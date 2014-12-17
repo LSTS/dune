@@ -40,5 +40,6 @@ namespace DUNE
 #include <DUNE/Monitors/MotorCurrentMonitor.hpp>
 #include <DUNE/Monitors/ServoCurrentMonitor.hpp>
 #include <DUNE/Monitors/ServoPositionMonitor.hpp>
+#include <DUNE/Monitors/VerticalMonitor.hpp>
 
 #endif

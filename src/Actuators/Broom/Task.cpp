@@ -139,22 +139,12 @@ namespace Actuators
       DevControlModes m_thrust_ctl_mode;
       //! RPMs message.
       IMC::Rpm m_rpms;
-      //! Motor phase current message.
-      IMC::Current m_current;
-      //! Bridge current message.
-      IMC::Current m_bridge_current;
-      //! Motor temperature message.
-      IMC::Temperature m_motor_temp;
-      //! Bridge temperature message.
-      IMC::Temperature m_bridge_temp;
-      //! Bridge voltage message.
-      IMC::Voltage m_bridge_volt;
-      //! MCU temperature message.
-      IMC::Temperature m_mcu_temp;
-      //! MCU voltage message.
-      IMC::Voltage m_mcu_volt;
-      //! Motor voltage message.
-      IMC::Voltage m_motor_volt;
+      //! Motor entity.
+      Entities::BasicEntity* m_motor_ent;
+      //! Bridge entity.
+      Entities::BasicEntity* m_bridge_ent;
+      //! MCU entity.
+      Entities::BasicEntity* m_mcu_ent;
       //! Last state request.
       double m_last_state;
       //! Task arguments.
@@ -168,6 +158,9 @@ namespace Actuators
         Tasks::Periodic(name, ctx),
         m_actuation(0),
         m_ctl_mode(MODE_NONE),
+        m_motor_ent(NULL),
+        m_bridge_ent(NULL),
+        m_mcu_ent(NULL),
         m_dev_errors(ERR_NONE),
         m_legacy(false)
       {
@@ -251,33 +244,34 @@ namespace Actuators
       void
       onEntityReservation(void)
       {
-        unsigned motor_eid = reserveEntity(m_args.motor_elabel);
-        m_rpms.setSourceEntity(motor_eid);
-        m_current.setSourceEntity(motor_eid);
-        m_motor_temp.setSourceEntity(motor_eid);
-        m_motor_volt.setSourceEntity(motor_eid);
-
-        unsigned bridge_eid = reserveEntity(m_args.bridge_elabel);
-        m_bridge_temp.setSourceEntity(bridge_eid);
-        m_bridge_volt.setSourceEntity(bridge_eid);
-        m_bridge_current.setSourceEntity(bridge_eid);
-
-        unsigned mcu_eid = reserveEntity(m_args.mcu_elabel);
-        m_mcu_temp.setSourceEntity(mcu_eid);
-        m_mcu_volt.setSourceEntity(mcu_eid);
+        m_motor_ent = reserveEntity<Entities::BasicEntity>(m_args.motor_elabel);
+        m_bridge_ent = reserveEntity<Entities::BasicEntity>(m_args.bridge_elabel);
+        m_mcu_ent = reserveEntity<Entities::BasicEntity>(m_args.mcu_elabel);
       }
 
       void
       onResourceAcquisition(void)
       {
-        m_proto.setUART(m_args.uart_dev);
-        m_proto.open();
-        m_proto.requestVersion();
+        try
+        {
+          m_proto.setUART(m_args.uart_dev);
+          m_proto.open();
+          m_proto.requestVersion();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void
       onCommand(uint8_t cmd, const uint8_t* data, int data_size)
       {
+        IMC::Temperature t;
+        IMC::Voltage v;
+        IMC::Current cur;
+        IMC::Rpm rpm;
+
         switch (cmd)
         {
           case CMD_DEBUG:
@@ -295,19 +289,23 @@ namespace Actuators
             }
             m_dev_errors = data[0];
 
-            m_mcu_temp.value = (int8_t)data[1];
-            m_bridge_temp.value = (int8_t)data[2];
-            m_motor_temp.value = (int8_t)data[3];
-            m_mcu_volt.value = ((uint8_t)data[4] * 0.025);
-            m_bridge_volt.value = ((uint8_t)data[5] * 0.25);
-            m_bridge_current.value = (int16_t)(data[6] << 8 | data[7]) * 10.0 / 511.0;
+            t.setTimeStamp();
+            t.value = (int8_t)data[1];
+            m_mcu_ent->dispatch(t, DF_KEEP_TIME);
+            t.value = (int8_t)data[2];
+            m_bridge_ent->dispatch(t, DF_KEEP_TIME);
+            t.value = (int8_t)data[3];
+            m_motor_ent->dispatch(t, DF_KEEP_TIME);
 
-            dispatch(m_motor_temp);
-            dispatch(m_bridge_temp);
-            dispatch(m_bridge_volt);
-            dispatch(m_bridge_current);
-            dispatch(m_mcu_temp);
-            dispatch(m_mcu_volt);
+            v.setTimeStamp(t.getTimeStamp());
+            v.value = ((uint8_t)data[4] * 0.025);
+            m_mcu_ent->dispatch(v, DF_KEEP_TIME);
+            v.value = ((uint8_t)data[5] * 0.25);
+            m_bridge_ent->dispatch(v, DF_KEEP_TIME);
+
+            cur.setTimeStamp(t.getTimeStamp());
+            cur.value = (int16_t)(data[6] << 8 | data[7]) * 10.0 / 511.0;
+            m_bridge_ent->dispatch(cur, DF_KEEP_TIME);
 
             if (m_dev_errors)
             {
@@ -338,20 +336,20 @@ namespace Actuators
               return;
             }
 
-            m_motor_volt.value = (int16_t)(data[0] << 8 | data[1]) * 0.125;
-            m_rpms.value = (m_args.inv_rotation ? -1 : 1) * (int16_t)(data[4] << 8 | data[5]) * 10 / m_args.pole_pairs;
-            if (m_legacy)
-            {
-              m_current.value = (int16_t)(data[2] << 8 | data[3]) * 10.0 / 511.0;
-            }
-            else
-            {
-              m_current.value = (int16_t)(data[2] << 8 | data[3]) / 32.0;
-            }
+            v.setTimeStamp();
+            v.value = (int16_t)(data[0] << 8 | data[1]) * 0.125;
+            m_motor_ent->dispatch(v, DF_KEEP_TIME);
 
-            dispatch(m_motor_volt);
-            dispatch(m_current);
-            dispatch(m_rpms);
+            rpm.setTimeStamp(v.getTimeStamp());
+            rpm.value = (m_args.inv_rotation ? -1 : 1) * (int16_t)(data[4] << 8 | data[5]) * 10 / m_args.pole_pairs;
+            m_motor_ent->dispatch(rpm, DF_KEEP_TIME);
+
+            cur.setTimeStamp(v.getTimeStamp());
+            if (m_legacy)
+              cur.value = (int16_t)(data[2] << 8 | data[3]) * 10.0 / 511.0;
+            else
+              cur.value = (int16_t)(data[2] << 8 | data[3]) / 32.0;
+            m_motor_ent->dispatch(cur, DF_KEEP_TIME);
 
             break;
         }

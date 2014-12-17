@@ -52,7 +52,6 @@ namespace Navigation
         NUM_STATE = 4
       };
 
-
       //! Navigation Output states.
       enum OutputIndexes
       {
@@ -244,12 +243,6 @@ namespace Navigation
 
           m_estate.u = m_kal.getState(STATE_U);
           m_estate.v = m_kal.getState(STATE_V);
-
-          // Water Velocity in the navigation frame.
-          if (m_valid_gv && m_valid_wv && !m_time_without_dvl.overflow())
-            BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi,
-                                            (m_gvel.x - m_wvel.x), (m_gvel.y - m_wvel.y), (m_gvel.z - m_wvel.z),
-                                            &m_ewvel.x, &m_ewvel.y, &m_ewvel.z);
 
           // Log Navigation Uncertainty.
           m_uncertainty.u = m_kal.getCovariance(STATE_U, STATE_U);

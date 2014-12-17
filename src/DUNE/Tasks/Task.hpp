@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
 #ifndef DUNE_TASKS_TASK_HPP_INCLUDED_
@@ -51,6 +52,8 @@
 #include <DUNE/Tasks/Context.hpp>
 #include <DUNE/Tasks/BasicParameterParser.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
+#include <DUNE/Entities/StatefulEntity.hpp>
 
 #if defined(DUNE_SHARED)
 #  define DUNE_TASK_EXPORT(class, mangled)                              \
@@ -114,6 +117,12 @@ namespace DUNE
       virtual
       ~Task(void)
       {
+        while (!m_entities.empty())
+        {
+          delete m_entities.back();
+          m_entities.pop_back();
+        }
+
         delete m_recipient;
       }
 
@@ -146,7 +155,7 @@ namespace DUNE
       unsigned int
       getEntityId(void) const
       {
-        return m_eid;
+        return m_entity->getId();
       }
 
       //! Retrieve the entity id of a given entity label.
@@ -169,6 +178,14 @@ namespace DUNE
       resolveEntity(unsigned int id) const
       {
         return m_ctx.entities.resolve(id);
+      }
+
+      //! Get current debug level.
+      //! @return debug level.
+      DebugLevel
+      getDebugLevel(void) const
+      {
+        return m_debug_level;
       }
 
       //! Retrieve the task's activation time.
@@ -355,13 +372,15 @@ namespace DUNE
     protected:
       //! Context.
       Context& m_ctx;
+      //! Owned entity list
+      std::vector<Entities::BasicEntity*> m_entities;
 
       //! Retrieve the main entity label of the task.
       //! @return main entity label.
       const char*
       getEntityLabel(void) const
       {
-        return m_elabel.c_str();
+        return m_entity->getLabel().c_str();
       }
 
       //! Set the main entity label of the task.
@@ -369,7 +388,7 @@ namespace DUNE
       void
       setEntityLabel(const std::string& label)
       {
-        m_elabel = label;
+        m_entity->setLabel(label);
       }
 
       //! Set current entity state with an optional pre-defined
@@ -379,21 +398,27 @@ namespace DUNE
       //! @param[in] code status code.
       void
       setEntityState(IMC::EntityState::StateEnum state,
-                     Status::Code code);
+                     Status::Code code)
+      {
+        m_entity->setState(state, code);
+      }
 
       //! Set current entity state with a custom description.
       //! @param[in] state entity state.
       //! @param[in] description custom state description.
       void
       setEntityState(IMC::EntityState::StateEnum state,
-                     const std::string& description);
+                     const std::string& description)
+      {
+        m_entity->setState(state, description);
+      }
 
       //! Retrieve the current entity state.
       //! @return entity state.
       IMC::EntityState::StateEnum
       getEntityState(void) const
       {
-        return static_cast<IMC::EntityState::StateEnum>(m_entity_state.state);
+        return m_entity->getState();
       }
 
       //! Associate an entity label with an automatically generated
@@ -402,6 +427,23 @@ namespace DUNE
       //! @return entity id.
       unsigned int
       reserveEntity(const std::string& label);
+
+      //! Associate an entity label with an internally stored entity
+      //! object, and retrieve a pointer to the object.
+      //! @param[in] label entity name/label.
+      //! @return pointer to entity object.
+      template <typename E>
+      E*
+      reserveEntity(const std::string& label)
+      {
+        E* entity = new E(this, m_ctx);
+        m_entities.push_back(static_cast<Entities::BasicEntity*>(entity));
+
+        entity->setLabel(label);
+        entity->setId(m_ctx.entities.reserve(label, getName()));
+        entity->setBindings(m_recipient);
+        return entity;
+      }
 
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
@@ -416,7 +458,7 @@ namespace DUNE
       bool
       isActive(void) const
       {
-        return m_act_state.state == IMC::EntityActivationState::EAS_ACTIVE;
+        return m_entity->isActive();
       }
 
       //! Test if task is activating.
@@ -424,7 +466,7 @@ namespace DUNE
       bool
       isActivating(void) const
       {
-        return m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP;
+        return m_entity->isActivating();
       }
 
       //! Test if task is deactivating.
@@ -432,7 +474,7 @@ namespace DUNE
       bool
       isDeactivating(void) const
       {
-        return m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP;
+        return m_entity->isDeactivating();
       }
 
       //! Wait for the receiving queue to contain at least one message
@@ -529,6 +571,19 @@ namespace DUNE
         void (T::* func)(const IMC::Message*) = &T::consume;
         for (unsigned int i = 0; i < list.size(); ++i)
           bind(list[i], new Consumer<T, IMC::Message>(*task_obj, func));
+      }
+
+      //! Bind multiple messages to a consumer method.
+      //! @param task_obj consumer object.
+      //! @param list list of message identifiers.
+      //! @param consumer consumer method.
+      template <typename T, typename M>
+      void
+      bind(T* task_obj, const std::vector<uint32_t>& list,
+           void (T::* consumer)(const M*) = &T::consume)
+      {
+        for (unsigned int i = 0; i < list.size(); ++i)
+          bind(list[i], new Consumer<T, M>(*task_obj, consumer));
       }
 
       //! Bind multiple messages to a default consumer method.
@@ -677,6 +732,8 @@ namespace DUNE
     private:
       struct BasicArguments
       {
+        //! Main entity label.
+        std::string elabel;
         //! Activation time.
         uint16_t act_time;
         //! Deactivation time.
@@ -691,48 +748,26 @@ namespace DUNE
         std::string active_visibility;
       };
 
-      enum NextActivationState
-      {
-        //! Keep current activation state.
-        NAS_SAME,
-        //! Request activation.
-        NAS_ACTIVE,
-        //! Request deactivation.
-        NAS_INACTIVE
-      };
-
       //! Message recipient (queue).
       Recipient* m_recipient;
       //! Task name.
       std::string m_name;
       //! Task parameters.
       ParameterTable m_params;
-      //! Entity Id.
-      unsigned int m_eid;
-      //! Entity Label.
-      std::string m_elabel;
+      //! Main Entity
+      Entities::StatefulEntity* m_entity;
       //! Debug level (as a string).
       std::string m_debug_level_string;
       //! Debug level.
       DebugLevel m_debug_level;
-      //! Main entity state.
-      IMC::EntityState m_entity_state;
-      //! Last entity state description code (-1 means none).
-      int m_entity_state_code;
-      //! Entity information message.
-      IMC::EntityInfo m_ent_info;
       //! Arguments.
       BasicArguments m_args;
       //! Parameters stack.
       std::stack<std::map<std::string, std::string> > m_params_stack;
-      //! Activation state.
-      IMC::EntityActivationState m_act_state;
       //! True if task honours changes to 'Active' parameter.
       bool m_honours_active;
       //! Name of parameter section editor.
       std::string m_param_editor;
-      //! Next activation state.
-      NextActivationState m_next_act_state;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of
@@ -757,9 +792,6 @@ namespace DUNE
         m_recipient->bind(message_id, consumer);
       }
 
-      void
-      consume(const IMC::QueryEntityInfo* msg);
-
       //! Consume QueryEntityState messages and reply accordingly.
       //! @param[in] msg QueryEntityState message.
       void
@@ -767,11 +799,6 @@ namespace DUNE
 
       void
       consume(const IMC::QueryEntityParameters* msg);
-
-      //! Consume QueryEntityActivationState messages and reply accordingly.
-      //! @param[in] msg QueryEntityActivationState message.
-      void
-      consume(const IMC::QueryEntityActivationState* msg);
 
       void
       consume(const IMC::SetEntityParameters* msg);

@@ -33,41 +33,38 @@
 
 // Local headers.
 #include "Constants.hpp"
-
-using DUNE_NAMESPACES;
+#include "MuxedManeuver.hpp"
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Elevator;
+    using DUNE_NAMESPACES;
+
+    //! Arguments
+    struct ElevatorArgs
+    {
+      //! Distance tolerance to start loitering near elevator's location
+      float radius_tolerance;
+      //! Negative values will disable vertical progress monitor
+      float vmonitor_speed;
+      //! Timeout when progress is below the specified value
+      float vmonitor_timeout;
+      //! Minimum radius to prevent incompatibility with path controller
+      float min_radius;
+    };
 
     //! Elevator maneuver
-    class Elevator
+    class Elevator: public MuxedManeuver<IMC::Elevator, ElevatorArgs>
     {
     public:
-      //! Arguments
-      struct ElevatorArgs
-      {
-        //! Distance tolerance to start loitering near elevator's location
-        float radius_tolerance;
-        //! Negative values will disable vertical progress monitor
-        float vmonitor_speed;
-        //! Timeout when progress is below the specified value
-        float vmonitor_timeout;
-        //! Minimum radius to prevent incompatibility with path controller
-        float min_radius;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args elevator arguments
       Elevator(Maneuvers::Maneuver* task, ElevatorArgs* args):
+        MuxedManeuver<IMC::Elevator, ElevatorArgs>(task, args),
         m_elevate(NULL),
-        m_vmon(NULL),
-        m_args(args),
-        m_task(task)
+        m_vmon(NULL)
       { }
 
       //! Destructor
@@ -80,7 +77,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver rows maneuver message
       void
-      start(const IMC::Elevator* maneuver)
+      onStart(const IMC::Elevator* maneuver)
       {
         m_maneuver = *maneuver;
 
@@ -90,7 +87,7 @@ namespace Maneuver
         if (m_args->vmonitor_speed > 0.0)
         {
           Memory::clear(m_vmon);
-          m_vmon = new VMonitor(m_args->vmonitor_timeout, m_depth);
+          m_vmon = new VerticalMonitor(m_args->vmonitor_timeout, m_args->vmonitor_speed);
         }
       }
 
@@ -99,6 +96,7 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
+        m_vz = msg->vz;
         m_depth = msg->depth;
         m_altitude = msg->alt;
         m_pitch = msg->theta;
@@ -149,69 +147,19 @@ namespace Maneuver
       {
         // compute vertical rate
         // (multiply by minus direction for absolute value)
-        float vrate = - m_elevate->getElevatorDirection() * (m_depth - m_vmon->last_depth) / (Clock::get() - m_vmon->last_time);
+        float vrate = - m_elevate->getElevatorDirection() * m_vz;
 
-        if ((m_args->vmonitor_speed > vrate) ||
-            (m_args->vmonitor_speed > m_vmon->mave->update(vrate)))
-        {
-          if (m_vmon->slow_progress)
-          {
-            if (m_vmon->timer.overflow())
-              m_task->signalError(DTR("vertical progress is too slow"));
-          }
-          else
-          {
-            m_vmon->slow_progress = true;
-            m_vmon->timer.reset();
-          }
-
-          m_task->trace("progress is slow: %.2f", vrate);
-        }
-        else
-        {
-          m_vmon->slow_progress = false;
-          m_task->trace("progress ok: %.2f", vrate);
-        }
-
-        m_vmon->last_time = Clock::get();
-        m_vmon->last_depth = m_depth;
+        if (m_vmon->isProgressSlow(vrate))
+          m_task->signalError(DTR("vertical progress is too slow"));
       }
 
     private:
-      //! Vertical monitor data
-      struct VMonitor
-      {
-        //! Timer counter for timeout
-        Time::Counter<float> timer;
-        //! Last value of depth
-        float last_depth;
-        //! Last time checked
-        double last_time;
-        //! Progress below minimum
-        bool slow_progress;
-        //! Moving average for progress samples
-        MovingAverage<float>* mave;
-
-        VMonitor(float timeout, float depth):
-          last_depth(depth),
-          last_time(Clock::get()),
-          slow_progress(false),
-          mave(NULL)
-        {
-          timer.setTop(timeout);
-          mave = new MovingAverage<float>(c_vsamples);
-        };
-
-        ~VMonitor(void)
-        {
-          Memory::clear(mave);
-        }
-      };
-
       //! Desired path message
       IMC::DesiredPath m_path;
       //! Elevator Maneuver message
       IMC::Elevator m_maneuver;
+      //! Current speed in z
+      float m_vz;
       //! Current depth
       float m_depth;
       //! Current altitude
@@ -223,11 +171,7 @@ namespace Maneuver
       //! Elevator mechanism
       Maneuvers::Elevate* m_elevate;
       //! Vertical monitor
-      VMonitor* m_vmon;
-      //! Arguments
-      ElevatorArgs* m_args;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
+      VerticalMonitor* m_vmon;
     };
   }
 }

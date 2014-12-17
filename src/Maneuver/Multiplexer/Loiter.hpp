@@ -31,37 +31,36 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Loiter;
+    struct LoiterArgs
+    {
+      //! Minimum radius to prevent incompatibility with path controller
+      double min_radius;
+    };
 
     //! Loiter maneuver
-    class Loiter
+    class Loiter: public MuxedManeuver<IMC::Loiter, LoiterArgs>
     {
     public:
-      struct LoiterArgs
-      {
-        //! Minimum radius to prevent incompatibility with path controller
-        double min_radius;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args loiter arguments
       Loiter(Maneuvers::Maneuver* task, LoiterArgs* args):
-        m_task(task),
-        m_args(args)
+        MuxedManeuver<IMC::Loiter, LoiterArgs>(task, args)
       { }
 
       //! Start maneuver function
       //! @param[in] maneuver loiter maneuver message
       void
-      start(const IMC::Loiter* maneuver)
+      onStart(const IMC::Loiter* maneuver)
       {
         m_task->setControl(IMC::CL_PATH);
 
@@ -136,10 +135,6 @@ namespace Maneuver
       double m_end_time;
       //! Loiter: Duration in seconds
       uint16_t m_duration;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
-      //! Pointer to loiter args
-      LoiterArgs* m_args;
     };
   }
 }

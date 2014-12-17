@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef MONITORS_FUELLEVEL_FUEL_FILTER_HPP_INCLUDED_
-#define MONITORS_FUELLEVEL_FUEL_FILTER_HPP_INCLUDED_
+#ifndef MONITORS_FUEL_LEVEL_FUEL_FILTER_HPP_INCLUDED_
+#define MONITORS_FUEL_LEVEL_FUEL_FILTER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>
@@ -58,11 +58,13 @@ namespace Monitors
     //! Maximum confidence value
     static const float c_top_conf = 100.0f;
     //! Electric current stable value to consider an estimate refresh
-    static const float c_stable_current = 1.0;
+    static const float c_stable_current = 1.0f;
     //! Minimum time to wait before redoing estimate
-    static const float c_redo_time = 600.0;
+    static const float c_redo_time = 600.0f;
     //! Time to consider stabilization after maneuvering
-    static const float c_sane_time = 10.0;
+    static const float c_sane_time = 10.0f;
+    //! Maximum time delta in seconds between measures
+    static const float c_max_delta = 3.0f;
 
     //! Fuel Filter for Fuel Level
     class FuelFilter
@@ -124,6 +126,8 @@ namespace Monitors
         float acceptable_temperature;
         //! Minimum confidence for recomputing update
         float min_update_conf;
+        //! Update estimate even if maneuvering
+        bool update_anytime;
       };
 
       FuelFilter(Arguments* args, unsigned eids[BatteryData::BM_TOTAL],
@@ -177,7 +181,7 @@ namespace Monitors
             m_last_time = msg->getTimeStamp();
 
             // Check if we have a valid time delta.
-            if (delta < 0)
+            if (delta < 0 || delta > c_max_delta)
               return;
 
             // integrate energy consumed even if there is no estimate yet
@@ -292,13 +296,27 @@ namespace Monitors
           return true;
         }
 
+        bool stable_current;
+        bool usable_state;
+        if (m_args->update_anytime)
+        {
+          float diff = std::fabs(m_bdata->getCurrent() - m_args->models[MDL_PES].current);
+          stable_current = diff < c_stable_current;
+
+          usable_state = true;
+        }
+        else
+        {
+          stable_current = (m_bdata->getCurrent() < c_stable_current);
+          usable_state = !m_is_maneuvering && m_sane_timer.overflow();
+        }
+
         // Check if we should refresh the initial estimate
         // if Temperature is reliable
-        // if we have low electric currents
-        // if vehicle is not maneuvering atm
+        // if we have stable electric currents
+        // if vehicle is not maneuvering atm or update anytime
         if ((m_bdata->getTemperature() > m_args->acceptable_temperature) &&
-            (m_bdata->getCurrent() < c_stable_current) &&
-            !m_is_maneuvering && m_sane_timer.overflow())
+            stable_current && usable_state)
         {
           bool refresh = false;
 
@@ -342,6 +360,8 @@ namespace Monitors
       {
         // fill value with estimated percentage of battery
         fl.value = (m_initial_estimate - m_energy_consumed) / m_args->full_capacity * 100.0;
+        fl.value = std::max(0.0f, fl.value);
+        fl.value = std::min(100.0f, fl.value);
         fl.confidence = computeConfidence();
 
         std::stringstream ss;
@@ -578,12 +598,12 @@ namespace Monitors
 
         if (bad_est_diff < prox_interval)
         {
-          bad_conf += (conf_gap) * (1 - bad_est_diff)  / (prox_interval);
+          bad_conf += (conf_gap) * (1 - bad_est_diff / prox_interval);
         }
 
         if (good_est_diff < prox_interval)
         {
-          good_conf += (conf_gap) * (1 - good_est_diff) / (prox_interval);
+          good_conf += (conf_gap) * (1 - good_est_diff / prox_interval);
         }
       }
 

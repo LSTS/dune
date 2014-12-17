@@ -25,6 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+var HIDE_PREFIX = "Private (";
+
 function Power(root_id)
 {
     this.serial = 0;
@@ -49,6 +51,9 @@ Power.prototype = new BasicSection;
 
 Power.prototype.updateEntry = function(msg)
 {
+    if (msg.name.slice(0, HIDE_PREFIX.length) == HIDE_PREFIX)
+        return;
+
     for (var i = 0; i < this.m_sbase.childNodes.length; i++)
     {
         var child = this.m_sbase.childNodes[i];

@@ -30,6 +30,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
+#include <limits.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -87,6 +88,7 @@ namespace Simulators
       // Initial state
       double init_lat;
       double init_lon;
+      double init_hei;
       double init_alt;
       double init_speed;
       double init_roll;
@@ -150,18 +152,19 @@ namespace Simulators
         .defaultValue("")
         .description("Emulated system id.");
 
-        param("Stream Speed North", m_args.wx)
+        param("Stream Speed to North", m_args.wx)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
-        .description("Wind speed along the North in the NED frame");
+        .description("Wind speed towards the North in the NED frame");
 
-        param("Stream Speed East", m_args.wy)
+        param("Stream Speed to East", m_args.wy)
         .units(Units::MeterPerSecond)
         .defaultValue("0.0")
-        .description("Wind speed along the East in the NED frame");
+        .description("Wind speed towards the East in the NED frame");
 
         param("Simulation type", m_args.sim_type)
         .defaultValue("4DOF_bank")
+        .values("3DOF, 4DOF_alt, 4DOF_bank, 5DOF")
         .description("Simulation type (DOF)");
 
         param("Bank Time Constant", m_args.c_bank)
@@ -252,16 +255,20 @@ namespace Simulators
         .defaultValue("Simulated GPS")
         .description("Entity label of simulated 'GpsFix' messages");
 
-        param("Initial Latitude", m_args.init_lat)
-        .defaultValue("39.09")
-        .description("Initial state latitude");
+        param("Reference Ground Height", m_args.init_hei)
+        .defaultValue("47.3")
+        .description("Home reference ground height");
 
-        param("Initial Longitude", m_args.init_lon)
+        param("Initial Reference Latitude", m_args.init_lat)
+        .defaultValue("39.09")
+        .description("Initial home reference latitude");
+
+        param("Initial Reference Longitude", m_args.init_lon)
         .defaultValue("-8.964")
-        .description("Initial state longitude");
+        .description("Initial home reference longitude");
 
         param("Initial Altitude", m_args.init_alt)
-        .defaultValue("147.3")
+        .defaultValue("100")
         .description("Initial state WGS-84 geoid altitude");
 
         param("Initial Speed", m_args.init_speed)
@@ -320,10 +327,10 @@ namespace Simulators
         IMC::GpsFix init_fix;
         init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
         init_fix.lon = DUNE::Math::Angles::radians(m_args.init_lon);
-        init_fix.height = m_args.init_alt;
+        init_fix.height = m_args.init_hei;
         m_sstate.lat = init_fix.lat;
         m_sstate.lon = init_fix.lon;
-        m_sstate.height = m_args.init_alt;
+        m_sstate.height = m_args.init_hei;
         dispatch(init_fix);
         requestActivation();
       }
@@ -336,7 +343,7 @@ namespace Simulators
         //! Model state initialization
         debug("Model initialization");
         //! - Altitude initialization
-        m_position(2) = m_args.init_alt;
+        m_position(2) = -m_args.init_alt;
         //! - Bank initialization
         m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
         //! - Heading initialization
@@ -349,7 +356,7 @@ namespace Simulators
         {
           //! 4 DOF (bank) model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -362,7 +369,7 @@ namespace Simulators
         {
           //! 4 DOF (altitude) model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_alt);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_alt);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -373,7 +380,7 @@ namespace Simulators
         {
           //! 4 DOF (bank) model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -386,7 +393,7 @@ namespace Simulators
         {
           //! 5 DOF model initialization
           //! - State  and control parameters initialization
-          m_model = new DUNE::Simulation::UAVSimulation(m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
+          m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
           //! - Commands initialization
           m_model->command(m_position(3), m_args.init_speed, -m_position(2));
           //! - Limits definition
@@ -455,12 +462,19 @@ namespace Simulators
         uint32_t i_cmd;
         uint32_t i_cmd_final;
         uint32_t i_src;
-        uint32_t i_src_ini;
+        uint32_t i_src_ini = UINT_MAX;
+        std::vector<std::string> parts;
+        std::vector<std::string> systems;
+        std::vector<std::string> entities;
+        unsigned int i_sys_n;
+        unsigned int i_ent_n;
+        uint32_t sys_tmp;
+
         m_filtered_sys.clear();
         m_filtered_ent.clear();
         for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
         {
-          std::vector<std::string> parts;
+          parts.clear();
           String::split(m_args.cmd_src[i], ":", parts);
           if (parts.size() < 1)
             continue;
@@ -481,10 +495,12 @@ namespace Simulators
             i_cmd = 6;
 
           // Split systems and entities.
-          std::vector<std::string> systems;
+          systems.clear();
+          entities.clear();
           String::split(parts[1], "+", systems);
-          std::vector<std::string> entities;
           String::split(parts[2], "+", entities);
+          i_sys_n = systems.size();
+          i_ent_n = entities.size();
 
           // Assign filtered systems and entities to the selected commands
           if (i_cmd == 6)
@@ -497,38 +513,66 @@ namespace Simulators
           for (; i_cmd <= i_cmd_final; i_cmd++)
           {
             i_src_ini = m_filtered_sys[i_cmd].size();
-            m_filtered_ent[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-            m_filtered_sys[i_cmd].resize(i_src_ini+systems.size()*entities.size());
-
-            // Resolve systems id.
-            for (unsigned j = 0; j < systems.size(); j++)
+            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
+            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
+            for (unsigned j = 0; j < i_sys_n; j++)
             {
-              // Resolve entities id.
-              for (unsigned k = 0; k < entities.size(); k++)
+              spew("Commands filtering - System '%s' (%u/%u).",
+                   systems[j].c_str(), j+1, i_sys_n);
+
+              // Resolve systems id.
+              if (systems[j].empty())
               {
-                i_src = (j+1)*(k+1)-1;
-                // Resolve systems.
-                if (systems[j].empty())
+                sys_tmp = UINT_MAX;
+                debug("Commands filtering - Filter source system undefined");
+              }
+              else if (systems[j].compare("self") == 0)
+              {
+                sys_tmp = getSystemId();
+                debug("Commands filtering - System '%s' with ID: %u",
+                    resolveSystemId(sys_tmp), sys_tmp);
+              }
+              else
+              {
+                try
                 {
-                  m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  debug("Commands filtering - Filter source system undefined");
+                  sys_tmp = resolveSystemName(systems[j]);
+                  if (sys_tmp != USHRT_MAX)
+                    debug("Commands filtering - System '%s' with ID: %u",
+                          resolveSystemId(sys_tmp), sys_tmp);
+                  else
+                  {
+                    war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
+                    for (unsigned j_tmp = j; j_tmp+1 < i_ent_n; j_tmp++)
+                      systems[j_tmp] = systems[j_tmp + 1];
+                    i_sys_n--;
+                    j--;
+                    continue;
+                  }
                 }
-                else
+                catch (...)
                 {
-                  try
-                  {
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = resolveSystemName(systems[j]);
-                    debug("Commands filtering - System '%s' with ID: %d",
-                        systems[j].c_str(), resolveSystemName(systems[j]));
-                  }
-                  catch (...)
-                  {
-                    debug("Commands filtering - No system found with designation '%s'.", parts[1].c_str());
-                    m_filtered_sys[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  }
+                  war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
+                  for (unsigned j_tmp = j; j_tmp+1 < i_sys_n; j_tmp++)
+                    systems[j_tmp] = systems[j_tmp + 1];
+                  i_sys_n--;
+                  j--;
+                  continue;
                 }
-                // Resolve entities.
-                if (entities[j].empty())
+              }
+
+              for (unsigned k = 0; k < i_ent_n; k++)
+              {
+                spew("Commands filtering - Entity '%s' (%u/%u).",
+                     entities[k].c_str(), k+1, i_ent_n);
+
+                i_src = j*i_ent_n + k;
+
+                // Assign system id
+                m_filtered_sys[i_cmd][i_src_ini+i_src] = sys_tmp;
+
+                // Resolve entities id.
+                if (entities[k].empty())
                 {
                   m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
                   debug("Commands filtering - Filter entity system undefined");
@@ -538,18 +582,37 @@ namespace Simulators
                   try
                   {
                     m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                    debug("Commands filtering - Entity '%s' with ID: %d",
-                        entities[k].c_str(), resolveEntity(entities[k]));
+                    debug("Commands filtering - Entity '%s' with ID: %u",
+                        resolveEntity(m_filtered_ent[i_cmd][i_src_ini+i_src]).c_str(),
+                        m_filtered_ent[i_cmd][i_src_ini+i_src]);
                   }
                   catch (...)
                   {
-                    debug("Commands filtering - No entity found with designation '%s'.", parts[2].c_str());
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
+                    war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
+                    for (unsigned k_tmp = k; k_tmp+1 < i_ent_n; k_tmp++)
+                      entities[k_tmp] = entities[k_tmp + 1];
+                    i_ent_n--;
+                    k--;
                   }
                 }
+
+                spew("Commands filtering state - System %u of %u : Entity %u of %u.",
+                    j+1, i_sys_n, k+1, i_ent_n);
               }
             }
+            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
+            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
           }
+          if (parts[0].empty())
+            spew("Commands filter sets:");
+          else
+            spew("%s filter sets:", parts[0].c_str());
+
+          i_cmd--;
+          for (unsigned i_flt = i_src_ini; i_flt < i_src_ini + i_sys_n*i_ent_n; i_flt++)
+            spew("    System %s : Entity %s.",
+                 resolveSystemId(m_filtered_sys[i_cmd][i_flt]),
+                 resolveEntity(m_filtered_ent[i_cmd][i_flt]).c_str());
         }
       }
 
@@ -610,246 +673,155 @@ namespace Simulators
       void
       consume(const IMC::DesiredRoll* msg)
       {
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[0].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[0].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[0].begin();
-          for (; itr_sys != m_filtered_sys[0].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Bank command rejected.");
-          trace("DesiredRoll received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
-          return;
-        }
+        spew("Consuming DesiredRoll");
 
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Bank command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
 
         m_model->commandBank(msg->value);
 
         // ========= Debug ===========
-        spew("Bank command received (%1.2fº)", DUNE::Math::Angles::degrees(msg->value));
-        spew("DesiredRoll received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
       void
       consume(const IMC::DesiredSpeed* msg)
       {
-        //spew("Consuming DesiredSpeed");
+        spew("Consuming DesiredSpeed");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[1].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[1].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[1].begin();
-          for (; itr_sys != m_filtered_sys[1].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Speed command rejected.");
-          trace("DesiredSpeed received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Speed command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
 
         m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
-        spew("Speed command received (%1.2fm/s)", msg->value);
-        spew("DesiredSpeed received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
       void
       consume(const IMC::DesiredZ* msg)
       {
-        //spew("Consuming DesiredZ");
+        spew("Consuming DesiredZ");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[2].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[2].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[2].begin();
-          for (; itr_sys != m_filtered_sys[2].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Altitude command rejected.");
-          trace("DesiredZ received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Altitude command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
 
         double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT)
-          alt_cmd = msg->value;
+          alt_cmd = msg->value-m_sstate.height;
         else if (msg->z_units == IMC::Z_DEPTH)
           alt_cmd = -msg->value;
         else
-          alt_cmd = msg->value+m_sstate.height;
+          alt_cmd = msg->value;
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
-        spew("Altitude command received (%1.2fm)", alt_cmd);
-        spew("DesiredZ received from system '%s' and entity '%s'.",
-            resolveSystemId(msg->getSource()),
-            resolveEntity(msg->getSourceEntity()).c_str());
+        commandPrintOut(msg, &(alt_cmd), &b_source_id);
       }
 
       void
       consume(const IMC::DesiredPitch* msg)
       {
-        //spew("Consuming DesiredPitch");
+        spew("Consuming DesiredPitch");
 
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[3].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[3].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[3].begin();
-          for (; itr_sys != m_filtered_sys[3].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Pitch command rejected.");
-          trace("DesiredPitch received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
-        }
-
-        //! Check if system is active
-        if (!isActive())
-        {
-          trace("Pitch command rejected.");
-          trace("Simulation not active.");
-          trace("Missing GPS-Fix!");
-          return;
-        }
 
         m_model->commandFPA(msg->value);
 
         // ========= Debug ===========
-        spew("Pitch command received (%1.2fm)", msg->value);
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
-       /*
+      /*
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[4].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[4].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[4].begin();
-          for (; itr_sys != m_filtered_sys[4].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("Servo command rejected.");
-          trace("SetServoPosition received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
-          return;
-        }
+        spew("Consuming SetServoPosition");
 
-        //! Check if system is active
-        if (!isActive())
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
           return;
 
         m_servo_pos(msg->id) = msg->value;
+
         // ========= Debug ===========
-        spew("Servo command received (%1.2fm)", msg->value);
+        commandPrintOut(msg, &(msg->value), &b_source_id);
       }
 
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
+        spew("Consuming SetThrusterActuation");
+
+        // Check if the command source is valid, if the simulator is active,
+        // and if the commanded value is a real value
+        bool b_source_id = false;
+        if (!commandFilter(msg, &b_source_id))
+          return;
+
+        m_thruster_act = msg->value;
+
+        // ========= Debug ===========
+        commandPrintOut(msg, &(msg->value), &b_source_id);
+      }
+      */
+
+      bool
+      commandFilter(const IMC::Message* msg, bool* b_source_id)
+      {
+        bool pass_command = true;
+        const char* system_id = NULL;
+        const char* entity_id = NULL;
+
+        try
+        {
+          system_id = resolveSystemId(msg->getSource());
+          entity_id = resolveEntity(msg->getSourceEntity()).c_str();
+          *b_source_id = true;
+        }
+        catch (...)
+        {
+          war("Unresolved system or entity ID!");
+        }
+
+        uint32_t i_cmd;
+        const char* c_msg_name = msg->getName();
+        if (strcmp(c_msg_name, "DesiredRoll") == 0)
+          i_cmd = 0;
+        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
+          i_cmd = 1;
+        else if (strcmp(c_msg_name, "DesiredZ") == 0)
+          i_cmd = 2;
+        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
+          i_cmd = 3;
+        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
+          i_cmd = 4;
+        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
+          i_cmd = 5;
+
         // Filter command by systems and entities.
         bool matched = true;
-        if (m_filtered_sys[5].size() > 0)
+        if (m_filtered_sys[i_cmd].size() > 0)
         {
           matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[5].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[5].begin();
-          for (; itr_sys != m_filtered_sys[5].end(); ++itr_sys)
+          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[i_cmd].begin();
+          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[i_cmd].begin();
+          for (; itr_sys != m_filtered_sys[i_cmd].end(); ++itr_sys)
           {
             if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
                 (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
@@ -860,22 +832,73 @@ namespace Simulators
         // This system and entity are not listed to be passed.
         if (!matched)
         {
-          trace("Thruster command rejected.");
-          trace("SetThrusterActuation received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
-          return;
+          trace("%s rejected.", c_msg_name);
+          if (*b_source_id)
+            trace("%s received from system '%s' and entity '%s'.", c_msg_name,
+                  system_id, entity_id);
+          else
+            trace("%s received from unidentified system and/or entity.", c_msg_name);
+          pass_command = false;
         }
 
         //! Check if system is active
         if (!isActive())
-          return;
+        {
+          trace("%s rejected - Simulation not active - Missing GPS-Fix!", c_msg_name);
+          pass_command = false;
+        }
 
-        m_thruster_act = msg->value;
-        // ========= Debug ===========
-        spew("Thruster command received (%1.2fm)", msg->value);
+        //! Check that the command is a real value
+        if (Math::isNaN(msg->getValueFP()))
+        {
+          war("%s rejected - Commanded value is not a number!", c_msg_name);
+          pass_command = false;
+        }
+
+        return pass_command;
       }
-      */
+
+      void
+      commandPrintOut(const IMC::Message* msg, const double* d_msg_value, bool* b_source_id)
+      {
+        // Get the print out message name and unit type, and define if the command is an angle
+        const char* c_msg_name = msg->getName();
+        std::string c_units = "";
+        bool b_cmd_angle = false;
+        if (strcmp(c_msg_name, "DesiredRoll") == 0)
+        {
+          b_cmd_angle = true;
+        }
+        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
+        {
+          c_units = "m/s";
+        }
+        else if (strcmp(c_msg_name, "DesiredZ") == 0)
+        {
+          c_units = "m";
+        }
+        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
+        {
+          b_cmd_angle = true;
+        }
+        /*
+        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
+        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
+        */
+
+        // Print out the command value and source information
+        if (b_cmd_angle)
+          spew("%s received (%1.2fº)", c_msg_name, DUNE::Math::Angles::degrees(*d_msg_value));
+        else
+          spew("%s received (%1.2f%s)", c_msg_name, *d_msg_value, c_units.c_str());
+        if (*b_source_id)
+          spew("%s received from system '%s' and entity '%s'.", c_msg_name,
+               resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str());
+        else
+          spew("%s received from unidentified system and/or entity.", c_msg_name);
+
+        return;
+      }
 
       Matrix
       matrixRotRbody2gnd(float roll, float pitch)

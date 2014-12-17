@@ -137,7 +137,9 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_mbox_check_timer.setTop(m_args.mbox_check_per);
+        if (paramChanged(m_args.mbox_check_per))
+          m_mbox_check_timer.setTop(m_args.mbox_check_per);
+
         if (m_driver != NULL)
           m_driver->setTxRateMax(m_args.max_tx_rate);
       }

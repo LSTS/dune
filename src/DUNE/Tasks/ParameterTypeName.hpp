@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_TASK_PARAMETER_TYPE_NAME_HPP_INCLUDED_
-#define DUNE_TASK_PARAMETER_TYPE_NAME_HPP_INCLUDED_
+#ifndef DUNE_TASKS_PARAMETER_TYPE_NAME_HPP_INCLUDED_
+#define DUNE_TASKS_PARAMETER_TYPE_NAME_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>

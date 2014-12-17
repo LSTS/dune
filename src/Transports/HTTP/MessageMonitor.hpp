@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_HTTP_STATE_MONITOR_HPP_INCLUDED_
-#define TRANSPORTS_HTTP_STATE_MONITOR_HPP_INCLUDED_
+#ifndef TRANSPORTS_HTTP_MESSAGE_MONITOR_HPP_INCLUDED_
+#define TRANSPORTS_HTTP_MESSAGE_MONITOR_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <map>

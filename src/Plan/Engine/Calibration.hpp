@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_CALIBRATION_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_CALIBRATION_HPP_INCLUDED_
+#ifndef PLAN_ENGINE_CALIBRATION_HPP_INCLUDED_
+#define PLAN_ENGINE_CALIBRATION_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -63,11 +63,9 @@ namespace Plan
       };
 
       //! Default constructor.
-      Calibration(void):
-        m_time(-1.0),
-        m_state(CS_NONE)
+      Calibration(void)
       {
-
+        clear();
       }
 
       //! Set the calibration time
@@ -81,6 +79,14 @@ namespace Plan
           m_state = CS_NOT_STARTED;
         else
           m_state = CS_NONE;
+      }
+
+      //! Clear calibration
+      void
+      clear(void)
+      {
+        m_state = CS_NONE;
+        m_time = -1.0;
       }
 
       //! Start calibration

@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef ACTUATORS_MCBV2_MCP23017_HPP_INCLUDED_
-#define ACTUATORS_MCBV2_MCP23017_HPP_INCLUDED_
+#ifndef POWER_MCBV2_MCP23017_HPP_INCLUDED_
+#define POWER_MCBV2_MCP23017_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>

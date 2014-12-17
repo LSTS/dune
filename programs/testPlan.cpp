@@ -66,7 +66,7 @@ sendMsg(IMC::Message& msg, UDPSocket& sock, Address& dest, int port)
   DUNE::Utils::ByteBuffer bb;
   msg.setTimeStamp();
   IMC::Packet::serialize(&msg, bb);
-  sock.write((const char*)bb.getBuffer(), msg.getSerializationSize(), dest, port);
+  sock.write((const uint8_t*)bb.getBuffer(), msg.getSerializationSize(), dest, port);
   msg.toText(std::cout);
 }
 

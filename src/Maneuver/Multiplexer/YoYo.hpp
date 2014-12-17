@@ -26,10 +26,13 @@
 // Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_YOYO_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_YOYO_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_YO_YO_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_YO_YO_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
+
+// Local headers
+#include "MuxedManeuver.hpp"
 
 using DUNE_NAMESPACES;
 
@@ -37,32 +40,28 @@ namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM YoYo;
+    struct YoYoArgs
+    {
+      //! Saturation level for variation in pitch references.
+      double variation;
+      //! True if we should check path errors and stabilize pitch
+      bool check_errors;
+      //! Max course error.
+      double u_course;
+      //! Max cross. track error.
+      double u_ctrack;
+    };
 
     //! Yoyo maneuver
-    class YoYo
+    class YoYo: public MuxedManeuver<IMC::YoYo, YoYoArgs>
     {
     public:
-      struct YoYoArgs
-      {
-        //! Saturation level for variation in pitch references.
-        double variation;
-        //! True if we should check path errors and stabilize pitch
-        bool check_errors;
-        //! Max course error.
-        double u_course;
-        //! Max cross. track error.
-        double u_ctrack;
-      };
-
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args yoyo arguments
       YoYo(Maneuvers::Maneuver* task, YoYoArgs* args):
-        m_yoyo(NULL),
-        m_task(task),
-        m_args(args)
+        MuxedManeuver<IMC::YoYo, YoYoArgs>(task, args),
+        m_yoyo(NULL)
       { }
 
       //! Destructor
@@ -74,7 +73,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver yoyo maneuver message
       void
-      start(const IMC::YoYo* maneuver)
+      onStart(const IMC::YoYo* maneuver)
       {
         // Enable path, pitch and speed control
         m_task->setControl(IMC::CL_PATH | IMC::CL_PITCH);
@@ -230,10 +229,6 @@ namespace Maneuver
       bool m_course_recovered;
       //! Some pitch reference has been dispatched already.
       bool m_dispatched;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
-      //! Pointer to args
-      YoYoArgs* m_args;
     };
   }
 }

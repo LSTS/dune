@@ -34,6 +34,7 @@
 // DUNE headers.
 #include <DUNE/IMC.hpp>
 #include <DUNE/Tasks/Task.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include "SlopeData.hpp"
 
@@ -69,14 +70,14 @@ namespace DUNE
         float slope_hyst;
         //! Check slope trend in unsafe state
         bool check_trend;
-        //! Entity id for bottom tracker
-        unsigned eid;
         //! Control period of execution for the bottom tracker
         float control_period;
         //! Enable or disable obstacle avoidance during depth control
         bool depth_avoid;
         //! Admissible altitude when doing depth control
         float adm_alt;
+        //! Entity for bottom tracker
+        Entities::BasicEntity* entity;
       };
 
       //! Constructor.
@@ -224,12 +225,6 @@ namespace DUNE
       //! @return true if they should be ignored.
       bool
       isAltitudeValid(void);
-
-      //! Inline function to call dispatch
-      //! @param[in] msg pointer to message to dispatch
-      //! @param[in] flags bitfield with flags (see DispatchFlags in Tasks/Task.hpp).
-      inline void
-      dispatch(IMC::Message& msg, unsigned int flags = 0) const;
 
       //! Function for info messages.
       //! @param[in] msg string message to output.

@@ -54,7 +54,9 @@ namespace DUNE
         encode(const IMC::EstimatedState* msg, IMC::UamTxFrame* frame)
         {
           CodedEstimatedState coded;
-          frame->data.resize(coded.getSize());
+          if (frame->data.size() < coded.getSize())
+            frame->data.resize(coded.getSize());
+
           uint8_t* ptr = (uint8_t*)&frame->data[0];
 
           coded.depth = static_cast<int16_t>(msg->depth * 100.0);
@@ -78,12 +80,12 @@ namespace DUNE
         {
           IMC::EstimatedState* estate = new IMC::EstimatedState;
           CodedEstimatedState coded;
-          if (frame->data.size() != coded.getSize())
+          if (frame->data.size() < coded.getSize())
             throw std::runtime_error("invalid size");
 
           uint8_t* ptr = (uint8_t*)&frame->data[1];
 
-          uint16_t length = frame->data.size() - 1;
+          uint16_t length = (uint16_t)frame->data.size() - 1;
           ptr += IMC::deserialize(coded.lat, ptr, length);
           ptr += IMC::deserialize(coded.lon, ptr, length);
           ptr += IMC::deserialize(coded.alt, ptr, length);
@@ -92,27 +94,27 @@ namespace DUNE
 
           estate->lat = coded.lat;
           estate->lon = coded.lon;
-          estate->alt = coded.alt / 100.0;
-          estate->depth = coded.depth / 100.0;
-          estate->psi = coded.yaw / 100.0;
+          estate->alt = (fp32_t)(coded.alt / 100.0);
+          estate->depth = (fp32_t)(coded.depth / 100.0);
+          estate->psi = (fp32_t)(coded.yaw / 100.0);
 
           return estate;
         }
 
-      private:
         //! Get payload size.
         //! @return size of payload.
-        size_t
+        static size_t
         getSize(void)
         {
-          return sizeof(c_id) + sizeof(lat) + sizeof(lon) + sizeof(depth)
-          + sizeof(alt) + sizeof(yaw);
+          // Size of lat, lon, depth, alt and yaw.
+          return sizeof(c_id) + 2 * sizeof(fp64_t) + 3 * sizeof(int16_t);
         }
 
+      private:
         //! WGS84 latitude.
-        double lat;
+        fp64_t lat;
         //! WGS84 longitude.
-        double lon;
+        fp64_t lon;
         //! System depth.
         int16_t depth;
         //! Altitude.

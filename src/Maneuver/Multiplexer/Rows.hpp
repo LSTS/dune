@@ -31,24 +31,24 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Rows;
-
     //! Rows maneuver
-    class Rows
+    class Rows: public MuxedManeuver<IMC::Rows, void>
     {
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       Rows(Maneuvers::Maneuver* task):
-        m_parser(NULL),
-        m_task(task)
+        MuxedManeuver<IMC::Rows, void>(task),
+        m_parser(NULL)
       { }
 
       //! Destructor
@@ -60,7 +60,7 @@ namespace Maneuver
       //! Start maneuver function
       //! @param[in] maneuver rows maneuver message
       void
-      start(const IMC::Rows* maneuver)
+      onStart(const IMC::Rows* maneuver)
       {
         Memory::clear(m_parser);
 
@@ -128,8 +128,6 @@ namespace Maneuver
       Maneuvers::RowsStages* m_parser;
       //! Desired path message
       IMC::DesiredPath m_path;
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
     };
   }
 }

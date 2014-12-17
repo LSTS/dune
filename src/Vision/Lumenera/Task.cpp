@@ -85,6 +85,8 @@ namespace Vision
       unsigned volume_size;
       //! Power GPIO.
       int pwr_gpio;
+      //! LED GPIO.
+      int led_gpio;
       //! Whether to configure the camera.
       bool camera_cfg;
       //! Whether to capture from the camera.
@@ -116,6 +118,8 @@ namespace Vision
       double m_timestamp;
       //! Power GPIO.
       Hardware::GPIO* m_pwr_gpio;
+      //! LEDs GPIO.
+      Hardware::GPIO* m_led_gpio;
       //! Config is dirty.
       bool m_cfg_dirty;
       //! Slave entities
@@ -133,6 +137,7 @@ namespace Vision
         m_volume_count(0),
         m_file_count(0),
         m_pwr_gpio(NULL),
+        m_led_gpio(NULL),
         m_cfg_dirty(false),
         m_slave_entities(NULL),
         m_log_dir_updated(false)
@@ -144,6 +149,10 @@ namespace Vision
         param("Power GPIO", m_args.pwr_gpio)
         .defaultValue("-1")
         .description("GPIO that controls power to the camera");
+
+        param("LED GPIO", m_args.led_gpio)
+        .defaultValue("-1")
+        .description("GPIO that controls power to the LEDs");
 
         param("Camera IPv4 Address", m_args.address)
         .defaultValue("10.0.10.82")
@@ -295,8 +304,27 @@ namespace Vision
       void
       onUpdateParameters(void)
       {
-        m_cfg_dirty = true;
         updateSlaveEntities();
+
+        if (isActive())
+        {
+          m_cfg_dirty = checkParameters();
+          return;
+        }
+
+        m_cfg_dirty = true;
+      }
+
+      bool
+      checkParameters(void)
+      {
+        return (paramChanged(m_args.fps) ||
+                paramChanged(m_args.gamma) ||
+                paramChanged(m_args.median_filter) ||
+                paramChanged(m_args.strobe) ||
+                checkExposure() ||
+                checkGain() ||
+                checkWhiteBalance());
       }
 
       void
@@ -309,8 +337,16 @@ namespace Vision
           m_pwr_gpio->setValue(0);
         }
 
+        if (m_args.led_gpio > 0)
+        {
+          m_led_gpio = new Hardware::GPIO(m_args.led_gpio);
+          m_led_gpio->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
+          m_led_gpio->setValue(0);
+        }
+
         m_slave_entities = new EntityActivationMaster(this);
         updateSlaveEntities();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -325,6 +361,12 @@ namespace Vision
           m_pwr_gpio = NULL;
         }
 
+        if (m_led_gpio != NULL)
+        {
+          delete m_led_gpio;
+          m_led_gpio = NULL;
+        }
+
         if (m_slave_entities != NULL)
         {
           delete m_slave_entities;
@@ -335,6 +377,9 @@ namespace Vision
       void
       consume(const IMC::LoggingControl* msg)
       {
+        if (!m_args.camera_capt)
+          return;
+
         if (!isDeactivating() && (msg->getDestination() != getSystemId()))
           return;
 
@@ -356,10 +401,6 @@ namespace Vision
 
         m_slave_entities->activate();
         m_act_timer.setTop(getActivationTime());
-
-        IMC::LoggingControl log_ctl;
-        log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
-        dispatch(log_ctl);
       }
 
       void
@@ -367,17 +408,42 @@ namespace Vision
       {
         trace("checking activation");
 
+        if (getEntityState() != IMC::EntityState::ESTA_BOOT)
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
         if (m_act_timer.overflow() && m_act_timer.getTop() != 0)
         {
-          activationFailed(DTR("failed to activate required entities"));
+          const char* reason;
+          if (!m_slave_entities->checkActivation())
+            reason = DTR("failed to activate required entities");
+          else if (m_args.camera_cfg && !checkConfiguration())
+            reason = DTR("failed to configure camera");
+          else if (m_args.camera_capt && !(checkCaptureOk() && checkLogdirOk()))
+            reason = DTR("failed to start video streamming");
+          else
+            reason = DTR("activation timed out for unknown reason");
+
+          activationFailed(reason);
           m_slave_entities->deactivate();
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           return;
         }
 
-        if (!m_slave_entities->checkActivation() || !m_log_dir_updated)
+        // Check if the dependencies are met
+        if (!m_slave_entities->checkActivation())
+        {
+          trace("activation waiting for slaves");
+          return;
+        }
+
+        // Check if we should configure the camera and still haven't
+        if (m_args.camera_cfg && !checkConfiguration())
           return;
 
-        m_cfg_dirty = true;
+        // Check if we should prepare for capture and still haven't
+        if (m_args.camera_capt && !(checkCaptureOk() && checkLogdirOk()))
+          return;
+
         activate();
         debug("activation took %0.2f s", getActivationTime() - m_act_timer.getRemaining());
       }
@@ -409,11 +475,13 @@ namespace Vision
         m_file_count = 0;
         m_volume_count = 0;
 
-        changeVolume();
+        if (m_args.camera_capt)
+          changeVolume();
 
         setStrobePower(true);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        inf(DTR("activated"));
       }
 
       void
@@ -436,7 +504,7 @@ namespace Vision
       {
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
-          err("invalid entity");
+          err(DTR("invalid entity"));
           return;
         }
         m_slave_entities->onEntityActivationState(msg);
@@ -447,7 +515,6 @@ namespace Vision
       {
         m_slave_entities->onEntityInfo(msg);
       }
-
 
       void
       setStrobePower(bool value)
@@ -503,6 +570,9 @@ namespace Vision
           }
         }
 
+        if (m_led_gpio != NULL)
+          m_led_gpio->setValue(1);
+
         inf(DTR("started video stream"));
       }
 
@@ -515,6 +585,9 @@ namespace Vision
         debug("stopping video stream");
         delete m_http;
         m_http = NULL;
+
+        if (m_led_gpio != NULL)
+          m_led_gpio->setValue(0);
       }
 
       void
@@ -631,9 +704,25 @@ namespace Vision
       void
       setProperties(void)
       {
+        updateFps();
+        updateExposure();
+        updateGain();
+        updateWhiteBalance();
+        updateGamma();
+        updateMedianFilter();
+        updateStrobe();
+      }
+
+      void
+      updateFps(void)
+      {
         debug("setting frames per second to '%u'", m_args.fps);
         setProperty("maximum_framerate", uncastLexical(m_args.fps));
+      }
 
+      void
+      updateExposure(void)
+      {
         if (m_args.auto_exposure)
         {
           debug("enabling autoexposure");
@@ -650,7 +739,32 @@ namespace Vision
           debug("setting exposure value to '%f' miliseconds", m_args.exposure_value);
           setProperty("exposure", uncastLexical(m_args.exposure_value));
         }
+      }
 
+      bool
+      checkExposure(void)
+      {
+        if (paramChanged(m_args.auto_exposure))
+          return true;
+
+        if (m_args.auto_exposure)
+        {
+          if (paramChanged(m_args.exposure_max) ||
+              paramChanged(m_args.exposure_knee))
+            return true;
+        }
+        else
+        {
+          if (paramChanged(m_args.exposure_value))
+            return true;
+        }
+
+        return false;
+      }
+
+      void
+      updateGain(void)
+      {
         if (m_args.auto_gain)
         {
           debug("enabling autogain");
@@ -667,12 +781,36 @@ namespace Vision
           debug("setting gain value to '%f'", m_args.gain_value);
           setProperty("gain", uncastLexical(m_args.gain_value));
         }
+      }
 
+      bool
+      checkGain(void)
+      {
+        if (paramChanged(m_args.auto_gain))
+          return true;
+
+        if (m_args.auto_gain)
+        {
+          if (paramChanged(m_args.gain_max) ||
+              paramChanged(m_args.gain_knee))
+            return true;
+        }
+        else
+        {
+          if (paramChanged(m_args.gain_value))
+            return true;
+        }
+
+        return false;
+      }
+
+      void
+      updateWhiteBalance(void)
+      {
         if (m_args.auto_whitebalance)
         {
           debug("enabling continuous automatic whitebalance");
           setProperty("whitebalance", "continuous");
-
         }
         else
         {
@@ -684,12 +822,42 @@ namespace Vision
           setProperty("gain_green", uncastLexical(m_args.gain_green));
           setProperty("gain_blue", uncastLexical(m_args.gain_blue));
         }
+      }
 
+      bool
+      checkWhiteBalance(void)
+      {
+        if (paramChanged(m_args.auto_whitebalance))
+          return true;
+
+        if (!m_args.auto_whitebalance)
+        {
+          if (paramChanged(m_args.gain_red) ||
+              paramChanged(m_args.gain_green) ||
+              paramChanged(m_args.gain_blue))
+            return true;
+        }
+
+        return false;
+      }
+
+      void
+      updateGamma(void)
+      {
         debug("setting gamma to '%f'", m_args.gamma);
         setProperty("gamma", uncastLexical(m_args.gamma));
+      }
+
+      void
+      updateMedianFilter(void)
+      {
         debug("setting median filtering to '%u'", m_args.median_filter);
         setProperty("median_filter", uncastLexical(m_args.median_filter));
+      }
 
+      void
+      updateStrobe(void)
+      {
         if (m_args.strobe)
         {
           debug("enabling strobe output");
@@ -698,7 +866,8 @@ namespace Vision
         else
         {
           debug("disabling strobe output");
-          setProperty("output_select", "off");
+          // the output on/off logic is inverted
+          setProperty("output_select", "on");
         }
       }
 
@@ -711,17 +880,100 @@ namespace Vision
       }
 
       void
-      onMain(void)
+      captureAndSave(void)
       {
         ByteBuffer dst;
+        try
+        {
+          captureFrame(dst);
+          if (dst.getSize() == 0)
+            spew("destination size is zero");
+        }
+        catch (std::runtime_error& e)
+        {
+          debug("frame capture failed: %s", e.what());
+          stopVideo();
+        }
 
+        if (m_file_count++ == m_args.volume_size)
+        {
+          m_file_count = 0;
+          changeVolume();
+        }
+
+        // Save file.
+        double timestamp = Clock::getSinceEpoch();
+        Path file = m_volume / String::str("%0.4f.jpg", timestamp);
+        std::ofstream jpg(file.c_str(), std::ios::binary);
+        jpg.write(dst.getBufferSigned(), dst.getSize());
+      }
+
+      bool
+      checkConfiguration(void)
+      {
+        if (!m_cfg_dirty)
+          return true;
+
+        try
+        {
+          setProperties();
+          m_cfg_dirty = false;
+          inf(DTR("successfully configured camera"));
+          return true;
+        }
+        catch (...)
+        { }
+        return false;
+      }
+
+      bool
+      checkCaptureOk(void)
+      {
+        if (m_http != NULL)
+          return true;
+
+        try
+        {
+          startVideo();
+          return true;
+        }
+        catch (std::runtime_error& e)
+        {
+          if (getEntityState() != IMC::EntityState::ESTA_FAULT)
+          {
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
+            err("%s", e.what());
+          }
+          stopVideo();
+        }
+        return false;
+      }
+
+      bool
+      checkLogdirOk(void)
+      {
+        if (m_log_dir_updated)
+          return true;
+
+        IMC::LoggingControl log_ctl;
+        log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(log_ctl);
+
+        return false;
+      }
+
+      void
+      onMain(void)
+      {
         while (!stopping())
         {
           if (isActive())
           {
-            consumeMessages();
-            if (!isActive())
-              continue;
+            waitForMessages(1.0);
+            if (m_args.camera_cfg)
+              checkConfiguration();
+            if (m_args.camera_capt && checkCaptureOk())
+              captureAndSave();
           }
           else
           {
@@ -730,77 +982,10 @@ namespace Vision
               checkActivationProgress();
             else if (isDeactivating())
               checkDeactivationProgress();
-            continue;
           }
-
-          if (m_args.camera_cfg && m_cfg_dirty)
-          {
-            try
-            {
-              setProperties();
-              m_cfg_dirty = false;
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-              inf(DTR("successfully configured camera"));
-            }
-            catch (std::runtime_error& e)
-            {
-              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
-              {
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
-                err("%s", e.what());
-              }
-              waitForMessages(0.2);
-              continue;
-            }
-          }
-
-          if (!m_args.camera_capt)
-            continue;
-
-          if (m_http == NULL)
-          {
-            try
-            {
-              startVideo();
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            }
-            catch (std::runtime_error& e)
-            {
-              if (getEntityState() != IMC::EntityState::ESTA_FAULT)
-              {
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
-                err("%s", e.what());
-              }
-              stopVideo();
-            }
-            continue;
-          }
-
-          try
-          {
-            captureFrame(dst);
-            if (dst.getSize() == 0)
-              spew("destination size is zero");
-          }
-          catch (std::runtime_error& e)
-          {
-            debug("frame capture failed: %s", e.what());
-            stopVideo();
-          }
-
-          if (m_file_count++ == m_args.volume_size)
-          {
-            m_file_count = 0;
-            changeVolume();
-          }
-
-          // Save file.
-          double timestamp = Clock::getSinceEpoch();
-          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
-          std::ofstream jpg(file.c_str(), std::ios::binary);
-          jpg.write(dst.getBufferSigned(), dst.getSize());
         }
       }
+
     };
   }
 }

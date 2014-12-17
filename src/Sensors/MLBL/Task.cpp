@@ -58,16 +58,18 @@ namespace Sensors
     static const unsigned c_code_sys_restart = 0x01a6;
     //! Restart system ack code.
     static const unsigned c_code_sys_restart_ack = 0x01a7;
-    //! Modem base frequency.
-    static const unsigned c_base_frequency = 22000;
-    //! Channel to frequency.
-    static const unsigned c_chn_frequency = 1000;
     // Acoustic Report code.
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
     static const uint8_t c_code_plan = 0x2;
     // Binary message size.
     static const uint8_t c_binary_size = 32;
+
+    enum BeaconType
+    {
+      BT_TRANSPONDER,
+      BT_MODEM
+    };
 
     enum EntityStates
     {
@@ -110,60 +112,63 @@ namespace Sensors
     // Configuration parameters.
     struct Arguments
     {
-      // Serial port device.
+      //! Serial port device.
       std::string uart_dev;
-      // Serial port baud rate.
+      //! Serial port baud rate.
       unsigned uart_baud;
-      // Maximum time without ranges.
+      //! Maximum time without ranges.
       double range_tout;
-      // Report types.
+      //! Report types.
       std::string report;
-      // Delay before sending range reports.
+      //! Delay before sending range reports.
       double report_delay_bef;
-      // Delay after sending range reports.
+      //! Delay after sending range reports.
       double report_delay_aft;
-      // Delay before sending Mini-Packet.
+      //! Delay before sending Mini-Packet.
       double mpk_delay_bef;
-      // Delay after sending Mini-Packet.
+      //! Delay after sending Mini-Packet.
       double mpk_delay_aft;
-      // Maximum age of a good range (for reporting).
+      //! Maximum age of a good range (for reporting).
       double good_range_age;
-      // Time between range reports.
+      //! Time between range reports.
       double report_period;
-      // Ping Period.
+      //! Ping Period.
       double ping_period;
-      // Ping Timeout.
-      unsigned ping_tout;
-      // Length of transmit pings.
+      //! Transponder Ping Timeout.
+      double ping_tout_nb;
+      //! Transponder Ping Wait Time.
+      double ping_wait_nb;
+      //! Micromodem Ping Timeout.
+      double ping_tout_mm;
+      //! Length of transmit pings.
       unsigned tx_length;
-      // Length of receive pings.
+      //! Length of receive pings.
       unsigned rx_length;
-      // Sound speed on water.
+      //! Sound speed on water.
       double sound_speed_def;
       //! Entity label of sound speed provider.
       std::string sound_speed_elabel;
-      // Turn around time (ms).
+      //! Turn around time (ms).
       unsigned turn_around_time;
-      // Transmit only underwater.
+      //! Transmit only underwater.
       bool only_underwater;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
+    //! Narrow-Band Beacon
     struct Beacon
     {
       // Beacon name.
       std::string name;
-      // Ping command.
-      std::string ping_cmd;
+      // Beacon Type.
+      BeaconType type;
       // Beacon id.
       unsigned id;
-      // Beacon receiving channel.
-      unsigned rx_channel;
-      // Beacon receiving frequency.
-      unsigned rx_frequency;
-      // Beacon transmission channel.
-      unsigned tx_channel;
-      // Beacon transmission frequency.
-      unsigned tx_frequency;
+      // Beacon query frequency.
+      unsigned query_frequency;
+      // Beacon reply frequency.
+      unsigned reply_frequency;
       // Last range.
       unsigned range;
       // Last range timestamp.
@@ -174,15 +179,11 @@ namespace Sensors
       double lon;
       // Depth
       float depth;
-      // Delay
-      uint8_t delay;
 
       Beacon(void):
         id(0),
-        rx_channel(0),
-        rx_frequency(0),
-        tx_channel(0),
-        tx_frequency(0),
+        query_frequency(0),
+        reply_frequency(0),
         range(0),
         range_time(0),
         lat(0),
@@ -191,37 +192,130 @@ namespace Sensors
       { }
     };
 
+    //! Complete LBL.
+    struct LBL
+    {
+      // Beacons.
+      std::vector<Beacon> beacons;
+
+      LBL(void):
+        index(0)
+      { }
+
+      unsigned
+      next(void)
+      {
+        unsigned it = index;
+        if (++index >= beacons.size())
+          index = 0;
+
+        return it;
+      }
+
+      bool
+      empty(void) const
+      {
+        return beacons.empty();
+      }
+
+      void
+      clear(void)
+      {
+        beacons.clear();
+      }
+
+      unsigned
+      size(void)
+      {
+        return beacons.size();
+      }
+
+      bool
+      isModem(unsigned ix) const
+      {
+        if (beacons[ix].type == BT_MODEM)
+          return true;
+
+        return false;
+      }
+
+      void
+      push_back(Beacon beacon)
+      {
+        beacons.push_back(beacon);
+      }
+
+      Beacon
+      operator()(unsigned i) const
+      {
+        return beacons[i];
+      }
+
+      Beacon&
+      operator()(unsigned i)
+      {
+        return beacons[i];
+      }
+
+    private:
+      // Iterator index.
+      unsigned index;
+    };
+
+    //! Narrow band transponder.
+    struct Transponder
+    {
+      // Query frequency.
+      unsigned query_freq;
+      // Reply frequency.
+      unsigned reply_freq;
+
+      Transponder(unsigned q, unsigned r):
+        query_freq(q),
+        reply_freq(r)
+      { }
+    };
+
+    // Type definition for mapping addresses.
+    typedef std::map<std::string, Transponder> NarrowBandMap;
+    typedef std::map<std::string, unsigned> MicroModemSystemsMap;
+    typedef std::map<unsigned, std::string> MicroModemAddressMap;
+
     struct Task: public DUNE::Tasks::Task
     {
-      // Maximum buffer size.
+      //! LBL setup.
+      LBL m_lbl;
+      //! Current LBL configuration.
+      IMC::LblConfig m_lbl_config;
+      //! Maximum buffer size.
       static const int c_bfr_size = 256;
-      // Beacons.
-      std::vector<Beacon> m_beacons;
-      // Serial port handle.
+      //! Map of narrow band transponders.
+      NarrowBandMap m_nbmap;
+      // Map of micro-modem system names to addresses.
+      MicroModemSystemsMap m_smap;
+      // Map of micro-modem addresses to system names.
+      MicroModemAddressMap m_amap;
+      //! Serial port handle.
       SerialPort* m_uart;
-      // Range.
-      IMC::LblRange m_range;
-      // Entity states.
+      //! Entity states.
       IMC::EntityState m_states[STA_MAX];
-      // Commands to/from modem.
-      IMC::DevDataText m_cmds;
-      // Internal buffer.
+      //! Internal buffer.
       char m_bfr[c_bfr_size];
-      // Task arguments.
+      //! Task arguments.
       Arguments m_args;
-      // Current state.
+      //! Current state.
       EntityStates m_state;
-      // Modem address.
+      //! Modem address.
       unsigned m_addr;
-      // Bitfield with results of last processInput().
+      //! Bitfield with results of last processInput().
       unsigned m_result;
-      // Time of last serial port input.
+      //! Time of last serial port input.
       double m_last_input;
-      // Current sound speed (m/s).
+      //! Current sound speed (m/s).
       double m_sound_speed;
       //! Sound speed entity id.
       int m_sound_speed_eid;
-      // Estimated state.
+      //! Estimated state.
       IMC::EstimatedState m_estate;
       //! Report timer.
       Counter<double> m_report_timer;
@@ -233,6 +327,8 @@ namespace Sensors
       float m_fuel_level;
       //! Last fuel level confidence.
       float m_fuel_conf;
+      //! Pinger.
+      Time::Counter<float> m_pinger;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -272,9 +368,19 @@ namespace Sensors
         .defaultValue("3")
         .minimumValue("0");
 
-        param("Ping Timeout", m_args.ping_tout)
-        .units(Units::Millisecond)
-        .defaultValue("1000")
+        param("Transponder Ping Timeout", m_args.ping_tout_nb)
+        .units(Units::Second)
+        .defaultValue("2")
+        .minimumValue("0");
+
+        param("Transponder Ping Wait Time", m_args.ping_wait_nb)
+        .units(Units::Second)
+        .defaultValue("0.5")
+        .minimumValue("0");
+
+        param("Micromodem Ping Timeout", m_args.ping_tout_mm)
+        .units(Units::Second)
+        .defaultValue("5")
         .minimumValue("0");
 
         param("Ping Periodicity", m_args.ping_period)
@@ -330,6 +436,10 @@ namespace Sensors
         .defaultValue("false")
         .description("Do not transmit when at water surface");
 
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Micromodem Addresses")
+        .description("Name of the configuration section with modem addresses");
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -346,14 +456,22 @@ namespace Sensors
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
 
-	m_stop_comms = true;
+        m_stop_comms = true;
+
+        // Process narrow band transponders.
+        std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
+        for (unsigned i = 0; i < txponders.size(); ++i)
+        {
+          std::vector<unsigned> freqs;
+          ctx.config.get("Narrow Band Transponders", txponders[i], "", freqs);
+          m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
+        }
 
         // Register handlers.
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::LblConfig>(this);
         bind<IMC::PlanControlState>(this);
-        bind<IMC::QueryEntityState>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
       }
@@ -361,10 +479,18 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_uart->setCanonicalInput(true);
-        m_uart->flush();
         setAndSendState(STA_BOOT);
+
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_uart->setCanonicalInput(true);
+          m_uart->flush();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
       void
@@ -377,15 +503,30 @@ namespace Sensors
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
-        m_report_timer.setTop(m_args.report_period);
+
+        if (paramChanged(m_args.report_period))
+          m_report_timer.setTop(m_args.report_period);
+
+        if (paramChanged(m_args.ping_period))
+          m_pinger.setTop(m_args.ping_period);
       }
 
       void
       onResourceInitialization(void)
       {
+        // Process micro-modem addresses.
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned mid = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", mid);
+          m_smap[addrs[i]] = mid;
+          m_amap[mid] = addrs[i];
+        }
+
         // Get modem address.
         std::string agent = getSystemName();
-        m_ctx.config.get("Micromodem Addresses", agent, "1024", m_addr);
+        m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
         if (m_addr == 1024)
           throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
 
@@ -444,7 +585,7 @@ namespace Sensors
           }
         }
 
-        if (m_beacons.empty())
+        if (m_lbl.empty())
           setAndSendState(STA_NO_BEACONS);
         else
           setAndSendState(STA_IDLE);
@@ -472,7 +613,8 @@ namespace Sensors
       setAndSendState(EntityStates state)
       {
         m_state = state;
-        dispatch(m_states[m_state]);
+        setEntityState((IMC::EntityState::StateEnum)m_states[m_state].state,
+                       m_states[m_state].description);
       }
 
       void
@@ -487,18 +629,6 @@ namespace Sensors
           inf(DTR("dynamic sound speed corrections are disabled"));
           m_sound_speed = m_args.sound_speed_def;
         }
-      }
-
-      void
-      onReportEntityState(void)
-      {
-        dispatch(m_states[m_state]);
-      }
-
-      unsigned
-      channelToFrequency(unsigned channel)
-      {
-        return channel * c_chn_frequency + c_base_frequency;
       }
 
       void
@@ -599,8 +729,11 @@ namespace Sensors
       void
       handleTransponderTravelTimes(std::auto_ptr<NMEAReader>& stn)
       {
-        m_range.setTimeStamp();
+        //! Range.
+        IMC::LblRange lrange;
+        lrange.setTimeStamp();
 
+        unsigned iterator = 0;
         for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           try
@@ -612,13 +745,26 @@ namespace Sensors
             double range = travel * m_sound_speed;
             if (range > 0.0)
             {
-              m_range.id = i;
-              m_range.range = range;
-              dispatch(m_range, DF_KEEP_TIME);
+              while (iterator < m_lbl.size())
+              {
+                if (m_lbl(iterator).type == BT_TRANSPONDER)
+                {
+                  lrange.id = m_lbl(iterator).id;
+                  lrange.range = range;
+                  dispatch(lrange, DF_KEEP_TIME);
 
-              // Update beacon statistics.
-              m_beacons[i].range = (unsigned)m_range.range;
-              m_beacons[i].range_time = Clock::get();
+                  // Update beacon statistics.
+                  m_lbl(iterator).range = (unsigned)lrange.range;
+                  m_lbl(iterator).range_time = Clock::get();
+                  iterator++;
+                  break;
+                }
+
+                iterator++;
+              }
+
+              if (iterator >= m_lbl.size())
+                break;
             }
             else
             {
@@ -630,6 +776,59 @@ namespace Sensors
         }
 
         addResult(RS_PNG_TIME);
+      }
+
+      void
+      handlePingReply(std::auto_ptr<NMEAReader>& stn)
+      {
+        unsigned src = 0;
+        *stn >> src;
+        unsigned dst = 0;
+        *stn >> dst;
+
+        if (dst != m_addr)
+          return;
+
+        double travel = 0;
+        try
+        {
+          *stn >> travel;
+        }
+        catch (...)
+        { }
+
+        if (travel < 0)
+          travel = 0;
+
+        // Compute range and dispatch message.
+        double range = travel * m_sound_speed;
+
+        if (range > 0.0)
+        {
+          IMC::LblRange lrange;
+          MicroModemAddressMap::iterator itr = m_amap.find(src);
+          if (itr == m_amap.end())
+            return;
+
+          for (unsigned i = 0; i < m_lbl.size(); ++i)
+          {
+            if (itr->second == m_lbl(i).name)
+            {
+              lrange.id = m_lbl(i).id;
+              lrange.range = range;
+              dispatch(lrange);
+
+              // Update beacon statistics.
+              m_lbl(i).range = (unsigned)range;
+              m_lbl(i).range_time = Clock::get();
+              return;
+            }
+          }
+        }
+        else
+        {
+          war(DTR("discarded invalid range %0.2f"), range);
+        }
       }
 
       void
@@ -648,10 +847,16 @@ namespace Sensors
           m_last_input = Clock::get();
 
           if (m_state != STA_NO_BEACONS)
-            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
+          {
+            if (isActive())
+              setAndSendState(STA_ACTIVE);
+            else
+              setAndSendState(STA_IDLE);
+          }
 
-          m_cmds.value.assign(sanitize(m_bfr));
-          dispatch(m_cmds);
+          IMC::DevDataText text;
+          text.value.assign(sanitize(m_bfr));
+          dispatch(text);
 
           try
           {
@@ -671,7 +876,9 @@ namespace Sensors
             else if (std::strcmp(stn->code(), "CACFG") == 0)
               handleConfigParam(stn);
             else if (std::strcmp(stn->code(), "CARXD") == 0)
-              handleCARXD(stn);
+              handleBinaryMessage(stn);
+            else if (std::strcmp(stn->code(), "CAMPR") == 0)
+              handlePingReply(stn);
           }
           catch (std::exception& e)
           {
@@ -681,7 +888,7 @@ namespace Sensors
       }
 
       void
-      handleCARXD(std::auto_ptr<NMEAReader>& stn)
+      handleBinaryMessage(std::auto_ptr<NMEAReader>& stn)
       {
         unsigned src;
         unsigned dst;
@@ -746,29 +953,71 @@ namespace Sensors
         }
       }
 
-
       void
       ping(void)
       {
+        unsigned index = m_lbl.next();
+
+        if (m_lbl.isModem(index))
+          pingMicroModem(index);
+        else
+          pingNarrowBand();
+      }
+
+      void
+      pingMicroModem(unsigned index)
+      {
+        MicroModemSystemsMap::iterator itr = m_smap.find(m_lbl(index).name);
+
+        if (itr == m_smap.end())
+          return;
+
+        std::string cmd = String::str("$CCMPC,%u,%u\r\n", m_addr, itr->second);
+        sendCommand(cmd);
+        processInput(m_args.ping_tout_mm);
+      }
+
+      void
+      pingNarrowBand(void)
+      {
         std::vector<unsigned> freqs;
+        unsigned iterator = 0;
+        unsigned query = 0;
+
         for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
-          if (i < m_beacons.size())
-            freqs.push_back(m_beacons[i].tx_frequency);
-          else
-            freqs.push_back(0);
+          while (iterator < m_lbl.size())
+          {
+            if (m_lbl(iterator).type == BT_TRANSPONDER)
+            {
+              freqs.push_back(m_lbl(iterator).reply_frequency);
+              query = m_lbl(iterator).query_frequency;
+              iterator++;
+              break;
+            }
+
+            iterator++;
+          }
+
+          if (iterator >= m_lbl.size())
+            break;
         }
 
+        if (!freqs.size())
+          return;
+
+        while (freqs.size() < 4)
+          freqs.push_back(0);
+
+        unsigned ping_time = static_cast<unsigned>(m_args.ping_tout_nb * 1000);
         std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,%u,%u,%u,1\r\n",
-                                      m_beacons[0].rx_frequency, m_args.tx_length,
-                                      m_args.rx_length, m_args.ping_tout,
+                                      query, m_args.tx_length, m_args.rx_length, ping_time,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
         sendCommand(cmd);
-
-        processInput(m_args.ping_period);
+        processInput(m_args.ping_tout_nb + m_args.ping_wait_nb);
         if (consumeResult(RS_PNG_ACKD) && consumeResult(RS_PNG_TIME))
-          m_state = STA_ACTIVE;
+          setAndSendState(STA_ACTIVE);
         else
           war(DTR("failed to ping beacons, modem seems busy"));
       }
@@ -790,10 +1039,10 @@ namespace Sensors
         uint8_t conf = (uint8_t)m_fuel_conf;
         int8_t prog = (int8_t)m_progress;
 
-        for (uint8_t i = 0; i < std::min(2, (int)m_beacons.size()); i++)
+        for (uint8_t i = 0; i < std::min(2, (int)m_lbl.size()); i++)
         {
-          if (m_args.good_range_age > (Clock::get() - m_beacons[i].range_time))
-            ranges[i] = m_beacons[i].range;
+          if (m_args.good_range_age > (Clock::get() - m_lbl(i).range_time))
+            ranges[i] = m_lbl(i).range;
           else
             ranges[i] = 0;
         }
@@ -819,11 +1068,18 @@ namespace Sensors
         std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_addr, 0);
         sendCommand(cyc);
 
+        IMC::UamTxStatus tx_status;
+        tx_status.value = IMC::UamTxStatus::UTS_IP;
+        dispatch(tx_status);
+
         for (int i = 0; i < 7; ++i)
         {
           consumeMessages();
           Delay::wait(1.0);
         }
+
+        tx_status.value = IMC::UamTxStatus::UTS_DONE;
+        dispatch(tx_status);
       }
 
       void
@@ -831,7 +1087,9 @@ namespace Sensors
       {
         if (msg->op == IMC::LblConfig::OP_SET_CFG)
         {
-          m_beacons.clear();
+          m_lbl_config = *msg;
+
+          m_lbl.clear();
           IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
           for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
           {
@@ -841,55 +1099,41 @@ namespace Sensors
             Beacon beacon;
             beacon.id = i;
             beacon.name = (*itr)->beacon;
-            beacon.rx_channel = (*itr)->query_channel;
-            beacon.rx_frequency = channelToFrequency((*itr)->query_channel);
-            beacon.tx_channel = (*itr)->reply_channel;
-            beacon.tx_frequency = channelToFrequency((*itr)->reply_channel);
-            beacon.ping_cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,0,0,0,1\r\n",
-                                          beacon.rx_frequency, m_args.tx_length,
-                                          m_args.rx_length, m_args.ping_tout,
-                                          beacon.tx_frequency);
             beacon.lat = (*itr)->lat;
             beacon.lon = (*itr)->lon;
             beacon.depth = (*itr)->depth;
-            beacon.delay = (*itr)->transponder_delay;
 
-            m_beacons.push_back(beacon);
+            NarrowBandMap::iterator nb_itr = m_nbmap.find((*itr)->beacon);
+            if (nb_itr != m_nbmap.end())
+            {
+              beacon.query_frequency = nb_itr->second.query_freq;
+              beacon.reply_frequency = nb_itr->second.reply_freq;
+              beacon.type = BT_TRANSPONDER;
+            }
+            else
+            {
+              beacon.type = BT_MODEM;
+            }
+
+            m_lbl.push_back(beacon);
           }
 
           if (m_state != STA_ERR_COM && m_state != STA_ERR_SRC && m_state != STA_ERR_STP)
-            m_state = isActive() ? STA_ACTIVE : STA_IDLE;
+          {
+            if (isActive())
+              setAndSendState(STA_ACTIVE);
+            else
+              setAndSendState(STA_IDLE);
+          }
         }
 
         if (msg->op == IMC::LblConfig::OP_GET_CFG)
         {
-          IMC::LblConfig cfg;
+          IMC::LblConfig cfg(m_lbl_config);
           cfg.op = IMC::LblConfig::OP_CUR_CFG;
-
-          for (unsigned i = 0; i < m_beacons.size(); i++)
-          {
-            LblBeacon beacon;
-            beacon.beacon = m_beacons[i].name;
-            beacon.lat = m_beacons[i].lat;
-            beacon.lon = m_beacons[i].lon;
-            beacon.depth = m_beacons[i].depth;
-            beacon.query_channel = m_beacons[i].rx_channel;
-            beacon.reply_channel = m_beacons[i].tx_channel;
-            beacon.transponder_delay = m_beacons[i].delay;
-
-            cfg.beacons.push_back(beacon);
-          }
-
-          // Dispatch LblConfig to bus.
-          dispatch(cfg);
+          cfg.setSource(getSystemId());
+          dispatchReply(*msg, cfg);
         }
-      }
-
-      void
-      consume(const IMC::QueryEntityState* msg)
-      {
-        (void)msg;
-        onReportEntityState();
       }
 
       void
@@ -927,7 +1171,7 @@ namespace Sensors
         }
 
         if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-	  m_stop_comms = true;
+          m_stop_comms = true;
         else
           m_stop_comms = false;
       }
@@ -950,9 +1194,10 @@ namespace Sensors
       {
         bool first = true;
 
-        for (unsigned i = 0; i < m_beacons.size(); ++i)
+        // @TODO how to handle
+        for (unsigned i = 0; i < m_lbl.size(); ++i)
         {
-          if ((now - m_beacons[i].range_time) < m_args.good_range_age)
+          if ((now - m_lbl(i).range_time) < m_args.good_range_age)
           {
             if (first)
             {
@@ -960,7 +1205,7 @@ namespace Sensors
               first = false;
             }
 
-            uint16_t code = 0x1000 | ((i & 0x03) << 10) | m_beacons[i].range;
+            uint16_t code = 0x1000 | ((i & 0x03) << 10) | m_lbl(i).range;
             std::string code_str = String::str("%04X", code);
             NMEAWriter stn("CCMUC");
             stn << m_addr << 15 << code_str;
@@ -969,9 +1214,9 @@ namespace Sensors
             sendDelayedCommand(cmd, m_args.mpk_delay_bef, m_args.mpk_delay_aft);
 
             if (consumeResult(RS_MPK_ACKD) && consumeResult(RS_MPK_STAR) && consumeResult(RS_MPK_SENT))
-              debug("reported range to %s = %u m", m_beacons[i].name.c_str(), m_beacons[i].range);
+              debug("reported range to %s = %u m", m_lbl(i).name.c_str(), m_lbl(i).range);
             else
-              debug("failed to report range to %s", m_beacons[i].name.c_str());
+              debug("failed to report range to %s", m_lbl(i).name.c_str());
           }
         }
 
@@ -1025,8 +1270,9 @@ namespace Sensors
       logCommand(const std::string& cmd)
       {
         // Log sent message.
-        m_cmds.value.assign(sanitize(cmd));
-        dispatch(m_cmds);
+        IMC::DevDataText text;
+        text.value.assign(sanitize(cmd));
+        dispatch(text);
       }
 
       void
@@ -1050,20 +1296,25 @@ namespace Sensors
             }
           }
 
-          if (m_beacons.empty())
+          if (m_lbl.empty())
           {
             waitForMessages(1.0);
-            processInput();
+            processInput(1.0);
             continue;
           }
 
-          if (isActive() && !m_stop_comms)
+          if (isActive() && !m_stop_comms &&  m_pinger.overflow())
+          {
+            m_pinger.reset();
             ping();
+          }
           else
-            processInput();
+          {
+            processInput(1.0);
+          }
 
           if (Clock::get() >= (m_last_input + c_input_tout))
-            m_state = STA_ERR_COM;
+            setAndSendState(STA_ERR_COM);
         }
       }
     };

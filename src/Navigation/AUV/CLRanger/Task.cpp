@@ -80,6 +80,9 @@ namespace Navigation
           DUNE::Tasks::Task(name, ctx),
           m_estate(NULL)
         {
+          paramActive(Tasks::Parameter::SCOPE_IDLE,
+                      Tasks::Parameter::VISIBILITY_USER);
+
           param("Slot Order", m_args.slot_order)
           .defaultValue("1")
           .values("1, 2")
@@ -139,7 +142,7 @@ namespace Navigation
           if (msg->getSource() != getSystemId())
             return;
 
-          if (m_estate)
+          if (m_estate != NULL)
             *m_estate = *msg;
           else
             m_estate = new IMC::EstimatedState(*msg);
@@ -167,7 +170,7 @@ namespace Navigation
             IMC::LblConfig cfg(m_lbl_config);
             cfg.op = IMC::LblConfig::OP_CUR_CFG;
             cfg.setSource(getSystemId());
-            dispatch(cfg);
+            dispatchReply(*msg, cfg);
           }
         }
 
@@ -253,12 +256,15 @@ namespace Navigation
             // Update own modem if exists.
             if ((*itr)->beacon == getSystemName())
             {
-              debug("update own position");
-              double lat, lon;
-              Coordinates::toWGS84(*m_estate, lat, lon);
-              (*itr)->lat = lat;
-              (*itr)->lon = lon;
-              (*itr)->depth = m_estate->depth;
+              if (m_estate != NULL)
+              {
+                debug("update own position");
+                double lat, lon;
+                Coordinates::toWGS84(*m_estate, lat, lon);
+                (*itr)->lat = lat;
+                (*itr)->lon = lon;
+                (*itr)->depth = m_estate->depth;
+              }
             }
           }
 
@@ -356,11 +362,8 @@ namespace Navigation
           frame.flags = IMC::UamTxFrame::UTF_ACK;
 
           // Cooperative AUV is the next system to ping.
-          if (sys_name == m_args.dst)
+          if (sys_name == m_args.dst && m_estate != NULL)
           {
-            if (m_estate == NULL)
-              return;
-
             frame.sys_dst = m_args.dst;
             Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
           }

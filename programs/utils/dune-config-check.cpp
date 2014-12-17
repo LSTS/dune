@@ -50,6 +50,11 @@ validateEntityLabels(Parsers::Config& cfg)
     if (vec[i].find_first_of(".") == std::string::npos)
       continue;
 
+    std::string enabled;
+    cfg.get(vec[i], "Enabled", "Never", enabled);
+    if (enabled == "Never")
+      continue;
+
     std::string entity_label;
     cfg.get(vec[i], "Entity Label", "", entity_label);
     if (entity_label.empty())
@@ -93,7 +98,6 @@ main(int argc, char** argv)
       catch (runtime_error& e)
       {
         fprintf(stderr, "[%s]\n", e.what());
-        return 1;
       }
     }
   }

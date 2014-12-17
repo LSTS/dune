@@ -99,12 +99,6 @@ namespace Monitors
           .description("Entity label of the " + c_measure_names[i] + " measures.");
         }
 
-        param("Batteries Energy Capacity", m_args.filter_args.full_capacity)
-        .defaultValue("498.8")
-        .minimumValue("0.0")
-        .units(Units::WattHour)
-        .description("Energy capacity of the batteries advertised by manufacturer");
-
         param("Minimum Samples For Estimate", m_args.filter_args.min_samples)
         .defaultValue("20")
         .minimumValue("0")
@@ -178,6 +172,10 @@ namespace Monitors
         .units(Units::Percentage)
         .description("Minimum confidence for recomputing update");
 
+        param("Update Estimate Anytime", m_args.filter_args.update_anytime)
+        .defaultValue("false")
+        .description("Update estimate even if maneuvering");
+
         param("Estimated Entity Label List", m_args.est_list)
         .defaultValue("")
         .description("List of entity labels that must be estimated");
@@ -186,6 +184,8 @@ namespace Monitors
         .defaultValue("")
         .units(Units::Watt)
         .description("List of estimated power consumed by the entities");
+
+        m_ctx.config.get("General", "Battery Capacity", "700.0", m_args.filter_args.full_capacity);
 
         // Register listeners.
         bind<IMC::Voltage>(this);

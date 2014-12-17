@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Renato Caldas                                                    *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -56,19 +57,16 @@ namespace DUNE
       m_ctx(ctx),
       m_recipient(0),
       m_name(n),
-      m_eid(DUNE_IMC_CONST_UNK_EID),
+      m_entity(NULL),
       m_debug_level(DEBUG_LEVEL_NONE),
-      m_entity_state_code(-1),
-      m_honours_active(false),
-      m_next_act_state(NAS_SAME)
+      m_honours_active(false)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
       m_args.deact_time = 0;
       m_args.active = false;
-      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
 
-      param(DTR_RT("Entity Label"), m_elabel)
+      param(DTR_RT("Entity Label"), m_args.elabel)
       .defaultValue("")
       .description(DTR("Main entity label"));
 
@@ -87,32 +85,36 @@ namespace DUNE
       .values("None, Debug, Trace, Spew");
 
       m_recipient = new Recipient(this, ctx);
+      m_entity = new Entities::StatefulEntity(this, m_ctx);
+      m_entities.push_back(m_entity);
 
-      // Initialize main entity state.
-      setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
-      bind<IMC::QueryEntityInfo>(this);
-      bind<IMC::QueryEntityState>(this);
-      bind<IMC::QueryEntityActivationState>(this);
       bind<IMC::QueryEntityParameters>(this);
       bind<IMC::SetEntityParameters>(this);
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
+      bind<IMC::QueryEntityState>(this);
     }
 
     unsigned int
     Task::reserveEntity(const std::string& label)
     {
-      return m_ctx.entities.reserve(label, getName(), m_args.act_time, m_args.deact_time);
+      Entities::BasicEntity* e = new Entities::BasicEntity(this, m_ctx);
+      e->setLabel(label);
+      e->setId(m_ctx.entities.reserve(label, getName()));
+      e->setBindings(m_recipient);
+
+      m_entities.push_back(e);
+      return e->getId();
     }
 
     void
     Task::reserveEntities(void)
     {
-      if (m_elabel.empty())
+      if (m_entity->getLabel().empty())
         throw std::runtime_error(DTR("entity label is not configured"));
 
-      m_eid = m_ctx.entities.reserve(m_elabel, getName(), m_args.act_time, m_args.deact_time);
+      m_entity->setId(m_ctx.entities.reserve(m_entity->getLabel(), getName()));
+      m_entity->setBindings(m_recipient);
       onEntityReservation();
     }
 
@@ -123,38 +125,17 @@ namespace DUNE
     }
 
     void
-    Task::setEntityState(IMC::EntityState::StateEnum state,
-                         Status::Code code)
-    {
-      bool new_state = (state != m_entity_state.state);
-
-      m_entity_state.state = state;
-      if (code != m_entity_state_code)
-        m_entity_state.description = DTR(Status::getString(code));
-      m_entity_state_code = code;
-
-      if (new_state && (m_eid != DUNE_IMC_CONST_UNK_EID))
-        dispatch(m_entity_state);
-    }
-
-    void
-    Task::setEntityState(IMC::EntityState::StateEnum state,
-                         const std::string& message)
-    {
-      bool new_state = (state != m_entity_state.state);
-
-      m_entity_state.state = state;
-      m_entity_state.description = message;
-      m_entity_state_code = -1;
-
-      if (new_state && (m_eid != DUNE_IMC_CONST_UNK_EID))
-        dispatch(m_entity_state);
-    }
-
-    void
     Task::reportEntityState(void)
     {
-      dispatch(m_entity_state);
+      m_entity->reportState();
+      onReportEntityState();
+    }
+
+    void
+    Task::consume(const IMC::QueryEntityState* msg)
+    {
+      (void)msg;
+      // Make sure onReportEntityState() is called for tasks that report entity states manually.
       onReportEntityState();
     }
 
@@ -228,11 +209,12 @@ namespace DUNE
     void
     Task::updateParameters(bool act_deact)
     {
-      m_ent_info.label = getEntityLabel();
-      m_ent_info.component = getName();
-      m_ent_info.act_time = m_args.act_time;
-      m_ent_info.deact_time = m_args.deact_time;
-      dispatch(m_ent_info);
+      if (m_entity->getLabel().empty())
+        m_entity->setLabel(m_args.elabel);
+      if (m_args.elabel != m_entity->getLabel())
+        m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
+      m_entity->setActTimes(m_args.act_time, m_args.deact_time);
+      m_entity->reportInfo();
 
       if (m_debug_level_string == "Debug")
         m_debug_level = DEBUG_LEVEL_DEBUG;
@@ -266,7 +248,7 @@ namespace DUNE
           }
           else
           {
-            dispatch(m_act_state);
+            m_entity->reportActivationState();
           }
         }
       }
@@ -278,41 +260,19 @@ namespace DUNE
     Task::requestActivation(void)
     {
       spew("request activation");
+      m_entity->requestActivation();
 
-      if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
+      if (m_entity->isActivating())
       {
-        spew("task is not inactive");
-
-        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
-            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_DONE)
-            || (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
-            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
-        {
-          spew("saving activation request");
-          m_next_act_state = NAS_ACTIVE;
-        }
-        else if (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
-        {
-          spew("activation is in progress");
-          m_next_act_state = NAS_ACTIVE;
-        }
-
-        dispatch(m_act_state);
-        return;
+        spew("calling on request activation");
+        onRequestActivation();
       }
-
-      m_next_act_state = NAS_SAME;
-      m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
-      dispatch(m_act_state);
-
-      spew("calling on request activation");
-      onRequestActivation();
     }
 
     void
     Task::activate(void)
     {
-      if (m_act_state.state != IMC::EntityActivationState::EAS_ACT_IP)
+      if (m_entity->getActivationState() != IMC::EntityActivationState::EAS_ACT_IP)
         throw std::runtime_error(DTR("activation is not in progress"));
 
       spew("activate");
@@ -323,68 +283,34 @@ namespace DUNE
       spew("calling on activation");
       onActivation();
 
-      m_act_state.state = IMC::EntityActivationState::EAS_ACT_DONE;
-      dispatch(m_act_state);
-
-      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
-      dispatch(m_act_state);
-
-      if (m_next_act_state == NAS_INACTIVE)
-        requestDeactivation();
+      m_entity->succeedActivation();
     }
 
     void
     Task::activationFailed(const std::string& reason)
     {
-      spew("activation failed");
-      m_act_state.state = IMC::EntityActivationState::EAS_ACT_FAIL;
-      m_act_state.error = reason;
-      dispatch(m_act_state);
-
-      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
-      m_act_state.error.clear();
-      dispatch(m_act_state);
+      spew("activation failed: %s", reason.c_str());
+      m_args.active = false;
+      m_entity->failActivation(reason);
     }
 
     void
     Task::requestDeactivation(void)
     {
       spew("request deactivation");
+      m_entity->requestDeactivation();
 
-      if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
+      if (m_entity->isDeactivating())
       {
-        spew("task is not active");
-
-        if ((m_act_state.state == IMC::EntityActivationState::EAS_DEACT_FAIL)
-            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_IP)
-            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_DONE)
-            || (m_act_state.state == IMC::EntityActivationState::EAS_ACT_FAIL))
-        {
-          spew("saving deactivation request");
-          m_next_act_state = NAS_INACTIVE;
-        }
-        else if (m_act_state.state == IMC::EntityActivationState::EAS_DEACT_IP)
-        {
-          spew("deactivation is in progress");
-          m_next_act_state = NAS_INACTIVE;
-        }
-
-        dispatch(m_act_state);
-        return;
+        spew("calling on request deactivation");
+        onRequestDeactivation();
       }
-
-      m_next_act_state = NAS_SAME;
-      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
-      dispatch(m_act_state);
-
-      spew("calling on request deactivation");
-      onRequestDeactivation();
     }
 
     void
     Task::deactivate(void)
     {
-      if (m_act_state.state != IMC::EntityActivationState::EAS_DEACT_IP)
+      if (m_entity->getActivationState() != IMC::EntityActivationState::EAS_DEACT_IP)
         throw std::runtime_error(DTR("deactivation is not in progress"));
 
       spew("deactivate");
@@ -395,27 +321,14 @@ namespace DUNE
       spew("calling on deactivation");
       onDeactivation();
 
-      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_DONE;
-      dispatch(m_act_state);
-      m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
-      dispatch(m_act_state);
-
-      if (m_next_act_state == NAS_ACTIVE)
-        requestActivation();
+      m_entity->succeedDeactivation();
     }
 
     void
     Task::deactivationFailed(const std::string& reason)
     {
       spew("deactivation failed");
-
-      m_act_state.state = IMC::EntityActivationState::EAS_DEACT_FAIL;
-      m_act_state.error = reason;
-      dispatch(m_act_state);
-
-      m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
-      m_act_state.error.clear();
-      dispatch(m_act_state);
+      m_entity->failDeactivation(reason);
     }
 
     void
@@ -505,31 +418,6 @@ namespace DUNE
         m_ctx.mbus.dispatch(msg, this);
       else
         m_ctx.mbus.dispatch(msg);
-    }
-
-    void
-    Task::consume(const IMC::QueryEntityInfo* msg)
-    {
-      if (msg->getDestinationEntity() != getEntityId() || msg->getDestinationEntity() != DUNE_IMC_CONST_UNK_EID)
-        return;
-
-      dispatchReply(*msg, m_ent_info);
-    }
-
-    void
-    Task::consume(const IMC::QueryEntityState* msg)
-    {
-      (void)msg;
-      reportEntityState();
-    }
-
-    void
-    Task::consume(const IMC::QueryEntityActivationState* msg)
-    {
-      if (msg->getDestinationEntity() != getEntityId())
-        return;
-
-      dispatch(m_act_state);
     }
 
     void

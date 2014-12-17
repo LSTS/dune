@@ -289,7 +289,7 @@ namespace Power
           {
             eid = resolveEntity(m_args.adc_elabels[i]);
           }
-          catch (Tasks::EntityDataBase::NonexistentLabel& e)
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
             eid = reserveEntity(m_args.adc_elabels[i]);

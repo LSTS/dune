@@ -77,9 +77,7 @@ namespace Plan
 
     struct Arguments
     {
-      // Trace flag
-      bool trace;
-      // Path to DB file
+      //! Path to DB file
       std::string db_path;
     };
 
@@ -110,10 +108,6 @@ namespace Plan
         m_db(NULL),
         m_local_reqid(0)
       {
-        param("Trace", m_args.trace)
-        .defaultValue("false")
-        .description("Enable verbose output");
-
         param("DB Path", m_args.db_path)
         .defaultValue("")
         .description("Path to DB file");
@@ -267,9 +261,6 @@ namespace Plan
         m_reply.request_id = req->request_id;
         m_reply.plan_id = req->plan_id;
 
-        if (m_args.trace)
-          req->toText(std::cerr);
-
         if (!m_db)
         {
           onFailure(DTR("not active"));
@@ -309,9 +300,6 @@ namespace Plan
         {
           onFailure(e.what());
         }
-
-        if (m_args.trace)
-          m_reply.toText(std::cerr);
 
         // Cleanup 'arg' field
         m_reply.arg.clear();
@@ -406,9 +394,6 @@ namespace Plan
 
         m_db->commit();
 
-        if (m_args.trace)
-          m_plan_info.toText(std::cerr);
-
         m_reply.arg.set(m_plan_info);
         onSuccess(count ? DTR("OK (updated)") : DTR("OK (new entry)"));
       }
@@ -461,7 +446,6 @@ namespace Plan
 
         bool found = m_get_plan_stmt->execute();
 
-
         if (!found)
         {
           onFailure(DTR("undefined plan"));
@@ -471,12 +455,9 @@ namespace Plan
           Database::Blob data;
           *m_get_plan_stmt >> data;
 
-          IMC::PlanSpecification* spec = new IMC::PlanSpecification;
-          spec->deserializeFields((const uint8_t*)&data[0], data.size());
-          m_reply.arg.set(spec);
-
-          if (m_args.trace)
-            spec->toText(std::cerr);
+          IMC::PlanSpecification spec;
+          spec.deserializeFields((const uint8_t*)&data[0], data.size());
+          m_reply.arg.set(&spec);
 
           onSuccess();
         }
@@ -511,9 +492,6 @@ namespace Plan
 
         m_reply.arg.set(m_plan_info);
         m_query_plan_stmt->reset();
-
-        if (m_args.trace)
-          m_plan_info.toText(std::cerr);
 
         onSuccess();
       }
@@ -568,9 +546,6 @@ namespace Plan
           state->plan_size += pinfo->plan_size;
           state->plan_count++;
 
-          if (m_args.trace)
-            pinfo->toText(std::cerr);
-
           plandbinfo->push_back(*pinfo);
 
           delete pinfo;
@@ -587,8 +562,6 @@ namespace Plan
                                  >> state->change_sname;
         m_lastchange_query_stmt->reset();
 
-        if (m_args.trace)
-          state->toText(std::cerr);
         m_reply.arg.set(*state);
         onSuccess();
 

@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef SIMULATORS_ECHOSOUNDER_BOUNDS_HPP_INCLUDED_
-#define SIMULATORS_ECHOSOUNDER_BOUNDS_HPP_INCLUDED_
+#ifndef SIMULATORS_ENVIRONMENT_BOUNDS_HPP_INCLUDED_
+#define SIMULATORS_ENVIRONMENT_BOUNDS_HPP_INCLUDED_
 
 // ISO C++ headers.
 #include <iomanip>

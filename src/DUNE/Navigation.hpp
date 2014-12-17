@@ -35,11 +35,11 @@ namespace DUNE
   { }
 }
 
-#include <DUNE/Navigation/AAKR.hpp>
 #include <DUNE/Navigation/BasicNavigation.hpp>
 #include <DUNE/Navigation/BeamFilter.hpp>
 #include <DUNE/Navigation/CompassCalibration.hpp>
 #include <DUNE/Navigation/KalmanFilter.hpp>
 #include <DUNE/Navigation/Ranging.hpp>
+#include <DUNE/Navigation/StreamEstimator.hpp>
 
 #endif

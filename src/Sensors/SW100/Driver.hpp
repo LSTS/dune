@@ -32,7 +32,7 @@
 #include <string>
 
 // DUNE headers.
-#include <DUNE/Hardware/SerialPort.hpp>
+#include <DUNE/DUNE.hpp>
 
 namespace Sensors
 {

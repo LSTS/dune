@@ -62,13 +62,17 @@
 #  include <linux/i2c-dev.h>
 #endif
 
+#if defined(DUNE_SYS_HAS_LINUX_I2C_H) && defined(DUNE_SYS_HAS_LINUX_I2C_DEV_H)
+#  define DUNE_SYS_HAS_LINUX_I2C_DEV 1
+#endif
+
 namespace DUNE
 {
   namespace Hardware
   {
     I2C::I2C(const std::string& dev)
     {
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       if ((m_fd = open(dev.c_str(), O_RDWR)) == -1)
         throw Error("opening device", System::Error::getLastMessage());
 #else
@@ -79,7 +83,7 @@ namespace DUNE
 
     I2C::~I2C(void)
     {
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       close(m_fd);
 #endif
     }
@@ -88,7 +92,7 @@ namespace DUNE
     I2C::transfer(uint8_t adr, uint8_t cmd, const uint8_t* wdata, uint8_t wlen, uint8_t* rdata, uint8_t rlen, uint8_t* bytes_read)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       i2c_rdwr_ioctl_data rdwr;
       i2c_msg msg[2];
       uint8_t wbuf[c_max_data_len + 2];  // +1 for cmd, +1 for len
@@ -104,16 +108,10 @@ namespace DUNE
         *bytes_read = 0;
 
       if (wlen > c_max_data_len)
-      {
-        printf("i2c_transfer: wlen too big: %d, max is %d\n", wlen, c_max_data_len);
         return -1;
-      }
 
       if (rlen > c_max_data_len)
-      {
-        printf("i2c_transfer: rlen too big: %d, max is %d\n", rlen, c_max_data_len);
         return -1;
-      }
 
       // Whether we're doing a read or a write, we always send
       // the command.
@@ -163,11 +161,7 @@ namespace DUNE
       {
         if (rblock)
         {
-          if (rbuf[0] > rlen)
-          {
-            printf("i2c_transfer: length is too big: %d max: %d\n", rbuf[0], rlen);
-          }
-          else
+          if (rbuf[0] <= rlen)
           {
             rlen = rbuf[0];
           }
@@ -197,7 +191,7 @@ namespace DUNE
     I2C::read(uint8_t adr, uint8_t* bfr, unsigned bfr_len)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       i2c_msg msg;
       msg.addr = adr;
       msg.flags = I2C_M_RD;
@@ -228,7 +222,7 @@ namespace DUNE
     I2C::connect(uint8_t addr)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       int a = (int)addr;
 
       if (ioctl(m_fd, I2C_SLAVE, a) < 0)
@@ -242,7 +236,7 @@ namespace DUNE
     I2C::read(uint8_t* bfr, unsigned bfr_len)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       int rv = ::read(m_fd, bfr, bfr_len);
       if (rv == -1)
         throw Error("read", System::Error::getLastMessage());
@@ -260,7 +254,7 @@ namespace DUNE
     I2C::write(const uint8_t* bfr, unsigned bfr_len)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       int rv = ::write(m_fd, bfr, bfr_len);
       if (rv == -1)
         throw Error("read", System::Error::getLastMessage());

@@ -148,7 +148,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_pinger.setTop(m_args.ping_delay);
+        if (paramChanged(m_args.ping_delay))
+          m_pinger.setTop(m_args.ping_delay);
       }
 
       //! Acquire resources.
@@ -234,10 +235,10 @@ namespace Simulators
         {
           IMC::LblConfig cfg;
           cfg.op = IMC::LblConfig::OP_CUR_CFG;
-          if (m_lbl_cfg != NULL)
+          if (hasLBLConfig())
             cfg.beacons = m_lbl_cfg->beacons;
 
-          dispatch(cfg);
+          dispatchReply(*msg, cfg);
         }
       }
 
@@ -279,6 +280,9 @@ namespace Simulators
       void
       range(const std::string& sys_name)
       {
+        if (!hasLBLConfig())
+          return;
+
         IMC::LblBeacon* beacon = NULL;
 
         // Find beacon id.

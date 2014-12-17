@@ -25,6 +25,8 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
+# Generate serialization/deserialization tests.                            #
+############################################################################
 
 import sys
 import random
@@ -35,6 +37,8 @@ import os.path
 from imc.utils import *
 from imc.file import *
 from imc.code import *
+
+CXX = 'test_IMC.cpp'
 
 class Message:
     def __init__(self, fd, var, abbrev, root, test_nr = 0):
@@ -152,15 +156,32 @@ class Message:
             value = self.make_number(field)
             self._fd.append('%s.%s = %s;' % (self._var, name, value))
 
+# Parse command line arguments.
+import argparse
+parser = argparse.ArgumentParser(
+    description="Generate serialization/deserialization tests.")
+parser.add_argument('dest_folder', metavar='DEST_FOLDER',
+                    help="destination folder")
+parser.add_argument('-x', '--xml', metavar='IMC_XML',
+                    help="IMC XML file")
+parser.add_argument('-f', '--force', action='store_true', required=False,
+                    help="Force creation of test file")
+args = parser.parse_args()
+
+xml_md5 = compute_md5(args.xml);
+dest_folder = args.dest_folder
+
+if not args.force:
+    if file_md5_matches(os.path.join(dest_folder, CXX), xml_md5):
+        print('* ' + os.path.join(dest_folder, CXX) + ' [Skipped]')
+        sys.exit(0)
+
 # Parse XML specification.
 import xml.etree.ElementTree as ET
-tree = ET.parse(sys.argv[1])
+tree = ET.parse(args.xml)
 root = tree.getroot()
 
-# Get destination folder.
-folder = sys.argv[2]
-
-fd = File('test_IMC.cpp', folder, ns = None)
+fd = File(CXX, dest_folder, ns = None, md5 = xml_md5)
 fd.add_dune_headers('DUNE.hpp')
 fd.append('using DUNE_NAMESPACES;\n')
 fd.append('#include "Test.hpp"\n')

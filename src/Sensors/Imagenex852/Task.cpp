@@ -150,6 +150,8 @@ namespace Sensors
       PatternFilter* m_pfilt;
       //! Medium handler.
       Monitors::MediumHandler m_hand;
+      //! Underwater acoustic modem transmission in progress.
+      bool m_uam_tx_ip;
 
       //! %Task constructor.
       Task(const std::string& name, Tasks::Context& ctx):
@@ -157,7 +159,8 @@ namespace Sensors
         m_uart(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
-        m_pfilt(NULL)
+        m_pfilt(NULL),
+        m_uam_tx_ip(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_IDLE,
@@ -266,6 +269,7 @@ namespace Sensors
 
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::UamTxStatus>(this);
       }
 
       //! Update parameters.
@@ -314,12 +318,20 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_uart = new SerialPort(m_args.uart_dev,
-                                c_uart_baud,
-                                SerialPort::SP_PARITY_NONE,
-                                SerialPort::SP_STOPBITS_1,
-                                SerialPort::SP_DATABITS_8,
-                                true);
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev,
+                                  c_uart_baud,
+                                  SerialPort::SP_PARITY_NONE,
+                                  SerialPort::SP_STOPBITS_1,
+                                  SerialPort::SP_DATABITS_8,
+                                  true);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
+
         m_wdog.setTop(2.0);
 
         if (m_args.pattern_filter)
@@ -368,6 +380,12 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
 
         m_trigger.setActive(false);
+      }
+
+      void
+      consume(const IMC::UamTxStatus* msg)
+      {
+        m_uam_tx_ip = (msg->value == IMC::UamTxStatus::UTS_IP);
       }
 
       void
@@ -465,7 +483,9 @@ namespace Sensors
             if (m_args.sspeed_dyn)
               m_dist.value = (m_dist.value * m_sound_speed) / c_sound_speed;
 
-            dispatch(m_dist);
+            // UAM is transmitting, data are probably garbled.
+            if (!m_uam_tx_ip)
+              dispatch(m_dist);
 
             if (m_parser.getDataPointsCount() > 0)
             {

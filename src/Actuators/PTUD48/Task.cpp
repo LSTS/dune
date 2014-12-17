@@ -237,7 +237,7 @@ namespace Actuators
       void
       boundPan(int& val)
       {
-        val = val < PAN_MIN ? PAN_MIN : val; 
+        val = val < PAN_MIN ? PAN_MIN : val;
         val = val > PAN_MAX ? PAN_MAX : val;
       }
 
@@ -293,7 +293,6 @@ namespace Actuators
 
         // Send tilt rate command.
         //createCommand("ts", tilt_rate_pos);
-
 
         // Send halt command.
         //if (tuples.get("Halt", 0)) sendCommand("h ");

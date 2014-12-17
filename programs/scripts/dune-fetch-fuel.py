@@ -49,7 +49,6 @@ def insertList( copy, num_spaces, list, exp ):
 
     copy.write('\n')
 
-
 def manipIni(myfile, labels_list, values_list):
     # Open ini file
     fo = open(sys.argv[1] + myfile + ".ini", "r")
@@ -132,7 +131,6 @@ print("Opening sheet " + sheet_key)
 sh = gc.open_by_key(sheet_key)
 
 worksheet = sh.get_worksheet(0)
-
 
 print("Starting to fetch data...")
 

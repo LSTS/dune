@@ -102,7 +102,7 @@ namespace Transports
             remove.push_back(it->first);
 
             // message has died of natural causes...
-            war("Removed incoming message from memory (%d fragments were still missing).",
+            war(DTR("Removed incoming message from memory (%d fragments were still missing)."),
                 it->second.getFragmentsMissing());
           }
         }

@@ -39,15 +39,14 @@ namespace Simulators
 
     //! Vector for System Mapping.
     typedef std::vector<uint32_t> Systems;
-
     //! Vector for Entity Mapping.
     typedef std::vector<uint32_t> Entities;
 
     struct Arguments
     {
-      //! State source
-      std::vector<std::string> filt_src;
-      //! Source system alias
+      // SimulatedState filter
+      std::vector<std::string> state_src;
+      // Source system alias
       std::string src_alias;
     };
 
@@ -74,7 +73,7 @@ namespace Simulators
         m_alias_id(UINT_MAX)
       {
         // Definition of configuration parameters.
-        param("Filtered source", m_args.filt_src)
+        param("SimulatedState Filter", m_args.state_src)
         .defaultValue("")
         .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities from which the state is accepted.");
 
@@ -120,14 +119,14 @@ namespace Simulators
       void
       onEntityResolution(void)
       {
-        //! Process the systems and entities allowed to define a command.
+        //! Process the systems and entities allowed to pass the SimulatedState
         uint32_t i_src;
         m_filtered_sys.clear();
         m_filtered_ent.clear();
-        for (unsigned int i = 0; i < m_args.filt_src.size(); ++i)
+        for (unsigned int i = 0; i < m_args.state_src.size(); ++i)
         {
           std::vector<std::string> parts;
-          String::split(m_args.filt_src[i], ":", parts);
+          String::split(m_args.state_src[i], ":", parts);
           if (parts.size() < 1)
             continue;
 
@@ -139,11 +138,13 @@ namespace Simulators
 
           m_filtered_ent.resize(systems.size()*entities.size());
           m_filtered_sys.resize(systems.size()*entities.size());
+          unsigned int i_sys_n = systems.size();
+          unsigned int i_ent_n = entities.size();
           // Resolve systems id.
-          for (unsigned j = 0; j < systems.size(); j++)
+          for (unsigned j = 0; j < i_sys_n; j++)
           {
             // Resolve entities id.
-            for (unsigned k = 0; k < entities.size(); k++)
+            for (unsigned k = 0; k < i_ent_n; k++)
             {
               i_src = (j+1)*(k+1)-1;
               // Resolve systems.
@@ -162,8 +163,9 @@ namespace Simulators
                 }
                 catch (...)
                 {
-                  debug("State filtering - No system found with designation '%s'.", parts[0].c_str());
-                  m_filtered_sys[i_src] = UINT_MAX;
+                  war("State filtering - No system found with designation '%s'!", systems[j].c_str());
+                  i_sys_n--;
+                  j--;
                 }
               }
               // Resolve entities.
@@ -182,8 +184,9 @@ namespace Simulators
                 }
                 catch (...)
                 {
-                  debug("State filtering - No entity found with designation '%s'.", parts[1].c_str());
-                  m_filtered_ent[i_src] = UINT_MAX;
+                  war("State filtering - No entity found with designation '%s'!", entities[k].c_str());
+                  i_ent_n--;
+                  k--;
                 }
               }
             }

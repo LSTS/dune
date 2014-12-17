@@ -191,7 +191,7 @@ main(int32_t argc, char** argv)
           {
             DUNE::IMC::Current* ptr = static_cast<DUNE::IMC::Current*>(msg);
             bdata.update(ptr);
-          }          
+          }
         }
         else if (msg->getId() == DUNE_IMC_RPM)
         {

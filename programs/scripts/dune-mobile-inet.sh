@@ -42,10 +42,6 @@ if [ -z "$GSM_MODE" ]; then
     GSM_MODE='AT\^SYSCFG=2,2,3fffffff,0,1'
 fi
 
-if [ -n "$NAT_ENABLE" ]; then
-    NAT_ENABLE='true'
-fi
-
 if [ -z "$GSM_PIN" ]; then
     GSM_PIN='AT'
 fi
@@ -115,16 +111,6 @@ dyndns_update()
     wget "$url" -O -
 }
 
-ppp_get_ip()
-{
-    ip="$(ifconfig "$FWL_EXT_ITF" 2> /dev/null | grep inet | cut -f2 -d: | cut -f1 -d' ')"
-    if [ -z "$ip" ]; then
-        ip="$(echo $(ifconfig "$FWL_EXT_ITF" 2> /dev/null | grep inet) | cut -f2 -d' ')"
-    fi
-
-    echo $ip
-}
-
 ppp_start()
 {
     modem="$(modem_probe)"
@@ -161,66 +147,27 @@ ppp_start()
         hide-password \
         persist \
         holdoff 10 \
-        maxfail 1 \
-        updetach \
+        maxfail 0 \
         connect "/usr/sbin/chat -E -v -t15 $CHAT_SCRIPT" > /var/run/ppp.log 2>&1
 
     if [ $? -ne 0 ]; then
         log err "ppp: failed to establish a connection"
         exit 1
     fi
-
-    log info "ppp: connected"
 }
 
 ppp_stop()
 {
     log info "ppp: stopping"
-
-    pid="$(cat "/var/run/$FWL_EXT_ITF.pid" 2> /dev/null)"
-
-    if [ -n "$pid" ]; then
-        for n in 1 2 3 4 5; do
-            if ! [ -d "/proc/$pid" ]; then
-                log info "ppp: daemon stopped"
-                return 0
-            fi
-
-            kill "$pid" > /dev/null 2>&1
-            sleep 2
-        done
-
-        kill -9 "$pid" > /dev/null 2>&1
-    fi
-
+    killall -9 chat > /dev/null 2>&1
+    killall -9 pppd > /dev/null 2>&1
+    sleep 1
     log info "ppp: stopped"
     return 0
 }
 
-ppp_watch()
-{
-    ip="$(ppp_get_ip)"
-    log info "ppp: external IP is $ip"
-
-    dyndns_update "$ip"
-
-    while [ 1 ]; do
-        ip="$(ppp_get_ip)"
-        if [ -z "$ip" ]; then
-            log err "ppp: connection lost"
-            return 1
-        fi
-
-        sleep 1
-    done
-}
-
 nat_start()
 {
-    if [ -z "$NAT_ENABLE" ]; then
-        return 0
-    fi
-
     log info "nat: enabling IP forwarding"
     echo '1' > /proc/sys/net/ipv4/ip_forward
     echo '1' > /proc/sys/net/ipv4/ip_dynaddr
@@ -246,10 +193,6 @@ nat_start()
 
 nat_stop()
 {
-    if [ -z "$NAT_ENABLE" ]; then
-        return 0
-    fi
-
     log info "nat: disabling IP forwarding"
     echo '0' > /proc/sys/net/ipv4/ip_forward
     echo '0' > /proc/sys/net/ipv4/ip_dynaddr
@@ -268,18 +211,16 @@ nat_stop()
 
 start()
 {
-    ppp_start && nat_start
+    ppp_start
     if [ $? -ne 0 ]; then
         log err "failed to establish a connection"
         exit 1
     fi
-
-    ppp_watch
 }
 
 stop()
 {
-    nat_stop && ppp_stop
+    ppp_stop
     if [ $? -eq 0 ]; then
         log info "stopped"
     else
@@ -289,12 +230,16 @@ stop()
 
 case "$1" in
     start)
-        stop
-        sleep 2
         start
         ;;
     stop)
         stop
+        ;;
+    nat_start)
+        nat_start
+        ;;
+    nat_stop)
+        nat_stop
         ;;
     *)
         echo "Usage: $0 <start|stop>"

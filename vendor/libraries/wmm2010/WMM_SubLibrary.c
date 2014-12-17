@@ -1222,7 +1222,7 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
   the Associated Legendre Functions.
 */
 {
-	int n, m, index, index1, index2, NumTerms;
+	int n, m, indx, indx1, indx2, NumTerms;
 	double k, z, *schmidtQuasiNorm;
 	Pcup[0] = 1.0;
 	dPcup[0] = 0.0;
@@ -1243,33 +1243,33 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	{
 		for (m=0;m<=n;m++)
 		{
-		index = (n * (n + 1) / 2 + m);
+		indx = (n * (n + 1) / 2 + m);
 			if (n == m)
 			{
-				index1 = ( n - 1 ) * n / 2 + m -1;
-				Pcup [index]  = z * Pcup[index1];
-				dPcup[index] = z *  dPcup[index1] + x *  Pcup[index1];
+				indx1 = ( n - 1 ) * n / 2 + m -1;
+				Pcup [indx]  = z * Pcup[indx1];
+				dPcup[indx] = z *  dPcup[indx1] + x *  Pcup[indx1];
 			}
 			else if (n == 1 && m == 0)
 			{
-				index1 = ( n - 1 ) * n / 2 + m;
-				Pcup[index]  = x *  Pcup[index1];
-				dPcup[index] = x *  dPcup[index1] - z *  Pcup[index1];
+				indx1 = ( n - 1 ) * n / 2 + m;
+				Pcup[indx]  = x *  Pcup[indx1];
+				dPcup[indx] = x *  dPcup[indx1] - z *  Pcup[indx1];
 			}
 			else if (n > 1 && n != m)
 			{
-				index1 = ( n - 2 ) * ( n - 1 ) / 2 + m;
-				index2 = ( n - 1) * n / 2 + m;
+				indx1 = ( n - 2 ) * ( n - 1 ) / 2 + m;
+				indx2 = ( n - 1) * n / 2 + m;
 				if (m > n - 2)
 				{
-					Pcup[index]  = x *  Pcup[index2];
-					dPcup[index] = x *  dPcup[index2] - z *  Pcup[index2];
+					Pcup[indx]  = x *  Pcup[indx2];
+					dPcup[indx] = x *  dPcup[indx2] - z *  Pcup[indx2];
 				}
 				else
 				{
 					k = (double)( ( ( n - 1 ) * ( n - 1 ) ) - ( m * m ) ) / ( double ) ( ( 2 * n - 1 ) * ( 2 * n - 3 ) );
-					Pcup[index]  = x *  Pcup[index2]  - k  *  Pcup[index1];
-					dPcup[index] = x *  dPcup[index2] - z *  Pcup[index2] - k *  dPcup[index1];
+					Pcup[indx]  = x *  Pcup[indx2]  - k  *  Pcup[indx1];
+					dPcup[indx] = x *  dPcup[indx2] - z *  Pcup[indx2] - k *  dPcup[indx1];
 				}
 			}
 		}
@@ -1281,16 +1281,16 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	schmidtQuasiNorm[0] = 1.0;
 	for (n = 1; n <= nMax; n++)
 	{
-		index = (n * (n + 1) / 2);
-		index1 = (n - 1)  * n / 2 ;
+		indx = (n * (n + 1) / 2);
+		indx1 = (n - 1)  * n / 2 ;
 		/* for m = 0 */
-		schmidtQuasiNorm[index] =  schmidtQuasiNorm[index1] * (double) (2 * n - 1) / (double) n;
+		schmidtQuasiNorm[indx] =  schmidtQuasiNorm[indx1] * (double) (2 * n - 1) / (double) n;
 
 		for ( m = 1; m <= n; m++)
 		{
-			index = (n * (n + 1) / 2 + m);
-			index1 = (n * (n + 1) / 2 + m - 1);
-			schmidtQuasiNorm[index] = schmidtQuasiNorm[index1] * sqrt( (double) ((n - m + 1) * (m == 1 ? 2 : 1)) / (double) (n + m));
+			indx = (n * (n + 1) / 2 + m);
+			indx1 = (n * (n + 1) / 2 + m - 1);
+			schmidtQuasiNorm[indx] = schmidtQuasiNorm[indx1] * sqrt( (double) ((n - m + 1) * (m == 1 ? 2 : 1)) / (double) (n + m));
 		}
 
 	}
@@ -1303,9 +1303,9 @@ int WMM_PcupLow( double *Pcup, double *dPcup, double x, int nMax)
 	{
 		for (m=0;m<=n;m++)
 		{
-			 index = (n * (n + 1) / 2 + m);
-			 Pcup[index]  = Pcup[index]  *  schmidtQuasiNorm[index];
-			 dPcup[index] =  - dPcup[index] *  schmidtQuasiNorm[index];
+			 indx = (n * (n + 1) / 2 + m);
+			 Pcup[indx]  = Pcup[indx]  *  schmidtQuasiNorm[indx];
+			 dPcup[indx] =  - dPcup[indx] *  schmidtQuasiNorm[indx];
 			 /* The sign is changed since the new WMM routines use derivative with respect to latitude
 			 insted of co-latitude */
 		}
@@ -1336,7 +1336,7 @@ int WMM_readMagneticModel(const char *filename, WMMtype_MagneticModel * Magnetic
 
 	FILE *WMM_COF_File;
 	char c_str[81], c_new[5];   /*these strings are used to read a line from coefficient file*/
-	int i, icomp, m, n, EOF_Flag = 0, index;
+	int i, icomp, m, n, EOF_Flag = 0, indx;
 	double epoch, gnm, hnm, dgnm, dhnm;
 	WMM_COF_File = fopen(filename,"r");
 	if (WMM_COF_File == NULL)
@@ -1374,11 +1374,11 @@ int WMM_readMagneticModel(const char *filename, WMMtype_MagneticModel * Magnetic
 		sscanf(c_str,"%d%d%lf%lf%lf%lf",&n,&m,&gnm,&hnm,&dgnm,&dhnm);
 		if (m <= n)
 		{
-			index = (n * (n + 1) / 2 + m);
-			MagneticModel->Main_Field_Coeff_G[index] = gnm;
-			MagneticModel->Secular_Var_Coeff_G[index] = dgnm;
-			MagneticModel->Main_Field_Coeff_H[index] = hnm;
-			MagneticModel->Secular_Var_Coeff_H[index] = dhnm;
+			indx = (n * (n + 1) / 2 + m);
+			MagneticModel->Main_Field_Coeff_G[indx] = gnm;
+			MagneticModel->Secular_Var_Coeff_G[indx] = dgnm;
+			MagneticModel->Main_Field_Coeff_H[indx] = hnm;
+			MagneticModel->Secular_Var_Coeff_H[indx] = dhnm;
 		}
 	}
 
@@ -1415,7 +1415,7 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
 	FILE *WMM_COF_File;
 	FILE *WMM_COFSV_File;
 	char c_str[81], c_str2[81];   /* these strings are used to read a line from coefficient file */
-	int i, m, n, index, a, b;
+	int i, m, n, indx, a, b;
 	double epoch, gnm, hnm, dgnm, dhnm;
 	WMM_COF_File = fopen(filename,"r");
 	WMM_COFSV_File = fopen(filenameSV,"r");
@@ -1445,11 +1445,11 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
           sscanf(c_str2,"%d%d%lf%lf",&n,&m,&dgnm,&dhnm);
 		if (m <= n)
 		{
-			index = (n * (n + 1) / 2 + m);
-			MagneticModel->Main_Field_Coeff_G[index] = gnm;
-			MagneticModel->Secular_Var_Coeff_G[index] = dgnm;
-			MagneticModel->Main_Field_Coeff_H[index] = hnm;
-			MagneticModel->Secular_Var_Coeff_H[index] = dhnm;
+			indx = (n * (n + 1) / 2 + m);
+			MagneticModel->Main_Field_Coeff_G[indx] = gnm;
+			MagneticModel->Secular_Var_Coeff_G[indx] = dgnm;
+			MagneticModel->Main_Field_Coeff_H[indx] = hnm;
+			MagneticModel->Secular_Var_Coeff_H[indx] = dhnm;
 		}
 	}
 	for(i = a + 1; i < b; i++)
@@ -1459,9 +1459,9 @@ int WMM_readMagneticModel_Large(const char *filename, char *filenameSV, WMMtype_
           sscanf(c_str,"%d%d%lf%lf", &n, &m, &gnm, &hnm);
 		if (m <= n)
 		{
-			index = (n * (n + 1) / 2 + m);
-			MagneticModel->Main_Field_Coeff_G[index] = gnm;
-			MagneticModel->Main_Field_Coeff_H[index] = hnm;
+			indx = (n * (n + 1) / 2 + m);
+			MagneticModel->Main_Field_Coeff_G[indx] = gnm;
+			MagneticModel->Main_Field_Coeff_H[indx] = hnm;
 		}
 	}
 	return TRUE;
@@ -1572,7 +1572,7 @@ int WMM_SecVarSummation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_Magn
 	CALLS : WMM_SecVarSummationSpecial
 
 	*/
-	int m, n, index;
+	int m, n, indx;
 	double cos_phi;
 	MagneticModel->SecularVariationUsed = TRUE;
 	MagneticResults->Bz = 0.0;
@@ -1582,34 +1582,34 @@ int WMM_SecVarSummation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_Magn
 	{
 		for (m=0;m<=n;m++)
 		{
-			index = (n * (n + 1) / 2 + m);
+			indx = (n * (n + 1) / 2 + m);
 
 /*		    nMax  	(n+2) 	  n     m            m           m
 	Bz =   -SUM (a/r)   (n+1) SUM  [g cos(m p) + h sin(m p)] P (sin(phi))
 			n=1      	      m=0   n            n           n  */
 /*  Derivative with respect to radius.*/
 			MagneticResults->Bz -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.cos_mlambda[m] +
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.sin_mlambda[m]	)
-						* (double) (n+1) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.cos_mlambda[m] +
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.sin_mlambda[m]	)
+						* (double) (n+1) * LegendreFunction-> Pcup[indx];
 
 /*		  1 nMax  (n+2)    n     m            m           m
 	By =    SUM (a/r) (m)  SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1             m=0   n            n           n  */
 /* Derivative with respect to longitude, divided by radius. */
 			MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.sin_mlambda[m] -
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.cos_mlambda[m]  )
-						* (double) (m) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.sin_mlambda[m] -
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.cos_mlambda[m]  )
+						* (double) (m) * LegendreFunction-> Pcup[indx];
 /*		   nMax  (n+2) n     m            m           m
 	Bx = - SUM (a/r)   SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1         m=0   n            n           n  */
 /* Derivative with respect to latitude, divided by radius. */
 
 			MagneticResults->Bx -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.cos_mlambda[m]  +
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.sin_mlambda[m]  )
-						* LegendreFunction-> dPcup[index];
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.cos_mlambda[m]  +
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.sin_mlambda[m]  )
+						* LegendreFunction-> dPcup[indx];
 		}
 	}
 	cos_phi = cos ( DEG2RAD ( CoordSpherical.phig ) );
@@ -1638,7 +1638,7 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 
 
 	*/
-	int n, index;
+	int n, indx;
 	double k, sin_phi, *PcupS, schmidtQuasiNorm1, schmidtQuasiNorm2, schmidtQuasiNorm3;
 
 	PcupS = (double *) malloc ( (MagneticModel->nMaxSecVar +1) * sizeof (double) );
@@ -1657,7 +1657,7 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 
 	for (n = 1; n <=  MagneticModel->nMaxSecVar; n++)
 	{
-		index = (n * (n + 1) / 2 + 1);
+		indx = (n * (n + 1) / 2 + 1);
 		schmidtQuasiNorm2 = schmidtQuasiNorm1 * (double) (2 * n - 1) / (double) n;
 		schmidtQuasiNorm3 = schmidtQuasiNorm2 *  sqrt( (double) (n * 2) / (double) (n + 1));
 		schmidtQuasiNorm1 = schmidtQuasiNorm2;
@@ -1677,8 +1677,8 @@ int WMM_SecVarSummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Sph
 /* Derivative with respect to longitude, divided by radius. */
 
 		MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Secular_Var_Coeff_G[index]*SphVariables.sin_mlambda[1] -
-						MagneticModel->Secular_Var_Coeff_H[index]*SphVariables.cos_mlambda[1]  )
+					(	MagneticModel->Secular_Var_Coeff_G[indx]*SphVariables.sin_mlambda[1] -
+						MagneticModel->Secular_Var_Coeff_H[indx]*SphVariables.cos_mlambda[1]  )
 						*  PcupS[n] * schmidtQuasiNorm3;
 	}
 
@@ -1713,7 +1713,7 @@ int WMM_Summation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_MagneticMo
 
    Manoj Nair, June, 2009 Manoj.C.Nair@Noaa.Gov
    */
-	int m, n, index;
+	int m, n, indx;
 	double cos_phi;
 	MagneticResults->Bz = 0.0;
 	MagneticResults->By = 0.0;
@@ -1722,34 +1722,34 @@ int WMM_Summation(WMMtype_LegendreFunction *LegendreFunction, WMMtype_MagneticMo
 	{
 		for (m=0;m<=n;m++)
 		{
-			index = (n * (n + 1) / 2 + m);
+			indx = (n * (n + 1) / 2 + m);
 
 /*		    nMax  	(n+2) 	  n     m            m           m
 	Bz =   -SUM (a/r)   (n+1) SUM  [g cos(m p) + h sin(m p)] P (sin(phi))
 			n=1      	      m=0   n            n           n  */
 /* Equation 12 in the WMM Technical report.  Derivative with respect to radius.*/
 			MagneticResults->Bz -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.cos_mlambda[m] +
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.sin_mlambda[m]	)
-						* (double) (n+1) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.cos_mlambda[m] +
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.sin_mlambda[m]	)
+						* (double) (n+1) * LegendreFunction-> Pcup[indx];
 
 /*		  1 nMax  (n+2)    n     m            m           m
 	By =    SUM (a/r) (m)  SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1             m=0   n            n           n  */
 /* Equation 11 in the WMM Technical report. Derivative with respect to longitude, divided by radius. */
 			MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.sin_mlambda[m] -
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.cos_mlambda[m]  )
-						* (double) (m) * LegendreFunction-> Pcup[index];
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.sin_mlambda[m] -
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.cos_mlambda[m]  )
+						* (double) (m) * LegendreFunction-> Pcup[indx];
 /*		   nMax  (n+2) n     m            m           m
 	Bx = - SUM (a/r)   SUM  [g cos(m p) + h sin(m p)] dP (sin(phi))
 		   n=1         m=0   n            n           n  */
 /* Equation 10  in the WMM Technical report. Derivative with respect to latitude, divided by radius. */
 
 			MagneticResults->Bx -= 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.cos_mlambda[m]  +
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.sin_mlambda[m]  )
-						* LegendreFunction-> dPcup[index];
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.cos_mlambda[m]  +
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.sin_mlambda[m]  )
+						* LegendreFunction-> dPcup[indx];
 
 
 
@@ -1786,7 +1786,7 @@ int WMM_SummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Spherical
 
 	*/
 	{
-	int n, index;
+	int n, indx;
 	double k, sin_phi, *PcupS, schmidtQuasiNorm1, schmidtQuasiNorm2, schmidtQuasiNorm3;
 
 	PcupS = (double *) malloc ( (MagneticModel->nMax +1) * sizeof (double) );
@@ -1809,7 +1809,7 @@ int WMM_SummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Spherical
   functions and the Schmidt quasi-normalized version. This is equivalent to
   sqrt((m==0?1:2)*(n-m)!/(n+m!))*(2n-1)!!/(n-m)!  */
 
-		index = (n * (n + 1) / 2 + 1);
+		indx = (n * (n + 1) / 2 + 1);
 		schmidtQuasiNorm2 = schmidtQuasiNorm1 * (double) (2 * n - 1) / (double) n;
 		schmidtQuasiNorm3 = schmidtQuasiNorm2 *  sqrt( (double) (n * 2) / (double) (n + 1));
 		schmidtQuasiNorm1 = schmidtQuasiNorm2;
@@ -1829,8 +1829,8 @@ int WMM_SummationSpecial(WMMtype_MagneticModel *MagneticModel, WMMtype_Spherical
 /* Equation 11 in the WMM Technical report. Derivative with respect to longitude, divided by radius. */
 
 		MagneticResults->By += 	SphVariables.RelativeRadiusPower[n] *
-					(	MagneticModel->Main_Field_Coeff_G[index]*SphVariables.sin_mlambda[1] -
-						MagneticModel->Main_Field_Coeff_H[index]*SphVariables.cos_mlambda[1]  )
+					(	MagneticModel->Main_Field_Coeff_G[indx]*SphVariables.sin_mlambda[1] -
+						MagneticModel->Main_Field_Coeff_H[indx]*SphVariables.cos_mlambda[1]  )
 						*  PcupS[n] * schmidtQuasiNorm3;
 	}
 
@@ -1854,7 +1854,7 @@ int WMM_TimelyModifyMagneticModel(WMMtype_Date UserDate, WMMtype_MagneticModel *
 	*/
 
 	{
-	int n, m, index, a, b;
+	int n, m, indx, a, b;
 	TimedMagneticModel->EditionDate = MagneticModel->EditionDate;
 	TimedMagneticModel->epoch	   = MagneticModel->epoch;
         TimedMagneticModel->nMax	   	   = MagneticModel->nMax;
@@ -1866,18 +1866,18 @@ int WMM_TimelyModifyMagneticModel(WMMtype_Date UserDate, WMMtype_MagneticModel *
 	{
 		for (m=0;m<=n;m++)
 		{
-			index = (n * (n + 1) / 2 + m);
-			if(index <= b)
+			indx = (n * (n + 1) / 2 + m);
+			if(indx <= b)
 			{
-				TimedMagneticModel->Main_Field_Coeff_H[index]   = MagneticModel->Main_Field_Coeff_H[index] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_H[index];
-				TimedMagneticModel->Main_Field_Coeff_G[index]   = MagneticModel->Main_Field_Coeff_G[index] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_G[index];
-				TimedMagneticModel->Secular_Var_Coeff_H[index]  = MagneticModel->Secular_Var_Coeff_H[index]; /* We need a copy of the secular var coef to calculate secular change */
-				TimedMagneticModel->Secular_Var_Coeff_G[index]  = MagneticModel->Secular_Var_Coeff_G[index];
+				TimedMagneticModel->Main_Field_Coeff_H[indx]   = MagneticModel->Main_Field_Coeff_H[indx] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_H[indx];
+				TimedMagneticModel->Main_Field_Coeff_G[indx]   = MagneticModel->Main_Field_Coeff_G[indx] + (UserDate.DecimalYear - MagneticModel->epoch) * MagneticModel->Secular_Var_Coeff_G[indx];
+				TimedMagneticModel->Secular_Var_Coeff_H[indx]  = MagneticModel->Secular_Var_Coeff_H[indx]; /* We need a copy of the secular var coef to calculate secular change */
+				TimedMagneticModel->Secular_Var_Coeff_G[indx]  = MagneticModel->Secular_Var_Coeff_G[indx];
 			}
 			else
 			{
-				TimedMagneticModel->Main_Field_Coeff_H[index] = MagneticModel->Main_Field_Coeff_H[index];
-				TimedMagneticModel->Main_Field_Coeff_G[index] = MagneticModel->Main_Field_Coeff_G[index];
+				TimedMagneticModel->Main_Field_Coeff_H[indx] = MagneticModel->Main_Field_Coeff_H[indx];
+				TimedMagneticModel->Main_Field_Coeff_G[indx] = MagneticModel->Main_Field_Coeff_G[indx];
 			}
 		}
 	}

@@ -124,8 +124,11 @@ namespace Maneuver
       void
       onUpdateParameters(void)
       {
-        m_last_update.setTop(m_args.timeout);
-        m_heading_timestamp.setTop(m_args.heading_cooldown);
+        if (paramChanged(m_args.timeout))
+          m_last_update.setTop(m_args.timeout);
+
+        if (paramChanged(m_args.heading_cooldown))
+          m_heading_timestamp.setTop(m_args.heading_cooldown);
       }
 
       void

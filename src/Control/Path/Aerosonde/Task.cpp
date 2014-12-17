@@ -127,6 +127,7 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          spew("Step start");
           // Unused state
           (void) state;
 
@@ -167,6 +168,7 @@ namespace Control
 
           // Send to bus
           dispatch(m_bank);
+          spew("DesiredBank = %3.2f deg", Math::Angles::degrees(m_bank.value));
         }
       };
     }

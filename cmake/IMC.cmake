@@ -31,6 +31,8 @@ if(DUNE_PROGRAM_PYTHON)
 
   set(DUNE_IMC_XML ${CMAKE_BINARY_DIR}/IMC/IMC.xml)
   set(DUNE_IMC_ADDRESSES_XML ${CMAKE_BINARY_DIR}/IMC/IMC_Addresses.xml)
+  set(DUNE_IMC_FOLDER ${PROJECT_SOURCE_DIR}/src/DUNE/IMC)
+  set(DUNE_IMC_TEST_FOLDER ${PROJECT_SOURCE_DIR}/programs/tests)
 
   # Download.
   add_custom_target(imc_download
@@ -40,22 +42,32 @@ if(DUNE_PROGRAM_PYTHON)
     -t ${IMC_TAG} ${CMAKE_BINARY_DIR}/IMC)
 
   # Generate.
-  add_custom_target(imc
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
-    ${DUNE_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
+  macro(dune_target_imc target_name extra_flags)
+    add_custom_target(${target_name}
+      COMMAND ${DUNE_PROGRAM_PYTHON}
+      ${PROJECT_SOURCE_DIR}/programs/generators/imc_code.py
+      ${extra_flags}
+      -x ${DUNE_IMC_XML} ${DUNE_IMC_FOLDER}
 
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
-    ${DUNE_IMC_XML} ${PROJECT_SOURCE_DIR}/src/DUNE/IMC
+      COMMAND ${DUNE_PROGRAM_PYTHON}
+      ${PROJECT_SOURCE_DIR}/programs/generators/imc_blob.py
+      ${extra_flags}
+      -x ${DUNE_IMC_XML} ${DUNE_IMC_FOLDER}
 
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
-    ${DUNE_IMC_XML} ${PROJECT_SOURCE_DIR}/programs/tests
+      COMMAND ${DUNE_PROGRAM_PYTHON}
+      ${PROJECT_SOURCE_DIR}/programs/generators/imc_tests.py
+      ${extra_flags}
+      -x ${DUNE_IMC_XML} ${DUNE_IMC_TEST_FOLDER}
 
-    COMMAND ${DUNE_PROGRAM_PYTHON}
-    ${PROJECT_SOURCE_DIR}/programs/generators/imc_addresses.py
-    ${DUNE_IMC_ADDRESSES_XML} ${PROJECT_SOURCE_DIR}/etc/common/imc-addresses.ini
+      COMMAND ${DUNE_PROGRAM_PYTHON}
+      ${PROJECT_SOURCE_DIR}/programs/generators/imc_addresses.py
+      ${extra_flags}
+      -x ${DUNE_IMC_ADDRESSES_XML} ${PROJECT_SOURCE_DIR}/etc/common/imc-addresses.ini
 
-    DEPENDS ${xml})
+      DEPENDS ${xml})
+  endmacro()
+
+  dune_target_imc(imc "")
+  dune_target_imc(imc_force "-f")
+
 endif(DUNE_PROGRAM_PYTHON)

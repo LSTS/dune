@@ -31,29 +31,29 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Goto;
-
-    //! Plan Specification parser
-    class Goto
+    //! Goto maneuver
+    class Goto: public MuxedManeuver<IMC::Goto, void>
     {
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       Goto(Maneuvers::Maneuver* task):
-        m_task(task)
+        MuxedManeuver<IMC::Goto, void>(task)
       { }
 
       //! Start maneuver function
       //! @param[in] maneuver goto maneuver message
       void
-      start(const IMC::Goto* maneuver)
+      onStart(const IMC::Goto* maneuver)
       {
         m_task->setControl(IMC::CL_PATH);
 
@@ -81,10 +81,6 @@ namespace Maneuver
 
       ~Goto(void)
       { }
-
-    private:
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
     };
   }
 }

@@ -76,7 +76,6 @@ main(int argc, char** argv)
   //   }
   // }
 
-
   // Test# 0.
   // {
   //   const char* text = "Encode/Decode";
@@ -101,8 +100,6 @@ main(int argc, char** argv)
   //     test.failed(text, e.what());
   //   }
   // }
-
-
 
   // // Test# 0.
   // {

@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLAN_ENGINE_PLAN_HPP_INCLUDED_
-#define DUNE_PLAN_ENGINE_PLAN_HPP_INCLUDED_
+#ifndef PLAN_ENGINE_PLAN_HPP_INCLUDED_
+#define PLAN_ENGINE_PLAN_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <map>
@@ -37,6 +37,9 @@
 #include <DUNE/Plans.hpp>
 #include "Calibration.hpp"
 #include "ActionSchedule.hpp"
+#include "Timeline.hpp"
+#include "FuelPrediction.hpp"
+#include "Statistics.hpp"
 
 namespace Plan
 {
@@ -51,13 +54,24 @@ namespace Plan
     class Plan
     {
     public:
+      //! Exception for plan parsing errors
+      struct ParseError: public std::runtime_error
+      {
+        ParseError(const std::string& label):
+          std::runtime_error(DTR("parse error: ") + label)
+        { }
+      };
+
       //! Default constructor.
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
+      //! @param[in] fpredict true if fuel prediction should be computed
+      //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
-      //! @param[in] speed_model pointer to model for speed conversions
+      //! @param[in] cfg pointer to config object
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           uint16_t min_cal_time, const SpeedModel* speed_model);
+           bool fpredict, Tasks::Task* task,
+           uint16_t min_cal_time, Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -67,17 +81,16 @@ namespace Plan
       clear(void);
 
       //! Parse a given plan
-      //! @param[out] desc description of the failure if any
       //! @param[in] supported_maneuvers list of supported maneuvers
-      //! @param[in] plan_startup true if the plan is starting up
       //! @param[in] cinfo map of components info
-      //! @param[in] task pointer to task
+      //! @param[out] ps reference to PlanStatistics message
+      //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
-      //! @return true if was able to parse the plan
-      bool
-      parse(std::string& desc, const std::set<uint16_t>* supported_maneuvers,
-            bool plan_startup, const std::map<std::string, IMC::EntityInfo>& cinfo,
-            Tasks::Task* task, const IMC::EstimatedState* state = NULL);
+      void
+      parse(const std::set<uint16_t>* supported_maneuvers,
+            const std::map<std::string, IMC::EntityInfo>& cinfo,
+            IMC::PlanStatistics& ps, bool imu_enabled = false,
+            const IMC::EstimatedState* state = NULL);
 
       //! Signal that the plan has started
       void
@@ -169,10 +182,15 @@ namespace Plan
       bool
       onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg);
 
-      //! Get plan estimated time of arrival
+      //! Pass FuelLevel to FuelPrediction
+      //! @param[in] msg FuelLevel message
+      void
+      onFuelLevel(const IMC::FuelLevel* msg);
+
+      //! Get current estimated time of arrival
       //! @return ETA
       float
-      getPlanEta(void) const;
+      getETA(void) const;
 
     private:
       //! Get duration of the execution phase of the plan
@@ -213,14 +231,27 @@ namespace Plan
       bool
       maneuverExists(const std::string id) const;
 
+      //! Build the graph that describes the plan
+      //! This represents the first and crucial part of the plan parse
+      //! @param[in] supported_maneuvers list of supported maneuvers
+      void
+      buildGraph(const std::set<uint16_t>* supported_maneuvers);
+
+      //! Perform secondary parsing procedures
+      //! That involve action scheduling, statistics, etc
+      //! Presumes buildGraph() did not fail
+      //! @param[in] cinfo map of components info
+      //! @param[out] ps reference to PlanStatistics message
+      //! @param[in] imu_enabled true if imu enabled, false otherwise
+      //! @param[in] state pointer to EstimatedState message
+      void
+      secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
+                     IMC::PlanStatistics& ps, bool imu_enabled,
+                     const IMC::EstimatedState* state);
+
       //! Sequence plan nodes if possible
       void
       sequenceNodes(void);
-
-      //! Compute durations of each point in the plan
-      //! @param[in] pointer to estimated state message
-      void
-      computeDurations(const IMC::EstimatedState* state);
 
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
@@ -233,6 +264,18 @@ namespace Plan
       //! @return progress in percent (-1.0 if unable to compute)
       float
       progress(const IMC::ManeuverControlState* mcs);
+
+      //! Fill in plan timeline
+      //! @param[out] tl plan timeline filled in
+      void
+      fillTimeline(Timeline& tl);
+
+      //! Test if plan is linear
+      inline bool
+      isLinear(void) const
+      {
+        return !(m_properties & IMC::PlanStatistics::PRP_NONLINEAR);
+      }
 
       //! Graph nodes (a maneuver and its outgoing transitions)
       struct Node
@@ -254,10 +297,10 @@ namespace Plan
       Node* m_curr_node;
       //! Last maneuver id
       std::string m_last_id;
-      //! True if plan is sequential
-      bool m_sequential;
       //! Whether or not to compute plan's progress
       bool m_compute_progress;
+      //! Whether or not to compute fuel prediction
+      bool m_predict_fuel;
       //! Current progress if any
       float m_progress;
       //! Estimated required calibration time
@@ -265,9 +308,7 @@ namespace Plan
       //! Vector of message pointers to cycle through (sequential) plan
       std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Pointer to maneuver durations
-      Plans::Duration* m_durations;
-      //! Iterator to last maneuver with a valid duration
-      Duration::ManeuverDuration::const_iterator m_last_dur;
+      Plans::TimeProfile* m_profiles;
       //! Flag to signal that the plan is past the last maneuver with a valid duration
       bool m_beyond_dur;
       //! Schedule for actions to take during plan
@@ -280,6 +321,24 @@ namespace Plan
       Calibration* m_calib;
       //! Minimum calibration time
       uint16_t m_min_cal_time;
+      //! Component active time for fuel estimation
+      ComponentActiveTime m_cat;
+      //! Pointer to speed model for speed conversions
+      const Plans::SpeedModel* m_speed_model;
+      //! Pointer to power model for power conversions and estimations
+      const Plans::PowerModel* m_power_model;
+      //! Pointer to power conversion and estimation model
+      Parsers::Config* m_config;
+      //! Pointer to Fuel Prediction object
+      FuelPrediction* m_fpred;
+      //! Pointer to task
+      Tasks::Task* m_task;
+      //! Plan properties
+      unsigned m_properties;
+      //! Post Plan Statistics message
+      IMC::PlanStatistics m_post_stat;
+      //! Pointer to Run Time Statistics
+      RunTimeStatistics* m_rt_stat;
     };
   }
 }

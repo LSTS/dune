@@ -25,6 +25,9 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef ACTUATORS_SCRTV4_LISTENER_HPP_INCLUDED_
+#define ACTUATORS_SCRTV4_LISTENER_HPP_INCLUDED_
+
 // ISO C++ 98 headers.
 #include <cmath>
 
@@ -85,3 +88,5 @@ namespace Actuators
     };
   }
 }
+
+#endif

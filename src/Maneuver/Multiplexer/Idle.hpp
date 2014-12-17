@@ -31,29 +31,29 @@
 
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MuxedManeuver.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Maneuver
 {
   namespace Multiplexer
   {
-    // Export DLL Symbol.
-    class DUNE_DLL_SYM Idle;
-
     //! Idle maneuver
-    class Idle
+    class Idle: public MuxedManeuver<IMC::IdleManeuver, void>
     {
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       Idle(Maneuvers::Maneuver* task):
-        m_task(task)
+        MuxedManeuver<IMC::IdleManeuver, void>(task)
       { }
 
       //! Start maneuver function
       //! @param[in] maneuver idle maneuver message
       void
-      start(const IMC::IdleManeuver* maneuver)
+      onStart(const IMC::IdleManeuver* maneuver)
       {
         m_task->setControl(0); // maneuver does not enable any control
 
@@ -90,8 +90,6 @@ namespace Maneuver
       { }
 
     private:
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
       //! End time of the loiter
       double m_end_time;
     };

@@ -69,7 +69,6 @@ if(DUNE_PROGRAM_XGETTEXT)
     --keyword=DTR
     --keyword=DTR_RT
     --no-wrap
-    --indent
     -o dune.pot ${headers} ${sources} ${private_headers} ${private_sources} ${user_headers} ${user_sources} ${texts}
     DEPENDS i18n_texts
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/i18n)
@@ -85,7 +84,6 @@ if(DUNE_PROGRAM_MSGMERGE)
     add_custom_target(i18n_update_${locale_name}
       msgmerge
       --quiet
-      --indent
       --no-wrap
       --update
       --backup=off

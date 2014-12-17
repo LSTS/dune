@@ -144,7 +144,6 @@ namespace DUNE
       return buffer - start;
     }
 
-
     IridiumCommand::IridiumCommand()
     {
       msg_id = ID_IRIDIUMCMD;
@@ -322,7 +321,6 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(source, buffer, length);
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
-
 
       return buffer - start;
     }

@@ -45,7 +45,6 @@ const unsigned c_min_samples = 20;
 //! Discharge curve model names
 static const std::string c_model_names[] = {"Optimistic", "Pessimistic", "Zero", "Very Cold"};
 
-
 using namespace Monitors::FuelLevel;
 
 struct Arguments
@@ -141,6 +140,9 @@ void
 readArgs(char* file, Arguments& args)
 {
   Config cfg(file);
+
+  cfg.get("General", "Battery Capacity", "498.8", args.filter_args.full_capacity);
+
   std::string sec = "Monitors.FuelLevel";
 
   for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
@@ -148,7 +150,7 @@ readArgs(char* file, Arguments& args)
     cfg.get(sec, c_measure_names[i] + " Moving Average Window", "5", args.filter_args.avg_win[i]);
     cfg.get(sec, "Entity Label - " + c_measure_names[i], "", args.elb[i]);
   }
-  cfg.get(sec, "Batteries Energy Capacity", "498.8", args.filter_args.full_capacity);
+
   cfg.get(sec, "Minimum Samples For Estimate", "20", args.filter_args.min_samples);
   cfg.get(sec, "Capacity Decay Factor", "15", args.filter_args.decay_factor);
 
@@ -162,6 +164,7 @@ readArgs(char* file, Arguments& args)
 
   cfg.get(sec, "Acceptable Temperature", "15.0", args.filter_args.acceptable_temperature);
   cfg.get(sec, "Minimum Update Confidence", "95.0", args.filter_args.min_update_conf);
+  cfg.get(sec, "Update Estimate Anytime", "true", args.filter_args.update_anytime);
 
   cfg.get(sec, "OP Mode Labels", "", args.op_labels);
   cfg.get(sec, "OP Mode Values", "", args.op_values);
@@ -198,7 +201,7 @@ main(int32_t argc, char** argv)
   for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
     resolved_entities[i] = false;
 
-  std::set<EntityPower> m_epower;
+  EPMap m_epower;
 
   bool got_entities = false;
 
@@ -283,11 +286,7 @@ main(int32_t argc, char** argv)
         for (unsigned i = 0; i < m_args.est_list.size(); i++)
         {
           if (ent->label == m_args.est_list[i])
-          {
-            m_epower.insert(EntityPower(ent->id, m_args.est_power[i]));
-            std::cerr << "inserted " << ent->label << " with "
-                      << m_args.est_power[i] << std::endl;
-          }
+            m_epower.insert(EPPair(ent->id, EntityPower(m_args.est_power[i])));
         }
 
         if (m_args.est_list.size() < m_epower.size())
@@ -337,7 +336,7 @@ main(int32_t argc, char** argv)
           IMC::FuelLevel fl;
           fl.setSourceEntity(250);
           fl.setTimeStamp(msg->getTimeStamp());
-          
+
           m_fuel_filter->fillMessage(fl, m_args.op_labels, m_args.op_values);
 
           if (ptr != NULL)

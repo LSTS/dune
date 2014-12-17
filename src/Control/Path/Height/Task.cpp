@@ -44,14 +44,22 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! Vector for System Mapping.
+      typedef std::vector<uint32_t> Systems;
+      //! Vector for Entity Mapping.
+      typedef std::vector<uint32_t> Entities;
+
       struct Arguments
       {
 //        double tau_ss;
         double k_vr;
 //        double phi_sp_ss;
         double phi_h;
-        std::string p_control_ent;
-        std::string e_state_ent;
+        // Input filtering
+        // - Command source
+        std::vector<std::string> cmd_src;
+        // - EstimatedState source
+        std::vector<std::string> state_src;
       };
 
       struct Task: public Tasks::Periodic
@@ -62,16 +70,20 @@ namespace Control
         double m_airspeed;
         double m_target_z;
         bool m_first_run;
-        unsigned int m_pc_ent;
-        unsigned int m_es_ent;
+
+        //! List of systems and entities allowed to define a command.
+        Systems m_cmd_filtered_sys;
+        Entities m_cmd_filtered_ent;
+        //! List of systems and entities allowed to pass EstimatedState.
+        Systems m_state_filtered_sys;
+        Entities m_state_filtered_ent;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-          m_h_dot_cmd(0),
-          m_airspeed(0),
-          m_first_run(true),
-          m_pc_ent(0),
-          m_es_ent(0)
+          m_h_dot_cmd(0.0),
+          m_airspeed(0.0),
+          m_target_z(0.0),
+          m_first_run(true)
         {
           paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                       Tasks::Parameter::VISIBILITY_USER);
@@ -95,13 +107,13 @@ namespace Control
           .defaultValue("20")
           .description("Limit distance above and bellow desired height from which maximum control is used");
 
-          param("DesiredZ Entity", m_args.p_control_ent)
-          .defaultValue("Path Control")
-          .description("Only accepts DesiredZ from this entity");
+          param("DesiredZ Filter", m_args.cmd_src)
+          .defaultValue("")
+          .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass DesiredZ.");
 
-          param("EstimatedState Entity", m_args.e_state_ent)
-          .defaultValue("Autopilot")
-          .description("Only accepts EstimatedState from this entity");
+          param("EstimatedState Filter", m_args.state_src)
+          .defaultValue("")
+          .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass EstimatedState messages.");
 
           bind<IMC::IndicatedSpeed>(this);
           bind<IMC::DesiredZ>(this);
@@ -151,13 +163,161 @@ namespace Control
         void
         onEntityResolution(void)
         {
-          try
+          spew("Entity resolution.");
+
+          //==========================================
+          // Process the systems and entities allowed to define DesiredZ
+          //==========================================
+          uint32_t i_src;
+          m_cmd_filtered_sys.clear();
+          m_cmd_filtered_ent.clear();
+          for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
           {
-            m_pc_ent = resolveEntity(m_args.p_control_ent);
-            m_es_ent = resolveEntity(m_args.e_state_ent);
+            std::vector<std::string> parts;
+            String::split(m_args.cmd_src[i], ":", parts);
+            if (parts.size() < 1)
+              continue;
+
+            // Split systems and entities.
+            std::vector<std::string> systems;
+            String::split(parts[0], "+", systems);
+            std::vector<std::string> entities;
+            String::split(parts[1], "+", entities);
+            if (systems.size() == 0)
+              systems.resize(1);
+            if (entities.size() == 0)
+              entities.resize(1);
+
+            m_cmd_filtered_sys.resize(systems.size()*entities.size());
+            m_cmd_filtered_ent.resize(systems.size()*entities.size());
+            unsigned int i_sys_n = systems.size();
+            unsigned int i_ent_n = entities.size();
+            // Resolve systems id.
+            for (unsigned j = 0; j < i_sys_n; j++)
+            {
+              // Resolve entities id.
+              for (unsigned k = 0; k < i_ent_n; k++)
+              {
+                i_src = (j+1)*(k+1)-1;
+                // Resolve systems.
+                if (systems[j].empty())
+                {
+                  m_cmd_filtered_sys[i_src] = UINT_MAX;
+                  debug("DesiredZ filtering - Filter source system undefined");
+                }
+                else
+                {
+                  try
+                  {
+                    m_cmd_filtered_sys[i_src] = resolveSystemName(systems[j]);
+                    debug("DesiredZ filtering - System '%s' with ID: %d",
+                        systems[j].c_str(), resolveSystemName(systems[j]));
+                  }
+                  catch (...)
+                  {
+                    war("DesiredZ filtering - No system found with designation '%s'!", systems[j].c_str());
+                    i_sys_n--;
+                    j--;
+                  }
+                }
+                // Resolve entities.
+                if (entities[j].empty())
+                {
+                  m_cmd_filtered_ent[i_src] = UINT_MAX;
+                  debug("DesiredZ filtering - Filter entity system undefined");
+                }
+                else
+                {
+                  try
+                  {
+                    m_cmd_filtered_ent[i_src] = resolveEntity(entities[k]);
+                    debug("DesiredZ filtering - Entity '%s' with ID: %d",
+                        entities[k].c_str(), resolveEntity(entities[k]));
+                  }
+                  catch (...)
+                  {
+                    war("DesiredZ filtering - No entity found with designation '%s'!", entities[k].c_str());
+                    i_ent_n--;
+                    k--;
+                  }
+                }
+              }
+            }
           }
-          catch (std::runtime_error& e) {
-            err("%s", e.what());
+
+          //==========================================
+          //! Process the systems and entities allowed to pass the EstimatedState
+          //==========================================
+          m_state_filtered_sys.clear();
+          m_state_filtered_ent.clear();
+          for (unsigned int i = 0; i < m_args.state_src.size(); ++i)
+          {
+            std::vector<std::string> parts;
+            String::split(m_args.state_src[i], ":", parts);
+            if (parts.size() < 1)
+              continue;
+
+            // Split systems and entities.
+            std::vector<std::string> systems;
+            String::split(parts[0], "+", systems);
+            std::vector<std::string> entities;
+            String::split(parts[1], "+", entities);
+
+            m_state_filtered_ent.resize(systems.size()*entities.size());
+            m_state_filtered_sys.resize(systems.size()*entities.size());
+            unsigned int i_sys_n = systems.size();
+            unsigned int i_ent_n = entities.size();
+            // Resolve systems id.
+            for (unsigned j = 0; j < i_sys_n; j++)
+            {
+              // Resolve entities id.
+              for (unsigned k = 0; k < i_ent_n; k++)
+              {
+                i_src = (j+1)*(k+1)-1;
+                // Resolve systems.
+                if (systems[j].empty())
+                {
+                  m_state_filtered_sys[i_src] = UINT_MAX;
+                  debug("State filtering - Filter source system undefined");
+                }
+                else
+                {
+                  try
+                  {
+                    m_state_filtered_sys[i_src] = resolveSystemName(systems[j]);
+                    debug("State filtering - System '%s' with ID: %d",
+                        systems[j].c_str(), resolveSystemName(systems[j]));
+                  }
+                  catch (...)
+                  {
+                    war("State filtering - No system found with designation '%s'!", systems[j].c_str());
+                    i_sys_n--;
+                    j--;
+                  }
+                }
+                // Resolve entities.
+                if (entities[j].empty())
+                {
+                  m_state_filtered_ent[i_src] = UINT_MAX;
+                  debug("State filtering - Filter entity system undefined");
+                }
+                else
+                {
+                  try
+                  {
+                    m_state_filtered_ent[i_src] = resolveEntity(entities[k]);
+                    debug("State filtering - Entity '%s' with ID: %d",
+                        entities[k].c_str(), resolveEntity(entities[k]));
+                  }
+                  catch (...)
+                  {
+                    war("State filtering - No entity found with designation '%s'!", entities[k].c_str());
+                    i_ent_n--;
+                    k--;
+                  }
+                }
+              }
+            }
           }
         }
 
@@ -170,8 +330,29 @@ namespace Control
         void
         consume(const IMC::DesiredZ* desired_z)
         {
-          if (m_pc_ent != desired_z->getSourceEntity())
+          // Filter command by systems and entities.
+          bool matched = true;
+          if (m_cmd_filtered_sys.size() > 0)
+          {
+            matched = false;
+            std::vector<uint32_t>::iterator itr_sys = m_cmd_filtered_sys.begin();
+            std::vector<uint32_t>::iterator itr_ent = m_cmd_filtered_ent.begin();
+            for (; itr_sys != m_cmd_filtered_sys.end(); ++itr_sys)
+            {
+              if ((*itr_sys == desired_z->getSource() || *itr_sys == UINT_MAX) &&
+                  (*itr_ent == desired_z->getSourceEntity() || *itr_ent == UINT_MAX))
+                matched = true;
+              ++itr_ent;
+            }
+          }
+          // This system and entity are not listed to be passed.
+          if (!matched)
+          {
+            trace("DesiredZ rejected (received from system '%s' and entity '%s')",
+                resolveSystemId(desired_z->getSource()),
+                resolveEntity(desired_z->getSourceEntity()).c_str());
             return;
+          }
 
           m_target_z = desired_z->value;
         }
@@ -182,8 +363,29 @@ namespace Control
           if (!isActive())
             return;
 
-          if (m_es_ent != state->getSourceEntity())
+          // Filter EstimatedState by systems and entities.
+          bool matched = true;
+          if (m_state_filtered_sys.size() > 0)
+          {
+            matched = false;
+            std::vector<uint32_t>::iterator itr_sys = m_state_filtered_sys.begin();
+            std::vector<uint32_t>::iterator itr_ent = m_state_filtered_ent.begin();
+            for (; itr_sys != m_state_filtered_sys.end(); ++itr_sys)
+            {
+              if ((*itr_sys == state->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
+                  (*itr_ent == state->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
+                matched = true;
+              ++itr_ent;
+            }
+          }
+          // This system and entity are not listed to be passed.
+          if (!matched)
+          {
+            trace("EstimatedState rejected (from system '%s' and entity '%s')",
+                resolveSystemId(state->getSource()),
+                resolveEntity(state->getSourceEntity()).c_str());
             return;
+          }
 
           if (m_first_run)
           {

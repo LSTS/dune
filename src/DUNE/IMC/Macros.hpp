@@ -26,6 +26,8 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
+// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+//***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
 #define DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -40,18 +42,12 @@
 #define DUNE_IMC_QUERYENTITYINFO 4
 //! EntityList identification number.
 #define DUNE_IMC_ENTITYLIST 5
-//! EntityControl identification number.
-#define DUNE_IMC_ENTITYCONTROL 6
 //! CpuUsage identification number.
 #define DUNE_IMC_CPUUSAGE 7
 //! TransportBindings identification number.
 #define DUNE_IMC_TRANSPORTBINDINGS 8
 //! RestartSystem identification number.
 #define DUNE_IMC_RESTARTSYSTEM 9
-//! Parameter identification number.
-#define DUNE_IMC_PARAMETER 10
-//! ParameterControl identification number.
-#define DUNE_IMC_PARAMETERCONTROL 11
 //! DevCalibrationControl identification number.
 #define DUNE_IMC_DEVCALIBRATIONCONTROL 12
 //! DevCalibrationState identification number.
@@ -120,26 +116,12 @@
 #define DUNE_IMC_SYSTEMGROUP 181
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
-//! LblDetection identification number.
-#define DUNE_IMC_LBLDETECTION 201
 //! LblBeacon identification number.
 #define DUNE_IMC_LBLBEACON 202
 //! LblConfig identification number.
 #define DUNE_IMC_LBLCONFIG 203
-//! AcousticRange identification number.
-#define DUNE_IMC_ACOUSTICRANGE 204
-//! AcousticRangeReply identification number.
-#define DUNE_IMC_ACOUSTICRANGEREPLY 205
 //! AcousticMessage identification number.
 #define DUNE_IMC_ACOUSTICMESSAGE 206
-//! AcousticDiagnostic identification number.
-#define DUNE_IMC_ACOUSTICDIAGNOSTIC 207
-//! AcousticNoise identification number.
-#define DUNE_IMC_ACOUSTICNOISE 208
-//! AcousticPing identification number.
-#define DUNE_IMC_ACOUSTICPING 209
-//! AcousticPingReply identification number.
-#define DUNE_IMC_ACOUSTICPINGREPLY 210
 //! AcousticOperation identification number.
 #define DUNE_IMC_ACOUSTICOPERATION 211
 //! AcousticSystemsQuery identification number.
@@ -196,8 +178,6 @@
 #define DUNE_IMC_DEVDATATEXT 273
 //! DevDataBinary identification number.
 #define DUNE_IMC_DEVDATABINARY 274
-//! SonarConfig identification number.
-#define DUNE_IMC_SONARCONFIG 275
 //! SonarData identification number.
 #define DUNE_IMC_SONARDATA 276
 //! Pulse identification number.
@@ -216,6 +196,12 @@
 #define DUNE_IMC_BEAMCONFIG 283
 //! DataSanity identification number.
 #define DUNE_IMC_DATASANITY 284
+//! RhodamineDye identification number.
+#define DUNE_IMC_RHODAMINEDYE 285
+//! CrudeOil identification number.
+#define DUNE_IMC_CRUDEOIL 286
+//! FineOil identification number.
+#define DUNE_IMC_FINEOIL 287
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -268,8 +254,6 @@
 #define DUNE_IMC_LBLRANGEACCEPTANCE 357
 //! DvlRejection identification number.
 #define DUNE_IMC_DVLREJECTION 358
-//! NavigationReset identification number.
-#define DUNE_IMC_NAVIGATIONRESET 359
 //! LblEstimate identification number.
 #define DUNE_IMC_LBLESTIMATE 360
 //! AlignmentState identification number.
@@ -424,6 +408,8 @@
 #define DUNE_IMC_PLANGENERATION 562
 //! LeaderState identification number.
 #define DUNE_IMC_LEADERSTATE 563
+//! PlanStatistics identification number.
+#define DUNE_IMC_PLANSTATISTICS 564
 //! ReportedState identification number.
 #define DUNE_IMC_REPORTEDSTATE 600
 //! RemoteSensorInfo identification number.
@@ -452,10 +438,6 @@
 #define DUNE_IMC_TREXPLAN 658
 //! Event identification number.
 #define DUNE_IMC_EVENT 660
-//! VideoData identification number.
-#define DUNE_IMC_VIDEODATA 700
-//! RawImage identification number.
-#define DUNE_IMC_RAWIMAGE 701
 //! CompressedImage identification number.
 #define DUNE_IMC_COMPRESSEDIMAGE 702
 //! ImageTxSettings identification number.
@@ -508,5 +490,11 @@
 #define DUNE_IMC_NEPTUSBLOB 888
 //! Aborted identification number.
 #define DUNE_IMC_ABORTED 889
+//! UsblAngles identification number.
+#define DUNE_IMC_USBLANGLES 890
+//! UsblPosition identification number.
+#define DUNE_IMC_USBLPOSITION 891
+//! UsblFix identification number.
+#define DUNE_IMC_USBLFIX 892
 
 #endif

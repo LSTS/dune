@@ -61,8 +61,6 @@ namespace DUNE
       m_args(args),
       m_active(false)
     {
-      m_cparcel.setSourceEntity(m_args->eid);
-
       m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
                               m_args->safe_pitch, m_args->slope_hyst);
 
@@ -154,8 +152,7 @@ namespace DUNE
       if (tobus)
       {
         zed.setTimeStamp();
-        zed.setSourceEntity(m_args->task->getEntityId());
-        dispatch(zed, Tasks::DF_KEEP_TIME | Tasks::DF_KEEP_SRC_EID);
+        m_args->entity->dispatch(zed, Tasks::DF_KEEP_TIME);
       }
     }
 
@@ -182,7 +179,7 @@ namespace DUNE
         m_last_run = Time::Clock::get();
 
         // dispatch debug message
-        dispatch(m_cparcel, Tasks::DF_KEEP_TIME | Tasks::DF_KEEP_SRC_EID);
+        m_args->entity->dispatch(m_cparcel, Tasks::DF_KEEP_TIME);
       }
     }
 
@@ -578,9 +575,8 @@ namespace DUNE
     BottomTracker::brake(bool start) const
     {
       IMC::Brake brk;
-      brk.setSourceEntity(m_args->eid);
       brk.op = start ? IMC::Brake::OP_START : IMC::Brake::OP_STOP;
-      dispatch(brk, Tasks::DF_KEEP_SRC_EID | Tasks::DF_LOOP_BACK);
+      m_args->entity->dispatch(brk, Tasks::DF_LOOP_BACK);
 
       if (start)
         info(DTR("Started braking"));
@@ -595,7 +591,6 @@ namespace DUNE
       float depth_at_slope = m_estate.depth - m_sdata->getFRange() * sin(m_estate.theta);
 
       IMC::DesiredZ new_ddepth;
-      new_ddepth.setSourceEntity(m_args->eid);
       new_ddepth.z_units = IMC::Z_DEPTH;
 
       if (m_z_ref.z_units == IMC::Z_ALTITUDE)
@@ -603,7 +598,7 @@ namespace DUNE
       else
         new_ddepth.value = std::max((float)0.0, depth_at_slope - m_args->alt_tol);
 
-      dispatch(new_ddepth, Tasks::DF_KEEP_SRC_EID);
+      m_args->entity->dispatch(new_ddepth);
 
       debug(String::str("dispatching new depth: %.2f", new_ddepth.value));
     }
@@ -612,11 +607,10 @@ namespace DUNE
     BottomTracker::dispatchLimitDepth(void) const
     {
       IMC::DesiredZ limit_depth;
-      limit_depth.setSourceEntity(m_args->eid);
       limit_depth.value = m_args->depth_limit;
       limit_depth.z_units = IMC::Z_DEPTH;
 
-      dispatch(limit_depth, Tasks::DF_KEEP_SRC_EID);
+      m_args->entity->dispatch(limit_depth);
 
       debug(String::str("dispatching limit depth: %.2f", limit_depth.value));
     }
@@ -625,9 +619,8 @@ namespace DUNE
     BottomTracker::dispatchSameZ(void) const
     {
       IMC::DesiredZ same_z = m_z_ref;
-      same_z.setSourceEntity(m_args->eid);
 
-      dispatch(same_z, Tasks::DF_KEEP_SRC_EID);
+      m_args->entity->dispatch(same_z);
 
       debug(String::str("dispatching same z ref: %.2f", same_z.value));
     }
@@ -636,11 +629,10 @@ namespace DUNE
     BottomTracker::dispatchAltitude(void) const
     {
       IMC::DesiredZ zed;
-      zed.setSourceEntity(m_args->eid);
       zed.value = m_args->alt_tol;
       zed.z_units = IMC::Z_ALTITUDE;
 
-      dispatch(zed, Tasks::DF_KEEP_SRC_EID);
+      m_args->entity->dispatch(zed);
 
       debug(String::str("dispatching altitude ref: %.2f", zed.value));
     }
@@ -649,11 +641,10 @@ namespace DUNE
     BottomTracker::dispatchAdmAltitude(void) const
     {
       IMC::DesiredZ zed;
-      zed.setSourceEntity(m_args->eid);
       zed.value = m_args->adm_alt;
       zed.z_units = IMC::Z_ALTITUDE;
 
-      dispatch(zed, Tasks::DF_KEEP_SRC_EID);
+      m_args->entity->dispatch(zed);
     }
 
     bool
@@ -668,12 +659,6 @@ namespace DUNE
         m_valid_alt = false;
 
       return m_valid_alt;
-    }
-
-    inline void
-    BottomTracker::dispatch(IMC::Message& msg, unsigned int flags) const
-    {
-      m_args->task->dispatch(msg, flags);
     }
 
     void

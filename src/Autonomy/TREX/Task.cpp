@@ -76,8 +76,10 @@ namespace Autonomy
       bool m_trex_control;
 
       Task(const std::string& name, Tasks::Context& ctx) :
-          DUNE::Tasks::Task(name, ctx), m_last_heartbeat(Time::Clock::get()), m_trex_connected(
-              false), m_trex_control(false)
+        DUNE::Tasks::Task(name, ctx),
+        m_last_heartbeat(Time::Clock::get()),
+        m_trex_connected(false),
+        m_trex_control(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -107,7 +109,6 @@ namespace Autonomy
         bind<IMC::TrexOperation>(this);
         bind<IMC::Abort>(this);
         bind<IMC::PlanControl>(this);
-
       }
 
       void
@@ -130,8 +131,8 @@ namespace Autonomy
         {
           std::stringstream sstm;
           sstm
-              << String::str(DTR("TREX disconnected for more than %d seconds"),
-                             (int)latency);
+          << String::str(DTR("TREX disconnected for more than %d seconds"),
+                         (int)latency);
           setEntityState(IMC::EntityState::ESTA_ERROR, sstm.str());
           m_trex_connected = false;
           if(isActive())
@@ -178,7 +179,7 @@ namespace Autonomy
 
         // if the vehicle is in error mode, T-REX payload becomes inactive
         if (msg->op_mode == IMC::VehicleState::VS_ERROR)
-        	requestDeactivation();
+          requestDeactivation();
       }
 
       void
@@ -187,7 +188,7 @@ namespace Autonomy
         m_last_plan_state = *msg;
 
         m_trex_control = msg->state == IMC::PlanControlState::PCS_EXECUTING
-            && msg->plan_id == "trex_plan";
+        && msg->plan_id == "trex_plan";
       }
 
       void
@@ -206,7 +207,7 @@ namespace Autonomy
         if (msg->type == PlanControl::PC_REQUEST && msg->op == PlanControl::PC_STOP)
         {
           m_trex_control = m_last_plan_state.plan_id == "trex_plan"
-                      && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+          && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
 
           if (m_trex_control)
           {
@@ -230,21 +231,21 @@ namespace Autonomy
             }
             break;
           case IMC::TrexOperation::OP_REQUEST_PLAN:
-          {
-            war(DTR("Restarting auxiliary CPU..."));
-            resetAuxCpu();
-            break;
-          }
+            {
+              war(DTR("Restarting auxiliary CPU..."));
+              resetAuxCpu();
+              break;
+            }
           case IMC::TrexOperation::OP_REPORT_PLAN:
-          {
-            int i = system("services trex stop 1,2 > /dev/null &");
-            if (i == 0)
-              inf(DTR("T-REX has been stopped."));
-            else
-              war(DTR("Could not stop T-REX: %d."), i);
+            {
+              int i = system("services trex stop 1,2 > /dev/null &");
+              if (i == 0)
+                inf(DTR("T-REX has been stopped."));
+              else
+                war(DTR("Could not stop T-REX: %d."), i);
 
-            break;
-          }
+              break;
+            }
           default:
             break;
         }
@@ -264,8 +265,8 @@ namespace Autonomy
 
         if (m_args.aux_pwr_channel != "None")
         {
-        	m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_ON;
-        	dispatch(m_pwr_cpu);
+          m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(m_pwr_cpu);
         }
       }
 
@@ -323,16 +324,16 @@ namespace Autonomy
       checkState(void)
       {
         m_trex_control = m_last_plan_state.plan_id == "trex_plan"
-            && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
+        && m_last_plan_state.state == IMC::PlanControlState::PCS_EXECUTING;
 
         if (m_trex_control && !isActive())
         {
-            stopExecution();
+          stopExecution();
         }
         else if (isActive() && m_trex_connected
-            && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
+                 && m_last_vehicle_state.op_mode == IMC::VehicleState::VS_SERVICE)
         {
-            startExecution();
+          startExecution();
         }
         else if (isActive() && !m_trex_connected && m_args.aux_pwr_channel != "None")
         {
@@ -343,19 +344,20 @@ namespace Autonomy
       }
 
       void
-      resetAuxCpu(void) {
+      resetAuxCpu(void)
+      {
         if (m_args.aux_pwr_channel == "None")
         {
           return;
         }
-    	  // Send turn off signal
-    	  m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_OFF;
-    	  dispatch(m_pwr_cpu);
+        // Send turn off signal
+        m_pwr_cpu.op = PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(m_pwr_cpu);
 
-    	  // Schedule turn on signal for current time + 2 seconds
-    	  m_pwr_cpu.op = PowerChannelControl::PCC_OP_SCHED_ON;
-    	  m_pwr_cpu.sched_time = Clock::getSinceEpoch() + 2;
-    	  dispatch(m_pwr_cpu);
+        // Schedule turn on signal for current time + 2 seconds
+        m_pwr_cpu.op = PowerChannelControl::PCC_OP_SCHED_ON;
+        m_pwr_cpu.sched_time = Clock::getSinceEpoch() + 2;
+        dispatch(m_pwr_cpu);
       }
 
       void
