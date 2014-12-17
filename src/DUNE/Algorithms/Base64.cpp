@@ -52,14 +52,13 @@ namespace DUNE
       std::string
       Base64::encode(const char* str, size_t len)
       {
-        return encode(reinterpret_cast<const unsigned char*>(str), sizeof(len));
+        return encode(reinterpret_cast<const unsigned char*>(str), len);
       }
       
       //! Encode a sequence of bytes in Base64.
       std::string
       Base64::encode(const unsigned char* bytes, size_t len)
       {
-        //return encode((const char*)bytes, len);
         std::string msg;
         int i = 0;
         int j = 0;
@@ -76,7 +75,7 @@ namespace DUNE
             quad[2] = ((triple[1] & 0x0f) << 2) + ((triple[2] & 0xc0) >> 6);
             quad[3] = triple[2] & 0x3f;
 
-            for(i = 0; (i <4) ; i++)
+            for(i = 0; (i < 4) ; i++)
               msg += b64_msg[quad[i]];
             i = 0;
           }
@@ -112,23 +111,19 @@ namespace DUNE
       std::string
       Base64::decode(const char* str, size_t len)
       {
-        return encode(reinterpret_cast<const unsigned char*>(str), sizeof(len));
-        //return "decode";
+        return encode(reinterpret_cast<const unsigned char*>(str), len);
       }
       
       //! Decode a sequence of bytes in Base64.
       std::string
       Base64::decode(const unsigned char* bytes, size_t len){
-        //return "decode";
-        //const char n_msg = reinterpret_cast<char*>(bytes);
-        //return decode(n_msg, sizeof(n_msg));
         if (len % 4 != 0) return NULL;
         size_t msg_len;
         msg_len = len / 4 * 3;
         if (bytes[len - 1] == '=') (msg_len)--;
         if (bytes[len - 2] == '=') (msg_len)--;
 
-        unsigned char *msg = (unsigned char*)malloc(msg_len);
+        unsigned char* msg = (unsigned char*)malloc(msg_len);
         if (msg == NULL) return NULL;
 
         for (unsigned int i = 0, j = 0; i < len;)
