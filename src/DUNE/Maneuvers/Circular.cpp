@@ -43,17 +43,26 @@ namespace DUNE
       if (Math::trimValueMod(radius, min_radius, radius))
         task->war(DTR("forcing minimum radius of %.1f"), min_radius);
 
-      *this = Circular(task, maneuver->lat, maneuver->lon,
-                       radius, maneuver->z, maneuver->z_units,
-                       maneuver->speed, maneuver->speed_units, maneuver->direction);
+      init(task, maneuver->lat, maneuver->lon,
+           radius, maneuver->z, maneuver->z_units,
+           maneuver->speed, maneuver->speed_units, maneuver->direction);
     }
 
     Circular::Circular(Maneuvers::Maneuver* task, double lat, double lon,
                        float radius, float z, uint8_t z_units,
                        float speed, uint8_t speed_units, uint8_t direction):
-      AbstractLoiter(task),
-      m_loitering(false)
+      AbstractLoiter(task)
     {
+      init(task, lat, lon, radius, z, z_units, speed, speed_units, direction);
+    }
+
+    void
+    Circular::init(Maneuvers::Maneuver* task, double lat, double lon,
+                   float radius, float z, uint8_t z_units,
+                   float speed, uint8_t speed_units, uint8_t direction)
+    {
+      m_loitering = false;
+
       task->setControl(IMC::CL_PATH);
 
       IMC::DesiredPath path;
@@ -84,7 +93,7 @@ namespace DUNE
     }
 
     bool
-    Circular::isLoitering(void)
+    Circular::isLoitering(void) const
     {
       return m_loitering;
     }

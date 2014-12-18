@@ -72,10 +72,25 @@ namespace DUNE
       onPathControlState(const IMC::PathControlState* pcs);
 
       //! Check if loitering
+      //! @return true if loitering, false otherwise
       bool
-      isLoitering(void);
+      isLoitering(void) const;
 
     private:
+      //! @param[in] task pointer to task object (debug and inf)
+      //! @param[in] lat latitude of maneuver
+      //! @param[in] lon longitude of maneuver
+      //! @param[in] radius circular radius
+      //! @param[in] z zed reference for this maneuver
+      //! @param[in] z_units units of the zed reference
+      //! @param[in] speed speed reference for maneuver
+      //! @param[in] speed_units speed units of the reference
+      //! @param[in] direction loiter direction according to IMC::Loiter
+      void 
+      init(Maneuvers::Maneuver* task, double lat, double lon,
+           float radius, float z, uint8_t z_units,
+           float speed, uint8_t speed_units, uint8_t direction);
+
       //! Loitering state flag
       bool m_loitering;
     };
