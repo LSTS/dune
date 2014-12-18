@@ -40,6 +40,20 @@ namespace DUNE
       static const std::string b64_msg = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                          "abcdefghijklmnopqrstuvwxyz"
                                          "0123456789+/";
+      static const unsigned char b64_de[] = 
+      {
+        66,66,66,66,66,66,66,66,66,64,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+        66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,62,66,66,66,63,52,53,
+        54,55,56,57,58,59,60,61,66,66,66,65,66,66,66, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,66,66,66,66,66,66,26,27,28,
+        29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,66,66,
+        66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+        66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+        66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+        66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+        66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
+        66,66,66,66,66,66
+      };
 
       //! Encode a sequence of bytes in Base64.
       std::string
@@ -118,7 +132,8 @@ namespace DUNE
       std::string
       Base64::decode(const unsigned char* bytes, size_t len){
         if (len % 4 != 0) return NULL;
-        size_t msg_len;
+        size_t msg_len = 0;
+
         msg_len = len / 4 * 3;
         if (bytes[len - 1] == '=') (msg_len)--;
         if (bytes[len - 2] == '=') (msg_len)--;
@@ -128,10 +143,10 @@ namespace DUNE
 
         for (unsigned int i = 0, j = 0; i < len;)
         {
-            uint32_t sextet_a = bytes[i] == '=' ? 0 & i++ : b64_msg[bytes[i++]];
-            uint32_t sextet_b = bytes[i] == '=' ? 0 & i++ : b64_msg[bytes[i++]];
-            uint32_t sextet_c = bytes[i] == '=' ? 0 & i++ : b64_msg[bytes[i++]];
-            uint32_t sextet_d = bytes[i] == '=' ? 0 & i++ : b64_msg[bytes[i++]];
+            uint32_t sextet_a = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
+            uint32_t sextet_b = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
+            uint32_t sextet_c = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
+            uint32_t sextet_d = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
 
             uint32_t triple = (sextet_a << 3 * 6)
             + (sextet_b << 2 * 6)
