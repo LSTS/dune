@@ -72,7 +72,7 @@ namespace DUNE
       //! Are we loiterting already?
       //! @return true if loitering, false otherwise.
       virtual bool
-      isLoitering(void) = 0;
+      isLoitering(void) const = 0;
 
     protected:
       //! Pointer to task
