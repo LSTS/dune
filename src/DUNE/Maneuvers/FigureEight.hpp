@@ -60,7 +60,7 @@ namespace DUNE
         //! Units of the zed reference.
         uint8_t z_units;
         //! Speed reference for maneuver.
-        float speed; 
+        float speed;
         //! Speed units of the reference.
         uint8_t speed_units;
         //! Bearing angle made by the line connecting both centers.
@@ -132,9 +132,52 @@ namespace DUNE
         FE_SWITCHING
       };
 
+      //! Arc progress in loiter
+      struct ArcProgress
+      {
+        //! True if valid, false otherwise
+        bool valid;
+        //! Last value of the arc in radians
+        float last_value;
+        //! Amount of arc travelled in radians
+        float accum;
+
+        ArcProgress(void):
+          valid(false),
+          accum(0.0)
+        { };
+
+        void
+        invalidate(void)
+        {
+          valid = false;
+        }
+
+        void
+        update(float value)
+        {
+          if (!valid)
+          {
+            valid = true;
+            accum = 0.0f;
+            last_value = value;
+            return;
+          }
+
+          accum += value - last_value;
+          last_value = value;
+        }
+
+        inline float
+        get(void) const
+        {
+          return accum;
+        }
+      };
+
       //! Initialize figure eight behavior
       //! @param[in] prop pointer to required properties to perform behavior
-      void 
+      void
       init(Properties* prop);
 
       //! Compute loop centers
@@ -153,6 +196,14 @@ namespace DUNE
       void
       dispatchPath(const EightLoop* loop);
 
+      //! Compute the angle between loiter center and the vehicle
+      double
+      computeRelativeBearing(const IMC::EstimatedState* msg);
+
+      //! Compute the distance between the vehicle and the exit point
+      float
+      computeDistanceToExit(const IMC::EstimatedState* msg);
+
       //! Behavior properties
       Properties m_prop;
       //! Left loop
@@ -163,6 +214,8 @@ namespace DUNE
       EightLoop* m_loop;
       //! State of the behavior
       FigureEightState m_state;
+      //! Arc progress
+      ArcProgress m_arc;
     };
   }
 }

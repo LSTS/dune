@@ -27,7 +27,7 @@
 
 // DUNE headers.
 #include <DUNE/Maneuvers/FigureEight.hpp>
-#include <DUNE/Coordinates/WGS84.hpp>
+#include <DUNE/Coordinates.hpp>
 
 namespace DUNE
 {
@@ -43,7 +43,7 @@ namespace DUNE
     static const float c_min_dist = 5.0f;
 
     //! Default constructor.
-    FigureEigth::FigureEight(const IMC::Loiter* maneuver, Maneuvers::Maneuver* task,
+    FigureEight::FigureEight(const IMC::Loiter* maneuver, Maneuvers::Maneuver* task,
                              float min_radius):
       AbstractLoiter(task)
     {
@@ -76,7 +76,7 @@ namespace DUNE
     void
     FigureEight::init(Properties* prop)
     {
-      m_prop = prop;
+      m_prop = *prop;
 
       if (m_prop.length < m_prop.radius * 2.0)
         m_prop.length = m_prop.radius * 2.0;
@@ -90,7 +90,9 @@ namespace DUNE
       // start on the left
       m_loop = &m_left;
 
-      task->setControl(IMC::CL_PATH);
+      m_state = FE_INIT;
+
+      m_task->setControl(IMC::CL_PATH);
 
       dispatchPath(m_loop);
     }
@@ -105,9 +107,9 @@ namespace DUNE
       m_right.center_lon = m_prop.lon;
 
       displace(m_left.center_lat, m_left.center_lon,
-               -(m_prop.bearing + Math::c_pi), m_prop.length / 2.0);
+               m_prop.bearing + Math::c_pi, m_prop.length / 2.0);
       displace(m_right.center_lat, m_right.center_lon,
-               -m_prop.bearing, m_prop.length / 2.0);
+               m_prop.bearing, m_prop.length / 2.0);
     }
 
     void
@@ -120,9 +122,9 @@ namespace DUNE
       m_right.exit_lon = m_right.center_lon;
 
       displace(m_left.exit_lat, m_left.exit_lon,
-               -(m_prop.bearing + c_exit_offset), m_prop.radius);
+               m_prop.bearing - c_exit_offset, m_prop.radius);
       displace(m_right.exit_lat, m_right.exit_lon,
-               -(m_prop.bearing + Math::c_pi + c_exit_offset), m_prop.radius);
+               m_prop.bearing + Math::c_pi + c_exit_offset, m_prop.radius);
     }
 
     void
@@ -134,9 +136,9 @@ namespace DUNE
 
       Coordinates::displace(point, angle, range);
 
-      double dummy;
+      double dummy = 0.0;
       Coordinates::WGS84::displace(point.y, point.x, 0.0,
-                                   lat, lon, dummy);
+                                   &lat, &lon, &dummy);
     }
 
     void
@@ -160,6 +162,33 @@ namespace DUNE
       m_task->dispatch(path);
     }
 
+    double
+    FigureEight::computeRelativeBearing(const IMC::EstimatedState* msg)
+    {
+      Point center;
+
+      Coordinates::WGS84::displacement(msg->lat, msg->lon, 0.0,
+                                       m_loop->center_lat, m_loop->center_lon, 0.0,
+                                       &center.y, &center.x);
+
+      Point vehicle;
+      vehicle.x = msg->y;
+      vehicle.y = msg->x;
+
+      return Coordinates::getBearing(center, vehicle);
+    }
+
+    float
+    FigureEight::computeDistanceToExit(const IMC::EstimatedState* msg)
+    {
+      double lat;
+      double lon;
+      Coordinates::toWGS84(*msg, lat, lon);
+
+      return Coordinates::WGS84::distance(lat, lon, 0.0,
+                                          m_loop->exit_lat, m_loop->exit_lon, 0.0);
+    }
+
     void
     FigureEight::onPathControlState(const IMC::PathControlState* pcs)
     {
@@ -168,7 +197,10 @@ namespace DUNE
         case FE_INIT:
         case FE_SWITCHING:
           if (pcs->flags & IMC::PathControlState::FL_LOITERING)
+          {
             m_state = FE_CIRCLING;
+            m_arc.invalidate();
+          }
           break;
         default:
           break;
@@ -178,27 +210,36 @@ namespace DUNE
     void
     FigureEight::onEstimatedState(const IMC::EstimatedState* msg)
     {
-      if (m_state == FE_EXITING)
+      switch (m_state)
       {
-        double lat;
-        double lon;
-        Coordinates::toWGS84(*msg, lat, lon);
+        case FE_EXITING:
+          {
+            float dist = computeDistanceToExit(msg);
 
-        double dist = Coordinates::WGS84::distance(lat, lon, 0.0,
-                                                   m_loop->exit_lat, m_loop->exit_lon, 0.0);
+            m_arc.update(computeRelativeBearing(msg));
 
-        if (dist < c_min_dist)
-        {
-          if (m_loop == &m_left)
-            m_loop = &m_right;
-          else
-            m_loop = &m_left;
+            if ((dist < c_min_dist) || (m_arc.get() > c_max_arc))
+            {
+              if (m_loop == &m_left)
+                m_loop = &m_right;
+              else
+                m_loop = &m_left;
 
-          // dispatch path to other center
-          dispatchPath(m_loop);
+              // dispatch path to other center
+              dispatchPath(m_loop);
 
-          m_state = FE_SWITCHING;
-        }
+              m_state = FE_SWITCHING;
+            }
+          }
+          break;
+        case FE_CIRCLING:
+          m_arc.update(computeRelativeBearing(msg));
+
+          if (std::fabs(m_arc.get()) > c_min_arc)
+            m_state = FE_EXITING;
+          break;
+        default:
+          break;
       }
     }
 
