@@ -25,6 +25,9 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// ISO C++ headers.
+#include <cmath>
+
 // DUNE headers.
 #include <DUNE/Maneuvers/FigureEight.hpp>
 #include <DUNE/Coordinates.hpp>
@@ -37,8 +40,6 @@ namespace DUNE
     static const float c_min_arc = Math::c_pi;
     //! Maximum arc to travel in radians
     static const float c_max_arc = 3.0f * Math::c_pi;
-    //! Offset arc for exit point of loop in radians
-    static const float c_exit_offset = Math::c_pi / 6.0f;
     //! Minimum distance to exit point of loiter
     static const float c_min_dist = 5.0f;
 
@@ -121,10 +122,13 @@ namespace DUNE
       m_right.exit_lat = m_right.center_lat;
       m_right.exit_lon = m_right.center_lon;
 
+      // Compute exit offset in radians
+      double exit_offset = std::acos(m_prop.radius / (m_prop.length / 2.0));
+
       displace(m_left.exit_lat, m_left.exit_lon,
-               m_prop.bearing - c_exit_offset, m_prop.radius);
+               m_prop.bearing - exit_offset, m_prop.radius);
       displace(m_right.exit_lat, m_right.exit_lon,
-               m_prop.bearing + Math::c_pi + c_exit_offset, m_prop.radius);
+               m_prop.bearing + Math::c_pi + exit_offset, m_prop.radius);
     }
 
     void
@@ -142,9 +146,20 @@ namespace DUNE
     }
 
     void
-    FigureEight::dispatchPath(const EightLoop* loop)
+    FigureEight::dispatchPath(const EightLoop* loop, bool set_start)
     {
       IMC::DesiredPath path;
+      path.flags = 0;
+
+      if (set_start)
+      {
+        EightLoop* other_loop = (loop == &m_left) ? &m_right : &m_left;
+        path.start_lat = other_loop->exit_lat;
+        path.start_lon = other_loop->exit_lon;
+
+        path.flags |= IMC::DesiredPath::FL_START;
+      }
+
       path.end_lat = loop->center_lat;
       path.end_lon = loop->center_lon;
       path.end_z = m_prop.z;
@@ -152,9 +167,7 @@ namespace DUNE
       path.lradius = m_prop.radius;
 
       if (!loop->direction)
-        path.flags = IMC::DesiredPath::FL_CCLOCKW;
-      else
-        path.flags = 0;
+        path.flags |= IMC::DesiredPath::FL_CCLOCKW;
 
       path.speed = m_prop.speed;
       path.speed_units = m_prop.speed_units;
@@ -226,7 +239,7 @@ namespace DUNE
                 m_loop = &m_left;
 
               // dispatch path to other center
-              dispatchPath(m_loop);
+              dispatchPath(m_loop, true);
 
               m_state = FE_SWITCHING;
             }

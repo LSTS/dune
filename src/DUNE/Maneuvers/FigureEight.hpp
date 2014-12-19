@@ -194,7 +194,7 @@ namespace DUNE
 
       //! Dispatch desired path to a loop
       void
-      dispatchPath(const EightLoop* loop);
+      dispatchPath(const EightLoop* loop, bool set_start = false);
 
       //! Compute the angle between loiter center and the vehicle
       double
