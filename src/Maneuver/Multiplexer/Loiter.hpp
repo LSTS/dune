@@ -54,7 +54,9 @@ namespace Maneuver
       enum LoiterTypes
       {
         //! Circular loiter
-        LTYPE_CIRCULAR = 0
+        LTYPE_CIRCULAR = 0,
+        //! Figure eight loiter
+        LTYPE_FIGURE_EIGHT
       };
 
       //! Default constructor.
@@ -81,6 +83,8 @@ namespace Maneuver
           case IMC::Loiter::LT_DEFAULT:
           case IMC::Loiter::LT_CIRCULAR:
             return LTYPE_CIRCULAR;
+          case IMC::Loiter::LT_EIGHT:
+            return LTYPE_FIGURE_EIGHT;
           default:
             m_task->err("Specified loiter type not supported, performing default");
             return getType(IMC::Loiter::LT_DEFAULT);
@@ -98,8 +102,14 @@ namespace Maneuver
 
         switch (type)
         {
+          case LTYPE_FIGURE_EIGHT:
+            Maneuvers::FigureEight* fig;
+            fig = new Maneuvers::FigureEight(maneuver, m_task, m_args->min_radius);
+            m_ltr = static_cast<Maneuvers::AbstractLoiter*>(fig);
+            break;
           default:
-            Maneuvers::Circular* circ = new Maneuvers::Circular(maneuver, m_task, m_args->min_radius);
+            Maneuvers::Circular* circ;
+            circ = new Maneuvers::Circular(maneuver, m_task, m_args->min_radius);
             m_ltr = static_cast<Maneuvers::AbstractLoiter*>(circ);
             break;
         }
@@ -143,6 +153,14 @@ namespace Maneuver
           else
             m_task->signalProgress();
         }
+      }
+
+      //! On EstimatedState message
+      //! @param[in] msg pointer to EstimatedState message
+      void
+      onEstimatedState(const IMC::EstimatedState* msg)
+      {
+        m_ltr->onEstimatedState(msg);
       }
 
     private:
