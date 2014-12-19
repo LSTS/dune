@@ -42,6 +42,7 @@ namespace DUNE
 #include <DUNE/Maneuvers/StationKeep.hpp>
 #include <DUNE/Maneuvers/AbstractLoiter.hpp>
 #include <DUNE/Maneuvers/Circular.hpp>
+#include <DUNE/Maneuvers/FigureEight.hpp>
 #include <DUNE/Maneuvers/Elevate.hpp>
 
 #endif
