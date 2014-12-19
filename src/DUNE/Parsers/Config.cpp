@@ -63,12 +63,12 @@ namespace DUNE
     getOptionAndValue(const char* line, char* option, char* value)
     {
       char equal[2] = {0};
-      int rv = std::sscanf(line, " %[^=] %1[=] %[^;|#] ", option, equal, arg);
+      int rv = std::sscanf(line, " %[^=] %1[=] %[^;|#] ", option, equal, value);
       if (rv < 2 || rv > 3)
         return false;
 
       if (rv == 2)
-        arg[0] = '\0';
+        value[0] = '\0';
 
       return true;
     }
