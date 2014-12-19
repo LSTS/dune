@@ -37,9 +37,11 @@ namespace DUNE
 {
   namespace Algorithms
   {
+      //!Table encode
       static const std::string b64_msg = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                          "abcdefghijklmnopqrstuvwxyz"
                                          "0123456789+/";
+      //!Table decode
       static const unsigned char b64_de[] = 
       {
         66,66,66,66,66,66,66,66,66,64,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
@@ -55,31 +57,16 @@ namespace DUNE
         66,66,66,66,66,66
       };
 
-      //! Encode a sequence of bytes in Base64.
-      std::string
-      Base64::encode(const std::string& str)
-      {
-        return encode(reinterpret_cast<const unsigned char*>(str.c_str()), str.size());
-      }
-      
-      //! Encode a sequence of bytes in Base64.
-      std::string
-      Base64::encode(const char* str, size_t len)
-      {
-        return encode(reinterpret_cast<const unsigned char*>(str), len);
-      }
       
       //! Encode a sequence of bytes in Base64.
       std::string
       Base64::encode(const unsigned char* bytes, size_t len)
       {
         std::string msg;
-        int i = 0;
-        int j = 0;
-        unsigned char triple[3];
-        unsigned char quad[4];
+        int i = 0, j = 0;
+        unsigned char triple[3], quad[4];
 
-        while (len--)
+        for(unsigned int k = 0; k < len; k++)
         {
           triple[i++] = *(bytes++);
           if (i == 3)
@@ -116,30 +103,18 @@ namespace DUNE
 
       //! Decode a sequence of bytes in Base64.
       std::string
-      Base64::decode(const std::string& str)
-      {
-        return decode(reinterpret_cast<const unsigned char*>(str.c_str()), str.size());
-      }
-      
-      //! Decode a sequence of bytes in Base64.
-      std::string
-      Base64::decode(const char* str, size_t len)
-      {
-        return encode(reinterpret_cast<const unsigned char*>(str), len);
-      }
-      
-      //! Decode a sequence of bytes in Base64.
-      std::string
       Base64::decode(const unsigned char* bytes, size_t len){
         if (len % 4 != 0) return NULL;
+        
         size_t msg_len = 0;
-
         msg_len = len / 4 * 3;
-        if (bytes[len - 1] == '=') (msg_len)--;
-        if (bytes[len - 2] == '=') (msg_len)--;
+        
+        if (bytes[len - 1] == '=')
+            (msg_len)--;
+        if (bytes[len - 2] == '=')
+            (msg_len)--;
 
-        unsigned char* msg = (unsigned char*)malloc(msg_len);
-        if (msg == NULL) return NULL;
+        unsigned char* msg = new unsigned char[msg_len];
 
         for (unsigned int i = 0, j = 0; i < len;)
         {
@@ -148,16 +123,15 @@ namespace DUNE
             uint32_t sextet_c = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
             uint32_t sextet_d = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
 
-            uint32_t triple = (sextet_a << 3 * 6)
-            + (sextet_b << 2 * 6)
-            + (sextet_c << 1 * 6)
-            + (sextet_d << 0 * 6);
+            uint32_t triple = (sextet_a << 3 * 6) + (sextet_b << 2 * 6)
+            + (sextet_c << 1 * 6) + (sextet_d << 0 * 6);
 
             if (j < msg_len) msg[j++] = (triple >> 2 * 8) & 0xFF;
             if (j < msg_len) msg[j++] = (triple >> 1 * 8) & 0xFF;
             if (j < msg_len) msg[j++] = (triple >> 0 * 8) & 0xFF;
         }
-        std::string str_out(reinterpret_cast<char*>(msg));
+        std::string str_out(msg, msg + msg_len);
+        delete[] msg;
         return str_out;
       }
   }
