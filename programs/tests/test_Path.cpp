@@ -71,35 +71,7 @@ pathRemove(const Path& path, Path::Mode mode)
 int
 main(void)
 {
-  
-  std::string test_std = "String em C++"; 
-  std::cout << test_std << "\n";
-  
-  std::string result_std;
-  result_std=Base64::encode(test_std);
-  printf("Base64::encode - %s\n",result_std.c_str());
-  
-  std::string ini_std;
-  ini_std=Base64::decode(result_std);
-  printf("Base64::decode - %s\n",ini_std.c_str());
 
-  printf("*\n*\n*\n*\n*\n*\n*\n*\n");
-  
-  char c_str[] = "Texto em C.";
-  std::cout << c_str << "\n";
-  
-  std::string result_c_str;
-  result_c_str=Base64::encode(c_str);
-  printf("Base64::encode - %s\n",result_c_str.c_str());
-  
-  std::string ini_c_str;
-  ini_c_str=Base64::decode(result_c_str);
-  printf("Base64::decode - %s\n",ini_c_str.c_str());
-  
-  
-  printf("*\n*\n*\n*\n*\n*\n*\n*\n");
-  
-  
   Test test("FileSystem::Path");
 
 #if defined(DUNE_OS_POSIX)
