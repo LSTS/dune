@@ -39,9 +39,11 @@ using DUNE_NAMESPACES;
 int
 main(void)
 {
+  //RFC 4648 Strings Test
   
-  std::string test_std = "String em C++"; 
-  std::cout << test_std << "\n";
+  //Space -> String: "" - ""
+  std::string test_std = ""; 
+  std::cout << "String: " << test_std << "\n";
   
   std::string result_std;
   result_std=Base64::encode(test_std);
@@ -51,20 +53,121 @@ main(void)
   ini_std=Base64::decode(result_std);
   printf("Base64::decode - %s\n",ini_std.c_str());
 
-  printf("*\n*\n*\n*\n*\n*\n*\n*\n");
+  printf("*\n*\n");
   
-  char c_str[] = "Texto em C.";
-  std::cout << c_str << "\n";
+  //String: f - Zg==
+  std::string test_std_1 = "f"; 
+  std::cout << "String: " << test_std_1 << "\n";
   
-  std::string result_c_str;
-  result_c_str=Base64::encode(c_str);
-  printf("Base64::encode - %s\n",result_c_str.c_str());
+  std::string result_std_1;
+  result_std_1=Base64::encode(test_std_1);
+  printf("Base64::encode - %s\n",result_std_1.c_str());
   
-  std::string ini_c_str;
-  ini_c_str=Base64::decode(result_c_str);
-  printf("Base64::decode - %s\n",ini_c_str.c_str());
+  std::string ini_std_1;
+  ini_std_1=Base64::decode(result_std_1);
+  printf("Base64::decode - %s\n",ini_std_1.c_str());
+
+  printf("*\n*\n");
   
-  printf("*\n*\n*\n*\n*\n*\n*\n*\n");
+  //String: fo - Zm8=
+  std::string test_std_2 = "fo"; 
+  std::cout << "String: " << test_std_2 << "\n";
+  
+  std::string result_std_2;
+  result_std_2=Base64::encode(test_std_2);
+  printf("Base64::encode - %s\n",result_std_2.c_str());
+  
+  std::string ini_std_2;
+  ini_std_2=Base64::decode(result_std_2);
+  printf("Base64::decode - %s\n",ini_std_2.c_str());
+
+  printf("*\n*\n");
+  
+  //String: foo - Zm9v
+  std::string test_std_3 = "foo"; 
+  std::cout << "String:" << test_std_3 << "\n";
+  
+  std::string result_std_3;
+  result_std_3=Base64::encode(test_std_3);
+  printf("Base64::encode - %s\n",result_std_3.c_str());
+  
+  std::string ini_std_3;
+  ini_std_3=Base64::decode(result_std_3);
+  printf("Base64::decode - %s\n",ini_std_3.c_str());
+
+  printf("*\n*\n");
+  
+  //String: foob - Zm9vYg==
+  std::string test_std_4 = "foob"; 
+  std::cout << "String: " << test_std_4 << "\n";
+  
+  std::string result_std_4;
+  result_std_4=Base64::encode(test_std_4);
+  printf("Base64::encode - %s\n",result_std_4.c_str());
+  
+  std::string ini_std_4;
+  ini_std_4=Base64::decode(result_std_4);
+  printf("Base64::decode - %s\n",ini_std_4.c_str());
+
+  printf("*\n*\n");
+  
+  //String: fooba - Zm9vYmE=
+  std::string test_std_5 = "fooba"; 
+  std::cout << "String: " << test_std_5 << "\n";
+  
+  std::string result_std_5;
+  result_std_5=Base64::encode(test_std_5);
+  printf("Base64::encode - %s\n",result_std_5.c_str());
+  
+  std::string ini_std_5;
+  ini_std_5=Base64::decode(result_std_5);
+  printf("Base64::decode - %s\n",ini_std_5.c_str());
+
+  printf("*\n*\n");
+  
+  //String: foobar - Zm9vYmFy
+  std::string test_std_6 = "foobar"; 
+  std::cout << "String: " << test_std_6 << "\n";
+  
+  std::string result_std_6;
+  result_std_6=Base64::encode(test_std_6);
+  printf("Base64::encode - %s\n",result_std_6.c_str());
+  
+  std::string ini_std_6;
+  ini_std_6=Base64::decode(result_std_6);
+  printf("Base64::decode - %s\n",ini_std_6.c_str());
+
+  printf("*\n*\n");
+  
+  //RFC 2045 Strings Test
+  
+  //String: "*" - "Kg=="
+  std::string test_std_7 = "*"; 
+  std::cout << "String: " << test_std_7 << "\n";
+  
+  std::string result_std_7;
+  result_std_7=Base64::encode(test_std_7);
+  printf("Base64::encode - %s\n",result_std_7.c_str());
+  
+  std::string ini_std_7;
+  ini_std_7=Base64::decode(result_std_7);
+  printf("Base64::decode - %s\n",ini_std_7.c_str());
+
+  printf("*\n*\n");
+  
+  //String: "Hello World!" - "SGVsbG8gV29ybGQh"
+  std::string test_std_8 = "Hello World!"; 
+  std::cout << "String: " << test_std_8 << "\n";
+  
+  std::string result_std_8;
+  result_std_8=Base64::encode(test_std_8);
+  printf("Base64::encode - %s\n",result_std_8.c_str());
+  
+  std::string ini_std_8;
+  ini_std_8=Base64::decode(result_std_8);
+  printf("Base64::decode - %s\n",ini_std_8.c_str());
+
+  printf("*\n*\n");
  
   return 0;
 }
