@@ -213,9 +213,7 @@ namespace Monitors
       onVehicleState(const IMC::VehicleState* msg)
       {
         // Check if vehicle is not maneuvering atm
-        if ((msg->op_mode != IMC::VehicleState::VS_MANEUVER) &&
-            (msg->op_mode != IMC::VehicleState::VS_CALIBRATION) &&
-            (msg->op_mode != IMC::VehicleState::VS_EXTERNAL))
+        if (msg->op_mode != IMC::VehicleState::VS_MANEUVER)
         {
           if (m_is_maneuvering)
           {
