@@ -116,9 +116,7 @@ namespace Supervisors
           case IMC::VehicleState::VS_SERVICE:
             m_new_mode = MODE_IDLE;
             break;
-          case IMC::VehicleState::VS_CALIBRATION:
           case IMC::VehicleState::VS_MANEUVER:
-          case IMC::VehicleState::VS_EXTERNAL:
             if (msg->maneuver_type == DUNE_IMC_TELEOPERATION)
               m_new_mode = MODE_MANUAL;
             else
