@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b5c5af1e3ff987b5a799ccc51cc51ea                            *
+// IMC XML MD5: a67a1fa7e1c11ea6a3be0634d905c820                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -198,7 +198,6 @@ MESSAGE(502, MonitorEntityState)
 MESSAGE(503, EntityMonitoringState)
 MESSAGE(504, OperationalLimits)
 MESSAGE(505, GetOperationalLimits)
-MESSAGE(506, Calibration)
 MESSAGE(507, ControlLoops)
 MESSAGE(508, VehicleMedium)
 MESSAGE(509, Collision)

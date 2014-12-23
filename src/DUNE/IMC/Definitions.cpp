@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b5c5af1e3ff987b5a799ccc51cc51ea                            *
+// IMC XML MD5: a67a1fa7e1c11ea6a3be0634d905c820                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -13802,7 +13802,6 @@ namespace DUNE
       request_id = 0;
       command = 0;
       maneuver.clear();
-      calib_time = 0;
       info.clear();
     }
 
@@ -13815,7 +13814,6 @@ namespace DUNE
       if (request_id != other__.request_id) return false;
       if (command != other__.command) return false;
       if (maneuver != other__.maneuver) return false;
-      if (calib_time != other__.calib_time) return false;
       if (info != other__.info) return false;
       return true;
     }
@@ -13829,7 +13827,6 @@ namespace DUNE
       ptr__ += IMC::serialize(request_id, ptr__);
       ptr__ += IMC::serialize(command, ptr__);
       ptr__ += maneuver.serialize(ptr__);
-      ptr__ += IMC::serialize(calib_time, ptr__);
       ptr__ += IMC::serialize(info, ptr__);
       return ptr__;
     }
@@ -13843,7 +13840,6 @@ namespace DUNE
       bfr__ += IMC::deserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(command, bfr__, size__);
       bfr__ += maneuver.deserialize(bfr__, size__);
-      bfr__ += IMC::deserialize(calib_time, bfr__, size__);
       bfr__ += IMC::deserialize(info, bfr__, size__);
       return bfr__ - start__;
     }
@@ -13857,7 +13853,6 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
       bfr__ += IMC::deserialize(command, bfr__, size__);
       bfr__ += maneuver.reverseDeserialize(bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(calib_time, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
       return bfr__ - start__;
     }
@@ -13870,7 +13865,6 @@ namespace DUNE
       IMC::toJSON(os__, "request_id", request_id, nindent__);
       IMC::toJSON(os__, "command", command, nindent__);
       maneuver.toJSON(os__, "maneuver", nindent__);
-      IMC::toJSON(os__, "calib_time", calib_time, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
     }
 
@@ -14248,62 +14242,6 @@ namespace DUNE
     GetOperationalLimits::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       Message::fieldsToJSON(os__, nindent__);
-    }
-
-    Calibration::Calibration(void)
-    {
-      m_header.mgid = 506;
-      clear();
-    }
-
-    void
-    Calibration::clear(void)
-    {
-      Message::clear();
-      duration = 0;
-    }
-
-    bool
-    Calibration::fieldsEqual(const Message& msg__) const
-    {
-      if (!Message::fieldsEqual(msg__)) return false;
-      const IMC::Calibration& other__ = static_cast<const Calibration&>(msg__);
-      if (duration != other__.duration) return false;
-      return true;
-    }
-
-    uint8_t*
-    Calibration::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ = Message::serializeFields(ptr__);
-      ptr__ += IMC::serialize(duration, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    Calibration::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += Message::deserializeFields(bfr__, size__);
-      bfr__ += IMC::deserialize(duration, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    Calibration::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += Message::reverseDeserializeFields(bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(duration, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    Calibration::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      Message::fieldsToJSON(os__, nindent__);
-      IMC::toJSON(os__, "duration", duration, nindent__);
     }
 
     ControlLoops::ControlLoops(void)

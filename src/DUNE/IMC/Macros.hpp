@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b5c5af1e3ff987b5a799ccc51cc51ea                            *
+// IMC XML MD5: a67a1fa7e1c11ea6a3be0634d905c820                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -374,8 +374,6 @@
 #define DUNE_IMC_OPERATIONALLIMITS 504
 //! GetOperationalLimits identification number.
 #define DUNE_IMC_GETOPERATIONALLIMITS 505
-//! Calibration identification number.
-#define DUNE_IMC_CALIBRATION 506
 //! ControlLoops identification number.
 #define DUNE_IMC_CONTROLLOOPS 507
 //! VehicleMedium identification number.

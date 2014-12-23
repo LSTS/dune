@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5b5c5af1e3ff987b5a799ccc51cc51ea                            *
+// IMC XML MD5: a67a1fa7e1c11ea6a3be0634d905c820                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -12972,14 +12972,10 @@ namespace DUNE
       {
         //! Service.
         VS_SERVICE = 0,
-        //! Calibration.
-        VS_CALIBRATION = 1,
         //! Error.
         VS_ERROR = 2,
         //! Maneuver.
         VS_MANEUVER = 3,
-        //! External Control.
-        VS_EXTERNAL = 4,
         //! Boot.
         VS_BOOT = 5
       };
@@ -13092,11 +13088,7 @@ namespace DUNE
         //! Execute Maneuver.
         VC_EXEC_MANEUVER = 0,
         //! Stop Maneuver.
-        VC_STOP_MANEUVER = 1,
-        //! Start Calibration.
-        VC_START_CALIBRATION = 2,
-        //! Stop Calibration.
-        VC_STOP_CALIBRATION = 3
+        VC_STOP_MANEUVER = 1
       };
 
       //! Type.
@@ -13107,8 +13099,6 @@ namespace DUNE
       uint8_t command;
       //! Maneuver.
       InlineMessage<Maneuver> maneuver;
-      //! Calibration Time.
-      uint16_t calib_time;
       //! Info.
       std::string info;
 
@@ -13156,7 +13146,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6 + Message::getFixedSerializationSize();
+        return 4 + Message::getFixedSerializationSize();
       }
 
       unsigned
@@ -13479,70 +13469,6 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 0 + Message::getFixedSerializationSize();
-      }
-
-      unsigned
-      getVariableSerializationSize(void) const
-      {
-        return Message::getVariableSerializationSize();
-      }
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-    };
-
-    //! Calibration.
-    class Calibration: public Message
-    {
-    public:
-      //! Duration.
-      uint16_t duration;
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 506;
-      }
-
-      Calibration(void);
-
-      uint16_t
-      getId(void) const
-      {
-        return Calibration::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "Calibration";
-      }
-
-      Message*
-      clone(void) const
-      {
-        return new Calibration(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 2 + Message::getFixedSerializationSize();
       }
 
       unsigned
