@@ -277,11 +277,7 @@ namespace UserInterfaces
           case IMC::VehicleState::VS_ERROR:
             m_next_id = PAT_ERROR;
             break;
-          case IMC::VehicleState::VS_CALIBRATION:
-            m_next_id = PAT_PLAN_STARTING;
-            break;
           case IMC::VehicleState::VS_MANEUVER:
-          case IMC::VehicleState::VS_EXTERNAL:
             m_next_id = PAT_PLAN_EXECUTING;
             break;
           case IMC::VehicleState::VS_SERVICE:
