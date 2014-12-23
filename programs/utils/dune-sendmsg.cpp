@@ -49,7 +49,7 @@ main(int argc, char** argv)
       fprintf(stdout, "List:\n");
       fprintf(stdout, "  Abort, AcousticMessage, AcousticSystemsQuery\n");
       fprintf(stdout, "  Brake, ButtonEvent\n");
-      fprintf(stdout, "  CacheControl, Calibration, ClockControl, ControlLoops\n");
+      fprintf(stdout, "  CacheControl, ClockControl, ControlLoops\n");
       fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate, DesiredPitch\n");
       fprintf(stdout, "  DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
       fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
@@ -134,13 +134,6 @@ main(int argc, char** argv)
     IMC::CacheControl* tmsg = new IMC::CacheControl;
     msg = tmsg;
     tmsg->op = atoi(argv[4]);
-  }
-
-  if (strcmp(argv[3], "Calibration") == 0)
-  {
-    IMC::Calibration* tmsg = new IMC::Calibration;
-    tmsg->duration = (uint16_t)(atof(argv[4]));
-    msg = tmsg;
   }
 
   if (strcmp(argv[3], "ClockControl") == 0)
