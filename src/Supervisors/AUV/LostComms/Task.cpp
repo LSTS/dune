@@ -273,7 +273,7 @@ namespace Supervisors
         bool
         isStillExecuting(void)
         {
-          if ((m_pcs.state == IMC::PlanControlState::PCS_INITIALIZING) ||
+          if ((m_pcs.state == IMC::PlanControlState::PCS_ACTIVATING) ||
               (m_pcs.state == IMC::PlanControlState::PCS_EXECUTING))
           {
             if (m_pcs.plan_id.compare(m_args.plan_name) == 0)
