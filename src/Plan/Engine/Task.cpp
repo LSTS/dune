@@ -55,7 +55,7 @@ namespace Plan
                                   DTR_RT("BLOCKED")};
     //! Plan control state description
     const char* c_pcs_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
-                                DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
+                                DTR_RT("ACTIVATING"), DTR_RT("EXECUTING")};
     //! Message to print when no plan is running
     const char* c_no_plan_running = DTR("no plan is running, request ignored");
     //! Message to print when plan is loaded
@@ -1122,7 +1122,7 @@ namespace Plan
           case ST_ACTIVATING:
           case ST_START_ACTIV:
           case ST_DBFETCH:
-            m_pcs.state = IMC::PlanControlState::PCS_INITIALIZING;
+            m_pcs.state = IMC::PlanControlState::PCS_ACTIVATING;
             break;
           case ST_START_EXEC:
           case ST_EXECUTING:
