@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: a67a1fa7e1c11ea6a3be0634d905c820                            *
+// IMC XML MD5: 4600656f536c140f01ba27b5b4ef98cc                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -14950,8 +14950,8 @@ namespace DUNE
         PCS_BLOCKED = 0,
         //! Ready.
         PCS_READY = 1,
-        //! Initializing.
-        PCS_INITIALIZING = 2,
+        //! Activating.
+        PCS_ACTIVATING = 2,
         //! Executing.
         PCS_EXECUTING = 3
       };
