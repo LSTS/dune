@@ -48,6 +48,7 @@ namespace Control
         float depth_rate;
         int depth_deadzone;
         float heading_rate;
+        float depth_inc;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -109,12 +110,19 @@ namespace Control
           .units(Units::DegreePerSecond)
           .description("Rate of increase or decrease of heading with control enabled.");
 
+          param("Depth Increment", m_args.depth_inc)
+          .defaultValue("0.2")
+          .units(Units::Meter)
+          .description("Increment in meters when using button for depth reference.");
+
           // Add remote actions.
           addActionAxis("Forward");
           addActionAxis("Starboard");
           addActionAxis("Up");
           addActionAxis("Rotate");
           addActionButton("Stop");
+          addActionButton("Z+");
+          addActionButton("Z-");
 
           bind<IMC::EstimatedState>(this);
         }
@@ -186,6 +194,14 @@ namespace Control
 	      m_depth += up / 127.0 * m_args.depth_rate;
 	      m_depth = std::max(0.0f, m_depth);
 	    }
+
+            int zed = tuples.get("Z+", 0) - 1 * tuples.get("Z-", 0);
+
+            if (zed != 0)
+            {
+              m_depth += (float)zed * m_args.depth_inc;
+	      m_depth = std::max(0.0f, m_depth);
+            }
 
             if (!m_args.as_control)
             {
