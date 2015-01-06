@@ -96,9 +96,23 @@ namespace Sensors
       clear(void)
       {
         estates.clear();
-        msec_cpu = 0;
-        ping_count = 0;
         ping_number = 0;
+        ping_count = 0;
+        msec_cpu = 0;
+        time_epoch = 0,
+        time_msec_today = 0;
+        validity = 0;
+        latitude = 0;
+        longitude = 0;
+        latitude_rad = 0;
+        longitude_rad = 0;
+        course = 0;
+        speed = 0;
+        heading = 0;
+        roll = 0;
+        pitch = 0;
+        altitude = 0;
+        depth = 0;
         active = false;
       }
     };
