@@ -71,7 +71,6 @@ pathRemove(const Path& path, Path::Mode mode)
 int
 main(void)
 {
-
   Test test("FileSystem::Path");
 
 #if defined(DUNE_OS_POSIX)

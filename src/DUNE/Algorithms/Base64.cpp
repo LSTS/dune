@@ -38,11 +38,11 @@ namespace DUNE
   namespace Algorithms
   {
       //!Table encode
-      static const std::string b64_msg = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      static const std::string c_b64_en = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                          "abcdefghijklmnopqrstuvwxyz"
                                          "0123456789+/";
       //!Table decode
-      static const unsigned char b64_de[] = 
+      static const unsigned char c_b64_de[] = 
       {
         66,66,66,66,66,66,66,66,66,64,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,
         66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,66,62,66,66,66,63,52,53,
@@ -77,7 +77,7 @@ namespace DUNE
             quad[3] = triple[2] & 0x3f;
 
             for(i = 0; (i < 4) ; i++)
-              msg += b64_msg[quad[i]];
+              msg += c_b64_en[quad[i]];
             i = 0;
           }
         }
@@ -93,7 +93,7 @@ namespace DUNE
           quad[3] = triple[2] & 0x3f;
 
           for (j = 0; (j < i + 1); j++)
-            msg += b64_msg[quad[j]];
+            msg += c_b64_en[quad[j]];
 
           while((i++ < 3))
             msg += '=';
@@ -118,10 +118,10 @@ namespace DUNE
 
         for (unsigned int i = 0, j = 0; i < len;)
         {
-            uint32_t sextet_a = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
-            uint32_t sextet_b = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
-            uint32_t sextet_c = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
-            uint32_t sextet_d = bytes[i] == '=' ? 0 & i++ : b64_de[bytes[i++]];
+            uint32_t sextet_a = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
+            uint32_t sextet_b = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
+            uint32_t sextet_c = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
+            uint32_t sextet_d = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
 
             uint32_t triple = (sextet_a << 3 * 6) + (sextet_b << 2 * 6)
             + (sextet_c << 1 * 6) + (sextet_d << 0 * 6);
