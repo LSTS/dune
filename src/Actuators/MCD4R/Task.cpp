@@ -259,6 +259,8 @@ namespace Actuators
       Counter<double> m_wdog;
       //! Set of remote actions
       IMC::RemoteActionsRequest m_actions;
+      //! Laser state (assume off at boot)
+      bool m_laser;
       //! Task arguments.
       Arguments m_args;
 
@@ -268,7 +270,8 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_ctl(NULL)
+        m_ctl(NULL),
+        m_laser(false)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -458,13 +461,18 @@ namespace Actuators
         return actCommand(ACT_ARM_FINGER, dir);
       }
 
-      //! Command laser
-      //! @param[in] value laser command to apply
+      //! Toggle laser value
       //! @return true if successful in sending command
       inline bool
-      actuateLaser(LaserCommands value)
+      toggleLaser(void)
       {
-        return actCommand(ACT_LASER, value);
+        if (actCommand(ACT_LASER, (int)!m_laser))
+        {
+          m_laser = !m_laser;
+          return true;
+        }
+
+        return false;
       }
 
       //! Dispatch raw board state
@@ -523,7 +531,16 @@ namespace Actuators
         {
           int op = tuples.get(c_action_names[i], 0);
 
-          actCommand((ActuateCommands)i, op);
+          switch ((ActuateCommands)i)
+          {
+            case ACT_LASER:
+              if (op)
+                toggleLaser();
+              break;
+            default:
+              actCommand((ActuateCommands)i, op);
+              break;
+          }
         }
       }
 
