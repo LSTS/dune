@@ -177,8 +177,9 @@ namespace Plan
       getETA(void) const;
 
       //! Get current maneuver name
+      //! @return maneuver name
       inline const std::string
-      getManeuverId(void)
+      getManeuverId(void) const
       {
         std::string man_id = "Unknown";
 
@@ -189,6 +190,25 @@ namespace Plan
           return man_id;
 
         return m_curr_node->pman->maneuver_id;
+      }
+
+      //! Get current maneuver type
+      //! @return maneuver type aka message identification number
+      inline uint32_t
+      getManeuverType(void) const
+      {
+        uint32_t unk = 0;
+
+        if (m_curr_node == NULL)
+          return unk;
+
+        if (m_curr_node->pman == NULL)
+          return unk;
+
+        if (m_curr_node->pman->data.isNull())
+          return unk;
+
+        return m_curr_node->pman->data.get()->getId();
       }
 
     private:
