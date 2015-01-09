@@ -76,9 +76,9 @@ class Changelog:
 
         text = ' '.join(text)
         sep_idx = text.find(':') + 1
-        if text.startswith('Fixed Bug'):
+        if text.startswith(('Fixed Bug', 'Bug Fix')):
             self._fixes.append(text[sep_idx:])
-        elif text.startswith('Feature'):
+        elif text.startswith(('Feature', 'Task')):
             self._features.append(text[sep_idx:])
 
     def process(self):
