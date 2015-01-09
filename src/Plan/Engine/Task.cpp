@@ -1095,6 +1095,7 @@ namespace Plan
             break;
         }
 
+        // this warning shall become a debug print
         war("switching from %s to %s, next is %s",
             c_state_desc[m_sm], c_state_desc[target_sm], c_state_desc[next_sm]);
 
@@ -1117,11 +1118,11 @@ namespace Plan
             m_pcs.state = IMC::PlanControlState::PCS_BLOCKED;
             break;
           case ST_READY:
+          case ST_DBFETCH:
             m_pcs.state = IMC::PlanControlState::PCS_READY;
             break;
           case ST_ACTIVATING:
           case ST_START_ACTIV:
-          case ST_DBFETCH:
             m_pcs.state = IMC::PlanControlState::PCS_ACTIVATING;
             break;
           case ST_START_EXEC:
