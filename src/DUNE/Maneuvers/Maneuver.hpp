@@ -113,11 +113,13 @@ namespace DUNE
 
         requestActivation();
 
+        // store current maneuver type
+        m_type = maneuver->getId();
         // store current maneuver id
-        m_id = maneuver->getId();
+        m_name = maneuver->id;
 
         // Fill memento table
-        MementoTable* mt = getMementoTable(m_id);
+        MementoTable* mt = getMementoTable(m_type);
         // set default values first
         mt->setDefaults();
         // then fill
@@ -260,30 +262,46 @@ namespace DUNE
       //! Signal an error.
       //! This method should be used by subclasses to signal an error condition.
       //! @param msg error message
-      void
-      signalError(const std::string& msg);
+      inline void
+      signalError(const std::string& msg)
+      {
+        signalEvent(IMC::ManeuverControlState::MCS_ERROR, msg, 0);
+      }
 
       //! Signal invalid Z reference
       //! This method should be used by subclasses to signal an error condition.
-      void
-      signalInvalidZ(void);
+      inline void
+      signalInvalidZ(void)
+      {
+        signalError(DTR("unsupported vertical reference"));
+      }
 
       //! Signal no altitude error.
       //! This method should be used by subclasses to signal an error condition.
       void
-      signalNoAltitude(void);
+      signalNoAltitude(void)
+      {
+        signalError(DTR("no valid value for altitude has been received yet,"
+                        "maneuver will not proceed"));
+      }
 
       //! Signal an error.
       //! This method should be used by subclasses to signal maneuver completion.
       //! @param msg completion message
-      void
-      signalCompletion(const std::string& msg = "done");
+      inline void
+      signalCompletion(const std::string& msg = "done")
+      {
+        signalEvent(IMC::ManeuverControlState::MCS_DONE, msg, 0);
+      }
 
       //! Signal maneuver progress.
       //! @param time_left estimated time for completion.
       //! @param msg human-readable information.
-      void
-      signalProgress(uint16_t time_left, const std::string& msg);
+      inline void
+      signalProgress(uint16_t time_left, const std::string& msg)
+      {
+        signalEvent(IMC::ManeuverControlState::MCS_EXECUTING, msg, time_left);
+      }
 
       //! Signal maneuver progress.
       //! @param msg human-readable information.
@@ -355,10 +373,28 @@ namespace DUNE
         m_mems.insert(std::pair<uint32_t, MementoTable>(id, MementoTable()));
       }
 
+      //! Fill name and type in ManeuverControlState message
+      //! @param[in,out] msg ManeuverControlState message
+      void
+      fillNameAndType(IMC::ManeuverControlState& msg)
+      {
+        msg.id = m_name;
+        msg.type = m_type;
+      }
+
+      //! Signal a generic event
+      //! @param[in] state current maneuver control state
+      //! @param[in] msg message to print
+      //! @param[in] eta estimated time of arrival of maneuver
+      void
+      signalEvent(uint8_t state, const std::string& msg, uint16_t eta);
+
       //! Entity to use when dispatching message
       unsigned m_eid;
-      //! Currently active maneuver ID
-      uint32_t m_id;
+      //! Currently active maneuver type or message identification number
+      uint32_t m_type;
+      //! Currently active maneuver name or id in Plan
+      std::string m_name;
       //! Set of registered maneuvers
       std::set<uint16_t> m_reg_man;
       //! Vector of memento tables (one per registered maneuver)

@@ -71,7 +71,7 @@ namespace DUNE
       debug("disabling");
 
       // dispatch memento
-      Maneuvers::MementoTable* mt = getMementoTable(m_id);
+      Maneuvers::MementoTable* mt = getMementoTable(m_type);
 
       if (mt == NULL)
         return;
@@ -83,6 +83,10 @@ namespace DUNE
 
       // set default values
       mt->setDefaults();
+
+      // Unset type and name
+      m_name = "";
+      m_type = 0;
     }
 
     void
@@ -155,13 +159,7 @@ namespace DUNE
 
       if (isActive())
       {
-        requestDeactivation();
-
-        IMC::ManeuverControlState mcs;
-        mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
-        mcs.info = "stopped";
-        mcs.eta = 0;
-        dispatch(mcs);
+        signalEvent(IMC::ManeuverControlState::MCS_STOPPED, "stopped", 0);
 
         // maneuver has been interrupted
         // check if memento is enabled
@@ -183,49 +181,28 @@ namespace DUNE
     }
 
     void
-    Maneuver::signalError(const std::string& msg)
-    {
-      err("%s", msg.c_str());
-      requestDeactivation();
-      IMC::ManeuverControlState mcs;
-      mcs.state = IMC::ManeuverControlState::MCS_ERROR;
-      mcs.info = msg;
-      mcs.eta = 0;
-      dispatch(mcs);
-    }
-
-    void
-    Maneuver::signalInvalidZ(void)
-    {
-      signalError(DTR("unsupported vertical reference"));
-    }
-
-    void
-    Maneuver::signalNoAltitude(void)
-    {
-      signalError(DTR("no valid value for altitude has been received yet,"
-                      "maneuver will not proceed"));
-    }
-
-    void
-    Maneuver::signalCompletion(const std::string& msg)
-    {
-      debug("%s", msg.c_str());
-      requestDeactivation();
-      IMC::ManeuverControlState mcs;
-      mcs.state = IMC::ManeuverControlState::MCS_DONE;
-      mcs.info = msg;
-      mcs.eta = 0;
-      dispatch(mcs);
-    }
-
-    void
-    Maneuver::signalProgress(uint16_t time_left, const std::string& msg)
+    Maneuver::signalEvent(uint8_t state, const std::string& msg, uint16_t eta)
     {
       IMC::ManeuverControlState mcs;
-      mcs.state = IMC::ManeuverControlState::MCS_EXECUTING;
+      mcs.state = state;
+      fillNameAndType(mcs);
       mcs.info = msg;
-      mcs.eta = time_left;
+      mcs.eta = eta;
+
+      switch (state)
+      {
+        case IMC::ManeuverControlState::MCS_ERROR:
+          err("%s", msg.c_str());
+        case IMC::ManeuverControlState::MCS_STOPPED:
+        case IMC::ManeuverControlState::MCS_DONE:
+          debug("%s", msg.c_str());
+          requestDeactivation();
+          break;
+        case IMC::ManeuverControlState::MCS_EXECUTING:
+        default:
+          break;
+      }
+
       dispatch(mcs);
     }
 
