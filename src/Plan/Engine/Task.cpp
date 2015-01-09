@@ -290,6 +290,15 @@ namespace Plan
       {
         m_mcs = *msg;
 
+        if (m_plan == NULL)
+          return;
+
+        if (m_plan->getManeuverType() != msg->type)
+          return;
+
+        if (m_plan->getManeuverId() != msg->id)
+          return;
+
         if (msg->state == IMC::ManeuverControlState::MCS_DONE)
         {
           m_plan->maneuverDone();
