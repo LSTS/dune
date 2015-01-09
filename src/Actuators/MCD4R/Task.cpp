@@ -212,6 +212,8 @@ namespace Actuators
     static const unsigned c_restart_delay = 1;
     //! Size in bytes of the board's state
     static const unsigned c_state_size = 20;
+    //! Laser debounce time
+    static const float c_laser_debounce = 0.8f;
     //! Labels for states voltages
     const char* c_voltage_labels[] =
     {
@@ -261,6 +263,8 @@ namespace Actuators
       IMC::RemoteActionsRequest m_actions;
       //! Laser state (assume off at boot)
       bool m_laser;
+      //! Laser state timer
+      Time::Counter<float> m_laser_cnt;
       //! Task arguments.
       Arguments m_args;
 
@@ -349,6 +353,7 @@ namespace Actuators
       onResourceInitialization(void)
       {
         m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
+        m_laser_cnt.setTop(c_laser_debounce);
 
         for (unsigned i = 0; i < ACT_TOTAL; ++i)
           addRemoteAction(c_action_names[i], c_action_types[i]);
@@ -466,9 +471,13 @@ namespace Actuators
       inline bool
       toggleLaser(void)
       {
+        if (!m_laser_cnt.overflow())
+          return false;
+
         if (actCommand(ACT_LASER, (int)!m_laser))
         {
           m_laser = !m_laser;
+          m_laser_cnt.reset();
           return true;
         }
 
