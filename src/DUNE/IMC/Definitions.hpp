@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4600656f536c140f01ba27b5b4ef98cc                            *
+// IMC XML MD5: f5945eec02448bc770e01e984183d2aa                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -11638,6 +11638,10 @@ namespace DUNE
         MCS_STOPPED = 3
       };
 
+      //! Maneuver ID.
+      std::string id;
+      //! Maneuver Type.
+      uint16_t type;
       //! State.
       uint8_t state;
       //! Completion Time.
@@ -11689,13 +11693,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3 + Message::getFixedSerializationSize();
+        return 5 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return Message::getVariableSerializationSize() + IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(id) + IMC::getSerializationSize(info);
       }
 
       void

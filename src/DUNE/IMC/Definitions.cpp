@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4600656f536c140f01ba27b5b4ef98cc                            *
+// IMC XML MD5: f5945eec02448bc770e01e984183d2aa                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -11996,6 +11996,8 @@ namespace DUNE
     ManeuverControlState::clear(void)
     {
       Message::clear();
+      id.clear();
+      type = 0;
       state = 0;
       eta = 0;
       info.clear();
@@ -12006,6 +12008,8 @@ namespace DUNE
     {
       if (!Message::fieldsEqual(msg__)) return false;
       const IMC::ManeuverControlState& other__ = static_cast<const ManeuverControlState&>(msg__);
+      if (id != other__.id) return false;
+      if (type != other__.type) return false;
       if (state != other__.state) return false;
       if (eta != other__.eta) return false;
       if (info != other__.info) return false;
@@ -12017,6 +12021,8 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ = Message::serializeFields(ptr__);
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
       ptr__ += IMC::serialize(state, ptr__);
       ptr__ += IMC::serialize(eta, ptr__);
       ptr__ += IMC::serialize(info, ptr__);
@@ -12028,6 +12034,8 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += Message::deserializeFields(bfr__, size__);
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
       bfr__ += IMC::deserialize(state, bfr__, size__);
       bfr__ += IMC::deserialize(eta, bfr__, size__);
       bfr__ += IMC::deserialize(info, bfr__, size__);
@@ -12039,6 +12047,8 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += Message::reverseDeserializeFields(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(type, bfr__, size__);
       bfr__ += IMC::deserialize(state, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(eta, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
@@ -12049,6 +12059,8 @@ namespace DUNE
     ManeuverControlState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       Message::fieldsToJSON(os__, nindent__);
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
       IMC::toJSON(os__, "state", state, nindent__);
       IMC::toJSON(os__, "eta", eta, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
