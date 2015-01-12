@@ -24,6 +24,7 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 // Author: Pedro Vaz Teixeira                                               *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -39,20 +40,21 @@ using namespace DUNE::FileSystem;
 using namespace DUNE::Math;
 using namespace DUNE::Time;
 
-// WMM 2010 headers.
-#include <wmm2010/WMMHeader.h>
+// WMM 2015 headers.
+#include <wmm2015/GeomagnetismHeader.h>
+#include <wmm2015/EGM9615.h>
 
 namespace DUNE
 {
   namespace Coordinates
   {
-    static const int c_num_terms = ((WMM_MAX_MODEL_DEGREES + 1) * (WMM_MAX_MODEL_DEGREES + 2) / 2);
+    static const int c_num_terms = ((MAG_MAX_MODEL_DEGREES + 1) * (MAG_MAX_MODEL_DEGREES + 2) / 2);
 
     struct WMMData
     {
-      WMMtype_Geoid geoid;
-      WMMtype_Ellipsoid ellip;
-      WMMtype_MagneticModel* mm;
+      MAGtype_Geoid geoid;
+      MAGtype_Ellipsoid ellip;
+      MAGtype_MagneticModel* mm;
     };
 
     WMM::WMM(void)
@@ -79,32 +81,32 @@ namespace DUNE
         throw std::runtime_error(wmmfile.str() + " not found");
 
       // Initialization
-      WMMtype_MagneticModel* tmp = WMM_AllocateModelMemory(c_num_terms);
-      WMM_SetDefaults(&m_data->ellip, tmp, &m_data->geoid);
+      MAGtype_MagneticModel* tmp = MAG_AllocateModelMemory(c_num_terms);
+      MAG_SetDefaults(&m_data->ellip, tmp, &m_data->geoid);
 
       // Read geoid data
-      WMM_InitializeGeoid(egmfile.c_str(), &m_data->geoid);
+      MAG_InitializeGeoid(egmfile.c_str(), &m_data->geoid);
 
       // Read magnetic model data
-      WMM_readMagneticModel(wmmfile.c_str(), tmp);
+      MAG_readMagneticModel(wmmfile.c_str(), tmp);
 
       // Adjust magnetic model according to date
       char dummy[100];
       BrokenDown now;
-      WMMtype_Date date;
+      MAGtype_Date date;
       date.Year = now.year;
       date.Month = now.month;
       date.Day = now.day;
-      WMM_DateToYear(&date, dummy);
+      MAG_DateToYear(&date, dummy);
 
-      m_data->mm = WMM_AllocateModelMemory(c_num_terms);
-      WMM_TimelyModifyMagneticModel(date, tmp, m_data->mm);
-      WMM_FreeMagneticModelMemory(tmp);
+      m_data->mm = MAG_AllocateModelMemory(c_num_terms);
+      MAG_TimelyModifyMagneticModel(date, tmp, m_data->mm);
+      MAG_FreeMagneticModelMemory(tmp);
     }
 
     WMM::~WMM(void)
     {
-      WMM_FreeMagneticModelMemory(m_data->mm);
+      MAG_FreeMagneticModelMemory(m_data->mm);
       std::free(m_data->geoid.GeoidHeightBuffer);
       delete m_data;
     }
@@ -114,7 +116,7 @@ namespace DUNE
     {
       double h = 0;
 
-      WMM_GetGeoidHeight(Angles::degrees(lat), Angles::degrees(lon), &h, &m_data->geoid);
+      MAG_GetGeoidHeight(Angles::degrees(lat), Angles::degrees(lon), &h, &m_data->geoid);
 
       return h;
     }
@@ -122,18 +124,18 @@ namespace DUNE
     double
     WMM::declination(double lat, double lon, double h)
     {
-      WMMtype_CoordGeodetic geo;
-      WMMtype_CoordSpherical sph;
-      WMMtype_GeoMagneticElements gme;
+      MAGtype_CoordGeodetic geo;
+      MAGtype_CoordSpherical sph;
+      MAGtype_GeoMagneticElements gme;
 
       geo.phi = Angles::degrees(lat);
       geo.lambda = Angles::degrees(lon);
       geo.UseGeoid = false;
       geo.HeightAboveEllipsoid = h * 1e-03;
 
-      WMM_GeodeticToSpherical(m_data->ellip, geo, &sph);
-      WMM_Geomag(m_data->ellip, sph, geo, m_data->mm, &gme);
-      WMM_CalculateGridVariation(geo, &gme);
+      MAG_GeodeticToSpherical(m_data->ellip, geo, &sph);
+      MAG_Geomag(m_data->ellip, sph, geo, m_data->mm, &gme);
+      MAG_CalculateGridVariation(geo, &gme);
 
       return Angles::radians(gme.Decl);
     }
