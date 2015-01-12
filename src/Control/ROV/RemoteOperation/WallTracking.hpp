@@ -39,15 +39,12 @@ namespace Control
     namespace RemoteOperation
     {
       using namespace DUNE;
-      using namespace DUNE::Math;
       using namespace DUNE::Control;
 
       struct WTArguments
       {
         //! Pointer to task
         DUNE::Tasks::Task* task;
-        //! Distance moving average window size
-        unsigned dist_mav_size;
         //! Distance PID controller gains
         std::vector<float> gains;
         //! Maximum speed output from PID
@@ -63,13 +60,11 @@ namespace Control
       {
       public:
         //! Constructor.
-        //! @param[in] window_size moving averages window sizes
+        //! @param[in] args pointer to arguments struct
         WallTracking(WTArguments* args):
           m_args(args),
           m_exec_time(-1.0f)
         {
-          m_mav = new MovingAverage<float>(m_args->dist_mav_size);
-
           m_pid.setGains(m_args->gains);
           m_pid.setOutputLimits(-m_args->max_speed, m_args->max_speed);
           m_pid.setIntegralLimits(m_args->int_limit);
@@ -77,15 +72,15 @@ namespace Control
         }
 
         void
-        updateDistance(float distance)
+        setDesiredDistance(float desired_distance)
         {
-          m_curr_dist = m_mav->update(distance);
+          m_desired_distance = desired_distance;
         }
 
         float
-        compute(float desired_distance)
+        update(float distance)
         {
-          float err = m_curr_dist - desired_distance;
+          float err = distance - m_desired_distance;
 
           if (m_exec_time < 0)
           {
@@ -104,21 +99,17 @@ namespace Control
 
         //! Destructor.
         ~WallTracking(void)
-        {
-          Memory::clear(m_mav);
-        }
+        { }
 
       private:
         //! Pointer to arguments
         WTArguments* m_args;
-        //! Moving average for distance
-        MovingAverage<float>* m_mav;
         //! PID controller for distance
         DiscretePID m_pid;
         //! PID control parcels for debug
         IMC::ControlParcel m_parcels;
-        //! Actual distance to wall
-        float m_curr_dist;
+        //! Desired distance to wall
+        float m_desired_distance;
         //! Last control execution time
         float m_exec_time;
       };
