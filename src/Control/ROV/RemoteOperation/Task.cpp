@@ -42,6 +42,11 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! Default desired distance to wall
+      static const float c_wall_dist = 1.0f;
+      //! Wall tracking enabled debounce time
+      static const float c_wt_debounce = 0.8f;
+
       struct Arguments
       {
         Matrix actuat;
@@ -54,6 +59,14 @@ namespace Control
         float depth_inc;
         //! Wall tracking algorithm arguments
         WTArguments wt;
+        //! Moving average window size for distance to wall
+        unsigned wdist_mav_size;
+        //! Desired distance to wall increments.
+        float wdist_inc;
+        //! Entity label of distance to wall
+        std::string wdist_label;
+        //! Entity label of desired distance to wall
+        std::string wdist_des_label;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -76,6 +89,18 @@ namespace Control
         bool m_dh_data;
         //! Wall tracking algorithm
         WallTracking* m_wt;
+        //! Desired distance to wall
+        float m_wdist_desired;
+        //! Wall tracking enabled
+        bool m_wt_enabled;
+        //! Wall tracking enabled counter
+        Time::Counter<float> m_wt_counter;
+        //! Moving average for the distance to wall
+        MovingAverage<float>* m_wdist_mav;
+        //! Distance to wall source entity
+        unsigned m_wdist_ent;
+        //! Desird distance to wall source entity
+        unsigned m_wdist_des_ent;
         //! Task arguments.
         Arguments m_args;
 
@@ -83,7 +108,9 @@ namespace Control
           DUNE::Control::BasicRemoteOperation(name, ctx),
           m_thruster(5, 1, 0.0),
           m_forces(6, 1, 0.0),
-          m_dh_data(false)
+          m_dh_data(false),
+          m_wdist_desired(c_wall_dist),
+          m_wdist_mav(NULL)
         {
           param("Actuation Inverse Matrix", m_args.actuat)
           .defaultValue("")
@@ -122,9 +149,8 @@ namespace Control
           .units(Units::Meter)
           .description("Increment in meters when using button for depth reference.");
 
-          param("Wall Tracking -- Average Window", m_args.wt.dist_mav_size)
+          param("Wall Tracking -- Average Window", m_args.wdist_mav_size)
           .defaultValue("5")
-          .units(Units::Meter)
           .description("Distance moving average window size");
 
           param("Wall Tracking -- Gains", m_args.wt.gains)
@@ -134,18 +160,31 @@ namespace Control
 
           param("Wall Tracking -- Maximum Speed", m_args.wt.max_speed)
           .defaultValue("0.5")
-          .units(Units::Meter)
+          .units(Units::MeterPerSecond)
           .description("Maximum speed output from PID");
 
           param("Wall Tracking -- Integral Limit", m_args.wt.int_limit)
           .defaultValue("0.2")
-          .units(Units::Meter)
+          .units(Units::MeterPerSecond)
           .description("PID Integral limit");
 
           param("Wall Tracking -- Absolute Maximum Error", m_args.wt.abs_max_dist)
           .defaultValue("1.0")
           .units(Units::Meter)
           .description("Absolute value of maximum error in distance");
+
+          param("Wall Tracking -- Distance Increments", m_args.wdist_inc)
+          .defaultValue("0.02")
+          .units(Units::Meter)
+          .description("Desired distance to wall increments.");
+
+          param("Entity Label - Wall Distance", m_args.wdist_label)
+          .defaultValue("")
+          .description("Entity label of distance to wall");
+
+          param("Entity Label - Desired Wall Distance", m_args.wdist_des_label)
+          .defaultValue("")
+          .description("Entity label of desired distance to wall");
 
           // Add remote actions.
           addActionAxis("Forward");
@@ -155,8 +194,43 @@ namespace Control
           addActionButton("Stop");
           addActionButton("Z+");
           addActionButton("Z-");
+          addActionButton("WallTracker");
 
           bind<IMC::EstimatedState>(this);
+          bind<IMC::Distance>(this);
+        }
+
+        void
+        onEntityResolution(void)
+        {
+          m_wdist_ent = resolveEntity(m_args.wdist_label);
+        }
+
+        void
+        onEntityReservation(void)
+        {
+          m_wdist_des_ent = reserveEntity(m_args.wdist_des_label);
+        }
+
+        void
+        onResourceInitialization(void)
+        {
+          BasicRemoteOperation::onResourceInitialization();
+
+          m_wt_counter.setTop(c_wt_debounce);
+        }
+
+        void
+        onResourceRelease(void)
+        {
+          Memory::clear(m_wdist_mav);
+          Memory::clear(m_wt);
+        }
+
+        void
+        onResourceAcquisition(void)
+        {
+          m_wdist_mav = new MovingAverage<float>(m_args.wdist_mav_size);
         }
 
         void
@@ -210,13 +284,86 @@ namespace Control
         }
 
         void
+        consume(const IMC::Distance* msg)
+        {
+          if (msg->getSourceEntity() != m_wdist_ent)
+            return;
+
+          IMC::Distance filt_msg = *msg;
+
+          filt_msg.value = m_wdist_mav->update(msg->value);
+
+          if (m_wt_enabled)
+            m_forces(0, 0) = m_wt->update(filt_msg.value) / m_args.max_speed;
+          else
+            m_wdist_desired = filt_msg.value;
+
+          dispatch(filt_msg);
+        }
+
+        void
+        toggleWallTracker(void)
+        {
+          if (!m_wt_counter.overflow())
+            return;
+
+          m_wt_enabled = !m_wt_enabled;
+          m_wt_counter.reset();
+
+          if (m_wt_enabled)
+          {
+            Memory::clear(m_wt);
+            m_wt = new WallTracking(&m_args.wt);
+            m_wt->setDesiredDistance(m_wdist_desired);
+          }
+        }
+
+        void
+        forwardControl(int value)
+        {
+          if (m_wt_enabled)
+          {
+            m_wdist_desired = value / 127.0 * m_args.wdist_inc;
+
+            IMC::Distance dist;
+            dist.setSourceEntity(m_wdist_des_ent);
+            dist.value = m_wdist_desired;
+            dispatch(dist);
+
+            m_wt->setDesiredDistance(m_wdist_desired);
+          }
+          else
+          {
+            m_forces(0, 0) = value / 127.0;   // X
+          }
+        }
+
+        void
+        rotateControl(int value)
+        {
+          if (!m_args.as_control)
+          {
+            m_h_ref += value / 127.0 * m_args.heading_rate;
+            m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
+          }
+          else
+          {
+            m_h_ref = value / 127.0 * m_args.heading_rate;
+          }
+        }
+
+        void
         onRemoteActions(const IMC::RemoteActions* msg)
         {
           TupleList tuples(msg->actions);
 
           if (m_args.dh_control)
           {
-            m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
+            if (tuples.get("WallTracker", 0))
+              toggleWallTracker();
+
+            forwardControl(tuples.get("Forward", 0));
+
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
 
 	    int up = tuples.get("Up", 0);
@@ -235,15 +382,7 @@ namespace Control
 	      m_depth = std::max(0.0f, m_depth);
             }
 
-            if (!m_args.as_control)
-            {
-              m_h_ref += tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
-              m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
-            }
-            else
-            {
-              m_h_ref = tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
-            }
+            rotateControl(tuples.get("Rotate", 0));
 
             if (tuples.get("Stop", 0))
             {
