@@ -31,6 +31,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "WallTracking.hpp"
+
 namespace Control
 {
   namespace ROV
@@ -49,6 +52,8 @@ namespace Control
         int depth_deadzone;
         float heading_rate;
         float depth_inc;
+        //! Wall tracking algorithm arguments
+        WTArguments wt;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -69,6 +74,8 @@ namespace Control
         float m_h_ref;
         //! Flag is true if we have depth and heading data
         bool m_dh_data;
+        //! Wall tracking algorithm
+        WallTracking* m_wt;
         //! Task arguments.
         Arguments m_args;
 
@@ -114,6 +121,31 @@ namespace Control
           .defaultValue("0.2")
           .units(Units::Meter)
           .description("Increment in meters when using button for depth reference.");
+
+          param("Wall Tracking -- Average Window", m_args.wt.dist_mav_size)
+          .defaultValue("5")
+          .units(Units::Meter)
+          .description("Distance moving average window size");
+
+          param("Wall Tracking -- Gains", m_args.wt.gains)
+          .defaultValue("")
+          .size(3)
+          .description("Distance PID controller gains");
+
+          param("Wall Tracking -- Maximum Speed", m_args.wt.max_speed)
+          .defaultValue("0.5")
+          .units(Units::Meter)
+          .description("Maximum speed output from PID");
+
+          param("Wall Tracking -- Integral Limit", m_args.wt.int_limit)
+          .defaultValue("0.2")
+          .units(Units::Meter)
+          .description("PID Integral limit");
+
+          param("Wall Tracking -- Absolute Maximum Error", m_args.wt.abs_max_dist)
+          .defaultValue("1.0")
+          .units(Units::Meter)
+          .description("Absolute value of maximum error in distance");
 
           // Add remote actions.
           addActionAxis("Forward");
