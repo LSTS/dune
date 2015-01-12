@@ -31,6 +31,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Media/EXIFEditor.hpp>
 
 // Local headers.
 #include "HTTPClient.hpp"
@@ -901,11 +902,15 @@ namespace Vision
           changeVolume();
         }
 
+        // Modify EXIF tags to include the position
+        Media::EXIFEditor ee;
+        ee.setBuffer(dst.getBuffer(), dst.getSize());
+
         // Save file.
         double timestamp = Clock::getSinceEpoch();
         Path file = m_volume / String::str("%0.4f.jpg", timestamp);
         std::ofstream jpg(file.c_str(), std::ios::binary);
-        jpg.write(dst.getBufferSigned(), dst.getSize());
+        ee.outputToStream(jpg);
       }
 
       bool
