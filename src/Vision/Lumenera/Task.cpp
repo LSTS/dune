@@ -31,7 +31,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <DUNE/Media/EXIFEditor.hpp>
+#include <DUNE/Media/ExifEditor.hpp>
 
 // Local headers.
 #include "HTTPClient.hpp"
@@ -903,7 +903,7 @@ namespace Vision
         }
 
         // Modify EXIF tags to include the position
-        Media::EXIFEditor ee;
+        Media::ExifEditor ee;
         ee.setBuffer(dst.getBuffer(), dst.getSize());
 
         // Save file.
