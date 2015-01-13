@@ -903,14 +903,21 @@ namespace Vision
         }
 
         // Modify EXIF tags to include the position
-        Media::ExifEditor ee;
-        ee.setBuffer(dst.getBuffer(), dst.getSize());
+        try
+        {
+          Media::ExifEditor ee;
+          ee.setBuffer(dst.getBuffer(), dst.getSize());
 
-        // Save file.
-        double timestamp = Clock::getSinceEpoch();
-        Path file = m_volume / String::str("%0.4f.jpg", timestamp);
-        std::ofstream jpg(file.c_str(), std::ios::binary);
-        ee.outputToStream(jpg);
+          // Save file.
+          double timestamp = Clock::getSinceEpoch();
+          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
+          std::ofstream jpg(file.c_str(), std::ios::binary);
+          ee.outputToStream(jpg);
+        }
+        catch (std::runtime_error& e)
+        {
+          debug("frame save failed: %s", e.what());
+        }
       }
 
       bool
