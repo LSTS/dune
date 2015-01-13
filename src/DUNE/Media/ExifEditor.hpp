@@ -39,16 +39,16 @@ namespace DUNE
   namespace Media
   {
     // Export DLL Symbol.
-    class DUNE_DLL_SYM EXIFEditor;
+    class DUNE_DLL_SYM ExifEditor;
 
-    class EXIFEditor
+    class ExifEditor
     {
     public:
-      //! Construct a EXIFEditor object.
-      EXIFEditor(void);
+      //! Construct a ExifEditor object.
+      ExifEditor(void);
 
-      //! Destroy a EXIFEditor object.
-      ~EXIFEditor(void)
+      //! Destroy a ExifEditor object.
+      ~ExifEditor(void)
       { }
 
       // Set the JPEG data (fix the name)

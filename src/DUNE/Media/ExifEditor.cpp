@@ -26,14 +26,14 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/Media/EXIFEditor.hpp>
+#include <DUNE/Media/ExifEditor.hpp>
 
 namespace DUNE
 {
   namespace Media
   {
-    //! Construct a EXIFEditor object.
-    EXIFEditor::EXIFEditor(void) :
+    //! Construct a ExifEditor object.
+    ExifEditor::ExifEditor(void) :
       m_bfr(NULL),
       m_bfr_len(0),
       m_exif_pos(0),
@@ -42,7 +42,7 @@ namespace DUNE
 
     // Set the JPEG data (fix the name)
     void
-    EXIFEditor::setBuffer(uint8_t* bfr, std::size_t length)
+    ExifEditor::setBuffer(uint8_t* bfr, std::size_t length)
     {
       std::size_t idx = 0;
 
@@ -86,7 +86,7 @@ namespace DUNE
     }
 
     void
-    EXIFEditor::outputToStream(std::ostream& stream)
+    ExifEditor::outputToStream(std::ostream& stream)
     {
       // Write the SOI
       stream.put((uint8_t)(c_mk_soi >> 8));
