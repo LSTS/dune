@@ -28,6 +28,10 @@
 // DUNE headers.
 #include <DUNE/Media/ExifEditor.hpp>
 
+// ISO C++ 98 headers.
+#include <iterator>
+#include <stdexcept>
+
 namespace DUNE
 {
   namespace Media
@@ -37,8 +41,16 @@ namespace DUNE
       m_bfr(NULL),
       m_bfr_len(0),
       m_exif_pos(0),
-      m_exif_len(0)
+      m_exif_len(0),
+      m_exif_data(NULL)
     { }
+
+    //! Destroy a ExifEditor object.
+    ExifEditor::~ExifEditor(void)
+    {
+      if (m_exif_data)
+        delete m_exif_data;
+    }
 
     // Set the JPEG data (fix the name)
     void
@@ -48,10 +60,7 @@ namespace DUNE
 
       // Check for the SOI marker
       if ((bfr[idx] << 8 | bfr[idx + 1]) != c_mk_soi)
-      {
-        // This is not a jpeg image, throw exception
-        return;
-      }
+        throw std::runtime_error(DTR("buffer does not contain a valid jpeg image"));
       idx += 2;
 
       while (true)
@@ -61,7 +70,7 @@ namespace DUNE
 
         if (marker == c_mk_app + 1)
         {
-          // Found the App1 (EXIF) marker
+          // Found the App1 (Exif) marker
           m_exif_pos = idx;
           m_exif_len = size + 2;
           break;
@@ -83,6 +92,15 @@ namespace DUNE
       // Save buffer information
       m_bfr = bfr;
       m_bfr_len = length;
+
+      // Load exif data structure
+      if (m_exif_data)
+        delete m_exif_data;
+
+      if (m_exif_pos > 0)
+        m_exif_data = new ExifData(m_bfr + m_exif_pos, m_exif_len);
+      else
+        m_exif_data = new ExifData;
     }
 
     void
@@ -92,7 +110,21 @@ namespace DUNE
       stream.put((uint8_t)(c_mk_soi >> 8));
       stream.put((uint8_t)(c_mk_soi & 0xFF));
 
-      // Write the new exif data
+      // Get exif data vector
+      std::vector<uint8_t> exif = m_exif_data->getRawData();
+
+      // Write JPEG marker and segment length
+      stream.put((uint8_t)(c_mk_app >> 8));
+      stream.put((uint8_t)((c_mk_app & 0xFF) + 1));
+      unsigned len = exif.size() + 2;
+      if (len > 0xFFFF)
+        throw std::runtime_error(DTR("exif data exceeds maximum segment size"));
+      stream.put((uint8_t)(len >> 8));
+      stream.put((uint8_t)(len & 0xFF));
+
+      // Write exif raw data
+      std::ostreambuf_iterator<char> oit (stream);
+      std::copy(exif.begin(), exif.end(), oit);
 
       // Write the remaining jpeg file contents
       std::size_t skip = m_exif_pos + m_exif_len;

@@ -30,6 +30,7 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Media/ExifData.hpp>
 
 // ISO C++ 98 headers.
 #include <ostream>
@@ -47,9 +48,7 @@ namespace DUNE
       //! Construct a ExifEditor object.
       ExifEditor(void);
 
-      //! Destroy a ExifEditor object.
-      ~ExifEditor(void)
-      { }
+      ~ExifEditor(void);
 
       // Set the JPEG data (fix the name)
       void
@@ -74,6 +73,8 @@ namespace DUNE
       unsigned m_exif_pos;
       // Length of the original exif section
       std::size_t m_exif_len;
+      // Exif data
+      ExifData* m_exif_data;
     };
   }
 }
