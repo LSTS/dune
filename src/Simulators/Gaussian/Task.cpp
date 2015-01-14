@@ -96,8 +96,17 @@ namespace Simulators
         // Register consumers.
         bind<IMC::SimulatedState>(this);
 
-        // Create message to be dispatched.
-        m_msg = IMC::Factory::produce(m_args.message_name);
+      }
+
+      //! Parse arguments.
+      void
+      onUpdateParameters(void)
+      {
+    	  if (m_msg != NULL)
+    		  Memory::clear(m_msg);
+
+          // Create message to be dispatched.
+          m_msg = IMC::Factory::produce(m_args.message_name);
       }
 
       //! Initialize resources.
@@ -112,6 +121,8 @@ namespace Simulators
       onResourceAcquisition(void)
       {
         m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
+        // Create message to be dispatched.
+        m_msg = IMC::Factory::produce(m_args.message_name);
       }
 
       //! Release resources.
