@@ -61,12 +61,17 @@ namespace Simulators
       IMC::Message *m_msg;
       IMC::SimulatedState m_last_state;
       Random::Generator* m_prng;
+      double m_lat, m_lon, m_height;
+
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
 		m_msg(NULL),
-		m_prng(NULL)
+		m_prng(NULL),
+		m_lat(0),
+		m_lon(0),
+		m_height(0)
       {
         // Retrieve configuration values.
         param("Latitude (degrees) of gaussian peak", m_args.peak_latitude)
@@ -105,8 +110,7 @@ namespace Simulators
     	  if (m_msg != NULL)
     		  Memory::clear(m_msg);
 
-          // Create message to be dispatched.
-          m_msg = IMC::Factory::produce(m_args.message_name);
+         init();
       }
 
       //! Initialize resources.
@@ -121,8 +125,17 @@ namespace Simulators
       onResourceAcquisition(void)
       {
         m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
-        // Create message to be dispatched.
-        m_msg = IMC::Factory::produce(m_args.message_name);
+        init();
+      }
+
+      void init(void)
+      {
+    	  // Create message to be dispatched.
+    	  m_msg = IMC::Factory::produce(m_args.message_name);
+
+    	  m_lat = Angles::radians(m_args.peak_latitude);
+    	  m_lon = Angles::radians(m_args.peak_longitude);
+    	  m_height = m_args.peak_value - m_args.away_value;
       }
 
       //! Release resources.
@@ -152,12 +165,22 @@ namespace Simulators
         if (!isActive())
           return;
 
-        m_msg->setTimeStamp();
+        double slat, slon, dx, dy, dz;
+        slat = m_last_state.lat;
+        slon = m_last_state.lon;
 
-        //fixme calculate value
-        m_msg->setValueFP(0);
+        // get absolute (simulated) position
+        WGS84::displace(m_last_state.x, m_last_state.y, &slat, &slon);
 
-        dispatch(m_msg, DF_KEEP_TIME);
+        // compute offset from plume peak
+        WGS84::displacement(slat, slon, 0, m_lat, m_lon, 0, &dx, &dy, &dz);
+
+        // calculate value based on 2d gaussian function
+        double val = m_args.away_value + m_height * exp(-1 * ((dx * dx + dy * dy)
+        		/(2 * (m_args.peak_width * m_args.peak_width))));
+
+        m_msg->setValueFP(val);
+        dispatch(m_msg);
       }
     };
   }
