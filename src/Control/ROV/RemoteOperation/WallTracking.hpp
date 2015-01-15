@@ -89,10 +89,7 @@ namespace Control
           }
 
           // Limit error
-          if (err > m_args->abs_max_dist)
-            err = m_args->abs_max_dist;
-          else if (err < -m_args->abs_max_dist)
-            err = -m_args->abs_max_dist;
+          err = Math::trimValue(err, -m_args->abs_max_dist, m_args->abs_max_dist);
 
           return m_pid.step(Time::Clock::get() - m_exec_time, err);
         }
