@@ -205,9 +205,6 @@ namespace Simulators
         m_qtree(NULL),
         m_pb(NULL)
       {
-        param("Entity Label", m_args.ents)
-        .defaultValue("thisandthat");
-
         param("Simulate - Bottom Distance", m_args.simulate_bd)
         .defaultValue("true")
         .description("True if bottom distance should be simulated");
@@ -514,8 +511,6 @@ namespace Simulators
       void
       task(void)
       {
-        inf("here here");
-
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
           return;  // Home ref not setup
 
