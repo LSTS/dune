@@ -87,12 +87,17 @@ namespace Simulators
 
         double res = m_beam_pos;
 
-        double limit = (double)m_direction * m_args->sector_width / 2.0;
+        double limit = m_args->sector_width / 2.0;
 
         if (std::abs(m_beam_pos + getIncrement()) > limit)
         {
           m_direction = - m_direction;
-          m_beam_pos = limit + getIncrement();
+          m_beam_pos = - (double)m_direction * limit + getIncrement();
+        }
+        else
+        {
+          m_beam_pos += getIncrement();
+          res = m_beam_pos;
         }
 
         return res;
@@ -370,6 +375,12 @@ namespace Simulators
             m_args.forward_orientation[i] = Angles::radians(m_args.forward_orientation[i]);
         }
 
+        if (paramChanged(m_args.pb.sector_width))
+          m_args.pb.sector_width = Angles::radians(m_args.pb.sector_width);
+
+        if (paramChanged(m_args.pb.step_size))
+          m_args.pb.step_size = Angles::radians(m_args.pb.step_size);
+
         if (paramChanged(m_args.pb.step_size) ||
             paramChanged(m_args.pb.sector_width) ||
             paramChanged(m_args.pb.time_step))
@@ -600,7 +611,7 @@ namespace Simulators
           psi_offset = m_pb->update();
         }
 
-        m_fd.value = forwardRange(psi_offset) + error;
+        m_fd.value = forwardRange(0.0) + error;
         m_fd.value = trimValue(m_fd.value, m_args.min_range, m_args.max_range);
         m_fd.validity = IMC::Distance::DV_VALID;
         const IMC::DeviceState* ds = *m_fd.location.begin();
