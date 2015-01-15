@@ -63,10 +63,14 @@ namespace Control
         unsigned wdist_mav_size;
         //! Desired distance to wall increments.
         float wdist_inc;
+        //! Desired distance to wall bounds (lower and upper respectively)
+        std::vector<float> wdist_bounds;
         //! Entity label of distance to wall
         std::string wdist_label;
         //! Entity label of desired distance to wall
         std::string wdist_des_label;
+        //! Entity label of filtered distance to wall
+        std::string filt_wdist_label;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -99,7 +103,9 @@ namespace Control
         MovingAverage<float>* m_wdist_mav;
         //! Distance to wall source entity
         unsigned m_wdist_ent;
-        //! Desird distance to wall source entity
+        //! Filtered distance to wall source entity
+        unsigned m_filt_wdist_ent;
+        //! Desired distance to wall source entity
         unsigned m_wdist_des_ent;
         //! Task arguments.
         Arguments m_args;
@@ -178,6 +184,12 @@ namespace Control
           .units(Units::Meter)
           .description("Desired distance to wall increments.");
 
+          param("Wall Tracking -- Distance Bounds", m_args.wdist_bounds)
+          .defaultValue("0.0, 3.0")
+          .size(2)
+          .units(Units::Meter)
+          .description("Desired distance to wall lower and upper bounds.");
+
           param("Entity Label - Wall Distance", m_args.wdist_label)
           .defaultValue("")
           .description("Entity label of distance to wall");
@@ -185,6 +197,10 @@ namespace Control
           param("Entity Label - Desired Wall Distance", m_args.wdist_des_label)
           .defaultValue("")
           .description("Entity label of desired distance to wall");
+
+          param("Entity Label - Filtered Wall Distance", m_args.filt_wdist_label)
+          .defaultValue("")
+          .description("Entity label of the filtered distance to wall");
 
           // Add remote actions.
           addActionAxis("Forward");
@@ -210,6 +226,7 @@ namespace Control
         onEntityReservation(void)
         {
           m_wdist_des_ent = reserveEntity(m_args.wdist_des_label);
+          m_filt_wdist_ent = reserveEntity(m_args.filt_wdist_label);
         }
 
         void
@@ -290,6 +307,7 @@ namespace Control
             return;
 
           IMC::Distance filt_msg = *msg;
+          filt_msg.setSourceEntity(m_filt_wdist_ent);
 
           filt_msg.value = m_wdist_mav->update(msg->value);
 
@@ -315,6 +333,12 @@ namespace Control
             Memory::clear(m_wt);
             m_wt = new WallTracking(&m_args.wt);
             m_wt->setDesiredDistance(m_wdist_desired);
+
+            inf("wall tracker is on");
+          }
+          else
+          {
+            inf("wall tracker is off");
           }
         }
 
@@ -323,7 +347,10 @@ namespace Control
         {
           if (m_wt_enabled)
           {
-            m_wdist_desired = value / 127.0 * m_args.wdist_inc;
+            // forward button will mean decreasing distance to wall
+            m_wdist_desired -= (float)(value / 127.0) * m_args.wdist_inc;
+
+            m_wdist_desired = trimValue(m_wdist_desired, m_args.wdist_bounds[0], m_args.wdist_bounds[1]);
 
             IMC::Distance dist;
             dist.setSourceEntity(m_wdist_des_ent);
@@ -393,13 +420,6 @@ namespace Control
               else
                 m_h_ref = 0.0;
             }
-
-            debug("desired depth: %.1f", m_depth);
-
-            if (!m_args.as_control)
-              debug("desired heading: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
-            else
-              debug("desired heading rate: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
           }
           else
           {
