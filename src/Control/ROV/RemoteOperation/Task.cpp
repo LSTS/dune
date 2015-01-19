@@ -135,6 +135,7 @@ namespace Control
           .description("Turn on actively control of depth and heading");
 
           param("Angular Speed Control", m_args.as_control)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
           .description("Control the angular speed instead of heading.");
 
@@ -148,7 +149,8 @@ namespace Control
           .description("Remote action deadzone for the depth rate.");
 
           param("Heading Rate", m_args.heading_rate)
-          .defaultValue("5.0")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .defaultValue("1.0")
           .units(Units::DegreePerSecond)
           .description("Rate of increase or decrease of heading with control enabled.");
 
