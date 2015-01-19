@@ -71,6 +71,8 @@ namespace Control
         std::string wdist_des_label;
         //! Entity label of filtered distance to wall
         std::string filt_wdist_label;
+        //! Maximum distance threshold;
+        double max_dist;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -202,6 +204,10 @@ namespace Control
           .defaultValue("")
           .description("Entity label of the filtered distance to wall");
 
+          param("Wall Tracking -- Distance Threshold", m_args.max_dist)
+          .defaultValue("5")
+          .description("Distance threshold");
+
           // Add remote actions.
           addActionAxis("Forward");
           addActionAxis("Starboard");
@@ -306,6 +312,9 @@ namespace Control
           if (msg->getSourceEntity() != m_wdist_ent)
             return;
 
+          if (msg->value > m_args.max_dist)
+            return;
+
           IMC::Distance filt_msg = *msg;
           filt_msg.setSourceEntity(m_filt_wdist_ent);
 
@@ -393,20 +402,20 @@ namespace Control
 
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
 
-	    int up = tuples.get("Up", 0);
+            int up = tuples.get("Up", 0);
 
-	    if (up > m_args.depth_deadzone || up < -m_args.depth_deadzone)
-	    {
-	      m_depth += up / 127.0 * m_args.depth_rate;
-	      m_depth = std::max(0.0f, m_depth);
-	    }
+            if (up > m_args.depth_deadzone || up < -m_args.depth_deadzone)
+            {
+              m_depth += up / 127.0 * m_args.depth_rate;
+              m_depth = std::max(0.0f, m_depth);
+            }
 
             int zed = tuples.get("Z+", 0) - 1 * tuples.get("Z-", 0);
 
             if (zed != 0)
             {
               m_depth += (float)zed * m_args.depth_inc;
-	      m_depth = std::max(0.0f, m_depth);
+              m_depth = std::max(0.0f, m_depth);
             }
 
             rotateControl(tuples.get("Rotate", 0));
