@@ -163,8 +163,11 @@ namespace Sensors
       //! Get head position.
       //! @return head position.
       float
-      getHeadPosition(void) const
+      getHeadPosition(bool invert) const
       {
+        if (invert)
+          return -m_head_position;
+
         return m_head_position;
       }
 

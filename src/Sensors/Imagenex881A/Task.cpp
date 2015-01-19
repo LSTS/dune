@@ -119,6 +119,8 @@ namespace Sensors
       double sspeed;
       //! Use dynamic sound speed.
       bool sspeed_dyn;
+      //! Invert Angle
+      bool invert;
       //! Sonar position.
       std::vector<float> position;
       //! Use default Imagenex configuration.
@@ -300,6 +302,10 @@ namespace Sensors
         param("Use Dynamic Sound Speed", m_args.sspeed_dyn)
         .defaultValue("true")
         .description("Update measurements according with measured sound speed");
+
+        param("Invert Orientation Angle", m_args.invert)
+        .defaultValue("false")
+        .description("Invert orientation angle");
 
         param("Sonar position", m_args.position)
         .defaultValue("0.2, 0, -0.4")
@@ -662,7 +668,7 @@ namespace Sensors
               if (m_args.sspeed_dyn)
                 m_distance.value *= m_sound_speed / c_sound_speed;
 
-              updateState(m_parser.getHeadPosition());
+              updateState(m_parser.getHeadPosition(m_args.invert));
 
               dispatch(m_distance);
 
