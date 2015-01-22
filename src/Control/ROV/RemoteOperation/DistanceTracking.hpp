@@ -25,8 +25,8 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef CONTROL_ROV_REMOTEOPERATION_WALLTRACKING_HPP_INCLUDED_
-#define CONTROL_ROV_REMOTEOPERATION_WALLTRACKING_HPP_INCLUDED_
+#ifndef CONTROL_ROV_REMOTEOPERATION_DISTANCETRACKING_HPP_INCLUDED_
+#define CONTROL_ROV_REMOTEOPERATION_DISTANCETRACKING_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Math.hpp>
@@ -41,7 +41,7 @@ namespace Control
       using namespace DUNE;
       using namespace DUNE::Control;
 
-      struct WTArguments
+      struct DTArguments
       {
         //! Pointer to task
         DUNE::Tasks::Task* task;
@@ -55,13 +55,13 @@ namespace Control
         float abs_max_dist;
       };
 
-      //! Wall tracking algorithm for ROV
-      class WallTracking
+      //! Distance tracking algorithm for ROV
+      class DistanceTracking
       {
       public:
         //! Constructor.
         //! @param[in] args pointer to arguments struct
-        WallTracking(WTArguments* args):
+        DistanceTracking(DTArguments* args):
           m_args(args),
           m_exec_time(-1.0f)
         {
@@ -95,17 +95,17 @@ namespace Control
         }
 
         //! Destructor.
-        ~WallTracking(void)
+        ~DistanceTracking(void)
         { }
 
       private:
         //! Pointer to arguments
-        WTArguments* m_args;
+        DTArguments* m_args;
         //! PID controller for distance
         DiscretePID m_pid;
         //! PID control parcels for debug
         IMC::ControlParcel m_parcels;
-        //! Desired distance to wall
+        //! Desired distance
         float m_desired_distance;
         //! Last control execution time
         float m_exec_time;
