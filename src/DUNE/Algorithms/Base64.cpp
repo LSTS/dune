@@ -82,38 +82,10 @@ namespace DUNE
         }
       }
 
-<<<<<<< HEAD
-      //! Decode a sequence of bytes in Base64.
-      std::string
-      Base64::decode(const unsigned char* bytes, size_t len){
-        if (len % 4 != 0) return NULL;
-        
-        size_t msg_len = 0;
-        
-        msg_len = len / 4 * 3;
-        
-        if (bytes[len - 1] == '=')
-            (msg_len)--;
-        if (bytes[len - 2] == '=')
-            (msg_len)--;
-        
-        //MAX Length of a base 64 line message
-        const int MAX_MSG=76;
-
-        unsigned char msg[MAX_MSG];
-
-        for (unsigned int i = 0, j = 0; i < len;)
-        {
-            uint32_t sextet_a = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
-            uint32_t sextet_b = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
-            uint32_t sextet_c = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
-            uint32_t sextet_d = bytes[i] == '=' ? 0 & i++ : c_b64_de[bytes[i++]];
-=======
       if (i)
       {
         for(j = i; j < 3; j++)
           triple[j] = '\0';
->>>>>>> 4389ab16caf3dc643b6066cc7e75063d55d9b704
 
         quad[0] = (triple[0] & 0xfc) >> 2;
         quad[1] = ((triple[0] & 0x03) << 4) + ((triple[1] & 0xf0) >> 4);
@@ -144,7 +116,7 @@ namespace DUNE
       if (bytes[len - 2] == '=')
         (msg_len)--;
 
-      unsigned char msg[static_cast<int>(msg_len)];
+      unsigned char msg[76];
 
       for (unsigned int i = 0, j = 0; i < len;)
       {
