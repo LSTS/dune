@@ -32,7 +32,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
-#include "WallTracking.hpp"
+#include "DistanceTracking.hpp"
 
 namespace Control
 {
@@ -57,8 +57,8 @@ namespace Control
         int depth_deadzone;
         float heading_rate;
         float depth_inc;
-        //! Wall tracking algorithm arguments
-        WTArguments wt;
+        //! Distance tracking algorithm arguments
+        DTArguments dt;
         //! Moving average window size for distance to wall
         unsigned wdist_mav_size;
         //! Desired distance to wall increments.
@@ -93,8 +93,8 @@ namespace Control
         float m_h_ref;
         //! Flag is true if we have depth and heading data
         bool m_dh_data;
-        //! Wall tracking algorithm
-        WallTracking* m_wt;
+        //! Distance tracking algorithm
+        DistanceTracking* m_dt;
         //! Desired distance to wall
         float m_wdist_desired;
         //! Wall tracking enabled
@@ -117,6 +117,7 @@ namespace Control
           m_thruster(5, 1, 0.0),
           m_forces(6, 1, 0.0),
           m_dh_data(false),
+          m_dt(NULL),
           m_wdist_desired(c_wall_dist),
           m_wdist_mav(NULL)
         {
@@ -163,22 +164,22 @@ namespace Control
           .defaultValue("5")
           .description("Distance moving average window size");
 
-          param("Wall Tracking -- Gains", m_args.wt.gains)
+          param("Wall Tracking -- Gains", m_args.dt.gains)
           .defaultValue("")
           .size(3)
           .description("Distance PID controller gains");
 
-          param("Wall Tracking -- Maximum Speed", m_args.wt.max_speed)
+          param("Wall Tracking -- Maximum Speed", m_args.dt.max_speed)
           .defaultValue("0.5")
           .units(Units::MeterPerSecond)
           .description("Maximum speed output from PID");
 
-          param("Wall Tracking -- Integral Limit", m_args.wt.int_limit)
+          param("Wall Tracking -- Integral Limit", m_args.dt.int_limit)
           .defaultValue("0.2")
           .units(Units::MeterPerSecond)
           .description("PID Integral limit");
 
-          param("Wall Tracking -- Absolute Maximum Error", m_args.wt.abs_max_dist)
+          param("Wall Tracking -- Absolute Maximum Error", m_args.dt.abs_max_dist)
           .defaultValue("1.0")
           .units(Units::Meter)
           .description("Absolute value of maximum error in distance");
@@ -249,7 +250,7 @@ namespace Control
         onResourceRelease(void)
         {
           Memory::clear(m_wdist_mav);
-          Memory::clear(m_wt);
+          Memory::clear(m_dt);
         }
 
         void
@@ -323,7 +324,7 @@ namespace Control
           filt_msg.value = m_wdist_mav->update(msg->value);
 
           if (m_wt_enabled)
-            m_forces(0, 0) = m_wt->update(filt_msg.value) / m_args.max_speed;
+            m_forces(0, 0) = m_dt->update(filt_msg.value) / m_args.max_speed;
           else
             m_wdist_desired = filt_msg.value;
 
@@ -341,9 +342,9 @@ namespace Control
 
           if (m_wt_enabled)
           {
-            Memory::clear(m_wt);
-            m_wt = new WallTracking(&m_args.wt);
-            m_wt->setDesiredDistance(m_wdist_desired);
+            Memory::clear(m_dt);
+            m_dt = new DistanceTracking(&m_args.dt);
+            m_dt->setDesiredDistance(m_wdist_desired);
 
             inf("wall tracker is on");
           }
@@ -368,7 +369,7 @@ namespace Control
             dist.value = m_wdist_desired;
             dispatch(dist);
 
-            m_wt->setDesiredDistance(m_wdist_desired);
+            m_dt->setDesiredDistance(m_wdist_desired);
           }
           else
           {
