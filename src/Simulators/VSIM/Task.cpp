@@ -186,9 +186,6 @@ namespace Simulators
       void
       task(void)
       {
-        std::string teste = "Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba! Esta merda e uma chatice do caralho pois nunca mais acaba!";
-        inf("%s", Algorithms::Base64::encode(teste).c_str());
-        inf("%s", Algorithms::Base64::decode(Algorithms::Base64::encode(teste)).c_str());
         if (!isActive())
           return;
 
