@@ -54,7 +54,7 @@ namespace DUNE
       {
         return encode(reinterpret_cast<const unsigned char*>(str.c_str()), str.size());
       }
-      
+
       //! Encode a sequence of bytes in Base64.
       //! @param[in] str source string.
       //! @param[in] len length of the string.
@@ -64,7 +64,7 @@ namespace DUNE
       {
         return encode(reinterpret_cast<const unsigned char*>(str), len);
       }
-      
+
       //! Encode a sequence of bytes in Base64.
       //! @param[in] bytes unsigned char.
       //! @param[in] len length of the string.
@@ -80,7 +80,7 @@ namespace DUNE
       {
         return decode(reinterpret_cast<const unsigned char*>(str.c_str()), str.size());
       }
-      
+
       //! Decode a sequence of bytes in Base64.
       //! @param[in] str source string.
       //! @param[in] len length of the string.
@@ -90,7 +90,7 @@ namespace DUNE
       {
         return decode(reinterpret_cast<const unsigned char*>(str), len);
       }
-      
+
       //! Decode a sequence of bytes in Base64.
       //! @param[in] bytes unsigned char.
       //! @param[in] len length of the string.
@@ -102,4 +102,4 @@ namespace DUNE
 }
 
 #endif
-        
+
