@@ -107,14 +107,18 @@ namespace DUNE
         if (len % 4 != 0) return NULL;
         
         size_t msg_len = 0;
+        
         msg_len = len / 4 * 3;
         
         if (bytes[len - 1] == '=')
             (msg_len)--;
         if (bytes[len - 2] == '=')
             (msg_len)--;
+        
+        //MAX Length of a base 64 line message
+        const int MAX_MSG=76;
 
-        unsigned char msg[static_cast<int>(msg_len)];
+        unsigned char msg[MAX_MSG];
 
         for (unsigned int i = 0, j = 0; i < len;)
         {
