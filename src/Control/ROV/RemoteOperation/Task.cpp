@@ -52,7 +52,7 @@ namespace Control
         Matrix actuat;
         double max_speed;
         bool dh_control;
-        bool as_control;
+        bool heading_control;
         float depth_rate;
         int depth_deadzone;
         float heading_rate;
@@ -134,10 +134,10 @@ namespace Control
           .defaultValue("false")
           .description("Turn on actively control of depth and heading");
 
-          param("Angular Speed Control", m_args.as_control)
+          param("Heading Tracking", m_args.heading_control)
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
-          .description("Control the angular speed instead of heading.");
+          .description("Control the heading angle instead of heading rate.");
 
           param("Depth Rate", m_args.depth_rate)
           .defaultValue("0.1")
@@ -268,7 +268,7 @@ namespace Control
             enableControlLoops(IMC::CL_SPEED | IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
 
-            if (!m_args.as_control)
+            if (m_args.heading_control)
               m_h_ref = m_start_heading;
           }
           else
@@ -379,7 +379,7 @@ namespace Control
         void
         rotateControl(int value)
         {
-          if (!m_args.as_control)
+          if (m_args.heading_control)
           {
             m_h_ref += value / 127.0 * m_args.heading_rate;
             m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
@@ -426,7 +426,7 @@ namespace Control
             {
               m_depth = m_start_depth;
 
-              if (!m_args.as_control)
+              if (m_args.heading_control)
                 m_h_ref = m_start_heading;
               else
                 m_h_ref = 0.0;
@@ -453,7 +453,7 @@ namespace Control
             disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
 
-            if (!m_args.as_control)
+            if (m_args.heading_control)
               m_h_ref = m_start_heading;
             else
               m_h_ref = 0.0;
@@ -482,7 +482,7 @@ namespace Control
             dvel.v = m_args.max_speed * m_forces(1, 0);
             dispatch(dvel);
 
-            if (!m_args.as_control)
+            if (m_args.heading_control)
             {
               IMC::DesiredHeading d_heading;
               d_heading.value = m_h_ref;
