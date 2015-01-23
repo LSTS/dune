@@ -80,6 +80,10 @@
 #define MAG_GEO_POLE_TOLERANCE  1e-5
 #define MAG_USE_GEOID	1    /* 1 Geoid - Ellipsoid difference should be corrected, 0 otherwise */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 Data types and prototype declaration for
 World Magnetic Model (WMM) subroutines.
@@ -493,7 +497,8 @@ void MAG_PrintUserDataWithUncertainty(MAGtype_GeoMagneticElements GeomagElements
         MAGtype_MagneticModel *MagneticModel,
         MAGtype_Geoid *Geoid);
 
-
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*GEOMAGHEADER_H*/
