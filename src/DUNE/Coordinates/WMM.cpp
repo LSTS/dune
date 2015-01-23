@@ -48,8 +48,6 @@ namespace DUNE
 {
   namespace Coordinates
   {
-    static const int c_num_terms = ((MAG_MAX_MODEL_DEGREES + 1) * (MAG_MAX_MODEL_DEGREES + 2) / 2);
-
     struct WMMData
     {
       MAGtype_Geoid geoid;
@@ -71,24 +69,27 @@ namespace DUNE
     WMM::init(const Path& root)
     {
       m_data = new WMMData;
-      Path egmfile(root / "wmm/egm9615.bin");
-      Path wmmfile(root / "wmm/wmm.cof");
-
-      if (!egmfile.isFile())
-        throw std::runtime_error(egmfile.str() + " not found");
+      Path wmmfile(root / "wmm/WMM.COF");
 
       if (!wmmfile.isFile())
         throw std::runtime_error(wmmfile.str() + " not found");
 
       // Initialization
-      MAGtype_MagneticModel* tmp = MAG_AllocateModelMemory(c_num_terms);
-      MAG_SetDefaults(&m_data->ellip, tmp, &m_data->geoid);
+      MAG_robustReadMagModels(wmmfile.c_str(), m_data->mm, 1);
+
+      int n_max = m_data->mm->nMax;
+
+      if (n_max < m_data->mm->nMax)
+        n_max = m_data->mm->nMax;
+
+      int num_terms = ((n_max + 1) * (n_max + 2) / 2);
+      MAGtype_MagneticModel* tmp = MAG_AllocateModelMemory(num_terms);
+      MAG_SetDefaults(&m_data->ellip, &m_data->geoid);
 
       // Read geoid data
-      MAG_InitializeGeoid(egmfile.c_str(), &m_data->geoid);
-
-      // Read magnetic model data
-      MAG_readMagneticModel(wmmfile.c_str(), tmp);
+      /* Set EGM96 Geoid parameters */
+      m_data->geoid.GeoidHeightBuffer = GeoidHeightBuffer;
+      m_data->geoid.Geoid_Initialized = 1;
 
       // Adjust magnetic model according to date
       char dummy[100];
@@ -99,8 +100,7 @@ namespace DUNE
       date.Day = now.day;
       MAG_DateToYear(&date, dummy);
 
-      m_data->mm = MAG_AllocateModelMemory(c_num_terms);
-      MAG_TimelyModifyMagneticModel(date, tmp, m_data->mm);
+      MAG_TimelyModifyMagneticModel(date, m_data->mm, tmp);
       MAG_FreeMagneticModelMemory(tmp);
     }
 
