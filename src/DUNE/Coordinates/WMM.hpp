@@ -24,6 +24,7 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 // Author: Pedro Vaz Teixeira                                               *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 #ifndef DUNE_COORDINATES_WMM_HPP_INCLUDED_
