@@ -31,7 +31,7 @@
 
 namespace Power
 {
-  //! Device driver for LUEMB. 
+  //! Device driver for LUEMB.
   //!
   //! This board is able to monitor voltages and currents, is also able to control:
   //! 3x (5V Outputs)
@@ -44,7 +44,7 @@ namespace Power
     using DUNE_NAMESPACES;
     using Power::PCTLv2::PowerChannel;
     using Power::PCTLv2::PowerChannels;
-    
+
     //! Serial port baud rate.
     static const unsigned c_baud_rate = 115200;
     //! Number of LEDs.
@@ -132,13 +132,13 @@ namespace Power
         param("LED - Names", m_args.led_names)
         .defaultValue("")
         .size(c_led_count)
-        .description("List of LED names"); 
+        .description("List of LED names");
 
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
           std::string option = String::str("ADC Channel %u - Message", i);
           param(option, m_args.adc_messages[i]);
-          
+
           option = String::str("ADC Channel %u - Entity Label", i);
           param(option, m_args.adc_elabels[i]);
 
@@ -157,7 +157,7 @@ namespace Power
           param(option, m_args.pwr_states[i])
           .defaultValue("0");
         }
-        
+
         bind<IMC::QueryPowerChannelState>(this);
         bind<IMC::QueryLedBrightness>(this);
         bind<IMC::PowerChannelControl>(this);
@@ -191,9 +191,9 @@ namespace Power
         {
           if (m_adcs[i] != NULL)
             delete m_adcs[i];
-          
+
           m_adcs[i] = IMC::Factory::produce(m_args.adc_messages[i]);
-          
+
           try
           {
             unsigned eid = resolveEntity(m_args.adc_elabels[i]);
@@ -215,7 +215,7 @@ namespace Power
             channel->state.state = IMC::PowerChannelState::PCS_OFF;
           m_channels.add(i, channel);
         }
-    
+
         clearLEDs();
         for (unsigned i = 0; i < m_args.led_names.size(); ++i)
         {
@@ -358,7 +358,7 @@ namespace Power
         std::map<std::string, LED*>::iterator itr = m_led_by_name.begin();
         for (; itr != m_led_by_name.end(); ++itr)
           delete itr->second;
-        
+
         m_led_by_name.clear();
         m_led_by_id.clear();
       }
@@ -410,7 +410,7 @@ namespace Power
           uint16_t value = 0;
           frame.get(value, i * 2);
           if (m_adcs[i] != NULL)
-          {   
+          {
             float tmp = m_args.adc_factors[i][0] * (value / 4096.0) + m_args.adc_factors[i][1];
             m_adcs[i]->setValueFP(tmp);
             dispatch(m_adcs[i]);
@@ -432,7 +432,7 @@ namespace Power
         frame.get(led_states, 24);
         for (unsigned i = 0; i < c_led_count; ++i)
           m_led_by_id[i]->brightness.value = (led_states & (1 << i)) != 0;
-        
+
         return true;
       }
 
@@ -440,7 +440,7 @@ namespace Power
       dispatchPowerChannelStates(void)
       {
         std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
-        
+
         for (; itr != m_channels.end(); ++itr)
         {
           if (itr->second->state.name.substr(0, 3) != "N/C")
