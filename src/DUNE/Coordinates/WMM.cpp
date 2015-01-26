@@ -53,6 +53,7 @@ namespace DUNE
       MAGtype_Geoid geoid;
       MAGtype_Ellipsoid ellip;
       MAGtype_MagneticModel* mm;
+      MAGtype_MagneticModel* timed_mm;
     };
 
     WMM::WMM(void)
@@ -75,15 +76,10 @@ namespace DUNE
         throw std::runtime_error(wmmfile.str() + " not found");
 
       // Initialization
-      MAG_robustReadMagModels(wmmfile.c_str(), m_data->mm, 1);
+      m_data->mm = MAG_robustReadMagModels(wmmfile.c_str());
 
-      int n_max = m_data->mm->nMax;
-
-      if (n_max < m_data->mm->nMax)
-        n_max = m_data->mm->nMax;
-
-      int num_terms = ((n_max + 1) * (n_max + 2) / 2);
-      MAGtype_MagneticModel* tmp = MAG_AllocateModelMemory(num_terms);
+      int num_terms = ((m_data->mm->nMax + 1) * (m_data->mm->nMax + 2) / 2);
+      m_data->timed_mm = MAG_AllocateModelMemory(num_terms);
       MAG_SetDefaults(&m_data->ellip, &m_data->geoid);
 
       // Read geoid data
@@ -99,15 +95,14 @@ namespace DUNE
       date.Month = now.month;
       date.Day = now.day;
       MAG_DateToYear(&date, dummy);
-
-      MAG_TimelyModifyMagneticModel(date, m_data->mm, tmp);
-      MAG_FreeMagneticModelMemory(tmp);
+      MAG_TimelyModifyMagneticModel(date, m_data->mm, m_data->timed_mm);
     }
 
     WMM::~WMM(void)
     {
+      MAG_FreeMagneticModelMemory(m_data->timed_mm);
       MAG_FreeMagneticModelMemory(m_data->mm);
-      std::free(m_data->geoid.GeoidHeightBuffer);
+
       delete m_data;
     }
 
@@ -134,7 +129,7 @@ namespace DUNE
       geo.HeightAboveEllipsoid = h * 1e-03;
 
       MAG_GeodeticToSpherical(m_data->ellip, geo, &sph);
-      MAG_Geomag(m_data->ellip, sph, geo, m_data->mm, &gme);
+      MAG_Geomag(m_data->ellip, sph, geo, m_data->timed_mm, &gme);
       MAG_CalculateGridVariation(geo, &gme);
 
       return Angles::radians(gme.Decl);
