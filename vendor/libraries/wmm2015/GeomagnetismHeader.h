@@ -277,7 +277,7 @@ int MAG_Grid(MAGtype_CoordGeodetic minimum,
 
 int MAG_robustReadMagneticModel_Large(const char *filename, const char* filenameSV, MAGtype_MagneticModel **MagneticModel);
 
-int MAG_robustReadMagModels(const char *filename, MAGtype_MagneticModel * magneticmodel, int array_size);
+MAGtype_MagneticModel * MAG_robustReadMagModels(const char *filename);
 
 int MAG_SetDefaults(MAGtype_Ellipsoid *Ellip, MAGtype_Geoid *Geoid);
 
@@ -352,7 +352,7 @@ int MAG_readMagneticModel(const char *filename, MAGtype_MagneticModel *MagneticM
 
 int MAG_readMagneticModel_Large(const char *filename, const char *filenameSV, MAGtype_MagneticModel *MagneticModel);
 
-int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * magneticmodel, int array_size);
+MAGtype_MagneticModel * MAG_readMagneticModel_SHDF(const char *filename);
 
 char *MAG_Trim(char *str);
 

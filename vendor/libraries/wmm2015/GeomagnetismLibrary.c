@@ -585,19 +585,20 @@ int MAG_robustReadMagneticModel_Large(const char *filename, const char *filename
     return 1;
 } /*MAG_robustReadMagneticModel_Large*/
 
-int MAG_robustReadMagModels(const char *filename, MAGtype_MagneticModel * magneticmodel, int array_size)
+MAGtype_MagneticModel* MAG_robustReadMagModels(const char *filename)
 {
+    MAGtype_MagneticModel* magneticmodel;
     char line[MAXLINELENGTH];
     int n, nMax = 0, num_terms, a;
     FILE *MODELFILE;
     MODELFILE = fopen(filename, "r");
     if(MODELFILE == 0) {
-        return 0;
+        return NULL;
     }
     fgets(line, MAXLINELENGTH, MODELFILE);
     if(line[0] == '%')
-        MAG_readMagneticModel_SHDF(filename, magneticmodel, array_size);
-    else if(array_size == 1)
+        magneticmodel = MAG_readMagneticModel_SHDF(filename);
+    else
     {
 
         do
@@ -615,9 +616,9 @@ int MAG_robustReadMagModels(const char *filename, MAGtype_MagneticModel * magnet
         MAG_readMagneticModel(filename, magneticmodel);
         magneticmodel->CoefficientFileEndDate = magneticmodel->epoch + 5;
 
-    } else return 0;
+    }
     fclose(MODELFILE);
-    return 1;
+    return magneticmodel;
 } /*MAG_robustReadMagModels*/
 
 /*End of Wrapper Functions*/
@@ -2102,43 +2103,57 @@ void MAG_PrintEMMFormat(const char *filename, const char *filenameSV, MAGtype_Ma
     return;
 } /*MAG_PrintEMMFormat*/
 
-void MAG_PrintSHDFFormat(const char *filename, MAGtype_MagneticModel * MagneticModel, int epochs)
+void MAG_PrintSHDFFormat(const char *filename, MAGtype_MagneticModel *MagneticModel, int epochs)
 {
-        int n, m, index;
+    	int i, n, m, index, epochRange;
 	FILE *SHDF_file;
 	SHDF_file = fopen(filename, "w");
 	/*lines = (int)(UFM_DEGREE / 2.0 * (UFM_DEGREE + 3));*/
-	fprintf(SHDF_file, "%%SHDF 16695 Definitive Geomagnetic Reference Field Model Coefficient File\n");
-	fprintf(SHDF_file, "%%ModelName: %s\n", MagneticModel->ModelName);
-	fprintf(SHDF_file, "%%Publisher: International Association of Geomagnetism and Aeronomy (IAGA), Working Group V-Mod\n");
-	fprintf(SHDF_file, "%%ReleaseDate: Some Number\n");
-	fprintf(SHDF_file, "%%DataCutOFF: Some Other Number\n");
-	fprintf(SHDF_file, "%%ModelStartYear: %d\n", (int)MagneticModel->epoch);
-	fprintf(SHDF_file, "%%ModelEndYear: %d\n", (int)MagneticModel->epoch+1);
-	fprintf(SHDF_file, "%%Epoch: %.0f\n", MagneticModel->epoch);
-	fprintf(SHDF_file, "%%IntStaticDeg: %d\n", MagneticModel->nMax);
-	fprintf(SHDF_file, "%%IntSecVarDeg: %d\n", MagneticModel->nMaxSecVar);
-	fprintf(SHDF_file, "%%ExtStaticDeg: 0\n");
-	fprintf(SHDF_file, "%%ExtSecVarDeg: 0\n");
-	fprintf(SHDF_file, "%%Normalization: Schmidt semi-normailized\n");
-	fprintf(SHDF_file, "%%SpatBasFunc: spherical harmonics\n"); 
-	fprintf(SHDF_file, "# To synthesize the field for a given date:\n");
-	fprintf(SHDF_file, "# Use the sub-model of the epoch corresponding to each date\n");
-	fprintf(SHDF_file, "#\n#\n#\n#\n# I/E, n, m, Gnm, Hnm, SV-Gnm, SV-Hnm\n#\n");
-	n = 1;
-	m = 0;
-	for(n = 1; n <= MagneticModel->nMax; n++)
-	  {
-	    for(m = 0; m <= n; m++)
-	      {
-		index = (n * (n+1)) / 2 + m;
-		if(m != 0)
-		  fprintf(SHDF_file, "I,%d,%d,%f,%f,%f,%f\n", n, m, MagneticModel->Main_Field_Coeff_G[index], MagneticModel->Main_Field_Coeff_H[index], MagneticModel->Secular_Var_Coeff_G[index], MagneticModel->Secular_Var_Coeff_H[index]);
-		else
-		  fprintf(SHDF_file, "I,%d,%d,%f,,%f,\n", n, m, MagneticModel->Main_Field_Coeff_G[index], MagneticModel->Secular_Var_Coeff_G[index]);
-	      }
-	  }
-	  (void)epochs;
+	for(i = 0; i < epochs; i++)
+	{
+            if(i < epochs - 1) epochRange = MagneticModel->epoch - MagneticModel->epoch;
+            else epochRange = MagneticModel->epoch - MagneticModel->epoch;
+            fprintf(SHDF_file, "%%SHDF 16695 Definitive Geomagnetic Reference Field Model Coefficient File\n");
+		fprintf(SHDF_file, "%%ModelName: %s\n", MagneticModel->ModelName);
+		fprintf(SHDF_file, "%%Publisher: International Association of Geomagnetism and Aeronomy (IAGA), Working Group V-Mod\n");
+		fprintf(SHDF_file, "%%ReleaseDate: Some Number\n");
+		fprintf(SHDF_file, "%%DataCutOFF: Some Other Number\n");
+		fprintf(SHDF_file, "%%ModelStartYear: %d\n", (int)MagneticModel->epoch);
+		fprintf(SHDF_file, "%%ModelEndYear: %d\n", (int)MagneticModel->epoch+epochRange);
+		fprintf(SHDF_file, "%%Epoch: %.0f\n", MagneticModel->epoch);
+		fprintf(SHDF_file, "%%IntStaticDeg: %d\n", MagneticModel->nMax);
+		fprintf(SHDF_file, "%%IntSecVarDeg: %d\n", MagneticModel->nMaxSecVar);
+		fprintf(SHDF_file, "%%ExtStaticDeg: 0\n");
+		fprintf(SHDF_file, "%%ExtSecVarDeg: 0\n");
+		fprintf(SHDF_file, "%%Normalization: Schmidt semi-normailized\n");
+		fprintf(SHDF_file, "%%SpatBasFunc: spherical harmonics\n"); 
+		fprintf(SHDF_file, "# To synthesize the field for a given date:\n");
+		fprintf(SHDF_file, "# Use the sub-model of the epoch corresponding to each date\n");
+		fprintf(SHDF_file, "#\n#\n#\n#\n# I/E, n, m, Gnm, Hnm, SV-Gnm, SV-Hnm\n#\n");
+		n = 1;
+		m = 0;
+		for(n = 1; n <= MagneticModel->nMax; n++)
+		{
+			for(m = 0; m <= n; m++)
+			{
+				index = (n * (n+1)) / 2 + m;
+				if(i < epochs - 1)
+				{
+					if(m != 0)
+						fprintf(SHDF_file, "I,%d,%d,%f,%f,%f,%f\n", n, m, MagneticModel->Main_Field_Coeff_G[index], MagneticModel->Main_Field_Coeff_H[index], MagneticModel->Secular_Var_Coeff_G[index], MagneticModel->Secular_Var_Coeff_H[index]);
+					else
+						fprintf(SHDF_file, "I,%d,%d,%f,,%f,\n", n, m, MagneticModel->Main_Field_Coeff_G[index], MagneticModel->Secular_Var_Coeff_G[index]);
+				}
+				else
+				{
+					if(m != 0)
+						fprintf(SHDF_file, "I,%d,%d,%f,%f,%f,%f\n", n, m, MagneticModel->Main_Field_Coeff_G[index], MagneticModel->Main_Field_Coeff_H[index], MagneticModel->Secular_Var_Coeff_G[index], MagneticModel->Secular_Var_Coeff_H[index]);
+					else
+						fprintf(SHDF_file, "I,%d,%d,%f,,%f,\n", n, m, MagneticModel->Main_Field_Coeff_G[index], MagneticModel->Secular_Var_Coeff_G[index]);
+				}
+			}
+		}
+	}
 } /*MAG_PrintSHDFFormat*/
 
 int MAG_readMagneticModel(const char *filename, MAGtype_MagneticModel * MagneticModel)
@@ -2284,7 +2299,7 @@ int MAG_readMagneticModel_Large(const char *filename, const char *filenameSV, MA
     return TRUE;
 } /*MAG_readMagneticModel_Large*/
 
-int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * magneticmodel, int array_size)
+MAGtype_MagneticModel * MAG_readMagneticModel_SHDF(const char *filename)
 /*
  * MAG_readMagneticModels - Read the Magnetic Models from an SHDF format file
  *
@@ -2293,7 +2308,7 @@ int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * mag
  *  array_size - Max No of models to be read from the file
  *
  * Output:
- *  magneticmodel[] - Array of magnetic models read from the file
+ *  magneticmodels[] - Array of magnetic models read from the file
  *
  * Return value:
  *  Returns the number of models read from the file.
@@ -2338,16 +2353,17 @@ int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * mag
 
     /* For reading coefficients */
     int n, m;
-    double gnm, hnm, dgnm, dhnm;
+    double gnm, hnm, dgnm, dhnm, cutoff;
     int index;
-    
+
+    MAGtype_MagneticModel* magneticmodel;
     FILE *stream;
     ptrreset = line;
     stream = fopen(filename, READONLYMODE);
     if(stream == NULL)
     {
         perror("File open error");
-        return header_index;
+        return NULL;
     }
 
     /* Read records from the model file and store header information. */
@@ -2366,10 +2382,10 @@ int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * mag
                     MAG_AssignHeaderValues(magneticmodel, paramvalues);
                 }
                 header_index++;
-                if(header_index >= array_size)
+                if(header_index >= 1)
                 {
                     fprintf(stderr, "Header limit exceeded - too many models in model file. (%d)\n", header_index);
-                    return array_size + 1;
+                    return NULL;
                 }
                 newrecord = 0;
                 allocationflag = 0;
@@ -2416,7 +2432,7 @@ int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * mag
             if(!allocationflag)
             {
                 fprintf(stderr, "Degree not found in model. Memory cannot be allocated.\n");
-                return _DEGREE_NOT_FOUND;
+                return NULL;
             }
             if(m <= n)
             {
@@ -2432,10 +2448,14 @@ int MAG_readMagneticModel_SHDF(const char *filename, MAGtype_MagneticModel * mag
         MAG_AssignHeaderValues(magneticmodel, paramvalues);
     fclose(stream);
 
+    cutoff = magneticmodel->CoefficientFileEndDate;
+
+    for(i = 0; i < 1; i++) magneticmodel->CoefficientFileEndDate = cutoff;
+
     free(ptrreset);
     line = NULL;
     ptrreset = NULL;
-    return header_index + 1;
+    return magneticmodel;
 }/*MAG_readMagneticModel_SHDF*/
 
 char *MAG_Trim(char *str)
