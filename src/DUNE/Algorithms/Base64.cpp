@@ -116,7 +116,7 @@ namespace DUNE
       if (bytes[len - 2] == '=')
         (msg_len)--;
 
-      unsigned char* msg = new unsigned char[msg_len];
+      std::string msg(bytes, bytes + msg_len);
 
       for (unsigned int i = 0, j = 0; i < len;)
       {
@@ -132,11 +132,8 @@ namespace DUNE
         if (j < msg_len) msg[j++] = (triple >> 1 * 8) & 0xFF;
         if (j < msg_len) msg[j++] = (triple >> 0 * 8) & 0xFF;
       }
-      std::string str_out(msg, msg + msg_len);
-      
-      delete[] msg;
-      
-      return str_out;
+
+      return msg;
     }
   }
 }
