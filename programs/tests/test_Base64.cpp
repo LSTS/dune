@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Mauro Brandão                                                    *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -37,119 +38,54 @@ using DUNE_NAMESPACES;
 // Local headers.
 #include "Test.hpp"
 
-//! Test if the string is able to encode in base64
-std::string
-test_encode_base64(std::string str){
-  try {
-    std::string e_std;
-    e_std=Base64::encode(str);
-    std::cout << "string encode passed the test!\n";
-    return e_std;
-  }
-  catch(const std::exception& e)
-  {
-    std::cerr << "string encode failed the test!\n";
-    return 0;
-  }
-}
-
-//! Test if the string is able to decode in base64
-std::string
-test_decode_base64(std::string str){
-  try {
-    std::string d_std;
-    d_std=Base64::decode(str);
-    std::cout << "string decode passed the test!\n";
-    return d_std;
-  }
-  catch(const std::exception& e)
-  {
-    std::cerr << "string decode failed the test!\n";
-    return 0;
-  }
-}
-
 int
 main(void)
 {
-  std::string test_encode_base64(std::string);
-  std::string test_decode_base64(std::string);
+  Test test("Algorithms::Base64");
 
-  // RFC 4648 Strings Test
-
-  // Space -> String: "" - ""
-  std::string test_std_0 = "", result_en_0, result_de_0;
-  std::cout << test_std_0 << "\n";
-  result_en_0=test_encode_base64(test_std_0);
-  result_de_0=test_decode_base64(result_en_0);
-
-  printf("*\n*\n");
+  /* RFC 4648 Strings Test */
 
   // String: f - Zg==
-  std::string test_std_1 = "f", result_en_1, result_de_1;
-  std::cout << test_std_1 << "\n";
-  result_en_1=test_encode_base64(test_std_1);
-  result_de_1=test_decode_base64(result_en_1);
-
-  printf("*\n*\n");
+  std::string str = "f";
+  test.boolean("encode(f) == 'Zg=='", Base64::encode(str) == "Zg==");
+  test.boolean("decode(Zg==) == 'f'", Base64::decode(Base64::encode(str)) == "f");
 
   // String: fo - Zm8=
-  std::string test_std_2 = "fo", result_en_2, result_de_2;
-  std::cout << test_std_2 << "\n";
-  result_en_2=test_encode_base64(test_std_2);
-  result_de_2=test_decode_base64(result_en_2);
-
-  printf("*\n*\n");
+  str = "fo";
+  test.boolean("encode(fo) == 'Zm8='", Base64::encode(str) == "Zm8=");
+  test.boolean("decode(Zm8=) == 'fo'", Base64::decode(Base64::encode(str)) == "fo");
 
   // String: foo - Zm9v
-  std::string test_std_3 = "foo", result_en_3, result_de_3;
-  std::cout << test_std_3 << "\n";
-  result_en_3=test_encode_base64(test_std_3);
-  result_de_3=test_decode_base64(result_en_3);
-
-  printf("*\n*\n");
+  str = "foo";
+  test.boolean("encode(foo) == 'Zm9v'", Base64::encode(str) == "Zm9v");
+  test.boolean("decode(Zm9v) == 'foo'", Base64::decode(Base64::encode(str)) == "foo");
 
   // String: foob - Zm9vYg==
-  std::string test_std_4 = "foob", result_en_4, result_de_4;
-  std::cout << test_std_4 << "\n";
-  result_en_4=test_encode_base64(test_std_4);
-  result_de_4=test_decode_base64(result_en_4);
-
-  printf("*\n*\n");
+  str = "foob";
+  test.boolean("encode(foob) == 'Zm9vYg=='", Base64::encode(str) == "Zm9vYg==");
+  test.boolean("decode(Zm9vYg==) == 'foob'", Base64::decode(Base64::encode(str)) == "foob");
 
   // String: fooba - Zm9vYmE=
-  std::string test_std_5 = "fooba", result_en_5, result_de_5;
-  std::cout << test_std_5 << "\n";
-  result_en_5=test_encode_base64(test_std_5);
-  result_de_5=test_decode_base64(result_en_5);
-
-  printf("*\n*\n");
+  str = "fooba";
+  test.boolean("encode(fooba) == 'Zm9vYmE='", Base64::encode(str) == "Zm9vYmE=");
+  test.boolean("decode(Zm9vYmE=) == 'fooba'", Base64::decode(Base64::encode(str)) == "fooba");
 
   // String: foobar - Zm9vYmFy
-  std::string test_std_6 = "foobar", result_en_6, result_de_6;
-  std::cout << test_std_6 << "\n";
-  result_en_6=test_encode_base64(test_std_6);
-  result_de_6=test_decode_base64(result_en_6);
+  str = "foobar";
+  test.boolean("encode(foobar) == 'Zm9vYmFy'", Base64::encode(str) == "Zm9vYmFy");
+  test.boolean("decode(Zm9vYmFy) == 'foobar'", Base64::decode(Base64::encode(str)) == "foobar");
 
-  printf("*\n*\n");
-
-  // RFC 2045 Strings Test
+  /* RFC 2045 Strings Test */
 
   // String: "*" - "Kg=="
-  std::string test_std_7 = "*", result_en_7, result_de_7;
-  std::cout << test_std_7 << "\n";
-  result_en_7=test_encode_base64(test_std_7);
-  result_de_7=test_decode_base64(result_en_7);
-
-  printf("*\n*\n");
+  str = "*";
+  test.boolean("encode(*) == 'Kg=='", Base64::encode(str) == "Kg==");
+  test.boolean("decode(Kg==) == '*'", Base64::decode(Base64::encode(str)) == "*");
 
   // String: "Hello World!" - "SGVsbG8gV29ybGQh"
-  std::string test_std_8 = "Hello World!", result_en_8, result_de_8;
-  std::cout << test_std_8 << "\n";
-  result_en_8=test_encode_base64(test_std_8);
-  result_de_8=test_decode_base64(result_en_8);
-
-  printf("*\n*\n");
-
+  str = "Hello World!";
+  test.boolean("encode(Hello World!) == 'SGVsbG8gV29ybGQh'", Base64::encode(str) == "SGVsbG8gV29ybGQh");
+  test.boolean("decode(SGVsbG8gV29ybGQh) == 'Hello World!'", Base64::decode(Base64::encode(str)) == "Hello World!")
+;
   return 0;
 }
