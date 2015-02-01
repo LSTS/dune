@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -69,7 +69,7 @@ namespace Sensors
       SM_ACT_SAMPLE,
       //! Start deactivation sequence.
       SM_DEACT_BEGIN,
-      //! Disconnect from the Internet.
+      //! Disconnect from sidescan.
       SM_DEACT_DISCONNECT,
       //! Switch power off.
       SM_DEACT_POWER_OFF,
@@ -136,6 +136,8 @@ namespace Sensors
       SubsystemData m_subsys_data[c_subsys_count];
       //! Current state machine state.
       StateMachineStates m_sm_state;
+      //! State machine state queue.
+      std::queue<StateMachineStates> m_sm_state_queue;
       //! True if device is powered on.
       bool m_powered;
       //! Current packet being parsed.
@@ -312,13 +314,44 @@ namespace Sensors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
+      //! Push a new state to the state queue.
+      //! @param[in] state state machine state.
+      void
+      queueState(StateMachineStates state)
+      {
+        m_sm_state_queue.push(state);
+      }
+
+      //! Test if state queue has pending state transitions.
+      //! @return true if state queue has pending states, false otherwise.
+      bool
+      hasQueuedStates(void) const
+      {
+        return !m_sm_state_queue.empty();
+      }
+
+      StateMachineStates
+      getCurrentState(void) const
+      {
+        return m_sm_state;
+      }
+
+      StateMachineStates
+      dequeueState(void)
+      {
+        if (hasQueuedStates())
+        {
+          m_sm_state = m_sm_state_queue.front();
+          m_sm_state_queue.pop();
+        }
+
+        return m_sm_state;
+      }
+
       void
       onRequestActivation(void)
       {
-        debug("starting activation sequence");
-        m_sm_state = SM_ACT_BEGIN;
-        updateStateMachine();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+        queueState(SM_ACT_BEGIN);
       }
 
       bool
@@ -346,19 +379,19 @@ namespace Sensors
       {
         activationFailed(message);
         controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       onRequestDeactivation(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
-        m_sm_state = SM_DEACT_BEGIN;
-        updateStateMachine();
+        queueState(SM_DEACT_BEGIN);
       }
 
       void
       disconnect(void)
       {
+        debug("disconnecting");
         setDataActive(SUBSYS_SSL, "None");
         setPing(SUBSYS_SSL, "None");
         setDataActive(SUBSYS_SSH, "None");
@@ -366,6 +399,7 @@ namespace Sensors
         m_cmd->shutdown();
         Memory::clear(m_cmd);
         Memory::clear(m_sock_dat);
+        debug("disconnected");
       }
 
       void
@@ -440,16 +474,15 @@ namespace Sensors
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if ((msg->getSource() != getSystemId())
-            || (msg->getDestination() != getSystemId())
-            || (msg->getDestinationEntity() != getEntityId()))
+        if (msg->getSource() != getSystemId())
           return;
 
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
           case IMC::LoggingControl::COP_CURRENT_NAME:
-            openLog(m_ctx.dir_log / msg->name / "Data.jsf");
+            if (getCurrentState() == SM_ACT_LOG_WAIT || getCurrentState() == SM_ACT_SAMPLE)
+              openLog(m_ctx.dir_log / msg->name / "Data.jsf");
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
@@ -568,6 +601,9 @@ namespace Sensors
       void
       handleSonarData(void)
       {
+        if (m_log == NULL || m_packet == NULL)
+          return;
+
         int subsys_idx = getSubsysIndex(m_packet->getSubsystemNumber());
         if (subsys_idx < 0)
           return;
@@ -591,7 +627,8 @@ namespace Sensors
         else
         {
           dispatchDebugData(String::str("discarded initial sample %u:%u",
-                                        m_packet->getSubsystemNumber(), data->ping_count));
+                                        m_packet->getSubsystemNumber(),
+                                        data->ping_count));
         }
       }
 
@@ -621,7 +658,7 @@ namespace Sensors
         m_packet->set(data->depth, SDATA_IDX_DEPTH);
         m_packet->set(data->validity, SDATA_IDX_VALIDITY);
 
-        // User annotation string to save position with increased
+        // Use user annotation string to save position with increased
         // resolution.
         std::memcpy(m_packet->getMessageData()
                     + SDATA_IDX_ANNOTATION_STRING,
@@ -742,9 +779,6 @@ namespace Sensors
           return false;
 
         consumeMessages();
-
-        if (m_sock_dat == NULL)
-          return false;
 
         size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
         for (size_t i = 0; i < rv; ++i)
@@ -869,7 +903,7 @@ namespace Sensors
       void
       updateStateMachine(void)
       {
-        switch (m_sm_state)
+        switch (dequeueState())
         {
           // Wait for activation.
           case SM_IDLE:
@@ -877,64 +911,69 @@ namespace Sensors
 
             // Begin activation sequence.
           case SM_ACT_BEGIN:
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
             m_wdog.setTop(getActivationTime());
-            m_sm_state = SM_ACT_POWER_ON;
+            queueState(SM_ACT_POWER_ON);
+            break;
 
             // Turn power on.
           case SM_ACT_POWER_ON:
             turnPowerOn();
-            m_sm_state = SM_ACT_POWER_WAIT;
+            queueState(SM_ACT_POWER_WAIT);
+            break;
 
             // Wait for power to be on.
           case SM_ACT_POWER_WAIT:
+            if (isPowered())
+            {
+              queueState(SM_ACT_SS_WAIT);
+            }
+
             if (m_wdog.overflow())
             {
               failActivation(DTR("failed to turn power on"));
-              m_sm_state = SM_IDLE;
-              break;
+              queueState(SM_IDLE);
             }
-            else if (!isPowered())
-            {
-              break;
-            }
-            m_sm_state = SM_ACT_SS_WAIT;
+            break;
 
             // Connect to sidescan.
           case SM_ACT_SS_WAIT:
             if (m_wdog.overflow())
             {
               failActivation(DTR("failed to connect to device"));
-              m_sm_state = SM_IDLE;
-              break;
+              queueState(SM_IDLE);
             }
-            else if (!connect())
+            else if (connect())
             {
-              break;
+              queueState(SM_ACT_SS_SYNC);
             }
-
-            m_sm_state = SM_ACT_SS_SYNC;
+            break;
 
             // Synchronize time.
           case SM_ACT_SS_SYNC:
             estimateTimeDelta(m_wdog);
-            m_sm_state = SM_ACT_LOG_REQUEST;
+            queueState(SM_ACT_LOG_REQUEST);
+            break;
 
             // Request log name.
           case SM_ACT_LOG_REQUEST:
+            closeLog();
             requestLogName();
-            m_sm_state = SM_ACT_LOG_WAIT;
+            queueState(SM_ACT_LOG_WAIT);
+            break;
 
             // Wait for log name.
           case SM_ACT_LOG_WAIT:
-            if (m_log == NULL)
-              break;
-            m_sm_state = SM_ACT_DONE;
+            if (m_log != NULL)
+              queueState(SM_ACT_DONE);
+            break;
 
             // Activation procedure is complete.
           case SM_ACT_DONE:
-            activate();
             m_time_delta_timer.setTop(5.0);
-            m_sm_state = SM_ACT_SAMPLE;
+            queueState(SM_ACT_SAMPLE);
+            activate();
+            break;
 
             // Read samples and continuously estimate time difference.
           case SM_ACT_SAMPLE:
@@ -949,32 +988,37 @@ namespace Sensors
 
             // Start deactivation procedure.
           case SM_DEACT_BEGIN:
-            closeLog();
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
             m_wdog.setTop(getDeactivationTime());
-            m_sm_state = SM_DEACT_DISCONNECT;
+            queueState(SM_DEACT_DISCONNECT);
+            break;
 
             // Disconnect and shutdown sidescan.
           case SM_DEACT_DISCONNECT:
             disconnect();
-            m_sm_state = SM_DEACT_POWER_OFF;
+            closeLog();
+            queueState(SM_DEACT_POWER_OFF);
+            break;
 
             // Turn power off.
           case SM_DEACT_POWER_OFF:
-            if (!m_wdog.overflow())
-              break;
-            turnPowerOff();
-            m_sm_state = SM_DEACT_POWER_WAIT;
+            if (m_wdog.overflow())
+            {
+              turnPowerOff();
+              queueState(SM_DEACT_POWER_WAIT);
+            }
+            break;
 
             // Wait for power to be turned off.
           case SM_DEACT_POWER_WAIT:
-            if (isPowered())
-              break;
-            m_sm_state = SM_DEACT_DONE;
+            if (!isPowered())
+              queueState(SM_DEACT_DONE);
+            break;
 
             // Deactivation is complete.
           case SM_DEACT_DONE:
             deactivate();
-            m_sm_state = SM_IDLE;
+            queueState(SM_IDLE);
             break;
         }
       }
@@ -986,6 +1030,8 @@ namespace Sensors
         {
           if (isActive())
             consumeMessages();
+          else if (hasQueuedStates())
+            updateStateMachine();
           else
             waitForMessages(1.0);
 

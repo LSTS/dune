@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -180,6 +180,7 @@ namespace Control
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
 
             int up = tuples.get("Up", 0);
+
             if (up > m_args.depth_deadzone || up < -m_args.depth_deadzone)
             {
               m_depth += up / 127.0 * m_args.depth_rate;
@@ -196,7 +197,7 @@ namespace Control
               m_h_ref = tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
             }
 
-            if (tuples.get("Stop", 1))
+            if (tuples.get("Stop", 0))
             {
               m_depth = m_start_depth;
 

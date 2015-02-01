@@ -1,0 +1,7 @@
+file(GLOB DUNE_WMM2015_FILES
+  vendor/libraries/wmm2015/*.c)
+
+set_source_files_properties(${DUNE_WMM2015_FILES}
+  PROPERTIES COMPILE_FLAGS "${DUNE_C_FLAGS} ${DUNE_C_FLAGS_STRICT}")
+
+list(APPEND DUNE_VENDOR_FILES ${DUNE_WMM2015_FILES})

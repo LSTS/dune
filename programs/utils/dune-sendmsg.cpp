@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 // Author: Eduardo Marques                                                  *
@@ -61,7 +61,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  PushEntityParameters, QueryEntityInfo, QueryEntityParameters\n");
       fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, RestartSystem\n");
       fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
-      fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed, TeleoperationDone, Temperature\n");
+      fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed, Target, TeleoperationDone, Temperature\n");
       fprintf(stdout, "  TextMessage, TrexCommand, VehicleCommand, VehicleMedium\n");
       return 1;
     }
@@ -642,6 +642,32 @@ main(int argc, char** argv)
     IMC::SoundSpeed* tmsg = new IMC::SoundSpeed;
     msg = tmsg;
     tmsg->value = atoi(argv[4]);
+  }
+
+  if (strcmp(argv[3], "Target") == 0)
+  {
+    IMC::Target* tmsg = new IMC::Target;
+    msg = tmsg;
+    tmsg->label = "dune-sendmsg";
+    tmsg->lat = Angles::radians(atof(argv[4]));
+    tmsg->lon = Angles::radians(atof(argv[5]));
+    tmsg->z = atof(argv[6]);
+
+    if (argc > 7)
+    {
+      if (!strcmp(argv[7], "DEP") || !strcmp(argv[7], "dep"))
+        tmsg->z_units = IMC::Z_DEPTH;
+      else if (!strcmp(argv[7], "ALT") || !strcmp(argv[7], "alt"))
+        tmsg->z_units = IMC::Z_ALTITUDE;
+      else if (!strcmp(argv[7], "HEI") || !strcmp(argv[7], "hei"))
+        tmsg->z_units = IMC::Z_HEIGHT;
+    }
+
+    if (argc > 9)
+    {
+      tmsg->cog = Angles::normalizeRadian(Angles::radians(atof(argv[8])));
+      tmsg->sog = atof(argv[9]);
+    }
   }
 
   if (strcmp(argv[3], "TeleoperationDone") == 0)

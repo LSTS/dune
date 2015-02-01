@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -20,7 +20,7 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
@@ -131,9 +131,6 @@ macro(dune_probe_headers)
   dune_test_header(windows.h)
   dune_test_header(direct.h)
   dune_test_header(winsock2.h)
-  dune_test_header(ws2tcpip.h)
-  dune_test_header(wspiapi.h)
-  dune_test_header(ws2spi.h)
   dune_test_header(mach-o/dyld.h)
   dune_test_header(process.h)
   dune_test_header(bsp.h)
@@ -161,4 +158,6 @@ macro(dune_probe_headers)
   dune_test_header_deps(net/if.h "sys/types.h;sys/socket.h")
   dune_test_header_deps(timepps.h "unistd.h")
   dune_test_header_deps(iphlpapi.h "windows.h")
+  dune_test_header_deps(ws2tcpip.h "winsock2.h")
+  dune_test_header_deps(ws2spi.h "winsock2.h")
 endmacro(dune_probe_headers)

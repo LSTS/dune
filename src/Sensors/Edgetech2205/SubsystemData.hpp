@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -96,9 +96,23 @@ namespace Sensors
       clear(void)
       {
         estates.clear();
-        msec_cpu = 0;
-        ping_count = 0;
         ping_number = 0;
+        ping_count = 0;
+        msec_cpu = 0;
+        time_epoch = 0,
+        time_msec_today = 0;
+        validity = 0;
+        latitude = 0;
+        longitude = 0;
+        latitude_rad = 0;
+        longitude_rad = 0;
+        course = 0;
+        speed = 0;
+        heading = 0;
+        roll = 0;
+        pitch = 0;
+        altitude = 0;
+        depth = 0;
         active = false;
       }
     };
