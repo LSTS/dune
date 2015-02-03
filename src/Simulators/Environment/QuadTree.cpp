@@ -253,27 +253,30 @@ namespace Simulators
       return iter.result();
     }
 
+    class Dump: public QuadTree::Iteration
+    {
+    public:
+      Dump(std::ostream& stream):
+        m_stream(stream)
+      { }
+
+      ~Dump(void)
+      { }
+
+      void
+      process(const QuadTree::Item& item)
+      {
+        m_stream << item.x << ' ' << item.y << ' ' << item.value << std::endl;
+      }
+
+    private:
+      std::ostream& m_stream;
+    };
+
     std::ostream&
     operator<<(std::ostream& os, const QuadTree& tree)
     {
-      class dump: public QuadTree::Iteration
-      {
-      public:
-        dump(std::ostream& stream): m_stream(stream) { }
-
-        ~dump(){ }
-
-        void
-        process(const QuadTree::Item& item)
-        {
-          m_stream << item.x << ' ' << item.y << ' ' << item.value << std::endl;
-        }
-
-      private:
-        std::ostream& m_stream;
-      };
-
-      dump iter(os);
+      Dump iter(os);
       tree.iterate(iter);
       return os;
     }

@@ -179,13 +179,13 @@ namespace Control
             m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
 
-	    int up = tuples.get("Up", 0);
+            int up = tuples.get("Up", 0);
 
-	    if (up > m_args.depth_deadzone || up < -m_args.depth_deadzone)
-	    {
-	      m_depth += up / 127.0 * m_args.depth_rate;
-	      m_depth = std::max(0.0f, m_depth);
-	    }
+            if (up > m_args.depth_deadzone || up < -m_args.depth_deadzone)
+            {
+              m_depth += up / 127.0 * m_args.depth_rate;
+              m_depth = std::max(0.0f, m_depth);
+            }
 
             if (!m_args.as_control)
             {

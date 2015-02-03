@@ -35,6 +35,7 @@ namespace DUNE
   { }
 }
 
+#include <DUNE/Algorithms/Base64.hpp>
 #include <DUNE/Algorithms/CRC8.hpp>
 #include <DUNE/Algorithms/CRC16.hpp>
 #include <DUNE/Algorithms/FletcherChecksum.hpp>
