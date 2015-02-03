@@ -40,6 +40,7 @@ namespace DUNE
       m_kd(0),
       m_limit_int(false),
       m_limit_out(false),
+      m_max_int(0),
       m_lower_limit(0),
       m_upper_limit(0),
       m_debug(false),
