@@ -103,6 +103,15 @@ namespace DUNE
         m_exif_data = new ExifData;
     }
 
+    ExifData*
+    ExifEditor::getExifData(void)
+    {
+      if (m_exif_data)
+        return m_exif_data;
+      else
+        throw std::runtime_error(DTR("jpeg buffer not set"));
+    }
+
     void
     ExifEditor::outputToStream(std::ostream& stream)
     {

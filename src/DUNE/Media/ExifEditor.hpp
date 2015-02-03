@@ -57,6 +57,10 @@ namespace DUNE
       void
       outputToStream(std::ostream& stream);
 
+      // Get the Exif data object
+      ExifData*
+      getExifData(void);
+
     private:
       // Start of Image JPEG marker
       static const uint16_t c_mk_soi = 0xFFD8;
