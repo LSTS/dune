@@ -399,6 +399,7 @@ namespace Control
           bind<VehicleMedium>(this);
           bind<VehicleState>(this);
           bind<SimulatedState>(this);
+          bind<Calibration>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -1274,6 +1275,14 @@ namespace Control
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
+        }
+
+        void
+        consume(const IMC::Calibration* msg)
+        {
+          (void)msg;
+          // Set ground pressure (used for Planes)
+          sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
         }
 
         void
