@@ -399,7 +399,7 @@ namespace Control
           bind<VehicleMedium>(this);
           bind<VehicleState>(this);
           bind<SimulatedState>(this);
-          bind<Calibration>(this);
+          bind<DevCalibrationControl>(this);
           bind<AutopilotMode>(this);
 
           //! Misc. initialization
@@ -1279,11 +1279,13 @@ namespace Control
         }
 
         void
-        consume(const IMC::Calibration* msg)
+        consume(const IMC::DevCalibrationControl* msg)
         {
-          (void)msg;
           // Set ground pressure (used for Planes)
-          sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
+          if (msg->op == IMC::DevCalibrationControl::DCAL_START)
+            sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
+
+          (void)msg;
         }
 
         void
