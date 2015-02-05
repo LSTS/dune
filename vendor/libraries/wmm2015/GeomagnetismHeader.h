@@ -65,10 +65,10 @@
 #define DEG2RAD(deg)    ((deg)*(M_PI/180.0L))
 #define ATanH(x)	    (0.5 * log((1 + x) / (1 - x)))
 
-
+#if !defined(DUNE_OS_WINDOWS)
 #define TRUE            ((int)1)
 #define FALSE           ((int)0)
-
+#endif
 
 
 
