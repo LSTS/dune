@@ -400,6 +400,7 @@ namespace Control
           bind<VehicleState>(this);
           bind<SimulatedState>(this);
           bind<Calibration>(this);
+          bind<AutopilotMode>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -1283,6 +1284,19 @@ namespace Control
           (void)msg;
           // Set ground pressure (used for Planes)
           sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
+        }
+
+        void
+        consume(const IMC::AutopilotMode* msg)
+        {
+          // Arm/Disarm (used for Planes)
+          if (msg->mode.compare("ARM") == 0)
+            sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 1);
+
+          if (msg->mode.compare("DISARM") == 0)
+            sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 0);
+
+          (void)msg;
         }
 
         void
