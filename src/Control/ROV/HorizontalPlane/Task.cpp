@@ -164,6 +164,8 @@ namespace Control
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
             m_pid[i].reset();
+
+          tal(0.0, 0.0, 0.0);
         }
 
         void
