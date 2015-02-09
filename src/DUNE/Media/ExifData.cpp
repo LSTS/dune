@@ -30,6 +30,8 @@
 
 // ISO C++ 98 headers.
 #include <cstddef>
+#include <stdexcept>
+#include <cstring>
 
 // Exif headers.
 #include <libexif/exif-data.h>
@@ -71,5 +73,51 @@ namespace DUNE
       delete[] bfr;
       return vec;
     }
+
+    std::string
+    ExifData::getComment(void)
+    {
+      ExifEntry* e = exif_content_get_entry(m_exif_data->ifd[EXIF_IFD_EXIF], exif_tag_table_get_tag(EXIF_TAG_USER_COMMENT));
+      if (e == NULL)
+        return std::string("");
+      else
+        return std::string((const char*)e->data + 8, (size_t)e->size - 8);
+    }
+
+    void
+    ExifData::setComment(std::string comment)
+    {
+      const char ascii_header[] = "ASCII\0\0\0";
+      ExifContent* ifd = m_exif_data->ifd[EXIF_IFD_EXIF];
+      ExifTag tag = exif_tag_table_get_tag(EXIF_TAG_USER_COMMENT);
+
+      ExifEntry* e = exif_content_get_entry(ifd, tag);
+      if (e != NULL)
+      {
+        // Remove existing tag
+        exif_content_remove_entry(ifd, e);
+      }
+
+      ExifMem* mem = exif_mem_new_default();
+
+      // Create and initialize the entry
+      e = exif_entry_new_mem(mem);
+      e->tag = tag;
+      e->format = EXIF_FORMAT_UNDEFINED;
+
+      // Fill data
+      std::size_t len = sizeof(ascii_header) - 1 + comment.length();
+      e->data = (unsigned char*)exif_mem_alloc(mem, len);
+      std::memcpy(e->data, ascii_header, sizeof(ascii_header) - 1);
+      std::memcpy(e->data + sizeof(ascii_header) - 1, comment.c_str(), comment.length());
+      e->size = len;
+      e->components = len;
+
+      // Pass ownership of "entity" to m_exif_data
+      exif_content_add_entry (ifd, e);
+      exif_mem_unref(mem);
+      exif_entry_unref(e);
+    }
+
   }
 }

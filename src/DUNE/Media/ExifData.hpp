@@ -33,6 +33,7 @@
 
 // ISO C++ 98 headers.
 #include <vector>
+#include <string>
 
 // Forward declarations.
 struct _ExifData;
@@ -59,6 +60,14 @@ namespace DUNE
       //! Get a vector with the raw exif data.
       std::vector<uint8_t>
       getRawData(void);
+
+      //! Get comment.
+      std::string
+      getComment(void);
+
+      //! Set comment.
+      void
+      setComment(std::string);
 
     private:
       //! Exif data structure.
