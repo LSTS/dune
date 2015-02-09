@@ -399,6 +399,8 @@ namespace Control
           bind<VehicleMedium>(this);
           bind<VehicleState>(this);
           bind<SimulatedState>(this);
+          bind<DevCalibrationControl>(this);
+          bind<AutopilotMode>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -1274,6 +1276,29 @@ namespace Control
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
+        }
+
+        void
+        consume(const IMC::DevCalibrationControl* msg)
+        {
+          // Set ground pressure (used for Planes)
+          if (msg->op == IMC::DevCalibrationControl::DCAL_START)
+            sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
+
+          (void)msg;
+        }
+
+        void
+        consume(const IMC::AutopilotMode* msg)
+        {
+          // Arm/Disarm (used for Planes)
+          if (msg->mode.compare("ARM") == 0)
+            sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 1);
+
+          if (msg->mode.compare("DISARM") == 0)
+            sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 0);
+
+          (void)msg;
         }
 
         void

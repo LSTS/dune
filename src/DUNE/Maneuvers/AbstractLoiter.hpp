@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,29 +20,65 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// http://ec.europa.eu/idabc/eupl.html.                                     *
+// https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_MANEUVERS_HPP_INCLUDED_
-#define DUNE_MANEUVERS_HPP_INCLUDED_
+#ifndef DUNE_MANEUVERS_ABSTRACT_LOITER_HPP_INCLUDED_
+#define DUNE_MANEUVERS_ABSTRACT_LOITER_HPP_INCLUDED_
+
+#include <DUNE/Maneuvers/Maneuver.hpp>
+#include <DUNE/IMC.hpp>
 
 namespace DUNE
 {
-  //! %Maneuver routines and classes.
   namespace Maneuvers
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM AbstractLoiter;
 
-#include <DUNE/Maneuvers/Maneuver.hpp>
-#include <DUNE/Maneuvers/FollowTrajectory.hpp>
-#include <DUNE/Maneuvers/VehicleFormation.hpp>
-#include <DUNE/Maneuvers/RowsStages.hpp>
-#include <DUNE/Maneuvers/StationKeep.hpp>
-#include <DUNE/Maneuvers/AbstractLoiter.hpp>
-#include <DUNE/Maneuvers/Circular.hpp>
-#include <DUNE/Maneuvers/FigureEight.hpp>
-#include <DUNE/Maneuvers/Elevate.hpp>
+    //! Abstract Loiter behavior
+    class AbstractLoiter
+    {
+    public:
+      //! Constructor
+      //! @param[in] task pointer to Maneuver task.
+      AbstractLoiter(Maneuvers::Maneuver* task):
+        m_task(task)
+      { }
+
+      //! Destructor
+      virtual
+      ~AbstractLoiter(void)
+      { }
+
+      //! On PathControlState message.
+      //! @param[in] pcs pointer to PathControlState message
+      virtual void
+      onPathControlState(const IMC::PathControlState* pcs)
+      {
+        (void)pcs;
+      }
+
+      //! On EstimatedState message.
+      //! @param[in] msg pointer to EstimatedState message
+      virtual void
+      onEstimatedState(const IMC::EstimatedState* msg)
+      {
+        (void)msg;
+      }
+
+      //! Are we loiterting already?
+      //! @return true if loitering, false otherwise.
+      virtual bool
+      isLoitering(void) const = 0;
+
+    protected:
+      //! Pointer to task
+      Maneuvers::Maneuver* m_task;
+    };
+  }
+}
 
 #endif
