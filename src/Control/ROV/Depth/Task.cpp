@@ -118,6 +118,8 @@ namespace Control
 
           m_thrust.id = m_args.vmotor_id;
           m_thrust.value = 0.0;
+
+          dispatch(m_thrust);
         }
 
         void
