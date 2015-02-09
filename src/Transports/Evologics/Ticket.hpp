@@ -51,6 +51,8 @@ namespace Transports
       uint16_t addr;
       //! Wait for ack.
       bool ack;
+      //! Piggyback message.
+      bool pbm;
     };
   }
 }
