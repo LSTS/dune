@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+// IMC XML MD5: ddef481743c0e112e82daff6609de92a                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -17589,7 +17589,9 @@ namespace DUNE
       enum FlagsBits
       {
         //! Acknowledgement.
-        UTF_ACK = 0x01
+        UTF_ACK = 0x01,
+        //! Delayed.
+        UTF_DELAYED = 0x02
       };
 
       //! Sequence Id.
