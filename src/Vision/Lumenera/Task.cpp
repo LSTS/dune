@@ -908,6 +908,10 @@ namespace Vision
           Media::ExifEditor ee;
           ee.setBuffer(dst.getBuffer(), dst.getSize());
 
+          // Fill the exif position data.
+          Media::ExifData* edata = ee.getExifData();
+          edata->setComment("Test comment");
+
           // Save file.
           double timestamp = Clock::getSinceEpoch();
           Path file = m_volume / String::str("%0.4f.jpg", timestamp);
