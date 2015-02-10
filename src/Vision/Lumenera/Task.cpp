@@ -129,6 +129,8 @@ namespace Vision
       Counter<double> m_act_timer;
       //! True if received the logging path.
       bool m_log_dir_updated;
+      //! Last estimated state
+      IMC::EstimatedState m_estate;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -277,6 +279,7 @@ namespace Vision
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::EntityInfo>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       void
@@ -390,6 +393,15 @@ namespace Vision
           m_log_dir_updated = true;
           trace("received new log dir");
         }
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_estate = *msg;
       }
 
       void
@@ -883,6 +895,9 @@ namespace Vision
       void
       captureAndSave(void)
       {
+        // Take estimated state snapshot just before capture
+        IMC::EstimatedState es = m_estate;
+
         ByteBuffer dst;
         try
         {
@@ -907,10 +922,20 @@ namespace Vision
         {
           Media::ExifEditor ee;
           ee.setBuffer(dst.getBuffer(), dst.getSize());
+          Media::ExifData* edata = ee.getExifData();
 
           // Fill the exif position data.
-          Media::ExifData* edata = ee.getExifData();
-          edata->setComment("Test comment");
+          double lat, lon;
+          Coordinates::toWGS84(es, lat, lon);
+          std::ostringstream ss;
+          ss << "latitude=" << Angles::degrees(lat);
+          ss << ", longitude=" << Angles::degrees(lon);
+          ss << ", depth=" << es.depth;
+          ss << ", altitude=" << es.alt;
+          ss << ", heading=" << Angles::degrees(es.psi);
+          ss << ", roll=" << Angles::degrees(es.phi);
+          ss << ", pitch=" << Angles::degrees(es.theta);
+          edata->setComment(ss.str());
 
           // Save file.
           double timestamp = Clock::getSinceEpoch();
