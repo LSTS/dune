@@ -89,7 +89,7 @@ namespace DUNE
     {
       const char ascii_header[] = "ASCII\0\0\0";
       ExifContent* ifd = m_exif_data->ifd[EXIF_IFD_EXIF];
-      ExifTag tag = exif_tag_table_get_tag(EXIF_TAG_USER_COMMENT);
+      ExifTag tag = EXIF_TAG_USER_COMMENT;
 
       ExifEntry* e = exif_content_get_entry(ifd, tag);
       if (e != NULL)
