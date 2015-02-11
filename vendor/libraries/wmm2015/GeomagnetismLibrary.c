@@ -723,7 +723,7 @@ char MAG_GeomagIntroduction_EMM(MAGtype_MagneticModel *MagneticModel, char* Vers
     {
         printf("\n Enter h for help and contact information or c to continue.");
         printf("\n >");
-        scanf("%c%*[^\n]", &ans);
+        ans = getchar();
         getchar();
 
         if((ans == 'h') || (ans == 'H'))
@@ -799,7 +799,7 @@ char MAG_GeomagIntroduction_WMM(MAGtype_MagneticModel *MagneticModel, char *Vers
     {
         printf("\n Enter h for help and contact information or c to continue.");
         printf("\n >");
-        scanf("%c%*[^\n]", &help);
+        help = getchar();
         getchar();
 
         if((help == 'h') || (help == 'H'))
