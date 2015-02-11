@@ -133,6 +133,8 @@ namespace Control
         //! Formation Flight
         bool form_fl;
         std::string form_fl_ent;
+        //! Convert MSL to WGS84 height
+        bool convert_msl;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -166,16 +168,19 @@ namespace Control
         IMC::DesiredPath m_dpath;
         //! DesiredPath message
         IMC::ControlLoops m_controllps;
-        //! Reference Lat and Lon and Hei to measure displacement
-        fp64_t ref_lat, ref_lon;
-        fp32_t ref_hei;
+        //! Localization origin (WGS-84)
+        fp64_t m_ref_lat, m_ref_lon;
+        fp32_t m_ref_hae;
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
         double m_lat, m_lon;
-        float m_alt;
+        //! Height received from the Ardupilot (Geoid/MSL).
+        float m_hae_msl;
+        //! Height offset to convert to WGS-84 ellipsoid.
+        float m_hae_offset;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -208,14 +213,15 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          ref_lat(0.0),
-          ref_lon(0.0),
-          ref_hei(0.0),
+          m_ref_lat(0.0),
+          m_ref_lon(0.0),
+          m_ref_hae(0.0),
           m_TCP_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
-          m_alt(0.0),
+          m_hae_msl(0.0),
+          m_hae_offset(0.0),
           m_external(true),
           m_current_wp(0),
           m_critical(false),
@@ -365,6 +371,10 @@ namespace Control
           param("Formation Flight Entity", m_args.form_fl_ent)
           .defaultValue("Formation Control")
           .description("Entity that sends Formation Flight control references");
+
+          param("Convert MSL to WGS84 height", m_args.convert_msl)
+          .defaultValue("false")
+          .description("Convert altitude extracted from the Ardupilot to WGS84 height");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -849,7 +859,7 @@ namespace Control
                                                     0, //! Not used
                                                     (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                                     (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                                    alt);//! z PARAM7 / z position: global: altitude
+                                                    alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
           }
           else
           {
@@ -868,7 +878,7 @@ namespace Control
                                         0, //! Not used
                                         (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                         (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                        alt);//! z PARAM7 / z position: global: altitude
+                                        alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
           }
           n = mavlink_msg_to_send_buffer(buf, &msg);
@@ -878,7 +888,7 @@ namespace Control
 
           m_pcs.start_lat = Angles::radians(m_lat);
           m_pcs.start_lon = Angles::radians(m_lon);
-          m_pcs.start_z = m_alt;
+          m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
           m_pcs.end_lat = path->end_lat;
@@ -1003,7 +1013,7 @@ namespace Control
 
           m_pcs.start_lat = Angles::radians(m_lat);
           m_pcs.start_lon = Angles::radians(m_lon);
-          m_pcs.start_z = m_alt;
+          m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
           m_pcs.end_lat = dpath->end_lat;
@@ -1074,7 +1084,7 @@ namespace Control
                                         0, //! Not used
                                         0, //! x PARAM5 / local: x position, global: latitude
                                         0, //! y PARAM6 / y position: global: longitude
-                                        m_alt + 10);//! z PARAM7 / z position: global: altitude
+                                        m_hae_msl + 10);//! z PARAM7 / z position: global: altitude
 
           m_mission_items.push(msg);
 
@@ -1126,7 +1136,7 @@ namespace Control
 
           m_pcs.start_lat = Angles::radians(m_lat);
           m_pcs.start_lon = Angles::radians(m_lon);
-          m_pcs.start_z = m_alt;
+          m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
           m_pcs.end_lat = dpath->end_lat;
@@ -1644,32 +1654,39 @@ namespace Control
           m_lat = (double)gp.lat * 1e-07;
           m_lon = (double)gp.lon * 1e-07;
 
-          double d = WGS84::distance(ref_lat, ref_lon, ref_hei,
-                                     lat, lon, m_alt);
+          double d = WGS84::distance(m_ref_lat, m_ref_lon, m_ref_hae,
+                                     lat, lon, getHeight());
 
           if (d > 1000.0)
           {
+            if (m_args.convert_msl)
+            {
+              Coordinates::WMM wmm(m_ctx.dir_cfg);
+              m_hae_offset = wmm.height(lat, lon);
+            }
+            else
+            {
+              m_hae_offset = 0;
+            }
+
             m_estate.lat = lat;
             m_estate.lon = lon;
-            m_estate.height = m_alt;
+            m_estate.height = getHeight();
 
             m_estate.x = 0;
             m_estate.y = 0;
             m_estate.z = 0;
 
-            ref_lat = lat;
-            ref_lon = lon;
-            ref_hei = m_alt;
+            m_ref_lat = lat;
+            m_ref_lon = lon;
+            m_ref_hae = getHeight();
+
           }
           else
           {
-            WGS84::displacement(ref_lat, ref_lon, ref_hei,
-                                lat, lon, m_alt,
+            WGS84::displacement(m_ref_lat, m_ref_lon, m_ref_hae,
+                                lat, lon, getHeight(),
                                 &m_estate.x, &m_estate.y, &m_estate.z);
-
-            m_estate.lat = ref_lat;
-            m_estate.lon = ref_lon;
-            m_estate.height = ref_hei;
           }
 
           m_estate.vx = 1e-02 * gp.vx;
@@ -1686,6 +1703,12 @@ namespace Control
           m_estate.alt = -1;
 
           dispatch(m_estate);
+        }
+
+        float
+        getHeight(void)
+        {
+          return m_hae_msl + m_hae_offset;
         }
 
         void
@@ -2005,7 +2028,7 @@ namespace Control
           d_roll.value = Angles::radians(nav_out.nav_roll);
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
-          d_z.value = m_alt + nav_out.alt_error;
+          d_z.value = getHeight() + nav_out.alt_error;
           d_z.z_units = IMC::Z_HEIGHT;
 
           dispatch(d_roll);
@@ -2110,7 +2133,7 @@ namespace Control
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
-          m_alt = vfr_hud.alt;
+          m_hae_msl = vfr_hud.alt;
 
           dispatch(ias);
           dispatch(gs);
