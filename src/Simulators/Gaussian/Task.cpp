@@ -62,16 +62,15 @@ namespace Simulators
       IMC::SimulatedState m_last_state;
       Random::Generator* m_prng;
       double m_lat, m_lon, m_height;
-
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-		m_msg(NULL),
-		m_prng(NULL),
-		m_lat(0),
-		m_lon(0),
-		m_height(0)
+        m_msg(NULL),
+        m_prng(NULL),
+        m_lat(0),
+        m_lon(0),
+        m_height(0)
       {
         // Retrieve configuration values.
         param("Latitude (degrees) of gaussian peak", m_args.peak_latitude)
@@ -90,7 +89,7 @@ namespace Simulators
         .defaultValue("250");
 
         param("Name of message to produce", m_args.message_name)
-       .defaultValue("RhodamineDye");
+        .defaultValue("RhodamineDye");
 
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
@@ -100,17 +99,14 @@ namespace Simulators
 
         // Register consumers.
         bind<IMC::SimulatedState>(this);
-
       }
 
       //! Parse arguments.
       void
       onUpdateParameters(void)
       {
-    	  if (m_msg != NULL)
-    		  Memory::clear(m_msg);
-
-         init();
+        Memory::clear(m_msg);
+        init();
       }
 
       //! Initialize resources.
@@ -130,12 +126,11 @@ namespace Simulators
 
       void init(void)
       {
-    	  // Create message to be dispatched.
-    	  m_msg = IMC::Factory::produce(m_args.message_name);
-
-    	  m_lat = Angles::radians(m_args.peak_latitude);
-    	  m_lon = Angles::radians(m_args.peak_longitude);
-    	  m_height = m_args.peak_value - m_args.away_value;
+        // Create message to be dispatched.
+        m_msg = IMC::Factory::produce(m_args.message_name);
+        m_lat = Angles::radians(m_args.peak_latitude);
+        m_lon = Angles::radians(m_args.peak_longitude);
+        m_height = m_args.peak_value - m_args.away_value;
       }
 
       //! Release resources.
@@ -176,8 +171,10 @@ namespace Simulators
         WGS84::displacement(slat, slon, 0, m_lat, m_lon, 0, &dx, &dy, &dz);
 
         // calculate value based on 2d gaussian function
-        double val = m_args.away_value + m_height * exp(-1 * ((dx * dx + dy * dy)
-        		/(2 * (m_args.peak_width * m_args.peak_width))));
+        double expn = exp(-1 * ((dx * dx + dy * dy)
+                                /(2 * (m_args.peak_width * m_args.peak_width))));
+
+        double val = m_args.away_value + m_height * expn;
 
         m_msg->setValueFP(val);
         dispatch(m_msg);
