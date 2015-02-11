@@ -1759,10 +1759,19 @@ namespace Control
           m_fix.satellites = gps_raw.satellites_visible;
 
           m_fix.validity = 0;
-          if (gps_raw.fix_type>1)
+          if (gps_raw.fix_type > 1)
+          {
             m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
-          if (m_fix.utc_year>2012)
-            m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
+            m_fix.type = IMC::GpsFix::GFT_STANDALONE;
+          }
+          else
+            m_fix.type = IMC::GpsFix::GFT_DEAD_RECKONING;
+
+          if (gps_raw.fix_type == 3)
+          {
+            m_fix.validity |= IMC::GpsFix::GFV_VALID_VDOP;
+            m_fix.vdop = 5;
+          }
         }
 
         void
