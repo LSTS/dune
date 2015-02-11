@@ -181,6 +181,7 @@ namespace Navigation
 
           m_estate.lat = msg->lat;
           m_estate.lon = msg->lon;
+          m_estate.height = msg->height;
 
           // Decompose velocity vector.
           m_estate.vx = std::cos(msg->cog) * msg->sog;
