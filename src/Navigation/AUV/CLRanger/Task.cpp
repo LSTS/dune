@@ -151,8 +151,11 @@ namespace Navigation
         void
         consume(const IMC::GpsFix* msg)
         {
-          if (m_tdma.check(msg->utc_time))
-            pingNextBeacon();
+          if (isActive())
+          {
+            if (m_tdma.check(msg->utc_time))
+              pingNextBeacon();
+          }
         }
 
         void
