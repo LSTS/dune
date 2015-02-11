@@ -1640,19 +1640,18 @@ namespace Control
 
           double lat = Angles::radians((double)gp.lat * 1e-07);
           double lon = Angles::radians((double)gp.lon * 1e-07);
-          float hei = m_alt;
 
           m_lat = (double)gp.lat * 1e-07;
           m_lon = (double)gp.lon * 1e-07;
 
-          double distance_to_ref = WGS84::distance(ref_lat,ref_lon,ref_hei,
-                                                   lat,lon,hei);
+          double d = WGS84::distance(ref_lat, ref_lon, ref_hei,
+                                     lat, lon, m_alt);
 
-          if (distance_to_ref>1000)
+          if (d > 1000.0)
           {
             m_estate.lat = lat;
             m_estate.lon = lon;
-            m_estate.height = hei;
+            m_estate.height = m_alt;
 
             m_estate.x = 0;
             m_estate.y = 0;
@@ -1660,12 +1659,12 @@ namespace Control
 
             ref_lat = lat;
             ref_lon = lon;
-            ref_hei = hei;
+            ref_hei = m_alt;
           }
           else
           {
             WGS84::displacement(ref_lat, ref_lon, ref_hei,
-                                lat, lon, hei,
+                                lat, lon, m_alt,
                                 &m_estate.x, &m_estate.y, &m_estate.z);
 
             m_estate.lat = ref_lat;
