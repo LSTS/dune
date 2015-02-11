@@ -961,7 +961,7 @@ namespace Control
                                         0, //! Not used
                                         0, //! x PARAM5 / local: x position, global: latitude
                                         0, //! y PARAM6 / y position: global: longitude
-                                        alt);//! z PARAM7 / z position: global: altitude
+                                        alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
           m_mission_items.push(msg);
 
@@ -999,7 +999,7 @@ namespace Control
                                         0, //! Not used
                                         (float)Angles::degrees(dpath->end_lat), //! x PARAM5 / local: x position, global: latitude
                                         (float)Angles::degrees(dpath->end_lon), //! y PARAM6 / y position: global: longitude
-                                        (float)(dpath->end_z));//! z PARAM7 / z position: global: altitude
+                                        (float)(dpath->end_z) - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
           m_mission_items.push(msg);
 
@@ -1122,7 +1122,7 @@ namespace Control
                                         0, //! Not used
                                         (float)Angles::degrees(dpath->end_lat), //! x PARAM5 / local: x position, global: latitude
                                         (float)Angles::degrees(dpath->end_lon), //! y PARAM6 / y position: global: longitude
-                                        (float)(dpath->end_z));//! z PARAM7 / z position: global: altitude
+                                        (float)(dpath->end_z) - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
           m_mission_items.push(msg);
 
