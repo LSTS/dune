@@ -1661,19 +1661,19 @@ CALLS : none
     if(!LegendreFunction)
     {
         MAG_Error(1);
-        return FALSE;
+        return NULL;
     }
     LegendreFunction->Pcup = (double *) malloc((NumTerms + 1) * sizeof ( double));
     if(LegendreFunction->Pcup == 0)
     {
         MAG_Error(1);
-        return FALSE;
+        return NULL;
     }
     LegendreFunction->dPcup = (double *) malloc((NumTerms + 1) * sizeof ( double));
     if(LegendreFunction->dPcup == 0)
     {
         MAG_Error(1);
-        return FALSE;
+        return NULL;
     }
     return LegendreFunction;
 } /*MAGtype_LegendreFunction*/
@@ -1711,7 +1711,7 @@ CALLS : none
     if(MagneticModel == NULL)
     {
         MAG_Error(2);
-        return FALSE;
+        return NULL;
     }
 
     MagneticModel->Main_Field_Coeff_G = (double *) malloc((NumTerms + 1) * sizeof ( double));
@@ -1719,7 +1719,7 @@ CALLS : none
     if(MagneticModel->Main_Field_Coeff_G == NULL)
     {
         MAG_Error(2);
-        return FALSE;
+        return NULL;
     }
 
     MagneticModel->Main_Field_Coeff_H = (double *) malloc((NumTerms + 1) * sizeof ( double));
@@ -1727,19 +1727,19 @@ CALLS : none
     if(MagneticModel->Main_Field_Coeff_H == NULL)
     {
         MAG_Error(2);
-        return FALSE;
+        return NULL;
     }
     MagneticModel->Secular_Var_Coeff_G = (double *) malloc((NumTerms + 1) * sizeof ( double));
     if(MagneticModel->Secular_Var_Coeff_G == NULL)
     {
         MAG_Error(2);
-        return FALSE;
+        return NULL;
     }
     MagneticModel->Secular_Var_Coeff_H = (double *) malloc((NumTerms + 1) * sizeof ( double));
     if(MagneticModel->Secular_Var_Coeff_H == NULL)
     {
         MAG_Error(2);
-        return FALSE;
+        return NULL;
     }
     MagneticModel->CoefficientFileEndDate = 0;
     MagneticModel->EditionDate = 0;
