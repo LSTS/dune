@@ -901,105 +901,13 @@ namespace Control
         takeoff_copter(const IMC::DesiredPath* dpath)
         {
 
-          uint8_t buf[512];
-          int seq = 1;
 
-          mavlink_message_t msg;
+          /* As of AC 3.1, we can now send takeoff as a guided command. */
+          // We need to be in guided for this to work.
 
-          mavlink_msg_param_set_pack(255, 0, &msg,
-                                     m_sysid, //! target_system System ID
-                                     0, //! target_component Component ID
-                                     "WP_LOITER_RAD", //! Parameter name
-                                     dpath->flags & DesiredPath::FL_CCLOCKW ? (-1 * dpath->lradius) : (dpath->lradius), //! Parameter value
-                                     MAV_PARAM_TYPE_INT16); //! Parameter type
+          float alt = (dpath->end_z_units & IMC::Z_NONE) ? m_args.alt : (float) dpath->end_z;
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-
-          mavlink_msg_mission_count_pack(255, 0, &msg,
-                                         m_sysid, //! target_system System ID
-                                         0, //! target_component Component ID
-                                         3); //! size of Mission
-
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-
-          mavlink_msg_mission_write_partial_list_pack(255, 0, &msg,
-                                                      m_sysid, //! target_system System ID
-                                                      0, //! target_component Component ID
-                                                      seq, //! start_index Start index, 0 by default and smaller / equal to the largest index of the current onboard list
-                                                      seq+1); //! end_index End index, equal or greater than start index
-
-          m_mission_items.push(msg);
-
-          sendMissionItem(false);
-
-          float alt = (dpath->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)dpath->end_z;
-
-          //! Current position
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        seq++, //! seq Sequence
-                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_NAV_TAKEOFF, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                        1, //! current false:0, true:1
-                                        1, //! autocontinue autocontinue to next wp
-                                        5, //! Pitch
-                                        0, //! Altitude
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! x PARAM5 / local: x position, global: latitude
-                                        0, //! y PARAM6 / y position: global: longitude
-                                        alt);//! z PARAM7 / z position: global: altitude
-
-          m_mission_items.push(msg);
-
-          //! Desired speed
-//          mavlink_msg_mission_item_pack(255, 0, &msg,
-//                                        m_sysid, //! target_system System ID
-//                                        0, //! target_component Component ID
-//                                        seq++, //! seq Sequence
-//                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-//                                        MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
-//                                        0, //! current false:0, true:1
-//                                        1, //! autocontinue autocontinue to next wp
-//                                        0, //! Speed type (0=Airspeed, 1=Ground Speed)
-//                                        (float)(dpath->speed_units == IMC::SUNITS_METERS_PS ? dpath->speed : -1), //! Speed  (m/s, -1 indicates no change)
-//                                        (float)(dpath->speed_units == IMC::SUNITS_PERCENTAGE ? dpath->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
-//                                        0, //! Not used
-//                                        0, //! Not used
-//                                        0, //! Not used
-//                                        0);//! Not used
-
-          //m_mission_items.push(msg);
-
-          //! Destination
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        seq++, //! seq Sequence
-                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                        0, //! current false:0, true:1
-                                        0, //! autocontinue autocontinue to next wp
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        (float)Angles::degrees(dpath->end_lat), //! x PARAM5 / local: x position, global: latitude
-                                        (float)Angles::degrees(dpath->end_lon), //! y PARAM6 / y position: global: longitude
-                                        (float)(dpath->end_z));//! z PARAM7 / z position: global: altitude
-
-          m_mission_items.push(msg);
-
-          mavlink_msg_mission_set_current_pack(255, 0, &msg,
-                                               m_sysid,
-                                               0,
-                                               1);
-
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+          sendCommandPacket(MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, alt);
 
           m_pcs.start_lat = Angles::radians(m_lat);
           m_pcs.start_lon = Angles::radians(m_lon);
@@ -1008,8 +916,6 @@ namespace Control
 
           m_pcs.end_lat = dpath->end_lat;
           m_pcs.end_lon = dpath->end_lon;
-
-          //float alt = (dpath->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)dpath->end_z;
 
           m_pcs.end_z = alt;
           m_pcs.end_z_units = IMC::Z_HEIGHT;
@@ -1020,7 +926,7 @@ namespace Control
 
           dispatch(m_pcs);
 
-          debug("Waypoint packet sent to Ardupilot");
+          debug("Takeoff command sent to Ardupilot");
         }
 
         void
