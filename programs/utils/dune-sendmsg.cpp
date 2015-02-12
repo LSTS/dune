@@ -47,7 +47,7 @@ main(int argc, char** argv)
     if (argc == 2 && (!strcmp(argv[1], "-l") || !strcmp(argv[1], "--list")))
     {
       fprintf(stdout, "List:\n");
-      fprintf(stdout, "  Abort, AcousticMessage, AcousticSystemsQuery\n");
+      fprintf(stdout, "  Abort, AcousticMessage, AcousticOperation, AcousticSystemsQuery\n");
       fprintf(stdout, "  Brake, ButtonEvent\n");
       fprintf(stdout, "  CacheControl, Calibration, ClockControl, ControlLoops\n");
       fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate, DesiredPitch\n");
@@ -106,6 +106,15 @@ main(int argc, char** argv)
     IMC::Message* imsg = IMC::Factory::produce(atoi(argv[4]));
     tmsg->message.set(*imsg);
     delete imsg;
+  }
+
+  if (strcmp(argv[3], "AcousticOperation") == 0)
+  {
+    IMC::AcousticOperation* tmsg = new IMC::AcousticOperation;
+    msg = tmsg;
+    tmsg->op = IMC::AcousticOperation::AOP_RANGE_RECVED;
+    tmsg->system = argv[4];
+    tmsg->range = atoi(argv[5]);
   }
 
   if (strcmp(argv[3], "AcousticSystemsQuery") == 0)
