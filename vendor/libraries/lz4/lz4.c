@@ -350,7 +350,7 @@ FORCE_INLINE void LZ4_putPositionOnHash(Ptr p, U32 h, void* tableBase, tableType
     switch (tableType)
     {
     case byPtr: { Ptr* hashTable = (Ptr*) tableBase; hashTable[h] = p; break; }
-    case byU32: { U32* hashTable = (U32*) tableBase; hashTable[h] = p-srcBase; break; }
+    case byU32: { U32* hashTable = (U32*) tableBase; hashTable[h] = (U32)(p-srcBase); break; }
     case byU16: { U16* hashTable = (U16*) tableBase; hashTable[h] = (U16)(p-srcBase); break; }
     }
 }
