@@ -61,8 +61,8 @@ namespace DUNE
       //! Destructor.
       ~WMM(void);
 
-      //! Get geoid height for given latitude and longitude (in radians).
-      //! Different from WGS-84 height (above ellipsoid).
+      //! Returns the height of the EGM96 geoid above or below the WGS84 ellipsoid,
+      //! at the specified geodetic coordinates.
       //! @param[in] lat WGS84 latitude
       //! @param[in] lon WGS84 longitude
       //! @return geoid height
