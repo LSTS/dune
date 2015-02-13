@@ -293,7 +293,7 @@ namespace Sensors
           case SS_PPS_WAIT:
             if (ktime.status & STA_PPSSIGNAL)
             {
-              debug("waiting for PPS to settle");
+              setEntityState(IMC::EntityState::ESTA_BOOT, DTR("waiting for PPS to settle"));
               m_pps_count = 0;
               m_clk_state = SS_PPS_SETTLE;
             }
@@ -306,7 +306,7 @@ namespace Sensors
               {
                 if ((ktime.offset / 1000) < 10)
                 {
-                  debug("clock synchronized");
+                  setEntityState(IMC::EntityState::ESTA_BOOT, DTR("synchronized clock to PPS"));
                   m_time_offset_samples = 0;
                   m_time_offset = 0;
                   m_clk_state = SS_SET_TIME;
@@ -317,7 +317,7 @@ namespace Sensors
             }
             else
             {
-              debug("PPS failed to settle, retrying");
+              setEntityState(IMC::EntityState::ESTA_BOOT, DTR("failed to synchronize to PPS, retrying"));
               m_clk_state = SS_PPS_WAIT;
             }
             break;
@@ -325,7 +325,7 @@ namespace Sensors
           case SS_SET_TIME:
             if ((ktime.status & STA_PPSSIGNAL) == 0)
             {
-              debug("lost PPS signal");
+              setEntityState(IMC::EntityState::ESTA_BOOT, DTR("lost PPS signal, restarting"));
               m_clk_state = SS_PPS_WAIT;
             }
             else
@@ -334,7 +334,7 @@ namespace Sensors
               {
                 if (m_time_offset == 0)
                 {
-                  debug("time is synchronized");
+                  setEntityState(IMC::EntityState::ESTA_NORMAL, DTR("synchronized time to GPS"));
                   double tstamp = Clock::getSinceEpoch();
                   IMC::ClockControl cc;
                   cc.setTimeStamp(tstamp);
@@ -360,7 +360,7 @@ namespace Sensors
           case SS_MONITOR:
             if ((ktime.status & STA_PPSSIGNAL) == 0)
             {
-              debug("lost PPS signal");
+              setEntityState(IMC::EntityState::ESTA_BOOT, DTR("lost PPS signal, restarting"));
               m_clk_state = SS_PPS_WAIT;
             }
 
