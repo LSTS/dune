@@ -365,8 +365,6 @@ namespace Sensors
                   m_time_offset_samples = 0;
                   m_time_offset = 0;
                 }
-
-                m_clk_state = SS_MONITOR;
               }
             }
 
