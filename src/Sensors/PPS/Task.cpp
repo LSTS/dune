@@ -98,6 +98,10 @@ namespace Sensors
       std::string uart_dev;
       //! PPS device.
       std::string pps_dev;
+      //! Command to execute when time is synchronized.
+      std::string time_sync_cmd;
+      //! PPS propagation delay.
+      unsigned prop_delay;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -136,9 +140,17 @@ namespace Sensors
         .defaultValue("")
         .description("Serial port device with PPS on CDC pin");
 
-        param("PPS Device", m_args.pps_dev)
+        param("PPS - Device", m_args.pps_dev)
         .defaultValue("")
         .description("Platform specific PPS device");
+
+        param("PPS - Propagation Delay", m_args.prop_delay)
+        .defaultValue("675")
+        .units(Units::Nanosecond)
+        .description("Propagation delay of the PPS");
+
+        param("Time Synchronization Command", m_args.time_sync_cmd)
+        .description("System command to execute everytime the clock is synchronized");
 
         bind<IMC::GpsFix>(this);
       }
@@ -193,7 +205,7 @@ namespace Sensors
           throw std::runtime_error("unable to retrieve parameters");
 
         params.assert_offset.tv_sec = 0;
-        params.assert_offset.tv_nsec = 675;
+        params.assert_offset.tv_nsec = m_args.prop_delay;
         params.mode |= PPS_CAPTUREASSERT | PPS_OFFSETASSERT;
         params.mode &= ~(PPS_CAPTURECLEAR | PPS_OFFSETCLEAR);
         rv = time_pps_setparams(m_pps, &params);
@@ -335,6 +347,9 @@ namespace Sensors
                 if (m_time_offset == 0)
                 {
                   setEntityState(IMC::EntityState::ESTA_NORMAL, DTR("synchronized time to GPS"));
+                  if (std::system(m_args.time_sync_cmd.c_str()) == -1)
+                    err(DTR("failed to set the hardware clock"));
+
                   double tstamp = Clock::getSinceEpoch();
                   IMC::ClockControl cc;
                   cc.setTimeStamp(tstamp);
