@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -31,7 +30,10 @@
 #include <string>
 #include <cstddef>
 
-// Platform headers.
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+// Linux headers.
 #if defined(DUNE_SYS_HAS_SYS_TYPES_H)
 #  include <sys/types.h>
 #endif
@@ -44,35 +46,52 @@
 #  include <fcntl.h>
 #endif
 
-#include <sys/timex.h>
-
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
+#if defined(DUNE_SYS_HAS_SYS_TIMEX_H)
+#  include <sys/timex.h>
+#endif
 
 // Local headers.
 #include "timepps.h"
 
-#ifndef N_PPS
-#  define N_PPS 18
-#endif
-
+// Line discipline IOCTL.
 #ifndef TIOCSETD
 #  define TIOCSETD 0x5423
 #endif
 
 namespace Sensors
 {
+  /// Time synchronization using %PPS and %GPS time.
+  //! This task configures the system to synchronize its clock using a
+  //! Pulse Per Second (%PPS) source and %GPS time. Requires a Linux
+  //! kernel compiled with CONFIG_PPS and CONFIG_NTP_PPS.
+  //!
+  //! - Consumes:
+  //!   + DUNE::IMC::GpsFix
+  //!
+  //! - Produces:
+  //!   + DUNE::IMC::Pulse
+  //!   + DUNE::IMC::ClockControl
   namespace PPS
   {
     using DUNE_NAMESPACES;
 
-    enum ClockState
+    //! PPS line discipline number.
+    static const int c_pps_ldisc = 18;
+
+    //! Synchronization state.
+    enum SyncState
     {
-      CS_PPS_WAIT,
-      CS_PPS_SETTLE,
-      CS_SYNCHED
+      //! Waiting for %PPS signal.
+      SS_PPS_WAIT,
+      //! Wait for %PPS signal to settle.
+      SS_PPS_SETTLE,
+      //! Gathering samples to set time.
+      SS_SET_TIME,
+      //! Monitoring synchronization state.
+      SS_MONITOR
     };
 
+    //! Task arguments.
     struct Arguments
     {
       //! UART device.
@@ -83,26 +102,35 @@ namespace Sensors
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Task arguments.
-      Arguments m_args;
-      // PPS device descriptor.
+      //! PPS device descriptor.
       int m_pps;
       //! PPS file descriptor.
       int m_fd;
       //! UART device.
       int m_uart;
       //! Current clock state.
-      ClockState m_clk_state;
+      SyncState m_clk_state;
       //! Count of PPS signals.
       unsigned m_pps_count;
+      //! Number of computed time offsets.
+      unsigned m_time_offset_samples;
+      //! Time offset.
+      time_t m_time_offset;
+      //! Task arguments.
+      Arguments m_args;
 
+      //! Constructor.
+      //! @param[in] name instance name.
+      //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_pps(-1),
         m_fd(-1),
         m_uart(-1),
-        m_clk_state(CS_PPS_WAIT),
-        m_pps_count(0)
+        m_clk_state(SS_PPS_WAIT),
+        m_pps_count(0),
+        m_time_offset_samples(0),
+        m_time_offset(0)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -118,33 +146,38 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        //! Attach PPS line discipline to serial port.
+        // Attach PPS line discipline to serial port.
         if (!m_args.uart_dev.empty())
         {
           m_uart = open(m_args.uart_dev.c_str(), O_RDWR | O_NOCTTY);
           if (m_uart < 0)
-            throw std::runtime_error(Utils::String::str("unable to open serial port '%s'", m_args.uart_dev.c_str()));
+            throw std::runtime_error(Utils::String::str("unable to open serial port '%s'",
+                                                        m_args.uart_dev.c_str()));
 
-          int ldisc = 18;
+          int ldisc = c_pps_ldisc;
           if (ioctl(m_uart, TIOCSETD, &ldisc) < 0)
-            throw std::runtime_error(Utils::String::str("unable to attach line discipline to serial port '%s'", m_args.uart_dev.c_str()));
+            throw std::runtime_error(Utils::String::str("unable to attach line discipline to serial port '%s'",
+                                                        m_args.uart_dev.c_str()));
         }
 
         // Try to find the source by using the supplied "path" name
         m_fd = open(m_args.pps_dev.c_str(), O_RDWR);
         if (m_fd < 0)
-          throw std::runtime_error(Utils::String::str("unable to open PPS device '%s'", m_args.pps_dev.c_str()));
+          throw std::runtime_error(Utils::String::str("unable to open PPS device '%s'",
+                                                      m_args.pps_dev.c_str()));
 
         // Open the PPS source (and check the file descriptor)
         int rv = time_pps_create(m_fd, &m_pps);
         if (rv < 0)
-          throw std::runtime_error(Utils::String::str("cannot create a PPS source from device '%s'", m_args.pps_dev.c_str()));
+          throw std::runtime_error(Utils::String::str("cannot create a PPS source from device '%s'",
+                                                      m_args.pps_dev.c_str()));
 
         // Find out what features are supported
         int mode = 0;
         rv = time_pps_getcap(m_pps, &mode);
         if (rv < 0)
-          throw std::runtime_error(Utils::String::str("cannot get capabilities of device '%s'", m_args.pps_dev.c_str()));
+          throw std::runtime_error(Utils::String::str("cannot get capabilities of device '%s'",
+                                                      m_args.pps_dev.c_str()));
 
         if ((mode & PPS_CAPTUREASSERT) == 0)
           throw std::runtime_error("device does not support CAPTUREASSERT");
@@ -176,8 +209,7 @@ namespace Sensors
         t.modes = ADJ_STATUS;
         t.status = STA_PLL | STA_PPSFREQ | STA_PPSTIME;
 
-        rv = adjtimex(&t);
-        inf("adjtimex returned %d", rv);
+        (void)adjtimex(&t);
       }
 
       void
@@ -203,48 +235,29 @@ namespace Sensors
         if (rv < 0)
           return;
 
-        long offset = bfr.assert_timestamp.tv_nsec;
-        if (bfr.assert_timestamp.tv_nsec > 500000000)
-          offset = bfr.assert_timestamp.tv_nsec - 1000000000;
+        int64_t time = bfr.assert_timestamp.tv_sec;
+        time *= Time::c_usec_per_sec;
+        time += bfr.assert_timestamp.tv_nsec / 1000;
 
-        //inf("offset: %ld ms", bfr.assert_timestamp.tv_nsec / 1000000);
-        inf("PPS offset: %ld us", offset / 1000);
-        //inf("%ld | %ld", bfr.assert_timestamp.tv_sec, bfr.assert_timestamp.tv_nsec);
-      }
-
-      void
-      getKernelClock(void)
-      {
-        struct timex t;
-        std::memset(&t, 0, sizeof(t));
-
-        int rv = adjtimex(&t);
-
-
-        inf("status: %d, offset: %ld us", t.status, t.offset);
-
-        // inf("rv        : %d", rv);
-        // inf("offset    : %ld (us)", t.offset);
-        // inf("freq      : %ld (sppm)", t.freq);
-        // inf("maxerror  : %ld (us)", t.maxerror);
-        // inf("esterror  : %ld (us)", t.esterror);
-        // inf("status    : %d", t.status);
-        // inf("pll_const : %ld", t.constant);
-        // inf("precision : %ld (us)", t.precision);
-        // inf("tolerance : %ld (ppm)", t.tolerance);
-        // inf("tick      : %ld", t.tick);
+        // Dispatch pulse.
+        IMC::Pulse pulse;
+        pulse.setTimeStamp(time / 1000000.0);
+        dispatch(pulse, DF_KEEP_TIME);
       }
 
       void
       consume(const IMC::GpsFix* msg)
       {
-        //msg->toText(std::cerr);
-        compare(msg);
+        computeTimeOffset(msg);
       }
 
       void
-      compare(const IMC::GpsFix* msg)
+      computeTimeOffset(const IMC::GpsFix* msg)
       {
+        // Compute time given by the GPS.
+        if ((msg->validity & IMC::GpsFix::GFV_VALID_TIME) == 0 or (msg->validity & IMC::GpsFix::GFV_VALID_DATE) == 0)
+          return;
+
         tm bdt = {0};
         bdt.tm_mday = msg->utc_day;
         bdt.tm_mon = msg->utc_month - 1;
@@ -254,9 +267,16 @@ namespace Sensors
         bdt.tm_sec = (int)Math::round(((((msg->utc_time / 3600.0) - bdt.tm_hour) * 60.0) - bdt.tm_min) * 60.0);
         time_t gps_time = mktime(&bdt);
 
-        time_t msg_time = static_cast<time_t>(msg->getTimeStamp());
+        // Get CPU time.
+        time_t cpu_time = static_cast<time_t>(Math::round(msg->getTimeStamp()));
 
-        inf("gps: %ld / msg: %ld", gps_time, msg_time);
+        // Compute offset.
+        m_time_offset = gps_time - cpu_time;
+
+        if (m_time_offset != 0)
+          spew("gps: %ld / msg: %ld / offs: %ld", gps_time, cpu_time, m_time_offset);
+
+        ++m_time_offset_samples;
       }
 
       void
@@ -270,24 +290,26 @@ namespace Sensors
 
         switch (m_clk_state)
         {
-          case CS_PPS_WAIT:
+          case SS_PPS_WAIT:
             if (ktime.status & STA_PPSSIGNAL)
             {
-              inf("waiting for PPS to settle");
+              debug("waiting for PPS to settle");
               m_pps_count = 0;
-              m_clk_state = CS_PPS_SETTLE;
+              m_clk_state = SS_PPS_SETTLE;
             }
             break;
 
-          case CS_PPS_SETTLE:
+          case SS_PPS_SETTLE:
             if (ktime.status & STA_PPSSIGNAL)
             {
               if (++m_pps_count == 5)
               {
                 if ((ktime.offset / 1000) < 10)
                 {
-                  inf("clock synchronized");
-                  m_clk_state = CS_SYNCHED;
+                  debug("clock synchronized");
+                  m_time_offset_samples = 0;
+                  m_time_offset = 0;
+                  m_clk_state = SS_SET_TIME;
                 }
                 else
                   m_pps_count = 0;
@@ -295,16 +317,51 @@ namespace Sensors
             }
             else
             {
-              inf("PPS failed to settle, retrying");
-              m_clk_state = CS_PPS_WAIT;
+              debug("PPS failed to settle, retrying");
+              m_clk_state = SS_PPS_WAIT;
             }
             break;
 
-          case CS_SYNCHED:
+          case SS_SET_TIME:
             if ((ktime.status & STA_PPSSIGNAL) == 0)
             {
-              war("lost PPS signal");
-              m_clk_state = CS_PPS_WAIT;
+              debug("lost PPS signal");
+              m_clk_state = SS_PPS_WAIT;
+            }
+            else
+            {
+              if (m_time_offset_samples >= 10)
+              {
+                if (m_time_offset == 0)
+                {
+                  debug("time is synchronized");
+                  double tstamp = Clock::getSinceEpoch();
+                  IMC::ClockControl cc;
+                  cc.setTimeStamp(tstamp);
+                  cc.op = IMC::ClockControl::COP_SYNC_DONE;
+                  cc.clock = tstamp;
+                  dispatch(cc, DF_KEEP_TIME);
+                  m_clk_state = SS_MONITOR;
+                }
+                else
+                {
+                  debug("adjusting time by %ld", m_time_offset);
+                  Time::Clock::set(Time::Clock::getSinceEpoch() + m_time_offset);
+                  m_time_offset_samples = 0;
+                  m_time_offset = 0;
+                }
+
+                m_clk_state = SS_MONITOR;
+              }
+            }
+
+            break;
+
+          case SS_MONITOR:
+            if ((ktime.status & STA_PPSSIGNAL) == 0)
+            {
+              debug("lost PPS signal");
+              m_clk_state = SS_PPS_WAIT;
             }
 
             break;
@@ -316,7 +373,8 @@ namespace Sensors
       {
         while (!stopping())
         {
-          waitForMessages(1.0);
+          consumeMessages();
+          fetch(1.0);
           updateState();
         }
       }
