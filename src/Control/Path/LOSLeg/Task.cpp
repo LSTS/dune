@@ -43,7 +43,7 @@ namespace Control
 {
   namespace Path
   {
-    namespace Aerosonde
+    namespace LOSLeg
     {
       using DUNE_NAMESPACES;
 
