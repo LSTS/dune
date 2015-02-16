@@ -38,9 +38,9 @@
 #endif
 
 // Local headers.
-#include "KernelPPS.hpp"
+#include "LinuxPPS.hpp"
 
-namespace Sensors
+namespace Supervisors
 {
   /// Time synchronization using %PPS and %GPS time.
   //! This task configures the system to synchronize its clock using a
@@ -53,7 +53,7 @@ namespace Sensors
   //! - Produces:
   //!   + DUNE::IMC::Pulse
   //!   + DUNE::IMC::ClockControl
-  namespace PPS
+  namespace ClockPPS
   {
     using DUNE_NAMESPACES;
 
@@ -96,7 +96,7 @@ namespace Sensors
       //! Last adjtimex() status.
       int m_timex_status;
       //! PPS consumer.
-      KernelPPS* m_kernel;
+      LinuxPPS* m_pps;
       //! Task arguments.
       Arguments m_args;
 
@@ -107,7 +107,7 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx),
         m_clk_state(SS_PPS_WAIT),
         m_timex_status(0),
-        m_kernel(NULL)
+        m_pps(NULL)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -140,8 +140,8 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_kernel = new KernelPPS(this, m_args.uart_dev, m_args.pps_dev, m_args.pps_prop_delay);
-        m_kernel->start();
+        m_pps = new LinuxPPS(this, m_args.uart_dev, m_args.pps_dev, m_args.pps_prop_delay);
+        m_pps->start();
 
         struct timex tmx;
         std::memset(&tmx, 0, sizeof(tmx));
@@ -153,10 +153,10 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
-        if (m_kernel != NULL)
+        if (m_pps != NULL)
         {
-          m_kernel->stopAndJoin();
-          Memory::clear(m_kernel);
+          m_pps->stopAndJoin();
+          Memory::clear(m_pps);
         }
       }
 
@@ -263,14 +263,14 @@ namespace Sensors
             if (status & STA_PPSSIGNAL)
             {
               setEntityState(IMC::EntityState::ESTA_BOOT, DTR("PPS signal acquired"));
-              m_kernel->reset();
-              m_kernel->resetLimits();
+              m_pps->reset();
+              m_pps->resetLimits();
               m_clk_state = SS_PPS_SETTLE;
             }
             break;
 
           case SS_PPS_SETTLE:
-            if (m_kernel->getOffset() < m_args.pps_max_offset)
+            if (m_pps->getOffset() < m_args.pps_max_offset)
             {
               setEntityState(IMC::EntityState::ESTA_BOOT, DTR("clock is disciplined"));
               m_time_offsets.clear();
@@ -279,7 +279,7 @@ namespace Sensors
             else
             {
               setEntityState(IMC::EntityState::ESTA_BOOT,
-                             String::str(DTR("disciplining clock (%lld µs)"), m_kernel->getOffset()));
+                             String::str(DTR("disciplining clock (%lld µs)"), m_pps->getOffset()));
             }
             break;
 
@@ -301,7 +301,7 @@ namespace Sensors
                 cc.clock = tstamp;
                 dispatch(cc, DF_KEEP_TIME);
 
-                m_kernel->resetLimits();
+                m_pps->resetLimits();
                 m_clk_state = SS_MONITOR;
               }
               else
@@ -320,9 +320,9 @@ namespace Sensors
 
           case SS_MONITOR:
             setEntityState(IMC::EntityState::ESTA_NORMAL, String::str(DTR("clock is synchronized [%lld, %ld, %ld]"),
-                                                                      m_kernel->getOffset(),
-                                                                      m_kernel->getOffsetMinimum(),
-                                                                      m_kernel->getOffsetMaximum()));
+                                                                      m_pps->getOffset(),
+                                                                      m_pps->getOffsetMinimum(),
+                                                                      m_pps->getOffsetMaximum()));
             break;
         }
       }

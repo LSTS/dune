@@ -24,6 +24,9 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+#ifndef SUPERVISORS_CLOCK_PPS_LINUX_PPS_HPP_INCLUDED_
+#define SUPERVISORS_CLOCK_PPS_LINUX_PPS_HPP_INCLUDED_
+
 // ISO C++ 98 headers.
 #include <limits>
 
@@ -51,19 +54,19 @@
 #  define TIOCSETD 0x5423
 #endif
 
-namespace Sensors
+namespace Supervisors
 {
-  namespace PPS
+  namespace ClockPPS
   {
     using DUNE_NAMESPACES;
 
     //! PPS line discipline number.
     static const int c_pps_ldisc = 18;
 
-    class KernelPPS: public Concurrency::Thread
+    class LinuxPPS: public Concurrency::Thread
     {
     public:
-      KernelPPS(Tasks::Task* parent, const std::string& uart_dev, const std::string& pps_dev, unsigned prop_delay):
+      LinuxPPS(Tasks::Task* parent, const std::string& uart_dev, const std::string& pps_dev, unsigned prop_delay):
         m_parent(parent),
         m_uart_fd(-1),
         m_pps(-1),
@@ -131,7 +134,7 @@ namespace Sensors
         resetLimits();
       }
 
-      ~KernelPPS(void)
+      ~LinuxPPS(void)
       {
         if (m_pps != -1)
           time_pps_destroy(m_pps);
