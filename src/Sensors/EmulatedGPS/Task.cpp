@@ -140,11 +140,11 @@ namespace Sensors
       consume(const IMC::Pulse* msg)
       {
         if (m_args.send_on_pulse)
-          sendSentences((time_t)msg->getTimeStamp());
+          sendSentences(msg->getTimeStamp());
       }
 
       std::string
-      createRMC(const Time::BrokenDown& bdt)
+      createRMC(const Time::BrokenDown& bdt, unsigned msec)
       {
         double lat = m_estate.lat;
         double lon = m_estate.lon;
@@ -162,7 +162,7 @@ namespace Sensors
         double vel = Math::norm(m_estate.vx, m_estate.vy);
 
         NMEAWriter stn("GPRMC");
-        stn << String::str("%02u%02u%02u.00", bdt.hour, bdt.minutes, bdt.seconds)
+        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, msec)
             << "A"
             << String::str("%02d%02.5f", std::abs(lat_deg), std::fabs(lat_min))
             << ((lat_deg >= 0) ? "N" : "S")
@@ -179,7 +179,7 @@ namespace Sensors
       }
 
       std::string
-      createVTG(const Time::BrokenDown& bdt)
+      createVTG(void)
       {
         double vel = Math::norm(m_estate.vx, m_estate.vy);
         double course = Angles::degrees(std::atan2(m_estate.vy, m_estate.vx));
@@ -197,15 +197,14 @@ namespace Sensors
                            course,
                            vel * DUNE::Units::c_ms_to_knot,
                            vel * DUNE::Units::c_ms_to_kmh);
-        (void)bdt;
         return stn.sentence();
       }
 
       std::string
-      createZDA(const Time::BrokenDown& bdt)
+      createZDA(const Time::BrokenDown& bdt, unsigned msec)
       {
         NMEAWriter stn("GPZDA");
-        stn << String::str("%02u%02u%02u.00", bdt.hour, bdt.minutes, bdt.seconds)
+        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, msec)
             << String::str("%02u", bdt.day)
             << String::str("%02u", bdt.month)
             << String::str("%04u", bdt.year)
@@ -216,13 +215,11 @@ namespace Sensors
       }
 
       std::string
-      createHDT(const Time::BrokenDown& bdt)
+      createHDT(void)
       {
         NMEAWriter stn("GPHDT");
         stn << String::str("%0.2f", Angles::degrees(m_estate.psi))
             << "T";
-
-        (void)bdt;
 
         return stn.sentence();
       }
@@ -230,36 +227,39 @@ namespace Sensors
       void
       sendSentences(void)
       {
-        sendSentences(std::time(NULL));
+        sendSentences(Clock::getSinceEpoch());
       }
 
       void
-      sendSentences(time_t time_reference)
+      sendSentences(double time_reference)
       {
-        Time::BrokenDown bdt(time_reference);
+        time_t secs = (time_t)time_reference;
+        double fraction = time_reference - secs;
+        unsigned msec = fraction * 1000;
+        Time::BrokenDown bdt(secs);
         std::string stn_str;
 
         if (m_args.send_zda)
         {
-          stn_str = createZDA(bdt);
+          stn_str = createZDA(bdt, msec);
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
         if (m_args.send_rmc and not m_estate_timer.overflow())
         {
-          stn_str = createRMC(bdt);
+          stn_str = createRMC(bdt, msec);
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
         if (m_args.send_hdt and not m_estate_timer.overflow())
         {
-          stn_str = createHDT(bdt);
+          stn_str = createHDT();
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
         if (m_args.send_vtg and not m_estate_timer.overflow())
         {
-          stn_str = createVTG(bdt);
+          stn_str = createVTG();
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
       }
