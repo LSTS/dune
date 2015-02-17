@@ -144,7 +144,7 @@ namespace Sensors
       }
 
       std::string
-      createRMC(const Time::BrokenDown& bdt, unsigned msec)
+      createRMC(const Time::BrokenDown& bdt, unsigned fsec)
       {
         double lat = m_estate.lat;
         double lon = m_estate.lon;
@@ -162,7 +162,7 @@ namespace Sensors
         double vel = Math::norm(m_estate.vx, m_estate.vy);
 
         NMEAWriter stn("GPRMC");
-        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, msec)
+        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << "A"
             << String::str("%02d%02.5f", std::abs(lat_deg), std::fabs(lat_min))
             << ((lat_deg >= 0) ? "N" : "S")
@@ -201,10 +201,10 @@ namespace Sensors
       }
 
       std::string
-      createZDA(const Time::BrokenDown& bdt, unsigned msec)
+      createZDA(const Time::BrokenDown& bdt, unsigned fsec)
       {
         NMEAWriter stn("GPZDA");
-        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, msec)
+        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << String::str("%02u", bdt.day)
             << String::str("%02u", bdt.month)
             << String::str("%04u", bdt.year)
@@ -235,19 +235,19 @@ namespace Sensors
       {
         time_t secs = (time_t)time_reference;
         double fraction = time_reference - secs;
-        unsigned msec = fraction * 1000;
+        unsigned fsec = fraction * 100;
         Time::BrokenDown bdt(secs);
         std::string stn_str;
 
         if (m_args.send_zda)
         {
-          stn_str = createZDA(bdt, msec);
+          stn_str = createZDA(bdt, fsec);
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
         if (m_args.send_rmc and not m_estate_timer.overflow())
         {
-          stn_str = createRMC(bdt, msec);
+          stn_str = createRMC(bdt, fsec);
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
