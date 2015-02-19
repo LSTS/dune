@@ -28,11 +28,11 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <vector>
-#include <limits.h>
+#include <climits>
+#define _STDC_LIMIT_MACROS
 
 // DUNE headers.
 #include <DUNE/Tasks.hpp>
-#include <DUNE/Tasks/SourceFilter.hpp>
 #include <DUNE/IMC/Constants.hpp>
 
 namespace DUNE
