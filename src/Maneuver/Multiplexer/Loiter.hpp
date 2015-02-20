@@ -50,43 +50,70 @@ namespace Maneuver
     class Loiter: public MuxedManeuver<IMC::Loiter, LoiterArgs>
     {
     public:
+      //! Supported loiter types
+      enum LoiterTypes
+      {
+        //! Circular loiter
+        LTYPE_CIRCULAR = 0,
+        //! Figure eight loiter
+        LTYPE_FIGURE_EIGHT
+      };
+
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] args loiter arguments
       Loiter(Maneuvers::Maneuver* task, LoiterArgs* args):
-        MuxedManeuver<IMC::Loiter, LoiterArgs>(task, args)
+        MuxedManeuver<IMC::Loiter, LoiterArgs>(task, args),
+        m_ltr(NULL)
       { }
+
+      //! Destructor
+      ~Loiter(void)
+      {
+        Memory::clear(m_ltr);
+      }
+
+      //! Get supported loiter type to perform
+      //! @param[in] type loiter type to perform from maneuver message
+      //! @return supported type of loiter that will be performed
+      LoiterTypes
+      getType(IMC::Loiter::LoiterTypeEnum type)
+      {
+        switch (type)
+        {
+          case IMC::Loiter::LT_DEFAULT:
+          case IMC::Loiter::LT_CIRCULAR:
+            return LTYPE_CIRCULAR;
+          case IMC::Loiter::LT_EIGHT:
+            return LTYPE_FIGURE_EIGHT;
+          default:
+            m_task->err("Specified loiter type not supported, performing default");
+            return getType(IMC::Loiter::LT_DEFAULT);
+        }
+      }
 
       //! Start maneuver function
       //! @param[in] maneuver loiter maneuver message
       void
       onStart(const IMC::Loiter* maneuver)
       {
-        m_task->setControl(IMC::CL_PATH);
+        Memory::clear(m_ltr);
 
-        float radius = maneuver->radius;
+        LoiterTypes type = getType((IMC::Loiter::LoiterTypeEnum)maneuver->type);
 
-        if (radius < m_args->min_radius)
+        switch (type)
         {
-          m_task->war(DTR("forcing minimum radius of %.1f"), m_args->min_radius);
-          radius = m_args->min_radius;
+          case LTYPE_FIGURE_EIGHT:
+            Maneuvers::FigureEight* fig;
+            fig = new Maneuvers::FigureEight(maneuver, m_task, m_args->min_radius);
+            m_ltr = static_cast<Maneuvers::AbstractLoiter*>(fig);
+            break;
+          default:
+            Maneuvers::Circular* circ;
+            circ = new Maneuvers::Circular(maneuver, m_task, m_args->min_radius);
+            m_ltr = static_cast<Maneuvers::AbstractLoiter*>(circ);
+            break;
         }
-
-        IMC::DesiredPath path;
-        path.end_lat = maneuver->lat;
-        path.end_lon = maneuver->lon;
-        path.end_z = maneuver->z;
-        path.end_z_units = maneuver->z_units;
-        path.lradius = radius;
-
-        if (maneuver->direction == IMC::Loiter::LD_CCLOCKW)
-          path.flags = IMC::DesiredPath::FL_CCLOCKW;
-        else
-          path.flags = 0;  // clockwise by default
-
-        path.speed = maneuver->speed;
-        path.speed_units = maneuver->speed_units;
-        m_task->dispatch(path);
 
         m_duration = maneuver->duration;
         m_end_time = -1;
@@ -97,7 +124,9 @@ namespace Maneuver
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        if (pcs->flags & IMC::PathControlState::FL_LOITERING)
+        m_ltr->onPathControlState(pcs);
+
+        if (m_ltr->isLoitering())
         {
           if (m_duration)
           {
@@ -127,10 +156,17 @@ namespace Maneuver
         }
       }
 
-      ~Loiter(void)
-      { }
+      //! On EstimatedState message
+      //! @param[in] msg pointer to EstimatedState message
+      void
+      onEstimatedState(const IMC::EstimatedState* msg)
+      {
+        m_ltr->onEstimatedState(msg);
+      }
 
     private:
+      //! Pointers to loiter type behavior
+      Maneuvers::AbstractLoiter* m_ltr;
       //! Loiter: End time
       double m_end_time;
       //! Loiter: Duration in seconds

@@ -164,7 +164,7 @@ namespace Maneuver
 
       // Function to check if the vehicle is getting near to the next waypoint
       void
-      consume(const IMC::PathControlState* pcs)
+      onPathControlState(const IMC::PathControlState* pcs)
       {
         // Verify maneuver completion
         double delta = Clock::get() - m_start_time - m_maneuver.duration;

@@ -155,9 +155,6 @@ namespace DUNE
 
       m_act_state.state = IMC::EntityActivationState::EAS_ACTIVE;
       dispatch(m_act_state);
-
-      if (m_next_act_state == NAS_INACTIVE)
-        requestDeactivation();
     }
 
     void
@@ -168,9 +165,6 @@ namespace DUNE
 
       m_act_state.state = IMC::EntityActivationState::EAS_INACTIVE;
       dispatch(m_act_state);
-
-      if (m_next_act_state == NAS_ACTIVE)
-        requestActivation();
     }
 
     void

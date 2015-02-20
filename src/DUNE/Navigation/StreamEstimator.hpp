@@ -45,11 +45,11 @@ namespace DUNE
     //! Number of samples.
     static const unsigned c_samples = 10;
     //! Time required with propeller stopped.
-    static const float c_time_no_rpm = 20.0;
+    static const float c_time_no_rpm = 20.0f;
     //! Time between samples.
-    static const float c_sampler = 10.0;
+    static const float c_sampler = 10.0f;
     //! Sampler factor.
-    static const float c_samp_f = 1.6;
+    static const float c_samp_f = 1.6f;
 
     //! %StreamEstimator is responsible to estimate the stream
     //! of the liquid fluid surrounding a underwater or surface

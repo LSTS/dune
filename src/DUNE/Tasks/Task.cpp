@@ -284,6 +284,8 @@ namespace DUNE
       onActivation();
 
       m_entity->succeedActivation();
+      if (m_entity->hasPendingDeactivation())
+        requestDeactivation();
     }
 
     void
@@ -322,6 +324,8 @@ namespace DUNE
       onDeactivation();
 
       m_entity->succeedDeactivation();
+      if (m_entity->hasPendingActivation())
+        requestActivation();
     }
 
     void
