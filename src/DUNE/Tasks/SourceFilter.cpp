@@ -50,7 +50,7 @@ namespace DUNE
     }
 
     SourceFilter::SourceFilter(Tasks::Task& task, const bool system,
-      const std::vector<std::string>& src):
+                               const std::vector<std::string>& src):
       m_task(task)
     {
       if (system)
@@ -62,7 +62,7 @@ namespace DUNE
     }
 
     SourceFilter::SourceFilter(Tasks::Task& task, const std::vector<std::string>& src,
-        const std::string& msg_name):
+                               const std::string& msg_name):
       m_task(task),
       m_msg_name(msg_name)
     {
@@ -72,7 +72,7 @@ namespace DUNE
     }
 
     SourceFilter::SourceFilter(Tasks::Task& task, const bool system,
-        const std::vector<std::string>& src, const std::string& msg_name):
+                               const std::vector<std::string>& src, const std::string& msg_name):
       m_task(task),
       m_msg_name(msg_name)
     {
@@ -776,9 +776,9 @@ namespace DUNE
            itr_sys != m_filtered_sys.end(); itr_sys++)
       {
         if ((*itr_msg).find((unsigned int)UINT_MAX) != (*itr_msg).end())
-		{
+        {
           filt_def.push_back("Filter for ANY message, sets:");
-		}
+        }
         else
         {
           filt_def.push_back("Filter for:");

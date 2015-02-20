@@ -72,7 +72,7 @@ namespace DUNE
       //! @param[in] source desired sources system and entity names.
       //! @param[in] msg_name filtered message name.
       SourceFilter(Tasks::Task& task, const bool only_systems, const std::vector<std::string>& source,
-          const std::string& msg_name);
+                   const std::string& msg_name);
 
       //! Destructor.
       ~SourceFilter(void)
