@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,31 +20,51 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// http://ec.europa.eu/idabc/eupl.html.                                     *
+// https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_HPP_INCLUDED_
-#define DUNE_CONTROL_HPP_INCLUDED_
+// DUNE headers.
+#include <DUNE/Control/ProxyPathController.hpp>
 
 namespace DUNE
 {
-  //! %Control related routines and classes.
   namespace Control
-  { }
+  {
+    using namespace Tasks;
+    using namespace IMC;
+
+    ProxyPathController::ProxyPathController(const std::string& name, Tasks::Context& ctx):
+      Control::PathController(name, ctx),
+      m_state_filter(NULL)
+    {
+      param("EstimatedState Filter", m_state_src)
+      .defaultValue("self")
+      .description("List of <System>+<System> that defines the source"
+                   " systems allowed to pass EstimatedState messages");
+    }
+
+    ProxyPathController::~ProxyPathController(void)
+    {
+      Memory::clear(m_state_filter);
+    }
+
+    void
+    ProxyPathController::onEntityResolution(void)
+    {
+      PathController::onEntityResolution();
+
+      // Process the systems allowed to pass the EstimatedState
+      m_state_filter = new SourceFilter(*this, true, m_state_src, "EstimatedState");
+    }
+
+    bool
+    ProxyPathController::sourceFilter(const IMC::EstimatedState* es)
+    {
+      // Allow only EstimatedState from the same vehicle.
+      // 'True' if the message is NOT allowed to pass.
+      return !m_state_filter->match(es);
+    }
+  }
 }
-
-#include <DUNE/Control/PathController.hpp>
-#include <DUNE/Control/ProxyPathController.hpp>
-#include <DUNE/Control/BasicRemoteOperation.hpp>
-#include <DUNE/Control/BasicAutopilot.hpp>
-#include <DUNE/Control/BasicUAVAutopilot.hpp>
-#include <DUNE/Control/BottomTracker.hpp>
-#include <DUNE/Control/DiscretePID.hpp>
-#include <DUNE/Control/YoYoMotion.hpp>
-#include <DUNE/Control/AUVModel.hpp>
-#include <DUNE/Control/LinearSystem.hpp>
-#include <DUNE/Control/CoarseAltitude.hpp>
-
-#endif
