@@ -558,8 +558,8 @@ namespace DUNE
     void
     PathController::consume(const IMC::EstimatedState* es)
     {
-      // Allow only EstimatedState from the same vehicle.
-      if (es->getSource() != getSystemId())
+      // Pass EstimatedStates from the specified vehicle.
+      if (sourceFilter(es))
         return;
 
       if (m_btd.enabled)
