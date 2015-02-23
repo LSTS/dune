@@ -34,13 +34,16 @@
 #include <cstring>
 
 // Exif headers.
+#if defined(DUNE_USING_EXIF)
 #include <libexif/exif-data.h>
 #include <libexif/exif-content.h>
+#endif
 
 namespace DUNE
 {
   namespace Media
   {
+#if defined(DUNE_USING_EXIF)
     //! Construct an empty ExifData object.
     ExifData::ExifData(void) :
       m_exif_data(exif_data_new())
@@ -50,17 +53,30 @@ namespace DUNE
     ExifData::ExifData(uint8_t* bfr, std::size_t len) :
       m_exif_data(exif_data_new_from_data(bfr, len))
     { }
+#else
+   ExifData::ExifData(void)
+   { }
+
+    ExifData::ExifData(uint8_t* bfr, std::size_t len)
+    {
+      (void)bfr;
+      (void)len;
+    }
+#endif
 
     //! Destroy a ExifData object.
     ExifData::~ExifData(void)
     {
+#if defined(DUNE_USING_EXIF)
       if (m_exif_data)
         exif_data_free(m_exif_data);
+#endif
     }
 
     std::vector<uint8_t>
     ExifData::getRawData(void)
     {
+#if defined(DUNE_USING_EXIF)
       uint8_t* bfr;
       unsigned len;
 
@@ -72,21 +88,29 @@ namespace DUNE
       std::vector<uint8_t> vec(bfr, bfr + len);
       delete[] bfr;
       return vec;
+#else
+      return std::vector<uint8_t>();
+#endif
     }
 
     std::string
     ExifData::getComment(void)
     {
+#if defined(DUNE_USING_EXIF)
       ExifEntry* e = exif_content_get_entry(m_exif_data->ifd[EXIF_IFD_EXIF], exif_tag_table_get_tag(EXIF_TAG_USER_COMMENT));
       if (e == NULL)
         return std::string("");
       else
         return std::string((const char*)e->data + 8, (size_t)e->size - 8);
+#else
+      return std::string("");
+#endif
     }
 
     void
     ExifData::setComment(std::string comment)
     {
+#if defined(DUNE_USING_EXIF)
       const char ascii_header[] = "ASCII\0\0\0";
       ExifContent* ifd = m_exif_data->ifd[EXIF_IFD_EXIF];
       ExifTag tag = EXIF_TAG_USER_COMMENT;
@@ -117,7 +141,11 @@ namespace DUNE
       exif_content_add_entry (ifd, e);
       exif_mem_unref(mem);
       exif_entry_unref(e);
+#else
+      (void)comment;
+#endif
     }
 
   }
 }
+
