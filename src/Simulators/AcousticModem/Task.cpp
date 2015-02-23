@@ -103,6 +103,7 @@ namespace Simulators
       {
         m_sock = new UDPSocket;
         m_sock->bind(m_args.local_port, Address::Any, false);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.

@@ -89,7 +89,9 @@ namespace DUNE
       unsigned n = c_num_geoid_cols * c_num_geoid_rows;
       m_data->geoid.GeoidHeightBuffer = (float *) std::malloc((n + 1) * sizeof(float));
       std::FILE* file = std::fopen(egmfile.c_str(), "rb");
-      std::fread(m_data->geoid.GeoidHeightBuffer, sizeof(float), n, file);
+      size_t rv = std::fread(m_data->geoid.GeoidHeightBuffer, sizeof(float), n, file);
+      if (rv != n)
+        throw std::runtime_error("unable to extract geoid");
       std::fclose(file);
 
       //m_data->geoid.GeoidHeightBuffer = GeoidHeightBuffer;

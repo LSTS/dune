@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,31 +20,61 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// http://ec.europa.eu/idabc/eupl.html.                                     *
+// https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_HPP_INCLUDED_
-#define DUNE_CONTROL_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_PROXY_PATH_CONTROLLER_HPP_INCLUDED_
+#define DUNE_CONTROL_PROXY_PATH_CONTROLLER_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <vector>
+#include <string>
+
+// DUNE headers.
+#include <DUNE/IMC.hpp>
+#include <DUNE/Control/PathController.hpp>
 
 namespace DUNE
 {
-  //! %Control related routines and classes.
   namespace Control
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM ProxyPathController;
 
-#include <DUNE/Control/PathController.hpp>
-#include <DUNE/Control/ProxyPathController.hpp>
-#include <DUNE/Control/BasicRemoteOperation.hpp>
-#include <DUNE/Control/BasicAutopilot.hpp>
-#include <DUNE/Control/BasicUAVAutopilot.hpp>
-#include <DUNE/Control/BottomTracker.hpp>
-#include <DUNE/Control/DiscretePID.hpp>
-#include <DUNE/Control/YoYoMotion.hpp>
-#include <DUNE/Control/AUVModel.hpp>
-#include <DUNE/Control/LinearSystem.hpp>
-#include <DUNE/Control/CoarseAltitude.hpp>
+    //! ProxyPathController
+    //! PathController with the capability to control the path
+    //! of a system with an id different from the vehicle's id
+    class ProxyPathController: public Control::PathController
+    {
+    public:
+      //! Constructor.
+      ProxyPathController(const std::string& name, Tasks::Context& ctx);
+
+      //! Destructor.
+      virtual
+      ~ProxyPathController(void);
+
+      //! Entity reservation callback.
+      void
+      onEntityResolution(void);
+
+      //! Handler for EstimatedState source id filter. This is called when
+      //! an EstimatedState is received. By default it only passes
+      //! EstimatedState messages from the system itself.
+      //! @param[in] es EstimatedState message.
+      //! @return true if the message is NOT allowed to pass.
+      virtual bool
+      sourceFilter(const IMC::EstimatedState* es);
+
+    private:
+      //! EstimatedState filter.
+      Tasks::SourceFilter* m_state_filter;
+      //! EstimatedState filter input.
+      std::vector<std::string> m_state_src;
+    };
+  }
+}
 
 #endif
