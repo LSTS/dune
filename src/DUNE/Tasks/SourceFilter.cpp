@@ -182,7 +182,7 @@ namespace DUNE
           try
           {
             sys_tmp = m_task.resolveSystemName(systems[i]);
-            if (sys_tmp != UINT16_MAX)
+            if (sys_tmp != 0xffff)
             {
               sys_ids.insert(sys_tmp);
             }
