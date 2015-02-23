@@ -37,6 +37,13 @@
 #if defined(DUNE_USING_EXIF)
 #include <libexif/exif-data.h>
 #include <libexif/exif-content.h>
+#else
+// Alternative struct _ExifData to hold the original exif data.
+struct _ExifData
+{
+  uint8_t* bfr;
+  std::size_t len;
+};
 #endif
 
 namespace DUNE
@@ -54,43 +61,71 @@ namespace DUNE
       m_exif_data(exif_data_new_from_data(bfr, len))
     { }
 #else
-   ExifData::ExifData(void)
-   { }
-
-    ExifData::ExifData(uint8_t* bfr, std::size_t len)
+    ExifData::ExifData(void) :
+      m_exif_data(new struct _ExifData)
     {
-      (void)bfr;
-      (void)len;
+      m_exif_data->len = 0;
+    }
+
+    ExifData::ExifData(uint8_t* bfr, std::size_t len) :
+      m_exif_data(new struct _ExifData)
+    {
+      if (len > 4)
+      {
+        // Advance the length of the EXIF header
+        len -= 4;
+        bfr += 4;
+
+        m_exif_data->len = len;
+        m_exif_data->bfr = new uint8_t[len];
+        std::memcpy(m_exif_data->bfr, bfr, len);
+      }
+      else
+        m_exif_data->len = 0;
     }
 #endif
 
     //! Destroy a ExifData object.
     ExifData::~ExifData(void)
     {
-#if defined(DUNE_USING_EXIF)
       if (m_exif_data)
+      {
+#if defined(DUNE_USING_EXIF)
         exif_data_free(m_exif_data);
+#else
+        if (m_exif_data->len)
+          delete m_exif_data->bfr;
+        delete m_exif_data;
 #endif
+      }
     }
 
     std::vector<uint8_t>
     ExifData::getRawData(void)
     {
-#if defined(DUNE_USING_EXIF)
       uint8_t* bfr;
       unsigned len;
 
+#if defined(DUNE_USING_EXIF)
       exif_data_fix(m_exif_data);
       exif_data_save_data(m_exif_data, &bfr, &len);
+#else
+      len = m_exif_data->len;
+      if (len > 0)
+      {
+        bfr = new uint8_t[len];
+        std::memcpy(bfr, m_exif_data->bfr, len);
+      }
+      else
+        bfr = NULL;
+#endif
+
       if (!bfr)
         return std::vector<uint8_t>();
 
       std::vector<uint8_t> vec(bfr, bfr + len);
       delete[] bfr;
       return vec;
-#else
-      return std::vector<uint8_t>();
-#endif
     }
 
     std::string
@@ -98,13 +133,10 @@ namespace DUNE
     {
 #if defined(DUNE_USING_EXIF)
       ExifEntry* e = exif_content_get_entry(m_exif_data->ifd[EXIF_IFD_EXIF], exif_tag_table_get_tag(EXIF_TAG_USER_COMMENT));
-      if (e == NULL)
-        return std::string("");
-      else
+      if (e != NULL)
         return std::string((const char*)e->data + 8, (size_t)e->size - 8);
-#else
-      return std::string("");
 #endif
+      return std::string("");
     }
 
     void
@@ -145,7 +177,6 @@ namespace DUNE
       (void)comment;
 #endif
     }
-
   }
 }
 
