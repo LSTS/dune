@@ -868,7 +868,7 @@ namespace Sensors
 
         stopMonitoring();
 
-        //turnOffAllInternalChannels();
+        turnOffAllInternalChannels();
       }
 
     };
