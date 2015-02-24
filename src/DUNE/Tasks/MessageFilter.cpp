@@ -23,28 +23,55 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
+// Author: João Fortuna                                                     *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // DUNE headers.
 #include <DUNE/IMC/Factory.hpp>
 #include <DUNE/Time/Clock.hpp>
 #include <DUNE/Utils/String.hpp>
-#include <DUNE/Tasks/RateLimiters.hpp>
+#include <DUNE/Tasks.hpp>
+#include <DUNE/Casts.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
-    RateLimiters::RateLimiters(void)
+    MessageFilter::MessageFilter(void)
     { }
 
-    RateLimiters::~RateLimiters(void)
+    MessageFilter::~MessageFilter(void)
     { }
 
+    //! Filter message
+    //! @param[in] msg IMC Message.
+    //! @return true if message filtered, false otherwise.
     bool
-    RateLimiters::filter(const IMC::Message* msg)
+    MessageFilter::filter(const IMC::Message* msg)
     {
       uint32_t mid = msg->getId();
+
+      // Filter message by entity.
+      if (m_filtered[mid].size() > 0)
+      {
+        bool matched = false;
+        std::vector<uint32_t>::iterator itr = m_filtered[mid].begin();
+        for (; itr != m_filtered[mid].end(); ++itr)
+        {
+          if (*itr == msg->getSourceEntity())
+          {
+            matched = true;
+            break;
+          }
+        }
+
+        // This entity is not listed to be passed.
+        if (!matched)
+          return true;
+      }
+
+      // Filter message by rate.
       RateMap::iterator rmitr = m_rates.find(mid);
 
       if (rmitr != m_rates.end())
@@ -61,8 +88,10 @@ namespace DUNE
       return false;
     }
 
+    //! Setup rate filters.
+    //! @param[in] spec String specification.
     void
-    RateLimiters::setup(const std::vector<std::string>& spec)
+    MessageFilter::setupRates(const std::vector<std::string>& spec)
     {
       m_rates.clear();
       m_stimes.clear();
@@ -82,7 +111,44 @@ namespace DUNE
             continue;
           }
         }
-        throw std::runtime_error(Utils::String::str(DTR("invalid rate limiter: %s"), spec[i].c_str()));
+        throw std::runtime_error(Utils::String::str(DTR("invalid filter: %s"), spec[i].c_str()));
+      }
+    }
+
+    //! Setup entities filter.
+    //! @param[in] spec String specification.
+    //! @param[in] task Pointer to Task object.
+    void
+    MessageFilter::setupEntities(const std::vector<std::string>& spec, Tasks::Task* task)
+    {
+      // Process filtered entities.
+      m_filtered.clear();
+      for (unsigned int i = 0; i < spec.size(); ++i)
+      {
+        std::vector<std::string> parts;
+        Utils::String::split(spec[i], ":", parts);
+        if (parts.size() != 2)
+          continue;
+
+        // Split entities.
+        uint32_t id = IMC::Factory::getIdFromAbbrev(parts[0]);
+        std::vector<std::string> entities;
+        Utils::String::split(parts[1], "+", entities);
+        m_filtered[id].resize(entities.size());
+
+        // Resolve entities id.
+        for (unsigned j = 0; j < entities.size(); j++)
+        {
+          // Resolve entities.
+          try
+          {
+            m_filtered[id][j] = task->resolveEntity(entities[j]);
+          }
+          catch (...)
+          {
+            m_filtered[id][j] = UINT_MAX;
+          }
+        }
       }
     }
   }

@@ -36,7 +36,7 @@
 #include <DUNE/Utils/ByteBuffer.hpp>
 #include <DUNE/IMC/Parser.hpp>
 #include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/RateLimiters.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
 
 namespace DUNE
 {
@@ -71,14 +71,20 @@ namespace DUNE
     private:
       struct GArguments
       {
+        // List of messages to publish.
         std::vector<std::string> transports;
+        // Rate limits.
         std::vector<std::string> rlim;
+        // Filtered entities.
+        std::vector<std::string> entities_flt;
+        // Trace incoming messages.
         bool trace_in;
+        // Trace outgoing messages.
         bool trace_out;
       };
       GArguments m_gargs;
       Utils::ByteBuffer m_buf;
-      RateLimiters m_rl;
+      MessageFilter m_rl;
     };
   }
 }

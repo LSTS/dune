@@ -25,8 +25,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_RATE_LIMITERS_HPP_INCLUDED_
-#define DUNE_TASKS_RATE_LIMITERS_HPP_INCLUDED_
+#ifndef DUNE_TASKS_MESSAGE_FILTER_HPP_INCLUDED_
+#define DUNE_TASKS_MESSAGE_FILTER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <vector>
@@ -39,15 +39,18 @@ namespace DUNE
 {
   namespace Tasks
   {
-    class RateLimiters
+    class MessageFilter
     {
     public:
-      RateLimiters(void);
+      MessageFilter(void);
 
-      ~RateLimiters(void);
+      ~MessageFilter(void);
 
       void
-      setup(const std::vector<std::string>& spec);
+      setupRates(const std::vector<std::string>& spec);
+
+      void
+      setupEntities(const std::vector<std::string>& spec, Tasks::Task* task);
 
       bool
       filter(const IMC::Message* msg);
@@ -61,6 +64,10 @@ namespace DUNE
       typedef std::pair<uint32_t, unsigned int> MsgKey;
       typedef std::map<MsgKey, double> STimesMap;
       STimesMap m_stimes;
+
+      // List of entities to be passed by given message
+      typedef std::vector<uint32_t> Entities;
+      std::map<uint32_t, Entities> m_filtered;
     };
   }
 }
