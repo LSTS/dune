@@ -365,8 +365,6 @@ namespace Sensors
             digParamHasChanged = true;
             m_dig_active = 0;
           }
-          else
-            digParamHasChanged = false;
         }
         // Message produce and update for dig channels.
         for (unsigned i = 0; i < c_digs_count; ++i)
@@ -407,8 +405,6 @@ namespace Sensors
             analogParamHasChanged = true;
             m_analog_active = 0;
           }
-          else
-            analogParamHasChanged = false;
         }
         // Message produce and update for analog channels.
         for (unsigned i = 0; i < c_analogs_count; ++i)
@@ -433,7 +429,7 @@ namespace Sensors
           }
           catch (...)
           { }
-          if (m_args.dig_elabels[i].empty() || m_args.analog_messages[i].empty())
+          if (m_args.analog_elabels[i].empty() || m_args.analog_messages[i].empty())
             continue;
           m_analogs[i]->setSourceEntity(eid);
           m_active_slots_array[digAndAnalogActive()] = i;
@@ -448,8 +444,6 @@ namespace Sensors
             internalParamHasChanged = true;
             m_internal_active = 0;
           }
-          else
-            internalParamHasChanged = false;
         }
         // Message produce and update for internal channels.
         for (unsigned i = 0; i < c_internals_count; ++i)
@@ -874,7 +868,7 @@ namespace Sensors
 
         stopMonitoring();
 
-        turnOffAllInternalChannels();
+        //turnOffAllInternalChannels();
       }
 
     };
