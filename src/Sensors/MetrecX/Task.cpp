@@ -29,30 +29,30 @@
 #include <DUNE/DUNE.hpp>
 #include <cstring>
 
-#define SET \
-"SET SCAN"
+#define SET                                     \
+  "SET SCAN"
 
-#define DENSITY \
-"DENSITY"
+#define DENSITY                                 \
+  "DENSITY"
 
-#define SALINITY \
-"SALINITY"
+#define SALINITY                                \
+  "SALINITY"
 
-#define SV \
-"SV"
+#define SV                                      \
+  "SV"
 
-#define SAMPLING \
-"SET S 1 s"
+#define SAMPLING                                \
+  "SET S 1 s"
 
-#define MONITOR \
-"MONITOR"
+#define MONITOR                                 \
+  "MONITOR"
 
-#define GET_COMMAND(operationType, command)      \
-(std::strcmp(operationType, "send") == 0         \
-?                                                \
-(command "\r")                                   \
-:                                                \
-(">" command "\r\n"))
+#define GET_COMMAND(operationType, command)     \
+  (std::strcmp(operationType, "send") == 0      \
+   ?                                            \
+   (command "\r")                               \
+   :                                            \
+   (">" command "\r\n"))
 
 
 namespace Sensors
@@ -375,7 +375,7 @@ namespace Sensors
             delete m_digs[i];
 
           if (m_args.dig_messages[i].empty())
-              continue;
+            continue;
 
           // Produce a message object by name.
           // @param name message name.
@@ -502,7 +502,7 @@ namespace Sensors
             (void)e;
             eid = reserveEntity(m_args.dig_elabels[i]);
           }
-         if (m_args.dig_elabels[i].empty() || m_args.dig_messages[i].empty())
+          if (m_args.dig_elabels[i].empty() || m_args.dig_messages[i].empty())
             continue;
           m_digs[i]->setSourceEntity(eid);
           m_active_slots_array[m_dig_active] = i;
@@ -690,7 +690,7 @@ namespace Sensors
           if (m_internal_active != 0)
             war(DTR("AML-MetrecX - Internal channels can not be turned on. Please check sensor configuration."));
           m_internal_active = 0;
-          }
+        }
 
       }
 
@@ -782,7 +782,7 @@ namespace Sensors
           // If change digital sensor or internal channel
           // it is needed to reconfigure internal channels.
           if (digParamHasChanged || analogParamHasChanged || internalParamHasChanged)
-          {std::cout<<"Param has changed!"<<m_internal_active<<m_analog_active<<m_dig_active<<std::endl;
+          {
             digParamHasChanged = false;
             analogParamHasChanged = false;
             internalParamHasChanged = false;
@@ -809,13 +809,12 @@ namespace Sensors
           }
 
           if (!Poll::poll(*m_uart, 1.0))
-          continue;
+            continue;
 
           size_t rv = m_uart->readString(bfr, sizeof(bfr));
           ptr = bfr;
           k = 0;
           n = 0;
-          std::cout << bfr << std::endl;std::cout<<"all: "<<allActive()<<std::endl;
           // You can use the %n conversion specifier, which doesn't consume any input
           // instead, it expects an int * parameter, and writes the number of characters
           // consumed from the input into it.
@@ -844,7 +843,7 @@ namespace Sensors
 
             // Dispatch depth value if pressure value is also dispatched.
             if (c_digital_templates[TI_PRESSURE].compare(m_digs[m_active_slots_array[j]]->getName()) == 0)
-            dispatchDepth(m_args.dig_elabels[m_active_slots_array[j]], tmp_bfr[j], m_args.dig_factors[m_active_slots_array[j]]);
+              dispatchDepth(m_args.dig_elabels[m_active_slots_array[j]], tmp_bfr[j], m_args.dig_factors[m_active_slots_array[j]]);
           }
 
           // Dispatch analog active channels.
@@ -868,7 +867,7 @@ namespace Sensors
           if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);
 
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           m_wdog.reset();
         }
