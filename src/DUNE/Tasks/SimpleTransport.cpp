@@ -44,7 +44,10 @@ namespace DUNE
 
       param("Rate Limiters", m_gargs.rlim)
       .defaultValue("")
-      .description("Rate limiters (message name/frequency pairs)");
+      .description("List of <Message>:<Frequency>");
+
+      param("Filtered Entities", m_gargs.entities_flt)
+      .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
       param("Trace - Incoming Messages", m_gargs.trace_in)
       .defaultValue("false")
@@ -81,7 +84,8 @@ namespace DUNE
     void
     SimpleTransport::onMain(void)
     {
-      m_rl.setup(m_gargs.rlim);
+      m_rl.setupRates(m_gargs.rlim);
+      m_rl.setupEntities(m_gargs.rlim, this);
       bind(this, m_gargs.transports);
 
       while (!stopping())
