@@ -48,7 +48,7 @@ namespace DUNE
 #include <DUNE/Tasks/AbstractCreator.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
 #include <DUNE/Tasks/SimpleTransport.hpp>
-#include <DUNE/Tasks/RateLimiters.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
 #include <DUNE/Tasks/SourceFilter.hpp>
 
 #endif
