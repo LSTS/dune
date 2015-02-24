@@ -23,6 +23,8 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
+// Author: João Fortuna                                                     *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // DUNE headers.
@@ -42,6 +44,9 @@ namespace DUNE
     MessageFilter::~MessageFilter(void)
     { }
 
+    //! Filter message
+    //! @param[in] msg IMC Message.
+    //! @return true if message filtered, false otherwise.
     bool
     MessageFilter::filter(const IMC::Message* msg)
     {
@@ -55,7 +60,10 @@ namespace DUNE
         for (; itr != m_filtered[mid].end(); ++itr)
         {
           if (*itr == msg->getSourceEntity())
+          {
             matched = true;
+            break;
+          }
         }
 
         // This entity is not listed to be passed.
@@ -63,7 +71,7 @@ namespace DUNE
           return true;
       }
 
-      //
+      // Filter message by rate.
       RateMap::iterator rmitr = m_rates.find(mid);
 
       if (rmitr != m_rates.end())
@@ -80,6 +88,8 @@ namespace DUNE
       return false;
     }
 
+    //! Setup rate filters.
+    //! @param[in] spec String specification.
     void
     MessageFilter::setupRates(const std::vector<std::string>& spec)
     {
@@ -105,6 +115,9 @@ namespace DUNE
       }
     }
 
+    //! Setup entities filter.
+    //! @param[in] spec String specification.
+    //! @param[in] task Pointer to Task object.
     void
     MessageFilter::setupEntities(const std::vector<std::string>& spec, Tasks::Task* task)
     {
