@@ -29,6 +29,11 @@
 #include <DUNE/DUNE.hpp>
 #include <cstring>
 
+#define CONDUCTIVITY_FLAG   1
+#define SV_FLAG             2
+#define PRESSURE_FLAG       4
+#define TEMPERATURE_FLAG    8
+
 #define SET                                     \
   "SET SCAN"
 
@@ -205,16 +210,10 @@ namespace Sensors
       int m_analog_active;
       //! Number of internal active channels.
       int m_internal_active;
-      //! Conductivity boolean flag.
-      bool m_conductivity;
-      //! Sound Velocity boolean flag.
-      bool m_sv;
-      //! Temperature boolean flag.
-      bool m_temperature;
-      //! Pressure boolean flag.
-      bool m_pressure;
       //! Vehicle Latitude.
       double m_lat;
+      //! Bitmask flag for digital sensors.
+      int m_bit_flag;
       //! Parameter has changed.
       bool m_dig_param_chang;
       bool m_analog_param_chang;
@@ -341,10 +340,7 @@ namespace Sensors
         m_analog_active = 0;
         m_internal_active = 0;
 
-        m_conductivity = false;
-        m_sv = false;
-        m_temperature = false;
-        m_pressure = false;
+        m_bit_flag = 0;
 
         m_dig_param_chang = false;
         m_analog_param_chang = false;
@@ -641,19 +637,25 @@ namespace Sensors
           // To prevent errors from trying to turn on SV channel
           // without the proper configuration.
           if (m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) == 0 &&
-              m_sv && m_pressure && m_temperature)
+              (m_bit_flag & SV_FLAG) == SV_FLAG &&
+              (m_bit_flag & PRESSURE_FLAG) == PRESSURE_FLAG &&
+              (m_bit_flag & TEMPERATURE_FLAG) == TEMPERATURE_FLAG)
             throw RestartNeeded(DTR("Tried to turn on SV channel without proper configuration"), 5, true);
 
           for (unsigned j = 0; j < c_internals_count; j++)
           {
             // If there are conditions to turn any internal channel.
-            if (m_conductivity && m_pressure && m_temperature &&
+            if ((m_bit_flag & CONDUCTIVITY_FLAG) == CONDUCTIVITY_FLAG &&
+                (m_bit_flag & PRESSURE_FLAG) == PRESSURE_FLAG &&
+                (m_bit_flag & TEMPERATURE_FLAG) == TEMPERATURE_FLAG &&
                 m_args.internal_messages[i].compare(c_internal_templates[j]) == 0)
             {
               if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
                 throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
             }
-            if (m_sv && m_pressure && m_temperature &&
+            if ((m_bit_flag & SV_FLAG) == SV_FLAG &&
+                (m_bit_flag & PRESSURE_FLAG) == PRESSURE_FLAG &&
+                (m_bit_flag & TEMPERATURE_FLAG) == TEMPERATURE_FLAG &&
                 m_args.internal_messages[i].compare(c_internal_templates[j]) == 0 &&
                 m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) != 0)
             {
@@ -665,7 +667,7 @@ namespace Sensors
 
         // If neither temperature or pressure sensors are
         // available, then turn off all internal channels.
-        if (!m_pressure || !m_temperature)
+        if ((m_bit_flag & PRESSURE_FLAG) != PRESSURE_FLAG || (m_bit_flag & TEMPERATURE_FLAG) != TEMPERATURE_FLAG)
         {
           turnOffChannels();
 
@@ -682,27 +684,16 @@ namespace Sensors
       checkDigitalSensors(void)
       {
         if (m_internal_active == 0)
-        {
-          m_conductivity = false;
-          m_sv = false;
-          m_temperature = false;
-          m_pressure = false;
-        }
+          m_bit_flag = 0;
         else
         {
           for (unsigned i = 0; i < c_digs_count; ++i)
           {
-            if (m_args.dig_messages[i].compare(c_digital_templates[TI_CONDUCTIVITY]) == 0)
-              m_conductivity = true;
-
-            if (m_args.dig_messages[i].compare(c_digital_templates[TI_SV]) == 0)
-              m_sv = true;
-
-            if (m_args.dig_messages[i].compare(c_digital_templates[TI_TEMPERATURE]) == 0)
-              m_temperature = true;
-
-            if (m_args.dig_messages[i].compare(c_digital_templates[TI_PRESSURE]) == 0)
-              m_pressure = true;
+            for (unsigned j = 0; j < 4; ++j)
+            {
+              if (m_args.dig_messages[i].compare(c_digital_templates[j]) == 0)
+                m_bit_flag |= 1 << j;
+            }
           }
         }
       }
@@ -778,22 +769,18 @@ namespace Sensors
             m_dig_param_chang = false;
             m_analog_param_chang = false;
             m_internal_param_chang = false;
-
             stopMonitoring();
 
             turnOffChannels();
 
-            m_conductivity = false;
-            m_sv = false;
-            m_temperature = false;
-            m_pressure = false;
+            m_bit_flag = 0;
             checkDigitalSensors();
 
             configureInternalChannels();
 
             startMonitoring();
           }
-          std::cout<<"active: "<<m_dig_active<<m_analog_active<<m_internal_active<<std::endl;
+
           if (m_wdog.overflow())
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
@@ -850,7 +837,7 @@ namespace Sensors
 
         stopMonitoring();
 
-        //turnOffChannels();
+        turnOffChannels();
       }
 
     };
