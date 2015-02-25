@@ -134,7 +134,7 @@ namespace Sensors
 
     //! Template for digital sensors.
     static const std::string c_digital_templates[] = { "Conductivity",
-                                                       "Sound Velocity",
+                                                       "SoundSpeed",
                                                        "Temperature",
                                                        "Pressure"};
 
@@ -486,70 +486,46 @@ namespace Sensors
       void
       onEntityReservation(void)
       {
-        m_dig_active = 0;
         // Entity reservation for dig channels.
         for (unsigned i = 0; i < c_digs_count; ++i)
         {
-          unsigned eid = 0;
           try
           {
-            eid = resolveEntity(m_args.dig_elabels[i]);
+            resolveEntity(m_args.dig_elabels[i]);
           }
           catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
-            eid = reserveEntity(m_args.dig_elabels[i]);
+            reserveEntity(m_args.dig_elabels[i]);
           }
-
-          if (m_args.dig_elabels[i].empty() || m_args.dig_messages[i].empty())
-            continue;
-          m_digs[i]->setSourceEntity(eid);
-          m_active_slots_array[m_dig_active] = i;
-          m_dig_active++;
         }
 
-        m_analog_active = 0;
         // Entity reservation for analog channels.
         for (unsigned i = 0; i < c_analogs_count; ++i)
         {
-          unsigned eid = 0;
           try
           {
-            eid = resolveEntity(m_args.analog_elabels[i]);
+            resolveEntity(m_args.analog_elabels[i]);
           }
           catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
-            eid = reserveEntity(m_args.analog_elabels[i]);
+            reserveEntity(m_args.analog_elabels[i]);
           }
-
-          if (m_args.analog_elabels[i].empty() || m_args.analog_messages[i].empty())
-            continue;
-          m_analogs[i]->setSourceEntity(eid);
-          m_active_slots_array[digAndAnalogActive()] = i;
-          m_analog_active++;
         }
 
-        m_internal_active = 0;
         // Entity reservation for internal channels.
         for (unsigned i = 0; i < c_internals_count; ++i)
         {
-          unsigned eid = 0;
           try
           {
-            eid = resolveEntity(m_args.internal_elabels[i]);
+            resolveEntity(m_args.internal_elabels[i]);
           }
           catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
-            eid = reserveEntity(m_args.internal_elabels[i]);
+            reserveEntity(m_args.internal_elabels[i]);
           }
-
-          if (m_args.internal_elabels[i].empty() || m_args.internal_messages[i].empty())
-            continue;
-          m_internals[i]->setSourceEntity(eid);
-          m_active_slots_array[allActive()] = i;
-          m_internal_active++;
         }
       }
 
@@ -644,42 +620,52 @@ namespace Sensors
         // Start by turning off internal channels.
         turnOffChannels();
 
-        // It can turn all internal.
-        if (m_conductivity && m_pressure && m_temperature)
+        // Check if there are two equal internal channels.
+        for (unsigned i = 0; i < c_internals_count; i++)
         {
-          // Turn on selected internal channel.
-          // For this case, the order match between
-          // c_internal_templates and c_set/receive_internal_channels
-          // is important.
-          for (unsigned i = 0; i < c_internals_count; i++)
+          for (unsigned j = 0; j < c_internals_count; j++)
           {
-            for (unsigned j = 0; j < c_internals_count; j++)
+            // If two channels have the same message, then restart task.
+            if (m_args.internal_messages[i].compare(m_args.internal_messages[j]) == 0 &&
+                !m_args.internal_messages[i].empty() &&
+                i != j)
             {
-              if (m_args.internal_messages[i].compare(c_internal_templates[j]) == 0)
-              {
-                if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
-                  throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
-              }
+              throw RestartNeeded(DTR("Two equal internal channels"), 5, true);
             }
           }
         }
-        // Can turn all internal channels except SV.
-        else if (m_sv && m_pressure && m_temperature)
+
+        // Configure internal channels.
+        for (unsigned i = 0; i < c_internals_count; i++)
         {
-          for (int i = 0; i < m_internal_active; i++)
+          // To prevent errors from trying to turn on SV channel
+          // without the proper configuration.
+          if (m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) == 0 &&
+              m_sv && m_pressure && m_temperature)
+            throw RestartNeeded(DTR("Tried to turn on SV channel without proper configuration"), 5, true);
+
+          for (unsigned j = 0; j < c_internals_count; j++)
           {
-            for (unsigned j = 0; j < c_internals_count; j++)
+            // If there are conditions to turn any internal channel.
+            if (m_conductivity && m_pressure && m_temperature &&
+                m_args.internal_messages[i].compare(c_internal_templates[j]) == 0)
             {
-              if (m_args.internal_messages[i].compare(c_internal_templates[j]) == 0 &&
-                  m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) != 0)
-              {
-                if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
-                  throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
-              }
+              if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
+                throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
+            }
+            if (m_sv && m_pressure && m_temperature &&
+                m_args.internal_messages[i].compare(c_internal_templates[j]) == 0 &&
+                m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) != 0)
+            {
+              if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
+                throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
             }
           }
         }
-        else
+
+        // If neither temperature or pressure sensors are
+        // available, then turn off all internal channels.
+        if (!m_pressure || !m_temperature)
         {
           turnOffChannels();
 
@@ -807,7 +793,7 @@ namespace Sensors
 
             startMonitoring();
           }
-
+          std::cout<<"active: "<<m_dig_active<<m_analog_active<<m_internal_active<<std::endl;
           if (m_wdog.overflow())
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
@@ -864,7 +850,7 @@ namespace Sensors
 
         stopMonitoring();
 
-        turnOffChannels();
+        //turnOffChannels();
       }
 
     };
