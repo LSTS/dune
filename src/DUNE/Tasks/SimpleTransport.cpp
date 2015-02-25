@@ -85,7 +85,7 @@ namespace DUNE
     SimpleTransport::onMain(void)
     {
       m_rl.setupRates(m_gargs.rlim);
-      m_rl.setupEntities(m_gargs.rlim, this);
+      m_rl.setupEntities(m_gargs.entities_flt, this);
       bind(this, m_gargs.transports);
 
       while (!stopping())
