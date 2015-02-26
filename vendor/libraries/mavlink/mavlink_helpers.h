@@ -4,6 +4,7 @@
 #include "string.h"
 #include "checksum.h"
 #include "mavlink_types.h"
+#include "mavlink_conversions.h"
 
 #ifndef MAVLINK_HELPER
 #define MAVLINK_HELPER
@@ -15,7 +16,12 @@
 #ifndef MAVLINK_GET_CHANNEL_STATUS
 MAVLINK_HELPER mavlink_status_t* mavlink_get_channel_status(uint8_t chan)
 {
+#ifdef MAVLINK_EXTERNAL_RX_STATUS
+	// No m_mavlink_status array defined in function,
+	// has to be defined externally
+#else
 	static mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
+#endif
 	return &m_mavlink_status[chan];
 }
 #endif
@@ -27,12 +33,9 @@ MAVLINK_HELPER mavlink_status_t* mavlink_get_channel_status(uint8_t chan)
 MAVLINK_HELPER mavlink_message_t* mavlink_get_channel_buffer(uint8_t chan)
 {
 	
-#if MAVLINK_EXTERNAL_RX_BUFFER
-	// No m_mavlink_message array defined in function,
+#ifdef MAVLINK_EXTERNAL_RX_BUFFER
+	// No m_mavlink_buffer array defined in function,
 	// has to be defined externally
-#ifndef m_mavlink_message
-#error ERROR: IF #define MAVLINK_EXTERNAL_RX_BUFFER IS SET, THE BUFFER HAS TO BE ALLOCATED OUTSIDE OF THIS FUNCTION (mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];)
-#endif
 #else
 	static mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
 #endif
@@ -70,7 +73,6 @@ MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, ui
 #endif
 {
 	// This code part is the same for all messages;
-	uint16_t checksum;
 	msg->magic = MAVLINK_STX;
 	msg->len = length;
 	msg->sysid = system_id;
@@ -78,12 +80,13 @@ MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, ui
 	// One sequence number per component
 	msg->seq = mavlink_get_channel_status(chan)->current_tx_seq;
 	mavlink_get_channel_status(chan)->current_tx_seq = mavlink_get_channel_status(chan)->current_tx_seq+1;
-	checksum = crc_calculate((uint8_t*)&msg->len, length + MAVLINK_CORE_HEADER_LEN);
+	msg->checksum = crc_calculate(((const uint8_t*)(msg)) + 3, MAVLINK_CORE_HEADER_LEN);
+	crc_accumulate_buffer(&msg->checksum, _MAV_PAYLOAD(msg), msg->len);
 #if MAVLINK_CRC_EXTRA
-	crc_accumulate(crc_extra, &checksum);
+	crc_accumulate(crc_extra, &msg->checksum);
 #endif
-	mavlink_ck_a(msg) = (uint8_t)(checksum & 0xFF);
-	mavlink_ck_b(msg) = (uint8_t)(checksum >> 8);
+	mavlink_ck_a(msg) = (uint8_t)(msg->checksum & 0xFF);
+	mavlink_ck_b(msg) = (uint8_t)(msg->checksum >> 8);
 
 	return length + MAVLINK_NUM_NON_PAYLOAD_BYTES;
 }
@@ -130,7 +133,7 @@ MAVLINK_HELPER void _mav_finalize_message_chan_send(mavlink_channel_t chan, uint
 	buf[4] = mavlink_system.compid;
 	buf[5] = msgid;
 	status->current_tx_seq++;
-	checksum = crc_calculate((uint8_t*)&buf[1], MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate((const uint8_t*)&buf[1], MAVLINK_CORE_HEADER_LEN);
 	crc_accumulate_buffer(&checksum, packet, length);
 #if MAVLINK_CRC_EXTRA
 	crc_accumulate(crc_extra, &checksum);
@@ -155,6 +158,7 @@ MAVLINK_HELPER void _mavlink_resend_uart(mavlink_channel_t chan, const mavlink_m
 
 	ck[0] = (uint8_t)(msg->checksum & 0xFF);
 	ck[1] = (uint8_t)(msg->checksum >> 8);
+	// XXX use the right sequence here
 
 	MAVLINK_START_UART_SEND(chan, MAVLINK_NUM_NON_PAYLOAD_BYTES + msg->len);
 	_mavlink_send_uart(chan, (const char *)&msg->magic, MAVLINK_NUM_HEADER_BYTES);
@@ -169,7 +173,13 @@ MAVLINK_HELPER void _mavlink_resend_uart(mavlink_channel_t chan, const mavlink_m
  */
 MAVLINK_HELPER uint16_t mavlink_msg_to_send_buffer(uint8_t *buffer, const mavlink_message_t *msg)
 {
-	memcpy(buffer, (const uint8_t *)&msg->magic, MAVLINK_NUM_NON_PAYLOAD_BYTES + (uint16_t)msg->len);
+	memcpy(buffer, (const uint8_t *)&msg->magic, MAVLINK_NUM_HEADER_BYTES + (uint16_t)msg->len);
+
+	uint8_t *ck = buffer + (MAVLINK_NUM_HEADER_BYTES + (uint16_t)msg->len);
+
+	ck[0] = (uint8_t)(msg->checksum & 0xFF);
+	ck[1] = (uint8_t)(msg->checksum >> 8);
+
 	return MAVLINK_NUM_NON_PAYLOAD_BYTES + (uint16_t)msg->len;
 }
 
@@ -199,19 +209,24 @@ MAVLINK_HELPER void mavlink_update_checksum(mavlink_message_t* msg, uint8_t c)
  * it could be successfully decoded. Checksum and other failures will be silently
  * ignored.
  *
+ * Messages are parsed into an internal buffer (one for each channel). When a complete
+ * message is received it is copies into *returnMsg and the channel's status is
+ * copied into *returnStats.
+ *
  * @param chan     ID of the current channel. This allows to parse different channels with this function.
  *                 a channel is not a physical message channel like a serial port, but a logic partition of
  *                 the communication streams in this case. COMM_NB is the limit for the number of channels
  *                 on MCU (e.g. ARM7), while COMM_NB_HIGH is the limit for the number of channels in Linux/Windows
- * @param c        The char to barse
+ * @param c        The char to parse
  *
  * @param returnMsg NULL if no message could be decoded, the message data else
+ * @param returnStats if a message was decoded, this is filled with the channel's stats
  * @return 0 if no message could be decoded, 1 else
  *
  * A typical use scenario of this function call is:
  *
  * @code
- * #include <inttypes.h> // For fixed-width uint8_t type
+ * #include <mavlink.h>
  *
  * mavlink_message_t msg;
  * int chan = 0;
@@ -248,7 +263,7 @@ MAVLINK_HELPER uint8_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_messa
  and out). Only use if the channel will only contain messages types listed in
  the headers.
 */
-#if MAVLINK_CHECK_MESSAGE_LENGTH
+#ifdef MAVLINK_CHECK_MESSAGE_LENGTH
 #ifndef MAVLINK_MESSAGE_LENGTH
 	static const uint8_t mavlink_message_lengths[256] = MAVLINK_MESSAGE_LENGTHS;
 #define MAVLINK_MESSAGE_LENGTH(msgid) mavlink_message_lengths[msgid]
@@ -317,7 +332,7 @@ MAVLINK_HELPER uint8_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_messa
 		break;
 
 	case MAVLINK_PARSE_STATE_GOT_COMPID:
-#if MAVLINK_CHECK_MESSAGE_LENGTH
+#ifdef MAVLINK_CHECK_MESSAGE_LENGTH
 	        if (rxmsg->len != MAVLINK_MESSAGE_LENGTH(c))
 		{
 			status->parse_error++;
@@ -417,7 +432,6 @@ MAVLINK_HELPER uint8_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_messa
 	r_mavlink_status->current_rx_seq = status->current_rx_seq+1;
 	r_mavlink_status->packet_rx_success_count = status->packet_rx_success_count;
 	r_mavlink_status->packet_rx_drop_count = status->parse_error;
-	r_mavlink_status->parse_state = status->parse_state;
 	status->parse_error = 0;
 	return status->msg_received;
 }
@@ -551,7 +565,7 @@ MAVLINK_HELPER void _mavlink_send_uart(mavlink_channel_t chan, const char *buf, 
 #ifdef MAVLINK_SEND_UART_BYTES
 	/* this is the more efficient approach, if the platform
 	   defines it */
-	MAVLINK_SEND_UART_BYTES(chan, (uint8_t *)buf, len);
+	MAVLINK_SEND_UART_BYTES(chan, (const uint8_t *)buf, len);
 #else
 	/* fallback to one byte at a time */
 	uint16_t i;
