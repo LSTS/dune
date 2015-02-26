@@ -102,7 +102,7 @@ typedef enum MAV_CMD
 	MAV_CMD_PANORAMA_CREATE=2800, /* Create a panorama at the current position |Viewing angle horizontal of the panorama (in degrees, +- 0.5 the total angle)| Viewing angle vertical of panorama (in degrees)| Speed of the horizontal rotation (in degrees per second)| Speed of the vertical rotation (in degrees per second)|  */
 	MAV_CMD_PAYLOAD_PREPARE_DEPLOY=30001, /* Deploy payload on a Lat / Lon / Alt position. This includes the navigation to reach the required release position and velocity. |Operation mode. 0: prepare single payload deploy (overwriting previous requests), but do not execute it. 1: execute payload deploy immediately (rejecting further deploy commands during execution, but allowing abort). 2: add payload deploy to existing deployment list.| Desired approach vector in degrees compass heading (0..360). A negative value indicates the system can define the approach vector at will.| Desired ground speed at release time. This can be overriden by the airframe in case it needs to meet minimum airspeed. A negative value indicates the system can define the ground speed at will.| Minimum altitude clearance to the release position in meters. A negative value indicates the system can define the clearance at will.| Latitude unscaled for MISSION_ITEM or in 1e7 degrees for MISSION_ITEM_INT| Longitude unscaled for MISSION_ITEM or in 1e7 degrees for MISSION_ITEM_INT| Altitude, in meters AMSL|  */
 	MAV_CMD_PAYLOAD_CONTROL_DEPLOY=30002, /* Control the payload deployment. |Operation mode. 0: Abort deployment, continue normal mission. 1: switch to payload deploment mode. 100: delete first payload deployment request. 101: delete all payload deployment requests.| Reserved| Reserved| Reserved| Reserved| Reserved| Reserved|  */
-	MAV_CMD_ENUM_END=30003, /*  | */
+	MAV_CMD_ENUM_END=30003 /*  | */
 } MAV_CMD;
 #endif
 
@@ -117,7 +117,7 @@ typedef enum LIMITS_STATE
 	LIMITS_TRIGGERED=3, /*  a limit has been breached | */
 	LIMITS_RECOVERING=4, /*  taking action eg. RTL | */
 	LIMITS_RECOVERED=5, /*  we're no longer in breach of a limit | */
-	LIMITS_STATE_ENUM_END=6, /*  | */
+	LIMITS_STATE_ENUM_END=6 /*  | */
 } LIMITS_STATE;
 #endif
 
@@ -129,7 +129,7 @@ typedef enum LIMIT_MODULE
 	LIMIT_GPSLOCK=1, /*  pre-initialization | */
 	LIMIT_GEOFENCE=2, /*  disabled | */
 	LIMIT_ALTITUDE=4, /*  checking limits | */
-	LIMIT_MODULE_ENUM_END=5, /*  | */
+	LIMIT_MODULE_ENUM_END=5 /*  | */
 } LIMIT_MODULE;
 #endif
 
@@ -140,7 +140,7 @@ typedef enum RALLY_FLAGS
 {
 	FAVORABLE_WIND=1, /* Flag set when requiring favorable winds for landing.  | */
 	LAND_IMMEDIATELY=2, /* Flag set when plane is to immediately descend to break altitude and land without GCS intervention.  Flag not set when plane is to loiter at Rally point until commanded to land. | */
-	RALLY_FLAGS_ENUM_END=3, /*  | */
+	RALLY_FLAGS_ENUM_END=3 /*  | */
 } RALLY_FLAGS;
 #endif
 
@@ -152,7 +152,7 @@ typedef enum PARACHUTE_ACTION
 	PARACHUTE_DISABLE=0, /* Disable parachute release | */
 	PARACHUTE_ENABLE=1, /* Enable parachute release | */
 	PARACHUTE_RELEASE=2, /* Release parachute | */
-	PARACHUTE_ACTION_ENUM_END=3, /*  | */
+	PARACHUTE_ACTION_ENUM_END=3 /*  | */
 } PARACHUTE_ACTION;
 #endif
 
@@ -164,7 +164,7 @@ typedef enum MOTOR_TEST_THROTTLE_TYPE
 	MOTOR_TEST_THROTTLE_PERCENT=0, /* throttle as a percentage from 0 ~ 100 | */
 	MOTOR_TEST_THROTTLE_PWM=1, /* throttle as an absolute PWM value (normally in range of 1000~2000) | */
 	MOTOR_TEST_THROTTLE_PILOT=2, /* throttle pass-through from pilot's transmitter | */
-	MOTOR_TEST_THROTTLE_TYPE_ENUM_END=3, /*  | */
+	MOTOR_TEST_THROTTLE_TYPE_ENUM_END=3 /*  | */
 } MOTOR_TEST_THROTTLE_TYPE;
 #endif
 
@@ -175,7 +175,7 @@ typedef enum GRIPPER_ACTIONS
 {
 	GRIPPER_ACTION_RELEASE=0, /* gripper release of cargo | */
 	GRIPPER_ACTION_GRAB=1, /* gripper grabs onto cargo | */
-	GRIPPER_ACTIONS_ENUM_END=2, /*  | */
+	GRIPPER_ACTIONS_ENUM_END=2 /*  | */
 } GRIPPER_ACTIONS;
 #endif
 
@@ -191,7 +191,7 @@ typedef enum CAMERA_STATUS_TYPES
 	CAMERA_STATUS_TYPE_LOWBATT=4, /* Camera battery low. Parameter p1 shows reported voltage | */
 	CAMERA_STATUS_TYPE_LOWSTORE=5, /* Camera storage low. Parameter p1 shows reported shots remaining | */
 	CAMERA_STATUS_TYPE_LOWSTOREV=6, /* Camera storage low. Parameter p1 shows reported video minutes remaining | */
-	CAMERA_STATUS_TYPES_ENUM_END=7, /*  | */
+	CAMERA_STATUS_TYPES_ENUM_END=7 /*  | */
 } CAMERA_STATUS_TYPES;
 #endif
 
@@ -204,7 +204,7 @@ typedef enum CAMERA_FEEDBACK_FLAGS
 	BADEXPOSURE=2, /* Unable to achieve requested exposure (e.g. shutter speed too low) | */
 	CLOSEDLOOP=3, /* Closed loop feedback from camera, we know for sure it has successfully taken a picture | */
 	OPENLOOP=4, /* Open loop camera, an image trigger has been requested but we can't know for sure it has successfully taken a picture | */
-	CAMERA_FEEDBACK_FLAGS_ENUM_END=5, /*  | */
+	CAMERA_FEEDBACK_FLAGS_ENUM_END=5 /*  | */
 } CAMERA_FEEDBACK_FLAGS;
 #endif
 
