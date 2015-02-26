@@ -1919,6 +1919,9 @@ namespace Control
           IMC::DesiredHeading d_head;
           IMC::DesiredZ d_z;
 
+          // As wp_dist is an integer, we calculate distance manually.
+          float copter_distance = 0;
+
           if (m_vehicle_type == VEHICLE_COPTER)
           {
             // As of AC 3.2, wp_dest is not updated in guided mode.
@@ -1935,9 +1938,11 @@ namespace Control
                                 m_dpath.end_lat, m_dpath.end_lon, alt,
                                 &destination(0), &destination(1), &destination(2));
 
-            float distance = (destination - current_pos).norm_2();
-            nav_out.wp_dist = distance;
-            trace("WP dist now: %d", nav_out.wp_dist);
+            copter_distance = (destination - current_pos).norm_2();
+
+            // Store mavlink distance.
+            nav_out.wp_dist = (uint16_t) copter_distance;
+            trace("Copter waypoint dist now: %d", copter_distance);
           }
 
           d_roll.value = Angles::radians(nav_out.nav_roll);
@@ -1965,7 +1970,7 @@ namespace Control
           // Check Loiter tolerance
           if (m_vehicle_type == VEHICLE_COPTER)
           {
-            if ((nav_out.wp_dist <= m_args.ltolerance)
+            if ((copter_distance <= m_args.ltolerance)
                && is_valid_mode)
             {
               m_pcs.flags |= PathControlState::FL_LOITERING;
@@ -1987,8 +1992,8 @@ namespace Control
           if (m_vehicle_type == VEHICLE_COPTER)
           {
             is_near = (!m_changing_wp
-                && (nav_out.wp_dist <= m_args.secs * m_gnd_speed
-                    || nav_out.wp_dist <= m_args.cp_wp_radius)
+                && (copter_distance <= m_args.secs * m_gnd_speed
+                    || copter_distance <= m_args.cp_wp_radius)
                 && is_valid_mode
                 && since_last_wp > 1.0);
           }
