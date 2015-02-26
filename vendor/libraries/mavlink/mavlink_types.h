@@ -81,7 +81,7 @@ typedef struct param_union {
 */
 MAVPACKED(
 typedef union {
-    struct {
+    struct param_union_double{
         uint8_t is_double:1;
         uint8_t mavlink_type:7;
         union {
