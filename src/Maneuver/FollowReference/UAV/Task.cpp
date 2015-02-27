@@ -23,6 +23,10 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Jose Pinto                                                       *
+// Author: Margarida Faria                                                  *
+//***************************************************************************
+// FollowReference for when the plan execution takes z into account to      *
+// declare a reference reached.                                             *
 //***************************************************************************
 
 // DUNE headers.
@@ -32,9 +36,6 @@ namespace Maneuver
 {
   namespace FollowReference
   {
-  //! Maneuver FollowReference for when the plan execution takes z into account to declare a reference reached.
-  //!
-  //! @author Margarida
     namespace UAV
     {
       using DUNE_NAMESPACES;
@@ -91,9 +92,9 @@ namespace Maneuver
         Task(const std::string& name, Tasks::Context& ctx) :
           DUNE::Maneuvers::Maneuver(name, ctx)
         {
-          param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5").units(
-              Units::Meter).description(
-                  "Radius of loitering circle after arriving at destination");
+          param("Loitering Radius", m_args.loitering_radius).defaultValue("7.5")
+          .units(Units::Meter)
+          .description("Radius of loitering circle after arriving at destination");
 
           param("Default Speed", m_args.default_speed)
           .defaultValue("50").
@@ -155,8 +156,7 @@ namespace Maneuver
           if (m_spec.control_src != 0xFFFF
               && m_spec.control_src != msg->getSource())
           {
-            inf(DTR("ignored reference from non-authorized source: %d"),
-                msg->getSource());
+            inf(DTR("ignored reference from non-authorized source: %d"), msg->getSource());
             return;
           }
           // verify that the source entity is either all or the one designated
@@ -177,12 +177,14 @@ namespace Maneuver
             m_fref_state.state = IMC::FollowRefState::FR_WAIT;
             signalCompletion("maneuver terminated by reference source");
           }
-          else{
+          else
+          {
             m_fref_state.state = IMC::FollowRefState::FR_GOTO;
           }
 
           // if it is a different ref, propagate
-          if(!sameReference(msg, &m_cur_ref)){
+          if (!sameReference(msg, &m_cur_ref))
+          {
             m_cur_ref = *msg;
             // propagate the new reference
             processDesiredPath();
@@ -210,8 +212,8 @@ namespace Maneuver
           dispatch(m_fref_state);
         }
 
-      private:
-        bool sameReference(const IMC::Reference *msg1, const IMC::Reference *msg2)
+        bool
+        sameReference(const IMC::Reference *msg1, const IMC::Reference *msg2)
         {
           if (msg1->flags != msg2->flags)
             return false;
@@ -272,7 +274,7 @@ namespace Maneuver
 
         //! Generate and dispatch a DesiredPath based on the received reference
         void
-        processDesiredPath()
+        processDesiredPath(void)
         {
           // start building the DesiredPath message to be commanded
           IMC::DesiredPath desired_path;
@@ -303,7 +305,8 @@ namespace Maneuver
           }
         }
 
-        void updateEndLoc(IMC::DesiredPath &desired_path)
+        void
+        updateEndLoc(IMC::DesiredPath &desired_path)
         {
           // set end location according to received reference
           if (m_cur_ref.flags & IMC::Reference::FLAG_LOCATION)
@@ -337,7 +340,8 @@ namespace Maneuver
           }
         }
 
-        void updateRadius(IMC::DesiredPath &desired_path)
+        void
+        updateRadius(IMC::DesiredPath &desired_path)
         {
           // set radius according to received reference. If the reference does not
           // provide a desired radius, use default
@@ -351,41 +355,47 @@ namespace Maneuver
           }
           // traduce negative radius in desiredPath (from received Reference) to a
           // positive one with CCLOCW flag
-          if(desired_path.lradius < 0)
+          if (desired_path.lradius < 0)
           {
             desired_path.flags |= DesiredPath::FL_CCLOCKW;
             desired_path.lradius = desired_path.lradius * -1;
           }
         }
 
-        void updateEndZ(IMC::DesiredPath& desired_path) {
+        void
+        updateEndZ(IMC::DesiredPath& desired_path)
+        {
           // set end_z according to received reference
           if ((m_cur_ref.flags & IMC::Reference::FLAG_Z) && !(m_cur_ref.z.isNull()))
           {
             desired_path.end_z = m_cur_ref.z->value;
             desired_path.end_z_units = m_cur_ref.z->z_units;
           }
-          else{
+          else
+          {
             desired_path.end_z = initializeEndZ();
             desired_path.end_z_units = IMC::Z_HEIGHT;
           }
         }
 
-  int initializeEndZ(){
+        int
+        initializeEndZ(void)
+        {
           int currentHeight = m_estate.height - m_estate.z;
-          if(currentHeight > 90 && currentHeight < 500)
+          if (currentHeight > 90 && currentHeight < 500)
           {
             //err("Setting according to estimated state --> %3.0f, %3.0f", m_estate.height, m_estate.z);
             return currentHeight;
           }
-          else{
+          else
+          {
             err("Setting according to default value --> %3.0f - estimated state %3.0f, %3.0f", m_args.default_z, m_estate.height, m_estate.z);
             return m_args.default_z;
-
           }
         }
 
-        void updateCoordinates(IMC::DesiredPath& desired_path)
+        void
+        updateCoordinates(IMC::DesiredPath& desired_path)
         {
           // calculate coordinates taking into account the offsets
           double curlat = m_estate.lat;
@@ -397,7 +407,8 @@ namespace Maneuver
           desired_path.flags = IMC::DesiredPath::FL_DIRECT;
         }
 
-        void dispatchDesiredPath(IMC::DesiredPath desired_path)
+        void
+        dispatchDesiredPath(IMC::DesiredPath desired_path)
         {
           enableMovement(true);
           dispatch(desired_path);
@@ -426,9 +437,10 @@ namespace Maneuver
           }
         }
 
-        void updateFollowRefStateFlags()
+        void
+        updateFollowRefStateFlags(void)
         {
-          if(m_pcs.flags & IMC::PathControlState::FL_LOITERING)
+          if (m_pcs.flags & IMC::PathControlState::FL_LOITERING)
           {
             m_fref_state.proximity = IMC::FollowRefState::PROX_Z_NEAR;
             m_fref_state.proximity |= IMC::FollowRefState::PROX_XY_NEAR;
@@ -441,7 +453,7 @@ namespace Maneuver
           else
           {
             m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
-            if(!offlineOrWaiting() )
+            if (!offlineOrWaiting())
             {
               m_fref_state.state = IMC::FollowRefState::FR_GOTO;
               trace(DTR("GOTO, FAR"));
@@ -449,13 +461,16 @@ namespace Maneuver
           }
         }
 
-        void checkTimeout() {
+        void
+        checkTimeout(void)
+        {
           // as EstimatedState is received regularly, use this event to process regularly!?
           double delta = 0;
           if (m_spec.timeout != 0)
             delta = Clock::get() - m_last_ref_time;
 
-          if (delta > m_spec.timeout  && isActive()) {
+          if (delta > m_spec.timeout  && isActive())
+          {
             m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
             signalError("reference source timed out");
             dispatch(m_fref_state);
@@ -463,7 +478,7 @@ namespace Maneuver
         }
 
         bool
-        offlineOrWaiting()
+        offlineOrWaiting(void)
         {
           return (m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT)
               && (m_fref_state.state & IMC::FollowRefState::FR_WAIT) ;
