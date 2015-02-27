@@ -29,11 +29,6 @@
 #include <DUNE/DUNE.hpp>
 #include <cstring>
 
-#define CONDUCTIVITY_FLAG   1
-#define SV_FLAG             2
-#define PRESSURE_FLAG       4
-#define TEMPERATURE_FLAG    8
-
 #define SET                                     \
   "SET SCAN"
 
@@ -115,17 +110,26 @@ namespace Sensors
     enum InternalChannelsModes
     {
       ICM_DENSITY = 0,
-      ICM_SALINITY = 1,
-      ICM_SV = 2
+      ICM_SALINITY,
+      ICM_SV
     };
 
     //! Templates Index.
     enum TemplatesIndex
     {
       TI_CONDUCTIVITY = 0,
-      TI_SV = 1,
-      TI_TEMPERATURE = 2,
-      TI_PRESSURE = 3
+      TI_SV,
+      TI_TEMPERATURE,
+      TI_PRESSURE,
+      TI_TOTAL
+    };
+
+    enum DigSensFlag
+    {
+      DSF_CONDUCTIVITY = 1 << TI_CONDUCTIVITY,
+      DSF_SV = 1 << TI_SV,
+      DSF_TEMPERATURE = 1 << TI_TEMPERATURE,
+      DSF_PRESSURE = 1 << TI_PRESSURE
     };
 
     //! Number of max Dig channels.
@@ -215,9 +219,7 @@ namespace Sensors
       //! Bitmask flag for digital sensors.
       int m_bit_flag;
       //! Parameter has changed.
-      bool m_dig_param_chang;
-      bool m_analog_param_chang;
-      bool m_internal_param_chang;
+      bool m_param_chang;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -335,16 +337,13 @@ namespace Sensors
           m_internals[i] = NULL;
 
         std::memset(m_active_slots_array, 0, sizeof(m_active_slots_array));
+        m_param_chang = true;
 
         m_dig_active = 0;
         m_analog_active = 0;
         m_internal_active = 0;
 
         m_bit_flag = 0;
-
-        m_dig_param_chang = false;
-        m_analog_param_chang = false;
-        m_internal_param_chang = false;
 
         m_lat = 0.0;
       }
@@ -359,15 +358,12 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        // Check if configuration changed.
-        for (unsigned i = 0; i < c_digs_count; ++i)
-        {
-          if (paramChanged(m_args.dig_messages[i]))
-          {
-            m_dig_param_chang = true;
-            m_dig_active = 0;
-          }
-        }
+        std::memset(m_active_slots_array, 0, sizeof(m_active_slots_array));
+        m_dig_active = 0;
+        m_analog_active = 0;
+        m_internal_active = 0;
+        m_param_chang = true;
+
         // Message produce and update for dig channels.
         for (unsigned i = 0; i < c_digs_count; ++i)
         {
@@ -381,8 +377,6 @@ namespace Sensors
           // @return message object allocated on the heap.
           m_digs[i] = IMC::Factory::produce(m_args.dig_messages[i]);
 
-          if (!m_dig_param_chang)
-            continue;
           unsigned eid = 0;
           try
           {
@@ -391,22 +385,13 @@ namespace Sensors
           catch (...)
           { }
 
-          if (m_args.dig_elabels[i].empty() || m_args.dig_messages[i].empty())
+          if (m_args.dig_elabels[i].empty())
             continue;
           m_digs[i]->setSourceEntity(eid);
           m_active_slots_array[m_dig_active] = i;
           m_dig_active++;
         }
 
-        // Check if configuration changed.
-        for (unsigned i = 0; i < c_analogs_count; ++i)
-        {
-          if (paramChanged(m_args.analog_messages[i]))
-          {
-            m_analog_param_chang = true;
-            m_analog_active = 0;
-          }
-        }
         // Message produce and update for analog channels.
         for (unsigned i = 0; i < c_analogs_count; ++i)
         {
@@ -420,8 +405,6 @@ namespace Sensors
           // @return message object allocated on the heap.
           m_analogs[i] = IMC::Factory::produce(m_args.analog_messages[i]);
 
-          if (!m_analog_param_chang)
-            continue;
           unsigned eid = 0;
           try
           {
@@ -430,22 +413,13 @@ namespace Sensors
           catch (...)
           { }
 
-          if (m_args.analog_elabels[i].empty() || m_args.analog_messages[i].empty())
+          if (m_args.analog_elabels[i].empty())
             continue;
           m_analogs[i]->setSourceEntity(eid);
           m_active_slots_array[digAndAnalogActive()] = i;
           m_analog_active++;
         }
 
-        // Check if configuration changed.
-        for (unsigned i = 0; i < c_internals_count; ++i)
-        {
-          if (paramChanged(m_args.internal_messages[i]))
-          {
-            m_internal_param_chang = true;
-            m_internal_active = 0;
-          }
-        }
         // Message produce and update for internal channels.
         for (unsigned i = 0; i < c_internals_count; ++i)
         {
@@ -459,8 +433,6 @@ namespace Sensors
           // @return message object allocated on the heap.
           m_internals[i] = IMC::Factory::produce(m_args.internal_messages[i]);
 
-          if (!m_internal_param_chang)
-            continue;
           unsigned eid = 0;
           try
           {
@@ -469,7 +441,7 @@ namespace Sensors
           catch (...)
           { }
 
-          if (m_args.internal_elabels[i].empty() || m_args.internal_messages[i].empty())
+          if (m_args.internal_elabels[i].empty())
             continue;
           m_internals[i]->setSourceEntity(eid);
           m_active_slots_array[allActive()] = i;
@@ -523,6 +495,8 @@ namespace Sensors
             reserveEntity(m_args.internal_elabels[i]);
           }
         }
+        // Set entitties after their reservation.
+        onUpdateParameters();
       }
 
       //! Acquire resources.
@@ -571,12 +545,8 @@ namespace Sensors
         // Start monitoring.
         startMonitoring();
 
-        if (m_dig_param_chang || m_analog_param_chang || m_internal_param_chang)
-        {
-          m_dig_param_chang = false;
-          m_analog_param_chang = false;
-          m_internal_param_chang = false;
-        }
+        if (m_param_chang)
+          m_param_chang = false;
 
         m_wdog.setTop(m_args.input_timeout);
       }
@@ -631,31 +601,26 @@ namespace Sensors
           }
         }
 
+        unsigned mask_sv = DSF_SV | DSF_PRESSURE | DSF_TEMPERATURE;
+        unsigned mask_cond = DSF_CONDUCTIVITY | DSF_PRESSURE | DSF_TEMPERATURE;
         // Configure internal channels.
         for (unsigned i = 0; i < c_internals_count; i++)
         {
           // To prevent errors from trying to turn on SV channel
           // without the proper configuration.
-          if (m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) == 0 &&
-              (m_bit_flag & SV_FLAG) == SV_FLAG &&
-              (m_bit_flag & PRESSURE_FLAG) == PRESSURE_FLAG &&
-              (m_bit_flag & TEMPERATURE_FLAG) == TEMPERATURE_FLAG)
+          if (m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) == 0 && (m_bit_flag & mask_sv) == mask_sv)
             throw RestartNeeded(DTR("Tried to turn on SV channel without proper configuration"), 5, true);
 
           for (unsigned j = 0; j < c_internals_count; j++)
           {
             // If there are conditions to turn any internal channel.
-            if ((m_bit_flag & CONDUCTIVITY_FLAG) == CONDUCTIVITY_FLAG &&
-                (m_bit_flag & PRESSURE_FLAG) == PRESSURE_FLAG &&
-                (m_bit_flag & TEMPERATURE_FLAG) == TEMPERATURE_FLAG &&
+            if ((m_bit_flag & mask_cond) == mask_cond &&
                 m_args.internal_messages[i].compare(c_internal_templates[j]) == 0)
             {
               if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
                 throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
             }
-            if ((m_bit_flag & SV_FLAG) == SV_FLAG &&
-                (m_bit_flag & PRESSURE_FLAG) == PRESSURE_FLAG &&
-                (m_bit_flag & TEMPERATURE_FLAG) == TEMPERATURE_FLAG &&
+            if ((m_bit_flag & mask_sv) == mask_sv &&
                 m_args.internal_messages[i].compare(c_internal_templates[j]) == 0 &&
                 m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) != 0)
             {
@@ -665,9 +630,11 @@ namespace Sensors
           }
         }
 
-        // If neither temperature or pressure sensors are
+
+        unsigned mask_pt = DSF_PRESSURE | DSF_TEMPERATURE;
+        // If no temperature sensor or no pressure sensor is
         // available, then turn off all internal channels.
-        if ((m_bit_flag & PRESSURE_FLAG) != PRESSURE_FLAG || (m_bit_flag & TEMPERATURE_FLAG) != TEMPERATURE_FLAG)
+        if (!(m_bit_flag & mask_pt))
         {
           turnOffChannels();
 
@@ -684,12 +651,14 @@ namespace Sensors
       checkDigitalSensors(void)
       {
         if (m_internal_active == 0)
+        {
           m_bit_flag = 0;
+        }
         else
         {
           for (unsigned i = 0; i < c_digs_count; ++i)
           {
-            for (unsigned j = 0; j < 4; ++j)
+            for (unsigned j = 0; j < TI_TOTAL; ++j)
             {
               if (m_args.dig_messages[i].compare(c_digital_templates[j]) == 0)
                 m_bit_flag |= 1 << j;
@@ -718,7 +687,6 @@ namespace Sensors
       void
       dispatchSensValues(IMC::Message* message, double value, std::string label, double factor)
       {
-        message->setSourceEntity(resolveEntity(label));
         message->setValueFP(value * factor);
         dispatch(message);
         if (c_digital_templates[TI_PRESSURE].compare(message->getName()) == 0)
@@ -764,11 +732,9 @@ namespace Sensors
 
           // If change digital sensor or internal channel
           // it is needed to reconfigure internal channels.
-          if (m_dig_param_chang || m_analog_param_chang || m_internal_param_chang)
+          if (m_param_chang)
           {
-            m_dig_param_chang = false;
-            m_analog_param_chang = false;
-            m_internal_param_chang = false;
+            m_param_chang = false;
             stopMonitoring();
 
             turnOffChannels();
