@@ -72,6 +72,7 @@ CODE
 
 # C++ test code.
 TEST_CXX = <<CODE
+#include <cstdlib>
 #include <stdexcept>
 #include <new>
 int main(void) { int* v = new int; return *v; }
@@ -342,6 +343,31 @@ class VirtualBox
   end
 end
 
+class Docker
+  def self.list_machines
+    lines = `docker images`.split("\n")
+    lines = lines.find_all{|l| l.start_with?("dune-")}
+    lines = lines.map do |l|
+      l.split(" ")[0]
+    end
+    lines.sort!
+  end
+
+  def initialize(name, target)
+    @name = name
+    @target = target
+    @script = File.basename(__FILE__)
+    @base = File.dirname(File.absolute_path(__FILE__))
+  end
+
+  def execute
+    hostname = @name.gsub("dune-", "")
+    puts hostname
+    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --target #{@target}`
+  end
+end
+
+
 ############################################################################
 # Command line options.                                                    #
 ############################################################################
@@ -351,6 +377,9 @@ options = {
   :target      => 'Experimental',
   :tchain      => nil,
   :machine     => nil,
+  :vbox        => false,
+  :docker      => false,
+  :native      => true
 }
 
 OptionParser.new do |opts|
@@ -375,41 +404,74 @@ OptionParser.new do |opts|
   opts.on("-p", "--pass PASS", "Password") do |v|
     AUTH[:password] = v
   end
+
+  opts.on("--[no-]vbox", "Run VirtualBox builds") do |v|
+    options[:vbox] = v
+  end
+
+  opts.on("--[no-]docker", "Run Docker builds") do |v|
+    options[:docker] = v
+  end
+
+  opts.on("--[no-]native", "Run native builds") do |v|
+    options[:native] = v
+  end
+
 end.parse!
 
 ############################################################################
 # Execute.                                                                 #
 ############################################################################
 
-if not options[:machine].nil?
-  if not (AUTH.has_key?(:user) and AUTH.has_key?(:password))
-    puts('ERROR: missing username and/or password.')
-    exit 0
+# Docker.
+if options[:docker]
+  if options[:machine].nil?
+    machines = Docker.list_machines
+  else
+    machines = [options[:machine]]
   end
 
-  if options[:machine] == 'All'
-    VirtualBox.list_machines_cdash.each do |machine|
-      vm = VirtualBox.new(machine, options[:target])
-      vm.execute
-    end
-  else
-    vm = VirtualBox.new(options[:machine], options[:target])
-    vm.execute
-    exit 0
+  machines.each do |machine|
+    c = Docker.new(machine, options[:target])
+    c.execute
   end
 end
 
-if options[:tchain].nil?
-  TOOLS.each do |k, v|
-    begin
-      s = Builder.new(options[:target], k)
-      s.execute
-    rescue Exception => e
-      $log.puts e.message
+# VirtualBox.
+if options[:vbox]
+  if not options[:machine].nil?
+    if not (AUTH.has_key?(:user) and AUTH.has_key?(:password))
+      puts('ERROR: missing username and/or password.')
+      exit 0
     end
-    $log.puts()
+
+    if options[:machine] == 'All'
+      VirtualBox.list_machines_cdash.each do |machine|
+        vm = VirtualBox.new(machine, options[:target])
+        vm.execute
+      end
+    else
+      vm = VirtualBox.new(options[:machine], options[:target])
+      vm.execute
+      exit 0
+    end
   end
-else
-  s = Builder.new(options[:target], options[:tchain])
-  s.execute
+end
+
+# Native.
+if options[:native]
+  if options[:tchain].nil?
+    TOOLS.each do |k, v|
+      begin
+        s = Builder.new(options[:target], k)
+        s.execute
+      rescue Exception => e
+        $log.puts e.message
+      end
+      $log.puts()
+    end
+  else
+    s = Builder.new(options[:target], options[:tchain])
+    s.execute
+  end
 end
