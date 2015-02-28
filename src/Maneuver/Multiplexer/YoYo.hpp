@@ -34,12 +34,12 @@
 // Local headers
 #include "MuxedManeuver.hpp"
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     struct YoYoArgs
     {
       //! Saturation level for variation in pitch references.

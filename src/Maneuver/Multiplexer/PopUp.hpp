@@ -35,12 +35,12 @@
 #include "Constants.hpp"
 #include "MuxedManeuver.hpp"
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     //! Arguments
     struct PopUpArgs
     {

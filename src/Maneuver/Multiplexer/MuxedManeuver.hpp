@@ -33,12 +33,12 @@
 // Local headers
 #include "AbstractMux.hpp"
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     //! Multiplexed maneuver
     template <typename Msg, typename Arg>
     class MuxedManeuver: public AbstractMux

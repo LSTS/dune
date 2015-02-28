@@ -30,12 +30,12 @@
 
 #include <DUNE/DUNE.hpp>
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     //! Abstract Multiplexed maneuver
     class AbstractMux
     {

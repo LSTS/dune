@@ -34,12 +34,12 @@
 // Local headers
 #include "MuxedManeuver.hpp"
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     //! FollowPath maneuver
     class FollowPath: public MuxedManeuver<IMC::FollowPath, void>
     {
