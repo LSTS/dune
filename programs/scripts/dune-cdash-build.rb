@@ -445,7 +445,7 @@ if options[:vbox]
       exit 0
     end
 
-    if options[:machine] == 'All'
+    if options[:machine].nil?
       VirtualBox.list_machines_cdash.each do |machine|
         vm = VirtualBox.new(machine, options[:target])
         vm.execute
