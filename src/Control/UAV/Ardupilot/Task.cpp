@@ -1942,7 +1942,7 @@ namespace Control
 
             // Store mavlink distance.
             nav_out.wp_dist = (uint16_t) copter_distance;
-            trace("Copter waypoint dist now: %d", copter_distance);
+            trace("Copter waypoint dist now: %0.2f", copter_distance);
           }
 
           d_roll.value = Angles::radians(nav_out.nav_roll);
