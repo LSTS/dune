@@ -439,22 +439,20 @@ end
 
 # VirtualBox.
 if options[:vbox]
-  if not options[:machine].nil?
-    if not (AUTH.has_key?(:user) and AUTH.has_key?(:password))
-      puts('ERROR: missing username and/or password.')
-      exit 0
-    end
+  if not (AUTH.has_key?(:user) and AUTH.has_key?(:password))
+    puts('ERROR: missing username and/or password.')
+    exit 1
+  end
 
-    if options[:machine].nil?
-      VirtualBox.list_machines_cdash.each do |machine|
-        vm = VirtualBox.new(machine, options[:target])
-        vm.execute
-      end
-    else
-      vm = VirtualBox.new(options[:machine], options[:target])
-      vm.execute
-      exit 0
-    end
+  if options[:machine].nil?
+    machines = VirtualBox.list_machines_cdash
+  else
+    machines = [options[:machine]]
+  end
+
+  machines.each do |machine|
+    vm = VirtualBox.new(machine, options[:target])
+    vm.execute
   end
 end
 
