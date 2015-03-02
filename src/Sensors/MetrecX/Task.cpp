@@ -54,7 +54,6 @@
    :                                            \
    (">" command "\r\n"))
 
-
 namespace Sensors
 {
   //! Device driver for the AML OEM MetrecX
@@ -630,7 +629,6 @@ namespace Sensors
           }
         }
 
-
         unsigned mask_pt = DSF_PRESSURE | DSF_TEMPERATURE;
         // If no temperature sensor or no pressure sensor is
         // available, then turn off all internal channels.
@@ -787,7 +785,6 @@ namespace Sensors
           // Dispatch analog active channels.
           for (int j = m_dig_active; j < digAndAnalogActive(); j++)
             dispatchSensValues(m_analogs[m_active_slots_array[j]], tmp_bfr[j], m_args.analog_elabels[m_active_slots_array[j]], m_args.analog_factors[m_active_slots_array[j]]);
-
 
           // Dispatch internal active channels.
           for (int j = digAndAnalogActive(); j < allActive(); j++)
