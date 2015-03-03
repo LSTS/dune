@@ -114,7 +114,7 @@ namespace Simulators
       if (m_asvm.turnRight_k_1)
         curR = std::sqrt(std::fabs(m_asvm.turnRight_k_1)) * (std::fabs(m_asvm.turnRight_k_1) / m_asvm.turnRight_k_1);
 
-      double Xf = 0.1200 * (curL + curR);
+      double Xf = 12 * (curL + curR);
       double Nf = 0.00088667 * (curL - curR);
 
       addForces(Xf, 0, 0, 0, 0, Nf);
