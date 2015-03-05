@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ddef481743c0e112e82daff6609de92a                            *
+// IMC XML MD5: 3d6973200b83d092c28143ce3a35235d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -35,9 +35,9 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.3"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2015-02-09 6530073  (HEAD, origin/feature/uamtxframe-pbm, feature/uamtxframe-pbm)"
+#define DUNE_IMC_CONST_GIT_INFO "2015-03-05 ba92258  (HEAD, origin/feature/uamtxframe-pbm, feature/uamtxframe-pbm)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "ddef481743c0e112e82daff6609de92a"
+#define DUNE_IMC_CONST_MD5 "3d6973200b83d092c28143ce3a35235d"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.

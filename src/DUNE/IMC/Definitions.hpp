@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ddef481743c0e112e82daff6609de92a                            *
+// IMC XML MD5: 3d6973200b83d092c28143ce3a35235d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -17671,7 +17671,9 @@ namespace DUNE
       enum FlagsBits
       {
         //! Promiscuous.
-        URF_PROMISCUOUS = 0x01
+        URF_PROMISCUOUS = 0x01,
+        //! Delayed.
+        URF_DELAYED = 0x02
       };
 
       //! Source System.
