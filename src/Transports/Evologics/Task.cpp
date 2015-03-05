@@ -512,6 +512,9 @@ namespace Transports
         if (m_address != reply.dst)
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
 
+        if (piggyback)
+          msg.flags |= IMC::UamRxFrame::URF_DELAYED;
+
         dispatch(msg);
 
         m_driver->getMultipathStructure();
