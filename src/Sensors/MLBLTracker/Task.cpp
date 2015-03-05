@@ -128,7 +128,7 @@ namespace Sensors
     struct Task: public DUNE::Tasks::Task
     {
       // Serial port handle.
-      SerialPort* m_uart;
+      IO::Handle* m_handle;
       // Map of narrow band transponders.
       NarrowBandMap m_nbmap;
       // Map of micro-modem addresses.
@@ -157,10 +157,12 @@ namespace Sensors
       GPIO* m_gpio_txd;
       // Time of last sentence from modem.
       Counter<double> m_last_stn;
+      // Ignore GPIO;
+      bool m_ignore_gpio;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL),
+        m_handle(NULL),
         m_op_deadline(-1.0),
         m_pc(NULL),
         m_op(OP_NONE),
@@ -228,6 +230,8 @@ namespace Sensors
           m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
         }
 
+        m_ignore_gpio = false;
+
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
       }
@@ -240,7 +244,7 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) )
+        if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) && !m_ignore_gpio)
           throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1);
 
         // Process micro-modem addresses.
@@ -284,9 +288,20 @@ namespace Sensors
           }
         }
 
-        m_uart = new SerialPort(m_args.uart_dev.c_str(), m_args.uart_baud);
-        m_uart->setCanonicalInput(true);
-        m_uart->flush();
+        try
+        {
+          if (openSocket())
+            return;
+
+          SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          port->setCanonicalInput(true);
+          port->flush();
+          m_handle = port;
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
 
         // Set unit number.
         configureModem("CCCFG", "SRC", m_address);
@@ -298,12 +313,29 @@ namespace Sensors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        m_ignore_gpio = true;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
+      }
+
       void
       onResourceRelease(void)
       {
         Memory::clear(m_pc);
         Memory::clear(m_gpio_txd);
-        Memory::clear(m_uart);
+        Memory::clear(m_handle);
       }
 
       void
@@ -325,6 +357,9 @@ namespace Sensors
       bool
       hasTransducer(void)
       {
+        if (m_ignore_gpio)
+          return true;
+
         if (m_gpio_txd == NULL)
           return true;
 
@@ -341,7 +376,7 @@ namespace Sensors
       sendCommand(const std::string& cmd)
       {
         inf("%s", sanitize(cmd).c_str());
-        m_uart->writeString(cmd.c_str());
+        m_handle->writeString(cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
       }
@@ -753,7 +788,7 @@ namespace Sensors
       readSentence(void)
       {
         char bfr[c_bfr_size];
-        m_uart->readString(bfr, sizeof(bfr));
+        m_handle->readString(bfr, sizeof(bfr));
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
@@ -829,7 +864,7 @@ namespace Sensors
         {
           consumeMessages();
 
-          if (Poll::poll(*m_uart, 0.1))
+          if (Poll::poll(*m_handle, 0.1))
           {
             readSentence();
             m_last_stn.reset();
