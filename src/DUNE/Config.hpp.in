@@ -71,6 +71,8 @@
 #cmakedefine DUNE_USING_SPIDERMONKEY
 //! DUNE was compiled with support for the Xeneth SDK.
 #cmakedefine DUNE_USING_XENETH
+//! DUNE was compiled with support for the Exif library.
+#cmakedefine DUNE_USING_EXIF
 
 //! Defined on Microsoft Windows.
 #cmakedefine DUNE_OS_WINDOWS
