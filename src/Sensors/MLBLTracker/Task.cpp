@@ -159,6 +159,8 @@ namespace Sensors
       Counter<double> m_last_stn;
       // Ignore GPIO;
       bool m_ignore_gpio;
+      //! Current line.
+      std::string m_line;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -784,20 +786,40 @@ namespace Sensors
         }
       }
 
+      //! Read sentence.
       void
       readSentence(void)
       {
         char bfr[c_bfr_size];
-        m_handle->readString(bfr, sizeof(bfr));
+        size_t rv = m_handle->readString(bfr, sizeof(bfr));
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        for (size_t i = 0; i < rv; ++i)
+        {
+          // Detected line termination.
+          if (bfr[i] == '\n')
+          {
+            process(m_line);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            m_line.clear();
+          }
+          else
+          {
+            m_line.push_back(bfr[i]);
+          }
+        }
+      }
 
-        m_dev_data.value.assign(sanitize(bfr));
+      //! Process sentence.
+      //! @param[in] msg sentence.
+      void
+      process(const std::string msg)
+      {
+        m_dev_data.value.assign(sanitize(msg));
         dispatch(m_dev_data);
 
         try
         {
-          std::auto_ptr<NMEAReader> stn = std::auto_ptr<NMEAReader>(new NMEAReader(bfr));
+          std::auto_ptr<NMEAReader> stn = std::auto_ptr<NMEAReader>(new NMEAReader(msg));
           if (std::strcmp(stn->code(), "CAMPR") == 0)
             handleCAMPR(stn);
           else if (std::strcmp(stn->code(), "CAMUA") == 0)
