@@ -512,6 +512,122 @@ namespace Transports
       }
 
       void
+      handlePlanAdd(const PlanAdd* cmd)
+      {
+        IMC::PlanSpecification ps;
+        ps.plan_id = cmd->plan_name;
+        ps.description = "Plan added through SUNSET.";
+        ps.start_man_id = "1";
+
+        IMC::MessageList<IMC::PlanManeuver> maneuvers;
+        unsigned i = 0;
+        std::vector<Maneuver*>::const_iterator itr;
+        for (itr = cmd->maneuver_list.begin(); itr != cmd->maneuver_list.end(); ++itr, ++i)
+        {
+
+          IMC::PlanManeuver pm;
+          pm.maneuver_id = String::str(i + 1);
+          if (i > 0)
+          {
+            // Not the first maneuver
+            IMC::PlanTransition pt;
+            pt.conditions = "maneuverIsDone";
+            pt.dest_man = pm.maneuver_id;
+            pt.source_man = String::str(i);
+
+            ps.transitions.push_back(pt);
+          }
+
+          std::string mtype = (*itr)->getTypeName();
+          if (mtype == "Goto")
+          {
+            Goto* gcmd = static_cast<Goto*>(*itr);
+
+            IMC::Goto gimc;
+            gimc.lat = gcmd->latitude;
+            gimc.lon = gcmd->longitude;
+            gimc.z = gcmd->z_reference.z_reference;
+            gimc.z_units = gcmd->z_reference.z_units;
+            gimc.speed = gcmd->speed_reference.speed_reference;
+            gimc.speed_units = gcmd->speed_reference.speed_units;
+            gimc.timeout = gcmd->timeout;
+
+            pm.data.set(gimc);
+          }
+          else if (mtype == "StationKeeping")
+          {
+            StationKeeping* skcmd = static_cast<StationKeeping*>(*itr);
+
+            IMC::StationKeeping skimc;
+            skimc.lat = skcmd->latitude;
+            skimc.lon = skcmd->longitude;
+            skimc.z = skcmd->z_reference.z_reference;
+            skimc.z_units = skcmd->z_reference.z_units;
+            skimc.speed = skcmd->speed_reference.speed_reference;
+            skimc.speed_units = skcmd->speed_reference.speed_units;
+            skimc.duration = skcmd->duration;
+            skimc.radius = skcmd->radius;
+
+            pm.data.set(skimc);
+          }
+
+          ps.maneuvers.push_back(pm);
+        }
+
+        IMC::PlanDB pdb;
+        pdb.op = IMC::PlanDB::DBOP_SET;
+        pdb.type = IMC::PlanDB::DBT_REQUEST;
+        pdb.plan_id = ps.plan_id;
+        pdb.arg.set(ps);
+        pdb.request_id = 0;
+        dispatch(pdb);
+
+        // Fixme: check reply.
+
+        sendPlanAdded(cmd->getSource(), cmd->plan_name);
+      }
+
+      void
+      sendPlanAdded(unsigned destination, const std::string& plan_name)
+      {
+        PlanAdded cmd;
+        cmd.plan_name = plan_name;
+        cmd.setDestination(destination);
+        sendCommand(cmd);
+      }
+
+      void
+      handlePlanGet(const PlanGet* cmd)
+      {
+
+        sendPlan(cmd->getSource());
+      }
+
+      void
+      sendPlan(unsigned destination)
+      {
+        Plan cmd;
+        //cmd.plan_name = plan_name;
+        cmd.setDestination(destination);
+        sendCommand(cmd);
+      }
+
+      void
+      handlePlanDelete(const PlanDelete* cmd)
+      {
+        sendPlanDeleted(cmd->getSource(), cmd->plan_name);
+      }
+
+      void
+      sendPlanDeleted(unsigned destination, const std::string& plan_name)
+      {
+        PlanDeleted cmd;
+        cmd.plan_name = plan_name;
+        cmd.setDestination(destination);
+        sendCommand(cmd);
+      }
+
+      void
       handleRange(const Range* cmd)
       {
         try
@@ -706,6 +822,15 @@ namespace Transports
 
           if (cmd->getName() == "PlanStop")
             handlePlanStop(static_cast<PlanStop*>(cmd));
+
+          if (cmd->getName() == "PlanAdd")
+            handlePlanAdd(static_cast<PlanAdd*>(cmd));
+
+          if (cmd->getName() == "PlanGet")
+            handlePlanGet(static_cast<PlanGet*>(cmd));
+
+          if (cmd->getName() == "PlanDelete")
+            handlePlanDelete(static_cast<PlanDelete*>(cmd));
 
           if (cmd->getName() == "SensorListGet")
             handleSensorListGet(static_cast<SensorListGet*>(cmd));
