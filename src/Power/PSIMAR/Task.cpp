@@ -192,11 +192,18 @@ namespace Power
       void
       onMain(void)
       {
+        Counter<double> timer(1.0);
+
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (m_get_state)
-            dispatchState();
+
+          if (timer.overflow())
+          {
+            timer.reset();
+            if (m_get_state)
+              dispatchState();
+          }
         }
       }
     };
