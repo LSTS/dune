@@ -712,6 +712,7 @@ namespace Plan
 
             m_reply.plan_id = m_spec.plan_id;
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
+            onSuccess();
             changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"));
           }
           else
