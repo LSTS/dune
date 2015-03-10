@@ -98,6 +98,8 @@ namespace Transports
       IMC::VehicleMedium m_medium;
       //! Task arguments.
       Arguments m_args;
+      //! Last received PlanControl message.
+      IMC::PlanControl m_pc;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -296,6 +298,8 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
+
+        m_pc = *msg;
       }
 
       void
@@ -450,9 +454,24 @@ namespace Transports
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 
-        // FIXME: check reply.
+        // Invalidate the last received plan control message.
+        m_pc.type = IMC::PlanControl::PC_REQUEST;
 
-        sendPlanStarted(cmd->getSource(), cmd->plan_name);
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_pc.type == IMC::PlanControl::PC_SUCCESS && m_pc.op == IMC::PlanControl::PC_START)
+          {
+            sendPlanStarted(cmd->getSource(), m_pc.plan_id);
+            return;
+          }
+          else
+            m_pc.type = IMC::PlanControl::PC_REQUEST;
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
+
       }
 
       void
@@ -473,9 +492,23 @@ namespace Transports
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 
-        // FIXME: check reply.
+        // Invalidate the last received plan control message.
+        m_pc.type = IMC::PlanControl::PC_REQUEST;
 
-        sendPlanStopped(cmd->getSource(), "");
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_pc.type == IMC::PlanControl::PC_SUCCESS && m_pc.op == IMC::PlanControl::PC_STOP)
+          {
+            sendPlanStopped(cmd->getSource(), m_pc.plan_id);
+            return;
+          }
+          else
+            m_pc.type = IMC::PlanControl::PC_REQUEST;
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
       }
 
       void
