@@ -103,6 +103,10 @@ namespace Transports
       IMC::PlanControl m_pc;
       //! Last received plan specification
       IMC::PlanSpecification m_plan_spec;
+      //! Plan added.
+      bool m_plan_added;
+      //! Plan deleted.
+      bool m_plan_deleted;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -114,7 +118,9 @@ namespace Transports
         m_aborted(false),
         m_link(NULL),
         m_sensors(NULL),
-        m_scheduler(NULL)
+        m_scheduler(NULL),
+        m_plan_added(false),
+        m_plan_deleted(false)
       {
         param("TCP - Address", m_args.tcp_addr)
         .defaultValue("10.0.250.24")
@@ -380,6 +386,14 @@ namespace Transports
 
           m_plan_spec = *(static_cast<const IMC::PlanSpecification*>(msg->arg.get()));
         }
+        else if (msg->op == IMC::PlanDB::DBOP_SET)
+        {
+          m_plan_added = true;
+        }
+        else if (msg->op == IMC::PlanDB::DBOP_DEL)
+        {
+          m_plan_deleted = true;
+        }
       }
 
       void
@@ -566,8 +580,19 @@ namespace Transports
         pdb.request_id = 0;
         dispatch(pdb);
 
-        // Fixme: check reply.
-        sendPlanAdded(cmd->getSource(), cmd->plan_name);
+        m_plan_added = false;
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_plan_added)
+          {
+            sendPlanAdded(cmd->getSource(), cmd->plan_name);
+            return;
+          }
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
       }
 
       void
@@ -665,9 +690,19 @@ namespace Transports
         pdb.request_id = 0;
         dispatch(pdb);
 
-        // Fixme: handle reply
+        m_plan_deleted = false;
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_plan_deleted)
+          {
+            sendPlanDeleted(cmd->getSource(), cmd->plan_name);
+            return;
+          }
+        }
 
-        sendPlanDeleted(cmd->getSource(), cmd->plan_name);
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
       }
 
       void
