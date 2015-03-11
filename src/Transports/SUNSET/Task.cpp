@@ -101,6 +101,8 @@ namespace Transports
       Arguments m_args;
       //! Last received PlanControl message.
       IMC::PlanControl m_pc;
+      //! Last received plan specification
+      IMC::PlanSpecification m_plan_spec;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -353,21 +355,31 @@ namespace Transports
         if (msg->type != IMC::PlanDB::DBT_SUCCESS)
           return;
 
-        if (msg->op != IMC::PlanDB::DBOP_GET_STATE)
-          return;
+        if (msg->op == IMC::PlanDB::DBOP_GET_STATE)
+        {
+          if (msg->arg.isNull())
+            return;
 
-        if (msg->arg.isNull())
-          return;
+          if (msg->arg->getId() != IMC::PlanDBState::getIdStatic())
+            return;
 
-        if (msg->arg->getId() != IMC::PlanDBState::getIdStatic())
-          return;
+          const IMC::PlanDBState* db_state = static_cast<const IMC::PlanDBState*>(msg->arg.get());
+          IMC::MessageList<IMC::PlanDBInformation>::const_iterator itr = db_state->plans_info.begin();
 
-        const IMC::PlanDBState* db_state = static_cast<const IMC::PlanDBState*>(msg->arg.get());
-        IMC::MessageList<IMC::PlanDBInformation>::const_iterator itr = db_state->plans_info.begin();
+          m_plan_list.clear();
+          for (; itr != db_state->plans_info.end(); ++itr)
+            m_plan_list.push_back((*itr)->plan_id);
+        }
+        else if (msg->op == IMC::PlanDB::DBOP_GET)
+        {
+          if (msg->arg.isNull())
+            return;
 
-        m_plan_list.clear();
-        for (; itr != db_state->plans_info.end(); ++itr)
-          m_plan_list.push_back((*itr)->plan_id);
+          if (msg->arg->getId() != IMC::PlanSpecification::getIdStatic())
+            return;
+
+          m_plan_spec = *(static_cast<const IMC::PlanSpecification*>(msg->arg.get()));
+        }
       }
 
       void
@@ -555,7 +567,6 @@ namespace Transports
         dispatch(pdb);
 
         // Fixme: check reply.
-
         sendPlanAdded(cmd->getSource(), cmd->plan_name);
       }
 
@@ -571,22 +582,91 @@ namespace Transports
       void
       handlePlanGet(const PlanGet* cmd)
       {
+        m_plan_spec.plan_id.clear();
+        IMC::PlanDB db;
+        db.type = IMC::PlanDB::DBT_REQUEST;
+        db.op = IMC::PlanDB::DBOP_GET;
+        db.plan_id = cmd->plan_name;
+        dispatch(db);
 
-        sendPlan(cmd->getSource());
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (!m_plan_spec.plan_id.empty())
+          {
+            sendPlan(cmd->getSource());
+            return;
+          }
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
       }
 
       void
       sendPlan(unsigned destination)
       {
         Plan cmd;
-        //cmd.plan_name = plan_name;
+        cmd.setName(m_plan_spec.plan_id);
         cmd.setDestination(destination);
-        sendCommand(cmd);
+
+        bool done = false;
+        std::string mid = m_plan_spec.start_man_id;
+        while (!done)
+        {
+          IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr;
+          for (mitr = m_plan_spec.maneuvers.begin(); mitr != m_plan_spec.maneuvers.end(); ++mitr)
+            if ((*mitr == NULL) || (*mitr)->maneuver_id != mid)
+              continue;
+
+          if (mitr == m_plan_spec.maneuvers.end())
+            break;
+
+          try
+          {
+            Maneuver* man = newManeuverSSC((*mitr)->data.get());
+            cmd.maneuver_list.push_back(man);
+          }
+          catch (...)
+          {
+            break;
+          }
+
+          IMC::MessageList<IMC::PlanTransition>::const_iterator titr;
+          for (titr = m_plan_spec.transitions.begin(); titr != m_plan_spec.transitions.end(); ++titr)
+            if ((*titr == NULL) || (*titr)->source_man != mid)
+              continue;
+
+          if (titr == m_plan_spec.transitions.end())
+            done = true;
+          else if ((*titr)->conditions == "maneuverIsDone")
+            mid = (*titr)->dest_man;
+          else
+            break;
+        }
+
+        if (done)
+          sendCommand(cmd);
+        else
+          sendFailure(destination, FAIL_INTERNAL_ERROR);
+
+        std::vector<Maneuver*>::const_iterator itr;
+        for (itr = cmd.maneuver_list.begin(); itr != cmd.maneuver_list.end(); ++itr)
+          delete (*itr);
       }
 
       void
       handlePlanDelete(const PlanDelete* cmd)
       {
+        IMC::PlanDB pdb;
+        pdb.op = IMC::PlanDB::DBOP_DEL;
+        pdb.type = IMC::PlanDB::DBT_REQUEST;
+        pdb.plan_id = cmd->plan_name;
+        pdb.request_id = 0;
+        dispatch(pdb);
+
+        // Fixme: handle reply
+
         sendPlanDeleted(cmd->getSource(), cmd->plan_name);
       }
 
