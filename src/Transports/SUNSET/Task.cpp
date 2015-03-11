@@ -33,6 +33,7 @@
 #include "Link.hpp"
 #include "Sensors.hpp"
 #include "Scheduler.hpp"
+#include "Conversions.hpp"
 
 namespace Transports
 {
@@ -538,38 +539,9 @@ namespace Transports
             ps.transitions.push_back(pt);
           }
 
-          std::string mtype = (*itr)->getTypeName();
-          if (mtype == "Goto")
-          {
-            Goto* gcmd = static_cast<Goto*>(*itr);
-
-            IMC::Goto gimc;
-            gimc.lat = gcmd->latitude;
-            gimc.lon = gcmd->longitude;
-            gimc.z = gcmd->z_reference.z_reference;
-            gimc.z_units = gcmd->z_reference.z_units;
-            gimc.speed = gcmd->speed_reference.speed_reference;
-            gimc.speed_units = gcmd->speed_reference.speed_units;
-            gimc.timeout = gcmd->timeout;
-
-            pm.data.set(gimc);
-          }
-          else if (mtype == "StationKeeping")
-          {
-            StationKeeping* skcmd = static_cast<StationKeeping*>(*itr);
-
-            IMC::StationKeeping skimc;
-            skimc.lat = skcmd->latitude;
-            skimc.lon = skcmd->longitude;
-            skimc.z = skcmd->z_reference.z_reference;
-            skimc.z_units = skcmd->z_reference.z_units;
-            skimc.speed = skcmd->speed_reference.speed_reference;
-            skimc.speed_units = skcmd->speed_reference.speed_units;
-            skimc.duration = skcmd->duration;
-            skimc.radius = skcmd->radius;
-
-            pm.data.set(skimc);
-          }
+          IMC::Maneuver* m = newManeuverIMC(*itr);
+          pm.data.set(m);
+          delete m;
 
           ps.maneuvers.push_back(pm);
         }
