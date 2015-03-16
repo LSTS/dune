@@ -84,6 +84,8 @@ namespace Vision
       std::string strobe_pwr;
       //! Number of photos per volume.
       unsigned volume_size;
+      //! Log folder prefix.
+      std::string log_prefix;
       //! Power GPIO.
       int pwr_gpio;
       //! LED GPIO.
@@ -264,6 +266,10 @@ namespace Vision
         .defaultValue("1000")
         .description("Number of photos per volume");
 
+        param("Log Prefix", m_args.log_prefix)
+        .defaultValue("")
+        .description("Log folder prefix");
+
         param("Enable Camera Configuration", m_args.camera_cfg)
         .defaultValue("true")
         .description("Attempt to configure the camera");
@@ -389,7 +395,7 @@ namespace Vision
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
-          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
+          m_log_dir = m_ctx.dir_log / m_args.log_prefix / msg->name / "Photos";
           m_log_dir_updated = true;
           trace("received new log dir");
         }
