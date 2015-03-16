@@ -186,7 +186,7 @@ namespace Sensors
     static const float c_min_alt = 0.3;
 
     //! %Task.
-    struct Task: public Tasks::Periodic
+    struct Task: public Tasks::Task
     {
       //! TCP socket.
       TCPSocket* m_sock;
@@ -217,7 +217,7 @@ namespace Sensors
 
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
+        Tasks::Task(name, ctx),
         m_sock(NULL)
       {
         // Define configuration parameters.
@@ -606,7 +606,6 @@ namespace Sensors
         m_frame.setPulseLength((uint8_t)(c_pulse_len[idx] / 10));
 
         m_ping.max_range = c_ranges[idx];
-        Periodic::setFrequency(1.0 / (c_rep_rate[idx] / 1000.0));
         m_frame.setRepRate((uint16_t)c_rep_rate[idx]);
       }
 
@@ -765,7 +764,7 @@ namespace Sensors
       }
 
       void
-      task(void)
+      onMain(void)
       {
         while (!stopping())
         {
