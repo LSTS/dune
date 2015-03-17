@@ -160,11 +160,11 @@ namespace Sensors
 
       //! Define total bytes in header.
       virtual void
-      setTotalBytes(void);
+      setTotalBytes(void) = 0;
 
       //! Define number of bytes to read in header.
       virtual void
-      setBytesToRead(void);
+      setBytesToRead(void) = 0;
 
       //! Set start gain.
       //! @param[in] gain start gain.
