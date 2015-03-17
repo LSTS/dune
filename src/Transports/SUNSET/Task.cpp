@@ -319,7 +319,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("SoundVelocity", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("SoundVelocity", sid, msg->value, m_position);
+          m_sensors->setMeasurement("SoundVelocity", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -330,7 +330,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("Salinity", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("Salinity", sid, msg->value, m_position);
+          m_sensors->setMeasurement("Salinity", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -341,7 +341,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("Temperature", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("Temperature", sid, msg->value, m_position);
+          m_sensors->setMeasurement("Temperature", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -352,7 +352,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("Conductivity", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("Conductivity", sid, msg->value, m_position);
+          m_sensors->setMeasurement("Conductivity", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -412,6 +412,7 @@ namespace Transports
         m_position.value.depth = msg->depth;
         m_position.value.altitude = msg->alt;
         m_position.heading = Angles::degrees(msg->psi);
+        m_position.timestamp = msg->getTimeStamp();
       }
 
       std::string
