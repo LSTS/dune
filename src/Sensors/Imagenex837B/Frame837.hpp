@@ -35,6 +35,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Frame.hpp"
+
 namespace Sensors
 {
   namespace Imagenex837B
@@ -45,9 +48,6 @@ namespace Sensors
     static const unsigned c_reserved_837[] = {19, 28, 41, 42, 79, 91, 92, 97, 98, 99, 108, 109};
     //! Count of reserved bytes.
     static const unsigned c_reserved_837_size = sizeof(c_reserved_837) / sizeof(c_reserved_837[0]);
-    //! List of months.
-    static const char* c_months_strings[] =
-    {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
     //! Size of IVX body.
     static const unsigned c_ivx_body_size = 16000;
     //! Size of IUX body.
@@ -56,11 +56,9 @@ namespace Sensors
     static const unsigned c_ivx_frame_size = 272;
     //! Size of IUX body.
     static const unsigned c_iux_frame_size = 80;
-    // Euler angles conversion factor.
-    static const double c_euler_factor = (65536.0 / 360.0);
 
     //! Data logger to Imagenex .837 format.
-    class Frame837
+    class Frame837: public Frame
     {
     public:
       //! 837 Header Indices.
@@ -567,10 +565,6 @@ namespace Sensors
       static const unsigned c_frequency = 260;
       //! Default display gain.
       static const uint8_t c_display_gain = 50;
-      //! Message data.
-      std::vector<uint8_t> m_data;
-      //! IVX mode active.
-      bool m_ivx_mode;
     };
   }
 }

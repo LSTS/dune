@@ -25,8 +25,8 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
-#ifndef SENSORS_IMAGENEX_837B_FRAME_83P_HPP_INCLUDED_
-#define SENSORS_IMAGENEX_837B_FRAME_83P_HPP_INCLUDED_
+#ifndef SENSORS_IMAGENEX_837B_FRAME_HPP_INCLUDED_
+#define SENSORS_IMAGENEX_837B_FRAME_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>
@@ -35,25 +35,22 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers.
-#include "Frame.hpp"
-
 namespace Sensors
 {
   namespace Imagenex837B
   {
     using DUNE_NAMESPACES;
 
-    //! Reserved bytes.
-    static const unsigned c_reserved_83P[] = {19, 28, 41, 42, 79, 91, 92, 97, 98, 99, 108, 109};
-    //! Count of reserved bytes.
-    static const unsigned c_reserved_83P_size = sizeof(c_reserved_83P) / sizeof(c_reserved_83P[0]);
+    static const char* c_months_strings[] =
+    {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+    // Euler angles conversion factor.
+    static const double c_euler_factor = (65536.0 / 360.0);
 
-    //! Data logger to Imagenex .83P format.
-    class Frame83P: public Frame
+    //! Data logger base frame for Imagenex files.
+    class Frame
     {
     public:
-      //! 83P Header Indices.
+      //! Default header indices for 837 files.
       enum HeaderIndices
       {
         HDR_IDX_N_TO_READ = 3,
@@ -94,7 +91,7 @@ namespace Sensors
         HDR_IDX_DATA_BYTES_LO = 111
       };
 
-      //! 83P Footer Indices.
+      //! Default 837 Footer Indices.
       enum FooterIndices
       {
         FTR_IDX_TYPE = 13,
@@ -105,18 +102,13 @@ namespace Sensors
       };
 
       //! Constructor.
-      Frame83P(void)
-      {
-        m_data.resize(c_ivx_size, 0);
-        m_data[0] = '8';
-        m_data[1] = '3';
-        m_data[2] = 'P';
+      Frame(void)
+      { }
 
-        for (unsigned i = 0; i < c_reserved_83P_size; ++i)
-          m_data[c_reserved_83P[i]] = 0x00;
-
-        setHeader();
-      }
+      //! Destructor.
+      virtual
+      ~Frame(void)
+      { }
 
       //! Get frame start address.
       //! @return pointer to address.
@@ -128,77 +120,51 @@ namespace Sensors
 
       //! Get data start address.
       //! @return pointer to address.
-      uint8_t*
+      virtual uint8_t*
       getMessageData(void)
       {
-        return &m_data[c_start_data];
+        return NULL;
       }
 
       //! Get footer start address.
       //! @return pointer to address.
-      uint8_t*
+      virtual uint8_t*
       getFooterData(void)
       {
-        return &m_data[c_hdr_size + c_rhdr_size + getMessageSize()];
+        return NULL;
       }
 
       //! Retrieve the size of the frame.
       //! @return frame size.
-      unsigned
+      virtual unsigned
       getSize(void) const
       {
-        return c_hdr_size + c_rhdr_size + getMessageSize() + getFooterSize();
+        return 0;
       }
 
       //! Retrieve message size.
       //! @return message size.
-      uint32_t
+      virtual uint32_t
       getMessageSize(void) const
       {
-        return m_ivx_mode ? c_ivx_body_size : c_iux_body_size;
+        return 0;
       }
 
       //! Retrieve footer size.
       //! @return footer size.
-      uint32_t
+      virtual uint32_t
       getFooterSize(void) const
       {
-        return m_ivx_mode ? c_ivx_frame_size : c_iux_frame_size;
+        return 0;
       }
 
       //! Define total bytes in header.
-      void
-      setTotalBytes(void)
-      {
-        // Total bytes.
-        if (m_ivx_mode)
-        {
-          m_data[HDR_IDX_TBYTES_HI] = (uint8_t)(c_ivx_size >> 8);
-          m_data[HDR_IDX_TBYTES_LO] = (uint8_t)c_ivx_size;
-        }
-        else
-        {
-          m_data[HDR_IDX_TBYTES_HI] = (uint8_t)(c_iux_size >> 8);
-          m_data[HDR_IDX_TBYTES_LO] = (uint8_t)c_iux_size;
-        }
-      }
+      virtual void
+      setTotalBytes(void);
 
       //! Define number of bytes to read in header.
-      void
-      setBytesToRead(void)
-      {
-        // Total bytes.
-        if (m_ivx_mode)
-        {
-          m_data[HDR_IDX_BYTES_TO_READ_HI] = (uint8_t)(c_ivx_bytes >> 8);
-          m_data[HDR_IDX_BYTES_TO_READ_LO] = (uint8_t)c_ivx_bytes;
-        }
-        else
-        {
-          m_data[HDR_IDX_BYTES_TO_READ_HI] = (uint8_t)(c_iux_bytes >> 8);
-          m_data[HDR_IDX_BYTES_TO_READ_LO] = (uint8_t)c_iux_bytes;
-        }
-      }
+      virtual void
+      setBytesToRead(void);
 
       //! Set start gain.
       //! @param[in] gain start gain.
@@ -452,6 +418,12 @@ namespace Sensors
       {
         m_data[HDR_IDX_VERSION] = version;
       }
+
+    protected:
+      //! IVX mode active.
+      bool m_ivx_mode;
+      //! Message data.
+      std::vector<uint8_t> m_data;
 
     private:
       //! Define frame constant header.
