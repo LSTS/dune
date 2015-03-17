@@ -33,7 +33,8 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "Frame.hpp"
+#include "Frame837.hpp"
+#include "Frame83P.hpp"
 
 namespace Sensors
 {
@@ -158,6 +159,10 @@ namespace Sensors
       float offset;
       //! 837 file name.
       std::string file_name_837;
+      //! 83P file name.
+      std::string file_name_83P;
+      //! Use External Control.
+      bool ec;
     };
 
     //! List of available ranges.
@@ -191,7 +196,9 @@ namespace Sensors
       //! TCP socket.
       TCPSocket* m_sock;
       //! 837 Frame.
-      Frame m_frame;
+      Frame837* m_frame837;
+      //! 83P Frame.
+      Frame83P* m_frame83P;
       //! Output switch data.
       uint8_t m_sdata[c_sdata_size];
       //! Header Return data.
@@ -320,6 +327,10 @@ namespace Sensors
         .defaultValue("Data.837")
         .description("837 file name");
 
+        param("83P File Name", m_args.file_name_83P)
+        .defaultValue("Data.83P")
+        .description("83P file name");
+
         param("Power Channel", m_args.power_channel)
         .defaultValue("Multibeam")
         .description("Power channel that controls the power of the device");
@@ -348,6 +359,10 @@ namespace Sensors
         .defaultValue("0")
         .units(Units::Meter)
         .description("Position of the Multibeam relative to the GPS antenna in the x-axis of the body frame");
+
+        param("Use External Control", m_args.ec)
+        .defaultValue("false")
+        .description("Use external binary to interact with sonar head");
 
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
@@ -402,7 +417,25 @@ namespace Sensors
         setAbsorption((unsigned)(m_args.absorption * 100));
         setDataPoints(m_args.data_points);
 
-        m_frame.setProfileTiltAngle(m_args.tilt_angle);
+        if (saveIn837())
+        {
+          if (m_frame837 == NULL)
+            m_frame837 = new Frame837();
+
+          if (m_frame83P != NULL)
+            Memory::clear(m_frame83P);
+
+          m_frame837->setProfileTiltAngle(m_args.tilt_angle);
+        }
+
+        if (saveIn83P())
+        {
+          if (m_frame83P == NULL)
+            m_frame83P = new Frame83P();
+
+          if (m_frame837 != NULL)
+            Memory::clear(m_frame837);
+        }
 
         if (m_args.auto_gain)
         {
@@ -437,6 +470,8 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_frame837);
+        Memory::clear(m_frame83P);
         requestDeactivation();
       }
 
@@ -548,7 +583,10 @@ namespace Sensors
         {
           case IMC::LoggingControl::COP_STARTED:
           case IMC::LoggingControl::COP_CURRENT_NAME:
-            openLog(m_ctx.dir_log / msg->name / m_args.file_name_837);
+            if (m_args.ec)
+              openLog(m_ctx.dir_log / msg->name / m_args.file_name_83P);
+            else
+              openLog(m_ctx.dir_log / msg->name / m_args.file_name_837);
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
@@ -564,7 +602,40 @@ namespace Sensors
         if (msg->value < 0)
           return;
 
-        m_frame.setSoundVelocity(msg->value);
+        if (useFrame837())
+          m_frame837->setSoundVelocity(msg->value);
+      }
+
+      //! Check if data should be stored in 837 files.
+      //! @return true to store data in 837 files, false otherwise.
+      bool
+      saveIn837(void)
+      {
+        return m_args.save_to_file && !m_args.ec;
+      }
+
+      //! Check if frame object is initialized
+      //! @return true if object initialized, false otherwise
+      bool
+      useFrame837(void)
+      {
+        return saveIn837() && (m_frame837 != NULL);
+      }
+
+      //! Check if frame object is initialized
+      //! @return true if object initialized, false otherwise
+      bool
+      useFrame83P(void)
+      {
+        return saveIn83P() && (m_frame83P != NULL);
+      }
+
+      //! Check if data should be stored in 83P files.
+      //! @return true to store data in 83P files, false otherwise.
+      bool
+      saveIn83P(void)
+      {
+        return m_args.save_to_file && m_args.ec;
       }
 
       //! Get index from table according with given value.
@@ -602,11 +673,14 @@ namespace Sensors
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_sdata[SD_PULSE_LEN] = (uint8_t)(c_pulse_len[idx] / 10);
 
-        m_frame.setRange((uint8_t)c_ranges[idx]);
-        m_frame.setPulseLength((uint8_t)(c_pulse_len[idx] / 10));
-
         m_ping.max_range = c_ranges[idx];
-        m_frame.setRepRate((uint16_t)c_rep_rate[idx]);
+
+        if (useFrame837())
+        {
+          m_frame837->setRange((uint8_t)c_ranges[idx]);
+          m_frame837->setPulseLength((uint8_t)(c_pulse_len[idx] / 10));
+          m_frame837->setRepRate((uint16_t)c_rep_rate[idx]);
+        }
       }
 
       //! Define switch command data start gain.
@@ -615,7 +689,9 @@ namespace Sensors
       setStartGain(unsigned value)
       {
         m_sdata[SD_START_GAIN] = (uint8_t) Math::trimValue(value, 0u, 20u);
-        m_frame.setStartGain(value);
+
+        if (useFrame837())
+          m_frame837->setStartGain(value);
       }
 
       //! Define switch command data switch delay.
@@ -641,10 +717,13 @@ namespace Sensors
       {
         m_sdata[SD_DATA_POINTS] = (uint8_t)value;
 
-        if (value == 16)
-          m_frame.setExtendedDataPoints(true);
-        if (value == 8)
-          m_frame.setExtendedDataPoints(false);
+        if (useFrame837())
+        {
+          if (value == 16)
+            m_frame837->setExtendedDataPoints(true);
+          if (value == 8)
+            m_frame837->setExtendedDataPoints(false);
+        }
       }
 
       //! Define switch command data auto mode.
@@ -673,7 +752,8 @@ namespace Sensors
         m_sdata[SD_NADIR_HI] = (uint8_t)((value & 0xff00) >> 8);
         m_sdata[SD_NADIR_LO] = (uint8_t)(value & 0x00ff);
 
-        m_frame.setDisplayMode(m_args.xdcr);
+        if (useFrame837())
+          m_frame837->setDisplayMode(m_args.xdcr);
       }
 
       //! Define switch command data auto gain threshold.
@@ -698,8 +778,8 @@ namespace Sensors
 
         unsigned dat_idx = data_point * c_rdata_dat_size;
 
-        if (m_args.save_to_file)
-          rv = m_sock->read((char*)(m_frame.getMessageData() + dat_idx), c_rdata_dat_size);
+        if (useFrame837())
+          rv = m_sock->read((char*)(m_frame837->getMessageData() + dat_idx), c_rdata_dat_size);
         else
           rv = m_sock->read(&m_ping.data[dat_idx], c_rdata_dat_size);
 
@@ -719,12 +799,18 @@ namespace Sensors
       {
         // Update information.
         updateState();
-        m_frame.setDateTime(Clock::getSinceEpochMsec());
-        m_frame.setSerialStatus(m_rdata_hdr[4]);
-        m_frame.setFirmwareVersion(m_rdata_hdr[6]);
+        if (useFrame837())
+        {
+          m_frame837->setDateTime(Clock::getSinceEpochMsec());
+          m_frame837->setSerialStatus(m_rdata_hdr[4]);
+          m_frame837->setFirmwareVersion(m_rdata_hdr[6]);
+        }
 
         if (m_log_file.is_open())
-          m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
+        {
+          if (useFrame837())
+            m_log_file.write((const char*)m_frame837->getData(), m_frame837->getSize());
+        }
       }
 
       //! Update vehicle state in 837 files.
@@ -747,12 +833,15 @@ namespace Sensors
           Coordinates::WGS84::displace(x, y, &lat, &lon);
         }
 
-        m_frame.setGpsData(lat, lon);
-        m_frame.setSpeed(m_estate.u);
-        m_frame.setCourse(m_estate.psi);
-        m_frame.setRoll(m_estate.phi);
-        m_frame.setPitch(m_estate.theta);
-        m_frame.setHeading(m_estate.psi);
+        if (useFrame837())
+        {
+          m_frame837->setGpsData(lat, lon);
+          m_frame837->setSpeed(m_estate.u);
+          m_frame837->setCourse(m_estate.psi);
+          m_frame837->setRoll(m_estate.phi);
+          m_frame837->setPitch(m_estate.theta);
+          m_frame837->setHeading(m_estate.psi);
+        }
       }
 
       //! Check current water column.
