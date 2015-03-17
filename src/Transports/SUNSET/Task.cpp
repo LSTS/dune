@@ -723,6 +723,7 @@ namespace Transports
           IMC::UamRxRange range;
           range.sys = lookupSystemName(cmd->target);
           range.value = cmd->travel_time * 1500.0;
+          range.setTimeStamp(cmd->timestamp);
           dispatch(range);
         }
         catch (std::runtime_error& e)
