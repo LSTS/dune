@@ -199,14 +199,14 @@ namespace Sensors
       Frame837* m_frame837;
       //! 83P Frame.
       Frame83P* m_frame83P;
+      //! Sonar Return Data.
+      IMC::SonarData* m_data;
       //! Output switch data.
       uint8_t m_sdata[c_sdata_size];
       //! Header Return data.
       uint8_t m_rdata_hdr[c_rdata_hdr_size];
       //! Footer Return data.
       uint8_t m_rdata_ftr[c_rdata_ftr_size];
-      //! Single sidescan ping.
-      IMC::SonarData m_ping;
       //! Estimated state.
       IMC::EstimatedState m_estate;
       //! Log file.
@@ -225,7 +225,10 @@ namespace Sensors
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_sock(NULL)
+        m_sock(NULL),
+        m_frame837(NULL),
+        m_frame83P(NULL),
+        m_data(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -372,20 +375,7 @@ namespace Sensors
         m_sdata[9] = 0x01;
         m_sdata[20] = 0x08;
         m_sdata[26] = 0xfd;
-
-        IMC::BeamConfig bc;
-        bc.beam_width = Math::Angles::radians(c_beam_width);
-        bc.beam_height = Math::Angles::radians(c_beam_height);
-        m_ping.beam_config.clear();
-        m_ping.beam_config.push_back(bc);
-
-        // Initialize return data.
-        m_ping.type = IMC::SonarData::ST_MULTIBEAM;
-        m_ping.bits_per_point = 8;
-        m_ping.scale_factor = 1.0f;
-        m_ping.min_range = 0;
-
-        setFrequency();
+        m_sdata[SD_FREQUENCY] = (uint8_t)86;
 
         // Register consumers.
         bind<IMC::LoggingControl>(this);
@@ -406,17 +396,15 @@ namespace Sensors
         }
 
         if (paramChanged(m_args.data_points))
-        {
           m_args.data_points /= 1000;
-          m_ping.data.resize(c_rdata_dat_size * m_args.data_points);
-        }
 
-        setRange(m_args.def_range);
-        setStartGain(m_args.start_gain);
-        setSwitchDelay(m_args.switch_delay);
-        setAbsorption((unsigned)(m_args.absorption * 100));
-        setDataPoints(m_args.data_points);
+        // Check if data is stored in IMC.
+        if (!m_args.save_to_file)
+          initializeSonarData();
+        else
+          Memory::clear(m_data);
 
+        // Or 837 files.
         if (saveIn837())
         {
           if (m_frame837 == NULL)
@@ -428,6 +416,7 @@ namespace Sensors
           m_frame837->setProfileTiltAngle(m_args.tilt_angle);
         }
 
+        // Or 83P files.
         if (saveIn83P())
         {
           if (m_frame83P == NULL)
@@ -436,6 +425,14 @@ namespace Sensors
           if (m_frame837 != NULL)
             Memory::clear(m_frame837);
         }
+
+        // Configure settings.
+        setRange(m_args.def_range);
+        setStartGain(m_args.start_gain);
+        setSwitchDelay(m_args.switch_delay);
+        setAbsorption((unsigned)(m_args.absorption * 100));
+        setDataPoints(m_args.data_points);
+
 
         if (m_args.auto_gain)
         {
@@ -459,6 +456,33 @@ namespace Sensors
           bind<IMC::EstimatedState>(this);
       }
 
+      //! Initialize IMC sonar data holder.
+      void
+      initializeSonarData(void)
+      {
+        if (m_data == NULL)
+          m_data = new IMC::SonarData();
+
+        IMC::BeamConfig bc;
+        bc.beam_width = Math::Angles::radians(c_beam_width);
+        bc.beam_height = Math::Angles::radians(c_beam_height);
+        m_data->beam_config.clear();
+        m_data->beam_config.push_back(bc);
+
+        // Initialize return data.
+        m_data->type = IMC::SonarData::ST_MULTIBEAM;
+        m_data->bits_per_point = 8;
+        m_data->scale_factor = 1.0f;
+        m_data->min_range = 0;
+        m_data->frequency = c_freq;
+
+        // Resize for 837 or 83P.
+        if (m_args.ec)
+          m_data->data.resize(0);
+        else
+          m_data->data.resize(c_rdata_dat_size * m_args.data_points);
+      }
+
       void
       onResourceInitialization(void)
       {
@@ -472,6 +496,7 @@ namespace Sensors
       {
         Memory::clear(m_frame837);
         Memory::clear(m_frame83P);
+        Memory::clear(m_data);
         requestDeactivation();
       }
 
@@ -532,6 +557,8 @@ namespace Sensors
         { }
       }
 
+      //! Open a log file to hold 837 or 83P files.
+      //! @param[in] path desired log path.
       void
       openLog(const Path& path)
       {
@@ -545,6 +572,7 @@ namespace Sensors
         debug("opening %s", m_log_path.c_str());
       }
 
+      //! Close current log file.
       void
       closeLog(void)
       {
@@ -655,14 +683,6 @@ namespace Sensors
         return table_size - 1;
       }
 
-      //! Define switch command data frequency value.
-      void
-      setFrequency(void)
-      {
-        m_sdata[SD_FREQUENCY] = (uint8_t)86;
-        m_ping.frequency = c_freq;
-      }
-
       //! Define switch command data range.
       //! @param[in] value range.
       void
@@ -673,7 +693,8 @@ namespace Sensors
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_sdata[SD_PULSE_LEN] = (uint8_t)(c_pulse_len[idx] / 10);
 
-        m_ping.max_range = c_ranges[idx];
+        if (m_data != NULL)
+          m_data->max_range = c_ranges[idx];
 
         if (useFrame837())
         {
@@ -780,8 +801,8 @@ namespace Sensors
 
         if (useFrame837())
           rv = m_sock->read((char*)(m_frame837->getMessageData() + dat_idx), c_rdata_dat_size);
-        else
-          rv = m_sock->read(&m_ping.data[dat_idx], c_rdata_dat_size);
+        else if (m_data != NULL)
+          rv = m_sock->read(&m_data->data[dat_idx], c_rdata_dat_size);
 
         if (rv != c_rdata_dat_size)
           throw std::runtime_error(DTR("failed to read data"));
@@ -863,14 +884,20 @@ namespace Sensors
           {
             try
             {
-              for (unsigned i = 0; i < m_args.data_points; ++i)
-                ping(i);
+              // Direct communication with sonar head.
+              if (!m_args.ec)
+              {
+                for (unsigned i = 0; i < m_args.data_points; ++i)
+                  ping(i);
+              }
 
+              // Store data.
               if (m_args.save_to_file)
                 handleSonarData();
-              else
-                dispatch(m_ping);
+              else if (m_data != NULL)
+                dispatch(m_data);
 
+              // Modify range if needed.
               if (m_args.range_modifier)
               {
                 if (m_range_counter.overflow())
