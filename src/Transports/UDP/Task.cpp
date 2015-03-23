@@ -76,6 +76,10 @@ namespace Transports
       bool underwater_comms;
       // Messages that will always be transmitted, disregarding comm limitations
       std::vector<std::string> allowed_messages;
+      // Enable use of dynamic nodes
+      bool dynamic_nodes;
+      // Only transmit messages from local system
+      bool only_local;
     };
 
     // Internal buffer size.
@@ -163,6 +167,14 @@ namespace Transports
         param("Always Transmitted Messages", m_args.allowed_messages)
         .defaultValue("")
         .description("List of messages that will always be transmitted disregarding communication limitations");
+
+        param("Dynamic Nodes", m_args.dynamic_nodes)
+        .defaultValue("true")
+        .description("Allow use of dynamic nodes.");
+
+        param("Local Messages Only", m_args.only_local)
+        .defaultValue("false")
+        .description("Only transmit messsages from local system.");
 
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
@@ -297,6 +309,9 @@ namespace Transports
             m_lcomms->setMyEstimatedState(static_cast<const IMC::EstimatedState*>(msg));
         }
 
+        if (m_args.only_local && msg->getSource() != this->getSystemId())
+          return;
+
         if (m_node_table.getActiveCount() == 0 && m_static_dsts.size() == 0)
           return;
 
@@ -320,8 +335,11 @@ namespace Transports
           { }
         }
 
-        // Send to dynamic nodes.
-        m_node_table.send(m_sock, m_bfr, rv, msg->getId());
+        if (m_args.dynamic_nodes)
+        {
+          // Send to dynamic nodes.
+          m_node_table.send(m_sock, m_bfr, rv, msg->getId());
+        }
       }
 
       void
