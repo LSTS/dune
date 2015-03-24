@@ -34,6 +34,8 @@ namespace Power
   {
     using DUNE_NAMESPACES;
 
+    // PSU packet state identifier.
+    static const unsigned c_pkt_state = 1;
     // PSU packet power identifier.
     static const unsigned c_pkt_power = 2;
 
@@ -54,6 +56,8 @@ namespace Power
       UCTK::Interface* m_psu_ctl;
       //! Current power channel state.
       IMC::PowerChannelState m_power_state;
+      //! Get state.
+      bool m_get_state;
       //! Task arguments.
       Arguments m_args;
 
@@ -69,6 +73,8 @@ namespace Power
         param("ESCC - PSU Device", m_args.psu_dev)
         .defaultValue("/dev/escc1")
         .description("ESCC device where PSU is connected");
+
+        m_get_state = false;
 
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
@@ -94,6 +100,9 @@ namespace Power
           else
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+
+          if ((info.major > 1) || (info.minor > 0))
+            m_get_state = true;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
@@ -150,6 +159,30 @@ namespace Power
         }
       }
 
+      //! Dispatch raw board state
+      //! @return true if successfully dispatched state
+      bool
+      dispatchState(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(c_pkt_state);
+
+        if (!m_psu_ctl->sendFrame(frame))
+          return false;
+
+        if (frame.getPayloadSize() != 2)
+          return false;
+
+        uint16_t value;
+        frame.get(value, 0);
+
+        IMC::Current c;
+        c.value = value / 1000.0;
+        dispatch(c);
+
+        return true;
+      }
+
       void
       consume(const IMC::QueryPowerChannelState* msg)
       {
@@ -159,9 +192,18 @@ namespace Power
       void
       onMain(void)
       {
+        Counter<double> timer(1.0);
+
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (timer.overflow())
+          {
+            timer.reset();
+            if (m_get_state)
+              dispatchState();
+          }
         }
       }
     };
