@@ -86,7 +86,7 @@ namespace DUNE
       //! @param[in] speed speed reference for maneuver
       //! @param[in] speed_units speed units of the reference
       //! @param[in] direction loiter direction according to IMC::Loiter
-      void 
+      void
       init(Maneuvers::Maneuver* task, double lat, double lon,
            float radius, float z, uint8_t z_units,
            float speed, uint8_t speed_units, uint8_t direction);
