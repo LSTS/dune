@@ -33,6 +33,7 @@
 #include <map>
 
 // DUNE headers.
+#include <DUNE/Tasks/Task.hpp>
 #include <DUNE/IMC/Message.hpp>
 
 namespace DUNE
