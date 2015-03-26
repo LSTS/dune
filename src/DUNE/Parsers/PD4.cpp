@@ -141,17 +141,14 @@ namespace DUNE
       m_data.e_vel_btm = 0.001 * stmp;
 
       // Bottom ranges.
-      uint16_t utmp = m_raw_data[10] * 256 + m_raw_data[9];
-      m_data.bm1_rng_btm = 0.01 * utmp;
+      uint16_t utmp = 0;
+      for (size_t i = 0; i < 4; ++i)
+      {
+        utmp = m_raw_data[10 + i * 2] * 256 + m_raw_data[9 + i * 2];
+        m_data.rng_to_btm[i] = 0.01 * utmp;
+      }
 
-      utmp = m_raw_data[12] * 256 + m_raw_data[11];
-      m_data.bm2_rng_btm = 0.01 * utmp;
-
-      utmp = m_raw_data[14] * 256 + m_raw_data[13];
-      m_data.bm3_rng_btm = 0.01 * utmp;
-
-      utmp = m_raw_data[16] * 256 + m_raw_data[15];
-      m_data.bm4_rng_btm = 0.01 * utmp;
+      m_data.bm_status = m_raw_data[17];
 
       // Water velocity.
       stmp = m_raw_data[19] * 256 + m_raw_data[18];
