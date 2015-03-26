@@ -68,14 +68,10 @@ namespace DUNE
         double y_vel_wtr;
         //! Z or Up velocity in relation to the water in m/s.
         double z_vel_wtr;
-        //! Beam #1 range to the bottom in m.
-        double bm1_rng_btm;
-        //! Beam #2 range to the bottom in m.
-        double bm2_rng_btm;
-        //! Beam #3 range to the bottom in m.
-        double bm3_rng_btm;
-        //! Beam #4 range to the bottom in m.
-        double bm4_rng_btm;
+        //! Ranges to the bottom in m (one per beam).
+        double rng_to_btm[4];
+        //! Bottom status.
+        uint8_t bm_status;
       };
 
       //! Default constructor.
