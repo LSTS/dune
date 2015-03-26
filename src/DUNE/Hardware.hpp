@@ -40,7 +40,6 @@ namespace DUNE
 #include <DUNE/Hardware/IOPort.hpp>
 #include <DUNE/Hardware/GPIO.hpp>
 #include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/PPS.hpp>
 #include <DUNE/Hardware/ESCC.hpp>
 #include <DUNE/Hardware/IntelHEX.hpp>
 #include <DUNE/Hardware/BasicModem.hpp>
