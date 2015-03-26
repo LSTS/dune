@@ -175,12 +175,14 @@ namespace Sensors
         .description("Entity label of sound speed provider");
 
         param("Device Position", m_args.position)
-        .defaultValue("0, 0, 0")
+        .defaultValue("0, -90, 0")
+        .units(Units::Meter)
         .size(3)
         .description("Device position relative to navigation estimation (relative to GPS sensor)");
 
         param("Device Orientation", m_args.orientation)
         .defaultValue("0, 0, 0")
+        .units(Units::Degree)
         .size(3)
         .description("Device orientation");
 
@@ -225,6 +227,13 @@ namespace Sensors
           m_sound_speed = m_args.sound_speed_def;
         }
 
+        if (!(paramChanged(m_args.beam_width)
+              or paramChanged(m_args.beam_angle)
+              or paramChanged(m_args.heading_alignment)
+              or paramChanged(m_args.orientation)
+              or paramChanged(m_args.position)))
+          return;
+
         IMC::BeamConfig bc;
         bc.beam_width = Angles::radians(m_args.beam_width);
         bc.beam_height = bc.beam_width;
@@ -240,8 +249,8 @@ namespace Sensors
         }
 
         double heading_alignment = Angles::radians(m_args.heading_alignment);
-        double beam_rel_x = m_args.xdcr_offset * cos(-heading_alignment);
-        double beam_rel_y = m_args.xdcr_offset * sin(-heading_alignment);
+        double beam_rel_x = m_args.xdcr_offset * std::cos(-heading_alignment);
+        double beam_rel_y = m_args.xdcr_offset * std::sin(-heading_alignment);
         double beam_angle = Angles::radians(m_args.beam_angle);
 
         // Beam 1.
@@ -251,8 +260,6 @@ namespace Sensors
         ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
         ds.psi = Angles::radians(m_args.heading_alignment - 90);
         m_altitude[0].location.push_back(ds);
-        trace("beam 1: %0.2f, %0.2f, %0.2f | %0.2f, %0.2f, %0.2f", ds.x, ds.y, ds.z,
-              Angles::degrees(ds.phi), Angles::degrees(ds.theta), Angles::degrees(ds.psi));
 
         // Beam 2.
         ds.x = m_args.position[0] + beam_rel_y;
@@ -261,8 +268,6 @@ namespace Sensors
         ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
         ds.psi = Angles::radians(m_args.heading_alignment + 90);
         m_altitude[1].location.push_back(ds);
-        trace("beam 2: %0.2f, %0.2f, %0.2f | %0.2f, %0.2f, %0.2f", ds.x, ds.y, ds.z,
-              Angles::degrees(ds.phi), Angles::degrees(ds.theta), Angles::degrees(ds.psi));
 
         // Beam 3.
         ds.x = m_args.position[0] + beam_rel_x;
@@ -271,8 +276,6 @@ namespace Sensors
         ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
         ds.psi = Angles::radians(m_args.heading_alignment);
         m_altitude[2].location.push_back(ds);
-        trace("beam 3: %0.2f, %0.2f, %0.2f | %0.2f, %0.2f, %0.2f", ds.x, ds.y, ds.z,
-              Angles::degrees(ds.phi), Angles::degrees(ds.theta), Angles::degrees(ds.psi));
 
         // Beam 4.
         ds.x = m_args.position[0] - beam_rel_x;
@@ -281,8 +284,6 @@ namespace Sensors
         ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
         ds.psi = Angles::radians(m_args.heading_alignment - 180);
         m_altitude[3].location.push_back(ds);
-        trace("beam 4: %0.2f, %0.2f, %0.2f | %0.2f, %0.2f, %0.2f", ds.x, ds.y, ds.z,
-              Angles::degrees(ds.phi), Angles::degrees(ds.theta), Angles::degrees(ds.psi));
 
         // Filtered altitude.
         m_altitude_filtered.location.clear();
@@ -335,6 +336,19 @@ namespace Sensors
         m_altitude[2].setSourceEntity(reserveEntity("DVL Beam 2"));
         m_altitude[3].setSourceEntity(reserveEntity("DVL Beam 3"));
         m_altitude_filtered.setSourceEntity(reserveEntity("DVL Filtered"));
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_sound_speed_eid = resolveEntity(m_args.sound_speed_elabel);
+        }
+        catch (...)
+        {
+          m_sound_speed = m_args.sound_speed_def;
+        }
       }
 
       void
