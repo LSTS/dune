@@ -37,6 +37,10 @@
 
 namespace Sensors
 {
+  //! Device driver for Klein's UUV3500 sidescan.
+  //!
+  //! This driver was designed to configure the sidescan to record data
+  //! files to an NFS mount.
   namespace Klein3500
   {
     using DUNE_NAMESPACES;

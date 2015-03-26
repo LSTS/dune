@@ -226,7 +226,6 @@ namespace Sensors
         const Packet* reply = readPacket(CMD_SET_FILE_FORMAT, 1.0);
         if (reply == NULL)
           throw std::runtime_error(DTR("failed to set recording file format"));
-        std::cerr << "RECORDING FILE FORMAT: " << format << std::endl;
       }
 
       void
@@ -236,8 +235,6 @@ namespace Sensors
         const Packet* reply = readPacket(CMD_SET_PINGS_PER_FILE, 1.0);
         if (reply == NULL)
           throw std::runtime_error(DTR("failed to set recording file ping count"));
-
-        std::cerr << "RECORDING PINGS PER FILE: " << ping_count << std::endl;
       }
 
       void
@@ -250,9 +247,7 @@ namespace Sensors
         if (reply == NULL)
           throw std::runtime_error(DTR("failed to set recording mode"));
 
-        std::cerr << "RECORDING MODE SET: " << mode << std::endl;
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
-        std::cerr << "STATUS: " << *status << std::endl;
       }
 
       void
@@ -268,8 +263,6 @@ namespace Sensors
           uint8_t data[259] = {0};
           uint8_t* ptr = data;
 
-          std::cerr << "PATH SIZE is: " << path_size << " / " << path << std::endl;
-
           ptr += ByteCopy::toBE(path_size, ptr);
           ptr += ByteCopy::toBE(action, ptr);
           std::memcpy(ptr, path.c_str(), path_size + 1);
@@ -281,12 +274,7 @@ namespace Sensors
 
           const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
           if (*status == 1)
-          {
-            std::cerr << "STATUS OK" << std::endl;
             break;
-          }
-          else
-            std::cerr << "STATUS: " << *status << std::endl;
 
           Delay::wait(0.1);
         }
@@ -312,10 +300,6 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to set recording file prefix"));
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
-        if (*status == 1)
-          std::cerr << "PREFIX OK" << std::endl;
-        else
-          std::cerr << "PREFIX: " << *status << std::endl;
       }
 
       void
@@ -329,7 +313,6 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to change file"));
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
-        std::cerr << "STATUS: " << *status << std::endl;
       }
 
       //! FIXME: keep backlog.
