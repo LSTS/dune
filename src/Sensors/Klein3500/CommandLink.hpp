@@ -248,6 +248,7 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to set recording mode"));
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
+        (void)status;
       }
 
       void
@@ -300,6 +301,7 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to set recording file prefix"));
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
+        (void)status;
       }
 
       void
@@ -313,6 +315,7 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to change file"));
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
+        (void)status;
       }
 
       //! FIXME: keep backlog.
