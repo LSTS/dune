@@ -67,7 +67,10 @@ namespace Transports
       "RECVFAILED",
       "RECVEND",
       "SENDSTART",
-      "SENDEND"
+      "SENDEND",
+      "SENDPBM",
+      "RECVPBM",
+      "CANCELEDPBM"
     };
 
     class Driver: public HayesModem
@@ -205,6 +208,20 @@ namespace Transports
         setBusy(true);
       }
 
+      //! Send piggyback instant message.
+      //! @param[in] data data to send.
+      //! @param[in] data_size number of bytes to send.
+      //! @param[in] dst destination address.
+      void
+      sendPBM(const uint8_t* data, size_t data_size, unsigned dst)
+      {
+        // Do not set modem busy.
+        std::string cmd = String::str("*SENDPBM,%u,%u,", data_size, dst);
+        cmd.append((char*)data, data_size);
+        sendAT(cmd);
+        expectOK();
+      }
+
       //! Retrieve the last computed acoustic signal propagation time
       //! between communicating devices.
       //! @return propagation time (microsecond).
@@ -319,7 +336,7 @@ namespace Transports
       }
 
       void
-      parse(const std::string& str, RecvIM& msg)
+      parse(const std::string& str, RecvIM& msg, bool piggyback)
       {
         int offset = 0;
         char flag[16] = {0};
@@ -328,27 +345,57 @@ namespace Transports
 
         if (getFirmwareVersion() == "1.6")
         {
-          rv = std::sscanf(str.c_str(),
-                           "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%f,%n",
-                           &data_size, &msg.src, &msg.dst, flag, &msg.bitrate,
-                           &msg.rssi, &msg.integrity, &msg.propagation_time,
-                           &msg.velocity, &offset);
+          if (!piggyback)
+          {
+            rv = std::sscanf(str.c_str(),
+                             "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%f,%n",
+                             &data_size, &msg.src, &msg.dst, flag, &msg.bitrate,
+                             &msg.rssi, &msg.integrity, &msg.propagation_time,
+                             &msg.velocity, &offset);
 
-          if (rv != 9)
-            throw std::runtime_error("invalid format");
+            if (rv != 9)
+              throw std::runtime_error("invalid format");
+          }
+          else
+          {
+            rv = std::sscanf(str.c_str(),
+                             "RECVPBM,%lu,%u,%u,%u,%f,%u,%f,%f,%n",
+                             &data_size, &msg.src, &msg.dst, &msg.bitrate,
+                             &msg.rssi, &msg.integrity, &msg.propagation_time,
+                             &msg.velocity, &offset);
+
+            if (rv != 8)
+              throw std::runtime_error("invalid format");
+          }
         }
         else
         {
-          rv = std::sscanf(str.c_str(),
-                           "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%n",
-                           &data_size, &msg.src, &msg.dst, flag, &msg.duration,
-                           &msg.rssi, &msg.integrity, &msg.velocity, &offset);
+          if (!piggyback)
+          {
+            rv = std::sscanf(str.c_str(),
+                             "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%n",
+                             &data_size, &msg.src, &msg.dst, flag, &msg.duration,
+                             &msg.rssi, &msg.integrity, &msg.velocity, &offset);
 
-          if (rv != 8)
-            throw std::runtime_error("invalid format");
+            if (rv != 8)
+              throw std::runtime_error("invalid format");
+          }
+          else
+          {
+            rv = std::sscanf(str.c_str(),
+                             "RECVPBM,%lu,%u,%u,%u,%f,%u,%f,%n",
+                             &data_size, &msg.src, &msg.dst, &msg.duration,
+                             &msg.rssi, &msg.integrity, &msg.velocity, &offset);
+
+            if (rv != 7)
+              throw std::runtime_error("invalid format");
+          }
         }
 
-        msg.ack = std::strcmp(flag, "ack") == 0;
+        if (!piggyback)
+          msg.ack = std::strcmp(flag, "ack") == 0;
+        else
+          msg.ack = false;
 
         if ((unsigned)offset >= str.size())
           throw std::runtime_error("empty payload");

@@ -322,11 +322,15 @@ namespace Transports
         if (String::startsWith(msg->value, "RECVIMS"))
           return;
         else if (String::startsWith(msg->value, "RECVIM"))
-          handleInstantMessage(msg->value);
+          handleInstantMessage(msg->value, false);
+        else if (String::startsWith(msg->value, "RECVPBM"))
+          handleInstantMessage(msg->value, true);
         else if (String::startsWith(msg->value, "DELIVEREDIM"))
           handleInstantMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "CANCELEDIM"))
-          handleInstantMessageFailed(msg->value);
+          handleInstantMessageCanceled(msg->value);
+        else if (String::startsWith(msg->value, "CANCELEDPBM"))
+          handleInstantMessageCanceled(msg->value);
         else if (String::startsWith(msg->value, "FAILEDIM"))
           handleInstantMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
@@ -376,6 +380,7 @@ namespace Transports
         ticket.imc_eid = msg->getSourceEntity();
         ticket.seq = msg->seq;
         ticket.ack = (msg->flags & IMC::UamTxFrame::UTF_ACK) != 0;
+        ticket.pbm = (msg->flags & IMC::UamTxFrame::UTF_DELAYED) != 0;
 
         if (msg->sys_dst == getSystemName())
         {
@@ -404,7 +409,12 @@ namespace Transports
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
-        m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
+
+        if (!ticket.pbm)
+          m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
+        else
+          m_driver->sendPBM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
+
         m_kalive_counter.reset();
       }
 
@@ -415,6 +425,12 @@ namespace Transports
 
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
+      }
+
+      void
+      handleInstantMessageCanceled(const std::string& str)
+      {
+        (void)str;
       }
 
       void
@@ -431,7 +447,8 @@ namespace Transports
             {
               IMC::UamRxRange range;
               range.sys = lookupSystemName(dst);
-              range.seq = m_ticket->seq;
+              if (m_ticket != NULL)
+                range.seq = m_ticket->seq;
               range.value = (ptime * m_sound_speed) / 1000000.0;
               dispatch(range);
             }
@@ -463,10 +480,10 @@ namespace Transports
       }
 
       void
-      handleInstantMessage(const std::string& str)
+      handleInstantMessage(const std::string& str, bool piggyback)
       {
         RecvIM reply;
-        m_driver->parse(str, reply);
+        m_driver->parse(str, reply, piggyback);
 
         IMC::UamRxFrame msg;
         msg.data.assign((char*)&reply.data[0], (char*)&reply.data[0] + reply.data.size());
@@ -494,6 +511,9 @@ namespace Transports
         // Fill flags.
         if (m_address != reply.dst)
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
+
+        if (piggyback)
+          msg.flags |= IMC::UamRxFrame::URF_DELAYED;
 
         dispatch(msg);
 
