@@ -208,7 +208,7 @@ namespace Sensors
       }
 
       //! Set sound velocity.
-      //! @param[in] speed sound velocity
+      //! @param[in] speed sound velocity.
       void
       setSoundVelocity(float speed)
       {
@@ -294,6 +294,7 @@ namespace Sensors
       }
 
       //! Set display mode.
+      //! @param[in] xdcr display mode.
       void
       setDisplayMode(bool xdcr)
       {

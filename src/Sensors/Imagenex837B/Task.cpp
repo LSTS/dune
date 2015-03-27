@@ -33,6 +33,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
+#include "ExternalControl.hpp"
 #include "Frame837.hpp"
 #include "Frame83P.hpp"
 
@@ -201,6 +202,8 @@ namespace Sensors
       Frame83P* m_frame83P;
       //! Sonar Return Data.
       IMC::SonarData* m_data;
+      //! External Control frame.
+      ExternalControl* m_ec;
       //! Output switch data.
       uint8_t m_sdata[c_sdata_size];
       //! Header Return data.
@@ -228,7 +231,8 @@ namespace Sensors
         m_sock(NULL),
         m_frame837(NULL),
         m_frame83P(NULL),
-        m_data(NULL)
+        m_data(NULL),
+        m_ec(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -398,6 +402,17 @@ namespace Sensors
         if (paramChanged(m_args.data_points))
           m_args.data_points /= 1000;
 
+        // Check external control option.
+        if (m_args.ec)
+        {
+          m_ec = new ExternalControl();
+          m_ec->setProfileTiltAngle(m_args.tilt_angle);
+        }
+        else
+        {
+          Memory::clear(m_ec);
+        }
+
         // Check if data is stored in IMC.
         if (!m_args.save_to_file)
           initializeSonarData();
@@ -432,7 +447,6 @@ namespace Sensors
         setSwitchDelay(m_args.switch_delay);
         setAbsorption((unsigned)(m_args.absorption * 100));
         setDataPoints(m_args.data_points);
-
 
         if (m_args.auto_gain)
         {
@@ -497,6 +511,7 @@ namespace Sensors
         Memory::clear(m_frame837);
         Memory::clear(m_frame83P);
         Memory::clear(m_data);
+        Memory::clear(m_ec);
         requestDeactivation();
       }
 
@@ -632,6 +647,9 @@ namespace Sensors
 
         if (useFrame837())
           m_frame837->setSoundVelocity(msg->value);
+
+        if (useEC())
+          m_ec->setSoundVelocity(msg->value);
       }
 
       //! Check if data should be stored in 837 files.
@@ -642,20 +660,28 @@ namespace Sensors
         return m_args.save_to_file && !m_args.ec;
       }
 
-      //! Check if frame object is initialized
-      //! @return true if object initialized, false otherwise
+      //! Check if frame object is initialized.
+      //! @return true if object initialized, false otherwise.
       bool
       useFrame837(void)
       {
         return saveIn837() && (m_frame837 != NULL);
       }
 
-      //! Check if frame object is initialized
-      //! @return true if object initialized, false otherwise
+      //! Check if frame object is initialized.
+      //! @return true if object initialized, false otherwise.
       bool
       useFrame83P(void)
       {
         return saveIn83P() && (m_frame83P != NULL);
+      }
+
+      //! Check if external control object is initialized.
+      //! @return true if object initialized, false otherwise.
+      bool
+      useEC(void)
+      {
+        return m_args.ec && (m_ec != NULL);
       }
 
       //! Check if data should be stored in 83P files.
@@ -713,6 +739,9 @@ namespace Sensors
 
         if (useFrame837())
           m_frame837->setStartGain(value);
+
+        if (useEC())
+          m_ec->setGain(value);
       }
 
       //! Define switch command data switch delay.
@@ -775,6 +804,9 @@ namespace Sensors
 
         if (useFrame837())
           m_frame837->setDisplayMode(m_args.xdcr);
+
+        if (useEC())
+          m_ec->setDisplayMode(m_args.xdcr);
       }
 
       //! Define switch command data auto gain threshold.
@@ -791,7 +823,7 @@ namespace Sensors
       ping(unsigned data_point)
       {
         m_sdata[SD_PACKET_NUM] = (uint8_t)data_point;
-        m_sock->write((char*)m_sdata, c_sdata_size);
+        m_sock->write((const char*)m_sdata, c_sdata_size);
 
         int rv = m_sock->read((char*)m_rdata_hdr, c_rdata_hdr_size);
         if (rv != c_rdata_hdr_size)
@@ -812,6 +844,16 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to read footer"));
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      //! Request get echo using External Control frame.
+      void
+      getEcho(void)
+      {
+        if (useEC())
+          m_sock->write((const char*)m_ec->getData(), m_ec->getSize());
+
+        // @todo: read echo.
       }
 
       //! Handle sonar data to 837 file format.
@@ -873,6 +915,49 @@ namespace Sensors
           setRange((unsigned)(m_estate.alt * m_args.range_modifier_mul_k + m_args.range_modifier_add_k));
       }
 
+      //! Request sonar data.
+      void
+      request(void)
+      {
+        if (m_args.ec)
+        {
+          // Use external binary.
+          getEcho();
+        }
+        else
+        {
+          // Direct communication with sonar head.
+          for (unsigned i = 0; i < m_args.data_points; ++i)
+            ping(i);
+        }
+      }
+
+      //! Process return data.
+      void
+      process(void)
+      {
+        // Store data or dispatch to bus.
+        if (m_args.save_to_file)
+          handleSonarData();
+        else if (m_data != NULL)
+          dispatch(m_data);
+      }
+
+      //! Check sonar range.
+      void
+      checkRange(void)
+      {
+        // Modify range if needed.
+        if (m_args.range_modifier)
+        {
+          if (m_range_counter.overflow())
+          {
+            checkAltitude();
+            m_range_counter.reset();
+          }
+        }
+      }
+
       void
       onMain(void)
       {
@@ -884,28 +969,9 @@ namespace Sensors
           {
             try
             {
-              // Direct communication with sonar head.
-              if (!m_args.ec)
-              {
-                for (unsigned i = 0; i < m_args.data_points; ++i)
-                  ping(i);
-              }
-
-              // Store data.
-              if (m_args.save_to_file)
-                handleSonarData();
-              else if (m_data != NULL)
-                dispatch(m_data);
-
-              // Modify range if needed.
-              if (m_args.range_modifier)
-              {
-                if (m_range_counter.overflow())
-                {
-                  checkAltitude();
-                  m_range_counter.reset();
-                }
-              }
+              request();
+              process();
+              checkRange();
             }
             catch (std::exception& e)
             {
