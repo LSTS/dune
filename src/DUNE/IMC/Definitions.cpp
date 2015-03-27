@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -6398,6 +6398,74 @@ namespace DUNE
 
     void
     FineOil::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    Turbidity::Turbidity(void)
+    {
+      m_header.mgid = 288;
+      clear();
+    }
+
+    void
+    Turbidity::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    Turbidity::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Turbidity& other__ = static_cast<const Turbidity&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    Turbidity::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Turbidity::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Turbidity::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Turbidity::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Turbidity::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Turbidity::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Turbidity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
     }
@@ -13398,6 +13466,213 @@ namespace DUNE
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 
+    Formation::Formation(void)
+    {
+      m_header.mgid = 484;
+      clear();
+      participants.setParent(this);
+    }
+
+    void
+    Formation::clear(void)
+    {
+      formation_name.clear();
+      type = 0;
+      op = 0;
+      group_name.clear();
+      plan_id.clear();
+      description.clear();
+      reference_frame = 0;
+      participants.clear();
+      leader_bank_lim = 0;
+      leader_speed_min = 0;
+      leader_speed_max = 0;
+      leader_alt_min = 0;
+      leader_alt_max = 0;
+      pos_sim_err_lim = 0;
+      pos_sim_err_wrn = 0;
+      pos_sim_err_timeout = 0;
+      converg_max = 0;
+      converg_timeout = 0;
+      comms_timeout = 0;
+      turb_lim = 0;
+      custom.clear();
+    }
+
+    bool
+    Formation::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Formation& other__ = static_cast<const Formation&>(msg__);
+      if (formation_name != other__.formation_name) return false;
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
+      if (group_name != other__.group_name) return false;
+      if (plan_id != other__.plan_id) return false;
+      if (description != other__.description) return false;
+      if (reference_frame != other__.reference_frame) return false;
+      if (participants != other__.participants) return false;
+      if (leader_bank_lim != other__.leader_bank_lim) return false;
+      if (leader_speed_min != other__.leader_speed_min) return false;
+      if (leader_speed_max != other__.leader_speed_max) return false;
+      if (leader_alt_min != other__.leader_alt_min) return false;
+      if (leader_alt_max != other__.leader_alt_max) return false;
+      if (pos_sim_err_lim != other__.pos_sim_err_lim) return false;
+      if (pos_sim_err_wrn != other__.pos_sim_err_wrn) return false;
+      if (pos_sim_err_timeout != other__.pos_sim_err_timeout) return false;
+      if (converg_max != other__.converg_max) return false;
+      if (converg_timeout != other__.converg_timeout) return false;
+      if (comms_timeout != other__.comms_timeout) return false;
+      if (turb_lim != other__.turb_lim) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    Formation::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Formation::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(formation_name, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(group_name, ptr__);
+      ptr__ += IMC::serialize(plan_id, ptr__);
+      ptr__ += IMC::serialize(description, ptr__);
+      ptr__ += IMC::serialize(reference_frame, ptr__);
+      ptr__ += participants.serialize(ptr__);
+      ptr__ += IMC::serialize(leader_bank_lim, ptr__);
+      ptr__ += IMC::serialize(leader_speed_min, ptr__);
+      ptr__ += IMC::serialize(leader_speed_max, ptr__);
+      ptr__ += IMC::serialize(leader_alt_min, ptr__);
+      ptr__ += IMC::serialize(leader_alt_max, ptr__);
+      ptr__ += IMC::serialize(pos_sim_err_lim, ptr__);
+      ptr__ += IMC::serialize(pos_sim_err_wrn, ptr__);
+      ptr__ += IMC::serialize(pos_sim_err_timeout, ptr__);
+      ptr__ += IMC::serialize(converg_max, ptr__);
+      ptr__ += IMC::serialize(converg_timeout, ptr__);
+      ptr__ += IMC::serialize(comms_timeout, ptr__);
+      ptr__ += IMC::serialize(turb_lim, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Formation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(group_name, bfr__, size__);
+      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(description, bfr__, size__);
+      bfr__ += IMC::deserialize(reference_frame, bfr__, size__);
+      bfr__ += participants.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(leader_bank_lim, bfr__, size__);
+      bfr__ += IMC::deserialize(leader_speed_min, bfr__, size__);
+      bfr__ += IMC::deserialize(leader_speed_max, bfr__, size__);
+      bfr__ += IMC::deserialize(leader_alt_min, bfr__, size__);
+      bfr__ += IMC::deserialize(leader_alt_max, bfr__, size__);
+      bfr__ += IMC::deserialize(pos_sim_err_lim, bfr__, size__);
+      bfr__ += IMC::deserialize(pos_sim_err_wrn, bfr__, size__);
+      bfr__ += IMC::deserialize(pos_sim_err_timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(converg_max, bfr__, size__);
+      bfr__ += IMC::deserialize(converg_timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(comms_timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(turb_lim, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Formation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(formation_name, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(group_name, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
+      bfr__ += IMC::deserialize(reference_frame, bfr__, size__);
+      bfr__ += participants.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_bank_lim, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_speed_min, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_speed_max, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_alt_min, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(leader_alt_max, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pos_sim_err_lim, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pos_sim_err_wrn, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pos_sim_err_timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(converg_max, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(converg_timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(comms_timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(turb_lim, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Formation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "formation_name", formation_name, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "group_name", group_name, nindent__);
+      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
+      IMC::toJSON(os__, "description", description, nindent__);
+      IMC::toJSON(os__, "reference_frame", reference_frame, nindent__);
+      participants.toJSON(os__, "participants", nindent__);
+      IMC::toJSON(os__, "leader_bank_lim", leader_bank_lim, nindent__);
+      IMC::toJSON(os__, "leader_speed_min", leader_speed_min, nindent__);
+      IMC::toJSON(os__, "leader_speed_max", leader_speed_max, nindent__);
+      IMC::toJSON(os__, "leader_alt_min", leader_alt_min, nindent__);
+      IMC::toJSON(os__, "leader_alt_max", leader_alt_max, nindent__);
+      IMC::toJSON(os__, "pos_sim_err_lim", pos_sim_err_lim, nindent__);
+      IMC::toJSON(os__, "pos_sim_err_wrn", pos_sim_err_wrn, nindent__);
+      IMC::toJSON(os__, "pos_sim_err_timeout", pos_sim_err_timeout, nindent__);
+      IMC::toJSON(os__, "converg_max", converg_max, nindent__);
+      IMC::toJSON(os__, "converg_timeout", converg_timeout, nindent__);
+      IMC::toJSON(os__, "comms_timeout", comms_timeout, nindent__);
+      IMC::toJSON(os__, "turb_lim", turb_lim, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    void
+    Formation::setTimeStampNested(double value__)
+    {
+      participants.setTimeStamp(value__);
+    }
+
+    void
+    Formation::setSourceNested(uint16_t value__)
+    {
+      participants.setSource(value__);
+    }
+
+    void
+    Formation::setSourceEntityNested(uint8_t value__)
+    {
+      participants.setSourceEntity(value__);
+    }
+
+    void
+    Formation::setDestinationNested(uint16_t value__)
+    {
+      participants.setDestination(value__);
+    }
+
+    void
+    Formation::setDestinationEntityNested(uint8_t value__)
+    {
+      participants.setDestinationEntity(value__);
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;
@@ -14361,6 +14636,104 @@ namespace DUNE
     {
       IMC::toJSON(os__, "autonomy", autonomy, nindent__);
       IMC::toJSON(os__, "mode", mode, nindent__);
+    }
+
+    FormationState::FormationState(void)
+    {
+      m_header.mgid = 512;
+      clear();
+    }
+
+    void
+    FormationState::clear(void)
+    {
+      type = 0;
+      op = 0;
+      possimerr = 0;
+      converg = 0;
+      turbulence = 0;
+      possimmon = 0;
+      commmon = 0;
+      convergmon = 0;
+    }
+
+    bool
+    FormationState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationState& other__ = static_cast<const FormationState&>(msg__);
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
+      if (possimerr != other__.possimerr) return false;
+      if (converg != other__.converg) return false;
+      if (turbulence != other__.turbulence) return false;
+      if (possimmon != other__.possimmon) return false;
+      if (commmon != other__.commmon) return false;
+      if (convergmon != other__.convergmon) return false;
+      return true;
+    }
+
+    int
+    FormationState::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(possimerr, ptr__);
+      ptr__ += IMC::serialize(converg, ptr__);
+      ptr__ += IMC::serialize(turbulence, ptr__);
+      ptr__ += IMC::serialize(possimmon, ptr__);
+      ptr__ += IMC::serialize(commmon, ptr__);
+      ptr__ += IMC::serialize(convergmon, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(possimerr, bfr__, size__);
+      bfr__ += IMC::deserialize(converg, bfr__, size__);
+      bfr__ += IMC::deserialize(turbulence, bfr__, size__);
+      bfr__ += IMC::deserialize(possimmon, bfr__, size__);
+      bfr__ += IMC::deserialize(commmon, bfr__, size__);
+      bfr__ += IMC::deserialize(convergmon, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(possimerr, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(converg, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(turbulence, bfr__, size__);
+      bfr__ += IMC::deserialize(possimmon, bfr__, size__);
+      bfr__ += IMC::deserialize(commmon, bfr__, size__);
+      bfr__ += IMC::deserialize(convergmon, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "possimerr", possimerr, nindent__);
+      IMC::toJSON(os__, "converg", converg, nindent__);
+      IMC::toJSON(os__, "turbulence", turbulence, nindent__);
+      IMC::toJSON(os__, "possimmon", possimmon, nindent__);
+      IMC::toJSON(os__, "commmon", commmon, nindent__);
+      IMC::toJSON(os__, "convergmon", convergmon, nindent__);
     }
 
     Abort::Abort(void)
@@ -18858,6 +19231,266 @@ namespace DUNE
       IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
     }
 
+    FormationControlParams::FormationControlParams(void)
+    {
+      m_header.mgid = 822;
+      clear();
+    }
+
+    void
+    FormationControlParams::clear(void)
+    {
+      action = 0;
+      lon_gain = 0;
+      lat_gain = 0;
+      bond_thick = 0;
+      lead_gain = 0;
+      deconfl_gain = 0;
+      accel_switch_gain = 0;
+      safe_dist = 0;
+      deconflict_offset = 0;
+      accel_safe_margin = 0;
+      accel_lim_x = 0;
+    }
+
+    bool
+    FormationControlParams::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationControlParams& other__ = static_cast<const FormationControlParams&>(msg__);
+      if (action != other__.action) return false;
+      if (lon_gain != other__.lon_gain) return false;
+      if (lat_gain != other__.lat_gain) return false;
+      if (bond_thick != other__.bond_thick) return false;
+      if (lead_gain != other__.lead_gain) return false;
+      if (deconfl_gain != other__.deconfl_gain) return false;
+      if (accel_switch_gain != other__.accel_switch_gain) return false;
+      if (safe_dist != other__.safe_dist) return false;
+      if (deconflict_offset != other__.deconflict_offset) return false;
+      if (accel_safe_margin != other__.accel_safe_margin) return false;
+      if (accel_lim_x != other__.accel_lim_x) return false;
+      return true;
+    }
+
+    int
+    FormationControlParams::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationControlParams::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(action, ptr__);
+      ptr__ += IMC::serialize(lon_gain, ptr__);
+      ptr__ += IMC::serialize(lat_gain, ptr__);
+      ptr__ += IMC::serialize(bond_thick, ptr__);
+      ptr__ += IMC::serialize(lead_gain, ptr__);
+      ptr__ += IMC::serialize(deconfl_gain, ptr__);
+      ptr__ += IMC::serialize(accel_switch_gain, ptr__);
+      ptr__ += IMC::serialize(safe_dist, ptr__);
+      ptr__ += IMC::serialize(deconflict_offset, ptr__);
+      ptr__ += IMC::serialize(accel_safe_margin, ptr__);
+      ptr__ += IMC::serialize(accel_lim_x, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationControlParams::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(action, bfr__, size__);
+      bfr__ += IMC::deserialize(lon_gain, bfr__, size__);
+      bfr__ += IMC::deserialize(lat_gain, bfr__, size__);
+      bfr__ += IMC::deserialize(bond_thick, bfr__, size__);
+      bfr__ += IMC::deserialize(lead_gain, bfr__, size__);
+      bfr__ += IMC::deserialize(deconfl_gain, bfr__, size__);
+      bfr__ += IMC::deserialize(accel_switch_gain, bfr__, size__);
+      bfr__ += IMC::deserialize(safe_dist, bfr__, size__);
+      bfr__ += IMC::deserialize(deconflict_offset, bfr__, size__);
+      bfr__ += IMC::deserialize(accel_safe_margin, bfr__, size__);
+      bfr__ += IMC::deserialize(accel_lim_x, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationControlParams::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(action, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon_gain, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat_gain, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(bond_thick, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lead_gain, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(deconfl_gain, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(accel_switch_gain, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(safe_dist, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(deconflict_offset, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(accel_safe_margin, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(accel_lim_x, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationControlParams::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "action", action, nindent__);
+      IMC::toJSON(os__, "lon_gain", lon_gain, nindent__);
+      IMC::toJSON(os__, "lat_gain", lat_gain, nindent__);
+      IMC::toJSON(os__, "bond_thick", bond_thick, nindent__);
+      IMC::toJSON(os__, "lead_gain", lead_gain, nindent__);
+      IMC::toJSON(os__, "deconfl_gain", deconfl_gain, nindent__);
+      IMC::toJSON(os__, "accel_switch_gain", accel_switch_gain, nindent__);
+      IMC::toJSON(os__, "safe_dist", safe_dist, nindent__);
+      IMC::toJSON(os__, "deconflict_offset", deconflict_offset, nindent__);
+      IMC::toJSON(os__, "accel_safe_margin", accel_safe_margin, nindent__);
+      IMC::toJSON(os__, "accel_lim_x", accel_lim_x, nindent__);
+    }
+
+    FormationEvaluation::FormationEvaluation(void)
+    {
+      m_header.mgid = 823;
+      clear();
+      controlparams.setParent(this);
+    }
+
+    void
+    FormationEvaluation::clear(void)
+    {
+      type = 0;
+      op = 0;
+      err_mean = 0;
+      dist_min_abs = 0;
+      dist_min_mean = 0;
+      roll_rate_mean = 0;
+      time = 0;
+      controlparams.clear();
+    }
+
+    bool
+    FormationEvaluation::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FormationEvaluation& other__ = static_cast<const FormationEvaluation&>(msg__);
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
+      if (err_mean != other__.err_mean) return false;
+      if (dist_min_abs != other__.dist_min_abs) return false;
+      if (dist_min_mean != other__.dist_min_mean) return false;
+      if (roll_rate_mean != other__.roll_rate_mean) return false;
+      if (time != other__.time) return false;
+      if (controlparams != other__.controlparams) return false;
+      return true;
+    }
+
+    int
+    FormationEvaluation::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    FormationEvaluation::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(err_mean, ptr__);
+      ptr__ += IMC::serialize(dist_min_abs, ptr__);
+      ptr__ += IMC::serialize(dist_min_mean, ptr__);
+      ptr__ += IMC::serialize(roll_rate_mean, ptr__);
+      ptr__ += IMC::serialize(time, ptr__);
+      ptr__ += controlparams.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FormationEvaluation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(roll_rate_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(time, bfr__, size__);
+      bfr__ += controlparams.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FormationEvaluation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(roll_rate_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time, bfr__, size__);
+      bfr__ += controlparams.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FormationEvaluation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "err_mean", err_mean, nindent__);
+      IMC::toJSON(os__, "dist_min_abs", dist_min_abs, nindent__);
+      IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
+      IMC::toJSON(os__, "roll_rate_mean", roll_rate_mean, nindent__);
+      IMC::toJSON(os__, "time", time, nindent__);
+      controlparams.toJSON(os__, "controlparams", nindent__);
+    }
+
+    void
+    FormationEvaluation::setTimeStampNested(double value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setSourceNested(uint16_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setSource(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setSourceEntityNested(uint8_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setDestinationNested(uint16_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setDestination(value__);
+      }
+    }
+
+    void
+    FormationEvaluation::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setDestinationEntity(value__);
+      }
+    }
+
     MessagePart::MessagePart(void)
     {
       m_header.mgid = 877;
@@ -19253,6 +19886,107 @@ namespace DUNE
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "z_units", z_units, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
+    }
+
+    ParametersXml::ParametersXml(void)
+    {
+      m_header.mgid = 893;
+      clear();
+    }
+
+    void
+    ParametersXml::clear(void)
+    {
+      locale.clear();
+      config.clear();
+    }
+
+    bool
+    ParametersXml::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ParametersXml& other__ = static_cast<const ParametersXml&>(msg__);
+      if (locale != other__.locale) return false;
+      if (config != other__.config) return false;
+      return true;
+    }
+
+    int
+    ParametersXml::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    ParametersXml::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(locale, ptr__);
+      ptr__ += IMC::serialize(config, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ParametersXml::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(locale, bfr__, size__);
+      bfr__ += IMC::deserialize(config, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ParametersXml::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(locale, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(config, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ParametersXml::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "locale", locale, nindent__);
+      IMC::toJSON(os__, "config", config, nindent__);
+    }
+
+    GetParametersXml::GetParametersXml(void)
+    {
+      m_header.mgid = 894;
+      clear();
+    }
+
+    void
+    GetParametersXml::clear(void)
+    {
+    }
+
+    int
+    GetParametersXml::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    GetParametersXml::serializeFields(uint8_t* bfr__) const
+    {
+      return bfr__;
+    }
+
+    uint16_t
+    GetParametersXml::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    uint16_t
+    GetParametersXml::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
     }
   }
 }

@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -114,6 +114,7 @@ MESSAGE(284, DataSanity)
 MESSAGE(285, RhodamineDye)
 MESSAGE(286, CrudeOil)
 MESSAGE(287, FineOil)
+MESSAGE(288, Turbidity)
 MESSAGE(300, CameraZoom)
 MESSAGE(301, SetThrusterActuation)
 MESSAGE(302, SetServoPosition)
@@ -191,6 +192,7 @@ MESSAGE(480, FollowRefState)
 MESSAGE(481, FormationMonitor)
 MESSAGE(482, RelativeState)
 MESSAGE(483, Dislodge)
+MESSAGE(484, Formation)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
 MESSAGE(502, MonitorEntityState)
@@ -203,6 +205,7 @@ MESSAGE(508, VehicleMedium)
 MESSAGE(509, Collision)
 MESSAGE(510, FormState)
 MESSAGE(511, AutopilotMode)
+MESSAGE(512, FormationState)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)
 MESSAGE(552, PlanManeuver)
@@ -255,10 +258,14 @@ MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
 MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
+MESSAGE(822, FormationControlParams)
+MESSAGE(823, FormationEvaluation)
 MESSAGE(877, MessagePart)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
 MESSAGE(890, UsblAngles)
 MESSAGE(891, UsblPosition)
 MESSAGE(892, UsblFix)
+MESSAGE(893, ParametersXml)
+MESSAGE(894, GetParametersXml)
 #undef MESSAGE

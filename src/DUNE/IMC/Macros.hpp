@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4ab0411c6256574a5ac1785347d0a9f2                            *
+// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -202,6 +202,8 @@
 #define DUNE_IMC_CRUDEOIL 286
 //! FineOil identification number.
 #define DUNE_IMC_FINEOIL 287
+//! Turbidity identification number.
+#define DUNE_IMC_TURBIDITY 288
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -356,6 +358,8 @@
 #define DUNE_IMC_RELATIVESTATE 482
 //! Dislodge identification number.
 #define DUNE_IMC_DISLODGE 483
+//! Formation identification number.
+#define DUNE_IMC_FORMATION 484
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -380,6 +384,8 @@
 #define DUNE_IMC_FORMSTATE 510
 //! AutopilotMode identification number.
 #define DUNE_IMC_AUTOPILOTMODE 511
+//! FormationState identification number.
+#define DUNE_IMC_FORMATIONSTATE 512
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -484,6 +490,10 @@
 #define DUNE_IMC_FORMCTRLPARAM 820
 //! FormationEval identification number.
 #define DUNE_IMC_FORMATIONEVAL 821
+//! FormationControlParams identification number.
+#define DUNE_IMC_FORMATIONCONTROLPARAMS 822
+//! FormationEvaluation identification number.
+#define DUNE_IMC_FORMATIONEVALUATION 823
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.
@@ -496,5 +506,9 @@
 #define DUNE_IMC_USBLPOSITION 891
 //! UsblFix identification number.
 #define DUNE_IMC_USBLFIX 892
+//! ParametersXml identification number.
+#define DUNE_IMC_PARAMETERSXML 893
+//! GetParametersXml identification number.
+#define DUNE_IMC_GETPARAMETERSXML 894
 
 #endif
