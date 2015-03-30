@@ -94,6 +94,7 @@ namespace Actuators
       IMC::Current m_servo_amp[c_servo_count];
       //! Serial port device.
       SerialPort* m_uart;
+      //! Command listener.
       Listener* m_listener;
       //! Minimum excursion (º).
       double m_exc_min[c_servo_count];
@@ -101,6 +102,12 @@ namespace Actuators
       double m_exc_max[c_servo_count];
       //! Demand resolution.
       uint8_t m_demand_res;
+      //! Count of invalid checksums.
+      unsigned m_stat_invalid;
+      //! Count of communication errors.
+      unsigned m_stat_error;
+      //! Count of command timeouts.
+      unsigned m_stat_timeout;
       //! Watchdog.
       Counter<double> m_wdog;
 
@@ -167,11 +174,133 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        LUCL::ProtocolParser::sendCommand(CMD_PARAMS_CON, 0, 0, m_uart);
-        LUCL::ProtocolParser::sendCommand(CMD_PARAMS_EFF, 0, 0, m_uart);
-        LUCL::ProtocolParser::sendCommand(CMD_STATE, CONT_OUT_RATE_10HZ, m_uart);
+        clearStats();
+
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+
+        while (!stopping())
+        {
+          consumeMessages();
+          if (!stopContinuous())
+            continue;
+
+          consumeMessages();
+          if (!readConstantParameters())
+            continue;
+
+          consumeMessages();
+          if (!readEffectiveParameters())
+            continue;
+
+          consumeMessages();
+          if (!startContinuous())
+            continue;
+
+          break;
+        }
 
         m_wdog.setTop(5.0);
+      }
+
+      void
+      consume(const IMC::SetServoPosition* msg)
+      {
+        if (msg->id >= c_servo_count)
+          return;
+
+        setServoPosition(msg->id, msg->value);
+      }
+
+      bool
+      readConstantParameters(void)
+      {
+        LUCL::ProtocolParser::sendCommand(CMD_PARAMS_CON, 0, 0, m_uart);
+        LUCL::Command* cmd = waitForReply(CMD_PARAMS_CON, 1.0);
+        if (cmd == NULL)
+          return false;
+
+        m_demand_res = cmd->command.data[6];
+        delete cmd;
+        return true;
+      }
+
+      bool
+      readEffectiveParameters(void)
+      {
+        LUCL::ProtocolParser::sendCommand(CMD_PARAMS_EFF, 0, 0, m_uart);
+        LUCL::Command* cmd = waitForReply(CMD_PARAMS_EFF, 1.0);
+        if (cmd == NULL)
+          return false;
+
+        uint8_t* ptr = cmd->command.data;
+        ptr += 2;
+
+        for (unsigned i = 0; i < c_servo_count; ++i)
+        {
+          uint16_t exc_min = (ptr[i * 2 + 17] << 8) | ptr[i * 2 + 16];
+          uint16_t exc_max = (ptr[i * 2 + 25] << 8) | ptr[i * 2 + 24];
+
+          m_exc_min[i] = -exc_min;
+          m_exc_max[i] = exc_max;
+
+          setServoPosition(i, 0);
+        }
+
+        delete cmd;
+        return true;
+      }
+
+      bool
+      startContinuous(void)
+      {
+        LUCL::ProtocolParser::sendCommand(CMD_STATE, CONT_OUT_RATE_10HZ, m_uart);
+        return waitForReplyAndDiscard(CMD_STATE, 1.0);
+      }
+
+      bool
+      stopContinuous(void)
+      {
+        LUCL::ProtocolParser::sendCommand(CMD_STATE, CONT_OUT_RATE_0HZ, m_uart);
+        LUCL::ProtocolParser::sendCommand(CMD_CHECK_FUSES, 0, 0, m_uart);
+        return waitForReplyAndDiscard(CMD_CHECK_FUSES, 1.0);
+      }
+
+      LUCL::Command*
+      waitForReply(Commands command, double timeout)
+      {
+        Counter<double> timer(timeout);
+        while (!timer.overflow())
+        {
+          if (m_listener->waitForCommand(timer.getRemaining()))
+          {
+            LUCL::Command* cmd = m_listener->pop();
+            if (cmd == NULL)
+              continue;
+
+            if (cmd->command.code == command)
+              return cmd;
+
+            delete cmd;
+          }
+        }
+
+        ++m_stat_timeout;
+        dispatchStats();
+
+        return NULL;
+      }
+
+      bool
+      waitForReplyAndDiscard(Commands command, double timeout)
+      {
+        LUCL::Command* cmd = waitForReply(command, timeout);
+        if (cmd != NULL)
+        {
+          delete cmd;
+          return true;
+        }
+
+        return false;
       }
 
       uint8_t
@@ -190,15 +319,6 @@ namespace Actuators
           demand = m_demand_res;
 
         return demand;
-      }
-
-      void
-      consume(const IMC::SetServoPosition* msg)
-      {
-        if (msg->id >= c_servo_count)
-          return;
-
-        setServoPosition(msg->id, msg->value);
       }
 
       void
@@ -235,31 +355,6 @@ namespace Actuators
       }
 
       void
-      handleParamsEff(LUCL::Command::CommandPayload& cmd)
-      {
-        uint8_t* ptr = cmd.data;
-
-        ptr += 2;
-
-        for (unsigned i = 0; i < c_servo_count; ++i)
-        {
-          uint16_t exc_min = (ptr[i * 2 + 17] << 8) | ptr[i * 2 + 16];
-          uint16_t exc_max = (ptr[i * 2 + 25] << 8) | ptr[i * 2 + 24];
-
-          m_exc_min[i] = -exc_min;
-          m_exc_max[i] = exc_max;
-
-          setServoPosition(i, 0);
-        }
-      }
-
-      void
-      handleParamsCon(LUCL::Command::CommandPayload& cmd)
-      {
-        m_demand_res = cmd.data[6];
-      }
-
-      void
       handleCommand(LUCL::Command* cmd)
       {
         switch (cmd->type)
@@ -267,23 +362,41 @@ namespace Actuators
           case LUCL::CommandTypeNormal:
             if (cmd->command.code == CMD_STATE)
               handleState(cmd->command);
-            else if (cmd->command.code == CMD_PARAMS_CON)
-              handleParamsCon(cmd->command);
-            else if (cmd->command.code == CMD_PARAMS_EFF)
-              handleParamsEff(cmd->command);
             break;
 
           case LUCL::CommandTypeError:
-            err(DTR("device reported: %s"), LUCL::Protocol::getErrorString(cmd->error.code));
+            ++m_stat_error;
+            dispatchStats();
             break;
 
           case LUCL::CommandTypeInvalidChecksum:
-            war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+            ++m_stat_invalid;
+            dispatchStats();
             break;
 
           default:
             break;
         }
+      }
+
+      void
+      dispatchStats(void)
+      {
+        IMC::DevDataText msg;
+        msg.value = String::str("invalid: %u, error: %u, timeout: %u",
+                                m_stat_invalid,
+                                m_stat_error,
+                                m_stat_timeout);
+        dispatch(msg);
+      }
+
+      void
+      clearStats(void)
+      {
+        m_stat_invalid = 0;
+        m_stat_error = 0;
+        m_stat_timeout = 0;
+        dispatchStats();
       }
 
       void
@@ -293,16 +406,21 @@ namespace Actuators
 
         while (!stopping())
         {
-          waitForMessages(0.1);
-
-          while ((cmd = m_listener->pop()) != NULL)
+          consumeMessages();
+          if (m_listener->waitForCommand(1.0))
           {
-            handleCommand(cmd);
-            delete cmd;
+            while ((cmd = m_listener->pop()) != NULL)
+            {
+              handleCommand(cmd);
+              delete cmd;
+            }
           }
 
           if (m_wdog.overflow())
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(Status::getString(Status::CODE_COM_ERROR), 5.0, false);
+          }
         }
       }
     };

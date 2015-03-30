@@ -45,11 +45,22 @@ namespace Actuators
     public:
       Listener(SerialPort* uart):
         m_uart(uart)
-      {
-      }
+      { }
 
       ~Listener(void)
       {
+        while (!m_queue.empty())
+        {
+          LUCL::Command* cmd = m_queue.pop();
+          if (cmd != NULL)
+            delete cmd;
+        }
+      }
+
+      bool
+      waitForCommand(double timeout)
+      {
+        return m_queue.waitForItems(timeout);
       }
 
       LUCL::Command*
