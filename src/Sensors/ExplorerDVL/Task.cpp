@@ -42,6 +42,10 @@ namespace Sensors
 
     //! Number of beams.
     static const unsigned c_beam_count = 4;
+    //! Data input timeout.
+    static const double c_data_timeout = 5.0;
+    //! Restart delay.
+    static const double c_restart_delay = 5.0;
 
     //! States of the activation state machine.
     enum ActivationState
@@ -133,6 +137,8 @@ namespace Sensors
       ActivationState m_act_state;
       //! Deactivation state machine state.
       DeactivationState m_deact_state;
+      //! Watchdog.
+      Counter<double> m_wdog;
       // Task arguments.
       Arguments m_args;
 
@@ -514,6 +520,7 @@ namespace Sensors
           processGroundVelocity(data, tstamp);
           processWaterVelocity(data, tstamp);
           processAltitude(data, tstamp);
+          m_wdog.reset();
 
           read_sample = true;
         }
@@ -530,45 +537,59 @@ namespace Sensors
         trace("stop pinging");
         consumeMessages();
         if (!m_driver->stopPinging())
-          return false;
+          goto fail;
 
         trace("set turn key off");
         consumeMessages();
         if (!m_driver->setTurnKey(false))
-          return false;
+          goto fail;
 
         trace("set sound speed to %0.2f", m_args.sound_speed_def);
         consumeMessages();
         if (!m_driver->setSoundSpeed(m_args.sound_speed_def))
-          return false;
+          goto fail;
 
         trace("set heading alignment to %0.2f", m_args.heading_alignment);
         consumeMessages();
         if (!m_driver->setHeadingAlignment(m_args.heading_alignment))
-          return false;
+          goto fail;
 
         trace("set maximum tracking depth");
         consumeMessages();
         if (!m_driver->setMaximumTrackingDepth(1000))
-          return false;
+          goto fail;
 
         trace("set bottom track pings per ensemble");
         consumeMessages();
         if (!m_driver->setBottomTrackPingsPerEnsemble(1))
-          return false;
+          goto fail;
 
         trace("set data format");
         consumeMessages();
         if (!m_driver->setDataFormat(4))
-          return false;
+          goto fail;
 
         trace("start pinging");
         consumeMessages();
         if (!m_driver->startPinging())
-          return false;
+          goto fail;
 
         debug("device is configured");
         return true;
+
+      fail:
+        dispatchStats();
+        return false;
+      }
+
+      void
+      dispatchStats(void)
+      {
+        if (m_driver == NULL)
+          return;
+
+        IMC::DevDataText msg;
+        msg.value = String::str("timeout: %u", m_driver->getTimeoutCount());
       }
 
       bool
@@ -602,6 +623,7 @@ namespace Sensors
             break;
 
           case ST_ACT_DONE:
+            m_wdog.setTop(c_data_timeout);
             break;
         }
 
@@ -659,6 +681,11 @@ namespace Sensors
             if (readSample(bfr, sizeof(bfr)))
             {
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+            else if (m_wdog.overflow())
+            {
+              throw RestartNeeded(Status::getString(Status::CODE_COM_ERROR),
+                                  c_restart_delay, false);
             }
           }
           else if (isActivating())
