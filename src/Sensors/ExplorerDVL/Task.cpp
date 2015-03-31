@@ -234,10 +234,10 @@ namespace Sensors
         }
 
         if (!(paramChanged(m_args.beam_width)
-              or paramChanged(m_args.beam_angle)
-              or paramChanged(m_args.heading_alignment)
-              or paramChanged(m_args.orientation)
-              or paramChanged(m_args.position)))
+              || paramChanged(m_args.beam_angle)
+              || paramChanged(m_args.heading_alignment)
+              || paramChanged(m_args.orientation)
+              || paramChanged(m_args.position)))
           return;
 
         IMC::BeamConfig bc;
