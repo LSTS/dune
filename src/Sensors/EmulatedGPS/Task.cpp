@@ -245,19 +245,19 @@ namespace Sensors
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
-        if (m_args.send_rmc and not m_estate_timer.overflow())
+        if (m_args.send_rmc && !m_estate_timer.overflow())
         {
           stn_str = createRMC(bdt, fsec);
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
-        if (m_args.send_hdt and not m_estate_timer.overflow())
+        if (m_args.send_hdt && !m_estate_timer.overflow())
         {
           stn_str = createHDT();
           m_uart->write(stn_str.c_str(), stn_str.size());
         }
 
-        if (m_args.send_vtg and not m_estate_timer.overflow())
+        if (m_args.send_vtg && !m_estate_timer.overflow())
         {
           stn_str = createVTG();
           m_uart->write(stn_str.c_str(), stn_str.size());
