@@ -44,11 +44,6 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Reserved bytes.
-    static const unsigned c_reserved_83P[] = {19, 28, 41, 42, 79, 91, 92, 97, 98, 99, 108, 109};
-    //! Count of reserved bytes.
-    static const unsigned c_reserved_83P_size = sizeof(c_reserved_83P) / sizeof(c_reserved_83P[0]);
-
     //! Data logger to Imagenex .83P format.
     class Frame83P: public Frame
     {
@@ -56,42 +51,43 @@ namespace Sensors
       //! 83P Header Indices.
       enum HeaderIndices
       {
-        HDR_IDX_N_TO_READ = 3,
-        HDR_IDX_TBYTES_HI = 4,
-        HDR_IDX_TBYTES_LO = 5,
-        HDR_IDX_BYTES_TO_READ_HI = 6,
-        HDR_IDX_BYTES_TO_READ_LO = 7,
-        HDR_IDX_DATE = 8,
-        HDR_IDX_TIME = 20,
-        HDR_IDX_TIME_HSEC = 29,
-        HDR_IDX_VIDEO_FRAME = 33,
-        HDR_IDX_DISPLAY_MODE = 37,
-        HDR_IDX_START_GAIN = 38,
-        HDR_IDX_PROFILE = 39,
-        HDR_IDX_PINGS_AVG = 43,
-        HDR_IDX_PULSE_LENGTH = 44,
-        HDR_IDX_SOUND_SPEED = 46,
-        HDR_IDX_LATITUDE = 48,
-        HDR_IDX_LONGITUDE = 62,
-        HDR_IDX_SPEED = 76,
-        HDR_IDX_COURSE = 77,
-        HDR_IDX_FREQUENCY = 80,
-        HDR_IDX_PITCH = 82,
-        HDR_IDX_ROLL = 84,
-        HDR_IDX_HEADING = 86,
-        HDR_IDX_REP_RATE = 88,
-        HDR_IDX_DISPLAY_GAIN = 90,
-        HDR_IDX_MILLI = 93,
-        HDR_IDX_MODE_I = 100,
-        HDR_IDX_MODE_UV = 101,
-        HDR_IDX_MODE_X = 102,
-        HDR_IDX_HEAD_ID = 103,
-        HDR_IDX_SERIAL_STATUS = 104,
-        HDR_IDX_PACKET_NUM = 105,
-        HDR_IDX_VERSION = 106,
-        HDR_IDX_RANGE = 107,
-        HDR_IDX_DATA_BYTES_HI = 110,
-        HDR_IDX_DATA_BYTES_LO = 111
+        HDR_IDX_LATITUDE = 33,
+        HDR_IDX_LONGITUDE = 47,
+        HDR_IDX_SPEED = 61,
+        HDR_IDX_COURSE = 62,
+        HDR_IDX_PITCH = 64,
+        HDR_IDX_ROLL = 66,
+        HDR_IDX_HEADING = 68,
+        HDR_IDX_BEAMS = 70,
+        HDR_IDX_SAMPLES_PER_BEAM = 72,
+        HDR_IDX_SECTOR_SIZE = 74,
+        HDR_IDX_START_ANGLE = 76,
+        HDR_IDX_RANGE = 79,
+        HDR_IDX_FREQUENCY = 81,
+        HDR_IDX_SOUND_SPEED = 83,
+        HDR_IDX_RANGE_RESOLUTION = 85,
+        HDR_IDX_TILT_ANGLE = 89,
+        HDR_IDX_REP_RATE = 91,
+        HDR_IDX_PING_NUMBER = 93,
+        HDR_IDX_X_OFFSET = 100,
+        HDR_IDX_Y_OFFSET = 104,
+        HDR_IDX_Z_OFFSET = 108,
+        HDR_IDX_MILLI = 112,
+        HDR_IDX_INTENSITY = 117,
+        HDR_IDX_PING_LATENCY = 118,
+        HDR_IDX_DATA_LATENCY = 120,
+        HDR_IDX_SAMPLE_RATE = 122,
+        HDR_IDX_FLAGS = 123,
+        HDR_IDX_PINGS_AVERAGED = 125,
+        HDR_IDX_CENTER_PING_OFFSET = 126,
+        HDR_IDX_HEAVE = 128,
+        HDR_IDX_ALTITUDE = 133,
+        HDR_IDX_EXTERNAL_FLAGS = 137,
+        HDR_IDX_EXTERNAL_PITCH = 138,
+        HDR_IDX_EXTERNAL_ROLL = 142,
+        HDR_IDX_EXTERNAL_HEADING = 146,
+        HDR_IDX_TRANSMIT_SCAN_FLAG = 150,
+        HDR_IDX_TRANSMIT_SCAN_ANGLE = 151
       };
 
       //! 83P Footer Indices.
@@ -107,13 +103,11 @@ namespace Sensors
       //! Constructor.
       Frame83P(void)
       {
-        m_data.resize(c_ivx_size, 0);
+        m_data.resize(getSize(), 0);
         m_data[0] = '8';
         m_data[1] = '3';
         m_data[2] = 'P';
-
-        for (unsigned i = 0; i < c_reserved_83P_size; ++i)
-          m_data[c_reserved_83P[i]] = 0x00;
+        m_data[3] = 10;
 
         setHeader();
       }
@@ -127,15 +121,7 @@ namespace Sensors
       uint8_t*
       getMessageData(void)
       {
-        return &m_data[c_start_data];
-      }
-
-      //! Get footer start address.
-      //! @return pointer to address.
-      uint8_t*
-      getFooterData(void)
-      {
-        return &m_data[c_hdr_size + c_rhdr_size + getMessageSize()];
+        return &m_data[c_hdr_size];
       }
 
       //! Retrieve the size of the frame.
@@ -143,7 +129,7 @@ namespace Sensors
       unsigned
       getSize(void) const
       {
-        return c_hdr_size + c_rhdr_size + getMessageSize() + getFooterSize();
+        return c_hdr_size + getMessageSize();
       }
 
       //! Retrieve message size.
@@ -151,15 +137,8 @@ namespace Sensors
       uint32_t
       getMessageSize(void) const
       {
-        return m_ivx_mode ? c_ivx_body_size : c_iux_body_size;
-      }
-
-      //! Retrieve footer size.
-      //! @return footer size.
-      uint32_t
-      getFooterSize(void) const
-      {
-        return m_ivx_mode ? c_ivx_frame_size : c_iux_frame_size;
+        // @todo verify.
+        return 4 * c_beams;
       }
 
       //! Define total bytes in header.
@@ -167,60 +146,15 @@ namespace Sensors
       setTotalBytes(void)
       {
         // Total bytes.
-        if (m_ivx_mode)
-        {
-          m_data[HDR_IDX_TBYTES_HI] = (uint8_t)(c_ivx_size >> 8);
-          m_data[HDR_IDX_TBYTES_LO] = (uint8_t)c_ivx_size;
-        }
-        else
-        {
-          m_data[HDR_IDX_TBYTES_HI] = (uint8_t)(c_iux_size >> 8);
-          m_data[HDR_IDX_TBYTES_LO] = (uint8_t)c_iux_size;
-        }
+        m_data[HDR_IDX_TBYTES_HI] = (uint8_t)(getSize() >> 8);
+        m_data[HDR_IDX_TBYTES_LO] = (uint8_t)getSize();
       }
 
-      //! Define number of bytes to read in header.
-      void
-      setBytesToRead(void)
-      {
-        // Total bytes.
-        if (m_ivx_mode)
-        {
-          m_data[HDR_IDX_BYTES_TO_READ_HI] = (uint8_t)(c_ivx_bytes >> 8);
-          m_data[HDR_IDX_BYTES_TO_READ_LO] = (uint8_t)c_ivx_bytes;
-        }
-        else
-        {
-          m_data[HDR_IDX_BYTES_TO_READ_HI] = (uint8_t)(c_iux_bytes >> 8);
-          m_data[HDR_IDX_BYTES_TO_READ_LO] = (uint8_t)c_iux_bytes;
-        }
-      }
-
-      //! Change mode according with data points.
       void
       setExtendedDataPoints(bool mode)
       {
-        m_ivx_mode = mode;
+        (void)mode;
         setTotalBytes();
-        setBytesToRead();
-        setMode();
-        setNumberOfBytesToRead();
-        setPacketNumber();
-        setFooter();
-      }
-
-      //! Set serial status.
-      void
-      setSerialStatus(uint8_t status)
-      {
-        m_data[HDR_IDX_SERIAL_STATUS] = status;
-      }
-
-      //! Set Firmware version.
-      void
-      setFirmwareVersion(uint8_t version)
-      {
-        m_data[HDR_IDX_VERSION] = version;
       }
 
     private:
@@ -228,105 +162,15 @@ namespace Sensors
       void
       setHeader(void)
       {
-        // Video Frame Length (unavailable).
-        for (unsigned i = 0; i < 4; ++i)
-          m_data[HDR_IDX_VIDEO_FRAME + i] = 0x00;
-
         // Number of pings averaged.
-        m_data[HDR_IDX_PINGS_AVG] = 0x00;
-
-        // Display gain.
-        m_data[HDR_IDX_DISPLAY_GAIN] = c_display_gain;
-
-        // Operating Frequency 260 kHz.
-        m_data[HDR_IDX_FREQUENCY] = (uint8_t)(c_frequency >> 8);
-        m_data[HDR_IDX_FREQUENCY + 1] = (uint8_t)c_frequency;
-
-        setSonarReturnHeader();
-      }
-
-      //! Define frame constant sonar return header data.
-      void
-      setSonarReturnHeader(void)
-      {
-        // IUX or IVX.
-        m_data[HDR_IDX_MODE_I] = 'I';
-        m_data[HDR_IDX_MODE_X] = 'X';
-
-        // Head ID and default packet number.
-        m_data[HDR_IDX_HEAD_ID] = 0x10;
-
-        // Data bytes (1k data bytes).
-        m_data[HDR_IDX_DATA_BYTES_HI] = (uint8_t)(c_ping_size >> 8);
-        m_data[HDR_IDX_DATA_BYTES_LO] = (uint8_t)c_ping_size;
-      }
-
-      //! Set number of bytes to read.
-      void
-      setNumberOfBytesToRead(void)
-      {
-        if (m_ivx_mode)
-          m_data[HDR_IDX_N_TO_READ] = (uint8_t) 0x0b;
-        else
-          m_data[HDR_IDX_N_TO_READ] = (uint8_t) 0x0a;
-      }
-
-      //! Set packet number
-      void
-      setPacketNumber(void)
-      {
-        if (m_ivx_mode)
-          m_data[HDR_IDX_PACKET_NUM] = (uint8_t) 0x0f;
-        else
-          m_data[HDR_IDX_PACKET_NUM] = (uint8_t) 0x07;
-      }
-
-      //! Define frame footer.
-      void
-      setFooter(void)
-      {
-        uint32_t addr = c_hdr_size + c_rhdr_size + getMessageSize();
-        m_data[addr] = (uint8_t) 0xfc;
-
-        unsigned size = getFooterSize();
-
-        for (unsigned i = 0; i < size; ++i)
-          m_data[(addr + 1) + i] = (uint8_t) 0x00;
-
-        m_data[addr + FTR_IDX_TYPE] = 0x01;
-        m_data[addr + FTR_IDX_AZIMUTH_UP] = 0x01;
-      }
-
-      //! Set sonar return header mode.
-      void
-      setMode(void)
-      {
-        if (m_ivx_mode)
-          m_data[HDR_IDX_MODE_UV] = 'V';
-        else
-          m_data[HDR_IDX_MODE_UV] = 'U';
+        //m_data[HDR_IDX_PINGS_AVG] = 0x00;
+        setFrequency();
       }
 
       //! Size of the header.
-      static const unsigned c_hdr_size = 100;
-      //! Size of the sonar return data header.
-      static const unsigned c_rhdr_size = 12;
-      //! Start of echo data.
-      static const unsigned c_start_data = 112;
-      //! Size of IVX frame.
-      static const unsigned c_ivx_size = 16384;
-      //! Size of IUX frame.
-      static const unsigned c_iux_size = 8192;
-      //! Number of bytes to read in IVX frame.
-      static const unsigned c_ivx_bytes = 16013;
-      //! Number of bytes to read in IUX frame.
-      static const unsigned c_iux_bytes = 8013;
-      //! Size of ping response.
-      static const unsigned c_ping_size = 1000;
-      //! Operating frequency.
-      static const unsigned c_frequency = 260;
-      //! Default display gain.
-      static const uint8_t c_display_gain = 50;
+      static const unsigned c_hdr_size = 256;
+      //! Number of beams.
+      static const unsigned c_beams = 480;
     };
   }
 }

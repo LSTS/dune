@@ -44,10 +44,6 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Reserved bytes.
-    static const unsigned c_reserved_837[] = {19, 28, 41, 42, 79, 91, 92, 97, 98, 99, 108, 109};
-    //! Count of reserved bytes.
-    static const unsigned c_reserved_837_size = sizeof(c_reserved_837) / sizeof(c_reserved_837[0]);
     //! Size of IVX body.
     static const unsigned c_ivx_body_size = 16000;
     //! Size of IUX body.
@@ -102,16 +98,6 @@ namespace Sensors
         HDR_IDX_DATA_BYTES_LO = 111
       };
 
-      //! 837 Footer Indices.
-      enum FooterIndices
-      {
-        FTR_IDX_TYPE = 13,
-        FTR_IDX_PITCH = 14,
-        FTR_IDX_ROLL = 16,
-        FTR_IDX_HEADING = 18,
-        FTR_IDX_AZIMUTH_UP = 24
-      };
-
       //! Constructor.
       Frame837(void)
       {
@@ -119,10 +105,6 @@ namespace Sensors
         m_data[0] = '8';
         m_data[1] = '3';
         m_data[2] = '7';
-
-        for (unsigned i = 0; i < c_reserved_837_size; ++i)
-          m_data[c_reserved_837[i]] = 0x00;
-
         setHeader();
       }
 
@@ -217,6 +199,46 @@ namespace Sensors
         setFooter();
       }
 
+      //! Set start gain.
+      //! @param[in] gain start gain.
+      void
+      setStartGain(uint8_t gain)
+      {
+        m_data[HDR_IDX_START_GAIN] = gain;
+      }
+
+      //! Set pulse length.
+      //! @param[in] length pulse length.
+      void
+      setPulseLength(uint8_t length)
+      {
+        m_data[HDR_IDX_PULSE_LENGTH] = length;
+      }
+
+      //! Set display mode.
+      //! @param[in] xdcr display mode.
+      void
+      setDisplayMode(bool xdcr)
+      {
+        m_data[HDR_IDX_DISPLAY_MODE] |= 0x80;
+
+        if (!xdcr)
+          m_data[HDR_IDX_DISPLAY_MODE] |= 0x40;
+        else
+          m_data[HDR_IDX_DISPLAY_MODE] &= 0xbf;
+
+        // Profile mode.
+        m_data[HDR_IDX_DISPLAY_MODE] |= 0x03;
+      }
+
+      //! Set display gain.
+      //! @param[in] gain display gain.
+      void
+      setDisplayGain(uint8_t gain)
+      {
+        m_data[HDR_IDX_DISPLAY_GAIN] = gain;
+      }
+
       //! Set serial status.
       void
       setSerialStatus(uint8_t status)
@@ -246,10 +268,7 @@ namespace Sensors
         // Display gain.
         m_data[HDR_IDX_DISPLAY_GAIN] = c_display_gain;
 
-        // Operating Frequency 260 kHz.
-        m_data[HDR_IDX_FREQUENCY] = (uint8_t)(c_frequency >> 8);
-        m_data[HDR_IDX_FREQUENCY + 1] = (uint8_t)c_frequency;
-
+        setFrequency();
         setSonarReturnHeader();
       }
 
@@ -315,6 +334,8 @@ namespace Sensors
           m_data[HDR_IDX_MODE_UV] = 'U';
       }
 
+      //! IVX mode active.
+      bool m_ivx_mode;
       //! Size of the header.
       static const unsigned c_hdr_size = 100;
       //! Size of the sonar return data header.
@@ -331,8 +352,6 @@ namespace Sensors
       static const unsigned c_iux_bytes = 8013;
       //! Size of ping response.
       static const unsigned c_ping_size = 1000;
-      //! Operating frequency.
-      static const unsigned c_frequency = 260;
       //! Default display gain.
       static const uint8_t c_display_gain = 50;
     };
