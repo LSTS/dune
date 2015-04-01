@@ -55,6 +55,8 @@ namespace Transports
       std::string dst;
       //! True to transmit estimated state.
       bool tx_estate;
+      //! Transmit distances and uncertainty.
+      bool tx_xtra;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -103,6 +105,10 @@ namespace Transports
         param("Transmit Estimated State", m_args.tx_estate)
         .defaultValue("true")
         .description("True to transmit estimated state");
+
+        param("Transmit Extra Information", m_args.tx_xtra)
+        .defaultValue("true")
+        .description("True to transmit distances and navigation uncertainty");
 
         resetBeamsValue();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -267,10 +273,21 @@ namespace Transports
 
             int16_t tdist;
             length = msg->data.size() - Utils::Codecs::CodedEstimatedState::getSize();
+
+            // There's no extra information to be processed.
+            if (length <= 1)
+              break;
+
+            uint8_t eid;
+            ptr += IMC::deserialize(eid, ptr, length);
             for (uint8_t i = 0; i < c_dvl_beams; ++i)
             {
               ptr += IMC::deserialize(tdist, ptr, length);
               distance.value = static_cast<float>(tdist / c_mult);
+
+              // Set source entity.
+              distance.setSourceEntity(eid);
+              eid++;
 
               if (distance.value > 0)
                 distance.validity = IMC::Distance::DV_VALID;
@@ -371,15 +388,25 @@ namespace Transports
         frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize() + c_dvl_beams * sizeof(int16_t) + 2 * sizeof(float));
         Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
 
-        // Add distance values.
-        uint8_t* ptr = (uint8_t*)&frame.data[Utils::Codecs::CodedEstimatedState::getSize()];
-        for (uint8_t i = 0; i < 4; ++i)
-          ptr += IMC::serialize(m_beams[i], ptr);
-        resetBeamsValue();
+        // Transmit extra information.
+        if (m_args.tx_xtra)
+        {
+          // Add distance values.
+          uint8_t* ptr = (uint8_t*)&frame.data[Utils::Codecs::CodedEstimatedState::getSize()];
 
-        // Add uncertainty.
-        ptr += IMC::serialize(m_uncertainty->x, ptr);
-        ptr += IMC::serialize(m_uncertainty->y, ptr);
+          // Send first DVL entity label value.
+          uint8_t eid = m_dvl_eid[0];
+          ptr += IMC::serialize(eid, ptr);
+
+          for (uint8_t i = 0; i < 4; ++i)
+            ptr += IMC::serialize(m_beams[i], ptr);
+          resetBeamsValue();
+
+          // Add uncertainty.
+          ptr += IMC::serialize(m_uncertainty->x, ptr);
+          ptr += IMC::serialize(m_uncertainty->y, ptr);
+        }
+
         dispatch(frame);
       }
 
