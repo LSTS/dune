@@ -642,8 +642,8 @@ namespace Transports
         {
           IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr;
           for (mitr = m_plan_spec.maneuvers.begin(); mitr != m_plan_spec.maneuvers.end(); ++mitr)
-            if ((*mitr == NULL) || (*mitr)->maneuver_id != mid)
-              continue;
+            if ((*mitr != NULL) && (*mitr)->maneuver_id == mid)
+              break;
 
           if (mitr == m_plan_spec.maneuvers.end())
             break;
