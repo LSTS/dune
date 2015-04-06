@@ -31,7 +31,6 @@
 #include <cmath>
 #include <vector>
 #include <climits>
-#define __STDC_LIMIT_MACROS
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -694,6 +693,10 @@ namespace Control
 
                 dispatchAlias(&m_uav_formation);
               }
+              else
+              {
+                war("No activation action - Not the main coordinator!");
+              }
 
               /*
               // ToDo - Check if there exist a formation controller task in the current system
@@ -760,6 +763,10 @@ namespace Control
                 //          dispatchAlias(&sep);
               }
               */
+            }
+            else
+            {
+              war("No activation action - No plan parameters received!");
             }
           }
 
@@ -845,7 +852,7 @@ namespace Control
 
             // Check if the vehicle is the intended destination of the plan
             if (msg->getDestination() != getSystemId() &&
-                msg->getDestination() != UINT16_MAX)
+                msg->getDestination() != 0xffff)
             {
               trace("PlanControl rejected (destination system: %s)",
                     resolveSystemId(msg->getDestination()));
@@ -897,19 +904,19 @@ namespace Control
             {
               trace("PlanDB message rejected.");
               if (msg->getDestination() != ((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) &&
-                  msg->getDestination() < UINT16_MAX)
+                  msg->getDestination() < 0xffff)
                 trace("Different system destination: %s (%s).", resolveSystemId(msg->getDestination()),
                       resolveSystemId((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()));
               if (msg->getDestinationEntity() != getEntityId() && msg->getDestinationEntity() < UINT8_MAX)
                 trace("Different entity destination: %s (%s).",
                       resolveEntity(msg->getDestinationEntity()).c_str(),
                       resolveEntity(getEntityId()).c_str());
-              if (msg->getDestination() < UINT16_MAX &&
+              if (msg->getDestination() < 0xffff &&
                   msg->getDestinationEntity() < UINT8_MAX)
                 trace("PlanDB received from system '%s' and entity '%s', to system '%s' and entity '%s'.",
                       resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                       resolveSystemId(msg->getDestination()), resolveEntity(msg->getDestinationEntity()).c_str());
-              else if (msg->getDestination() < UINT16_MAX)
+              else if (msg->getDestination() < 0xffff)
                 trace("PlanDB received from system '%s' and entity '%s', to system '%s' and no specific entity.",
                       resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                       resolveSystemId(msg->getDestination()));
@@ -1301,6 +1308,7 @@ namespace Control
               // Select the team vehicle
               unsigned int uav_ind = 0;
               for (; uav_ind < m_uav_n; uav_ind++)
+              {
                 if (m_uav_id[uav_ind] == msg->getSource())
                 {
                   // Check if the received message is new
@@ -1314,12 +1322,11 @@ namespace Control
 
                   spew("EstimatedState received from vehicle %s", resolveSystemId(msg->getSource()));
                   // Update the relative formation state from a team vehicle
-                  double vt_uav_state[9] = {
-                      msg->x - m_formation_pos(0, uav_ind),
-                      msg->y - m_formation_pos(1, uav_ind),
-                      msg->z - m_formation_pos(2, uav_ind),
-                      msg->vx, msg->vy, msg->vz,
-                      0, 0, msg->psi};
+                  double vt_uav_state[9] = { msg->x - m_formation_pos(0, uav_ind),
+                                             msg->y - m_formation_pos(1, uav_ind),
+                                             msg->z - m_formation_pos(2, uav_ind),
+                                             msg->vx, msg->vy, msg->vz,
+                                             0, 0, msg->psi};
                   if (m_uav_id[uav_ind] == getSystemId())
                   {
                     // Updating the home reference if the vehicle is that on which the coordinator is running
@@ -1328,11 +1335,13 @@ namespace Control
                     m_llh_ref_pos[2] = msg->alt;
                   }
                   else
+                  {
                     // Adjust the cooperating vehicle offset position from its reference
                     // frame to the current vehicle reference frame
                     positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
                                       msg->lat, msg->lon, msg->height,
                                       &vt_uav_state[0], &vt_uav_state[1], &vt_uav_state[2]);
+                  }
                   // Update vehicle state vector
                   m_vehicle_state.set(0, 8, uav_ind, uav_ind, Matrix(vt_uav_state, 9, 1));
                   m_vehicle_state_flag[uav_ind] = true;
@@ -1355,6 +1364,7 @@ namespace Control
                   }
                   break;
                 }
+              }
             }
           }
 
