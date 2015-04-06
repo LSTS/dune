@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Fortuna                                                     *
 //***************************************************************************
@@ -90,7 +90,7 @@ namespace Vision
         .description("Trigger by using overlap value and distance to previous shot");
 
         param("Trigger Frequency", m_args.freq)
-        .defaultValue("0.25")
+        .defaultValue("0.4")
         .units(Units::Hertz)
         .maximumValue("1.0")
         .description("Frequency of photo shots");
@@ -157,8 +157,9 @@ namespace Vision
         std::ostringstream ss;
         ss << m_lat << ", " << m_lon << ", " << m_hei;
         log_entry.text = ss.str();
-        Delay::wait(0.1);
+        Delay::wait(0.2);
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(log_entry);
         dispatch(pcc);
       }
 
@@ -166,7 +167,7 @@ namespace Vision
       sendPulse(void)
       {
         trigger();
-        Delay::wait(m_period - 0.1);
+        Delay::wait(m_period - 0.2);
       }
 
       //! Main loop.

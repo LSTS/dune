@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
@@ -43,15 +43,20 @@ namespace DUNE
 
       config->get(sec, "Speed Conversion -- MPS",
                   "", m_models[IMC::SUNITS_METERS_PS]);
+
+      config->get(sec, "Time Of Arrival Factor",
+                  "5.0", m_time_factor);
     }
 
     SpeedModel::SpeedModel(const std::vector<float>& act,
                            const std::vector<float>& rpm,
-                           const std::vector<float>& mps)
+                           const std::vector<float>& mps,
+                           float time_factor)
     {
       m_models[IMC::SUNITS_PERCENTAGE] = act;
       m_models[IMC::SUNITS_METERS_PS] = rpm;
       m_models[IMC::SUNITS_RPM] = mps;
+      m_time_factor = time_factor;
     }
 
     float

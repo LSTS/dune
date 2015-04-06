@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,13 +20,13 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 73b91babb844cbd885fecbb79bb415cd                            *
+// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -6398,6 +6398,74 @@ namespace DUNE
 
     void
     FineOil::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    Turbidity::Turbidity(void)
+    {
+      m_header.mgid = 288;
+      clear();
+    }
+
+    void
+    Turbidity::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    Turbidity::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Turbidity& other__ = static_cast<const Turbidity&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    Turbidity::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Turbidity::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Turbidity::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Turbidity::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Turbidity::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Turbidity::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Turbidity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
     }
@@ -13139,7 +13207,6 @@ namespace DUNE
     void
     FormationMonitor::clear(void)
     {
-      dist_min = 0;
       ax_cmd = 0;
       ay_cmd = 0;
       az_cmd = 0;
@@ -13165,7 +13232,6 @@ namespace DUNE
     FormationMonitor::fieldsEqual(const Message& msg__) const
     {
       const IMC::FormationMonitor& other__ = static_cast<const FormationMonitor&>(msg__);
-      if (dist_min != other__.dist_min) return false;
       if (ax_cmd != other__.ax_cmd) return false;
       if (ay_cmd != other__.ay_cmd) return false;
       if (az_cmd != other__.az_cmd) return false;
@@ -13198,7 +13264,6 @@ namespace DUNE
     FormationMonitor::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(dist_min, ptr__);
       ptr__ += IMC::serialize(ax_cmd, ptr__);
       ptr__ += IMC::serialize(ay_cmd, ptr__);
       ptr__ += IMC::serialize(az_cmd, ptr__);
@@ -13225,7 +13290,6 @@ namespace DUNE
     FormationMonitor::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(dist_min, bfr__, size__);
       bfr__ += IMC::deserialize(ax_cmd, bfr__, size__);
       bfr__ += IMC::deserialize(ay_cmd, bfr__, size__);
       bfr__ += IMC::deserialize(az_cmd, bfr__, size__);
@@ -13252,7 +13316,6 @@ namespace DUNE
     FormationMonitor::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(dist_min, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(ax_cmd, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(ay_cmd, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(az_cmd, bfr__, size__);
@@ -13278,7 +13341,6 @@ namespace DUNE
     void
     FormationMonitor::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "dist_min", dist_min, nindent__);
       IMC::toJSON(os__, "ax_cmd", ax_cmd, nindent__);
       IMC::toJSON(os__, "ay_cmd", ay_cmd, nindent__);
       IMC::toJSON(os__, "az_cmd", az_cmd, nindent__);
@@ -14585,6 +14647,8 @@ namespace DUNE
     void
     FormationState::clear(void)
     {
+      type = 0;
+      op = 0;
       possimerr = 0;
       converg = 0;
       turbulence = 0;
@@ -14597,6 +14661,8 @@ namespace DUNE
     FormationState::fieldsEqual(const Message& msg__) const
     {
       const IMC::FormationState& other__ = static_cast<const FormationState&>(msg__);
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
       if (possimerr != other__.possimerr) return false;
       if (converg != other__.converg) return false;
       if (turbulence != other__.turbulence) return false;
@@ -14616,6 +14682,8 @@ namespace DUNE
     FormationState::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(possimerr, ptr__);
       ptr__ += IMC::serialize(converg, ptr__);
       ptr__ += IMC::serialize(turbulence, ptr__);
@@ -14629,6 +14697,8 @@ namespace DUNE
     FormationState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(possimerr, bfr__, size__);
       bfr__ += IMC::deserialize(converg, bfr__, size__);
       bfr__ += IMC::deserialize(turbulence, bfr__, size__);
@@ -14642,6 +14712,8 @@ namespace DUNE
     FormationState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(possimerr, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(converg, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(turbulence, bfr__, size__);
@@ -14654,6 +14726,8 @@ namespace DUNE
     void
     FormationState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "possimerr", possimerr, nindent__);
       IMC::toJSON(os__, "converg", converg, nindent__);
       IMC::toJSON(os__, "turbulence", turbulence, nindent__);
@@ -19283,6 +19357,8 @@ namespace DUNE
     void
     FormationEvaluation::clear(void)
     {
+      type = 0;
+      op = 0;
       err_mean = 0;
       dist_min_abs = 0;
       dist_min_mean = 0;
@@ -19295,6 +19371,8 @@ namespace DUNE
     FormationEvaluation::fieldsEqual(const Message& msg__) const
     {
       const IMC::FormationEvaluation& other__ = static_cast<const FormationEvaluation&>(msg__);
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
       if (err_mean != other__.err_mean) return false;
       if (dist_min_abs != other__.dist_min_abs) return false;
       if (dist_min_mean != other__.dist_min_mean) return false;
@@ -19314,6 +19392,8 @@ namespace DUNE
     FormationEvaluation::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(err_mean, ptr__);
       ptr__ += IMC::serialize(dist_min_abs, ptr__);
       ptr__ += IMC::serialize(dist_min_mean, ptr__);
@@ -19327,6 +19407,8 @@ namespace DUNE
     FormationEvaluation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(err_mean, bfr__, size__);
       bfr__ += IMC::deserialize(dist_min_abs, bfr__, size__);
       bfr__ += IMC::deserialize(dist_min_mean, bfr__, size__);
@@ -19340,6 +19422,8 @@ namespace DUNE
     FormationEvaluation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(err_mean, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(dist_min_abs, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(dist_min_mean, bfr__, size__);
@@ -19352,6 +19436,8 @@ namespace DUNE
     void
     FormationEvaluation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "err_mean", err_mean, nindent__);
       IMC::toJSON(os__, "dist_min_abs", dist_min_abs, nindent__);
       IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
@@ -19800,6 +19886,107 @@ namespace DUNE
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "z_units", z_units, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
+    }
+
+    ParametersXml::ParametersXml(void)
+    {
+      m_header.mgid = 893;
+      clear();
+    }
+
+    void
+    ParametersXml::clear(void)
+    {
+      locale.clear();
+      config.clear();
+    }
+
+    bool
+    ParametersXml::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ParametersXml& other__ = static_cast<const ParametersXml&>(msg__);
+      if (locale != other__.locale) return false;
+      if (config != other__.config) return false;
+      return true;
+    }
+
+    int
+    ParametersXml::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    ParametersXml::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(locale, ptr__);
+      ptr__ += IMC::serialize(config, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ParametersXml::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(locale, bfr__, size__);
+      bfr__ += IMC::deserialize(config, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ParametersXml::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(locale, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(config, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ParametersXml::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "locale", locale, nindent__);
+      IMC::toJSON(os__, "config", config, nindent__);
+    }
+
+    GetParametersXml::GetParametersXml(void)
+    {
+      m_header.mgid = 894;
+      clear();
+    }
+
+    void
+    GetParametersXml::clear(void)
+    {
+    }
+
+    int
+    GetParametersXml::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    GetParametersXml::serializeFields(uint8_t* bfr__) const
+    {
+      return bfr__;
+    }
+
+    uint16_t
+    GetParametersXml::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
+    }
+
+    uint16_t
+    GetParametersXml::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      (void)bfr__;
+      (void)size__;
+      return 0;
     }
   }
 }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Jose Pinto                                                       *
 //***************************************************************************
@@ -102,7 +102,7 @@ namespace Transports
             remove.push_back(it->first);
 
             // message has died of natural causes...
-            war("Removed incoming message from memory (%d fragments were still missing).",
+            war(DTR("Removed incoming message from memory (%d fragments were still missing)."),
                 it->second.getFragmentsMissing());
           }
         }

@@ -25,16 +25,16 @@
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_Proxy_PATH_CONTROLLER_HPP_INCLUDED_
-#define DUNE_CONTROL_Proxy_PATH_CONTROLLER_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_PROXY_PATH_CONTROLLER_HPP_INCLUDED_
+#define DUNE_CONTROL_PROXY_PATH_CONTROLLER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <vector>
 #include <string>
 
 // DUNE headers.
-#include <DUNE/Control/PathController.hpp>
 #include <DUNE/IMC.hpp>
+#include <DUNE/Control/PathController.hpp>
 
 namespace DUNE
 {
@@ -43,11 +43,14 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM ProxyPathController;
 
-    class ProxyPathController: public DUNE::Control::PathController
+    //! ProxyPathController
+    //! PathController with the capability to control the path
+    //! of a system with an id different from the vehicle's id
+    class ProxyPathController: public Control::PathController
     {
     public:
       //! Constructor.
-      ProxyPathController(std::string name, Tasks::Context& ctx);
+      ProxyPathController(const std::string& name, Tasks::Context& ctx);
 
       //! Destructor.
       virtual
@@ -57,18 +60,18 @@ namespace DUNE
       void
       onEntityResolution(void);
 
-      //! Handler for EstimatedState source id filter.
-      //! This is called when an EstimatedState is received.
-      //! By default it only passes EstimatedState messages from the system itself.
+      //! Handler for EstimatedState source id filter. This is called when
+      //! an EstimatedState is received. By default it only passes
+      //! EstimatedState messages from the system itself.
       //! @param[in] es EstimatedState message.
       //! @return true if the message is NOT allowed to pass.
       virtual bool
       sourceFilter(const IMC::EstimatedState* es);
 
     private:
-      // EstimatedState filter
-      DUNE::Tasks::SourceFilter* m_stateFilter;
-      // EstimatedState filter input
+      //! EstimatedState filter.
+      Tasks::SourceFilter* m_state_filter;
+      //! EstimatedState filter input.
       std::vector<std::string> m_state_src;
     };
   }

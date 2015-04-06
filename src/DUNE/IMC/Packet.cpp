@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -250,10 +250,18 @@ namespace DUNE
       }
 
       // Deserialize message fields.
-      if (hdr.sync == DUNE_IMC_CONST_SYNC_REV)
-        msg->reverseDeserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
-      else
-        msg->deserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
+      try
+      {
+        if (hdr.sync == DUNE_IMC_CONST_SYNC_REV)
+          msg->reverseDeserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
+        else
+          msg->deserializeFields(bfr + DUNE_IMC_CONST_HEADER_SIZE, hdr.size);
+      }
+      catch (...)
+      {
+        delete msg;
+        throw;
+      }
 
       msg->setTimeStamp(hdr.timestamp);
       msg->setSource(hdr.src);

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,13 +20,13 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 73b91babb844cbd885fecbb79bb415cd                            *
+// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -202,6 +202,8 @@
 #define DUNE_IMC_CRUDEOIL 286
 //! FineOil identification number.
 #define DUNE_IMC_FINEOIL 287
+//! Turbidity identification number.
+#define DUNE_IMC_TURBIDITY 288
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -504,5 +506,9 @@
 #define DUNE_IMC_USBLPOSITION 891
 //! UsblFix identification number.
 #define DUNE_IMC_USBLFIX 892
+//! ParametersXml identification number.
+#define DUNE_IMC_PARAMETERSXML 893
+//! GetParametersXml identification number.
+#define DUNE_IMC_GETPARAMETERSXML 894
 
 #endif

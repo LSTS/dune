@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,26 +20,26 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 // Author: Eduardo Marques (original maneuver implementation)               *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_STATIONKEEPING_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_STATIONKEEPING_HPP_INCLUDED_
+#ifndef MANEUVER_MULTIPLEXER_STATION_KEEPING_HPP_INCLUDED_
+#define MANEUVER_MULTIPLEXER_STATION_KEEPING_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 
 // Local headers
 #include "MuxedManeuver.hpp"
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     struct StationKeepingArgs
     {
       //! Minimum radius to prevent incompatibility with path controller

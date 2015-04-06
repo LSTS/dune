@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -77,7 +77,8 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          m_timer.setTop(m_args.ping_period);
+          if (paramChanged(m_args.ping_period))
+            m_timer.setTop(m_args.ping_period);
         }
 
         //! Initialize resources.
@@ -112,7 +113,8 @@ namespace Navigation
           {
             IMC::LblConfig cfg(m_lbl_config);
             cfg.op = IMC::LblConfig::OP_CUR_CFG;
-            dispatch(cfg);
+            cfg.setSource(getSystemId());
+            dispatchReply(*msg, cfg);
           }
         }
 

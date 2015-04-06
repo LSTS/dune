@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
@@ -30,6 +30,9 @@
 
 // DUNE headers.
 #include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Math/MovingAverage.hpp>
+#include <DUNE/Time/Counter.hpp>
+#include <DUNE/Memory.hpp>
 
 namespace DUNE
 {
@@ -55,7 +58,7 @@ namespace DUNE
         m_mave(NULL)
       {
         m_timer.setTop(timeout);
-        m_mave = new MovingAverage<float>(c_vsamples);
+        m_mave = new Math::MovingAverage<float>(c_vsamples);
       }
 
       ~VerticalMonitor(void)
@@ -97,7 +100,7 @@ namespace DUNE
       //! Progress below minimum
       bool m_slow_progress;
       //! Moving average for progress samples
-      MovingAverage<float>* m_mave;
+      Math::MovingAverage<float>* m_mave;
     };
   }
 }

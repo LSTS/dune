@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 // Author: Renato Caldas                                                    *
@@ -174,6 +174,26 @@ namespace DUNE
       //! @param[in] msg QueryEntityActivationState message.
       void
       consume(const IMC::QueryEntityActivationState* msg);
+
+      //! Check if an activation request arrived while the entity was
+      //! being deactivated.
+      //! @return true if an activation request is pending, false
+      //! otherwise.
+      bool
+      hasPendingActivation(void) const
+      {
+        return m_next_act_state == NAS_ACTIVE;
+      }
+
+      //! Check if a deactivation request arrived while the entity was
+      //! being activated.
+      //! @return true if a deactivation request is pending, false
+      //! otherwise.
+      bool
+      hasPendingDeactivation(void) const
+      {
+        return m_next_act_state == NAS_INACTIVE;
+      }
 
     private:
       enum NextActivationState

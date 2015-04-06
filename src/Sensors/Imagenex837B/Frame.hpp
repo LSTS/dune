@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
 //***************************************************************************
@@ -56,8 +56,6 @@ namespace Sensors
     static const unsigned c_ivx_frame_size = 272;
     //! Size of IUX body.
     static const unsigned c_iux_frame_size = 80;
-    //! Meter per Second to Knots conversion.
-    static const double c_ms_to_knots = 1.94384449;
     // Euler angles conversion factor.
     static const double c_euler_factor = (65536.0 / 360.0);
 
@@ -267,7 +265,7 @@ namespace Sensors
       void
       setSpeed(float speed)
       {
-        m_data[HDR_IDX_SPEED] = (int8_t)(speed * 10 * c_ms_to_knots);
+        m_data[HDR_IDX_SPEED] = (int8_t)(speed * 10 * DUNE::Units::c_ms_to_knot);
       }
 
       //! Set GNSS ships course.

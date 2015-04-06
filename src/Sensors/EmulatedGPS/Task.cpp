@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -40,32 +40,41 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    static const double c_ms_to_kmh = 3.6;
-    static const double c_ms_to_knots = 1.94384449;
-
     struct Arguments
     {
-      // Serial port device.
+      //! Serial port device.
       std::string uart_dev;
-      // Serial port baud.
+      //! Serial port baud.
       unsigned uart_baud;
+      //! Lifespan of estimated state messages.
+      double lifespan_estate;
+      //! Send GPZDA sentences.
+      bool send_zda;
+      //! Send GPRMC sentences.
+      bool send_rmc;
+      //! Send GPHDT sentences.
+      bool send_hdt;
+      //! Send GPVTG sentences.
+      bool send_vtg;
+      //! Send sentences on IMC::Pulse.
+      bool send_on_pulse;
     };
 
-    struct Task: public DUNE::Tasks::Periodic
+    struct Task: public DUNE::Tasks::Task
     {
-      // Task config.
-      Arguments m_args;
-      // Serial port handle.
+      //! Serial port handle.
       SerialPort* m_uart;
-      // Estimated state.
+      //! Estimated state.
       IMC::EstimatedState m_estate;
-      // True if we can compute a lat/lon position.
-      bool m_has_position;
+      //! Time of last estimated state.
+      Counter<double> m_estate_timer;
+      //! Task parameters.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Periodic(name, ctx),
+        Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_has_position(false)
+        m_estate_timer(0.0)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -75,6 +84,32 @@ namespace Sensors
         .defaultValue("4800")
         .description("Serial port baud rate");
 
+        param("Lifespan - Estimated State", m_args.lifespan_estate)
+        .units(Units::Second)
+        .defaultValue("2.0")
+        .description("Lifespan of estimated state messages");
+
+        param("Send ZDA", m_args.send_zda)
+        .defaultValue("true")
+        .description("Send GPZDA sentences");
+
+        param("Send RMC", m_args.send_rmc)
+        .defaultValue("true")
+        .description("Send GPRMC sentences");
+
+        param("Send HDT", m_args.send_hdt)
+        .defaultValue("true")
+        .description("Send GPHDT sentences");
+
+        param("Send VTG", m_args.send_vtg)
+        .defaultValue("true")
+        .description("Send GPVTG sentences");
+
+        param("Send Sentences on Pulse", m_args.send_on_pulse)
+        .defaultValue("true")
+        .description("Send sentences only upon reception of Pulse messages");
+
+        bind<IMC::Pulse>(this);
         bind<IMC::EstimatedState>(this);
       }
 
@@ -82,6 +117,7 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -97,11 +133,18 @@ namespace Sensors
           return;
 
         m_estate = *msg;
-        m_has_position = true;
+        m_estate_timer.setTop(m_args.lifespan_estate);
+      }
+
+      void
+      consume(const IMC::Pulse* msg)
+      {
+        if (m_args.send_on_pulse)
+          sendSentences(msg->getTimeStamp());
       }
 
       std::string
-      createRMC(const Time::BrokenDown& bdt)
+      createRMC(const Time::BrokenDown& bdt, unsigned fsec)
       {
         double lat = m_estate.lat;
         double lon = m_estate.lon;
@@ -119,13 +162,13 @@ namespace Sensors
         double vel = Math::norm(m_estate.vx, m_estate.vy);
 
         NMEAWriter stn("GPRMC");
-        stn << String::str("%02u%02u%02u.00", bdt.hour, bdt.minutes, bdt.seconds)
+        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << "A"
             << String::str("%02d%02.5f", std::abs(lat_deg), std::fabs(lat_min))
             << ((lat_deg >= 0) ? "N" : "S")
             << String::str("%03d%02.5f", std::abs(lon_deg), std::fabs(lon_min))
             << ((lon_deg >= 0) ? "E" : "W")
-            << vel * c_ms_to_knots // speed in knots.
+            << vel * DUNE::Units::c_ms_to_knot
             << 0 // azimuth.
             << String::str("%02u%02u%02u", bdt.day, bdt.month, bdt.year - 2000)
             << ""
@@ -136,7 +179,7 @@ namespace Sensors
       }
 
       std::string
-      createVTG(const Time::BrokenDown& bdt)
+      createVTG(void)
       {
         double vel = Math::norm(m_estate.vx, m_estate.vy);
         double course = Angles::degrees(std::atan2(m_estate.vy, m_estate.vx));
@@ -152,17 +195,16 @@ namespace Sensors
         stn << String::str("%03.1f,T,%03.1f,M,%03.1f,N,%03.1f,K",
                            course,
                            course,
-                           vel * c_ms_to_knots,
-                           vel * c_ms_to_kmh);
-        (void)bdt;
+                           vel * DUNE::Units::c_ms_to_knot,
+                           vel * DUNE::Units::c_ms_to_kmh);
         return stn.sentence();
       }
 
       std::string
-      createZDA(const Time::BrokenDown& bdt)
+      createZDA(const Time::BrokenDown& bdt, unsigned fsec)
       {
         NMEAWriter stn("GPZDA");
-        stn << String::str("%02u%02u%02u.00", bdt.hour, bdt.minutes, bdt.seconds)
+        stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << String::str("%02u", bdt.day)
             << String::str("%02u", bdt.month)
             << String::str("%04u", bdt.year)
@@ -173,33 +215,73 @@ namespace Sensors
       }
 
       std::string
-      createHDT(const Time::BrokenDown& bdt)
+      createHDT(void)
       {
         NMEAWriter stn("GPHDT");
         stn << String::str("%0.2f", Angles::degrees(m_estate.psi))
             << "T";
 
-        (void)bdt;
-
         return stn.sentence();
       }
 
       void
-      task(void)
+      sendSentences(void)
       {
-        Time::BrokenDown bdt;
+        sendSentences(Clock::getSinceEpoch());
+      }
 
-        std::string stn_str = createRMC(bdt);
-        m_uart->write(stn_str.c_str(), stn_str.size());
+      void
+      sendSentences(double time_reference)
+      {
+        time_t secs = (time_t)time_reference;
+        double fraction = time_reference - secs;
+        unsigned fsec = fraction * 100;
+        Time::BrokenDown bdt(secs);
+        std::string stn_str;
 
-        stn_str = createZDA(bdt);
-        m_uart->write(stn_str.c_str(), stn_str.size());
+        if (m_args.send_zda)
+        {
+          stn_str = createZDA(bdt, fsec);
+          m_uart->write(stn_str.c_str(), stn_str.size());
+        }
 
-        stn_str = createHDT(bdt);
-        m_uart->write(stn_str.c_str(), stn_str.size());
+        if (m_args.send_rmc && !m_estate_timer.overflow())
+        {
+          stn_str = createRMC(bdt, fsec);
+          m_uart->write(stn_str.c_str(), stn_str.size());
+        }
 
-        stn_str = createVTG(bdt);
-        m_uart->write(stn_str.c_str(), stn_str.size());
+        if (m_args.send_hdt && !m_estate_timer.overflow())
+        {
+          stn_str = createHDT();
+          m_uart->write(stn_str.c_str(), stn_str.size());
+        }
+
+        if (m_args.send_vtg && !m_estate_timer.overflow())
+        {
+          stn_str = createVTG();
+          m_uart->write(stn_str.c_str(), stn_str.size());
+        }
+      }
+
+      void
+      onMain(void)
+      {
+        PeriodicDelay delay(1000000);
+
+        while (!stopping())
+        {
+          if (m_args.send_on_pulse)
+          {
+            waitForMessages(1.0);
+          }
+          else
+          {
+            delay.wait();
+            consumeMessages();
+            sendSentences();
+          }
+        }
       }
     };
   }

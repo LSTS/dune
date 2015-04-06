@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Jose Pinto                                                       *
 //***************************************************************************
@@ -405,22 +405,22 @@ namespace Maneuver
           switch (m_fref_state.state)
           {
             case (IMC::FollowRefState::FR_LOITER):
-              inf(DTR("Loitering around (%f, %f, %f, %f)."),
-                  Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
-                  desired_path.end_z, desired_path.lradius);
+              trace(DTR("Loitering around (%f, %f, %f, %f)."),
+              Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
+              desired_path.end_z, desired_path.lradius);
               break;
             case (IMC::FollowRefState::FR_GOTO):
-              inf(DTR("Going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
-                  Angles::degrees(desired_path.end_lon), desired_path.end_z);
+              trace(DTR("Going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
+              Angles::degrees(desired_path.end_lon), desired_path.end_z);
               break;
             case (IMC::FollowRefState::FR_WAIT):
-              inf(DTR("Waiting for next reference."));
+              trace(DTR("Waiting for next reference."));
               break;
             case (IMC::FollowRefState::FR_TIMEOUT):
-              inf(DTR("Bad connection, too long since last EstimatedState was received."));
+              trace(DTR("Bad connection, too long since last EstimatedState was received."));
               break;
             default:
-              inf(DTR("Unexpected state %#x"), m_fref_state.state);
+              trace(DTR("Unexpected state %#x"), m_fref_state.state);
               enableMovement(false);
               break;
           }
@@ -435,7 +435,7 @@ namespace Maneuver
             if (!offlineOrWaiting())
             {
               m_fref_state.state = IMC::FollowRefState::FR_LOITER;
-              inf(DTR("LOITER, XY and Z NEAR"));
+              trace(DTR("LOITER, XY and Z NEAR"));
             }
           }
           else
@@ -444,7 +444,7 @@ namespace Maneuver
             if(!offlineOrWaiting() )
             {
               m_fref_state.state = IMC::FollowRefState::FR_GOTO;
-              inf(DTR("GOTO, FAR"));
+              trace(DTR("GOTO, FAR"));
             }
           }
         }

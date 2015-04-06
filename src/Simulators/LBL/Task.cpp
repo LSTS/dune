@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 // Author: Bruno Terra                                                      *
@@ -148,7 +148,8 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        m_pinger.setTop(m_args.ping_delay);
+        if (paramChanged(m_args.ping_delay))
+          m_pinger.setTop(m_args.ping_delay);
       }
 
       //! Acquire resources.
@@ -237,7 +238,7 @@ namespace Simulators
           if (hasLBLConfig())
             cfg.beacons = m_lbl_cfg->beacons;
 
-          dispatch(cfg);
+          dispatchReply(*msg, cfg);
         }
       }
 

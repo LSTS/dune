@@ -29,14 +29,12 @@
 #define DUNE_TASKS_SOURCE_FILTER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <stdint.h>
 #include <string>
 #include <vector>
 
 // DUNE headers.
 #include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
-#include <DUNE/Memory.hpp>
 
 namespace DUNE
 {
@@ -45,6 +43,9 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM SourceFilter;
 
+    //! SourceFilter
+    //! Filter to check if a message is allowed to pass according
+    //! to its source system and/or entity
     class SourceFilter
     {
     public:
@@ -63,7 +64,7 @@ namespace DUNE
       //! @param[in] task filter parent task.
       //! @param[in] source desired sources system and entity names.
       //! @param[in] msg_name filtered message name.
-      SourceFilter(Tasks::Task& task, const std::vector<std::string>& source, const std::string msg_name);
+      SourceFilter(Tasks::Task& task, const std::vector<std::string>& source, const std::string& msg_name);
 
       //! Construct a task input filter by systems or entities for a general message.
       //! @param[in] task filter parent task.
@@ -71,10 +72,11 @@ namespace DUNE
       //! @param[in] source desired sources system and entity names.
       //! @param[in] msg_name filtered message name.
       SourceFilter(Tasks::Task& task, const bool only_systems, const std::vector<std::string>& source,
-          const std::string msg_name);
+                   const std::string& msg_name);
 
       //! Destructor.
-      ~SourceFilter(void);
+      ~SourceFilter(void)
+      {  };
 
       //! Define filter by systems.
       //! @param[in] source desired sources system and entity names.
@@ -113,28 +115,31 @@ namespace DUNE
       match(const IMC::Message* msg);
 
     private:
+      //! Filter lists
+      typedef std::vector<std::set<uint32_t> > FilterList;
+
       //! Define a set of filtered messages.
       //! @param[in] messages filtered messages' names.
       //! @return set of filtered message ids.
-      std::set<uint32_t>*
+      std::set<uint32_t>
       listMessages(std::vector<std::string>& messages);
 
       //! Define the desired message source systems.
       //! @param[in] systems sources system names.
       //! @return set of system ids allowed to pass a message.
-      std::set<uint32_t>*
+      std::set<uint32_t>
       listSystems(std::vector<std::string>& systems);
 
       //! Define the desired message source entities.
       //! @param[in] entities sources entity names.
       //! @return set of entity ids allowed to pass a message.
-      std::set<uint32_t>*
+      std::set<uint32_t>
       listEntities(std::vector<std::string>& entities);
 
       //! Delete a set of filter ids.
       //! @param[in/out] list filtered message, system, or entity ids.
       void
-      deleteList(std::vector<std::set<uint32_t>*>& list);
+      deleteList(FilterList& list);
 
       //! Verification of a general message source system.
       //! @param[in] msg input message.
@@ -220,22 +225,23 @@ namespace DUNE
       std::vector<std::string>
       warnings(void);
 
-      // Parent task.
+      //! Parent task.
       Tasks::Task& m_task;
-      //! List of filtered messages and systems and entities allowed to pass them.
-      typedef std::vector<std::set<uint32_t>*> Messages;
-      typedef std::vector<std::set<uint32_t>*> Systems;
-      typedef std::vector<std::set<uint32_t>*> Entities;
-      Messages m_filtered_msg;
-      Systems m_filtered_sys;
-      Entities m_filtered_ent;
-      // Filtered message name
+      //! List of filtered messages allowed to pass them.
+      FilterList m_filtered_msg;
+      //! List of filtered systems allowed to pass them.
+      FilterList m_filtered_sys;
+      //! List of filtered entities allowed to pass them.
+      FilterList m_filtered_ent;
+      //! Filtered message name
       std::string m_msg_name;
-      // Flags for filter type
+      //! Message filtering flag
       bool m_filt_msg;
+      //! System filtering flag
       bool m_filt_sys;
+      //! Entity filtering flag
       bool m_filt_ent;
-      // User information outputs
+      //! User information outputs
       std::vector<std::string> m_warnings;
     };
   }

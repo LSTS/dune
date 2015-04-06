@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,13 +20,13 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 73b91babb844cbd885fecbb79bb415cd                            *
+// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -6470,6 +6470,73 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Turbidity.
+    class Turbidity: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 288;
+      }
+
+      Turbidity(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Turbidity(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Turbidity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Turbidity";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Camera Zoom.
     class CameraZoom: public Message
     {
@@ -12494,8 +12561,6 @@ namespace DUNE
     class FormationMonitor: public Message
     {
     public:
-      //! Minimum Distance.
-      fp32_t dist_min;
       //! Commanded X Acceleration (North).
       fp32_t ax_cmd;
       //! Commanded Y Acceleration (East).
@@ -12582,7 +12647,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 76;
+        return 72;
       }
 
       unsigned
@@ -13859,6 +13924,24 @@ namespace DUNE
     class FormationState: public Message
     {
     public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Request.
+        FC_REQUEST = 0,
+        //! Report.
+        FC_REPORT = 1
+      };
+
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Start.
+        OP_START = 0,
+        //! Stop.
+        OP_STOP = 1
+      };
+
       //! Position Mismatch Monitor.
       enum PositionMismatchMonitorEnum
       {
@@ -13888,6 +13971,10 @@ namespace DUNE
         CONV_TIMEOUT = 1
       };
 
+      //! Type.
+      uint8_t type;
+      //! Operation.
+      uint8_t op;
       //! Position Mismatch.
       fp32_t possimerr;
       //! Convergence.
@@ -13948,7 +14035,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 15;
+        return 17;
       }
 
       void
@@ -17849,7 +17936,9 @@ namespace DUNE
       enum FlagsBits
       {
         //! Acknowledgement.
-        UTF_ACK = 0x01
+        UTF_ACK = 0x01,
+        //! Delayed.
+        UTF_DELAYED = 0x02
       };
 
       //! Sequence Id.
@@ -17929,7 +18018,9 @@ namespace DUNE
       enum FlagsBits
       {
         //! Promiscuous.
-        URF_PROMISCUOUS = 0x01
+        URF_PROMISCUOUS = 0x01,
+        //! Delayed.
+        URF_DELAYED = 0x02
       };
 
       //! Source System.
@@ -18415,6 +18506,34 @@ namespace DUNE
     class FormationEvaluation: public Message
     {
     public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Request.
+        FC_REQUEST = 0,
+        //! Report.
+        FC_REPORT = 1
+      };
+
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Start.
+        OP_START = 0,
+        //! Stop.
+        OP_STOP = 1,
+        //! Ready.
+        OP_READY = 2,
+        //! Executing.
+        OP_EXECUTING = 3,
+        //! Failure.
+        OP_FAILURE = 4
+      };
+
+      //! Type.
+      uint8_t type;
+      //! Operation.
+      uint8_t op;
       //! Mean Position Error.
       fp32_t err_mean;
       //! Absolute Minimum Distance.
@@ -18475,7 +18594,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 20;
+        return 22;
       }
 
       unsigned
@@ -18898,6 +19017,128 @@ namespace DUNE
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Parameters XML.
+    class ParametersXml: public Message
+    {
+    public:
+      //! Locale.
+      std::string locale;
+      //! Configuration Data.
+      std::vector<char> config;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 893;
+      }
+
+      ParametersXml(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ParametersXml(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ParametersXml::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ParametersXml";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(locale) + IMC::getSerializationSize(config);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Get Parameters XML.
+    class GetParametersXml: public Message
+    {
+    public:
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 894;
+      }
+
+      GetParametersXml(void);
+
+      Message*
+      clone(void) const
+      {
+        return new GetParametersXml(*this);
+      }
+
+      void
+      clear(void);
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return GetParametersXml::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "GetParametersXml";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
     };
   }
 }

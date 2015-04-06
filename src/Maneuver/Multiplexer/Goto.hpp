@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 // Author: Eduardo Marques (original maneuver implementation)               *
@@ -34,12 +34,12 @@
 // Local headers
 #include "MuxedManeuver.hpp"
 
-using DUNE_NAMESPACES;
-
 namespace Maneuver
 {
   namespace Multiplexer
   {
+    using DUNE_NAMESPACES;
+
     //! Goto maneuver
     class Goto: public MuxedManeuver<IMC::Goto, void>
     {

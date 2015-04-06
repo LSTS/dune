@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -193,24 +193,35 @@ namespace Monitors
       void
       sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
       {
+        inf(DTR("sending SMS %s | %u"), prefix, timeout);
+
+        IMC::Sms sms;
+        if (recipient.size() == 0)
+          sms.number = m_args.recipient;
+        else
+          sms.number = recipient;
+
+        sms.timeout = timeout;
+
         if (!m_emsg.empty())
         {
-          inf(DTR("sending SMS %s | %u"), prefix, timeout);
-
-          IMC::Sms sms;
-          if (recipient.size() == 0)
-            sms.number = m_args.recipient;
-          else
-            sms.number = recipient;
-
-          sms.timeout = timeout;
           sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
-          dispatch(sms);
         }
         else
         {
-          war(DTR("unknown location"));
+          std::string msg;
+          Time::BrokenDown bdt;
+          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%u c:%u",
+                               getSystemName(),
+                               bdt.hour, bdt.minutes, bdt.seconds,
+                               (int)m_fuel, (int)m_fuel_conf);
+
+          msg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
+
+          sms.contents = String::str("(%s) %s", prefix, msg.c_str());
         }
+
+        dispatch(sms);
       }
 
       void

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
@@ -76,6 +76,8 @@ namespace Simulators
       double hacc;
       //! Number of sattelites.
       uint16_t n_sat;
+      //! Initial position (degrees)
+      std::vector<double> position;
     };
 
     //! %GPS simulator task.
@@ -129,6 +131,11 @@ namespace Simulators
         .defaultValue("8")
         .description("Number of available satellites");
 
+        param("Initial Position", m_args.position)
+        .units(Units::Degree)
+        .size(2)
+        .description("Initial position of the vehicle");
+
         m_fix.clear();
         m_euler.clear();
         m_gv.clear();
@@ -140,6 +147,21 @@ namespace Simulators
 
         bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        m_origin.lat = Math::Angles::radians(m_args.position[0]);
+        m_origin.lon = Math::Angles::radians(m_args.position[1]);
+        m_origin.type = IMC::GpsFix::GFT_MANUAL_INPUT;
+        m_origin.validity = 0xffff;
+
+        // Dispatching local origin.
+        dispatch(m_origin);
+
+        // Activate task.
+        requestActivation();
       }
 
       void
@@ -156,7 +178,9 @@ namespace Simulators
       consume(const IMC::SimulatedState* msg)
       {
         if (!isActive())
+        {
           return;
+        }
 
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {

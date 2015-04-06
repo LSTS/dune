@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -102,6 +102,10 @@ namespace Transports
       std::string m_command_connect;
       //! Stop command.
       std::string m_command_disconnect;
+      //! Start NAT command.
+      std::string m_command_nat_start;
+      //! Stop NAT command.
+      std::string m_command_nat_stop;
       //! True if modem is powered on.
       bool m_powered;
       //! Current state machine state.
@@ -132,13 +136,13 @@ namespace Transports
         param("GSM - User", m_args.gsm_user)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("vodafone")
+        .defaultValue("")
         .description(DTR("GSM/GPRS username"));
 
         param("GSM - Password", m_args.gsm_pass)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("vodafone")
+        .defaultValue("")
         .description(DTR("GSM/GPRS password"));
 
         param("GSM - APN", m_args.gsm_apn)
@@ -168,6 +172,8 @@ namespace Transports
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
         m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
         m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
+        m_command_nat_start = String::str("/bin/sh %s nat_start > /dev/null 2>&1", script.c_str());
+        m_command_nat_stop = String::str("/bin/sh %s nat_stop > /dev/null 2>&1", script.c_str());
 
         bind<IMC::PowerChannelState>(this);
       }
@@ -266,14 +272,16 @@ namespace Transports
         Environment::set("GSM_PIN", pin);
         Environment::set("GSM_MODE", m_args.gsm_mode);
 
-        std::system(m_command_connect.c_str());
+        if (std::system(m_command_connect.c_str()) == -1)
+          err(DTR("failed to execute connect command"));
       }
 
       void
       disconnect(void)
       {
         debug("disconnecting");
-        std::system(m_command_disconnect.c_str());
+        if (std::system(m_command_disconnect.c_str()) == -1)
+          err(DTR("failed to execute disconnect command"));
       }
 
       bool
@@ -291,6 +299,20 @@ namespace Transports
         }
 
         return false;
+      }
+
+      void
+      startNAT(void)
+      {
+        if (std::system(m_command_nat_start.c_str()) == -1)
+          err(DTR("failed to start NAT"));
+      }
+
+      void
+      stopNAT(void)
+      {
+        if (std::system(m_command_nat_stop.c_str()) == -1)
+          err(DTR("failed to stop NAT"));
       }
 
       void
@@ -350,6 +372,7 @@ namespace Transports
             if (isConnected(&m_address))
             {
               debug("connected: %s", m_address.c_str());
+              startNAT();
               setEntityState(IMC::EntityState::ESTA_NORMAL,
                              String::str(DTR("connected to the Internet with public address '%s'"), m_address.c_str()));
               m_sm_state = SM_ACT_CONNECTED;
@@ -359,6 +382,7 @@ namespace Transports
           case SM_ACT_CONNECTED:
             if (!isConnected())
             {
+              stopNAT();
               debug("disconnected");
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CONNECTING);
               m_sm_state = SM_ACT_DISCONNECTED;
@@ -393,6 +417,7 @@ namespace Transports
 
           case SM_DEACT_DONE:
             debug("deactivation complete");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
             deactivate();
             m_sm_state = SM_IDLE;
             break;

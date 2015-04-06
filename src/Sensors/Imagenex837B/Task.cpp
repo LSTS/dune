@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
 //***************************************************************************
@@ -418,7 +418,9 @@ namespace Sensors
         m_power_channel_control.name = m_args.power_channel;
 
         m_countdown.setTop(getActivationTime());
-        m_range_counter.setTop(m_args.range_modifier_timer);
+
+        if (paramChanged(m_args.range_modifier_timer))
+          m_range_counter.setTop(m_args.range_modifier_timer);
 
         if (m_args.fill_state || m_args.range_modifier)
           bind<IMC::EstimatedState>(this);

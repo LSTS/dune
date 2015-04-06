@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
 // Author: Pedro Calado (Altitude filter)                                   *
@@ -190,9 +190,6 @@ namespace DUNE
       .defaultValue("AHRS")
       .description("Entity label of 'AHRS' messages");
 
-      param("Entity Label - Alignment", m_elabel_alignment)
-      .description("Entity label of 'EulerAngles' alignment messages");
-
       param("Entity Label - DVL", m_elabel_dvl)
       .description("Entity label of the DVL device");
 
@@ -300,15 +297,6 @@ namespace DUNE
 
       m_agvel_eid = m_ahrs_eid;
       m_accel_eid = m_ahrs_eid;
-
-      try
-      {
-        m_alignment_eid = resolveEntity(m_elabel_alignment);
-      }
-      catch (...)
-      {
-        m_alignment_eid = 0;
-      }
 
       try
       {
@@ -435,20 +423,11 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::EulerAngles* msg)
     {
-      if (msg->getSourceEntity() == m_alignment_eid)
-      {
-        correctAlignment(msg->psi);
-        m_phi_offset = msg->phi - Math::Angles::normalizeRadian(getEuler(AXIS_X));
-        m_theta_offset = msg->theta - Math::Angles::normalizeRadian(getEuler(AXIS_Y));
-        spew("Euler Angles offset - phi, theta: %f | %f", m_phi_offset, m_theta_offset);
-        return;
-      }
-
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
-      m_euler_bfr[AXIS_X] += msg->phi + m_phi_offset;
-      m_euler_bfr[AXIS_Y] += msg->theta + m_theta_offset;
+      m_euler_bfr[AXIS_X] += msg->phi;
+      m_euler_bfr[AXIS_Y] += msg->theta;
 
       // Heading buffer maintains sign.
       m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
@@ -553,6 +532,11 @@ namespace DUNE
       Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, m_origin->height,
                                        msg->lat, msg->lon, msg->height,
                                        &x, &y, &m_last_z);
+
+      // Stream Estimator.
+      IMC::EstimatedStreamVelocity stream;
+      if (m_stream_filter.consume(msg, stream))
+        dispatch(stream);
 
       // Correct for roll angle.
       y += std::sin(getEuler(AXIS_X)) * m_dist_gps_cg;
@@ -721,6 +705,7 @@ namespace DUNE
     BasicNavigation::consume(const IMC::Rpm* msg)
     {
       m_rpm = msg->value;
+      m_stream_filter.consume(msg);
     }
 
     void
@@ -816,8 +801,6 @@ namespace DUNE
 
       m_gps_sog = 0.0;
       m_heading = 0.0;
-      m_phi_offset = 0.0;
-      m_theta_offset = 0.0;
       m_altitude = -1;
 
       m_navstate = SM_STATE_IDLE;
@@ -935,13 +918,6 @@ namespace DUNE
     }
 
     void
-    BasicNavigation::correctAlignment(double psi)
-    {
-      // do nothing.
-      (void)psi;
-    }
-
-    void
     BasicNavigation::onDispatchNavigation(void)
     {
       m_estate.x = m_kal.getState(STATE_X);
@@ -1007,12 +983,10 @@ namespace DUNE
       m_estate.setTimeStamp(tstamp);
       m_uncertainty.setTimeStamp(tstamp);
       m_navdata.setTimeStamp(tstamp);
-      m_ewvel.setTimeStamp(tstamp);
 
       dispatch(m_estate, DF_KEEP_TIME);
       dispatch(m_uncertainty, DF_KEEP_TIME);
       dispatch(m_navdata, DF_KEEP_TIME);
-      dispatch(m_ewvel, DF_KEEP_TIME);
     }
 
     void

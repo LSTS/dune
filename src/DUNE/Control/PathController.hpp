@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
@@ -43,8 +43,6 @@ namespace DUNE
 {
   namespace Control
   {
-    //! Estimated time of arrival factor
-    static const float c_time_factor = 5.0f;
     //! Factor for path error in y direction to prevent too large cross track offsets
     static const float c_erry_factor = 1.75f;
 
@@ -235,7 +233,6 @@ namespace DUNE
       //! @param ts tracking state information
       virtual void
       step(const IMC::EstimatedState& state, const TrackingState& ts) = 0;
-
 
       //! Default implementation for loiter control,
       //! that can be  overriden for a controller specific implementation.
@@ -439,7 +436,10 @@ namespace DUNE
       float m_eta_min_speed;
       //! Active loops
       uint32_t m_aloops;
-
+      //! Timeout for new incoming path reference
+      double m_new_ref_timeout;
+      //! Time of arrival factor
+      float m_time_factor;
       //! Current tracking state
       TrackingState m_ts;
       //! Path control state message

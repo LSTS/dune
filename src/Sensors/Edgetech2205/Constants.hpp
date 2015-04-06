@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -51,8 +51,6 @@ namespace Sensors
     //! Subsystem identifiers.
     enum SubsystemId
     {
-      //! Sub-bottom.
-      SUBSYS_SB = 0,
       //! Low-frequency sidescan.
       SUBSYS_SSL = 20,
       //! High-frequency sidescan.
@@ -108,13 +106,16 @@ namespace Sensors
     enum SonarDataIndices
     {
       SDATA_IDX_TIME = 0,
+      SDATA_IDX_PING_NUMBER = 8,
       SDATA_IDX_MSB = 16,
       SDATA_IDX_VALIDITY = 30,
       SDATA_IDX_DATA_FORMAT = 34,
       SDATA_IDX_LONGITUDE = 80,
       SDATA_IDX_LATITUDE = 84,
       SDATA_IDX_COORDINATE_UNITS = 88,
+      SDATA_IDX_ANNOTATION_STRING = 90,
       SDATA_IDX_DATA_SAMPLES  = 114,
+      SDATA_IDX_SAMPLING_INTERVAL  = 116,
       SDATA_IDX_PULSE_START_FREQ = 126,
       SDATA_IDX_PULSE_END_FREQ = 128,
       SDATA_IDX_DEPTH = 136,
@@ -138,6 +139,10 @@ namespace Sensors
       SDATA_IDX_TRACE_DATA = 240
     };
 
+    //! Channel count.
+    static const size_t c_channel_count = 2;
+    //! Subsystem count.
+    static const size_t c_subsys_count = 2;
     //! First byte of the start of header marker.
     static const uint8_t c_marker0 = 0x01;
     //! Second byte of the start of header marker.

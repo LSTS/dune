@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -296,19 +296,29 @@ namespace Sensors
         double tstamp = Clock::getSinceEpoch();
 
         // Angles Increment.
+        m_data(0) = read24b(bfr + OFF_ANG_INC0) * c_ang_scale;
+        m_data(1) = read24b(bfr + OFF_ANG_INC1) * c_ang_scale;
+        m_data(2) = read24b(bfr + OFF_ANG_INC2) * c_ang_scale;
+        m_data = m_rotation * m_data;
+
         m_edelta.setTimeStamp(tstamp);
+        m_edelta.x = m_data(0);
+        m_edelta.y = m_data(1);
+        m_edelta.z = m_data(2);
         m_edelta.time += m_edelta.timestep;
-        m_edelta.x = read24b(bfr + OFF_ANG_INC0) * c_ang_scale;
-        m_edelta.y = read24b(bfr + OFF_ANG_INC1) * c_ang_scale;
-        m_edelta.z = read24b(bfr + OFF_ANG_INC2) * c_ang_scale;
         dispatch(m_edelta, DF_KEEP_TIME);
 
         // Velocity Increment.
+        m_data(0) = read24b(bfr + OFF_VEL_INC0) * c_vel_scale;
+        m_data(1) = read24b(bfr + OFF_VEL_INC1) * c_vel_scale;
+        m_data(2) = read24b(bfr + OFF_VEL_INC2) * c_vel_scale;
+        m_data = m_rotation * m_data;
+
         m_vdelta.setTimeStamp(tstamp);
         m_vdelta.time += m_edelta.timestep;
-        m_vdelta.x = read24b(bfr + OFF_VEL_INC0) * c_vel_scale;
-        m_vdelta.y = read24b(bfr + OFF_VEL_INC1) * c_vel_scale;
-        m_vdelta.z = read24b(bfr + OFF_VEL_INC2) * c_vel_scale;
+        m_vdelta.x = m_data(0);
+        m_vdelta.y = m_data(1);
+        m_vdelta.z = m_data(2);
         dispatch(m_vdelta, DF_KEEP_TIME);
 
         // Status words.

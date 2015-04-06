@@ -1,6 +1,6 @@
 #! /bin/sh
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -21,7 +21,7 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
@@ -40,10 +40,6 @@ fi
 
 if [ -z "$GSM_MODE" ]; then
     GSM_MODE='AT\^SYSCFG=2,2,3fffffff,0,1'
-fi
-
-if [ -n "$NAT_ENABLE" ]; then
-    NAT_ENABLE='true'
 fi
 
 if [ -z "$GSM_PIN" ]; then
@@ -172,10 +168,6 @@ ppp_stop()
 
 nat_start()
 {
-    if [ -z "$NAT_ENABLE" ]; then
-        return 0
-    fi
-
     log info "nat: enabling IP forwarding"
     echo '1' > /proc/sys/net/ipv4/ip_forward
     echo '1' > /proc/sys/net/ipv4/ip_dynaddr
@@ -201,10 +193,6 @@ nat_start()
 
 nat_stop()
 {
-    if [ -z "$NAT_ENABLE" ]; then
-        return 0
-    fi
-
     log info "nat: disabling IP forwarding"
     echo '0' > /proc/sys/net/ipv4/ip_forward
     echo '0' > /proc/sys/net/ipv4/ip_dynaddr
@@ -223,7 +211,7 @@ nat_stop()
 
 start()
 {
-    ppp_start && nat_start
+    ppp_start
     if [ $? -ne 0 ]; then
         log err "failed to establish a connection"
         exit 1
@@ -232,7 +220,7 @@ start()
 
 stop()
 {
-    nat_stop && ppp_stop
+    ppp_stop
     if [ $? -eq 0 ]; then
         log info "stopped"
     else
@@ -246,6 +234,12 @@ case "$1" in
         ;;
     stop)
         stop
+        ;;
+    nat_start)
+        nat_start
+        ;;
+    nat_stop)
+        nat_stop
         ;;
     *)
         echo "Usage: $0 <start|stop>"

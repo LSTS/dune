@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -21,7 +21,7 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Pedro Calado                                                     #
 ############################################################################
@@ -72,7 +72,11 @@ def write_values(option_list, values_list, copy, equal_pos):
 
 def editIni(vname, option_list, values_list):
     # Open ini file
-    fo = open(sys.argv[1] + vname + ".ini", "r")
+    try:
+        fo = open(sys.argv[1] + vname + ".ini", "r")
+    except:
+        print("File " + sys.argv[1] + vname + ".ini not found.")
+        return
 
     copy = open(sys.argv[1] + vname + "_copy.ini", "w")
 
@@ -182,14 +186,13 @@ start_row = 1;
 for i in range(start_row, len(first_col)):
     options.append(first_col[i]);
 
-
  # Get values for each vehicle and write ini file for each
 for v in range(len(profile_cols)):
 
 # Get all values for these options
     if (v < len(profile_cols) - 1):
         values_list = getsubgrid(profile_cols[v], start_row,
-                                 profile_cols[v + 1] - 1, start_row + len(options),
+                                 profile_cols[v + 1], start_row + len(options),
                                  all_values);
     else:
         values_list = getsubgrid(profile_cols[v], start_row,

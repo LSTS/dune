@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -30,9 +30,13 @@
 
 namespace DUNE
 {
-  class Units
+  namespace Units
   {
-  public:
+    //! Conversion factor: m/s to knot.
+    static const double c_ms_to_knot = 1.94384449;
+    //! Conversion factor: m/s to km/h.
+    static const double c_ms_to_kmh = 3.6;
+
     enum Types
     {
 #define UNIT(t, a) t,
@@ -40,9 +44,9 @@ namespace DUNE
       TypeMax
     };
 
-    static const char*
+    const char*
     getAbbrev(Types);
-  };
+  }
 }
 
 #endif

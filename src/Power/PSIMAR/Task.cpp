@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
 //***************************************************************************
@@ -34,6 +34,8 @@ namespace Power
   {
     using DUNE_NAMESPACES;
 
+    // PSU packet state identifier.
+    static const unsigned c_pkt_state = 1;
     // PSU packet power identifier.
     static const unsigned c_pkt_power = 2;
 
@@ -52,6 +54,10 @@ namespace Power
       Hardware::ESCC* m_psu_escc;
       //! PSU handle.
       UCTK::Interface* m_psu_ctl;
+      //! Current power channel state.
+      IMC::PowerChannelState m_power_state;
+      //! Get state.
+      bool m_get_state;
       //! Task arguments.
       Arguments m_args;
 
@@ -61,14 +67,23 @@ namespace Power
         m_psu_ctl(NULL)
       {
         param("Power Channel", m_args.pwr_chn)
-        .defaultValue("IMU")
+        .defaultValue("Private (IMU)")
         .description("Device name to be activated");
 
         param("ESCC - PSU Device", m_args.psu_dev)
         .defaultValue("/dev/escc1")
         .description("ESCC device where PSU is connected");
 
+        m_get_state = false;
+
         bind<IMC::PowerChannelControl>(this);
+        bind<IMC::QueryPowerChannelState>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        m_power_state.name = m_args.pwr_chn;
       }
 
       void
@@ -85,6 +100,9 @@ namespace Power
           else
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+
+          if ((info.major > 1) || (info.minor > 0))
+            m_get_state = true;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
@@ -115,7 +133,13 @@ namespace Power
         frame.setId(c_pkt_power);
         frame.setPayloadSize(1);
         frame.set(value, 0);
-        return m_psu_ctl->sendFrame(frame, 2.0);
+        if (m_psu_ctl->sendFrame(frame, 2.0))
+        {
+          m_power_state.state = on ? IMC::PowerChannelState::PCS_ON : IMC::PowerChannelState::PCS_OFF;
+          return true;
+        }
+
+        return false;
       }
 
       void
@@ -123,19 +147,63 @@ namespace Power
       {
         if (msg->name == m_args.pwr_chn)
         {
+          bool rv = false;
+
           if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
-            setPower(true);
+            rv = setPower(true);
           else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
-            setPower(false);
+            rv = setPower(false);
+
+          if (rv)
+            dispatchReply(*msg, m_power_state);
         }
+      }
+
+      //! Dispatch raw board state
+      //! @return true if successfully dispatched state
+      bool
+      dispatchState(void)
+      {
+        UCTK::Frame frame;
+        frame.setId(c_pkt_state);
+
+        if (!m_psu_ctl->sendFrame(frame))
+          return false;
+
+        if (frame.getPayloadSize() != 2)
+          return false;
+
+        uint16_t value;
+        frame.get(value, 0);
+
+        IMC::Current c;
+        c.value = value / 1000.0;
+        dispatch(c);
+
+        return true;
+      }
+
+      void
+      consume(const IMC::QueryPowerChannelState* msg)
+      {
+        dispatchReply(*msg, m_power_state);
       }
 
       void
       onMain(void)
       {
+        Counter<double> timer(1.0);
+
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (timer.overflow())
+          {
+            timer.reset();
+            if (m_get_state)
+              dispatchState();
+          }
         }
       }
     };

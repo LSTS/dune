@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -62,13 +62,17 @@
 #  include <linux/i2c-dev.h>
 #endif
 
+#if defined(DUNE_SYS_HAS_LINUX_I2C_H) && defined(DUNE_SYS_HAS_LINUX_I2C_DEV_H)
+#  define DUNE_SYS_HAS_LINUX_I2C_DEV 1
+#endif
+
 namespace DUNE
 {
   namespace Hardware
   {
     I2C::I2C(const std::string& dev)
     {
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       if ((m_fd = open(dev.c_str(), O_RDWR)) == -1)
         throw Error("opening device", System::Error::getLastMessage());
 #else
@@ -79,7 +83,7 @@ namespace DUNE
 
     I2C::~I2C(void)
     {
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       close(m_fd);
 #endif
     }
@@ -88,7 +92,7 @@ namespace DUNE
     I2C::transfer(uint8_t adr, uint8_t cmd, const uint8_t* wdata, uint8_t wlen, uint8_t* rdata, uint8_t rlen, uint8_t* bytes_read)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       i2c_rdwr_ioctl_data rdwr;
       i2c_msg msg[2];
       uint8_t wbuf[c_max_data_len + 2];  // +1 for cmd, +1 for len
@@ -187,7 +191,7 @@ namespace DUNE
     I2C::read(uint8_t adr, uint8_t* bfr, unsigned bfr_len)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       i2c_msg msg;
       msg.addr = adr;
       msg.flags = I2C_M_RD;
@@ -218,7 +222,7 @@ namespace DUNE
     I2C::connect(uint8_t addr)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       int a = (int)addr;
 
       if (ioctl(m_fd, I2C_SLAVE, a) < 0)
@@ -232,7 +236,7 @@ namespace DUNE
     I2C::read(uint8_t* bfr, unsigned bfr_len)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       int rv = ::read(m_fd, bfr, bfr_len);
       if (rv == -1)
         throw Error("read", System::Error::getLastMessage());
@@ -250,7 +254,7 @@ namespace DUNE
     I2C::write(const uint8_t* bfr, unsigned bfr_len)
     {
       // Linux implementation.
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_SYS_HAS_LINUX_I2C_DEV)
       int rv = ::write(m_fd, bfr, bfr_len);
       if (rv == -1)
         throw Error("read", System::Error::getLastMessage());

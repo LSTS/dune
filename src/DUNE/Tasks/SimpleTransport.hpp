@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
@@ -36,7 +36,7 @@
 #include <DUNE/Utils/ByteBuffer.hpp>
 #include <DUNE/IMC/Parser.hpp>
 #include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/RateLimiters.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
 
 namespace DUNE
 {
@@ -71,14 +71,20 @@ namespace DUNE
     private:
       struct GArguments
       {
+        // List of messages to publish.
         std::vector<std::string> transports;
+        // Rate limits.
         std::vector<std::string> rlim;
+        // Filtered entities.
+        std::vector<std::string> entities_flt;
+        // Trace incoming messages.
         bool trace_in;
+        // Trace outgoing messages.
         bool trace_out;
       };
       GArguments m_gargs;
       Utils::ByteBuffer m_buf;
-      RateLimiters m_rl;
+      MessageFilter m_rl;
     };
   }
 }

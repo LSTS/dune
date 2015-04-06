@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -20,7 +20,7 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
@@ -123,10 +123,12 @@ macro(dune_probe_cxx)
         set(DUNE_C_FLAGS "${DUNE_C_FLAGS} -fdiagnostics-show-option")
       endif(has_fdiagnostic_show_option)
 
-      check_cxx_compiler_flag(-fno-rtti has_fno_rtti)
-      if(has_fno_rtti)
-        set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -fno-rtti")
-      endif(has_fno_rtti)
+      if(NO_RTTI)
+        check_cxx_compiler_flag(-fno-rtti has_fno_rtti)
+        if(has_fno_rtti)
+          set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -fno-rtti")
+        endif(has_fno_rtti)
+      endif()
 
       if(PROFILE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
