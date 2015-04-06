@@ -429,7 +429,7 @@ namespace Sensors
         sendCommand(CMD_SEND_FISH_CMD, data, str_size + 4);
         const Packet* reply = readPacket(CMD_SEND_FISH_CMD, 1.0);
         if (reply == NULL)
-          throw std::runtime_error(DTR("failed to set time"));
+          m_parent->trace("failed to send fish command");
       }
 
       //! Send command without payload to TPU.
