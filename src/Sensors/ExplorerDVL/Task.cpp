@@ -320,6 +320,7 @@ namespace Sensors
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.setTop(c_data_timeout);
       }
 
       void
@@ -616,14 +617,12 @@ namespace Sensors
           case ST_ACT_SETUP:
             if (setup())
             {
-              activate();
               m_act_state = ST_ACT_DONE;
               return true;
             }
             break;
 
           case ST_ACT_DONE:
-            m_wdog.setTop(c_data_timeout);
             break;
         }
 
@@ -654,7 +653,6 @@ namespace Sensors
             waitForMessages(1.0);
             if (!m_powered)
             {
-              deactivate();
               m_deact_state = ST_DEACT_DONE;
               return true;
             }
@@ -685,14 +683,15 @@ namespace Sensors
             else if (m_wdog.overflow())
             {
               throw RestartNeeded(Status::getString(Status::CODE_COM_ERROR),
-                                  c_restart_delay, false);
+                                  c_restart_delay, true);
             }
           }
           else if (isActivating())
           {
             try
             {
-              runActivationStateMachine();
+              if (runActivationStateMachine())
+                activate();
             }
             catch (std::runtime_error& e)
             {
@@ -703,7 +702,8 @@ namespace Sensors
           {
             try
             {
-              runDeactivationStateMachine();
+              if (runDeactivationStateMachine())
+                deactivate();
             }
             catch (std::runtime_error& e)
             {
