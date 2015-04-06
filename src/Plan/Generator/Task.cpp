@@ -490,9 +490,16 @@ namespace Plan
           loiter->lon = lon;
           loiter->z = depth;
           loiter->z_units = IMC::Z_DEPTH;
-          loiter->type = IMC::Loiter::LT_CIRCULAR;
-          loiter->duration = m_args.dive_time;
-          loiter->speed = m_args.speed_rpms;
+
+          std::string default_type = "circular";
+          std::string type = params.get("type", default_type);
+          if (!type.compare("eight"))
+            loiter->type = IMC::Loiter::LT_EIGHT;
+          else
+            loiter->type = IMC::Loiter::LT_CIRCULAR;
+
+          loiter->duration = params.get("duration", m_args.dive_time);
+          loiter->speed = params.get("rpm", m_args.speed_rpms);
           loiter->speed_units = IMC::SUNITS_RPM;
           loiter->radius = m_args.radius;
           maneuvers.push_back(*loiter);
