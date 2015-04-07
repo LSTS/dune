@@ -83,7 +83,7 @@ namespace Plan
       {
         param("Dive depth", m_args.dive_depth)
         .description("Depth to dive in response to 'dive' command")
-        .defaultValue("2.0");
+        .defaultValue("5.0");
 
         param("Traveling depth", m_args.travel_depth)
         .description("Depth to use when traveling (Goto maneuvers)")
@@ -498,6 +498,7 @@ namespace Plan
           else
             loiter->type = IMC::Loiter::LT_CIRCULAR;
 
+          loiter->direction = IMC::Loiter::LD_CCLOCKW;
           loiter->duration = params.get("duration", m_args.dive_time);
           loiter->speed = params.get("rpm", m_args.speed_rpms);
           loiter->speed_units = IMC::SUNITS_RPM;
