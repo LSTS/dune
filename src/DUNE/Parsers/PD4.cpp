@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <cstring>
 #include <cstddef>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/Parsers/PD4.hpp>
