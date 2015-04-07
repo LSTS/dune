@@ -1486,6 +1486,7 @@ namespace Control
               IMC::PathControlState path_ctrl_state;
               path_ctrl_state.end_lat = msg->lat;
               path_ctrl_state.end_lon = msg->lon;
+              // ToDo - Correct for path aligned formations
               WGS84::displace(m_vehicle_state(0, 0) + m_formation_pos(0, m_uav_ind),
                   m_vehicle_state(1, 0) + m_formation_pos(1, m_uav_ind),
                   &(path_ctrl_state.end_lat), &(path_ctrl_state.end_lon));
