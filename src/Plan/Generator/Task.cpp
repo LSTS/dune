@@ -491,12 +491,12 @@ namespace Plan
           loiter->z = depth;
           loiter->z_units = IMC::Z_DEPTH;
 
-          std::string default_type = "circular";
+          std::string default_type = "eight";
           std::string type = params.get("type", default_type);
-          if (!type.compare("eight"))
-            loiter->type = IMC::Loiter::LT_EIGHT;
-          else
+          if (!type.compare("circular"))
             loiter->type = IMC::Loiter::LT_CIRCULAR;
+          else
+            loiter->type = IMC::Loiter::LT_EIGHT;
 
           loiter->direction = IMC::Loiter::LD_CCLOCKW;
           loiter->duration = params.get("duration", m_args.dive_time);
