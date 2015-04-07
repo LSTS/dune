@@ -633,7 +633,6 @@ namespace Transports
       sendPlan(unsigned destination)
       {
         Plan cmd;
-        cmd.setName(m_plan_spec.plan_id);
         cmd.setDestination(destination);
 
         bool done = false;
