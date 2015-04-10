@@ -337,7 +337,7 @@ namespace Plan
           else
           {
             IMC::PlanTransition trans;
-            trans.conditions = "maneuverIsDone";
+            trans.conditions = "ManeuverIsDone";
             trans.dest_man = man_spec.maneuver_id;
             trans.source_man = last_man.maneuver_id;
 
