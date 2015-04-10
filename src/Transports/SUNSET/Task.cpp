@@ -559,7 +559,7 @@ namespace Transports
           {
             // Not the first maneuver
             IMC::PlanTransition pt;
-            pt.conditions = "maneuverIsDone";
+            pt.conditions = "ManeuverIsDone";
             pt.dest_man = pm.maneuver_id;
             pt.source_man = String::str(i);
 
