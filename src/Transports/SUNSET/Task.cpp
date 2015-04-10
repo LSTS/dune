@@ -659,14 +659,15 @@ namespace Transports
 
           IMC::MessageList<IMC::PlanTransition>::const_iterator titr;
           for (titr = m_plan_spec.transitions.begin(); titr != m_plan_spec.transitions.end(); ++titr)
-            if ((*titr == NULL) || (*titr)->source_man != mid)
-              continue;
+            if ((*titr) != NULL && (*titr)->source_man == mid)
+              break;
 
           if (titr == m_plan_spec.transitions.end())
             done = true;
-          else if ((*titr)->conditions == "maneuverIsDone")
+          else if ((*titr)->conditions == "ManeuverIsDone")
             mid = (*titr)->dest_man;
           else
+            // Unsupported transition.
             break;
         }
 
