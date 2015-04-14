@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: f5945eec02448bc770e01e984183d2aa                            *
+// IMC XML MD5: 685ccd58f94bda7bf50f1d1ddf3be199                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -15694,8 +15694,9 @@ namespace DUNE
       type = 0;
       op = 0;
       request_id = 0;
-      plan_id.clear();
+      object_id.clear();
       flags = 0;
+      dt = 0;
       arg.clear();
       info.clear();
     }
@@ -15708,8 +15709,9 @@ namespace DUNE
       if (type != other__.type) return false;
       if (op != other__.op) return false;
       if (request_id != other__.request_id) return false;
-      if (plan_id != other__.plan_id) return false;
+      if (object_id != other__.object_id) return false;
       if (flags != other__.flags) return false;
+      if (dt != other__.dt) return false;
       if (arg != other__.arg) return false;
       if (info != other__.info) return false;
       return true;
@@ -15723,8 +15725,9 @@ namespace DUNE
       ptr__ += IMC::serialize(type, ptr__);
       ptr__ += IMC::serialize(op, ptr__);
       ptr__ += IMC::serialize(request_id, ptr__);
-      ptr__ += IMC::serialize(plan_id, ptr__);
+      ptr__ += IMC::serialize(object_id, ptr__);
       ptr__ += IMC::serialize(flags, ptr__);
+      ptr__ += IMC::serialize(dt, ptr__);
       ptr__ += arg.serialize(ptr__);
       ptr__ += IMC::serialize(info, ptr__);
       return ptr__;
@@ -15738,8 +15741,9 @@ namespace DUNE
       bfr__ += IMC::deserialize(type, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::deserialize(request_id, bfr__, size__);
-      bfr__ += IMC::deserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::deserialize(object_id, bfr__, size__);
       bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::deserialize(dt, bfr__, size__);
       bfr__ += arg.deserialize(bfr__, size__);
       bfr__ += IMC::deserialize(info, bfr__, size__);
       return bfr__ - start__;
@@ -15753,8 +15757,9 @@ namespace DUNE
       bfr__ += IMC::deserialize(type, bfr__, size__);
       bfr__ += IMC::deserialize(op, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(plan_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(object_id, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(flags, bfr__, size__);
+      bfr__ += IMC::deserialize(dt, bfr__, size__);
       bfr__ += arg.reverseDeserialize(bfr__, size__);
       bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
       return bfr__ - start__;
@@ -15767,8 +15772,9 @@ namespace DUNE
       IMC::toJSON(os__, "type", type, nindent__);
       IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "request_id", request_id, nindent__);
-      IMC::toJSON(os__, "plan_id", plan_id, nindent__);
+      IMC::toJSON(os__, "object_id", object_id, nindent__);
       IMC::toJSON(os__, "flags", flags, nindent__);
+      IMC::toJSON(os__, "dt", dt, nindent__);
       arg.toJSON(os__, "arg", nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
     }

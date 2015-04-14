@@ -106,20 +106,37 @@ namespace Plan
       {
         int fetch_type = -1;
         std::string object_id = "";
+        m_valid_mem = false;
 
         if (pc->arg.isNull())
         {
           object_id = pc->plan_id;
-          fetch_type = IMC::PlanDB::DBDT_PLAN;
-          m_valid_mem = false;
+          fetch_type = convertDataType(pc->dt);
         }
-        else if (pc->arg.get()->getId() == DUNE_IMC_PLANMEMENTO)
+        else
         {
-          // For now, fetch type is always plan, until PlanControl message changes
-          m_pmem = *static_cast<const IMC::PlanMemento*>(pc->arg.get());
-          object_id = m_pmem.plan_id;
-          fetch_type = IMC::PlanDB::DBDT_PLAN;
-          m_valid_mem = true;
+          switch (pc->dt)
+          {
+            case IMC::PlanControl::PCD_MEMENTO:
+              if (pc->arg.get()->getId() != DUNE_IMC_PLANMEMENTO)
+                break;
+
+              m_pmem = *static_cast<const IMC::PlanMemento*>(pc->arg.get());
+              object_id = m_pmem.plan_id;
+              fetch_type = IMC::PlanDB::DBDT_PLAN;
+              m_valid_mem = true;
+              break;
+            case IMC::PlanControl::PCD_PLAN:
+            case IMC::PlanControl::PCD_MANEUVER:
+              // fetch nothing
+              break;
+            case IMC::PlanControl::PCD_NONE:
+            default:
+              // assume plan is intended to be fetched
+              object_id = pc->plan_id;
+              fetch_type = IMC::PlanDB::DBDT_PLAN;
+              break;
+          }
         }
 
         if (fetch_type >= 0)
@@ -349,6 +366,21 @@ namespace Plan
 
         m_req_get.pdb = *pdb;
         m_req_get.state = RS_REPLIED;
+      }
+
+      //! Convert PlanControl data type to PlanDB data type (-1 if unmatched)
+      int
+      convertDataType(IMC::PlanControl::DataTypeEnum pcdt)
+      {
+        switch (pcdt)
+        {
+          case IMC::PlanControl::PCD_PLAN:
+            return IMC::PlanDB::DBDT_PLAN;
+          case IMC::PlanControl::PCD_MEMENTO:
+            return IMC::PlanDB::DBDT_MEMENTO;
+          default:
+            return -1;
+        }
       }
 
       //! Pointer to task

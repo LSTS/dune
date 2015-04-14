@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: f5945eec02448bc770e01e984183d2aa                            *
+// IMC XML MD5: 685ccd58f94bda7bf50f1d1ddf3be199                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -14846,6 +14846,19 @@ namespace DUNE
         PC_GET = 3
       };
 
+      //! Data Type.
+      enum DataTypeEnum
+      {
+        //! None.
+        PCD_NONE = 0,
+        //! Plan.
+        PCD_PLAN = 1,
+        //! Maneuver.
+        PCD_MANEUVER = 2,
+        //! Memento.
+        PCD_MEMENTO = 3
+      };
+
       //! Flags.
       enum FlagsBits
       {
@@ -14861,10 +14874,12 @@ namespace DUNE
       uint8_t op;
       //! Request ID.
       uint16_t request_id;
-      //! Plan Identifier.
-      std::string plan_id;
+      //! Object Identifier.
+      std::string object_id;
       //! Flags.
       uint16_t flags;
+      //! Data Type.
+      uint8_t dt;
       //! Request/Reply Argument.
       InlineMessage<Message> arg;
       //! Complementary Info.
@@ -14914,13 +14929,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 6 + Message::getFixedSerializationSize();
+        return 7 + Message::getFixedSerializationSize();
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return Message::getVariableSerializationSize() + IMC::getSerializationSize(plan_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
+        return Message::getVariableSerializationSize() + IMC::getSerializationSize(object_id) + arg.getSerializationSize() + IMC::getSerializationSize(info);
       }
 
       void

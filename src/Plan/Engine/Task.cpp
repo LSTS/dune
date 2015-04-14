@@ -594,7 +594,7 @@ namespace Plan
           if (pc->arg.get()->getId() != DUNE_IMC_PLANSPECIFICATION)
           {
             std::string info;
-            if (!handleQuickPlan(pc->plan_id, pc->arg.get(), info))
+            if (!handleQuickPlan(pc->object_id, pc->arg.get(), info))
             {
               onFailure(info);
               return false;
@@ -616,7 +616,7 @@ namespace Plan
       void
       processRequest(const IMC::PlanControl* pc)
       {
-        inf(DTR("request -- %s (%s)"), c_op_desc[pc->op], pc->plan_id.c_str());
+        inf(DTR("request -- %s (%s)"), c_op_desc[pc->op], pc->object_id.c_str());
 
         switch (m_sm)
         {
