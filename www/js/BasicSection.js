@@ -111,11 +111,9 @@ BasicSection.prototype.getEntityStateIcon = function(state)
         return g_icons.path('warning');
     case 1:
         return g_icons.path('normal');
-    case 2:
+    case 2: case 3:
         return g_icons.path('error');
-    case 3: case 4:
-        return g_icons.path('error');
-    case 5:
+    case 4:
         return g_icons.path('fatal');
     }
 
