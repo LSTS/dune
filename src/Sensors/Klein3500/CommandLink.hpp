@@ -75,7 +75,7 @@ namespace Sensors
       //! Set standby state of the device.
       //! @param[in] value 0 to enter run mode, any other value to enter
       //! paused mode.
-      void
+      bool
       setStandBy(uint32_t value)
       {
         if (value > 1)
@@ -85,6 +85,9 @@ namespace Sensors
         const Packet* reply = readPacket(CMD_SET_STAND_BY, 1.0);
         if (reply == NULL)
           throw std::runtime_error(DTR("failed to set standby"));
+
+        const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
+        return *status == 1;
       }
 
       //! Set range.
@@ -172,7 +175,7 @@ namespace Sensors
         double vel = Math::norm(estate.vx, estate.vy);
 
         // Course.
-        double course = Angles::degrees(std::atan2(estate.vy, estate.vx));
+        double course = Angles::degrees(Angles::normalizeRadian(std::atan2(estate.vy, estate.vx)) + Math::c_pi);
 
         // Build sentence.
         std::string stn = String::str("$PAUV"
@@ -203,7 +206,6 @@ namespace Sensors
 
         uint8_t checksum = XORChecksum::compute((uint8_t*)&stn[1], stn.size() - 1);
         stn += String::str("*%02X\r\n", checksum);
-        //m_parent->spew("%s", stn.c_str());
         sendFishCommand(stn);
       }
 
@@ -237,7 +239,7 @@ namespace Sensors
           throw std::runtime_error(DTR("failed to set recording file ping count"));
       }
 
-      void
+      bool
       setRecordingMode(bool mode)
       {
         uint32_t value = mode ? 1 : 0;
@@ -245,40 +247,34 @@ namespace Sensors
         sendCommand(CMD_SET_RECORDING_MODE, value);
         const Packet* reply = readPacket(CMD_SET_RECORDING_MODE, 1.0);
         if (reply == NULL)
-          throw std::runtime_error(DTR("failed to set recording mode"));
+          return false;
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
-        (void)status;
+        return *status == 1;
       }
 
-      void
+      bool
       setRecordingFilePath(const std::string& path)
       {
-        for (int i = 0; i < 100; ++i)
-        {
-          if (path.size() >= 128)
-            throw std::runtime_error("path exceeds maximum size");
+        if (path.size() >= 128)
+          throw std::runtime_error("path exceeds maximum size");
 
-          uint32_t path_size = path.size() + 1;
-          uint32_t action = 1;
-          uint8_t data[259] = {0};
-          uint8_t* ptr = data;
+        uint32_t path_size = path.size() + 1;
+        uint32_t action = 1;
+        uint8_t data[259] = {0};
+        uint8_t* ptr = data;
 
-          ptr += ByteCopy::toBE(path_size, ptr);
-          ptr += ByteCopy::toBE(action, ptr);
-          std::memcpy(ptr, path.c_str(), path_size + 1);
+        ptr += ByteCopy::toBE(path_size, ptr);
+        ptr += ByteCopy::toBE(action, ptr);
+        std::memcpy(ptr, path.c_str(), path_size);
 
-          sendCommand(CMD_SET_FILE_PATH, data, path_size + 8);
-          const Packet* reply = readPacket(CMD_SET_FILE_PATH, 1.0);
-          if (reply == NULL)
-            throw std::runtime_error(DTR("failed to set recording file path"));
+        sendCommand(CMD_SET_FILE_PATH, data, path_size + 8);
+        const Packet* reply = readPacket(CMD_SET_FILE_PATH, 1.0);
+        if (reply == NULL)
+          return false;
 
-          const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
-          if (*status == 1)
-            break;
-
-          Delay::wait(0.1);
-        }
+        const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
+        return (*status == 1);
       }
 
       void
@@ -304,7 +300,25 @@ namespace Sensors
         (void)status;
       }
 
-      void
+      bool
+      unmountNFS(const std::string& mount_point)
+      {
+        uint32_t mount_point_size = mount_point.size() + 1;
+        uint8_t data[259] = {0};
+        uint8_t* ptr = data;
+        ptr += ByteCopy::toBE(mount_point_size, ptr);
+        std::memcpy(ptr, mount_point.c_str(), mount_point_size);
+
+        sendCommand(CMD_UNMOUNT_NFS, data, mount_point_size + 4);
+        const Packet* reply = readPacket(CMD_UNMOUNT_NFS, 1.0);
+        if (reply == NULL)
+          return false;
+
+        const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
+        return (*status == 1);
+      }
+
+      bool
       setRecordingNewFile(void)
       {
         uint32_t value = 1;
@@ -312,10 +326,10 @@ namespace Sensors
         sendCommand(CMD_SET_NEW_FILE, value);
         const Packet* reply = readPacket(CMD_SET_NEW_FILE, 1.0);
         if (reply == NULL)
-          throw std::runtime_error(DTR("failed to change file"));
+          return false;
 
         const uint32_t* status = reinterpret_cast<const uint32_t*>(reply->getData() + 8);
-        (void)status;
+        return (*status == 1);
       }
 
       //! FIXME: keep backlog.

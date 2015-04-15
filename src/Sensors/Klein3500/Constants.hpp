@@ -127,7 +127,9 @@ namespace Sensors
       CMD_SET_PINGS_PER_FILE = 470,
       CMD_SET_NEW_FILE       = 472,
       //! Set recording file prefix.
-      CMD_SET_FILE_PREFIX    = 473
+      CMD_SET_FILE_PREFIX    = 473,
+      //! Unmount NFS device.
+      CMD_UNMOUNT_NFS        = 480
     };
 
     //! Framing mode.
