@@ -435,7 +435,7 @@ namespace Plan
           }
 
           // if some latitude / longitude was given, goes there
-          if (lat != 0 || lon != 0)
+          if (lat != 0 && lon != 0)
           {
             IMC::MessageList<IMC::Maneuver> maneuvers;
 
