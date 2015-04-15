@@ -277,12 +277,16 @@ namespace DUNE
       const uint32_t m_required_loops;
       //! Control loops last reference
       uint32_t m_scope_ref;
-      //! Maximum admissible depth that the vehicle may sustain
-      float m_max_depth;
+      //! Timer to ignore no valid altitude measurements
+      Time::Counter<float> m_timer_alt;
 
       // Configuration
       //! Bypass heading rate control
       bool m_hrate_bypass;
+      //! Maximum admissible depth that the vehicle may sustain
+      float m_max_depth;
+      //! Timeout for ignoring invalid altitude
+      float m_alt_timeout;
     };
   }
 }
