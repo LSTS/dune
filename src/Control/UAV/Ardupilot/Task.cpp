@@ -1448,6 +1448,12 @@ namespace Control
                   case MAVLINK_MSG_ID_COMMAND_ACK:
                     spew("CMD_ACK");
                     break;
+                  case 116:
+                    spew("SCALED_IMU_2");
+                    break;
+                  case 136:
+                    spew("TERRAIN_REPORT");
+                    break;
                   case MAVLINK_MSG_ID_BATTERY_STATUS:
                     spew("BATTERY_STAT");
                     break;
@@ -1471,6 +1477,9 @@ namespace Control
                     break;
                   case MAVLINK_MSG_ID_WIND:
                     spew("WIND");
+                    break;
+                  case 178:
+                    spew("AHRS2");
                     break;
                   case MAVLINK_MSG_ID_STATUSTEXT:
                     trace("STATUSTEXT");
