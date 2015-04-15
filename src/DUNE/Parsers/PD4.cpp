@@ -144,7 +144,7 @@ namespace DUNE
 
       // Bottom ranges.
       uint16_t utmp = 0;
-      for (size_t i = 0; i < 4; ++i)
+      for (int i = 0; i < 4; ++i)
       {
         utmp = m_raw_data[10 + i * 2] * 256 + m_raw_data[9 + i * 2];
         m_data.rng_to_btm[i] = 0.01 * utmp;
