@@ -761,7 +761,7 @@ namespace Sensors
           // You can use the %n conversion specifier, which doesn't consume any input
           // instead, it expects an int * parameter, and writes the number of characters
           // consumed from the input into it.
-          while (sscanf(ptr, "%lf%n", &extracted_value, &n) == true)
+          while (std::sscanf(ptr, "%lf%n", &extracted_value, &n) == true)
           {
             ptr +=n;
             // Save to temporary buffer the sensor output.
