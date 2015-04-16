@@ -284,7 +284,7 @@ namespace Autonomy
         IMC::PlanControl startPlan;
         startPlan.type = IMC::PlanControl::PC_REQUEST;
         startPlan.op = IMC::PlanControl::PC_START;
-        startPlan.plan_id = "trex_plan";
+        startPlan.object_id = "trex_plan";
         IMC::FollowReference man;
         man.control_ent = 255;
         man.control_src = m_args.trex_id;
@@ -315,7 +315,7 @@ namespace Autonomy
         IMC::PlanControl stopPlan;
         stopPlan.type = IMC::PlanControl::PC_REQUEST;
         stopPlan.op = IMC::PlanControl::PC_STOP;
-        stopPlan.plan_id = "trex_plan";
+        stopPlan.object_id = "trex_plan";
         dispatch(stopPlan);
       }
 

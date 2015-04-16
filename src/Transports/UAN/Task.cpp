@@ -474,8 +474,8 @@ namespace Transports
 
         std::vector<uint8_t> data;
         data.push_back(CODE_PLAN);
-        for (size_t i = 0; i < msg->plan_id.size(); ++i)
-          data.push_back((uint8_t)msg->plan_id[i]);
+        for (size_t i = 0; i < msg->object_id.size(); ++i)
+          data.push_back((uint8_t)msg->object_id[i]);
         sendFrame(sys, data, true);
       }
 
@@ -494,7 +494,7 @@ namespace Transports
         pc.setSource(imc_src);
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
-        pc.plan_id.assign(&msg->data[2], msg->data.size() - 3);
+        pc.object_id.assign(&msg->data[2], msg->data.size() - 3);
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 

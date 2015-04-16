@@ -446,7 +446,7 @@ namespace Transports
         IMC::PlanControl pc;
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
-        pc.plan_id.assign(cmd->plan_name);
+        pc.object_id.assign(cmd->plan_name);
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 

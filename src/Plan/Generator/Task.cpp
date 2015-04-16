@@ -240,7 +240,7 @@ namespace Plan
           if (tlist.get("ignore_errors") == "true")
             pcontrol.flags |= IMC::PlanControl::FLG_IGNORE_ERRORS;
 
-          pcontrol.plan_id = spec.plan_id;
+          pcontrol.object_id = spec.plan_id;
           pcontrol.request_id = 0;
           pcontrol.type = IMC::PlanControl::PC_REQUEST;
           pcontrol.op = IMC::PlanControl::PC_START;

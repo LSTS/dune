@@ -60,10 +60,10 @@ namespace Autonomy
         pc.op = IMC::PlanControl::PC_START;
         char plan_id[32];
         std::sscanf(args.c_str(), "%s", plan_id);
-        pc.plan_id = plan_id;
+        pc.object_id = plan_id;
 
         inf(DTR("received SMS request to start plan '%s'"),
-            sanitize(pc.plan_id).c_str());
+            sanitize(pc.object_id).c_str());
 
         // Send the plan start request
         dispatch(pc);

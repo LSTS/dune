@@ -403,15 +403,15 @@ namespace Sensors
           {
             std::vector<char> pmsg(c_binary_size, 0);
 
-            if (pc->plan_id.size() > c_binary_size - 1)
+            if (pc->object_id.size() > c_binary_size - 1)
             {
-              err(DTR("unable to send plan %s"), pc->plan_id.c_str());
+              err(DTR("unable to send plan %s"), pc->object_id.c_str());
               return;
             }
 
             // Make packet.
             pmsg[0] = (char)c_code_plan;
-            std::memcpy(&pmsg[1], &pc->plan_id[0], std::min(c_binary_size - 1, (int)pc->plan_id.size()));
+            std::memcpy(&pmsg[1], &pc->object_id[0], std::min(c_binary_size - 1, (int)pc->object_id.size()));
 
             std::string hex = String::toHex(pmsg);
             std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",

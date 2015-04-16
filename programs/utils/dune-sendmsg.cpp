@@ -459,7 +459,7 @@ main(int argc, char** argv)
     IMC::PlanControl* tmsg = new IMC::PlanControl;
     tmsg->type = IMC::PlanControl::PC_REQUEST;
     tmsg->op = atoi(argv[4]);
-    tmsg->plan_id = argv[5];
+    tmsg->object_id = argv[5];
     if (argc >= 7)
       tmsg->flags = atoi(argv[6]);
 
@@ -486,7 +486,7 @@ main(int argc, char** argv)
     IMC::PlanControl* tmsg = new IMC::PlanControl;
     tmsg->type = IMC::PlanControl::PC_REQUEST;
     tmsg->op = IMC::PlanControl::PC_START;
-    tmsg->plan_id = argv[4];
+    tmsg->object_id = argv[4];
 
     IMC::PlanMemento pmem;
     pmem.id = std::string(Time::Format::getTimeSafe(Clock::getSinceEpoch()) + "_" + argv[4]);

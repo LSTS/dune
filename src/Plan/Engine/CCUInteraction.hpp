@@ -239,7 +239,7 @@ namespace Plan
         reply.setDestinationEntity(pc->getSourceEntity());
         reply.request_id = pc->request_id;
         reply.op = pc->op;
-        reply.plan_id = pc->plan_id;
+        reply.object_id = pc->object_id;
 
         if (arg != NULL)
           reply.arg.set(*arg);
@@ -250,7 +250,7 @@ namespace Plan
         {
           std::string str = Utils::String::str(DTR("reply -- %s (%s) -- %s"),
                                                DTR(c_op_desc[reply.op]),
-                                               reply.plan_id.c_str(),
+                                               reply.object_id.c_str(),
                                                desc.c_str());
 
           if (type == IMC::PlanControl::PC_FAILURE)

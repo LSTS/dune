@@ -133,7 +133,7 @@ namespace Supervisors
         startLostComms(void)
         {
           IMC::PlanControl p_control;
-          p_control.plan_id = m_args.plan;
+          p_control.object_id = m_args.plan;
           p_control.op = IMC::PlanControl::PC_START;
           p_control.type = IMC::PlanControl::PC_REQUEST;
           p_control.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;

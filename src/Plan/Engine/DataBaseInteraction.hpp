@@ -110,7 +110,7 @@ namespace Plan
 
         if (pc->arg.isNull())
         {
-          object_id = pc->plan_id;
+          object_id = pc->object_id;
           fetch_type = convertDataType(pc->dt);
         }
         else
@@ -133,7 +133,7 @@ namespace Plan
             case IMC::PlanControl::PCD_NONE:
             default:
               // assume plan is intended to be fetched
-              object_id = pc->plan_id;
+              object_id = pc->object_id;
               fetch_type = IMC::PlanDB::DBDT_PLAN;
               break;
           }
@@ -370,7 +370,7 @@ namespace Plan
 
       //! Convert PlanControl data type to PlanDB data type (-1 if unmatched)
       int
-      convertDataType(IMC::PlanControl::DataTypeEnum pcdt)
+      convertDataType(uint8_t pcdt)
       {
         switch (pcdt)
         {

@@ -218,7 +218,7 @@ namespace Supervisors
           if (msg->type != IMC::PlanControl::PC_START)
             return;
 
-          if (msg->plan_id != m_args.plan_id)
+          if (msg->object_id != m_args.plan_id)
             return;
 
           if (msg->type == IMC::PlanControl::PC_SUCCESS)

@@ -210,7 +210,7 @@ namespace Supervisors
         {
           if ((msg->type == IMC::PlanControl::PC_REQUEST) &&
               (msg->op == IMC::PlanControl::PC_LOAD) &&
-              (msg->plan_id.compare(m_args.plan_name) == 0))
+              (msg->object_id.compare(m_args.plan_name) == 0))
           {
             getPlanSpec(&msg->arg);
           }
@@ -320,7 +320,7 @@ namespace Supervisors
                 pc.type = IMC::PlanControl::PC_REQUEST;
                 pc.op = IMC::PlanControl::PC_START;
                 pc.request_id = 0;
-                pc.plan_id = m_args.plan_name;
+                pc.object_id = m_args.plan_name;
                 pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
                 pc.arg.set(m_plan);
 

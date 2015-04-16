@@ -43,9 +43,8 @@ namespace Supervisors
     using DUNE_NAMESPACES;
 
     //! State description strings
-    static const char* c_state_desc[] = {DTR_RT("SERVICE"), DTR_RT("CALIBRATION"),
-                                         DTR_RT("ERROR"), DTR_RT("MANEUVERING"),
-                                         DTR_RT("EXTERNAL CONTROL"), DTR_RT("BOOT")};
+    static const char* c_state_desc[] = {DTR_RT("SERVICE"),DTR_RT("ERROR"),
+                                         DTR_RT("MANEUVERING"), DTR_RT("BOOT")};
     //! Vehicle command description strings
     static const char* c_cmd_desc[] =
     {"maneuver start", "maneuver stop", "calibration start", "calibration stop"};
