@@ -25,34 +25,22 @@
 // Author: Tiago Rodrigues                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstring>
+#include <cstdio>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <cstring>
 
-#define SET                                     \
-  "SET SCAN"
+#define SET        "SET SCAN"
+#define DENSITY    "DENSITY"
+#define SALINITY   "SALINITY"
+#define SV         "SV"
+#define SAMPLING   "SET S 1 s"
+#define MONITOR    "MONITOR"
 
-#define DENSITY                                 \
-  "DENSITY"
-
-#define SALINITY                                \
-  "SALINITY"
-
-#define SV                                      \
-  "SV"
-
-#define SAMPLING                                \
-  "SET S 1 s"
-
-#define MONITOR                                 \
-  "MONITOR"
-
-#define GET_COMMAND(operationType, command)     \
-  (std::strcmp(operationType, "send") == 0      \
-   ?                                            \
-   (command "\r")                               \
-   :                                            \
-   (">" command "\r\n"))
+#define GET_COMMAND(operationType, command)                             \
+  (std::strcmp(operationType, "send") == 0 ? (command "\r") : (">" command "\r\n"))
 
 namespace Sensors
 {
@@ -76,7 +64,6 @@ namespace Sensors
   //! and the output order is incremented from channel 1.
   //!
   //! @author Tiago Rodrigues
-
   namespace MetrecX
   {
     // using DUNE_NAMESPACES;
