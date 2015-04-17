@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2014-12-01 15:19+0000\n"
+"POT-Creation-Date: 2015-04-17 17:04+0100\n"
 "PO-Revision-Date: 2013-08-03 13:42-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -259,9 +259,62 @@ msgstr "неверный размер чтения"
 msgid "character value '%d' is not a valid nibble"
 msgstr "значение символа '%d' не является допустимым клев"
 
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:87
+#, fuzzy
+msgid "failed to set standby"
+msgstr "не удалось установить диапазон"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:101
 #: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:108
 #, fuzzy
 msgid "failed to set range"
+msgstr "не удалось установить диапазон"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:111
+#, fuzzy
+msgid "failed to set framing mode"
+msgstr "не удалось установить диапазон"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:136
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:140
+#: /home/jb/workspace/dune/trunk/src/DUNE/Time/Clock.cpp:123
+#, fuzzy
+msgid "failed to set time"
+msgstr "Не удалось установить время"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:230
+#, fuzzy
+msgid "failed to set recording file format"
+msgstr "не удалось установить выходной формат"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:239
+#, fuzzy
+msgid "failed to set recording file ping count"
+msgstr "не удалось установить контроль потока"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:297
+#, fuzzy
+msgid "failed to set recording file prefix"
+msgstr "не удалось установить диапазон"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:391
+#, fuzzy
+msgid "failed to start slave"
+msgstr "Не удалось запустить %s план"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:401
+#, fuzzy
+msgid "failed to end slave"
+msgstr "Не удалось открыть файл"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:410
+#, fuzzy
+msgid "failed to open sonar"
+msgstr "Не удалось открыть файл"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/CommandLink.hpp:426
+#, fuzzy
+msgid "failed to close sonar"
 msgstr "не удалось установить диапазон"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/CommandLink.hpp:136
@@ -382,13 +435,6 @@ msgstr "выбить не удалось"
 msgid "trying again to dislodge"
 msgstr "снова пытаются выбить"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Loiter.hpp:71
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Elevate.cpp:53
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:50
-#, fuzzy, c-format
-msgid "forcing minimum radius of %.1f"
-msgstr "заставляя минимальный радиус %.1f"
-
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Plan.hpp:61
 #, fuzzy
 msgid "parse error: "
@@ -436,7 +482,7 @@ msgid "Motion"
 msgstr "Motion"
 
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Statistics.hpp:176
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:52
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:49
 #, fuzzy
 msgid "IMU"
 msgstr "ИДУ"
@@ -462,7 +508,7 @@ msgstr "переполнение буфера"
 msgid "null frame"
 msgstr "пустым кадром"
 
-#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:302
+#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:305
 #, fuzzy
 msgid "destination is not in the LBL configuration"
 msgstr "назначения не в конфигурации LBL"
@@ -497,20 +543,20 @@ msgstr "Положение неопределенность %0.2f м"
 msgid "Maximum Horizontal Position Variance"
 msgstr "Максимальная Горизонтальное положение Разница"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1092
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1098
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1096
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1102
 #, fuzzy, c-format
 msgid "no measurements available: %s"
 msgstr "нет измерения, проводимые: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1092
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1096
 #: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:57
 #, fuzzy
 msgid "Depth"
 msgstr "Глубина"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1098
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1102
 #, fuzzy
 msgid "Euler Angles"
 msgstr "Углы Эйлера"
@@ -585,22 +631,34 @@ msgstr "создание сокет"
 msgid "Invalid fragment received and it won't be processed."
 msgstr "Неверный фрагмент получен, и это не будет обработан."
 
+#: /home/jb/workspace/dune/trunk/src/DUNE/Media/ExifEditor.cpp:63
+msgid "buffer does not contain a valid jpeg image"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Media/ExifEditor.cpp:112
+msgid "jpeg buffer not set"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Media/ExifEditor.cpp:130
+msgid "exif data exceeds maximum segment size"
+msgstr ""
+
 #: /home/jb/workspace/dune/trunk/src/DUNE/Entities/BasicEntity.cpp:46
 #, fuzzy
 msgid "entity label already set: "
 msgstr "Этикетка лицо уже установлено:"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Time/Clock.cpp:123
-#, fuzzy
-msgid "failed to set time"
-msgstr "Не удалось установить время"
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/MessageFilter.cpp:114
+#, fuzzy, c-format
+msgid "invalid filter: %s"
+msgstr "неверный формат: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/SimpleTransport.cpp:76
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/SimpleTransport.cpp:79
 #, fuzzy, c-format
 msgid "outgoing: %s"
 msgstr "исходящие: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/SimpleTransport.cpp:107
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/SimpleTransport.cpp:111
 #, fuzzy, c-format
 msgid "incoming: %s"
 msgstr "Входящий: %s"
@@ -681,37 +739,37 @@ msgstr "Правда, чтобы активировать задачу, инач
 msgid "activation is not in progress"
 msgstr "активация не выполняется"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:314
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:316
 #, fuzzy
 msgid "deactivation is not in progress"
 msgstr "отключение не выполняется"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:371
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:375
 #, fuzzy
 msgid "restarting"
 msgstr "перезапуска"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:372
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:376
 #, fuzzy, c-format
 msgid "restarting in %u seconds due to error: %s"
 msgstr "перезапуска в %u секунд за ошибки: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:389
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:393
 #, fuzzy, c-format
 msgid "failed to update parameters: %s"
 msgstr "не удалось обновить параметры: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:397
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:401
 #, fuzzy, c-format
 msgid "task died with uncaught exception: %s: restarting"
 msgstr "Задача умер с неперехваченного исключения: %s: перезапуск"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:459
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:463
 #, fuzzy, c-format
 msgid "updating entity parameters: %s: '%s'"
 msgstr "обновления параметров сущностей: %s: '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:658
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:662
 #, fuzzy, c-format
 msgid "invalid parameter '%s'"
 msgstr "неверный параметр '%s'"
@@ -763,11 +821,6 @@ msgstr "Недопустимая строка область"
 msgid "no available reader"
 msgstr "нет в наличии читатель"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/RateLimiters.cpp:85
-#, fuzzy, c-format
-msgid "invalid rate limiter: %s"
-msgstr "недействительным ограничитель скорости: %s"
-
 #: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Periodic.cpp:48
 #, fuzzy
 msgid "Execution Frequency"
@@ -782,6 +835,14 @@ msgstr "Частота, на которой выполняется задача"
 #, fuzzy
 msgid "invalid parameter"
 msgstr "неверный параметр"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Circular.cpp:44
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/FigureEight.cpp:54
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Elevate.cpp:53
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/StationKeep.cpp:50
+#, fuzzy, c-format
+msgid "forcing minimum radius of %.1f"
+msgstr "заставляя минимальный радиус %.1f"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/VehicleFormation.cpp:67
 #, fuzzy
@@ -972,7 +1033,7 @@ msgstr "не удалось получить флэш-инфо"
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:40
 #: /home/jb/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:147
 #: /home/jb/workspace/dune/trunk/src/Sensors/MLBL/Task.cpp:445
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1084
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1085
 #, fuzzy
 msgid "initializing"
 msgstr "инициализации"
@@ -1070,6 +1131,7 @@ msgid "synchronized"
 msgstr "синхронизированы"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:59
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:317
 #, fuzzy
 msgid "synchronizing"
 msgstr "синхронизации"
@@ -1300,37 +1362,37 @@ msgstr "Остановился торможения"
 msgid "no valid altitude measurements"
 msgstr "нет действительных измерений высоты"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:168
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:173
 #, fuzzy, c-format
 msgid "limiting depth to %.1f"
 msgstr "предельную глубину, чтобы %.1f"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:226
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:237
 #, fuzzy, c-format
 msgid "invalid vertical control mode %d"
 msgstr "неверный режим вертикального управления %d"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:238
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:249
 #, fuzzy
 msgid "timed out while waiting for vertical control mode"
 msgstr "истекло время ожидания для режима вертикального управления"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:263
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:286
 #, fuzzy, c-format
 msgid "water column not deep enough for altitude control ( %0.2f < %0.2f )"
 msgstr "водяного столба не достаточно глубоко для контроля высоты (%0.2f <%0.2f)"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:282
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:305
 #, fuzzy
 msgid "getting too close to maximum admissible depth"
 msgstr "слишком близко к максимально допустимой глубины"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:293
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:316
 #, fuzzy, c-format
 msgid "invalid yaw control mode %d"
 msgstr "неверный режим рыскания %d"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:305
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/BasicAutopilot.cpp:328
 #, fuzzy
 msgid "timed out waiting for yaw control mode"
 msgstr "истекло время ожидания для режима управления рыскания"
@@ -1420,6 +1482,8 @@ msgstr "Рабочая частота"
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:154
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:265
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:256
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:155
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:162
 #, fuzzy
 msgid "Range"
 msgstr "Диапазон"
@@ -1432,7 +1496,8 @@ msgstr "Рабочий диапазон"
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex872/Task.cpp:186
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:387
 #: /home/jb/workspace/dune/trunk/src/Sensors/Genesys/Task.cpp:103
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:268
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:209
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:270
 #: /home/jb/workspace/dune/trunk/src/Simulators/AcousticModem/Task.cpp:93
 #, fuzzy
 msgid "restarting to change IPv4 address"
@@ -1463,6 +1528,21 @@ msgstr "Не удалось прочитать данные"
 msgid "failed to read footer"
 msgstr "удалось прочитать подвал"
 
+#: /home/jb/workspace/dune/trunk/src/Sensors/SmartX/Task.cpp:98
+#, fuzzy
+msgid "Sampling Frequency"
+msgstr "Рабочая частота"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/SmartX/Task.cpp:103
+#, fuzzy
+msgid "Sampling frequency"
+msgstr "Рабочая частота"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/SmartX/Task.cpp:269
+#, c-format
+msgid "detected sensor '%s' with serial number '%s'"
+msgstr ""
+
 #: /home/jb/workspace/dune/trunk/src/Sensors/OS4000/Task.cpp:154
 #, fuzzy
 msgid "Level the device and hit NEXT"
@@ -1487,53 +1567,6 @@ msgstr "Ошибка калибровки, процедура калибровк
 #, fuzzy, c-format
 msgid "Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"
 msgstr "Опыт устройство и нажмите Next (рулона: %0.2f | Pitch: %0.2f)"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:44
-#, fuzzy
-msgid "failed to set output format"
-msgstr "не удалось установить выходной формат"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:45
-#, fuzzy
-msgid "failed to set flow control"
-msgstr "не удалось установить контроль потока"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:46
-#, fuzzy
-msgid "failed to disable power saving"
-msgstr "Не удалось отключить энергосбережение"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:47
-#, fuzzy
-msgid "failed to disable low latency trigger"
-msgstr "Не удалось отключить низкий курок задержки"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:48
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:49
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:50
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:51
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:52
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:53
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:54
-#, fuzzy
-msgid "unexpected response"
-msgstr "неожиданный ответ"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:261
-#, fuzzy
-msgid "failed to wake device"
-msgstr "не удалось разбудить устройство"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:277
-#, fuzzy
-msgid "unable to read prompt"
-msgstr "не в состоянии читать строки"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/WorkhorseNavigator/Task.cpp:291
-#: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:617
-#, fuzzy
-msgid "failed to start data sampling"
-msgstr "Не удалось запустить выборку данных"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/Keller/Task.cpp:279
 #, fuzzy
@@ -1590,9 +1623,21 @@ msgstr "удалось получить серийный номер"
 msgid "unable to zero the device"
 msgstr "неспособны к нулю устройство"
 
+#: /home/jb/workspace/dune/trunk/src/Sensors/ExplorerDVL/Task.cpp:153
+#: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:256
+#: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:208
+#, fuzzy
+msgid "Use Device at Surface"
+msgstr "Используйте устройство на поверхности"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/ExplorerDVL/Task.cpp:159
+#, fuzzy
+msgid "Automatic Activation"
+msgstr "активации"
+
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex837B/Task.cpp:482
 #: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex881A/Task.cpp:445
-#: /home/jb/workspace/dune/trunk/src/Supervisors/SlaveCPU/Task.cpp:130
+#: /home/jb/workspace/dune/trunk/src/Supervisors/SlaveCPU/Task.cpp:136
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv2/Task.cpp:177
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:361
 #: /home/jb/workspace/dune/trunk/private/src/Sensors/BlueView/Task.cpp:212
@@ -1622,6 +1667,7 @@ msgid "unexpected byte"
 msgstr "неожиданное байт"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:131
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:520
 #, fuzzy
 msgid "failed to enter command mode"
 msgstr "не удалось войти в командный режим"
@@ -1637,6 +1683,7 @@ msgid "failed to enter monitor mode"
 msgstr "не удалось войти в режим монитора"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/XchangeSV/Task.cpp:163
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:781
 #: /home/jb/workspace/dune/trunk/src/Sensors/MiniSVS/Task.cpp:127
 #: /home/jb/workspace/dune/trunk/src/Sensors/AIS/Task.cpp:211
 #, fuzzy
@@ -1853,20 +1900,21 @@ msgstr "Тайм-аут"
 #: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:202
 #: /home/jb/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:333
 #: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:227
-#: /home/jb/workspace/dune/trunk/src/Power/PSIMAR/Task.cpp:84
+#: /home/jb/workspace/dune/trunk/src/Power/LUEMB/Task.cpp:264
+#: /home/jb/workspace/dune/trunk/src/Power/PSIMAR/Task.cpp:99
 #, fuzzy
 msgid "device is using unstable firmware"
 msgstr "Устройство использует нестабильную прошивку"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/LIMU/Task.cpp:181
 #: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:204
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:457
 #: /home/jb/workspace/dune/trunk/src/Actuators/MCD4R/Task.cpp:335
 #: /home/jb/workspace/dune/trunk/src/Actuators/LED4R/Task.cpp:229
 #: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:361
 #: /home/jb/workspace/dune/trunk/src/Power/MCBv2/Task.cpp:634
 #: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:505
-#: /home/jb/workspace/dune/trunk/src/Power/PSIMAR/Task.cpp:86
+#: /home/jb/workspace/dune/trunk/src/Power/LUEMB/Task.cpp:266
+#: /home/jb/workspace/dune/trunk/src/Power/PSIMAR/Task.cpp:101
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:310
 #, fuzzy, c-format
 msgid "firmware version %u.%u.%u"
@@ -1888,12 +1936,6 @@ msgstr "не удалось установить трудно железные �
 msgid "parse error: %s"
 msgstr "ошибка разбора: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Imagenex852/Task.cpp:256
-#: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:208
-#, fuzzy
-msgid "Use Device at Surface"
-msgstr "Используйте устройство на поверхности"
-
 #: /home/jb/workspace/dune/trunk/src/Sensors/Genesys/Task.cpp:109
 #, fuzzy
 msgid "restarting to change device address"
@@ -1903,6 +1945,38 @@ msgstr "перезапуска изменить адрес устройства"
 #, fuzzy, c-format
 msgid "file '%s' doesn't exist"
 msgstr "подать '%s' не существует"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:547
+#, fuzzy
+msgid "failed to start monitoring"
+msgstr "Не удалось запустить видео streamming"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:565
+#, fuzzy
+msgid "failed to turn off internal channels"
+msgstr "удалось включить устройство"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:585
+msgid "Two equal internal channels"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:598
+msgid "Tried to turn on SV channel without proper configuration"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:607
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:614
+#, fuzzy
+msgid "failed to turn on internal channels"
+msgstr "удалось включить устройство"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:627
+msgid "Internal channels can not be turned on. Please check sensor configuration."
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/MetrecX/Task.cpp:764
+msgid "Mismatch between sensor output and configuration file!"
+msgstr ""
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:234
 #, fuzzy
@@ -1914,15 +1988,53 @@ msgstr "Не удалось настроить частоту запуска"
 msgid "failed to turn on device"
 msgstr "удалось включить устройство"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:348
+#: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:358
 #, fuzzy, c-format
 msgid "IMU failure: %04X"
 msgstr "Отказ ИДУ: '%s'0"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:353
+#: /home/jb/workspace/dune/trunk/src/Sensors/IFOG/Task.cpp:363
 #, fuzzy, c-format
 msgid "data might be unreliable: %04X"
 msgstr "данные могут быть недостоверными: '%s'0"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:143
+#, fuzzy
+msgid "High-Frequency Channel"
+msgstr "Высокочастотные каналы"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:147
+#, fuzzy
+msgid "Enable high-frequency channel"
+msgstr "Включить высокую подсистему частоты"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:149
+#, fuzzy
+msgid "Low-Frequency Channel"
+msgstr "Низкочастотные каналы"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:153
+#, fuzzy
+msgid "Enable low-frequency channel"
+msgstr "Низкочастотные каналы"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:212
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:273
+#, fuzzy
+msgid "restarting to change TCP command port"
+msgstr "перезапуска изменить командный порт TCP"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:574
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:934
+#, fuzzy
+msgid "failed to turn power on"
+msgstr "удалось включить устройство"
+
+#: /home/jb/workspace/dune/trunk/src/Sensors/Klein3500/Task.cpp:583
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:943
+#, fuzzy
+msgid "failed to connect to device"
+msgstr "не удалось связаться с устройства"
 
 #: /home/jb/workspace/dune/trunk/src/Sensors/MTi/Task.cpp:200
 #, fuzzy, c-format
@@ -1984,113 +2096,98 @@ msgstr "различные параметры калибровки"
 msgid "new hard-iron calibration parameters: %f, %f, 0.0"
 msgstr "новые трудно железа параметры калибровки: %f, %f, 0.0"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:244
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:250
 #, fuzzy
 msgid "restarting to change transducer detection GPIO"
 msgstr "перезапуска изменить датчика GPIO обнаружения"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:283
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:289
 #, fuzzy, c-format
 msgid "unable to use GPIO %d for transducer detection"
 msgstr "не в состоянии использовать GPIO %d для обнаружения датчика"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:334
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:371
 #, fuzzy
 msgid "transducer not connected"
 msgstr "Преобразователь не подключен"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:408
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:445
 #, fuzzy, c-format
 msgid "unable to send plan %s"
 msgstr "не в состоянии отправить план %s"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:603
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:640
 #, fuzzy
 msgid "plan started"
 msgstr "План начал"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:619
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:712
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:656
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:749
 #, fuzzy
 msgid "range to"
 msgstr "Диапазон чтобы"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:731
+#: /home/jb/workspace/dune/trunk/src/Sensors/MLBLTracker/Task.cpp:768
 #, fuzzy, c-format
 msgid "plan progress is %f"
 msgstr "прогресс план %f"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:177
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:179
 #, fuzzy
 msgid "High-Frequency Channels"
 msgstr "Высокочастотные каналы"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:178
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:194
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:180
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:196
 #, fuzzy
 msgid "None, Port, Starboard, Both"
 msgstr "Отсутствует, Порт, по правому борту, И"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:182
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:184
 #, fuzzy
 msgid "High-frequency subsystem channels"
 msgstr "Высокочастотные подсистемы каналов"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:184
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:186
 #, fuzzy
 msgid "High-Frequency Range"
 msgstr "Высокочастотный диапазон"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:191
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:207
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:193
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:209
 #, fuzzy
 msgid "Enable high frequency subsystem"
 msgstr "Включить высокую подсистему частоты"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:193
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:195
 #, fuzzy
 msgid "Low-Frequency Channels"
 msgstr "Низкочастотные каналы"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:198
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:200
 #, fuzzy
 msgid "Low-frequency subsystem channels"
 msgstr "Низкочастотные подсистемы каналов"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:200
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:202
 #, fuzzy
 msgid "Low-Frequency Range"
 msgstr "Диапазон низких частот"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:209
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:211
 #, fuzzy
 msgid "Range Multiplier"
 msgstr "Диапазон Multiplier"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:215
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:217
 #, fuzzy
 msgid "Range multiplier"
 msgstr "Диапазон множитель"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:271
-#, fuzzy
-msgid "restarting to change TCP command port"
-msgstr "перезапуска изменить командный порт TCP"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:274
+#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:276
 #, fuzzy
 msgid "restarting to change TCP data port"
 msgstr "перезапуска изменить порт данных TCP"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:892
-#, fuzzy
-msgid "failed to turn power on"
-msgstr "удалось включить устройство"
-
-#: /home/jb/workspace/dune/trunk/src/Sensors/Edgetech2205/Task.cpp:906
-#, fuzzy
-msgid "failed to connect to device"
-msgstr "не удалось связаться с устройства"
 
 #: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:134
 #, fuzzy, c-format
@@ -2344,26 +2441,6 @@ msgstr "Режим работы список этикетки и значени�
 msgid "invalid opmode value (zero)"
 msgstr "недопустимое значение OPMODE (ноль)"
 
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:352
-#, fuzzy, c-format
-msgid "servo number out of bounds: %u"
-msgstr "серво число вне границ: %u"
-
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:368
-#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:132
-#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:147
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:580
-#, fuzzy
-msgid "leak detected"
-msgstr "Утечка обнаружена"
-
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:375
-#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:587
-#, fuzzy
-msgid "no leak"
-msgstr "нет утечки"
-
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRT/Task.cpp:488
 #: /home/jb/workspace/dune/trunk/src/Actuators/SCRTv4/Task.cpp:277
 #: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:481
 #, fuzzy, c-format
@@ -2542,19 +2619,19 @@ msgstr "необработанное исключение"
 msgid "ERROR: no configuration file was given, see options --config-list and --config-file\n"
 msgstr "ОШИБКА: конфигурационный файл не был дан в разделе Опции --config-лист и --config-file'%s'5"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:288
+#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:231
 #: /home/jb/workspace/dune/trunk/src/Transports/TCP/Server/Task.cpp:106
 #, fuzzy, c-format
 msgid "failed to bind to port %u: %s"
 msgstr "не удалось выполнить привязку к порту %u: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:295
+#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:238
 #: /home/jb/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:142
 #, fuzzy
 msgid "failed to find one available port"
 msgstr "не удалось найти один свободный порт"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:298
+#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:241
 #: /home/jb/workspace/dune/trunk/src/Transports/FTP/Task.cpp:103
 #: /home/jb/workspace/dune/trunk/src/Transports/Discovery/Task.cpp:105
 #: /home/jb/workspace/dune/trunk/src/Transports/HTTP/Task.cpp:114
@@ -2563,12 +2640,12 @@ msgstr "не удалось найти один свободный порт"
 msgid "listening on %s:%u"
 msgstr "прослушивает %s: %u"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:435
+#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:350
 #, fuzzy, c-format
 msgid "activating transmission to node '%s'"
 msgstr "активации передачи к узлу '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:440
+#: /home/jb/workspace/dune/trunk/src/Transports/UDP/Task.cpp:355
 #, fuzzy, c-format
 msgid "deactivating transmission to node '%s'"
 msgstr "отключение передачи к узлу '%s'"
@@ -2605,7 +2682,7 @@ msgstr "ошибки принятия нового подключения кли
 msgid "Source Level"
 msgstr "Источник Уровень"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:392
+#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:397
 #, fuzzy, c-format
 msgid "invalid system name %s"
 msgstr "неверное имя системы %s"
@@ -2872,7 +2949,7 @@ msgid "Sway"
 msgstr "Sway"
 
 #: /home/jb/workspace/dune/trunk/src/Control/PTU/Task.cpp:113
-#: /home/jb/workspace/dune/trunk/src/Control/AntennaTracker/Task.cpp:86
+#: /home/jb/workspace/dune/trunk/src/Control/AntennaTracker/Task.cpp:85
 #, fuzzy, c-format
 msgid "Target name is %s, with ID %d"
 msgstr "Имя целевого является %s, с ID %d"
@@ -2882,49 +2959,49 @@ msgstr "Имя целевого является %s, с ID %d"
 msgid "received euler angles"
 msgstr "полученные углы Эйлера"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:437
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:449
 #, fuzzy
 msgid "Ardupilot interface initialized"
 msgstr "Ardupilot интерфейс инициализации"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:442
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:454
 #, fuzzy
 msgid "Connection failed, retrying..."
 msgstr "Сбой подключения, попытки были ..."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:558
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:570
 #, fuzzy
 msgid "ArduPilot is in Manual mode, saving control loops."
 msgstr "ArduPilot находится в ручном режиме, экономя контуров управления."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:718
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:730
 #: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:253
 #, fuzzy
 msgid "speed control is NOT active"
 msgstr "контроль скорости не участвует"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:747
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:759
 #, fuzzy
 msgid "ArduPilot is in Manual mode, saving desired path."
 msgstr "ArduPilot находится в ручном режиме, экономя нужный путь."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:753
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:765
 #: /home/jb/workspace/dune/trunk/private/src/Piccolo/Task.cpp:372
 #, fuzzy
 msgid "path control is NOT active"
 msgstr "управления траекторией не участвует"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:761
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:773
 #, fuzzy
 msgid "ArduPilot in Auto mode but still in ground, performing takeoff first."
 msgstr "ArduPilot в автоматическом режиме, но все еще в земле, выполняя взлет первого."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1382
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1323
 #, fuzzy
 msgid "Connection lost, retrying..."
 msgstr "Потерял соединения, попытки были ..."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1833
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1804
 #, fuzzy
 msgid "Controlling an unknown vehicle type."
 msgstr "Управление неизвестный тип транспортного средства."
@@ -2935,14 +3012,14 @@ msgid "failed to submerge"
 msgstr "удалось погрузить"
 
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/Allocator/Task.cpp:81
-#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:157
+#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:169
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/LMI/Task.cpp:89
 #, fuzzy
 msgid "Maximum Fin Rotation"
 msgstr "Максимальная Fin вращения"
 
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/Allocator/Task.cpp:84
-#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:160
+#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:172
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/LMI/Task.cpp:92
 #, fuzzy
 msgid "Maximum admissible fin rotation"
@@ -2958,8 +3035,8 @@ msgstr "Ролл"
 msgid "Pitch"
 msgstr "Шаг"
 
-#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:162
-#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:164
+#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:174
+#: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:176
 #, fuzzy
 msgid "Enable roll controller"
 msgstr "Включить контроллер ролл"
@@ -2969,12 +3046,12 @@ msgstr "Включить контроллер ролл"
 msgid "Gain matrix has invalid dimensions"
 msgstr "Усиление матрица имеет недопустимые размеры"
 
-#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:316
+#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:334
 #, fuzzy
 msgid "enabling"
 msgstr "позволяет"
 
-#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:316
+#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:334
 #, fuzzy
 msgid "disabling"
 msgstr "отключение"
@@ -2988,6 +3065,43 @@ msgstr "начиная потерял порта связи план"
 #, fuzzy, c-format
 msgid "failed to start %s plan"
 msgstr "Не удалось запустить %s план"
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:256
+msgid "acquiring PPS signal"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:265
+msgid "PPS signal acquired"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:275
+msgid "clock is disciplined"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:282
+#, c-format
+msgid "disciplining clock (%lld µs)"
+msgstr ""
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:293
+#, fuzzy
+msgid "clock is synchronized"
+msgstr "не синхронизированы"
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:295
+#, fuzzy
+msgid "failed to set the hardware clock"
+msgstr "не удалось установить модем адрес"
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:310
+#, fuzzy, c-format
+msgid "adjusting clock by %ld s"
+msgstr "регулировки частоты процессора на% 0.4f с"
+
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:322
+#, c-format
+msgid "clock is synchronized [%lld, %ld, %ld]"
+msgstr ""
 
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:46
 #, fuzzy
@@ -3081,7 +3195,7 @@ msgstr "маневр начался"
 
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:596
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:610
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1006
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1007
 #, fuzzy
 msgid "OK"
 msgstr "Хорошо"
@@ -3125,6 +3239,13 @@ msgstr "Успех"
 #, fuzzy, c-format
 msgid "unexpected simulation message: %s"
 msgstr "неожиданное сообщение моделирование: %s"
+
+#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:132
+#: /home/jb/workspace/dune/trunk/src/Simulators/Leaks/Task.cpp:147
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:580
+#, fuzzy
+msgid "leak detected"
+msgstr "Утечка обнаружена"
 
 #: /home/jb/workspace/dune/trunk/src/Simulators/AcousticModem/Task.cpp:96
 #, fuzzy
@@ -3320,6 +3441,11 @@ msgstr "выключения питания последовательность
 msgid "air"
 msgstr "воздуха"
 
+#: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:587
+#, fuzzy
+msgid "no leak"
+msgstr "нет утечки"
+
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:252
 #, fuzzy
 msgid "failed to configure strobe mode"
@@ -3331,7 +3457,7 @@ msgid "strobe mode set to: %s"
 msgstr "стробоскоп режим настроен в: %s"
 
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:256
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:18
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:17
 #, fuzzy
 msgid "Camera"
 msgstr "Камеры"
@@ -3420,7 +3546,7 @@ msgstr "В базе поврежден"
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:406
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:441
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:472
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:771
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:772
 #, fuzzy
 msgid "undefined plan id"
 msgstr "определено план ID"
@@ -3448,7 +3574,7 @@ msgstr "ОК (новая запись)"
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:431
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:451
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:482
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:781
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:782
 #, fuzzy
 msgid "undefined plan"
 msgstr "определено план"
@@ -3568,62 +3694,62 @@ msgstr "План загружалась"
 msgid "no plan is running"
 msgstr "никакой план не работает"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:715
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:716
 #, fuzzy
 msgid "plan stopped"
 msgstr "План остановился"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:728
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:729
 #, fuzzy
 msgid "no plan is running, request ignored"
 msgstr "никакой план не работает, просьба игнорируется"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:796
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:797
 #, fuzzy, c-format
 msgid "failed loading from DB: %s"
 msgstr "не удалось загрузки из БД: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:870
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:871
 #, fuzzy
 msgid "plan initializing: "
 msgstr "План инициализации:"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:920
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:921
 #, fuzzy
 msgid "cannot initialize plan in BLOCKED state"
 msgstr "не может инициализировать план в заблокированном состоянии"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:951
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:952
 #, fuzzy
 msgid ": invalid maneuver ID"
 msgstr ": Неверный маневр ID"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:958
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:959
 #, fuzzy
 msgid ": executing maneuver"
 msgstr ": Выполнение маневра"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:977
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:978
 #, fuzzy, c-format
 msgid "reply -- %s (%s) -- %s"
 msgstr "ответить - %s (%s) - %s"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1033
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1034
 #, fuzzy, c-format
 msgid "now in %s state"
 msgstr "Теперь в %s государства"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1126
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1127
 #, fuzzy
 msgid "vehicle state timeout"
 msgstr "автомобиль состояние тайм-аута"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1148
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1149
 #, fuzzy
 msgid "vehicle reply timeout"
 msgstr "транспортного средства ответ таймаут"
 
-#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1157
+#: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1158
 #, fuzzy
 msgid "cleared all requests"
 msgstr "очищены все запросы"
@@ -3688,63 +3814,63 @@ msgstr "запланирован на: %.1f"
 msgid "END %s ---"
 msgstr "END %s ---"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:418
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:437
 #, fuzzy
 msgid "failed to activate required entities"
 msgstr "смогли активировать необходимые объекты"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:420
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:439
 #, fuzzy
 msgid "failed to configure camera"
 msgstr "Не удалось настроить камеру"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:422
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:441
 #, fuzzy
 msgid "failed to start video streamming"
 msgstr "Не удалось запустить видео streamming"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:424
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:443
 #, fuzzy
 msgid "activation timed out for unknown reason"
 msgstr "активации истекло по неизвестной причине"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:466
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:485
 #, fuzzy
 msgid "failed to deactivate required entities"
 msgstr "удалось деактивировать необходимые объекты"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:484
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:503
 #, fuzzy
 msgid "activated"
 msgstr "активируется"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:491
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:510
 #, fuzzy
 msgid "stopped video stream"
 msgstr "остановился видеопоток"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:507
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:526
 #, fuzzy
 msgid "invalid entity"
 msgstr "недействительным лицо"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:556
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:575
 #, fuzzy
 msgid "failed to start video stream"
 msgstr "Не удалось запустить видео поток"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:576
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:595
 #, fuzzy
 msgid "started video stream"
 msgstr "начал видеопоток"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:658
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:699
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:677
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:718
 #, fuzzy
 msgid "failed to set property"
 msgstr "не удалось установить имущество"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:921
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:968
 #, fuzzy
 msgid "successfully configured camera"
 msgstr "успешно настроен камера"
@@ -3824,6 +3950,11 @@ msgstr "не требовал, текущие выходные форматы"
 #, fuzzy
 msgid "failed to configure output format"
 msgstr "Не удалось настроить формат вывода"
+
+#: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:617
+#, fuzzy
+msgid "failed to start data sampling"
+msgstr "Не удалось запустить выборку данных"
 
 #: /home/jb/workspace/dune/trunk/private/src/Sensors/NavQuestDVL/Task.cpp:631
 #, fuzzy
@@ -4032,588 +4163,619 @@ msgstr "Автопилот"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:13
 #, fuzzy
-msgid "Autopilot Telemetry"
-msgstr "Автопилот телеметрии"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:14
-#, fuzzy
 msgid "CLRanger"
 msgstr "CLRanger"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:15
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:14
 #, fuzzy
 msgid "CPU"
 msgstr "ЦПУ"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:16
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:15
 #, fuzzy
 msgid "CTD"
 msgstr "CTD"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:17
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:16
 #, fuzzy
 msgid "Cache"
 msgstr "Кэш"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:19
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:18
 #, fuzzy
 msgid "Camera Backend"
 msgstr "Backend камеры"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:20
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:19
 #, fuzzy
 msgid "Camera Module"
 msgstr "Модуль камеры"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:21
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:20
 #, fuzzy
 msgid "Clock"
 msgstr "Часы"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:22
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:21
 #, fuzzy
 msgid "Collisions"
 msgstr "Столкновения"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:23
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:22
 #, fuzzy
 msgid "Communications Relay Maneuver"
 msgstr "Реле Communications Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:24
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:23
 #, fuzzy
 msgid "Compass Calibration Maneuver"
 msgstr "Компас Калибровка Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:25
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:24
 #, fuzzy
 msgid "Cover Area"
 msgstr "Обложка Площадь"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:26
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:25
 #, fuzzy
 msgid "DVL"
 msgstr "DVL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:27
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:26
 #, fuzzy
 msgid "Depth Control"
 msgstr "Контроль глубины"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:28
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:27
 #, fuzzy
 msgid "Depth Sensor"
 msgstr "Датчик глубины"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:29
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:28
 #, fuzzy
 msgid "Discovery"
 msgstr "Discovery"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:30
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:29
 #, fuzzy
 msgid "Diving"
 msgstr "Дайвинг"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:31
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:30
 #, fuzzy
 msgid "Docking"
 msgstr "Док-"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:32
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:31
 #, fuzzy
 msgid "Echo Sounder"
 msgstr "Эхолот"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:33
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:32
 #, fuzzy
 msgid "Emergency Monitor"
 msgstr "Аварийный монитор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:34
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:33
 #, fuzzy
 msgid "Entity Monitor"
 msgstr "Entity монитор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:35
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:34
 #, fuzzy
 msgid "Environment"
 msgstr "Окружающая среда"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:36
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:35
 #, fuzzy
 msgid "FTP Server"
 msgstr "FTP-сервер"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:37
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:36
 #, fuzzy
 msgid "Follow Reference"
 msgstr "Последующие Ссылка"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:38
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:37
 #, fuzzy
 msgid "Follow Reference Maneuver"
 msgstr "Следуйте Reference Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:39
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:38
 #, fuzzy
 msgid "Follow System Maneuver"
 msgstr "Следуйте System Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:40
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:39
 #, fuzzy
 msgid "Formation Control"
 msgstr "Формирование управления"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:41
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:40
 #, fuzzy
 msgid "Formation Coordinator"
 msgstr "Координатор Формирование"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:42
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:41
 #, fuzzy
 msgid "Formation Link"
 msgstr "Формирование Ссылка"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:43
-#, fuzzy
-msgid "Frame Grabber"
-msgstr "Захват кадров"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:44
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:42
 #, fuzzy
 msgid "Fuel"
 msgstr "Топлива"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:45
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:43
 #, fuzzy
 msgid "GPS"
 msgstr "GPS"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:46
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:44
 #, fuzzy
 msgid "GSM"
 msgstr "GSM"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:47
-#, fuzzy
-msgid "Gimbal"
-msgstr "Gimbal"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:48
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:45
 #, fuzzy
 msgid "HTTP Server"
 msgstr "HTTP-сервер"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:49
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:46
 #, fuzzy
 msgid "Heave Motor"
 msgstr "Качки двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:50
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:47
 #, fuzzy
 msgid "Height Control"
 msgstr "Высота управления"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:51
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:48
 #, fuzzy
 msgid "Horizontal Plane Control"
 msgstr "Горизонтальной плоскости управления"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:53
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:50
 #, fuzzy
 msgid "IMU Power Supply"
 msgstr "ИДУ питания"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:54
-#, fuzzy
-msgid "INOV TCP"
-msgstr "INOV TCP"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:55
-#, fuzzy
-msgid "INOV Target"
-msgstr "INOV Целевая"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:56
-#, fuzzy
-msgid "Idle Maneuver"
-msgstr "Idle Маневр"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:57
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:51
 #, fuzzy
 msgid "Iridium Modem"
 msgstr "Iridium Модем"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:58
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:52
 #, fuzzy
 msgid "Iridium Transport"
 msgstr "Iridium Транспорт"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:59
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:53
 #, fuzzy
 msgid "LBL"
 msgstr "LBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:60
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:54
 #, fuzzy
 msgid "LBL Estimator"
 msgstr "LBL Оценщик"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:61
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:55
 #, fuzzy
 msgid "LCD"
 msgstr "ЖК"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:62
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:56
 #, fuzzy
 msgid "LED Driver"
 msgstr "Светодиодный драйвер"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:63
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:57
 #, fuzzy
 msgid "LEDs"
 msgstr "Светодиоды"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:64
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:58
 #, fuzzy
 msgid "Leak Simulator"
 msgstr "Утечка Simulator"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:65
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:59
 #, fuzzy
 msgid "Log Book"
 msgstr "Log Book"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:66
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:60
 #, fuzzy
 msgid "Logger"
 msgstr "Logger"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:67
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:61
 #, fuzzy
 msgid "Lost Comms"
 msgstr "Потерянные Comms"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:68
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:62
 #, fuzzy
 msgid "Lost Comms Monitor"
 msgstr "Забыли Comms монитор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:69
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:63
 #, fuzzy
 msgid "MCD4R"
 msgstr "MCD4R"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:70
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:64
 #, fuzzy
 msgid "Mainboard"
 msgstr "Материнская плата"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:71
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:65
 #, fuzzy
 msgid "Medium"
 msgstr "Средний"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:72
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:66
 #, fuzzy
 msgid "Message Fragments"
 msgstr "Фрагменты Сообщение"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:73
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:67
 #, fuzzy
 msgid "Mobile Internet"
 msgstr "Мобильный Интернет"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:74
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:68
 #, fuzzy
 msgid "Motor"
 msgstr "Мотор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:75
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:69
 #, fuzzy
 msgid "Motor Controller"
 msgstr "Контроллер двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:76
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:70
 #, fuzzy
 msgid "Multibeam"
 msgstr "Многолучевой"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:77
-#, fuzzy
-msgid "Multicopter simple simulation"
-msgstr "Multicopter просто моделирование"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:78
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:71
 #, fuzzy
 msgid "Multiplexer Maneuver"
 msgstr "Мультиплексор Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:79
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:72
 #, fuzzy
 msgid "Navigation"
 msgstr "Навигация"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:80
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:73
 #, fuzzy
 msgid "Noptilus"
 msgstr "Noptilus"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:81
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:74
 #, fuzzy
 msgid "Operational Limits"
 msgstr "Эксплуатационные пределы"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:82
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:75
 #, fuzzy
 msgid "PTUD48"
 msgstr "PTUD48"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:83
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:76
 #, fuzzy
 msgid "Panel"
 msgstr "Панель"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:84
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:77
 #, fuzzy
 msgid "Panel Buttons"
 msgstr "Панель Кнопки"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:85
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:78
 #, fuzzy
 msgid "Path Control"
 msgstr "Путь управления"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:86
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:79
 #, fuzzy
 msgid "Path Control Leader"
 msgstr "Путь Лидер управления"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:87
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:80
 #, fuzzy
 msgid "Pencil Beam"
 msgstr "Карандаш Beam"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:88
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:81
 #, fuzzy
 msgid "Photo Trigger"
 msgstr "Фото Trigger"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:89
-#, fuzzy
-msgid "Piccolo Communications"
-msgstr "Пикколо Communications"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:90
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:82
 #, fuzzy
 msgid "Plan Database"
 msgstr "План База данных"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:91
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:83
 #, fuzzy
 msgid "Plan Engine"
 msgstr "План двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:92
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:84
 #, fuzzy
 msgid "Plan Generator"
 msgstr "План Генератор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:93
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:85
 #, fuzzy
 msgid "Port Bow Motor"
 msgstr "Порт Лук двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:94
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:86
 #, fuzzy
 msgid "Port Stern Motor"
 msgstr "Порт Стерн двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:95
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:87
+#, fuzzy
+msgid "Power Board"
+msgstr "Источник питания"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:88
 #, fuzzy
 msgid "Power Source"
 msgstr "Источник питания"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:96
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:89
 #, fuzzy
 msgid "Power Supervisor"
 msgstr "Мощность руководитель"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:97
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:90
 #, fuzzy
 msgid "Power Supply"
 msgstr "Электропитание"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:98
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:91
 #, fuzzy
 msgid "Ranger"
 msgstr "Ranger"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:99
-#, fuzzy
-msgid "RcViaArdupilot"
-msgstr "RcViaArdupilot"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:100
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:92
 #, fuzzy
 msgid "Remote Control"
 msgstr "Пульт дистанционного управления"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:101
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:93
 #, fuzzy
 msgid "Remote Operation"
 msgstr "Удаленная работа"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:102
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:94
+#, fuzzy
+msgid "Rhodamine Simulator"
+msgstr "Утечка Simulator"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:95
 #, fuzzy
 msgid "Service Announcer"
 msgstr "Обслуживание Диктор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:103
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:96
 #, fuzzy
 msgid "Service Discovery"
 msgstr "Service Discovery"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:104
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:97
 #, fuzzy
 msgid "Servo Controller"
 msgstr "Сервоконтроллер"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:105
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:98
 #, fuzzy
 msgid "Servo Monitor"
 msgstr "Servo монитор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:106
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:99
 #, fuzzy
 msgid "Servos"
 msgstr "Сервоприводы"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:107
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:100
 #, fuzzy
 msgid "Sidescan"
 msgstr "Sidescan"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:108
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:101
 #, fuzzy
 msgid "Simulation Engine"
 msgstr "Моделирование двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:109
-#, fuzzy
-msgid "Sitl Layer"
-msgstr "Sitl Layer"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:110
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:102
 #, fuzzy
 msgid "Slave CPU"
 msgstr "Ведомый CPU"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:111
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:103
 #, fuzzy
 msgid "Sound Speed Sensor"
 msgstr "Звук датчик скорости"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:112
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:104
 #, fuzzy
 msgid "Speed Control"
 msgstr "Управление скоростью"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:113
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:105
 #, fuzzy
 msgid "Starboard Bow Motor"
 msgstr "Носу двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:114
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:106
 #, fuzzy
 msgid "Starboard Stern Motor"
 msgstr "По правому борту кормовой двигателя"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:115
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:107
 #, fuzzy
 msgid "TCP Server"
 msgstr "TCP Server"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:108
 #, fuzzy
 msgid "TCP to Camera CPU"
 msgstr "TCP для камеры CPU"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:109
 #, fuzzy
 msgid "TCP to Master"
 msgstr "TCP Мастеру"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:110
 #, fuzzy
 msgid "TCP to Slave CPU"
 msgstr "TCP ведомого CPU"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:111
 #, fuzzy
 msgid "TREX"
 msgstr "TREX"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:112
 #, fuzzy
 msgid "Teleoperation Maneuver"
 msgstr "Teleoperation Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:113
 #, fuzzy
 msgid "Text Message Parser"
 msgstr "Текст Parser сообщение"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:114
 #, fuzzy
 msgid "Thermal Zone"
 msgstr "Термальная зона"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:123
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:115
 #, fuzzy
 msgid "UAN"
 msgstr "КАС"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:124
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
 #, fuzzy
 msgid "UAV Simulator"
 msgstr "БПЛА Simulator"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:125
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
 #, fuzzy
 msgid "UDP"
 msgstr "UDP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:126
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
 #, fuzzy
 msgid "UDP to Auxiliary"
 msgstr "UDP к вспомогательным"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:127
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
 #, fuzzy
 msgid "UDP to TREX"
 msgstr "UDP для TREX"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:128
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
 #, fuzzy
 msgid "USBL"
 msgstr "USBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:129
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
 #, fuzzy
 msgid "Underwater Acoustics Simulator"
 msgstr "Подводные Акустика Simulator"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:130
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
 #, fuzzy
 msgid "Vehicle Supervisor"
 msgstr "Автомобиль руководитель"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:131
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:123
+msgid "Water Quality Sensor"
+msgstr ""
+
 #, fuzzy
-msgid "Visualizer"
-msgstr "Visualizer"
+#~ msgid "invalid rate limiter: %s"
+#~ msgstr "недействительным ограничитель скорости: %s"
+
+#, fuzzy
+#~ msgid "failed to disable power saving"
+#~ msgstr "Не удалось отключить энергосбережение"
+
+#, fuzzy
+#~ msgid "failed to disable low latency trigger"
+#~ msgstr "Не удалось отключить низкий курок задержки"
+
+#, fuzzy
+#~ msgid "unexpected response"
+#~ msgstr "неожиданный ответ"
+
+#, fuzzy
+#~ msgid "failed to wake device"
+#~ msgstr "не удалось разбудить устройство"
+
+#, fuzzy
+#~ msgid "unable to read prompt"
+#~ msgstr "не в состоянии читать строки"
+
+#, fuzzy
+#~ msgid "servo number out of bounds: %u"
+#~ msgstr "серво число вне границ: %u"
+
+#, fuzzy
+#~ msgid "Autopilot Telemetry"
+#~ msgstr "Автопилот телеметрии"
+
+#, fuzzy
+#~ msgid "Frame Grabber"
+#~ msgstr "Захват кадров"
+
+#, fuzzy
+#~ msgid "Gimbal"
+#~ msgstr "Gimbal"
+
+#, fuzzy
+#~ msgid "INOV TCP"
+#~ msgstr "INOV TCP"
+
+#, fuzzy
+#~ msgid "INOV Target"
+#~ msgstr "INOV Целевая"
+
+#, fuzzy
+#~ msgid "Idle Maneuver"
+#~ msgstr "Idle Маневр"
+
+#, fuzzy
+#~ msgid "Multicopter simple simulation"
+#~ msgstr "Multicopter просто моделирование"
+
+#, fuzzy
+#~ msgid "Piccolo Communications"
+#~ msgstr "Пикколо Communications"
+
+#, fuzzy
+#~ msgid "RcViaArdupilot"
+#~ msgstr "RcViaArdupilot"
+
+#, fuzzy
+#~ msgid "Sitl Layer"
+#~ msgstr "Sitl Layer"
+
+#, fuzzy
+#~ msgid "Visualizer"
+#~ msgstr "Visualizer"
 
 #, fuzzy
 #~ msgid "motion detected"
