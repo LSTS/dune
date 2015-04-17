@@ -175,7 +175,9 @@ namespace Sensors
           return true;
         }
         catch (std::runtime_error& e)
-        {  }
+        {
+          (void)e;
+        }
 
         return true;
       }
