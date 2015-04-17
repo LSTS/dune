@@ -164,7 +164,7 @@ namespace DUNE
             return;
           }
 
-          accum += Math::Angles::normalizeRadian(value - last_value);
+          accum += (float)Math::Angles::normalizeRadian(value - last_value);
           last_value = value;
         }
 
