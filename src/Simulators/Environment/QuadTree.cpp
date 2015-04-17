@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
@@ -253,27 +253,30 @@ namespace Simulators
       return iter.result();
     }
 
+    class Dump: public QuadTree::Iteration
+    {
+    public:
+      Dump(std::ostream& stream):
+        m_stream(stream)
+      { }
+
+      ~Dump(void)
+      { }
+
+      void
+      process(const QuadTree::Item& item)
+      {
+        m_stream << item.x << ' ' << item.y << ' ' << item.value << std::endl;
+      }
+
+    private:
+      std::ostream& m_stream;
+    };
+
     std::ostream&
     operator<<(std::ostream& os, const QuadTree& tree)
     {
-      class dump: public QuadTree::Iteration
-      {
-      public:
-        dump(std::ostream& stream): m_stream(stream) { }
-
-        ~dump(){ }
-
-        void
-        process(const QuadTree::Item& item)
-        {
-          m_stream << item.x << ' ' << item.y << ' ' << item.value << std::endl;
-        }
-
-      private:
-        std::ostream& m_stream;
-      };
-
-      dump iter(os);
+      Dump iter(os);
       tree.iterate(iter);
       return os;
     }

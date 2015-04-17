@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Rui Gomes (original code)                                        *
 // Author: Eduardo Marques (port)                                           *
@@ -83,7 +83,6 @@ namespace DUNE
         *v = t10 * t12 - t14 * cphi + t17 * t12 + t19 * cphi + sphi * ctheta * vz;
         *w = t10 * t23 + t14 * sphi + t17 * t23 - t19 * sphi + cphi * ctheta * vz;
       }
-
 
       //! Body to inertial frame conversion of linear velocities.
       //! Given the angles of a body in respect to the reference axes

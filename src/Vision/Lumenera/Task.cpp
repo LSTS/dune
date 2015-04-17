@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Renato Caldas                                                    *
 //***************************************************************************
@@ -31,6 +31,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Media/ExifEditor.hpp>
 
 // Local headers.
 #include "HTTPClient.hpp"
@@ -83,6 +84,8 @@ namespace Vision
       std::string strobe_pwr;
       //! Number of photos per volume.
       unsigned volume_size;
+      //! Log folder prefix.
+      std::string log_prefix;
       //! Power GPIO.
       int pwr_gpio;
       //! LED GPIO.
@@ -128,6 +131,8 @@ namespace Vision
       Counter<double> m_act_timer;
       //! True if received the logging path.
       bool m_log_dir_updated;
+      //! Last estimated state
+      IMC::EstimatedState m_estate;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -261,6 +266,10 @@ namespace Vision
         .defaultValue("1000")
         .description("Number of photos per volume");
 
+        param("Log Prefix", m_args.log_prefix)
+        .defaultValue("")
+        .description("Log folder prefix");
+
         param("Enable Camera Configuration", m_args.camera_cfg)
         .defaultValue("true")
         .description("Attempt to configure the camera");
@@ -276,6 +285,7 @@ namespace Vision
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::EntityInfo>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       void
@@ -385,10 +395,19 @@ namespace Vision
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
-          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
+          m_log_dir = m_ctx.dir_log / m_args.log_prefix / msg->name / "Photos";
           m_log_dir_updated = true;
           trace("received new log dir");
         }
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_estate = *msg;
       }
 
       void
@@ -515,7 +534,6 @@ namespace Vision
       {
         m_slave_entities->onEntityInfo(msg);
       }
-
 
       void
       setStrobePower(bool value)
@@ -883,6 +901,9 @@ namespace Vision
       void
       captureAndSave(void)
       {
+        // Take estimated state snapshot just before capture
+        IMC::EstimatedState es = m_estate;
+
         ByteBuffer dst;
         try
         {
@@ -902,11 +923,36 @@ namespace Vision
           changeVolume();
         }
 
-        // Save file.
-        double timestamp = Clock::getSinceEpoch();
-        Path file = m_volume / String::str("%0.4f.jpg", timestamp);
-        std::ofstream jpg(file.c_str(), std::ios::binary);
-        jpg.write(dst.getBufferSigned(), dst.getSize());
+        // Modify EXIF tags to include the position
+        try
+        {
+          Media::ExifEditor ee;
+          ee.setBuffer(dst.getBuffer(), dst.getSize());
+          Media::ExifData* edata = ee.getExifData();
+
+          // Fill the exif position data.
+          double lat, lon;
+          Coordinates::toWGS84(es, lat, lon);
+          std::ostringstream ss;
+          ss << "latitude=" << Angles::degrees(lat);
+          ss << ", longitude=" << Angles::degrees(lon);
+          ss << ", depth=" << es.depth;
+          ss << ", altitude=" << es.alt;
+          ss << ", heading=" << Angles::degrees(es.psi);
+          ss << ", roll=" << Angles::degrees(es.phi);
+          ss << ", pitch=" << Angles::degrees(es.theta);
+          edata->setComment(ss.str());
+
+          // Save file.
+          double timestamp = Clock::getSinceEpoch();
+          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
+          std::ofstream jpg(file.c_str(), std::ios::binary);
+          ee.outputToStream(jpg);
+        }
+        catch (std::runtime_error& e)
+        {
+          debug("frame save failed: %s", e.what());
+        }
       }
 
       bool

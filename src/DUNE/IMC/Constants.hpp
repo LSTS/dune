@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,24 +20,24 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 685ccd58f94bda7bf50f1d1ddf3be199                            *
+// IMC XML MD5: c4ed792acea0f60a3083fcc9f9d4dcc6                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
 #define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
 
 //! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.4.3"
+#define DUNE_IMC_CONST_VERSION "5.4.4"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2015-01-09 6585b70  (HEAD, origin/feature/vs_pe_clean, feature/vs_pe_clean)"
+#define DUNE_IMC_CONST_GIT_INFO "2015-04-17 d1a74e9  (HEAD, feature/vs_pe_clean)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "685ccd58f94bda7bf50f1d1ddf3be199"
+#define DUNE_IMC_CONST_MD5 "c4ed792acea0f60a3083fcc9f9d4dcc6"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.

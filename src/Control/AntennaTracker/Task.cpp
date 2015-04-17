@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Filipe Ferreira                                                  *
 // Author: João Fortuna                                                     *
@@ -76,7 +76,6 @@ namespace Control
         // Register consumers.
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
-        bind<IMC::GpsFix>(this);
       }
 
       void
@@ -100,21 +99,20 @@ namespace Control
       }
 
       void
-      consume(const IMC::GpsFix* gpsfix)
-      {
-        if (getSystemId() != gpsfix->getSource())
-          return;
-
-        m_lat = gpsfix->lat;
-        m_lon = gpsfix->lon;
-        m_hei = gpsfix->height;
-      }
-
-      void
       consume(const IMC::EstimatedState* estate)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         spew("Estimated State arrived from %d", estate->getSource());
+
+        if (getSystemId() == estate->getSource())
+        {
+          m_lat = estate->lat;
+          m_lon = estate->lon;
+          m_hei = estate->height;
+
+          WGS84::displace(estate->x, estate->y, estate->z,
+                          &m_lat, &m_lon, &m_hei);
+        }
 
         if (m_trg_id != estate->getSource())
           return;

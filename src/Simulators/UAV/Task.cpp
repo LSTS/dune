@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
@@ -462,7 +462,7 @@ namespace Simulators
         uint32_t i_cmd;
         uint32_t i_cmd_final;
         uint32_t i_src;
-        uint32_t i_src_ini;
+        uint32_t i_src_ini = UINT_MAX;
         std::vector<std::string> parts;
         std::vector<std::string> systems;
         std::vector<std::string> entities;

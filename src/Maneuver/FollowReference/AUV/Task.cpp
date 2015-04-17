@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Jose Pinto                                                       *
 //***************************************************************************
@@ -76,7 +76,6 @@ namespace Maneuver
         static const uint8_t SPEED_CHANGED     = 2;
         static const uint8_t LOC_CHANGED       = 4;
         static const uint8_t RADIUS_CHANGED    = 8;
-
 
         Task(const std::string& name, Tasks::Context& ctx) :
           DUNE::Maneuvers::Maneuver(name, ctx)
@@ -148,7 +147,6 @@ namespace Maneuver
           m_path_sent = false;
           inf(DTR("waiting for first reference"));
         }
-
 
         uint8_t pathDifferences(const IMC::DesiredPath *msg1, const IMC::DesiredPath *msg2)
         {
@@ -555,7 +553,6 @@ namespace Maneuver
 
           return z_dist;
         }
-
 
         void
         dispatchDesiredPath(IMC::DesiredPath desired_path)

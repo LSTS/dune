@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -21,7 +21,7 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
@@ -43,18 +43,18 @@ VBOX_TIMEOUT = '10800000'
 
 # Table of tools.
 TOOLS = {
-  'gnu32'   => ['Unix Makefiles'        , 'gcc -m32'  , 'g++ -m32'    ],
-  'gnu64'   => ['Unix Makefiles'        , 'gcc -m64'  , 'g++ -m64'    ],
-  'llvm32'  => ['Unix Makefiles'        , 'clang -m32', 'clang++ -m32'],
-  'llvm64'  => ['Unix Makefiles'        , 'clang -m64', 'clang++ -m64'],
-  'sun32'   => ['Unix Makefiles'        , 'suncc -m32', 'sunCC -m32'  ],
-  'sun64'   => ['Unix Makefiles'        , 'suncc -m64', 'sunCC -m64'  ],
-  'icc32'   => ['Unix Makefiles'        , 'icc -m32'  , 'icpc -m32'   ],
-  'icc64'   => ['Unix Makefiles'        , 'icc -m64'  , 'icpc -m64'   ],
-  'mvs32'   => ['Visual Studio 10'      , ''          , ''            ],
-  'mvs64'   => ['Visual Studio 10 Win64', ''          , ''            ],
-  'mgw32'   => ['MinGW Makefiles'       , 'gcc -m32'  , 'g++ -m32'    ],
-  'mgw64'   => ['MinGW Makefiles'       , 'gcc -m64'  , 'g++ -m64'    ],
+  'gnu32'   => [['Ninja', 'Unix Makefiles'] , 'gcc -m32'  , 'g++ -m32'    ],
+  'gnu64'   => [['Ninja', 'Unix Makefiles'] , 'gcc -m64'  , 'g++ -m64'    ],
+  'llvm32'  => [['Ninja', 'Unix Makefiles'] , 'clang -m32', 'clang++ -m32'],
+  'llvm64'  => [['Ninja', 'Unix Makefiles'] , 'clang -m64', 'clang++ -m64'],
+  'sun32'   => [['Ninja', 'Unix Makefiles'] , 'suncc -m32', 'sunCC -m32'  ],
+  'sun64'   => [['Ninja', 'Unix Makefiles'] , 'suncc -m64', 'sunCC -m64'  ],
+  'icc32'   => [['Ninja', 'Unix Makefiles'] , 'icc -m32'  , 'icpc -m32'   ],
+  'icc64'   => [['Ninja', 'Unix Makefiles'] , 'icc -m64'  , 'icpc -m64'   ],
+  'mvs32'   => [['Visual Studio 10']        , ''          , ''            ],
+  'mvs64'   => [['Visual Studio 10 Win64']  , ''          , ''            ],
+  'mgw32'   => [['MinGW Makefiles']         , 'gcc -m32'  , 'g++ -m32'    ],
+  'mgw64'   => [['MinGW Makefiles']         , 'gcc -m64'  , 'g++ -m64'    ],
 }
 
 # CMake test code.
@@ -72,6 +72,7 @@ CODE
 
 # C++ test code.
 TEST_CXX = <<CODE
+#include <cstdlib>
 #include <stdexcept>
 #include <new>
 int main(void) { int* v = new int; return *v; }
@@ -130,27 +131,36 @@ class Builder
   end
 
   def usable?
-    src = File.join(@base_test, 'src')
-    FileUtils.mkdir_p(src)
-
-    write_file(File.join(src, 'CMakeLists.txt'), TEST_CMAKE)
-    write_file(File.join(src, 'test.c'), TEST_C)
-    write_file(File.join(src, 'test.cpp'), TEST_CXX)
-
-    bin = File.join(@base_test, 'bin')
-    FileUtils.mkdir_p(bin)
-
     ENV['CC'] = @cc
     ENV['CXX'] = @cxx
 
-    Dir.chdir(bin)
-    if run('cmake', '-G', @gen, src) == 0
-      rv = true if run('cmake', '--build', bin) == 0
+    @gen.each do |gen|
+      src = File.join(@base_test, 'src')
+      FileUtils.mkdir_p(src)
+
+      write_file(File.join(src, 'CMakeLists.txt'), TEST_CMAKE)
+      write_file(File.join(src, 'test.c'), TEST_C)
+      write_file(File.join(src, 'test.cpp'), TEST_CXX)
+
+      bin = File.join(@base_test, 'bin')
+      FileUtils.mkdir_p(bin)
+
+      Dir.chdir(bin)
+
+      if run('cmake', '-G', gen, src) == 0
+        rv = true if run('cmake', '--build', bin) == 0
+      end
+
+      Dir.chdir(@base)
+      FileUtils.rm_rf @base_test
+
+      if rv
+        @gen = gen
+        return true
+      end
     end
 
-    Dir.chdir(@base)
-    FileUtils.rm_rf @base_test
-    return rv
+    return false
   end
 
   def execute
@@ -333,6 +343,31 @@ class VirtualBox
   end
 end
 
+class Docker
+  def self.list_machines
+    lines = `docker images`.split("\n")
+    lines = lines.find_all{|l| l.start_with?("dune-")}
+    lines = lines.map do |l|
+      l.split(" ")[0]
+    end
+    lines.sort!
+  end
+
+  def initialize(name, target)
+    @name = name
+    @target = target
+    @script = File.basename(__FILE__)
+    @base = File.dirname(File.absolute_path(__FILE__))
+  end
+
+  def execute
+    hostname = @name.gsub("dune-", "")
+    puts hostname
+    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --target #{@target}`
+  end
+end
+
+
 ############################################################################
 # Command line options.                                                    #
 ############################################################################
@@ -342,6 +377,9 @@ options = {
   :target      => 'Experimental',
   :tchain      => nil,
   :machine     => nil,
+  :vbox        => false,
+  :docker      => false,
+  :native      => true
 }
 
 OptionParser.new do |opts|
@@ -366,41 +404,72 @@ OptionParser.new do |opts|
   opts.on("-p", "--pass PASS", "Password") do |v|
     AUTH[:password] = v
   end
+
+  opts.on("--[no-]vbox", "Run VirtualBox builds") do |v|
+    options[:vbox] = v
+  end
+
+  opts.on("--[no-]docker", "Run Docker builds") do |v|
+    options[:docker] = v
+  end
+
+  opts.on("--[no-]native", "Run native builds") do |v|
+    options[:native] = v
+  end
+
 end.parse!
 
 ############################################################################
 # Execute.                                                                 #
 ############################################################################
 
-if not options[:machine].nil?
-  if not (AUTH.has_key?(:user) and AUTH.has_key?(:password))
-    puts('ERROR: missing username and/or password.')
-    exit 0
+# Docker.
+if options[:docker]
+  if options[:machine].nil?
+    machines = Docker.list_machines
+  else
+    machines = [options[:machine]]
   end
 
-  if options[:machine] == 'All'
-    VirtualBox.list_machines_cdash.each do |machine|
-      vm = VirtualBox.new(machine, options[:target])
-      vm.execute
-    end
-  else
-    vm = VirtualBox.new(options[:machine], options[:target])
-    vm.execute
-    exit 0
+  machines.each do |machine|
+    c = Docker.new(machine, options[:target])
+    c.execute
   end
 end
 
-if options[:tchain].nil?
-  TOOLS.each do |k, v|
-    begin
-      s = Builder.new(options[:target], k)
-      s.execute
-    rescue Exception => e
-      $log.puts e.message
-    end
-    $log.puts()
+# VirtualBox.
+if options[:vbox]
+  if not (AUTH.has_key?(:user) and AUTH.has_key?(:password))
+    puts('ERROR: missing username and/or password.')
+    exit 1
   end
-else
-  s = Builder.new(options[:target], options[:tchain])
-  s.execute
+
+  if options[:machine].nil?
+    machines = VirtualBox.list_machines_cdash
+  else
+    machines = [options[:machine]]
+  end
+
+  machines.each do |machine|
+    vm = VirtualBox.new(machine, options[:target])
+    vm.execute
+  end
+end
+
+# Native.
+if options[:native]
+  if options[:tchain].nil?
+    TOOLS.each do |k, v|
+      begin
+        s = Builder.new(options[:target], k)
+        s.execute
+      rescue Exception => e
+        $log.puts e.message
+      end
+      $log.puts()
+    end
+  else
+    s = Builder.new(options[:target], options[:tchain])
+    s.execute
+  end
 end

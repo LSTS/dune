@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -45,6 +45,8 @@ namespace Supervisors
       std::string pwr_chn;
       //! Slave system name.
       std::string slave_system;
+      //! Dispatch Power Operation.
+      bool dispatch_power_op;
     };
 
     struct Task: public Tasks::Task
@@ -71,6 +73,10 @@ namespace Supervisors
 
         param("Slave System Name", m_args.slave_system)
         .description("Name of the slave system");
+
+        param("Dispatch Power Operation", m_args.dispatch_power_op)
+        .defaultValue("true")
+        .description("Instruct slave CPU to power down");
 
         // Register handler routines.
         bind<IMC::Heartbeat>(this);
@@ -150,10 +156,13 @@ namespace Supervisors
       {
         trace("on request deactivation");
 
-        IMC::PowerOperation pop;
-        pop.setDestination(m_slave_id);
-        pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
-        dispatch(pop);
+        if (m_args.dispatch_power_op)
+        {
+          IMC::PowerOperation pop;
+          pop.setDestination(m_slave_id);
+          pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+          dispatch(pop);
+        }
 
         m_act_timer.setTop(getDeactivationTime());
       }

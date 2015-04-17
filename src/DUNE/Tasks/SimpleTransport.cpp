@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
@@ -44,7 +44,10 @@ namespace DUNE
 
       param("Rate Limiters", m_gargs.rlim)
       .defaultValue("")
-      .description("Rate limiters (message name/frequency pairs)");
+      .description("List of <Message>:<Frequency>");
+
+      param("Filtered Entities", m_gargs.entities_flt)
+      .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
       param("Trace - Incoming Messages", m_gargs.trace_in)
       .defaultValue("false")
@@ -81,7 +84,8 @@ namespace DUNE
     void
     SimpleTransport::onMain(void)
     {
-      m_rl.setup(m_gargs.rlim);
+      m_rl.setupRates(m_gargs.rlim);
+      m_rl.setupEntities(m_gargs.entities_flt, this);
       bind(this, m_gargs.transports);
 
       while (!stopping())

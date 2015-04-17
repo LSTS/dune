@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,13 +20,15 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
 // ISO C++ 98 headers.
 #include <cstring>
+#include <cstddef>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/Parsers/PD4.hpp>
@@ -141,17 +143,14 @@ namespace DUNE
       m_data.e_vel_btm = 0.001 * stmp;
 
       // Bottom ranges.
-      uint16_t utmp = m_raw_data[10] * 256 + m_raw_data[9];
-      m_data.bm1_rng_btm = 0.01 * utmp;
+      uint16_t utmp = 0;
+      for (int i = 0; i < 4; ++i)
+      {
+        utmp = m_raw_data[10 + i * 2] * 256 + m_raw_data[9 + i * 2];
+        m_data.rng_to_btm[i] = 0.01 * utmp;
+      }
 
-      utmp = m_raw_data[12] * 256 + m_raw_data[11];
-      m_data.bm2_rng_btm = 0.01 * utmp;
-
-      utmp = m_raw_data[14] * 256 + m_raw_data[13];
-      m_data.bm3_rng_btm = 0.01 * utmp;
-
-      utmp = m_raw_data[16] * 256 + m_raw_data[15];
-      m_data.bm4_rng_btm = 0.01 * utmp;
+      m_data.bm_status = m_raw_data[17];
 
       // Water velocity.
       stmp = m_raw_data[19] * 256 + m_raw_data[18];

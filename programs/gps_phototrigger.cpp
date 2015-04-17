@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Filipe Ferreira                                                  *
 //***************************************************************************
@@ -73,16 +73,16 @@ main(int32_t argc, char** argv)
 
         if (lbe->getSourceEntity() != phototrigger_eid)
           continue;
-	
-	double lat;
-	double lon;
-	double height;
+
+        double lat;
+        double lon;
+        double height;
 
         std::sscanf(lbe->text.c_str(), "%lf,%lf,%lf", &lat, &lon, &height);
 
-	logfile << std::setprecision(10) << Angles::degrees(lat) << "," << Angles::degrees(lon) << "," << height << std::endl;
+        logfile << std::setprecision(10) << Angles::degrees(lat) << "," << Angles::degrees(lon) << "," << height << std::endl;
       }
-     
+
       else if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
         IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(msg);

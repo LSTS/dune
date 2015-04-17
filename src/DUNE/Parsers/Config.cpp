@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -54,6 +54,25 @@ namespace DUNE
     //! Maximum buffer size.
     static const size_t c_max_bfr_size = 1024;
 
+    //! Retrieve option and respective value from a line.
+    //! @param[in] line line.
+    //! @param[out] option option string.
+    //! @param[out] value option value.
+    //! @return true if line is an option assignment, false otherwise.
+    static bool
+    getOptionAndValue(const char* line, char* option, char* value)
+    {
+      char equal[2] = {0};
+      int rv = std::sscanf(line, " %[^=] %1[=] %[^;|#] ", option, equal, value);
+      if (rv < 2 || rv > 3)
+        return false;
+
+      if (rv == 2)
+        value[0] = '\0';
+
+      return true;
+    }
+
     Config::Config(const char* fname)
     {
       parseFile(fname);
@@ -80,11 +99,11 @@ namespace DUNE
       {
         ++line_count;
 
-        // Ignore comments
+        // Ignore comments.
         if (line[0] == ';' || line[0] == '#')
           continue;
 
-        // Section name
+        // Section name.
         if (std::sscanf(line, "[%[^]]] ", section) == 1)
         {
           String::rtrim(section);
@@ -109,8 +128,8 @@ namespace DUNE
 
           ++section_count;
         }
-        // Option and arguments
-        else if (std::sscanf(line, " %[^=] = %[^\n|;|#] ", option, arg) == 2)
+        // Option and value.
+        else if (getOptionAndValue(line, option, arg))
         {
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
@@ -136,8 +155,8 @@ namespace DUNE
 
           m_data[section][option] = m_data[isec][iopt];
         }
-        // Multiline argument
-        else if (std::sscanf(line, " %[^\n|;|#] ", arg) == 1)
+        // Multiline argument.
+        else if (std::sscanf(line, " %[^;|#] ", arg) == 1)
         {
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
@@ -146,7 +165,7 @@ namespace DUNE
           m_data[section][tmp] += " ";
           m_data[section][tmp] += arg;
         }
-        // Error
+        // Syntax error.
         else
         {
           throw SyntaxError(fname, line_count);

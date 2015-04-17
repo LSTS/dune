@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,10 +20,11 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 // Author: Pedro Vaz Teixeira                                               *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -35,42 +36,40 @@
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Time/BrokenDown.hpp>
 
-using namespace DUNE::FileSystem;
-using namespace DUNE::Math;
-using namespace DUNE::Time;
-
-// WMM 2010 headers.
-#include <wmm2010/WMMHeader.h>
+// WMM 2015 headers.
+#include <wmm2015/GeomagnetismHeader.h>
 
 namespace DUNE
 {
   namespace Coordinates
   {
-    static const int c_num_terms = ((WMM_MAX_MODEL_DEGREES + 1) * (WMM_MAX_MODEL_DEGREES + 2) / 2);
+    static const unsigned c_num_geoid_cols = 1441;
+    static const unsigned c_num_geoid_rows = 721;
 
     struct WMMData
     {
-      WMMtype_Geoid geoid;
-      WMMtype_Ellipsoid ellip;
-      WMMtype_MagneticModel* mm;
+      MAGtype_Geoid geoid;
+      MAGtype_Ellipsoid ellip;
+      MAGtype_MagneticModel* mm;
+      MAGtype_MagneticModel* timed_mm;
     };
 
     WMM::WMM(void)
     {
-      init(Path::applicationFile().dirname() / "../etc");
+      init(FileSystem::Path::applicationFile().dirname() / "../etc");
     }
 
-    WMM::WMM(const Path& root)
+    WMM::WMM(const FileSystem::Path& root)
     {
       init(root);
     }
 
     void
-    WMM::init(const Path& root)
+    WMM::init(const FileSystem::Path& root)
     {
       m_data = new WMMData;
-      Path egmfile(root / "wmm/egm9615.bin");
-      Path wmmfile(root / "wmm/wmm.cof");
+      FileSystem::Path egmfile(root / "wmm/egm9615.bin");
+      FileSystem::Path wmmfile(root / "wmm/wmm.cof");
 
       if (!egmfile.isFile())
         throw std::runtime_error(egmfile.str() + " not found");
@@ -79,32 +78,40 @@ namespace DUNE
         throw std::runtime_error(wmmfile.str() + " not found");
 
       // Initialization
-      WMMtype_MagneticModel* tmp = WMM_AllocateModelMemory(c_num_terms);
-      WMM_SetDefaults(&m_data->ellip, tmp, &m_data->geoid);
+      m_data->mm = MAG_robustReadMagModels(wmmfile.c_str());
+
+      int num_terms = ((m_data->mm->nMax + 1) * (m_data->mm->nMax + 2) / 2);
+      m_data->timed_mm = MAG_AllocateModelMemory(num_terms);
+      MAG_SetDefaults(&m_data->ellip, &m_data->geoid);
 
       // Read geoid data
-      WMM_InitializeGeoid(egmfile.c_str(), &m_data->geoid);
+      /* Set EGM96 Geoid parameters */
+      unsigned n = c_num_geoid_cols * c_num_geoid_rows;
+      m_data->geoid.GeoidHeightBuffer = (float *) std::malloc((n + 1) * sizeof(float));
+      std::FILE* file = std::fopen(egmfile.c_str(), "rb");
+      size_t rv = std::fread(m_data->geoid.GeoidHeightBuffer, sizeof(float), n, file);
+      if (rv != n)
+        throw std::runtime_error("unable to extract geoid");
+      std::fclose(file);
 
-      // Read magnetic model data
-      WMM_readMagneticModel(wmmfile.c_str(), tmp);
+      //m_data->geoid.GeoidHeightBuffer = GeoidHeightBuffer;
+      m_data->geoid.Geoid_Initialized = 1;
 
       // Adjust magnetic model according to date
       char dummy[100];
-      BrokenDown now;
-      WMMtype_Date date;
+      Time::BrokenDown now;
+      MAGtype_Date date;
       date.Year = now.year;
       date.Month = now.month;
       date.Day = now.day;
-      WMM_DateToYear(&date, dummy);
-
-      m_data->mm = WMM_AllocateModelMemory(c_num_terms);
-      WMM_TimelyModifyMagneticModel(date, tmp, m_data->mm);
-      WMM_FreeMagneticModelMemory(tmp);
+      MAG_DateToYear(&date, dummy);
+      MAG_TimelyModifyMagneticModel(date, m_data->mm, m_data->timed_mm);
     }
 
     WMM::~WMM(void)
     {
-      WMM_FreeMagneticModelMemory(m_data->mm);
+      MAG_FreeMagneticModelMemory(m_data->timed_mm);
+      MAG_FreeMagneticModelMemory(m_data->mm);
       std::free(m_data->geoid.GeoidHeightBuffer);
       delete m_data;
     }
@@ -113,8 +120,7 @@ namespace DUNE
     WMM::height(double lat, double lon)
     {
       double h = 0;
-
-      WMM_GetGeoidHeight(Angles::degrees(lat), Angles::degrees(lon), &h, &m_data->geoid);
+      MAG_GetGeoidHeight(Math::Angles::degrees(lat), Math::Angles::degrees(lon), &h, &m_data->geoid);
 
       return h;
     }
@@ -122,20 +128,20 @@ namespace DUNE
     double
     WMM::declination(double lat, double lon, double h)
     {
-      WMMtype_CoordGeodetic geo;
-      WMMtype_CoordSpherical sph;
-      WMMtype_GeoMagneticElements gme;
+      MAGtype_CoordGeodetic geo;
+      MAGtype_CoordSpherical sph;
+      MAGtype_GeoMagneticElements gme;
 
-      geo.phi = Angles::degrees(lat);
-      geo.lambda = Angles::degrees(lon);
+      geo.phi = Math::Angles::degrees(lat);
+      geo.lambda = Math::Angles::degrees(lon);
       geo.UseGeoid = false;
       geo.HeightAboveEllipsoid = h * 1e-03;
 
-      WMM_GeodeticToSpherical(m_data->ellip, geo, &sph);
-      WMM_Geomag(m_data->ellip, sph, geo, m_data->mm, &gme);
-      WMM_CalculateGridVariation(geo, &gme);
+      MAG_GeodeticToSpherical(m_data->ellip, geo, &sph);
+      MAG_Geomag(m_data->ellip, sph, geo, m_data->timed_mm, &gme);
+      MAG_CalculateGridVariation(geo, &gme);
 
-      return Angles::radians(gme.Decl);
+      return Math::Angles::radians(gme.Decl);
     }
   }
 }

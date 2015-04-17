@@ -1,5 +1,5 @@
 # ##########################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 # ##########################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -20,13 +20,13 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 # ##########################################################################
 msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2014-11-11 14:03+0000\n"
+"POT-Creation-Date: 2014-12-01 15:19+0000\n"
 "PO-Revision-Date: 2014-08-10 23:54-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -343,15 +343,15 @@ msgstr "estado indefinido"
 msgid "relocated station keeping"
 msgstr "posição estacionária relocalizada"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Elevator.hpp:152
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Elevator.hpp:153
 msgid "vertical progress is too slow"
 msgstr "progresso na vertical é demasiado lento"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:198
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:200
 msgid "dislodge failed"
 msgstr "libertação falhou"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:266
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:268
 msgid "trying again to dislodge"
 msgstr "a tentar libertar novamente"
 
@@ -422,28 +422,6 @@ msgstr "espaço de dados excedido"
 msgid "null frame"
 msgstr "trama inválida"
 
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:201
-#: /home/jb/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:206
-#, c-format
-msgid "failed to resolve entity '%s': %s"
-msgstr "erro ao resolver entidade '%s': %s"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:244
-msgid "motion detected"
-msgstr "movimento detetado"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:326
-msgid "device is not active"
-msgstr "dispositivo não está ativo"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:334
-msgid "device is not in proper medium"
-msgstr "dispositivo não está no meio apropriado"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:346
-msgid "calibrating: system must remain static"
-msgstr "em calibração: o sistema deve permanecer estático"
-
 #: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:302
 msgid "destination is not in the LBL configuration"
 msgstr "destino não está na configuração LBL"
@@ -475,19 +453,19 @@ msgstr "incerteza de posição é %0.2f m"
 msgid "Maximum Horizontal Position Variance"
 msgstr "Máxima Variância Horizontal de Posição"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1122
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1128
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1092
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1098
 #, c-format
 msgid "no measurements available: %s"
 msgstr "valores não disponíveis: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1122
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1092
 #: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:57
 msgid "Depth"
 msgstr "Profundidade"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1128
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1098
 msgid "Euler Angles"
 msgstr "Ângulos de Euler"
 
@@ -742,11 +720,11 @@ msgstr "veículo local não faz parte da formação"
 msgid "too few trajectory points"
 msgstr "poucos pontos de trajetória"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:181
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:180
 msgid "unsupported vertical reference"
 msgstr "referência vertical não suportada"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:187
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:186
 msgid "no valid value for altitude has been received yet,maneuver will not proceed"
 msgstr "não foi recebido valor de altitude válido, a manobra não irá prosseguir"
 
@@ -1069,37 +1047,37 @@ msgstr "perfil de execução: %s"
 msgid "clean shutdown"
 msgstr "encerramento limpo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:302
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:309
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:266
 msgid "not active"
 msgstr "inativo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:445
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:452
 msgid "keep loitering"
 msgstr "manter loiter"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:487
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:494
 #, c-format
 msgid "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr "caminho (lat/lon): %0.5f %0.5f para %0.5f %0.5f"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:658
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:665
 msgid "expected new path control reference"
 msgstr "esperada nova referência de path control"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:715
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:722
 msgid "now loitering"
 msgstr "a fazer loiter"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:854
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:861
 msgid "along-track divergence error"
 msgstr "erro por divergência ao longo do caminho"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:887
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:894
 msgid "cross-track divergence error"
 msgstr "erro por divergência perpendicular ao caminho"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:968
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:975
 msgid "waiting for position estimate from navigation"
 msgstr "à espera de uma estimativa da posição pela navegação"
 
@@ -1828,28 +1806,28 @@ msgstr "falha ao ligar dispositivo"
 msgid "failed to connect to device"
 msgstr "falha ao contactar dispositivo"
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:133
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:134
 #, c-format
 msgid "TREX disconnected for more than %d seconds"
 msgstr "TREX desligado durante mais do que %d segundos"
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:199
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:200
 msgid "Abort detected. Disabling TREX control..."
 msgstr "Detetado aborte. A desabilitar controlo T-REX."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:214
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:215
 msgid "Stop TREX detected. Disabling TREX control..."
 msgstr "Detetada paragem no TREX. A desabilitar controlo T-REX."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:234
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:235
 msgid "Restarting auxiliary CPU..."
 msgstr "A reiniciar CPU auxiliar..."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:242
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:243
 msgid "T-REX has been stopped."
 msgstr "T-REX interrompido."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:244
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:245
 #, c-format
 msgid "Could not stop T-REX: %d."
 msgstr "Incapaz de parar T-REX: %d."
@@ -1991,6 +1969,11 @@ msgstr "a enviar SMS %s | %u"
 #: /home/jb/workspace/dune/trunk/src/Power/PCTLv2/Task.cpp:570
 msgid "water"
 msgstr "água"
+
+#: /home/jb/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:206
+#, c-format
+msgid "failed to resolve entity '%s': %s"
+msgstr "erro ao resolver entidade '%s': %s"
 
 #: /home/jb/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:359
 #: /home/jb/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:253
@@ -2542,11 +2525,11 @@ msgstr "controlo de caminho NÃO está ativo"
 msgid "ArduPilot in Auto mode but still in ground, performing takeoff first."
 msgstr "ArduPilot em modo automático mas em Terra, a fazer takeoff primeiro"
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1383
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1382
 msgid "Connection lost, retrying..."
 msgstr "Ligação perdida, a tentar novamente..."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1804
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1833
 msgid "Controlling an unknown vehicle type."
 msgstr "A controlar um tipo de veículo desconhecido."
 
@@ -2583,11 +2566,11 @@ msgstr "Habilitar controlador de roll"
 msgid "Gain matrix has invalid dimensions"
 msgstr "Matriz de ganhos tem dimensões inválidas"
 
-#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:316
 msgid "enabling"
 msgstr "a ativar"
 
-#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:316
 msgid "disabling"
 msgstr "a desativar"
 
@@ -2677,7 +2660,7 @@ msgid " maneuver started"
 msgstr " manobra começada"
 
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:596
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:611
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:610
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1006
 msgid "OK"
 msgstr "OK"
@@ -2736,13 +2719,13 @@ msgid "lat lon = 0 ? %f"
 msgstr "lat lon = 0 ? %f"
 
 #: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:158
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:225
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:223
 #, c-format
 msgid "ignored reference from non-authorized source: %d"
 msgstr "ignorada referência de origem não autorizada: %d"
 
 #: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:167
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:234
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:232
 #, c-format
 msgid "ignored reference from non-authorized entity: %d"
 msgstr "ignorada referência de entidade não autorizada: %d"
@@ -2778,41 +2761,41 @@ msgstr "LOITER, XY e perto Z"
 msgid "GOTO, FAR"
 msgstr "GOTO, LONGE"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:149
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:148
 msgid "waiting for first reference"
 msgstr "à espera da primeira referência"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:582
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:579
 #, c-format
 msgid "Z reference changed to %f"
 msgstr "Referência Z mudada para %f"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:591
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:588
 #, c-format
 msgid "Speed reference changed to %f"
 msgstr "Referência de velocidade mudada para %f"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:597
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:594
 #, c-format
 msgid "Loiter radius reference changed to %f"
 msgstr "Referência de raio de loiter mudada para %f"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:611
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:608
 #, c-format
 msgid "loitering around (%f, %f, %f, %f)."
 msgstr "em loiter em torno de (%f, %f, %f, %f)."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:622
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:619
 #, c-format
 msgid "loitering (elevator) towards (%f, %f, %f, %f)."
 msgstr "em loiter (elevador) em direção a (%f, %f, %f, %f)."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:633
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:630
 #, c-format
 msgid "going towards (%f, %f, %f)."
 msgstr "a ir em direção (%f, %f, %f)."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:638
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:635
 #, c-format
 msgid "hovering next to (%f, %f)."
 msgstr "a pairar perto de (%f,%f)."
@@ -2855,16 +2838,16 @@ msgstr "tipo de manobra errado"
 msgid "timeout to receive new remote info was exceeded."
 msgstr "excedido timeout para receber nova info remota."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:167
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:183
 msgid "insufficient data for calibration"
 msgstr "dados insuficientes para calibração"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:172
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:188
 #, c-format
 msgid "%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"
 msgstr "Entidade %s não calibrada. Valores de calibração para %d voltas: %f, %f, 0.0"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:184
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:200
 #, c-format
 msgid "forcing minimum of %.1f"
 msgstr "a forçar mínimo de %.1f"
@@ -2976,7 +2959,7 @@ msgstr "base de dados corrompida"
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:333
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:406
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:441
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:473
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:472
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:771
 msgid "undefined plan id"
 msgstr "plan ID indefinido"
@@ -2998,8 +2981,8 @@ msgid "OK (new entry)"
 msgstr "OK (nova entrada)"
 
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:431
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:452
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:483
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:451
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:482
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:781
 msgid "undefined plan"
 msgstr "plano indefinido"
@@ -3234,20 +3217,20 @@ msgstr "\"stream\" vídeo parado"
 msgid "invalid entity"
 msgstr "entidade inválida"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:557
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:556
 msgid "failed to start video stream"
 msgstr "falha ao iniciar \"stream\" vídeo"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:577
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:576
 msgid "started video stream"
 msgstr "\"stream\" vídeo iniciado"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:659
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:700
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:658
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:699
 msgid "failed to set property"
 msgstr "falha ao configurar propriedade"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:922
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:921
 msgid "successfully configured camera"
 msgstr "câmara configurada com sucesso"
 
@@ -3950,6 +3933,18 @@ msgstr "Supervisor de Veículo"
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:131
 msgid "Visualizer"
 msgstr "Visualizador"
+
+#~ msgid "motion detected"
+#~ msgstr "movimento detetado"
+
+#~ msgid "device is not active"
+#~ msgstr "dispositivo não está ativo"
+
+#~ msgid "device is not in proper medium"
+#~ msgstr "dispositivo não está no meio apropriado"
+
+#~ msgid "calibrating: system must remain static"
+#~ msgstr "em calibração: o sistema deve permanecer estático"
 
 #~ msgid "failed to get time"
 #~ msgstr "falha ao obter tempo"

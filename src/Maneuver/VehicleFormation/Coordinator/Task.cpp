@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
@@ -958,7 +958,7 @@ namespace Maneuver
 
           // Check if the vehicle is the intended destination of the plan
           if (msg->getDestination() != getSystemId() &&
-              msg->getDestination() != UINT16_MAX)
+              msg->getDestination() != 0xffff)
           {
             trace("PlanControl rejected (destination system: %s)",
                   resolveSystemId(msg->getDestination()));
@@ -1010,19 +1010,19 @@ namespace Maneuver
           {
             trace("PlanDB message rejected.");
             if (msg->getDestination() != ((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) &&
-                msg->getDestination() < UINT16_MAX)
+                msg->getDestination() < 0xffff)
               trace("Different system destination: %s (%s).", resolveSystemId(msg->getDestination()),
                     resolveSystemId((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()));
             if (msg->getDestinationEntity() != getEntityId() && msg->getDestinationEntity() < UINT8_MAX)
               trace("Different entity destination: %s (%s).",
                     resolveEntity(msg->getDestinationEntity()).c_str(),
                     resolveEntity(getEntityId()).c_str());
-            if (msg->getDestination() < UINT16_MAX &&
+            if (msg->getDestination() < 0xffff &&
                 msg->getDestinationEntity() < UINT8_MAX)
               trace("PlanDB received from system '%s' and entity '%s', to system '%s' and entity '%s'.",
                     resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                     resolveSystemId(msg->getDestination()), resolveEntity(msg->getDestinationEntity()).c_str());
-            else if (msg->getDestination() < UINT16_MAX)
+            else if (msg->getDestination() < 0xffff)
               trace("PlanDB received from system '%s' and entity '%s', to system '%s' and no specific entity.",
                     resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                     resolveSystemId(msg->getDestination()));

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2014-11-11 14:03+0000\n"
+"POT-Creation-Date: 2014-12-01 15:19+0000\n"
 "PO-Revision-Date: 2013-08-03 13:42-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -367,17 +367,17 @@ msgstr "неопределенное состояние"
 msgid "relocated station keeping"
 msgstr "переехал дирижабля"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Elevator.hpp:152
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Elevator.hpp:153
 #, fuzzy
 msgid "vertical progress is too slow"
 msgstr "вертикальный прогресс идет слишком медленно"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:198
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:200
 #, fuzzy
 msgid "dislodge failed"
 msgstr "выбить не удалось"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:266
+#: /home/jb/workspace/dune/trunk/src/Maneuver/Multiplexer/Dislodge.hpp:268
 #, fuzzy
 msgid "trying again to dislodge"
 msgstr "снова пытаются выбить"
@@ -462,32 +462,6 @@ msgstr "переполнение буфера"
 msgid "null frame"
 msgstr "пустым кадром"
 
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:201
-#: /home/jb/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:206
-#, fuzzy, c-format
-msgid "failed to resolve entity '%s': %s"
-msgstr "не удалось разрешить лица '%s': %s"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:244
-#, fuzzy
-msgid "motion detected"
-msgstr "обнаружении движения"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:326
-#, fuzzy
-msgid "device is not active"
-msgstr "Устройство не является активным"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:334
-#, fuzzy
-msgid "device is not in proper medium"
-msgstr "устройство не находится в соответствующей среде"
-
-#: /home/jb/workspace/dune/trunk/src/Navigation/General/Alignment/Task.cpp:346
-#, fuzzy
-msgid "calibrating: system must remain static"
-msgstr "калибровки: система должна оставаться статичным"
-
 #: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:302
 #, fuzzy
 msgid "destination is not in the LBL configuration"
@@ -523,20 +497,20 @@ msgstr "Положение неопределенность %0.2f м"
 msgid "Maximum Horizontal Position Variance"
 msgstr "Максимальная Горизонтальное положение Разница"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1122
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1128
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1092
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1098
 #, fuzzy, c-format
 msgid "no measurements available: %s"
 msgstr "нет измерения, проводимые: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1122
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1092
 #: /home/jb/workspace/dune/trunk/src/DUNE/Control/BottomTracker.cpp:50
 #: /home/jb/workspace/dune/trunk/src/Control/AUV/Attitude/Task.cpp:57
 #, fuzzy
 msgid "Depth"
 msgstr "Глубина"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1128
+#: /home/jb/workspace/dune/trunk/src/DUNE/Navigation/BasicNavigation.cpp:1098
 #, fuzzy
 msgid "Euler Angles"
 msgstr "Углы Эйлера"
@@ -840,12 +814,12 @@ msgstr "местный автомобиль не является частью �
 msgid "too few trajectory points"
 msgstr "слишком мало точек траектории"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:181
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:180
 #, fuzzy
 msgid "unsupported vertical reference"
 msgstr "поддерживается вертикальной ссылки"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:187
+#: /home/jb/workspace/dune/trunk/src/DUNE/Maneuvers/Maneuver.cpp:186
 #, fuzzy
 msgid "no valid value for altitude has been received yet,maneuver will not proceed"
 msgstr "не допустимым значением высоты не поступало еще, маневр не будет продолжаться"
@@ -1230,43 +1204,43 @@ msgstr "профили выполнение: %s"
 msgid "clean shutdown"
 msgstr "чистого отключения"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:302
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:309
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:266
 #, fuzzy
 msgid "not active"
 msgstr "не активен"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:445
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:452
 #, fuzzy
 msgid "keep loitering"
 msgstr "держать слонялся"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:487
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:494
 #, fuzzy, c-format
 msgid "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr "Путь (широта / долгота): '%s'1 '%s'1 в '%s'1 '%s'1"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:658
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:665
 #, fuzzy
 msgid "expected new path control reference"
 msgstr "Ожидается, ссылка контроль новый путь"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:715
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:722
 #, fuzzy
 msgid "now loitering"
 msgstr "теперь слонялся"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:854
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:861
 #, fuzzy
 msgid "along-track divergence error"
 msgstr "наряду-треке ошибки расхождение"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:887
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:894
 #, fuzzy
 msgid "cross-track divergence error"
 msgstr "кросс-трек ошибке расхождение"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:968
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:975
 #, fuzzy
 msgid "waiting for position estimate from navigation"
 msgstr "ждет позиции оценки от навигации"
@@ -2118,32 +2092,32 @@ msgstr "удалось включить устройство"
 msgid "failed to connect to device"
 msgstr "не удалось связаться с устройства"
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:133
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:134
 #, fuzzy, c-format
 msgid "TREX disconnected for more than %d seconds"
 msgstr "TREX отключен для более чем %d секунд"
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:199
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:200
 #, fuzzy
 msgid "Abort detected. Disabling TREX control..."
 msgstr "Прервать обнаружено. Отключение контроля TREX ..."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:214
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:215
 #, fuzzy
 msgid "Stop TREX detected. Disabling TREX control..."
 msgstr "Стоп TREX обнаружено. Отключение контроля TREX ..."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:234
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:235
 #, fuzzy
 msgid "Restarting auxiliary CPU..."
 msgstr "Перезапуск вспомогательный процессор ..."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:242
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:243
 #, fuzzy
 msgid "T-REX has been stopped."
 msgstr "T-REX был остановлен."
 
-#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:244
+#: /home/jb/workspace/dune/trunk/src/Autonomy/TREX/Task.cpp:245
 #, fuzzy, c-format
 msgid "Could not stop T-REX: %d."
 msgstr "Не удалось остановить T-REX: %d."
@@ -2298,6 +2272,11 @@ msgstr "отправки SMS %s | %u"
 #, fuzzy
 msgid "water"
 msgstr "вода"
+
+#: /home/jb/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:206
+#, fuzzy, c-format
+msgid "failed to resolve entity '%s': %s"
+msgstr "не удалось разрешить лица '%s': %s"
 
 #: /home/jb/workspace/dune/trunk/src/Monitors/Collisions/Task.cpp:359
 #: /home/jb/workspace/dune/trunk/src/Simulators/UnderwaterAcoustics/Task.cpp:253
@@ -2940,12 +2919,12 @@ msgstr "управления траекторией не участвует"
 msgid "ArduPilot in Auto mode but still in ground, performing takeoff first."
 msgstr "ArduPilot в автоматическом режиме, но все еще в земле, выполняя взлет первого."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1383
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1382
 #, fuzzy
 msgid "Connection lost, retrying..."
 msgstr "Потерял соединения, попытки были ..."
 
-#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1804
+#: /home/jb/workspace/dune/trunk/src/Control/UAV/Ardupilot/Task.cpp:1833
 #, fuzzy
 msgid "Controlling an unknown vehicle type."
 msgstr "Управление неизвестный тип транспортного средства."
@@ -2990,12 +2969,12 @@ msgstr "Включить контроллер ролл"
 msgid "Gain matrix has invalid dimensions"
 msgstr "Усиление матрица имеет недопустимые размеры"
 
-#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:316
 #, fuzzy
 msgid "enabling"
 msgstr "позволяет"
 
-#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Control/ASV/HeadingAndSpeed/Task.cpp:316
 #, fuzzy
 msgid "disabling"
 msgstr "отключение"
@@ -3101,7 +3080,7 @@ msgid " maneuver started"
 msgstr "маневр начался"
 
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Vehicle/Task.cpp:596
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:611
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:610
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:1006
 #, fuzzy
 msgid "OK"
@@ -3168,13 +3147,13 @@ msgid "lat lon = 0 ? %f"
 msgstr "Lat Lon = 0? %f"
 
 #: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:158
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:225
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:223
 #, fuzzy, c-format
 msgid "ignored reference from non-authorized source: %d"
 msgstr "игнорируются справка из несанкционированного источника: %d"
 
 #: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/UAV/Task.cpp:167
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:234
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:232
 #, fuzzy, c-format
 msgid "ignored reference from non-authorized entity: %d"
 msgstr "игнорируются справка с несанкционированного лица: %d"
@@ -3214,42 +3193,42 @@ msgstr "Слоняться, XY и Z РЯДОМ"
 msgid "GOTO, FAR"
 msgstr "GOTO, FAR"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:149
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:148
 #, fuzzy
 msgid "waiting for first reference"
 msgstr "ждет первой ссылки"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:582
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:579
 #, fuzzy, c-format
 msgid "Z reference changed to %f"
 msgstr "Z ссылка изменено на %f"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:591
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:588
 #, fuzzy, c-format
 msgid "Speed reference changed to %f"
 msgstr "Задание скорости изменяется на %f"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:597
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:594
 #, fuzzy, c-format
 msgid "Loiter radius reference changed to %f"
 msgstr "Отношение радиуса Лойтер изменено на %f"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:611
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:608
 #, fuzzy, c-format
 msgid "loitering around (%f, %f, %f, %f)."
 msgstr "слонялся вокруг (%f, %f, %f, %f)."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:622
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:619
 #, fuzzy, c-format
 msgid "loitering (elevator) towards (%f, %f, %f, %f)."
 msgstr "слонялся (лифт) к (%f, %f, %f, %f)."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:633
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:630
 #, fuzzy, c-format
 msgid "going towards (%f, %f, %f)."
 msgstr "идти к (%f, %f, %f)."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:638
+#: /home/jb/workspace/dune/trunk/src/Maneuver/FollowReference/AUV/Task.cpp:635
 #, fuzzy, c-format
 msgid "hovering next to (%f, %f)."
 msgstr "зависший рядом с (%f, %f)."
@@ -3299,17 +3278,17 @@ msgstr "неправильный тип маневр"
 msgid "timeout to receive new remote info was exceeded."
 msgstr "был превышен таймаут, чтобы получить новый удаленный информацию."
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:167
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:183
 #, fuzzy
 msgid "insufficient data for calibration"
 msgstr "недостаточно данных для калибровки"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:172
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:188
 #, fuzzy, c-format
 msgid "%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"
 msgstr "%s лицо не откалиброван. Значения калибровки с %d получается: %f, %f, 0.0"
 
-#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:184
+#: /home/jb/workspace/dune/trunk/src/Maneuver/CompassCalibration/Task.cpp:200
 #, fuzzy, c-format
 msgid "forcing minimum of %.1f"
 msgstr "заставляя минимум %.1f"
@@ -3440,7 +3419,7 @@ msgstr "В базе поврежден"
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:333
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:406
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:441
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:473
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:472
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:771
 #, fuzzy
 msgid "undefined plan id"
@@ -3467,8 +3446,8 @@ msgid "OK (new entry)"
 msgstr "ОК (новая запись)"
 
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:431
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:452
-#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:483
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:451
+#: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:482
 #: /home/jb/workspace/dune/trunk/src/Plan/Engine/Task.cpp:781
 #, fuzzy
 msgid "undefined plan"
@@ -3749,23 +3728,23 @@ msgstr "остановился видеопоток"
 msgid "invalid entity"
 msgstr "недействительным лицо"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:557
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:556
 #, fuzzy
 msgid "failed to start video stream"
 msgstr "Не удалось запустить видео поток"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:577
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:576
 #, fuzzy
 msgid "started video stream"
 msgstr "начал видеопоток"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:659
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:700
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:658
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:699
 #, fuzzy
 msgid "failed to set property"
 msgstr "не удалось установить имущество"
 
-#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:922
+#: /home/jb/workspace/dune/trunk/src/Vision/Lumenera/Task.cpp:921
 #, fuzzy
 msgid "successfully configured camera"
 msgstr "успешно настроен камера"
@@ -4635,6 +4614,22 @@ msgstr "Автомобиль руководитель"
 #, fuzzy
 msgid "Visualizer"
 msgstr "Visualizer"
+
+#, fuzzy
+#~ msgid "motion detected"
+#~ msgstr "обнаружении движения"
+
+#, fuzzy
+#~ msgid "device is not active"
+#~ msgstr "Устройство не является активным"
+
+#, fuzzy
+#~ msgid "device is not in proper medium"
+#~ msgstr "устройство не находится в соответствующей среде"
+
+#, fuzzy
+#~ msgid "calibrating: system must remain static"
+#~ msgstr "калибровки: система должна оставаться статичным"
 
 #, fuzzy
 #~ msgid "failed to get time"

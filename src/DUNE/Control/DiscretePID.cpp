@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Renato Caldas                                                    *
 //***************************************************************************
@@ -40,6 +40,7 @@ namespace DUNE
       m_kd(0),
       m_limit_int(false),
       m_limit_out(false),
+      m_max_int(0),
       m_lower_limit(0),
       m_upper_limit(0),
       m_debug(false),
@@ -59,6 +60,24 @@ namespace DUNE
       m_kp = gains[0];
       m_ki = gains[1];
       m_kd = gains[2];
+    }
+
+    void
+    DiscretePID::setProportionalGain(float gain)
+    {
+      m_kp = gain;
+    }
+
+    void
+    DiscretePID::setIntegralGain(float gain)
+    {
+      m_ki = gain;
+    }
+
+    void
+    DiscretePID::setDerivativeGain(float gain)
+    {
+      m_kd = gain;
     }
 
     void

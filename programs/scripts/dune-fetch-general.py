@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -21,7 +21,7 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Pedro Calado                                                     #
 ############################################################################
@@ -185,7 +185,6 @@ start_row = 1;
 
 for i in range(start_row, len(first_col)):
     options.append(first_col[i]);
-
 
  # Get values for each vehicle and write ini file for each
 for v in range(len(profile_cols)):

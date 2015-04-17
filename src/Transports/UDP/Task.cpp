@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -46,18 +46,6 @@ namespace Transports
   namespace UDP
   {
     using DUNE_NAMESPACES;
-
-    //! Vector for Entity Mapping.
-    typedef std::vector<uint32_t> Entities;
-
-    //! Structure that contains information about rate info.
-    struct RateInfo
-    {
-      // Interval between sending the same message (s).
-      double rate;
-      // Last time a given message type was sent.
-      double last;
-    };
 
     //! %Task arguments.
     struct Arguments
@@ -103,12 +91,6 @@ namespace Transports
       UDPSocket m_sock;
       //! Set of static nodes.
       std::set<NodeAddress> m_static_dsts;
-      //! Message rate information: rates per message id.
-      std::map<uint32_t, double> m_rates_per_id;
-      //! Message rate information: rates per key id.
-      std::map<uint32_t, RateInfo> m_rates;
-      //! List of entities to be passed by given message.
-      std::map<uint32_t, Entities> m_filtered;
       //! Set of destination nodes.
       NodeTable m_node_table;
       //! Task arguments.
@@ -123,6 +105,8 @@ namespace Transports
       Time::Counter<float> m_contacts_refresh_counter;
       //! LimitedComms object
       LimitedComms* m_lcomms;
+      //! Message Filter
+      MessageFilter m_filter;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -205,50 +189,9 @@ namespace Transports
           m_static_dsts.insert(NodeAddress(m_args.destinations[i]));
 
         // Process rate limiters.
-        m_rates_per_id.clear();
-        m_rates.clear();
-        for (unsigned int i = 0; i < m_args.rate_lims.size(); ++i)
-        {
-          std::vector<std::string> parts;
-          String::split(m_args.rate_lims[i], ":", parts);
-          if (parts.size() != 2)
-            continue;
-
-          uint32_t id = IMC::Factory::getIdFromAbbrev(parts[0]);
-          float rate = 0;
-          std::sscanf(parts[1].c_str(), "%f", &rate);
-          m_rates_per_id[id] = 1.0 / rate;
-        }
-
+        m_filter.setupRates(m_args.rate_lims);
         // Process filtered entities.
-        m_filtered.clear();
-        for (unsigned int i = 0; i < m_args.entities_flt.size(); ++i)
-        {
-          std::vector<std::string> parts;
-          String::split(m_args.entities_flt[i], ":", parts);
-          if (parts.size() != 2)
-            continue;
-
-          // Split entities.
-          uint32_t id = IMC::Factory::getIdFromAbbrev(parts[0]);
-          std::vector<std::string> entities;
-          String::split(parts[1], "+", entities);
-          m_filtered[id].resize(entities.size());
-
-          // Resolve entities id.
-          for (unsigned j = 0; j < entities.size(); j++)
-          {
-            // Resolve entities.
-            try
-            {
-              m_filtered[id][j] = resolveEntity(entities[j]);
-            }
-            catch (...)
-            {
-              m_filtered[id][j] = UINT_MAX;
-            }
-          }
-        }
+        m_filter.setupEntities(m_args.entities_flt, this);
 
         m_underwater_comms = m_args.underwater_comms;
 
@@ -357,36 +300,8 @@ namespace Transports
         if (m_node_table.getActiveCount() == 0 && m_static_dsts.size() == 0)
           return;
 
-        uint32_t key = (msg->getId() << 16) + (msg->getSourceEntity() << 8) + (msg->getSubId() & 0xff);
-
-        // Filter message by entity.
-        if (m_filtered[msg->getId()].size() > 0)
-        {
-          bool matched = false;
-          std::vector<uint32_t>::iterator itr = m_filtered[msg->getId()].begin();
-          for (; itr != m_filtered[msg->getId()].end(); ++itr)
-          {
-            if (*itr == msg->getSourceEntity())
-              matched = true;
-          }
-
-          // This entity is not listed to be passed.
-          if (!matched)
-            return;
-        }
-
-        if (m_rates.find(key) == m_rates.end())
-        {
-          m_rates[key].rate = m_rates_per_id[msg->getId()];
-          m_rates[key].last = 0.0;
-        }
-        else
-        {
-          double now = Clock::get();
-          if (m_rates[key].last + m_rates[key].rate >= now)
-            return;
-          m_rates[key].last = now;
-        }
+        if (m_filter.filter(msg))
+          return;
 
         if (m_args.trace_out)
           msg->toText(std::cerr);

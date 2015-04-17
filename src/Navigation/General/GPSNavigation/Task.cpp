@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -50,6 +50,8 @@ namespace Navigation
         std::string elabel_imu;
         //! Yaw entity label.
         std::string elabel_yaw;
+        //! Convert height to geoid height (MSL)
+        bool convert_msl;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -60,6 +62,10 @@ namespace Navigation
         int m_imu_eid;
         //! Yaw entity eid.
         int m_yaw_eid;
+        //! Height offset.
+        float m_offset;
+        //! Offset flag.
+        bool m_offset_flag;
         //! Estimated state.
         IMC::EstimatedState m_estate;
         //! GPS fix rejection.
@@ -82,7 +88,13 @@ namespace Navigation
           param("Entity Label - Yaw", m_args.elabel_yaw)
           .description("Entity label of 'EulerAngles' messages (field 'psi')");
 
+          param("Convert Height to Geoid Height", m_args.convert_msl)
+          .defaultValue("false")
+          .description("Convert WGS84 height to geoid height (mean sea level) height");
+
           m_estate.clear();
+          m_offset = 0.0f;
+          m_offset_flag = false;
 
           // Navigation enters error mode without valid GPS data.
           m_time_without_gps.setTop(5.0);
@@ -92,6 +104,16 @@ namespace Navigation
           bind<IMC::EulerAngles>(this);
           bind<IMC::GpsFix>(this);
           bind<IMC::GroundVelocity>(this);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (!m_args.convert_msl)
+          {
+            m_offset = 0.0f;
+            m_offset_flag = false;
+          }
         }
 
         void
@@ -181,6 +203,15 @@ namespace Navigation
 
           m_estate.lat = msg->lat;
           m_estate.lon = msg->lon;
+
+          if (m_args.convert_msl && !m_offset_flag)
+          {
+            m_offset_flag = true;
+            Coordinates::WMM wmm(m_ctx.dir_cfg);
+            m_offset = wmm.height(m_estate.lat, m_estate.lon);
+          }
+
+          m_estate.height = msg->height - m_offset;
 
           // Decompose velocity vector.
           m_estate.vx = std::cos(msg->cog) * msg->sog;

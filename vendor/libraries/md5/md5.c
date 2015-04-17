@@ -198,9 +198,8 @@ MD5_CTX *context;                                       /* context */
 
 /* MD5 basic transformation. Transforms state based on block.
  */
-static void MD5Transform (state, block)
-UINT4 state[4];
-unsigned char block[64];
+static void
+MD5Transform (UINT4 state[4], unsigned char block[64])
 {
   UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
@@ -291,10 +290,8 @@ unsigned char block[64];
 /* Encodes input (UINT4) into output (unsigned char). Assumes len is
   a multiple of 4.
  */
-static void Encode (output, input, len)
-unsigned char *output;
-UINT4 *input;
-unsigned int len;
+static void
+Encode (unsigned char *output, UINT4 *input, unsigned int len)
 {
   unsigned int i, j;
 
@@ -309,10 +306,8 @@ unsigned int len;
 /* Decodes input (unsigned char) into output (UINT4). Assumes len is
   a multiple of 4.
  */
-static void Decode (output, input, len)
-UINT4 *output;
-unsigned char *input;
-unsigned int len;
+static void
+Decode (UINT4 *output, unsigned char *input, unsigned int len)
 {
   unsigned int i, j;
 

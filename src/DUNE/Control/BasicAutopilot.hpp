@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
@@ -277,12 +277,16 @@ namespace DUNE
       const uint32_t m_required_loops;
       //! Control loops last reference
       uint32_t m_scope_ref;
-      //! Maximum admissible depth that the vehicle may sustain
-      float m_max_depth;
+      //! Timer to ignore no valid altitude measurements
+      Time::Counter<float> m_timer_alt;
 
       // Configuration
       //! Bypass heading rate control
       bool m_hrate_bypass;
+      //! Maximum admissible depth that the vehicle may sustain
+      float m_max_depth;
+      //! Timeout for ignoring invalid altitude
+      float m_alt_timeout;
     };
   }
 }

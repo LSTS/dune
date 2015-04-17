@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
 //***************************************************************************
@@ -114,7 +114,7 @@ namespace Simulators
       if (m_asvm.turnRight_k_1)
         curR = std::sqrt(std::fabs(m_asvm.turnRight_k_1)) * (std::fabs(m_asvm.turnRight_k_1) / m_asvm.turnRight_k_1);
 
-      double Xf = 0.1200 * (curL + curR);
+      double Xf = 25 * (curL + curR);
       double Nf = 0.00088667 * (curL - curR);
 
       addForces(Xf, 0, 0, 0, 0, Nf);

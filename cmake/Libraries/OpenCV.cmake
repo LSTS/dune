@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -20,16 +20,14 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Kristian Klausen                                                 #
 ############################################################################
 
 if(OPENCV)
-  
-  
   CHECK_LIBRARY_EXISTS(opencv_core cvGetImage "" HAVE_LIB_OPENCV)
-  
+
   if(HAVE_LIB_OPENCV)
     # OpenCV Present
     set(DUNE_SYS_HAS_OPENCV 1 CACHE INTERNAL "OpenCV library")
@@ -53,17 +51,14 @@ if(OPENCV)
     #dune_add_lib(opencv_ts)
     #dune_add_lib(opencv_videostab)
     #dune_add_lib(opencv_nonfree)
-    
+
     # Check Header
     dune_test_header(opencv2/opencv.hpp)
-    
+
   else(HAVE_LIB_OPENCV)
-    # OpenCV not found on the system. 
+    # OpenCV not found on the system.
     message(SEND_ERROR "OpenCV was not found on the system.")
     set(DUNE_SYS_HAS_OPENCV 0 CACHE INTERNAL "OpenCV library")
     set(DUNE_USING_OPENCV 0 CACHE INTERNAL "OpenCV library")
   endif(HAVE_LIB_OPENCV)
-  
-
-
 endif(OPENCV)

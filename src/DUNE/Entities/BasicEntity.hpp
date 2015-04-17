@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,13 +20,13 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Renato Caldas                                                    *
 //***************************************************************************
 
-#ifndef DUNE_ENTITIES_PLAIN_ENTITY_HPP_INCLUDED_
-#define DUNE_ENTITIES_PLAIN_ENTITY_HPP_INCLUDED_
+#ifndef DUNE_ENTITIES_BASIC_ENTITY_HPP_INCLUDED_
+#define DUNE_ENTITIES_BASIC_ENTITY_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -114,7 +114,6 @@ namespace DUNE
       //! Report the entity information by broadcasting an EntityInfo message.
       void
       reportInfo(void);
-
 
       //! Compare label against a string.
       //! @param[in] label string to be compared against.

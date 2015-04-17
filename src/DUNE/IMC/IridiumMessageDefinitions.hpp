@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,14 +20,13 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-
-#ifndef IRIDIUMMESSAGEDEFINITIONS_HPP_
-#define IRIDIUMMESSAGEDEFINITIONS_HPP_
+#ifndef DUNE_IMC_IRIDIUM_MESSAGE_DEFINITIONS_HPP_INCLUDED_
+#define DUNE_IMC_IRIDIUM_MESSAGE_DEFINITIONS_HPP_INCLUDED_
 
 # include <DUNE/Config.hpp>
 # include <DUNE/IMC/Serialization.hpp>
@@ -79,17 +78,16 @@ namespace DUNE
       virtual ~IridiumMessage() {}
     };
 
-
     //! An Iridium message that encapsulates an IMC message
     class ImcIridiumMessage : public IridiumMessage
     {
     public:
-    	ImcIridiumMessage();
-    	ImcIridiumMessage(DUNE::IMC::Message * msg);
-    	int serialize(uint8_t * buffer);
-    	int deserialize(uint8_t* data, uint16_t len);
-    	~ImcIridiumMessage();
-    	DUNE::IMC::Message * msg;
+      ImcIridiumMessage();
+      ImcIridiumMessage(DUNE::IMC::Message * msg);
+      int serialize(uint8_t * buffer);
+      int deserialize(uint8_t* data, uint16_t len);
+      ~ImcIridiumMessage();
+      DUNE::IMC::Message * msg;
     };
 
     //! Extension to the IMC protocol used to report a set of device positions
@@ -107,11 +105,11 @@ namespace DUNE
     class ExtendedDeviceUpdate : public IridiumMessage
     {
     public:
-    	std::vector<DevicePosition> positions;
-    	int serialize(uint8_t * buffer);
-    	int deserialize(uint8_t* data, uint16_t len);
-    	ExtendedDeviceUpdate();
-    	~ExtendedDeviceUpdate(){};
+      std::vector<DevicePosition> positions;
+      int serialize(uint8_t * buffer);
+      int deserialize(uint8_t* data, uint16_t len);
+      ExtendedDeviceUpdate();
+      ~ExtendedDeviceUpdate(){};
     };
 
     //! Extension to the IMC protocol used request reception of device position updates

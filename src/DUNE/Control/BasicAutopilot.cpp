@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
@@ -60,6 +60,11 @@ namespace DUNE
       param("Heading Rate Bypass", m_hrate_bypass)
       .defaultValue("false")
       .description("Bypass heading rate controller and use reference directly on torques");
+
+      param("Altitude Timeout", m_alt_timeout)
+      .defaultValue("60.0f")
+      .units(Units::Meter)
+      .description("Timeout for ignoring invalid altitude");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
 
@@ -173,6 +178,9 @@ namespace DUNE
         m_vertical_mode = VERTICAL_MODE_ALTITUDE;
         // Avoid possible rough transition when changing from depth to altitude
         m_bottom_follow_depth = m_estate.depth;
+
+        // reset altitude timer
+        m_timer_alt.setTop(m_alt_timeout);
       }
       else
       {
@@ -220,6 +228,9 @@ namespace DUNE
 
       m_estate = *msg;
 
+      if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+        return;
+
       // check if vertical control mode is valid
       if (m_vertical_mode >= VERTICAL_MODE_SIZE)
       {
@@ -249,12 +260,24 @@ namespace DUNE
         // check if we have altitude measurements
         if (msg->alt < 0.0)
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, DTR(c_no_alt));
-          err("%s", DTR(c_no_alt));
-          return;
-        }
+          if (m_timer_alt.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, DTR(c_no_alt));
+            err("%s", DTR(c_no_alt));
+            return;
+          }
 
-        m_bottom_follow_depth = m_estate.depth + (msg->alt - m_vertical_ref);
+          // Assume zero error in altitude
+          m_bottom_follow_depth = m_estate.depth;
+        }
+        else
+        {
+          // reset timer
+          m_timer_alt.reset();
+
+          // Use altitude error
+          m_bottom_follow_depth = m_estate.depth + (msg->alt - m_vertical_ref);
+        }
 
         if (m_bottom_follow_depth < 0.0)
         {

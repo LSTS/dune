@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Bencatel                                                 *
 //***************************************************************************
@@ -1326,7 +1326,6 @@ namespace Maneuver
             // Ground velocity vector computation
             double vt_body_vel[3] = {msg->u, msg->v, msg->w};
             Matrix vd_vel = md_rot_body2ground*Matrix(vt_body_vel, 3, 1);
-
 
             //! Update leader state variables
             double t_leader[12] = {msg->x,       msg->y,       msg->z,
@@ -3162,7 +3161,6 @@ namespace Maneuver
           //!-------------------------------------------
           //! Control influence merging
           //!-------------------------------------------
-
 
           //! UAV weight on control strategy
           Matrix vd_ctrl_weight = Matrix(m_uav_n+1, 1, 1.0);

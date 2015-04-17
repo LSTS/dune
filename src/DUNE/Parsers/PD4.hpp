@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,7 +20,7 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
@@ -68,14 +68,10 @@ namespace DUNE
         double y_vel_wtr;
         //! Z or Up velocity in relation to the water in m/s.
         double z_vel_wtr;
-        //! Beam #1 range to the bottom in m.
-        double bm1_rng_btm;
-        //! Beam #2 range to the bottom in m.
-        double bm2_rng_btm;
-        //! Beam #3 range to the bottom in m.
-        double bm3_rng_btm;
-        //! Beam #4 range to the bottom in m.
-        double bm4_rng_btm;
+        //! Ranges to the bottom in m (one per beam).
+        double rng_to_btm[4];
+        //! Bottom status.
+        uint8_t bm_status;
       };
 
       //! Default constructor.

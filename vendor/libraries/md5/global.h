@@ -10,10 +10,6 @@ The following makes PROTOTYPES default to 0 if it has not already
 
 #define __LSTS_MD5
 
-#ifndef PROTOTYPES
-#define PROTOTYPES 0
-#endif
-
 /* POINTER defines a generic pointer type */
 typedef unsigned char *POINTER;
 
@@ -28,13 +24,4 @@ typedef unsigned int UINT4;
 typedef unsigned long int UINT4;
 #endif
 
-/* PROTO_LIST is defined depending on how PROTOTYPES is defined above.
-If using PROTOTYPES, then PROTO_LIST returns the list, otherwise it
-  returns an empty list.
- */
-#if PROTOTYPES
 #define PROTO_LIST(list) list
-#else
-#define PROTO_LIST(list) ()
-#endif
-

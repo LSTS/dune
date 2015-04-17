@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -20,13 +20,13 @@
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 685ccd58f94bda7bf50f1d1ddf3be199                            *
+// IMC XML MD5: c4ed792acea0f60a3083fcc9f9d4dcc6                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -202,6 +202,8 @@
 #define DUNE_IMC_CRUDEOIL 286
 //! FineOil identification number.
 #define DUNE_IMC_FINEOIL 287
+//! Turbidity identification number.
+#define DUNE_IMC_TURBIDITY 288
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -360,8 +362,10 @@
 #define DUNE_IMC_RELATIVESTATE 482
 //! Dislodge identification number.
 #define DUNE_IMC_DISLODGE 483
+//! Formation identification number.
+#define DUNE_IMC_FORMATION 484
 //! Memento identification number.
-#define DUNE_IMC_MEMENTO 484
+#define DUNE_IMC_MEMENTO 485
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -384,6 +388,8 @@
 #define DUNE_IMC_FORMSTATE 510
 //! AutopilotMode identification number.
 #define DUNE_IMC_AUTOPILOTMODE 511
+//! FormationState identification number.
+#define DUNE_IMC_FORMATIONSTATE 512
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -490,6 +496,10 @@
 #define DUNE_IMC_FORMCTRLPARAM 820
 //! FormationEval identification number.
 #define DUNE_IMC_FORMATIONEVAL 821
+//! FormationControlParams identification number.
+#define DUNE_IMC_FORMATIONCONTROLPARAMS 822
+//! FormationEvaluation identification number.
+#define DUNE_IMC_FORMATIONEVALUATION 823
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.
@@ -502,5 +512,9 @@
 #define DUNE_IMC_USBLPOSITION 891
 //! UsblFix identification number.
 #define DUNE_IMC_USBLFIX 892
+//! ParametersXml identification number.
+#define DUNE_IMC_PARAMETERSXML 893
+//! GetParametersXml identification number.
+#define DUNE_IMC_GETPARAMETERSXML 894
 
 #endif
