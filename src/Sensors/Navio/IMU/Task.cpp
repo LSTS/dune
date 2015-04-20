@@ -131,48 +131,43 @@ namespace Sensors
         void
         task(void)
         {
-          while (!stopping())
-          {
-            float ax, ay, az, gx, gy, gz, mx, my, mz;
+          consumeMessages();
+
+          float ax, ay, az, gx, gy, gz, mx, my, mz;
+
+          m_imu.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+
+          if (m_wdog.overflow())
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
 
-            m_imu.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+          // Convert degree to radian.
+          m_euler.setTimeStamp();
+          m_euler.psi_magnetic = Angles::radians(m_euler.psi_magnetic);
+          m_euler.psi = m_euler.psi_magnetic;
+          m_euler.phi = Angles::radians(m_euler.phi);
+          m_euler.theta = Angles::radians(m_euler.theta);
+          dispatch(m_euler, DF_KEEP_TIME);
 
-            if (m_wdog.overflow())
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          // Convert G to m/s/s.
+          m_accel.setTimeStamp(m_euler.getTimeStamp());
+          m_accel.x = ax;
+          m_accel.y = ay * -1.0;
+          m_accel.z = az * -1.0;
+          dispatch(m_accel, DF_KEEP_TIME);
 
-            consumeMessages();
+          m_mag.setTimeStamp(m_euler.getTimeStamp());
+          m_mag.x = mx;
+          m_mag.y = my;
+          m_mag.z = mz;
+          dispatch(m_mag, DF_KEEP_TIME);
 
-            // Convert degree to radian.
-            m_euler.setTimeStamp();
-            m_euler.psi_magnetic = Angles::radians(m_euler.psi_magnetic);
-            m_euler.psi = m_euler.psi_magnetic;
-            m_euler.phi = Angles::radians(m_euler.phi);
-            m_euler.theta = Angles::radians(m_euler.theta);
-            dispatch(m_euler, DF_KEEP_TIME);
+          m_temp.setTimeStamp(m_euler.getTimeStamp());
+          m_temp.value = m_imu.temperature;
+          dispatch(m_temp, DF_KEEP_TIME);
 
-            // Convert G to m/s/s.
-            m_accel.setTimeStamp(m_euler.getTimeStamp());
-            m_accel.x = ax;
-            m_accel.y = ay * -1.0;
-            m_accel.z = az * -1.0;
-            dispatch(m_accel, DF_KEEP_TIME);
-
-            m_mag.setTimeStamp(m_euler.getTimeStamp());
-            m_mag.x = mx;
-            m_mag.y = my;
-            m_mag.z = mz;
-            dispatch(m_mag, DF_KEEP_TIME);
-
-            m_temp.setTimeStamp(m_euler.getTimeStamp());
-            m_temp.value = m_imu.temperature;
-            dispatch(m_temp, DF_KEEP_TIME);
-
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            m_wdog.reset();
-
-            waitForMessages(0.5);
-          }
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          m_wdog.reset();
         }
       };
     }
