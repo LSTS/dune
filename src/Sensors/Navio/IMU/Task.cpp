@@ -137,6 +137,9 @@ namespace Sensors
 
           m_imu.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
 
+          inf("Acc: %+05.3f %+05.3f %+05.3f; Gyr: %+05.3f %+05.3f %+05.3f", ax, ay, az, gx, gy, gz);
+//          inf("Mag: %+05.3f %+05.3f %+05.3f", mx, my, mz);
+
           if (m_wdog.overflow())
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
 
