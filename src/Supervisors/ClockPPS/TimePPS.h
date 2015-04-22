@@ -203,10 +203,10 @@ static __inline int time_pps_kcbind(pps_handle_t handle,
 					const int edge, const int tsformat)
 {
 	(void)handle;
-	(void)consumer;
+	(void)kernel_consumer;
 	(void)edge;
 	(void)tsformat;
-    
+
 	/* LinuxPPS doesn't implement kernel consumer feature */
 	errno = EOPNOTSUPP;
 	return -1;
