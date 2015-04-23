@@ -1813,6 +1813,13 @@ namespace Control
         void
         handleHeartbeatPacket(const mavlink_message_t* msg)
         {
+          mavlink_heartbeat_t hbt;
+          mavlink_msg_heartbeat_decode(msg, &hbt);
+
+          // since GCS heartbeat are actually also sent, ignore if type is a GCS (6)
+          if (static_cast<MAV_TYPE>(hbt.type) == MAV_TYPE_GCS)
+            return;
+
           if (!m_has_setup_rate)
           {
             m_has_setup_rate = true;
@@ -1820,7 +1827,6 @@ namespace Control
             debug("Rates setup second time.");
           }
 
-          mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
 
           if (hbt.system_status == MAV_STATE_CRITICAL)
@@ -1836,20 +1842,23 @@ namespace Control
             {
             default:
               err(DTR("Controlling an unknown vehicle type."));
-              break;
+              return;
             case MAV_TYPE_FIXED_WING:
               m_vehicle_type = VEHICLE_FIXEDWING;
-              debug("Controlling a fixed-wing vehicle.");
+              inf(DTR("Controlling a fixed-wing vehicle."));
               break;
             case MAV_TYPE_QUADROTOR:
             case MAV_TYPE_HEXAROTOR:
             case MAV_TYPE_OCTOROTOR:
             case MAV_TYPE_TRICOPTER:
               m_vehicle_type = VEHICLE_COPTER;
-              debug("Controlling a multicopter.");
+              inf(DTR("Controlling a multirotor."));
               break;
             }
           }
+
+          if (m_mode != (int)hbt.custom_mode)
+            debug("Switched mode from %d to %d", m_mode, hbt.custom_mode);
 
           m_mode = hbt.custom_mode;
           if (m_vehicle_type == VEHICLE_COPTER)
