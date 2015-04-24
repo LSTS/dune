@@ -37,9 +37,9 @@
 
 namespace Sensors
 {
-  //! Device driver for the OceanServer OS4000/5000 Digital Compass.
   namespace Navio
   {
+    //! Device driver for the Navio+ MPU9250 IMU
     namespace IMU
     {
       using DUNE_NAMESPACES;
@@ -51,27 +51,20 @@ namespace Sensors
         int data_rate;
       };
 
-
       struct Task: public DUNE::Tasks::Periodic
       {
-        //! Internal read buffer.
-        static const unsigned c_bfr_size = 128;
-        //! Euler angles message.
-        IMC::EulerAngles m_euler;
+        //! Angular velocity message.
+        IMC::AngularVelocity m_gyro;
         //! Magnetic field message.
         IMC::MagneticField m_mag;
         //! Acceleration message.
         IMC::Acceleration m_accel;
         //! Temperature.
         IMC::Temperature m_temp;
-        //! Internal read buffer.
-        char m_bfr[c_bfr_size];
         //! Read timestamp.
         double m_tstamp;
         //! Task arguments.
         Arguments m_args;
-        //! Watchdog.
-        Counter<double> m_wdog;
         //! Sensor object
         MPU9250 m_imu;
 
@@ -107,15 +100,6 @@ namespace Sensors
         onResourceInitialization(void)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          m_wdog.reset();
-        }
-
-        //! Update %Task parameters.
-        void
-        onUpdateParameters(void)
-        {
-          if (paramChanged(m_args.data_tout))
-            m_wdog.setTop(m_args.data_tout);
         }
 
         void
@@ -126,6 +110,13 @@ namespace Sensors
 
           if (getEntityState() == IMC::EntityState::ESTA_BOOT)
             return;
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
+
+          m_imu.calib_acc();
+          m_imu.calib_mag();
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATED);
         }
 
         void
@@ -137,40 +128,29 @@ namespace Sensors
 
           m_imu.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
 
-          inf("Acc: %+05.3f %+05.3f %+05.3f; Gyr: %+05.3f %+05.3f %+05.3f", ax, ay, az, gx, gy, gz);
-//          inf("Mag: %+05.3f %+05.3f %+05.3f", mx, my, mz);
+          m_gyro.setTimeStamp();
+          m_gyro.x = gx;
+          m_gyro.y = gy;
+          m_gyro.z = gz;
+          dispatch(m_gyro, DF_KEEP_TIME);
 
-          if (m_wdog.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-
-
-          // Convert degree to radian.
-          m_euler.setTimeStamp();
-          m_euler.psi_magnetic = Angles::radians(m_euler.psi_magnetic);
-          m_euler.psi = m_euler.psi_magnetic;
-          m_euler.phi = Angles::radians(m_euler.phi);
-          m_euler.theta = Angles::radians(m_euler.theta);
-          dispatch(m_euler, DF_KEEP_TIME);
-
-          // Convert G to m/s/s.
-          m_accel.setTimeStamp(m_euler.getTimeStamp());
+          m_accel.setTimeStamp(m_gyro.getTimeStamp());
           m_accel.x = ax;
-          m_accel.y = ay * -1.0;
-          m_accel.z = az * -1.0;
+          m_accel.y = ay;
+          m_accel.z = az;
           dispatch(m_accel, DF_KEEP_TIME);
 
-          m_mag.setTimeStamp(m_euler.getTimeStamp());
+          m_mag.setTimeStamp(m_gyro.getTimeStamp());
           m_mag.x = mx;
           m_mag.y = my;
           m_mag.z = mz;
           dispatch(m_mag, DF_KEEP_TIME);
 
-          m_temp.setTimeStamp(m_euler.getTimeStamp());
+          m_temp.setTimeStamp(m_gyro.getTimeStamp());
           m_temp.value = m_imu.temperature;
           dispatch(m_temp, DF_KEEP_TIME);
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_wdog.reset();
         }
       };
     }
