@@ -445,6 +445,7 @@ namespace Control
           {
             m_TCP_sock = new TCPSocket;
             m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+            m_TCP_sock->setNoDelay(true);
             setupRate(m_args.trate);
             inf(DTR("Ardupilot interface initialized"));
           }
@@ -1525,6 +1526,8 @@ namespace Control
           m_estate.p = att.rollspeed;
           m_estate.q = att.pitchspeed;
           m_estate.r = att.yawspeed;
+
+          dispatch(m_estate);
         }
 
         void
@@ -1617,7 +1620,7 @@ namespace Control
           m_estate.depth = -1;
           m_estate.alt = -1;
 
-          dispatch(m_estate);
+
         }
 
         float
