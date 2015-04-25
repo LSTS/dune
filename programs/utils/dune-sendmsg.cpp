@@ -54,7 +54,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
       fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
       fprintf(stdout, "  FuelLevel\n");
-      fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
+      fprintf(stdout, "  GpsFix, GpsFixRtk, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
       fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
       fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
       fprintf(stdout, "  PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl\n");
@@ -343,6 +343,58 @@ main(int argc, char** argv)
 
     if (argc >= 7)
       tmsg->height = atof(argv[6]);
+  }
+
+  if (strcmp(argv[3], "GpsFixRtk") == 0)
+  {
+    IMC::GpsFixRtk* tmsg = new IMC::GpsFixRtk;
+    msg = tmsg;
+    tmsg->type = IMC::GpsFixRtk::RTK_FIXED;
+    tmsg->satellites = 10;
+    tmsg->iar_hyp = 1;
+    tmsg->setSource(0x2c01);
+
+    if (argc >= 5)
+      tmsg->setSource(tmsg->getSource() + atoi(argv[4]));
+
+    if (argc >= 6)
+    {
+      if (!strcmp(argv[5], "Float"))
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_FLOAT;
+      }
+      else if (!strcmp(argv[5], "Obs"))
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_OBS;
+      }
+      else if (!strcmp(argv[5], "None"))
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_NONE;
+      }
+      else
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_FIXED;
+      }
+    }
+    if (argc >= 9)
+    {
+      tmsg->n = atof(argv[6]);
+      tmsg->e = atof(argv[7]);
+      tmsg->d = atof(argv[8]);
+
+    }
+    else
+    {
+      // Default location
+      tmsg->n = 4.0;
+      tmsg->e = 3.0;
+      tmsg->d = -2.0;
+    }
+
+    if (argc == 7)
+    {
+      tmsg->iar_hyp = atoi(argv[6]);
+    }
   }
 
   if (strcmp(argv[3], "Heartbeat") == 0)
