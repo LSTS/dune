@@ -41,7 +41,7 @@ namespace Control
 
       struct Arguments
       {
-        //! Maximum bank angle - Defined by aircaft structural, navigation
+        //! Maximum bank angle - Defined by aircraft structural, navigation
         //! or control constraints
         double max_bank;
         double lookahead;
@@ -172,7 +172,7 @@ namespace Control
           double cos_phi = std::cos(phi);
 
           double tmp = m_airspeed + std::cos(psi) * w_x + std::sin(psi) * w_y;
-          double chi_dot = Math::c_gravity * std::tan(phi) * tmp / (g_speed_sq);
+          double chi_dot = Math::c_gravity * std::tan(phi) * tmp / g_speed_sq;
 
           double y = ts.track_pos.y;
           double y_sq = y * y;
@@ -191,7 +191,7 @@ namespace Control
 
           double u = -m_args.lambda * chi_err_dot - m_args.rho * sat - m_args.gamma * s;
 
-          m_bank.value = (u * speed_g * speed_g * cos_phi * cos_phi * m_args.roll_tc) / (Math::c_gravity * tmp);
+          m_bank.value = (u * g_speed_sq * cos_phi * cos_phi * m_args.roll_tc) / (Math::c_gravity * tmp);
 
           //! Output - Bank angle command, constrained
           m_bank.value = trimValue(m_bank.value, -m_bank_lim, m_bank_lim);
