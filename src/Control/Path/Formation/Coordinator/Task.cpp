@@ -58,6 +58,8 @@ namespace Control
           std::string src_alias;
           // Main coordinator flag
           bool main;
+          //! Path controller name
+          std::string leader_path_controller;
           //! Simulation and control frequencies
           double ctrl_frequency;
           double sync_frequency;
@@ -239,6 +241,10 @@ namespace Control
             param("Main Coordinator", m_args.main)
             .defaultValue("false")
             .description("Flag indicating that the coordinator in this system is the main coordinator task.");
+
+            param("Leader Path Controller", m_args.leader_path_controller)
+            .defaultValue("Path Control")
+            .description("Leader path controller entity label.");
 
             param("Control Frequency", m_args.ctrl_frequency)
             .defaultValue("20.0")
@@ -696,6 +702,7 @@ namespace Control
               else
               {
                 war("No activation action - Not the main coordinator!");
+                activationFailed("Not the main coordinator");
               }
 
               /*
@@ -767,6 +774,7 @@ namespace Control
             else
             {
               war("No activation action - No plan parameters received!");
+              activationFailed("No plan parameters received");
             }
           }
 
