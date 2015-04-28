@@ -59,6 +59,10 @@ namespace Control
           std::string src_alias;
           //! Leader system name
           std::string leader_alias;
+          //! Path controller configuration for the formation leader
+          std::string leader_path_controller;
+          std::string leader_look_ahead_gain;
+          std::string leader_turn_rate_gain;
           //! Simulation and control frequencies
           double sim_frequency;
           double ctrl_frequency;
@@ -441,6 +445,18 @@ namespace Control
             param("Leader Name", m_args.leader_alias)
             .defaultValue("form-leader-01")
             .description("Leader system name.");
+
+            param("Leader Path Controller", m_args.leader_path_controller)
+            .defaultValue("Path Control")
+            .description("Leader path controller entity label.");
+
+            param("Leader Look Ahead Gain", m_args.leader_look_ahead_gain)
+            .defaultValue("1.5")
+            .description("Leader path controller look ahead gain.");
+
+            param("Leader Turn Rate Gain", m_args.leader_turn_rate_gain)
+            .defaultValue("0.0005")
+            .description("Leader path controller turn rate gain.");
 
             param("Simulation Frequency", m_args.sim_frequency)
             .defaultValue("0.0")
@@ -980,6 +996,8 @@ namespace Control
           void
           onRequestDeactivation(void)
           {
+            spew("Deactivating the formation controller");
+
             m_team_leader_init = false;
 
             // Controller parameters
@@ -989,7 +1007,36 @@ namespace Control
               m_mean_first = false;
             }
 
-            spew("Deactivating the formation controller");
+            // Change the path controller parameters to control directly the vehicle
+            IMC::SetEntityParameters sep;
+            IMC::EntityParameter ep;
+            sep.name = m_args.leader_path_controller;
+            sep.setDestination( getSystemId() );
+            ep.name = "EstimatedState Filter";
+            ep.value = "self";
+            sep.params.push_back(ep);
+            // ToDo - Return the path controller configuration to the one defined before
+            // the formation controller activation
+            //ep.name = "Look Ahead Gain";
+            //ep.value = m_args.leader_look_ahead_gain; //Look Ahead Gain = 1.5
+            //sep.params.push_back(ep);
+            //ep.name = "Turn Rate Gain";
+            //ep.value = m_args.leader_turn_rate_gain; //Turn Rate Gain = 0.0005
+            //sep.params.push_back(ep);
+            //ep.name = "Maximum Bank";
+            //ep.value = m_args.leader_maximum_bank; //Maximum Bank = 30
+            //sep.params.push_back(ep);
+            //ep.name = "Cross-track -- Monitor";
+            //ep.value = false;
+            //sep.params.push_back(ep);
+            //ep.name = "Along-track -- Monitor";
+            //ep.value = false;
+            //sep.params.push_back(ep);
+            //ep.name = "Active";
+            //ep.value = "false";
+            //sep.params.push_back(ep);
+            dispatchAlias(&sep);
+
             isControlActive();
           }
 
@@ -1099,17 +1146,39 @@ namespace Control
                   onUpdateParameters();
                   requestActivation();
 
-                  /*
-                  // ToDo - Change the Path Control parameters to control the virtual leader
+                  // Change the path controller parameters to control the virtual leader
                   IMC::SetEntityParameters sep;
                   IMC::EntityParameter ep;
-                  // Request formation controller activation
-                  ep.name = "Active";
+                  sep.name = m_args.leader_path_controller;
+                  sep.setDestination( getSystemId() );
+                  ep.name = "EstimatedState Filter";
+                  ep.value = m_args.leader_alias;
+                  sep.params.push_back(ep);
+                  ep.name = "Look Ahead Gain";
+                  ep.value = m_args.leader_look_ahead_gain; //Look Ahead Gain = 1.5
+                  sep.params.push_back(ep);
+                  ep.name = "Turn Rate Gain";
+                  ep.value = m_args.leader_turn_rate_gain; //Turn Rate Gain = 0.0005
+                  sep.params.push_back(ep);
+                  ep.name = "Maximum Bank";
+                  ep.value = static_cast<std::ostringstream*>
+                    ( &( std::ostringstream() << resolveSystemId( m_leader_bank_lim ) ) )->str();
+                  sep.params.push_back(ep);
+                  // ToDo - Set additional path controller parameters
+                  //ep.name = "Cross-track -- Monitor";
+                  //ep.value = false;
+                  //sep.params.push_back(ep);
+                  //ep.name = "Along-track -- Monitor";
+                  //ep.value = false;
+                  //sep.params.push_back(ep);
+                  // Request path controller activation, in case it is not active
+                  // ToDo - Check the path controller activation status before the formation activation,
+                  // save its state, to return it to that state upon the deactivation of the formation controller
+                  ep.name = "Use controller";
                   ep.value = "true";
                   sep.params.push_back(ep);
-                  // Request path controller activation
-                  sep.name = "Path Control Leader";
                   dispatchAlias(&sep);
+                  /*
                   sep.name = "Path Control Coordinator";
                   dispatchLeader(&sep);
                   */
