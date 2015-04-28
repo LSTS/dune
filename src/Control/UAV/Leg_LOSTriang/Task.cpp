@@ -43,7 +43,7 @@ namespace Control
 {
   namespace Path
   {
-    namespace LOSLeg
+    namespace Leg_LOSTriang
     {
       using DUNE_NAMESPACES;
 
@@ -56,7 +56,7 @@ namespace Control
         //! Turn rate gain - Defines how sharply should the aircraft turn to
         //! to track the desired look-ahead point
         double tr_gain;
-        //! Maximum bank angle - Defined by aircaft structural, navigation
+        //! Maximum bank angle - Defined by aircraft structural, navigation
         //! or control constraints
         double max_bank;
         //!
