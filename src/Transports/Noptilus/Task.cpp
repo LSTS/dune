@@ -57,6 +57,8 @@ namespace Transports
       bool tx_estate;
       //! Transmit distances and uncertainty.
       bool tx_xtra;
+      //! Timer reference
+      double timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -65,6 +67,8 @@ namespace Transports
       IMC::EstimatedState* m_estate;
       //! Last received navigation uncertainty.
       IMC::NavigationUncertainty* m_uncertainty;
+      //! Reference message.
+      IMC::Reference* m_reference;
       //! DVL beam value.
       int16_t m_beams[c_dvl_beams];
       //! DVL beam entity id.
@@ -73,6 +77,10 @@ namespace Transports
       std::map<std::string, IMC::Reference*> m_txs;
       //! Destination of last transmission.
       std::string m_tx_last;
+      //! Reference timer.
+      Time::Counter<double> m_timer;
+      //! Send reference.
+      bool m_repeater;
       //! TDMA slots
       DUNE::Network::TDMA m_tdma;
       //! Task arguments.
@@ -84,7 +92,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_estate(NULL),
-        m_uncertainty(NULL)
+        m_uncertainty(NULL),
+        m_reference(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_DEVELOPER);
@@ -110,8 +119,14 @@ namespace Transports
         .defaultValue("true")
         .description("True to transmit distances and navigation uncertainty");
 
+        param("Reference Repeater Time", m_args.timeout)
+        .defaultValue("30.0")
+        .description("Keep transmitting reference message");
+
         resetBeamsValue();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        m_repeater = false;
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::Distance>(this);
@@ -131,6 +146,7 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_tdma.reset(m_args.slot_count, m_args.slot_number, m_args.slot_dur);
+        m_timer.setTop(m_args.timeout);
       }
 
       void
@@ -322,6 +338,15 @@ namespace Transports
           uint16_t sr = resolveSystemName(msg->sys_src);
           rmsg->setSource(sr);
           dispatch(*rmsg);
+
+          // Keep sending reference for a short amount of time.
+          if (id == Utils::Codecs::CodedReference::c_id)
+          {
+            m_repeater = true;
+            m_timer.reset();
+            const IMC::Reference* r = static_cast<const IMC::Reference*>(rmsg);
+            Memory::replace(m_reference, new IMC::Reference(*r));
+          }
         }
       }
 
@@ -337,6 +362,20 @@ namespace Transports
             transmit();
           else
             transmitPending();
+        }
+
+        // Check if there is a Reference to be sent.
+        if (m_repeater && !m_timer.overflow())
+        {
+          if (m_reference != NULL)
+            dispatch(*m_reference);
+        }
+
+        // Reference repeater timeout.
+        if (m_timer.overflow())
+        {
+          m_repeater = false;
+          Memory::clear(m_reference);
         }
       }
 
