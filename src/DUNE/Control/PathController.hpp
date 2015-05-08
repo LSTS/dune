@@ -63,10 +63,6 @@ namespace DUNE
       void
       onEntityReservation(void);
 
-      //! Entity reservation callback.
-      void
-      onEntityResolution(void);
-
       //! Consumer for Brake message.
       //! @param brake message to consume.
       void
@@ -118,12 +114,6 @@ namespace DUNE
       //! class implementation MUST be called.
       virtual void
       onResourceInitialization(void);
-
-      //! On resource aquisition
-      //! This can be overriden but in that case this parent
-      //! class implementation MUST be called.
-      virtual void
-      onResourceAcquisition(void);
 
       //! On resource aquisition
       //! This can be overriden but in that case this parent

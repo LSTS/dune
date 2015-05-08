@@ -250,6 +250,12 @@ namespace DUNE
 
           if (paramChanged(m_btd.args.control_period))
             m_btd.args.control_period = 1.0 / m_btd.args.control_period;
+
+          if (m_btrack == NULL)
+          {
+            m_btd.args.task = this;
+            m_btrack = new BottomTracker(&m_btd.args);
+          }
         }
         else
         {
@@ -265,16 +271,6 @@ namespace DUNE
     }
 
     void
-    PathController::onResourceAcquisition(void)
-    {
-      if (m_btd.enabled)
-      {
-        m_btd.args.task = this;
-        m_btrack = new BottomTracker(&m_btd.args);
-      }
-    }
-
-    void
     PathController::onResourceRelease(void)
     {
       Memory::clear(m_btrack);
@@ -283,13 +279,8 @@ namespace DUNE
     void
     PathController::onEntityReservation(void)
     {
-      m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>("Bottom Track");
+      m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Bottom Track", getEntityLabel()));
       m_btd.args.entity = m_bt_entity;
-    }
-
-    void
-    PathController::onEntityResolution(void)
-    {
     }
 
     void
