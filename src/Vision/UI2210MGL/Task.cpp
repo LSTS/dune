@@ -29,22 +29,15 @@
 
 // ISO C++ 98 headers.
 #include <queue>
-#include <iostream>
-#include <cstring>
-#include <cstdio>
-#include <time.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Vendor headers.
-#include <ueye.h>
+// Local headers.
+#include "CaptureUeye.hpp"
 
 // Number of image buffers to allocate
 #define MAX_BUFFERS     256
-
-// Milliseconds to wait for FRAME event before timeout occurs
-#define FRAME_EVENT_TIMEOUT 5000
 
 using DUNE_NAMESPACES;
 
@@ -65,6 +58,8 @@ namespace Vision
       unsigned quality;
       //! Path to log directory
       std::string log_dir;
+      //! Area of Interest specification
+      AOI aoi;
     };
 
     //! Device driver task.
@@ -80,18 +75,17 @@ namespace Vision
       Path m_log_dir;
       //! Camera handle.
       HIDS m_cam;
-      // Will contain the address of memory allocated for images
-      char* m_ppcImgMem;
-      // Will contain pointers to all image allocated memory areas
-      char **m_imgMems;
-      // Will contain picture IDs for the above array
-      int *m_imgMemIds;
+      //! Flag to allow ignoring the first run.
       bool m_starting;
+      //! Thread fro image capture.
+      CaptureUeye* m_capture;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_log_dir(ctx.dir_log),
-        m_starting(true)
+        m_cam(1),
+        m_starting(true),
+        m_capture(NULL)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -102,6 +96,26 @@ namespace Vision
         .minimumValue("0")
         .maximumValue("75.3")
         .description("Frames per second");
+
+        param("AOI - X", m_args.aoi.x)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("X coordinate of upper left corner of AOI");
+
+        param("AOI - Y", m_args.aoi.y)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("Y coordinate of upper left corner of AOI");
+
+        param("AOI - Width", m_args.aoi.width)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("Width of AOI");
+
+        param("AOI - Height", m_args.aoi.height)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("Height of AOI");
 
         param("Quality", m_args.quality)
         .defaultValue("80")
@@ -114,7 +128,7 @@ namespace Vision
         .defaultValue("")
         .description("Path to Log Directory");
 
-        bind<IMC::LoggingControl>(this);
+//        bind<IMC::LoggingControl>(this);
       }
 
       //! Update internal parameters.
@@ -127,100 +141,28 @@ namespace Vision
           return;
         }
 
-        // Set target FPS. It is capped at 75.3 FPS.
-        double newFPS, fpsWish = m_args.fps;
-        is_SetFrameRate(m_cam, fpsWish, &newFPS);
-        inf("Set FPS to %.1f, actual FPS is now %.1f", fpsWish, newFPS);
+        m_capture->setAOI(m_args.aoi);
+        m_capture->setFPS(m_args.fps);
       }
 
       //! Acquire resources and buffers.
       void
       onResourceAcquisition(void)
       {
-        // Open camera with ID 1. Set to 0 would take the first CAM avaiable.
-        m_cam = 1;
-
-        // Will hold the picture ID of an image. I think this is an image's
-        // index within a memory area allocated to images
-        int pid;
-
-        // Will contain pointers to all image allocated memory areas
-        m_imgMems = new char*[MAX_BUFFERS]();
-        // Will contain picture IDs for the above array
-        m_imgMemIds = new int[MAX_BUFFERS]();
-
-        int tmp;
-
-        // Will contain information about the sensor
-        SENSORINFO sensorInfo;
-
-        // Starts the driver and establishes the connection to the camera
-        tmp = is_InitCamera(&m_cam, NULL);
-
-        // Check if camera initialisation was successfull.
-        if (tmp != IS_SUCCESS)
-          err("Camera initialisation was unsuccessful. Error %d", tmp);
-
-        // Get information about the sensor type used in the camera
-        tmp = is_GetSensorInfo(m_cam, &sensorInfo);
-        debug("Sensor name: %s", sensorInfo.strSensorName);
-        debug("Resolution: %d x %d", sensorInfo.nMaxWidth, sensorInfo.nMaxHeight);
-
-        // Set color mode.
-        is_SetColorMode(m_cam, IS_CM_MONO12);
-
-        // Set the pixel clock. This is capped at 30. Higher pixel clock
-        // will enable higher FPS.
-        UINT nPixelClockDefault = 30;
-        tmp = is_PixelClock(m_cam, IS_PIXELCLOCK_CMD_SET,
-            (void*)&nPixelClockDefault,
-            sizeof(nPixelClockDefault));
-        debug("Status is_PixelClock %d", tmp);
-
-        // 11 - Set format to 960x480. See https://en.ids-imaging.com/manuals/uEye_SDK/EN/uEye_Manual/is_imageformat.html#bildformate
-        // 13 - Set format to 640x480. See https://en.ids-imaging.com/manuals/uEye_SDK/EN/uEye_Manual/is_imageformat.html#bildformate
-        UINT formatID = 13;
-        tmp = is_ImageFormat(m_cam, IMGFRMT_CMD_SET_FORMAT, &formatID, 4);
-        debug("Status ImageFormat %d", tmp);
-
-        IS_RECT rectAOI;
-
-        rectAOI.s32X     = 0;
-        rectAOI.s32Y     = 112;
-        rectAOI.s32Width = 640;
-        rectAOI.s32Height = 250;
-
-        tmp = is_AOI(m_cam, IS_AOI_IMAGE_SET_AOI, (void*)&rectAOI, sizeof(rectAOI));
-        if (tmp)
-          err("Enabled AOI with status %d", tmp);
-
-        onUpdateParameters();
-
-        // Allocate memory and add to the sequence
-        for(int i = 0; i < MAX_BUFFERS; i++) {
-          // Allocate memory
-          tmp = is_AllocImageMem(m_cam, c_width, c_height, 16, &m_ppcImgMem, &pid);
-          // Store pointer and picture ID for this memory
-          m_imgMems[i] = m_ppcImgMem;
-          m_imgMemIds[i] = pid;
-          // Add the memory to the live capture sequence
-          tmp = is_AddToSequence(m_cam, m_ppcImgMem, pid);
-        }
-        if (tmp)
-          err("Allocated %d image buffers with last error code %d", MAX_BUFFERS, tmp);
-
-        // Enable the FRAME event. Triggers when a frame is ready in memory.
-        tmp = is_EnableEvent(m_cam, IS_SET_EVENT_FRAME);
-        if (tmp)
-          err("Enabled FRAME event with status %d", tmp);
+        m_capture = new CaptureUeye(this, m_args.aoi, m_cam, m_args.fps);
+        m_capture->start();
       }
 
       //! Release allocated resources.
       void
       onResourceRelease(void)
       {
-        is_DisableEvent(m_cam, IS_SET_EVENT_FRAME);
-        is_ExitCamera(m_cam);
+        if (m_capture != NULL)
+        {
+          m_capture->stopAndJoin();
+          delete m_capture;
+          m_capture = NULL;
+        }
       }
 
       //! Initialize resources and start capturing frames.
@@ -230,18 +172,18 @@ namespace Vision
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      void
-      consume(const IMC::LoggingControl* msg)
-      {
-        if (!isActivating() && (msg->getDestination() != getSystemId()))
-          return;
-
-        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
-        {
-          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
-          activate();
-        }
-      }
+//      void
+//      consume(const IMC::LoggingControl* msg)
+//      {
+//        if (!isActivating() && (msg->getDestination() != getSystemId()))
+//          return;
+//
+//        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
+//        {
+//          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
+//          activate();
+//        }
+//      }
 
       void
       onRequestActivation(void)
@@ -256,6 +198,7 @@ namespace Vision
       {
         m_log_dir.create();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_capture->start();
       }
 
       void
@@ -266,19 +209,18 @@ namespace Vision
 
       //! Saves the image pointed to by pMem .
       void
-      saveImageN(char *pMem)
+      saveImageN(Frame* frame)
       {
         IMAGE_FILE_PARAMS ImageFileParams;
 
-        double timestamp = Clock::getSinceEpoch();
-        Path file = m_args.log_dir / String::str("%0.4f.png", timestamp);
+        Path file = m_args.log_dir / String::str("%0.4f.png", frame->timestamp);
         wchar_t* filename = new wchar_t[ file.str().length() + 1 ];
         std::copy( file.str().begin(), file.str().end(), filename );
         filename[ file.str().length() ] = 0;
 
         ImageFileParams.pwchFileName = filename;
         ImageFileParams.pnImageID = NULL;
-        ImageFileParams.ppcImageMem = &pMem;
+        ImageFileParams.ppcImageMem = &frame->mem;
         // File format to use when saving the image. BMP/JPG/PNG/RAW/TIF
         ImageFileParams.nFileType = IS_IMG_PNG;
         // Quality to use when compressing image.
@@ -291,24 +233,19 @@ namespace Vision
       void
       onMain(void)
       {
-        int status = is_CaptureVideo(m_cam, IS_WAIT);
-        inf("Activated video capture with status %d", status);
-
-        int i=1;
-
-        // Small delay to let camera start
-        Time::Delay::wait(1.0);
-
+        Frame* frame = NULL;
         while (!stopping()) // && isActive())
         {
-          is_SetImageMem(m_cam, m_imgMems[i % MAX_BUFFERS], m_imgMemIds[i % MAX_BUFFERS]);
-          if (is_WaitEvent(m_cam, IS_SET_EVENT_FRAME, FRAME_EVENT_TIMEOUT))
-            err("Timed out");
-          else
+          consumeMessages();
+
+          frame = m_capture->dequeue();
+          if (frame == NULL)
           {
-            is_GetImageMem(m_cam, (void**)(&m_ppcImgMem));
-            saveImageN(m_ppcImgMem);
+            m_capture->waitFrame(1.0);
+            continue;
           }
+          saveImageN(frame);
+          delete frame;
         }
       }
     };
