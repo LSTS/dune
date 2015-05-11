@@ -501,11 +501,11 @@ namespace Sensors
 
         // Y is forward, X is right, Z is up.
         m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Y) ? IMC::WaterVelocity::VAL_VEL_X : 0;
-        m_wvel.x = correctSoundSpeed(data->y_vel_btm);
+        m_wvel.x = correctSoundSpeed(data->y_vel_wtr);
         m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_X) ? IMC::WaterVelocity::VAL_VEL_Y : 0;
-        m_wvel.y = correctSoundSpeed(data->x_vel_btm);
+        m_wvel.y = correctSoundSpeed(data->x_vel_wtr);
         m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Z) ? IMC::WaterVelocity::VAL_VEL_Z : 0;
-        m_wvel.z = correctSoundSpeed(-data->z_vel_btm);
+        m_wvel.z = correctSoundSpeed(-data->z_vel_wtr);
         dispatch(m_wvel, DF_KEEP_TIME);
       }
 
