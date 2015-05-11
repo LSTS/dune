@@ -109,8 +109,8 @@ namespace Transports
         Goto* gcmd = static_cast<Goto*>(m);
 
         IMC::Goto* gimc = new IMC::Goto();
-        gimc->lat = gcmd->latitude;
-        gimc->lon = gcmd->longitude;
+        gimc->lat = Angles::radians(gcmd->latitude);
+        gimc->lon = Angles::radians(gcmd->longitude);
         gimc->z = gcmd->z_reference.z_reference;
         gimc->z_units = zUnitsToIMC(gcmd->z_reference.z_units);
         gimc->speed = gcmd->speed_reference.speed_reference;
@@ -124,8 +124,8 @@ namespace Transports
         StationKeeping* skcmd = static_cast<StationKeeping*>(m);
 
         IMC::StationKeeping* skimc = new IMC::StationKeeping();
-        skimc->lat = skcmd->latitude;
-        skimc->lon = skcmd->longitude;
+        skimc->lat = Angles::radians(skcmd->latitude);
+        skimc->lon = Angles::radians(skcmd->longitude);
         skimc->z = skcmd->z_reference.z_reference;
         skimc->z_units = zUnitsToIMC(skcmd->z_reference.z_units);
         skimc->speed = skcmd->speed_reference.speed_reference;
@@ -147,8 +147,8 @@ namespace Transports
         IMC::Goto* gimc = static_cast<IMC::Goto*>(m);
 
         Goto* gcmd = new Goto();
-        gcmd->latitude = gimc->lat;
-        gcmd->longitude = gimc->lon;
+        gcmd->latitude = Angles::degrees(gimc->lat);
+        gcmd->longitude = Angles::degrees(gimc->lon);
         gcmd->z_reference.z_reference = gimc->z;
         gcmd->z_reference.z_units = zUnitsToSSC(gimc->z_units);
         gcmd->speed_reference.speed_reference = gimc->speed;
@@ -162,8 +162,8 @@ namespace Transports
         IMC::StationKeeping* skimc = static_cast<IMC::StationKeeping*>(m);
 
         StationKeeping* skcmd = new StationKeeping();
-        skcmd->latitude = skimc->lat;
-        skcmd->longitude = skimc->lon;
+        skcmd->latitude = Angles::degrees(skimc->lat);
+        skcmd->longitude = Angles::degrees(skimc->lon);
         skcmd->z_reference.z_reference = skimc->z;
         skcmd->z_reference.z_units = zUnitsToSSC(skimc->z_units);
         skcmd->speed_reference.speed_reference = skimc->speed;
