@@ -133,6 +133,10 @@ namespace Monitors
       void
       consume(const IMC::GpsFix* msg)
       {
+        // Only use fixes from local system.
+        if (msg->getSource() != getSystemId())
+          return;
+
         // Return if clock is already synched.
         if (m_clock_synched)
           return;
