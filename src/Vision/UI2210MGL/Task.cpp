@@ -159,7 +159,6 @@ namespace Vision
       {
         if (m_capture != NULL)
         {
-          m_capture->stopAndJoin();
           delete m_capture;
           m_capture = NULL;
         }
@@ -213,21 +212,21 @@ namespace Vision
       {
         IMAGE_FILE_PARAMS ImageFileParams;
 
-        Path file = m_args.log_dir / String::str("%0.4f.png", frame->timestamp);
+        Path file = m_args.log_dir / String::str("%0.4f.bmp", frame->timestamp);
         wchar_t* filename = new wchar_t[ file.str().length() + 1 ];
         std::copy( file.str().begin(), file.str().end(), filename );
         filename[ file.str().length() ] = 0;
 
         ImageFileParams.pwchFileName = filename;
-        ImageFileParams.pnImageID = NULL;
-        ImageFileParams.ppcImageMem = &frame->mem;
+        ImageFileParams.pnImageID = (UINT*) &frame->id;
+        ImageFileParams.ppcImageMem = &frame->data;
         // File format to use when saving the image. BMP/JPG/PNG/RAW/TIF
-        ImageFileParams.nFileType = IS_IMG_PNG;
+        ImageFileParams.nFileType = IS_IMG_BMP;
         // Quality to use when compressing image.
         ImageFileParams.nQuality = 100;
-        int status = is_ImageFile(m_cam, IS_IMAGE_FILE_CMD_SAVE, (void*) &ImageFileParams, sizeof(ImageFileParams));
-        if (status)
-          err("Image save failed with code: %d", status);
+        int stat = is_ImageFile(m_cam, IS_IMAGE_FILE_CMD_SAVE, (void*) &ImageFileParams, sizeof(ImageFileParams));
+        if (stat)
+          err("Image save failed with code: %d", stat);
       }
 
       void
@@ -238,15 +237,26 @@ namespace Vision
         {
           consumeMessages();
 
-          frame = m_capture->dequeue();
+          frame = m_capture->readFrame();
           if (frame == NULL)
-          {
-            m_capture->waitFrame(1.0);
-            continue;
-          }
-          saveImageN(frame);
-          delete frame;
+            Time::Delay::wait(0.5);
+          else
+            saveImageN(frame);
         }
+
+        m_capture->stopAndJoin();
+
+        bool qhasdata = true;
+
+        while (qhasdata)
+        {
+          frame = m_capture->readFrame();
+          if (frame == NULL)
+            qhasdata = false;
+          else
+            saveImageN(frame);
+        }
+        delete frame;
       }
     };
   }

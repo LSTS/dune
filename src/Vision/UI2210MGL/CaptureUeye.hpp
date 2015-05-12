@@ -57,12 +57,15 @@ namespace Vision
       unsigned width, height;
     };
 
+    //! Frame
     struct Frame
     {
-      //! Memory location.
-      char* mem;
+      //! Data pointer
+      char* data;
       //! Timestamp
       double timestamp;
+      //! ID
+      int id;
     };
 
     class CaptureUeye: public Thread
@@ -75,8 +78,14 @@ namespace Vision
         m_task(task),
         m_cam(cam),
         m_aoi(aoi),
-        m_fps(fps)
+        m_fps(fps),
+        m_read(0),
+        m_write(0)
       {
+        m_imgMems = new char*[c_buf_len];
+        m_imgMemIds = new int[c_buf_len];
+        m_frames = new Frame[c_buf_len];
+
         initializeCam();
       }
 
@@ -84,42 +93,6 @@ namespace Vision
       ~CaptureUeye(void)
       {
         delete m_ppcImgMem;
-      }
-
-      //! Enqueue frame.
-      //! @param[in] frame frame.
-      void
-      enqueue(Frame* frame)
-      {
-        m_lock.lock();
-        m_frames.push(frame);
-        m_lock.unlock();
-        m_cond.broadcast();
-      }
-
-      //! Dequeue frame.
-      //! @return frame frame or NULL if none is available.
-      Frame*
-      dequeue(void)
-      {
-        ScopedMutex l(m_lock);
-        if (m_frames.empty())
-          return NULL;
-
-        Frame* frame;
-        frame = m_frames.front();
-        m_frames.pop();
-        return frame;
-      }
-
-      //! Wait for a frame to be available.
-      //! @param[in] timeout maximum amount of time to wait.
-      void
-      waitFrame(double timeout)
-      {
-        m_cond.lock();
-        m_cond.wait(timeout);
-        m_cond.unlock();
       }
 
       void
@@ -137,11 +110,22 @@ namespace Vision
           m_task->err("Tried to enable AOI. Error %d", tmp);
 
         // Allocate memory
-        tmp = is_AllocImageMem(m_cam, m_aoi.width, m_aoi.height, 16, &m_ppcImgMem, &m_pid);
-        is_SetImageMem(m_cam, m_ppcImgMem, m_pid);
 
-        if (tmp)
-          m_task->err("Trying to allocate image buffer. Error %d", tmp);
+        // Will hold the picture ID of an image. I think this is an image's
+        // index within a memory area allocated to images
+        int pid;
+
+        for (unsigned i = 0; i < c_buf_len; i++)
+        {
+          tmp = is_AllocImageMem(m_cam, m_aoi.width, m_aoi.height, 8, &m_ppcImgMem, &pid);
+
+          // Store pointer and picture ID for this memory
+          m_imgMems[i] = m_ppcImgMem;
+          m_imgMemIds[i] = pid;
+
+          if (tmp)
+            m_task->err("Trying to allocate image buffer. Error %d", tmp);
+        }
       }
 
       void
@@ -153,15 +137,20 @@ namespace Vision
         m_task->inf("Set FPS to %.1f, actual FPS is now %.1f", fpsWish, newFPS);
       }
 
+      Frame*
+      readFrame(void)
+      {
+        if ((m_read % c_buf_len) == (m_write % c_buf_len))
+          return NULL;
+
+        return &m_frames[m_read++ % c_buf_len];
+      }
+
     private:
       //! Parent task.
       DUNE::Tasks::Task* m_task;
-      //! Condition to notify of queue changes.
-      Condition m_cond;
-      //! Lock to protect concurrent access to queues.
-      Mutex m_lock;
-      //! Queue of captured but not yet processed frames.
-      std::queue<Frame*> m_frames;
+      //! Array of captured frames.
+      Frame* m_frames;
       //! Camera handle.
       HIDS m_cam;
       //! Will contain the address of memory allocated for images.
@@ -170,9 +159,13 @@ namespace Vision
       AOI m_aoi;
       //! Frames per Second.
       double m_fps;
-      // Will hold the picture ID of an image. I think this is an image's
-      // index within a memory area allocated to images
-      int m_pid;
+      // Will contain pointers to all image allocated memory areas
+      char **m_imgMems;
+      // Will contain picture IDs for the above array
+      int *m_imgMemIds;
+      static const unsigned c_buf_len = 256;
+      //! Reader/Writer positions.
+      unsigned m_read, m_write;
 
       void
       initializeCam(void)
@@ -194,7 +187,7 @@ namespace Vision
         m_task->inf("Resolution: %d x %d", sensorInfo.nMaxWidth, sensorInfo.nMaxHeight);
 
         // Set color mode.
-        is_SetColorMode(m_cam, IS_CM_MONO12);
+        is_SetColorMode(m_cam, IS_CM_SENSOR_RAW8);
 
         // Set the pixel clock. This is capped at 30. Higher pixel clock
         // will enable higher FPS.
@@ -213,38 +206,62 @@ namespace Vision
         setAOI(m_aoi);
         setFPS(m_fps);
 
+        is_SetImageMem(m_cam, m_imgMems[0], m_imgMemIds[0]);
+        is_SetDisplayMode (m_cam, IS_SET_DM_DIB);
+
         // Enable the FRAME event. Triggers when a frame is ready in memory.
         tmp = is_EnableEvent(m_cam, IS_SET_EVENT_FRAME);
         if (tmp)
           m_task->err("Enabled FRAME event with status %d", tmp);
+
+        /* Readout the current LUT state */
+        IS_LUT_STATE lutState;
+        tmp = is_LUT(m_cam, IS_LUT_CMD_GET_STATE, (void*) &lutState, sizeof(lutState));
+        m_task->war("LUT: %d", tmp);
       }
 
       void
       run(void)
       {
-        int status = is_CaptureVideo(m_cam, IS_WAIT);
-        m_task->inf("Activated video capture with status %d", status);
-
-        Frame* frame;
+        int stat = is_CaptureVideo(m_cam, IS_DONT_WAIT);
+        m_task->inf("Activated video capture with status %d", stat);
 
         // Small delay to let camera start
         Time::Delay::wait(1.0);
 
-        unsigned i = 0;
         while (!isStopping())
         {
-          if (is_WaitEvent(m_cam, IS_SET_EVENT_FRAME, 500))
-            m_task->err("Timed out");
+          stat = is_SetImageMem(m_cam, m_imgMems[m_write % c_buf_len], m_imgMemIds[m_write % c_buf_len]);
+          if (stat)
+          {
+            m_task->err("SetImageMem Error: %d", stat);
+
+            Time::Delay::wait(0.1);
+            continue;
+          }
+
+          stat = is_WaitEvent(m_cam, IS_SET_EVENT_FRAME, 500);
+          if (stat)
+            m_task->err("Timed out: %d", stat);
           else
           {
-            frame = new Frame;
-            m_task->inf("Captured! %d", i);
+            m_task->spew("Captured! %d", m_write);
             is_GetImageMem(m_cam, (void**)(&m_ppcImgMem));
 
-            frame->mem = (char*) std::malloc(m_aoi.width * m_aoi.height * 2);
-            std::memcpy (frame->mem, m_ppcImgMem, m_aoi.width * m_aoi.height * 2);
-            frame->timestamp = Clock::getSinceEpoch();
-            enqueue(frame);
+            Frame frame;
+            frame.data = m_imgMems[m_write % c_buf_len];
+            frame.id = m_imgMemIds[m_write % c_buf_len];
+            frame.timestamp = Clock::getSinceEpoch();
+            m_frames[m_write % c_buf_len] = frame;
+
+            m_task->spew("Read: %u; Write: %u", m_read % c_buf_len, m_write % c_buf_len);
+
+            m_write++;
+
+            if (m_write == m_read)
+            {
+              m_task->err("Buffer overrun!");
+            }
           }
         }
 
