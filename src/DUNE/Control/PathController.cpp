@@ -557,7 +557,8 @@ namespace DUNE
       {
         try
         {
-          m_btrack->onEstimatedState(es);
+          if (m_btrack != NULL)
+            m_btrack->onEstimatedState(es);
         }
         catch (std::runtime_error& e)
         {
