@@ -137,6 +137,15 @@ namespace Vision
         m_task->inf("Set FPS to %.1f, actual FPS is now %.1f", fpsWish, newFPS);
       }
 
+      void
+      setAutoGain(bool autogain)
+      {
+        //Enable or disable auto gain control:
+        double param = autogain ? 1 : 0;
+        int ret = is_SetAutoParameter (m_cam, IS_SET_ENABLE_AUTO_GAIN, &param, 0);
+        m_task->inf("Set Auto Gain to %f. Status %d", param, ret);
+      }
+
       Frame*
       readFrame(void)
       {

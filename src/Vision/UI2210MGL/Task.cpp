@@ -36,9 +36,6 @@
 // Local headers.
 #include "CaptureUeye.hpp"
 
-// Number of image buffers to allocate
-#define MAX_BUFFERS     256
-
 using DUNE_NAMESPACES;
 
 namespace Vision
@@ -60,6 +57,8 @@ namespace Vision
       std::string log_dir;
       //! Area of Interest specification
       AOI aoi;
+      //! Auto Gain
+      bool auto_gain;
     };
 
     //! Device driver task.
@@ -94,7 +93,7 @@ namespace Vision
         param("Frames Per Second", m_args.fps)
         .defaultValue("30")
         .minimumValue("0")
-        .maximumValue("75.3")
+        .maximumValue("75")
         .description("Frames per second");
 
         param("AOI - X", m_args.aoi.x)
@@ -124,6 +123,10 @@ namespace Vision
         .maximumValue("100")
         .description("Image compression quality");
 
+        param("Auto Gain", m_args.auto_gain)
+        .defaultValue("false")
+        .description("Enable Auto Gain");
+
         param("Log Dir", m_args.log_dir)
         .defaultValue("")
         .description("Path to Log Directory");
@@ -143,6 +146,7 @@ namespace Vision
 
         m_capture->setAOI(m_args.aoi);
         m_capture->setFPS(m_args.fps);
+        m_capture->setAutoGain(m_args.auto_gain);
       }
 
       //! Acquire resources and buffers.
@@ -151,6 +155,7 @@ namespace Vision
       {
         m_capture = new CaptureUeye(this, m_args.aoi, m_cam, m_args.fps);
         m_capture->start();
+        m_capture->setAutoGain(m_args.auto_gain);
       }
 
       //! Release allocated resources.
