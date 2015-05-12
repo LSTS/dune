@@ -343,6 +343,14 @@ namespace DUNE
       void
       deactivateBottomTracker(void);
 
+      //! Is the system performing bottom tracking ?
+      //! @return true if it is bottom tracking, false otherwise.
+      bool
+      isTrackingBottom(void)
+      {
+        return m_btd.enabled && (m_btrack != NULL);
+      }
+
       //! Data for along-track error monitoring.
       struct ATMData
       {

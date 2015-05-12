@@ -213,7 +213,9 @@ namespace DUNE
     }
 
     PathController::~PathController(void)
-    { }
+    {
+      Memory::clear(m_btrack);
+    }
 
     void
     PathController::onUpdateParameters(void)
@@ -260,6 +262,7 @@ namespace DUNE
         else
         {
           deactivateBottomTracker();
+          Memory::clear(m_btrack);
         }
       }
     }
@@ -272,9 +275,7 @@ namespace DUNE
 
     void
     PathController::onResourceRelease(void)
-    {
-      Memory::clear(m_btrack);
-    }
+    { }
 
     void
     PathController::onEntityReservation(void)
@@ -395,7 +396,7 @@ namespace DUNE
         m_zref.value = dpath->end_z;
         m_zref.z_units = dpath->end_z_units;
 
-        if (m_btd.enabled)
+        if (isTrackingBottom())
           m_btrack->onDesiredZ(&m_zref, true);
         else
           dispatch(m_zref);
@@ -528,21 +529,21 @@ namespace DUNE
     void
     PathController::consume(const IMC::Distance* dist)
     {
-      if (m_btd.enabled)
+      if (isTrackingBottom())
         m_btrack->onDistance(dist);
     }
 
     void
     PathController::consume(const IMC::DesiredZ* zref)
     {
-      if (m_btd.enabled)
+      if (isTrackingBottom())
         m_btrack->onDesiredZ(zref);
     }
 
     void
     PathController::consume(const IMC::DesiredSpeed* dspeed)
     {
-      if (m_btd.enabled)
+      if (isTrackingBottom())
         m_btrack->onDesiredSpeed(dspeed);
     }
 
@@ -553,12 +554,11 @@ namespace DUNE
       if (sourceFilter(es))
         return;
 
-      if (m_btd.enabled)
+      if (isTrackingBottom())
       {
         try
         {
-          if (m_btrack != NULL)
-            m_btrack->onEstimatedState(es);
+          m_btrack->onEstimatedState(es);
         }
         catch (std::runtime_error& e)
         {
@@ -932,7 +932,7 @@ namespace DUNE
       onPathActivation();
       updateEntityState();
 
-      if (m_btd.enabled)
+      if (isTrackingBottom())
         m_btrack->activate();
     }
 
@@ -948,7 +948,7 @@ namespace DUNE
       onPathDeactivation();
       updateEntityState();
 
-      if (m_btd.enabled)
+      if (isTrackingBottom())
         deactivateBottomTracker();
     }
 
