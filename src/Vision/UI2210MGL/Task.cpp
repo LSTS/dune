@@ -33,6 +33,12 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
+
+
 // Local headers.
 #include "CaptureUeye.hpp"
 
@@ -211,33 +217,28 @@ namespace Vision
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      //! Saves the image pointed to by pMem .
+      //! Saves the image.
       void
-      saveImageN(Frame* frame)
+      saveImage(Frame* frame)
       {
-        IMAGE_FILE_PARAMS ImageFileParams;
+        Path file = m_args.log_dir / String::str("%0.4f.png", frame->timestamp);
 
-        Path file = m_args.log_dir / String::str("%0.4f.bmp", frame->timestamp);
-        wchar_t* filename = new wchar_t[ file.str().length() + 1 ];
-        std::copy( file.str().begin(), file.str().end(), filename );
-        filename[ file.str().length() ] = 0;
+        cv::Mat image_cv = cv::Mat(m_args.aoi.height, m_args.aoi.width, CV_8UC1);
+        std::memcpy(image_cv.ptr(), frame->data, m_args.aoi.height * m_args.aoi.width);
 
-        ImageFileParams.pwchFileName = filename;
-        ImageFileParams.pnImageID = (UINT*) &frame->id;
-        ImageFileParams.ppcImageMem = &frame->data;
-        // File format to use when saving the image. BMP/JPG/PNG/RAW/TIF
-        ImageFileParams.nFileType = IS_IMG_BMP;
-        // Quality to use when compressing image.
-        ImageFileParams.nQuality = 100;
-        int stat = is_ImageFile(m_cam, IS_IMAGE_FILE_CMD_SAVE, (void*) &ImageFileParams, sizeof(ImageFileParams));
-        if (stat)
-          err("Image save failed with code: %d", stat);
+        cv::flip(image_cv, image_cv, 0);
+        cv::imwrite(file.c_str(), image_cv);
+//        double min, max;
+//        cv::minMaxLoc(image_cv, &min, &max);
+//
+//        inf("Min: %f, Max: %f", min, max);
       }
 
       void
       onMain(void)
       {
         Frame* frame = NULL;
+
         while (!stopping()) // && isActive())
         {
           consumeMessages();
@@ -246,7 +247,9 @@ namespace Vision
           if (frame == NULL)
             Time::Delay::wait(0.5);
           else
-            saveImageN(frame);
+          {
+            saveImage(frame);
+          }
         }
 
         m_capture->stopAndJoin();
@@ -259,7 +262,7 @@ namespace Vision
           if (frame == NULL)
             qhasdata = false;
           else
-            saveImageN(frame);
+            saveImage(frame);
         }
         delete frame;
       }

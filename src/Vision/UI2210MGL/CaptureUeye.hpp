@@ -214,9 +214,8 @@ namespace Vision
 
         setAOI(m_aoi);
         setFPS(m_fps);
-
+        is_SetDisplayMode(m_cam, IS_SET_DM_DIB);
         is_SetImageMem(m_cam, m_imgMems[0], m_imgMemIds[0]);
-        is_SetDisplayMode (m_cam, IS_SET_DM_DIB);
 
         // Enable the FRAME event. Triggers when a frame is ready in memory.
         tmp = is_EnableEvent(m_cam, IS_SET_EVENT_FRAME);
@@ -226,7 +225,7 @@ namespace Vision
         /* Readout the current LUT state */
         IS_LUT_STATE lutState;
         tmp = is_LUT(m_cam, IS_LUT_CMD_GET_STATE, (void*) &lutState, sizeof(lutState));
-        m_task->war("LUT: %d", tmp);
+        m_task->inf("LUT: %d", tmp);
       }
 
       void
@@ -256,7 +255,6 @@ namespace Vision
           {
             m_task->spew("Captured! %d", m_write);
             is_GetImageMem(m_cam, (void**)(&m_ppcImgMem));
-
             Frame frame;
             frame.data = m_imgMems[m_write % c_buf_len];
             frame.id = m_imgMemIds[m_write % c_buf_len];
