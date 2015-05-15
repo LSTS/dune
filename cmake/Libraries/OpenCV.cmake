@@ -57,9 +57,9 @@ if(OPENCV)
     dune_test_header(opencv2/opencv.hpp)
     
     dune_test_header(opencv2/imgcodecs.hpp)
-    if(DUNE_SYS_HAS_OPENCV_IMGCODECS)
+    if(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
       dune_add_lib(opencv_imgcodecs)
-    endif(DUNE_SYS_HAS_OPENCV_IMGCODECS)
+    endif(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
 
   else(HAVE_LIB_OPENCV)
     # OpenCV not found on the system.
