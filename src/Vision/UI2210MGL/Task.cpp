@@ -37,8 +37,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#if defined(DUNE_SYS_HAS_OPENCV_IMGCODECS)
-  #include <opencv2/imgcodecs.hpp>
+#if defined(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
+#  include <opencv2/imgcodecs.hpp>
 #endif
 
 
