@@ -36,7 +36,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgcodecs.hpp>
+
+#if defined(DUNE_SYS_HAS_OPENCV_IMGCODECS)
+  #include <opencv2/imgcodecs.hpp>
+#endif
 
 
 // Local headers.
@@ -252,18 +255,26 @@ namespace Vision
           }
         }
 
-        m_capture->stopAndJoin();
+        m_capture->stopCapture();
 
         bool qhasdata = true;
+        int i = -1;
 
         while (qhasdata)
         {
+          inf("Emptying buffer.");
           frame = m_capture->readFrame();
           if (frame == NULL)
             qhasdata = false;
           else
             saveImage(frame);
+          i++;
         }
+
+        inf("%d images in buffer at shutdown.", i);
+
+        m_capture->stopAndJoin();
+
         delete frame;
       }
     };

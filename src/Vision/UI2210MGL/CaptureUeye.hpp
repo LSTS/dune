@@ -92,7 +92,17 @@ namespace Vision
       //! Destructor.
       ~CaptureUeye(void)
       {
-        delete m_ppcImgMem;
+        for (unsigned i = 0; i < c_buf_len; i++)
+        {
+          int tmp = is_FreeImageMem(m_cam, m_imgMems[i], m_imgMemIds[i]);
+
+          if (tmp)
+          {
+            m_task->err("Trying to free image buffer %d. Error %d", i, tmp);
+            break;
+          }
+        }
+        is_ExitCamera(m_cam);
       }
 
       void
@@ -124,7 +134,10 @@ namespace Vision
           m_imgMemIds[i] = pid;
 
           if (tmp)
-            m_task->err("Trying to allocate image buffer. Error %d", tmp);
+          {
+            m_task->err("Trying to allocate image buffer %d. Error %d", i, tmp);
+            break;
+          }
         }
       }
 
@@ -134,7 +147,7 @@ namespace Vision
         // Set target FPS
         double newFPS, fpsWish = fps;
         is_SetFrameRate(m_cam, fpsWish, &newFPS);
-        m_task->inf("Set FPS to %.1f, actual FPS is now %.1f", fpsWish, newFPS);
+        m_task->debug("Set FPS to %.1f, actual FPS is now %.1f", fpsWish, newFPS);
       }
 
       void
@@ -143,7 +156,7 @@ namespace Vision
         //Enable or disable auto gain control:
         double param = autogain ? 1 : 0;
         int ret = is_SetAutoParameter (m_cam, IS_SET_ENABLE_AUTO_GAIN, &param, 0);
-        m_task->inf("Set Auto Gain to %f. Status %d", param, ret);
+        m_task->debug("Set Auto Gain to %f. Status %d", param, ret);
       }
 
       Frame*
@@ -153,6 +166,12 @@ namespace Vision
           return NULL;
 
         return &m_frames[m_read++ % c_buf_len];
+      }
+
+      void
+      stopCapture(void)
+      {
+        is_DisableEvent(m_cam, IS_SET_EVENT_FRAME);
       }
 
     private:
@@ -192,8 +211,8 @@ namespace Vision
 
         // Get information about the sensor type used in the camera
         tmp = is_GetSensorInfo(m_cam, &sensorInfo);
-        m_task->inf("Sensor name: %s", sensorInfo.strSensorName);
-        m_task->inf("Resolution: %d x %d", sensorInfo.nMaxWidth, sensorInfo.nMaxHeight);
+        m_task->debug("Sensor name: %s", sensorInfo.strSensorName);
+        m_task->debug("Resolution: %d x %d", sensorInfo.nMaxWidth, sensorInfo.nMaxHeight);
 
         // Set color mode.
         is_SetColorMode(m_cam, IS_CM_SENSOR_RAW8);
@@ -220,24 +239,27 @@ namespace Vision
         // Enable the FRAME event. Triggers when a frame is ready in memory.
         tmp = is_EnableEvent(m_cam, IS_SET_EVENT_FRAME);
         if (tmp)
-          m_task->err("Enabled FRAME event with status %d", tmp);
+          m_task->debug("Enabled FRAME event with status %d", tmp);
 
         /* Readout the current LUT state */
         IS_LUT_STATE lutState;
         tmp = is_LUT(m_cam, IS_LUT_CMD_GET_STATE, (void*) &lutState, sizeof(lutState));
-        m_task->inf("LUT: %d", tmp);
+        m_task->debug("LUT: %d", tmp);
       }
 
       void
       run(void)
       {
         int stat = is_CaptureVideo(m_cam, IS_DONT_WAIT);
-        m_task->inf("Activated video capture with status %d", stat);
+        if (stat)
+          m_task->err("Failed to activate image capture with error %d", stat);
+        else
+          m_task->inf("Image capture started");
 
         // Small delay to let camera start
         Time::Delay::wait(1.0);
 
-        while (!isStopping())
+        while (!isStopping() && !stat)
         {
           stat = is_SetImageMem(m_cam, m_imgMems[m_write % c_buf_len], m_imgMemIds[m_write % c_buf_len]);
           if (stat)
@@ -248,9 +270,12 @@ namespace Vision
             continue;
           }
 
-          stat = is_WaitEvent(m_cam, IS_SET_EVENT_FRAME, 500);
+          stat = is_WaitEvent(m_cam, IS_SET_EVENT_FRAME, 1000);
           if (stat)
-            m_task->err("Timed out: %d", stat);
+          {
+            if (stat != 122)
+              m_task->err("WaitEvent error: %d", stat);
+          }
           else
           {
             m_task->spew("Captured! %d", m_write);
@@ -268,12 +293,10 @@ namespace Vision
             if (m_write == m_read)
             {
               m_task->err("Buffer overrun!");
+              Time::Delay::wait(0.1);
             }
           }
         }
-
-        is_DisableEvent(m_cam, IS_SET_EVENT_FRAME);
-        is_ExitCamera(m_cam);
       }
     };
   }
