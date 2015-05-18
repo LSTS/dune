@@ -164,14 +164,14 @@ namespace Control
           if (!m_args.use_controller)
             return;
 
-          //! Check if airspeed is larger than zero
+          // Check if airspeed is larger than zero
           if (m_airspeed <= 0)
           {
             war("No waypoint tracking control update: Airspeed <= 0!");
             return;
           }
 
-          //! Converting wind to path reference frame
+          // Converting wind to path reference frame
           double w_x = m_W_x, w_y = m_W_y;
           Angles::rotate(ts.track_bearing, false, w_x, w_y);
 
@@ -181,7 +181,7 @@ namespace Control
           double chi = ts.course_error;
           double phi = state.phi;
 
-          //! Converting heading to path reference frame
+          // Converting heading to path reference frame
           double psi = Angles::normalizeRadian(state.psi - ts.track_bearing);
           double cos_phi = std::cos(phi);
 
@@ -192,14 +192,14 @@ namespace Control
           double y_sq = y * y;
           double y_dot = ts.track_vel.y;
 
-          //! LOS
+          // LOS
           double chi_d = -std::atan(y/m_lookahead);
           double chi_d_dot = -(m_lookahead/(m_lookahead_sq + y_sq)) * y_dot;
 
           double chi_err = chi - chi_d;
           double chi_err_dot = chi_dot - chi_d_dot;
 
-          //! SMC
+          // SMC
           double s = chi_err_dot + 2 * m_args.lambda * chi_err;
           double sat = std::tanh(s/m_args.bandwidth);
 
@@ -207,7 +207,7 @@ namespace Control
 
           m_bank.value = (u * g_speed_sq * cos_phi * cos_phi * m_args.roll_tc) / (Math::c_gravity * tmp);
 
-          //! Output - Bank angle command, constrained
+          // Output - Bank angle command, constrained
           m_bank.value = trimValue(m_bank.value, -m_bank_lim, m_bank_lim);
 
           // Send to bus
