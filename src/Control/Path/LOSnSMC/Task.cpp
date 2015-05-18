@@ -24,6 +24,11 @@
 //***************************************************************************
 // Author: João Fortuna                                                     *
 //***************************************************************************
+// Paper submitted to MSC2015 and awaiting review:                          *
+// "Cascaded Line-of-Sight Path-Following and                               *
+// Sliding Mode Controllers for Fixed-Wing UAVs"                            *
+// João Fortuna and Thor I. Fossen                                          *
+//***************************************************************************
 
 // ISO C++ 98 headers.
 #include <cmath>
@@ -35,7 +40,7 @@ namespace Control
 {
   namespace Path
   {
-    namespace SMC
+    namespace LOSnSMC
     {
       using DUNE_NAMESPACES;
 
@@ -44,13 +49,19 @@ namespace Control
         //! Maximum bank angle - Defined by aircraft structural, navigation
         //! or control constraints
         double max_bank;
+        //! Look ahead distance for line-of-sight
         double lookahead;
+        //! Sliding surface gain
         double rho;
+        //! Course error gain
         double lambda;
-        double gamma;
+        //! K_d gain
+        double k_d;
+        //! Sliding surface bandwidth
         double bandwidth;
+        //! Estimated aircraft roll time constant
         double roll_tc;
-        //!
+        //! Flag to enable controller
         bool use_controller;
       };
 
@@ -73,28 +84,28 @@ namespace Control
           m_W_y(0.0)
         {
           param("Lookahead", m_args.lookahead)
-          .defaultValue("100.0")
+          .defaultValue("50.0")
           .description("Lookahead distance");
 
           param("Rho", m_args.rho)
-          .defaultValue("1.0")
-          .description("Turn rate gain for control");
+          .defaultValue("4.0")
+          .description("Sliding surface gain");
 
           param("Lambda", m_args.lambda)
-          .defaultValue("1.0")
-          .description("Turn rate gain for control");
+          .defaultValue("2.0")
+          .description("Course error gain");
 
-          param("Gamma", m_args.gamma)
-          .defaultValue("1.0")
-          .description("Integral gain");
+          param("Kd", m_args.k_d)
+          .defaultValue("3.0")
+          .description("Kd gain");
 
           param("Bandwidth", m_args.bandwidth)
-          .defaultValue("1.0")
-          .description("Turn rate gain for control");
+          .defaultValue("5.0")
+          .description("Sliding surface bandwidth");
 
           param("Roll Time Const", m_args.roll_tc)
-          .defaultValue("1.0")
-          .description("Turn rate gain for control");
+          .defaultValue("0.1")
+          .description("Estimated aircraft roll time constant");
 
           param("Maximum Bank", m_args.max_bank)
           .units(Units::Degree)
@@ -160,6 +171,7 @@ namespace Control
             return;
           }
 
+          //! Converting wind to path reference frame
           double w_x = m_W_x, w_y = m_W_y;
           Angles::rotate(ts.track_bearing, false, w_x, w_y);
 
@@ -168,6 +180,8 @@ namespace Control
 
           double chi = ts.course_error;
           double phi = state.phi;
+
+          //! Converting heading to path reference frame
           double psi = Angles::normalizeRadian(state.psi - ts.track_bearing);
           double cos_phi = std::cos(phi);
 
@@ -189,7 +203,7 @@ namespace Control
           double s = chi_err_dot + 2 * m_args.lambda * chi_err;
           double sat = std::tanh(s/m_args.bandwidth);
 
-          double u = -m_args.lambda * chi_err_dot - m_args.rho * sat - m_args.gamma * s;
+          double u = -m_args.lambda * chi_err_dot - m_args.rho * sat - m_args.k_d * s;
 
           m_bank.value = (u * g_speed_sq * cos_phi * cos_phi * m_args.roll_tc) / (Math::c_gravity * tmp);
 
