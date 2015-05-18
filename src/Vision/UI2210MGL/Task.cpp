@@ -224,17 +224,13 @@ namespace Vision
       void
       saveImage(Frame* frame)
       {
-        Path file = m_args.log_dir / String::str("%0.4f.png", frame->timestamp);
+        Path file = m_args.log_dir / String::str("%0.4f_%d.bmp", frame->timestamp, frame->gain_factor);
 
         cv::Mat image_cv = cv::Mat(m_args.aoi.height, m_args.aoi.width, CV_8UC1);
         std::memcpy(image_cv.ptr(), frame->data, m_args.aoi.height * m_args.aoi.width);
 
         cv::flip(image_cv, image_cv, 0);
         cv::imwrite(file.c_str(), image_cv);
-//        double min, max;
-//        cv::minMaxLoc(image_cv, &min, &max);
-//
-//        inf("Min: %f, Max: %f", min, max);
       }
 
       void

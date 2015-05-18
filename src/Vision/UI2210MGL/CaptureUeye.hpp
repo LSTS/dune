@@ -66,6 +66,8 @@ namespace Vision
       double timestamp;
       //! ID
       int id;
+      //! Gain in percent of original value
+      int gain_factor;
     };
 
     class CaptureUeye: public Thread
@@ -174,6 +176,12 @@ namespace Vision
         is_DisableEvent(m_cam, IS_SET_EVENT_FRAME);
       }
 
+      int
+      queryGainFactor(int gain)
+      {
+          return is_SetHWGainFactor(m_cam, IS_INQUIRE_MASTER_GAIN_FACTOR, gain);
+      }
+
     private:
       //! Parent task.
       DUNE::Tasks::Task* m_task;
@@ -187,13 +195,16 @@ namespace Vision
       AOI m_aoi;
       //! Frames per Second.
       double m_fps;
-      // Will contain pointers to all image allocated memory areas
+      //! Will contain pointers to all image allocated memory areas
       char **m_imgMems;
-      // Will contain picture IDs for the above array
+      //! Will contain picture IDs for the above array
       int *m_imgMemIds;
+      //! Buffer Size
       static const unsigned c_buf_len = 256;
       //! Reader/Writer positions.
       unsigned m_read, m_write;
+      //! Lookup table for gain factors
+      int m_gains[101];
 
       void
       initializeCam(void)
@@ -235,6 +246,11 @@ namespace Vision
         setFPS(m_fps);
         is_SetDisplayMode(m_cam, IS_SET_DM_DIB);
         is_SetImageMem(m_cam, m_imgMems[0], m_imgMemIds[0]);
+
+        for (int i = 0; i <= 100; i++)
+        {
+          m_gains[i] = queryGainFactor(i);
+        }
 
         // Enable the FRAME event. Triggers when a frame is ready in memory.
         tmp = is_EnableEvent(m_cam, IS_SET_EVENT_FRAME);
@@ -279,16 +295,17 @@ namespace Vision
           else
           {
             m_task->spew("Captured! %d", m_write);
+
+            int gain = is_SetHardwareGain(m_cam, IS_GET_MASTER_GAIN, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER);
             is_GetImageMem(m_cam, (void**)(&m_ppcImgMem));
+
             Frame frame;
             frame.data = m_imgMems[m_write % c_buf_len];
             frame.id = m_imgMemIds[m_write % c_buf_len];
             frame.timestamp = Clock::getSinceEpoch();
-            m_frames[m_write % c_buf_len] = frame;
+            frame.gain_factor = m_gains[gain];
 
-            m_task->spew("Read: %u; Write: %u", m_read % c_buf_len, m_write % c_buf_len);
-
-            m_write++;
+            m_frames[m_write++ % c_buf_len] = frame;
 
             if (m_write == m_read)
             {
