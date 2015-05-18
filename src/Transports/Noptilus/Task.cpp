@@ -291,7 +291,7 @@ namespace Transports
             length = msg->data.size() - Utils::Codecs::CodedEstimatedState::getSize();
 
             // There's no extra information to be processed.
-            if (length <= 1)
+            if (length <= 0)
               break;
 
             uint8_t eid;
@@ -424,7 +424,10 @@ namespace Transports
         IMC::UamTxFrame frame;
         frame.setDestination(getSystemId());
         frame.sys_dst = m_args.dst;
-        frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize() + c_dvl_beams * sizeof(int16_t) + 2 * sizeof(float));
+        if (m_args.tx_xtra)
+          frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize() + sizeof(uint8_t) + c_dvl_beams * sizeof(int16_t) + 2 * sizeof(float));
+        else
+          frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize());
         Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
 
         // Transmit extra information.
