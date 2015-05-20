@@ -345,10 +345,15 @@ endif(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
 
 # LAUV Simulator link.
 if(DUNE_OS_WINDOWS)
-  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\\
-    \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\LAUV Simulator.lnk\\\" \\\\
-    \\\"$INSTDIR\\\\bin\\\\dune.exe\\\" \\\\
-    \\\"-c lauv-simulator-1 -p Simulation\\\"")
+  set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL 1)
+
+  set(CPACK_NSIS_CREATE_ICONS_EXTRA "CreateShortCut          \\\\
+    '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\LAUV Simulator.lnk' \\\\
+    '$INSTDIR\\\\bin\\\\dune.exe'                            \\\\
+    '-c lauv-simulator-1 -p Simulation'")
+
+  set(CPACK_NSIS_DELETE_ICONS_EXTRA "Delete                  \\\\
+    '$SMPROGRAMS\\\\$MUI_TEMP\\\\LAUV Simulator.lnk'")
 endif(DUNE_OS_WINDOWS)
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_NAME})
