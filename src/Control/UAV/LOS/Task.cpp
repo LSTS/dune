@@ -41,7 +41,7 @@
 
 namespace Control
 {
-  namespace Path
+  namespace UAV
   {
     namespace LOS
     {
