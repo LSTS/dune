@@ -343,12 +343,12 @@ if(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
     DESTINATION bin)
 endif(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
 
-# Seacon simulator link.
+# LAUV Simulator link.
 if(DUNE_OS_WINDOWS)
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "CreateShortCut \\\\
-    \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Seacon Simulator.lnk\\\" \\\\
+    \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\LAUV Simulator.lnk\\\" \\\\
     \\\"$INSTDIR\\\\bin\\\\dune.exe\\\" \\\\
-    \\\"-c lauv-seacon-1 -p Simulation\\\"")
+    \\\"-c lauv-simulator-1 -p Simulation\\\"")
 endif(DUNE_OS_WINDOWS)
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_NAME})
