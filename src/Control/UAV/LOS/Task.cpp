@@ -43,7 +43,7 @@ namespace Control
 {
   namespace Path
   {
-    namespace Leg_LOSTriang
+    namespace LOS
     {
       using DUNE_NAMESPACES;
 
