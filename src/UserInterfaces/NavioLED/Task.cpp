@@ -63,6 +63,7 @@ namespace UserInterfaces
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
+        m_pin(NULL),
         m_R(0),
         m_G(0),
         m_B(0),
@@ -190,6 +191,15 @@ namespace UserInterfaces
 
           waitForMessages((double)1.0/m_speed);
         }
+
+        // Turn off LED
+        r = getPWM(m_args.max_bright*0.01, 0);
+        g = getPWM(m_args.max_bright*0.01, 0);
+        b = getPWM(m_args.max_bright*0.01, 0);
+
+        m_pwm.setPWM(2, r);
+        m_pwm.setPWM(1, g);
+        m_pwm.setPWM(0, b);
       }
     };
   }
