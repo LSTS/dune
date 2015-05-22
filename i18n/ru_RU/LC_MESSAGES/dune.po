@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2015-04-17 17:04+0100\n"
+"POT-Creation-Date: 2015-05-22 19:23+0100\n"
 "PO-Revision-Date: 2013-08-03 13:42-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -508,7 +508,7 @@ msgstr "переполнение буфера"
 msgid "null frame"
 msgstr "пустым кадром"
 
-#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:305
+#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:378
 #, fuzzy
 msgid "destination is not in the LBL configuration"
 msgstr "назначения не в конфигурации LBL"
@@ -1131,7 +1131,7 @@ msgid "synchronized"
 msgstr "синхронизированы"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:59
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:321
 #, fuzzy
 msgid "synchronizing"
 msgstr "синхронизации"
@@ -1266,43 +1266,43 @@ msgstr "профили выполнение: %s"
 msgid "clean shutdown"
 msgstr "чистого отключения"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:309
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:301
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:266
 #, fuzzy
 msgid "not active"
 msgstr "не активен"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:452
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:444
 #, fuzzy
 msgid "keep loitering"
 msgstr "держать слонялся"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:494
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:486
 #, fuzzy, c-format
 msgid "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr "Путь (широта / долгота): '%s'1 '%s'1 в '%s'1 '%s'1"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:665
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:657
 #, fuzzy
 msgid "expected new path control reference"
 msgstr "Ожидается, ссылка контроль новый путь"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:722
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:714
 #, fuzzy
 msgid "now loitering"
 msgstr "теперь слонялся"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:861
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:853
 #, fuzzy
 msgid "along-track divergence error"
 msgstr "наряду-треке ошибки расхождение"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:894
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:886
 #, fuzzy
 msgid "cross-track divergence error"
 msgstr "кросс-трек ошибке расхождение"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:975
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:967
 #, fuzzy
 msgid "waiting for position estimate from navigation"
 msgstr "ждет позиции оценки от навигации"
@@ -1931,7 +1931,7 @@ msgstr "Не удалось настроить выходную частоту"
 msgid "failed to set hard-iron correction factors"
 msgstr "не удалось установить трудно железные поправочные коэффициенты"
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/XR620CTD/Task.cpp:457
+#: /home/jb/workspace/dune/trunk/src/Sensors/XR620CTD/Task.cpp:466
 #, fuzzy, c-format
 msgid "parse error: %s"
 msgstr "ошибка разбора: %s"
@@ -2334,12 +2334,12 @@ msgstr "%s - статус не сообщается после %0.2f секун�
 msgid "%s: entity state timeout"
 msgstr "%s: сущность состояние тайм-аута"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:168
+#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:177
 #, fuzzy, c-format
 msgid "adjusting CPU clock by %0.4f s"
 msgstr "регулировки частоты процессора на% 0.4f с"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:194
+#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:214
 #, fuzzy
 msgid "failed to execute clock sync command"
 msgstr "не удалось выполнить команду Clock Sync"
@@ -2440,12 +2440,6 @@ msgstr "Режим работы список этикетки и значени�
 #, fuzzy
 msgid "invalid opmode value (zero)"
 msgstr "недопустимое значение OPMODE (ноль)"
-
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRTv4/Task.cpp:277
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:481
-#, fuzzy, c-format
-msgid "device reported: %s"
-msgstr "Устройство сообщил: %s"
 
 #: /home/jb/workspace/dune/trunk/src/Actuators/SingleSIMCT01/Task.cpp:139
 #, fuzzy
@@ -2583,6 +2577,11 @@ msgstr "Устройство ошибка инициализации, с про�
 msgid "CMD_ACTUATE Data size doesn't match!"
 msgstr "Размер CMD_ACTUATE данных не соответствует!"
 
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:481
+#, fuzzy, c-format
+msgid "device reported: %s"
+msgstr "Устройство сообщил: %s"
+
 #: /home/jb/workspace/dune/trunk/src/UserInterfaces/MantaPanel/Task.cpp:315
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Power/Task.cpp:116
 #, fuzzy
@@ -2677,12 +2676,12 @@ msgstr "недействительным или не поддерживаетс�
 msgid "error accepting new client connection: %s"
 msgstr "ошибки принятия нового подключения клиента: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:125
+#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:135
 #, fuzzy
 msgid "Source Level"
 msgstr "Источник Уровень"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:397
+#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:452
 #, fuzzy, c-format
 msgid "invalid system name %s"
 msgstr "неверное имя системы %s"
@@ -2891,12 +2890,12 @@ msgstr "начал переигровка"
 msgid "stopped replay"
 msgstr "остановился Повтор"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:232
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:254
 #, fuzzy
 msgid "messages doesn't fit in one frame"
 msgstr "Сообщения не подходит в одном кадре"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:297
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:330
 #, fuzzy, c-format
 msgid "deserialization error: %s"
 msgstr "Ошибка десериализации: %s"
@@ -3066,39 +3065,39 @@ msgstr "начиная потерял порта связи план"
 msgid "failed to start %s plan"
 msgstr "Не удалось запустить %s план"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:256
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:260
 msgid "acquiring PPS signal"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:265
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:269
 msgid "PPS signal acquired"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:275
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:279
 msgid "clock is disciplined"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:282
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:286
 #, c-format
 msgid "disciplining clock (%lld µs)"
 msgstr ""
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:293
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:297
 #, fuzzy
 msgid "clock is synchronized"
 msgstr "не синхронизированы"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:295
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:299
 #, fuzzy
 msgid "failed to set the hardware clock"
 msgstr "не удалось установить модем адрес"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:310
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:314
 #, fuzzy, c-format
 msgid "adjusting clock by %ld s"
 msgstr "регулировки частоты процессора на% 0.4f с"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:322
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:326
 #, c-format
 msgid "clock is synchronized [%lld, %ld, %ld]"
 msgstr ""
@@ -3457,7 +3456,7 @@ msgid "strobe mode set to: %s"
 msgstr "стробоскоп режим настроен в: %s"
 
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:256
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:17
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:18
 #, fuzzy
 msgid "Camera"
 msgstr "Камеры"
@@ -4123,178 +4122,178 @@ msgstr "АНПА Simulator"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:5
 #, fuzzy
+msgid "Acoustic Access Controller"
+msgstr "Контроллер двигателя"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:6
+#, fuzzy
 msgid "Acoustic Modem"
 msgstr "Акустический модем"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:6
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:7
 #, fuzzy
 msgid "Acoustic Modem Simulated"
 msgstr "Акустический модем Имитация"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:7
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:8
 #, fuzzy
 msgid "Allocator"
 msgstr "Allocator"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:8
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:9
 #, fuzzy
 msgid "Announce"
 msgstr "Анонс"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:9
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:10
 #, fuzzy
 msgid "Antenna Tracker"
 msgstr "Антенна Tracker"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:10
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:11
 #, fuzzy
 msgid "Arduino Serial"
 msgstr "Arduino Серийный"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:11
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:12
 #, fuzzy
 msgid "Attitude"
 msgstr "Отношение"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:12
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:13
 #, fuzzy
 msgid "Autopilot"
 msgstr "Автопилот"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:13
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:14
 #, fuzzy
 msgid "CLRanger"
 msgstr "CLRanger"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:14
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:15
 #, fuzzy
 msgid "CPU"
 msgstr "ЦПУ"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:15
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:16
 #, fuzzy
 msgid "CTD"
 msgstr "CTD"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:16
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:17
 #, fuzzy
 msgid "Cache"
 msgstr "Кэш"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:18
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:19
 #, fuzzy
 msgid "Camera Backend"
 msgstr "Backend камеры"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:19
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:20
 #, fuzzy
 msgid "Camera Module"
 msgstr "Модуль камеры"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:20
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:21
 #, fuzzy
 msgid "Clock"
 msgstr "Часы"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:21
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:22
 #, fuzzy
 msgid "Collisions"
 msgstr "Столкновения"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:22
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:23
 #, fuzzy
 msgid "Communications Relay Maneuver"
 msgstr "Реле Communications Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:23
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:24
 #, fuzzy
 msgid "Compass Calibration Maneuver"
 msgstr "Компас Калибровка Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:24
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:25
 #, fuzzy
 msgid "Cover Area"
 msgstr "Обложка Площадь"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:25
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:26
 #, fuzzy
 msgid "DVL"
 msgstr "DVL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:26
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:27
 #, fuzzy
 msgid "Depth Control"
 msgstr "Контроль глубины"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:27
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:28
 #, fuzzy
 msgid "Depth Sensor"
 msgstr "Датчик глубины"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:28
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:29
 #, fuzzy
 msgid "Discovery"
 msgstr "Discovery"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:29
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:30
 #, fuzzy
 msgid "Diving"
 msgstr "Дайвинг"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:30
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:31
 #, fuzzy
 msgid "Docking"
 msgstr "Док-"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:31
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:32
 #, fuzzy
 msgid "Echo Sounder"
 msgstr "Эхолот"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:32
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:33
 #, fuzzy
 msgid "Emergency Monitor"
 msgstr "Аварийный монитор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:33
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:34
 #, fuzzy
 msgid "Entity Monitor"
 msgstr "Entity монитор"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:34
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:35
 #, fuzzy
 msgid "Environment"
 msgstr "Окружающая среда"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:35
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:36
 #, fuzzy
 msgid "FTP Server"
 msgstr "FTP-сервер"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:36
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:37
 #, fuzzy
 msgid "Follow Reference"
 msgstr "Последующие Ссылка"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:37
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:38
 #, fuzzy
 msgid "Follow Reference Maneuver"
 msgstr "Следуйте Reference Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:38
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:39
 #, fuzzy
 msgid "Follow System Maneuver"
 msgstr "Следуйте System Маневр"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:39
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:40
 #, fuzzy
 msgid "Formation Control"
 msgstr "Формирование управления"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:40
-#, fuzzy
-msgid "Formation Coordinator"
-msgstr "Координатор Формирование"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:41
 #, fuzzy
@@ -4663,47 +4662,50 @@ msgstr "Термальная зона"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:115
 #, fuzzy
-msgid "UAN"
-msgstr "КАС"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
-#, fuzzy
 msgid "UAV Simulator"
 msgstr "БПЛА Simulator"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
 #, fuzzy
 msgid "UDP"
 msgstr "UDP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
 #, fuzzy
 msgid "UDP to Auxiliary"
 msgstr "UDP к вспомогательным"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
 #, fuzzy
 msgid "UDP to TREX"
 msgstr "UDP для TREX"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
 #, fuzzy
 msgid "USBL"
 msgstr "USBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
 #, fuzzy
 msgid "Underwater Acoustics Simulator"
 msgstr "Подводные Акустика Simulator"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
 #, fuzzy
 msgid "Vehicle Supervisor"
 msgstr "Автомобиль руководитель"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:123
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
 msgid "Water Quality Sensor"
 msgstr ""
+
+#, fuzzy
+#~ msgid "Formation Coordinator"
+#~ msgstr "Координатор Формирование"
+
+#, fuzzy
+#~ msgid "UAN"
+#~ msgstr "КАС"
 
 #, fuzzy
 #~ msgid "invalid rate limiter: %s"

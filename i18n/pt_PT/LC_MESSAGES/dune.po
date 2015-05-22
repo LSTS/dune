@@ -26,7 +26,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2015-04-17 17:15+0100\n"
+"POT-Creation-Date: 2015-05-22 19:23+0100\n"
 "PO-Revision-Date: 2014-08-10 23:54-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -464,7 +464,7 @@ msgstr "espaço de dados excedido"
 msgid "null frame"
 msgstr "trama inválida"
 
-#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:305
+#: /home/jb/workspace/dune/trunk/src/Navigation/AUV/CLRanger/Task.cpp:378
 msgid "destination is not in the LBL configuration"
 msgstr "destino não está na configuração LBL"
 
@@ -989,7 +989,7 @@ msgid "synchronized"
 msgstr "sincronizado"
 
 #: /home/jb/workspace/dune/trunk/src/DUNE/Status/Messages.cpp:59
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:317
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:321
 msgid "synchronizing"
 msgstr "a sincronizar"
 
@@ -1106,37 +1106,37 @@ msgstr "perfil de execução: %s"
 msgid "clean shutdown"
 msgstr "encerramento limpo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:309
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:301
 #: /home/jb/workspace/dune/trunk/src/Plan/DB/Task.cpp:266
 msgid "not active"
 msgstr "inativo"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:452
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:444
 msgid "keep loitering"
 msgstr "manter loiter"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:494
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:486
 #, c-format
 msgid "path (lat/lon): %0.5f %0.5f to %0.5f %0.5f"
 msgstr "caminho (lat/lon): %0.5f %0.5f para %0.5f %0.5f"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:665
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:657
 msgid "expected new path control reference"
 msgstr "esperada nova referência de path control"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:722
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:714
 msgid "now loitering"
 msgstr "a fazer loiter"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:861
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:853
 msgid "along-track divergence error"
 msgstr "erro por divergência ao longo do caminho"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:894
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:886
 msgid "cross-track divergence error"
 msgstr "erro por divergência perpendicular ao caminho"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:975
+#: /home/jb/workspace/dune/trunk/src/DUNE/Control/PathController.cpp:967
 msgid "waiting for position estimate from navigation"
 msgstr "à espera de uma estimativa da posição pela navegação"
 
@@ -1676,7 +1676,7 @@ msgstr "falha ao configurar frequência de saída"
 msgid "failed to set hard-iron correction factors"
 msgstr "falha ao definir fatores de correção \"hard-iron\""
 
-#: /home/jb/workspace/dune/trunk/src/Sensors/XR620CTD/Task.cpp:457
+#: /home/jb/workspace/dune/trunk/src/Sensors/XR620CTD/Task.cpp:466
 #, c-format
 msgid "parse error: %s"
 msgstr "processamento do erro: %s"
@@ -2031,12 +2031,12 @@ msgstr "%s -- estado não foi reportado depois de %0.2f segundos"
 msgid "%s: entity state timeout"
 msgstr "%s: tempo limite excedido à espera do estado da entidade"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:168
+#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:177
 #, c-format
 msgid "adjusting CPU clock by %0.4f s"
 msgstr "a ajustar relógio do CPU em %0.4f s"
 
-#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:194
+#: /home/jb/workspace/dune/trunk/src/Monitors/Clock/Task.cpp:214
 msgid "failed to execute clock sync command"
 msgstr "falha ao executar comando de sincronização"
 
@@ -2121,12 +2121,6 @@ msgstr "lista de modos de operação e de valores têm tamanhos diferentes"
 #: /home/jb/workspace/dune/trunk/src/Monitors/FuelLevel/Task.cpp:225
 msgid "invalid opmode value (zero)"
 msgstr "modo de operação inválido (zero)"
-
-#: /home/jb/workspace/dune/trunk/src/Actuators/SCRTv4/Task.cpp:277
-#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:481
-#, c-format
-msgid "device reported: %s"
-msgstr "dispositivo reportado: %s"
 
 #: /home/jb/workspace/dune/trunk/src/Actuators/SingleSIMCT01/Task.cpp:139
 msgid "invalid value for 'Motor Id'"
@@ -2238,6 +2232,11 @@ msgstr "erro ao iniciar dispositivo, pedido reset"
 msgid "CMD_ACTUATE Data size doesn't match!"
 msgstr "CMD_ACTUATE Incompatibilidade tamanho Data"
 
+#: /home/jb/workspace/dune/trunk/src/Actuators/Broom/Task.cpp:481
+#, c-format
+msgid "device reported: %s"
+msgstr "dispositivo reportado: %s"
+
 #: /home/jb/workspace/dune/trunk/src/UserInterfaces/MantaPanel/Task.cpp:315
 #: /home/jb/workspace/dune/trunk/src/Supervisors/Power/Task.cpp:116
 msgid "failed to execute power down command"
@@ -2321,11 +2320,11 @@ msgstr "parâmetro inválido ou não suportado"
 msgid "error accepting new client connection: %s"
 msgstr "erro ao aceitar ligação a novo cliente: %s"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:125
+#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:135
 msgid "Source Level"
 msgstr "Nível da Fonte"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:397
+#: /home/jb/workspace/dune/trunk/src/Transports/Evologics/Task.cpp:452
 #, c-format
 msgid "invalid system name %s"
 msgstr "nome de sistema inválido %s"
@@ -2509,11 +2508,11 @@ msgstr "iniciou a repetição de"
 msgid "stopped replay"
 msgstr "repetição parada"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:232
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:254
 msgid "messages doesn't fit in one frame"
 msgstr "mensagens não cabem num única trama"
 
-#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:297
+#: /home/jb/workspace/dune/trunk/src/Transports/Noptilus/Task.cpp:330
 #, c-format
 msgid "deserialization error: %s"
 msgstr "erro de desserialização: %s"
@@ -2657,37 +2656,37 @@ msgstr "iniciar plano perda comunicações: "
 msgid "failed to start %s plan"
 msgstr "falha ao arrancar plano %s"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:256
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:260
 msgid "acquiring PPS signal"
 msgstr "a adquirir sinal PPS"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:265
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:269
 msgid "PPS signal acquired"
 msgstr "sinal PPS adquirido"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:275
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:279
 msgid "clock is disciplined"
 msgstr "relógio está corrigido"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:282
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:286
 #, c-format
 msgid "disciplining clock (%lld µs)"
 msgstr "a corrigir relógio (%lld µs)"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:293
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:297
 msgid "clock is synchronized"
 msgstr "relógio sincronizado"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:295
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:299
 msgid "failed to set the hardware clock"
 msgstr "falhou ao definir relógio no sistema"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:310
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:314
 #, c-format
 msgid "adjusting clock by %ld s"
 msgstr "a ajustar relógio em %ld s"
 
-#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:322
+#: /home/jb/workspace/dune/trunk/src/Supervisors/ClockPPS/Task.cpp:326
 #, c-format
 msgid "clock is synchronized [%lld, %ld, %ld]"
 msgstr "relógio sincronizado [%lld, %ld, %ld]"
@@ -3003,7 +3002,7 @@ msgid "strobe mode set to: %s"
 msgstr "modo de strobe configurado para: %s"
 
 #: /home/jb/workspace/dune/trunk/src/Power/DOAMv1/Task.cpp:256
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:17
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:18
 msgid "Camera"
 msgstr "Câmara"
 
@@ -3558,144 +3557,144 @@ msgid "AUV Simulator"
 msgstr "Simulador de AUV"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:5
+msgid "Acoustic Access Controller"
+msgstr "Controlador de Acesso Acústico"
+
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:6
 msgid "Acoustic Modem"
 msgstr "Modem Acústico"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:6
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:7
 msgid "Acoustic Modem Simulated"
 msgstr "Modem Acústico Simulado"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:7
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:8
 msgid "Allocator"
 msgstr "Alocador"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:8
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:9
 msgid "Announce"
 msgstr "Anunciador"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:9
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:10
 msgid "Antenna Tracker"
 msgstr "Tracker da Antena"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:10
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:11
 msgid "Arduino Serial"
 msgstr "Arduino Série"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:11
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:12
 msgid "Attitude"
 msgstr "Atitude"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:12
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:13
 msgid "Autopilot"
 msgstr "Piloto Automático"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:13
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:14
 msgid "CLRanger"
 msgstr "CLRanger"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:14
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:15
 msgid "CPU"
 msgstr "CPU"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:15
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:16
 msgid "CTD"
 msgstr "CTD"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:16
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:17
 msgid "Cache"
 msgstr "Acumulador"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:18
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:19
 msgid "Camera Backend"
 msgstr "Câmara Backend"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:19
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:20
 msgid "Camera Module"
 msgstr "Modulo da Câmara"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:20
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:21
 msgid "Clock"
 msgstr "Relógio"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:21
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:22
 msgid "Collisions"
 msgstr "Colisões"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:22
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:23
 msgid "Communications Relay Maneuver"
 msgstr "Manobra de Retransmissão de Comunicações"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:23
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:24
 msgid "Compass Calibration Maneuver"
 msgstr "Manobra de Calibração de Bússola"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:24
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:25
 msgid "Cover Area"
 msgstr "Cobre Área"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:25
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:26
 msgid "DVL"
 msgstr "DVL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:26
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:27
 msgid "Depth Control"
 msgstr "Controlo de Profundidade"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:27
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:28
 msgid "Depth Sensor"
 msgstr "Sensor de Profundidade"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:28
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:29
 msgid "Discovery"
 msgstr "Descoberta"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:29
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:30
 msgid "Diving"
 msgstr "Mergulho"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:30
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:31
 msgid "Docking"
 msgstr "Docagem"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:31
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:32
 msgid "Echo Sounder"
 msgstr "Ecobatímetro"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:32
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:33
 msgid "Emergency Monitor"
 msgstr "Monitor de Emergências"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:33
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:34
 msgid "Entity Monitor"
 msgstr "Monitor de Entidades"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:34
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:35
 msgid "Environment"
 msgstr "Ambiente"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:35
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:36
 msgid "FTP Server"
 msgstr "Servidor FTP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:36
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:37
 msgid "Follow Reference"
 msgstr "Seguimento de Referência"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:37
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:38
 msgid "Follow Reference Maneuver"
 msgstr "Manobra Seguir Referência"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:38
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:39
 msgid "Follow System Maneuver"
 msgstr "Manobra de Seguimento de Sistema"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:39
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:40
 msgid "Formation Control"
 msgstr "Controlo de Formação"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:40
-msgid "Formation Coordinator"
-msgstr "Coordenador de Formação"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:41
 msgid "Formation Link"
@@ -3990,40 +3989,42 @@ msgid "Thermal Zone"
 msgstr "Zona Térmica"
 
 #: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:115
-msgid "UAN"
-msgstr "UAN"
-
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid "UAV Simulator"
 msgstr "Simulador de AUV"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:116
 msgid "UDP"
 msgstr "UDP"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:117
 msgid "UDP to Auxiliary"
 msgstr "UDP para Auxiliar"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:118
 msgid "UDP to TREX"
 msgstr "UDP para TREX"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:119
 msgid "USBL"
 msgstr "USBL"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:120
 msgid "Underwater Acoustics Simulator"
 msgstr "Simulador de Comunicação Acústica Subaquática"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:121
 msgid "Vehicle Supervisor"
 msgstr "Supervisor de Veículo"
 
-#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:123
+#: /home/jb/workspace/dune/trunk/i18n/entity_labels.txt:122
 msgid "Water Quality Sensor"
 msgstr "Sensor da Qualidade da Água"
+
+#~ msgid "Formation Coordinator"
+#~ msgstr "Coordenador de Formação"
+
+#~ msgid "UAN"
+#~ msgstr "UAN"
 
 #~ msgid "invalid rate limiter: %s"
 #~ msgstr "limitador de taxa inválido '%s'"
