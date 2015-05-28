@@ -62,7 +62,8 @@ namespace DUNE
       m_nrows(0),
       m_ncols(0),
       m_size(0),
-      m_data(NULL)
+      m_data(NULL),
+      m_counter(NULL)
     { }
 
     Matrix::Matrix(size_t r, size_t c)
@@ -125,6 +126,7 @@ namespace DUNE
       std::memcpy(m_data, data, m_size * sizeof(double));
     }
 
+
     Matrix::Matrix(size_t n)
     {
       if (!n)
@@ -164,11 +166,13 @@ namespace DUNE
     void
     Matrix::erase(void)
     {
-      if (m_size != 0)
+      if (m_size != 0 && m_counter != NULL)
       {
-        if (!(--(*m_counter)))
+        if (--(*m_counter) == 0)
         {
           std::free(m_data);
+          m_data = NULL;
+          m_counter = NULL;
         }
       }
     }
