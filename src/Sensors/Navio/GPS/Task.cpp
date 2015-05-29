@@ -48,7 +48,6 @@ namespace Sensors
       struct Arguments
       {
         double data_tout;
-        int data_rate;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -63,7 +62,7 @@ namespace Sensors
         Ublox m_gps;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Tasks::Periodic(name, ctx),
+          DUNE::Tasks::Task(name, ctx),
           m_tstamp(0)
         {
           param("Data Timeout", m_args.data_tout)
@@ -71,12 +70,6 @@ namespace Sensors
               .minimumValue("0.2")
               .units(Units::Second)
               .description("Number of seconds without data before reporting an error");
-
-          param("Data Rate", m_args.data_rate)
-          .defaultValue("40")
-          .minimumValue("-50")
-          .maximumValue("40")
-          .description("Sensor data rate");
 
           // Register listeners.
           bind<IMC::DevCalibrationControl>(this);
@@ -131,9 +124,7 @@ namespace Sensors
 
           while (!stopping())
           {
-            consumeMessages();
-
-            if (m_gps.decodeSingleMessage(Ublox::NAV_POSLLH, pos_data) == 1)
+            if (m_gps.decodeSingleMessage(Ublox::NAV_POSLLH, pos_data))
             {
               // after desired message is successfully decoded, we can use the information stored in pos_data vector
               // right here, or we can do something with it from inside decodeSingleMessage() function(see ublox.h).
@@ -142,15 +133,15 @@ namespace Sensors
               m_fix.lat = Angles::radians(pos_data[2]/10000000);
               m_fix.lon = Angles::radians(pos_data[1]/10000000);
               m_fix.height = pos_data[3]/1000;
+
+              dispatch(m_fix);
             }
 
-            if (m_gps.decodeSingleMessage(Ublox::NAV_STATUS, pos_data) == 1)
+            if (m_gps.decodeSingleMessage(Ublox::NAV_STATUS, pos_data))
             {
-              printf("Current GPS status:\n");
-              printf("gpsFixOk: %d\n", ((int)pos_data[1] & 0x01));
-
-              printf("gps Fix status: ");
-              switch((int)pos_data[0]){
+              debug("gps Fix status: ");
+              switch((int)pos_data[0])
+              {
                 case 0x00:
                   break;
                 case 0x01:
@@ -158,24 +149,26 @@ namespace Sensors
                   break;
                 case 0x02:
                   m_fix.type = IMC::GpsFix::GFT_STANDALONE;
-                  printf("2D-fix\n");
+                  debug("2D-fix");
                   break;
                 case 0x03:
                   m_fix.type = IMC::GpsFix::GFT_STANDALONE;
-                  printf("3D-fix\n");
+                  m_fix.validity = IMC::GpsFix::GFV_VALID_POS;
+                  debug("3D-fix");
                   break;
                 case 0x04:
                   m_fix.type = IMC::GpsFix::GFT_DEAD_RECKONING;
-                  printf("GPS + dead reckoning combined\n");
+                  debug("GPS + dead reckoning combined");
                   break;
                 case 0x05:
-                  printf("Time only fix\n");
+                  debug("Time only fix");
                   break;
                 default:
+                  break;
               }
             }
 
-            waitForMessages(0.0002);
+            waitForMessages(0.02);
           }
         }
       };
