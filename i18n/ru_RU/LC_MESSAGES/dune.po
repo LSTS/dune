@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2015-05-22 19:23+0100\n"
+"POT-Creation-Date: 2015-05-29 11:10+0100\n"
 "PO-Revision-Date: 2013-08-03 13:42-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -744,32 +744,37 @@ msgstr "активация не выполняется"
 msgid "deactivation is not in progress"
 msgstr "отключение не выполняется"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:375
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:377
 #, fuzzy
 msgid "restarting"
 msgstr "перезапуска"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:376
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:380
+#, fuzzy, c-format
+msgid "restarting immediately due to error: %s"
+msgstr "перезапуска в %u секунд за ошибки: %s"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:382
 #, fuzzy, c-format
 msgid "restarting in %u seconds due to error: %s"
 msgstr "перезапуска в %u секунд за ошибки: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:393
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:398
 #, fuzzy, c-format
 msgid "failed to update parameters: %s"
 msgstr "не удалось обновить параметры: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:401
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:406
 #, fuzzy, c-format
 msgid "task died with uncaught exception: %s: restarting"
 msgstr "Задача умер с неперехваченного исключения: %s: перезапуск"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:463
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:468
 #, fuzzy, c-format
 msgid "updating entity parameters: %s: '%s'"
 msgstr "обновления параметров сущностей: %s: '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:662
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:667
 #, fuzzy, c-format
 msgid "invalid parameter '%s'"
 msgstr "неверный параметр '%s'"

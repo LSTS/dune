@@ -26,7 +26,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DUNE\n"
 "Report-Msgid-Bugs-To: dune@lsts.pt\n"
-"POT-Creation-Date: 2015-05-22 19:23+0100\n"
+"POT-Creation-Date: 2015-05-29 11:10+0100\n"
 "PO-Revision-Date: 2014-08-10 23:54-0000\n"
 "Last-Translator: Ricardo Martins <rasm@lsts.pt>\n"
 "Language-Team: DUNE <dune.i18n@lsts.pt>\n"
@@ -664,31 +664,36 @@ msgstr "ativação não está em progresso"
 msgid "deactivation is not in progress"
 msgstr "desativação não está em progresso"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:375
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:377
 msgid "restarting"
 msgstr "a reiniciar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:376
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:380
+#, fuzzy, c-format
+msgid "restarting immediately due to error: %s"
+msgstr "a reiniciar imediatamente devido a erro: %s"
+
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:382
 #, c-format
 msgid "restarting in %u seconds due to error: %s"
 msgstr "a reiniciar em %u segundos devido a erro: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:393
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:398
 #, c-format
 msgid "failed to update parameters: %s"
 msgstr "falha ao atualizar parâmetros: %s"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:401
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:406
 #, c-format
 msgid "task died with uncaught exception: %s: restarting"
 msgstr "a tarefa morreu com uma exceção não apanhada: %s, a reiniciar"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:463
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:468
 #, c-format
 msgid "updating entity parameters: %s: '%s'"
 msgstr "a atualizar parâmetros de entidade: %s: '%s'"
 
-#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:662
+#: /home/jb/workspace/dune/trunk/src/DUNE/Tasks/Task.cpp:667
 #, c-format
 msgid "invalid parameter '%s'"
 msgstr "parâmetro inválido '%s'"
