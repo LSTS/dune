@@ -310,14 +310,60 @@ namespace Sensors
         queueState(SM_DEACT_BEGIN);
       }
 
-      void
+      bool
       disconnect(void)
       {
         debug("disconnecting");
-        m_cmd->setRecordingMode(false);
-        m_cmd->setStandBy(true);
+
+        trace("setting recording mode to false");
+        if (!m_cmd->setRecordingMode(false))
+          return false;
+
+        Delay::wait(1.0);
+        consumeMessages();
+
+        trace("setting recording file path");
+        if (!m_cmd->setRecordingFilePath("/tmp"))
+          return false;
+
+        Delay::wait(1.0);
+        consumeMessages();
+
+        trace("setting recording new file");
+        if (!m_cmd->setRecordingNewFile())
+          return false;
+
+        Delay::wait(1.0);
+        consumeMessages();
+
+        trace("setting recording mode to true");
+        if (!m_cmd->setRecordingMode(true))
+          return false;
+
+        Delay::wait(1.0);
+        consumeMessages();
+
+        trace("setting recording mode to false");
+        if (!m_cmd->setRecordingMode(false))
+          return false;
+
+        Delay::wait(1.0);
+        consumeMessages();
+
+        trace("setting standby");
+        if (!m_cmd->setStandBy(true))
+          return false;
+
+        Delay::wait(1.0);
+        consumeMessages();
+
+        trace("unmounting");
+        if (!m_cmd->unmountNFS(m_args.record_path_prefix))
+          return false;
+
         Memory::clear(m_cmd);
         debug("disconnected");
+        return true;
       }
 
       void
@@ -575,8 +621,8 @@ namespace Sensors
 
             // Disconnect and shutdown sidescan.
           case SM_DEACT_DISCONNECT:
-            disconnect();
-            queueState(SM_DEACT_POWER_OFF);
+            if (disconnect())
+              queueState(SM_DEACT_POWER_OFF);
             break;
 
             // Turn power off.

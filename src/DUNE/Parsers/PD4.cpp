@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <cstring>
 #include <cstddef>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/Parsers/PD4.hpp>
@@ -143,7 +144,7 @@ namespace DUNE
 
       // Bottom ranges.
       uint16_t utmp = 0;
-      for (size_t i = 0; i < 4; ++i)
+      for (int i = 0; i < 4; ++i)
       {
         utmp = m_raw_data[10 + i * 2] * 256 + m_raw_data[9 + i * 2];
         m_data.rng_to_btm[i] = 0.01 * utmp;
@@ -153,21 +154,21 @@ namespace DUNE
 
       // Water velocity.
       stmp = m_raw_data[19] * 256 + m_raw_data[18];
-      if (stmp != c_invalid_vel)
+      if (stmp != c_invalid_vel && stmp != 0)
       {
         m_data.x_vel_wtr = 0.001 * stmp;
         m_data.vel_wtr_validity |= COMP_X;
       }
 
       stmp = m_raw_data[21] * 256 + m_raw_data[20];
-      if (stmp != c_invalid_vel)
+      if (stmp != c_invalid_vel && stmp != 0)
       {
         m_data.y_vel_wtr = 0.001 * stmp;
         m_data.vel_wtr_validity |= COMP_Y;
       }
 
       stmp = m_raw_data[23] * 256 + m_raw_data[22];
-      if (stmp != c_invalid_vel)
+      if (stmp != c_invalid_vel && stmp != 0)
       {
         m_data.z_vel_wtr = 0.001 * stmp;
         m_data.vel_wtr_validity |= COMP_Z;

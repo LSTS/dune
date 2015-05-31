@@ -370,13 +370,18 @@ namespace DUNE
         }
         catch (RestartNeeded& e)
         {
+          unsigned delay = e.getDelay();
+
           if (e.isError())
           {
             setEntityState(IMC::EntityState::ESTA_FAILURE, DTR("restarting"));
-            err(DTR("restarting in %u seconds due to error: %s"),
-                e.getDelay(), e.getError());
+
+            if (delay == 0)
+              err(DTR("restarting immediately due to error: %s"), e.getError());
+            else
+              err(DTR("restarting in %u seconds due to error: %s"), delay, e.getError());
           }
-          Time::Counter<unsigned int> counter(e.getDelay());
+          Time::Counter<unsigned int> counter(delay);
           while (!stopping() && !counter.overflow())
           {
             double remaining = counter.getRemaining();

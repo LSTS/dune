@@ -61,6 +61,11 @@ namespace DUNE
       .defaultValue("false")
       .description("Bypass heading rate controller and use reference directly on torques");
 
+      param("Altitude Timeout", m_alt_timeout)
+      .defaultValue("60.0f")
+      .units(Units::Meter)
+      .description("Timeout for ignoring invalid altitude");
+
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
 
       // Initialize entity state.
@@ -173,6 +178,9 @@ namespace DUNE
         m_vertical_mode = VERTICAL_MODE_ALTITUDE;
         // Avoid possible rough transition when changing from depth to altitude
         m_bottom_follow_depth = m_estate.depth;
+
+        // reset altitude timer
+        m_timer_alt.setTop(m_alt_timeout);
       }
       else
       {
@@ -220,6 +228,9 @@ namespace DUNE
 
       m_estate = *msg;
 
+      if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+        return;
+
       // check if vertical control mode is valid
       if (m_vertical_mode >= VERTICAL_MODE_SIZE)
       {
@@ -249,12 +260,24 @@ namespace DUNE
         // check if we have altitude measurements
         if (msg->alt < 0.0)
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, DTR(c_no_alt));
-          err("%s", DTR(c_no_alt));
-          return;
-        }
+          if (m_timer_alt.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, DTR(c_no_alt));
+            err("%s", DTR(c_no_alt));
+            return;
+          }
 
-        m_bottom_follow_depth = m_estate.depth + (msg->alt - m_vertical_ref);
+          // Assume zero error in altitude
+          m_bottom_follow_depth = m_estate.depth;
+        }
+        else
+        {
+          // reset timer
+          m_timer_alt.reset();
+
+          // Use altitude error
+          m_bottom_follow_depth = m_estate.depth + (msg->alt - m_vertical_ref);
+        }
 
         if (m_bottom_follow_depth < 0.0)
         {

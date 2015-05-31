@@ -55,6 +55,10 @@ namespace Transports
       std::string dst;
       //! True to transmit estimated state.
       bool tx_estate;
+      //! Transmit distances and uncertainty.
+      bool tx_xtra;
+      //! Timer reference
+      double timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -63,6 +67,8 @@ namespace Transports
       IMC::EstimatedState* m_estate;
       //! Last received navigation uncertainty.
       IMC::NavigationUncertainty* m_uncertainty;
+      //! Reference message.
+      IMC::Reference* m_reference;
       //! DVL beam value.
       int16_t m_beams[c_dvl_beams];
       //! DVL beam entity id.
@@ -71,6 +77,10 @@ namespace Transports
       std::map<std::string, IMC::Reference*> m_txs;
       //! Destination of last transmission.
       std::string m_tx_last;
+      //! Reference timer.
+      Time::Counter<double> m_timer;
+      //! Send reference.
+      bool m_repeater;
       //! TDMA slots
       DUNE::Network::TDMA m_tdma;
       //! Task arguments.
@@ -82,7 +92,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_estate(NULL),
-        m_uncertainty(NULL)
+        m_uncertainty(NULL),
+        m_reference(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_DEVELOPER);
@@ -104,8 +115,18 @@ namespace Transports
         .defaultValue("true")
         .description("True to transmit estimated state");
 
+        param("Transmit Extra Information", m_args.tx_xtra)
+        .defaultValue("true")
+        .description("True to transmit distances and navigation uncertainty");
+
+        param("Reference Repeater Time", m_args.timeout)
+        .defaultValue("30.0")
+        .description("Keep transmitting reference message");
+
         resetBeamsValue();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        m_repeater = false;
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::Distance>(this);
@@ -125,6 +146,7 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_tdma.reset(m_args.slot_count, m_args.slot_number, m_args.slot_dur);
+        m_timer.setTop(m_args.timeout);
       }
 
       void
@@ -267,10 +289,21 @@ namespace Transports
 
             int16_t tdist;
             length = msg->data.size() - Utils::Codecs::CodedEstimatedState::getSize();
+
+            // There's no extra information to be processed.
+            if (length <= 0)
+              break;
+
+            uint8_t eid;
+            ptr += IMC::deserialize(eid, ptr, length);
             for (uint8_t i = 0; i < c_dvl_beams; ++i)
             {
               ptr += IMC::deserialize(tdist, ptr, length);
               distance.value = static_cast<float>(tdist / c_mult);
+
+              // Set source entity.
+              distance.setSourceEntity(eid);
+              eid++;
 
               if (distance.value > 0)
                 distance.validity = IMC::Distance::DV_VALID;
@@ -305,6 +338,15 @@ namespace Transports
           uint16_t sr = resolveSystemName(msg->sys_src);
           rmsg->setSource(sr);
           dispatch(*rmsg);
+
+          // Keep sending reference for a short amount of time.
+          if (id == Utils::Codecs::CodedReference::c_id)
+          {
+            m_repeater = true;
+            m_timer.reset();
+            const IMC::Reference* r = static_cast<const IMC::Reference*>(rmsg);
+            Memory::replace(m_reference, new IMC::Reference(*r));
+          }
         }
       }
 
@@ -320,6 +362,20 @@ namespace Transports
             transmit();
           else
             transmitPending();
+        }
+
+        // Check if there is a Reference to be sent.
+        if (m_repeater && !m_timer.overflow())
+        {
+          if (m_reference != NULL)
+            dispatch(*m_reference);
+        }
+
+        // Reference repeater timeout.
+        if (m_timer.overflow())
+        {
+          m_repeater = false;
+          Memory::clear(m_reference);
         }
       }
 
@@ -368,18 +424,31 @@ namespace Transports
         IMC::UamTxFrame frame;
         frame.setDestination(getSystemId());
         frame.sys_dst = m_args.dst;
-        frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize() + c_dvl_beams * sizeof(int16_t) + 2 * sizeof(float));
+        if (m_args.tx_xtra)
+          frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize() + sizeof(uint8_t) + c_dvl_beams * sizeof(int16_t) + 2 * sizeof(float));
+        else
+          frame.data.resize(Utils::Codecs::CodedEstimatedState::getSize());
         Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
 
-        // Add distance values.
-        uint8_t* ptr = (uint8_t*)&frame.data[Utils::Codecs::CodedEstimatedState::getSize()];
-        for (uint8_t i = 0; i < 4; ++i)
-          ptr += IMC::serialize(m_beams[i], ptr);
-        resetBeamsValue();
+        // Transmit extra information.
+        if (m_args.tx_xtra)
+        {
+          // Add distance values.
+          uint8_t* ptr = (uint8_t*)&frame.data[Utils::Codecs::CodedEstimatedState::getSize()];
 
-        // Add uncertainty.
-        ptr += IMC::serialize(m_uncertainty->x, ptr);
-        ptr += IMC::serialize(m_uncertainty->y, ptr);
+          // Send first DVL entity label value.
+          uint8_t eid = m_dvl_eid[0];
+          ptr += IMC::serialize(eid, ptr);
+
+          for (uint8_t i = 0; i < 4; ++i)
+            ptr += IMC::serialize(m_beams[i], ptr);
+          resetBeamsValue();
+
+          // Add uncertainty.
+          ptr += IMC::serialize(m_uncertainty->x, ptr);
+          ptr += IMC::serialize(m_uncertainty->y, ptr);
+        }
+
         dispatch(frame);
       }
 

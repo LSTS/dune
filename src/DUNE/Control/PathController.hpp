@@ -63,10 +63,6 @@ namespace DUNE
       void
       onEntityReservation(void);
 
-      //! Entity reservation callback.
-      void
-      onEntityResolution(void);
-
       //! Consumer for Brake message.
       //! @param brake message to consume.
       void
@@ -118,12 +114,6 @@ namespace DUNE
       //! class implementation MUST be called.
       virtual void
       onResourceInitialization(void);
-
-      //! On resource aquisition
-      //! This can be overriden but in that case this parent
-      //! class implementation MUST be called.
-      virtual void
-      onResourceAcquisition(void);
 
       //! On resource aquisition
       //! This can be overriden but in that case this parent
@@ -352,6 +342,14 @@ namespace DUNE
       //! Deactivate bottom tracker
       void
       deactivateBottomTracker(void);
+
+      //! Is the system performing bottom tracking ?
+      //! @return true if it is bottom tracking, false otherwise.
+      bool
+      isTrackingBottom(void)
+      {
+        return m_btd.enabled && (m_btrack != NULL);
+      }
 
       //! Data for along-track error monitoring.
       struct ATMData

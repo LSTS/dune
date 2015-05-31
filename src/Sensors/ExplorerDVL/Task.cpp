@@ -320,6 +320,7 @@ namespace Sensors
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.setTop(c_data_timeout);
       }
 
       void
@@ -462,6 +463,10 @@ namespace Sensors
           m_altitude[i].setTimeStamp(tstamp);
           m_altitude[i].value = correctSoundSpeed(data->rng_to_btm[i]);
           setAltitudeValidity(m_altitude[i]);
+
+          if ((data->bm_status & (0x03 << i * 2)) != 0)
+            m_altitude[i].validity = IMC::Distance::DV_INVALID;
+
           m_filter.updateBeam(i, m_altitude[i]);
           dispatch(m_altitude[i], DF_KEEP_TIME);
         }
@@ -496,11 +501,11 @@ namespace Sensors
 
         // Y is forward, X is right, Z is up.
         m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Y) ? IMC::WaterVelocity::VAL_VEL_X : 0;
-        m_wvel.x = correctSoundSpeed(data->y_vel_btm);
+        m_wvel.x = correctSoundSpeed(data->y_vel_wtr);
         m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_X) ? IMC::WaterVelocity::VAL_VEL_Y : 0;
-        m_wvel.y = correctSoundSpeed(data->x_vel_btm);
+        m_wvel.y = correctSoundSpeed(data->x_vel_wtr);
         m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Z) ? IMC::WaterVelocity::VAL_VEL_Z : 0;
-        m_wvel.z = correctSoundSpeed(-data->z_vel_btm);
+        m_wvel.z = correctSoundSpeed(-data->z_vel_wtr);
         dispatch(m_wvel, DF_KEEP_TIME);
       }
 
@@ -510,6 +515,13 @@ namespace Sensors
         bool read_sample = false;
 
         size_t rv = m_driver->readData(bfr, bfr_size);
+        if (rv > 0)
+        {
+          IMC::DevDataBinary debug_data;
+          debug_data.value.assign((char*)bfr, (char*)bfr + rv);
+          dispatch(debug_data);
+        }
+
         for (size_t i = 0; i < rv; ++i)
         {
           if (!m_parser.parse(bfr[i]))
@@ -616,14 +628,12 @@ namespace Sensors
           case ST_ACT_SETUP:
             if (setup())
             {
-              activate();
               m_act_state = ST_ACT_DONE;
               return true;
             }
             break;
 
           case ST_ACT_DONE:
-            m_wdog.setTop(c_data_timeout);
             break;
         }
 
@@ -654,7 +664,6 @@ namespace Sensors
             waitForMessages(1.0);
             if (!m_powered)
             {
-              deactivate();
               m_deact_state = ST_DEACT_DONE;
               return true;
             }
@@ -685,14 +694,15 @@ namespace Sensors
             else if (m_wdog.overflow())
             {
               throw RestartNeeded(Status::getString(Status::CODE_COM_ERROR),
-                                  c_restart_delay, false);
+                                  c_restart_delay, true);
             }
           }
           else if (isActivating())
           {
             try
             {
-              runActivationStateMachine();
+              if (runActivationStateMachine())
+                activate();
             }
             catch (std::runtime_error& e)
             {
@@ -703,7 +713,8 @@ namespace Sensors
           {
             try
             {
-              runDeactivationStateMachine();
+              if (runDeactivationStateMachine())
+                deactivate();
             }
             catch (std::runtime_error& e)
             {

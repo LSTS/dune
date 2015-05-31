@@ -69,6 +69,14 @@ namespace Transports
       double kalive_tout;
       //! Highest address.
       unsigned highest_addr;
+      //! True to control source level based on medium.
+      bool src_level_control;
+      //! Source Level - Unknown.
+      unsigned src_level_unknown;
+      //! Source Level - Water.
+      unsigned src_level_water;
+      //! Source Level - Underwater.
+      unsigned src_level_underwater;
     };
 
     // Type definition for mapping addresses.
@@ -99,6 +107,8 @@ namespace Transports
       Ticket* m_ticket;
       //! Keep-alive counter.
       Counter<double> m_kalive_counter;
+      //! Medium.
+      IMC::VehicleMedium m_medium;
       //! Task arguments.
       Arguments m_args;
 
@@ -177,6 +187,22 @@ namespace Transports
         .units(Units::Second)
         .description("Keep-alive timeout");
 
+        param("Source Level - Control", m_args.src_level_control)
+        .defaultValue("false")
+        .description("Enable/disable source level control based on medium");
+
+        param("Source Level - Unknown", m_args.src_level_unknown)
+        .defaultValue("3")
+        .description("Source level when medium is unknown");
+
+        param("Source Level - Water", m_args.src_level_water)
+        .defaultValue("2")
+        .description("Source level when medium is water");
+
+        param("Source Level - Underwater", m_args.src_level_underwater)
+        .defaultValue("1")
+        .description("Source level when medium is underwater");
+
         // Process modem addresses.
         std::string system = getSystemName();
         std::vector<std::string> addrs = ctx.config.options("Evologics Addresses");
@@ -191,10 +217,12 @@ namespace Transports
             m_address = addr;
         }
 
+        m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
+
         bind<IMC::UamTxFrame>(this);
         bind<IMC::DevDataText>(this);
         bind<IMC::SoundSpeed>(this);
-        //bind<IMC::VehicleMedium>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -308,6 +336,33 @@ namespace Transports
           return;
 
         m_sound_speed = msg->value;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (!m_args.src_level_control)
+          return;
+
+        if (msg->medium != m_medium.medium)
+        {
+          spew("medium changed to %u", msg->medium);
+          m_medium = *msg;
+          switch (msg->medium)
+          {
+            case IMC::VehicleMedium::VM_UNDERWATER:
+              m_driver->setSourceLevel(m_args.src_level_underwater);
+              break;
+
+            case IMC::VehicleMedium::VM_WATER:
+              m_driver->setSourceLevel(m_args.src_level_water);
+              break;
+
+            default:
+              m_driver->setSourceLevel(m_args.src_level_unknown);
+              break;
+          }
+        }
       }
 
       void

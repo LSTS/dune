@@ -410,6 +410,15 @@ namespace Sensors
           }
 
           size_t rv = m_uart->readString(m_bfr, sizeof(m_bfr));
+
+          // Save raw data.
+          if (rv > 0)
+          {
+            IMC::DevDataBinary raw;
+            raw.value.assign((char*)m_bfr, (char*)m_bfr + rv);
+            dispatch(raw);
+          }
+
           for (size_t i = 0; i < rv; ++i)
           {
             try

@@ -163,6 +163,10 @@ namespace Supervisors
       void
       consume(const IMC::GpsFix* msg)
       {
+        // Only use fixes from local system.
+        if (msg->getSource() != getSystemId())
+          return;
+
         computeTimeOffset(msg);
       }
 

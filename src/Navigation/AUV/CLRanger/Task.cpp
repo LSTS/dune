@@ -58,6 +58,8 @@ namespace Navigation
         uint8_t extra_slots;
         //! AUV to range.
         std::string dst;
+        //! Destination first.
+        bool dest_head;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -66,10 +68,18 @@ namespace Navigation
         IMC::EstimatedState* m_estate;
         //! Current LBL configuration.
         IMC::LblConfig m_lbl_config;
-        //! Cursor.
-        MessageList<IMC::LblBeacon>::const_iterator m_cursor;
-        //! TDMA slots
+        //! Latest LBL range to destination system.
+        IMC::LblRange m_lbl_range;
+        //! TDMA slots for regular transmissions.
         DUNE::Network::TDMA m_tdma;
+        //! TDMA slots for piggyback messages.
+        DUNE::Network::TDMA m_tdma_pbm;
+        //! List of systems to ping.
+        std::vector<std::string> m_list;
+        //! Iterator
+        uint8_t m_cursor;
+        //! Holder counter;
+        Time::Counter<double> m_wdog;
         //! Task arguments.
         Arguments m_args;
 
@@ -95,12 +105,19 @@ namespace Navigation
           .description("TDMA slot duration");
 
           param("Extra Slots", m_args.extra_slots)
-          .defaultValue("1")
+          .defaultValue("0")
           .minimumValue("0")
           .description("Extra TDMA slots");
 
           param("Destination", m_args.dst)
           .description("Destination name");
+
+          param("Destination First", m_args.dest_head)
+          .defaultValue("false")
+          .description("Destination will be pinged first");
+
+          m_cursor = 0;
+          m_wdog.setTop(2.0);
 
           bind<IMC::EstimatedState>(this);
           bind<IMC::GpsFix>(this);
@@ -136,6 +153,13 @@ namespace Navigation
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
+        //! On task activation.
+        void
+        onActivation(void)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
         void
         consume(const IMC::EstimatedState* msg)
         {
@@ -153,9 +177,25 @@ namespace Navigation
         {
           if (isActive())
           {
+            // Synchronize cursor at each minute start.
+            synch(msg->utc_time);
+
             if (m_tdma.check(msg->utc_time))
               pingNextBeacon();
+            if (m_tdma_pbm.check(msg->utc_time))
+              queue();
           }
+        }
+
+        void
+        synch(float utc_time)
+        {
+          unsigned thour = (unsigned)(utc_time / 3600);
+          unsigned tmin = (unsigned)(((utc_time / 3600.0) - thour) * 60);
+          unsigned tsec = (unsigned)Math::round(((((utc_time / 3600.0) - thour) * 60.0) - tmin) * 60.0);
+
+          if (tsec == 0)
+            m_cursor = 0;
         }
 
         void
@@ -165,7 +205,6 @@ namespace Navigation
           if (msg->op == IMC::LblConfig::OP_SET_CFG)
           {
             m_lbl_config = *msg;
-            m_cursor = m_lbl_config.beacons.begin();
             setTDMA();
           }
           else if (msg->op == IMC::LblConfig::OP_GET_CFG)
@@ -173,6 +212,7 @@ namespace Navigation
             IMC::LblConfig cfg(m_lbl_config);
             cfg.op = IMC::LblConfig::OP_CUR_CFG;
             cfg.setSource(getSystemId());
+            cfg.setSourceEntity(getEntityId());
             dispatchReply(*msg, cfg);
           }
         }
@@ -224,6 +264,16 @@ namespace Navigation
 
             if ((*itr)->beacon == msg->sys)
             {
+              // Hold range to system.
+              if ((*itr)->beacon == m_args.dst && !m_ctx.profiles.isSelected("Simulation"))
+              {
+                m_lbl_range.setTimeStamp(msg->getTimeStamp());
+                m_lbl_range.id = id;
+                m_lbl_range.range = msg->value;
+                m_wdog.reset();
+                return;
+              }
+
               IMC::LblRange range;
               range.id = id;
               range.range = msg->value;
@@ -273,7 +323,12 @@ namespace Navigation
 
           m_lbl_config.op = IMC::LblConfig::OP_SET_CFG;
           m_lbl_config.setSource(getSystemId());
+          m_lbl_config.setSourceEntity(getEntityId());
           dispatch(m_lbl_config);
+
+          // Dispatch LBL range if information is not too old.
+          if (!m_wdog.overflow())
+            dispatch(m_lbl_range);
         }
 
         //! Compute TDMA slots.
@@ -281,6 +336,8 @@ namespace Navigation
         setTDMA(void)
         {
           std::vector<unsigned> slot_number;
+          std::vector<unsigned> slot_pbm_number;
+          m_list.clear();
 
           // Only if beacons are available.
           if (m_lbl_config.beacons.size() > 0)
@@ -298,61 +355,92 @@ namespace Navigation
                 slot_count++;
 
               if ((*itr)->beacon == m_args.dst)
+              {
                 destination_check = true;
+
+                // Destination goes first.
+                if (m_args.dest_head)
+                  m_list.insert(m_list.begin(), (*itr)->beacon);
+                else
+                  m_list.push_back((*itr)->beacon);
+              }
+              else
+              {
+                // Destination goes last.
+                if (m_args.dest_head)
+                  m_list.push_back((*itr)->beacon);
+                else
+                  m_list.insert(m_list.begin(), (*itr)->beacon);
+              }
             }
 
             if (!destination_check)
               err(DTR("destination is not in the LBL configuration"));
 
-            for (uint8_t i = 0; i < slot_count - m_args.extra_slots; ++i)
+            // Ping to beacons.
+            for (uint8_t i = 0; i < slot_count - m_args.extra_slots - 1; ++i)
               slot_number.push_back(i + (m_args.slot_order - 1) * slot_count);
 
-            m_tdma.reset(2 * slot_count, slot_number, m_args.slot_duration);
+            // Ping destination system.
+            int8_t slot = (m_args.slot_order % 2) * 2 * slot_count - m_args.extra_slots - 1;
+            if (slot < 0)
+              slot += slot_count;
+            slot_number.push_back(slot);
 
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            // Queued message.
+            int8_t pbm_slot = ((m_args.slot_order * slot_count - m_args.extra_slots - 1) * m_args.slot_duration) - 1;
+            if (pbm_slot < 0)
+              pbm_slot += slot_count * m_args.slot_duration * 2;
+            slot_pbm_number.push_back(pbm_slot);
+
+            // Debug information
+            for (uint8_t i = 0; i < slot_number.size(); i++)
+              spew("Added slot for instant message: %d/%d", slot_number[i] * m_args.slot_duration, slot_count * 2 * m_args.slot_duration);
+
+            for (uint8_t i = 0; i < slot_pbm_number.size(); i++)
+              spew("Added slot for piggyback message: %d/%d", slot_pbm_number[i], slot_count * m_args.slot_duration * 2);
+
+            // Reset TDMA.
+            m_tdma.reset(2 * slot_count, slot_number, m_args.slot_duration);
+            m_tdma_pbm.reset(2 * slot_count * m_args.slot_duration, slot_pbm_number, 1);
+
+            if (isActive())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           }
           else
           {
             m_tdma.reset(0, slot_number, 0);
+            m_tdma_pbm.reset(0, slot_number, 0);
           }
-        }
-
-        //! Get next beacon in the list.
-        //! @return next beacon.
-        const IMC::LblBeacon*
-        getNextBeacon(void)
-        {
-          for (size_t i = 0; i < m_lbl_config.beacons.size(); ++i)
-          {
-            if (*m_cursor != NULL)
-            {
-              const IMC::LblBeacon* beacon = *m_cursor;
-              if (++m_cursor == m_lbl_config.beacons.end())
-                m_cursor = m_lbl_config.beacons.begin();
-
-              // Do not ping itself.
-              if ((*m_cursor)->beacon == getSystemName())
-              {
-                if (++m_cursor == m_lbl_config.beacons.end())
-                  m_cursor = m_lbl_config.beacons.begin();
-              }
-
-              return beacon;
-            }
-          }
-
-          return NULL;
         }
 
         //! Ping next beacon in the list.
         void
         pingNextBeacon(void)
         {
-          const IMC::LblBeacon* beacon = getNextBeacon();
-          if (beacon == NULL)
-            return;
+          ping(m_list[m_cursor]);
 
-          ping(beacon->beacon);
+          if (++m_cursor >= m_list.size())
+            m_cursor = 0;
+        }
+
+        //! Queue Piggyback Message
+        void
+        queue(void)
+        {
+          IMC::UamTxFrame frame;
+          frame.setDestination(getSystemId());
+          frame.flags = IMC::UamTxFrame::UTF_DELAYED;
+
+          if (m_estate != NULL)
+          {
+            frame.sys_dst = m_args.dst;
+            Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
+          }
+
+          dispatch(frame);
         }
 
         //! Ping system.
@@ -363,19 +451,8 @@ namespace Navigation
           IMC::UamTxFrame frame;
           frame.setDestination(getSystemId());
           frame.flags = IMC::UamTxFrame::UTF_ACK;
-
-          // Cooperative AUV is the next system to ping.
-          if (sys_name == m_args.dst && m_estate != NULL)
-          {
-            frame.sys_dst = m_args.dst;
-            Utils::Codecs::CodedEstimatedState::encode(m_estate, &frame);
-          }
-          else
-          {
-            frame.sys_dst = sys_name;
-            frame.data.push_back(0);
-          }
-
+          frame.sys_dst = sys_name;
+          frame.data.push_back(0);
           dispatch(frame);
         }
 

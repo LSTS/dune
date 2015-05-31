@@ -512,6 +512,16 @@ namespace DUNE
       {
         return toBE(static_cast<uint32_t>(value), dst);
       }
+
+      static inline unsigned
+      toBE(const float value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return copy4b(dst, (uint8_t*)&value);
+#else
+        return rcopy4b(dst, (uint8_t*)&value);
+#endif
+      }
     };
 
     //! Copy two bytes of a memory area while reversing the order of

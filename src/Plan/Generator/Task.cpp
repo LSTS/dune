@@ -83,7 +83,7 @@ namespace Plan
       {
         param("Dive depth", m_args.dive_depth)
         .description("Depth to dive in response to 'dive' command")
-        .defaultValue("2.0");
+        .defaultValue("5.0");
 
         param("Traveling depth", m_args.travel_depth)
         .description("Depth to use when traveling (Goto maneuvers)")
@@ -337,7 +337,7 @@ namespace Plan
           else
           {
             IMC::PlanTransition trans;
-            trans.conditions = "maneuverIsDone";
+            trans.conditions = "ManeuverIsDone";
             trans.dest_man = man_spec.maneuver_id;
             trans.source_man = last_man.maneuver_id;
 
@@ -435,7 +435,7 @@ namespace Plan
           }
 
           // if some latitude / longitude was given, goes there
-          if (lat != 0 || lon != 0)
+          if (lat != 0 && lon != 0)
           {
             IMC::MessageList<IMC::Maneuver> maneuvers;
 
@@ -490,11 +490,24 @@ namespace Plan
           loiter->lon = lon;
           loiter->z = depth;
           loiter->z_units = IMC::Z_DEPTH;
-          loiter->type = IMC::Loiter::LT_CIRCULAR;
-          loiter->duration = m_args.dive_time;
-          loiter->speed = m_args.speed_rpms;
+          loiter->duration = params.get("duration", m_args.dive_time);
+          loiter->speed = params.get("rpm", m_args.speed_rpms);
           loiter->speed_units = IMC::SUNITS_RPM;
           loiter->radius = m_args.radius;
+          loiter->direction = IMC::Loiter::LD_CCLOCKW;
+
+          std::string default_type = "eight";
+          std::string type = params.get("type", default_type);
+          if (!type.compare("circular"))
+          {
+            loiter->type = IMC::Loiter::LT_CIRCULAR;
+          }
+          else
+          {
+            loiter->type = IMC::Loiter::LT_EIGHT;
+            loiter->length = loiter->radius * 2.5;
+          }
+
           maneuvers.push_back(*loiter);
 
           delete loiter;
