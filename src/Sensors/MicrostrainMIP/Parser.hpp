@@ -42,37 +42,6 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Commands to device.
-    enum Commands
-    {
-      //! Acceleration, Angular Rates, Magnetometer Vector and the Orientation Matrix.
-      CMD_DATA = 0xCC,
-      //! Write Word to EEPROM
-      CMD_WRITE_EEPROM = 0xE4,
-      //! Read Word from EEPROM
-      CMD_READ_EEPROM = 0xE5,
-      //! Firmware version.
-      CMD_FWARE_VERSION = 0xE9,
-      //! Device reset.
-      CMD_DEVICE_RESET = 0xFE
-    };
-
-    //! Response frame sizes.
-    enum Sizes
-    {
-      //! Size of Acceleration, Angular Rates,
-      //! Magnetometer Vector and Orientation Matrix frame.
-      CMD_DATA_SIZE = 79,
-      //! Size of Write Word to EEPROM frame.
-      CMD_WRITE_EEPROM_SIZE = 5,
-      //! Size of Read Word from EEPROM.
-      CMD_READ_EEPROM_SIZE = 5,
-      //! Size of Firmware version frame.
-      CMD_FWARE_VERSION_SIZE = 7,
-      //! Size of Device reset frame.
-      CMD_DEVICE_RESET_SIZE = 0
-    };
-
     class Parser
     {
     public:
@@ -92,7 +61,6 @@ namespace Sensors
         switch (m_state)
         {
           case STA_SYNC0:
-            //fprintf(stdout, "SYN0: %02X\n", byte);
             if (byte == c_sync0)
             {
               m_timestamp = Clock::getSinceEpoch();
@@ -105,7 +73,6 @@ namespace Sensors
             break;
 
           case STA_SYNC1:
-            //fprintf(stdout, "SYN1: %02X\n", byte);
             m_checksum_msb += byte;
             m_checksum_lsb += m_checksum_msb;
             if (byte == c_sync1)
@@ -115,7 +82,6 @@ namespace Sensors
             break;
 
           case STA_DESC:
-            //fprintf(stdout, "DESC: %02X\n", byte);
             m_checksum_msb += byte;
             m_checksum_lsb += m_checksum_msb;
             m_desc = byte;
@@ -123,7 +89,6 @@ namespace Sensors
             break;
 
           case STA_PLEN:
-            //fprintf(stdout, "PLEN: %02X\n", byte);
             m_checksum_msb += byte;
             m_checksum_lsb += m_checksum_msb;
             m_payload_size = byte;
@@ -131,7 +96,6 @@ namespace Sensors
             break;
 
           case STA_PLOAD:
-            //fprintf(stdout, "PLOAD: %02X\n", byte);
             m_checksum_msb += byte;
             m_checksum_lsb += m_checksum_msb;
             m_payload[m_payload_index++] = byte;
@@ -140,7 +104,6 @@ namespace Sensors
             break;
 
           case STA_CHECKSUM_MSB:
-            //fprintf(stdout, "CMSB: %02X\n", byte);
             if (byte == m_checksum_msb)
             {
               m_state = STA_CHECKSUM_LSB;
@@ -148,21 +111,16 @@ namespace Sensors
             else
             {
               m_state = STA_SYNC0;
-              fprintf(stdout, "Invalid checksum MSB: %02X != %02X\n", byte, m_checksum_msb);
               ++m_invalid_checksum_count;
             }
             break;
 
           case STA_CHECKSUM_LSB:
-            //fprintf(stdout, "CLSB: %02X\n", byte);
             m_state = STA_SYNC0;
             if (byte == m_checksum_lsb)
               return true;
             else
-            {
-              fprintf(stdout, "Invalid checksum LSB: %02X != %02X\n", byte, m_checksum_lsb);
               ++m_invalid_checksum_count;
-            }
             break;
         }
 

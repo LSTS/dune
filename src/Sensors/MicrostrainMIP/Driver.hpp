@@ -411,10 +411,7 @@ namespace Sensors
       saveToBacklog(const uint8_t* bfr, size_t start, size_t size)
       {
         for (size_t i = start; i < size; ++i)
-        {
-          //fprintf(stderr, "backlog %u - %u\n", i, size);
           m_backlog.push(bfr[i]);
-        }
       }
 
       //! Create packet using command buffer.
@@ -446,11 +443,6 @@ namespace Sensors
       size_t
       send(const uint8_t* data, size_t data_size)
       {
-        // fprintf(stdout, "SEND:");
-        // for (size_t i = 0; i < data_size; ++i)
-        //   fprintf(stdout, " %02X", m_bfr[i]);
-        // fprintf(stdout, "\n");
-
         return m_uart->write(data, data_size);
       }
 
@@ -482,15 +474,8 @@ namespace Sensors
           size_t size = receive(bfr, sizeof(bfr));
           for (size_t i = 0; i < size; ++i)
           {
-            //fprintf(stderr, "BYTE: %02X\n", bfr[i]);
-
             if (m_parser.parse(bfr[i]))
             {
-              // fprintf(stdout, "DONE: %02X %02X %02X %02X\n",
-              //         m_parser.getDescriptorSet(),
-              //         m_parser.getFieldDescriptor(),
-              //         m_parser.getPayload()[2],
-              //         m_parser.getPayload()[3]);
               if (m_parser.getDescriptorSet() == cmd_set and m_parser.getFieldDescriptor() == 0xf1)
               {
                 if (m_parser.getPayload()[2] == cmd and m_parser.getPayload()[3] == 0)
