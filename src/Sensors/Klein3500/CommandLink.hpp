@@ -174,9 +174,6 @@ namespace Sensors
         // Velocity.
         double vel = Math::norm(estate.vx, estate.vy);
 
-        // Course.
-        double course = Angles::degrees(Angles::normalizeRadian(std::atan2(estate.vy, estate.vx)) + Math::c_pi);
-
         // Build sentence.
         std::string stn = String::str("$PAUV"
                                       ",%02u%02u%02u.%02u,A"
@@ -197,7 +194,7 @@ namespace Sensors
                                       std::abs(lon_deg), std::fabs(lon_min),
                                       (lon_deg >= 0) ? 'E' : 'W',
                                       vel * DUNE::Units::c_ms_to_knot,
-                                      course,
+                                      Angles::degrees(estate.psi),
                                       Angles::degrees(estate.theta),
                                       Angles::degrees(estate.phi),
                                       estate.depth,
