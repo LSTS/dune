@@ -157,6 +157,15 @@ namespace Sensors
         return sendCommand(m_cmd_bfr);
       }
 
+      //! Set the source of environmental sensor data to manual. This is
+      //! useful when the DVL doesn't have any installed optional sensors.
+      //! @return true if command succeeded, false otherwise.
+      bool
+      setManualSensorSource(void)
+      {
+        return sendCommand("EZ00000000\r");
+      }
+
       //! Set the number of seconds to wait for a reply.
       //! @param[in] timeout number of seconds to wait for a reply.
       void

@@ -32,6 +32,7 @@
 
 // Local headers.
 #include "Driver.hpp"
+#include "ParserPD0.hpp"
 
 namespace Sensors
 {
@@ -67,8 +68,6 @@ namespace Sensors
     {
       //! Starting deactivation procedure.
       ST_DEACT_BEGIN,
-      //! Stop pinging.
-      ST_DEACT_STOP_PING,
       //! Turning ofg power channel.
       ST_DEACT_TURN_OFF,
       //! Waiting for power channel to turn off.
@@ -129,8 +128,8 @@ namespace Sensors
       int m_sound_speed_eid;
       //! Medium monitor.
       Monitors::MediumHandler m_medium;
-      //! PD4 format parser.
-      Parsers::PD4 m_parser;
+      //! PD0 format parser.
+      ParserPD0 m_parser;
       //! True if device is powered.
       bool m_powered;
       //! Activation state machine state.
@@ -449,65 +448,44 @@ namespace Sensors
         }
       }
 
-      double
-      correctSoundSpeed(double value)
-      {
-        return value * (m_sound_speed / m_args.sound_speed_def);
-      }
-
       void
-      processAltitude(const PD4::Data* data, double tstamp)
+      processAltitude(void)
       {
         for (size_t i = 0; i < c_beam_count; ++i)
         {
-          m_altitude[i].setTimeStamp(tstamp);
-          m_altitude[i].value = correctSoundSpeed(data->rng_to_btm[i]);
-          setAltitudeValidity(m_altitude[i]);
-
-          if ((data->bm_status & (0x03 << i * 2)) != 0)
-            m_altitude[i].validity = IMC::Distance::DV_INVALID;
-
+          m_parser.fillAltitude(m_altitude[i], i, m_sound_speed);
           m_filter.updateBeam(i, m_altitude[i]);
           dispatch(m_altitude[i], DF_KEEP_TIME);
         }
 
-        m_altitude_filtered.setTimeStamp(tstamp);
+        m_altitude_filtered.setTimeStamp(m_altitude[0].getTimeStamp());
         m_altitude_filtered.value = m_filter.getDistance();
         setAltitudeValidity(m_altitude_filtered);
         dispatch(m_altitude_filtered, DF_KEEP_TIME);
       }
 
       void
-      processGroundVelocity(const PD4::Data* data, double tstamp)
+      processGroundVelocity(void)
       {
-        m_gvel.setTimeStamp(tstamp);
-        m_gvel.validity = 0;
-
-        // Y is forward, X is right, Z is up.
-        m_gvel.validity |= (data->vel_btm_validity & PD4::COMP_Y) ? IMC::GroundVelocity::VAL_VEL_X : 0;
-        m_gvel.x = correctSoundSpeed(data->y_vel_btm);
-        m_gvel.validity |= (data->vel_btm_validity & PD4::COMP_X) ? IMC::GroundVelocity::VAL_VEL_Y : 0;
-        m_gvel.y = correctSoundSpeed(data->x_vel_btm);
-        m_gvel.validity |= (data->vel_btm_validity & PD4::COMP_Z) ? IMC::GroundVelocity::VAL_VEL_Z : 0;
-        m_gvel.z = correctSoundSpeed(-data->z_vel_btm);
+        m_parser.fillGroundVelocity(m_gvel, m_sound_speed);
         dispatch(m_gvel, DF_KEEP_TIME);
       }
 
-      void
-      processWaterVelocity(const PD4::Data* data, double tstamp)
-      {
-        m_wvel.setTimeStamp(tstamp);
-        m_wvel.validity = 0;
+      // void
+      // processWaterVelocity(const PD4::Data* data, double tstamp)
+      // {
+      //   m_wvel.setTimeStamp(tstamp);
+      //   m_wvel.validity = 0;
 
-        // Y is forward, X is right, Z is up.
-        m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Y) ? IMC::WaterVelocity::VAL_VEL_X : 0;
-        m_wvel.x = correctSoundSpeed(data->y_vel_wtr);
-        m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_X) ? IMC::WaterVelocity::VAL_VEL_Y : 0;
-        m_wvel.y = correctSoundSpeed(data->x_vel_wtr);
-        m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Z) ? IMC::WaterVelocity::VAL_VEL_Z : 0;
-        m_wvel.z = correctSoundSpeed(-data->z_vel_wtr);
-        dispatch(m_wvel, DF_KEEP_TIME);
-      }
+      //   // Y is forward, X is right, Z is up.
+      //   m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Y) ? IMC::WaterVelocity::VAL_VEL_X : 0;
+      //   m_wvel.x = correctSoundSpeed(data->y_vel_wtr);
+      //   m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_X) ? IMC::WaterVelocity::VAL_VEL_Y : 0;
+      //   m_wvel.y = correctSoundSpeed(data->x_vel_wtr);
+      //   m_wvel.validity |= (data->vel_wtr_validity & PD4::COMP_Z) ? IMC::WaterVelocity::VAL_VEL_Z : 0;
+      //   m_wvel.z = correctSoundSpeed(-data->z_vel_wtr);
+      //   dispatch(m_wvel, DF_KEEP_TIME);
+      // }
 
       bool
       readSample(uint8_t* bfr, size_t bfr_size)
@@ -527,12 +505,8 @@ namespace Sensors
           if (!m_parser.parse(bfr[i]))
             continue;
 
-          double tstamp = Clock::getSinceEpoch();
-          const PD4::Data* data = m_parser.data();
-          processGroundVelocity(data, tstamp);
-          processWaterVelocity(data, tstamp);
-          processAltitude(data, tstamp);
-          m_wdog.reset();
+          processAltitude();
+          processGroundVelocity();
 
           read_sample = true;
         }
@@ -554,6 +528,11 @@ namespace Sensors
         trace("set turn key off");
         consumeMessages();
         if (!m_driver->setTurnKey(false))
+          goto fail;
+
+        trace("set manual sensor source");
+        consumeMessages();
+        if (!m_driver->setManualSensorSource())
           goto fail;
 
         trace("set sound speed to %0.2f", m_args.sound_speed_def);
@@ -578,7 +557,7 @@ namespace Sensors
 
         trace("set data format");
         consumeMessages();
-        if (!m_driver->setDataFormat(4))
+        if (!m_driver->setDataFormat(0))
           goto fail;
 
         trace("start pinging");
@@ -587,6 +566,7 @@ namespace Sensors
           goto fail;
 
         debug("device is configured");
+        m_parser.reset();
         return true;
 
       fail:
@@ -610,22 +590,26 @@ namespace Sensors
         switch (m_act_state)
         {
           case ST_ACT_BEGIN:
+            trace("activation begin");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_act_state = ST_ACT_TURN_ON;
             break;
 
           case ST_ACT_TURN_ON:
+            trace("turning on");
             turnPowerOn();
             m_act_state = ST_ACT_TURN_ON_WAIT;
             break;
 
           case ST_ACT_TURN_ON_WAIT:
+            trace("waiting turn on");
             waitForMessages(1.0);
             if (m_powered)
               m_act_state = ST_ACT_SETUP;
             break;
 
           case ST_ACT_SETUP:
+            trace("setup");
             if (setup())
             {
               m_act_state = ST_ACT_DONE;
@@ -634,6 +618,7 @@ namespace Sensors
             break;
 
           case ST_ACT_DONE:
+            trace("activation done");
             break;
         }
 
@@ -646,21 +631,19 @@ namespace Sensors
         switch (m_deact_state)
         {
           case ST_DEACT_BEGIN:
+            trace("activation begin");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
-            m_deact_state = ST_DEACT_STOP_PING;
-            break;
-
-          case ST_DEACT_STOP_PING:
-            if (m_driver->stopPinging())
-              m_deact_state = ST_DEACT_TURN_OFF;
+            m_deact_state = ST_DEACT_TURN_OFF;
             break;
 
           case ST_DEACT_TURN_OFF:
+            trace("turning power offg");
             turnPowerOff();
             m_deact_state = ST_DEACT_TURN_OFF_WAIT;
             break;
 
           case ST_DEACT_TURN_OFF_WAIT:
+            trace("waiting power off");
             waitForMessages(1.0);
             if (!m_powered)
             {
@@ -670,6 +653,7 @@ namespace Sensors
             break;
 
           case ST_DEACT_DONE:
+            trace("deactivation done");
             break;
         }
 
@@ -689,12 +673,13 @@ namespace Sensors
           {
             if (readSample(bfr, sizeof(bfr)))
             {
+              m_wdog.reset();
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             }
             else if (m_wdog.overflow())
             {
-              throw RestartNeeded(Status::getString(Status::CODE_COM_ERROR),
-                                  c_restart_delay, true);
+              requestDeactivation();
+              requestActivation();
             }
           }
           else if (isActivating())
