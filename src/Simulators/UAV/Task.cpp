@@ -329,8 +329,22 @@ namespace Simulators
       }
 
       void
+      onResourceRelease(void)
+      {
+        spew("do 'onResourceRelease'");
+
+        Memory::clear( m_model );
+        Memory::clear( m_cmd_flt );
+      }
+
+      void
       onResourceAcquisition(void)
       {
+        spew("onResourceAquisition - start");
+
+        // Process the systems and entities allowed to define a command.
+        m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
+
         // Control and state initialization
 
         // Model state initialization
@@ -441,28 +455,8 @@ namespace Simulators
         debug("Initial x wind speed: %1.4f", m_wind(0));
         debug("Initial y wind speed: %1.4f", m_wind(1));
         debug("Initial z wind speed: %1.4f", m_wind(2));
-      }
 
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      void
-      onEntityResolution(void)
-      {
-        spew("onEntityResolution - start");
-
-        // Process the systems and entities allowed to define a command.
-        m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
-
-        spew("onEntityResolution - end");
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_model);
+        spew("onResourceAquisition - end");
       }
 
       void
