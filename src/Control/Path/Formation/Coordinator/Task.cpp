@@ -564,61 +564,50 @@ namespace Control
               m_alt_max_uav = Matrix(1, m_uav_n, m_args.alt_max);
             }
 
-            //==========================================
             // Compute the leader limits from the formation configuration
-            //==========================================
             updateLeaderLimits();
 
-            //==========================================
-            // Check if the coordinator is activating and continue the activation process
-            //==========================================
+            // Check if the coordinator is activating and continue
+            // the activation process
             spew("onUpdateParameters - 4");
             if (m_plan_params && (isActivating() || isActive()))
               onRequestActivation();
 
-            //==========================================
-            // Initialize the leader vehicle model
-            //==========================================
-            spew("onUpdateParameters - 5");
-            if (m_param_update_first)
+            // Updated the leader vehicle model
+            spew( "onUpdateParameters - 5" );
+            if ( m_model != NULL )
             {
-              // Model initialization
-              debug("Formation leader model initialization");
-              // - State  and control parameters initialization
-              m_velocity(0) = m_speed_cmd_leader;
-              m_model = new DUNE::Simulation::UAVSimulation(*this,
-                  m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-              // - Commands initialization
-              m_model->command(0, m_speed_cmd_leader, -m_alt_cmd_leader);
-            }
-            else if (paramChanged(m_args.c_bank) || paramChanged(m_args.c_speed))
-              m_model->setCtrl(m_args.c_bank, m_args.c_speed);
-            // - Limits definition
-            if (paramChanged(m_args.l_bank_rate))
-              m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-            if (paramChanged(m_args.l_accel_x))
-              m_model->setAccelLim(m_args.l_accel_x);
-            // - Simulation type
-            if (paramChanged(m_args.sim_type))
-              m_model->m_sim_type = m_args.sim_type;
+              debug( "Formation leader model initialization" );
+              if ( paramChanged( m_args.c_bank ) ||
+                   paramChanged( m_args.c_speed ) )
+                m_model->setCtrl( m_args.c_bank, m_args.c_speed );
+              // Limits definition
+              if ( paramChanged( m_args.l_bank_rate ) )
+                m_model->setBankRateLim( 
+                  DUNE::Math::Angles::radians( m_args.l_bank_rate ) );
+              if ( paramChanged( m_args.l_accel_x ) )
+                m_model->setAccelLim( m_args.l_accel_x );
+              // Simulation type
+              if ( paramChanged( m_args.sim_type ) )
+                m_model->m_sim_type = m_args.sim_type;
+	    }
 
-            //==========================================
             // Set messages system source
-            //==========================================
-            spew("onUpdateParameters - 6");
+            spew( "onUpdateParameters - 6" );
             //! Set source system alias
-            if (paramChanged(m_args.src_alias))
+            if ( paramChanged( m_args.src_alias ) )
             {
-              if (!m_args.src_alias.empty())
+              if ( !m_args.src_alias.empty() )
               {
                 // Resolve systems.
                 try
                 {
-                  m_alias_id = resolveSystemName(m_args.src_alias);
+                  m_alias_id = resolveSystemName( m_args.src_alias );
                 }
                 catch (...)
                 {
-                  debug("No system found with designation '%s'.", m_args.src_alias.c_str());
+                  debug( "No system found with designation '%s'.",
+                         m_args.src_alias.c_str() );
                   m_alias_id = UINT_MAX;
                 }
               }
@@ -627,28 +616,39 @@ namespace Control
             }
 
             m_param_update_first = false;
-            spew("Ending the parameters update.");
+            spew( "Ending the parameters update." );
           }
 
           void
-          onEntityResolution(void)
+          onResourceRelease(void)
           {
-            spew("Entity resolution.");
-
-            // Process the systems and entities allowed to define a command
-            m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
-         }
+	    Memory::clear( m_cmd_flt );
+	    Memory::clear( m_model );
+          }
 
           void
           onResourceAcquisition(void)
           {
             // Initialize entity state.
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          }
 
-          void
-          onResourceRelease(void)
-          {
+            // Process the systems and entities allowed to define a command
+            m_cmd_flt = new Tasks::SourceFilter( *this, m_args.cmd_src );
+
+            // Initialize the leader vehicle model
+            debug( "Formation leader model initialization" );
+            // - State  and control parameters initialization
+            m_velocity( 0 ) = m_speed_cmd_leader;
+            m_model = new DUNE::Simulation::UAVSimulation( *this,
+                m_position, m_velocity, m_args.c_bank, m_args.c_speed );
+            // - Commands initialization
+            m_model->command( 0, m_speed_cmd_leader, -m_alt_cmd_leader );
+            // - Limits definition
+            m_model->setBankRateLim(
+              DUNE::Math::Angles::radians( m_args.l_bank_rate ) );
+            m_model->setAccelLim( m_args.l_accel_x );
+            // - Simulation type
+            m_model->m_sim_type = m_args.sim_type;
           }
 
           void
