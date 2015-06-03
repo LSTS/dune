@@ -117,6 +117,24 @@ namespace Control
         }
 
         void
+        onResourceRelease(void)
+        {
+          Memory::clear( m_cmd_flt );
+          Memory::clear( m_state_flt );
+        }
+
+        void
+        onResourceAcquisition(void)
+        {
+          spew("Entity resolution.");
+
+          // Process the systems allowed to define DesiredZ
+          m_cmd_flt = new Tasks::SourceFilter(*this, true, m_args.cmd_src, "DesiredZ");
+          // Process the systems allowed to pass the EstimatedState
+          m_state_flt = new Tasks::SourceFilter(*this, true, m_args.state_src, "EstimatedState");
+        }
+
+        void
         onActivation(void)
         {
           // Activate vertical rate controller.
@@ -153,24 +171,6 @@ namespace Control
             cloops.mask = IMC::CL_VERTICAL_RATE;
             dispatch(cloops);
           }
-        }
-
-        void
-        onEntityResolution(void)
-        {
-          spew("Entity resolution.");
-
-          // Process the systems allowed to define DesiredZ
-          m_cmd_flt = new Tasks::SourceFilter(*this, true, m_args.cmd_src, "DesiredZ");
-          // Process the systems allowed to pass the EstimatedState
-          m_state_flt = new Tasks::SourceFilter(*this, true, m_args.state_src, "EstimatedState");
-        }
-
-        void
-        onResourceRelease(void)
-        {
-          Memory::clear( m_cmd_flt );
-          Memory::clear( m_state_flt );
         }
 
         void
