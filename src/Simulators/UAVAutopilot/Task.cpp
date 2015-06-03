@@ -55,8 +55,6 @@ namespace Simulators
     {
       //! Task arguments.
       Arguments m_args;
-      // Simulation vehicle.
-      //UAVModel* m_model;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
       //! Origin for simulated state.
@@ -112,12 +110,13 @@ namespace Simulators
       }
 
       void
-      onResourceAcquisition(void)
+      onResourceRelease(void)
       {
+        Memory::clear( m_state_flt );
       }
 
       void
-      onEntityResolution(void)
+      onResourceAcquisition(void)
       {
         //! Process the systems and entities allowed to pass the SimulatedState
         uint32_t i_src;
@@ -192,12 +191,6 @@ namespace Simulators
             }
           }
         }
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        //Memory::clear(m_model);
       }
 
       void
