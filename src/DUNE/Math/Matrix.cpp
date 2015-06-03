@@ -183,10 +183,13 @@ namespace DUNE
       if (!m_size)
         return;
 
-      if ((*m_counter) == 1)
-        return;
+      if ( m_counter != NULL )
+      {
+        if ( (*m_counter) == 1 )
+          return;
 
-      (*m_counter)--;
+        (*m_counter)--;
+      }
 
       double* newdata = ALLOCD(m_size + 1);
       std::memcpy(newdata, m_data, m_size * sizeof(double));
@@ -681,6 +684,16 @@ namespace DUNE
         return false;
 
       if (m_ncols != m.m_ncols)
+        return false;
+
+      if (m_data == NULL)
+      {
+        if (m.m_data == NULL)
+          return true;
+        else
+          return false;
+      }
+      else if (m.m_data == NULL)
         return false;
 
       return std::memcmp(m_data, m.m_data, m_size * sizeof(double)) == 0;
