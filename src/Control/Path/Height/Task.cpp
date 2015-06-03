@@ -167,6 +167,13 @@ namespace Control
         }
 
         void
+        onResourceRelease(void)
+        {
+          Memory::clear( m_cmd_flt );
+          Memory::clear( m_state_flt );
+        }
+
+        void
         consume(const IMC::IndicatedSpeed* airspeed)
         {
           m_airspeed = airspeed->value;
