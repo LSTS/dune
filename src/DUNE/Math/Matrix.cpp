@@ -192,7 +192,8 @@ namespace DUNE
       }
 
       double* newdata = ALLOCD(m_size + 1);
-      std::memcpy(newdata, m_data, m_size * sizeof(double));
+      if ( m_data != NULL )
+        std::memcpy(newdata, m_data, m_size * sizeof(double));
       m_data = newdata;
       m_counter = m_data + m_size;
       *m_counter = 1;
