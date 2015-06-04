@@ -45,8 +45,9 @@ namespace Control
     {
       namespace Controller
       {
-        using DUNE::Simulation::UAVSimulation;
         using DUNE_NAMESPACES;
+        using namespace DUNE;
+        using DUNE::Simulation::UAVSimulation;
 
         //! Vector for System Mapping.
         typedef std::vector<uint32_t> Systems;
@@ -348,7 +349,6 @@ namespace Control
           // Debug variables
           bool m_debug;
           FormMonitor* m_form_monitor;
-          //std::vector<RelState*> m_rel_state;
 
           //! Commands filter
           DUNE::Tasks::SourceFilter* m_cmd_flt;
@@ -376,9 +376,9 @@ namespace Control
             m_vehicle_accel(3, 1, 0.0),
             m_airspeed(0.0),
             m_wind(3, 1, 0.0),
-            m_wind_avg_x(new Math::MovingAverage<fp64_t>(300)),
-            m_wind_avg_y(new Math::MovingAverage<fp64_t>(300)),
-            m_wind_avg_z(new Math::MovingAverage<fp64_t>(300)),
+            m_wind_avg_x( NULL ),
+            m_wind_avg_y( NULL ),
+            m_wind_avg_z( NULL ),
             m_g(Math::c_gravity),
             m_speed_cmd_leader(0.0),
             m_speed_units_leader(IMC::SUNITS_METERS_PS),
@@ -707,36 +707,28 @@ namespace Control
               }
             }
 
-            //==========================================
             // Set the leader vehicle model parameters
-            //==========================================
-            spew("onUpdateParameters - 3");
-            if (m_param_update_first)
+            spew( "onUpdateParameters - 3" );
+            if ( m_model != NULL )
             {
-              // Model initialization
-              debug("Formation leader model initialization");
-              // - State  and control parameters initialization
-              m_model = new DUNE::Simulation::UAVSimulation(*this,
-                  m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-              // - Commands initialization
-              m_model->command(0, m_speed_cmd_leader, - m_alt_cmd_leader);
+              debug("Formation leader model update");
+              // ToDo - Update with "DynamicsSimParam" message for the leader
+              // State  and control parameters definition
+              if ( paramChanged( m_args.c_bank ) ||
+                   paramChanged( m_args.c_speed ) )
+                m_model->setCtrl( m_args.c_bank, m_args.c_speed );
+              // Limits definition
+              if ( paramChanged( m_args.l_bank_rate ) )
+                m_model->setBankRateLim(
+        	  Angles::radians( m_args.l_bank_rate ) );
+              m_model->setAccelLim( m_accel_lim_x );
+              // Simulation type
+              if ( paramChanged( m_args.sim_type ) )
+                m_model->m_sim_type = m_args.sim_type;
             }
-            // ToDo - Update with "DynamicsSimParam" message for the leader
-            // - State  and control parameters definition
-            if (paramChanged(m_args.c_bank) || paramChanged(m_args.c_speed))
-              m_model->setCtrl(m_args.c_bank, m_args.c_speed);
-            // - Limits definition
-            if (paramChanged(m_args.l_bank_rate))
-              m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-            m_model->setAccelLim(m_accel_lim_x);
-            // - Simulation type
-            if (paramChanged(m_args.sim_type))
-              m_model->m_sim_type = m_args.sim_type;
 
-            //==========================================
             // Simulation model initialization
-            //==========================================
-            spew("onUpdateParameters - 4");
+            spew( "onUpdateParameters - 4" );
             // Check if the formation composition changed
             // Reinitialize the simulation models if so
             // ToDo - Check - data reallocation logic to keep the data from the remaining vehicles
@@ -754,9 +746,9 @@ namespace Control
               else
                 b_formation_change = true;
             }
+
             if (b_formation_change)
             {
-              m_uav_id_last = m_uav_id;
               // Initialize the team vehicles' models
               debug("Vehicles state and command vectors initialization");
               m_team_state_init = false;
@@ -784,7 +776,7 @@ namespace Control
                 m_vehicle_state_flag.push_back(false);
               m_vehicle_accel.resizeAndKeep(3, m_uav_n + 1);
               // Initialize vehicles commands
-              m_uav_ctrl = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+              m_uav_ctrl = Matrix(3, m_uav_n, 0.0);
               // Start the team vehicles synchronization, simulation and control time
               m_last_state_update.resizeAndKeep(m_uav_n + 1, 1);
               m_last_state_estim.resizeAndKeep(m_uav_n + 1, 1);
@@ -794,62 +786,79 @@ namespace Control
               // Initialize the simulated vehicles models
               debug("Simulated vehicles models initialization");
               UAVSimulation* model;
-              m_models.clear();
+              clearVehiclesModels();
               std::vector<bool> t_keep_data;
-              for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
-                t_keep_data.push_back(false);
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              for ( unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++ )
+                t_keep_data.push_back( false );
+              for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++ )
               {
                 bool remaining_vehicle = false;
-                // Data reallocation to keep the data from the remaining vehicles
-                if (!m_param_update_first)
-                  for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
+                // Data reallocation to keep the data from the remaining
+                // vehicles
+                if ( !m_param_update_first )
+                {
+                  for ( unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n;
+                        ind_uav2++ )
                   {
-                    if (m_uav_id_last[ind_uav2] == m_uav_id[ind_uav])
+                    if ( m_uav_id_last[ ind_uav2 ] == m_uav_id[ ind_uav ] )
                     {
                       remaining_vehicle = true;
-                      t_keep_data[ind_uav2] = true;
-                      m_vehicle_state.set(0, 11, ind_uav + 1, ind_uav + 1,
-                                          t_vehicle_state.get(0, 11, ind_uav2 + 1, ind_uav2 + 1));
-                      m_vehicle_state_flag[ind_uav] = t_vehicle_state_flag[ind_uav2];
-                      m_vehicle_accel.set(0, 2, ind_uav + 1, ind_uav + 1,
-                                          t_vehicle_accel.get(0, 2, ind_uav2 + 1, ind_uav2 + 1));
-                      m_uav_ctrl.set(0, 2, ind_uav, ind_uav,
-                                     t_uav_ctrl.get(0, 2, ind_uav2, ind_uav2));
-                      m_last_state_update(ind_uav + 1) = t_last_state_update(ind_uav2 + 1);
-                      m_last_state_estim(ind_uav + 1) = t_last_state_estim(ind_uav2 + 1);
-                      m_last_simctrl_update(ind_uav) = t_last_simctrl_update(ind_uav2);
-                      m_models.push_back(t_models[ind_uav2]);
-                      debug("Simulated vehicle model maintained for vehicle: %s",
-                          resolveSystemId(m_uav_id[ind_uav]));
+                      t_keep_data[ ind_uav2 ] = true;
+                      m_vehicle_state.set( 0, 11, ind_uav + 1, ind_uav + 1,
+                                           t_vehicle_state.get( 0, 11,
+                                                                ind_uav2 + 1,
+                                                                ind_uav2 + 1 ));
+                      m_vehicle_state_flag[ind_uav] =
+                        t_vehicle_state_flag[ind_uav2];
+                      m_vehicle_accel.set( 0, 2, ind_uav + 1, ind_uav + 1,
+                                           t_vehicle_accel.get( 0, 2,
+                                                                ind_uav2 + 1,
+                                                                ind_uav2 + 1 ));
+                      m_uav_ctrl.set( 0, 2, ind_uav, ind_uav,
+                                      t_uav_ctrl.get( 0, 2,
+                                                      ind_uav2, ind_uav2 ) );
+                      m_last_state_update( ind_uav + 1 ) =
+                        t_last_state_update( ind_uav2 + 1 );
+                      m_last_state_estim( ind_uav + 1 ) =
+                        t_last_state_estim( ind_uav2 + 1 );
+                      m_last_simctrl_update( ind_uav ) =
+                        t_last_simctrl_update( ind_uav2 );
+                      m_models.push_back( t_models[ ind_uav2 ] );
+                      debug( "Simulated vehicle model maintained for vehicle: %s",
+                             resolveSystemId( m_uav_id[ ind_uav ] ) );
                       break;
                     }
                   }
-                if (remaining_vehicle)
-                  continue;
 
-                // - State  and control parameters initialization
-                model = new DUNE::Simulation::UAVSimulation(*this,
-                    m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
-                    m_velocity, m_args.c_bank, m_args.c_speed);
-                // - Simulation type
-                model->m_sim_type = m_args.sim_type;
-                // - Commands initialization
-                model->command(0, m_speed_cmd_leader, - m_alt_cmd_leader);
-                // - Limits definition
-                if (m_args.l_bank_rate > 0)
-                  model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
-                if (m_args.l_accel_x > 0)
-                  model->setAccelLim(m_args.l_accel_x);
-                // Add model to the models vector
-                m_models.push_back(model);
-                debug("Simulated vehicle model initialized for vehicle %d.", ind_uav);
+                  if ( remaining_vehicle )
+                    continue;
+
+                  // - State  and control parameters initialization
+                  model = new UAVSimulation( *this,
+                      m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
+                      m_velocity, m_args.c_bank, m_args.c_speed);
+                  // - Simulation type
+                  model->m_sim_type = m_args.sim_type;
+                  // - Commands initialization
+                  model->command(0, m_speed_cmd_leader, - m_alt_cmd_leader);
+                  // - Limits definition
+                  if (m_args.l_bank_rate > 0)
+                    model->setBankRateLim( Angles::radians(m_args.l_bank_rate));
+                  if (m_args.l_accel_x > 0)
+                    model->setAccelLim(m_args.l_accel_x);
+                  // Add model to the models vector
+                  m_models.push_back(model);
+                }
+                debug( "Simulated vehicle model initialized for vehicle %d.",
+                       ind_uav);
               }
 
               // Clean missing vehicles data
               for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
                 if (!t_keep_data[ind_uav2])
                   delete t_models[ind_uav2];
+
+              m_uav_id_last = m_uav_id;
             }
 
             //==========================================
@@ -898,73 +907,115 @@ namespace Control
                 err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
             }
 
-            //==========================================
             // Monitoring variables initialization
-            //==========================================
-            spew("onUpdateParameters - 6");
-            // Initialize the formation monitor message
-            if (m_debug)
+            spew( "onUpdateParameters - 6" );
+            // Update the formation monitor message
+            if ( m_debug && m_form_monitor != NULL &&
+                 m_uav_n != m_form_monitor->rel_state.size() )
             {
-              if (m_form_monitor == NULL)
-                m_form_monitor = new FormMonitor;
-              RelState* rel_state;
-              if (!m_form_monitor->rel_state.empty())
-              {
-                for (unsigned int ind_uav = 0; ind_uav < m_form_monitor->rel_state.size(); ind_uav++)
-                  delete m_form_monitor->rel_state[ind_uav];
-                m_form_monitor->rel_state.clear();
-              }
-              for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
-              {
-                rel_state = new RelState();
-                m_form_monitor->rel_state.push_back(rel_state);
-              }
+              // Reset the quantity of relative state messages
+              clearRelativeState();
+              createRelativeState();
             }
 
-            //==========================================
             // Wind average setup
-            //==========================================
-            unsigned int window_size;
-            if (m_args.wind_average_window > 0)
-              window_size = m_args.wind_average_window;
-            else
+            if ( m_wind_avg_x != NULL )
             {
-              war("Wind average window length parameter is too low: 0");
-              window_size = 120;
+              unsigned int window_size;
+              checkWindAvgWindow( window_size );
+              *m_wind_avg_x = Math::MovingAverage<fp64_t>( window_size );
+              *m_wind_avg_y = Math::MovingAverage<fp64_t>( window_size );
+              *m_wind_avg_z = Math::MovingAverage<fp64_t>( window_size );
             }
-            *m_wind_avg_x = Math::MovingAverage<fp64_t>(window_size);
-            *m_wind_avg_y = Math::MovingAverage<fp64_t>(window_size);
-            *m_wind_avg_z = Math::MovingAverage<fp64_t>(window_size);
 
             m_param_update_first = false;
             debug("Ending the parameters update.");
           }
 
           void
-          onEntityResolution(void)
+          onResourceRelease(void)
           {
-            spew("Entity resolution.");
+            // Free the vehicles' models memory
+            Memory::clear( m_model );
+            clearVehiclesModels();
 
-            // Initialize the PlanControl message plan id
-            m_current_plan.plan_id = "";
+            // Free the command filter memory
+            Memory::clear( m_cmd_flt );
 
-            // Process the systems and entities allowed to define a command
-            m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
+            // Free monitoring messages memory
+            clearRelativeState();
+            Memory::clear( m_form_monitor );
+
+	    // Free the wind window average memory
+            Memory::clear( m_wind_avg_x );
+            Memory::clear( m_wind_avg_y );
+            Memory::clear( m_wind_avg_z );
+            //for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+            //      Memory::clear(m_form_monitor->rel_state[ind_uav]);
+            //  Memory::clear(m_form_monitor);
           }
 
           void
           onResourceAcquisition(void)
           {
+            // Initialize the leader vehicle model
+            debug( "Formation leader model initialization" );
+            // State and control parameters initialization
+            m_model = new UAVSimulation( *this,
+              m_position, m_velocity, m_args.c_bank, m_args.c_speed );
+            // Commands initialization
+            m_model->command( 0, m_speed_cmd_leader, - m_alt_cmd_leader );
+            // ToDo - Update with "DynamicsSimParam" message for the leader
+            // Limits definition
+            m_model->setBankRateLim( Angles::radians( m_args.l_bank_rate ) );
+            m_model->setAccelLim( m_accel_lim_x );
+            // Simulation type
+            m_model->m_sim_type = m_args.sim_type;
+
+            // Initialize the formation's vehicles models
+	    Simulation::UAVSimulation* model;
+            for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++ )
+            {
+              // State  and control parameters initialization
+              model = new UAVSimulation( *this,
+                  m_formation_pos.get( 0, 2, ind_uav, ind_uav ).
+                    vertCat(m_position.get( 3, 5, 0, 0 ) ),
+                  m_velocity, m_args.c_bank, m_args.c_speed );
+              // Simulation type
+              model->m_sim_type = m_args.sim_type;
+              // - Commands initialization
+              model->command( 0, m_speed_cmd_leader, - m_alt_cmd_leader );
+              // - Limits definition
+              if ( m_args.l_bank_rate > 0 )
+                model->setBankRateLim( Angles::radians( m_args.l_bank_rate ) );
+              if ( m_args.l_accel_x > 0 )
+                model->setAccelLim( m_args.l_accel_x );
+              // Add model to the models vector
+              m_models.push_back( model );
+
+              debug( "Simulated vehicle model initialized for vehicle %d.",
+                       ind_uav);
+            }
+
+            // Initialize the monitoring messages
+            m_form_monitor = new FormMonitor;
+            createRelativeState();
+
             // Initialize entity state.
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          }
 
-          void
-          onResourceRelease(void)
-          {
-            //          for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-            //            Memory::clear(m_form_monitor->rel_state[ind_uav]);
-            //          Memory::clear(m_form_monitor);
+            // Initialize the command filter
+            m_cmd_flt = new Tasks::SourceFilter( *this, m_args.cmd_src );
+
+            // Initialize the wind window average
+            unsigned int window_size;
+            checkWindAvgWindow( window_size );
+            m_wind_avg_x = new Math::MovingAverage<fp64_t>( window_size );
+            m_wind_avg_y = new Math::MovingAverage<fp64_t>( window_size );
+            m_wind_avg_z = new Math::MovingAverage<fp64_t>( window_size );
+
+            // Initialize the PlanControl message plan id
+            m_current_plan.plan_id = "";
           }
 
           void
@@ -1362,11 +1413,11 @@ namespace Control
             m_model->commandBank(trimValue(msg->value, - m_leader_bank_lim, m_leader_bank_lim));
 
             // ========= Debug ===========
-            spew("DesiredRoll accepted (%1.2fdeg), assumed (%1.2fdeg) - from system '%s' and entity '%s'",
-                DUNE::Math::Angles::degrees(msg->value),
-                DUNE::Math::Angles::degrees(m_model->getBankCmd()),
-                resolveSystemId(msg->getSource()),
-                resolveEntity(msg->getSourceEntity()).c_str());
+            spew( "DesiredRoll accepted (%1.2fdeg), assumed (%1.2fdeg) - from system '%s' and entity '%s'",
+                 Angles::degrees(msg->value),
+                 Angles::degrees(m_model->getBankCmd()),
+                 resolveSystemId(msg->getSource()),
+                 resolveEntity(msg->getSourceEntity()).c_str());
           }
 
           void
@@ -1928,8 +1979,10 @@ namespace Control
             leaderOutput();
 
             trace("---------------------------");
-            trace("Leader latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-            trace("Leader longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+            trace( "Leader latitude: %1.4fº",
+                   Angles::degrees( m_init_leader.lat ) );
+            trace( "Leader longitude: %1.4fº",
+                   Angles::degrees( m_init_leader.lon ) );
             trace("Leader altitude: %1.4fm", m_init_leader.height);
             trace("Leader x position: %1.4f", m_vehicle_state(0, 0));
             trace("Leader y position: %1.4f", m_vehicle_state(1, 0));
@@ -2149,13 +2202,13 @@ namespace Control
               if (time >= m_last_time_verb_leaderspew + m_timestep_spew)
               {
                 //spew("Simulating: %s", m_model->m_sim_type);
-                spew("Bank: %1.2fº        - Commanded bank: %1.2fº",
-                     DUNE::Math::Angles::degrees(m_position(3)),
-                     DUNE::Math::Angles::degrees(m_model->getBankCmd()));
+                spew( "Bank: %1.2fº        - Commanded bank: %1.2fº",
+                      Angles::degrees(m_position(3)),
+                      Angles::degrees(m_model->getBankCmd()));
                 spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-                spew("Yaw: %1.2f", DUNE::Math::Anglest_posm_position(5)));
-                spew("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-                spew("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
+                spew("Yaw: %1.2f", Angles::degrees( m_position(5)));
+                spew("Current latitude: %1.4fº", Angles::degrees(m_init_leader.lat));
+                spew("Current longitude: %1.4fº", Angles::degrees(m_init_leader.lon));
                 spew("Current altitude: %1.4fm", m_init_leader.height);
                 spew("Current x position: %1.4f m", m_position(0));
                 spew("Current y position: %1.4f m", m_position(1));
@@ -2189,19 +2242,21 @@ namespace Control
                 /*
               if (time >= m_last_time_verb_leadertrace + m_timestep_trace)
               {
-                //trace("Simulating: %s", m_model->m_sim_type);
-                trace("Bank: %1.2fº        - Commanded bank: %1.2fº",
-                    DUNE::Math::Angles::degrees(m_position(3)),
-                    DUNE::Math::Angles::degrees(m_model->getBankCmd()));
-                trace("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-                trace("Yaw: %1.2f", DUNE::Math::Angles::degrees(m_position(5)));
-                trace("Current latitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lat));
-                trace("Current longitude: %1.4fº", DUNE::Math::Angles::degrees(m_init_leader.lon));
-                trace("Current altitude: %1.4fm", m_init_leader.height);
-                trace("Current x position: %1.4f m", m_position(0));
-                trace("Current y position: %1.4f m", m_position(1));
-                trace("Current z position: %1.4f m", m_position(2));
-                trace("Current roll angle: %1.4f deg", Angles::degrees(m_position(3)));
+                //trace( "Simulating: %s", m_model->m_sim_type );
+                trace( "Bank: %1.2fº        - Commanded bank: %1.2fº",
+                       Angles::degrees(m_position(3)),
+                       Angles::degrees(m_model->getBankCmd()));
+                trace( "Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
+                trace( "Yaw: %1.2f", Angles::degrees(m_position(5)));
+                trace( "Current latitude: %1.4fº",
+                       Angles::degrees(m_init_leader.lat));
+                trace( "Current longitude: %1.4fº",
+                       Angles::degrees(m_init_leader.lon));
+                trace( "Current altitude: %1.4fm", m_init_leader.height );
+                trace( "Current x position: %1.4f m", m_position(0) );
+                trace( "Current y position: %1.4f m", m_position(1) );
+                trace( "Current z position: %1.4f m", m_position(2) );
+                trace( "Current roll angle: %1.4f deg", Angles::degrees(m_position(3)));
                 trace("Current pitch angle: %1.4f deg", Angles::degrees(m_position(4)));
                 trace("Current yaw angle: %1.4f deg", Angles::degrees(m_position(5)));
                 trace("Current x speed: %1.4f m/s", m_velocity(0));
@@ -2360,6 +2415,55 @@ namespace Control
                 }
               }
             spew("Assynchronous update - End");
+          }
+
+	  void
+	  checkWindAvgWindow( unsigned int& window_size )
+	  {
+            if ( m_args.wind_average_window > 0 )
+	    {
+              window_size = m_args.wind_average_window;
+	    }
+            else
+            {
+              war( "Wind average window length must be larger than 0 [Set to 120]." );
+              window_size = 120;
+            }
+
+	    return;
+	  }
+
+          void
+          clearVehiclesModels( void )
+          {
+            std::vector<UAVSimulation*>::iterator it;
+            for ( it = m_models.begin(); it != m_models.end(); it++ )
+              Memory::clear( (*it) );
+            m_models.clear();
+          }
+
+          void
+          createRelativeState( void )
+          {
+            RelState* rel_state;
+            for ( unsigned int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++ )
+            {
+              rel_state = new RelState();
+              m_form_monitor->rel_state.push_back( rel_state );
+            }
+          }
+
+          void
+          clearRelativeState( void )
+          {
+            if ( m_form_monitor == NULL )
+              return;
+
+            std::vector<RelState*>::iterator it;
+            for ( it = m_form_monitor->rel_state.begin();
+                  it != m_form_monitor->rel_state.end(); it++ )
+              Memory::clear( (*it) );
+            m_form_monitor->rel_state.clear();
           }
 
           void
