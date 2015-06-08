@@ -38,7 +38,7 @@
 
 namespace Actuators
 {
-  namespace PTUD48
+  namespace FLIRPTU
   {
     using DUNE_NAMESPACES;
 
