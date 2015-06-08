@@ -43,20 +43,22 @@ namespace Actuators
     using DUNE_NAMESPACES;
 
     // Pan and Tilt maximum and minimum values.
-    enum Limits
+    struct Limits
     {
       // Maximum tilt.
-      TILT_MAX = 2333,
+      int tMax;
       // Minimum tilt.
-      TILT_MIN = -6999,
+      int tMin;
       // Maximum pan.
-      PAN_MAX  = 6999,
+      int pMax;
       // Minimum pan.
-      PAN_MIN  = -6999
+      int pMin;
     };
 
     struct Arguments
     {
+      // PTU model.
+      std::string model;
       // Serial port device.
       std::string uart_dev;
       // Serial port baud rate.
@@ -73,12 +75,16 @@ namespace Actuators
       int pan_accel;
       // PTU tilt acceleration.
       int tilt_accel;
+      // Minimum tilt
+      float tilt_min;
     };
 
     struct Task: public Tasks::Periodic
     {
       // Device protocol handler.
       SerialPort* m_uart;
+      // Pan-Tilt Limits.
+      Limits m_limits;
       // Task Arguments.
       Arguments m_args;
       // Serial Port buffer.
@@ -92,6 +98,11 @@ namespace Actuators
         m_pan(0),
         m_tilt(0)
       {
+        param("PTU Model", m_args.model)
+        .defaultValue("D48")
+        .values("D48, D300")
+        .description("Pan-Til Unit model name");
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("/dev/ttyUSB0")
         .description("Serial port device (used to communicate with the actuator)");
@@ -128,6 +139,11 @@ namespace Actuators
         .minimumValue("0")
         .description("PTU tilt acceleration in positions/sec/sec");
 
+        param("PTU Minimum Tilt Angle", m_args.tilt_min)
+        .defaultValue("10.0")
+        .minimumValue("0")
+        .description("PTU minimum tilt angle to avoid damaging cable");
+
         // Setup entity states.
         // @todo: set task entity states using new scheme.
         //
@@ -161,8 +177,11 @@ namespace Actuators
         sendCommand("ci ");
         // Wait.
         sendCommand("a ");
-        // Send pan continuous mode (disable).
-        sendCommand("pcd ");
+        // Send pan continuous mode.
+        if (m_args.ptu_pc)
+          sendCommand("pce ");
+        else
+          sendCommand("pcd ");
         // Wait.
         sendCommand("a ");
         // Disable factory limits (Attention to not overload the tilt limits).
@@ -175,6 +194,25 @@ namespace Actuators
         // Set pan and tilt accelerations.
         createCommand("pa", m_args.pan_accel);
         createCommand("ta", m_args.tilt_accel);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.model == "D48")
+        {
+          m_limits.tMax = 2333;
+          m_limits.tMin = -6999;
+          m_limits.pMax  = 6999;
+          m_limits.pMin  = -6999;
+        }
+        if (m_args.model == "D300")
+        {
+          m_limits.tMax = 0;
+          m_limits.tMin = -3499;
+          m_limits.pMax  = 7000;
+          m_limits.pMin  = -6999;
+        }
       }
 
       void
@@ -223,28 +261,11 @@ namespace Actuators
       }
 
       int
-      panRadToPos(float& val)
+      rad2pos(float min_angle, float max_angle, int min_pos, int max_pos, float angle)
       {
-        return (int)((val * 6999 / Math::c_pi) + 0.5);
-      }
+        int pos = (int) ((max_pos - min_pos) * (angle - min_angle) / (max_angle - min_angle)) + min_pos;
 
-      int
-      tiltRadToPos(float& val)
-      {
-        return (int)((val * 2 * 6999/ Math::c_pi) + 0.5);
-      }
-
-      void
-      boundPan(int& val)
-      {
-        val = val < PAN_MIN ? PAN_MIN : val;
-        val = val > PAN_MAX ? PAN_MAX : val;
-      }
-
-      void
-      boundTilt(int& val)
-      {
-        val = val < TILT_MIN ? TILT_MIN : val; val = val > TILT_MAX ? TILT_MAX : val;
+        return trimValue(pos, min_pos, max_pos);
       }
 
       void
@@ -252,26 +273,24 @@ namespace Actuators
       {
         // PAN
         float pan_rad = Angles::normalizeRadian(m_pan);
-        int pan_pos = panRadToPos(pan_rad);
+        int pan_pos = rad2pos(-Math::c_pi, Math::c_pi, m_limits.pMin, m_limits.pMax, pan_rad);
 
         debug("Pan: %f rad", pan_rad);
         debug("Pan: %d", pan_pos);
 
-        // Bound pan value.
-        boundPan(pan_pos);
         // Send pan command.
         createCommand("pp", pan_pos);
 
         debug("Pan bounded: %d", pan_pos);
 
         // TILT
-        int tilt_pos = tiltRadToPos(m_tilt);
+        float tilt_rad = Angles::normalizeRadian(m_tilt);
+        tilt_rad = trimValue(m_tilt, 0, Math::c_half_pi);
+        int tilt_pos = rad2pos(0, Math::c_half_pi, m_limits.tMin, m_limits.tMax, tilt_rad);
 
         debug("Tilt: %f rad", m_tilt);
         debug("Tilt: %d", tilt_pos);
 
-        // Bound tilt value.
-        boundTilt(tilt_pos);
         // Send tilt command.
         createCommand("tp", tilt_pos);
 
