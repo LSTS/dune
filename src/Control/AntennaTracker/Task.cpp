@@ -133,7 +133,7 @@ namespace Control
         dispatch(scsd);
 
         scsd.id = 't';
-        scsd.angle = elevation - Math::c_half_pi;
+        scsd.angle = elevation;
         dispatch(scsd);
       }
 
