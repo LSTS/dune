@@ -65,8 +65,6 @@ namespace Actuators
       unsigned uart_baud;
       // PTU pan continuous.
       bool ptu_pc;
-      // PTU tracking.
-      bool ptu_track;
       // PTU pan speed.
       int  pan_speed;
       // PTU tilt speed.
@@ -96,7 +94,7 @@ namespace Actuators
         Tasks::Periodic(name, ctx),
         m_uart(NULL),
         m_pan(0),
-        m_tilt(0)
+        m_tilt(Math::c_half_pi)
       {
         param("PTU Model", m_args.model)
         .defaultValue("D48")
@@ -111,38 +109,34 @@ namespace Actuators
         .defaultValue("9600")
         .description("Serial port baud rate");
 
-        param("PTU Pan Continuous", m_args.ptu_pc)
+        param("Pan Continuous", m_args.ptu_pc)
         .defaultValue("false")
         .description("PTU pan continuous enable");
 
-        param("PTU Tracking", m_args.ptu_track)
-        .defaultValue("true")
-        .description("PTU tracking mode enable");
-
-        param("PTU Pan Speed", m_args.pan_speed)
+        param("Pan Speed", m_args.pan_speed)
         .defaultValue("1000")
         .minimumValue("0")
         .description("PTU pan speed in positions/sec");
 
-        param("PTU Tilt Speed", m_args.tilt_speed)
+        param("Tilt Speed", m_args.tilt_speed)
         .defaultValue("1000")
         .minimumValue("0")
         .description("PTU tilt speed in positions/sec");
 
-        param("PTU Pan Acceleration", m_args.pan_accel)
+        param("Pan Acceleration", m_args.pan_accel)
         .defaultValue("2000")
         .minimumValue("0")
         .description("PTU pan acceleration in positions/sec/sec");
 
-        param("PTU Tilt Acceleration", m_args.tilt_accel)
+        param("Tilt Acceleration", m_args.tilt_accel)
         .defaultValue("2000")
         .minimumValue("0")
         .description("PTU tilt acceleration in positions/sec/sec");
 
-        param("PTU Minimum Tilt Angle", m_args.tilt_min)
+        param("Minimum Tilt Angle", m_args.tilt_min)
         .defaultValue("10.0")
-        .minimumValue("0")
-        .description("PTU minimum tilt angle to avoid damaging cable");
+        .minimumValue("0.0")
+        .description("PTU minimum tilt angle in degrees");
 
         // Setup entity states.
         // @todo: set task entity states using new scheme.
@@ -201,7 +195,7 @@ namespace Actuators
       {
         if (m_args.model == "D48")
         {
-          m_limits.tMax = 2333;
+          m_limits.tMax = 0;
           m_limits.tMin = -6999;
           m_limits.pMax  = 6999;
           m_limits.pMin  = -6999;
@@ -213,6 +207,8 @@ namespace Actuators
           m_limits.pMax  = 7000;
           m_limits.pMin  = -6999;
         }
+
+        m_args.tilt_min = Angles::radians(m_args.tilt_min);
       }
 
       void
@@ -285,7 +281,7 @@ namespace Actuators
 
         // TILT
         float tilt_rad = Angles::normalizeRadian(m_tilt);
-        tilt_rad = trimValue(m_tilt, 0, Math::c_half_pi);
+        tilt_rad = trimValue(m_tilt, m_args.tilt_min, Math::c_half_pi);
         int tilt_pos = rad2pos(0, Math::c_half_pi, m_limits.tMin, m_limits.tMax, tilt_rad);
 
         debug("Tilt: %f rad", m_tilt);
