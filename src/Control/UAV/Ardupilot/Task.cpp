@@ -781,26 +781,36 @@ namespace Control
             return;
           }
 
+          uint8_t buf[512];
+          mavlink_message_t msg;
+
           if(m_vehicle_type == VEHICLE_COPTER)
           {
             // Copters must first be set to guided as of AC 3.2
             // Disabled, as this is not
-            uint8_t buf[512];
-            mavlink_message_t* msg = new mavlink_message_t;
 
-            mavlink_msg_set_mode_pack(255, 0, msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       CP_MODE_GUIDED); //! DUNE mode on arducopter is 12
 
-            uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
             debug("Guided MODE on ardupilot is set");
           }
 
-          uint8_t buf[512];
+          if(m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            // Planes must first be set to guided as of AP 3.3.0
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      PL_MODE_GUIDED);
 
-          mavlink_message_t msg;
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            debug("Guided MODE on ardupilot is set");
+          }
 
           //! Setting airspeed parameter
           if (m_vehicle_type == VEHICLE_COPTER)
@@ -957,6 +967,16 @@ namespace Control
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
 
+          mavlink_msg_param_set_pack(255, 0, &msg,
+                                     m_sysid, //! target_system System ID
+                                     0, //! target_component Component ID
+                                     "TRIM_ARSPD_CM", //! Parameter name
+                                     (int)(dpath->speed * 100), //! Parameter value
+                                     MAV_PARAM_TYPE_INT16); //! Parameter type
+
+          n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+
           mavlink_msg_mission_count_pack(255, 0, &msg,
                                          m_sysid, //! target_system System ID
                                          0, //! target_component Component ID
@@ -994,24 +1014,24 @@ namespace Control
 
           m_mission_items.push(msg);
 
-          //! Desired speed
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        seq++, //! seq Sequence
-                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
-                                        0, //! current false:0, true:1
-                                        1, //! autocontinue autocontinue to next wp
-                                        0, //! Speed type (0=Airspeed, 1=Ground Speed)
-                                        (float)(dpath->speed_units == IMC::SUNITS_METERS_PS ? dpath->speed : -1), //! Speed  (m/s, -1 indicates no change)
-                                        (float)(dpath->speed_units == IMC::SUNITS_PERCENTAGE ? dpath->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0);//! Not used
-
-          m_mission_items.push(msg);
+//          //! Desired speed
+//          mavlink_msg_mission_item_pack(255, 0, &msg,
+//                                        m_sysid, //! target_system System ID
+//                                        0, //! target_component Component ID
+//                                        seq++, //! seq Sequence
+//                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+//                                        MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
+//                                        0, //! current false:0, true:1
+//                                        1, //! autocontinue autocontinue to next wp
+//                                        0, //! Speed type (0=Airspeed, 1=Ground Speed)
+//                                        (float)(dpath->speed_units == IMC::SUNITS_METERS_PS ? dpath->speed : -1), //! Speed  (m/s, -1 indicates no change)
+//                                        (float)(dpath->speed_units == IMC::SUNITS_PERCENTAGE ? dpath->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
+//                                        0, //! Not used
+//                                        0, //! Not used
+//                                        0, //! Not used
+//                                        0);//! Not used
+//
+//          m_mission_items.push(msg);
 
           //! Destination
           mavlink_msg_mission_item_pack(255, 0, &msg,
