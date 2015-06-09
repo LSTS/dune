@@ -37,50 +37,147 @@ namespace Autonomy
   {
     using DUNE_NAMESPACES;
 
+    struct Arguments
+    {
+      // Message to sample.
+      std::vector<std::string> message;
+      // Minimum positive samples.
+      unsigned pos_samples;
+      // Minimum negative samples.
+      unsigned neg_samples;
+      // Positive threshold.
+      double pos_threshold;
+      // Negative threshold.
+      double neg_threshold;
+      // Type of event that triggers behavior.
+      std::string event_type;
+      // Action to be triggered.
+      std::string trigger;
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
+      // Sampler.
+      Sampler* m_sampler;
+      // Trigger variable.
+      bool m_trigger;
+      // Task arguments.
+      Arguments m_args;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_sampler(NULL),
+        m_trigger(false)
       {
+        param("Samples: Minimum Positive Samples", m_args.pos_samples)
+        .defaultValue("2")
+        .minimumValue("1")
+        .description("Minimum consecutive positive samples for detection confirmation.");
+
+        param("Samples: Minimum Negative Samples", m_args.neg_samples)
+        .defaultValue("3")
+        .minimumValue("1")
+        .description("Minimum consecutive negative samples for no-detection confirmation.");
+
+        param("Samples: Positive Threshold", m_args.pos_threshold)
+        .defaultValue("2.5")
+        .description("Threshold to mark passage from negative to positive samples");
+
+        param("Samples: Negative Threshold", m_args.neg_threshold)
+        .defaultValue("2.4")
+        .description("Threshold to mark passage from positive to negative samples");
+
+        param("Event Type Trigger", m_args.event_type)
+        .values("Detection, NoDetection")
+        .defaultValue("Detection")
+        .description("Type of event to detect");
+
+        param("Triggered Action", m_args.trigger)
+        .values("Abort, Plan")
+        .defaultValue("Abort")
+        .description("Type of action to be triggered");
+
+        param("Message to sample", m_args.message)
+        .defaultValue("");
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
-      }
+        bind(this, m_args.message);
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
+        // Check if we need to restart sampler.
+        bool changed = false;
+        changed = (paramChanged(m_args.pos_samples) ||
+                   paramChanged(m_args.neg_samples) ||
+                   paramChanged(m_args.pos_threshold) ||
+                   paramChanged(m_args.neg_threshold));
 
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
+        if (changed)
+        {
+          m_trigger = false;
+          Memory::replace(m_sampler, new Sampler(m_args.pos_threshold,
+                                                 m_args.pos_samples,
+                                                 m_args.neg_threshold,
+                                                 m_args.neg_samples));
+        }
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_sampler);
+      }
+
+      void
+      consume(const IMC::Message* msg)
+      {
+        Sampler::SamplerState ss = m_sampler->insert(msg->getValueFP());
+
+        if (m_args.event_type == "Detection")
+          checkTrigger(ss, Sampler::ST_NOT_DETECTED, Sampler::ST_DETECTED);
+        else if (m_args.event_type == "NoDetection")
+          checkTrigger(ss, Sampler::ST_DETECTED, Sampler::ST_NOT_DETECTED);
+      }
+
+      //! Check if trigger can be latched or launched.
+      //! @param[in] state current state.
+      //! @param[in] latcher sampler state trigger latcher.
+      //! @param[in] trigger type of sampler state that triggers event.
+      void
+      checkTrigger(Sampler::SamplerState state, Sampler::SamplerState latcher, Sampler::SamplerState trigger)
+      {
+        // Latch trigger.
+        if (state == latcher)
+          m_trigger = true;
+
+        // Trigger!
+        if (state == trigger && m_trigger)
+        {
+          triggered();
+          m_trigger = false;
+        }
+      }
+
+      //! Action was triggered.
+      void
+      triggered(void)
+      {
+        // Check type of trigger.
+        if (m_args.trigger == "Abort")
+        {
+          IMC::Abort msg;
+          dispatch(msg);
+        }
+        else if (m_args.trigger == "Plan")
+        {
+          // @todo: generate plan.
+        }
       }
 
       //! Main loop.
