@@ -37,6 +37,9 @@ namespace Autonomy
   {
     using DUNE_NAMESPACES;
 
+    //! Broadcast channel.
+    static const std::string c_broadcast = "broadcast";
+
     struct Arguments
     {
       // Message to sample.
@@ -53,6 +56,12 @@ namespace Autonomy
       std::string event_type;
       // Action to be triggered.
       std::string trigger;
+      // Communication policy.
+      std::string comms_policy;
+      // Communication interval.
+      float comms_delta;
+      // Maximum expected reading.
+      float max_reading;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -61,6 +70,8 @@ namespace Autonomy
       Sampler* m_sampler;
       // Trigger variable.
       bool m_trigger;
+      // Communications timer.
+      Time::Counter<double> m_delta;
       // Task arguments.
       Arguments m_args;
 
@@ -102,6 +113,20 @@ namespace Autonomy
 
         param("Message to sample", m_args.message)
         .defaultValue("");
+
+        param("Communication Policy", m_args.comms_policy)
+        .values("Always, Never, OnRisingEdge, Detected")
+        .defaultValue("OnRisingEdge")
+        .description("Acoustic Transmission Communication Policy");
+
+        param("Communication Interval", m_args.comms_delta)
+        .defaultValue("3.0")
+        .minimumValue("2.0")
+        .description("Communication interval for acoustic transmission requests");
+
+        param("Maximum Expected Reading", m_args.max_reading)
+        .defaultValue("5.0")
+        .description("Communication interval for acoustic transmission requests");
       }
 
       //! Update internal state with new parameter values.
@@ -109,6 +134,9 @@ namespace Autonomy
       onUpdateParameters(void)
       {
         bind(this, m_args.message);
+
+        if (paramChanged(m_args.comms_delta))
+          m_delta.setTop(m_args.comms_delta);
 
         // Check if we need to restart sampler.
         bool changed = false;
@@ -137,19 +165,41 @@ namespace Autonomy
       void
       consume(const IMC::Message* msg)
       {
-        Sampler::SamplerState ss = m_sampler->insert(msg->getValueFP());
+        double reading = msg->getValueFP();
+        Sampler::SamplerState ss = m_sampler->insert(reading);
+
+        bool triggered = false;
 
         if (m_args.event_type == "Detection")
-          checkTrigger(ss, Sampler::ST_NOT_DETECTED, Sampler::ST_DETECTED);
+          triggered = checkTrigger(ss, Sampler::ST_NOT_DETECTED, Sampler::ST_DETECTED);
         else if (m_args.event_type == "NoDetection")
-          checkTrigger(ss, Sampler::ST_DETECTED, Sampler::ST_NOT_DETECTED);
+          triggered = checkTrigger(ss, Sampler::ST_DETECTED, Sampler::ST_NOT_DETECTED);
+
+        if (m_args.comms_policy == "Always")
+        {
+          transmit(reading);
+          return;
+        }
+
+        if ((m_args.comms_policy == "Detected") && (ss == Sampler::ST_DETECTED))
+        {
+          transmit(reading);
+          return;
+        }
+
+        if ((m_args.comms_policy == "OnRisingEdge") && (ss == Sampler::ST_DETECTED) && triggered)
+        {
+          transmit(reading);
+          return;
+        }
       }
 
       //! Check if trigger can be latched or launched.
       //! @param[in] state current state.
       //! @param[in] latcher sampler state trigger latcher.
       //! @param[in] trigger type of sampler state that triggers event.
-      void
+      //! @return true if an event was triggered.
+      bool
       checkTrigger(Sampler::SamplerState state, Sampler::SamplerState latcher, Sampler::SamplerState trigger)
       {
         // Latch trigger.
@@ -161,7 +211,10 @@ namespace Autonomy
         {
           triggered();
           m_trigger = false;
+          return true;
         }
+
+        return false;
       }
 
       //! Action was triggered.
@@ -177,6 +230,36 @@ namespace Autonomy
         else if (m_args.trigger == "Plan")
         {
           // @todo: generate plan.
+        }
+      }
+
+      //! Check if we can transmit message.
+      //! @param[in] reading reading to be transmitted acoustically.
+      void
+      transmit(double reading)
+      {
+        // Time to transmit ?
+        if (m_delta.overflow())
+        {
+          m_delta.reset();
+
+          IMC::UamTxFrame tx;
+          tx.setDestination(getSystemId());
+          tx.sys_dst = c_broadcast;
+          tx.data.resize(1);
+
+          // We'll assume default 0 to m_args.max_reading value.
+          if (reading < 0)
+            reading = 0;
+
+          if (reading > m_args.max_reading)
+            reading = m_args.max_reading;
+
+          unsigned scale = 255 / m_args.max_reading;
+
+          uint8_t* ptr = (uint8_t*)&tx.data[0];
+          IMC::serialize((uint8_t)(reading * scale), ptr);
+          dispatch(tx);
         }
       }
 
