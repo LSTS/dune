@@ -381,7 +381,8 @@ namespace DUNE
             else
               err(DTR("restarting in %u seconds due to error: %s"), delay, e.getError());
           }
-          Time::Counter<unsigned int> counter(delay);
+
+          Time::Counter<double> counter(static_cast<double>(delay));
           while (!stopping() && !counter.overflow())
           {
             double remaining = counter.getRemaining();
