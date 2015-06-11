@@ -255,7 +255,7 @@ namespace Autonomy
           if (reading > m_args.max_reading)
             reading = m_args.max_reading;
 
-          unsigned scale = 255 / m_args.max_reading;
+          float scale = 127.0 / m_args.max_reading;
 
           uint8_t* ptr = (uint8_t*)&tx.data[0];
           IMC::serialize((uint8_t)(reading * scale), ptr);
