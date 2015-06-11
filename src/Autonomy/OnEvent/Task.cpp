@@ -83,6 +83,9 @@ namespace Autonomy
         m_sampler(NULL),
         m_trigger(false)
       {
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Samples: Minimum Positive Samples", m_args.pos_samples)
         .defaultValue("2")
         .minimumValue("1")
@@ -107,21 +110,27 @@ namespace Autonomy
         .description("Type of event to detect");
 
         param("Triggered Action", m_args.trigger)
-        .values("Abort, Plan")
+        .values("Abort, Plan, None")
         .defaultValue("Abort")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .description("Type of action to be triggered");
 
-        param("Message to sample", m_args.message)
+        param("Message to Sample", m_args.message)
         .defaultValue("");
 
         param("Communication Policy", m_args.comms_policy)
         .values("Always, Never, OnRisingEdge, Detected")
         .defaultValue("OnRisingEdge")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .description("Acoustic Transmission Communication Policy");
 
         param("Communication Interval", m_args.comms_delta)
         .defaultValue("3.0")
         .minimumValue("2.0")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .description("Communication interval for acoustic transmission requests");
 
         param("Maximum Expected Reading", m_args.max_reading)
@@ -221,6 +230,10 @@ namespace Autonomy
       void
       triggered(void)
       {
+        // No actions if not active.
+        if (!isActive())
+          return;
+
         // Check type of trigger.
         if (m_args.trigger == "Abort")
         {
@@ -229,7 +242,11 @@ namespace Autonomy
         }
         else if (m_args.trigger == "Plan")
         {
-          // @todo: generate plan.
+          IMC::PlanGeneration msg;
+          msg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
+          msg.op = IMC::PlanGeneration::OP_REQUEST;
+          msg.plan_id = "rows";
+          dispatch(msg);
         }
       }
 
