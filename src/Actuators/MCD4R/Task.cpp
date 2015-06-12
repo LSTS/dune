@@ -212,6 +212,8 @@ namespace Actuators
     static const unsigned c_restart_delay = 1;
     //! Size in bytes of the board's state
     static const unsigned c_state_size = 20;
+    //! Laser debounce time
+    static const float c_laser_debounce = 0.8f;
     //! Labels for states voltages
     const char* c_voltage_labels[] =
     {
@@ -259,6 +261,10 @@ namespace Actuators
       Counter<double> m_wdog;
       //! Set of remote actions
       IMC::RemoteActionsRequest m_actions;
+      //! Laser state (assume off at boot)
+      bool m_laser;
+      //! Laser state timer
+      Time::Counter<float> m_laser_cnt;
       //! Task arguments.
       Arguments m_args;
 
@@ -268,7 +274,8 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_ctl(NULL)
+        m_ctl(NULL),
+        m_laser(false)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -346,6 +353,7 @@ namespace Actuators
       onResourceInitialization(void)
       {
         m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
+        m_laser_cnt.setTop(c_laser_debounce);
 
         for (unsigned i = 0; i < ACT_TOTAL; ++i)
           addRemoteAction(c_action_names[i], c_action_types[i]);
@@ -458,13 +466,22 @@ namespace Actuators
         return actCommand(ACT_ARM_FINGER, dir);
       }
 
-      //! Command laser
-      //! @param[in] value laser command to apply
+      //! Toggle laser value
       //! @return true if successful in sending command
       inline bool
-      actuateLaser(LaserCommands value)
+      toggleLaser(void)
       {
-        return actCommand(ACT_LASER, value);
+        if (!m_laser_cnt.overflow())
+          return false;
+
+        if (actCommand(ACT_LASER, (int)!m_laser))
+        {
+          m_laser = !m_laser;
+          m_laser_cnt.reset();
+          return true;
+        }
+
+        return false;
       }
 
       //! Dispatch raw board state
@@ -523,7 +540,16 @@ namespace Actuators
         {
           int op = tuples.get(c_action_names[i], 0);
 
-          actCommand((ActuateCommands)i, op);
+          switch ((ActuateCommands)i)
+          {
+            case ACT_LASER:
+              if (op)
+                toggleLaser();
+              break;
+            default:
+              actCommand((ActuateCommands)i, op);
+              break;
+          }
         }
       }
 

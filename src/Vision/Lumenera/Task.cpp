@@ -70,8 +70,8 @@ namespace Vision
       float gamma;
       //! Enable median filtering (helps with noise in low light/high gain settings).
       bool median_filter;
-      //! Enable the LED strobe output.
-      bool strobe;
+      //! LED scheme.
+      std::string led_type;
       //! Automatic white balance
       bool auto_whitebalance;
       //! White balance red gain.
@@ -253,11 +253,12 @@ namespace Vision
         .defaultValue("2.0")
         .description("White Balance Gain Blue");
 
-        param("Strobe", m_args.strobe)
+        param("LED Type", m_args.led_type)
+        .values("OFF, ON, STROBE")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("true")
-        .description("Enable Strobe");
+        .defaultValue("ON")
+        .description("LED type");
 
         param("Power Channel - Strobe", m_args.strobe_pwr)
         .description("Power channel of the strobe");
@@ -331,7 +332,7 @@ namespace Vision
         return (paramChanged(m_args.fps) ||
                 paramChanged(m_args.gamma) ||
                 paramChanged(m_args.median_filter) ||
-                paramChanged(m_args.strobe) ||
+                paramChanged(m_args.led_type) ||
                 checkExposure() ||
                 checkGain() ||
                 checkWhiteBalance());
@@ -538,7 +539,7 @@ namespace Vision
       void
       setStrobePower(bool value)
       {
-        if (!m_args.strobe)
+        if (m_args.led_type != "STROBE")
           return;
 
         if (m_args.strobe_pwr.empty())
@@ -877,17 +878,22 @@ namespace Vision
       void
       updateStrobe(void)
       {
-        if (m_args.strobe)
+        if (m_args.led_type == "STROBE")
         {
           debug("enabling strobe output");
           setProperty("output_select", "strobe");
+          return;
         }
-        else
+
+        if (m_args.led_type == "ON")
         {
-          debug("disabling strobe output");
-          // the output on/off logic is inverted
-          setProperty("output_select", "on");
+          debug("leds always on");
+          setProperty("output_select", "off");
+          return;
         }
+
+        debug("leds always off");
+        setProperty("output_select", "on");
       }
 
       void

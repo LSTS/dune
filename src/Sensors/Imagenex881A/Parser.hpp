@@ -163,8 +163,11 @@ namespace Sensors
       //! Get head position.
       //! @return head position.
       float
-      getHeadPosition(void) const
+      getHeadPosition(bool invert) const
       {
+        if (invert)
+          return -m_head_position;
+
         return m_head_position;
       }
 
@@ -230,7 +233,7 @@ namespace Sensors
       {
         uint8_t hb = (hbyte & 0x7e) >> 1;
         uint8_t lb = (((hbyte & 0x01) << 7) | (lbyte & 0x7f));
-        uint16_t r = (hb << 8) | lb;
+        float r = (float)((hb << 8) | lb);
 
         if (m_range < 5)
           m_profile_range = (r * 2) / 1000;
