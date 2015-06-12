@@ -149,7 +149,7 @@ namespace Vision
         IMC::PowerChannelControl pcc;
         IMC::LogBookEntry log_entry;
 
-        pcc.name = "Photo Trigger";
+        pcc.name = "5V C.1  (Photo Trigger)";
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(pcc);
         log_entry.type = IMC::LogBookEntry::LBET_INFO;
