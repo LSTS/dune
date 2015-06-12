@@ -405,7 +405,6 @@ namespace Control
           bind<DesiredSpeed>(this);
           bind<IdleManeuver>(this);
           bind<ControlLoops>(this);
-          bind<PowerChannelControl>(this);
           bind<VehicleMedium>(this);
           bind<VehicleState>(this);
           bind<SimulatedState>(this);
@@ -1117,18 +1116,6 @@ namespace Control
           m_dpath.clear();
 
           loiterHere();
-        }
-
-        //! Trigger relay in Ardupilot, used to shoot pictures with photo camera
-        void
-        consume(const IMC::PowerChannelControl* pcc)
-        {
-          trace("Trigger Request Received");
-
-          if (pcc->op & IMC::PowerChannelControl::PCC_OP_TURN_ON)
-            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0, 1);
-          else
-            sendCommandPacket(MAV_CMD_DO_SET_RELAY, 0, 0);
         }
 
         void
