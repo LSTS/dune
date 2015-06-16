@@ -145,34 +145,36 @@ namespace Sensors
       void
       consume(const IMC::Voltage* msg)
       {
-        if (msg->value < 0)
-          msg->value = 0.0;
+        double val = msg->value;
+
+        if (val < 0)
+          val = 0.0;
 
         if (msg->getSourceEntity() == m_rhodamine_eid)
         {
           IMC::RhodamineDye dye;
-          dye.value = msg->value * m_args.conversions[C_RHODAMINE][0] + m_args.conversions[C_RHODAMINE][1];
+          dye.value = val * m_args.conversions[C_RHODAMINE][0] + m_args.conversions[C_RHODAMINE][1];
           dispatch(dye);
         }
 
         if (msg->getSourceEntity() == m_fine_oil_eid)
         {
           IMC::FineOil oil;
-          oil.value = msg->value * m_args.conversions[C_FINE_OIL][0] + m_args.conversions[C_FINE_OIL][1];
+          oil.value = val * m_args.conversions[C_FINE_OIL][0] + m_args.conversions[C_FINE_OIL][1];
           dispatch(oil);
         }
 
         if (msg->getSourceEntity() == m_crude_oil_eid)
         {
           IMC::CrudeOil oil;
-          oil.value = msg->value * m_args.conversions[C_CRUDE_OIL][0] + m_args.conversions[C_CRUDE_OIL][1];
+          oil.value = val * m_args.conversions[C_CRUDE_OIL][0] + m_args.conversions[C_CRUDE_OIL][1];
           dispatch(oil);
         }
 
         if (msg->getSourceEntity() == m_turbidity_eid)
         {
           IMC::Turbidity turb;
-          turb.value = msg->value * m_args.conversions[C_TURBIDITY][0] + m_args.conversions[C_TURBIDITY][1];
+          turb.value = val * m_args.conversions[C_TURBIDITY][0] + m_args.conversions[C_TURBIDITY][1];
           dispatch(turb);
         }
 
