@@ -145,6 +145,9 @@ namespace Sensors
       void
       consume(const IMC::Voltage* msg)
       {
+        if (msg->value < 0)
+          msg->value = 0.0;
+
         if (msg->getSourceEntity() == m_rhodamine_eid)
         {
           IMC::RhodamineDye dye;
