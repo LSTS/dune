@@ -136,14 +136,14 @@ namespace Autonomy
         param("Maximum Expected Reading", m_args.max_reading)
         .defaultValue("5.0")
         .description("Communication interval for acoustic transmission requests");
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
-        bind(this, m_args.message);
-
         if (paramChanged(m_args.comms_delta))
           m_delta.setTop(m_args.comms_delta);
 
@@ -164,11 +164,27 @@ namespace Autonomy
         }
       }
 
-      //! Release resources.
-      void
-      onResourceRelease(void)
+     ~Task(void)
       {
         Memory::clear(m_sampler);
+      }
+
+      void
+      onResourceInitialization(void)
+      {
+        bind(this, m_args.message);
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -238,6 +254,7 @@ namespace Autonomy
         if (m_args.trigger == "Abort")
         {
           IMC::Abort msg;
+          msg.setDestination(getSystemId());
           dispatch(msg);
         }
         else if (m_args.trigger == "Plan")
