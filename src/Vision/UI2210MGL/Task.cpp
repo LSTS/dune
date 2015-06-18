@@ -68,6 +68,8 @@ namespace Vision
       AOI aoi;
       //! Auto Gain
       bool auto_gain;
+      //! Calibration parameters
+      double c1, c2, c3;
     };
 
     //! Device driver task.
@@ -135,6 +137,18 @@ namespace Vision
         param("Auto Gain", m_args.auto_gain)
         .defaultValue("false")
         .description("Enable Auto Gain");
+
+        param("Calib - C1", m_args.c1)
+        .defaultValue("372")
+        .description("C1 parameter of polynomial calibration function");
+
+        param("Calib - C2", m_args.c2)
+        .defaultValue("0.505")
+        .description("C2 parameter of polynomial calibration function");
+
+        param("Calib - C3", m_args.c3)
+        .defaultValue("-0.00002235")
+        .description("C3 parameter of polynomial calibration function");
 
         param("Log Dir", m_args.log_dir)
         .defaultValue("")
@@ -231,6 +245,20 @@ namespace Vision
 
         cv::flip(image_cv, image_cv, 0);
         cv::imwrite(file.c_str(), image_cv);
+      }
+
+      float
+      pixel2wlen(int pix)
+      {
+        // Polynomial conversion function
+        return (float) (m_args.c1 + m_args.c2 * pix + m_args.c3 * pix * pix);
+      }
+
+      int
+      wlen2pixel(float wlen)
+      {
+        // Inverse polynomial conversion function
+        return (int) ((-m_args.c2 + std::sqrt(m_args.c2 * m_args.c2 - 4 * m_args.c3 * (m_args.c1 - wlen))) / (2 * m_args.c3));
       }
 
       void
