@@ -78,12 +78,23 @@ namespace Control
       };
 
       //! List of ArduPlane modes.
+      //! From ArduPlane/defines.h in diydrones git repo.
       enum APM_planeModes
       {
-        PL_MODE_FBWB = 6,
-        PL_MODE_AUTO = 10,
-        PL_MODE_LOITER = 12,
-        PL_MODE_GUIDED = 15
+        PL_MODE_MANUAL       = 0,
+        PL_MODE_CIRCLE       = 1,
+        PL_MODE_STABILIZE    = 2,
+        PL_MODE_TRAINING     = 3,
+        PL_MODE_ACRO         = 4,
+        PL_MODE_FBWA         = 5,
+        PL_MODE_FBWB         = 6,
+        PL_MODE_CRUISE       = 7,
+        PL_MODE_AUTOTUNE     = 8,
+        PL_MODE_AUTO         = 10,
+        PL_MODE_RTL          = 11,
+        PL_MODE_LOITER       = 12,
+        PL_MODE_GUIDED       = 15,
+        PL_MODE_INITIALISING = 16
       };
 
       //! Radio Channel structure.
@@ -1882,10 +1893,18 @@ namespace Control
                 mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
                 mode.mode = "MANUAL";
                 m_critical = false;
-                if (m_mode == 2)
+                if (m_mode != PL_MODE_MANUAL)
                 {
                   mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
-                  mode.mode = "STABILIZE";
+
+                  if (m_mode == PL_MODE_STABILIZE)
+                    mode.mode = "STABILIZE";
+                  if (m_mode == PL_MODE_RTL)
+                    mode.mode = "RTL";
+                  if (m_mode == PL_MODE_CIRCLE)
+                    mode.mode = "CIRCLE";
+                  if (m_mode == PL_MODE_AUTOTUNE)
+                    mode.mode = "AUTOTUNE";
                 }
                 {
                   IMC::ControlLoops cl;
