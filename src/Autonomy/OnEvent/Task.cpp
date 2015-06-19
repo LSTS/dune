@@ -237,7 +237,7 @@ namespace Autonomy
         // Trigger!
         if (state == trigger && m_trigger)
         {
-          triggered();
+          fire();
           m_trigger = false;
           return true;
         }
@@ -247,7 +247,7 @@ namespace Autonomy
 
       //! Action was triggered.
       void
-      triggered(void)
+      fire(void)
       {
         // No actions if not active.
         if (!isActive())
