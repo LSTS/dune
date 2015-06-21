@@ -29,6 +29,7 @@
 
 // ISO C++ 98 headers.
 #include <queue>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -70,6 +71,8 @@ namespace Vision
       bool auto_gain;
       //! Calibration parameters
       double c1, c2, c3;
+      //! Wavelength to send
+      float wlen;
     };
 
     //! Device driver task.
@@ -87,8 +90,12 @@ namespace Vision
       HIDS m_cam;
       //! Flag to allow ignoring the first run.
       bool m_starting;
-      //! Thread fro image capture.
+      //! Thread for image capture.
       CaptureUeye* m_capture;
+      //! OpenCV frame.
+      cv::Mat m_image_cv;
+      //! Wavelengths.
+//      float m_wlengths[3];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -150,11 +157,16 @@ namespace Vision
         .defaultValue("-0.00002235")
         .description("C3 parameter of polynomial calibration function");
 
+        param("Live Wavelength", m_args.wlen)
+        .defaultValue("500.0")
+        .description("Send live data from this wavelength");
+
         param("Log Dir", m_args.log_dir)
         .defaultValue("")
         .description("Path to Log Directory");
 
-//        bind<IMC::LoggingControl>(this);
+        bind<IMC::LoggingControl>(this);
+//        bind<IMC::HyperSnapRequest>(this);
       }
 
       //! Update internal parameters.
@@ -166,6 +178,8 @@ namespace Vision
           m_starting = false;
           return;
         }
+
+        m_log_dir = m_args.log_dir;
 
         m_capture->setAOI(m_args.aoi);
         m_capture->setFPS(m_args.fps);
@@ -199,18 +213,18 @@ namespace Vision
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-//      void
-//      consume(const IMC::LoggingControl* msg)
-//      {
-//        if (!isActivating() && (msg->getDestination() != getSystemId()))
-//          return;
-//
-//        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
-//        {
-//          m_log_dir = m_ctx.dir_log / msg->name / "Photos";
-//          activate();
-//        }
-//      }
+      void
+      consume(const IMC::LoggingControl* msg)
+      {
+        if (!isActivating() && (msg->getDestination() != getSystemId()))
+          return;
+
+        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
+        {
+          m_log_dir = m_args.log_dir / msg->name;
+          m_log_dir.create();
+        }
+      }
 
       void
       onRequestActivation(void)
@@ -220,31 +234,31 @@ namespace Vision
         dispatch(log_ctl);
       }
 
-      void
-      onActivation(void)
-      {
-        m_log_dir.create();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_capture->start();
-      }
-
-      void
-      onDeactivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
+//      void
+//      onActivation(void)
+//      {
+//        m_log_dir.create();
+//        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+//        m_capture->start();
+//      }
+//
+//      void
+//      onDeactivation(void)
+//      {
+//        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+//      }
 
       //! Saves the image.
       void
       saveImage(Frame* frame)
       {
-        Path file = m_args.log_dir / String::str("%0.4f_%d.bmp", frame->timestamp, frame->gain_factor);
+        Path file = m_log_dir / String::str("%0.4f_%d.bmp", frame->timestamp, frame->gain_factor);
 
-        cv::Mat image_cv = cv::Mat(m_args.aoi.height, m_args.aoi.width, CV_8UC1);
-        std::memcpy(image_cv.ptr(), frame->data, m_args.aoi.height * m_args.aoi.width);
+        m_image_cv = cv::Mat(m_args.aoi.height, m_args.aoi.width, CV_8UC1);
+        std::memcpy(m_image_cv.ptr(), frame->data, m_args.aoi.height * m_args.aoi.width);
 
-        cv::flip(image_cv, image_cv, 0);
-        cv::imwrite(file.c_str(), image_cv);
+        cv::flip(m_image_cv, m_image_cv, 0);
+        cv::imwrite(file.c_str(), m_image_cv);
       }
 
       float
@@ -259,6 +273,31 @@ namespace Vision
       {
         // Inverse polynomial conversion function
         return (int) ((-m_args.c2 + std::sqrt(m_args.c2 * m_args.c2 - 4 * m_args.c3 * (m_args.c1 - wlen))) / (2 * m_args.c3));
+      }
+
+//      void
+//      consume(const IMC::HyperSnapRequest* msg)
+//      {
+//        std::vector<std::string> vec;
+//        String::split(msg->wavelengths, ",", vec);
+//
+//        for (int i = 0; i < vec.size(); i++)
+//          m_wlengths[i] = std::atof(vec[i].c_str());
+//      }
+
+      void
+      sendData(float wlen, int gain, double timestamp)
+      {
+        IMC::HyperSpecData hyper;
+
+        hyper.setTimeStamp(timestamp);
+
+        cv::Mat slice = m_image_cv.col(wlen2pixel(wlen));
+        hyper.data.assign(slice.data, slice.data+slice.rows);
+        hyper.gain = (float)gain / 100;
+        hyper.wavelen = wlen;
+
+        dispatch(hyper);
       }
 
       void
@@ -276,6 +315,7 @@ namespace Vision
           else
           {
             saveImage(frame);
+            sendData(m_args.wlen, frame->gain_factor, frame->timestamp);
           }
         }
 
