@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
+// IMC XML MD5: 68340176398d4cf0eb30bb903ea9c5e7                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -237,6 +237,9 @@ MESSAGE(658, TrexPlan)
 MESSAGE(660, Event)
 MESSAGE(702, CompressedImage)
 MESSAGE(703, ImageTxSettings)
+MESSAGE(710, HyperSpecData)
+MESSAGE(711, HyperSnapshot)
+MESSAGE(712, HyperSnapRequest)
 MESSAGE(750, RemoteState)
 MESSAGE(800, Target)
 MESSAGE(801, EntityParameter)
