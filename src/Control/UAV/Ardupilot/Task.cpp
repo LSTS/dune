@@ -1807,7 +1807,7 @@ namespace Control
         {
           mavlink_statustext_t stat_tex;
           mavlink_msg_statustext_decode(msg, &stat_tex);
-          debug("Status: %s", stat_tex.text);
+          inf("AP Status: %.*s", 50, stat_tex.text);
         }
 
         void
@@ -1822,6 +1822,9 @@ namespace Control
 
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
+
+          if (hbt.system_status == MAV_STATE_CRITICAL)
+            war("APM failsafe active");
 
           IMC::AutopilotMode mode;
 
