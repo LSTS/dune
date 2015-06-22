@@ -97,11 +97,6 @@ namespace Simulators
         .defaultValue("0.0")
         .description("Water current speed along the East in the NED frame");
 
-        param("Initial Heading", m_args.yaw)
-        .units(Units::Degree)
-        .defaultValue("0.0")
-        .description("Initial heading of the vehicle.");
-
         // Register handler routines.
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
@@ -151,7 +146,7 @@ namespace Simulators
 
         // We assume vehicle starts at sea surface.
         m_vehicle->setPosition(0, 0, 0);
-        m_vehicle->setOrientation(0, 0, m_args.yaw);
+        m_vehicle->setOrientation(0, 0, msg->cog);
 
         // Define vehicle origin.
         m_sstate.lat = msg->lat;
