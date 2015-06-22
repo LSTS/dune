@@ -198,7 +198,11 @@ namespace Control
         int m_current_wp;
         //! Critical WP
         bool m_critical;
+        //! Servo PWM message
+        fp32_t m_servo;
         //! Bitfield of enabled control loops.
+        //! Desired gimbal angles
+        float m_gb_pan, m_gb_tilt, m_gb_retract;
         uint32_t m_cloops;
         //! Parser Variables
         mavlink_message_t m_msg;
@@ -250,7 +254,10 @@ namespace Control
           m_dspeed(20),
           m_vehicle_type(VEHICLE_UNKNOWN),
           m_service(false),
-          m_last_wp(0)
+          m_last_wp(0),
+          m_gb_pan(0),
+          m_gb_tilt(0),
+          m_gb_retract(0)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -422,6 +429,7 @@ namespace Control
           bind<SimulatedState>(this);
           bind<DevCalibrationControl>(this);
           bind<AutopilotMode>(this);
+          bind<SetServoPosition>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -473,6 +481,19 @@ namespace Control
           uint8_t buf[512];
           mavlink_message_t msg;
 
+          //Configure Gimbal
+          mavlink_msg_mount_configure_pack(255, 0,
+                                           &msg,
+                                           m_sysid, 0,
+                                           MAV_MOUNT_MODE_MAVLINK_TARGETING,
+                                           0,
+                                           0,
+                                           0);
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+          spew("Gimbal Control setup to Mavlink Targeting");
+
           //! ATTITUDE and SIMSTATE messages
           mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
@@ -481,7 +502,7 @@ namespace Control
                                                rate,
                                                1);
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+          n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
           spew("ATTITUDE Stream setup to %d Hertz", rate);
 
@@ -1172,6 +1193,68 @@ namespace Control
         consume(const IMC::VehicleState* msg)
         {
           m_service = (msg->op_mode == IMC::VehicleState::VS_SERVICE);
+        }
+
+        void
+        consume(const IMC::SetServoPosition* sp)
+        {
+          m_servo = sp->value;
+          switch(sp->id)
+          {
+            case 6:
+            {
+              fp32_t retract_value;
+              retract_value = (m_servo/DUNE::Math::c_pi)*180*100;
+              if(retract_value < 1.0)
+              {
+                m_gb_retract = (int16_t)0;
+              }
+              if(retract_value > 1.0)
+              {
+                m_gb_retract = (int16_t)9000;
+              }
+              break;
+            }
+            case 7:
+            {
+              //inf("GOT PAN");
+              fp32_t pan_value;
+              pan_value = (m_servo/DUNE::Math::c_pi)*180*100;
+              //inf("Got Pan %f", pan_value);
+              if(pan_value < 18000 && pan_value > -18000)
+              {
+                m_gb_pan = (int16_t)pan_value;
+              }
+              break;
+            }
+            case 8:
+            {
+              //inf("GOT TILT");
+              fp32_t tilt_value;
+              tilt_value = (m_servo/DUNE::Math::c_pi)*180*100;
+              //inf("Got tilt %f", tilt_value);
+              if(tilt_value > 2200 && tilt_value < 6500)
+              {
+                m_gb_tilt = (int16_t)tilt_value;
+              }
+              break;
+            }
+          }
+          spew("Sending gimbal angles: %f, %f", m_gb_pan, m_gb_tilt);
+
+          uint8_t buf[512];
+
+          mavlink_message_t* msg = new mavlink_message_t;
+
+          mavlink_msg_mount_control_pack(255, 0, //! Host sys&comp id
+              msg,
+              m_sysid, 0, //! Target sys&comp id
+              m_gb_tilt, //! Gimbal pitch/tilt
+              m_gb_retract, //! Gimbal roll
+              m_gb_pan, //! Gimbal pan/yaw
+              0); //! Save/not save position
+          uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+          sendData(buf, n);
         }
 
         //! Used for HITL simulations
