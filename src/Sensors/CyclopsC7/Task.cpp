@@ -66,6 +66,8 @@ namespace Sensors
       unsigned m_crude_oil_eid;
       // Turbidity Entity Id.
       unsigned m_turbidity_eid;
+      //! Medium handler.
+      DUNE::Monitors::MediumHandler m_hand;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -101,6 +103,7 @@ namespace Sensors
         param("Crude Oil Label", m_args.elabels[C_CRUDE_OIL])
         .defaultValue("Crude Oil");
 
+        bind<IMC::VehicleMedium>(this);
         bind<IMC::Voltage>(this);
       }
 
@@ -143,11 +146,17 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        m_hand.update(msg);
+      }
+
+      void
       consume(const IMC::Voltage* msg)
       {
         double val = msg->value;
 
-        if (val < 0)
+        if (val < 0 || !m_hand.isUnderwater())
           val = 0.0;
 
         if (msg->getSourceEntity() == m_rhodamine_eid)
