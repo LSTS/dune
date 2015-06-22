@@ -1,6 +1,7 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
-# Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
+# Copyright 2013-2015 Norwegian University of Science and Technology (NTNU)#
+# Centre for Autonomous Marine Operations and Systems (AMOS)               #
+# Department of Engineering Cybernetics (ITK)                              #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
 #                                                                          #
@@ -22,49 +23,34 @@
 # language governing permissions and limitations at                        #
 # http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
-# Author: Kristian Klausen                                                 #
+# Author: João Fortuna                                                     #
 ############################################################################
 
-if(OPENCV)
-  CHECK_LIBRARY_EXISTS(opencv_core cvGetImage "" HAVE_LIB_OPENCV)
+if(UEYE)
+  dune_test_lib(ueye_api is_GetImageMem)
+  dune_test_header(ueye.h)
 
-  if(HAVE_LIB_OPENCV)
-    # OpenCV Present
-    set(DUNE_SYS_HAS_OPENCV 1 CACHE INTERNAL "OpenCV library")
-    set(DUNE_USING_OPENCV 1 CACHE INTERNAL "OpenCV library")
+  if(DUNE_SYS_HAS_LIB_UEYE_API AND DUNE_SYS_HAS_UEYE_H)
+    set(DUNE_USING_UEYE 1 CACHE INTERNAL "ueye")
+  else(DUNE_SYS_HAS_LIB_UEYE_API AND DUNE_SYS_HAS_UEYE_H)
+    set(DUNE_USING_UEYE 0 CACHE INTERNAL "ueye")
+  endif(DUNE_SYS_HAS_LIB_UEYE_API AND DUNE_SYS_HAS_UEYE_H)
+endif(UEYE)
 
-    # FIND_PACKAGE(OpenCV REQUIRED)
-    dune_add_lib(opencv_calib3d)
-    dune_add_lib(opencv_core)
-    dune_add_lib(opencv_features2d)
-    dune_add_lib(opencv_flann)
-    dune_add_lib(opencv_highgui)
-    dune_add_lib(opencv_imgproc)
-    dune_add_lib(opencv_ml)
-    dune_add_lib(opencv_video)
-    dune_add_lib(opencv_objdetect)
-    dune_add_lib(opencv_photo)
-    dune_add_lib(opencv_stitching)
-
-    #dune_add_lib(opencv_ts)
-    #dune_add_lib(opencv_videostab)
-    #dune_add_lib(opencv_nonfree)
-    #dune_add_lib(opencv_contrib)
-    #dune_add_lib(opencv_gpu)
-    #dune_add_lib(opencv_legacy)
-
-    # Check Header
-    dune_test_header(opencv2/opencv.hpp)
-    
-    dune_test_header(opencv2/imgcodecs.hpp)
-    if(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
-      dune_add_lib(opencv_imgcodecs)
-    endif(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
-
-  else(HAVE_LIB_OPENCV)
-    # OpenCV not found on the system.
-    message(SEND_ERROR "OpenCV was not found on the system.")
-    set(DUNE_SYS_HAS_OPENCV 0 CACHE INTERNAL "OpenCV library")
-    set(DUNE_USING_OPENCV 0 CACHE INTERNAL "OpenCV library")
-  endif(HAVE_LIB_OPENCV)
-endif(OPENCV)
+#if(UEYE)
+#  CHECK_LIBRARY_EXISTS(ueye_api is_GetImageMem "" DUNE_SYS_HAS_LIB_UEYE_API)
+#
+#  if(DUNE_SYS_HAS_LIB_UEYE_API)
+#    set(DUNE_SYS_HAS_UEYE_H 1 CACHE INTERNAL "uEye library")
+#    set(DUNE_USING_UEYE 1 CACHE INTERNAL "uEye library")
+#
+#    dune_add_lib(ueye_api)
+#
+#    dune_test_header(ueye.h)
+#
+#  else(DUNE_SYS_HAS_LIB_UEYE_API)
+#    message(SEND_ERROR "uEye was not found on the system.")
+#    set(DUNE_SYS_HAS_UEYE_H 0 CACHE INTERNAL "uEye library")
+#    set(DUNE_USING_UEYE 0 CACHE INTERNAL "uEye library")
+#  endif(DUNE_SYS_HAS_LIB_UEYE_API)
+#endif(UEYE)

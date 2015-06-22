@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
+// IMC XML MD5: 68340176398d4cf0eb30bb903ea9c5e7                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -448,6 +448,12 @@
 #define DUNE_IMC_COMPRESSEDIMAGE 702
 //! ImageTxSettings identification number.
 #define DUNE_IMC_IMAGETXSETTINGS 703
+//! HyperSpecData identification number.
+#define DUNE_IMC_HYPERSPECDATA 710
+//! HyperSnapshot identification number.
+#define DUNE_IMC_HYPERSNAPSHOT 711
+//! HyperSnapRequest identification number.
+#define DUNE_IMC_HYPERSNAPREQUEST 712
 //! RemoteState identification number.
 #define DUNE_IMC_REMOTESTATE 750
 //! Target identification number.
