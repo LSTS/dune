@@ -664,8 +664,11 @@ namespace Supervisors
         if (!m_vs.error_count)
           return false;
 
-        if (!m_args.safe_ents.size() || !m_in_safe_plan)
+        if (!m_in_safe_plan)
           return true;
+
+        if (!m_args.safe_ents.size())
+          return false;
 
         std::vector<std::string>::const_iterator it_ents = m_ents_in_error.begin();
 
