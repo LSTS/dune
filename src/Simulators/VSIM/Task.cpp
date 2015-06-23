@@ -62,8 +62,6 @@ namespace Simulators
       double wx;
       //! Stream speed East parameter (m/s).
       double wy;
-      //! Initial heading (degrees).
-      double yaw;
     };
 
     //! Simulator task.
@@ -101,14 +99,6 @@ namespace Simulators
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
-      }
-
-      //! Update parameters.
-      void
-      onUpdateParameters(void)
-      {
-        if (paramChanged(m_args.yaw))
-          m_args.yaw = Math::Angles::radians(m_args.yaw);
       }
 
       //! Release allocated resources.
