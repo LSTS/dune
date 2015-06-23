@@ -58,6 +58,8 @@ namespace Autonomy
         IMC::PlanControl pc;
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
+        pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+
         char plan_id[32];
         std::sscanf(args.c_str(), "%s", plan_id);
         pc.plan_id = plan_id;
