@@ -105,6 +105,8 @@ namespace Sensors
       double beam_width;
       //! Transducer offset.
       double xdcr_offset;
+      //! Enable input trigger.
+      bool input_trigger;
     };
 
     //! %Task.
@@ -215,9 +217,14 @@ namespace Sensors
         .defaultValue("")
         .description("Power channel that controls the power of the device");
 
+        param("Enable Input Trigger", m_args.input_trigger)
+        .defaultValue("true")
+        .description("Enable input trigger");
+
         bind<IMC::VehicleMedium>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::PowerChannelState>(this);
+        bind<IMC::PulseDetectionControl>(this);
       }
 
       void
@@ -361,6 +368,30 @@ namespace Sensors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      consume(const IMC::PulseDetectionControl* msg)
+      {
+        if (!m_args.input_trigger)
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (m_driver == NULL)
+          return;
+
+        if (msg->op == IMC::PulseDetectionControl::POP_ON)
+        {
+          trace("enabling detection of input trigger");
+          m_driver->setInputTriggerEnable(Driver::ITB_RISING_EDGE, 0, 200);
+        }
+        else if (msg->op == IMC::PulseDetectionControl::POP_OFF)
+        {
+          trace("disabling detection of input trigger");
+          m_driver->setInputTriggerEnable(Driver::ITB_OFF, 0);
+        }
       }
 
       void
@@ -528,6 +559,11 @@ namespace Sensors
         trace("set turn key off");
         consumeMessages();
         if (!m_driver->setTurnKey(false))
+          goto fail;
+
+        trace("set earth coordinates");
+        consumeMessages();
+        if (!m_driver->setEarthCoordinates())
           goto fail;
 
         trace("set manual sensor source");

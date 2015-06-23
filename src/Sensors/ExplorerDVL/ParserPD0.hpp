@@ -146,6 +146,7 @@ namespace Sensors
       void
       interpret(void)
       {
+
         // Number of data types.
         unsigned data_type_count = m_data[5];
 
@@ -154,11 +155,20 @@ namespace Sensors
           unsigned offset = m_data[6 + i * 2 + 1] << 8 | m_data[6 + i * 2];
           unsigned id = m_data[offset + 1] << 8 | m_data[offset];
 
+          if (id == 0x0000)
+            interpretFixedLeader(offset);
           if (id == 0x0080)
             interpretVariableLeader(offset);
           else if (id == 0x0600)
             interpretBottomTrack(offset);
         }
+      }
+
+      void
+      interpretFixedLeader(size_t offset)
+      {
+        uint8_t* data = m_data + offset;
+        (void)data;
       }
 
       void
@@ -178,6 +188,7 @@ namespace Sensors
           m_bottom_range[i] = data[77 + i] << 16
           | data[16 + i * 2 + 1] << 8
           | data[16 + i * 2];
+
           m_bottom_velocity[i] = data[24 + i * 2 + 1] << 8 | data[24 + i * 2];
         }
       }
@@ -200,17 +211,23 @@ namespace Sensors
         velocity.setTimeStamp(m_timestamp);
         velocity.validity = 0;
 
-        velocity.x = (m_bottom_velocity[1] / 1000.0) * (sound_speed / m_sound_speed);
+        velocity.x = -((m_bottom_velocity[1] / 1000.0) * (sound_speed / m_sound_speed));
         if (m_bottom_velocity[1] != -32768)
           velocity.validity |= IMC::GroundVelocity::VAL_VEL_X;
+        else
+          velocity.x = 0.0;
 
-        velocity.y = (m_bottom_velocity[0] / 1000.0) * (sound_speed / m_sound_speed);
+        velocity.y = -((m_bottom_velocity[0] / 1000.0) * (sound_speed / m_sound_speed));
         if (m_bottom_velocity[0] != -32768)
           velocity.validity |= IMC::GroundVelocity::VAL_VEL_Y;
+        else
+          velocity.y = 0.0;
 
-        velocity.z = -(m_bottom_velocity[2] / 1000.0) * (sound_speed / m_sound_speed);
+        velocity.z = -((m_bottom_velocity[2] / 1000.0) * (sound_speed / m_sound_speed));
         if (m_bottom_velocity[2] != -32768)
           velocity.validity |= IMC::GroundVelocity::VAL_VEL_Z;
+        else
+          velocity.z = 0.0;
       }
 
     private:

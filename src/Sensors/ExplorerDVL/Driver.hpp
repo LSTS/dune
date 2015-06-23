@@ -42,6 +42,16 @@ namespace Sensors
     class Driver
     {
     public:
+      enum InputTriggerBehaviour
+      {
+        ITB_OFF = 0,
+        ITB_RISING_EDGE = 1,
+        ITB_FALLING_EDGE = 2,
+        ITB_BOTH_EDGES = 3,
+        ITB_LOW_LEVEL = 4,
+        ITB_HIGH_LEVEL = 5
+      };
+
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port device.
@@ -157,6 +167,12 @@ namespace Sensors
         return sendCommand(m_cmd_bfr);
       }
 
+      bool
+      setEarthCoordinates(void)
+      {
+        return sendCommand("EX11111\r");
+      }
+
       //! Set the source of environmental sensor data to manual. This is
       //! useful when the DVL doesn't have any installed optional sensors.
       //! @return true if command succeeded, false otherwise.
@@ -164,6 +180,13 @@ namespace Sensors
       setManualSensorSource(void)
       {
         return sendCommand("EZ00000000\r");
+      }
+
+      void
+      setInputTriggerEnable(InputTriggerBehaviour behaviour, uint16_t delay, uint16_t timeout = 65535)
+      {
+        std::string cmd = String::str("CX %u %u %u\r", behaviour, delay, timeout);
+        m_uart->writeString(cmd.c_str());
       }
 
       //! Set the number of seconds to wait for a reply.
