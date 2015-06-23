@@ -62,8 +62,6 @@ namespace Simulators
       double wx;
       //! Stream speed East parameter (m/s).
       double wy;
-      //! Initial heading (degrees).
-      double yaw;
     };
 
     //! Simulator task.
@@ -97,23 +95,10 @@ namespace Simulators
         .defaultValue("0.0")
         .description("Water current speed along the East in the NED frame");
 
-        param("Initial Heading", m_args.yaw)
-        .units(Units::Degree)
-        .defaultValue("0.0")
-        .description("Initial heading of the vehicle.");
-
         // Register handler routines.
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
-      }
-
-      //! Update parameters.
-      void
-      onUpdateParameters(void)
-      {
-        if (paramChanged(m_args.yaw))
-          m_args.yaw = Math::Angles::radians(m_args.yaw);
       }
 
       //! Release allocated resources.
@@ -151,7 +136,7 @@ namespace Simulators
 
         // We assume vehicle starts at sea surface.
         m_vehicle->setPosition(0, 0, 0);
-        m_vehicle->setOrientation(0, 0, m_args.yaw);
+        m_vehicle->setOrientation(0, 0, msg->cog);
 
         // Define vehicle origin.
         m_sstate.lat = msg->lat;
