@@ -332,7 +332,8 @@ namespace Vision
 
         debug("%d images in buffer when stopping.", i);
 
-        m_capture->stopAndJoin();
+        if (m_capture->isRunning())
+          m_capture->stopAndJoin();
       }
 
       void
