@@ -175,7 +175,7 @@ namespace Vision
       {
         is_DisableEvent(m_cam, IS_SET_EVENT_FRAME);
         is_StopLiveVideo(m_cam, IS_DONT_WAIT);
-        m_task->inf("Image capture started");
+        m_task->inf("Image capture stopped");
       }
 
       int
