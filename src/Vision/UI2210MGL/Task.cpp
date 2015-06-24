@@ -194,7 +194,6 @@ namespace Vision
       onResourceAcquisition(void)
       {
         m_capture = new CaptureUeye(this, m_args.aoi, m_cam, m_args.fps);
-        m_capture->start();
         m_capture->setAutoGain(m_args.auto_gain);
       }
 
