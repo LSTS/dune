@@ -221,6 +221,8 @@ namespace Control
         float m_last_wp;
         //! Mission items queue
         std::queue<mavlink_message_t> m_mission_items;
+        //! Desired gimbal angles
+        float m_gb_pan, m_gb_tilt, m_gb_retract;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
