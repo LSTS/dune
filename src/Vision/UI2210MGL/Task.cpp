@@ -96,16 +96,19 @@ namespace Vision
       cv::Mat m_image_cv;
       //! Wavelengths.
 //      float m_wlengths[3];
+      //! Frame
+      Frame* m_frame;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_log_dir(ctx.dir_log),
         m_cam(1),
         m_starting(true),
-        m_capture(NULL)
+        m_capture(NULL),
+        m_frame(NULL)
       {
         // Retrieve configuration values.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Frames Per Second", m_args.fps)
@@ -146,7 +149,7 @@ namespace Vision
         .description("Enable Auto Gain");
 
         param("Calib - C1", m_args.c1)
-        .defaultValue("372")
+        .defaultValue("372.5")
         .description("C1 parameter of polynomial calibration function");
 
         param("Calib - C2", m_args.c2)
@@ -204,6 +207,12 @@ namespace Vision
           delete m_capture;
           m_capture = NULL;
         }
+
+        if (m_frame != NULL)
+        {
+          delete m_frame;
+          m_frame = NULL;
+        }
       }
 
       //! Initialize resources and start capturing frames.
@@ -216,7 +225,7 @@ namespace Vision
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if (!isActivating() && (msg->getDestination() != getSystemId()))
+        if ((msg->getDestination() != getSystemId()))
           return;
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
@@ -234,19 +243,20 @@ namespace Vision
         dispatch(log_ctl);
       }
 
-//      void
-//      onActivation(void)
-//      {
-//        m_log_dir.create();
-//        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-//        m_capture->start();
-//      }
-//
-//      void
-//      onDeactivation(void)
-//      {
-//        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-//      }
+      void
+      onActivation(void)
+      {
+        m_log_dir.create();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_capture->start();
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        stopCapture();
+      }
 
       //! Saves the image.
       void
@@ -292,33 +302,19 @@ namespace Vision
 
         hyper.setTimeStamp(timestamp);
 
-        cv::Mat slice = m_image_cv.col(wlen2pixel(wlen));
+        int col = wlen2pixel(wlen);
+
+        cv::Mat slice = m_image_cv.col(col);
         hyper.data.assign(slice.data, slice.data+slice.rows);
         hyper.gain = (float)gain / 100;
-        hyper.wavelen = wlen;
+        hyper.wavelen = pixel2wlen(col);
 
         dispatch(hyper);
       }
 
       void
-      onMain(void)
+      stopCapture(void)
       {
-        Frame* frame = NULL;
-
-        while (!stopping()) // && isActive())
-        {
-          consumeMessages();
-
-          frame = m_capture->readFrame();
-          if (frame == NULL)
-            Time::Delay::wait(0.5);
-          else
-          {
-            saveImage(frame);
-            sendData(m_args.wlen, frame->gain_factor, frame->timestamp);
-          }
-        }
-
         m_capture->stopCapture();
 
         bool qhasdata = true;
@@ -326,20 +322,44 @@ namespace Vision
 
         while (qhasdata)
         {
-          inf("Emptying buffer.");
-          frame = m_capture->readFrame();
-          if (frame == NULL)
+          debug("Emptying buffer.");
+          m_frame = m_capture->readFrame();
+          if (m_frame == NULL)
             qhasdata = false;
           else
-            saveImage(frame);
+            saveImage(m_frame);
           i++;
         }
 
-        inf("%d images in buffer at shutdown.", i);
+        debug("%d images in buffer when stopping.", i);
 
         m_capture->stopAndJoin();
+      }
 
-        delete frame;
+      void
+      onMain(void)
+      {
+        while (!stopping())
+        {
+          consumeMessages();
+
+          if (!isActive())
+          {
+            Time::Delay::wait(0.5);
+            continue;
+          }
+
+          m_frame = m_capture->readFrame();
+          if (m_frame == NULL)
+            Time::Delay::wait(0.5);
+          else
+          {
+            saveImage(m_frame);
+            sendData(m_args.wlen, m_frame->gain_factor, m_frame->timestamp);
+          }
+        }
+
+        stopCapture();
       }
     };
   }
