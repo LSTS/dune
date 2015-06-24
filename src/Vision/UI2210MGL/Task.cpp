@@ -240,6 +240,7 @@ namespace Vision
         IMC::LoggingControl log_ctl;
         log_ctl.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(log_ctl);
+        activate();
       }
 
       void
