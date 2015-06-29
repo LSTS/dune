@@ -125,6 +125,7 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         m_driver = new Driver(m_args.base_addr, m_args.range, m_args.diff_mode);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
