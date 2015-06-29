@@ -99,6 +99,8 @@ namespace Sensors
       std::string record_file_prefix;
       //! Pings per file.
       unsigned pings_per_file;
+      //! Trigger slaves.
+      std::vector<std::string> trigger_slaves;
     };
 
     struct Task: public Tasks::Task
@@ -178,6 +180,10 @@ namespace Sensors
         .maximumValue("50000")
         .defaultValue("50000")
         .description("Number of pings per recorded file");
+
+        param("Output Trigger - Slave Entity Labels", m_args.trigger_slaves)
+        .defaultValue("")
+        .description("Output trigger slaves");
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
@@ -369,17 +375,30 @@ namespace Sensors
       void
       onDeactivation(void)
       {
+        controlPulseDetection(IMC::PulseDetectionControl::POP_OFF);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         debug("deactivation complete");
+      }
+
+      void
+      controlPulseDetection(IMC::PulseDetectionControl::OperationEnum op)
+      {
+        for (size_t i = 0; i < m_args.trigger_slaves.size(); ++i)
+        {
+          unsigned eid = resolveEntity(m_args.trigger_slaves[i]);
+          IMC::PulseDetectionControl pdc;
+          pdc.setDestinationEntity(eid);
+          pdc.op = op;
+          dispatch(pdc);
+        }
       }
 
       void
       onActivation(void)
       {
         debug("activation took %0.2f s", m_wdog.getElapsed());
-
         m_cmd->setStandBy(false);
-
+        controlPulseDetection(IMC::PulseDetectionControl::POP_ON);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
