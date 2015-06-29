@@ -233,6 +233,7 @@ namespace Sensors
       void
       sendSentences(double time_reference)
       {
+        time_reference = Math::round(time_reference);
         time_t secs = (time_t)time_reference;
         double fraction = time_reference - secs;
         unsigned fsec = fraction * 100;
