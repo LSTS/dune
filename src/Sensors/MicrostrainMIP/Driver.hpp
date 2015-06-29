@@ -476,9 +476,9 @@ namespace Sensors
           {
             if (m_parser.parse(bfr[i]))
             {
-              if (m_parser.getDescriptorSet() == cmd_set and m_parser.getFieldDescriptor() == 0xf1)
+              if (m_parser.getDescriptorSet() == cmd_set && m_parser.getFieldDescriptor() == 0xf1)
               {
-                if (m_parser.getPayload()[2] == cmd and m_parser.getPayload()[3] == 0)
+                if (m_parser.getPayload()[2] == cmd && m_parser.getPayload()[3] == 0)
                 {
                   return true;
                 }
