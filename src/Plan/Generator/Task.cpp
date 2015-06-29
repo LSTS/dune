@@ -740,25 +740,31 @@ namespace Plan
           yoyo->z_units = IMC::Z_DEPTH;
           yoyo->pitch = Angles::radians(pitch);
 
-          double minradius = std::sqrt(std::pow((radius / 2), 2) +
-                                       std::pow((radius / 4), 2));
+          double minradius = std::sqrt(std::pow((size / 2), 2) +
+                                       std::pow((size / 4), 2));
 
           // List with angles and radius.
-          Math::Matrix points(7, 2);
-          points(0, 0) = Angles::radians(45 + rot);
+          Math::Matrix points(10, 2);
+          points(0, 0) = Angles::radians(-45 + rot);
           points(0, 1) = radius;
-          points(1, 0) = std::atan2(radius / 2, radius / 4) + Angles::radians(rot);
-          points(1, 1) = minradius;
-          points(2, 0) = std::atan2(- radius / 2, radius / 4) + Angles::radians(rot);
+          points(1, 0) = Angles::radians(45 + rot);
+          points(1, 1) = radius;
+          points(2, 0) = std::atan2(radius / 2, radius / 4) + Angles::radians(rot);
           points(2, 1) = minradius;
-          points(3, 0) = std::atan2(- radius / 2, - radius / 4) + Angles::radians(rot);
+          points(3, 0) = std::atan2(- radius / 2, radius / 4) + Angles::radians(rot);
           points(3, 1) = minradius;
-          points(4, 0) = std::atan2(radius / 2, - radius / 4) + Angles::radians(rot);
-          points(4, 1) = minradius;
-          points(5, 0) = Angles::radians(45 + 90 + rot);
-          points(5, 1) = radius;
-          points(6, 0) = Angles::radians(45 + 180 + rot);
-          points(6, 1) = radius;
+          points(4, 0) = std::atan2(- radius / 2, 0) + Angles::radians(rot);
+          points(4, 1) = size / 2;
+          points(5, 0) = std::atan2(radius / 2, 0) + Angles::radians(rot);
+          points(5, 1) = size / 2;
+          points(6, 0) = std::atan2(radius / 2, - radius / 4) + Angles::radians(rot);
+          points(6, 1) = minradius;
+          points(7, 0) = std::atan2(- radius / 2, - radius / 4) + Angles::radians(rot);
+          points(7, 1) = minradius;
+          points(8, 0) = Angles::radians(45 + 180 + rot);
+          points(8, 1) = radius;
+          points(9, 0) = Angles::radians(45 + 90 + rot);
+          points(9, 1) = radius;
 
           for (int i = 0; i < points.rows(); ++i)
           {
