@@ -33,12 +33,22 @@
 
 namespace Autonomy
 {
+  //! Task that analyzes a configurable variable to trigger specific actions
+  //! according with positive or negative validations. This task also applies
+  //! an acoustic communication policy by sending request to transmit reading
+  //! values.
+  //!
+  //! Acoustic modems drivers should be prepared to handle this information.
+  //!
+  //! @author José Braga
   namespace OnEvent
   {
     using DUNE_NAMESPACES;
 
     //! Broadcast channel.
     static const std::string c_broadcast = "broadcast";
+    //! Code to identify message.
+    static const uint8_t c_id = 0xdd;
 
     struct Arguments
     {
@@ -54,6 +64,8 @@ namespace Autonomy
       double neg_threshold;
       // Type of event that triggers behavior.
       std::string event_type;
+      // Plan template that will be launched.
+      std::string plan_template;
       // Action to be triggered.
       std::string trigger;
       // Communication policy.
@@ -108,6 +120,10 @@ namespace Autonomy
         .values("Detection, NoDetection")
         .defaultValue("Detection")
         .description("Type of event to detect");
+
+        param("Plan Template", m_args.plan_template)
+        .defaultValue("rows")
+        .description("Name of plan template");
 
         param("Triggered Action", m_args.trigger)
         .values("Abort, Plan, None")
@@ -265,7 +281,7 @@ namespace Autonomy
           IMC::PlanGeneration msg;
           msg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
           msg.op = IMC::PlanGeneration::OP_REQUEST;
-          msg.plan_id = "rows";
+          msg.plan_id = m_args.plan_template;
           dispatch(msg);
         }
       }
@@ -278,25 +294,21 @@ namespace Autonomy
         // Time to transmit ?
         if (m_delta.overflow())
         {
+          // Acoustic modem driver on both ends must be
+          // programmed to interpret this information.
+          IMC::AcousticOperation amsg;
+          amsg.op = IMC::AcousticOperation::AOP_MSG;
+          amsg.system = c_broadcast;
+          amsg.setSource(getSystemId());
+          amsg.setSourceEntity(getEntityId());
+
+          IMC::Message* rmsg;
+          rmsg = IMC::Factory::produce(m_args.message[0]);
+          rmsg->setValueFP(reading);
+          amsg.msg.set(*rmsg);
+          dispatch(amsg);
+
           m_delta.reset();
-
-          IMC::UamTxFrame tx;
-          tx.setDestination(getSystemId());
-          tx.sys_dst = c_broadcast;
-          tx.data.resize(1);
-
-          // We'll assume default 0 to m_args.max_reading value.
-          if (reading < 0)
-            reading = 0;
-
-          if (reading > m_args.max_reading)
-            reading = m_args.max_reading;
-
-          float scale = 127.0 / m_args.max_reading;
-
-          uint8_t* ptr = (uint8_t*)&tx.data[0];
-          IMC::serialize((uint8_t)(reading * scale), ptr);
-          dispatch(tx);
         }
       }
 
