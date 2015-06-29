@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
+// IMC XML MD5: 8ceccab312f86ca95954ac370389e9f3                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -6466,6 +6466,74 @@ namespace DUNE
 
     void
     Turbidity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    Chlorophyll::Chlorophyll(void)
+    {
+      m_header.mgid = 289;
+      clear();
+    }
+
+    void
+    Chlorophyll::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    Chlorophyll::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Chlorophyll& other__ = static_cast<const Chlorophyll&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    Chlorophyll::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Chlorophyll::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Chlorophyll::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Chlorophyll::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Chlorophyll::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Chlorophyll::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Chlorophyll::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
     }
