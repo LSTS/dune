@@ -676,6 +676,126 @@ namespace Plan
           return true;
         }
 
+        // This template makes the vehicle survey the water column around a moving point
+        // using a simple lawn-mower pattern.
+        if (plan_id == "rows")
+        {
+          IMC::MessageList<IMC::Maneuver> maneuvers;
+
+          double curlat, curlon, curdepth;
+          double lat = Angles::radians(params.get("lat", 0.0));
+          double lon = Angles::radians(params.get("lon", 0.0));
+          double maxdepth = params.get("maxdepth", 4.0);
+          double mindepth = params.get("mindepth", 1.0);
+          double size = params.get("size", 50.0);
+          double speed = params.get("speed", 1.1);
+          double rot = params.get("rot", 0.0);
+          double popup = params.get("popup", 30);
+          double pitch = params.get("pitch", 15);
+          double radius = std::sqrt((size * size) /2);
+          double ang = Angles::radians(-45.0 + rot);
+
+          getCurrentPosition(&curlat, &curlon, &curdepth);
+
+          if (lat == 0 && lon == 0) {
+            lat = curlat;
+            lon = curlon;
+          }
+
+          IMC::Goto* first = new IMC::Goto();
+          first->lat = lat;
+          first->lon = lon;
+          first->z = mindepth;
+          first->z_units = IMC::Z_DEPTH;
+          first->speed_units = IMC::SUNITS_METERS_PS;
+          first->speed = speed;
+          WGS84::displace(std::sin(ang) * radius, std::cos(ang) * radius,
+                          &(first->lat), &(first->lon));
+          maneuvers.push_back(*first);
+
+          /* No popup after first goto is needed.
+          if (popup > 0)
+          {
+            IMC::PopUp * p = new IMC::PopUp();
+            p->lat = first->lat;
+            p->lon = first->lon;
+            p->radius = 20;
+            p->z = 0;
+            p->z_units = IMC::Z_DEPTH;
+            p->duration = (int) popup;
+            p->speed = first->speed;
+            p->speed_units = first->speed_units;
+            maneuvers.push_back(*p);
+            delete p;
+          } */
+          delete first;
+
+          IMC::YoYo * yoyo = new IMC::YoYo();
+          yoyo->lat = lat;
+          yoyo->lon = lon;
+          yoyo->speed = speed;
+          yoyo->speed_units = IMC::SUNITS_METERS_PS;
+          yoyo->amplitude = (maxdepth - mindepth)/2;
+          yoyo->z = (mindepth + maxdepth) / 2;
+          yoyo->z_units = IMC::Z_DEPTH;
+          yoyo->pitch = Angles::radians(pitch);
+
+          double minradius = std::sqrt(std::pow((size / 2), 2) +
+                                       std::pow((size / 4), 2));
+
+          // List with angles and radius.
+          Math::Matrix points(10, 2);
+          points(0, 0) = Angles::radians(-45 + rot);
+          points(0, 1) = radius;
+          points(1, 0) = Angles::radians(45 + rot);
+          points(1, 1) = radius;
+          points(2, 0) = std::atan2(radius / 2, radius / 4) + Angles::radians(rot);
+          points(2, 1) = minradius;
+          points(3, 0) = std::atan2(- radius / 2, radius / 4) + Angles::radians(rot);
+          points(3, 1) = minradius;
+          points(4, 0) = std::atan2(- radius / 2, 0) + Angles::radians(rot);
+          points(4, 1) = size / 2;
+          points(5, 0) = std::atan2(radius / 2, 0) + Angles::radians(rot);
+          points(5, 1) = size / 2;
+          points(6, 0) = std::atan2(radius / 2, - radius / 4) + Angles::radians(rot);
+          points(6, 1) = minradius;
+          points(7, 0) = std::atan2(- radius / 2, - radius / 4) + Angles::radians(rot);
+          points(7, 1) = minradius;
+          points(8, 0) = Angles::radians(45 + 180 + rot);
+          points(8, 1) = radius;
+          points(9, 0) = Angles::radians(45 + 90 + rot);
+          points(9, 1) = radius;
+
+          for (int i = 0; i < points.rows(); ++i)
+          {
+            yoyo->lat = lat;
+            yoyo->lon = lon;
+            WGS84::displace(std::sin(points(i, 0)) * points(i, 1),
+                            std::cos(points(i, 0)) * points(i, 1),
+                            &(yoyo->lat), &(yoyo->lon));
+            maneuvers.push_back(*yoyo);
+          }
+
+          if (popup > 0)
+          {
+            IMC::PopUp * pop = new IMC::PopUp();
+            pop->lat = lat;
+            pop->lon = lon;
+            pop->radius = 20;
+            pop->z = 0;
+            pop->z_units = IMC::Z_DEPTH;
+            pop->duration = (int) popup;
+            pop->speed = yoyo->speed;
+            pop->speed_units = yoyo->speed_units;
+            maneuvers.push_back(*pop);
+            delete pop;
+          }
+          delete yoyo;
+
+          sequentialPlan(plan_id, &maneuvers, result);
+          return true;
+        }
+
         // This template generates a plan that attempts to dislodge the vehicle (dislodge)
         if (plan_id == "dislodge")
         {
