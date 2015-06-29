@@ -174,6 +174,10 @@ namespace Sensors
         // Velocity.
         double vel = Math::norm(estate.vx, estate.vy);
 
+        double heading = Angles::degrees(estate.psi);
+        if (heading < 0)
+          heading += 360.0;
+
         // Build sentence.
         std::string stn = String::str("$PAUV"
                                       ",%02u%02u%02u.%02u,A"
@@ -194,7 +198,7 @@ namespace Sensors
                                       std::abs(lon_deg), std::fabs(lon_min),
                                       (lon_deg >= 0) ? 'E' : 'W',
                                       vel * DUNE::Units::c_ms_to_knot,
-                                      Angles::degrees(estate.psi),
+                                      heading,
                                       Angles::degrees(estate.theta),
                                       Angles::degrees(estate.phi),
                                       estate.depth,
