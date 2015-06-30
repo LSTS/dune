@@ -182,11 +182,11 @@ namespace Sensors
         return sendCommand("EZ00000000\r");
       }
 
-      void
+      bool
       setInputTriggerEnable(InputTriggerBehaviour behaviour, uint16_t delay, uint16_t timeout = 65535)
       {
         std::string cmd = String::str("CX %u %u %u\r", behaviour, delay, timeout);
-        m_uart->writeString(cmd.c_str());
+        return sendCommand(cmd);
       }
 
       //! Set the number of seconds to wait for a reply.

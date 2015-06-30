@@ -384,13 +384,11 @@ namespace Sensors
 
         if (msg->op == IMC::PulseDetectionControl::POP_ON)
         {
-          trace("enabling detection of input trigger");
-          m_driver->setInputTriggerEnable(Driver::ITB_RISING_EDGE, 0, 200);
+          setInputTrigger(true);
         }
         else if (msg->op == IMC::PulseDetectionControl::POP_OFF)
         {
-          trace("disabling detection of input trigger");
-          m_driver->setInputTriggerEnable(Driver::ITB_OFF, 0);
+          setInputTrigger(false);
         }
       }
 
@@ -431,6 +429,46 @@ namespace Sensors
           debug("device is powered");
         else if (old_state && !m_powered)
           debug("device is no longer powered");
+      }
+
+      void
+      setInputTrigger(bool value)
+      {
+        Driver::InputTriggerBehaviour behaviour = Driver::ITB_OFF;
+        uint16_t delay = 0;
+        uint16_t timeout = 65535;
+
+        if (value)
+        {
+          trace("enabling detection of input trigger");
+          behaviour = Driver::ITB_RISING_EDGE;
+          timeout = 200;
+        }
+        else
+        {
+          trace("disabling detection of input trigger");
+        }
+
+        Counter<double> timer(5.0);
+        while (!timer.overflow())
+        {
+          trace("stop pinging");
+          consumeMessages();
+          if (!m_driver->stopPinging())
+            continue;
+
+          trace("configuring input trigger");
+          consumeMessages();
+          if (!m_driver->setInputTriggerEnable(behaviour, delay, timeout))
+            continue;
+
+          trace("start pinging");
+          consumeMessages();
+          if (!m_driver->startPinging())
+            continue;
+
+          break;
+        }
       }
 
       //! Test if the task can request activation.
