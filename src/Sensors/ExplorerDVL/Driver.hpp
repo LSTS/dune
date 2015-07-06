@@ -71,6 +71,23 @@ namespace Sensors
         Memory::clear(m_uart);
       }
 
+      bool
+      restartPinging(void)
+      {
+        Counter<double> timer(5.0);
+
+        while (!timer.overflow())
+        {
+          if (stopPinging())
+          {
+            if (startPinging())
+              return true;
+          }
+        }
+
+        return false;
+      }
+
       //! Start pinging and collecting data.
       //! @return true if command succeeded, false otherwise.
       bool
