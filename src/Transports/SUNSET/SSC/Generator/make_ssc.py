@@ -227,6 +227,10 @@ def do_complex(node, out):
     args = node.findall('args/arg')
     class_name = node.attrib['name'].strip()
 
+    public.append('virtual')
+    public.append('~%s(void)' % class_name)
+    public.append('{ }')
+    public.append('')
     public.append('virtual size_t')
     public.append('encodeArgs(std::vector<std::string>& args__) const = 0;')
     public.append('')

@@ -33,6 +33,7 @@
 #include "Link.hpp"
 #include "Sensors.hpp"
 #include "Scheduler.hpp"
+#include "Conversions.hpp"
 
 namespace Transports
 {
@@ -98,6 +99,14 @@ namespace Transports
       IMC::VehicleMedium m_medium;
       //! Task arguments.
       Arguments m_args;
+      //! Last received PlanControl message.
+      IMC::PlanControl m_pc;
+      //! Last received plan specification
+      IMC::PlanSpecification m_plan_spec;
+      //! Plan added.
+      bool m_plan_added;
+      //! Plan deleted.
+      bool m_plan_deleted;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -109,7 +118,9 @@ namespace Transports
         m_aborted(false),
         m_link(NULL),
         m_sensors(NULL),
-        m_scheduler(NULL)
+        m_scheduler(NULL),
+        m_plan_added(false),
+        m_plan_deleted(false)
       {
         param("TCP - Address", m_args.tcp_addr)
         .defaultValue("10.0.250.24")
@@ -296,6 +307,8 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
+
+        m_pc = *msg;
       }
 
       void
@@ -306,7 +319,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("SoundVelocity", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("SoundVelocity", sid, msg->value, m_position);
+          m_sensors->setMeasurement("SoundVelocity", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -317,7 +330,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("Salinity", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("Salinity", sid, msg->value, m_position);
+          m_sensors->setMeasurement("Salinity", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -328,7 +341,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("Temperature", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("Temperature", sid, msg->value, m_position);
+          m_sensors->setMeasurement("Temperature", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -339,7 +352,7 @@ namespace Transports
 
         int sid = m_sensors->getSensorId("Conductivity", msg->getSourceEntity());
         if (sid >= 0)
-          m_sensors->setMeasurement("Conductivity", sid, msg->value, m_position);
+          m_sensors->setMeasurement("Conductivity", sid, msg->value, m_position, msg->getTimeStamp());
       }
 
       void
@@ -348,21 +361,39 @@ namespace Transports
         if (msg->type != IMC::PlanDB::DBT_SUCCESS)
           return;
 
-        if (msg->op != IMC::PlanDB::DBOP_GET_STATE)
-          return;
+        if (msg->op == IMC::PlanDB::DBOP_GET_STATE)
+        {
+          if (msg->arg.isNull())
+            return;
 
-        if (msg->arg.isNull())
-          return;
+          if (msg->arg->getId() != IMC::PlanDBState::getIdStatic())
+            return;
 
-        if (msg->arg->getId() != IMC::PlanDBState::getIdStatic())
-          return;
+          const IMC::PlanDBState* db_state = static_cast<const IMC::PlanDBState*>(msg->arg.get());
+          IMC::MessageList<IMC::PlanDBInformation>::const_iterator itr = db_state->plans_info.begin();
 
-        const IMC::PlanDBState* db_state = static_cast<const IMC::PlanDBState*>(msg->arg.get());
-        IMC::MessageList<IMC::PlanDBInformation>::const_iterator itr = db_state->plans_info.begin();
+          m_plan_list.clear();
+          for (; itr != db_state->plans_info.end(); ++itr)
+            m_plan_list.push_back((*itr)->plan_id);
+        }
+        else if (msg->op == IMC::PlanDB::DBOP_GET)
+        {
+          if (msg->arg.isNull())
+            return;
 
-        m_plan_list.clear();
-        for (; itr != db_state->plans_info.end(); ++itr)
-          m_plan_list.push_back((*itr)->plan_id);
+          if (msg->arg->getId() != IMC::PlanSpecification::getIdStatic())
+            return;
+
+          m_plan_spec = *(static_cast<const IMC::PlanSpecification*>(msg->arg.get()));
+        }
+        else if (msg->op == IMC::PlanDB::DBOP_SET)
+        {
+          m_plan_added = true;
+        }
+        else if (msg->op == IMC::PlanDB::DBOP_DEL)
+        {
+          m_plan_deleted = true;
+        }
       }
 
       void
@@ -381,6 +412,7 @@ namespace Transports
         m_position.value.depth = msg->depth;
         m_position.value.altitude = msg->alt;
         m_position.heading = Angles::degrees(msg->psi);
+        m_position.timestamp = msg->getTimeStamp();
       }
 
       std::string
@@ -450,9 +482,24 @@ namespace Transports
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 
-        // FIXME: check reply.
+        // Invalidate the last received plan control message.
+        m_pc.type = IMC::PlanControl::PC_REQUEST;
 
-        sendPlanStarted(cmd->getSource(), cmd->plan_name);
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_pc.type == IMC::PlanControl::PC_SUCCESS && m_pc.op == IMC::PlanControl::PC_START)
+          {
+            sendPlanStarted(cmd->getSource(), m_pc.plan_id);
+            return;
+          }
+          else
+            m_pc.type = IMC::PlanControl::PC_REQUEST;
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
+
       }
 
       void
@@ -473,9 +520,199 @@ namespace Transports
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 
-        // FIXME: check reply.
+        // Invalidate the last received plan control message.
+        m_pc.type = IMC::PlanControl::PC_REQUEST;
 
-        sendPlanStopped(cmd->getSource(), "");
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_pc.type == IMC::PlanControl::PC_SUCCESS && m_pc.op == IMC::PlanControl::PC_STOP)
+          {
+            sendPlanStopped(cmd->getSource(), m_pc.plan_id);
+            return;
+          }
+          else
+            m_pc.type = IMC::PlanControl::PC_REQUEST;
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
+      }
+
+      void
+      handlePlanAdd(const PlanAdd* cmd)
+      {
+        IMC::PlanSpecification ps;
+        ps.plan_id = cmd->plan_name;
+        ps.description = "Plan added through SUNSET.";
+        ps.start_man_id = "1";
+
+        IMC::MessageList<IMC::PlanManeuver> maneuvers;
+        unsigned i = 0;
+        std::vector<Maneuver*>::const_iterator itr;
+        for (itr = cmd->maneuver_list.begin(); itr != cmd->maneuver_list.end(); ++itr, ++i)
+        {
+
+          IMC::PlanManeuver pm;
+          pm.maneuver_id = String::str(i + 1);
+          if (i > 0)
+          {
+            // Not the first maneuver
+            IMC::PlanTransition pt;
+            pt.conditions = "ManeuverIsDone";
+            pt.dest_man = pm.maneuver_id;
+            pt.source_man = String::str(i);
+
+            ps.transitions.push_back(pt);
+          }
+
+          IMC::Maneuver* m = newManeuverIMC(*itr);
+          pm.data.set(m);
+          delete m;
+
+          ps.maneuvers.push_back(pm);
+        }
+
+        IMC::PlanDB pdb;
+        pdb.op = IMC::PlanDB::DBOP_SET;
+        pdb.type = IMC::PlanDB::DBT_REQUEST;
+        pdb.plan_id = ps.plan_id;
+        pdb.arg.set(ps);
+        pdb.request_id = 0;
+        dispatch(pdb);
+
+        m_plan_added = false;
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_plan_added)
+          {
+            sendPlanAdded(cmd->getSource(), cmd->plan_name);
+            return;
+          }
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
+      }
+
+      void
+      sendPlanAdded(unsigned destination, const std::string& plan_name)
+      {
+        PlanAdded cmd;
+        cmd.plan_name = plan_name;
+        cmd.setDestination(destination);
+        sendCommand(cmd);
+      }
+
+      void
+      handlePlanGet(const PlanGet* cmd)
+      {
+        m_plan_spec.plan_id.clear();
+        IMC::PlanDB db;
+        db.type = IMC::PlanDB::DBT_REQUEST;
+        db.op = IMC::PlanDB::DBOP_GET;
+        db.plan_id = cmd->plan_name;
+        dispatch(db);
+
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (!m_plan_spec.plan_id.empty())
+          {
+            sendPlan(cmd->getSource());
+            return;
+          }
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
+      }
+
+      void
+      sendPlan(unsigned destination)
+      {
+        Plan cmd;
+        cmd.setDestination(destination);
+
+        bool done = false;
+        std::string mid = m_plan_spec.start_man_id;
+        while (!done)
+        {
+          IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr;
+          for (mitr = m_plan_spec.maneuvers.begin(); mitr != m_plan_spec.maneuvers.end(); ++mitr)
+            if ((*mitr != NULL) && (*mitr)->maneuver_id == mid)
+              break;
+
+          if (mitr == m_plan_spec.maneuvers.end())
+            break;
+
+          try
+          {
+            Maneuver* man = newManeuverSSC((*mitr)->data.get());
+            cmd.maneuver_list.push_back(man);
+          }
+          catch (...)
+          {
+            break;
+          }
+
+          IMC::MessageList<IMC::PlanTransition>::const_iterator titr;
+          for (titr = m_plan_spec.transitions.begin(); titr != m_plan_spec.transitions.end(); ++titr)
+            if ((*titr) != NULL && (*titr)->source_man == mid)
+              break;
+
+          if (titr == m_plan_spec.transitions.end())
+            done = true;
+          else if ((*titr)->conditions == "ManeuverIsDone")
+            mid = (*titr)->dest_man;
+          else
+            // Unsupported transition.
+            break;
+        }
+
+        if (done)
+          sendCommand(cmd);
+        else
+          sendFailure(destination, FAIL_INTERNAL_ERROR);
+
+        std::vector<Maneuver*>::const_iterator itr;
+        for (itr = cmd.maneuver_list.begin(); itr != cmd.maneuver_list.end(); ++itr)
+          delete (*itr);
+      }
+
+      void
+      handlePlanDelete(const PlanDelete* cmd)
+      {
+        IMC::PlanDB pdb;
+        pdb.op = IMC::PlanDB::DBOP_DEL;
+        pdb.type = IMC::PlanDB::DBT_REQUEST;
+        pdb.plan_id = cmd->plan_name;
+        pdb.request_id = 0;
+        dispatch(pdb);
+
+        m_plan_deleted = false;
+        Time::Counter<double> timer(1.0);
+        while (!timer.overflow())
+        {
+          waitForMessages(timer.getRemaining());
+          if (m_plan_deleted)
+          {
+            sendPlanDeleted(cmd->getSource(), cmd->plan_name);
+            return;
+          }
+        }
+
+        sendFailure(cmd->getSource(), FAIL_INTERNAL_ERROR);
+      }
+
+      void
+      sendPlanDeleted(unsigned destination, const std::string& plan_name)
+      {
+        PlanDeleted cmd;
+        cmd.plan_name = plan_name;
+        cmd.setDestination(destination);
+        sendCommand(cmd);
       }
 
       void
@@ -486,6 +723,7 @@ namespace Transports
           IMC::UamRxRange range;
           range.sys = lookupSystemName(cmd->target);
           range.value = cmd->travel_time * 1500.0;
+          range.setTimeStamp(cmd->timestamp);
           dispatch(range);
         }
         catch (std::runtime_error& e)
@@ -673,6 +911,15 @@ namespace Transports
 
           if (cmd->getName() == "PlanStop")
             handlePlanStop(static_cast<PlanStop*>(cmd));
+
+          if (cmd->getName() == "PlanAdd")
+            handlePlanAdd(static_cast<PlanAdd*>(cmd));
+
+          if (cmd->getName() == "PlanGet")
+            handlePlanGet(static_cast<PlanGet*>(cmd));
+
+          if (cmd->getName() == "PlanDelete")
+            handlePlanDelete(static_cast<PlanDelete*>(cmd));
 
           if (cmd->getName() == "SensorListGet")
             handleSensorListGet(static_cast<SensorListGet*>(cmd));
