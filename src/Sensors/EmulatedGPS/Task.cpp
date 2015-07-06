@@ -225,6 +225,13 @@ namespace Sensors
       }
 
       void
+      writeToUART(const std::string& str)
+      {
+        trace("%s", sanitize(str).c_str());
+        m_uart->write(str.c_str(), str.size());
+      }
+
+      void
       sendSentences(void)
       {
         sendSentences(Clock::getSinceEpoch());
@@ -243,25 +250,25 @@ namespace Sensors
         if (m_args.send_zda)
         {
           stn_str = createZDA(bdt, fsec);
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
 
         if (m_args.send_rmc && !m_estate_timer.overflow())
         {
           stn_str = createRMC(bdt, fsec);
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
 
         if (m_args.send_hdt && !m_estate_timer.overflow())
         {
           stn_str = createHDT();
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
 
         if (m_args.send_vtg && !m_estate_timer.overflow())
         {
           stn_str = createVTG();
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
       }
 
