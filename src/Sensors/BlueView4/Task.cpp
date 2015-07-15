@@ -180,7 +180,7 @@ namespace Sensors
         if (paramChanged(m_args.sound_speed_def))
         {
           m_sound_speed_full_res = m_args.sound_speed_def;
-          setSoundSpeed(m_args.sound_speed_def);
+          setSoundSpeed(m_sound_speed_full_res);
         }
 
         if (!hasPowerChannel())
@@ -304,8 +304,8 @@ namespace Sensors
         if (m_sonar_head == NULL)
           return;
 
-        m_sound_speed = msg->value;
-        setSoundSpeed((int)Math::round(msg->value));
+        m_sound_speed_full_res = msg->value;
+        setSoundSpeed((int)Math::round(m_sound_speed_full_res));
       }
 
       bool
