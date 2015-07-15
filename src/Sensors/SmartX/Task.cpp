@@ -95,9 +95,7 @@ namespace Sensors
         .defaultValue("38400")
         .description("Serial port baud rate");
 
-        param(DTR_RT("Sampling Frequency"), m_args.sampling_freq)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        param("Sampling Frequency", m_args.sampling_freq)
         .defaultValue("1.0")
         .units(Units::Hertz)
         .description(DTR("Sampling frequency"));
