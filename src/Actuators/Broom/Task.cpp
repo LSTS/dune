@@ -153,6 +153,8 @@ namespace Actuators
       uint8_t m_dev_errors;
       //! Enable legacy protocol
       bool m_legacy;
+      //! Used to silence some spurious boot errors.
+      Counter<double> m_boot_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -257,6 +259,7 @@ namespace Actuators
           m_proto.setUART(m_args.uart_dev);
           m_proto.open();
           m_proto.requestVersion();
+          m_boot_timer.setTop(10.0);
         }
         catch (std::runtime_error& e)
         {
@@ -312,7 +315,10 @@ namespace Actuators
               for (int i = 0; i < 8; i++)
               {
                 if (data[0] & (1 << i))
-                  err(DTR("device error: %s"), DTR(c_dev_error_strings[i]));
+                {
+                  if (m_boot_timer.overflow())
+                    err(DTR("device error: %s"), DTR(c_dev_error_strings[i]));
+                }
               }
 
               // FIXME: report this error properly
