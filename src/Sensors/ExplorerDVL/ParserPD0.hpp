@@ -200,12 +200,20 @@ namespace Sensors
         altitude.value = (m_bottom_range[beam_number] / 100.0) * (sound_speed / m_sound_speed);
 
         if (m_bottom_range[beam_number] > 0)
+        {
           altitude.validity = IMC::Distance::DV_VALID;
+        }
         else
+        {
+          altitude.value = -1.0;
           altitude.validity = IMC::Distance::DV_INVALID;
+        }
 
         if ((m_bottom_velocity[0] == -32768) || (m_bottom_velocity[1] == -32768) || (m_bottom_velocity[2] == -32768))
+        {
+          altitude.value = -1.0;
           altitude.validity = IMC::Distance::DV_INVALID;
+        }
       }
 
       void

@@ -518,20 +518,6 @@ namespace Sensors
       }
 
       void
-      setAltitudeValidity(IMC::Distance& alt)
-      {
-        if (alt.value > 0.0)
-        {
-          alt.validity = IMC::Distance::DV_VALID;
-        }
-        else
-        {
-          alt.value = 0.0;
-          alt.validity = IMC::Distance::DV_INVALID;
-        }
-      }
-
-      void
       processAltitude(void)
       {
         for (size_t i = 0; i < c_beam_count; ++i)
@@ -543,7 +529,11 @@ namespace Sensors
 
         m_altitude_filtered.setTimeStamp(m_altitude[0].getTimeStamp());
         m_altitude_filtered.value = m_filter.getDistance();
-        setAltitudeValidity(m_altitude_filtered);
+        if (m_altitude_filtered.value > 0.0)
+          m_altitude_filtered.validity = IMC::Distance::DV_VALID;
+        else
+          m_altitude_filtered.validity = IMC::Distance::DV_INVALID;
+
         dispatch(m_altitude_filtered, DF_KEEP_TIME);
 
         if (m_altitude_filtered.validity == IMC::Distance::DV_VALID)
