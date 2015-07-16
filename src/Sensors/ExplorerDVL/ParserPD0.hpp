@@ -203,6 +203,9 @@ namespace Sensors
           altitude.validity = IMC::Distance::DV_VALID;
         else
           altitude.validity = IMC::Distance::DV_INVALID;
+
+        if ((m_bottom_velocity[0] == -32768) || (m_bottom_velocity[1] == -32768) || (m_bottom_velocity[2] == -32768))
+          altitude.validity = IMC::Distance::DV_INVALID;
       }
 
       void
