@@ -44,7 +44,8 @@ namespace Sensors
     class Log: public Concurrency::Thread
     {
     public:
-      Log(Tasks::Task* parent, const std::string& prefix, const Path& path, BVTSonar sonar, int sound_speed):
+      Log(Tasks::Task* parent, const std::string& prefix, const Path& path,
+          BVTSonar sonar, int sound_speed, const std::string& nav_offsets):
         m_parent(parent),
         m_prefix(prefix),
         m_path(path),
@@ -53,6 +54,7 @@ namespace Sensors
         m_file = BVTSonar_Create();
         BVTSonar_CreateFile(m_file, path.c_str(), sonar, "");
         BVTSonar_GetHead(m_file, 0, &m_file_head);
+        BVTSonar_PutEventMark(m_file, "nav_offsets", nav_offsets.c_str());
         BVTHead_SetSoundSpeed(m_file_head, sound_speed);
         m_parent->trace("opened log file: %s", path.c_str());
       }

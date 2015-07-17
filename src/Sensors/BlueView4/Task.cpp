@@ -83,6 +83,18 @@ namespace Sensors
       unsigned pings_per_file;
       //! Sound speed tolerance.
       int sound_speed_tolerance;
+      //! True heading offset.
+      double nav_offset_heading;
+      //! Vehicle depth offset.
+      double nav_offset_depth;
+      //! Pitch angle offset.
+      double nav_offset_pitch;
+      //! Roll angle offset.
+      double nav_offset_roll;
+      //! Altitude offset.
+      double nav_offset_altitude;
+      //! Fore-aft offset.
+      double nav_offset_fore_aft;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -107,6 +119,8 @@ namespace Sensors
       int m_sound_speed;
       //! Last sound speed value with full resolution.
       double m_sound_speed_full_res;
+      //! Navigation offsets.
+      std::string m_nav_offsets_marker;
       //! Configuration parameters.
       Arguments m_args;
 
@@ -159,6 +173,36 @@ namespace Sensors
         .units(Units::MeterPerSecond)
         .description("Sound speed in water");
 
+        param("Navigation Offset - True Heading", m_args.nav_offset_heading)
+        .defaultValue("0")
+        .units(Units::Degree)
+        .description("True heading offset");
+
+        param("Navigation Offset - Depth", m_args.nav_offset_depth)
+        .defaultValue("0")
+        .units(Units::Meter)
+        .description("Vehicle depth offset");
+
+        param("Navigation Offset - Pitch", m_args.nav_offset_pitch)
+        .defaultValue("0")
+        .units(Units::Degree)
+        .description("Pitch angle offset");
+
+        param("Navigation Offset - Roll", m_args.nav_offset_roll)
+        .defaultValue("0")
+        .units(Units::Degree)
+        .description("Roll angle offset");
+
+        param("Navigation Offset - Altitude", m_args.nav_offset_altitude)
+        .defaultValue("0")
+        .units(Units::Meter)
+        .description("Altitude offset");
+
+        param("Navigation Offset - Fore Aft", m_args.nav_offset_fore_aft)
+        .defaultValue("0")
+        .units(Units::Meter)
+        .description("Fore-aft offset");
+
         m_nav_data = BVTNavData_Create();
 
         // Register consumers.
@@ -173,6 +217,26 @@ namespace Sensors
         BVTNavData_Destroy(m_nav_data);
       }
 
+      void
+      createNavigationOffsetsMarker(void)
+      {
+        m_nav_offsets_marker = String::str("{ \"head_list\": [{"
+                                           "  \"head_id\": 0,"
+                                           "  \"heading_off\": %f,"
+                                           "  \"depth_off\": %f,"
+                                           "  \"pitch_off\": %f,"
+                                           "  \"roll_off\": %f,"
+                                           "  \"altitude_off\": %f,"
+                                           "  \"fore_aft_off\": %f"
+                                           "}]}",
+                                          m_args.nav_offset_heading,
+                                          m_args.nav_offset_depth,
+                                          m_args.nav_offset_pitch,
+                                          m_args.nav_offset_roll,
+                                          m_args.nav_offset_altitude,
+                                          m_args.nav_offset_fore_aft);
+      }
+
       //! Update task parameters.
       void
       onUpdateParameters(void)
@@ -182,6 +246,8 @@ namespace Sensors
           m_sound_speed_full_res = m_args.sound_speed_def;
           setSoundSpeed(m_sound_speed_full_res);
         }
+
+        createNavigationOffsetsMarker();
 
         if (!hasPowerChannel())
           m_powered = true;
@@ -501,7 +567,7 @@ namespace Sensors
 
         closeLog();
         Path path = getLogPath(prefix);
-        m_log = new Log(this, prefix, path, m_sonar, m_sound_speed);
+        m_log = new Log(this, prefix, path, m_sonar, m_sound_speed, m_nav_offsets_marker);
         m_log->start();
       }
 
