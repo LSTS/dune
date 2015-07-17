@@ -55,7 +55,7 @@ namespace Maneuver
       void
       onStart(const IMC::Launch* maneuver)
       {
-        m_task->setControl(IMC::CL_PATH);
+        m_task->setControl(IMC::CL_NONE);
 
         m_lstate = ST_WATER;
         m_path.end_lat = maneuver->lat;
@@ -91,6 +91,7 @@ namespace Maneuver
             if (msg->medium == IMC::VehicleMedium::VM_WATER ||
                 msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
             {
+              m_task->setControl(IMC::CL_PATH);
               m_task->dispatch(m_path);
               m_lstate = ST_THRUST;
             }
