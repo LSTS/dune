@@ -162,14 +162,18 @@ namespace Sensors
         Coordinates::toWGS84(estate, lat, lon);
 
         // Convert latitude.
-        int lat_deg;
-        double lat_min;
-        Angles::convertDecimalToDM(Angles::degrees(lat), lat_deg, lat_min);
+        int lat_deg = 0;
+        double lat_min_fp = 0;
+        Angles::convertDecimalToDM(Angles::degrees(lat), lat_deg, lat_min_fp);
+        int lat_min = (int)lat_min_fp;
+        int lat_min_frac = (lat_min_fp - lat_min) * 100000;
 
         // Convert longitude.
-        int lon_deg;
-        double lon_min;
-        Angles::convertDecimalToDM(Angles::degrees(lon), lon_deg, lon_min);
+        int lon_deg = 0;
+        double lon_min_fp = 0;
+        Angles::convertDecimalToDM(Angles::degrees(lon), lon_deg, lon_min_fp);
+        int lon_min = (int)lon_min_fp;
+        int lon_min_frac = (lon_min_fp - lon_min) * 100000;
 
         // Velocity.
         double vel = Math::norm(estate.vx, estate.vy);
@@ -181,9 +185,9 @@ namespace Sensors
         // Build sentence.
         std::string stn = String::str("$PAUV"
                                       ",%02u%02u%02u.%02u,A"
-                                      ",%02d%02.5f"
+                                      ",%02d%02d.%05d"
                                       ",%c"
-                                      ",%03d%02.5f"
+                                      ",%03d%02d.%05d"
                                       ",%c"
                                       ",%0.2f"
                                       ",%0.2f"
@@ -193,9 +197,9 @@ namespace Sensors
                                       ",%0.2f"
                                       ",%02u%02u%02u",
                                       bdt.hour, bdt.minutes, bdt.seconds, fsec,
-                                      std::abs(lat_deg), std::fabs(lat_min),
+                                      std::abs(lat_deg), lat_min, lat_min_frac,
                                       (lat_deg >= 0) ? 'N' : 'S',
-                                      std::abs(lon_deg), std::fabs(lon_min),
+                                      std::abs(lon_deg), lon_min, lon_min_frac,
                                       (lon_deg >= 0) ? 'E' : 'W',
                                       vel * DUNE::Units::c_ms_to_knot,
                                       heading,
