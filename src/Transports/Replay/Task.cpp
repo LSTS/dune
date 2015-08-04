@@ -69,11 +69,9 @@ namespace Transports
       double m_start_time;
 
       // Replay file handle
-      std::ifstream* m_ifs;
+      std::istream* m_is;
       // last state from replay file
       IMC::EstimatedState m_estate;
-      // IMC parser handle
-      IMC::Parser m_parser;
 
       struct Stats
       {
@@ -96,7 +94,7 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_ifs(0)
+        m_is(0)
       {
         param("Load At Start", m_args.startup_file)
         .defaultValue("")
@@ -209,7 +207,11 @@ namespace Transports
 
         try
         {
-          m_ifs = new std::ifstream(file.c_str(), std::ios::binary);
+          Compression::Methods method = Compression::Factory::detect(file.c_str());
+          if (method == Compression::METHOD_UNKNOWN)
+            m_is = new std::ifstream(file.c_str(), std::ios::binary);
+          else
+            m_is = new Compression::FileInput(file.c_str(), method);
         }
         catch (std::exception& e)
         {
@@ -221,7 +223,7 @@ namespace Transports
 
         try
         {
-          m = IMC::Packet::deserialize(*m_ifs);
+          m = IMC::Packet::deserialize(*m_is);
         }
         catch (std::exception& e)
         {
@@ -265,7 +267,6 @@ namespace Transports
         requestActivation();
 
         war("%s '%s'", DTR("started replay of"), file.c_str());
-        m_parser.reset();
       }
 
       void
@@ -313,17 +314,16 @@ namespace Transports
       {
         requestDeactivation();
 
-        if (m_ifs)
+        if (m_is)
         {
-          delete m_ifs;
-          m_ifs = 0;
+          delete m_is;
+          m_is = 0;
         }
         m_eid2eid.clear();
         m_name2eid.clear();
         m_eid2name.clear();
         m_tstats.clear();
         m_tgstats = Stats();
-        m_parser.reset();
       }
 
       void
@@ -347,87 +347,81 @@ namespace Transports
 
           IMC::Message* m = 0;
 
-          while (!m_ifs->eof() && !m)
+          while (!stopping() && (m = DUNE::IMC::Packet::deserialize(*m_is)) != 0 && !m_is->eof())
           {
-            char c;
-            m_ifs->get(c);
-            m = m_parser.parse((uint8_t)c);
-          }
+            consumeMessages();
 
-          if (!m)
-          {
-            stopReplay();
-            continue;
-          }
-
-          if (m->getId() == DUNE_IMC_ESTIMATEDSTATE)
-          {
-            m_estate = *static_cast<IMC::EstimatedState*>(m);
-          }
-          else if (m->getId() == DUNE_IMC_ENTITYINFO)
-          {
-            // Update entity id map
-            IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
-            Name2Eid::iterator itr = m_name2eid.find(ei->label);
-
-            if (itr != m_name2eid.end())
+            if (m->getId() == DUNE_IMC_ESTIMATEDSTATE)
             {
-              m_eid2eid[ei->id] = itr->second;
+              m_estate = *static_cast<IMC::EstimatedState*>(m);
+            }
+            else if (m->getId() == DUNE_IMC_ENTITYINFO)
+            {
+              // Update entity id map
+              IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
+              Name2Eid::iterator itr = m_name2eid.find(ei->label);
 
-              trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
+              if (itr != m_name2eid.end())
+              {
+                m_eid2eid[ei->id] = itr->second;
+
+                trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
+              }
+            }
+
+            m->setSourceEntity(mapEntity(m->getSourceEntity()));
+            m->setDestinationEntity(mapEntity(m->getDestinationEntity()));
+
+            if ((m->getId() == DUNE_IMC_ENTITYSTATE && m->getSourceEntity() != DUNE_IMC_CONST_UNK_EID) || m_replay.find(m->getName()) != m_replay.end())
+            {
+              double original_ts;
+
+              if (m->getId() == DUNE_IMC_LBLCONFIG)
+                original_ts = m_start_time - m_ts_delta;
+              else
+                original_ts = m->getTimeStamp();
+
+              double new_ts = original_ts + m_ts_delta;
+              m->setTimeStamp(new_ts);
+
+              // Wait till the time is right
+              double now = Clock::getSinceEpoch();
+              double delta = new_ts - now;
+
+              double delay;
+
+              if (delta >= 1e-03)
+              {
+                // Delay::wait does not behave satisfactorily otherwise
+                // in some systems
+                Delay::wait(delta);
+                delay = Clock::getSinceEpoch() - new_ts;
+              }
+              else
+              {
+                delay = 0;
+                delta = 0;
+              }
+
+              // Counter for delay before bus delivery
+              updateStats(m_tstats[m->getName()], delay);
+              updateStats(m_tgstats, delay);
+
+              // Dispatch message
+              dispatch(m, DF_KEEP_TIME);
+
+              if (now >= m_next_stats)
+              {
+                displayStats();
+                m_next_stats += c_stats_period;
+              }
+
+              spew("%s %0.4f %s", m->getName(), (new_ts - m_start_time),
+                   m_eid2name[m->getSourceEntity()].c_str());
             }
           }
 
-          m->setSourceEntity(mapEntity(m->getSourceEntity()));
-          m->setDestinationEntity(mapEntity(m->getDestinationEntity()));
-
-          if ((m->getId() == DUNE_IMC_ENTITYSTATE && m->getSourceEntity() != DUNE_IMC_CONST_UNK_EID) || m_replay.find(m->getName()) != m_replay.end())
-          {
-            double original_ts;
-
-            if (m->getId() == DUNE_IMC_LBLCONFIG)
-              original_ts = m_start_time - m_ts_delta;
-            else
-              original_ts = m->getTimeStamp();
-
-            double new_ts = original_ts + m_ts_delta;
-            m->setTimeStamp(new_ts);
-
-            // Wait till the time is right
-            double now = Clock::getSinceEpoch();
-            double delta = new_ts - now;
-
-            double delay;
-
-            if (delta >= 1e-03)
-            {
-              // Delay::wait does not behave satisfactorily otherwise
-              // in some systems
-              Delay::wait(delta);
-              delay = Clock::getSinceEpoch() - new_ts;
-            }
-            else
-            {
-              delay = 0;
-              delta = 0;
-            }
-
-            // Counter for delay before bus delivery
-            updateStats(m_tstats[m->getName()], delay);
-            updateStats(m_tgstats, delay);
-
-            // Dispatch message
-            dispatch(m, DF_KEEP_TIME);
-
-            if (now >= m_next_stats)
-            {
-              displayStats();
-              m_next_stats += c_stats_period;
-            }
-
-            trace("%s %0.4f %s", m->getName(), (new_ts - m_start_time),
-                  m_eid2name[m->getSourceEntity()].c_str());
-          }
+          stopReplay();
 
           // Clean up
           delete m;
