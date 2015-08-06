@@ -171,7 +171,7 @@ namespace DUNE
     void
     Matrix::erase(void)
     {
-      if ( m_size != 0 )
+      if (m_size != 0)
       {
         if (--(*m_counter) == 0)
           std::free(m_data);
@@ -190,7 +190,7 @@ namespace DUNE
       if (!m_size)
         return;
 
-      if ( (*m_counter) == 1 )
+      if ((*m_counter) == 1)
         return;
 
       (*m_counter)--;
@@ -267,7 +267,7 @@ namespace DUNE
     {
       // Check if the size of 'data' matches the new m_size
       // to avoid having memcpy copying gibberish
-      if ( sizeof(data) != r * c * sizeof(double) )
+      if (sizeof(data) != r * c * sizeof(double))
         throw Error("Matrix input 'data' does not match its size!");
 
       erase();
@@ -348,10 +348,10 @@ namespace DUNE
     }
 
     void
-    Matrix::trimValues( double lim )
+    Matrix::trimValues(double lim)
     {
-      maxLimitValues( lim );
-      minLimitValues( -lim );
+      maxLimitValues(lim);
+      minLimitValues(- lim);
     }
 
     Matrix
@@ -407,7 +407,7 @@ namespace DUNE
       Matrix mx_in_ = mx_in;
       resizeAndFill(m_nrows + mx_in_.rows(), m_ncols + mx_in_.columns(), 0);
 
-      if ( !old.isEmpty() )
+      if (!old.isEmpty())
         set(0, old.rows() - 1, 0, old.columns() - 1, old);
       set(old.rows(), old.rows() + mx_in_.rows() - 1, old.columns(), old.columns() + mx_in_.columns() - 1, mx_in_);
 
@@ -417,14 +417,14 @@ namespace DUNE
     Matrix&
     Matrix::vertCat(const Matrix& mx_in)
     {
-      if (m_ncols != mx_in.m_ncols && !isEmpty() )
+      if (m_ncols != mx_in.m_ncols && !isEmpty())
         throw Error("Invalid index!");
 
       Matrix old = *this;
       Matrix mx_in_ = mx_in;
       resizeAndFill(old.rows() + mx_in_.rows(), mx_in_.columns(), 0);
 
-      if ( !old.isEmpty() )
+      if (!old.isEmpty())
         set(0, old.rows() - 1, 0, old.columns() - 1, old);
       set(old.rows(), old.rows() + mx_in_.rows() - 1, 0, mx_in_.columns() - 1, mx_in_);
 
@@ -434,14 +434,14 @@ namespace DUNE
     Matrix&
     Matrix::horzCat(const Matrix& mx_in)
     {
-      if (m_nrows != mx_in.m_nrows && !isEmpty() )
+      if (m_nrows != mx_in.m_nrows && !isEmpty())
         throw Error("Invalid index!");
 
       Matrix old = *this; //  <=> Matrix old(*this);
       Matrix mx_in_ = mx_in;
       resizeAndFill(mx_in_.rows(), m_ncols + mx_in.columns(), 0);
 
-      if ( !old.isEmpty() )
+      if (!old.isEmpty())
         set(0, old.rows() - 1, 0, old.columns() - 1, old);
       set(0, mx_in_.rows() - 1, old.columns(), old.columns() + mx_in_.columns() - 1, mx_in_);
 
@@ -562,7 +562,7 @@ namespace DUNE
       if (r == m_nrows && c == m_ncols)
         return;
 
-      if ( !isEmpty() )
+      if (!isEmpty())
       {
         if ((!r && c) || (r && !c))
           throw Error("Invalid dimension!");
@@ -605,7 +605,7 @@ namespace DUNE
       }
       else
       {
-        resize( r, c );
+        resize(r, c);
       }
     }
 
@@ -1376,7 +1376,7 @@ namespace DUNE
     Matrix
     Matrix::multiply(const Matrix& m2)
     {
-      if ( isEmpty() || m2.isEmpty() )
+      if (isEmpty() || m2.isEmpty())
         throw Error("Trying to access an empty matrix!");
 
       if (m_ncols != m2.m_nrows)
@@ -1427,7 +1427,7 @@ namespace DUNE
     Matrix
     operator+(const Matrix& m1, const Matrix& m2)
     {
-      if ( m1.isEmpty() || m2.isEmpty() )
+      if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
@@ -1449,7 +1449,7 @@ namespace DUNE
     Matrix
     operator-(const Matrix& m1, const Matrix& m2)
     {
-      if ( m1.isEmpty() || m2.isEmpty() )
+      if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
@@ -1471,7 +1471,7 @@ namespace DUNE
     Matrix
     operator*(const Matrix& m1, const Matrix& m2)
     {
-      if ( m1.isEmpty() || m2.isEmpty() )
+      if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (m1.m_ncols != m2.m_nrows)
@@ -1509,7 +1509,7 @@ namespace DUNE
     Matrix
     operator&(const Matrix& m1, const Matrix& m2)
     {
-      if ( m1.isEmpty() || m2.isEmpty() )
+      if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
@@ -1531,7 +1531,7 @@ namespace DUNE
     Matrix
     operator/(const Matrix& a, const Matrix& b)
     {
-      if ( a.isEmpty() || b.isEmpty() )
+      if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (a.m_nrows != b.m_nrows || a.m_ncols != b.m_ncols)
@@ -1644,7 +1644,7 @@ namespace DUNE
     Matrix
     transpose(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       int n = a.m_nrows;
@@ -1662,7 +1662,7 @@ namespace DUNE
     bool
     Matrix::isInvertible(void) const
     {
-      if ( isEmpty() )
+      if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
       if (m_nrows != m_ncols)
@@ -1696,7 +1696,7 @@ namespace DUNE
     Matrix
     inverse_pp(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (a.m_nrows != a.m_ncols)
@@ -1750,7 +1750,7 @@ namespace DUNE
     Matrix
     inverse_pp(const Matrix& a, const Matrix& b)
     {
-      if ( a.isEmpty() || b.isEmpty() )
+      if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (a.m_nrows != a.m_ncols)
@@ -1806,7 +1806,7 @@ namespace DUNE
     Matrix
     inverse(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (a.m_nrows != a.m_ncols)
@@ -1865,7 +1865,7 @@ namespace DUNE
     Matrix
     inverse(const Matrix& a, const Matrix& b)
     {
-      if ( a.isEmpty() || b.isEmpty() )
+      if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (a.m_nrows != a.m_ncols)
@@ -1938,7 +1938,7 @@ namespace DUNE
     Matrix
     skew(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (!((a.m_nrows == 1 && a.m_ncols == 3) || (a.m_nrows == 3 && a.m_ncols == 1)))
@@ -1952,7 +1952,7 @@ namespace DUNE
     Matrix
     inverse_lup(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       if (a.m_nrows != a.m_ncols)
@@ -2007,7 +2007,7 @@ namespace DUNE
     Matrix
     abs(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       Matrix s(a.m_nrows, a.m_ncols);
@@ -2023,7 +2023,7 @@ namespace DUNE
     double
     max(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       double* p = a.m_data;
@@ -2043,7 +2043,7 @@ namespace DUNE
     double
     min(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       double* p = a.m_data;
@@ -2063,7 +2063,7 @@ namespace DUNE
     double
     sum(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       double* p = a.m_data;
@@ -2079,7 +2079,7 @@ namespace DUNE
     double
     squaresum(const Matrix& a)
     {
-      if ( a.isEmpty() )
+      if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       double* p = a.m_data;
@@ -2195,7 +2195,7 @@ namespace DUNE
     double
     Matrix::dot(const Matrix& a, const Matrix& b)
     {
-      if ( a.isEmpty() || a.isEmpty() )
+      if (a.isEmpty() || a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       // Check if a and b are both column vectors or row vectors
@@ -2218,7 +2218,7 @@ namespace DUNE
     Matrix
     Matrix::cross(const Matrix& a, const Matrix& b)
     {
-      if ( a.isEmpty() || a.isEmpty() )
+      if (a.isEmpty() || a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       // Check if a and b are both column vectors or row vectors
