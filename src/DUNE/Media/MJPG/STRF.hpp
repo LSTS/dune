@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,73 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_STRF_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_STRF_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
+// Local headers.
+#include "Chunk.hpp"
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Class representing an AVI stream format chunk.
+      class STRF: public Chunk
+      {
+      public:
+        //! Constructor.
+        //! @param properties stream properties.
+        STRF(const Properties& properties):
+          Chunk(properties, "strf")
+        {
+          setDataSize(68);
+        }
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Write chunk data to output stream.
+        //! @param[in] os output stream.
+        void
+        writeData(std::ostream& os)
+        {
+          // biSize.
+          writeWord(getDataSize(), os);
+          // Width.
+          writeWord(m_properties.width, os);
+          // Height.
+          writeWord(m_properties.height, os);
+          // Planes.
+          writeShort(1, os);
+          // Bit count.
+          writeShort(24, os);
+          // Compression (JPEG).
+          writeWord(1196444237, os);
+          // Size image.
+          writeWord(0, os);
+          // X Pixels per meter.
+          writeWord(0, os);
+          // Y Pixels per meter.
+          writeWord(0, os);
+          // Colors used.
+          writeWord(0, os);
+          // Important colors.
+          writeWord(0, os);
+
+          // Padding.
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+        }
+      };
+    }
+  }
+}
 
 #endif

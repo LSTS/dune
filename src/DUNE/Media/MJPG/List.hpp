@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,67 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_LIST_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_LIST_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <vector>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
+// Local headers.
+#include "Chunk.hpp"
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Class representing an AVI list chunk.
+      class List: public Chunk
+      {
+      public:
+        //! Constructor.
+        //! @param[in] properties stream properties.
+        //! @param[in] id list name.
+        //! @param[in] name chunk name.
+        List(const Properties& properties, const char* id, const char* name = "LIST"):
+          Chunk(properties, name)
+        {
+          std::memcpy(m_id, id, 4);
+          setDataSize(4);
+        }
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Add chunk to list.
+        //! @param[in] chunk chunk.
+        void
+        add(Chunk* chunk)
+        {
+          m_chunks.push_back(chunk);
+          setDataSize(getDataSize() + chunk->getSize());
+        }
+
+        //! Write chunk data to output stream.
+        //! @param[in] os output stream.
+        void
+        writeData(std::ostream& os)
+        {
+          writeFourCC(m_id, os);
+
+          for (size_t i = 0; i < m_chunks.size(); ++i)
+            m_chunks[i]->write(os);
+        }
+
+      private:
+        //! List chunk id.
+        char m_id[4];
+        //! List of chunks.
+        std::vector<Chunk*> m_chunks;
+      };
+    }
+  }
+}
 
 #endif

@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,69 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_AVIH_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_AVIH_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
+// Local headers.
+#include "Chunk.hpp"
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Class representing an AVI header chunk.
+      class AVIH: public Chunk
+      {
+      public:
+        //! Constructor.
+        //! @param[in] properties stream properties.
+        AVIH(const Properties& properties):
+          Chunk(properties, "avih")
+        {
+          setDataSize(56);
+        }
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Write chunk data to output stream.
+        //! @param[in] os output stream.
+        void
+        writeData(std::ostream& os)
+        {
+          uint32_t usec_per_frame = 1e6 / m_properties.fps;
+
+          // Microsecond per frame.
+          writeWord(usec_per_frame, os);
+          // Maximum bytes per second.
+          writeWord(0, os);
+          // Padding granularity.
+          writeWord(0, os);
+          // Flags.
+          writeWord(0, os);
+          // Total frames.
+          writeWord(m_properties.total_frames, os);
+          // Initial frames.
+          writeWord(0, os);
+          // Streams.
+          writeWord(1, os);
+          // Suggested buffer size.
+          writeWord(0, os);
+          // Width.
+          writeWord(m_properties.width, os);
+          // Height.
+          writeWord(m_properties.height, os);
+          // Reserved.
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+          writeWord(0, os);
+        }
+      };
+    }
+  }
+}
 
 #endif

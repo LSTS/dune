@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,76 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_IDX1_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_IDX1_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <list>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
+// Local headers.
+#include "Chunk.hpp"
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Class representing an AVI index.
+      class IDX1: public Chunk
+      {
+      public:
+        //! Constructor.
+        //! @param[in] properties stream properties.
+        IDX1(const Properties& properties):
+          Chunk(properties, "idx1")
+        {  }
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Destructor.
+        ~IDX1(void)
+        {
+          std::list<uint8_t*>::const_iterator itr = m_index.begin();
+          for (; itr != m_index.end(); ++itr)
+            delete [] *itr;
+        }
+
+        //! Add record to the index.
+        //! @param[in] id chunk id.
+        //! @param[in] flags flags.
+        //! @param[in] offset chunk offset.
+        //! @param[in] length chunk length.
+        void
+        add(const char* id, uint32_t flags, uint32_t offset, uint32_t length)
+        {
+          uint8_t* record = new uint8_t[16];
+          std::memcpy(record, id, 4);
+          std::memcpy(record + 4, &flags, 4);
+          std::memcpy(record + 8, &offset, 4);
+          std::memcpy(record + 12, &length, 4);
+
+          m_index.push_back(record);
+          setDataSize(getDataSize() + 16);
+        }
+
+        //! Write chunk data to output stream.
+        //! @param[in] os output stream.
+        void
+        writeData(std::ostream& os)
+        {
+          std::list<uint8_t*>::const_iterator itr = m_index.begin();
+          for (; itr != m_index.end(); ++itr)
+            os.write((const char*)*itr, 16);
+        }
+
+      private:
+        //! List of index entries.
+        std::list<uint8_t*> m_index;
+      };
+    }
+  }
+}
 
 #endif

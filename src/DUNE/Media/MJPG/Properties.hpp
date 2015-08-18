@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,40 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_PROPERTIES_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_PROPERTIES_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Properties of an AVI encoded MJPEG.
+      struct Properties
+      {
+        //! Image width.
+        uint32_t width;
+        //! Image height.
+        uint32_t height;
+        //! Frames per second.
+        uint32_t fps;
+        //! Number of frames in the stream.
+        uint32_t total_frames;
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Constructor.
+        Properties(void):
+          width(0),
+          height(0),
+          fps(0),
+          total_frames(0)
+        {  }
+      };
+    }
+  }
+}
 
 #endif

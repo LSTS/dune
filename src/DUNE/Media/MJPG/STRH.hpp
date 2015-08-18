@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,76 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_STRH_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_STRH_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
+// Local headers.
+#include "Chunk.hpp"
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Class representing an AVI stream header chunk.
+      class STRH: public Chunk
+      {
+      public:
+        //! Constructor.
+        //! @param[in] properties stream properties.
+        STRH(const Properties& properties):
+          Chunk(properties, "strh")
+        {
+          setDataSize(56);
+        }
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Write chunk data to output stream.
+        //! @param[in] os output stream.
+        void
+        writeData(std::ostream& os)
+        {
+          // Type.
+          writeFourCC("vids", os);
+          // Handler.
+          writeFourCC("MJPG", os);
+          // Flags.
+          writeWord(0, os);
+          // Priority.
+          writeShort(0, os);
+          // Language.
+          writeShort(0, os);
+          // Initial frames.
+          writeWord(0, os);
+          // Scale.
+          writeWord(1, os);
+          // Rate.
+          writeWord(m_properties.fps, os);
+          // Start.
+          writeWord(0, os);
+          // Length.
+          writeWord(m_properties.total_frames, os);
+          // Suggested buffer size.
+          writeWord(0, os);
+          // Quality.
+          writeWord(0, os);
+          // Sample size.
+          writeWord(0, os);
+          // RC frame (left).
+          writeShort(0, os);
+          // RC frame (top).
+          writeShort(0, os);
+          // RC frame (right).
+          writeShort(m_properties.width, os);
+          // RC frame (bottom).
+          writeShort(m_properties.height, os);
+        }
+      };
+    }
+  }
+}
 
 #endif

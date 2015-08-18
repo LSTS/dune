@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +24,49 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_MEDIA_HPP_INCLUDED_
-#define DUNE_MEDIA_HPP_INCLUDED_
+#ifndef DUNE_MEDIA_MJPG_ISFT_HPP_INCLUDED_
+#define DUNE_MEDIA_MJPG_ISFT_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+#include <DUNE/Version.hpp>
+
+// Local headers.
+#include "Chunk.hpp"
 
 namespace DUNE
 {
   namespace Media
-  { }
-}
+  {
+    namespace MJPG
+    {
+      //! Class representing an AVI software information metadata chunk.
+      class ISFT: public Chunk
+      {
+      public:
+        //! Constructor.
+        //! @param[in] properties stream properties.
+        ISFT(const Properties& properties):
+          Chunk(properties, "ISFT"),
+          m_info("DUNE")
+        {
+          setDataSize(m_info.size());
+        }
 
-#include <DUNE/Media/JPEGCompressor.hpp>
-#include <DUNE/Media/VideoCapture.hpp>
-#include <DUNE/Media/VideoIIDC1394.hpp>
-#include <DUNE/Media/BayerDecoder.hpp>
-#include <DUNE/Media/MJPG/Encoder.hpp>
+        //! Write chunk data to output stream.
+        //! @param[in] os output stream.
+        void
+        writeData(std::ostream& os)
+        {
+          writeString(m_info, os);
+        }
+
+      private:
+        //! Information string.
+        std::string m_info;
+      };
+    }
+  }
+}
 
 #endif
