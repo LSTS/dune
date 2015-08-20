@@ -227,7 +227,7 @@ namespace Vision
         if ((msg->getDestination() != getSystemId()))
           return;
 
-        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
+        if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME || msg->op == IMC::LoggingControl::COP_REQUEST_START)
         {
           m_log_dir = m_args.log_dir / msg->name;
           m_log_dir.create();
