@@ -35,6 +35,7 @@
 #include "STRH.hpp"
 #include "ISFT.hpp"
 #include "IDX1.hpp"
+#include "TSTP.hpp"
 
 namespace DUNE
 {
@@ -64,6 +65,7 @@ namespace DUNE
           m_strf = new STRF(m_properties);
           m_isft = new ISFT(m_properties);
           m_idx1 = new IDX1(m_properties);
+          m_tstp = new TSTP(m_properties);
 
           m_strl = new List(m_properties, "strl");
           m_strl->add(m_strh);
@@ -90,7 +92,8 @@ namespace DUNE
         ~Encoder(void)
         {
           m_idx1->write(m_ofs);
-          m_riff->setDataSize(m_riff->getDataSize() + m_idx1->getSize());
+          m_tstp->write(m_ofs);
+          m_riff->setDataSize(m_riff->getDataSize() + m_idx1->getSize() + m_tstp->getSize());
 
           // Patch sizes.
           m_ofs.seekp(0);
@@ -102,6 +105,7 @@ namespace DUNE
           delete m_hdrl;
           delete m_strl;
           delete m_idx1;
+          delete m_tstp;
           delete m_isft;
           delete m_strf;
           delete m_strh;
@@ -112,7 +116,7 @@ namespace DUNE
         //! @param[in] data video data.
         //! @param[in] data_size size of video data.
         void
-        encode(const uint8_t* data, size_t data_size)
+        encode(const uint8_t* data, size_t data_size, double timestamp)
         {
           Chunk frame(m_properties, "00dc");
           frame.setData(data, data_size);
@@ -124,6 +128,7 @@ namespace DUNE
           m_riff->setDataSize(m_riff->getDataSize() + frame.getSize());
 
           m_idx1->add("00dc", 0x01, offset, frame.getSize());
+          m_tstp->add(timestamp);
 
           ++m_properties.total_frames;
         }
@@ -143,6 +148,8 @@ namespace DUNE
         ISFT* m_isft;
         //! AVI index.
         IDX1* m_idx1;
+        //! AVI timestamp index.
+        TSTP* m_tstp;
         //! Stream list.
         List* m_strl;
         //! Header list.
