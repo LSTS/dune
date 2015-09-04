@@ -160,20 +160,8 @@ namespace Sensors
         double lat = estate.lat;
         double lon = estate.lon;
         Coordinates::toWGS84(estate, lat, lon);
-
-        // Convert latitude.
-        int lat_deg = 0;
-        double lat_min_fp = 0;
-        Angles::convertDecimalToDM(Angles::degrees(lat), lat_deg, lat_min_fp);
-        int lat_min = (int)lat_min_fp;
-        int lat_min_frac = (lat_min_fp - lat_min) * 100000;
-
-        // Convert longitude.
-        int lon_deg = 0;
-        double lon_min_fp = 0;
-        Angles::convertDecimalToDM(Angles::degrees(lon), lon_deg, lon_min_fp);
-        int lon_min = (int)lon_min_fp;
-        int lon_min_frac = (lon_min_fp - lon_min) * 100000;
+        std::string lat_nmea = latitudeToNMEA(lat);
+        std::string lon_nmea = longitudeToNMEA(lon);
 
         // Velocity.
         double vel = Math::norm(estate.vx, estate.vy);
@@ -185,10 +173,8 @@ namespace Sensors
         // Build sentence.
         std::string stn = String::str("$PAUV"
                                       ",%02u%02u%02u.%02u,A"
-                                      ",%02d%02d.%05d"
-                                      ",%c"
-                                      ",%03d%02d.%05d"
-                                      ",%c"
+                                      ",%s"
+                                      ",%s"
                                       ",%0.2f"
                                       ",%0.2f"
                                       ",%0.2f"
@@ -197,11 +183,9 @@ namespace Sensors
                                       ",%0.2f"
                                       ",%02u%02u%02u",
                                       bdt.hour, bdt.minutes, bdt.seconds, fsec,
-                                      std::abs(lat_deg), lat_min, lat_min_frac,
-                                      (lat_deg >= 0) ? 'N' : 'S',
-                                      std::abs(lon_deg), lon_min, lon_min_frac,
-                                      (lon_deg >= 0) ? 'E' : 'W',
-                                      vel * DUNE::Units::c_ms_to_knot,
+                                      lat_nmea.c_str(),
+                                      lon_nmea.c_str(),
+                                      vel,
                                       heading,
                                       Angles::degrees(estate.theta),
                                       Angles::degrees(estate.phi),
