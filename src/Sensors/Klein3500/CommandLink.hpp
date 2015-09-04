@@ -185,7 +185,7 @@ namespace Sensors
                                       bdt.hour, bdt.minutes, bdt.seconds, fsec,
                                       lat_nmea.c_str(),
                                       lon_nmea.c_str(),
-                                      vel,
+                                      vel * Units::c_ms_to_knot,
                                       heading,
                                       Angles::degrees(estate.theta),
                                       Angles::degrees(estate.phi),
