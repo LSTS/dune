@@ -159,8 +159,8 @@ namespace Sensors
         NMEAWriter stn("GPRMC");
         stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << "A"
-            << lat_str
-            << lon_str
+            << lat_nmea
+            << lon_nmea
             << vel * DUNE::Units::c_ms_to_knot
             << 0 // azimuth.
             << String::str("%02u%02u%02u", bdt.day, bdt.month, bdt.year - 2000)
