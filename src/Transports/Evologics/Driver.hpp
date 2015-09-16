@@ -353,23 +353,23 @@ namespace Transports
       }
 
       void
-	  parseReceivedBurst(const std::string& str, RecvIM& msg)
+      parseReceivedBurst(const std::string& str, RecvIM& msg)
       {
-    	  int offset = 0;
-    	  long unsigned int data_size = 0;
-    	  int rv = 0;
+        int offset = 0;
+        long unsigned int data_size = 0;
+        int rv = 0;
 
-    	  unsigned int bitrate, propagation_time;
+        unsigned int bitrate, propagation_time;
 
-    	  rv = std::sscanf(str.c_str(),
-    			  "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
-				  &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
-				  &msg.integrity, &propagation_time, &msg.velocity, &offset);
+        rv = std::sscanf(str.c_str(),
+            "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
+            &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
+            &msg.integrity, &propagation_time, &msg.velocity, &offset);
 
-    	  if (rv != 8)
-            throw std::runtime_error("invalid format");
+        if (rv != 8)
+          throw std::runtime_error("invalid format");
 
-    	  msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
+        msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
 
       void
