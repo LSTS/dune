@@ -50,9 +50,12 @@ namespace Transports
     //! Asynchronous messages.
     static const char* c_async_msgs[] =
     {
+      "DELIVERED",
       "DELIVEREDIM",
+	    "FAILED",
       "FAILEDIM",
       "CANCELEDIM",
+      "RECV",
       "RECVIMS",
       "RECVIM",
       "USBLLONG",
@@ -208,6 +211,20 @@ namespace Transports
         setBusy(true);
       }
 
+      //! Send burst data.
+      //! @param[in] data data to send.
+      //! @param[in] data_size number of bytes to send.
+      //! @param[in] dst destination address.
+      void
+      sendBurst(const uint8_t* data, size_t data_size, unsigned dst)
+      {
+        std::string cmd = String::str("*SEND,%u,%u,", data_size, dst);
+        cmd.append((char*)data, data_size);
+        sendAT(cmd);
+        expectOK();
+        setBusy(true);
+      }
+
       //! Send piggyback instant message.
       //! @param[in] data data to send.
       //! @param[in] data_size number of bytes to send.
@@ -333,6 +350,26 @@ namespace Transports
       getRSSI(void)
       {
 
+      }
+
+      void
+	  parseReceivedBurst(const std::string& str, RecvIM& msg)
+      {
+    	  int offset = 0;
+    	  long unsigned int data_size = 0;
+    	  int rv = 0;
+
+    	  unsigned int bitrate, propagation_time;
+
+    	  rv = std::sscanf(str.c_str(),
+    			  "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
+				  &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
+				  &msg.integrity, &propagation_time, &msg.velocity, &offset);
+
+    	  if (rv != 8)
+            throw std::runtime_error("invalid format");
+
+    	  msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
 
       void

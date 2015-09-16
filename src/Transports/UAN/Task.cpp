@@ -44,7 +44,8 @@ namespace Transports
       CODE_RANGE   = 0x01,
       CODE_PLAN    = 0x02,
       CODE_REPORT  = 0x03,
-      CODE_RESTART = 0x04
+      CODE_RESTART = 0x04,
+	  CODE_RAW     = 0x05
     };
 
     struct Report
@@ -454,6 +455,9 @@ namespace Transports
           case DUNE_IMC_PLANCONTROL:
             sendPlanControl(sys, static_cast<const IMC::PlanControl*>(msg));
             break;
+          default:
+            sendRawMessage(sys, msg);
+            break;
         }
       }
 
@@ -461,6 +465,28 @@ namespace Transports
       recvMessage(const IMC::UamRxFrame* msg)
       {
         (void)msg;
+      }
+
+      void
+	  sendRawMessage(const std::string& sys, const IMC::Message * msg)
+      {
+    	  std::vector<uint8_t> data;
+    	  data.push_back(CODE_RAW);
+
+    	  // leave 1 byte for CODE_RAW and another for CRC8
+    	  uint8_t buf[1022];
+
+    	  // start with message id
+    	  uint16_t id = msg->getId();
+    	  buf[0] = ((uint8_t *) &id)[0];
+    	  buf[1] = ((uint8_t *) &id)[1];
+
+    	  // followed by all message fields
+    	  uint8_t * end = msg->serializeFields(&buf[2]);
+
+    	  int length = end - buf;
+    	  data.insert(data.end(), buf, buf + length);
+    	  sendFrame(sys, data, false);
       }
 
       void
