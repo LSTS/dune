@@ -75,6 +75,14 @@ namespace Actuators
       int tilt_accel;
       // Minimum tilt
       float tilt_min;
+      // Reset on boot
+      bool reset_on_boot;
+      // Set to desired position on boot
+      bool begin_non_standard;
+      // Tilt after boot
+      int begin_tilt;
+      // Pan after boot
+      int begin_pan;
     };
 
     struct Task: public Tasks::Periodic
@@ -138,6 +146,29 @@ namespace Actuators
         .minimumValue("0.0")
         .description("PTU minimum tilt angle in degrees");
 
+        param("Reset On Boot", m_args.reset_on_boot)
+        .defaultValue("true")
+        .description("reseting PTU on boot");
+
+         param("Non-Standard Position on Boot", m_args.begin_non_standard)
+        .defaultValue("false")
+        .description("PTU non-standard position after DUNE start");
+
+        param("Tilt Angle After Boot", m_args.begin_tilt)
+        .defaultValue("0.0")
+        .minimumValue("-3499")
+        .description("PTU tilt angle after boot in FLIR units");
+        
+        param("Pan Angle After Boot", m_args.begin_pan)
+         .defaultValue("0.0")
+         .minimumValue("-6999")
+         .description("PTU pan angle after boot in FLIR units")
+
+
+
+
+
+
         // Setup entity states.
         // @todo: set task entity states using new scheme.
         //
@@ -163,8 +194,11 @@ namespace Actuators
         // Send execute immediatly command.
         sendCommand("i ");
         // Send reset.
-        sendCommand("r ");
-        debug("resetting PTU");
+        if (m_args.reset_on_boot)
+           {
+           sendCommand("r ");
+           debug("resetting PTU");
+           }
         // Wait for reset.
         sendCommand("a ");
         // Send position control command.
@@ -188,6 +222,12 @@ namespace Actuators
         // Set pan and tilt accelerations.
         createCommand("pa", m_args.pan_accel);
         createCommand("ta", m_args.tilt_accel);
+        // Set non-standard position after boot
+        if(m_args.begin_non_standard){
+            createCommand("tp", m_args.begin_tilt);
+            createCommand("pp", m_args.begin_pan);
+        }
+      }
       }
 
       void
