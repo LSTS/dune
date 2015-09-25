@@ -23,6 +23,8 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Joel Cardoso                                                     *
+// Author: Artur Zolich                                                     *
+// Tester: Krzysztof Cisek                                                  *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -156,17 +158,15 @@ namespace Actuators
 
         param("Tilt Angle After Boot", m_args.begin_tilt)
         .defaultValue("0.0")
-        .minimumValue("-3499")
-        .description("PTU tilt angle after boot in FLIR units");
+        .minimumValue("-10.0")
+        .maximumValue("90.0")
+        .description("PTU tilt angle after boot in degrees: 90 degrees points up");
         
-        param("Pan Angle After Boot", m_args.begin_pan)
+         param("Pan Angle After Boot", m_args.begin_pan)
          .defaultValue("0.0")
-         .minimumValue("-6999")
-         .description("PTU pan angle after boot in FLIR units")
-
-
-
-
+         .minimumValue("-180.0")
+         .maximumValue("180.0")
+         .description("PTU pan angle after boot in degrees");
 
 
         // Setup entity states.
@@ -222,12 +222,24 @@ namespace Actuators
         // Set pan and tilt accelerations.
         createCommand("pa", m_args.pan_accel);
         createCommand("ta", m_args.tilt_accel);
+        // Wait.
+        sendCommand("a ");
         // Set non-standard position after boot
         if(m_args.begin_non_standard){
-            createCommand("tp", m_args.begin_tilt);
-            createCommand("pp", m_args.begin_pan);
+        m_pan = Math::c_pi / 180.0 * m_args.begin_pan;
+        m_tilt = Math::c_pi / 180.0 * m_args.begin_tilt;
         }
-      }
+        // Set non-standard position after boot
+/*        
+            if(m_args.begin_non_standard){
+            createCommand("tp", m_args.begin_tilt);
+            // Wait.
+            sendCommand("a ");
+            createCommand("pp", m_args.begin_pan);
+            // Wait.
+            sendCommand("a ");
+
+        }*/
       }
 
       void
