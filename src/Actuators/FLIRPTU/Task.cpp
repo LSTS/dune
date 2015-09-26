@@ -328,6 +328,7 @@ namespace Actuators
 
         // Send pan command.
         createCommand("pp", pan_pos);
+        sendCommand("a "); //to avoid resetting of axle        
 
         debug("Pan bounded: %d", pan_pos);
 
@@ -341,6 +342,7 @@ namespace Actuators
 
         // Send tilt command.
         createCommand("tp", tilt_pos);
+        sendCommand("a "); //to avoid resetting of axle
 
         debug("Tilt bounded: %d", tilt_pos);
 
