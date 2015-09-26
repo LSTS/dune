@@ -192,7 +192,11 @@ namespace Actuators
       {
         debug("initializing");
         // Send execute immediatly command.
-        sendCommand("i ");
+        //sendCommand("i ");
+        // Send execute slave command.
+                sendCommand("s ");
+
+
         // Send reset.
         if (m_args.reset_on_boot)
            {
@@ -329,14 +333,7 @@ namespace Actuators
         debug("Pan: %f rad", pan_rad);
         debug("Pan: %d", pan_pos);
 
-        if(old_pan_pos != pan_pos){
-			// Send pan command.
-			createCommand("pp", pan_pos);
-			sendCommand("a "); //to avoid resetting of axle
 
-			debug("Pan bounded: %d", pan_pos);
-			old_pan_pos = pan_pos;
-        }
 
         // TILT
         float tilt_rad = Angles::normalizeRadian(m_tilt);
@@ -346,7 +343,13 @@ namespace Actuators
         debug("Tilt: %f rad", m_tilt);
         debug("Tilt: %d", tilt_pos);
 
-        if(old_tilt_pos != tilt_pos){
+        if((old_tilt_pos != tilt_pos)||(old_pan_pos != pan_pos)){
+			// Send pan command.
+			createCommand("pp", pan_pos);
+
+			debug("Pan bounded: %d", pan_pos);
+			old_pan_pos = pan_pos;
+
 			// Send tilt command.
 			createCommand("tp", tilt_pos);
 			sendCommand("a "); //to avoid resetting of axle
