@@ -316,6 +316,9 @@ namespace Actuators
         return trimValue(pos, min_pos, max_pos);
       }
 
+      int old_pan_pos =0;
+      int old_tilt_pos=0;
+
       void
       task(void)
       {
@@ -326,11 +329,14 @@ namespace Actuators
         debug("Pan: %f rad", pan_rad);
         debug("Pan: %d", pan_pos);
 
-        // Send pan command.
-        createCommand("pp", pan_pos);
-        sendCommand("a "); //to avoid resetting of axle        
+        if(old_pan_pos != pan_pos){
+			// Send pan command.
+			createCommand("pp", pan_pos);
+			sendCommand("a "); //to avoid resetting of axle
 
-        debug("Pan bounded: %d", pan_pos);
+			debug("Pan bounded: %d", pan_pos);
+			old_pan_pos = pan_pos;
+        }
 
         // TILT
         float tilt_rad = Angles::normalizeRadian(m_tilt);
@@ -340,12 +346,14 @@ namespace Actuators
         debug("Tilt: %f rad", m_tilt);
         debug("Tilt: %d", tilt_pos);
 
-        // Send tilt command.
-        createCommand("tp", tilt_pos);
-        sendCommand("a "); //to avoid resetting of axle
+        if(old_tilt_pos != tilt_pos){
+			// Send tilt command.
+			createCommand("tp", tilt_pos);
+			sendCommand("a "); //to avoid resetting of axle
 
-        debug("Tilt bounded: %d", tilt_pos);
-
+			debug("Tilt bounded: %d", tilt_pos);
+			old_tilt_pos = tilt_pos;
+        }
         //float pan_rate_rad =  tuples.get("PanRate", 0.0f);
         //int pan_rate_pos = radToPos(pan_rate_rad);
 
