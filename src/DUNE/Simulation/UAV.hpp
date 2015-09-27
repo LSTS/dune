@@ -320,6 +320,11 @@ namespace DUNE
       void
       setCtrl(const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst);
 
+      //! This method sets the vehicle model bank operation constraint.
+      //! @param[in] bank_lim - bank limit
+      void
+      setBankLim(const double& bank_lim);
+
       //! This method sets the vehicle model bank rate operation constraint.
       //! @param[in] bank_rate_lim - bank rate limit
       void
@@ -453,6 +458,9 @@ namespace DUNE
       double m_alt_time_cst;
       bool m_alt_time_cst_f;
       //! Vehicle operation limits and respective initialization flags
+      //! - Bank
+      double m_bank_lim;
+      bool m_bank_lim_f;
       //! - Bank rate
       double m_bank_rate_lim;
       bool m_bank_rate_lim_f;

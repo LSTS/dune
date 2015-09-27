@@ -53,6 +53,9 @@ namespace DUNE
       m_sim_type("3DOF")
     {
       resetModel();
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(const UAVSimulation& model):
@@ -72,6 +75,9 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const double& bank_time_cst, const double& speed_time_cst):
@@ -88,6 +94,9 @@ namespace DUNE
       // - Airspeed time constant
       m_speed_time_cst = speed_time_cst;
       m_speed_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const double& bank_time_cst, const double& speed_time_cst, const double& alt_time_cst):
@@ -107,6 +116,9 @@ namespace DUNE
       // - Airspeed time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel):
@@ -118,6 +130,10 @@ namespace DUNE
 
       // Vehicle velocity vector
       setVelocity(vel);
+
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& alt_time_cst):
@@ -134,6 +150,9 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst):
@@ -153,6 +172,9 @@ namespace DUNE
       // - Airspeed time constant
       m_speed_time_cst = speed_time_cst;
       m_speed_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
@@ -176,6 +198,9 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel, const double& bank_time_cst, const double& speed_time_cst,
@@ -196,6 +221,9 @@ namespace DUNE
       // - Airspeed time constant
       m_speed_time_cst = speed_time_cst;
       m_speed_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
 
       // Control commands
       // - Bank
@@ -216,6 +244,10 @@ namespace DUNE
 
       // Vehicle velocity vector
       setVelocity(vel);
+
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
@@ -236,6 +268,9 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
@@ -259,6 +294,9 @@ namespace DUNE
       // - Airspeed time constant
       m_speed_time_cst = speed_time_cst;
       m_speed_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
@@ -285,6 +323,9 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
     }
 
     UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos, const DUNE::Math::Matrix& vel,
@@ -309,6 +350,9 @@ namespace DUNE
       // - Airspeed time constant
       m_speed_time_cst = speed_time_cst;
       m_speed_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
 
       // Control commands
       // - Bank
@@ -342,6 +386,9 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+      // - Bank simulation limits
+      m_bank_lim = Math::Angles::radians(80);
+      m_bank_lim_f = true;
 
       // Control commands
       // - Bank
@@ -385,6 +432,9 @@ namespace DUNE
       m_alt_time_cst = model.m_alt_time_cst;
       m_alt_time_cst_f = model.m_alt_time_cst_f;
       // Vehicle operation limits and respective initialization flags
+      // - Bank
+      m_bank_lim = model.m_bank_lim;
+      m_bank_lim_f = model.m_bank_lim_f;
       // - Bank rate
       m_bank_rate_lim = model.m_bank_rate_lim;
       m_bank_rate_lim_f = model.m_bank_rate_lim_f;
@@ -463,6 +513,9 @@ namespace DUNE
       m_alt_time_cst = 0.0;
       m_alt_time_cst_f = false;
       // Vehicle operation limits and respective initialization flags
+      // - Bank
+      m_bank_lim = Math::Angles::radians(89);
+      m_bank_lim_f = false;
       // - Bank rate
       m_bank_rate_lim = 0.0;
       m_bank_rate_lim_f = false;
@@ -651,8 +704,19 @@ namespace DUNE
       double d_initial_yaw = m_position(5);
       // Vertical position and Euler angles state update
       m_position.set(2, 5, 0, 0, m_position.get(2, 5, 0, 0) + m_velocity.get(2, 5, 0, 0) * timestep);
-      m_position(3) = DUNE::Math::Angles::normalizeRadian(m_position(3));
       m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
+      // Bank simulation limits
+      if (m_bank_lim_f)
+      {
+        if (m_position(3) > m_bank_lim)
+          m_position(3) = m_bank_lim;
+        if (m_position(3) < - m_bank_lim)
+          m_position(3) = - m_bank_lim;
+      }
+      else
+      {
+        m_position(3) = DUNE::Math::Angles::normalizeRadian(m_position(3));
+      }
       // Optimization variables
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
@@ -668,7 +732,7 @@ namespace DUNE
       }
 
       // Horizontal position state update
-      if (std::abs(m_position(3)) < 0.1)
+      if (std::abs(m_velocity(5)) < 0.05)
       {
         m_position.set(0, 1, 0, 0, m_position.get(0, 1, 0, 0) + m_velocity.get(0, 1, 0, 0) * timestep);
       }
@@ -953,6 +1017,17 @@ namespace DUNE
       // - Altitude time constant
       m_alt_time_cst = alt_time_cst;
       m_alt_time_cst_f = true;
+    }
+
+    void
+    UAVSimulation::setBankLim(const double& bank_lim)
+    {
+      // Vehicle operation bank limit and respective initialization flag
+      m_bank_lim = bank_lim;
+      if (bank_lim > 0)
+        m_bank_lim_f = true;
+      else
+        m_bank_lim_f = false;
     }
 
     void
