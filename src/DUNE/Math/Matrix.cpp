@@ -196,7 +196,7 @@ namespace DUNE
       (*m_counter)--;
 
       double* newdata = ALLOCD(m_size + 1);
-        std::memcpy(newdata, m_data, m_size * sizeof(double));
+      std::memcpy(newdata, m_data, m_size * sizeof(double));
       m_data = newdata;
       m_counter = m_data + m_size;
       *m_counter = 1;
@@ -1059,12 +1059,12 @@ namespace DUNE
       else if (m_nrows == 2)
         return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
       else if (m_nrows == 3)
-        return this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
-               + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
-               + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
-               - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
-               - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
-               - this->element(2, 2) * this->element(1, 0) * this->element(0, 1);
+        return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
+                + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
+                + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
+                - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
+                - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
+                - this->element(2, 2) * this->element(1, 0) * this->element(0, 1));
       else
       {
         double d = 0;
@@ -1090,12 +1090,12 @@ namespace DUNE
       else if (m_nrows == 2)
         return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
       else if (m_nrows == 3)
-        return this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
-               + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
-               + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
-               - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
-               - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
-               - this->element(2, 2) * this->element(1, 0) * this->element(0, 1);
+        return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
+                + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
+                + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
+                - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
+                - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
+                - this->element(2, 2) * this->element(1, 0) * this->element(0, 1));
       else
       {
         Matrix L(m_nrows), U(m_nrows), P(m_nrows);
