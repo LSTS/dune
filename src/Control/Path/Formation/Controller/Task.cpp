@@ -812,12 +812,13 @@ namespace Control
               size_systems ind_uav_tmp = 0;
               for (std::vector<UAVSimulation*>::iterator it = m_models.begin(); it != m_models.end(); ++it, ++ind_uav_tmp)
               {
-                Math::Matrix position((*it)->getBankCmd());
+                Math::Matrix position = (*it)->getPosition();
                 war("Vehicle %u x position: %1.3f", (unsigned int)ind_uav_tmp, position(0));
                 war("Vehicle %u y position: %1.3f", (unsigned int)ind_uav_tmp, position(1));
               }
 
-              clearVehiclesModels();
+              //clearVehiclesModels();
+	      m_models.clear();
               std::vector<bool> t_keep_data;
               for (size_systems ind_uav2 = 0; ind_uav2 != t_uav_n;
                    ++ind_uav2)
@@ -860,7 +861,14 @@ namespace Control
                       m_models.push_back( t_models[ ind_uav2 ] );
                       debug("Simulated vehicle model maintained for vehicle %u: %s",
                             (unsigned int)ind_uav, resolveSystemId( m_uav_id[ ind_uav ] ));
-                      Math::Matrix position = (*(m_models.end()))->getPosition();
+                      unsigned int models_size = m_models.size();
+                      war("m_models size = %u", models_size);
+		      std::vector<UAVSimulation*>::iterator it = m_models.end();
+                      --it;
+                      Math::Matrix position = (*it)->getPosition();
+		      /*
+                      Math::Matrix position = m_models[models_size-1]->getPosition();
+		      */
                       war("* Maintained model current x position: %1.3f", position(0));
                       war("* Maintained model current y position: %1.3f", position(1));
                       break;
@@ -888,7 +896,9 @@ namespace Control
                   m_models.push_back(model);
                   debug("Simulated vehicle model initialized for vehicle %u: %s",
                         (unsigned int)ind_uav, resolveSystemId( m_uav_id[ ind_uav ] ));
-                  Math::Matrix position = (*(m_models.end()))->getPosition();
+		  std::vector<UAVSimulation*>::iterator it = m_models.end();
+		  --it;
+                  Math::Matrix position = (*it)->getPosition();
                   war("* Initialized model current x position: %1.3f", position(0));
                   war("* Initialized model current y position: %1.3f", position(1));
                 }
@@ -1065,7 +1075,15 @@ namespace Control
 
               debug("Simulated vehicle model initialized for vehicle %u.",
                     (unsigned int)ind_uav);
-              Math::Matrix position = (*(m_models.end()))->getPosition();
+	      /*
+		std::vector<UAVSimulation*>::iterator it = m_models.end();
+		--it;
+		Math::Matrix position = (*it)->getPosition();
+	      */
+	      unsigned int models_size = m_models.size();
+	      war("m_models size = %u", models_size);
+	      Math::Matrix position = m_models[models_size-1]->getPosition();
+
               war("* Initialized model current x position: %1.3f", position(0));
               war("* Initialized model current y position: %1.3f", position(1));
             }
