@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -51,6 +51,7 @@ namespace Control
 
         //! Vector for System Mapping.
         typedef std::vector<uint32_t> Systems;
+        typedef Systems::size_type size_systems;
 
         struct Arguments
         {
@@ -325,8 +326,8 @@ namespace Control
           bool m_mean_first;
 
           //! Formation configuration
-          unsigned int m_uav_n;
-          unsigned int m_uav_ind;
+          Systems::size_type m_uav_n;
+          Systems::size_type m_uav_ind;
           Systems m_uav_id;
           Systems m_uav_id_last;
           std::vector<std::string> m_formation_systems;
@@ -744,13 +745,13 @@ namespace Control
             // Reinitialize the simulation models if so
             // ToDo - Check - data reallocation logic to keep the data from the remaining vehicles
             bool b_formation_change = true;
-            unsigned int t_uav_n = m_uav_id_last.size();
+            Systems::size_type t_uav_n = m_uav_id_last.size();
             if ( !m_param_update_first )
             {
               if ( t_uav_n == m_uav_n )
               {
                 b_formation_change = false;
-                for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++ )
+                for ( size_systems ind_uav = 0; ind_uav != m_uav_n; ++ind_uav )
                 {
                   if ( m_uav_id_last[ ind_uav ] != m_uav_id[ ind_uav ] )
                     b_formation_change = true;
@@ -787,33 +788,51 @@ namespace Control
               // Initialize vehicles state
               m_vehicle_state.resizeAndKeep(12, m_uav_n + 1);
               m_vehicle_state_flag.clear();
-              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; ++uav_ind)
                 m_vehicle_state_flag.push_back(false);
               m_vehicle_accel.resizeAndKeep(3, m_uav_n + 1);
               // Initialize vehicles commands
               m_uav_ctrl = Matrix(3, m_uav_n, 0.0);
-              // Start the team vehicles synchronization, simulation and control time
+              // Start the team vehicles synchronization, simulation and
+              // control time
               m_last_state_update.resizeAndKeep(m_uav_n + 1, 1);
               m_last_state_estim.resizeAndKeep(m_uav_n + 1, 1);
-              m_last_state_estim.set(1, m_uav_n, 0, 0, Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch()));
-              m_last_simctrl_update = Matrix(m_uav_n, 1, Time::Clock::getSinceEpoch());
+              m_last_state_estim.set(1, m_uav_n, 0, 0,
+                                     Matrix(m_uav_n, 1,
+                                            Time::Clock::getSinceEpoch()));
+              m_last_simctrl_update = Matrix(m_uav_n, 1,
+                                             Time::Clock::getSinceEpoch());
 
               // Initialize the simulated vehicles models
               debug("Simulated vehicles models initialization");
               UAVSimulation* model;
+
+              war("Current number of vehicle models %u", (unsigned int)m_models.size());
+              war("Current number of vehicles %u", (unsigned int)m_uav_n);
+              size_systems ind_uav_tmp = 0;
+              for (std::vector<UAVSimulation*>::iterator it = m_models.begin(); it != m_models.end(); ++it, ++ind_uav_tmp)
+              {
+                Math::Matrix position((*it)->getBankCmd());
+                war("Vehicle %u x position: %1.3f", (unsigned int)ind_uav_tmp, position(0));
+                war("Vehicle %u y position: %1.3f", (unsigned int)ind_uav_tmp, position(1));
+              }
+
               clearVehiclesModels();
               std::vector<bool> t_keep_data;
-              for ( unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++ )
+              for (size_systems ind_uav2 = 0; ind_uav2 != t_uav_n;
+                   ++ind_uav2)
                 t_keep_data.push_back( false );
-              for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++ )
+              bool remaining_vehicle;
+              for (size_systems ind_uav = 0; ind_uav != m_uav_n;
+                   ++ind_uav)
               {
-                bool remaining_vehicle = false;
+                remaining_vehicle = false;
                 // Data reallocation to keep the data from the remaining
                 // vehicles
                 if ( !m_param_update_first )
                 {
-                  for ( unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n;
-                        ind_uav2++ )
+                  for (size_systems ind_uav2 = 0; ind_uav2 != t_uav_n;
+                       ++ind_uav2)
                   {
                     if ( m_uav_id_last[ ind_uav2 ] == m_uav_id[ ind_uav ] )
                     {
@@ -839,8 +858,11 @@ namespace Control
                       m_last_simctrl_update( ind_uav ) =
                           t_last_simctrl_update( ind_uav2 );
                       m_models.push_back( t_models[ ind_uav2 ] );
-                      debug( "Simulated vehicle model maintained for vehicle: %s",
-                             resolveSystemId( m_uav_id[ ind_uav ] ) );
+                      debug("Simulated vehicle model maintained for vehicle %u: %s",
+                            (unsigned int)ind_uav, resolveSystemId( m_uav_id[ ind_uav ] ));
+                      Math::Matrix position = (*(m_models.end()))->getPosition();
+                      war("* Maintained model current x position: %1.3f", position(0));
+                      war("* Maintained model current y position: %1.3f", position(1));
                       break;
                     }
                   }
@@ -850,7 +872,8 @@ namespace Control
 
                   // - State  and control parameters initialization
                   model = new UAVSimulation( *this,
-                      m_formation_pos.get(0, 2, ind_uav, ind_uav).vertCat(m_position.get(3, 5, 0, 0)),
+                      m_formation_pos.get(0, 2, ind_uav, ind_uav)
+                      .vertCat(m_position.get(3, 5, 0, 0)),
                       m_velocity, m_args.c_bank, m_args.c_speed);
                   // - Simulation type
                   model->m_sim_type = m_args.sim_type;
@@ -863,20 +886,37 @@ namespace Control
                     model->setAccelLim(m_args.l_accel_x);
                   // Add model to the models vector
                   m_models.push_back(model);
+                  debug("Simulated vehicle model initialized for vehicle %u: %s",
+                        (unsigned int)ind_uav, resolveSystemId( m_uav_id[ ind_uav ] ));
+                  Math::Matrix position = (*(m_models.end()))->getPosition();
+                  war("* Initialized model current x position: %1.3f", position(0));
+                  war("* Initialized model current y position: %1.3f", position(1));
                 }
-                debug( "Simulated vehicle model initialized for vehicle %d.",
-                       ind_uav);
               }
 
               // Clean missing vehicles data
-              for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
+              for (size_systems ind_uav2 = 0; ind_uav2 != t_uav_n; ++ind_uav2)
               {
                 if ( !t_keep_data[ ind_uav2 ] )
+                {
                   Memory::clear( t_models[ ind_uav2 ] );
+                  trace("Simulation vehicle model cleared for vehicle %u.",
+                        (unsigned int)ind_uav2);
+                }
               }
+              t_models.clear();
 
               m_uav_id_last = m_uav_id;
             }
+
+            war("- New number of vehicle models %u", (unsigned int)m_models.size());
+            war("- New number of vehicles %u", (unsigned int)m_uav_n);
+            size_systems ind_uav_tmp = 0;
+            for (std::vector<UAVSimulation*>::iterator it = m_models.begin(); it != m_models.end(); ++it, ++ind_uav_tmp)
+            {
+              war("- New vehicle %u bank: %1.3f", (unsigned int)ind_uav_tmp, Math::Angles::degrees((*it)->getBankCmd()));
+            }
+
 
             // Set messages system source:
             // Main system alias identification and leader identification
@@ -911,15 +951,20 @@ namespace Control
                 try
                 {
                   m_leader_id = resolveSystemName(m_args.leader_alias);
-                  inf("Leader output defined for system '%s' with id: %u", m_args.leader_alias.c_str(), m_leader_id);
+                  inf("Leader output defined for system '%s' with id: %u",
+                      m_args.leader_alias.c_str(), (unsigned int)m_leader_id);
                 }
                 catch (...)
                 {
-                  err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
+                  err("Leader system name - No system found with designation '%s'.",
+                      m_args.leader_alias.c_str());
                 }
               }
               else
-                err("Leader system name - No system found with designation '%s'.", m_args.leader_alias.c_str());
+              {
+                err("Leader system name - No system found with designation '%s'.",
+                    m_args.leader_alias.c_str());
+              }
             }
 
             // Monitoring variables initialization
@@ -975,7 +1020,7 @@ namespace Control
             Memory::clear( m_wind_avg_x );
             Memory::clear( m_wind_avg_y );
             Memory::clear( m_wind_avg_z );
-            //for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+            //for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ++ind_uav)
             //      Memory::clear(m_form_monitor->rel_state[ind_uav]);
             //  Memory::clear(m_form_monitor);
           }
@@ -999,7 +1044,7 @@ namespace Control
 
             // Initialize the formation's vehicles models
             Simulation::UAVSimulation* model;
-            for ( unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++ )
+            for (size_systems ind_uav = 0; ind_uav != m_uav_n; ++ind_uav)
             {
               // State  and control parameters initialization
               model = new UAVSimulation( *this,
@@ -1018,8 +1063,11 @@ namespace Control
               // Add model to the models vector
               m_models.push_back( model );
 
-              debug( "Simulated vehicle model initialized for vehicle %d.",
-                       ind_uav);
+              debug("Simulated vehicle model initialized for vehicle %u.",
+                    (unsigned int)ind_uav);
+              Math::Matrix position = (*(m_models.end()))->getPosition();
+              war("* Initialized model current x position: %1.3f", position(0));
+              war("* Initialized model current y position: %1.3f", position(1));
             }
 
             // Initialize the monitoring messages
@@ -1106,6 +1154,7 @@ namespace Control
           void
           consume(const IMC::LeaderState* msg)
           {
+            trace("LeaderState received!");
             // Set leader state
             if (msg->op == IMC::LeaderState::OP_SET)
             {
@@ -1118,7 +1167,7 @@ namespace Control
               }
               */
 
-              debug("LeaderState received!");
+              debug("LeaderState accepted!");
               setLeaderState(msg);
             }
           }
@@ -1150,20 +1199,21 @@ namespace Control
 
                 // Update the controller configuration
                 m_formation_frame = msg->reference_frame;
-                unsigned int uav_ind = 0;
+                size_systems uav_ind = 0;
                 m_uav_id.clear();
                 m_formation_systems.clear();
                 m_formation_pos.~Matrix();
-                for ( IMC::MessageList<IMC::VehicleFormationParticipant>::const_iterator it =
-                    msg->participants.begin(); it != msg->participants.end(); it++ )
+                for (IMC::MessageList<IMC::VehicleFormationParticipant>::const_iterator it =
+                    msg->participants.begin(); it != msg->participants.end(); ++it, ++uav_ind)
                 {
                   m_uav_id.push_back( (*it)->vid );
+                  trace("Adding vehicle %u (%s) to the formation",
+                        (unsigned int)uav_ind, resolveSystemId( m_uav_id[ uav_ind ] ));
                   m_formation_systems.push_back( resolveSystemId( m_uav_id[ uav_ind ] ) );
                   m_formation_pos.resizeAndKeep( 3, uav_ind + 1 );
                   m_formation_pos( 0, uav_ind ) = (*it)->off_x;
                   m_formation_pos( 1, uav_ind ) = (*it)->off_y;
                   m_formation_pos( 2, uav_ind ) = (*it)->off_z;
-                  uav_ind++;
                 }
                 m_leader_bank_lim = msg->leader_bank_lim;
                 m_leader_speed_min = msg->leader_speed_min;
@@ -1178,10 +1228,10 @@ namespace Control
                   // Process formation vehicle list
                   bool is_in_formation = false;
                   debug( "Formation vehicles' list:" );
-                  for ( uav_ind = 0; uav_ind < m_uav_n; uav_ind++ )
+                  for ( uav_ind = 0; uav_ind != m_uav_n; ++uav_ind )
                   {
-                    debug( "UAV %u: %s", uav_ind,
-                           resolveSystemId( m_uav_id[ uav_ind ] ) );
+                    debug("UAV %u: %s", (unsigned int)uav_ind,
+                          resolveSystemId( m_uav_id[ uav_ind ] ) );
 
                     // Set the current UAV index according to the group definition
                     if ( m_uav_id[ uav_ind ] == this->getSystemId() )
@@ -1192,17 +1242,18 @@ namespace Control
                   }
 
                   debug( "Formation vehicles' positions matrix:" );
-                  for ( uav_ind = 0; uav_ind < m_uav_n; uav_ind++ )
+                  for (uav_ind = 0; uav_ind != m_uav_n; ++uav_ind)
                   {
-                    debug( "UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", uav_ind,
-                           m_formation_pos( 0, uav_ind ),
-                           m_formation_pos( 1, uav_ind ),
-                           m_formation_pos( 2, uav_ind ) );
+                    debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]",
+                          (unsigned int)uav_ind,
+                          m_formation_pos( 0, uav_ind ),
+                          m_formation_pos( 1, uav_ind ),
+                          m_formation_pos( 2, uav_ind ) );
                   }
 
                   // Vehicle quantity considered in the formation
-                  debug( "Number of UAVs -> %d", m_uav_n );
-                  debug( "Current UAV -> %d", m_uav_ind );
+                  debug("Number of UAVs -> %u", (unsigned int)m_uav_n);
+                  debug("Current UAV -> %u", (unsigned int)m_uav_ind);
 
                   if ( is_in_formation )
                   {
@@ -1628,7 +1679,7 @@ namespace Control
                 RelState rel_state;
 
                 // Iterate point list
-                for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
+                for (size_systems ind_uav = 0; ind_uav <= m_uav_n; ++ind_uav)
                 {
                   if (m_uav_ind + 1 == ind_uav)
                     continue;
@@ -1727,10 +1778,10 @@ namespace Control
                 return;
 
               // Get vehicle team index
-              unsigned int ind_uav = 0;
+              size_systems ind_uav = 0;
               while ( m_uav_id[ ind_uav ] != msg->getSource() )
               {
-                ind_uav++;
+                ++ind_uav;
                 if ( ind_uav == m_uav_n )
                 {
                   spew("EstimatedState rejected! - Vehicle '%s' is not on the formation vehicle list.",
@@ -1748,7 +1799,7 @@ namespace Control
               m_last_state_update(ind_uav + 1) = msg->getTimeStamp();
               m_last_state_estim(ind_uav + 1) = msg->getTimeStamp();
               spew("EstimatedState accepted! - Vehicle '%s' is the '%u' in the formation vehicle list.",
-                  resolveSystemId(msg->getSource()), ind_uav);
+                   resolveSystemId(msg->getSource()), (unsigned int)ind_uav);
 
               // - State update
               double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
@@ -1884,7 +1935,7 @@ namespace Control
               if (!m_team_state_init)
               {
                 m_team_state_init = true;
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                for (size_systems ind_uav = 0; ind_uav != m_uav_n; ++ind_uav)
                   if (!m_vehicle_state_flag[ind_uav])
                   {
                     m_team_state_init = false;
@@ -2143,22 +2194,22 @@ namespace Control
             // Variables initialization
             double d_sim_time;
             Matrix vi_sim_time = Matrix(m_uav_n + 1, 1);
-            unsigned int ind_time;
-            unsigned int i_time_n = m_uav_n;
+            size_systems ind_time;
+            size_systems i_time_n = m_uav_n;
             Matrix vd_cmd = Matrix(3, 1);
             Matrix tmp_last_state_estim = m_last_state_estim;
 
             spew("Periodic update 1");
             // Order the update times as an increasing sequence
-            for (unsigned int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++)
+            for (size_systems ind_uav = 0; ind_uav != m_uav_n + 1; ++ind_uav)
               vi_sim_time(ind_uav) = ind_uav;
 
             // ToDo - Limit the maximum difference between the current time and the last estimate time
             // for example with the time-out duration
             spew("Update state estimate up to: %1.2f", time);
-            for (unsigned int ind_uav = 0; ind_uav < i_time_n; ind_uav++)
+            for (unsigned int ind_uav = 0; ind_uav != i_time_n; ++ind_uav)
             {
-              for (unsigned int ind_uav2 = ind_uav + 1; ind_uav2 <= i_time_n; ind_uav2++)
+              for (size_systems ind_uav2 = ind_uav + 1; ind_uav2 != i_time_n + 1; ++ind_uav2)
               {
                 if (m_last_state_estim(vi_sim_time(ind_uav)) > m_last_state_estim(vi_sim_time(ind_uav2)))
                 {
@@ -2169,7 +2220,7 @@ namespace Control
                 else if (m_last_state_estim(vi_sim_time(ind_uav)) == m_last_state_estim(vi_sim_time(ind_uav2)))
                 {
                   --i_time_n;
-                  for (ind_time = ind_uav2; ind_time <= i_time_n; ind_time++)
+                  for (ind_time = ind_uav2; ind_time < i_time_n + 1; ++ind_time)
                     vi_sim_time(ind_time) = vi_sim_time(ind_time + 1);
                 }
               }
@@ -2188,7 +2239,7 @@ namespace Control
             {
               m_last_state_estim(vi_sim_time(ind_time)) = time;
               if (ind_time < i_time_n)
-                ind_time++;
+                ++ind_time;
               d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
             }
 
@@ -2286,7 +2337,7 @@ namespace Control
 
               spew("Periodic update 3.3");
               // Team state prediction - Update the simulated vehicles state
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              for (size_systems ind_uav = 0; ind_uav != m_uav_n; ++ind_uav)
                 if (m_last_state_estim(ind_uav + 1) <= d_sim_time && m_vehicle_state_flag[ind_uav])
                 {
                   m_models[ind_uav]->update(m_timestep_sim);
@@ -2295,7 +2346,7 @@ namespace Control
 
               spew("Periodic update 3.4");
               // Team control prediction - Update the simulated vehicles commands
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              for (size_systems ind_uav = 0; ind_uav != m_uav_n; ++ind_uav)
               {
                 // Commands update - At control frequency
                 if (tmp_last_state_estim(ind_uav + 1) <= d_sim_time &&
@@ -2337,7 +2388,7 @@ namespace Control
 
               // Select the next prediction time reference
               if (ind_time < i_time_n)
-                ind_time++;
+                ++ind_time;
               else
                 ind_time = 0;
               d_sim_time = m_last_state_estim(vi_sim_time(ind_time));
@@ -2387,7 +2438,7 @@ namespace Control
 
             spew("Assynchronous update 2");
             // - Team state prediction - Update the simulated vehicles state
-            for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+            for (size_systems ind_uav = 0; ind_uav != m_uav_n; ++ind_uav)
               if (m_vehicle_state_flag[ind_uav])
               {
                 //spew("Assynchronous update 2.1");
@@ -2440,9 +2491,18 @@ namespace Control
           void
           clearVehiclesModels( void )
           {
-            std::vector<UAVSimulation*>::iterator it;
-            for ( it = m_models.begin(); it != m_models.end(); it++ )
-              Memory::clear( (*it) );
+            for (std::vector<UAVSimulation*>::iterator it = m_models.begin();
+                 it != m_models.end(); ++it)
+            {
+              inf("* Number of vehicle models %u", (unsigned int)m_models.size());
+              inf("* Initial and final addresses of the models vector: %x and %x", m_models.begin(), m_models.end());
+              Math::Matrix position = (*it)->getPosition();
+              inf("* Model current x position: %1.3f", position(0));
+              inf("* Model current y position: %1.3f", position(1));
+              Memory::clear( *it );
+              inf("... Number of vehicle models %u", (unsigned int)m_models.size());
+              inf("... Initial and final addresses of the models vector: %x and %x", m_models.begin(), m_models.end());
+            }
             m_models.clear();
           }
 
@@ -2450,7 +2510,7 @@ namespace Control
           createRelativeState( void )
           {
             RelState* rel_state;
-            for ( unsigned int ind_uav = 0; ind_uav <= m_uav_n; ind_uav++ )
+            for (size_systems ind_uav = 0; ind_uav != m_uav_n + 1; ++ind_uav)
             {
               rel_state = new RelState();
               m_form_monitor->rel_state.push_back( rel_state );
@@ -2463,9 +2523,8 @@ namespace Control
             if ( m_form_monitor == NULL )
               return;
 
-            std::vector<RelState*>::iterator it;
-            for ( it = m_form_monitor->rel_state.begin();
-                  it != m_form_monitor->rel_state.end(); it++ )
+            for (std::vector<RelState*>::iterator it = m_form_monitor->rel_state.begin();
+                  it != m_form_monitor->rel_state.end(); ++it)
               Memory::clear( (*it) );
             m_form_monitor->rel_state.clear();
           }
@@ -2685,7 +2744,7 @@ namespace Control
 
             // ToDo - check - verificar inclusão do líder como elemento 0 dos vectores e matrizes
             // da formação, em vez de elemento m_uav_n em apenas algumas
-            for (unsigned int ind_uav2 = 0; ind_uav2 < m_uav_n; ind_uav2++)
+            for (size_systems ind_uav2 = 0; ind_uav2 != m_uav_n; ++ind_uav2)
             {
               // Skipping the current UAV index
               if (ind_uav == ind_uav2)
@@ -2830,7 +2889,7 @@ namespace Control
             t_CtrlMarg = d_c2 / t_ctrl_marg_mult;
             d_deconfliction_dist = m_safe_dist + t_CtrlMarg;
             if (t_CtrlMarg > m_deconfliction_offset * 1.1)
-              spew('Control margin: %1.1f m; UAV%d & UAV%d\n', t_CtrlMarg, ind_uav, ind_uav2);
+              spew('Control margin: %1.1f m; UAV%u & UAV%u\n', t_CtrlMarg, (unsigned int)ind_uav, (unsigned int)ind_uav2);
                  */
               }
 
@@ -3218,7 +3277,7 @@ namespace Control
             // Tracking output
             if (b_debug)
             {
-              for (unsigned int ind_uav2 = 0; ind_uav2 <= m_uav_n; ind_uav2++)
+              for (size_systems ind_uav2 = 0; ind_uav2 != m_uav_n + 1; ++ind_uav2)
               {
                 if (ind_uav + 1 == ind_uav2)
                   continue;
@@ -3272,7 +3331,7 @@ namespace Control
 
             // UAVs Uncertainty compensation
             double t_SurfSqr;
-            for (unsigned int ind_uav2 = 0; ind_uav2 < m_uav_n; ind_uav2++)
+            for (size_systems ind_uav2 = 0; ind_uav2 != m_uav_n; ++ind_uav2)
             {
               // Skipping the current UAV index
               if (ind_uav == ind_uav2)
