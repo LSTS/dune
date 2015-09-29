@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -384,16 +384,17 @@ namespace Control
           onUpdateParameters(void)
           {
             spew("Starting the parameters update.");
-            //==========================================
+
+            m_plan_params = true;
+
             // General parameters treatment
-            //==========================================
             // Reset angular units
             m_bank_lim = Angles::radians(m_args.bank_lim);
             // Simulation time step
             if (this->getFrequency() > 0.0)
               m_timestep = 1 / this->getFrequency();
             else
-              throw std::runtime_error("Frequency must be larger than 0!");;
+              throw RestartNeeded("Frequency must be larger than 0!", 10);
             // Control frequency
             m_timestep_ctrl = 1 / m_args.ctrl_frequency;
             // Virtual leader synchronization period
@@ -429,6 +430,7 @@ namespace Control
                 war("Formation vehicle list is empty!");
                 m_uav_id.push_back(getSystemId());
                 m_uav_n = 1;
+                m_plan_params = false;
               }
               else
               {
@@ -461,7 +463,8 @@ namespace Control
               unsigned int t_uav_n = m_formation_pos.rows() / 3;
               if (m_uav_n != t_uav_n)
               {
-                war("Number of the vehicles in the formation matrix (%u) and listed vehicles (%u) is different!",
+                war("Number of the vehicles in the formation matrix (%u) and"
+                    " listed vehicles (%u) is different!",
                     t_uav_n, m_uav_n);
                 m_uav_n = (m_uav_n < t_uav_n)?m_uav_n:t_uav_n;
               }
@@ -469,30 +472,26 @@ namespace Control
               // 3 rows and as many columns as the number of UAVs
               m_formation_pos.resizeAndKeep(3, m_uav_n);
               for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+              {
                 for (unsigned int i = 0; i < 3; i++)
                   m_formation_pos(i, ind_uav) = m_args.formation_pos(i + ind_uav * 3);
+              }
 
               for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              {
                 debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
-                      m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav), m_formation_pos(2, ind_uav));
+                      m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav),
+                      m_formation_pos(2, ind_uav));
+              }
 
               // Clean the formation position matrix parameter variable
               m_args.formation_pos.~Matrix();
-
-              // Set flag for formation activation
-              if (m_plan_new)
-              {
-                m_plan_new = false;
-                m_plan_params = true;
-              }
             }
 
             // Vehicle quantity considered in the formation
             debug("Number of UAVs -> %d", m_uav_n);
 
-            //==========================================
             // Data resizing
-            //==========================================
             // Check if the formation composition changed
             spew("onUpdateParameters - 3");
             bool b_formation_change = true;
@@ -503,8 +502,10 @@ namespace Control
               {
                 b_formation_change = false;
                 for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                {
                   if (t_uav_id_last[ind_uav] != m_uav_id[ind_uav])
                     b_formation_change = true;
+                }
               }
               else
                 b_formation_change = true;
@@ -590,7 +591,7 @@ namespace Control
               // Simulation type
               if ( paramChanged( m_args.sim_type ) )
                 m_model->m_sim_type = m_args.sim_type;
-	    }
+            }
 
             // Set messages system source
             spew( "onUpdateParameters - 6" );
@@ -622,8 +623,8 @@ namespace Control
           void
           onResourceRelease(void)
           {
-	    Memory::clear( m_cmd_flt );
-	    Memory::clear( m_model );
+            Memory::clear( m_cmd_flt );
+            Memory::clear( m_model );
           }
 
           void
@@ -657,9 +658,10 @@ namespace Control
             // Activating the formation coordinator
             spew("Activating the formation coordinator");
 
-            if (m_plan_params)
+            if (m_plan_params && m_plan_new)
             {
-              m_plan_params = false;
+              //m_plan_params = false;
+              m_plan_new = false;
               if (m_args.main)
               {
                 war("Requesting formation control activation");
@@ -1025,6 +1027,8 @@ namespace Control
             //==========================================
             // Activate the formation control and plan
             //==========================================
+            // ToDo - A change in the plan while the formation is active might
+            // require running again the code to send the Formation message
             m_plan_new = true;
             if (!isActive())
               requestActivation();
