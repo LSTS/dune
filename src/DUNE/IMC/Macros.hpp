@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
+// IMC XML MD5: 890378262006e51241ae862c1125b2dd                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -204,6 +204,8 @@
 #define DUNE_IMC_FINEOIL 287
 //! Turbidity identification number.
 #define DUNE_IMC_TURBIDITY 288
+//! Chlorophyll identification number.
+#define DUNE_IMC_CHLOROPHYLL 289
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -360,6 +362,8 @@
 #define DUNE_IMC_DISLODGE 483
 //! Formation identification number.
 #define DUNE_IMC_FORMATION 484
+//! Launch identification number.
+#define DUNE_IMC_LAUNCH 485
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -510,5 +514,11 @@
 #define DUNE_IMC_PARAMETERSXML 893
 //! GetParametersXml identification number.
 #define DUNE_IMC_GETPARAMETERSXML 894
+//! NecMsg identification number.
+#define DUNE_IMC_NECMSG 2001
+//! JsonObject identification number.
+#define DUNE_IMC_JSONOBJECT 2002
+//! pwmBBB identification number.
+#define DUNE_IMC_PWMBBB 2003
 
 #endif

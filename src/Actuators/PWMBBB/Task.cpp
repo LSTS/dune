@@ -40,6 +40,12 @@ namespace Actuators
     struct Task: public DUNE::Tasks::Task
     {
       //!Variables
+      struct Arguments
+      {
+        // - PinOut
+        std::vector<int> portio;
+      };
+      Arguments m_args;
       //GPIO for signal of servo
       int GPIOPin;
       //Debug, number of loops of 0º to 180º for test
@@ -53,16 +59,20 @@ namespace Actuators
       char GPIOString[4];
       //Value to put in pinout
       char GPIOValue[64];
-      //counter
-      int cnt;     
- 
+      //state 
+      bool isOpen;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
       DUNE::Tasks::Task(name, ctx)
       {
+        param("PinOut", m_args.portio)
+          .defaultValue("60")
+          .description("Port to use in PWMBBB");
 
+        bind<IMC::pwmBBB>(this);
       }
       
       //! Update internal state with new parameter values.
@@ -102,11 +112,26 @@ namespace Actuators
       {
       }
       
+      void
+      consume(const IMC::pwmBBB* msg)
+      {
+        if(msg->servstat == IMC::pwmBBB::SERVSTAT_OPEN)
+        {
+          //setAngleServomotor(msg->servmin);
+          inf("IS OPEN - VALUE: %dº", msg->servmin);
+        }
+        else if(msg->servstat == IMC::pwmBBB::SERVSTAT_CLOSED)
+        {
+          inf("IS CLOSED - VALUE: %dº", msg->servmax);
+          //setAngleServomotor(msg->servmax);
+        }
+      }
+
       //!Inic of config to pinout of servomotor
       void
       inicServo(void)
       {
-        GPIOPin=60; /* GPIO1_28 or pin 12 on the P9 header */ 
+        GPIOPin=m_args.portio[0]; /* GPIO1_28 or pin 12 on the P9 header */ 
         times=6;
         sprintf(GPIOString, "%d", GPIOPin);
         sprintf(GPIOValue, "/sys/class/gpio/gpio%d/value", GPIOPin);
@@ -149,43 +174,6 @@ namespace Actuators
         usleep (20000 - valueUP);
       }
 
-      //!Test Servomotor
-      bool
-      onTestServo(void)
-      {
-        for(int i=0; i<times; i++)
-          {
-            cnt=0;
-            while(cnt<100 && !stopping())
-            {
-              //0º
-              // Set output to high
-              setAngleServomotor(0);
-              cnt++;
-            }
-
-            cnt = 0;
-            while(cnt<100 && !stopping())
-            {
-              //180º
-              // Set output to high
-              setAngleServomotor(90);
-              cnt++;
-            }
-
-            cnt = 0;
-            while(cnt<100 && !stopping())
-            {
-              //180º
-              // Set output to high
-              setAngleServomotor(180);
-              cnt++;
-            }
-          }
-          inf("Test DONE");
-          return true;
-      }
-
       //!Close PinOut config
       void
       closeConfigServo(void)
@@ -201,20 +189,14 @@ namespace Actuators
       //! Main loop.
       void
       onMain(void)
-      {    
-        
-        inf("Starting GPIO PWM output program");
-        inicServo();    
+      {  
+        inf("Valor: %d",m_args.portio[0]);
+ //       inicServo();    
         while (!stopping())
         {
-          //Set pos to 180º
-          //setAngleServomotor(180);
-          while(!onTestServo());
-          while (!stopping());
+          waitForMessages(0.1);
         }
-        
-        closeConfigServo();
-        inf("Completed GPIO output program");
+ //       closeConfigServo();
       }
     };
   }

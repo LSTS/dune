@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bd24744a7b3932c3a956ddc60e9abdd6                            *
+// IMC XML MD5: 890378262006e51241ae862c1125b2dd                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -115,6 +115,7 @@ MESSAGE(285, RhodamineDye)
 MESSAGE(286, CrudeOil)
 MESSAGE(287, FineOil)
 MESSAGE(288, Turbidity)
+MESSAGE(289, Chlorophyll)
 MESSAGE(300, CameraZoom)
 MESSAGE(301, SetThrusterActuation)
 MESSAGE(302, SetServoPosition)
@@ -193,6 +194,7 @@ MESSAGE(481, FormationMonitor)
 MESSAGE(482, RelativeState)
 MESSAGE(483, Dislodge)
 MESSAGE(484, Formation)
+MESSAGE(485, Launch)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
 MESSAGE(502, MonitorEntityState)
@@ -268,4 +270,7 @@ MESSAGE(891, UsblPosition)
 MESSAGE(892, UsblFix)
 MESSAGE(893, ParametersXml)
 MESSAGE(894, GetParametersXml)
+MESSAGE(2001, NecMsg)
+MESSAGE(2002, JsonObject)
+MESSAGE(2003, pwmBBB)
 #undef MESSAGE
