@@ -266,11 +266,6 @@ namespace DUNE
     void
     Matrix::fill(size_t r, size_t c, const double* data)
     {
-      // Check if the size of 'data' matches the new m_size
-      // to avoid having memcpy copying gibberish
-      if (sizeof(data) != r * c * sizeof(double))
-        throw Error("Matrix input 'data' does not match its size!");
-
       erase();
       resize(r, c);
       std::memcpy(m_data, data, m_size * sizeof(double));
