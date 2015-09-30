@@ -238,7 +238,7 @@ def computeProfiles(options, values_list):
                     if (isempty(values_list[num][vind])):
                         break
                     payload = payload + float(values_list[num][vind])
-    return [str(hotel), str(payload + imu)];
+    return [str(hotel), str("{0:.2f}".format(hotel + payload + imu))];
 
 # Main body
 if len(sys.argv) < 3:
