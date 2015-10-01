@@ -52,7 +52,7 @@ namespace Transports
     {
       "DELIVERED",
       "DELIVEREDIM",
-	    "FAILED",
+      "FAILED",
       "FAILEDIM",
       "CANCELEDIM",
       "RECV",
@@ -362,9 +362,9 @@ namespace Transports
         unsigned int bitrate, propagation_time;
 
         rv = std::sscanf(str.c_str(),
-            "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
-            &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
-            &msg.integrity, &propagation_time, &msg.velocity, &offset);
+                         "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
+                         &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
+                         &msg.integrity, &propagation_time, &msg.velocity, &offset);
 
         if (rv != 8)
           throw std::runtime_error("invalid format");

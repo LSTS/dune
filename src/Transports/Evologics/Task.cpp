@@ -121,8 +121,8 @@ namespace Transports
         m_ticket(NULL)
       {
         param("IPv4 Address", m_args.address)
-            .defaultValue("192.168.0.147")
-            .description("IPv4 address");
+        .defaultValue("192.168.0.147")
+        .description("IPv4 address");
 
         param("TCP Port", m_args.port)
         .defaultValue("9200")
@@ -173,7 +173,7 @@ namespace Transports
         .defaultValue("14")
         .values("2, 6, 14, 30, 62, 126, 254")
         .description("The highest address available for a device."
-            "Highest Address values must match for all communicating devices.");
+                     "Highest Address values must match for all communicating devices.");
 
         param("Sound Speed - Default Value", m_args.sound_speed_def)
         .units(Units::MeterPerSecond)
@@ -418,7 +418,7 @@ namespace Transports
 
       void
       sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
-          const std::string& error = "")
+                   const std::string& error = "")
       {
         IMC::UamTxStatus status;
         status.setDestination(ticket.imc_sid);
