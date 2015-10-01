@@ -45,7 +45,7 @@ namespace Transports
       CODE_PLAN    = 0x02,
       CODE_REPORT  = 0x03,
       CODE_RESTART = 0x04,
-	  CODE_RAW     = 0x05
+      CODE_RAW     = 0x05
     };
 
     struct Report
@@ -468,25 +468,25 @@ namespace Transports
       }
 
       void
-	  sendRawMessage(const std::string& sys, const IMC::Message * msg)
+      sendRawMessage(const std::string& sys, const IMC::Message * msg)
       {
-    	  std::vector<uint8_t> data;
-    	  data.push_back(CODE_RAW);
+        std::vector<uint8_t> data;
+        data.push_back(CODE_RAW);
 
-    	  // leave 1 byte for CODE_RAW and another for CRC8
-    	  uint8_t buf[1022];
+        // leave 1 byte for CODE_RAW and another for CRC8
+        uint8_t buf[1022];
 
-    	  // start with message id
-    	  uint16_t id = msg->getId();
-    	  buf[0] = ((uint8_t *) &id)[0];
-    	  buf[1] = ((uint8_t *) &id)[1];
+        // start with message id
+        uint16_t id = msg->getId();
+        buf[0] = ((uint8_t *) &id)[0];
+        buf[1] = ((uint8_t *) &id)[1];
 
-    	  // followed by all message fields
-    	  uint8_t * end = msg->serializeFields(&buf[2]);
+        // followed by all message fields
+        uint8_t* end = msg->serializeFields(&buf[2]);
 
-    	  int length = end - buf;
-    	  data.insert(data.end(), buf, buf + length);
-    	  sendFrame(sys, data, false);
+        int length = end - buf;
+        data.insert(data.end(), buf, buf + length);
+        sendFrame(sys, data, false);
       }
 
       void
