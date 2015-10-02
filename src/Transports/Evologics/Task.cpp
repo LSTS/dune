@@ -390,6 +390,10 @@ namespace Transports
           handleInstantMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
+        // do nothing.
+        else if (String::startsWith(msg->value, "RECVSTART"));
+        // do nothing.
+        else if (String::startsWith(msg->value, "RECVEND"));
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVERED"))
@@ -477,7 +481,7 @@ namespace Transports
             m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
           else
           {
-            war("Sending burst message (size=%lu) to %d.", msg->data.size(), ticket.addr);
+            war("Sending burst message (size=%u) to %d.", msg->data.size(), ticket.addr);
             m_driver->sendBurst((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
           }
         }
