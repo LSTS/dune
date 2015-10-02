@@ -56,7 +56,7 @@ namespace DUNE
         void
         writeData(std::ostream& os)
         {
-          uint32_t usec_per_frame = 1e6 / m_properties.fps;
+          uint32_t usec_per_frame = (uint32_t)(1e6 / m_properties.fps);
 
           // Microsecond per frame.
           writeWord(usec_per_frame, os);
