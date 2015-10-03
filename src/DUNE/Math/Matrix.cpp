@@ -395,8 +395,6 @@ namespace DUNE
       if ((m_data == m.m_data))
         return *this;
 
-      split();
-
       unsigned int r = i2 - i1 + 1;
       unsigned int c = j2 - j1 + 1;
 
