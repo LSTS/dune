@@ -100,7 +100,7 @@ namespace Control
           // Coordination flags
           bool m_standalone;
           bool m_param_update_first;
-          bool m_plan_new;
+          bool m_formation_plan_req;
           bool m_plan_params;
           //! Leader vehicle model
           UAVSimulation* m_model;
@@ -185,7 +185,7 @@ namespace Control
             DUNE::Tasks::Periodic(name, ctx),
             m_standalone(false),
             m_param_update_first(true),
-            m_plan_new(false),
+            m_formation_plan_req(false),
             m_plan_params(false),
             m_model(NULL),
             m_position(6, 1, 0.0),
@@ -658,10 +658,16 @@ namespace Control
             // Activating the formation coordinator
             spew("Activating the formation coordinator");
 
-            if (m_plan_params && m_plan_new)
+            if (!m_formation_plan_req)
             {
-              //m_plan_params = false;
-              m_plan_new = false;
+              war("onRequestActivation - No formation plan requested -"
+                  " Requesting deactivation!");
+              requestDeactivation();
+            }
+
+            if (m_plan_params)
+            {
+              m_plan_params = false;
               if (m_args.main)
               {
                 war("Requesting formation control activation");
@@ -701,10 +707,14 @@ namespace Control
 
                 dispatchAlias(&m_uav_formation);
               }
+              else if (!isActivating() && !isActive())
+              {
+                war("Failed activation - Not the main coordinator!");
+                activationFailed("Not the main coordinator");
+              }
               else
               {
                 war("No activation action - Not the main coordinator!");
-                activationFailed("Not the main coordinator");
               }
 
               /*
@@ -773,16 +783,21 @@ namespace Control
               }
               */
             }
+            else if (!isActivating() && !isActive())
+            {
+              war("Failed activation - No plan parameters received!");
+              activationFailed("No plan parameters received");
+            }
             else
             {
               war("No activation action - No plan parameters received!");
-              activationFailed("No plan parameters received");
             }
           }
 
           void
           onRequestDeactivation(void)
           {
+            m_formation_plan_req = false;
             // Deactivate the formation controller in the cooperating vehicles
             if (m_args.main)
             {
@@ -881,7 +896,6 @@ namespace Control
               // Request plan information to check if it is a formation flight plan
               trace("PlanControl accepted - Requesting plan information.");
               m_plan_ctrl_last = *msg;
-              //m_plan_new = true;
 
               // Request plan specification to confirm if it is a formation flight plan
               IMC::PlanDB plan_db;
@@ -894,6 +908,7 @@ namespace Control
             else if (msg->op == IMC::PlanControl::PC_STOP)
             {
               debug("PlanControl accepted - Stop plan.");
+              m_formation_plan_req = false;
               requestDeactivation();
             }
           }
@@ -905,9 +920,7 @@ namespace Control
             if (!m_args.main)
               return;
 
-            //================================================
             // Check if the plan is a formation flight plan
-            //================================================
             // Check if the system and entity are the destination of the PlanDB message
             if (msg->getDestination() != ((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()) ||
                 msg->getDestinationEntity() != getEntityId())
@@ -980,9 +993,6 @@ namespace Control
               err(DTR("Plan specification request failed with uncaught exception: %s"), e.what());
             }
 
-            //===================================
-            // Activate formation flight control
-            //===================================
             if (!is_formation_control)
             {
               debug("Plan is not a formation control plan.");
@@ -998,6 +1008,7 @@ namespace Control
             if (m_plan_ctrl_last.op != IMC::PlanControl::PC_START)
               return;
 
+            // Activate formation flight control
             // Set the leader initial state with the global team state
             trace("Sending LeaderState to the vehicles.");
             m_init_leader.op      = IMC::LeaderState::OP_SET;
@@ -1027,9 +1038,7 @@ namespace Control
             //==========================================
             // Activate the formation control and plan
             //==========================================
-            // ToDo - A change in the plan while the formation is active might
-            // require running again the code to send the Formation message
-            m_plan_new = true;
+            m_formation_plan_req = true;
             if (!isActive())
               requestActivation();
           }
