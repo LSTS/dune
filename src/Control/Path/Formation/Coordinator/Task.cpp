@@ -71,7 +71,7 @@ namespace Control
           double alt_min;
           //! Formation configuration parameters
           std::vector<std::string> formation_systems;
-          int formation_frame;
+          unsigned int formation_frame;
           Matrix formation_pos;
           //! UAV Model Parameters
           std::string sim_type; // Simulation type (3DOF, 4DOF_bank, 4DOF_alt, 5DOF, 6DOF_stabder, and 6DOF_geom)
@@ -100,6 +100,7 @@ namespace Control
           // Coordination flags
           bool m_standalone;
           bool m_param_update_first;
+          bool m_plan_new;
           bool m_formation_plan_req;
           bool m_plan_params;
           //! Leader vehicle model
@@ -156,6 +157,7 @@ namespace Control
           //! Number of team vehicles
           unsigned int m_uav_n;
           Systems m_uav_id;
+          unsigned int m_formation_frame;
           Matrix m_formation_pos;
 
           //! Simulation process time step
@@ -185,6 +187,7 @@ namespace Control
             DUNE::Tasks::Periodic(name, ctx),
             m_standalone(false),
             m_param_update_first(true),
+            m_plan_new(false),
             m_formation_plan_req(false),
             m_plan_params(false),
             m_model(NULL),
@@ -218,6 +221,7 @@ namespace Control
             m_alt_min_uav(1, 1, 0.0),
             m_alt_max_uav(1, 1, 0.0),
             m_uav_n(1),
+            m_formation_frame(0),
             m_timestep(0.0),
             m_timestep_ctrl(0.0),
             m_timestep_sync(0.0),
@@ -420,9 +424,10 @@ namespace Control
             //==========================================
             spew("onUpdateParameters - 1");
             Systems t_uav_id_last = m_uav_id;
-            if (paramChanged(m_args.formation_systems))
+            if (m_param_update_first || (m_plan_new &&
+                paramChanged(m_args.formation_systems)))
             {
-              inf("New Formation vehicles' list.");
+              inf("New formation vehicles' list.");
               // Process formation vehicle list
               m_uav_id.clear();
               if (m_args.formation_systems.empty())
@@ -444,9 +449,18 @@ namespace Control
             }
 
             spew("onUpdateParameters - 2");
-            if (paramChanged(m_args.formation_pos))
+            if (m_param_update_first || (m_plan_new &&
+                paramChanged(m_args.formation_frame)))
             {
-              inf("New Formation vehicles' position matrix");
+              m_formation_frame = m_args.formation_frame;
+              inf("New formation reference frame type: %u", m_formation_frame);
+            }
+
+            spew("onUpdateParameters - 2");
+            if (m_param_update_first || (m_plan_new &&
+                paramChanged(m_args.formation_pos)))
+            {
+              inf("New formation vehicles' position matrix");
 
               // Check if the formation positions matrix has a suitable size
               if (m_args.formation_pos.size() == 0)
@@ -490,6 +504,8 @@ namespace Control
 
             // Vehicle quantity considered in the formation
             debug("Number of UAVs -> %d", m_uav_n);
+
+            m_plan_new = false;
 
             // Data resizing
             // Check if the formation composition changed
@@ -680,7 +696,7 @@ namespace Control
                 m_uav_formation.group_name = "AsasF";
                 m_uav_formation.plan_id = m_plan_ctrl_last.plan_id;
                 m_uav_formation.description = "Test formation configuration";
-                m_uav_formation.reference_frame = m_args.formation_frame;
+                m_uav_formation.reference_frame = m_formation_frame;
                 m_uav_formation.participants.clear();
                 for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
                 {
@@ -738,7 +754,7 @@ namespace Control
                 // -  Formation reference frame
                 ep.name = "Formation Reference Frame";
                 ep.value = static_cast<std::ostringstream*>(
-                    &(std::ostringstream() << m_args.formation_frame))->str();
+                    &(std::ostringstream() << m_formation_frame))->str();
                 sep.params.push_back(ep);
                 // - Vehicle formation' positions
                 ep.name = "Formation Positions";
@@ -797,6 +813,7 @@ namespace Control
           void
           onRequestDeactivation(void)
           {
+            m_plan_new = false;
             m_formation_plan_req = false;
             // Deactivate the formation controller in the cooperating vehicles
             if (m_args.main)
@@ -893,6 +910,7 @@ namespace Control
 
             if (msg->op == IMC::PlanControl::PC_START && m_args.main)
             {
+              m_plan_new = true;
               // Request plan information to check if it is a formation flight plan
               trace("PlanControl accepted - Requesting plan information.");
               m_plan_ctrl_last = *msg;
@@ -908,6 +926,7 @@ namespace Control
             else if (msg->op == IMC::PlanControl::PC_STOP)
             {
               debug("PlanControl accepted - Stop plan.");
+              m_plan_new = false;
               m_formation_plan_req = false;
               requestDeactivation();
             }
@@ -1709,7 +1728,7 @@ namespace Control
                 m_alt_max = m_alt_max_uav(uav_ind) + m_formation_pos(2, uav_ind);
             }
 
-            if (m_args.formation_frame == IMC::Formation::OP_EARTH_FIXED)
+            if (m_formation_frame == IMC::Formation::OP_EARTH_FIXED)
             {
               //------------------------------------------
               // Ground aligned formation reference frame
