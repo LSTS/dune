@@ -777,7 +777,12 @@ namespace Control
               Matrix t_last_state_update = m_last_state_update;
               Matrix t_last_state_estim = m_last_state_estim;
               Matrix t_last_simctrl_update = m_last_simctrl_update;
+              // ToDo - Use insert and erase methods in the vehicle's
+              // simulation models vector (m_models) to avoid having two
+              // vectors with the same pointers (t_models, m_models)
               std::vector<UAVSimulation*> t_models = m_models;
+              //clearVehiclesModels();
+              m_models.clear();
 
               // Keep the leader data
               m_vehicle_state.resizeAndKeep(12, 1);
@@ -806,19 +811,6 @@ namespace Control
               // Initialize the simulated vehicles models
               debug("Simulated vehicles models initialization");
               UAVSimulation* model;
-
-              war("Current number of vehicle models %u", (unsigned int)m_models.size());
-              war("Current number of vehicles %u", (unsigned int)m_uav_n);
-              size_systems ind_uav_tmp = 0;
-              for (std::vector<UAVSimulation*>::iterator it = m_models.begin(); it != m_models.end(); ++it, ++ind_uav_tmp)
-              {
-                Math::Matrix position = (*it)->getPosition();
-                war("Vehicle %u x position: %1.3f", (unsigned int)ind_uav_tmp, position(0));
-                war("Vehicle %u y position: %1.3f", (unsigned int)ind_uav_tmp, position(1));
-              }
-
-              //clearVehiclesModels();
-	      m_models.clear();
               std::vector<bool> t_keep_data;
               for (size_systems ind_uav2 = 0; ind_uav2 != t_uav_n;
                    ++ind_uav2)
@@ -861,16 +853,6 @@ namespace Control
                       m_models.push_back( t_models[ ind_uav2 ] );
                       debug("Simulated vehicle model maintained for vehicle %u: %s",
                             (unsigned int)ind_uav, resolveSystemId( m_uav_id[ ind_uav ] ));
-                      unsigned int models_size = m_models.size();
-                      war("m_models size = %u", models_size);
-		      std::vector<UAVSimulation*>::iterator it = m_models.end();
-                      --it;
-                      Math::Matrix position = (*it)->getPosition();
-		      /*
-                      Math::Matrix position = m_models[models_size-1]->getPosition();
-		      */
-                      war("* Maintained model current x position: %1.3f", position(0));
-                      war("* Maintained model current y position: %1.3f", position(1));
                       break;
                     }
                   }
@@ -896,11 +878,6 @@ namespace Control
                   m_models.push_back(model);
                   debug("Simulated vehicle model initialized for vehicle %u: %s",
                         (unsigned int)ind_uav, resolveSystemId( m_uav_id[ ind_uav ] ));
-		  std::vector<UAVSimulation*>::iterator it = m_models.end();
-		  --it;
-                  Math::Matrix position = (*it)->getPosition();
-                  war("* Initialized model current x position: %1.3f", position(0));
-                  war("* Initialized model current y position: %1.3f", position(1));
                 }
               }
 
@@ -918,15 +895,6 @@ namespace Control
 
               m_uav_id_last = m_uav_id;
             }
-
-            war("- New number of vehicle models %u", (unsigned int)m_models.size());
-            war("- New number of vehicles %u", (unsigned int)m_uav_n);
-            size_systems ind_uav_tmp = 0;
-            for (std::vector<UAVSimulation*>::iterator it = m_models.begin(); it != m_models.end(); ++it, ++ind_uav_tmp)
-            {
-              war("- New vehicle %u bank: %1.3f", (unsigned int)ind_uav_tmp, Math::Angles::degrees((*it)->getBankCmd()));
-            }
-
 
             // Set messages system source:
             // Main system alias identification and leader identification
@@ -1075,17 +1043,6 @@ namespace Control
 
               debug("Simulated vehicle model initialized for vehicle %u.",
                     (unsigned int)ind_uav);
-	      /*
-		std::vector<UAVSimulation*>::iterator it = m_models.end();
-		--it;
-		Math::Matrix position = (*it)->getPosition();
-	      */
-	      unsigned int models_size = m_models.size();
-	      war("m_models size = %u", models_size);
-	      Math::Matrix position = m_models[models_size-1]->getPosition();
-
-              war("* Initialized model current x position: %1.3f", position(0));
-              war("* Initialized model current y position: %1.3f", position(1));
             }
 
             // Initialize the monitoring messages
@@ -1148,13 +1105,14 @@ namespace Control
               dispatchLeader( &m_current_plan );
               inf( "Formation control plan - Stop requested" );
 
-              if ( !m_diff_plan_req )
-              {
-                // Send PlanControl message to initiate the fallback control plan
-                dispatchLeader( &m_fallback_plan );
-                inf( "Formation fallback control plan - Start requested" );
-                m_diff_plan_req = false;
-              }
+            }
+
+            if ( !m_diff_plan_req )
+            {
+              // Send PlanControl message to initiate the fallback control plan
+              dispatchLeader( &m_fallback_plan );
+              inf( "Formation fallback control plan - Start requested" );
+              m_diff_plan_req = false;
             }
 
             m_team_leader_init = false;
@@ -1225,8 +1183,6 @@ namespace Control
                     msg->participants.begin(); it != msg->participants.end(); ++it, ++uav_ind)
                 {
                   m_uav_id.push_back( (*it)->vid );
-                  trace("Adding vehicle %u (%s) to the formation",
-                        (unsigned int)uav_ind, resolveSystemId( m_uav_id[ uav_ind ] ));
                   m_formation_systems.push_back( resolveSystemId( m_uav_id[ uav_ind ] ) );
                   m_formation_pos.resizeAndKeep( 3, uav_ind + 1 );
                   m_formation_pos( 0, uav_ind ) = (*it)->off_x;
@@ -1306,7 +1262,7 @@ namespace Control
                   m_formation_pos = Matrix(3, 1, 0.0);
                 }
               }
-              else if ( msg->op == IMC::Formation::OP_STOP && isActive() )
+              else if (msg->op == IMC::Formation::OP_STOP)
               {
                 inf( "Formation deactivation request received!" );
                 // Deactivate the formation controller in the current system
@@ -1342,8 +1298,8 @@ namespace Control
               else if ( msg->op == IMC::PlanControl::PC_START &&
                   msg->plan_id.compare( m_current_plan.plan_id ) != 0 )
               {
-                requestDeactivation();
                 m_diff_plan_req = true;
+                requestDeactivation();
               }
             }
           }
@@ -1665,11 +1621,11 @@ namespace Control
                 IMC::FormationMonitor form_monit;
 
                 form_monit.ax_cmd = m_form_monitor->ax_cmd;
-                form_monit.ay_cmd = m_form_monitor->ax_cmd;
-                //form_monit.az_cmd = m_form_monitor->ax_cmd;
+                form_monit.ay_cmd = m_form_monitor->ay_cmd;
+                //form_monit.az_cmd = m_form_monitor->az_cmd;
                 form_monit.ax_des = m_form_monitor->ax_des;
-                form_monit.ay_des = m_form_monitor->ax_des;
-                //form_monit.az_des = m_form_monitor->ax_des;
+                form_monit.ay_des = m_form_monitor->ay_des;
+                //form_monit.az_des = m_form_monitor->az_des;
                 form_monit.virt_err_x = m_form_monitor->virt_err_x;
                 form_monit.virt_err_y = m_form_monitor->virt_err_y;
                 //form_monit.virterr_z = m_form_monitor->virt_err_z;
@@ -2484,7 +2440,8 @@ namespace Control
                   t_rot[3] = d_sin_psi;
                   t_rot[4] = d_cos_psi;
                   md_rot = Matrix(t_rot, 3, 3);
-                  m_vehicle_accel.set(0, 2, ind_uav + 1, ind_uav + 1, md_rot * Matrix(mt_vehicle_accel, 3, 1));
+                  m_vehicle_accel.set(0, 2, ind_uav + 1, ind_uav + 1,
+                                      md_rot * Matrix(mt_vehicle_accel, 3, 1));
                 }
               }
             spew("Assynchronous update - End");
@@ -2509,17 +2466,13 @@ namespace Control
           void
           clearVehiclesModels( void )
           {
+            debug("Eliminating all vehicle models (%u models)", (unsigned int)m_models.size());
+            size_systems ind_uav = 0;
             for (std::vector<UAVSimulation*>::iterator it = m_models.begin();
-                 it != m_models.end(); ++it)
+                 it != m_models.end(); ++it, ++ind_uav)
             {
-              inf("* Number of vehicle models %u", (unsigned int)m_models.size());
-              inf("* Initial and final addresses of the models vector: %x and %x", m_models.begin(), m_models.end());
-              Math::Matrix position = (*it)->getPosition();
-              inf("* Model current x position: %1.3f", position(0));
-              inf("* Model current y position: %1.3f", position(1));
+              debug("Eliminating model of vehicle %u", (unsigned int)ind_uav);
               Memory::clear( *it );
-              inf("... Number of vehicle models %u", (unsigned int)m_models.size());
-              inf("... Initial and final addresses of the models vector: %x and %x", m_models.begin(), m_models.end());
             }
             m_models.clear();
           }
@@ -3435,9 +3388,21 @@ namespace Control
             //-------------------------------------------
 
             // Longitudinal acceleration command
-            vd_ctrl(0) = trimValue(vd_ctrl(0), - m_accel_lim_x, m_accel_lim_x);
+            if (d_time_step > 0)
+            {
+              vd_ctrl(0) = trimValue((trimValue((*vd_cmd)(1) + d_time_step *
+                                                vd_ctrl(0), m_speed_min,
+                                                m_speed_max) - (*vd_cmd)(1))/
+                                     d_time_step,
+                                     - m_accel_lim_x, m_accel_lim_x);
+              (*vd_cmd)(1) = trimValue((*vd_cmd)(1) + d_time_step * vd_ctrl(0),
+                                       m_speed_min, m_speed_max);
+            }
+            else
+            {
+              vd_ctrl(0) = 0;
+            }
             // Speed command
-            (*vd_cmd)(1) = trimValue((*vd_cmd)(1) + d_time_step * vd_ctrl(0), m_speed_min, m_speed_max);
 
             //-------------------------------------------
             // Altitude control
