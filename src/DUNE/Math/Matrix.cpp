@@ -387,7 +387,7 @@ namespace DUNE
         throw Error("Invalid index!");
 
       // If data is already shared: there is nothing to do
-      if ((m_data == m.m_data))
+      if (m_data == m.m_data)
         return *this;
 
       unsigned int r = i2 - i1 + 1;
