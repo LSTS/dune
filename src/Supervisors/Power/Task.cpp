@@ -28,8 +28,6 @@
 // ISO C++ 98 headers.
 #include <memory>
 #include <cstring>
-#include <algorithm>
-#include <cerrno>
 #include <cstdlib>
 
 // DUNE headers.
@@ -44,26 +42,33 @@ namespace Supervisors
   {
     using DUNE_NAMESPACES;
 
+    //! Invalid power operation.
+    static const int c_power_op_invalid = -1;
+
     struct Arguments
     {
-      //! Main power channel.
+      //! Main power channel name.
       std::string pwr_main;
       //! Command to execute on power down.
       std::string cmd_pwr_down;
       //! Command to execute on power down abort.
       std::string cmd_pwr_down_abort;
+      //! Slave systems.
+      std::vector<std::string> slave_systems;
     };
 
     struct Task: public Tasks::Task
     {
+      //! Set of slave system not yet powered-off.
+      std::set<uint16_t> m_notified_slaves;
+      //! Last power operation.
+      int m_power_op;
       //! Task arguments.
       Arguments m_args;
-      //! Command.
-      Command* m_cmd;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_cmd(NULL)
+        m_power_op(c_power_op_invalid)
       {
         // Define configuration parameters.
         param("Main Power Channel", m_args.pwr_main)
@@ -78,14 +83,35 @@ namespace Supervisors
         .defaultValue("")
         .description("Command to execute when the power down sequence is aborted");
 
+        param("Slave System Names", m_args.slave_systems)
+        .description("Name of the slave systems");
+
         // Register listeners.
         bind<IMC::PowerOperation>(this);
+        bind<IMC::PowerChannelControl>(this);
       }
 
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      consume(const IMC::PowerChannelControl* msg)
+      {
+        if (msg->getDestination() == getSystemId())
+          return;
+
+        if (msg->name != "System")
+          return;
+
+        if ((powerDownInProgress() && msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
+            || (powerDownAborted() && msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON))
+        {
+          trace("notified %04X", msg->getSource());
+          m_notified_slaves.erase(msg->getSource());
+        }
       }
 
       void
@@ -94,28 +120,107 @@ namespace Supervisors
         if (msg->getDestination() != getSystemId())
           return;
 
-        if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
-        {
-          if (m_cmd == NULL)
-          {
-            m_cmd = new Command(m_args.cmd_pwr_down);
-            m_cmd->start();
-          }
-        }
-        else if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_ABORTED)
-        {
-          // if (!m_power_down)
-          //   return;
+        m_power_op = msg->op;
+      }
 
-          // m_power_down = false;
-          // m_power_down_now = false;
+      void
+      powerDown(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_POWER_DOWN);
 
-          if (std::system(m_args.cmd_pwr_down_abort.c_str()) == -1)
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR,
-                           DTR("failed to execute power down command"));
-          }
+        // Execute power down command.
+        while (!powerDownCommand())
+          waitForMessages(1.0);
+
+        // Split point.
+        if (powerDownInProgress())
+        {
+          notifySlaves(IMC::PowerOperation::POP_PWR_DOWN_IP);
+          while (!m_notified_slaves.empty())
+            waitForMessages(1.0);
         }
+
+        if (powerDownInProgress())
+        {
+          controlSystemPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+          m_power_op = c_power_op_invalid;
+        }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      powerDownAbort(void)
+      {
+        if (powerDownAborted())
+        {
+          notifySlaves(IMC::PowerOperation::POP_PWR_DOWN_ABORTED);
+          while (!m_notified_slaves.empty())
+            waitForMessages(1.0);
+        }
+
+        if (powerDownAborted())
+        {
+          while (!powerDownAbortCommand())
+            waitForMessages(1.0);
+        }
+
+        if (powerDownAborted())
+        {
+          controlSystemPower(IMC::PowerChannelControl::PCC_OP_TURN_ON);
+          m_power_op = c_power_op_invalid;
+        }
+      }
+
+      bool
+      powerDownCommand(void)
+      {
+        return std::system(m_args.cmd_pwr_down.c_str()) == 0;
+      }
+
+      bool
+      powerDownAbortCommand(void)
+      {
+        return std::system(m_args.cmd_pwr_down_abort.c_str()) == 0;
+      }
+
+      void
+      notifySlaves(IMC::PowerOperation::OperationEnum op)
+      {
+        m_notified_slaves.clear();
+
+        for (size_t i = 0; i < m_args.slave_systems.size(); ++i)
+        {
+          uint16_t addr = resolveSystemName(m_args.slave_systems[i]);
+          m_notified_slaves.insert(addr);
+
+          IMC::PowerOperation pop;
+          pop.setDestination(addr);
+          pop.op = op;
+          dispatch(pop);
+        }
+      }
+
+      void
+      controlSystemPower(IMC::PowerChannelControl::OperationEnum op)
+      {
+        IMC::PowerChannelControl pcc;
+        pcc.setDestination(getSystemId());
+        pcc.name = m_args.pwr_main;
+        pcc.op = op;
+        dispatch(pcc);
+      }
+
+      bool
+      powerDownInProgress(void)
+      {
+        return m_power_op == IMC::PowerOperation::POP_PWR_DOWN_IP;
+      }
+
+      bool
+      powerDownAborted(void)
+      {
+        return m_power_op == IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
       }
 
       void
@@ -125,32 +230,10 @@ namespace Supervisors
         {
           waitForMessages(1.0);
 
-          // Power down command is in progress.
-          if (m_cmd)
-          {
-            if (m_cmd->isDead())
-            {
-              bool success = m_cmd->success();
-              m_cmd->stopAndJoin();
-              Memory::clear(m_cmd);
-
-              if (success)
-              {
-                war("%s", DTR(Status::getString(Status::CODE_POWER_DOWN)));
-                IMC::PowerChannelControl pcc;
-                pcc.setDestination(getSystemId());
-                pcc.name = m_args.pwr_main;
-                pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-                dispatch(pcc);
-              }
-              else
-              {
-                Delay::wait(1.0);
-                m_cmd = new Command(m_args.cmd_pwr_down);
-                m_cmd->start();
-              }
-            }
-          }
+          if (powerDownInProgress())
+            powerDown();
+          else if (powerDownAborted())
+            powerDownAbort();
         }
       }
     };

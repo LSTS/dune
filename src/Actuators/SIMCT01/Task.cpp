@@ -211,7 +211,13 @@ namespace Actuators
         {
           if (m_args.addrs_log[i] == msg->id)
           {
-            sendDemand(i, (int8_t)(msg->value * m_args.scale));
+            float value = (msg->value * m_args.scale);
+            if (value > 100)
+              value = 100;
+            if (value < -100)
+              value = -100;
+
+            sendDemand(i, (int8_t)value);
             break;
           }
         }
@@ -254,11 +260,6 @@ namespace Actuators
       {
         char expected[16];
         std::sprintf(expected, "U%u4\r", m_args.addrs_hwr[index]);
-
-        if (value > 100)
-          value = 100;
-        if (value < -100)
-          value = -100;
 
         char cmd[16];
         std::sprintf(cmd, "u%u_%+03d\r", m_args.addrs_hwr[index], value);

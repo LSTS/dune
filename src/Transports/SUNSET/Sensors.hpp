@@ -82,13 +82,14 @@ namespace Transports
       }
 
       void
-      setMeasurement(const std::string& name, unsigned sensor_id, double value, const Position& position)
+      setMeasurement(const std::string& name, unsigned sensor_id, double value, const Position& position, double timestamp)
       {
         if (m_readings[name][sensor_id] == NULL)
           m_readings[name][sensor_id] = new SensorSample;
 
         m_readings[name][sensor_id]->sample = value;
         m_readings[name][sensor_id]->position = position.value;
+        m_readings[name][sensor_id]->timestamp = timestamp;
       }
 
       const SensorSample&

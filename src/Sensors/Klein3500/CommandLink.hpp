@@ -160,30 +160,21 @@ namespace Sensors
         double lat = estate.lat;
         double lon = estate.lon;
         Coordinates::toWGS84(estate, lat, lon);
-
-        // Convert latitude.
-        int lat_deg;
-        double lat_min;
-        Angles::convertDecimalToDM(Angles::degrees(lat), lat_deg, lat_min);
-
-        // Convert longitude.
-        int lon_deg;
-        double lon_min;
-        Angles::convertDecimalToDM(Angles::degrees(lon), lon_deg, lon_min);
+        std::string lat_nmea = latitudeToNMEA(lat);
+        std::string lon_nmea = longitudeToNMEA(lon);
 
         // Velocity.
         double vel = Math::norm(estate.vx, estate.vy);
 
-        // Course.
-        double course = Angles::degrees(Angles::normalizeRadian(std::atan2(estate.vy, estate.vx)) + Math::c_pi);
+        double heading = Angles::degrees(estate.psi);
+        if (heading < 0)
+          heading += 360.0;
 
         // Build sentence.
         std::string stn = String::str("$PAUV"
                                       ",%02u%02u%02u.%02u,A"
-                                      ",%02d%02.5f"
-                                      ",%c"
-                                      ",%03d%02.5f"
-                                      ",%c"
+                                      ",%s"
+                                      ",%s"
                                       ",%0.2f"
                                       ",%0.2f"
                                       ",%0.2f"
@@ -192,12 +183,10 @@ namespace Sensors
                                       ",%0.2f"
                                       ",%02u%02u%02u",
                                       bdt.hour, bdt.minutes, bdt.seconds, fsec,
-                                      std::abs(lat_deg), std::fabs(lat_min),
-                                      (lat_deg >= 0) ? 'N' : 'S',
-                                      std::abs(lon_deg), std::fabs(lon_min),
-                                      (lon_deg >= 0) ? 'E' : 'W',
-                                      vel * DUNE::Units::c_ms_to_knot,
-                                      course,
+                                      lat_nmea.c_str(),
+                                      lon_nmea.c_str(),
+                                      vel * Units::c_ms_to_knot,
+                                      heading,
                                       Angles::degrees(estate.theta),
                                       Angles::degrees(estate.phi),
                                       estate.depth,

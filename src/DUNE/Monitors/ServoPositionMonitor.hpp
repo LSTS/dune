@@ -93,7 +93,7 @@ namespace DUNE
             if (m_accum_pos < c_rate_factor * m_accum_com &&
                 std::fabs(position - command) > c_min_diff)
             {
-              *description = Utils::String::str("position change is %.5f"
+              *description = Utils::String::str("position change is %.5f, "
                                                 "command change is %.5f",
                                                 m_accum_pos, m_accum_com);
               return true;

@@ -31,6 +31,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "DistanceTracking.hpp"
+
 namespace Control
 {
   namespace ROV
@@ -39,15 +42,37 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! Default desired distance to wall
+      static const float c_wall_dist = 1.0f;
+      //! Wall tracking enabled debounce time
+      static const float c_wt_debounce = 0.8f;
+
       struct Arguments
       {
         Matrix actuat;
         double max_speed;
         bool dh_control;
-        bool as_control;
+        bool heading_control;
         float depth_rate;
         int depth_deadzone;
         float heading_rate;
+        float depth_inc;
+        //! Distance tracking algorithm arguments
+        DTArguments dt;
+        //! Moving average window size for distance to wall
+        unsigned wdist_mav_size;
+        //! Desired distance to wall increments.
+        float wdist_inc;
+        //! Desired distance to wall bounds (lower and upper respectively)
+        std::vector<float> wdist_bounds;
+        //! Entity label of distance to wall
+        std::string wdist_label;
+        //! Entity label of desired distance to wall
+        std::string wdist_des_label;
+        //! Entity label of filtered distance to wall
+        std::string filt_wdist_label;
+        //! Maximum distance threshold;
+        double max_dist;
       };
 
       struct Task: public DUNE::Control::BasicRemoteOperation
@@ -68,6 +93,22 @@ namespace Control
         float m_h_ref;
         //! Flag is true if we have depth and heading data
         bool m_dh_data;
+        //! Distance tracking algorithm
+        DistanceTracking* m_dt;
+        //! Desired distance to wall
+        float m_wdist_desired;
+        //! Wall tracking enabled
+        bool m_wt_enabled;
+        //! Wall tracking enabled counter
+        Time::Counter<float> m_wt_counter;
+        //! Moving average for the distance to wall
+        MovingAverage<float>* m_wdist_mav;
+        //! Distance to wall source entity
+        unsigned m_wdist_ent;
+        //! Filtered distance to wall source entity
+        unsigned m_filt_wdist_ent;
+        //! Desired distance to wall source entity
+        unsigned m_wdist_des_ent;
         //! Task arguments.
         Arguments m_args;
 
@@ -75,7 +116,10 @@ namespace Control
           DUNE::Control::BasicRemoteOperation(name, ctx),
           m_thruster(5, 1, 0.0),
           m_forces(6, 1, 0.0),
-          m_dh_data(false)
+          m_dh_data(false),
+          m_dt(NULL),
+          m_wdist_desired(c_wall_dist),
+          m_wdist_mav(NULL)
         {
           param("Actuation Inverse Matrix", m_args.actuat)
           .defaultValue("")
@@ -91,9 +135,10 @@ namespace Control
           .defaultValue("false")
           .description("Turn on actively control of depth and heading");
 
-          param("Angular Speed Control", m_args.as_control)
+          param("Heading Tracking", m_args.heading_control)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
-          .description("Control the angular speed instead of heading.");
+          .description("Control the heading angle instead of heading rate.");
 
           param("Depth Rate", m_args.depth_rate)
           .defaultValue("0.1")
@@ -105,9 +150,66 @@ namespace Control
           .description("Remote action deadzone for the depth rate.");
 
           param("Heading Rate", m_args.heading_rate)
-          .defaultValue("5.0")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .defaultValue("1.0")
           .units(Units::DegreePerSecond)
           .description("Rate of increase or decrease of heading with control enabled.");
+
+          param("Depth Increment", m_args.depth_inc)
+          .defaultValue("0.2")
+          .units(Units::Meter)
+          .description("Increment in meters when using button for depth reference.");
+
+          param("Wall Tracking -- Average Window", m_args.wdist_mav_size)
+          .defaultValue("5")
+          .description("Distance moving average window size");
+
+          param("Wall Tracking -- Gains", m_args.dt.gains)
+          .defaultValue("")
+          .size(3)
+          .description("Distance PID controller gains");
+
+          param("Wall Tracking -- Maximum Speed", m_args.dt.max_speed)
+          .defaultValue("0.5")
+          .units(Units::MeterPerSecond)
+          .description("Maximum speed output from PID");
+
+          param("Wall Tracking -- Integral Limit", m_args.dt.int_limit)
+          .defaultValue("0.2")
+          .units(Units::MeterPerSecond)
+          .description("PID Integral limit");
+
+          param("Wall Tracking -- Absolute Maximum Error", m_args.dt.abs_max_dist)
+          .defaultValue("1.0")
+          .units(Units::Meter)
+          .description("Absolute value of maximum error in distance");
+
+          param("Wall Tracking -- Distance Increments", m_args.wdist_inc)
+          .defaultValue("0.02")
+          .units(Units::Meter)
+          .description("Desired distance to wall increments.");
+
+          param("Wall Tracking -- Distance Bounds", m_args.wdist_bounds)
+          .defaultValue("0.0, 3.0")
+          .size(2)
+          .units(Units::Meter)
+          .description("Desired distance to wall lower and upper bounds.");
+
+          param("Entity Label - Wall Distance", m_args.wdist_label)
+          .defaultValue("")
+          .description("Entity label of distance to wall");
+
+          param("Entity Label - Desired Wall Distance", m_args.wdist_des_label)
+          .defaultValue("")
+          .description("Entity label of desired distance to wall");
+
+          param("Entity Label - Filtered Wall Distance", m_args.filt_wdist_label)
+          .defaultValue("")
+          .description("Entity label of the filtered distance to wall");
+
+          param("Wall Tracking -- Distance Threshold", m_args.max_dist)
+          .defaultValue("5")
+          .description("Distance threshold");
 
           // Add remote actions.
           addActionAxis("Forward");
@@ -115,8 +217,46 @@ namespace Control
           addActionAxis("Up");
           addActionAxis("Rotate");
           addActionButton("Stop");
+          addActionButton("Z+");
+          addActionButton("Z-");
+          addActionButton("WallTracker");
 
           bind<IMC::EstimatedState>(this);
+          bind<IMC::Distance>(this);
+        }
+
+        void
+        onEntityResolution(void)
+        {
+          m_wdist_ent = resolveEntity(m_args.wdist_label);
+        }
+
+        void
+        onEntityReservation(void)
+        {
+          m_wdist_des_ent = reserveEntity(m_args.wdist_des_label);
+          m_filt_wdist_ent = reserveEntity(m_args.filt_wdist_label);
+        }
+
+        void
+        onResourceInitialization(void)
+        {
+          BasicRemoteOperation::onResourceInitialization();
+
+          m_wt_counter.setTop(c_wt_debounce);
+        }
+
+        void
+        onResourceRelease(void)
+        {
+          Memory::clear(m_wdist_mav);
+          Memory::clear(m_dt);
+        }
+
+        void
+        onResourceAcquisition(void)
+        {
+          m_wdist_mav = new MovingAverage<float>(m_args.wdist_mav_size);
         }
 
         void
@@ -129,7 +269,7 @@ namespace Control
             enableControlLoops(IMC::CL_SPEED | IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
 
-            if (!m_args.as_control)
+            if (m_args.heading_control)
               m_h_ref = m_start_heading;
           }
           else
@@ -170,13 +310,99 @@ namespace Control
         }
 
         void
+        consume(const IMC::Distance* msg)
+        {
+          if (msg->getSourceEntity() != m_wdist_ent)
+            return;
+
+          if (msg->value > m_args.max_dist)
+            return;
+
+          IMC::Distance filt_msg = *msg;
+          filt_msg.setSourceEntity(m_filt_wdist_ent);
+
+          filt_msg.value = m_wdist_mav->update(msg->value);
+
+          if (m_wt_enabled)
+            m_forces(0, 0) = m_dt->update(filt_msg.value) / m_args.max_speed;
+          else
+            m_wdist_desired = filt_msg.value;
+
+          dispatch(filt_msg);
+        }
+
+        void
+        toggleWallTracker(void)
+        {
+          if (!m_wt_counter.overflow())
+            return;
+
+          m_wt_enabled = !m_wt_enabled;
+          m_wt_counter.reset();
+
+          if (m_wt_enabled)
+          {
+            Memory::clear(m_dt);
+            m_dt = new DistanceTracking(&m_args.dt);
+            m_dt->setDesiredDistance(m_wdist_desired);
+
+            inf("wall tracker is on");
+          }
+          else
+          {
+            inf("wall tracker is off");
+          }
+        }
+
+        void
+        forwardControl(int value)
+        {
+          if (m_wt_enabled)
+          {
+            // forward button will mean decreasing distance to wall
+            m_wdist_desired -= (float)(value / 127.0) * m_args.wdist_inc;
+
+            m_wdist_desired = trimValue(m_wdist_desired, m_args.wdist_bounds[0], m_args.wdist_bounds[1]);
+
+            IMC::Distance dist;
+            dist.setSourceEntity(m_wdist_des_ent);
+            dist.value = m_wdist_desired;
+            dispatch(dist);
+
+            m_dt->setDesiredDistance(m_wdist_desired);
+          }
+          else
+          {
+            m_forces(0, 0) = value / 127.0;   // X
+          }
+        }
+
+        void
+        rotateControl(int value)
+        {
+          if (m_args.heading_control)
+          {
+            m_h_ref += value / 127.0 * m_args.heading_rate;
+            m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
+          }
+          else
+          {
+            m_h_ref = value / 127.0 * m_args.heading_rate;
+          }
+        }
+
+        void
         onRemoteActions(const IMC::RemoteActions* msg)
         {
           TupleList tuples(msg->actions);
 
           if (m_args.dh_control)
           {
-            m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
+            if (tuples.get("WallTracker", 0))
+              toggleWallTracker();
+
+            forwardControl(tuples.get("Forward", 0));
+
             m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
 
             int up = tuples.get("Up", 0);
@@ -187,32 +413,25 @@ namespace Control
               m_depth = std::max(0.0f, m_depth);
             }
 
-            if (!m_args.as_control)
+            int zed = tuples.get("Z+", 0) - 1 * tuples.get("Z-", 0);
+
+            if (zed != 0)
             {
-              m_h_ref += tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
-              m_h_ref = Math::Angles::normalizeRadian(m_h_ref);
+              m_depth += (float)zed * m_args.depth_inc;
+              m_depth = std::max(0.0f, m_depth);
             }
-            else
-            {
-              m_h_ref = tuples.get("Rotate", 0) / 127.0 * m_args.heading_rate;
-            }
+
+            rotateControl(tuples.get("Rotate", 0));
 
             if (tuples.get("Stop", 0))
             {
               m_depth = m_start_depth;
 
-              if (!m_args.as_control)
+              if (m_args.heading_control)
                 m_h_ref = m_start_heading;
               else
                 m_h_ref = 0.0;
             }
-
-            debug("desired depth: %.1f", m_depth);
-
-            if (!m_args.as_control)
-              debug("desired heading: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
-            else
-              debug("desired heading rate: %.1f", m_h_ref * 180.0 / DUNE::Math::c_pi);
           }
           else
           {
@@ -235,7 +454,7 @@ namespace Control
             disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
 
-            if (!m_args.as_control)
+            if (m_args.heading_control)
               m_h_ref = m_start_heading;
             else
               m_h_ref = 0.0;
@@ -264,7 +483,7 @@ namespace Control
             dvel.v = m_args.max_speed * m_forces(1, 0);
             dispatch(dvel);
 
-            if (!m_args.as_control)
+            if (m_args.heading_control)
             {
               IMC::DesiredHeading d_heading;
               d_heading.value = m_h_ref;

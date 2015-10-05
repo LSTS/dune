@@ -1048,6 +1048,12 @@
       </doc>
 
       <args>
+	<arg name="Timestamp" type="Real">
+          <doc>
+            Time at which the sample was collected.
+          </doc>
+        </arg>
+
         <arg name="Position" type="PositionType">
           <doc>
             Position where sample was collected.
@@ -1108,6 +1114,11 @@
       </doc>
 
       <args>
+	<arg name="Timestamp" type="Real">
+          <doc>
+          </doc>
+        </arg>
+
         <arg name="Value" type="PositionType">
           <doc>
           </doc>
@@ -1151,6 +1162,11 @@
       </doc>
 
       <args>
+	<arg name="Timestamp" type="Real">
+          <doc>
+          </doc>
+        </arg>
+
         <arg name="Target" type="Integer">
           <doc>
             Target address.

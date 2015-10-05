@@ -35,6 +35,7 @@ namespace DUNE
 {
   namespace Time
   {
+    //! Time delta calculations.
     class Delta
     {
     public:
@@ -42,18 +43,28 @@ namespace DUNE
         m_last(-1.0)
       { }
 
+      //! Clear delta time clock.
       inline void
       clear(void)
       {
         m_last = -1.0;
       }
 
+      //! Reset time now.
+      inline void
+      reset(void)
+      {
+        m_last = Time::Clock::get();
+      }
+
+      //! Get current delta and reset clock.
+      //! @return delta time.
       inline double
       getDelta(void)
       {
         if (m_last < 0.0)
         {
-          m_last = Time::Clock::get();
+          reset();
           return -1.0;
         }
 
@@ -64,6 +75,22 @@ namespace DUNE
         return delta;
       }
 
+      //! Check time since last reset.
+      //! @return delta time.
+      inline double
+      check(void)
+      {
+        if (m_last < 0.0)
+        {
+          reset();
+          return -1.0;
+        }
+
+        return Time::Clock::get() - m_last;
+      }
+
+      //! Check if delta is invalid.
+      //! @return true if delta is invalid, false otherwise.
       inline static bool
       isInvalid(double delta)
       {
@@ -71,6 +98,7 @@ namespace DUNE
       }
 
     private:
+      //! Amount of time reference (in seconds).
       double m_last;
     };
   }

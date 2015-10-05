@@ -50,6 +50,76 @@ namespace Simulators
     //! Number of points in the forward direction for bottom intersection
     static const unsigned c_forward_points = 10;
 
+    class PencilBeam
+    {
+    public:
+      struct PBArguments
+      {
+        //! Step size
+        float step_size;
+        //! Time step
+        float time_step;
+        //! Sector width
+        float sector_width;
+      };
+
+      PencilBeam(PBArguments* args):
+        m_args(args)
+      {
+        m_counter.setTop(m_args->time_step);
+        m_beam_pos = - (double)m_args->sector_width / 2.0;
+        m_direction = 1;
+      }
+
+      inline bool
+      isValid(void)
+      {
+        return m_counter.overflow();
+      }
+
+      double
+      update(void)
+      {
+        if (!isValid())
+          return 0.0;
+
+        m_counter.reset();
+
+        double res = m_beam_pos;
+
+        double limit = m_args->sector_width / 2.0;
+
+        if (std::abs(m_beam_pos + getIncrement()) > limit)
+        {
+          m_direction = - m_direction;
+          m_beam_pos = - (double)m_direction * limit + getIncrement();
+        }
+        else
+        {
+          m_beam_pos += getIncrement();
+          res = m_beam_pos;
+        }
+
+        return res;
+      }
+
+    private:
+      inline double
+      getIncrement(void)
+      {
+        return m_args->step_size * (double)m_direction;
+      }
+
+      //! Pointer to arguments
+      PBArguments* m_args;
+      //! Time step counter
+      Time::Counter<float> m_counter;
+      //! Current beam position
+      double m_beam_pos;
+      //! Direction of the beam rotation (positive or negative)
+      int m_direction;
+    };
+
     struct Arguments
     {
       //! True if bottom distance should be simulated
@@ -76,6 +146,8 @@ namespace Simulators
       double fd_std_dev;
       //! Maximum range of the sensor
       double max_range;
+      //! Minimum range of the sensor
+      double min_range;
       //! Bottom echo sounder's beam apperture
       double bottom_width;
       //! Forward echo sounder's beam bottom_width
@@ -100,6 +172,12 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! Simulate pencil beam
+      bool pencil_beam;
+      //! Pencil Beam arguments
+      PencilBeam::PBArguments pb;
+      // delete me
+      std::string ents;
     };
 
     struct Task: public Tasks::Periodic
@@ -121,13 +199,16 @@ namespace Simulators
       double m_ref_lat, m_ref_lon;
       //! NE offsets in regard to navigational reference.
       double m_off_n, m_off_e;
+      //! Pencil beam object
+      PencilBeam* m_pb;
       //! Task Arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_prng(NULL),
-        m_qtree(NULL)
+        m_qtree(NULL),
+        m_pb(NULL)
       {
         param("Simulate - Bottom Distance", m_args.simulate_bd)
         .defaultValue("true")
@@ -178,6 +259,11 @@ namespace Simulators
         .units(Units::Meter)
         .defaultValue("50.0");
 
+        param("Minimum Forward Range", m_args.min_range)
+        .units(Units::Meter)
+        .defaultValue("0.2")
+        .description("Minimum range measured forward");
+
         param("Bottom Beam Width", m_args.bottom_width)
         .defaultValue("10.0")
         .units(Units::Degree)
@@ -204,6 +290,25 @@ namespace Simulators
         .size(3)
         .units(Units::Degree)
         .description("Forward sonar orientation");
+
+        param("Simulate Pencil Beam", m_args.pencil_beam)
+        .defaultValue("false")
+        .description("Simulate pencil beam instead of simple echo sounder");
+
+        param("Pencil Beam Step Size", m_args.pb.step_size)
+        .defaultValue("0.3")
+        .units(Units::Degree)
+        .description("Pencil beam's step size");
+
+        param("Pencil Beam Sector Width", m_args.pb.sector_width)
+        .defaultValue("20.0")
+        .units(Units::Degree)
+        .description("Pencil beam's sector width");
+
+        param("Pencil Beam Time Step", m_args.pb.time_step)
+        .defaultValue("0.2")
+        .units(Units::Second)
+        .description("Pencil beam's time step");
 
         param("Bottom Sonar Position", m_args.bottom_position)
         .defaultValue("0, 0, 0")
@@ -238,6 +343,7 @@ namespace Simulators
       onResourceAcquisition(void)
       {
         m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
+        m_pb = new PencilBeam(&m_args.pb);
       }
 
       void
@@ -245,6 +351,7 @@ namespace Simulators
       {
         Memory::clear(m_prng);
         Memory::clear(m_qtree);
+        Memory::clear(m_pb);
       }
 
       void
@@ -266,6 +373,20 @@ namespace Simulators
         {
           for (unsigned i = 0; i < 3; ++i)
             m_args.forward_orientation[i] = Angles::radians(m_args.forward_orientation[i]);
+        }
+
+        if (paramChanged(m_args.pb.sector_width))
+          m_args.pb.sector_width = Angles::radians(m_args.pb.sector_width);
+
+        if (paramChanged(m_args.pb.step_size))
+          m_args.pb.step_size = Angles::radians(m_args.pb.step_size);
+
+        if (paramChanged(m_args.pb.step_size) ||
+            paramChanged(m_args.pb.sector_width) ||
+            paramChanged(m_args.pb.time_step))
+        {
+          Memory::clear(m_pb);
+          m_pb = new PencilBeam(&m_args.pb);
         }
 
         debug("pier point A lat: %0.6f, lon: %0.6f", m_args.pier[0], m_args.pier[1]);
@@ -476,9 +597,32 @@ namespace Simulators
         // define a random error
         double error = m_prng->gaussian() * m_args.fd_std_dev;
 
-        m_fd.value = forwardRange() + error;
-        m_fd.value = trimValue(m_fd.value, 0, m_args.max_range);
+        double psi_offset;
+
+        if (!m_args.pencil_beam)
+        {
+          psi_offset = 0.0;
+        }
+        else
+        {
+          if (!m_pb->isValid())
+            return;
+
+          psi_offset = m_pb->update();
+        }
+
+        m_fd.value = forwardRange(0.0) + error;
+        m_fd.value = trimValue(m_fd.value, m_args.min_range, m_args.max_range);
         m_fd.validity = IMC::Distance::DV_VALID;
+        const IMC::DeviceState* ds = *m_fd.location.begin();
+        IMC::DeviceState* cl = static_cast<IMC::DeviceState*>(ds->clone());
+        cl->psi = psi_offset;
+
+        m_fd.location.clear();
+        m_fd.location.push_back(cl);
+
+        delete cl;
+
         dispatch(m_fd);
 
         trace("(x,y,z) %0.2f %0.2f %0.2f, forward distance %0.2f, simulated error %0.2f",
@@ -488,32 +632,35 @@ namespace Simulators
       //! Compute the forward range seen by the FLS according to obstacles and bottom
       //! @return forward range at current position
       double
-      forwardRange(void)
+      forwardRange(double psi_offset = 0.0)
       {
         double range = m_args.max_range;
 
-        // use forward distance to the surface if the current pitch angle allows it
-        if (m_sstate.theta > 0 && m_args.max_range * sin(m_sstate.theta) >= m_sstate.z)
+        if (!m_args.pencil_beam)
         {
-          double value = std::abs(m_sstate.z / sin(m_sstate.theta));
-          range = std::min(range, value);
-        }
-
-        if (m_args.intersect_method)
-        {
-          range = std::min(range, bottomIntersection());
-        }
-        else
-        {
-          // use forward distance to bottom of the sea if the current pitch angle allows it
-          if (m_bd.value >= 0 && m_sstate.theta <= 0 &&
-              m_args.max_range * sin(m_sstate.theta) >= m_bd.value)
+          // use forward distance to the surface if the current pitch angle allows it
+          if (m_sstate.theta > 0 && m_args.max_range * sin(m_sstate.theta) >= m_sstate.z)
           {
-            // make sure it is not null otherwise we'll be dividing by zero
-            if (sin(m_sstate.theta) != 0)
+            double value = std::abs(m_sstate.z / sin(m_sstate.theta));
+            range = std::min(range, value);
+          }
+
+          if (m_args.intersect_method)
+          {
+            range = std::min(range, bottomIntersection());
+          }
+          else
+          {
+            // use forward distance to bottom of the sea if the current pitch angle allows it
+            if (m_bd.value >= 0 && m_sstate.theta <= 0 &&
+                m_args.max_range * sin(m_sstate.theta) >= m_bd.value)
             {
-              double value = std::abs(m_sstate.z / sin(m_sstate.theta));
-              range = std::min(range, value);
+              // make sure it is not null otherwise we'll be dividing by zero
+              if (sin(m_sstate.theta) != 0)
+              {
+                double value = std::abs(m_sstate.z / sin(m_sstate.theta));
+                range = std::min(range, value);
+              }
             }
           }
         }
@@ -521,8 +668,8 @@ namespace Simulators
         if (m_args.simulate_pier)
         {
           // find the furthest point seen by the forward distance sensor
-          double x_target = m_sstate.x + m_args.max_range* cos(m_sstate.psi);
-          double y_target = m_sstate.y + m_args.max_range* sin(m_sstate.psi);
+          double x_target = m_sstate.x + m_args.max_range* cos(m_sstate.psi + psi_offset);
+          double y_target = m_sstate.y + m_args.max_range* sin(m_sstate.psi + psi_offset);
 
           double x, y;
 

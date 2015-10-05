@@ -38,5 +38,6 @@ namespace DUNE
 #include <DUNE/Media/VideoCapture.hpp>
 #include <DUNE/Media/VideoIIDC1394.hpp>
 #include <DUNE/Media/BayerDecoder.hpp>
+#include <DUNE/Media/MJPG/Encoder.hpp>
 
 #endif

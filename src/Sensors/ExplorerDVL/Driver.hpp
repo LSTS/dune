@@ -42,6 +42,16 @@ namespace Sensors
     class Driver
     {
     public:
+      enum InputTriggerBehaviour
+      {
+        ITB_OFF = 0,
+        ITB_RISING_EDGE = 1,
+        ITB_FALLING_EDGE = 2,
+        ITB_BOTH_EDGES = 3,
+        ITB_LOW_LEVEL = 4,
+        ITB_HIGH_LEVEL = 5
+      };
+
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port device.
@@ -59,6 +69,23 @@ namespace Sensors
       ~Driver(void)
       {
         Memory::clear(m_uart);
+      }
+
+      bool
+      restartPinging(void)
+      {
+        Counter<double> timer(5.0);
+
+        while (!timer.overflow())
+        {
+          if (stopPinging())
+          {
+            if (startPinging())
+              return true;
+          }
+        }
+
+        return false;
       }
 
       //! Start pinging and collecting data.
@@ -155,6 +182,28 @@ namespace Sensors
 
         String::format(m_cmd_bfr, sizeof(m_cmd_bfr), "#EC%u\r", value);
         return sendCommand(m_cmd_bfr);
+      }
+
+      bool
+      setEarthCoordinates(void)
+      {
+        return sendCommand("EX11111\r");
+      }
+
+      //! Set the source of environmental sensor data to manual. This is
+      //! useful when the DVL doesn't have any installed optional sensors.
+      //! @return true if command succeeded, false otherwise.
+      bool
+      setManualSensorSource(void)
+      {
+        return sendCommand("EZ00000000\r");
+      }
+
+      bool
+      setInputTriggerEnable(InputTriggerBehaviour behaviour, uint16_t delay, uint16_t timeout = 65535)
+      {
+        std::string cmd = String::str("CX %u %u %u\r", behaviour, delay, timeout);
+        return sendCommand(cmd);
       }
 
       //! Set the number of seconds to wait for a reply.

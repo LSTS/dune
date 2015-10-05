@@ -25,13 +25,24 @@
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
-if(BLUEVIEW)
-  dune_test_lib(bvtsdk BVTSonar_Create)
-  dune_test_header(bvt_sdk.h)
+dune_test_lib(bvtsdk BVTSonar_Create)
+dune_test_header(bvt_sdk.h)
 
-  if(DUNE_SYS_HAS_LIB_BVTSDK AND DUNE_SYS_HAS_BVT_SDK_H)
+if(DUNE_SYS_HAS_LIB_BVTSDK AND DUNE_SYS_HAS_BVT_SDK_H)
+  # BVTSDK.
+  check_cxx_source_compiles("#include <bvt_sdk.h>\nint main(void) { BVTSonar_GetTemperature(0); return 0;}"
+    BVTSDK)
+  # BVTSDK 4.
+  check_cxx_source_compiles("#include <bvt_sdk.h>\nint main(void) { float x = 0; BVTSonar_GetTemperature(0, &x); return 0;}"
+    BVTSDK4)
+
+  if(BVTSDK)
     set(DUNE_USING_BVTSDK 1 CACHE INTERNAL "libbvtsdk")
-  else(DUNE_SYS_HAS_LIB_BVTSDK AND DUNE_SYS_HAS_BVT_SDK_H)
-    set(DUNE_USING_BVTSDK 0 CACHE INTERNAL "libbvtsdk")
-  endif(DUNE_SYS_HAS_LIB_BVTSDK AND DUNE_SYS_HAS_BVT_SDK_H)
-endif(BLUEVIEW)
+  endif()
+
+  if(BVTSDK4)
+    set(DUNE_USING_BVTSDK4 1 CACHE INTERNAL "libbvtsdk4")
+  endif()
+else(DUNE_SYS_HAS_LIB_BVTSDK AND DUNE_SYS_HAS_BVT_SDK_H)
+  set(DUNE_USING_BVTSDK 0 CACHE INTERNAL "libbvtsdk")
+endif(DUNE_SYS_HAS_LIB_BVTSDK AND DUNE_SYS_HAS_BVT_SDK_H)

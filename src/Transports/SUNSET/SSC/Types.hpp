@@ -600,6 +600,10 @@ namespace Transports
     class Maneuver
     {
     public:
+      virtual
+      ~Maneuver(void)
+      { }
+
       virtual size_t
       encodeArgs(std::vector<std::string>& args__) const = 0;
 

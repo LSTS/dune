@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <cmath>
+#include <cstdlib>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -109,8 +110,8 @@ namespace DUNE
       {
         degrees = (int)value;
         double minutes_fp = (value - degrees) * 60.0;
-        minutes = (int)(minutes_fp);
-        seconds = (minutes_fp - minutes) * 60.0;
+        minutes = std::abs((int)(minutes_fp));
+        seconds = std::fabs((minutes_fp - minutes) * 60.0);
       }
 
       //! Convert decimal degrees to Degrees, Minutes.
@@ -121,7 +122,7 @@ namespace DUNE
       convertDecimalToDM(double value, int& degrees, double& minutes)
       {
         degrees = (int)value;
-        minutes = (value - degrees) * 60.0;
+        minutes = std::fabs((value - degrees) * 60.0);
       }
 
       //! XY Coordinate conversion considering a rotation angle.

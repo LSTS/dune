@@ -1111,6 +1111,7 @@ namespace Transports
     class SensorSample: public AbstractCommand
     {
     public:
+      double timestamp;
       PositionType position;
       std::string measurement_name;
       int sensor_identifier;
@@ -1119,6 +1120,7 @@ namespace Transports
       SensorSample(void)
       {
         setName("SensorSample");
+        timestamp = 0;
         reset(position);
         measurement_name.clear();
         sensor_identifier = 0;
@@ -1130,6 +1132,7 @@ namespace Transports
       encodeArgs(std::vector<std::string>& args__) const
       {
         size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, timestamp);
         arg_count__ += encodeType(args__, position);
         arg_count__ += encodeType(args__, measurement_name);
         arg_count__ += encodeType(args__, sensor_identifier);
@@ -1141,6 +1144,7 @@ namespace Transports
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
         size_t index_cursor__ = index__;
+        index_cursor__ += decodeType(args__, index_cursor__, timestamp);
         index_cursor__ += decodeType(args__, index_cursor__, position);
         index_cursor__ += decodeType(args__, index_cursor__, measurement_name);
         index_cursor__ += decodeType(args__, index_cursor__, sensor_identifier);
@@ -1197,12 +1201,14 @@ namespace Transports
     class Position: public AbstractCommand
     {
     public:
+      double timestamp;
       PositionType value;
       double heading;
 
       Position(void)
       {
         setName("Position");
+        timestamp = 0;
         reset(value);
         heading = 0;
       }
@@ -1212,6 +1218,7 @@ namespace Transports
       encodeArgs(std::vector<std::string>& args__) const
       {
         size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, timestamp);
         arg_count__ += encodeType(args__, value);
         arg_count__ += encodeType(args__, heading);
         return arg_count__;
@@ -1221,6 +1228,7 @@ namespace Transports
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
         size_t index_cursor__ = index__;
+        index_cursor__ += decodeType(args__, index_cursor__, timestamp);
         index_cursor__ += decodeType(args__, index_cursor__, value);
         index_cursor__ += decodeType(args__, index_cursor__, heading);
         return index_cursor__ - index__;
@@ -1279,6 +1287,7 @@ namespace Transports
     class Range: public AbstractCommand
     {
     public:
+      double timestamp;
       int target;
       double travel_time;
       double bearing;
@@ -1287,6 +1296,7 @@ namespace Transports
       Range(void)
       {
         setName("Range");
+        timestamp = 0;
         target = 0;
         travel_time = 0;
         bearing = 0;
@@ -1298,6 +1308,7 @@ namespace Transports
       encodeArgs(std::vector<std::string>& args__) const
       {
         size_t arg_count__ = 0;
+        arg_count__ += encodeType(args__, timestamp);
         arg_count__ += encodeType(args__, target);
         arg_count__ += encodeType(args__, travel_time);
         arg_count__ += encodeType(args__, bearing);
@@ -1309,6 +1320,7 @@ namespace Transports
       decodeArgs(const std::vector<std::string>& args__, size_t index__)
       {
         size_t index_cursor__ = index__;
+        index_cursor__ += decodeType(args__, index_cursor__, timestamp);
         index_cursor__ += decodeType(args__, index_cursor__, target);
         index_cursor__ += decodeType(args__, index_cursor__, travel_time);
         index_cursor__ += decodeType(args__, index_cursor__, bearing);

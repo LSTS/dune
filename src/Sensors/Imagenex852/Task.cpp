@@ -180,8 +180,6 @@ namespace Sensors
         param("Range", m_args.range)
         .defaultValue("50")
         .values("5, 10, 20, 30, 40, 50")
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .units(Units::Meter)
         .description("Default range");
 
