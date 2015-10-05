@@ -30,7 +30,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
-#include <limits.h>
+#include <climits>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -41,12 +41,6 @@ namespace Simulators
   namespace UAV
   {
     using DUNE_NAMESPACES;
-
-    //! Vector for System Mapping.
-    typedef std::vector<uint32_t> Systems;
-
-    //! Vector for Entity Mapping.
-    typedef std::vector<uint32_t> Entities;
 
     struct Arguments
     {
@@ -121,12 +115,10 @@ namespace Simulators
       //! Wind velocity vector
       Matrix m_wind;
       //! Gps simulator entity id.
-//      unsigned m_gps_eid;
-      //! List of systems allowed to define a command.
-      std::map<uint32_t, Systems> m_filtered_sys;
-      //! List of entities allowed to define a command.
-      std::map<uint32_t, Entities> m_filtered_ent;
-      // System alias id
+      //unsigned m_gps_eid;
+      //! Commands filter
+      DUNE::Tasks::SourceFilter* m_cmd_flt;
+      //! System alias id
       uint32_t m_alias_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -141,12 +133,13 @@ namespace Simulators
         m_position(6, 1, 0.0),
         m_velocity(6, 1, 0.0),
         m_wind(3, 1, 0.0),
+        m_cmd_flt(NULL),
         m_alias_id(UINT_MAX)
       {
         // Definition of configuration parameters.
         param("Commands source", m_args.cmd_src)
         .defaultValue("")
-        .description("List of <Command>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a specific command.");
+        .description("List of <Command message>+<Command message>:<System>+<System>:<Entity>+<Entity> that define the source systems and entities allowed to pass a command.");
 
         param("Source Alias", m_args.src_alias)
         .defaultValue("")
@@ -305,7 +298,7 @@ namespace Simulators
           m_model->m_wind(1) = m_args.wy;
         }
 
-        //! Set source system alias
+        // Set source system alias
         if (!m_args.src_alias.empty())
         {
           // Resolve systems.
@@ -322,7 +315,7 @@ namespace Simulators
         else
           m_alias_id = UINT_MAX;
 
-        //! GPS position initialization
+        // GPS position initialization
         debug("GPS-Fix initialization");
         IMC::GpsFix init_fix;
         init_fix.lat = DUNE::Math::Angles::radians(m_args.init_lat);
@@ -336,30 +329,44 @@ namespace Simulators
       }
 
       void
+      onResourceRelease(void)
+      {
+        spew("do 'onResourceRelease'");
+
+        Memory::clear( m_model );
+        Memory::clear( m_cmd_flt );
+      }
+
+      void
       onResourceAcquisition(void)
       {
+        spew("onResourceAquisition - start");
+
+        // Process the systems and entities allowed to define a command.
+        m_cmd_flt = new Tasks::SourceFilter(*this, m_args.cmd_src);
+
         // Control and state initialization
 
-        //! Model state initialization
+        // Model state initialization
         debug("Model initialization");
-        //! - Altitude initialization
-        m_position(2) = -m_args.init_alt;
-        //! - Bank initialization
+        // - Altitude initialization
+        m_position(2) = - m_args.init_alt;
+        // - Bank initialization
         m_position(3) = DUNE::Math::Angles::radians(m_args.init_roll);
-        //! - Heading initialization
+        // - Heading initialization
         m_position(5) = DUNE::Math::Angles::radians(m_args.init_yaw);
-        //! - Velocity vector initialization
-        m_velocity(0) = m_args.init_speed*std::cos(m_position(5));
-        m_velocity(1) = m_args.init_speed*std::sin(m_position(5));
+        // - Velocity vector initialization
+        m_velocity(0) = m_args.init_speed * std::cos(m_position(5));
+        m_velocity(1) = m_args.init_speed * std::sin(m_position(5));
 
         if (m_args.sim_type == "3DOF")
         {
-          //! 4 DOF (bank) model initialization
-          //! - State  and control parameters initialization
+          // 4 DOF (bank) model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
           if (m_args.l_accel_x > 0)
@@ -367,23 +374,23 @@ namespace Simulators
         }
         else if (m_args.sim_type == "4DOF_alt")
         {
-          //! 4 DOF (altitude) model initialization
-          //! - State  and control parameters initialization
+          // 4 DOF (altitude) model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_alt);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_vert_slope > 0)
             m_model->setVertSlopeLim(m_args.l_vert_slope);
         }
         else if (m_args.sim_type == "4DOF_bank")
         {
-          //! 4 DOF (bank) model initialization
-          //! - State  and control parameters initialization
+          // 4 DOF (bank) model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
           if (m_args.l_accel_x > 0)
@@ -391,12 +398,12 @@ namespace Simulators
         }
         else if (m_args.sim_type == "5DOF")
         {
-          //! 5 DOF model initialization
-          //! - State  and control parameters initialization
+          // 5 DOF model initialization
+          // - State  and control parameters initialization
           m_model = new DUNE::Simulation::UAVSimulation(*this, m_position, m_velocity, m_args.c_bank, m_args.c_speed, m_args.c_alt);
-          //! - Commands initialization
-          m_model->command(m_position(3), m_args.init_speed, -m_position(2));
-          //! - Limits definition
+          // - Commands initialization
+          m_model->command(m_position(3), m_args.init_speed, - m_position(2));
+          // - Limits definition
           if (m_args.l_bank_rate > 0)
             m_model->setBankRateLim(DUNE::Math::Angles::radians(m_args.l_bank_rate));
           if (m_args.l_accel_x > 0)
@@ -419,14 +426,14 @@ namespace Simulators
           par.rud_lift = m_args.rud_lift;
         }
         */
-        //! - Simulation type
+        // - Simulation type
         m_model->m_sim_type = m_args.sim_type;
         inf(DTR("UAV simulation type: %s"), m_args.sim_type.c_str());
         // Application of the wind vector
         m_model->m_wind(0) = m_args.wx;
         m_model->m_wind(1) = m_args.wy;
 
-        //! Start the simulation time
+        // Start the simulation time
         m_start_time = Clock::get();
         m_last_update = Clock::get();
 
@@ -448,178 +455,8 @@ namespace Simulators
         debug("Initial x wind speed: %1.4f", m_wind(0));
         debug("Initial y wind speed: %1.4f", m_wind(1));
         debug("Initial z wind speed: %1.4f", m_wind(2));
-      }
 
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      void
-      onEntityResolution(void)
-      {
-        //! Process the systems and entities allowed to define a command.
-        uint32_t i_cmd;
-        uint32_t i_cmd_final;
-        uint32_t i_src;
-        uint32_t i_src_ini = UINT_MAX;
-        std::vector<std::string> parts;
-        std::vector<std::string> systems;
-        std::vector<std::string> entities;
-        unsigned int i_sys_n;
-        unsigned int i_ent_n;
-        uint32_t sys_tmp;
-
-        m_filtered_sys.clear();
-        m_filtered_ent.clear();
-        for (unsigned int i = 0; i < m_args.cmd_src.size(); ++i)
-        {
-          parts.clear();
-          String::split(m_args.cmd_src[i], ":", parts);
-          if (parts.size() < 1)
-            continue;
-
-          if (parts[0].compare("DesiredRoll") == 0)
-            i_cmd = 0;
-          else if (parts[0].compare("DesiredSpeed") == 0)
-            i_cmd = 1;
-          else if (parts[0].compare("DesiredZ") == 0)
-            i_cmd = 2;
-          else if (parts[0].compare("DesiredPitch") == 0)
-            i_cmd = 3;
-          else if (parts[0].compare("SetServoPosition") == 0)
-            i_cmd = 4;
-          else if (parts[0].compare("SetThrusterActuation") == 0)
-            i_cmd = 5;
-          else
-            i_cmd = 6;
-
-          // Split systems and entities.
-          systems.clear();
-          entities.clear();
-          String::split(parts[1], "+", systems);
-          String::split(parts[2], "+", entities);
-          i_sys_n = systems.size();
-          i_ent_n = entities.size();
-
-          // Assign filtered systems and entities to the selected commands
-          if (i_cmd == 6)
-          {
-            i_cmd = 0;
-            i_cmd_final = 5;
-          }
-          else
-            i_cmd_final = i_cmd;
-          for (; i_cmd <= i_cmd_final; i_cmd++)
-          {
-            i_src_ini = m_filtered_sys[i_cmd].size();
-            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-            for (unsigned j = 0; j < i_sys_n; j++)
-            {
-              spew("Commands filtering - System '%s' (%u/%u).",
-                   systems[j].c_str(), j+1, i_sys_n);
-
-              // Resolve systems id.
-              if (systems[j].empty())
-              {
-                sys_tmp = UINT_MAX;
-                debug("Commands filtering - Filter source system undefined");
-              }
-              else if (systems[j].compare("self") == 0)
-              {
-                sys_tmp = getSystemId();
-                debug("Commands filtering - System '%s' with ID: %u",
-                    resolveSystemId(sys_tmp), sys_tmp);
-              }
-              else
-              {
-                try
-                {
-                  sys_tmp = resolveSystemName(systems[j]);
-                  if (sys_tmp != USHRT_MAX)
-                    debug("Commands filtering - System '%s' with ID: %u",
-                          resolveSystemId(sys_tmp), sys_tmp);
-                  else
-                  {
-                    war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
-                    for (unsigned j_tmp = j; j_tmp+1 < i_ent_n; j_tmp++)
-                      systems[j_tmp] = systems[j_tmp + 1];
-                    i_sys_n--;
-                    j--;
-                    continue;
-                  }
-                }
-                catch (...)
-                {
-                  war("Commands filtering - No system found with designation '%s'!", systems[j].c_str());
-                  for (unsigned j_tmp = j; j_tmp+1 < i_sys_n; j_tmp++)
-                    systems[j_tmp] = systems[j_tmp + 1];
-                  i_sys_n--;
-                  j--;
-                  continue;
-                }
-              }
-
-              for (unsigned k = 0; k < i_ent_n; k++)
-              {
-                spew("Commands filtering - Entity '%s' (%u/%u).",
-                     entities[k].c_str(), k+1, i_ent_n);
-
-                i_src = j*i_ent_n + k;
-
-                // Assign system id
-                m_filtered_sys[i_cmd][i_src_ini+i_src] = sys_tmp;
-
-                // Resolve entities id.
-                if (entities[k].empty())
-                {
-                  m_filtered_ent[i_cmd][i_src_ini+i_src] = UINT_MAX;
-                  debug("Commands filtering - Filter entity system undefined");
-                }
-                else
-                {
-                  try
-                  {
-                    m_filtered_ent[i_cmd][i_src_ini+i_src] = resolveEntity(entities[k]);
-                    debug("Commands filtering - Entity '%s' with ID: %u",
-                        resolveEntity(m_filtered_ent[i_cmd][i_src_ini+i_src]).c_str(),
-                        m_filtered_ent[i_cmd][i_src_ini+i_src]);
-                  }
-                  catch (...)
-                  {
-                    war("Commands filtering - No entity found with designation '%s'!", entities[k].c_str());
-                    for (unsigned k_tmp = k; k_tmp+1 < i_ent_n; k_tmp++)
-                      entities[k_tmp] = entities[k_tmp + 1];
-                    i_ent_n--;
-                    k--;
-                  }
-                }
-
-                spew("Commands filtering state - System %u of %u : Entity %u of %u.",
-                    j+1, i_sys_n, k+1, i_ent_n);
-              }
-            }
-            m_filtered_ent[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-            m_filtered_sys[i_cmd].resize(i_src_ini+i_sys_n*i_ent_n);
-          }
-          if (parts[0].empty())
-            spew("Commands filter sets:");
-          else
-            spew("%s filter sets:", parts[0].c_str());
-
-          i_cmd--;
-          for (unsigned i_flt = i_src_ini; i_flt < i_src_ini + i_sys_n*i_ent_n; i_flt++)
-            spew("    System %s : Entity %s.",
-                 resolveSystemId(m_filtered_sys[i_cmd][i_flt]),
-                 resolveEntity(m_filtered_ent[i_cmd][i_flt]).c_str());
-        }
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_model);
+        spew("onResourceAquisition - end");
       }
 
       void
@@ -633,14 +470,14 @@ namespace Simulators
           return;
         }
 
-        //! Check if system is active and activate it if not
+        // Check if system is active and activate it if not
         if (!isActive())
           requestActivation();
 
         /*
-         * if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
-         * return;
-         */
+        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+        */
         debug("Consuming GPS-Fix");
 
         // Defining origin.
@@ -648,7 +485,7 @@ namespace Simulators
         m_sstate.lon = msg->lon;
         m_sstate.height = msg->height;
 
-        //! - State initialization
+        // - State initialization
         m_position(0) = 0.0;
         m_position(1) = 0.0;
         // Assuming vehicle starts at ground surface.
@@ -677,14 +514,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_model->commandBank(msg->value);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       void
@@ -694,14 +530,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_model->commandAirspeed(msg->value);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       void
@@ -711,21 +546,20 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         double alt_cmd;
         if (msg->z_units == IMC::Z_HEIGHT)
           alt_cmd = msg->value-m_sstate.height;
         else if (msg->z_units == IMC::Z_DEPTH)
-          alt_cmd = -msg->value;
+          alt_cmd = - msg->value;
         else
           alt_cmd = msg->value;
         m_model->commandAlt(alt_cmd);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(alt_cmd), &b_source_id);
+        commandPrintOut(msg, &(alt_cmd));
       }
 
       void
@@ -735,14 +569,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_model->commandFPA(msg->value);
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       /*
@@ -753,14 +586,13 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_servo_pos(msg->id) = msg->value;
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
 
       void
@@ -770,88 +602,33 @@ namespace Simulators
 
         // Check if the command source is valid, if the simulator is active,
         // and if the commanded value is a real value
-        bool b_source_id = false;
-        if (!commandFilter(msg, &b_source_id))
+        if (!commandFilter(msg))
           return;
 
         m_thruster_act = msg->value;
 
         // ========= Debug ===========
-        commandPrintOut(msg, &(msg->value), &b_source_id);
+        commandPrintOut(msg, &(msg->value));
       }
       */
 
       bool
-      commandFilter(const IMC::Message* msg, bool* b_source_id)
+      commandFilter(const IMC::Message* msg)
       {
-        bool pass_command = true;
-        const char* system_id = NULL;
-        const char* entity_id = NULL;
-
-        try
-        {
-          system_id = resolveSystemId(msg->getSource());
-          entity_id = resolveEntity(msg->getSourceEntity()).c_str();
-          *b_source_id = true;
-        }
-        catch (...)
-        {
-          war("Unresolved system or entity ID!");
-        }
-
-        uint32_t i_cmd;
-        const char* c_msg_name = msg->getName();
-        if (strcmp(c_msg_name, "DesiredRoll") == 0)
-          i_cmd = 0;
-        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
-          i_cmd = 1;
-        else if (strcmp(c_msg_name, "DesiredZ") == 0)
-          i_cmd = 2;
-        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
-          i_cmd = 3;
-        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
-          i_cmd = 4;
-        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
-          i_cmd = 5;
-
         // Filter command by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys[i_cmd].size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys[i_cmd].begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent[i_cmd].begin();
-          for (; itr_sys != m_filtered_sys[i_cmd].end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("%s rejected.", c_msg_name);
-          if (*b_source_id)
-            trace("%s received from system '%s' and entity '%s'.", c_msg_name,
-                  system_id, entity_id);
-          else
-            trace("%s received from unidentified system and/or entity.", c_msg_name);
-          pass_command = false;
-        }
+        bool pass_command = m_cmd_flt->match(msg);
 
-        //! Check if system is active
+        // Check if system is active
         if (!isActive())
         {
-          trace("%s rejected - Simulation not active - Missing GPS-Fix!", c_msg_name);
+          trace("%s rejected - Simulation not active - Missing GPS-Fix!", msg->getName());
           pass_command = false;
         }
 
-        //! Check that the command is a real value
+        // Check that the command is a real value
         if (Math::isNaN(msg->getValueFP()))
         {
-          war("%s rejected - Commanded value is not a number!", c_msg_name);
+          war("%s rejected - Commanded value is not a number!", msg->getName());
           pass_command = false;
         }
 
@@ -859,43 +636,54 @@ namespace Simulators
       }
 
       void
-      commandPrintOut(const IMC::Message* msg, const double* d_msg_value, bool* b_source_id)
+      commandPrintOut(const IMC::Message* msg, const double* d_msg_value)
       {
         // Get the print out message name and unit type, and define if the command is an angle
-        const char* c_msg_name = msg->getName();
+        const char* msg_name = msg->getName();
         std::string c_units = "";
         bool b_cmd_angle = false;
-        if (strcmp(c_msg_name, "DesiredRoll") == 0)
+        if (strcmp(msg_name, "DesiredRoll") == 0)
         {
           b_cmd_angle = true;
         }
-        else if (strcmp(c_msg_name, "DesiredSpeed") == 0)
+        else if (strcmp(msg_name, "DesiredSpeed") == 0)
         {
           c_units = "m/s";
         }
-        else if (strcmp(c_msg_name, "DesiredZ") == 0)
+        else if (strcmp(msg_name, "DesiredZ") == 0)
         {
           c_units = "m";
         }
-        else if (strcmp(c_msg_name, "DesiredPitch") == 0)
+        else if (strcmp(msg_name, "DesiredPitch") == 0)
         {
           b_cmd_angle = true;
         }
         /*
-        else if (strcmp(c_msg_name, "SetServoPosition") == 0)
-        else if (strcmp(c_msg_name, "SetThrusterActuation") == 0)
+        else if (strcmp(msg_name, "SetServoPosition") == 0)
+        else if (strcmp(msg_name, "SetThrusterActuation") == 0)
         */
 
         // Print out the command value and source information
-        if (b_cmd_angle)
-          spew("%s received (%1.2fº)", c_msg_name, DUNE::Math::Angles::degrees(*d_msg_value));
-        else
-          spew("%s received (%1.2f%s)", c_msg_name, *d_msg_value, c_units.c_str());
-        if (*b_source_id)
-          spew("%s received from system '%s' and entity '%s'.", c_msg_name,
-               resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str());
-        else
-          spew("%s received from unidentified system and/or entity.", c_msg_name);
+        try
+        {
+          const char* system_name = resolveSystemId(msg->getSource());
+          const char* entity_name = resolveEntity(msg->getSourceEntity()).c_str();
+          if (b_cmd_angle)
+            spew("%s received (%1.2fº) from system '%s' and entity '%s'.", msg_name,
+                 DUNE::Math::Angles::degrees(*d_msg_value), system_name, entity_name);
+          else
+            spew("%s received (%1.2f%s) from system '%s' and entity '%s'.", msg_name,
+                 *d_msg_value, c_units.c_str(), system_name, entity_name);
+        }
+        catch (...)
+        {
+          if (b_cmd_angle)
+            war("%s received (%1.2fº) from an unresolved system and/or entity.", msg_name,
+                 DUNE::Math::Angles::degrees(*d_msg_value));
+          else
+            war("%s received (%1.2f%s) from an unresolved system and/or entity.", msg_name,
+                 *d_msg_value, c_units.c_str());
+        }
 
         return;
       }
@@ -905,7 +693,7 @@ namespace Simulators
       {
         // Rotations rotation matrix
         double tmp_j2[9] = {1, std::sin(roll) * std::tan(pitch),  std::cos(roll) * std::tan(pitch),
-                            0,                   std::cos(roll),                   -std::sin(roll),
+                            0,                   std::cos(roll),                  - std::sin(roll),
                             0, std::sin(roll) / std::cos(pitch),  std::cos(roll) / std::cos(pitch)};
 
         return Matrix(tmp_j2, 3, 3);
@@ -915,9 +703,9 @@ namespace Simulators
       matrixRotRgnd2body(float roll, float pitch)
       {
         // Rotations rotation matrix
-        double tmp_j2[9] = {1,               0,               -std::sin(pitch),
-                            0,  std::cos(roll), std::cos(pitch)*std::sin(roll),
-                            0, -std::sin(roll), std::cos(pitch)*std::cos(roll)};
+        double tmp_j2[9] = {1,                0,                - std::sin(pitch),
+                            0,   std::cos(roll), std::cos(pitch) * std::sin(roll),
+                            0, - std::sin(roll), std::cos(pitch) * std::cos(roll)};
 
         return Matrix(tmp_j2, 3, 3);
       }
@@ -939,18 +727,18 @@ namespace Simulators
       void
       task(void)
       {
-        //! Handle IMC messages from bus
+        // Handle IMC messages from bus
         consumeMessages();
 
-        //! Check if system is active
+        // Check if system is active
         if (!isActive())
           return;
 
-        //! Declaration
+        // Declaration
         double d_time;
         double d_timestep;
 
-        //! Compute the time step
+        // Compute the time step
         d_time  = Clock::get();
         d_timestep = d_time - m_last_update;
         m_last_update = d_time;
@@ -987,7 +775,7 @@ namespace Simulators
         }
         */
         //==========================================================================
-        //! Dynamics
+        // Dynamics
         //==========================================================================
 
         m_model->update(d_timestep);
@@ -1026,46 +814,46 @@ namespace Simulators
         }
         */
         //==========================================================================
-        //! Output
+        // Output
         //==========================================================================
 
-        //! Fill position.
+        // Fill position.
         m_sstate.x = m_position(0);
         m_sstate.y = m_position(1);
         m_sstate.z = m_position(2);
 
-        //! Fill attitude.
+        // Fill attitude.
         m_sstate.phi = m_position(3);
         m_sstate.theta = m_position(4);
         m_sstate.psi = m_position(5);
 
-        //! Rotation matrix
+        // Rotation matrix
         double euler_ang[3] = {m_position(3), m_position(4), m_position(5)};
         Matrix md_rot_body2gnd = Matrix(euler_ang, 3, 1).toDCM();
-        //! UAV velocity rotation to the body frame
+        // UAV velocity rotation to the body frame
         Matrix vd_body_vel = transpose(md_rot_body2gnd) * m_velocity.get(0, 2, 0, 0);
-        //! Fill body-frame linear velocity, relative to the ground.
+        // Fill body-frame linear velocity, relative to the ground.
         m_sstate.u = vd_body_vel(0);
         m_sstate.v = vd_body_vel(1);
         m_sstate.w = vd_body_vel(2);
 
-        //! UAV body-frame rotation rates
+        // UAV body-frame rotation rates
         // vd_UAVRotRates = UAVRotRatTrans_1_00(vd_State);
 
-        //! Fill angular velocity.
+        // Fill angular velocity.
         m_sstate.p = m_velocity(3);
         m_sstate.q = m_velocity(4);
         m_sstate.r = m_velocity(5);
 
-        //! Fill stream velocity.
+        // Fill stream velocity.
         m_sstate.svx = m_model->m_wind(0);
         m_sstate.svy = m_model->m_wind(1);
         m_sstate.svz = m_model->m_wind(2);
 
-        //! Set the destination ID as the system own ID
+        // Set the destination ID as the system own ID
         m_sstate.setDestination(getSystemId());
 
-        //! Set source system alias
+        // Set source system alias
         if (m_alias_id != (unsigned int)UINT_MAX)
           m_sstate.setSource(m_alias_id);
 
