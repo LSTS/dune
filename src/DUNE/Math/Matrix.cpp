@@ -375,9 +375,9 @@ namespace DUNE
     }
 
     Matrix&
-    Matrix::set(size_t i1, size_t i2, size_t j1, size_t j2, const Matrix& mx_in)
+    Matrix::set(size_t i1, size_t i2, size_t j1, size_t j2, const Matrix& m)
     {
-      if (isEmpty())
+      if (isEmpty() || m.isEmpty())
         throw Error("Trying to access an empty matrix!");
 
       if (i1 > i2 || j1 > j2)
@@ -386,12 +386,16 @@ namespace DUNE
       if (i2 >= m_nrows || j2 >= m_ncols)
         throw Error("Invalid index!");
 
+      // If data is already shared: there is nothing to do
+      if ((m_data == m.m_data))
+        return *this;
+
       unsigned int r = i2 - i1 + 1;
       unsigned int c = j2 - j1 + 1;
 
       for (unsigned int i = 0; i < r; i++)
         for (unsigned int j = 0; j < c; j++)
-          (*this)(i1 + i, j1 + j) = mx_in.element(i, j);
+          (*this)(i1 + i, j1 + j) = m.element(i, j);
 
       return *this;
     }
