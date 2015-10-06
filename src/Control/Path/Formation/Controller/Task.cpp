@@ -1777,9 +1777,14 @@ namespace Control
               spew("EstimatedState accepted! - Vehicle '%s' is the '%u' in the"
                    " formation vehicle list.",
                    resolveSystemId(msg->getSource()), (unsigned int)ind_uav);
-              inf("Vehicle %s - Link latency: %1.2fs",
-                  resolveSystemId(msg->getSource()),
-                  Clock::getSinceEpoch() - msg->getTimeStamp());
+              IMC::Latency latency;
+              latency.value = Clock::getSinceEpoch() - msg->getTimeStamp();
+              latency.comms_src = msg->getSource();
+              latency.comms_ent = msg->getSourceEntity();
+              dispatchAlias(&latency);
+              //inf("Vehicle %s - Link latency: %1.2fs",
+              //    resolveSystemId(msg->getSource()),
+              //    Clock::getSinceEpoch() - msg->getTimeStamp());
 
               // - State update
               double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
@@ -1825,6 +1830,8 @@ namespace Control
                 return;
 
               // Check if the commands should be updated
+              if (m_last_simctrl_update(ind_uav) + m_timestep_ctrl > msg->getTimeStamp())
+                return;
               spew("Process another system's EstimatedState and control - start"
                    " for vehicle %s", resolveSystemId(msg->getSource()));
 
