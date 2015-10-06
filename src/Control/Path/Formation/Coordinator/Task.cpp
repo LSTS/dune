@@ -100,7 +100,6 @@ namespace Control
           // Coordination flags
           bool m_standalone;
           bool m_param_update_first;
-          bool m_plan_new;
           bool m_formation_plan_req;
           bool m_plan_params;
           //! Leader vehicle model
@@ -187,7 +186,6 @@ namespace Control
             DUNE::Tasks::Periodic(name, ctx),
             m_standalone(false),
             m_param_update_first(true),
-            m_plan_new(false),
             m_formation_plan_req(false),
             m_plan_params(false),
             m_model(NULL),
@@ -374,6 +372,7 @@ namespace Control
             //bind<IMC::LeaderState>(this);
             bind<IMC::PlanControl>(this);
             bind<IMC::PlanDB>(this);
+            bind<IMC::SetEntityParameters>(this);
             //bind<IMC::Formation>(this);
             bind<IMC::EntityActivationState>(this);
             //bind<IMC::SetEntityParameters>(this);
@@ -388,8 +387,6 @@ namespace Control
           onUpdateParameters(void)
           {
             spew("Starting the parameters update.");
-
-            m_plan_params = true;
 
             // General parameters treatment
             // Reset angular units
@@ -419,179 +416,12 @@ namespace Control
               m_altitude_cmd.value = m_alt_cmd_leader;
             }
 
-            //==========================================
             // Check the formation parameters
-            //==========================================
-            spew("onUpdateParameters - 1");
-            Systems t_uav_id_last = m_uav_id;
-            if (m_param_update_first || (m_plan_new &&
-                paramChanged(m_args.formation_systems)))
-            {
-              inf("New formation vehicles' list.");
-              // Process formation vehicle list
-              m_uav_id.clear();
-              if (m_args.formation_systems.empty())
-              {
-                war("Formation vehicle list is empty!");
-                m_uav_id.push_back(getSystemId());
-                m_uav_n = 1;
-                m_plan_params = false;
-              }
-              else
-              {
-                m_uav_n = m_args.formation_systems.size();
-                for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
-                {
-                  debug("UAV %u: %s", uav_ind, m_args.formation_systems[uav_ind].c_str());
-                  m_uav_id.push_back(resolveSystemName(m_args.formation_systems[uav_ind]));
-                }
-              }
-            }
-
-            spew("onUpdateParameters - 2");
-            if (m_param_update_first || (m_plan_new &&
-                paramChanged(m_args.formation_frame)))
-            {
-              m_formation_frame = m_args.formation_frame;
-              inf("New formation reference frame type: %u", m_formation_frame);
-            }
-
-            spew("onUpdateParameters - 2");
-            if (m_param_update_first || (m_plan_new &&
-                paramChanged(m_args.formation_pos)))
-            {
-              inf("New formation vehicles' position matrix");
-
-              // Check if the formation positions matrix has a suitable size
-              if (m_args.formation_pos.size() == 0)
-                throw RestartNeeded("Formation vehicle positions matrix is empty!", 10);
-              if (m_args.formation_pos.rows()%3 != 0)
-                throw RestartNeeded(static_cast<std::ostringstream*>(
-                    &(std::ostringstream() <<
-                        "Number of vehicle positions coordinates in the formation matrix (" <<
-                        m_args.formation_pos.rows() << ") is not a multiple of 3!"))->str(), 10);
-
-              m_formation_pos = m_args.formation_pos;
-              // Check if the number of UAVs in the formation positions matrix
-              // matches the number of listed vehicles
-              unsigned int t_uav_n = m_formation_pos.rows() / 3;
-              if (m_uav_n != t_uav_n)
-              {
-                war("Number of the vehicles in the formation matrix (%u) and"
-                    " listed vehicles (%u) is different!",
-                    t_uav_n, m_uav_n);
-                m_uav_n = (m_uav_n < t_uav_n)?m_uav_n:t_uav_n;
-              }
-              // Resize the formation positions matrix:
-              // 3 rows and as many columns as the number of UAVs
-              m_formation_pos.resizeAndKeep(3, m_uav_n);
-              for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
-              {
-                for (unsigned int i = 0; i < 3; i++)
-                  m_formation_pos(i, ind_uav) = m_args.formation_pos(i + ind_uav * 3);
-              }
-
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-              {
-                debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
-                      m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav),
-                      m_formation_pos(2, ind_uav));
-              }
-
-              // Clean the formation position matrix parameter variable
-              m_args.formation_pos.~Matrix();
-            }
-
-            // Vehicle quantity considered in the formation
-            debug("Number of UAVs -> %d", m_uav_n);
-
-            m_plan_new = false;
-
-            // Data resizing
-            // Check if the formation composition changed
-            spew("onUpdateParameters - 3");
-            bool b_formation_change = true;
-            unsigned int t_uav_n = t_uav_id_last.size();
-            if (!m_param_update_first)
-            {
-              if (t_uav_n == m_uav_n)
-              {
-                b_formation_change = false;
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-                {
-                  if (t_uav_id_last[ind_uav] != m_uav_id[ind_uav])
-                    b_formation_change = true;
-                }
-              }
-              else
-                b_formation_change = true;
-            }
-            if (b_formation_change)
-            {
-              // ToDo - Add data reallocation logic to keep the data from the remaining vehicles
-              debug("Vehicles state and command vectors initialization");
-
-              //! Save existing vehicles state
-              Matrix t_vehicle_state = m_vehicle_state;
-              Matrix t_wind_team = m_wind_team;
-              std::vector<bool> t_vehicle_state_flag = m_vehicle_state_flag;
-              std::vector<bool> t_vehicle_wind_flag = m_vehicle_wind_flag;
-              Matrix t_last_state_update = m_last_state_update;
-
-              // Keep the leader data
-              m_last_state_update.resizeAndKeep(1, 1);
-
-              spew("onUpdateParameters - 3.1");
-              // Initialize the team vehicles' state matrix
-              m_vehicle_state = DUNE::Math::Matrix(12, m_uav_n, 0.0);
-              m_wind_team = DUNE::Math::Matrix(3, m_uav_n, 0.0);
-              m_vehicle_state_flag.clear();
-              m_vehicle_wind_flag.clear();
-              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
-              {
-                m_vehicle_state_flag.push_back(false);
-                m_vehicle_wind_flag.push_back(false);
-              }
-              //! Start the team vehicles synchronization time
-              m_last_state_update.resizeAndKeep(m_uav_n + 1, 1);
-
-              spew("onUpdateParameters - 3.2");
-              // Data reallocation to keep the data from the remaining vehicles
-              if (!m_param_update_first)
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-                  for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
-                    if (t_uav_id_last[ind_uav2] == m_uav_id[ind_uav])
-                    {
-                      m_vehicle_state.set(0, 11, ind_uav, ind_uav,
-                                          t_vehicle_state.get(0, 11, ind_uav2, ind_uav2));
-                      m_wind_team.set(0, 2, ind_uav, ind_uav,
-                                      t_wind_team.get(0, 2, ind_uav2, ind_uav2));
-                      m_vehicle_state_flag[ind_uav] = t_vehicle_state_flag[ind_uav2];
-                      m_vehicle_wind_flag[ind_uav] = t_vehicle_wind_flag[ind_uav2];
-                      m_last_state_update(ind_uav + 1) = t_last_state_update(ind_uav2 + 1);
-                      debug("Vehicle state data maintained for vehicle: %s",
-                          resolveSystemId(m_uav_id[ind_uav]));
-                    }
-
-              // ToDo - Acquire operation limits from all the formation vehicles
-              m_bank_lim_uav = Matrix(1, m_uav_n, Angles::radians(m_args.bank_lim));
-              m_speed_min_uav = Matrix(1, m_uav_n, m_args.speed_min);
-              m_speed_max_uav = Matrix(1, m_uav_n, m_args.speed_max);
-              m_alt_min_uav = Matrix(1, m_uav_n, m_args.alt_min);
-              m_alt_max_uav = Matrix(1, m_uav_n, m_args.alt_max);
-            }
-
-            // Compute the leader limits from the formation configuration
-            updateLeaderLimits();
-
-            // Check if the coordinator is activating and continue
-            // the activation process
-            spew("onUpdateParameters - 4");
-            if (m_plan_params && (isActivating() || isActive()))
-              onRequestActivation();
+            spew("onUpdateParameters - Update formation parameters");
+            updateFormationParams();
 
             // Updated the leader vehicle model
-            spew( "onUpdateParameters - 5" );
+            spew( "onUpdateParameters - Updated the leader vehicle model" );
             if ( m_model != NULL )
             {
               debug( "Formation leader model initialization" );
@@ -610,7 +440,7 @@ namespace Control
             }
 
             // Set messages system source
-            spew( "onUpdateParameters - 6" );
+            spew( "onUpdateParameters - Set coordinator system ID" );
             //! Set source system alias
             if ( paramChanged( m_args.src_alias ) )
             {
@@ -647,6 +477,7 @@ namespace Control
           onResourceAcquisition(void)
           {
             // Initialize entity state.
+            debug("Set entity state to: normal");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
             // Process the systems and entities allowed to define a command
@@ -813,7 +644,6 @@ namespace Control
           void
           onRequestDeactivation(void)
           {
-            m_plan_new = false;
             m_formation_plan_req = false;
             // Deactivate the formation controller in the cooperating vehicles
             if (m_args.main)
@@ -910,7 +740,6 @@ namespace Control
 
             if (msg->op == IMC::PlanControl::PC_START && m_args.main)
             {
-              m_plan_new = true;
               // Request plan information to check if it is a formation flight plan
               trace("PlanControl accepted - Requesting plan information.");
               m_plan_ctrl_last = *msg;
@@ -926,7 +755,6 @@ namespace Control
             else if (msg->op == IMC::PlanControl::PC_STOP)
             {
               debug("PlanControl accepted - Stop plan.");
-              m_plan_new = false;
               m_formation_plan_req = false;
               requestDeactivation();
             }
@@ -1060,6 +888,26 @@ namespace Control
             m_formation_plan_req = true;
             if (!isActive())
               requestActivation();
+          }
+
+          void
+          consume(const IMC::SetEntityParameters* msg)
+          {
+            if (msg->name != getEntityLabel())
+              return;
+
+            spew("Parameters update activated by a 'SetEntityParameters'");
+
+            if (getEntityState() == IMC::EntityState::ESTA_NORMAL)
+            {
+              // Check the formation parameters
+              spew("Update the formation parameters");
+              updateFormationParams();
+              // Check if the coordinator is activating and continue
+              // the activation process
+              if (isActivating() || isActive())
+                onRequestActivation();
+            }
           }
 
           /*
@@ -1342,9 +1190,7 @@ namespace Control
             }
             else
             {
-              //==========================================================
               // Define a global team state (for leader initial state)
-              //==========================================================
               // Select the team vehicle
               unsigned int uav_ind = 0;
               for (; uav_ind < m_uav_n; uav_ind++)
@@ -1452,6 +1298,175 @@ namespace Control
             if (m_alias_id != UINT_MAX)
               msg->setSource(m_alias_id);
             dispatch(*msg);
+          }
+
+          void
+          updateFormationParams(void)
+          {
+            m_plan_params = true;
+
+            // Update formation vehicles' list
+            spew("Formation parameters update - Formation vehicles' list");
+            Systems t_uav_id_last = m_uav_id;
+            if (paramChanged(m_args.formation_systems))
+            {
+              inf("New formation vehicles' list.");
+              // Process formation vehicle list
+              m_uav_id.clear();
+              if (m_args.formation_systems.empty())
+              {
+                war("Formation vehicle list is empty!");
+                m_uav_id.push_back(getSystemId());
+                m_uav_n = 1;
+                m_plan_params = false;
+              }
+              else
+              {
+                m_uav_n = m_args.formation_systems.size();
+                for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+                {
+                  debug("UAV %u: %s", uav_ind, m_args.formation_systems[uav_ind].c_str());
+                  m_uav_id.push_back(resolveSystemName(m_args.formation_systems[uav_ind]));
+                }
+              }
+            }
+
+            // Update formation reference frame
+            spew("Formation parameters update - Formation reference frame");
+            if (paramChanged(m_args.formation_frame))
+            {
+              m_formation_frame = m_args.formation_frame;
+              inf("New formation reference frame type: %u", m_formation_frame);
+            }
+
+            // Update formation vehicles' positions
+            spew("Formation parameters update - Formation vehicles' positions");
+            if (paramChanged(m_args.formation_pos))
+            {
+              inf("New formation vehicles' position matrix");
+
+              // Check if the formation positions matrix has a suitable size
+              if (m_args.formation_pos.size() == 0)
+                throw RestartNeeded("Formation vehicle positions matrix is empty!", 10);
+              if (m_args.formation_pos.rows()%3 != 0)
+                throw RestartNeeded(static_cast<std::ostringstream*>(
+                    &(std::ostringstream() <<
+                        "Number of vehicle positions coordinates in the formation matrix (" <<
+                        m_args.formation_pos.rows() << ") is not a multiple of 3!"))->str(), 10);
+
+              m_formation_pos = m_args.formation_pos;
+              // Check if the number of UAVs in the formation positions matrix
+              // matches the number of listed vehicles
+              unsigned int t_uav_n = m_formation_pos.rows() / 3;
+              if (m_uav_n != t_uav_n)
+              {
+                war("Number of the vehicles in the formation matrix (%u) and"
+                    " listed vehicles (%u) is different!",
+                    t_uav_n, m_uav_n);
+                m_uav_n = (m_uav_n < t_uav_n)?m_uav_n:t_uav_n;
+              }
+              // Resize the formation positions matrix:
+              // 3 rows and as many columns as the number of UAVs
+              m_formation_pos.resizeAndKeep(3, m_uav_n);
+              for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+              {
+                for (unsigned int i = 0; i < 3; i++)
+                  m_formation_pos(i, ind_uav) = m_args.formation_pos(i + ind_uav * 3);
+              }
+
+              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              {
+                debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
+                      m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav),
+                      m_formation_pos(2, ind_uav));
+              }
+
+              // Clean the formation position matrix parameter variable
+              m_args.formation_pos.~Matrix();
+            }
+
+            // Vehicle quantity considered in the formation
+            debug("Number of UAVs -> %d", m_uav_n);
+
+            // Check if the formation composition changed
+            spew("Formation parameters update - Check if the formation composition changed");
+            bool b_formation_change = true;
+            unsigned int t_uav_n = t_uav_id_last.size();
+            if (!m_param_update_first)
+            {
+              if (t_uav_n == m_uav_n)
+              {
+                b_formation_change = false;
+                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                {
+                  if (t_uav_id_last[ind_uav] != m_uav_id[ind_uav])
+                    b_formation_change = true;
+                }
+              }
+              else
+                b_formation_change = true;
+            }
+
+            // Data resizing
+            if (b_formation_change)
+            {
+              trace("Formation parameters update - Rearrange data for the"
+                   " changed formation");
+
+              //! Save existing vehicles state
+              Matrix t_vehicle_state = m_vehicle_state;
+              Matrix t_wind_team = m_wind_team;
+              std::vector<bool> t_vehicle_state_flag = m_vehicle_state_flag;
+              std::vector<bool> t_vehicle_wind_flag = m_vehicle_wind_flag;
+              Matrix t_last_state_update = m_last_state_update;
+
+              // Keep the leader data
+              m_last_state_update.resizeAndKeep(1, 1);
+
+              spew("Formation parameters update - Initialize the team vehicles'"
+                   " state matrix");
+              // Initialize the team vehicles' state matrix
+              m_vehicle_state = DUNE::Math::Matrix(12, m_uav_n, 0.0);
+              m_wind_team = DUNE::Math::Matrix(3, m_uav_n, 0.0);
+              m_vehicle_state_flag.clear();
+              m_vehicle_wind_flag.clear();
+              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              {
+                m_vehicle_state_flag.push_back(false);
+                m_vehicle_wind_flag.push_back(false);
+              }
+              //! Start the team vehicles synchronization time
+              m_last_state_update.resizeAndKeep(m_uav_n + 1, 1);
+
+              spew("Formation parameters update - Data reallocation to keep the"
+                   " data from the remaining vehicles");
+              // Data reallocation to keep the data from the remaining vehicles
+              if (!m_param_update_first)
+                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                  for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
+                    if (t_uav_id_last[ind_uav2] == m_uav_id[ind_uav])
+                    {
+                      m_vehicle_state.set(0, 11, ind_uav, ind_uav,
+                                          t_vehicle_state.get(0, 11, ind_uav2, ind_uav2));
+                      m_wind_team.set(0, 2, ind_uav, ind_uav,
+                                      t_wind_team.get(0, 2, ind_uav2, ind_uav2));
+                      m_vehicle_state_flag[ind_uav] = t_vehicle_state_flag[ind_uav2];
+                      m_vehicle_wind_flag[ind_uav] = t_vehicle_wind_flag[ind_uav2];
+                      m_last_state_update(ind_uav + 1) = t_last_state_update(ind_uav2 + 1);
+                      debug("Vehicle state data maintained for vehicle: %s",
+                          resolveSystemId(m_uav_id[ind_uav]));
+                    }
+
+              // ToDo - Acquire operation limits from all the formation vehicles
+              m_bank_lim_uav = Matrix(1, m_uav_n, Angles::radians(m_args.bank_lim));
+              m_speed_min_uav = Matrix(1, m_uav_n, m_args.speed_min);
+              m_speed_max_uav = Matrix(1, m_uav_n, m_args.speed_max);
+              m_alt_min_uav = Matrix(1, m_uav_n, m_args.alt_min);
+              m_alt_max_uav = Matrix(1, m_uav_n, m_args.alt_max);
+            }
+
+            // Compute the leader limits from the formation configuration
+            updateLeaderLimits();
           }
 
           void
