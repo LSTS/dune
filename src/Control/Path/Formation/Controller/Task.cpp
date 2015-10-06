@@ -1069,23 +1069,22 @@ namespace Control
           void
           onRequestActivation(void)
           {
-            if ( !m_team_leader_init )
+            if (!m_team_leader_init)
               return;
 
-            // Check if the message is from the same system leader
-            //if (msg->getSource() != m_leader_id)
-            //{
-            // Send a PlanControl message to start the formation control plan
-            // This is a resend in the vehicle where the coordinator is running
-            // to make sure all the virtual leaders maneuver starting points are the same
-            // ToDo - Set the maneuver start point directly
-            m_current_plan.op = IMC::PlanControl::PC_START;
-            dispatchLeader( &m_current_plan );
-            inf( "Formation control plan - Start requested!" );
-            //}
+            if (!m_local_leader)
+            {
+              // Send a PlanControl message to start the formation control plan
+              // This was a resend in the vehicle where the coordinator is running
+              // to make sure all the virtual leaders maneuver starting points are the same
+              // ToDo - Set the maneuver start point directly
+              m_current_plan.op = IMC::PlanControl::PC_START;
+              dispatchLeader( &m_current_plan );
+              inf("Formation control plan - Start requested!");
+            }
 
             // Controller parameters
-            if ( m_debug )
+            if (m_debug)
               dispatchFormationParameters();
 
             spew("Activating the formation controller");
@@ -1095,7 +1094,7 @@ namespace Control
           void
           onRequestDeactivation(void)
           {
-            inf( "Deactivating the formation controller" );
+            inf("Deactivating the formation controller");
 
             // Check if the message is from the same system leader
             if ( !m_local_leader )
@@ -1180,7 +1179,7 @@ namespace Control
                 m_formation_systems.clear();
                 m_formation_pos.~Matrix();
                 for (IMC::MessageList<IMC::VehicleFormationParticipant>::const_iterator it =
-                    msg->participants.begin(); it != msg->participants.end(); ++it, ++uav_ind)
+                     msg->participants.begin(); it != msg->participants.end(); ++it, ++uav_ind)
                 {
                   m_uav_id.push_back( (*it)->vid );
                   m_formation_systems.push_back( resolveSystemId( m_uav_id[ uav_ind ] ) );
@@ -1744,9 +1743,9 @@ namespace Control
             }
             else
             {
-              spew( "Process another system's EstimatedState - start for vehicle %s",
-                    resolveSystemId( msg->getSource() ) );
               // Get team vehicle updated state
+              spew("Process another system's EstimatedState - start for vehicle %s",
+                   resolveSystemId(msg->getSource()));
 
               if ( m_uav_n < 2 )
                 return;
@@ -1758,7 +1757,8 @@ namespace Control
                 ++ind_uav;
                 if ( ind_uav == m_uav_n )
                 {
-                  spew("EstimatedState rejected! - Vehicle '%s' is not on the formation vehicle list.",
+                  spew("EstimatedState rejected! - Vehicle '%s' is not on the"
+                       " formation vehicle list.",
                        resolveSystemId(msg->getSource()));
                   return;
                 }
@@ -1766,14 +1766,20 @@ namespace Control
               // Get estimated state time stamp
               if (m_last_state_update(ind_uav + 1) > msg->getTimeStamp())
               {
-                war("Old EstimatedState received from vehicle %s. (Received: %1.2f < Current: %1.2f)",
-                    resolveSystemId(msg->getSource()), msg->getTimeStamp(), m_last_state_update(ind_uav + 1));
+                war("Old EstimatedState received from vehicle %s. (Received:"
+                    " %1.2f < Current: %1.2f)",
+                    resolveSystemId(msg->getSource()), msg->getTimeStamp(),
+                    m_last_state_update(ind_uav + 1));
                 return;
               }
               m_last_state_update(ind_uav + 1) = msg->getTimeStamp();
               m_last_state_estim(ind_uav + 1) = msg->getTimeStamp();
-              spew("EstimatedState accepted! - Vehicle '%s' is the '%u' in the formation vehicle list.",
+              spew("EstimatedState accepted! - Vehicle '%s' is the '%u' in the"
+                   " formation vehicle list.",
                    resolveSystemId(msg->getSource()), (unsigned int)ind_uav);
+              inf("Vehicle %s - Link latency: %1.2fs",
+                  resolveSystemId(msg->getSource()),
+                  Clock::getSinceEpoch() - msg->getTimeStamp());
 
               // - State update
               double vt_uav_state[12] = {msg->x,   msg->y,     msg->z,
@@ -1783,13 +1789,16 @@ namespace Control
               // Adjust the cooperating vehicle offset position from its reference
               // frame to the current vehicle reference frame
               positionReframing(m_llh_ref_pos[0], m_llh_ref_pos[1], m_llh_ref_pos[2],
-                  msg->lat, msg->lon, msg->height, &vt_uav_state[0], &vt_uav_state[1], &vt_uav_state[2]);
+                                msg->lat, msg->lon, msg->height,
+                                &vt_uav_state[0], &vt_uav_state[1], &vt_uav_state[2]);
               // Update vehicle state vector
-              m_vehicle_state.set( 0, 11, ind_uav + 1, ind_uav + 1, Matrix( vt_uav_state, 12, 1 ) );
+              m_vehicle_state.set(0, 11, ind_uav + 1, ind_uav + 1,
+                                  Matrix(vt_uav_state, 12, 1));
               // Set airspeed command starting point
               if (!m_vehicle_state_flag[ind_uav] || !isActive())
               {
-                Matrix vd_ac2air = m_vehicle_state.get(3, 5, ind_uav + 1, ind_uav + 1) - m_wind;
+                Matrix vd_ac2air = m_vehicle_state.get(3, 5, ind_uav + 1,
+                                                       ind_uav + 1) - m_wind;
                 m_uav_ctrl(1, ind_uav) = vd_ac2air.norm_2();
                 m_vehicle_state_flag[ind_uav] = true;
               }
@@ -1797,11 +1806,13 @@ namespace Control
               m_models[ind_uav]->setPosition(m_vehicle_state.
                                              get(0, 2, ind_uav + 1, ind_uav + 1).
                                              vertCat(m_vehicle_state.
-                                                     get(6, 8, ind_uav + 1, ind_uav + 1)));
+                                                     get(6, 8, ind_uav + 1,
+                                                         ind_uav + 1)));
               m_models[ind_uav]->setVelocity(m_vehicle_state.
                                              get(3, 5, ind_uav + 1, ind_uav + 1).
                                              vertCat(m_vehicle_state.
-                                                     get(9, 11, ind_uav + 1, ind_uav + 1)));
+                                                     get(9, 11, ind_uav + 1,
+                                                         ind_uav + 1)));
 
               // Check if conditions are met to initiate team virtual state updates
               //if (!isActive() && m_team_state_init)
@@ -1812,11 +1823,10 @@ namespace Control
               // Check if the control is active
               if (!isControlActive())
                 return;
+
               // Check if the commands should be updated
-              if (m_last_simctrl_update(ind_uav) + m_timestep_ctrl > msg->getTimeStamp())
-                return;
-              spew("Process another system's EstimatedState and control - start for vehicle %s",
-                  resolveSystemId(msg->getSource()));
+              spew("Process another system's EstimatedState and control - start"
+                   " for vehicle %s", resolveSystemId(msg->getSource()));
 
               spew("Starting team-mate EstimatedState control 2");
               // Update team simulated state for standard time periods
