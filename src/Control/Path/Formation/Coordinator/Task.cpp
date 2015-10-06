@@ -417,26 +417,10 @@ namespace Control
             }
 
             // Check the formation parameters
-            spew("onUpdateParameters - Update formation parameters");
-            updateFormationParams();
-
-            // Updated the leader vehicle model
-            spew( "onUpdateParameters - Updated the leader vehicle model" );
-            if ( m_model != NULL )
+            if (m_param_update_first)
             {
-              debug( "Formation leader model initialization" );
-              if ( paramChanged( m_args.c_bank ) ||
-                   paramChanged( m_args.c_speed ) )
-                m_model->setCtrl( m_args.c_bank, m_args.c_speed );
-              // Limits definition
-              if ( paramChanged( m_args.l_bank_rate ) )
-                m_model->setBankRateLim( 
-                  DUNE::Math::Angles::radians( m_args.l_bank_rate ) );
-              if ( paramChanged( m_args.l_accel_x ) )
-                m_model->setAccelLim( m_args.l_accel_x );
-              // Simulation type
-              if ( paramChanged( m_args.sim_type ) )
-                m_model->m_sim_type = m_args.sim_type;
+              spew("onUpdateParameters - Update formation parameters");
+              updateFormationParams();
             }
 
             // Set messages system source
@@ -1467,6 +1451,25 @@ namespace Control
 
             // Compute the leader limits from the formation configuration
             updateLeaderLimits();
+
+            // Update the leader vehicle model
+            spew("Formation parameters update - Update the leader vehicle model" );
+            if ( m_model != NULL )
+            {
+              debug( "Formation leader model initialization" );
+              if ( paramChanged( m_args.c_bank ) ||
+                   paramChanged( m_args.c_speed ) )
+                m_model->setCtrl( m_args.c_bank, m_args.c_speed );
+              // Limits definition
+              if ( paramChanged( m_args.l_bank_rate ) )
+                m_model->setBankRateLim(
+                  DUNE::Math::Angles::radians( m_args.l_bank_rate ) );
+              if ( paramChanged( m_args.l_accel_x ) )
+                m_model->setAccelLim( m_args.l_accel_x );
+              // Simulation type
+              if ( paramChanged( m_args.sim_type ) )
+                m_model->m_sim_type = m_args.sim_type;
+            }
           }
 
           void
