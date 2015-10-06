@@ -43,6 +43,12 @@ namespace Simulators
       std::vector<std::string> state_src;
       // Source system alias
       std::string src_alias;
+
+      // Autopilot simulation placeholders
+      // - Ardupilot as the guidance controller
+      std::string ardu_tracker;
+      // - Formation control as the guidance controller
+      std::string form_fl;
     };
 
     //! %UAV autopilot simulator task.
@@ -72,6 +78,18 @@ namespace Simulators
         param("Source Alias", m_args.src_alias)
         .defaultValue("")
         .description("Emulated system id.");
+
+        param("Ardupilot Tracker", m_args.ardu_tracker)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .defaultValue("false")
+        .description("Use Ardupilot's waypoint tracker - Simulation placeholder");
+
+        param("Formation Flight", m_args.form_fl)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .defaultValue("false")
+        .description("Receive control references from Formation Flight controller - Simulation placeholder");
 
         bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
