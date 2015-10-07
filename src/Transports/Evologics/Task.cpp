@@ -394,6 +394,9 @@ namespace Transports
         else if (String::startsWith(msg->value, "RECVSTART"));
         // do nothing.
         else if (String::startsWith(msg->value, "RECVEND"));
+	// do nothing.
+        else if (String::startsWith(msg->value, "RECVFAILED"));
+	// do nothing.
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVERED"))

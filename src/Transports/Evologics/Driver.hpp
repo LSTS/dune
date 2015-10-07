@@ -367,7 +367,7 @@ namespace Transports
                          &msg.integrity, &propagation_time, &msg.velocity, &offset);
 
         if (rv != 8)
-          throw std::runtime_error("invalid format");
+          throw std::runtime_error("invalid format for RECV");
 
         msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
@@ -391,7 +391,7 @@ namespace Transports
                              &msg.velocity, &offset);
 
             if (rv != 9)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVIM");
           }
           else
           {
@@ -402,7 +402,7 @@ namespace Transports
                              &msg.velocity, &offset);
 
             if (rv != 8)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVPBM");
           }
         }
         else
@@ -415,7 +415,7 @@ namespace Transports
                              &msg.rssi, &msg.integrity, &msg.velocity, &offset);
 
             if (rv != 8)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVIM");
           }
           else
           {
@@ -425,7 +425,7 @@ namespace Transports
                              &msg.rssi, &msg.integrity, &msg.velocity, &offset);
 
             if (rv != 7)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVPBM");
           }
         }
 
