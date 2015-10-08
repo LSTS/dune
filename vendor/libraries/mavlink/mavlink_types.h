@@ -12,7 +12,10 @@
 #ifdef __GNUC__
   #define MAVPACKED( __Declaration__ ) __Declaration__ __attribute__((packed))
 #else
-  #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+  #if defined(__IBMC__) || defined(__SUNPRO_CC) || defined(__SUNPRO_C)
+    #define MAVPACKED( __Declaration__ ) __pragma( pack(1) ) __Declaration__ __pragma( pack() )
+  #else
+    #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
 #endif
 
 #ifndef MAVLINK_MAX_PAYLOAD_LEN
