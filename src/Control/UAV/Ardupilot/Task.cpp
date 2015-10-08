@@ -78,12 +78,23 @@ namespace Control
       };
 
       //! List of ArduPlane modes.
+      //! From ArduPlane/defines.h in diydrones git repo.
       enum APM_planeModes
       {
-        PL_MODE_FBWB = 6,
-        PL_MODE_AUTO = 10,
-        PL_MODE_LOITER = 12,
-        PL_MODE_GUIDED = 15
+        PL_MODE_MANUAL       = 0,
+        PL_MODE_CIRCLE       = 1,
+        PL_MODE_STABILIZE    = 2,
+        PL_MODE_TRAINING     = 3,
+        PL_MODE_ACRO         = 4,
+        PL_MODE_FBWA         = 5,
+        PL_MODE_FBWB         = 6,
+        PL_MODE_CRUISE       = 7,
+        PL_MODE_AUTOTUNE     = 8,
+        PL_MODE_AUTO         = 10,
+        PL_MODE_RTL          = 11,
+        PL_MODE_LOITER       = 12,
+        PL_MODE_GUIDED       = 15,
+        PL_MODE_INITIALISING = 16
       };
 
       //! Radio Channel structure.
@@ -210,6 +221,8 @@ namespace Control
         float m_last_wp;
         //! Mission items queue
         std::queue<mavlink_message_t> m_mission_items;
+        //! Desired gimbal angles
+        float m_gb_pan, m_gb_tilt, m_gb_retract;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -780,26 +793,36 @@ namespace Control
             return;
           }
 
+          uint8_t buf[512];
+          mavlink_message_t msg;
+
           if(m_vehicle_type == VEHICLE_COPTER)
           {
             // Copters must first be set to guided as of AC 3.2
             // Disabled, as this is not
-            uint8_t buf[512];
-            mavlink_message_t* msg = new mavlink_message_t;
 
-            mavlink_msg_set_mode_pack(255, 0, msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       CP_MODE_GUIDED); //! DUNE mode on arducopter is 12
 
-            uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
             debug("Guided MODE on ardupilot is set");
           }
 
-          uint8_t buf[512];
+          if(m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            // Planes must first be set to guided as of AP 3.3.0
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      PL_MODE_GUIDED);
 
-          mavlink_message_t msg;
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            debug("Guided MODE on ardupilot is set");
+          }
 
           //! Setting airspeed parameter
           if (m_vehicle_type == VEHICLE_COPTER)
@@ -956,6 +979,16 @@ namespace Control
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
 
+          mavlink_msg_param_set_pack(255, 0, &msg,
+                                     m_sysid, //! target_system System ID
+                                     0, //! target_component Component ID
+                                     "TRIM_ARSPD_CM", //! Parameter name
+                                     (int)(dpath->speed * 100), //! Parameter value
+                                     MAV_PARAM_TYPE_INT16); //! Parameter type
+
+          n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+
           mavlink_msg_mission_count_pack(255, 0, &msg,
                                          m_sysid, //! target_system System ID
                                          0, //! target_component Component ID
@@ -993,24 +1026,24 @@ namespace Control
 
           m_mission_items.push(msg);
 
-          //! Desired speed
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        seq++, //! seq Sequence
-                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
-                                        0, //! current false:0, true:1
-                                        1, //! autocontinue autocontinue to next wp
-                                        0, //! Speed type (0=Airspeed, 1=Ground Speed)
-                                        (float)(dpath->speed_units == IMC::SUNITS_METERS_PS ? dpath->speed : -1), //! Speed  (m/s, -1 indicates no change)
-                                        (float)(dpath->speed_units == IMC::SUNITS_PERCENTAGE ? dpath->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0);//! Not used
-
-          m_mission_items.push(msg);
+//          //! Desired speed
+//          mavlink_msg_mission_item_pack(255, 0, &msg,
+//                                        m_sysid, //! target_system System ID
+//                                        0, //! target_component Component ID
+//                                        seq++, //! seq Sequence
+//                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+//                                        MAV_CMD_DO_CHANGE_SPEED, //! command The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs
+//                                        0, //! current false:0, true:1
+//                                        1, //! autocontinue autocontinue to next wp
+//                                        0, //! Speed type (0=Airspeed, 1=Ground Speed)
+//                                        (float)(dpath->speed_units == IMC::SUNITS_METERS_PS ? dpath->speed : -1), //! Speed  (m/s, -1 indicates no change)
+//                                        (float)(dpath->speed_units == IMC::SUNITS_PERCENTAGE ? dpath->speed : -1), //! Throttle  ( Percent, -1 indicates no change)
+//                                        0, //! Not used
+//                                        0, //! Not used
+//                                        0, //! Not used
+//                                        0);//! Not used
+//
+//          m_mission_items.push(msg);
 
           //! Destination
           mavlink_msg_mission_item_pack(255, 0, &msg,
@@ -1763,7 +1796,7 @@ namespace Control
         {
           mavlink_statustext_t stat_tex;
           mavlink_msg_statustext_decode(msg, &stat_tex);
-          debug("Status: %s", stat_tex.text);
+          inf("AP Status: %.*s", 50, stat_tex.text);
         }
 
         void
@@ -1782,6 +1815,9 @@ namespace Control
             setupRate(m_args.trate);
             debug("Rates setup second time.");
           }
+
+          if (hbt.system_status == MAV_STATE_CRITICAL)
+            war("APM failsafe active");
 
           IMC::AutopilotMode mode;
 
@@ -1856,10 +1892,18 @@ namespace Control
                 mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
                 mode.mode = "MANUAL";
                 m_critical = false;
-                if (m_mode == 2)
+                if (m_mode != PL_MODE_MANUAL)
                 {
                   mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
-                  mode.mode = "STABILIZE";
+
+                  if (m_mode == PL_MODE_STABILIZE)
+                    mode.mode = "STABILIZE";
+                  if (m_mode == PL_MODE_RTL)
+                    mode.mode = "RTL";
+                  if (m_mode == PL_MODE_CIRCLE)
+                    mode.mode = "CIRCLE";
+                  if (m_mode == PL_MODE_AUTOTUNE)
+                    mode.mode = "AUTOTUNE";
                 }
                 {
                   IMC::ControlLoops cl;
