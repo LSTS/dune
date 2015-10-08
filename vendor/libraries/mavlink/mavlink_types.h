@@ -16,6 +16,7 @@
     #define MAVPACKED( __Declaration__ ) __pragma( pack(1) ) __Declaration__ __pragma( pack() )
   #else
     #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+  #endif
 #endif
 
 #ifndef MAVLINK_MAX_PAYLOAD_LEN
