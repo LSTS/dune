@@ -49,6 +49,7 @@ namespace Control
 
         //! Vector for System Mapping.
         typedef std::vector<uint32_t> Systems;
+        typedef Systems::size_type sys_size_t;
 
         struct Arguments
         {
@@ -154,7 +155,7 @@ namespace Control
           Matrix m_alt_max_uav;
 
           //! Number of team vehicles
-          unsigned int m_uav_n;
+          sys_size_t m_uav_n;
           Systems m_uav_id;
           unsigned int m_formation_frame;
           Matrix m_formation_pos;
@@ -417,11 +418,8 @@ namespace Control
             }
 
             // Check the formation parameters
-            if (m_param_update_first)
-            {
-              spew("onUpdateParameters - Update formation parameters");
-              updateFormationParams();
-            }
+            trace("onUpdateParameters - Update formation parameters");
+            updateFormationParams();
 
             // Set messages system source
             spew( "onUpdateParameters - Set coordinator system ID" );
@@ -513,7 +511,7 @@ namespace Control
                 m_uav_formation.description = "Test formation configuration";
                 m_uav_formation.reference_frame = m_formation_frame;
                 m_uav_formation.participants.clear();
-                for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+                for (sys_size_t uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
                 {
                   formation_uav.vid = m_uav_id[uav_ind];
                   formation_uav.off_x = m_formation_pos(0, uav_ind);
@@ -583,7 +581,7 @@ namespace Control
                   ep.value.append(static_cast<std::ostringstream*>(
                       &(std::ostringstream() << m_formation_pos(i, 0)))->str());
                 }
-                for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+                for (sys_size_t ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
                   for (unsigned int i = 0; i < 3; i++)
                   {
                     debug("UAV %u - position %u: %1.2f", ind_uav, i, m_formation_pos(i, ind_uav));
@@ -596,7 +594,7 @@ namespace Control
                 // - Vehicle list
                 ep.name = "Vehicle List";
                 ep.value = m_args.formation_systems[0];
-                for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+                for (sys_size_t ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
                 {
                   ep.value.append(", ");
                   ep.value.append(m_args.formation_systems[ind_uav]);
@@ -880,13 +878,10 @@ namespace Control
             if (msg->name != getEntityLabel())
               return;
 
-            spew("Parameters update activated by a 'SetEntityParameters'");
+            trace("Parameters update activated by a 'SetEntityParameters'");
 
             if (getEntityState() == IMC::EntityState::ESTA_NORMAL)
             {
-              // Check the formation parameters
-              spew("Update the formation parameters");
-              updateFormationParams();
               // Check if the coordinator is activating and continue
               // the activation process
               if (isActivating() || isActive())
@@ -911,7 +906,7 @@ namespace Control
               {
                 // Update the controller configuration
                 m_uav_formation.reference_frame = msg->reference_frame;
-                unsigned int uav_ind = 0;
+                sys_size_t uav_ind = 0;
                 for (IMC::MessageList<IMC::VehicleFormationParticipant>::const_iterator it =
                     msg->participants.begin(); it != msg->participants.end(); it++ )
                 {
@@ -929,7 +924,7 @@ namespace Control
                 requestActivation();
 
                 // Send a PlanControl message to start the formation control plan
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                for (sys_size_t ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
                   if (m_uav_id[ind_uav] == getSystemId())
                   {
                     IMC::PlanControl plan;
@@ -950,7 +945,7 @@ namespace Control
                 requestDeactivation();
 
                 // Send a PlanControl message to stop the formation control plan
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                for (sys_size_t ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
                   if (m_uav_id[ind_uav] == getSystemId())
                   {
                     IMC::PlanControl plan;
@@ -1099,8 +1094,9 @@ namespace Control
           consume(const IMC::EstimatedStreamVelocity* msg)
           {
             // Set the current UAV index according to the group definition and the message source
-            unsigned int uav_ind = 0;
+            sys_size_t uav_ind = 0;
             for (; uav_ind < m_uav_n; uav_ind++)
+            {
               if (m_uav_id[uav_ind] == msg->getSource())
               {
                 m_wind_team(0, uav_ind) = msg->x;
@@ -1109,22 +1105,25 @@ namespace Control
                 m_vehicle_wind_flag[uav_ind] = true;
                 // Average the received wind estimations over the team members
                 double t_sum;
-                unsigned int t_uav;
+                sys_size_t t_uav;
                 for (unsigned int i = 0; i < 3; i++)
                 {
                   t_sum = 0.0;
                   t_uav = 0;
                   for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+                  {
                     if (m_vehicle_wind_flag[uav_ind])
                     {
                       t_sum += m_wind_team(i, uav_ind);
                       t_uav++;
                     }
+                  }
                   m_wind(i) = t_sum / t_uav;
                   m_wind_speed = m_wind.norm_2();
                 }
                 break;
               }
+            }
           }
 
           void
@@ -1176,7 +1175,7 @@ namespace Control
             {
               // Define a global team state (for leader initial state)
               // Select the team vehicle
-              unsigned int uav_ind = 0;
+              sys_size_t uav_ind = 0;
               for (; uav_ind < m_uav_n; uav_ind++)
               {
                 if (m_uav_id[uav_ind] == msg->getSource())
@@ -1218,17 +1217,19 @@ namespace Control
 
                   // Average the received state data over the team members
                   double t_sum;
-                  unsigned int t_uav;
-                  for (unsigned int i = 0; i < 9; i++)
+                  sys_size_t t_uav;
+                  for (sys_size_t i = 0; i < 9; i++)
                   {
                     t_sum = 0.0;
                     t_uav = 0;
                     for (uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+                    {
                       if (m_vehicle_state_flag[uav_ind])
                       {
                         t_sum += m_vehicle_state(i, uav_ind);
                         t_uav++;
                       }
+                    }
                     m_team_state(i) = t_sum / t_uav;
                     // ToDo - Correct the average for heading angles
                   }
@@ -1307,9 +1308,10 @@ namespace Control
               else
               {
                 m_uav_n = m_args.formation_systems.size();
-                for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+                for (sys_size_t uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
                 {
-                  debug("UAV %u: %s", uav_ind, m_args.formation_systems[uav_ind].c_str());
+                  debug("UAV %u: %s", (unsigned int)uav_ind,
+                        m_args.formation_systems[uav_ind].c_str());
                   m_uav_id.push_back(resolveSystemName(m_args.formation_systems[uav_ind]));
                 }
               }
@@ -1341,26 +1343,26 @@ namespace Control
               m_formation_pos = m_args.formation_pos;
               // Check if the number of UAVs in the formation positions matrix
               // matches the number of listed vehicles
-              unsigned int t_uav_n = m_formation_pos.rows() / 3;
+              sys_size_t t_uav_n = m_formation_pos.rows() / 3;
               if (m_uav_n != t_uav_n)
               {
                 war("Number of the vehicles in the formation matrix (%u) and"
                     " listed vehicles (%u) is different!",
-                    t_uav_n, m_uav_n);
+                    (unsigned int)t_uav_n, (unsigned int)m_uav_n);
                 m_uav_n = (m_uav_n < t_uav_n)?m_uav_n:t_uav_n;
               }
               // Resize the formation positions matrix:
               // 3 rows and as many columns as the number of UAVs
               m_formation_pos.resizeAndKeep(3, m_uav_n);
-              for (unsigned int ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
+              for (sys_size_t ind_uav = 1; ind_uav < m_uav_n; ind_uav++)
               {
-                for (unsigned int i = 0; i < 3; i++)
+                for (sys_size_t i = 0; i < 3; i++)
                   m_formation_pos(i, ind_uav) = m_args.formation_pos(i + ind_uav * 3);
               }
 
-              for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+              for (sys_size_t ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
               {
-                debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", ind_uav,
+                debug("UAV %u: [x=%1.1f, y=%1.1f, z=%1.1f]", (unsigned int)ind_uav,
                       m_formation_pos(0, ind_uav), m_formation_pos(1, ind_uav),
                       m_formation_pos(2, ind_uav));
               }
@@ -1375,13 +1377,13 @@ namespace Control
             // Check if the formation composition changed
             spew("Formation parameters update - Check if the formation composition changed");
             bool b_formation_change = true;
-            unsigned int t_uav_n = t_uav_id_last.size();
+            sys_size_t t_uav_n = t_uav_id_last.size();
             if (!m_param_update_first)
             {
               if (t_uav_n == m_uav_n)
               {
                 b_formation_change = false;
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                for (sys_size_t ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
                 {
                   if (t_uav_id_last[ind_uav] != m_uav_id[ind_uav])
                     b_formation_change = true;
@@ -1414,7 +1416,7 @@ namespace Control
               m_wind_team = DUNE::Math::Matrix(3, m_uav_n, 0.0);
               m_vehicle_state_flag.clear();
               m_vehicle_wind_flag.clear();
-              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              for (sys_size_t uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
               {
                 m_vehicle_state_flag.push_back(false);
                 m_vehicle_wind_flag.push_back(false);
@@ -1426,8 +1428,11 @@ namespace Control
                    " data from the remaining vehicles");
               // Data reallocation to keep the data from the remaining vehicles
               if (!m_param_update_first)
-                for (unsigned int ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
-                  for (unsigned int ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
+              {
+                for (sys_size_t ind_uav = 0; ind_uav < m_uav_n; ind_uav++)
+                {
+                  for (sys_size_t ind_uav2 = 0; ind_uav2 < t_uav_n; ind_uav2++)
+                  {
                     if (t_uav_id_last[ind_uav2] == m_uav_id[ind_uav])
                     {
                       m_vehicle_state.set(0, 11, ind_uav, ind_uav,
@@ -1440,6 +1445,9 @@ namespace Control
                       debug("Vehicle state data maintained for vehicle: %s",
                           resolveSystemId(m_uav_id[ind_uav]));
                     }
+                  }
+                }
+              }
 
               // ToDo - Acquire operation limits from all the formation vehicles
               m_bank_lim_uav = Matrix(1, m_uav_n, Angles::radians(m_args.bank_lim));
@@ -1734,7 +1742,7 @@ namespace Control
             m_speed_max = m_speed_max_uav(0);
             m_alt_min = m_alt_min_uav(0) + m_formation_pos(2, 0);
             m_alt_max = m_alt_max_uav(0) + m_formation_pos(2, 0);
-            for (unsigned int uav_ind = 1; uav_ind < m_uav_n; uav_ind++)
+            for (sys_size_t uav_ind = 1; uav_ind < m_uav_n; uav_ind++)
             {
               if (m_speed_min_uav(uav_ind) > m_speed_min)
                 m_speed_min = m_speed_min_uav(uav_ind);
@@ -1753,7 +1761,7 @@ namespace Control
               //------------------------------------------
               // Maximum leader bank
               m_bank_lim = m_args.bank_lim;
-              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              for (sys_size_t uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
                 if (m_bank_lim_uav(uav_ind) < m_bank_lim)
                   m_bank_lim = m_bank_lim_uav(uav_ind);
             }
@@ -1775,7 +1783,7 @@ namespace Control
               double d_FollLonDist = 0;
               double t_LatDist;
               double t_LonDist;
-              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              for (sys_size_t uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
               {
                 t_LatDist = std::abs(m_formation_pos(1, uav_ind));
                 if (t_LatDist > d_FollLatDist)
@@ -1786,20 +1794,23 @@ namespace Control
               }
 
               // Minimum formation turn radius due to aircraft minimum velocity
-              double d_FormRMin = m_speed_min * d_FollLatDist / (d_speed_cmd_leader_wind - m_speed_min);
+              double d_FormRMin = m_speed_min * d_FollLatDist /
+                  (d_speed_cmd_leader_wind - m_speed_min);
               // Minimum formation turn radius due to aircraft maximum velocity
               d_FormRMin = std::max(d_FormRMin, m_speed_max * d_FollLatDist /
                   (m_speed_max - d_speed_cmd_leader_wind));
               // Minimum formation turn radius due to aircraft turning limits
               double t_MinRad;
               // Get bank limits from the team vehicles
-              // ToDo - Update method to get bank limits from the vehicles themselves
-              for (unsigned int uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
+              // ToDo - Update method to get bank limits from the vehicles
+              // themselves
+              for (sys_size_t uav_ind = 0; uav_ind < m_uav_n; uav_ind++)
               {
                 // Maximum of the minimum feasible radius at maximum ground speed
                 t_MinRad = (d_speed_cmd_leader_wind *
-                    ((d_FormRMin + d_FollLatDist) / d_FormRMin) * (d_FormRMin + d_FollLatDist) / d_FormRMin) /
-                        (m_g * std::tan(m_bank_lim_uav(uav_ind)));
+                    ((d_FormRMin + d_FollLatDist) / d_FormRMin) *
+                     (d_FormRMin + d_FollLatDist) / d_FormRMin) /
+                    (m_g * std::tan(m_bank_lim_uav(uav_ind)));
                 if (t_MinRad > d_FormRMin)
                   d_FormRMin = t_MinRad;
               }
