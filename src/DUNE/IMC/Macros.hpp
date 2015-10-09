@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 59cbe8766fbbf2d6e9cfd8d0cb1977e2                            *
+// IMC XML MD5: d42c33ab58ac41f37bab1cd847763c35                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -114,6 +114,8 @@
 #define DUNE_IMC_GROUPMEMBERSHIPSTATE 180
 //! SystemGroup identification number.
 #define DUNE_IMC_SYSTEMGROUP 181
+//! LinkLatency identification number.
+#define DUNE_IMC_LINKLATENCY 182
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblBeacon identification number.
@@ -364,6 +366,8 @@
 #define DUNE_IMC_FORMATION 484
 //! Launch identification number.
 #define DUNE_IMC_LAUNCH 485
+//! ExtendedFormationMonitor identification number.
+#define DUNE_IMC_EXTENDEDFORMATIONMONITOR 486
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -420,6 +424,8 @@
 #define DUNE_IMC_LEADERSTATE 563
 //! PlanStatistics identification number.
 #define DUNE_IMC_PLANSTATISTICS 564
+//! PlanStartPoint identification number.
+#define DUNE_IMC_PLANSTARTPOINT 565
 //! ReportedState identification number.
 #define DUNE_IMC_REPORTEDSTATE 600
 //! RemoteSensorInfo identification number.

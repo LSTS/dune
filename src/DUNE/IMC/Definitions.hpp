@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 59cbe8766fbbf2d6e9cfd8d0cb1977e2                            *
+// IMC XML MD5: d42c33ab58ac41f37bab1cd847763c35                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -3215,6 +3215,75 @@ namespace DUNE
       {
         return IMC::getSerializationSize(groupname) + IMC::getSerializationSize(grouplist);
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Link Latency.
+    class LinkLatency: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+      //! Communications Source System ID.
+      uint16_t sys_src;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 182;
+      }
+
+      LinkLatency(void);
+
+      Message*
+      clone(void) const
+      {
+        return new LinkLatency(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return LinkLatency::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "LinkLatency";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -13060,6 +13129,127 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Formation Monitoring Data.
+    class ExtendedFormationMonitor: public Message
+    {
+    public:
+      //! Minimum Distance.
+      fp32_t dist_min;
+      //! Commanded X Acceleration (North).
+      fp32_t ax_cmd;
+      //! Commanded Y Acceleration (East).
+      fp32_t ay_cmd;
+      //! Commanded Z Acceleration (Down).
+      fp32_t az_cmd;
+      //! Desired X Acceleration (North).
+      fp32_t ax_des;
+      //! Desired Y Acceleration (East).
+      fp32_t ay_des;
+      //! Desired Z Acceleration (Down).
+      fp32_t az_des;
+      //! X Virtual Error (North).
+      fp32_t virt_err_x;
+      //! Y Virtual Error (East).
+      fp32_t virt_err_y;
+      //! Z Virtual Error (Down).
+      fp32_t virt_err_z;
+      //! X Sliding Surface Feedback (North).
+      fp32_t surf_fdbk_x;
+      //! Y Sliding Surface Feedback (East).
+      fp32_t surf_fdbk_y;
+      //! Z Sliding Surface Feedback (Down).
+      fp32_t surf_fdbk_z;
+      //! X Uncertainty Compensation (North).
+      fp32_t surf_unkn_x;
+      //! Y Uncertainty Compensation (East).
+      fp32_t surf_unkn_y;
+      //! Z Uncertainty Compensation (Down).
+      fp32_t surf_unkn_z;
+      //! X Convergence Deviation (North).
+      fp32_t ss_x;
+      //! Y Convergence Deviation (East).
+      fp32_t ss_y;
+      //! Z Convergence Deviation (Down).
+      fp32_t ss_z;
+      //! Relative State.
+      MessageList<RelativeState> rel_state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 486;
+      }
+
+      ExtendedFormationMonitor(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ExtendedFormationMonitor(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ExtendedFormationMonitor::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ExtendedFormationMonitor";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 76;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return rel_state.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Vehicle State.
     class VehicleState: public Message
     {
@@ -15643,6 +15833,81 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(plan_id) + IMC::getSerializationSize(durations) + IMC::getSerializationSize(distances) + IMC::getSerializationSize(actions) + IMC::getSerializationSize(fuel);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Plan Start Point.
+    class PlanStartPoint: public Message
+    {
+    public:
+      //! Plan Identifier.
+      std::string plan_id;
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z Reference.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 565;
+      }
+
+      PlanStartPoint(void);
+
+      Message*
+      clone(void) const
+      {
+        return new PlanStartPoint(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return PlanStartPoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "PlanStartPoint";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 21;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(plan_id);
       }
 
       void

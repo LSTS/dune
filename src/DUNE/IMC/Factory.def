@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 59cbe8766fbbf2d6e9cfd8d0cb1977e2                            *
+// IMC XML MD5: d42c33ab58ac41f37bab1cd847763c35                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -70,6 +70,7 @@ MESSAGE(171, IridiumMsgTx)
 MESSAGE(172, IridiumTxStatus)
 MESSAGE(180, GroupMembershipState)
 MESSAGE(181, SystemGroup)
+MESSAGE(182, LinkLatency)
 MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)
@@ -195,6 +196,7 @@ MESSAGE(482, RelativeState)
 MESSAGE(483, Dislodge)
 MESSAGE(484, Formation)
 MESSAGE(485, Launch)
+MESSAGE(486, ExtendedFormationMonitor)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
 MESSAGE(502, MonitorEntityState)
@@ -223,6 +225,7 @@ MESSAGE(561, PlanVariable)
 MESSAGE(562, PlanGeneration)
 MESSAGE(563, LeaderState)
 MESSAGE(564, PlanStatistics)
+MESSAGE(565, PlanStartPoint)
 MESSAGE(600, ReportedState)
 MESSAGE(601, RemoteSensorInfo)
 MESSAGE(602, Map)
