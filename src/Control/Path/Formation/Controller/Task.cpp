@@ -323,8 +323,8 @@ namespace Control
           double m_dist_min_mean;
           double m_err_mean;
           double m_roll_rate_mean;
-          double m_mean_time;
-          double m_mean_time_start;
+          double m_time4mean;
+          double m_time4mean_start;
           bool m_mean_first;
 
           //! Formation configuration
@@ -418,8 +418,8 @@ namespace Control
             m_dist_min_mean(0.0),
             m_err_mean(0.0),
             m_roll_rate_mean(0.0),
-            m_mean_time(0.0),
-            m_mean_time_start(0.0),
+            m_time4mean(0.0),
+            m_time4mean_start(Time::Clock::getSinceEpoch()),
             m_mean_first(true),
             m_uav_n(1),
             m_uav_ind(0),
@@ -717,6 +717,7 @@ namespace Control
                 {
                   formationEvaluation();
                   m_mean_first = true;
+                  m_time4mean_start = Time::Clock::getSinceEpoch();
                 }
               }
             }
@@ -1128,7 +1129,7 @@ namespace Control
             if ( m_debug )
             {
               formationEvaluation();
-              m_mean_first = false;
+              m_mean_first = true;
             }
 
             isControlActive();
@@ -1621,7 +1622,6 @@ namespace Control
                                &( path_ctrl_state.end_lat ), &( path_ctrl_state.end_lon ) );
               dispatchAlias( &path_ctrl_state );
 
-              double d_timestep = msg->getTimeStamp() - m_last_simctrl_update( m_uav_ind );
               if ( m_debug )
               {
                 // Update the monitoring message
@@ -1648,9 +1648,10 @@ namespace Control
 
                 // Initialize the data for the controller evaluation
                 if (m_mean_first)
-                  m_mean_time_start = msg->getTimeStamp();
-                double d_mean_time_last = m_mean_time;
-                m_mean_time = msg->getTimeStamp() - m_mean_time_start;
+                  m_time4mean_start = Time::Clock::getSinceEpoch();
+                double time4mean_prev = m_time4mean;
+                m_time4mean = Time::Clock::getSinceEpoch() - m_time4mean_start;
+                double time_step = m_time4mean - time4mean_prev;
                 double t_dist_min = 0.0;
                 bool t_dist_min_first = true;
 
@@ -1711,11 +1712,13 @@ namespace Control
                   }
                   else if (ind_uav == 0)
                   {
-                    m_err_mean = (m_err_mean * d_mean_time_last + rel_state.err * d_timestep)/m_mean_time;
+                    m_err_mean = (m_err_mean * time4mean_prev +
+                        rel_state.err * time_step) / m_time4mean;
                   }
                   else if (m_uav_n > 1)
                   {
-                    // - Mean and absolute minimum distance relative to other vehicles
+                    // - Mean and absolute minimum distance relative to other
+                    // vehicles
                     if (m_mean_first && t_dist_min_first)
                     {
                       t_dist_min = rel_state.dist;
@@ -1747,10 +1750,22 @@ namespace Control
                   if (m_mean_first)
                   {
                     m_dist_min_mean = t_dist_min;
-                    m_mean_first = false;
                   }
                   else
-                    m_dist_min_mean = (m_dist_min_mean * d_mean_time_last + t_dist_min * d_timestep)/m_mean_time;
+                  {
+                    m_dist_min_mean = (m_dist_min_mean * time4mean_prev +
+                        t_dist_min * time_step) / m_time4mean;
+                  }
+                }
+                if (m_mean_first)
+                {
+                  m_roll_rate_mean = msg->p;
+                  m_mean_first = false;
+                }
+                else
+                {
+                  m_roll_rate_mean = (m_roll_rate_mean * time4mean_prev +
+                      msg->p * time_step) / m_time4mean;
                 }
               }
               spew("Ending own EstimatedState");
@@ -3509,19 +3524,21 @@ namespace Control
           formationEvaluation(void)
           {
             // Output
+            m_formation_eval.type = IMC::FormationEvaluation::FC_REPORT;
+            m_formation_eval.op = IMC::FormationEvaluation::OP_STOP;
+            m_formation_eval.err_mean = m_err_mean;
             m_formation_eval.dist_min_abs = m_dist_min_abs;
             m_formation_eval.dist_min_mean = m_dist_min_mean;
-            m_formation_eval.err_mean = m_err_mean;
             m_formation_eval.roll_rate_mean = m_roll_rate_mean;
-            m_formation_eval.time = m_mean_time;
+            m_formation_eval.time = m_time4mean;
             m_formation_eval.controlparams.set(m_formation_ctrl_params);
             dispatchAlias(&m_formation_eval);
             // Reset
+            m_err_mean = 0.0;
             m_dist_min_abs = 0.0;
             m_dist_min_mean = 0.0;
-            m_err_mean = 0.0;
             m_roll_rate_mean = 0.0;
-            m_mean_time = 0.0;
+            m_time4mean = 0.0;
           }
 
           void
