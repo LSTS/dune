@@ -66,6 +66,8 @@ namespace Monitors
       std::vector<std::string> est_list;
       //! List of estimated power consumed by the entities
       std::vector<float> est_power;
+      //! Number of battery packs.
+      unsigned battery_packs;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -186,6 +188,7 @@ namespace Monitors
         .description("List of estimated power consumed by the entities");
 
         m_ctx.config.get("General", "Battery Capacity", "700.0", m_args.filter_args.full_capacity);
+        m_ctx.config.get("General", "Battery Packs", "4", m_args.battery_packs);
 
         // Register listeners.
         bind<IMC::Voltage>(this);
@@ -238,6 +241,12 @@ namespace Monitors
       void
       onResourceAcquisition(void)
       {
+        for (unsigned i = 0; i < FuelFilter::MDL_TOTAL; ++i)
+        {
+          for (unsigned j = 0; j < m_args.filter_args.models[i].energy.size(); j++)
+            m_args.filter_args.models[i].energy[j] *= m_args.battery_packs;
+        }
+
         m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, &m_epower, this);
       }
 
