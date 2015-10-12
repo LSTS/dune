@@ -759,12 +759,12 @@ namespace Control
                   msg->getDestination() < 0xffff)
                 trace("Different system destination: %s (%s).", resolveSystemId(msg->getDestination()),
                       resolveSystemId((m_alias_id != UINT_MAX)?m_alias_id:getSystemId()));
-              if (msg->getDestinationEntity() != getEntityId() && msg->getDestinationEntity() < UINT8_MAX)
+              if (msg->getDestinationEntity() != getEntityId() && msg->getDestinationEntity() < 255)
                 trace("Different entity destination: %s (%s).",
                       resolveEntity(msg->getDestinationEntity()).c_str(),
                       resolveEntity(getEntityId()).c_str());
               if (msg->getDestination() < 0xffff &&
-                  msg->getDestinationEntity() < UINT8_MAX)
+                  msg->getDestinationEntity() < 255)
                 trace("PlanDB received from system '%s' and entity '%s', to system '%s' and entity '%s'.",
                       resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                       resolveSystemId(msg->getDestination()), resolveEntity(msg->getDestinationEntity()).c_str());
@@ -772,7 +772,7 @@ namespace Control
                 trace("PlanDB received from system '%s' and entity '%s', to system '%s' and no specific entity.",
                       resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                       resolveSystemId(msg->getDestination()));
-              else if (msg->getDestinationEntity() < UINT8_MAX)
+              else if (msg->getDestinationEntity() < 255)
                 trace("PlanDB received from system '%s' and entity '%s', to no specific system and entity '%s'.",
                       resolveSystemId(msg->getSource()), resolveEntity(msg->getSourceEntity()).c_str(),
                       resolveEntity(msg->getDestinationEntity()).c_str());
