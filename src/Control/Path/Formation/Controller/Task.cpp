@@ -1564,6 +1564,8 @@ namespace Control
               // Update team simulated state for standard time periods
               teamPeriodicUpdate(msg->getTimeStamp());
               teamUnevenUpdate(msg->getTimeStamp());
+              //teamPeriodicUpdate(Time::Clock::getSinceEpoch());
+              //teamUnevenUpdate(Time::Clock::getSinceEpoch());
 
               //===========================================
               // Control computation
@@ -1868,6 +1870,8 @@ namespace Control
               // Update team simulated state for standard time periods
               teamPeriodicUpdate(msg->getTimeStamp());
               teamUnevenUpdate(msg->getTimeStamp());
+              //teamPeriodicUpdate(Time::Clock::getSinceEpoch());
+              //teamUnevenUpdate(Time::Clock::getSinceEpoch());
 
               spew("Starting team-mate EstimatedState control 3");
               // - Commands update
@@ -2226,31 +2230,34 @@ namespace Control
             for (sys_size_t ind_uav = 0; ind_uav != m_uav_n + 1; ++ind_uav)
               vi_sim_time(ind_uav) = ind_uav;
 
-            // ToDo - Limit the maximum difference between the current time and the last estimate time
-            // for example with the time-out duration
-            spew("Update state estimate up to: %1.2f", time);
+            // ToDo - Limit the maximum difference between the current time and
+            // the last estimate time for example with the time-out duration
+            spew("Update state estimate up to: %1.3fs", time);
             for (unsigned int ind_uav = 0; ind_uav != i_time_n; ++ind_uav)
             {
-              for (sys_size_t ind_uav2 = ind_uav + 1; ind_uav2 != i_time_n + 1; ++ind_uav2)
+              for (sys_size_t ind_uav2 = ind_uav + 1; ind_uav2 != i_time_n + 1;
+                   ++ind_uav2)
               {
-                if (m_last_state_estim(vi_sim_time(ind_uav)) > m_last_state_estim(vi_sim_time(ind_uav2)))
+                if (m_last_state_estim(vi_sim_time(ind_uav)) >
+                    m_last_state_estim(vi_sim_time(ind_uav2)))
                 {
                   ind_time = vi_sim_time(ind_uav);
                   vi_sim_time(ind_uav) = vi_sim_time(ind_uav2);
                   vi_sim_time(ind_uav2) = ind_time;
                 }
-                else if (m_last_state_estim(vi_sim_time(ind_uav)) == m_last_state_estim(vi_sim_time(ind_uav2)))
+                else if (m_last_state_estim(vi_sim_time(ind_uav)) ==
+                         m_last_state_estim(vi_sim_time(ind_uav2)))
                 {
                   --i_time_n;
                   for (ind_time = ind_uav2; ind_time < i_time_n + 1; ++ind_time)
                     vi_sim_time(ind_time) = vi_sim_time(ind_time + 1);
                 }
               }
-              spew("UAV %1.0f last state estimate: %1.2f",
-                  vi_sim_time(ind_uav), m_last_state_estim(vi_sim_time(ind_uav)));
+              spew("UAV %1.0f last state estimate: %1.3fs", vi_sim_time(ind_uav),
+                   m_last_state_estim(vi_sim_time(ind_uav)));
             }
-            spew("UAV %1.0f last state estimate: %1.2f",
-                vi_sim_time(i_time_n), m_last_state_estim(vi_sim_time(i_time_n)));
+            spew("UAV %1.0f last state estimate: %1.3fs", vi_sim_time(i_time_n),
+                 m_last_state_estim(vi_sim_time(i_time_n)));
 
             spew("Periodic update 2");
             // Select the oldest prediction time reference
@@ -2270,101 +2277,58 @@ namespace Control
             while (d_sim_time + m_timestep_sim <= time)
             {
               spew("Periodic update 3.1");
-              spew("Simulating up to current time: %1.2f", d_sim_time + m_timestep_sim);
+              spew("Simulating up to current time: %1.3fs", d_sim_time + m_timestep_sim);
               // Leader state prediction - Update the simulated vehicle state
               if (m_last_state_estim(0) <= d_sim_time && m_team_leader_init)
               {
-                // ========= Spew ===========
                 /*
-              if (time >= m_last_time_verb_leaderspew + m_timestep_spew)
-              {
-                //spew("Simulating: %s", m_model->m_sim_type);
-                spew( "Bank: %1.2fº        - Commanded bank: %1.2fº",
-                      Angles::degrees(m_position(3)),
-                      Angles::degrees(m_model->getBankCmd()));
-                spew("Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-                spew("Yaw: %1.2f", Angles::degrees( m_position(5)));
-                spew("Current latitude: %1.4fº", Angles::degrees(m_init_leader.lat));
-                spew("Current longitude: %1.4fº", Angles::degrees(m_init_leader.lon));
-                spew("Current altitude: %1.4fm", m_init_leader.height);
-                spew("Current x position: %1.4f m", m_position(0));
-                spew("Current y position: %1.4f m", m_position(1));
-                spew("Current z position: %1.4f m", m_position(2));
-                spew("Current roll angle: %1.4f deg", Angles::degrees(m_position(3)));
-                spew("Current pitch angle: %1.4f deg", Angles::degrees(m_position(4)));
-                spew("Current yaw angle: %1.4f deg", Angles::degrees(m_position(5)));
-                spew("Current x speed: %1.4f m/s", m_velocity(0));
-                spew("Current y speed: %1.4f m/s", m_velocity(1));
-                spew("Current z speed: %1.4f m/s", m_velocity(2));
-                spew("Current roll rate: %1.4f deg/s", Angles::degrees(m_velocity(3)));
-                spew("Current pitch rate: %1.4f deg/s", Angles::degrees(m_velocity(4)));
-                spew("Current yaw rate: %1.4f deg/s", Angles::degrees(m_velocity(5)));
-                spew("Current x wind speed: %1.4f m/s", m_wind(0));
-                spew("Current y wind speed: %1.4f m/s", m_wind(1));
-                spew("Current z wind speed: %1.4f m/s", m_wind(2));
-                m_last_time_verb_leaderspew = time;
-              }
+                if (time >= m_last_time_verb_leaderspew + m_timestep_spew)
+                {
+                  spewModelState("Leader", m_model);
+                  m_last_time_verb_leaderspew = time;
+                }
                  */
-
-                //==========================================================================
-                // Dynamics
-                //==========================================================================
-
+                // Leader simulation update
                 m_model->update(m_timestep_sim);
                 m_last_state_estim(0) += m_timestep_sim;
                 m_position = m_model->getPosition();
                 m_velocity = m_model->getVelocity();
-
-                // ========= Trace ===========
                 /*
-              if (time >= m_last_time_verb_leadertrace + m_timestep_trace)
-              {
-                //trace( "Simulating: %s", m_model->m_sim_type );
-                trace( "Bank: %1.2fº        - Commanded bank: %1.2fº",
-                       Angles::degrees(m_position(3)),
-                       Angles::degrees(m_model->getBankCmd()));
-                trace( "Speed: %1.2fm/s     - Commanded speed: %1.2fm/s", m_model->getAirspeed(), m_model->getAirspeedCmd());
-                trace( "Yaw: %1.2f", Angles::degrees(m_position(5)));
-                trace( "Current latitude: %1.4fº",
-                       Angles::degrees(m_init_leader.lat));
-                trace( "Current longitude: %1.4fº",
-                       Angles::degrees(m_init_leader.lon));
-                trace( "Current altitude: %1.4fm", m_init_leader.height );
-                trace( "Current x position: %1.4f m", m_position(0) );
-                trace( "Current y position: %1.4f m", m_position(1) );
-                trace( "Current z position: %1.4f m", m_position(2) );
-                trace( "Current roll angle: %1.4f deg", Angles::degrees(m_position(3)));
-                trace("Current pitch angle: %1.4f deg", Angles::degrees(m_position(4)));
-                trace("Current yaw angle: %1.4f deg", Angles::degrees(m_position(5)));
-                trace("Current x speed: %1.4f m/s", m_velocity(0));
-                trace("Current y speed: %1.4f m/s", m_velocity(1));
-                trace("Current z speed: %1.4f m/s", m_velocity(2));
-                trace("Current roll rate: %1.4f deg/s", Angles::degrees(m_velocity(3)));
-                trace("Current pitch rate: %1.4f deg/s", Angles::degrees(m_velocity(4)));
-                trace("Current yaw rate: %1.4f deg/s", Angles::degrees(m_velocity(5)));
-                trace("Current x wind speed: %1.4f m/s", m_wind(0));
-                trace("Current y wind speed: %1.4f m/s", m_wind(1));
-                trace("Current z wind speed: %1.4f m/s", m_wind(2));
-                m_last_time_verb_leadertrace = time;
-              }
+                if (time >= m_last_time_verb_leadertrace + m_timestep_trace)
+                {
+                  traceModelState("Leader", m_model);
+                  m_last_time_verb_leadertrace = time;
+                }
                  */
 
-                //==========================================================================
                 // Leader state output
-                //==========================================================================
-
                 if (m_last_leader_output + m_timestep_leader <= Clock::get())
                   leaderOutput();
               }
 
               spew("Periodic update 3.3");
               // Team state prediction - Update the simulated vehicles state
+              spew("Number of UAVs (UAV models): %u (%u)", (unsigned int)m_uav_n,
+                   (unsigned int)m_models.size());
               for (sys_size_t ind_uav = 0; ind_uav != m_uav_n; ++ind_uav)
-                if (m_last_state_estim(ind_uav + 1) <= d_sim_time && m_vehicle_state_flag[ind_uav])
+              {
+                spew("Trying to update the state prediction for UAV: %u",
+                     (unsigned int)ind_uav);
+                if (m_last_state_estim(ind_uav + 1) <= d_sim_time &&
+                    m_vehicle_state_flag[ind_uav])
                 {
+                  spew("Updating the state prediction for UAV: %u (step: %1.3fs -"
+                      " last state estimate: %1.3fs)", (unsigned int)ind_uav,
+                      m_timestep_sim, m_last_state_estim(ind_uav + 1));
+                  spewModelState(static_cast<std::ostringstream*>(
+                      &(std::ostringstream() << ind_uav))->str(), m_models[ind_uav]);
                   m_models[ind_uav]->update(m_timestep_sim);
                   m_last_state_estim(ind_uav + 1) += m_timestep_sim;
+                  spew("Updated the state prediction for UAV: %u (new state update"
+                      " time: %1.3fs)", (unsigned int)ind_uav,
+                      m_last_state_estim(ind_uav + 1));
                 }
+              }
 
               spew("Periodic update 3.4");
               // Team control prediction - Update the simulated vehicles commands
@@ -2372,7 +2336,8 @@ namespace Control
               {
                 // Commands update - At control frequency
                 if (tmp_last_state_estim(ind_uav + 1) <= d_sim_time &&
-                    m_last_simctrl_update(ind_uav) + m_timestep_ctrl < d_sim_time + m_timestep_sim
+                    m_last_simctrl_update(ind_uav) + m_timestep_ctrl < d_sim_time
+                    + m_timestep_sim
                     && m_vehicle_state_flag[ind_uav])
                 {
                   //spew("Periodic update 3.4.1");
@@ -3558,6 +3523,94 @@ namespace Control
             inf("%s pitch rate: %1.4f deg/s", what.c_str(), Angles::degrees(vel(4)));
             inf("%s yaw rate: %1.4f deg/s", what.c_str(), Angles::degrees(vel(5)));
             inf("-----------------------------");
+          }
+
+          void
+          traceModelState(const std::string what, UAVSimulation* model)
+          {
+            Matrix position = model->getPosition();
+            Matrix velocity = model->getVelocity();
+            Matrix wind = model->getWind();
+            //trace( "Simulating: %s", m_model->m_sim_type );
+            trace("UAV %s - Bank: %1.2fº        - Commanded bank: %1.2fº",
+                  what.c_str(), Angles::degrees(position(3)),
+                  Angles::degrees(model->getBankCmd()));
+            trace("UAV %s - Speed: %1.2fm/s     - Commanded speed: %1.2fm/s",
+                  what.c_str(), model->getAirspeed(),
+                  model->getAirspeedCmd());
+            //trace("UAV %s - Yaw: %1.2f", what.c_str(),
+            //      Angles::degrees(position(5)));
+            trace("UAV %s - Latitude: %1.4fº", what.c_str(),
+                  Angles::degrees(m_init_leader.lat));
+            trace("UAV %s - Longitude: %1.4fº", what.c_str(),
+                  Angles::degrees(m_init_leader.lon));
+            trace("UAV %s - Altitude: %1.4fm", what.c_str(),
+                  m_init_leader.height);
+            trace("UAV %s - x position: %1.4f m", what.c_str(), position(0));
+            trace("UAV %s - y position: %1.4f m", what.c_str(), position(1));
+            trace("UAV %s - z position: %1.4f m", what.c_str(), position(2));
+            trace("UAV %s - Roll angle: %1.4f deg", what.c_str(),
+                Angles::degrees(position(3)));
+            trace("UAV %s - Pitch angle: %1.4f deg", what.c_str(),
+                Angles::degrees(position(4)));
+            trace("UAV %s - Yaw angle: %1.4f deg", what.c_str(),
+                Angles::degrees(position(5)));
+            trace("UAV %s - x speed: %1.4f m/s", what.c_str(), velocity(0));
+            trace("UAV %s - y speed: %1.4f m/s", what.c_str(), velocity(1));
+            trace("UAV %s - z speed: %1.4f m/s", what.c_str(), velocity(2));
+            trace("UAV %s - Roll rate: %1.4f deg/s", what.c_str(),
+                Angles::degrees(velocity(3)));
+            trace("UAV %s - Pitch rate: %1.4f deg/s", what.c_str(),
+                Angles::degrees(velocity(4)));
+            trace("UAV %s - Yaw rate: %1.4f deg/s", what.c_str(),
+                Angles::degrees(velocity(5)));
+            trace("UAV %s - x wind speed: %1.4f m/s", what.c_str(), wind(0));
+            trace("UAV %s - y wind speed: %1.4f m/s", what.c_str(), wind(1));
+            trace("UAV %s - z wind speed: %1.4f m/s", what.c_str(), wind(2));
+          }
+
+          void
+          spewModelState(const std::string what, UAVSimulation* model)
+          {
+            Matrix position = model->getPosition();
+            Matrix velocity = model->getVelocity();
+            Matrix wind = model->getWind();
+            //trace( "Simulating: %s", m_model->m_sim_type );
+            spew("UAV %s - Bank: %1.2fº        - Commanded bank: %1.2fº",
+                  what.c_str(), Angles::degrees(position(3)),
+                  Angles::degrees(model->getBankCmd()));
+            spew("UAV %s - Speed: %1.2fm/s     - Commanded speed: %1.2fm/s",
+                  what.c_str(), model->getAirspeed(),
+                  model->getAirspeedCmd());
+            //spew("UAV %s - Yaw: %1.2f", what.c_str(),
+            //      Angles::degrees(position(5)));
+            spew("UAV %s - Latitude: %1.4fº", what.c_str(),
+                  Angles::degrees(m_init_leader.lat));
+            spew("UAV %s - Longitude: %1.4fº", what.c_str(),
+                  Angles::degrees(m_init_leader.lon));
+            spew("UAV %s - Altitude: %1.4fm", what.c_str(),
+                  m_init_leader.height);
+            spew("UAV %s - x position: %1.4f m", what.c_str(), position(0));
+            spew("UAV %s - y position: %1.4f m", what.c_str(), position(1));
+            spew("UAV %s - z position: %1.4f m", what.c_str(), position(2));
+            spew("UAV %s - Roll angle: %1.4f deg", what.c_str(),
+                Angles::degrees(position(3)));
+            spew("UAV %s - Pitch angle: %1.4f deg", what.c_str(),
+                Angles::degrees(position(4)));
+            spew("UAV %s - Yaw angle: %1.4f deg", what.c_str(),
+                Angles::degrees(position(5)));
+            spew("UAV %s - x speed: %1.4f m/s", what.c_str(), velocity(0));
+            spew("UAV %s - y speed: %1.4f m/s", what.c_str(), velocity(1));
+            spew("UAV %s - z speed: %1.4f m/s", what.c_str(), velocity(2));
+            spew("UAV %s - Roll rate: %1.4f deg/s", what.c_str(),
+                Angles::degrees(velocity(3)));
+            spew("UAV %s - Pitch rate: %1.4f deg/s", what.c_str(),
+                Angles::degrees(velocity(4)));
+            spew("UAV %s - Yaw rate: %1.4f deg/s", what.c_str(),
+                Angles::degrees(velocity(5)));
+            spew("UAV %s - x wind speed: %1.4f m/s", what.c_str(), wind(0));
+            spew("UAV %s - y wind speed: %1.4f m/s", what.c_str(), wind(1));
+            spew("UAV %s - z wind speed: %1.4f m/s", what.c_str(), wind(2));
           }
         };
       }
