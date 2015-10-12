@@ -12,8 +12,10 @@
 #ifdef __GNUC__
   #define MAVPACKED( __Declaration__ ) __Declaration__ __attribute__((packed))
 #else
-  #if defined(__IBMC__) || defined(__SUNPRO_CC) || defined(__SUNPRO_C)
+  #if defined(__IBMC__)
     #define MAVPACKED( __Declaration__ ) __pragma( pack(1) ) __Declaration__ __pragma( pack() )
+  #elif defined(__SUNPRO_CC) || defined(__SUNPRO_C)
+    #define MAVPACKED( __Declaration__ ) _Pragma("pack(1)") __Declaration__ _Pragma("pack()")
   #else
     #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
   #endif
