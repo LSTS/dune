@@ -355,6 +355,11 @@ namespace DUNE
       double
       getAirspeed(void);
 
+      //! This method gets the wind through which the vehicle flying.
+      //! @returns wind vector
+      Matrix
+      getWind(void);
+
       //! This method gets the vehicle bank command.
       //! @returns bank command
       double

@@ -1084,6 +1084,13 @@ namespace DUNE
       return m_airspeed;
     }
 
+    Matrix
+    UAVSimulation::getWind(void)
+    {
+      // Wind through which the aircraft is flying
+      return m_wind;
+    }
+
     double
     UAVSimulation::getBankCmd(void)
     {
