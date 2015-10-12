@@ -125,6 +125,8 @@ namespace Actuators
       bool inv_rotation;
       //! Accept DesiredSpeed messages
       bool desired_speed;
+      //! Motor identifier.
+      unsigned motor_id;
     };
 
     struct Task: public Tasks::Periodic
@@ -151,6 +153,8 @@ namespace Actuators
       Arguments m_args;
       //! Device error mask.
       uint8_t m_dev_errors;
+      //! Motor identifier.
+      unsigned m_motor_id;
       //! Enable legacy protocol
       bool m_legacy;
       //! Used to silence some spurious boot errors.
@@ -164,6 +168,7 @@ namespace Actuators
         m_bridge_ent(NULL),
         m_mcu_ent(NULL),
         m_dev_errors(ERR_NONE),
+        m_motor_id(0),
         m_legacy(false)
       {
         // Define configuration parameters.
@@ -212,6 +217,9 @@ namespace Actuators
         param("MCU - Entity Label", m_args.mcu_elabel)
         .defaultValue("");
 
+        param("Motor Identifier", m_args.motor_id)
+        .defaultValue("0");
+
         // Initialize the state request clock
         m_last_state = Clock::get();
 
@@ -223,6 +231,8 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
+        m_motor_id = m_args.motor_id;
+
         if (paramChanged(m_args.state_per))
           m_args.state_per = 1.0 / m_args.state_per;
 
@@ -430,7 +440,8 @@ namespace Actuators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
-        setRefThrust(msg->value);
+        if (msg->id == m_motor_id)
+          setRefThrust(msg->value);
       }
 
       void
