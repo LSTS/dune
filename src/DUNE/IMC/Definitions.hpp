@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 12964515b017f374ba9afe5ad06c2fc8                            *
+// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -3301,6 +3301,12 @@ namespace DUNE
       fp64_t lon;
       //! Depth.
       fp32_t depth;
+      //! Interrogation channel.
+      uint8_t query_channel;
+      //! Reply channel.
+      uint8_t reply_channel;
+      //! Transponder delay.
+      uint8_t transponder_delay;
 
       static uint16_t
       getIdStatic(void)
@@ -3349,7 +3355,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 20;
+        return 23;
       }
 
       unsigned

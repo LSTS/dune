@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 12964515b017f374ba9afe5ad06c2fc8                            *
+// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -3101,6 +3101,9 @@ namespace DUNE
       lat = 0;
       lon = 0;
       depth = 0;
+      query_channel = 0;
+      reply_channel = 0;
+      transponder_delay = 0;
     }
 
     bool
@@ -3111,6 +3114,9 @@ namespace DUNE
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
       if (depth != other__.depth) return false;
+      if (query_channel != other__.query_channel) return false;
+      if (reply_channel != other__.reply_channel) return false;
+      if (transponder_delay != other__.transponder_delay) return false;
       return true;
     }
 
@@ -3128,6 +3134,9 @@ namespace DUNE
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
       ptr__ += IMC::serialize(depth, ptr__);
+      ptr__ += IMC::serialize(query_channel, ptr__);
+      ptr__ += IMC::serialize(reply_channel, ptr__);
+      ptr__ += IMC::serialize(transponder_delay, ptr__);
       return ptr__;
     }
 
@@ -3139,6 +3148,9 @@ namespace DUNE
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
       bfr__ += IMC::deserialize(depth, bfr__, size__);
+      bfr__ += IMC::deserialize(query_channel, bfr__, size__);
+      bfr__ += IMC::deserialize(reply_channel, bfr__, size__);
+      bfr__ += IMC::deserialize(transponder_delay, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -3150,6 +3162,9 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(depth, bfr__, size__);
+      bfr__ += IMC::deserialize(query_channel, bfr__, size__);
+      bfr__ += IMC::deserialize(reply_channel, bfr__, size__);
+      bfr__ += IMC::deserialize(transponder_delay, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -3160,6 +3175,9 @@ namespace DUNE
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "depth", depth, nindent__);
+      IMC::toJSON(os__, "query_channel", query_channel, nindent__);
+      IMC::toJSON(os__, "reply_channel", reply_channel, nindent__);
+      IMC::toJSON(os__, "transponder_delay", transponder_delay, nindent__);
     }
 
     LblConfig::LblConfig(void)
