@@ -217,6 +217,11 @@ typedef struct __mavlink_status {
     uint8_t current_tx_seq;             ///< Sequence number of last packet sent
     uint16_t packet_rx_success_count;   ///< Received packets
     uint16_t packet_rx_drop_count;      ///< Number of packet drops
+
+    __mavlink_status()
+    {
+      parse_state = MAVLINK_PARSE_STATE_UNINIT;
+    }
 } mavlink_status_t;
 
 #define MAVLINK_BIG_ENDIAN 0
