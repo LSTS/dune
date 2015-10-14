@@ -379,6 +379,7 @@ options = {
   :machine     => nil,
   :vbox        => false,
   :docker      => false,
+  :native      => true,
   :log         => true
 }
 
