@@ -363,7 +363,7 @@ class Docker
   def execute
     hostname = @name.gsub("dune-", "")
     puts hostname
-    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --target #{@target}`
+    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --no-log --target #{@target}`
   end
 end
 
