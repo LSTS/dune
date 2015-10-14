@@ -327,6 +327,15 @@ namespace Transports
       void
       consume(const IMC::Announce* msg)
       {
+        // Check if static address is already in announce services.
+        std::set<NodeAddress>::iterator itr = m_static_dsts.begin();
+        for (; itr != m_static_dsts.end(); ++itr)
+        {
+          // Static address is in list of services.
+          if (Node(msg->sys_name, msg->services).check(itr->getAddress(), itr->getPort()))
+            return;
+        }
+
         m_node_table.addNode(msg->getSource(), msg->sys_name, msg->services);
         m_lcomms->setAnnounce(msg);
       }
