@@ -1372,7 +1372,7 @@ namespace Control
             }
 
             // Vehicle quantity considered in the formation
-            debug("Number of UAVs -> %d", m_uav_n);
+            debug("Number of UAVs -> %d", (unsigned int)m_uav_n);
 
             // Check if the formation composition changed
             spew("Formation parameters update - Check if the formation composition changed");
