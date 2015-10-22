@@ -416,6 +416,7 @@ namespace Control
           bind<DesiredZ>(this);
           bind<DesiredVerticalRate>(this);
           bind<DesiredSpeed>(this);
+          bind<DesiredControl>(this);
           bind<IdleManeuver>(this);
           bind<ControlLoops>(this);
           bind<VehicleMedium>(this);
@@ -707,6 +708,92 @@ namespace Control
                                                 0);//! RC Channel 8 (mode - do not override)
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
+        }
+
+        void
+        consume(const IMC::DesiredControl* d_acc)
+        {
+          if (getSystemId() != d_acc->getSource())
+          {
+            debug("Ignoring DesiredAcc from remote system '%s' and entity '%s'",
+                  resolveSystemId(d_acc->getSource()),
+                  resolveEntity(d_acc->getSourceEntity()).c_str());
+            return;
+          }
+
+          if (m_external)
+          {
+            trace("ArduPilot is in Manual mode, ignoring acceleration setpoint.");
+            return;
+          }
+
+          if (!((m_cloops & IMC::CL_FORCE)))
+          {
+            trace("Force (acc) control is NOT active");
+            return;
+          }
+
+          if (m_vehicle_type == VEHICLE_COPTER &&
+              m_mode != CP_MODE_GUIDED)
+          {
+            // Copters must first be set to guided as of AC 3.2
+            uint8_t buf[512];
+            mavlink_message_t* msg = new mavlink_message_t;
+
+            mavlink_msg_set_mode_pack(255, 0, msg,
+                                      m_sysid,
+                                      1,
+                                      CP_MODE_GUIDED);
+
+            uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+            sendData(buf, n);
+            debug("Guided MODE on ardupilot is set");
+          }
+
+          // Pack and send to arducopter
+          // only if ardu_tracker is disabled.
+          if (m_vehicle_type == VEHICLE_COPTER
+              && !m_args.ardu_tracker)
+          {
+            uint32_t mask = 0x07FF; // Start, ignore all. (1s 12 first bits)
+            mask &= ~(1 << 9); // Clear bit 10.
+            float x=0, y=0, z=0;
+
+            if (d_acc->flags & DesiredControl::FL_X)
+            {
+              x = d_acc->x;
+              mask &= ~ ( 1 << (0 + 6));
+            }
+            if (d_acc->flags & DesiredControl::FL_Y)
+            {
+              y = d_acc->y;
+              mask &= ~ (1 << (1 + 6));
+            }
+            if (d_acc->flags & DesiredControl::FL_Z)
+            {
+              z = d_acc->z;
+              mask &= ~ (1 << (2 + 6));
+            }
+
+            mavlink_message_t msg;
+            uint8_t buf[512];
+
+            mavlink_msg_set_position_target_local_ned_pack(255, 0, &msg,
+                                                      Clock::getMsec(),
+                                                      m_sysid, //@param target_system System ID
+                                                      0, //@param target_component Component ID
+                                                      MAV_FRAME_LOCAL_NED,
+                                                      mask,
+                                                      0,0,0,
+                                                      0,0,0,
+                                                      x,y,z,
+                                                      0, 0);
+
+            int n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+
+            spew("Sent accel data to apm.");
+          }
         }
 
         void
