@@ -1761,13 +1761,13 @@ namespace Control
                 }
                 if (m_mean_first)
                 {
-                  m_roll_rate_mean = msg->p;
+                  m_roll_rate_mean = std::fabs(msg->p);
                   m_mean_first = false;
                 }
                 else
                 {
                   m_roll_rate_mean = (m_roll_rate_mean * time4mean_prev +
-                      msg->p * time_step) / m_time4mean;
+                      std::fabs(msg->p) * time_step) / m_time4mean;
                 }
               }
               spew("Ending own EstimatedState");
@@ -3496,6 +3496,7 @@ namespace Control
             m_formation_eval.dist_min_mean = m_dist_min_mean;
             m_formation_eval.roll_rate_mean = m_roll_rate_mean;
             m_formation_eval.time = m_time4mean;
+            //m_formation_eval.timespan = m_time4mean;
             m_formation_eval.controlparams.set(m_formation_ctrl_params);
             dispatchAlias(&m_formation_eval);
             // Reset
