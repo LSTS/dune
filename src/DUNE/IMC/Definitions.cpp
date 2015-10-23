@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d42c33ab58ac41f37bab1cd847763c35                            *
+// IMC XML MD5: 5bfe1a693e9fcbf67bf6175e44375d8c                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -19987,6 +19987,150 @@ namespace DUNE
 
     void
     FormationEvaluation::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setDestinationEntity(value__);
+      }
+    }
+
+    ExtendedFormationEvaluation::ExtendedFormationEvaluation(void)
+    {
+      m_header.mgid = 824;
+      clear();
+      controlparams.setParent(this);
+    }
+
+    void
+    ExtendedFormationEvaluation::clear(void)
+    {
+      type = 0;
+      op = 0;
+      err_mean = 0;
+      dist_min_abs = 0;
+      dist_min_mean = 0;
+      roll_rate_mean = 0;
+      timespan = 0;
+      controlparams.clear();
+    }
+
+    bool
+    ExtendedFormationEvaluation::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ExtendedFormationEvaluation& other__ = static_cast<const ExtendedFormationEvaluation&>(msg__);
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
+      if (err_mean != other__.err_mean) return false;
+      if (dist_min_abs != other__.dist_min_abs) return false;
+      if (dist_min_mean != other__.dist_min_mean) return false;
+      if (roll_rate_mean != other__.roll_rate_mean) return false;
+      if (timespan != other__.timespan) return false;
+      if (controlparams != other__.controlparams) return false;
+      return true;
+    }
+
+    int
+    ExtendedFormationEvaluation::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    ExtendedFormationEvaluation::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(err_mean, ptr__);
+      ptr__ += IMC::serialize(dist_min_abs, ptr__);
+      ptr__ += IMC::serialize(dist_min_mean, ptr__);
+      ptr__ += IMC::serialize(roll_rate_mean, ptr__);
+      ptr__ += IMC::serialize(timespan, ptr__);
+      ptr__ += controlparams.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ExtendedFormationEvaluation::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::deserialize(dist_min_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(roll_rate_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(timespan, bfr__, size__);
+      bfr__ += controlparams.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ExtendedFormationEvaluation::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(err_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_abs, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(dist_min_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(roll_rate_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(timespan, bfr__, size__);
+      bfr__ += controlparams.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ExtendedFormationEvaluation::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "err_mean", err_mean, nindent__);
+      IMC::toJSON(os__, "dist_min_abs", dist_min_abs, nindent__);
+      IMC::toJSON(os__, "dist_min_mean", dist_min_mean, nindent__);
+      IMC::toJSON(os__, "roll_rate_mean", roll_rate_mean, nindent__);
+      IMC::toJSON(os__, "timespan", timespan, nindent__);
+      controlparams.toJSON(os__, "controlparams", nindent__);
+    }
+
+    void
+    ExtendedFormationEvaluation::setTimeStampNested(double value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    ExtendedFormationEvaluation::setSourceNested(uint16_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setSource(value__);
+      }
+    }
+
+    void
+    ExtendedFormationEvaluation::setSourceEntityNested(uint8_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    ExtendedFormationEvaluation::setDestinationNested(uint16_t value__)
+    {
+      if (!controlparams.isNull())
+      {
+        controlparams.get()->setDestination(value__);
+      }
+    }
+
+    void
+    ExtendedFormationEvaluation::setDestinationEntityNested(uint8_t value__)
     {
       if (!controlparams.isNull())
       {

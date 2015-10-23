@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d42c33ab58ac41f37bab1cd847763c35                            *
+// IMC XML MD5: 5bfe1a693e9fcbf67bf6175e44375d8c                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -18996,6 +18996,127 @@ namespace DUNE
       getName(void) const
       {
         return "FormationEvaluation";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 22;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return controlparams.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Formation Evaluation Data.
+    class ExtendedFormationEvaluation: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Request.
+        FC_REQUEST = 0,
+        //! Report.
+        FC_REPORT = 1
+      };
+
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Start.
+        OP_START = 0,
+        //! Stop.
+        OP_STOP = 1,
+        //! Ready.
+        OP_READY = 2,
+        //! Executing.
+        OP_EXECUTING = 3,
+        //! Failure.
+        OP_FAILURE = 4
+      };
+
+      //! Type.
+      uint8_t type;
+      //! Operation.
+      uint8_t op;
+      //! Mean Position Error.
+      fp32_t err_mean;
+      //! Absolute Minimum Distance.
+      fp32_t dist_min_abs;
+      //! Mean Minimum Distance.
+      fp32_t dist_min_mean;
+      //! Mean Roll Rate.
+      fp32_t roll_rate_mean;
+      //! Evaluation Time.
+      fp32_t timespan;
+      //! Formation Control Parameters.
+      InlineMessage<FormationControlParams> controlparams;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 824;
+      }
+
+      ExtendedFormationEvaluation(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ExtendedFormationEvaluation(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ExtendedFormationEvaluation::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ExtendedFormationEvaluation";
       }
 
       unsigned

@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d42c33ab58ac41f37bab1cd847763c35                            *
+// IMC XML MD5: 5bfe1a693e9fcbf67bf6175e44375d8c                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -265,6 +265,7 @@ MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
 MESSAGE(822, FormationControlParams)
 MESSAGE(823, FormationEvaluation)
+MESSAGE(824, ExtendedFormationEvaluation)
 MESSAGE(877, MessagePart)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
