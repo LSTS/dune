@@ -505,6 +505,10 @@ namespace Transports
         {
           last_comma = getCommaIndex(str, 9);
         }
+        else if (std::sscanf(str.c_str(), "RECV,%u", &length) == 1)
+        {
+          last_comma = getCommaIndex(str, 9);
+        }
         else
         {
           return false;
