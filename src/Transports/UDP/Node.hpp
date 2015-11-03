@@ -78,12 +78,33 @@ namespace Transports
           m_active = m_addrs.find(node.m_active->first);
       }
 
+      //! Get node name.
+      //! @return node name.
       const std::string&
       getName(void) const
       {
         return m_name;
       }
 
+      //! Check if address and port are on this node's
+      //! list of services.
+      //! @param[in] addr address.
+      //! @param[in] port port.
+      //! @return true if address:port is part of node list
+      //! of services, false otherwise.
+      bool
+      check(const Address& addr, unsigned port)
+      {
+        std::map<Address, unsigned>::iterator itr;
+        itr = m_addrs.find(addr);
+
+        return (itr != m_addrs.end() && itr->second != port);
+      }
+
+      //! Point active address to existing node service.
+      //! @param[in] addr node address.
+      //! @return true if activation successful, false if
+      //! already activated.
       bool
       activate(const Address& addr)
       {
@@ -97,6 +118,10 @@ namespace Transports
         return (m_active != m_addrs.end());
       }
 
+      //! Deactivate destination address from list of services.
+      //! @param[in] addr node address.
+      //! @return true if deactivation successful, false if already
+      //! deactivated.
       bool
       deactivate(const Address& addr)
       {
@@ -110,6 +135,10 @@ namespace Transports
         return true;
       }
 
+      //! Send data to node.
+      //! @param[in] sock UDP destination socket.
+      //! @param[in] data data to be transmitted.
+      //! @param[in] data_len length of data to be transmitted.
       void
       send(UDPSocket& sock, const uint8_t* data, unsigned data_len)
       {
