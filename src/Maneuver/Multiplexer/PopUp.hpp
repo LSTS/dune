@@ -222,6 +222,9 @@ namespace Maneuver
         {
           case ST_GET_FIX:
           case ST_SKEEP:
+            if (mustWait())
+              return;
+
             if (!(msg->validity & IMC::GpsFix::GFV_VALID_POS))
               break;
 
