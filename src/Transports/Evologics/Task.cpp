@@ -248,6 +248,12 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
+
+        if (m_driver == NULL)
+          return;
+
+        if (paramChanged(m_args.source_level))
+          m_driver->setSourceLevel(m_args.source_level);
       }
 
       void
