@@ -224,6 +224,9 @@ namespace Transports
       void
       consume(const IMC::UamRxFrame* msg)
       {
+        if ((msg->flags & IMC::UamRxFrame::URF_PROMISCUOUS) != 0)
+          return;
+
         if (msg->data.size() < 2)
         {
           debug("invalid message size");
