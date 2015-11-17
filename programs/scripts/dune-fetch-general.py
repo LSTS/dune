@@ -116,7 +116,7 @@ def editGeneral(vname, option_list, values_list):
         fo = open(sys.argv[2] + vname + ".ini", "r")
     except:
         print("File " + sys.argv[2] + vname + ".ini not found.")
-        return
+        return False
 
     copy = open(sys.argv[2] + vname + "_copy.ini", "w")
 
@@ -163,6 +163,7 @@ def editGeneral(vname, option_list, values_list):
     fo.close()
 
     os.rename(sys.argv[2] + vname + "_copy.ini", sys.argv[2] + vname + ".ini")
+    return True
 
 def editFuel(vname, labels_list, values_list):
     # Open ini file
@@ -170,7 +171,7 @@ def editFuel(vname, labels_list, values_list):
         fo = open(sys.argv[2] + vname + ".ini", "r")
     except:
         print("File " + sys.argv[2] + vname + ".ini not found.")
-        return
+        return False
 
     fo = open(sys.argv[2] + vname + ".ini", "r")
     copy = open(sys.argv[2] + vname + "_copy.ini", "w")
@@ -219,6 +220,7 @@ def editFuel(vname, labels_list, values_list):
     fo.close()
 
     os.rename(sys.argv[2] + vname + "_copy.ini", sys.argv[2] + vname + ".ini")
+    return True
 
 def getsubgrid(x1, y1, x2, y2, grid):
     return [item[x1:x2] for item in grid[y1:y2]]
@@ -305,7 +307,8 @@ for v in range(len(profile_cols)):
 
 
     # edit general parameters.
-    editGeneral(first_row[profile_cols[v]], options, values_list)
+    if (editGeneral(first_row[profile_cols[v]], options, values_list) == False):
+        continue
     values = computeProfiles(options, values_list)
     # edit fuel monitor profiles.
     editFuel(first_row[profile_cols[v]], c_profiles, values)
