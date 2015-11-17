@@ -58,25 +58,12 @@ namespace DUNE
       {
         std::string sec = "General";
 
+        cfg->get(sec, "Hardware List", "", m_hardware_list);
         cfg->get(sec, "Power Model -- Conversion - Watt", "50.0", m_conv_watt);
         cfg->get(sec, "Power Model -- Conversion - RPM", "1000.0", m_conv_rpm);
-        cfg->get(sec, "Power Model -- Hotel Load", "40.0", m_hotel_load);
-
-        std::vector<std::string> labels;
-        cfg->get(sec, "Power Model -- Payload Labels", "", labels);
-
-        std::vector<float> powers;
-        cfg->get(sec, "Power Model -- Payload Powers", "", powers);
-
-        for (unsigned i = 0; i < labels.size(); ++i)
-        {
-          std::pair<std::string, float> pl(labels[i], powers[i]);
-          m_payloads.insert(pl);
-        }
-
-        cfg->get(sec, "Power Model -- IMU Power", "0.0", m_imu_power);
-
         cfg->get(sec, "Battery Capacity", "700.0", m_capacity);
+
+        computePowers(cfg);
       }
 
       //! Validate the model
@@ -155,6 +142,17 @@ namespace DUNE
       }
 
     private:
+      enum Indices
+      {
+        CFG_IDX_SURVIVAL = 0,
+        CFG_IDX_HOTEL = 1,
+        CFG_IDX_PAYLOAD = 2,
+        CFG_IDX_IMU = 3,
+        CFG_IDX_AVERAGE = 4,
+        CFG_IDX_POWERSAVE = 5,
+        CFG_IDX_ENTITY_LABEL = 6
+      };
+
       //! Converts W to Wh using time in seconds
       //! @param[in] power value of power in W
       //! @param[in] duration amount of time in seconds
@@ -165,10 +163,50 @@ namespace DUNE
         return (float)(power * duration / 3600.0);
       }
 
+      void
+      computePowers(Parsers::Config* cfg)
+      {
+        m_imu_power = 0;
+        m_hotel_load = 0;
+
+        for (size_t i = 0; i < m_hardware_list.size(); ++i)
+        {
+          std::vector<std::string> elements;
+          cfg->get("Hardware Parts", m_hardware_list[i], "", elements);
+          if (elements.size() != 7)
+            continue;
+
+          if (elements[CFG_IDX_HOTEL] == "On")
+          {
+            m_hotel_load += castLexical<float>(elements[CFG_IDX_AVERAGE]);
+          }
+          else if (elements[CFG_IDX_HOTEL] == "Powersave")
+          {
+            m_hotel_load += castLexical<float>(elements[CFG_IDX_POWERSAVE]);
+          }
+
+          if (elements[CFG_IDX_PAYLOAD] == "On")
+          {
+            std::pair<std::string, float> pl(elements[CFG_IDX_ENTITY_LABEL], castLexical<float>(elements[CFG_IDX_AVERAGE]));
+            m_payloads.insert(pl);
+          }
+
+          if (elements[CFG_IDX_IMU] == "On")
+          {
+            m_imu_power += castLexical<float>(elements[CFG_IDX_AVERAGE]);
+          }
+        }
+
+        std::fprintf(stderr, "Hotel load: %0.2f\n", m_hotel_load);
+        std::fprintf(stderr, "IMU load: %0.2f\n", m_imu_power);
+      }
+
       //! Conversion values for power (Watt)
       std::vector<float> m_conv_watt;
       //! Conversion values for speed (rpm)
       std::vector<float> m_conv_rpm;
+      //! Hardware list.
+      std::vector<std::string> m_hardware_list;
       //! Hotel load of the model
       float m_hotel_load;
       //! Map of payloads to power consumed
