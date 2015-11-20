@@ -1,0 +1,3 @@
+if(NOT DUNE_USING_MCCUSB)
+  set(TASK_ENABLED FALSE)
+endif()
