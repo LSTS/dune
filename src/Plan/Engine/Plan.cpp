@@ -507,10 +507,14 @@ namespace Plan
     void
     Plan::sequenceNodes(void)
     {
-      PlanMap::iterator itr = m_graph.find(m_spec->start_man_id);
+      std::string maneuver_id = m_spec->start_man_id;
+      PlanMap::iterator itr = m_graph.find(maneuver_id);
 
       while (true)
       {
+        if (itr == m_graph.end())
+          throw ParseError(String::str(DTR("invalid maneuver id '%s'"), maneuver_id.c_str()));
+
         m_seq_nodes.push_back(itr->second.pman);
 
         if (!itr->second.trans.size())
@@ -527,7 +531,8 @@ namespace Plan
           return;
         }
 
-        itr = m_graph.find(itr->second.trans[0]->dest_man);
+        maneuver_id = itr->second.trans[0]->dest_man;
+        itr = m_graph.find(maneuver_id);
       }
     }
 
