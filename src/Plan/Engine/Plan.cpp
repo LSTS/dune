@@ -25,6 +25,9 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// DUNE headers.
+#include <DUNE/I18N.hpp>
+
 // Local headers.
 #include "Plan.hpp"
 
@@ -68,10 +71,10 @@ namespace Plan
         m_power_model = new Power::Model(cfg);
         m_power_model->validate();
       }
-      catch (...)
+      catch (std::exception& e)
       {
         Memory::clear(m_power_model);
-        m_task->inf(DTR("plan: power model invalid"));
+        m_task->err(DTR("plan: power model invalid: %s"), e.what());
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
