@@ -65,7 +65,7 @@ namespace Plan
 
       try
       {
-        m_power_model = new Plans::PowerModel(cfg);
+        m_power_model = new Power::Model(cfg);
         m_power_model->validate();
       }
       catch (...)

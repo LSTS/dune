@@ -326,7 +326,7 @@ namespace Plan
       //! Pointer to speed model for speed conversions
       const Plans::SpeedModel* m_speed_model;
       //! Pointer to power model for power conversions and estimations
-      const Plans::PowerModel* m_power_model;
+      const Power::Model* m_power_model;
       //! Pointer to power conversion and estimation model
       Parsers::Config* m_config;
       //! Pointer to Fuel Prediction object

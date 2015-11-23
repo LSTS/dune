@@ -25,113 +25,61 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_POWER_MODEL_HPP_INCLUDED_
-#define DUNE_PLANS_POWER_MODEL_HPP_INCLUDED_
+#ifndef DUNE_POWER_MODEL_HPP_INCLUDED_
+#define DUNE_POWER_MODEL_HPP_INCLUDED_
 
-//! ISO C++ headers.
+// ISO C++ headers.
 #include <vector>
 #include <map>
 
 // DUNE headers.
-#include <DUNE/IMC.hpp>
 #include <DUNE/Parsers/Config.hpp>
-#include <DUNE/Math/General.hpp>
 
 namespace DUNE
 {
-  namespace Plans
+  namespace Power
   {
     // Export DLL Symbol.
-    class DUNE_DLL_SYM PowerModel;
-
-    //! Maximum number of payloads
-    static const unsigned c_max_payloads = 10;
+    class DUNE_DLL_SYM Model;
 
     //! Utility class to compute offline power conversions and hold model parameters.
     //! Consider ONLY positive speed.
-    class PowerModel
+    class Model
     {
     public:
       //! Constructor
       //! @param[in] cfg reference to Config parser
-      PowerModel(Parsers::Config* cfg)
-      {
-        std::string sec = "General";
-
-        cfg->get(sec, "Hardware List", "", m_hardware_list);
-        cfg->get(sec, "Power Model -- Conversion - Watt", "50.0", m_conv_watt);
-        cfg->get(sec, "Power Model -- Conversion - RPM", "1000.0", m_conv_rpm);
-        cfg->get(sec, "Battery Capacity", "700.0", m_capacity);
-
-        computePowers(cfg);
-      }
+      Model(Parsers::Config* cfg);
 
       //! Validate the model
       void
-      validate(void) const
-      {
-        if (!m_conv_watt.size() || !m_conv_rpm.size())
-          throw std::runtime_error("power model has empty parameters");
-
-        if (m_conv_watt.size() != m_conv_rpm.size())
-          throw std::runtime_error("power model sizes do not match");
-      }
+      validate(void) const;
 
       //! Compute energy consumed by motor for some RPM value
       //! @param[in] rpm value of rpms to convert from
       //! @param[in] duration amount of time rotating at rpm
       //! @return energy consumed in Wh
       float
-      computeMotionEnergy(float rpm, float duration) const
-      {
-        if (rpm <= 0.0f || duration <= 0.0f)
-          return 0.0;
-
-        float power;
-
-        if (m_conv_watt.size() == 1)
-          power = rpm * m_conv_watt[0] / m_conv_rpm[0];
-        else
-          power = Math::piecewiseLI(m_conv_watt , m_conv_rpm, rpm);
-
-        return toWh(power, duration);
-      }
+      computeMotionEnergy(float rpm, float duration) const;
 
       //! Compute energy consumed by a payload entity
       //! @param[in] label name of the payload
       //! @param[in] duration amount of time active
       //! @return energy consumed in Wh
       float
-      computePayloadEnergy(const std::string& label, float duration) const
-      {
-        if (!m_payloads.size())
-          return 0.0;
-
-        std::map<std::string, float>::const_iterator itr;
-        itr = m_payloads.find(label);
-        if (itr == m_payloads.end())
-          return 0.0;
-
-        return toWh(itr->second, duration);
-      }
+      computePayloadEnergy(const std::string& label, float duration) const;
 
       //! Compute energy consumed by minimal resources
       //! @param[in] duration amount of time in seconds
       //! @return energy consumed in Wh
       float
-      computeHotelEnergy(float duration) const
-      {
-        return toWh(m_hotel_load, duration);
-      }
+      computeHotelEnergy(float duration) const;
 
       //! Compute energy consumed by IMU
       //! @param[in] duration amount of time in seconds
       //! @return energy consumed in Wh
       float
-      computeIMUEnergy(float duration) const
-      {
-        return toWh(m_imu_power, duration);
-      }
+      computeIMUEnergy(float duration) const;
 
       //! Get the battery capacity
       //! @return battery energy capacity in Wh
@@ -141,17 +89,53 @@ namespace DUNE
         return m_capacity;
       }
 
+      inline float
+      getPowerConsumptionHotel(void) const
+      {
+        return m_power_hotel;
+      }
+
+      inline float
+      getPowerConsumptionFull(void) const
+      {
+        return m_power_full;
+      }
+
     private:
       enum Indices
       {
+        //! Index of the 'Survival' column.
         CFG_IDX_SURVIVAL = 0,
+        //! Index of the 'Hotel' column.
         CFG_IDX_HOTEL = 1,
+        //! Index of the 'Payload' column.
         CFG_IDX_PAYLOAD = 2,
+        //! Index of the 'IMU' column.
         CFG_IDX_IMU = 3,
+        //! Index of the 'Average Power Consuption' column.
         CFG_IDX_AVERAGE = 4,
+        //! Index of the 'Powersave Power Consuption' column.
         CFG_IDX_POWERSAVE = 5,
+        //! Index of the 'Entity Label' column.
         CFG_IDX_ENTITY_LABEL = 6
       };
+
+      //! Conversion values for power (Watt).
+      std::vector<float> m_conv_watt;
+      //! Conversion values for speed (rpm).
+      std::vector<float> m_conv_rpm;
+      //! Hotel load of the model.
+      float m_power_hotel;
+      //! Power consumed by IMU.
+      float m_power_imu;
+      //! Power consumed by the payload.
+      float m_power_payload;
+      //! Power consumed by the full system (hotel + payload + IMU).
+      float m_power_full;
+      //! Map of payloads to power consumed.
+      std::map<std::string, float> m_payloads;
+      //! Battery energy capacity.
+      float m_capacity;
 
       //! Converts W to Wh using time in seconds
       //! @param[in] power value of power in W
@@ -164,57 +148,7 @@ namespace DUNE
       }
 
       void
-      computePowers(Parsers::Config* cfg)
-      {
-        m_imu_power = 0;
-        m_hotel_load = 0;
-
-        for (size_t i = 0; i < m_hardware_list.size(); ++i)
-        {
-          std::vector<std::string> elements;
-          cfg->get("Hardware Parts", m_hardware_list[i], "", elements);
-          if (elements.size() != 7)
-            continue;
-
-          if (elements[CFG_IDX_HOTEL] == "On")
-          {
-            m_hotel_load += castLexical<float>(elements[CFG_IDX_AVERAGE]);
-          }
-          else if (elements[CFG_IDX_HOTEL] == "Powersave")
-          {
-            m_hotel_load += castLexical<float>(elements[CFG_IDX_POWERSAVE]);
-          }
-
-          if (elements[CFG_IDX_PAYLOAD] == "On")
-          {
-            std::pair<std::string, float> pl(elements[CFG_IDX_ENTITY_LABEL], castLexical<float>(elements[CFG_IDX_AVERAGE]));
-            m_payloads.insert(pl);
-          }
-
-          if (elements[CFG_IDX_IMU] == "On")
-          {
-            m_imu_power += castLexical<float>(elements[CFG_IDX_AVERAGE]);
-          }
-        }
-
-        std::fprintf(stderr, "Hotel load: %0.2f\n", m_hotel_load);
-        std::fprintf(stderr, "IMU load: %0.2f\n", m_imu_power);
-      }
-
-      //! Conversion values for power (Watt)
-      std::vector<float> m_conv_watt;
-      //! Conversion values for speed (rpm)
-      std::vector<float> m_conv_rpm;
-      //! Hardware list.
-      std::vector<std::string> m_hardware_list;
-      //! Hotel load of the model
-      float m_hotel_load;
-      //! Map of payloads to power consumed
-      std::map<std::string, float> m_payloads;
-      //! Power consumed by IMU
-      float m_imu_power;
-      //! Battery energy capacity
-      float m_capacity;
+      processHardwareParts(const std::vector<std::string>& hardware_parts, Parsers::Config* cfg);
     };
   }
 }
