@@ -84,7 +84,7 @@ AUTH = {
   :config   => false
 }
 
-$log = File.new(__FILE__.sub('.rb', '.log'), 'w')
+$log = $stdout
 
 def banner(text)
   o = '#' * 50
@@ -363,7 +363,7 @@ class Docker
   def execute
     hostname = @name.gsub("dune-", "")
     puts hostname
-    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --target #{@target}`
+    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --no-log --target #{@target}`
   end
 end
 
@@ -379,11 +379,16 @@ options = {
   :machine     => nil,
   :vbox        => false,
   :docker      => false,
-  :native      => true
+  :native      => true,
+  :log         => true
 }
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: options.rb [options]"
+  opts.banner = "Usage: dune-cdash-build.rb [options]"
+
+  opts.on("--[no-]log", "Log output to a file") do |v|
+    options[:log] = v
+  end
 
   opts.on("-t", "--target TARGET", "Target name (Nightly, Experimental)") do |v|
     options[:target] = v
@@ -422,6 +427,10 @@ end.parse!
 ############################################################################
 # Execute.                                                                 #
 ############################################################################
+
+if options[:log]
+  $log = File.new(__FILE__.sub('.rb', '.log'), 'w')
+end
 
 # Docker.
 if options[:docker]

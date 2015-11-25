@@ -118,6 +118,8 @@ namespace Sensors
       unsigned rx_length;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Navigation turn around time.
+      unsigned turn_around_time;
     };
 
     // Type definition for mapping addresses.
@@ -195,6 +197,11 @@ namespace Sensors
         .maximumValue("1900")
         .units(Units::MeterPerSecond)
         .description("Water sound speed");
+
+        param("Turn Around Time", m_args.turn_around_time)
+        .units(Units::Millisecond)
+        .defaultValue("20")
+        .minimumValue("0");
 
         param("Timeout - Micro-Modem Ping", m_args.tout_mmping)
         .units(Units::Second)
@@ -311,6 +318,8 @@ namespace Sensors
         configureModem("CCCFG", "XST", 0);
         // Cycle-init timeout time.
         configureModem("CCCFG", "CTO", 10);
+        // Navigation turn around time.
+        configureModem("CCCFG", "TAT", m_args.turn_around_time);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }

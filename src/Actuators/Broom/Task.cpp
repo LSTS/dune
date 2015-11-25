@@ -125,6 +125,8 @@ namespace Actuators
       bool inv_rotation;
       //! Accept DesiredSpeed messages
       bool desired_speed;
+      //! Motor identifier.
+      unsigned motor_id;
     };
 
     struct Task: public Tasks::Periodic
@@ -151,8 +153,12 @@ namespace Actuators
       Arguments m_args;
       //! Device error mask.
       uint8_t m_dev_errors;
+      //! Motor identifier.
+      unsigned m_motor_id;
       //! Enable legacy protocol
       bool m_legacy;
+      //! Used to silence some spurious boot errors.
+      Counter<double> m_boot_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -162,6 +168,7 @@ namespace Actuators
         m_bridge_ent(NULL),
         m_mcu_ent(NULL),
         m_dev_errors(ERR_NONE),
+        m_motor_id(0),
         m_legacy(false)
       {
         // Define configuration parameters.
@@ -210,6 +217,9 @@ namespace Actuators
         param("MCU - Entity Label", m_args.mcu_elabel)
         .defaultValue("");
 
+        param("Motor Identifier", m_args.motor_id)
+        .defaultValue("0");
+
         // Initialize the state request clock
         m_last_state = Clock::get();
 
@@ -221,6 +231,8 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
+        m_motor_id = m_args.motor_id;
+
         if (paramChanged(m_args.state_per))
           m_args.state_per = 1.0 / m_args.state_per;
 
@@ -257,6 +269,7 @@ namespace Actuators
           m_proto.setUART(m_args.uart_dev);
           m_proto.open();
           m_proto.requestVersion();
+          m_boot_timer.setTop(10.0);
         }
         catch (std::runtime_error& e)
         {
@@ -312,7 +325,10 @@ namespace Actuators
               for (int i = 0; i < 8; i++)
               {
                 if (data[0] & (1 << i))
-                  err(DTR("device error: %s"), DTR(c_dev_error_strings[i]));
+                {
+                  if (m_boot_timer.overflow())
+                    err(DTR("device error: %s"), DTR(c_dev_error_strings[i]));
+                }
               }
 
               // FIXME: report this error properly
@@ -424,7 +440,8 @@ namespace Actuators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
-        setRefThrust(msg->value);
+        if (msg->id == m_motor_id)
+          setRefThrust(msg->value);
       }
 
       void

@@ -35,7 +35,7 @@ namespace Sensors
     using DUNE_NAMESPACES;
 
     // Number of Channels
-    static const uint8_t c_channels = 4;
+    static const uint8_t c_channels = 5;
 
     //! Channel Names
     enum Channels
@@ -43,7 +43,8 @@ namespace Sensors
       C_RHODAMINE = 0 ,
       C_TURBIDITY = 1,
       C_FINE_OIL = 2,
-      C_CRUDE_OIL = 3
+      C_CRUDE_OIL = 3,
+      C_CHLOROPHYLL = 4
     };
 
     struct Arguments
@@ -66,6 +67,8 @@ namespace Sensors
       unsigned m_crude_oil_eid;
       // Turbidity Entity Id.
       unsigned m_turbidity_eid;
+      // Chlorophyll Entity Id.
+      unsigned m_chlorophyll_eid;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
 
@@ -102,6 +105,13 @@ namespace Sensors
 
         param("Crude Oil Label", m_args.elabels[C_CRUDE_OIL])
         .defaultValue("Crude Oil");
+
+        param("Chlorophyll Conversion Factors", m_args.conversions[C_CRUDE_OIL])
+        .size(2)
+        .defaultValue("1.0, 0.0");
+
+        param("Chlorophyll Label", m_args.elabels[C_CRUDE_OIL])
+        .defaultValue("Chlorophyll");
 
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Voltage>(this);
@@ -143,6 +153,15 @@ namespace Sensors
         {
           m_turbidity_eid = UINT_MAX;
         }
+        try
+        {
+          m_chlorophyll_eid = resolveEntity(m_args.elabels[C_CHLOROPHYLL]);
+        }
+        catch (...)
+        {
+          m_chlorophyll_eid = UINT_MAX;
+        }
+
       }
 
       void
@@ -185,6 +204,13 @@ namespace Sensors
           IMC::Turbidity turb;
           turb.value = val * m_args.conversions[C_TURBIDITY][0] + m_args.conversions[C_TURBIDITY][1];
           dispatch(turb);
+        }
+
+        if (msg->getSourceEntity() == m_chlorophyll_eid)
+        {
+          IMC::Chlorophyll chlo;
+          chlo.value = val * m_args.conversions[C_CHLOROPHYLL][0] + m_args.conversions[C_CHLOROPHYLL][1];
+          dispatch(chlo);
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);

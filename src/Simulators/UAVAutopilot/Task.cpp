@@ -37,11 +37,6 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
-    //! Vector for System Mapping.
-    typedef std::vector<uint32_t> Systems;
-    //! Vector for Entity Mapping.
-    typedef std::vector<uint32_t> Entities;
-
     struct Arguments
     {
       // SimulatedState filter
@@ -55,26 +50,23 @@ namespace Simulators
     {
       //! Task arguments.
       Arguments m_args;
-      // Simulation vehicle.
-      //UAVModel* m_model;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
       //! Origin for simulated state.
       IMC::GpsFix m_origin;
-      //! List of systems allowed to define a command.
-      Systems m_filtered_sys;
-      //! List of entities allowed to define a command.
-      Entities m_filtered_ent;
+      //! SimulatedState filter.
+      DUNE::Tasks::SourceFilter* m_state_flt;
       // System alias id
       uint32_t m_alias_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
+        m_state_flt(NULL),
         m_alias_id(UINT_MAX)
       {
         // Definition of configuration parameters.
         param("SimulatedState Filter", m_args.state_src)
-        .defaultValue("")
+        .defaultValue("self:")
         .description("List of <System>+<System>:<Entity>+<Entity> that define the source systems and entities from which the state is accepted.");
 
         param("Source Alias", m_args.src_alias)
@@ -112,92 +104,16 @@ namespace Simulators
       }
 
       void
-      onResourceAcquisition(void)
-      {
-      }
-
-      void
-      onEntityResolution(void)
-      {
-        //! Process the systems and entities allowed to pass the SimulatedState
-        uint32_t i_src;
-        m_filtered_sys.clear();
-        m_filtered_ent.clear();
-        for (unsigned int i = 0; i < m_args.state_src.size(); ++i)
-        {
-          std::vector<std::string> parts;
-          String::split(m_args.state_src[i], ":", parts);
-          if (parts.size() < 1)
-            continue;
-
-          // Split systems and entities.
-          std::vector<std::string> systems;
-          String::split(parts[0], "+", systems);
-          std::vector<std::string> entities;
-          String::split(parts[1], "+", entities);
-
-          m_filtered_ent.resize(systems.size()*entities.size());
-          m_filtered_sys.resize(systems.size()*entities.size());
-          unsigned int i_sys_n = systems.size();
-          unsigned int i_ent_n = entities.size();
-          // Resolve systems id.
-          for (unsigned j = 0; j < i_sys_n; j++)
-          {
-            // Resolve entities id.
-            for (unsigned k = 0; k < i_ent_n; k++)
-            {
-              i_src = (j+1)*(k+1)-1;
-              // Resolve systems.
-              if (systems[j].empty())
-              {
-                m_filtered_sys[i_src] = UINT_MAX;
-                debug("State filtering - Filter source system undefined");
-              }
-              else
-              {
-                try
-                {
-                  m_filtered_sys[i_src] = resolveSystemName(systems[j]);
-                  debug("State filtering - System '%s' with ID: %d",
-                      systems[j].c_str(), resolveSystemName(systems[j]));
-                }
-                catch (...)
-                {
-                  war("State filtering - No system found with designation '%s'!", systems[j].c_str());
-                  i_sys_n--;
-                  j--;
-                }
-              }
-              // Resolve entities.
-              if (entities[j].empty())
-              {
-                m_filtered_ent[i_src] = UINT_MAX;
-                debug("State filtering - Filter entity system undefined");
-              }
-              else
-              {
-                try
-                {
-                  m_filtered_ent[i_src] = resolveEntity(entities[k]);
-                  debug("State filtering - Entity '%s' with ID: %d",
-                      entities[k].c_str(), resolveEntity(entities[k]));
-                }
-                catch (...)
-                {
-                  war("State filtering - No entity found with designation '%s'!", entities[k].c_str());
-                  i_ent_n--;
-                  k--;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      void
       onResourceRelease(void)
       {
-        //Memory::clear(m_model);
+        Memory::clear( m_state_flt );
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        //! Process the systems and entities allowed to pass the SimulatedState
+        m_state_flt = new Tasks::SourceFilter(*this, m_args.state_src, "SimulatedState");
       }
 
       void
@@ -230,29 +146,8 @@ namespace Simulators
         }
 
         // Filter SimulatedState by systems and entities.
-        bool matched = true;
-        if (m_filtered_sys.size() > 0)
-        {
-          matched = false;
-          std::vector<uint32_t>::iterator itr_sys = m_filtered_sys.begin();
-          std::vector<uint32_t>::iterator itr_ent = m_filtered_ent.begin();
-          for (; itr_sys != m_filtered_sys.end(); ++itr_sys)
-          {
-            if ((*itr_sys == msg->getSource() || *itr_sys == (unsigned int)UINT_MAX) &&
-                (*itr_ent == msg->getSourceEntity() || *itr_ent == (unsigned int)UINT_MAX))
-              matched = true;
-            ++itr_ent;
-          }
-        }
-        // This system and entity are not listed to be passed.
-        if (!matched)
-        {
-          trace("SimulatedState message rejected.");
-          trace("SimulatedState received from system '%s' and entity '%s'.",
-              resolveSystemId(msg->getSource()),
-              resolveEntity(msg->getSourceEntity()).c_str());
+        if (!m_state_flt->match(msg))
           return;
-        }
 
         spew("Consuming SimulatedState");
 

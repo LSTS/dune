@@ -194,6 +194,17 @@ namespace DUNE
     void
     toWGS84(const IMC::SimulatedState& estate, double& lat, double& lon);
 
+    //! Convert latitude to the format used in NMEA sentences.
+    //! @param latitude latitude in radian.
+    //! @return NMEA formatted latitude.
+    std::string
+    latitudeToNMEA(double latitude);
+
+    //! Convert longitude to the format used in NMEA sentences.
+    //! @param longitude longitude in radian.
+    //! @return NMEA formatted longitude.
+    std::string
+    longitudeToNMEA(double longitude);
   }
 }
 

@@ -385,11 +385,16 @@ namespace Sensors
       {
         for (size_t i = 0; i < m_args.trigger_slaves.size(); ++i)
         {
-          unsigned eid = resolveEntity(m_args.trigger_slaves[i]);
-          IMC::PulseDetectionControl pdc;
-          pdc.setDestinationEntity(eid);
-          pdc.op = op;
-          dispatch(pdc);
+          try
+          {
+            unsigned eid = resolveEntity(m_args.trigger_slaves[i]);
+            IMC::PulseDetectionControl pdc;
+            pdc.setDestinationEntity(eid);
+            pdc.op = op;
+            dispatch(pdc);
+          }
+          catch (...)
+          { }
         }
       }
 

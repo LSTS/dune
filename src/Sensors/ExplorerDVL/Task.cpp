@@ -45,8 +45,8 @@ namespace Sensors
     static const unsigned c_beam_count = 4;
     //! Data input timeout.
     static const double c_data_timeout = 5.0;
-    //! Restart delay.
-    static const double c_restart_delay = 5.0;
+    //! Bottom lock timeout.
+    static const double c_bottom_lock_timeout = 10.0;
 
     //! States of the activation state machine.
     enum ActivationState
@@ -140,13 +140,18 @@ namespace Sensors
       DeactivationState m_deact_state;
       //! Watchdog.
       Counter<double> m_wdog;
-      // Task arguments.
+      //! Bottom Lock Watchdog.
+      Counter<double> m_bottom_lock_timer;
+      //! True if pings are externally triggered.
+      bool m_triggered;
+      //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_driver(NULL),
-        m_powered(false)
+        m_powered(false),
+        m_triggered(false)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -327,6 +332,7 @@ namespace Sensors
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.setTop(c_data_timeout);
+        m_bottom_lock_timer.setTop(c_bottom_lock_timeout);
       }
 
       void
@@ -379,19 +385,21 @@ namespace Sensors
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
+        if (msg->op == IMC::PulseDetectionControl::POP_ON)
+          m_triggered = true;
+        else if (msg->op == IMC::PulseDetectionControl::POP_OFF)
+          m_triggered = false;
+
         if (m_driver == NULL)
           return;
 
+        if (!isActive())
+          return;
+
         if (msg->op == IMC::PulseDetectionControl::POP_ON)
-        {
-          trace("enabling detection of input trigger");
-          m_driver->setInputTriggerEnable(Driver::ITB_RISING_EDGE, 0, 200);
-        }
+          configureInputTrigger(true);
         else if (msg->op == IMC::PulseDetectionControl::POP_OFF)
-        {
-          trace("disabling detection of input trigger");
-          m_driver->setInputTriggerEnable(Driver::ITB_OFF, 0);
-        }
+          configureInputTrigger(false);
       }
 
       void
@@ -433,6 +441,50 @@ namespace Sensors
           debug("device is no longer powered");
       }
 
+      bool
+      setInputTrigger(bool enabled)
+      {
+        Driver::InputTriggerBehaviour behaviour = Driver::ITB_OFF;
+        uint16_t delay = 0;
+        uint16_t timeout = 65535;
+
+        if (enabled)
+        {
+          behaviour = Driver::ITB_RISING_EDGE;
+          timeout = 500;
+        }
+
+        bool rv = m_driver->setInputTriggerEnable(behaviour, delay, timeout);
+        if (rv)
+          trace("input trigger: %s", enabled ? "enabled" : "disabled");
+
+        return rv;
+      }
+
+      void
+      configureInputTrigger(bool value)
+      {
+        Counter<double> timer(5.0);
+        while (!timer.overflow())
+        {
+          trace("stop pinging");
+          consumeMessages();
+          if (!m_driver->stopPinging())
+            continue;
+
+          consumeMessages();
+          setInputTrigger(value);
+
+          trace("start pinging");
+          consumeMessages();
+          if (!m_driver->startPinging())
+            continue;
+
+          m_bottom_lock_timer.reset();
+          break;
+        }
+      }
+
       //! Test if the task can request activation.
       //! @return true if we can request activation, false otherwise.
       bool
@@ -466,20 +518,6 @@ namespace Sensors
       }
 
       void
-      setAltitudeValidity(IMC::Distance& alt)
-      {
-        if (alt.value > 0.0)
-        {
-          alt.validity = IMC::Distance::DV_VALID;
-        }
-        else
-        {
-          alt.value = 0.0;
-          alt.validity = IMC::Distance::DV_INVALID;
-        }
-      }
-
-      void
       processAltitude(void)
       {
         for (size_t i = 0; i < c_beam_count; ++i)
@@ -491,8 +529,15 @@ namespace Sensors
 
         m_altitude_filtered.setTimeStamp(m_altitude[0].getTimeStamp());
         m_altitude_filtered.value = m_filter.getDistance();
-        setAltitudeValidity(m_altitude_filtered);
+        if (m_altitude_filtered.value > 0.0)
+          m_altitude_filtered.validity = IMC::Distance::DV_VALID;
+        else
+          m_altitude_filtered.validity = IMC::Distance::DV_INVALID;
+
         dispatch(m_altitude_filtered, DF_KEEP_TIME);
+
+        if (m_altitude_filtered.validity == IMC::Distance::DV_VALID)
+          m_bottom_lock_timer.reset();
       }
 
       void
@@ -596,6 +641,11 @@ namespace Sensors
         if (!m_driver->setDataFormat(0))
           goto fail;
 
+        trace("configuring input trigger");
+        consumeMessages();
+        if (!setInputTrigger(m_triggered))
+          goto fail;
+
         trace("start pinging");
         consumeMessages();
         if (!m_driver->startPinging())
@@ -673,7 +723,7 @@ namespace Sensors
             break;
 
           case ST_DEACT_TURN_OFF:
-            trace("turning power offg");
+            trace("turning power off");
             turnPowerOff();
             m_deact_state = ST_DEACT_TURN_OFF_WAIT;
             break;
@@ -710,6 +760,18 @@ namespace Sensors
             if (readSample(bfr, sizeof(bfr)))
             {
               m_wdog.reset();
+
+              if (m_bottom_lock_timer.overflow())
+              {
+                trace("no bottom lock for %0.2f s", m_bottom_lock_timer.getElapsed());
+                double clock_start = Clock::get();
+                if (m_driver->restartPinging())
+                {
+                  trace("pinging restarted in %0.2f s", Clock::get() - clock_start);
+                  m_bottom_lock_timer.reset();
+                }
+              }
+
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             }
             else if (m_wdog.overflow())

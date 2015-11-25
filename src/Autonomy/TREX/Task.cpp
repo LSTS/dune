@@ -227,6 +227,7 @@ namespace Autonomy
             if (!msg->token.isNull())
             {
               IMC::TrexToken token(*msg->token.get());
+              token.setSource(m_ctx.resolver.id());
               dispatch(token);
             }
             break;

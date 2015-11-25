@@ -375,18 +375,14 @@ main(int argc, char** argv)
     tmsg->op = IMC::LblConfig::OP_SET_CFG;
 
     IMC::LblBeacon bc;
-    bc.beacon = "b2";
+    bc.beacon = "benthos2";
     bc.lat = 0.71883274;
     bc.lon = -0.15194732;
     bc.depth = 3;
-    bc.query_channel = 4;
-    bc.reply_channel = 5;
-    bc.transponder_delay = 0;
     tmsg->beacons.push_back(bc);
-    bc.beacon = "b3";
+    bc.beacon = "benthos3";
     bc.lat = 0.71881068;
     bc.lon = -0.15192335;
-    bc.reply_channel = 6;
     tmsg->beacons.push_back(bc);
   }
 

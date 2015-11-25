@@ -151,23 +151,16 @@ namespace Sensors
 
         Coordinates::toWGS84(m_estate, lat, lon);
 
-        int lat_deg;
-        double lat_min;
-        Angles::convertDecimalToDM(Angles::degrees(lat), lat_deg, lat_min);
-
-        int lon_deg;
-        double lon_min;
-        Angles::convertDecimalToDM(Angles::degrees(lon), lon_deg, lon_min);
+        std::string lat_nmea = latitudeToNMEA(lat);
+        std::string lon_nmea = longitudeToNMEA(lon);
 
         double vel = Math::norm(m_estate.vx, m_estate.vy);
 
         NMEAWriter stn("GPRMC");
         stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << "A"
-            << String::str("%02d%02.5f", std::abs(lat_deg), std::fabs(lat_min))
-            << ((lat_deg >= 0) ? "N" : "S")
-            << String::str("%03d%02.5f", std::abs(lon_deg), std::fabs(lon_min))
-            << ((lon_deg >= 0) ? "E" : "W")
+            << lat_nmea
+            << lon_nmea
             << vel * DUNE::Units::c_ms_to_knot
             << 0 // azimuth.
             << String::str("%02u%02u%02u", bdt.day, bdt.month, bdt.year - 2000)
@@ -225,6 +218,13 @@ namespace Sensors
       }
 
       void
+      writeToUART(const std::string& str)
+      {
+        trace("%s", sanitize(str).c_str());
+        m_uart->write(str.c_str(), str.size());
+      }
+
+      void
       sendSentences(void)
       {
         sendSentences(Clock::getSinceEpoch());
@@ -243,25 +243,25 @@ namespace Sensors
         if (m_args.send_zda)
         {
           stn_str = createZDA(bdt, fsec);
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
 
         if (m_args.send_rmc && !m_estate_timer.overflow())
         {
           stn_str = createRMC(bdt, fsec);
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
 
         if (m_args.send_hdt && !m_estate_timer.overflow())
         {
           stn_str = createHDT();
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
 
         if (m_args.send_vtg && !m_estate_timer.overflow())
         {
           stn_str = createVTG();
-          m_uart->write(stn_str.c_str(), stn_str.size());
+          writeToUART(stn_str);
         }
       }
 

@@ -71,6 +71,23 @@ namespace Sensors
         Memory::clear(m_uart);
       }
 
+      bool
+      restartPinging(void)
+      {
+        Counter<double> timer(5.0);
+
+        while (!timer.overflow())
+        {
+          if (stopPinging())
+          {
+            if (startPinging())
+              return true;
+          }
+        }
+
+        return false;
+      }
+
       //! Start pinging and collecting data.
       //! @return true if command succeeded, false otherwise.
       bool
@@ -182,11 +199,11 @@ namespace Sensors
         return sendCommand("EZ00000000\r");
       }
 
-      void
+      bool
       setInputTriggerEnable(InputTriggerBehaviour behaviour, uint16_t delay, uint16_t timeout = 65535)
       {
         std::string cmd = String::str("CX %u %u %u\r", behaviour, delay, timeout);
-        m_uart->writeString(cmd.c_str());
+        return sendCommand(cmd);
       }
 
       //! Set the number of seconds to wait for a reply.

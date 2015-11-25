@@ -533,7 +533,7 @@ namespace Power
               break;
 
             case LUCL::CommandTypeInvalidVersion:
-              err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+              err("%s", DTR(Status::getString(Status::CODE_INVALID_VERSION)));
               break;
 
             case LUCL::CommandTypeError:
@@ -541,7 +541,7 @@ namespace Power
               break;
 
             case LUCL::CommandTypeInvalidChecksum:
-              err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+              war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
               break;
 
             case LUCL::CommandTypeNone:

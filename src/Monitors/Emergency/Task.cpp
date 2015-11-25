@@ -155,7 +155,7 @@ namespace Monitors
           m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%u c:%u",
                                getSystemName(),
                                bdt.hour, bdt.minutes, bdt.seconds,
-                               lat_deg, lat_min, lon_deg, std::fabs(lon_min),
+                               lat_deg, lat_min, lon_deg, lon_min,
                                (int)m_fuel, (int)m_fuel_conf);
 
           m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
