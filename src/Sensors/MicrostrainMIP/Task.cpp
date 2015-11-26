@@ -153,7 +153,7 @@ namespace Sensors
         Math::Matrix data(c_axes_count, 1);
         for (unsigned i = 0; i < c_axes_count; i++)
           data(i) = m_args.hard_iron[i];
-        data = inverse(m_rotation) * data;
+        data = transpose(m_rotation) * data;
         for (unsigned i = 0; i < c_axes_count; i++)
           m_hard_iron_rotated[i] = data(i);
 
