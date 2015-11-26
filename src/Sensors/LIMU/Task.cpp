@@ -299,7 +299,7 @@ namespace Sensors
       //! Set Hard-Iron calibration parameters.
       //! @param[in] factors new calibration values.
       void
-      setHardIronFactors(const std::vector<double>& factors)
+      setHardIronFactors(const float* factors)
       {
         spew("setting hard-iron parameters to %.4f, %.4f, %.4f",
              factors[0],
