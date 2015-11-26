@@ -177,7 +177,7 @@ namespace Sensors
           return;
 
         if (paramChanged(m_args.hard_iron))
-          setHardIronFactors(m_args.hard_iron);
+          setHardIronFactors(m_hard_iron);
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
@@ -225,7 +225,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        setHardIronFactors(m_args.hard_iron);
+        setHardIronFactors(m_hard_iron);
         setOutputFrequency(m_args.output_frq);
         m_wdog.setTop(2.0);
       }
@@ -236,8 +236,8 @@ namespace Sensors
         if (getEntityId() != msg->getDestinationEntity())
           return;
 
-        double hi_x = m_args.hard_iron[0] - msg->x;
-        double hi_y = m_args.hard_iron[1] - msg->y;
+        double hi_x = m_hard_iron[0] - msg->x;
+        double hi_y = m_hard_iron[1] - msg->y;
 
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
