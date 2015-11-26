@@ -162,7 +162,7 @@ namespace Sensors
       {
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
         m_rotation_euler(0) = atan2(m_rotation(2, 1), m_rotation(2, 2));
-        m_rotation_euler(1) = asin(m_rotation(2, 0));
+        m_rotation_euler(1) = asin(-m_rotation(2, 0));
         m_rotation_euler(2) = atan2(m_rotation(1, 0), m_rotation(0, 0));
 
         // Rotate calibration parameters.
