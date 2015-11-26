@@ -22,21 +22,19 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Pedro Calado                                                     *
+// Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_PLANS_HPP_INCLUDED_
-#define DUNE_PLANS_HPP_INCLUDED_
+#ifndef DUNE_POWER_HPP_INCLUDED_
+#define DUNE_POWER_HPP_INCLUDED_
 
 namespace DUNE
 {
-  //! %Plan routines and classes.
-  namespace Plans
+  //! %Power routines and classes.
+  namespace Power
   { }
 }
 
-#include <DUNE/Plans/TimeProfile.hpp>
-#include <DUNE/Plans/Progress.hpp>
-#include <DUNE/Plans/SpeedModel.hpp>
+#include <DUNE/Power/Model.hpp>
 
 #endif
