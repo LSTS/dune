@@ -483,13 +483,10 @@ namespace Sensors
         m_magn.z = data(2);
 
         // Euler angles.
-        Math::Matrix angles(3, 1);
         data(0) = m_euler.phi;
         data(1) = m_euler.theta;
         data(2) = m_euler.psi;
-
         data = m_rotation * data - m_rotation_euler;
-
         m_euler.phi = data(0);
         m_euler.theta = data(1);
         m_euler.psi = data(2);
