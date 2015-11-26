@@ -280,17 +280,22 @@ namespace Sensors
           return false;
 
         // Exit if hard-iron offsets match the ones we have.
-        if (hard_iron_read[0] == m_hard_iron_rotated[0] && hard_iron_read[1] == m_hard_iron_rotated[1])
+        if (hard_iron_read[0] == m_hard_iron_rotated[0] &&
+            hard_iron_read[1] == m_hard_iron_rotated[1] &&
+            hard_iron_read[2] == m_hard_iron_rotated[2])
           return true;
 
-        inf("%f == %f && %f == %f", hard_iron_read[0], m_hard_iron_rotated[0], hard_iron_read[1], m_hard_iron_rotated[1]);
+        spew("%f == %f && %f == %f && %f == %f",
+             hard_iron_read[0], m_hard_iron_rotated[0],
+             hard_iron_read[1], m_hard_iron_rotated[1],
+             hard_iron_read[2], m_hard_iron_rotated[2]);
 
         // Update hard-iron offsets.
-        if (m_driver->setHardIronOffset(m_hard_iron_rotated[0], m_hard_iron_rotated[1], 0))
+        if (m_driver->setHardIronOffset(m_hard_iron_rotated[0], m_hard_iron_rotated[1], m_hard_iron_rotated[2]))
         {
           inf(DTR("new hard-iron calibration parameters: %f, %f, 0.0"),
-              m_hard_iron_rotated[0],
-              m_hard_iron_rotated[1]);
+              m_args.hard_iron[0],
+              m_args.hard_iron[1]);
 
           return true;
         }
