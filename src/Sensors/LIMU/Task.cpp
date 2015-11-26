@@ -74,6 +74,8 @@ namespace Sensors
       std::string pwr_name;
       //! Hard-iron correction factors.
       std::vector<double> hard_iron;
+      //! Rotation matrix values.
+      std::vector<double> rotation_mx;
     };
 
     struct Task: public Tasks::Task
@@ -106,6 +108,12 @@ namespace Sensors
       uint8_t m_buffer[128];
       //! Compass Calibration maneuver entity id.
       unsigned m_calib_eid;
+      //! Rotation Matrix to correct mounting position.
+      Math::Matrix m_rotation;
+      //! Euler angles offset.
+      Math::Matrix m_rotation_euler;
+      //! Rotated calibration parameters.
+      float m_hard_iron[3];
       //! Watchdog.
       Counter<double> m_wdog;
       //! Error counts.
@@ -141,12 +149,30 @@ namespace Sensors
         .defaultValue("false")
         .description("Set to true to enable raw data output");
 
+        param("Rotation Matrix", m_args.rotation_mx)
+        .defaultValue("1, 0, 0, 0, 1, 0, 0, 0, 1")
+        .size(9)
+        .description("Rotation matrix which is dependent of the mounting position");
+
         bind<IMC::MagneticField>(this);
       }
 
       void
       onUpdateParameters(void)
       {
+        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
+        m_rotation_euler(0) = atan2(m_rotation(2, 1), m_rotation(2, 2));
+        m_rotation_euler(1) = asin(m_rotation(2, 0));
+        m_rotation_euler(2) = atan2(m_rotation(1, 0), m_rotation(0, 0));
+
+        // Rotate calibration parameters.
+        Math::Matrix data(3, 1);
+        for (unsigned i = 0; i < 3; i++)
+          data(i) = m_args.hard_iron[i];
+        data = inverse(m_rotation) * data;
+        for (unsigned i = 0; i < 3; i++)
+          m_hard_iron[i] = data(i);
+
         if (m_ctl == NULL)
           return;
 
@@ -320,7 +346,6 @@ namespace Sensors
         m_ang_vel.z = Angles::radians(tmp);
         m_ang_vel.time = dev_tstamp;
         m_ang_vel.setTimeStamp(imc_tstamp);
-        dispatch(m_ang_vel, DF_KEEP_TIME);
 
         // Acceleration.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -331,7 +356,6 @@ namespace Sensors
         m_accel.z = tmp;
         m_accel.time = dev_tstamp;
         m_accel.setTimeStamp(imc_tstamp);
-        dispatch(m_accel, DF_KEEP_TIME);
 
         // Delta Angles.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -342,7 +366,6 @@ namespace Sensors
         m_delt_ang.z = Angles::radians(tmp);
         m_delt_ang.time = dev_tstamp;
         m_delt_ang.setTimeStamp(imc_tstamp);
-        dispatch(m_delt_ang, DF_KEEP_TIME);
 
         // Delta Velocity.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -353,7 +376,6 @@ namespace Sensors
         m_delt_vel.z = tmp;
         m_delt_vel.time = dev_tstamp;
         m_delt_vel.setTimeStamp(imc_tstamp);
-        dispatch(m_delt_vel, DF_KEEP_TIME);
 
         // Magnetic Field.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -364,7 +386,6 @@ namespace Sensors
         m_magn.z = tmp;
         m_magn.time = dev_tstamp;
         m_magn.setTimeStamp(imc_tstamp);
-        dispatch(m_magn, DF_KEEP_TIME);
 
         // Euler Angles.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -376,7 +397,15 @@ namespace Sensors
         m_euler.psi = tmp;
         m_euler.time = dev_tstamp;
         m_euler.setTimeStamp(imc_tstamp);
+
+        rotateData();
+
         dispatch(m_euler, DF_KEEP_TIME);
+        dispatch(m_magn, DF_KEEP_TIME);
+        dispatch(m_delt_vel, DF_KEEP_TIME);
+        dispatch(m_accel, DF_KEEP_TIME);
+        dispatch(m_delt_ang, DF_KEEP_TIME);
+        dispatch(m_ang_vel, DF_KEEP_TIME);
 
         // Temperature.
         ptr += ByteCopy::fromLE(tmp, ptr);
@@ -400,6 +429,71 @@ namespace Sensors
           m_err_counts.increment(ERR_FLAG_SPI_ERR);
 
         m_wdog.reset();
+      }
+
+      //! Correct data according with mounting position.
+      void
+      rotateData(void)
+      {
+        Math::Matrix data(3, 1);
+
+        // Acceleration.
+        data(0) = m_accel.x;
+        data(1) = m_accel.y;
+        data(2) = m_accel.z;
+        data = m_rotation * data;
+        m_accel.x = data(0);
+        m_accel.y = data(1);
+        m_accel.z = data(2);
+
+        // Angular Velocity.
+        data(0) = m_ang_vel.x;
+        data(1) = m_ang_vel.y;
+        data(2) = m_ang_vel.z;
+        data = m_rotation * data;
+        m_ang_vel.x = data(0);
+        m_ang_vel.y = data(1);
+        m_ang_vel.z = data(2);
+
+        // Delta Angles.
+        data(0) = m_delt_ang.x;
+        data(1) = m_delt_ang.y;
+        data(2) = m_delt_ang.z;
+        data = m_rotation * data;
+        m_delt_ang.x = data(0);
+        m_delt_ang.y = data(1);
+        m_delt_ang.z = data(2);
+
+        // Delta Velocity.
+        data(0) = m_delt_vel.x;
+        data(1) = m_delt_vel.y;
+        data(2) = m_delt_vel.z;
+        data = m_rotation * data;
+        m_delt_vel.x = data(0);
+        m_delt_vel.y = data(1);
+        m_delt_vel.z = data(2);
+
+        // Magnetic Field.
+        data(0) = m_magn.x;
+        data(1) = m_magn.y;
+        data(2) = m_magn.z;
+        data = m_rotation * data;
+        m_magn.x = data(0);
+        m_magn.y = data(1);
+        m_magn.z = data(2);
+
+        // Euler angles.
+        Math::Matrix angles(3, 1);
+        data(0) = m_euler.phi;
+        data(1) = m_euler.theta;
+        data(2) = m_euler.psi;
+
+        data = m_rotation * data - m_rotation_euler;
+
+        m_euler.phi = data(0);
+        m_euler.theta = data(1);
+        m_euler.psi = data(2);
+        m_euler.psi_magnetic = m_euler.psi;
       }
 
       //! Decode output raw data.
