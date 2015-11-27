@@ -39,6 +39,7 @@
 #include "Goto.hpp"
 #include "Launch.hpp"
 #include "Loiter.hpp"
+#include "Drop.hpp"
 #include "StationKeeping.hpp"
 #include "YoYo.hpp"
 #include "Rows.hpp"
@@ -57,7 +58,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge"};
+                                          "Dislodge", "Drop"};
 
     enum ManeuverType
     {
@@ -83,6 +84,8 @@ namespace Maneuver
       TYPE_POPUP,
       //! Type Dislodge
       TYPE_DISLODGE,
+      //! Type Drop
+      TYPE_DROP,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -95,6 +98,8 @@ namespace Maneuver
       std::vector<std::string> unsupported;
       //! Loiter Arguments
       LoiterArgs loiter;
+      //! Drop Arguments
+      LoiterArgs drop;
       //! StationKeeping Arguments
       StationKeepingArgs sk;
       //! Yoyo Arguments
@@ -309,6 +314,7 @@ namespace Maneuver
         m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
+        m_maneuvers[TYPE_DROP] = create<Drop>();
       }
 
       void
