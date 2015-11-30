@@ -122,7 +122,8 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_ctl(NULL)
+        m_ctl(NULL),
+        m_rotation_euler(3, 1, 0.0)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
