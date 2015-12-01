@@ -60,8 +60,8 @@ namespace Actuators
       //Value to put in pinout
       char GPIOValue[64];
       //state 
-      bool isOpen;
-
+      bool isOpen;  
+ 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -72,7 +72,7 @@ namespace Actuators
           .defaultValue("60")
           .description("Port to use in PWMBBB");
 
-        bind<IMC::pwmBBB>(this);
+        bind<IMC::ServoPosition>(this);
       }
       
       //! Update internal state with new parameter values.
@@ -113,18 +113,10 @@ namespace Actuators
       }
       
       void
-      consume(const IMC::pwmBBB* msg)
+      consume(const IMC::ServoPosition* msg)
       {
-        if(msg->servstat == IMC::pwmBBB::SERVSTAT_OPEN)
-        {
-          //setAngleServomotor(msg->servmin);
-          inf("IS OPEN - VALUE: %dº", msg->servmin);
-        }
-        else if(msg->servstat == IMC::pwmBBB::SERVSTAT_CLOSED)
-        {
-          inf("IS CLOSED - VALUE: %dº", msg->servmax);
-          //setAngleServomotor(msg->servmax);
-        }
+        setAngleServomotor(DUNE::Math::Angles::degrees(std::abs(msg->value)));
+        war("VALUE in deg: %fº", DUNE::Math::Angles::degrees(std::abs(msg->value)));
       }
 
       //!Inic of config to pinout of servomotor
@@ -189,14 +181,14 @@ namespace Actuators
       //! Main loop.
       void
       onMain(void)
-      {  
-        inf("Valor: %d",m_args.portio[0]);
- //       inicServo();    
+      {    
+        inicServo();    
         while (!stopping())
         {
           waitForMessages(0.1);
         }
- //       closeConfigServo();
+        
+        closeConfigServo();
       }
     };
   }
