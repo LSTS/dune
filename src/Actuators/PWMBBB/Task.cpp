@@ -48,8 +48,6 @@ namespace Actuators
       Arguments m_args;
       //GPIO for signal of servo
       int GPIOPin;
-      //Debug, number of loops of 0º to 180º for test
-      int times;
       //Handle of servo pinout
       FILE *myOutputHandle = NULL;
       //Mode in/out of pinout
@@ -59,8 +57,10 @@ namespace Actuators
       char GPIOString[4];
       //Value to put in pinout
       char GPIOValue[64];
-      //state 
-      bool isOpen;  
+      //state of update msg servo position
+      bool updateMsg;
+      //Value of servo position in deg
+      int valuePos;
  
       //! Constructor.
       //! @param[in] name task name.
@@ -72,7 +72,7 @@ namespace Actuators
           .defaultValue("60")
           .description("Port to use in PWMBBB");
 
-        bind<IMC::ServoPosition>(this);
+        bind<IMC::SetServoPosition>(this);
       }
       
       //! Update internal state with new parameter values.
@@ -113,18 +113,18 @@ namespace Actuators
       }
       
       void
-      consume(const IMC::ServoPosition* msg)
+      consume(const IMC::SetServoPosition* msg)
       {
         setAngleServomotor(DUNE::Math::Angles::degrees(std::abs(msg->value)));
-        war("VALUE in deg: %fº", DUNE::Math::Angles::degrees(std::abs(msg->value)));
       }
 
       //!Inic of config to pinout of servomotor
       void
       inicServo(void)
       {
+        updateMsg = false;
+        valuePos = 0;
         GPIOPin=m_args.portio[0]; /* GPIO1_28 or pin 12 on the P9 header */ 
-        times=6;
         sprintf(GPIOString, "%d", GPIOPin);
         sprintf(GPIOValue, "/sys/class/gpio/gpio%d/value", GPIOPin);
         sprintf(GPIODirection, "/sys/class/gpio/gpio%d/direction", GPIOPin);
@@ -144,26 +144,35 @@ namespace Actuators
 
       //!Set 0º to servomotor
       void
-      setAngleServomotor( int angle)
+      setAngleServomotor( int angle )
       {
+        valuePos = angle;
+        updateMsg = true;
+        int cntRefreshservo = 0;
         if(angle < 0)
           angle = 0;
         if(angle > 180)
           angle = 180;
         int valueUP = (10 * angle) + 600;
-        if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
-          inf("Unable to open value handle");
-        strcpy(setValue, "1"); // Set value high
-        fwrite(&setValue, sizeof(char), 1, myOutputHandle);
-        fclose(myOutputHandle);
-        usleep (valueUP);
-        // Set output to low
-        if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
-          inf("Unable to open value handle");
-        strcpy(setValue, "0"); // Set value low
-        fwrite(&setValue, sizeof(char), 1, myOutputHandle);
-        fclose(myOutputHandle);;
-        usleep (20000 - valueUP);
+
+        while(cntRefreshservo < 20)
+        {
+          if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
+            inf("Unable to open value handle");
+          strcpy(setValue, "1"); // Set value high
+          fwrite(&setValue, sizeof(char), 1, myOutputHandle);
+          fclose(myOutputHandle);
+          usleep (valueUP);
+          // Set output to low
+          if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
+            inf("Unable to open value handle");
+          strcpy(setValue, "0"); // Set value low
+          fwrite(&setValue, sizeof(char), 1, myOutputHandle);
+          fclose(myOutputHandle);;
+          usleep (20000 - valueUP);
+
+          cntRefreshservo++;
+        }
       }
 
       //!Close PinOut config
@@ -181,13 +190,19 @@ namespace Actuators
       //! Main loop.
       void
       onMain(void)
-      {    
-        inicServo();    
+      {
+        IMC::ServoPosition msgServoPos;
+        inicServo();   
         while (!stopping())
         {
           waitForMessages(0.1);
+          if(updateMsg)
+          {
+            msgServoPos.value = valuePos;
+            dispatch(msgServoPos);
+            updateMsg = false;
+          }
         }
-        
         closeConfigServo();
       }
     };
