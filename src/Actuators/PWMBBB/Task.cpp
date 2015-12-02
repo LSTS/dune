@@ -49,7 +49,7 @@ namespace Actuators
       //GPIO for signal of servo
       int GPIOPin;
       //Handle of servo pinout
-      FILE *myOutputHandle = NULL;
+      FILE *myOutputHandle;
       //Mode in/out of pinout
       char setValue[4];
       char GPIODirection[64];
