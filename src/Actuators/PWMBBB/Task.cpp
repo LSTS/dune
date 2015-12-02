@@ -60,7 +60,7 @@ namespace Actuators
       //state of update msg servo position
       bool updateMsg;
       //Value of servo position in deg
-      int valuePos;
+      double valuePos;
  
       //! Constructor.
       //! @param[in] name task name.
@@ -115,7 +115,7 @@ namespace Actuators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        setAngleServomotor(DUNE::Math::Angles::degrees(std::abs(msg->value)));
+        setAngleServomotor(msg->value);
       }
 
       //!Inic of config to pinout of servomotor
@@ -152,16 +152,18 @@ namespace Actuators
 
       //!Set 0º to servomotor
       bool
-      setAngleServomotor( int angle )
+      setAngleServomotor( double angle )
       {
         bool resultState = true;
-        valuePos = DUNE::Math::Angles::radians(std::abs(angle));
+        valuePos = angle;
         int cntRefreshservo = 0;
-        if(angle < 0)
-          angle = 0;
-        if(angle > 180)
-          angle = 180;
-        int valueUP = (10 * angle) + 600;
+        int degAngle = DUNE::Math::Angles::degrees(std::abs(angle));
+        if(degAngle < 0)
+          degAngle = 0;
+        if(degAngle > 180)
+          degAngle = 180;
+
+        int valueUP = (10 * degAngle) + 600;
 
         while(cntRefreshservo < 20 && resultState)
         {
