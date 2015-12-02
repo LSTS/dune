@@ -119,7 +119,7 @@ namespace Actuators
       }
 
       //!Inic of config to pinout of servomotor
-      void
+      bool
       inicServo(void)
       {
         updateMsg = false;
@@ -130,24 +130,32 @@ namespace Actuators
         sprintf(GPIODirection, "/sys/class/gpio/gpio%d/direction", GPIOPin);
         // Export the pin
         if ((myOutputHandle = fopen("/sys/class/gpio/export", "ab")) == NULL)
-          inf("Unable to export GPIO pin");
+        {
+          err(DTR("Unable to export GPIO pin"));
+          return false;
+        }
         strcpy(setValue, GPIOString);
         fwrite(&setValue, sizeof(char), 2, myOutputHandle);
         fclose(myOutputHandle);
         // Set direction of the pin to an output
         if ((myOutputHandle = fopen(GPIODirection, "rb+")) == NULL)
-          inf("Unable to open direction handle");
+        {
+          err(DTR("Unable to open direction handle"));
+          return false;
+        }
         strcpy(setValue,"out");
         fwrite(&setValue, sizeof(char), 3, myOutputHandle);
         fclose(myOutputHandle);
+
+        return true;
       }
 
       //!Set 0º to servomotor
-      void
+      bool
       setAngleServomotor( int angle )
       {
-        valuePos = angle;
-        updateMsg = true;
+        bool resultState = true;
+        valuePos = DUNE::Math::Angles::radians(std::abs(angle));
         int cntRefreshservo = 0;
         if(angle < 0)
           angle = 0;
@@ -155,17 +163,23 @@ namespace Actuators
           angle = 180;
         int valueUP = (10 * angle) + 600;
 
-        while(cntRefreshservo < 20)
+        while(cntRefreshservo < 20 && resultState)
         {
           if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
-            inf("Unable to open value handle");
+          {
+            resultState = false;
+            err(DTR("Unable to open value handle"));
+          }
           strcpy(setValue, "1"); // Set value high
           fwrite(&setValue, sizeof(char), 1, myOutputHandle);
           fclose(myOutputHandle);
           usleep (valueUP);
           // Set output to low
           if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
-            inf("Unable to open value handle");
+          {
+            err(DTR("Unable to open value handle"));
+            resultState = false;
+          }
           strcpy(setValue, "0"); // Set value low
           fwrite(&setValue, sizeof(char), 1, myOutputHandle);
           fclose(myOutputHandle);;
@@ -173,18 +187,28 @@ namespace Actuators
 
           cntRefreshservo++;
         }
+
+        if(resultState)
+          updateMsg = true;
+
+        return resultState;
       }
 
       //!Close PinOut config
-      void
+      bool
       closeConfigServo(void)
       {
         // Unexport the pin
         if ((myOutputHandle = fopen("/sys/class/gpio/unexport", "ab")) == NULL)
-          inf("Unable to unexport GPIO pin");
+        {
+          err(DTR("Unable to unexport GPIO pin"));
+          return false;
+        }
         strcpy(setValue, GPIOString);
         fwrite(&setValue, sizeof(char), 2, myOutputHandle);
         fclose(myOutputHandle);
+
+        return true;
       }
 
       //! Main loop.
@@ -192,7 +216,10 @@ namespace Actuators
       onMain(void)
       {
         IMC::ServoPosition msgServoPos;
-        inicServo();   
+        while(!inicServo())
+        {
+          waitForMessages(1.0);
+        }
         while (!stopping())
         {
           waitForMessages(0.1);
