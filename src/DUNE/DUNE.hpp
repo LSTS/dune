@@ -55,6 +55,7 @@
 #include <DUNE/Media.hpp>
 #include <DUNE/Parsers.hpp>
 #include <DUNE/Plans.hpp>
+#include <DUNE/Power.hpp>
 #include <DUNE/Time.hpp>
 #include <DUNE/Database.hpp>
 #include <DUNE/Daemon.hpp>
@@ -89,6 +90,7 @@ namespace DUNE
   using namespace DUNE::Media;                  \
   using namespace DUNE::Parsers;                \
   using namespace DUNE::Plans;                  \
+  using namespace DUNE::Power;                  \
   using namespace DUNE::Time;                   \
   using namespace DUNE::Utils;                  \
   using namespace DUNE::Navigation;             \

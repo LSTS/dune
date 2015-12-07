@@ -342,6 +342,14 @@ namespace Maneuver
         double n, e, op_dir, diameter;
         Math::Matrix polygon, new_vtx;
 
+        // Reject if no vertices are defined. Later on, a more proper
+        // check should be used that verifies if we have a 2D polygon.
+        if (!maneuver->polygon.size())
+        {
+          err(DTR("undefined area"));
+          return;
+        }
+
         IMC::MessageList<IMC::PolygonVertex>::const_iterator it = maneuver->polygon.begin();
 
         m_path.speed = m_maneuver.speed;
@@ -371,7 +379,6 @@ namespace Maneuver
         m_rows = getRows(polygon, op_dir, m_param_width, diameter);
 
         trace("%d rows found", m_rows.columns() / 2);
-
         m_moving = true;
         enableMovement(true);
       }

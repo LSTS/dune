@@ -37,6 +37,7 @@
 // Local headers.
 #include "Idle.hpp"
 #include "Goto.hpp"
+#include "Launch.hpp"
 #include "Loiter.hpp"
 #include "StationKeeping.hpp"
 #include "YoYo.hpp"
@@ -53,7 +54,7 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    static const std::string c_names[] = {"IdleManeuver", "Goto", "Loiter",
+    static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
                                           "Dislodge"};
@@ -64,6 +65,8 @@ namespace Maneuver
       TYPE_IDLE = 0,
       //! Type Goto
       TYPE_GOTO,
+      //! Type Launch
+      TYPE_LAUNCH,
       //! Type Loiter
       TYPE_LOITER,
       //! Type StationKeeping
@@ -297,6 +300,7 @@ namespace Maneuver
       {
         m_maneuvers[TYPE_IDLE] = create<Idle>();
         m_maneuvers[TYPE_GOTO] = create<Goto>();
+        m_maneuvers[TYPE_LAUNCH] = create<Launch>();
         m_maneuvers[TYPE_LOITER] = create<Loiter>(&m_args.loiter);
         m_maneuvers[TYPE_SKEEP] = create<StationKeeping>(&m_args.sk);
         m_maneuvers[TYPE_YOYO] = create<YoYo>(&m_args.yoyo);

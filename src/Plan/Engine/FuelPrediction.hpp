@@ -71,7 +71,7 @@ namespace Plan
       //! Constructor.
       FuelPrediction(const Plans::TimeProfile* profiles,
                      const ComponentActiveTime* cat,
-                     const Plans::PowerModel* power_model,
+                     const Power::Model* power_model,
                      const Plans::SpeedModel* speed_model,
                      bool imu_enabled,
                      float total_duration):
@@ -284,7 +284,7 @@ namespace Plan
       //! Parcels of estimated fuel consumed
       float m_fuel_parcels[FP_TOTAL];
       //! Power model for the estimation
-      const Plans::PowerModel* m_pmodel;
+      const Power::Model* m_pmodel;
       //! Starting value of fuel level
       float m_starting_fuel;
       //! Current value of fuel level

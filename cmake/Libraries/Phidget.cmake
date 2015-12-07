@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -20,43 +20,18 @@
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
-# https://www.lsts.pt/dune/licence.                                        #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
-# Author: Ricardo Martins                                                  #
-############################################################################
-# Manta #15 Gateway configuration file.                                    #
+# Author: Kristian Klausen                                                 #
 ############################################################################
 
-[Require hardware/lctr-a9xx.ini]
+dune_test_lib(phidget21 CPhidgetBridge_setEnabled)
+dune_test_header("phidget21.h")
 
-[General]
-Vehicle                                 = manta-15
-
-[Power.MCBv2]
-Drive LCD                               = true
-Power Channel 7 - Name                  = Evologics
-Power Channel 7 - State                 = 1
-
-[Sensors.MLBLTracker]
-#Enabled                                 = Never
-
-[UserInterfaces.MantaPanel]
-#Sections of System Addresses            = Evologics Addresses
-Sections of System Addresses            = Micromodem Addresses, Narrow Band Transponders
-System Names                            = benthos2,
-                                          benthos3,
-                                          benthos4,
-                                          benthos5
-
-[Transports.Evologics]
-#Enabled                                 = Hardware
-IPv4 Address                            = 10.0.50.1
-Source Level                            = 1
-
-[Transports.UAN]
-#Enabled                                 = Hardware
-Entity Label                            = Acoustic Access Controller
-Debug Level                             = Spew
-
-[Transports.Logging]
-Enabled                                 = Never
+if(DUNE_SYS_HAS_LIB_PHIDGET21 AND DUNE_SYS_HAS_PHIDGET21_H)
+  set(DUNE_SYS_HAS_PHIDGET 1 CACHE INTERNAL "PHIDGET library")
+  set(DUNE_USING_PHIDGET 1 CACHE INTERNAL "PHIDGET library")
+else(DUNE_SYS_HAS_LIB_PHIDGET21 AND DUNE_SYS_HAS_PHIDGET21_H)
+  set(DUNE_SYS_HAS_PHIDGET 0 CACHE INTERNAL "PHIDGET library")
+  set(DUNE_USING_PHIDGET 0 CACHE INTERNAL "PHIDGET library")
+endif(DUNE_SYS_HAS_LIB_PHIDGET21 AND DUNE_SYS_HAS_PHIDGET21_H)

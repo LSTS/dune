@@ -119,7 +119,7 @@ namespace DUNE
         encode(const uint8_t* data, size_t data_size, double timestamp)
         {
           Chunk frame(m_properties, "00dc");
-          frame.setData(data, data_size);
+          frame.setData(data, (uint32_t)data_size);
           frame.write(m_ofs);
 
           uint32_t offset = m_riff->getSize();

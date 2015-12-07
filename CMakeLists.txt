@@ -327,6 +327,11 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   install(DIRECTORY user/etc DESTINATION ./user/)
 endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 
+if(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
+  # Install private configuration files.
+  install(DIRECTORY private/etc DESTINATION ./private/)
+endif(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
+
 # Install firmware files.
 install(DIRECTORY firmware DESTINATION .)
 
@@ -379,7 +384,7 @@ set(CPACK_NSIS_DISPLAY_NAME
   "${PROJECT_SHORT_NAME} ${PROJECT_VERSION}")
 
 if(DUNE_OS_WINDOWS)
-  set(CPACK_GENERATOR "NSIS")
+  set(CPACK_GENERATOR "NSIS;ZIP")
 else(DUNE_OS_WINDOWS)
   set(CPACK_GENERATOR "TBZ2")
 endif(DUNE_OS_WINDOWS)

@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <cmath>
+#include <cstdlib>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
