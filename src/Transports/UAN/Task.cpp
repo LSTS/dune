@@ -464,7 +464,22 @@ namespace Transports
       void
       recvMessage(const IMC::UamRxFrame* msg)
       {
-        (void)msg;
+        debug("Parsing message received via acoustic message.");
+
+        try {
+          uint16_t msg_type;
+          std::memcpy(&msg_type, &msg->data[2], sizeof(msg_type));
+          Message *m = IMC::Factory::produce(msg_type);
+          m->setSource(resolveSystemName(msg->sys_src));
+          m->setDestination(resolveSystemName(msg->sys_dst));
+          m->setTimeStamp(msg->getTimeStamp());
+          m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
+          dispatch(m, DF_KEEP_TIME);
+          debug("Acoustic message successfully parsed as '%s'.", m->getName());
+        }
+        catch (std::exception& ex) {
+          err("Error parsing raw message from UAM frame: %s.", ex.what());
+        }
       }
 
       void
