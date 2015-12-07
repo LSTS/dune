@@ -97,7 +97,11 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_seq(0),
-        m_last_acop(NULL)
+        m_last_acop(NULL),
+        m_pc(NULL),
+        m_fuel_conf(0),
+        m_progress(0),
+        m_fuel_level(0)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -284,6 +288,10 @@ namespace Transports
           case CODE_PLAN:
             recvPlanControl(imc_addr_src, imc_addr_dst, msg);
             break;
+
+          case CODE_RAW:
+            recvMessage(imc_addr_src, imc_addr_dst, msg);
+            break;
         }
       }
 
@@ -450,30 +458,32 @@ namespace Transports
           return;
         }
 
-        switch (msg->getId())
-        {
-          case DUNE_IMC_PLANCONTROL:
+        // Check if special command can be used...
+        if (msg->getId() == IMC::PlanControl::getIdStatic()) {
+          const IMC::PlanControl * pc = static_cast<const IMC::PlanControl*>(msg);
+          if (pc->arg.isNull()) {
             sendPlanControl(sys, static_cast<const IMC::PlanControl*>(msg));
-            break;
-          default:
-            sendRawMessage(sys, msg);
-            break;
+            return;
+          }
         }
+
+        // For all other cases, send the raw message across
+        sendRawMessage(sys, msg);
       }
 
       void
-      recvMessage(const IMC::UamRxFrame* msg)
+      recvMessage(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         debug("Parsing message received via acoustic message.");
 
         try {
           uint16_t msg_type;
-          std::memcpy(&msg_type, &msg->data[2], sizeof(msg_type));
+          std::memcpy(&msg_type, &msg->data[1], sizeof(uint16_t));
           Message *m = IMC::Factory::produce(msg_type);
-          m->setSource(resolveSystemName(msg->sys_src));
-          m->setDestination(resolveSystemName(msg->sys_dst));
+          m->setSource(imc_src);
+          m->setDestination(imc_dst);
           m->setTimeStamp(msg->getTimeStamp());
-          m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
+          m->deserializeFields((const unsigned char *)&msg->data[3], msg->data.size()-3);
           dispatch(m, DF_KEEP_TIME);
           debug("Acoustic message successfully parsed as '%s'.", m->getName());
         }
@@ -493,15 +503,14 @@ namespace Transports
 
         // start with message id
         uint16_t id = msg->getId();
-        buf[0] = ((uint8_t *) &id)[0];
-        buf[1] = ((uint8_t *) &id)[1];
+        std::memcpy(&buf[0], &id, sizeof(uint16_t));
 
         // followed by all message fields
         uint8_t* end = msg->serializeFields(&buf[2]);
 
         int length = end - buf;
         data.insert(data.end(), buf, buf + length);
-        sendFrame(sys, data, false);
+        sendFrame(sys, data, true);
       }
 
       void
