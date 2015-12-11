@@ -987,9 +987,9 @@ namespace Transports
         }
         if (Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.OutputFlags_list[2]) //Position Fields
         {
-          std::cout << std::dec << Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_EASTING  << "   Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_EASTING  " << std::endl;
-          std::cout << std::dec << Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_NORTHING << "   Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_NORTHING " << std::endl;
-          std::cout << std::dec << Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_DEPTH    << "   Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_DEPTH    " << std::endl;
+          std::cout << std::dec << (long int) Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_EASTING  << "   Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_EASTING  " << std::endl;
+          std::cout << std::dec << (long int) Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_NORTHING << "   Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_NORTHING " << std::endl;
+          std::cout << std::dec << (long int) Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_DEPTH    << "   Data_Beacon.type_CID_PING_REQ_m.PING_REQ_Beacon.POSITION_DEPTH    " << std::endl;
         }
         
          
@@ -1031,9 +1031,9 @@ namespace Transports
         }
         if (Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.OutputFlags_list[2]) //Position Fields
         {
-          std::cout << std::dec << Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_EASTING   << "    Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_EASTING    "   << std::endl;     
-          std::cout << std::dec << Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_NORTHING  << "    Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_NORTHING   "   << std::endl;     
-          std::cout << std::dec << Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_DEPTH     << "  Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_DEPTH      "   << std::endl;   
+          std::cout << std::dec << (long int) Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_EASTING   << "    Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_EASTING    "   << std::endl;     
+          std::cout << std::dec << (long int) Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_NORTHING  << "    Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_NORTHING   "   << std::endl;     
+          std::cout << std::dec << (long int) Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_DEPTH     << "  Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.POSITION_DEPTH      "   << std::endl;   
         }
      
         }  
@@ -1111,9 +1111,9 @@ namespace Transports
             }
             if (Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.OutputFlags_list[2]) //Position Fields
             {
-              std::cout << Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_EASTING    <<  "  Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_EASTING    "  << std::endl;
-              std::cout << Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_NORTHING   <<  "  Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_NORTHING   "  << std::endl;
-              std::cout << Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_DEPTH      <<  "  Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_DEPTH      "  << std::endl;
+              std::cout << (long int) Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_EASTING    <<  "  Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_EASTING    "  << std::endl;
+              std::cout << (long int) Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_NORTHING   <<  "  Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_NORTHING   "  << std::endl;
+              std::cout << (long int) Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_DEPTH      <<  "  Data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.POSITION_DEPTH      "  << std::endl;
               
             }
 
