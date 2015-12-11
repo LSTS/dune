@@ -1019,7 +1019,7 @@ namespace Transports
         }
         if (Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.OutputFlags_list[1]) //USBL Fields
         {
-          std::cout << std::dec << Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_CHANNELS  << "      Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_CHANNELS "   << std::endl;   
+          std::cout << std::dec << (int) Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_CHANNELS  << "      Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_CHANNELS "   << std::endl;   
           for (i=0; i<Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_CHANNELS ;i++)
           {
           std::cout << std::dec << Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_RSSI[i]   << "  Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_RSSI       "   << std::endl;   
