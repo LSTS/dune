@@ -714,7 +714,6 @@ namespace Transports
         {
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_RSSI[i]   , msg_raw + ind + 1+2*i, 2); 
         }
-        i=i-1;
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_AZIMUTH    , msg_raw + ind + 1+2*i, 2);
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_ELEVATION  , msg_raw + ind + 3+2*i, 2);
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_FIT_ERROR  , msg_raw + ind + 5+2*i, 2);
