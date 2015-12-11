@@ -710,7 +710,7 @@ namespace Transports
           else if (m_args.Beacon==BT_X150) // para a manta
           { 
           
-
+            /*
             unsigned src = 0;
             *stn >> src;
             unsigned dst = 0;
@@ -751,7 +751,7 @@ namespace Transports
               inf("%s %u: %u", DTR("range to"), beacon, range);
 
             }
-            
+            */
       }
         
       }
