@@ -285,7 +285,7 @@ namespace Transports
     int16_t USBL_FIT_ERROR;  //The fit error value returns a number that indicates he quality of fit (or confidence) of the signal azimuth and elevation values from the timing and phase-angle data available. Values are dimensionless, but divide the value by 100 to obtain a signed floating-point value to a resolution of 0.01.
     //Position Fields
     int32_t POSITION_EASTING;  //The Easting distance component of the relative position of the remote beacon to the local beacon computed from the range, incoming signal angle, local beacon depth, attitude and magnetic heading. Values are encoded in decimetres, so divide by 10 for a value in metres. 
-    int32_t POSITION_NORTHING; // The Northing distance component of the relative position of the remote beacon to the local beacon computed from the range, incoming signal angle, local beacon depth, attitude and magnetic heading. Page 47SeaTrac Serial Command Interface Reference Values are encoded in decimetres, so divide by 10 for a value in metres.
+    int32_t POSITION_NORTHING; // The Northing distance component of the relative position of the remote beacon to the local beacon computed from the range, incoming signal angle, local beacon depth, attitude and magnetic heading. Reference Values are encoded in decimetres, so divide by 10 for a value in metres.
     int32_t POSITION_DEPTH;    //The vertical Depth distance component of the relative position of the remote beacon to the local beacon computed from the range, incoming signal angle, local beacon depth, attitude and magnetic heading. Values are encoded in decimetres, so divide by 10 for a value in metres. NB: If the ‘Fix’ has been obtained by a MSG_REQU (Usbl) type request, then this value is computed from the beacon’s attitude and incoming signal angle. If a MSG_REQX (Enhanced) type request has been used, then this value is the remotely transmitted beacon depth sensor value.
 
     uint8_t OutputFlags_list[6]; 
@@ -714,10 +714,11 @@ namespace Transports
         {
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_RSSI[i]   , msg_raw + ind + 1+2*i, 2); 
         }
+        i=i-1;
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_AZIMUTH    , msg_raw + ind + 1+2*i, 2);
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_ELEVATION  , msg_raw + ind + 3+2*i, 2);
         std::memcpy(&Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.USBL_FIT_ERROR  , msg_raw + ind + 5+2*i, 2);
-        ind=ind+7+i*2;
+        ind=ind+7+(i)*2;
       }
       if (Data_Beacon.type_CID_PING_RESP_m.PING_RESP_Beacon.OutputFlags_list[2]) //Position Fields
       {
