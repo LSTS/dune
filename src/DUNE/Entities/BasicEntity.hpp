@@ -83,7 +83,7 @@ namespace DUNE
 
       //! Retrieve the entity label.
       //! @return entity label.
-      const std::string
+      const std::string&
       getLabel(void) const
       {
         return m_label;
