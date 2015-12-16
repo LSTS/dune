@@ -126,28 +126,42 @@ namespace Sensors
           uint32_t delay = 1000000 / m_args.sampling_freq;
           m_delay.set(delay);
         }
-      }
 
-      void
-      onResourceInitialization(void)
-      {
+        // Update messages.
+        int eid = -1;
         for (size_t i = 0; i < c_adcs_count; ++i)
         {
           Memory::clear(m_messages[i]);
           if (m_args.adc_messages[i].empty())
             continue;
 
+          try
+          {
+            eid = resolveEntity(m_args.adc_elabels[i]);
+          }
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            (void)e;
+            eid = reserveEntity(m_args.adc_elabels[i]);
+          }
+
           m_messages[i] = IMC::Factory::produce(m_args.adc_messages[i]);
-          int eid = reserveEntity(m_args.adc_elabels[i]);
           m_messages[i]->setSourceEntity(eid);
         }
+      }
 
+      void
+      onResourceInitialization(void)
+      {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       ~Task(void)
       {
         onResourceRelease();
+
+        for (size_t i = 0; i < c_adcs_count; ++i)
+          Memory::clear(m_messages[i]);
       }
 
       void
@@ -231,12 +245,12 @@ namespace Sensors
         debug("initializing USB library");
         int rv = libusb_init(NULL);
         if (rv < 0)
-          throw std::runtime_error("failed to initialize libusb");
+          throw RestartNeeded(DTR("failed to initialize USB library"), 5.0, false);
 
         debug("probing MCC device");
         m_udev = usb_device_find_USB_MCC(USB1608G_PID, NULL);
         if (m_udev == NULL)
-          throw std::runtime_error("failed to find valid device");
+          throw RestartNeeded(DTR("failed to find valid device"), 5.0, false);
 
         debug("initializing MCC device");
         usbInit_1608G(m_udev);
