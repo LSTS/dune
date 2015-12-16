@@ -84,7 +84,7 @@ namespace Sensors
         Tasks::Task(name, ctx),
         m_udev(NULL)
       {
-        paramActive(Tasks::Parameter::SCOPE_IDLE,
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Sampling Frequency", m_args.sampling_freq)
@@ -178,9 +178,18 @@ namespace Sensors
       {
         for (size_t i = 0; i < c_adcs_count; ++i)
         {
-          m_scan_list[i].range = getRange(m_args.adc_range[i]);
-          m_scan_list[i].mode = m_args.adc_diff[i] ? DIFFERENTIAL : 0;
           m_scan_list[i].channel = i;
+
+          if (m_messages[i] == NULL)
+          {
+            m_scan_list[i].range = BP_5V;
+            m_scan_list[i].mode = 0;
+          }
+          else
+          {
+            m_scan_list[i].range = getRange(m_args.adc_range[i]);
+            m_scan_list[i].mode = m_args.adc_diff[i] ? DIFFERENTIAL : 0;
+          }
         }
 
         m_scan_list[c_adcs_count - 1].mode |= LAST_CHANNEL;
@@ -198,16 +207,17 @@ namespace Sensors
       scanAnalogueInputs(void)
       {
         double time = Clock::getSinceEpoch();
+
         usbAInScanStart_USB1608G(m_udev, 1, 0, 1, 1 << 0);
-        int rv = usbAInScanRead_USB1608G(m_udev, 1, c_adcs_count, m_adc_data_in);
+        usbAInScanRead_USB1608G(m_udev, 1, c_adcs_count, m_adc_data_in);
+
         for (size_t i = 0; i < c_adcs_count; ++i)
         {
           if (m_messages[i] == NULL)
             continue;
 
           uint8_t gain = m_scan_list[i].range;
-          int k = i * c_adcs_count + i;
-          uint16_t raw_value = rint(m_adc_data_in[k] * m_gain_table[gain][0] + m_gain_table[gain][1]);
+          uint16_t raw_value = rint(m_adc_data_in[i] * m_gain_table[gain][0] + m_gain_table[gain][1]);
           double volt = volts_USB1608G(m_udev, gain, raw_value);
           m_messages[i]->setTimeStamp(time);
           m_messages[i]->setValueFP(volt);
