@@ -76,8 +76,6 @@ namespace DUNE
       FileSystem::Path dir_log;
       //! Path to libraries directory.
       FileSystem::Path dir_lib;
-      //! Path to firmware directory.
-      FileSystem::Path dir_fmw;
       //! Path to internationalization directory.
       FileSystem::Path dir_i18n;
       //! Path to database directory.

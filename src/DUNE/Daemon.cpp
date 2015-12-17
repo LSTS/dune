@@ -118,7 +118,6 @@ namespace DUNE
     inf(DTR("web server folder: '%s'"), ctx.dir_www.c_str());
     inf(DTR("log folder: '%s'"), ctx.dir_log.c_str());
     inf(DTR("library folder: '%s'"), ctx.dir_lib.c_str());
-    inf(DTR("firmware folder: '%s'"), ctx.dir_fmw.c_str());
     if (!profiles.empty())
     {
       m_ctx.profiles.select(profiles);
