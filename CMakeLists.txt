@@ -332,9 +332,6 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
   install(DIRECTORY private/etc DESTINATION ./private/)
 endif(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
 
-# Install firmware files.
-install(DIRECTORY firmware DESTINATION .)
-
 # Install scripts.
 install(DIRECTORY programs/scripts DESTINATION .)
 
