@@ -232,7 +232,7 @@ namespace Sensors
 
           uint8_t gain = m_scan_list[i].range;
           uint16_t raw_value = rint(m_adc_data_in[i] * m_gain_table[gain][0] + m_gain_table[gain][1]);
-          double volt = volts_USB1608G(m_udev, gain, raw_value);
+          double volt = volts_USB1608G(gain, raw_value);
           m_messages[i]->setTimeStamp(time);
           m_messages[i]->setValueFP(volt);
           dispatch(m_messages[i]);
