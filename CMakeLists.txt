@@ -327,11 +327,6 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   install(DIRECTORY user/etc DESTINATION ./user/)
 endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
-  # Install private configuration files.
-  install(DIRECTORY private/etc DESTINATION ./private/)
-endif(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
-
 # Install scripts.
 install(DIRECTORY programs/scripts DESTINATION .)
 
