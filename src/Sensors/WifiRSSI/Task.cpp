@@ -49,6 +49,9 @@ namespace Sensors
       // Where to connect via ssh
       std::string remote_host;
 
+      // Username to use for ssh connection
+      std::string remote_user;
+
       // File where private rsa key is stored
       std::string private_key;
 
@@ -62,6 +65,8 @@ namespace Sensors
       Time::Counter<int> m_period;
       Arguments m_args;
       Path m_keyfile, m_tmpfile;
+      IMC::RSSI m_msg;
+      std::string m_format;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -79,9 +84,11 @@ namespace Sensors
         param("Update Period", m_args.period)
           .defaultValue("5");
 
-
         param("Remote Hostname", m_args.remote_host)
           .defaultValue("127.0.0.1");
+
+        param("Remote Username", m_args.remote_user)
+          .defaultValue("root");
 
         param("Private Key File", m_args.private_key)
           .defaultValue("../private/etc/id_rsa");
@@ -92,6 +99,9 @@ namespace Sensors
         param("Update Period", m_args.period)
           .defaultValue("5");
 
+        std::stringstream ss;
+        ss << s_prefix << "%d/%d ";
+        m_format = ss.str();
       }
 
       //! Update internal state with new parameter values.
@@ -107,78 +117,44 @@ namespace Sensors
 
       //! Retrieve current wifi RSSI
       void
-      poll() {
+      poll()
+      {
+#ifdef DUNE_SYS_HAS_POPEN
         std::stringstream ss;
         if (m_args.use_ssh)
         {
-          ss << "ssh " << sanitize(m_args.ssh_flags) << " -i " << m_keyfile.c_str()
-              << " " << sanitize(m_args.remote_host) << " ";
+          ss << "ssh " << sanitize(m_args.ssh_flags) << " -i " << m_keyfile.c_str() << " "
+              << sanitize(m_args.remote_user) << "@" << sanitize(m_args.remote_host) << " ";
         }
-
-        ss << "iwconfig > " << m_tmpfile.c_str() << " 2> /dev/null";
-
+        ss << "iwconfig </dev/zero 2>/dev/null";
         debug("executing '%s'", ss.str().c_str());
-        int result = std::system(ss.str().c_str());
-        if (result != 0)
+        FILE * fd = popen(ss.str().c_str(), "re");
+        if (fd == NULL)
         {
-          war("Unable to retrieve RSSI. Result was %d.", result);
+          war("Unable to retrieve RSSI. Unable to spawn child process.");
         }
-        else {
-          std::FILE* fd = std::fopen(m_tmpfile.c_str(), "r");
-          if (fd == 0)
-          {
-            err("Could not read from %s.", m_tmpfile.c_str());
-            return;
-          }
+        else
+        {
           char line[512] = {0};
 
-          while (std::fscanf(fd, " %511[^\n] ", line) == 1)
+          while (fgets(line, 512, fd))
           {
             std::string l = String::trim(line);
             if (String::startsWith(l, s_prefix))
             {
               int val, max;
-              std::sscanf(l.c_str(), "Link Quality=%d/%d ", &val, &max);
-
-              IMC::RSSI msg;
-              msg.value = (val * 100.0) / max;
-              debug("Wi-fi link quality is %f %%.", msg.value);
-              dispatch(msg);
+              std::sscanf(l.c_str(), m_format.c_str(), &val, &max);
+              m_msg.value = (val * 100.0) / max;
+              debug("Link quality: %f %% (%s).", m_msg.value, l.c_str());
+              dispatch(m_msg);
               break;
             }
           }
-          std::fclose(fd);
+          pclose(fd);
         }
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
+#else
+        war("popen() is not supported in this system.");
+#endif
       }
 
       //! Main loop.
@@ -190,7 +166,9 @@ namespace Sensors
           waitForMessages(1.0);
           if (m_period.overflow())
           {
+            double time = Clock::get();
             poll();
+            debug("Took %f seconds to get RSSI.", Time::Clock::get() - time);
             m_period.reset();
           }
         }
