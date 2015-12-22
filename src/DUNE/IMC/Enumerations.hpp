@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
+// IMC XML MD5: 65ba2ee1d64e9a3f35837bb8072848b4                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_ENUMERATIONS_HPP_INCLUDED_
@@ -101,6 +101,15 @@ namespace DUNE
       Z_ALTITUDE = 2,
       //! Height.
       Z_HEIGHT = 3
+    };
+
+    //! RSSI Units.
+    enum RSSIUnits
+    {
+      //! Decibel.
+      RSSIUNITS_dB = 0,
+      //! Percentage.
+      RSSIUNITS_PERCENTAGE = 1
     };
   }
 }
