@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 65ba2ee1d64e9a3f35837bb8072848b4                            *
+// IMC XML MD5: 6c347cdacbdacce16be764ef407e717b                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -15680,9 +15680,9 @@ namespace DUNE
     ReportControl::clear(void)
     {
       op = 0;
-      interface = 0;
+      comm_interface = 0;
       period = 0;
-      dst.clear();
+      sys_dst.clear();
     }
 
     bool
@@ -15690,9 +15690,9 @@ namespace DUNE
     {
       const IMC::ReportControl& other__ = static_cast<const ReportControl&>(msg__);
       if (op != other__.op) return false;
-      if (interface != other__.interface) return false;
+      if (comm_interface != other__.comm_interface) return false;
       if (period != other__.period) return false;
-      if (dst != other__.dst) return false;
+      if (sys_dst != other__.sys_dst) return false;
       return true;
     }
 
@@ -15707,9 +15707,9 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(op, ptr__);
-      ptr__ += IMC::serialize(interface, ptr__);
+      ptr__ += IMC::serialize(comm_interface, ptr__);
       ptr__ += IMC::serialize(period, ptr__);
-      ptr__ += IMC::serialize(dst, ptr__);
+      ptr__ += IMC::serialize(sys_dst, ptr__);
       return ptr__;
     }
 
@@ -15718,9 +15718,9 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(op, bfr__, size__);
-      bfr__ += IMC::deserialize(interface, bfr__, size__);
+      bfr__ += IMC::deserialize(comm_interface, bfr__, size__);
       bfr__ += IMC::deserialize(period, bfr__, size__);
-      bfr__ += IMC::deserialize(dst, bfr__, size__);
+      bfr__ += IMC::deserialize(sys_dst, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -15729,9 +15729,9 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(op, bfr__, size__);
-      bfr__ += IMC::deserialize(interface, bfr__, size__);
+      bfr__ += IMC::deserialize(comm_interface, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(period, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(dst, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sys_dst, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -15739,9 +15739,9 @@ namespace DUNE
     ReportControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "op", op, nindent__);
-      IMC::toJSON(os__, "interface", interface, nindent__);
+      IMC::toJSON(os__, "comm_interface", comm_interface, nindent__);
       IMC::toJSON(os__, "period", period, nindent__);
-      IMC::toJSON(os__, "dst", dst, nindent__);
+      IMC::toJSON(os__, "sys_dst", sys_dst, nindent__);
     }
 
     Abort::Abort(void)
