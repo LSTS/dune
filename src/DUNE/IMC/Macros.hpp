@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
+// IMC XML MD5: 65ba2ee1d64e9a3f35837bb8072848b4                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -114,6 +114,10 @@
 #define DUNE_IMC_GROUPMEMBERSHIPSTATE 180
 //! SystemGroup identification number.
 #define DUNE_IMC_SYSTEMGROUP 181
+//! LinkLatency identification number.
+#define DUNE_IMC_LINKLATENCY 182
+//! ExtendedRSSI identification number.
+#define DUNE_IMC_EXTENDEDRSSI 183
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblBeacon identification number.
@@ -206,6 +210,14 @@
 #define DUNE_IMC_TURBIDITY 288
 //! Chlorophyll identification number.
 #define DUNE_IMC_CHLOROPHYLL 289
+//! Fluorescein identification number.
+#define DUNE_IMC_FLUORESCEIN 290
+//! Phycocyanin identification number.
+#define DUNE_IMC_PHYCOCYANIN 291
+//! Phycoerythrin identification number.
+#define DUNE_IMC_PHYCOERYTHRIN 292
+//! GpsFixRtk identification number.
+#define DUNE_IMC_GPSFIXRTK 293
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -264,6 +276,8 @@
 #define DUNE_IMC_ALIGNMENTSTATE 361
 //! GroupStreamVelocity identification number.
 #define DUNE_IMC_GROUPSTREAMVELOCITY 362
+//! Airflow identification number.
+#define DUNE_IMC_AIRFLOW 363
 //! DesiredHeading identification number.
 #define DUNE_IMC_DESIREDHEADING 400
 //! DesiredZ identification number.
@@ -292,6 +306,8 @@
 #define DUNE_IMC_CONTROLPARCEL 412
 //! Brake identification number.
 #define DUNE_IMC_BRAKE 413
+//! DesiredLinearState identification number.
+#define DUNE_IMC_DESIREDLINEARSTATE 414
 //! Goto identification number.
 #define DUNE_IMC_GOTO 450
 //! PopUp identification number.
@@ -364,6 +380,8 @@
 #define DUNE_IMC_FORMATION 484
 //! Launch identification number.
 #define DUNE_IMC_LAUNCH 485
+//! Drop identification number.
+#define DUNE_IMC_DROP 486
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -390,6 +408,8 @@
 #define DUNE_IMC_AUTOPILOTMODE 511
 //! FormationState identification number.
 #define DUNE_IMC_FORMATIONSTATE 512
+//! ReportControl identification number.
+#define DUNE_IMC_REPORTCONTROL 513
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -514,9 +534,5 @@
 #define DUNE_IMC_PARAMETERSXML 893
 //! GetParametersXml identification number.
 #define DUNE_IMC_GETPARAMETERSXML 894
-//! NecMsg identification number.
-#define DUNE_IMC_NECMSG 2001
-//! JsonObject identification number.
-#define DUNE_IMC_JSONOBJECT 2002
 
 #endif

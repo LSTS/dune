@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
+// IMC XML MD5: 65ba2ee1d64e9a3f35837bb8072848b4                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_BITFIELDS_HPP_INCLUDED_
@@ -65,6 +65,8 @@ namespace DUNE
       CL_TORQUE = 0x00000400,
       //! Force Control.
       CL_FORCE = 0x00000800,
+      //! Velocity Control.
+      CL_VELOCITY = 0x00001000,
       //! Unspecified External Control.
       CL_EXTERNAL = 0x40000000,
       //! Non-overridable control.
