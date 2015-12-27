@@ -125,6 +125,7 @@ namespace Transports
       {
         m_sock->bind(m_args.tcp_port);
         m_sock->listen(1024);
+        m_sock->setNoDelay(true);
         m_poll.add(*m_sock);
         m_poll.add(*m_uart);
       }

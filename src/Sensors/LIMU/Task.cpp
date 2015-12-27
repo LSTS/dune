@@ -264,6 +264,9 @@ namespace Sensors
           }
         }
 
+        if (factors.size() != c_hard_iron_count)
+          throw std::runtime_error("failed to retrieve hard-iron factors");
+
         return factors;
       }
 

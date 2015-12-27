@@ -1,6 +1,5 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
-# Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
+# Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
 #                                                                          #
@@ -24,10 +23,14 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
-# Manta #14 Gateway configuration file                                     #
-############################################################################
 
-[Require manta-10.ini]
+dune_test_lib(usb-1.0 libusb_init)
+dune_test_lib(hidapi-libusb hid_close)
+dune_test_lib(mccusb usb_device_find_USB_MCC)
+dune_test_header(mccusb/pmd.h)
 
-[General]
-Vehicle                                 = manta-14
+if(DUNE_SYS_HAS_LIB_MCCUSB AND DUNE_SYS_HAS_MCCUSB_PMD_H)
+  set(DUNE_USING_MCCUSB 1 CACHE INTERNAL "MCC USB library")
+else()
+  set(DUNE_USING_MCCUSB 0 CACHE INTERNAL "MCC USB library")
+endif()

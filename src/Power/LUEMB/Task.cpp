@@ -42,8 +42,8 @@ namespace Power
   namespace LUEMB
   {
     using DUNE_NAMESPACES;
-    using Power::PCTLv2::PowerChannel;
-    using Power::PCTLv2::PowerChannels;
+    using ::Power::PCTLv2::PowerChannel;
+    using ::Power::PCTLv2::PowerChannels;
 
     //! Serial port baud rate.
     static const unsigned c_baud_rate = 115200;

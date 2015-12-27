@@ -1156,7 +1156,7 @@ namespace DUNE
 
       // Sensed angular velocities due to Earth rotation effect.
       Math::Matrix av(3,1);
-      av = inverse(ea.toDCM()) * we;
+      av = transpose(ea.toDCM()) * we;
 
       // Extract from angular velocities measurements.
       p -= av(0);

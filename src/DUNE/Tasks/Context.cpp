@@ -45,7 +45,6 @@ namespace DUNE
       dir_cfg = dir_app / ".." / Path("etc");
       dir_usr_cfg = dir_app / ".." / Path("user") / Path("etc");
       dir_www = dir_app / ".." / Path("www");
-      dir_fmw = dir_app / ".." / Path("firmware");
       dir_i18n = dir_app / ".." / Path("i18n");
       dir_db = dir_app / ".." / Path("db");
       dir_log = dir_app / ".." / Path("log");
@@ -60,14 +59,13 @@ namespace DUNE
 #endif
 
       // Check if we are running from the development build.
-      if (!dir_cfg.isDirectory() || !dir_www.isDirectory() || !dir_lib.isDirectory() || !dir_fmw.isDirectory())
+      if (!dir_cfg.isDirectory() || !dir_www.isDirectory() || !dir_lib.isDirectory())
       {
         dir_lib = dir_app;
         dir_cfg = Path(DUNE_PATH_SRC) / Path("etc");
         dir_usr_cfg = Path(DUNE_PATH_SRC) / Path("user") / Path("etc");
         dir_www = Path(DUNE_PATH_SRC) / Path("www");
         dir_i18n = Path(DUNE_PATH_BUILD) / Path("DUNEGeneratedFiles") / Path("i18n");
-        dir_fmw = Path(DUNE_PATH_SRC) / Path("firmware");
         dir_log = dir_app / Path("log");
         dir_db = dir_app / Path("db");
         dir_scripts = Path(DUNE_PATH_SRC) / Path("programs") / Path("scripts");

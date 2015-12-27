@@ -12,7 +12,13 @@
 #ifdef __GNUC__
   #define MAVPACKED( __Declaration__ ) __Declaration__ __attribute__((packed))
 #else
-  #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+  #if defined(__IBMC__)
+    #define MAVPACKED( __Declaration__ ) __pragma( pack(1) ) __Declaration__ __pragma( pack() )
+  #elif defined(__SUNPRO_CC) || defined(__SUNPRO_C)
+    #define MAVPACKED( __Declaration__ ) _Pragma("pack(1)") __Declaration__ _Pragma("pack()")
+  #else
+    #define MAVPACKED( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+  #endif
 #endif
 
 #ifndef MAVLINK_MAX_PAYLOAD_LEN
@@ -211,6 +217,11 @@ typedef struct __mavlink_status {
     uint8_t current_tx_seq;             ///< Sequence number of last packet sent
     uint16_t packet_rx_success_count;   ///< Received packets
     uint16_t packet_rx_drop_count;      ///< Number of packet drops
+
+    __mavlink_status()
+    {
+      parse_state = MAVLINK_PARSE_STATE_UNINIT;
+    }
 } mavlink_status_t;
 
 #define MAVLINK_BIG_ENDIAN 0
