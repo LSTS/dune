@@ -32,41 +32,35 @@ namespace Sensors
 {
   namespace WifiRSSI
   {
-    static const std::string s_prefix = "Link Quality=";
     using DUNE_NAMESPACES;
+
+    static const std::string c_prefix = "Link Quality=";
 
     struct Arguments
     {
-      // Temporary file where to store retrieved data
+      //! Temporary file where to store retrieved data.
       std::string tmp_file;
-
-      // Whether to use ssh or run locally
+      //! Whether to use SSH or run locally.
       bool use_ssh;
-
-      // extra SSH flags to use
+      //! Extra SSH flags to use.
       std::string ssh_flags;
-
-      // Where to connect via ssh
+      //! Where to connect via SSH.
       std::string remote_host;
-
-      // Username to use for ssh connection
+      //! Username to use for SSH connection.
       std::string remote_user;
-
-      // File where private rsa key is stored
+      //! File where private RSA key is stored.
       std::string private_key;
-
-      // Period, in seconds, between polls
+      //! Period, in seconds, between polls.
       int period;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-
       Time::Counter<int> m_period;
-      Arguments m_args;
       Path m_keyfile, m_tmpfile;
       IMC::RSSI m_msg;
       std::string m_format;
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -74,12 +68,11 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
-
         param("Connect via SSH", m_args.use_ssh)
-          .defaultValue("false");
+        .defaultValue("false");
 
         param("SSH Flags", m_args.ssh_flags)
-          .defaultValue("-y");
+        .defaultValue("-y");
 
         param("Update Period", m_args.period)
           .defaultValue("5");
@@ -100,7 +93,7 @@ namespace Sensors
           .defaultValue("5");
 
         std::stringstream ss;
-        ss << s_prefix << "%d/%d ";
+        ss << c_prefix << "%d/%d ";
         m_format = ss.str();
       }
 
@@ -140,7 +133,7 @@ namespace Sensors
           while (fgets(line, 512, fd))
           {
             std::string l = String::trim(line);
-            if (String::startsWith(l, s_prefix))
+            if (String::startsWith(l, c_prefix))
             {
               int val, max;
               std::sscanf(l.c_str(), m_format.c_str(), &val, &max);
@@ -164,6 +157,7 @@ namespace Sensors
         while (!stopping())
         {
           waitForMessages(1.0);
+
           if (m_period.overflow())
           {
             double time = Clock::get();
