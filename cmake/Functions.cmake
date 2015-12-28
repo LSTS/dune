@@ -746,4 +746,10 @@ macro(dune_probe_functions)
     "float.h"
     DUNE_SYS_HAS__ISNAN)
 
+  dune_test_function(popen
+    "FILE*"
+    "char*;char*"
+    "stdio.h"
+    DUNE_SYS_HAS_POPEN)
+
 endmacro(dune_probe_functions)
