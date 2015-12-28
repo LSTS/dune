@@ -30,10 +30,17 @@
 
 namespace Sensors
 {
+  //! Wireless link quality reporter.
+  //!
+  //! This task will use the 'iwconfig' command to acquire wireless link quality.
+  //! As a result produces messages of type RSSI for Wi-Fi.
+  //!
+  //! @author Jose Pinto
   namespace WifiRSSI
   {
     using DUNE_NAMESPACES;
 
+    //! Prefix to search for when processing iwconfig output
     static const std::string c_prefix = "Link Quality=";
 
     struct Arguments
@@ -54,12 +61,18 @@ namespace Sensors
       int period;
     };
 
+    //! Wireless RSSI reporter
     struct Task: public DUNE::Tasks::Task
     {
+      //! Counter for determining when to fetch RSSI
       Time::Counter<int> m_period;
-      Path m_keyfile, m_tmpfile;
+      //! Path to SSH private key
+      Path m_keyfile;
+      //! Message to send with RSSI information
       IMC::RSSI m_msg;
+      //! Scanf format to be computed using prefix constant
       std::string m_format;
+      //! Task arguments
       Arguments m_args;
 
       //! Constructor.
@@ -69,29 +82,37 @@ namespace Sensors
         DUNE::Tasks::Task(name, ctx)
       {
         param("Connect via SSH", m_args.use_ssh)
-        .defaultValue("false");
+        .defaultValue("false")
+        .description("When wireless device is attached to a different CPU "
+          "(as it is the case when using Ubiquiti radios), SSH is used to"
+          "connect onto that CPU.");
 
         param("SSH Flags", m_args.ssh_flags)
-        .defaultValue("-y");
+        .defaultValue("-y")
+        .description("SSH flags to use when connecting. For instance, in "
+          "Dropbear SSH '-y' will accept unknown hosts.");
+
 
         param("Update Period", m_args.period)
-          .defaultValue("5");
+          .defaultValue("5")
+          .minimumValue("2")
+          .units(Units::Second)
+          .description("Time, in seconds, between RSSI polling.");
 
         param("Remote Hostname", m_args.remote_host)
-          .defaultValue("127.0.0.1");
+          .defaultValue("127.0.0.1")
+          .description("Remote address to connect to when using SSH.");
 
         param("Remote Username", m_args.remote_user)
-          .defaultValue("root");
+          .defaultValue("root")
+          .description("Remote username to use when connecting over SSH.");
 
         param("Private Key File", m_args.private_key)
-          .defaultValue("../private/etc/id_rsa");
+          .defaultValue("../private/etc/id_rsa")
+          .description("File name of private key file to use when connecting via SSH. "
+            "File paths shall be given in relation to DUNE configuration folder.");
 
-        param("Temporary File", m_args.tmp_file)
-          .defaultValue("/tmp/airhost_rssi");
-
-        param("Update Period", m_args.period)
-          .defaultValue("5");
-
+        // Format to be used when scanning the output of 'iwconfig'
         std::stringstream ss;
         ss << c_prefix << "%d/%d ";
         m_format = ss.str();
@@ -103,9 +124,7 @@ namespace Sensors
       {
         m_period.setTop(m_args.period);
         m_keyfile = Path(m_ctx.dir_cfg) / m_args.private_key;
-        m_tmpfile = Path(m_args.tmp_file);
         debug("Private key file is in %s", m_keyfile.c_str());
-        debug("Temporary file set to %s", m_tmpfile.c_str());
       }
 
       //! Retrieve current wifi RSSI
@@ -113,14 +132,20 @@ namespace Sensors
       poll()
       {
 #ifdef DUNE_SYS_HAS_POPEN
+        // Compute command to be used for getting RSSI
         std::stringstream ss;
+
+        // If SSH is used, prepend SSH connection to the command
         if (m_args.use_ssh)
         {
           ss << "ssh " << sanitize(m_args.ssh_flags) << " -i " << m_keyfile.c_str() << " "
               << sanitize(m_args.remote_user) << "@" << sanitize(m_args.remote_host) << " ";
         }
+        // Use 'iwconfig' with correct input / output redirection
         ss << "iwconfig </dev/zero 2>/dev/null";
         debug("executing '%s'", ss.str().c_str());
+
+        // Execute and open command output for reading
         FILE * fd = popen(ss.str().c_str(), "re");
         if (fd == NULL)
         {
@@ -133,12 +158,15 @@ namespace Sensors
           while (fgets(line, 512, fd))
           {
             std::string l = String::trim(line);
+            // Look for prefix in the output of 'iwconfig'
             if (String::startsWith(l, c_prefix))
             {
               int val, max;
+              // Parse RSSI line according to format
               std::sscanf(l.c_str(), m_format.c_str(), &val, &max);
               m_msg.value = (val * 100.0) / max;
               debug("Link quality: %f %% (%s).", m_msg.value, l.c_str());
+              // Send received link quality as an RSSI message
               dispatch(m_msg);
               break;
             }
@@ -156,12 +184,14 @@ namespace Sensors
       {
         while (!stopping())
         {
+          // Stop for 1 second (not bound to any messages)
           waitForMessages(1.0);
 
           if (m_period.overflow())
           {
             double time = Clock::get();
             poll();
+            // When using an SSH connection, it may take a while to fetch RSSI.
             debug("Took %f seconds to get RSSI.", Time::Clock::get() - time);
             m_period.reset();
           }
