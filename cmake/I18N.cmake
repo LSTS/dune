@@ -58,7 +58,7 @@ if(DUNE_PROGRAM_XGETTEXT)
   file(GLOB_RECURSE texts   "${PROJECT_SOURCE_DIR}/i18n/*.txt")
 
   add_custom_target(i18n_extract
-    xgettext
+    ${XGETTEXT_EXE}
     --package-name=${PROJECT_SHORT_NAME}
     --package-version=${PROJECT_VERSION}
     --copyright-holder=${PROJECT_VENDOR}
@@ -82,7 +82,7 @@ if(DUNE_PROGRAM_MSGMERGE)
     dune_i18n_get_name(${locale} locale_name)
 
     add_custom_target(i18n_update_${locale_name}
-      msgmerge
+      ${MSGMERGE_EXE}
       --quiet
       --no-wrap
       --update
@@ -104,7 +104,7 @@ if(DUNE_PROGRAM_MSGFMT)
     file(MAKE_DIRECTORY ${mo_folder})
 
     add_custom_target(i18n_compile_${locale_name}
-      msgfmt
+      ${MSGFMT_EXE}
       --verbose
       --check
       --statistics
