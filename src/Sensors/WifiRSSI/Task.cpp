@@ -84,33 +84,32 @@ namespace Sensors
         param("Connect via SSH", m_args.use_ssh)
         .defaultValue("false")
         .description("When wireless device is attached to a different CPU "
-          "(as it is the case when using Ubiquiti radios), SSH is used to"
-          "connect onto that CPU.");
+                     "(as it is the case when using Ubiquiti radios), SSH is used to"
+                     "connect onto that CPU.");
 
         param("SSH Flags", m_args.ssh_flags)
         .defaultValue("-y")
         .description("SSH flags to use when connecting. For instance, in "
-          "Dropbear SSH '-y' will accept unknown hosts.");
-
+                     "Dropbear SSH '-y' will accept unknown hosts.");
 
         param("Update Period", m_args.period)
-          .defaultValue("5")
-          .minimumValue("2")
-          .units(Units::Second)
-          .description("Time, in seconds, between RSSI polling.");
+        .defaultValue("5")
+        .minimumValue("2")
+        .units(Units::Second)
+        .description("Time, in seconds, between RSSI polling.");
 
         param("Remote Hostname", m_args.remote_host)
-          .defaultValue("127.0.0.1")
-          .description("Remote address to connect to when using SSH.");
+        .defaultValue("127.0.0.1")
+        .description("Remote address to connect to when using SSH.");
 
         param("Remote Username", m_args.remote_user)
-          .defaultValue("root")
-          .description("Remote username to use when connecting over SSH.");
+        .defaultValue("root")
+        .description("Remote username to use when connecting over SSH.");
 
         param("Private Key File", m_args.private_key)
-          .defaultValue("../private/etc/id_rsa")
-          .description("File name of private key file to use when connecting via SSH. "
-            "File paths shall be given in relation to DUNE configuration folder.");
+        .defaultValue("../private/etc/id_rsa")
+        .description("File name of private key file to use when connecting via SSH. "
+                     "File paths shall be given in relation to DUNE configuration folder.");
 
         // Format to be used when scanning the output of 'iwconfig'
         std::stringstream ss;
@@ -139,7 +138,7 @@ namespace Sensors
         if (m_args.use_ssh)
         {
           ss << "ssh " << sanitize(m_args.ssh_flags) << " -i " << m_keyfile.c_str() << " "
-              << sanitize(m_args.remote_user) << "@" << sanitize(m_args.remote_host) << " ";
+             << sanitize(m_args.remote_user) << "@" << sanitize(m_args.remote_host) << " ";
         }
         // Use 'iwconfig' with correct input / output redirection
         ss << "iwconfig </dev/zero 2>/dev/null";
