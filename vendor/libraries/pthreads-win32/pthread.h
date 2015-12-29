@@ -309,7 +309,7 @@ enum {
 #endif
 #endif
 
-#ifndef HAVE_STRUCT_TIMESPEC
+#if !defined(HAVE_STRUCT_TIMESPEC) && _MSC_VER < 1900
 #ifndef _TIMESPEC_DEFINED
 #define HAVE_STRUCT_TIMESPEC 1
 struct timespec {
