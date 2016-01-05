@@ -88,6 +88,13 @@ namespace Transports
       uint16_t m_seq;
       //! Last acoustic operation.
       IMC::AcousticOperation* m_last_acop;
+      //! Vector of pending message requests
+      std::vector<const IMC::AcousticOperation*> m_msg_requests;
+      //! Timer for sending preceding message
+      Counter<double> m_msg_send_timer;
+      //! When set should wait and send next message
+      bool m_send_next;
+
       //! Task arguments.
       Arguments m_args;
 
@@ -96,12 +103,13 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
+        m_progress(0),
+        m_fuel_level(0),
+        m_fuel_conf(0),
+        m_pc(NULL),
         m_seq(0),
         m_last_acop(NULL),
-        m_pc(NULL),
-        m_fuel_conf(0),
-        m_progress(0),
-        m_fuel_level(0)
+        m_send_next(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -216,13 +224,21 @@ namespace Transports
             break;
 
           case IMC::AcousticOperation::AOP_MSG:
-            sendMessage(msg->system, msg->msg);
+            m_msg_requests.push_back((const IMC::AcousticOperation*)msg->clone());
+            // are there more messages being sent?
+            if (m_msg_requests.size() > 1)
+            {
+              IMC::AcousticOperation aop(*msg);
+              aop.op = IMC::AcousticOperation::AOP_MSG_QUEUED;
+              dispatch(aop);
+              return;
+            }
+            else
+              sendMessage(msg->system, msg->msg);
             break;
-
           default:
             return;
         }
-
         replaceLastOp(msg);
       }
 
@@ -259,7 +275,7 @@ namespace Transports
 
         if ((uint8_t)msg->data[0] != c_sync)
         {
-          debug("invalid synchronization number");
+          debug("invalid synchronization number: %02X", msg->data[0]);
           return;
         }
 
@@ -307,44 +323,85 @@ namespace Transports
         if (m_last_acop == NULL)
           return;
 
-        if (msg->value == IMC::UamTxStatus::UTS_IP)
+        IMC::AcousticOperation aop(*m_last_acop);
+
+        switch(msg->value)
         {
-          if (m_last_acop->op == IMC::AcousticOperation::AOP_RANGE)
+          case IMC::UamTxStatus::UTS_BUSY:
           {
-            IMC::AcousticOperation aop(*m_last_acop);
-            aop.op = IMC::AcousticOperation::AOP_RANGE_IP;
-            dispatch(aop);
+            aop.op = IMC::AcousticOperation::AOP_BUSY;
+            break;
           }
-          else if (m_last_acop->op == IMC::AcousticOperation::AOP_ABORT)
+          case IMC::UamTxStatus::UTS_INV_ADDR:
           {
-            IMC::AcousticOperation aop(*m_last_acop);
-            aop.op = IMC::AcousticOperation::AOP_ABORT_IP;
-            dispatch(aop);
+            aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+            if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
+              delete m_msg_requests.front();
+              m_msg_requests.erase(m_msg_requests.begin());
+            break;
+          }
+          case IMC::UamTxStatus::UTS_DONE:
+          {
+            switch(m_last_acop->op)
+            {
+              case IMC::AcousticOperation::AOP_ABORT:
+                aop.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
+                break;
+              case IMC::AcousticOperation::AOP_RANGE:
+                aop.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
+                break;
+              case IMC::AcousticOperation::AOP_MSG:
+                delete m_msg_requests.front();
+                m_msg_requests.erase(m_msg_requests.begin());
+                aop.op = IMC::AcousticOperation::AOP_MSG_DONE;
+                break;
+            }
+            break;
+          }
+          case IMC::UamTxStatus::UTS_IP:
+          {
+            switch(m_last_acop->op)
+            {
+              case IMC::AcousticOperation::AOP_ABORT:
+                aop.op = IMC::AcousticOperation::AOP_ABORT_IP;
+                break;
+              case IMC::AcousticOperation::AOP_RANGE:
+                aop.op = IMC::AcousticOperation::AOP_RANGE_IP;
+                break;
+              case IMC::AcousticOperation::AOP_MSG:
+                aop.op = IMC::AcousticOperation::AOP_MSG_IP;
+                break;
+            }
+            break;
+          }
+          case IMC::UamTxStatus::UTS_FAILED:
+          {
+            switch(m_last_acop->op)
+            {
+              case IMC::AcousticOperation::AOP_ABORT:
+                aop.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
+                break;
+              case IMC::AcousticOperation::AOP_RANGE:
+                aop.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
+                break;
+              case IMC::AcousticOperation::AOP_MSG:
+                m_msg_requests.erase(m_msg_requests.begin());
+                aop.op = IMC::AcousticOperation::AOP_MSG_FAILURE;
+                break;
+            }
+            break;
           }
         }
-        else if (msg->value == IMC::UamTxStatus::UTS_DONE)
+
+        dispatch(aop);
+
+        // If idle send pending messages.
+        if (msg->value != IMC::UamTxStatus::UTS_IP && !m_msg_requests.empty())
         {
-          if (m_last_acop->op == IMC::AcousticOperation::AOP_ABORT)
-          {
-            IMC::AcousticOperation aop(*m_last_acop);
-            aop.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
-            dispatch(aop);
-          }
-        }
-        else
-        {
-          if (m_last_acop->op == IMC::AcousticOperation::AOP_ABORT)
-          {
-            IMC::AcousticOperation aop(*m_last_acop);
-            aop.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
-            dispatch(aop);
-          }
-          else if (m_last_acop->op == IMC::AcousticOperation::AOP_RANGE)
-          {
-            IMC::AcousticOperation aop(*m_last_acop);
-            aop.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
-            dispatch(aop);
-          }
+          // wait (for clearing buffers) and send next message
+          m_msg_send_timer.setTop(2);
+          m_msg_send_timer.reset();
+          m_send_next = true;
         }
       }
 
@@ -398,6 +455,8 @@ namespace Transports
         frame.data.push_back(crc.get());
 
         dispatch(frame);
+
+
       }
 
       void
@@ -478,12 +537,18 @@ namespace Transports
 
         try {
           uint16_t msg_type;
-          std::memcpy(&msg_type, &msg->data[1], sizeof(uint16_t));
+          std::memcpy(&msg_type, &msg->data[2], sizeof(uint16_t));
           Message *m = IMC::Factory::produce(msg_type);
+          if (m == NULL)
+          {
+            err("Invalid message type received: %d", msg_type);
+            return;
+          }
+
           m->setSource(imc_src);
           m->setDestination(imc_dst);
           m->setTimeStamp(msg->getTimeStamp());
-          m->deserializeFields((const unsigned char *)&msg->data[3], msg->data.size()-3);
+          m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
           dispatch(m, DF_KEEP_TIME);
           debug("Acoustic message successfully parsed as '%s'.", m->getName());
         }
@@ -636,6 +701,13 @@ namespace Transports
               m_rep_timer.reset();
               sendReport();
             }
+          }
+
+          if (m_send_next && m_msg_send_timer.overflow()) {
+            m_send_next = false;
+            const IMC::AcousticOperation * req = m_msg_requests.at(0);
+            replaceLastOp(req);
+            sendMessage(req->system, req->msg);
           }
         }
       }
