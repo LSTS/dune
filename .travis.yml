@@ -3,10 +3,17 @@ language: cpp
 compiler:
 - gcc
 - clang
-script: mkdir build && cd build && cmake -DTESTS=1 .. && make -j8 && make test
+before_install:
+  - if [ $TRAVIS_OS_NAME == linux ]; sudo add-apt-repository -y ppa:saiarcot895/chromium-beta; sudo apt-get update; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null; brew install ninja; fi
+script:
+  - if [$NINJA == true] mkdir build && cd build && cmake -G Ninja -DTESTS=1 .. && ninja Experimental; fi
+  - if [$NINJA == false] mkdir build && cd build && cmake -DTESTS=1 .. && make -j8 && make test; fi
 env:
   global:
   - LANG="en_US.UTF-8"
+  - NINJA="true"
+  - NINJA="false"
 os:
 - linux
 - osx
