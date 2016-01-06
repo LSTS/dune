@@ -6,7 +6,7 @@ compiler:
 before_install:
 - echo $LANG
 - echo $LC_ALL
-script: mkdir build && cd build && cmake .. && make test -j8
+script: mkdir build && cd build && cmake .. && make -j8
 env:
   global:
   - LANG="en_US.UTF-8"
