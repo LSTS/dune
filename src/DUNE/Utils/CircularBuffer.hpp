@@ -31,6 +31,7 @@
 // ISO C++ headers.
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
