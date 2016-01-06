@@ -390,6 +390,18 @@ namespace Transports
           handleInstantMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
+        else if (String::startsWith(msg->value, "RECVSTART"))
+          return;
+        else if (String::startsWith(msg->value, "RECVEND"))
+          return;
+        else if (String::startsWith(msg->value, "RECVFAILED"))
+          return;
+        else if (String::startsWith(msg->value, "RECV"))
+          handleBurstMessage(msg->value);
+        else if (String::startsWith(msg->value, "DELIVERED"))
+          handleBurstMessageDelivered(msg->value);
+        else if (String::startsWith(msg->value, "FAILED"))
+          handleBurstMessageFailed(msg->value);
       }
 
       void
@@ -466,7 +478,15 @@ namespace Transports
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
         if (!ticket.pbm)
-          m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
+        {
+          if (msg->data.size() <= 64)
+            m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
+          else
+          {
+            war(DTR("Sending burst message (size=%u) to %d."), msg->data.size(), ticket.addr);
+            m_driver->sendBurst((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
+          }
+        }
         else
           m_driver->sendPBM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
 
@@ -576,6 +596,78 @@ namespace Transports
       }
 
       void
+      handleBurstMessage(const std::string& str)
+      {
+        RecvIM reply;
+        m_driver->parseReceivedBurst(str, reply);
+
+        IMC::UamRxFrame msg;
+        msg.data.assign((char*)&reply.data[0], (char*)&reply.data[0] + reply.data.size());
+
+        // Lookup source system name.
+        try
+        {
+          msg.sys_src = lookupSystemName(reply.src);
+        }
+        catch (...)
+        {
+          msg.sys_src = "unknown";
+        }
+
+        // Lookup destination system name.
+        try
+        {
+          msg.sys_dst = lookupSystemName(reply.dst);
+        }
+        catch (...)
+        {
+          msg.sys_dst = "unknown";
+        }
+        dispatch(msg);
+
+        m_driver->getMultipathStructure();
+      }
+
+      void
+      handleBurstMessageFailed(const std::string& str)
+      {
+        (void)str;
+        m_driver->setBusy(false);
+        clearTicket(IMC::UamTxStatus::UTS_FAILED);
+      }
+
+      void
+      handleBurstMessageDelivered(const std::string& str)
+      {
+        //! Query propagation time.
+        unsigned dst = 0;
+        if (std::sscanf(str.c_str(), "DELIVERED,%u", &dst) == 1)
+        {
+          try
+          {
+            double ptime = m_driver->getPropagationTime();
+            if (ptime > 0)
+            {
+              IMC::UamRxRange range;
+              range.sys = lookupSystemName(dst);
+              if (m_ticket != NULL)
+                range.seq = m_ticket->seq;
+              range.value = (ptime * m_sound_speed) / 1000000.0;
+              dispatch(range);
+            }
+          }
+          catch (...)
+          { }
+        }
+
+        m_driver->getMultipathStructure();
+
+        // Clear ticket.
+        m_driver->setBusy(false);
+        clearTicket(IMC::UamTxStatus::UTS_DONE);
+      }
+
+      void
       keepAlive(void)
       {
         if (m_driver->isBusy())
@@ -610,3 +702,4 @@ namespace Transports
 }
 
 DUNE_TASK
+
