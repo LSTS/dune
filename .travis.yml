@@ -3,7 +3,7 @@ language: cpp
 compiler:
 - gcc
 - clang
-script: mkdir build && cd build && cmake .. && make -j8
+script: mkdir build && cd build && cmake -DTESTS=1 .. && make -j8 && make test
 env:
   global:
   - LANG="en_US.UTF-8"
