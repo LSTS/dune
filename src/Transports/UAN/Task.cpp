@@ -234,8 +234,11 @@ namespace Transports
               return;
             }
             else
+            {
               sendMessage(msg->system, msg->msg);
+            }
             break;
+
           default:
             return;
         }
@@ -328,12 +331,10 @@ namespace Transports
         switch(msg->value)
         {
           case IMC::UamTxStatus::UTS_BUSY:
-          {
             aop.op = IMC::AcousticOperation::AOP_BUSY;
             break;
-          }
+
           case IMC::UamTxStatus::UTS_INV_ADDR:
-          {
             aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
             if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
             {
@@ -341,9 +342,8 @@ namespace Transports
               m_msg_requests.erase(m_msg_requests.begin());
             }
             break;
-          }
+
           case IMC::UamTxStatus::UTS_DONE:
-          {
             switch(m_last_acop->op)
             {
               case IMC::AcousticOperation::AOP_ABORT:
@@ -359,9 +359,8 @@ namespace Transports
                 break;
             }
             break;
-          }
+
           case IMC::UamTxStatus::UTS_IP:
-          {
             switch(m_last_acop->op)
             {
               case IMC::AcousticOperation::AOP_ABORT:
@@ -375,9 +374,8 @@ namespace Transports
                 break;
             }
             break;
-          }
+
           case IMC::UamTxStatus::UTS_FAILED:
-          {
             switch(m_last_acop->op)
             {
               case IMC::AcousticOperation::AOP_ABORT:
@@ -393,7 +391,6 @@ namespace Transports
                 break;
             }
             break;
-          }
         }
 
         dispatch(aop);
@@ -458,8 +455,6 @@ namespace Transports
         frame.data.push_back(crc.get());
 
         dispatch(frame);
-
-
       }
 
       void
@@ -521,9 +516,11 @@ namespace Transports
         }
 
         // Check if special command can be used...
-        if (msg->getId() == IMC::PlanControl::getIdStatic()) {
+        if (msg->getId() == IMC::PlanControl::getIdStatic())
+        {
           const IMC::PlanControl * pc = static_cast<const IMC::PlanControl*>(msg);
-          if (pc->arg.isNull()) {
+          if (pc->arg.isNull())
+          {
             sendPlanControl(sys, static_cast<const IMC::PlanControl*>(msg));
             return;
           }
@@ -538,7 +535,8 @@ namespace Transports
       {
         debug("Parsing message received via acoustic message.");
 
-        try {
+        try
+        {
           uint16_t msg_type;
           std::memcpy(&msg_type, &msg->data[2], sizeof(uint16_t));
           Message *m = IMC::Factory::produce(msg_type);
@@ -706,7 +704,8 @@ namespace Transports
             }
           }
 
-          if (m_send_next && m_msg_send_timer.overflow()) {
+          if (m_send_next && m_msg_send_timer.overflow())
+          {
             m_send_next = false;
             const IMC::AcousticOperation * req = m_msg_requests.at(0);
             replaceLastOp(req);
