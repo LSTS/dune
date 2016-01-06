@@ -336,8 +336,10 @@ namespace Transports
           {
             aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
             if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
+            {
               delete m_msg_requests.front();
               m_msg_requests.erase(m_msg_requests.begin());
+            }
             break;
           }
           case IMC::UamTxStatus::UTS_DONE:
@@ -385,6 +387,7 @@ namespace Transports
                 aop.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
                 break;
               case IMC::AcousticOperation::AOP_MSG:
+                delete m_msg_requests.front();
                 m_msg_requests.erase(m_msg_requests.begin());
                 aop.op = IMC::AcousticOperation::AOP_MSG_FAILURE;
                 break;
