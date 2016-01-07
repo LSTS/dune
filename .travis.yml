@@ -9,7 +9,7 @@ before_install:
   - cmake --version
 
 script: 
-  - mkdir build && cd build && cmake -DTESTS=1 .. && make test
+  - mkdir build && cd build && cmake -DTESTS=1 .. && make -j4 && make test
 
 env:
   global:
