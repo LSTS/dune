@@ -25,6 +25,9 @@
 // Author: José Pinto                                                       *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstdio>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -145,7 +148,7 @@ namespace Sensors
         debug("executing '%s'", ss.str().c_str());
 
         // Execute and open command output for reading
-        FILE * fd = popen(ss.str().c_str(), "re");
+        FILE* fd = popen(ss.str().c_str(), "re");
         if (fd == NULL)
         {
           war("Unable to retrieve RSSI. Unable to spawn child process.");
