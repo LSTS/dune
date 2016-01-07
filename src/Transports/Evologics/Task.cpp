@@ -483,7 +483,7 @@ namespace Transports
             m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
           else
           {
-            war(DTR("Sending burst message (size=%lu) to %d."), msg->data.size(), ticket.addr);
+            war(DTR("Sending burst message (size=%lu) to %d."), (unsigned long)msg->data.size(), ticket.addr);
             m_driver->sendBurst((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
           }
         }
@@ -702,4 +702,3 @@ namespace Transports
 }
 
 DUNE_TASK
-
