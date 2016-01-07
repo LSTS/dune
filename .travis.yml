@@ -5,15 +5,11 @@ compiler:
 - gcc
 - clang
 
-sudo: required
-
 before_install:
-  - if [ $TRAVIS_OS_NAME == osx ]; then ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null; brew install ninja; fi
   - cmake --version
 
-script:
-  - if [ $TRAVIS_OS_NAME == osx ]; then mkdir build && cd build && cmake -GNinja -DTESTS=1 .. && ninja Experimental; fi
-  - if [ $TRAVIS_OS_NAME == linux ]; then mkdir build && cd build && cmake -DTESTS=1 .. && make -j4 && make test; fi
+script: 
+  - mkdir build && cd build && cmake -DTESTS=1 .. && make test
 
 env:
   global:
