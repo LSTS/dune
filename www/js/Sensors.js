@@ -34,6 +34,10 @@ Sensors.prototype = new BasicSection;
 
 Sensors.prototype.m_msgs =
     {
+        'Chlorophyll': { },
+        'Fluorescein': { },
+        'Phycocyanin': { },
+        'Phycoerythrin': { },
         'Depth': { },
         'Pressure': { },
         'Temperature': { },
