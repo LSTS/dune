@@ -92,6 +92,8 @@ namespace Sensors
         param("Sampling Frequency", m_args.sampling_freq)
         .defaultValue("1.0")
         .units(Units::Hertz)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .description(DTR("Sampling frequency"));
 
         for (size_t i = 0; i < c_adcs_count; ++i)
