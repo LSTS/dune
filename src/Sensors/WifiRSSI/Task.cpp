@@ -129,6 +129,13 @@ namespace Sensors
         debug("Private key file is in %s", m_keyfile.c_str());
       }
 
+      //! Initialize entity state to NORMAL
+      void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
       //! Retrieve current wifi RSSI
       void
       poll()
@@ -156,6 +163,7 @@ namespace Sensors
         else
         {
           char line[512] = {0};
+          bool found = false;
 
           while (fgets(line, 512, fd))
           {
@@ -170,13 +178,16 @@ namespace Sensors
               debug("Link quality: %f %% (%s).", m_msg.value, l.c_str());
               // Send received link quality as an RSSI message
               dispatch(m_msg);
+              found = true;
               break;
             }
           }
           pclose(fd);
+          if (!found)
+            throw std::runtime_error("Unable to parse RSSI.");
         }
 #else
-        war("popen() is not supported in this system.");
+        throw std::runtime_error("popen() is not supported in this system.");
 #endif
       }
 
@@ -192,7 +203,16 @@ namespace Sensors
           if (m_period.overflow())
           {
             double time = Clock::get();
-            poll();
+            try
+            {
+              poll();
+            }
+            catch (std::exception& e)
+            {
+              err("Error polling RSSI: %s.", e.what());
+              setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
+            }
+
             // When using an SSH connection, it may take a while to fetch RSSI.
             debug("Took %f seconds to get RSSI.", Time::Clock::get() - time);
             m_period.reset();
