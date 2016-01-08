@@ -44,6 +44,8 @@ namespace Sensors
 
     //! Maximum number of ADC channels.
     static const size_t c_adcs_count = 8;
+    //! Alterative USB product id.
+    static const uint16_t c_1608g_alt_pid = 0x0134;
 
     //! Task arguments.
     struct Arguments
@@ -240,6 +242,21 @@ namespace Sensors
       }
 
       void
+      findDevice(void)
+      {
+        debug("probing MCC device");
+        m_udev = usb_device_find_USB_MCC(USB1608G_PID, NULL);
+        if (m_udev != NULL)
+          return;
+
+        m_udev = usb_device_find_USB_MCC(c_1608g_alt_pid, NULL);
+        if (m_udev != NULL)
+          return;
+
+        throw RestartNeeded(DTR("failed to find valid device"), 5.0, false);
+      }
+
+      void
       connect(void)
       {
         debug("initializing USB library");
@@ -247,10 +264,7 @@ namespace Sensors
         if (rv < 0)
           throw RestartNeeded(DTR("failed to initialize USB library"), 5.0, false);
 
-        debug("probing MCC device");
-        m_udev = usb_device_find_USB_MCC(USB1608G_PID, NULL);
-        if (m_udev == NULL)
-          throw RestartNeeded(DTR("failed to find valid device"), 5.0, false);
+        findDevice();
 
         debug("initializing MCC device");
         usbInit_1608G(m_udev);
