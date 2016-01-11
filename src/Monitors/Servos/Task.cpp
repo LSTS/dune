@@ -112,6 +112,10 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx)
       {
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Position Fault Detection", m_args.pos_fault_detect)
         .defaultValue("false")
         .description("Enable position fault detection");
@@ -360,7 +364,7 @@ namespace Monitors
         if (curr > 0)
         {
           m_error_str = String::str(DTR("potential fault in servo#%d, "
-                                        "current consumption above %f"),
+                                        "current consumption above %0.1f A"),
                                     i, curr);
 
           m_on_fault[i] |= FT_CURRENT;
