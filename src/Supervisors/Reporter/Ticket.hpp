@@ -38,6 +38,8 @@ namespace Supervisors
 {
   namespace Reporter
   {
+    using namespace DUNE;
+
     //! Communication interfaces. The variables must match
     //! IMC::ReportControl communication interface field.
     enum CommInterface
@@ -52,8 +54,8 @@ namespace Supervisors
       IS_MOBILE = 0x08
     };
 
-    //! Ticket structure.
-    struct Ticket
+    //! Request structure.
+    struct Request
     {
       //! Sequence Id.
       uint16_t id;
@@ -66,7 +68,65 @@ namespace Supervisors
       //! Start/stop.
       bool start;
     };
+
+    // Ticket
+    class Ticket
+    {
+    public:
+      //! Constructor.
+      Ticket(Tasks::Task* task, unsigned id, const IMC::ReportControl* msg):
+        m_rc(NULL),
+        m_task(task)
+      {
+        m_ticket.id = id;
+        m_ticket.interface = msg->comm_interface;
+        m_ticket.period = msg->period;
+        m_ticket.destination = msg->sys_dst;
+
+        // Initialize counter.
+        if (msg->op == IMC::ReportControl::OP_REQUEST_START)
+        {
+          m_ticket.start = true;
+          m_timer.setTop(m_ticket.period);
+          Memory::replace(m_rc, new IMC::ReportControl(*msg));
+          m_rc->op = IMC::ReportControl::OP_REQUEST_REPORT;
+        }
+        else
+        {
+          m_ticket.start = false;
+        }
+      }
+
+      //! Trigger a report.
+      //! @return true if report was requested, false otherwise.
+      bool
+      trigger(void)
+      {
+        // Positive request.
+        if (m_ticket.start && m_rc != NULL)
+        {
+          // It is time to report.
+          if (m_timer.overflow())
+          {
+            m_timer.reset();
+            m_task->dispatch(*m_rc);
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+    private:
+      //! Ticket issued.
+      Request m_ticket;
+      //! Ticket timer.
+      Time::Counter<double> m_timer;
+      //! Pointer to ReportControl.
+      IMC::ReportControl* m_rc;
+      //! Pointer to task.
+      Tasks::Task* m_task;
+    };
   }
 }
-
 #endif
