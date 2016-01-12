@@ -55,7 +55,7 @@ namespace Supervisors
       void
       add(const Ticket ticket)
       {
-        if (ticket.isOperationStart())
+        if (!ticket.isOperationStart())
           return;
 
         // Iterate through list and add if necessary.
