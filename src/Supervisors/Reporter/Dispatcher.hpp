@@ -25,109 +25,90 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
+#ifndef SUPERVISORS_REPORTER_DISPATCHER_HPP_INCLUDED_
+#define SUPERVISORS_REPORTER_DISPATCHER_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+#include <vector>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "Dispatcher.hpp"
 #include "Ticket.hpp"
 
 namespace Supervisors
 {
   namespace Reporter
   {
-    using DUNE_NAMESPACES;
+    using namespace DUNE;
 
-    struct Task: public DUNE::Tasks::Task
+    //! Dispatcher class.
+    class Dispatcher
     {
-      //! Sequence id.
-      uint16_t m_id;
-
+    public:
       //! Constructor.
-      //! @param[in] name task name.
-      //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+      Dispatcher(void)
+      { }
+
+      void
+      add(const Ticket ticket)
       {
-        bind<IMC::ReportControl>(this);
+        if (ticket.isOperationStart())
+          return;
+
+        // Iterate through list and add if necessary.
+        std::vector<Ticket>::iterator itr = m_list.begin();
+        for (; itr != m_list.end(); ++itr)
+        {
+          // Same ticket.
+          if (itr->compare(ticket))
+          {
+            // Just update period.
+            if (itr->getPeriod() != ticket.getPeriod())
+              itr->reset(ticket.getPeriod());
+
+            return;
+          }
+        }
+
+        m_list.push_back(ticket);
       }
 
       void
-      consume(const IMC::ReportControl* msg)
+      remove(const Ticket ticket)
       {
-        switch (msg->op)
+        if (ticket.isOperationStart())
+          return;
+
+        // Iterate through list and remove if necessary.
+        std::vector<Ticket>::iterator itr = m_list.begin();
+        for (; itr != m_list.end(); ++itr)
         {
-          case IMC::ReportControl::OP_REQUEST_START:
-            // fill ticket.
+          // Same ticket.
+          if (itr->compare(ticket))
+          {
+            // Erase from list.
+            m_list.erase(itr, itr + 1);
             break;
-          case IMC::ReportControl::OP_STARTED:
-            // ack gateway.
-            break;
-          case IMC::ReportControl::OP_REQUEST_STOP:
-            // fill ticket.
-            break;
-          case IMC::ReportControl::OP_STOPPED:
-            // ack gateway.
-            break;
-          case IMC::ReportControl::OP_REQUEST_REPORT:
-            // request to drivers.
-            break;
-          case IMC::ReportControl::OP_REPORT_SENT:
-            // ack gateway.
-            break;
-          default:
-            debug("caught unexpected transition");
-            break;
+          }
         }
       }
 
-      //! Update internal state with new parameter values.
       void
-      onUpdateParameters(void)
+      run(void)
       {
+        // Iterate and call triggers.
+        std::vector<Ticket>::iterator itr = m_list.begin();
+        for (; itr != m_list.end(); ++itr)
+          itr->trigger();
       }
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-      }
-
-      //! Main loop.
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          waitForMessages(1.0);
-        }
-      }
+    private:
+      //! List of active tickets.
+      std::vector<Ticket> m_list;
     };
   }
 }
-
-DUNE_TASK
+#endif

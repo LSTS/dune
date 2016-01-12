@@ -65,11 +65,11 @@ namespace Supervisors
       uint16_t period;
       //! Destination system.
       std::string destination;
-      //! Start/stop.
+      //! Start/stop operation.
       bool start;
     };
 
-    // Ticket
+    //! Ticket class.
     class Ticket
     {
     public:
@@ -115,6 +115,47 @@ namespace Supervisors
         }
 
         return false;
+      }
+
+      bool
+      compare(const Ticket ticket)
+      {
+        if (m_ticket.interface == ticket.getInterface() &&
+            m_ticket.destination == ticket.getDestination())
+          return true;
+
+        return false;
+      }
+
+      void
+      reset(uint16_t period)
+      {
+        m_ticket.period = period;
+        m_timer.setTop(period);
+      }
+
+      uint8_t
+      getInterface(void) const
+      {
+        return m_ticket.interface;
+      }
+
+      std::string
+      getDestination(void) const
+      {
+        return m_ticket.destination;
+      }
+
+      bool
+      isOperationStart(void) const
+      {
+        return m_ticket.start;
+      }
+
+      uint16_t
+      getPeriod(void) const
+      {
+        return m_ticket.period;
       }
 
     private:
