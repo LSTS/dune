@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -41,7 +41,7 @@ project("DUNE")
 set(PROJECT_NAME "DUNE: Unified Navigation Environment")
 set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
-set(PROJECT_COPYRIGHT "Copyright (C) 2007-2015 - ${PROJECT_VENDOR}")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2016 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_MAJ "2")
 set(PROJECT_VERSION_MIN "6")
@@ -327,14 +327,6 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   install(DIRECTORY user/etc DESTINATION ./user/)
 endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 
-if(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
-  # Install private configuration files.
-  install(DIRECTORY private/etc DESTINATION ./private/)
-endif(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
-
-# Install firmware files.
-install(DIRECTORY firmware DESTINATION .)
-
 # Install scripts.
 install(DIRECTORY programs/scripts DESTINATION .)
 
@@ -384,7 +376,7 @@ set(CPACK_NSIS_DISPLAY_NAME
   "${PROJECT_SHORT_NAME} ${PROJECT_VERSION}")
 
 if(DUNE_OS_WINDOWS)
-  set(CPACK_GENERATOR "NSIS")
+  set(CPACK_GENERATOR "NSIS;ZIP")
 else(DUNE_OS_WINDOWS)
   set(CPACK_GENERATOR "TBZ2")
 endif(DUNE_OS_WINDOWS)

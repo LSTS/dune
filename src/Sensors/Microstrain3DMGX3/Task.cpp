@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -191,9 +191,7 @@ namespace Sensors
 
         for (unsigned i = 0; i < 3; i++)
           data(i) = m_args.hard_iron[i];
-
-        data = inverse(m_rotation) * data;
-
+        data = transpose(m_rotation) * data;
         for (unsigned i = 0; i < 3; i++)
           m_hard_iron[i] = data(i);
 

@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -150,6 +150,12 @@ macro(dune_probe_cxx)
 
       if(MSVC60)
         message(FATAL_ERROR "Visual Studio 6.0 is not supported")
+      elseif(MSVC14)
+        set(msv_version "2015")
+      elseif(MSVC12)
+        set(msv_version "2013")
+      elseif(MSVC11)
+        set(msv_version "2012")
       elseif(MSVC10)
         set(msv_version "2010")
       elseif(MSVC90)

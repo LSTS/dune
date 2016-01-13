@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,6 +24,9 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 //***************************************************************************
+
+// DUNE headers.
+#include <DUNE/I18N.hpp>
 
 // Local headers.
 #include "Plan.hpp"
@@ -65,13 +68,13 @@ namespace Plan
 
       try
       {
-        m_power_model = new Plans::PowerModel(cfg);
+        m_power_model = new Power::Model(cfg);
         m_power_model->validate();
       }
-      catch (...)
+      catch (std::exception& e)
       {
         Memory::clear(m_power_model);
-        m_task->inf(DTR("plan: power model invalid"));
+        m_task->err(DTR("plan: power model invalid: %s"), e.what());
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
@@ -507,10 +510,14 @@ namespace Plan
     void
     Plan::sequenceNodes(void)
     {
-      PlanMap::iterator itr = m_graph.find(m_spec->start_man_id);
+      std::string maneuver_id = m_spec->start_man_id;
+      PlanMap::iterator itr = m_graph.find(maneuver_id);
 
       while (true)
       {
+        if (itr == m_graph.end())
+          throw ParseError(String::str(DTR("invalid maneuver id '%s'"), maneuver_id.c_str()));
+
         m_seq_nodes.push_back(itr->second.pman);
 
         if (!itr->second.trans.size())
@@ -527,7 +534,8 @@ namespace Plan
           return;
         }
 
-        itr = m_graph.find(itr->second.trans[0]->dest_man);
+        maneuver_id = itr->second.trans[0]->dest_man;
+        itr = m_graph.find(maneuver_id);
       }
     }
 

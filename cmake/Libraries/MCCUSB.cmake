@@ -1,6 +1,5 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
-# Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
+# Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
 #                                                                          #
@@ -24,32 +23,14 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
-# Manta #9 Gateway configuration file                                      #
-############################################################################
 
-[Require hardware/lctr-a9xx.ini]
+dune_test_lib(usb-1.0 libusb_init)
+dune_test_lib(hidapi-libusb hid_close)
+dune_test_lib(mccusb usb_device_find_USB_MCC)
+dune_test_header(mccusb/pmd.h)
 
-[General]
-Vehicle                                 = manta-9
-
-[Power.MCBv2]
-Drive LCD                               = true
-
-[UserInterfaces.MantaPanel]
-Sections of System Addresses            = Micromodem Addresses, Narrow Band Transponders
-System Names                            = lauv-seacon-1,
-                                          lauv-seacon-2,
-                                          lauv-seacon-3,
-                                          benthos1,
-                                          benthos2,
-                                          benthos3,
-                                          benthos4,
-                                          benthos5
-
-[Transports.Logging]
-Enabled                                 = Never
-
-[Transports.MobileInternet]
-GSM - User                              = vodafone
-GSM - Password                          = vodafone
-GSM - APN                               = net2.vodafone.pt
+if(DUNE_SYS_HAS_LIB_MCCUSB AND DUNE_SYS_HAS_MCCUSB_PMD_H)
+  set(DUNE_USING_MCCUSB 1 CACHE INTERNAL "MCC USB library")
+else()
+  set(DUNE_USING_MCCUSB 0 CACHE INTERNAL "MCC USB library")
+endif()
