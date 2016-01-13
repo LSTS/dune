@@ -357,6 +357,7 @@ namespace Sensors
           rmat.fill(3, 3, &r8[0]);
           rmat = transpose(m_rotation_matrix * rmat);
 
+          m_euler.setTimeStamp(m_parser.getTimeStamp());
           m_euler.phi = std::atan2(rmat(2, 1), rmat(2, 2));
           m_euler.theta = std::asin(-rmat(2, 0));
           m_euler.psi = std::atan2(rmat(1, 0), rmat(0, 0));
