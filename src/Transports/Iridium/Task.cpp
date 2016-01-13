@@ -110,7 +110,7 @@ namespace Transports
         IMC::AnnounceService announce;
         announce.service = std::string("imc+any://iridium");
         dispatch(announce);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
