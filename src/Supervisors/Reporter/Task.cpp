@@ -38,10 +38,22 @@ namespace Supervisors
   {
     using DUNE_NAMESPACES;
 
+    struct Arguments
+    {
+      //! Enable acoustic reports.
+      bool acoustic;
+      //! Acoustic reports periodicity.
+      double acoustic_period;
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
       //! Sequence id.
       uint16_t m_id;
+      //! Ticket dispatcher.
+      Dispatcher m_dispatcher;
+      //! Task arguments
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -49,7 +61,43 @@ namespace Supervisors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
+        param(DTR_RT("Acoustic Reports"), m_args.acoustic)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description("Enable acoustic system state reporting");
+
+        param(DTR_RT("Acoustic Reports Periodicity"), m_args.acoustic_period)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .units(Units::Second)
+        .defaultValue("60")
+        .minimumValue("30")
+        .maximumValue("600")
+        .description("Reports periodicity");
+
         bind<IMC::ReportControl>(this);
+      }
+
+      //! Update internal state with new parameter values.
+      void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.acoustic) || paramChanged(m_args.acoustic_period))
+        {
+          if (m_args.acoustic)
+          {
+            IMC::ReportControl* rc;
+            rc = new IMC::ReportControl;
+            rc->op = IMC::ReportControl::OP_REQUEST_START;
+            rc->comm_interface = IMC::ReportControl::CI_ACOUSTIC;
+            rc->period = m_args.acoustic_period;
+            rc->sys_dst = "broadcast";
+            m_dispatcher.add(Ticket(this, m_id++, rc));
+          }
+          else
+          {
+            m_dispatcher.clearAcoustic();
+          }
+        }
       }
 
       void
@@ -58,63 +106,31 @@ namespace Supervisors
         switch (msg->op)
         {
           case IMC::ReportControl::OP_REQUEST_START:
-            // fill ticket.
-            break;
-          case IMC::ReportControl::OP_STARTED:
-            // ack gateway.
+            m_dispatcher.add(Ticket(this, m_id++, msg));
+
+            {
+              IMC::ReportControl rc(*msg);
+              rc.op = IMC::ReportControl::OP_STARTED;
+              dispatchReply(*msg, rc);
+            }
             break;
           case IMC::ReportControl::OP_REQUEST_STOP:
-            // fill ticket.
+            m_dispatcher.remove(Ticket(this, m_id++, msg));
+
+            {
+              IMC::ReportControl rc(*msg);
+              rc.op = IMC::ReportControl::OP_STOPPED;
+              dispatchReply(*msg, rc);
+            }
             break;
+          case IMC::ReportControl::OP_STARTED:
           case IMC::ReportControl::OP_STOPPED:
-            // ack gateway.
-            break;
           case IMC::ReportControl::OP_REQUEST_REPORT:
-            // request to drivers.
-            break;
           case IMC::ReportControl::OP_REPORT_SENT:
-            // ack gateway.
-            break;
           default:
             debug("caught unexpected transition");
             break;
         }
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
       }
 
       //! Main loop.

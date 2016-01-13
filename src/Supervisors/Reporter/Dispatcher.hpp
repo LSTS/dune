@@ -105,6 +105,24 @@ namespace Supervisors
           itr->trigger();
       }
 
+      void
+      clear(void)
+      {
+        m_list.clear();
+      }
+
+      void
+      clearAcoustic(void)
+      {
+        // Iterate through list and remove if necessary.
+        std::vector<Ticket>::iterator itr = m_list.begin();
+        for (; itr != m_list.end(); ++itr)
+        {
+          if (itr->getInterface() == IS_ACOUSTIC)
+            m_list.erase(itr, itr + 1);
+        }
+      }
+
     private:
       //! List of active tickets.
       std::vector<Ticket> m_list;
