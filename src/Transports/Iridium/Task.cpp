@@ -196,6 +196,7 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgRx* msg)
       {
+
         DUNE::IMC::IridiumMessage * m = DUNE::IMC::IridiumMessage::deserialize(msg);
         if (m == NULL)
         {
@@ -390,23 +391,24 @@ namespace Transports
       {
         while (!stopping())
         {
-          consumeMessages();
-          double now = Clock::get();
-          if ((m_args.delay_between_device_updates > 0)
-              && (now - m_last_dev_update_time) > m_args.delay_between_device_updates)
-            sendDeviceUpdates();
-          else
-            debug("Will send device updates in %f seconds.", (now - m_last_dev_update_time)
-                  - m_args.delay_between_device_updates);
+          waitForMessages(3.0);
 
-          if ((m_args.delay_between_announces > 0)
-              && (now - m_last_announce_time) > m_args.delay_between_announces)
-            sendAnnounce();
-          else
-            debug("Will send announce in %f seconds.", (now - m_last_announce_time)
-                  - m_args.delay_between_announces);
+          if (isActive()) {
+            double now = Clock::get();
+            if ((m_args.delay_between_device_updates > 0)
+                && (now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+              sendDeviceUpdates();
+            else
+              debug("Will send device updates in %f seconds.", (now - m_last_dev_update_time)
+                    - m_args.delay_between_device_updates);
 
-          Delay::wait(3.0);
+            if ((m_args.delay_between_announces > 0)
+                && (now - m_last_announce_time) > m_args.delay_between_announces)
+              sendAnnounce();
+            else
+              debug("Will send announce in %f seconds.", (now - m_last_announce_time)
+                    - m_args.delay_between_announces);
+          }
         }
       }
     };
