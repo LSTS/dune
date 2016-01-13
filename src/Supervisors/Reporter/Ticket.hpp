@@ -70,6 +70,10 @@ namespace Supervisors
     };
 
     //! Ticket class.
+    //!
+    //! This class holds active report request details.
+    //!
+    //! @author José Braga
     class Ticket
     {
     public:
@@ -117,6 +121,10 @@ namespace Supervisors
         return false;
       }
 
+      //! Compare another ticket with this object.
+      //! Only interface and destination are compared.
+      //! @return true if tickets hold same basic information,
+      //! false otherwise.
       bool
       compare(const Ticket ticket)
       {
@@ -127,6 +135,8 @@ namespace Supervisors
         return false;
       }
 
+      //! Reset periodicity of current ticket.
+      //! @param[in] period periodicity value.
       void
       reset(uint16_t period)
       {
@@ -134,24 +144,32 @@ namespace Supervisors
         m_timer.setTop(period);
       }
 
+      //! Get current communication interface.
+      //! @return communication interface index.
       uint8_t
       getInterface(void) const
       {
         return m_ticket.interface;
       }
 
+      //! Get current ticket destination.
+      //! @return ticket destination.
       std::string
       getDestination(void) const
       {
         return m_ticket.destination;
       }
 
+      //! Check if this ticket is a start report request.
+      //! @return true if it's a start request, false otherwise.
       bool
       isOperationStart(void) const
       {
         return m_ticket.start;
       }
 
+      //! Get current peridicity.
+      //! @return periodicity value.
       uint16_t
       getPeriod(void) const
       {

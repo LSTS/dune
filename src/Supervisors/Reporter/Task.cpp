@@ -98,6 +98,11 @@ namespace Supervisors
             m_dispatcher.clearAcoustic();
           }
         }
+
+        if (m_dispatcher.isEmpty())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -131,6 +136,11 @@ namespace Supervisors
             debug("caught unexpected transition");
             break;
         }
+
+        if (m_dispatcher.isEmpty())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Main loop.
@@ -140,6 +150,7 @@ namespace Supervisors
         while (!stopping())
         {
           waitForMessages(1.0);
+          m_dispatcher.run();
         }
       }
     };

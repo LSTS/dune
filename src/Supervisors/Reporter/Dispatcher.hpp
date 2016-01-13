@@ -45,6 +45,12 @@ namespace Supervisors
     using namespace DUNE;
 
     //! Dispatcher class.
+    //!
+    //! This class handles a vector of tickets.
+    //! These tickets hold report information to issue
+    //! single requests
+    //!
+    //! @author José Braga
     class Dispatcher
     {
     public:
@@ -52,6 +58,8 @@ namespace Supervisors
       Dispatcher(void)
       { }
 
+      //! Add tickets to dispatcher.
+      //! @param[in] ticket ticket with report information.
       void
       add(const Ticket ticket)
       {
@@ -76,6 +84,8 @@ namespace Supervisors
         m_list.push_back(ticket);
       }
 
+      //! Remove tickets from dispatcher.
+      //! @param[in] ticket ticket with report information.
       void
       remove(const Ticket ticket)
       {
@@ -96,6 +106,7 @@ namespace Supervisors
         }
       }
 
+      //! Trigger through all tickets.
       void
       run(void)
       {
@@ -105,12 +116,14 @@ namespace Supervisors
           itr->trigger();
       }
 
+      //! Clear dispatcher list.
       void
       clear(void)
       {
         m_list.clear();
       }
 
+      //! Clear all acoustic interface tickets.
       void
       clearAcoustic(void)
       {
@@ -121,6 +134,17 @@ namespace Supervisors
           if (itr->getInterface() == IS_ACOUSTIC)
             m_list.erase(itr, itr + 1);
         }
+      }
+
+      //! Check if dispatcher is empty.
+      //! @return true if dispatcher is empty, false otherwise.
+      bool
+      isEmpty(void)
+      {
+        if (m_list.size() == 0)
+          return true;
+
+        return false;
       }
 
     private:
