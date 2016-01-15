@@ -578,8 +578,21 @@ namespace Navigation
             }
           }
 
+
+          // Do not estimate bias using LBL fixes.
+          double bias = m_kal.getCovariance(STATE_PSI_BIAS);
+          if (m_lbl_reading)
+            m_kal.resetCovariance(STATE_PSI_BIAS);
+
           // Extended Kalman Filter update with no threshold defined.
           m_kal.update(0.0);
+
+          // Restore bias estimation.
+          if (m_lbl_reading)
+          {
+            m_kal.setCovariance(STATE_PSI_BIAS, bias + m_process_noise[PN_PSI_BIAS]);
+            m_lbl_reading = false;
+          }
 
           // Limit revolutions to speed factor.
           float k_lim = trimValue(m_kal.getState(STATE_K),
