@@ -571,6 +571,8 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
+      //! Received LBL fix.
+      bool m_lbl_reading;
       //! Derivative for heave.
       Math::Derivative<double> m_deriv_heave;
 
