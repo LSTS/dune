@@ -216,6 +216,7 @@ namespace DUNE
       m_aligned = false;
       m_edelta_ts = 0.1;
       m_rpm = 0;
+      m_lbl_reading = false;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
@@ -881,17 +882,18 @@ namespace DUNE
       }
       else
       {
-        unsigned states = getNumberOutputs() + beacon;
+        unsigned index = getNumberOutputs() + beacon;
 
         // Define measurements matrix.
-        m_kal.setObservation(states, STATE_X, dx / exp_range);
-        m_kal.setObservation(states, STATE_Y, dy / exp_range);
+        m_kal.setObservation(index, STATE_X, dx / exp_range);
+        m_kal.setObservation(index, STATE_Y, dy / exp_range);
 
         // Define Output matrix.
-        m_kal.setOutput(states, range);
-        m_kal.setInnovation(states, range - exp_range);
+        m_kal.setOutput(index, range);
+        m_kal.setInnovation(index, range - exp_range);
         m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
         dispatch(m_lbl_ac, DF_KEEP_TIME);
+        m_lbl_reading = true;
       }
     }
 
