@@ -251,12 +251,15 @@ namespace Sensors
         int i = len;
         bool aborted = true;
 
+        // Clean uart to avoid collisions
+        m_handle->flush();
+
         m_handle->write(bfr, len);
         // If no echo is expected, do nothing here.
         if (!m_args.uart_echo)
           return true;
 
-        Time::Counter<double> tout(1.0);
+        Time::Counter<double> tout(1);
 
         while (!tout.overflow())
         {
@@ -273,10 +276,9 @@ namespace Sensors
 
         if (aborted)
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-
-          // No echo received, so something is seriously broken
-          throw RestartNeeded(DTR("echo handling enabled, but got no RS-485 echo"), 5);
+          m_handle->flush();
+          debug(DTR("echo handling enabled, but got no RS-485 echo"));
+          return false;
         }
 
         // Check for collisions here.
