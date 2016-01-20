@@ -914,28 +914,6 @@ namespace Vision
         setProperty("output_select", "on");
       }
 
-      Path
-      getLogPath(void)
-      {
-        double now = Clock::getSinceEpoch();
-        Path path;
-
-        while (true)
-        {
-          std::string log_name(c_log_prefix);
-          log_name.append(Format::getDateSafe(now) + Format::getTimeSafe(now));
-          log_name.append(c_log_suffix);
-
-          path = m_log_dir / log_name;
-          if (!path.exists())
-            break;
-
-          now += 1.0;
-        }
-
-        return path;
-      }
-
       void
       changeLogFile(void)
       {
