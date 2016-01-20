@@ -86,6 +86,7 @@ namespace Vision
         m_frame_count(0)
       {
         m_path = getLogPath(folder);
+        folder.create();
         m_parent->debug("starting file: %s", m_path.c_str());
 
         m_encoder = new MJPG::Encoder(m_path.c_str(), width, height, fps);
