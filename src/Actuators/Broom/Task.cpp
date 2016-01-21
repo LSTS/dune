@@ -147,8 +147,6 @@ namespace Actuators
       Entities::BasicEntity* m_bridge_ent;
       //! MCU entity.
       Entities::BasicEntity* m_mcu_ent;
-      //! Last state request.
-      double m_last_state;
       //! Task arguments.
       Arguments m_args;
       //! Device error mask.
@@ -159,6 +157,10 @@ namespace Actuators
       bool m_legacy;
       //! Used to silence some spurious boot errors.
       Counter<double> m_boot_timer;
+      //! State update timer.
+      Counter<double> m_state_timer;
+      //! Watchdog.
+      Counter<double> m_wdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -221,7 +223,7 @@ namespace Actuators
         .defaultValue("0");
 
         // Initialize the state request clock
-        m_last_state = Clock::get();
+        m_wdog.setTop(2.0);
 
         // Register handler routines.
         bind<IMC::SetThrusterActuation>(this);
@@ -234,7 +236,10 @@ namespace Actuators
         m_motor_id = m_args.motor_id;
 
         if (paramChanged(m_args.state_per))
+        {
           m_args.state_per = 1.0 / m_args.state_per;
+          m_state_timer.setTop(m_args.state_per);
+        }
 
         if (m_args.thrust_ctl_mode == "none")
           m_thrust_ctl_mode = MODE_NONE;
@@ -483,11 +488,15 @@ namespace Actuators
             case LUCL::CommandTypeNormal:
               onCommand(cmd.command.code, cmd.command.data, cmd.command.size);
               if (cmd.command.code == code)
+              {
+                m_wdog.reset();
                 return true;
+              }
               break;
 
             case LUCL::CommandTypeVersion:
               onVersion(cmd.version.major, cmd.version.minor, cmd.version.patch);
+              m_wdog.reset();
               break;
 
             case LUCL::CommandTypeInvalidVersion:
@@ -526,33 +535,24 @@ namespace Actuators
 
         // Send actuation.
         m_proto.sendCommand(CMD_ACTUATE, actdata, sizeof(actdata));
-        if (!waitForCommand(CMD_ACTUATE))
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-        }
-        else
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        }
+        waitForCommand(CMD_ACTUATE);
 
-        double now = Clock::get();
-        if ((now - m_last_state) < m_args.state_per)
+        if (m_wdog.overflow() && m_boot_timer.overflow())
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+        else
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_ACTIVE);
+
+        if (!m_state_timer.overflow())
           return;
 
-        m_last_state = now;
+        m_state_timer.reset();
 
-        // Request state:
+        // Request state.
         m_proto.sendCommand(CMD_STATE, &m_dev_errors, 1);
-        if (!waitForCommand(CMD_STATE))
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-        }
-        else
+        if (waitForCommand(CMD_STATE))
         {
           // Check for internal errors
-          if (!m_dev_errors)
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          else
+          if (m_dev_errors)
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
         }
       }
