@@ -83,6 +83,11 @@ namespace Sensors
       float depth_conv;
       // Device address.
       int address;
+      //! Number of seconds without data before reporting an error.
+      double timeout_error;
+      //! Number of seconds without data before reporting a failure and
+      //! restarting.
+      double timeout_failure;
     };
 
     // Number of seconds to wait before setting an entity error.
@@ -126,16 +131,28 @@ namespace Sensors
       // Active channel value.
       float m_channel_readout;
       // Entity error reporting expire time checker
-      Time::Counter<float> m_error_wdog;
-      // Task arguments.
-      Arguments m_args;
+      Time::Counter<float> m_wdog;
       // Unsigned CRC error counter.
       unsigned m_crc_err_count;
+      //! Entity state timer.
+      Counter<double> m_state_timer;
+      //! Sample count.
+      size_t m_sample_count;
+      //! Faults count.
+      size_t m_faults_count;
+      //! Timeout count.
+      size_t m_timeout_count;
+      // Task arguments.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_handle(NULL),
-        m_crc_err_count(0)
+        m_crc_err_count(0),
+        m_state_timer(0),
+        m_sample_count(0),
+        m_faults_count(0),
+        m_timeout_count(0)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -157,6 +174,18 @@ namespace Sensors
         param("Water Density", m_args.depth_conv)
         .units(Units::KilogramPerCubicMeter)
         .defaultValue("1025.0");
+
+        param("Timeout - Error", m_args.timeout_error)
+        .defaultValue("4.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before reporting an error");
+
+        param("Timeout - Failure", m_args.timeout_failure)
+        .defaultValue("8.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before restarting task");
 
         m_calibrated = false;
 
@@ -184,7 +213,8 @@ namespace Sensors
         crc = Algorithms::CRC16::compute(m_msg_read_temperature, 3, 0xFFFF);
         ByteCopy::toBE(crc, &m_msg_read_temperature[3]);
 
-        m_error_wdog.setTop(c_expire_wdog);
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
       }
 
       void
@@ -251,15 +281,14 @@ namespace Sensors
         int i = len;
         bool aborted = true;
 
-        // Clean uart to avoid collisions
         m_handle->flush();
-
         m_handle->write(bfr, len);
+
         // If no echo is expected, do nothing here.
         if (!m_args.uart_echo)
           return true;
 
-        Time::Counter<double> tout(1);
+        Time::Counter<double> tout(1.0);
 
         while (!tout.overflow())
         {
@@ -276,8 +305,9 @@ namespace Sensors
 
         if (aborted)
         {
+          m_timeout_count++;
+          debug("echo handling enabled, but got no RS-485 echo");
           m_handle->flush();
-          debug(DTR("echo handling enabled, but got no RS-485 echo"));
           return false;
         }
 
@@ -286,8 +316,9 @@ namespace Sensors
         {
           if (rxbfr[i] != bfr[i])
           {
+            m_faults_count++;
+            debug("received RS-485 echo doesn't match");
             m_handle->flush();
-            war(DTR("received RS-485 echo doesn't match"));
             return false;
           }
         }
@@ -310,26 +341,29 @@ namespace Sensors
 
           if (result == RES_DONE)
           {
-            m_error_wdog.reset();
+            m_wdog.reset();
+            m_sample_count++;
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_crc_err_count = 0;
             return true;
           }
           else if (result == RES_EXCEPTION)
           {
+            m_faults_count++;
             m_crc_err_count = 0;
             return false;
           }
           else if (result == RES_CRC)
           {
-            err(DTR("invalid CRC"));
+            m_faults_count++;
             if (++m_crc_err_count > c_max_crc_err)
               throw RestartNeeded(DTR("exceeded maximum consecutive CRC error count"), 5);
             return false;
           }
         }
 
-        // hasNewData timed out, so got nothing useful:
+        // No data received.
+        m_timeout_count++;
         return false;
       }
 
@@ -484,6 +518,39 @@ namespace Sensors
       }
 
       void
+      reportEntityState(void)
+      {
+        if (m_wdog.overflow())
+        {
+          std::string text = String::str(DTR("%0.1f seconds without valid data"),
+                                         m_wdog.getElapsed());
+
+          if (m_wdog.getElapsed() >= m_args.timeout_failure)
+            throw RestartNeeded(text, 0);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, text);
+
+          return;
+        }
+
+        if (!m_state_timer.overflow())
+          return;
+
+        double time_elapsed = m_state_timer.getElapsed();
+        double frequency = Math::round(m_sample_count / time_elapsed);
+
+        std::string text = String::str(DTR("active | timeouts: %u | faults: %u | frequency: %u"),
+                                       m_timeout_count,
+                                       m_faults_count,
+                                       (unsigned)frequency);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
+
+        m_state_timer.reset();
+        m_sample_count = 0;
+      }
+
+      void
       task(void)
       {
         // Query pressure.
@@ -508,12 +575,7 @@ namespace Sensors
           }
         }
 
-        // If we had no good answer from device in x seconds, show entity error.
-        if (m_error_wdog.overflow())
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded(DTR(Status::getString(Status::CODE_COM_ERROR)), 5);
-        }
+        reportEntityState();
       }
     };
   }
