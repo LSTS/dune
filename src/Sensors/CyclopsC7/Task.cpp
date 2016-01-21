@@ -65,7 +65,7 @@ namespace Sensors
         .size(2)
         .defaultValue("1.0, 0.0");
 
-        param("Entity Label", m_args.elabel)
+        param("Voltage Entity Label", m_args.elabel)
         .defaultValue("Rhodamine");
 
         param("Name of message to produce", m_args.message_name)
