@@ -127,6 +127,11 @@ namespace Actuators
       bool desired_speed;
       //! Motor identifier.
       unsigned motor_id;
+      //! Number of seconds without data before reporting an error.
+      double timeout_error;
+      //! Number of seconds without data before reporting a failure and
+      //! restarting.
+      double timeout_failure;
     };
 
     struct Task: public Tasks::Periodic
@@ -147,8 +152,6 @@ namespace Actuators
       Entities::BasicEntity* m_bridge_ent;
       //! MCU entity.
       Entities::BasicEntity* m_mcu_ent;
-      //! Task arguments.
-      Arguments m_args;
       //! Device error mask.
       uint8_t m_dev_errors;
       //! Motor identifier.
@@ -161,6 +164,16 @@ namespace Actuators
       Counter<double> m_state_timer;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! Entity state timer.
+      Counter<double> m_estate_timer;
+      //! Sample count.
+      size_t m_sample_count;
+      //! Faults count.
+      size_t m_faults_count;
+      //! Timeout count.
+      size_t m_timeout_count;
+      //! Task arguments.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -171,7 +184,11 @@ namespace Actuators
         m_mcu_ent(NULL),
         m_dev_errors(ERR_NONE),
         m_motor_id(0),
-        m_legacy(false)
+        m_legacy(false),
+        m_estate_timer(1.0),
+        m_sample_count(0),
+        m_faults_count(0),
+        m_timeout_count(0)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -222,8 +239,17 @@ namespace Actuators
         param("Motor Identifier", m_args.motor_id)
         .defaultValue("0");
 
-        // Initialize the state request clock
-        m_wdog.setTop(2.0);
+        param("Timeout - Error", m_args.timeout_error)
+        .defaultValue("2.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before reporting an error");
+
+        param("Timeout - Failure", m_args.timeout_failure)
+        .defaultValue("4.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before restarting task");
 
         // Register handler routines.
         bind<IMC::SetThrusterActuation>(this);
@@ -240,6 +266,9 @@ namespace Actuators
           m_args.state_per = 1.0 / m_args.state_per;
           m_state_timer.setTop(m_args.state_per);
         }
+
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
 
         if (m_args.thrust_ctl_mode == "none")
           m_thrust_ctl_mode = MODE_NONE;
@@ -490,6 +519,7 @@ namespace Actuators
               if (cmd.command.code == code)
               {
                 m_wdog.reset();
+                m_sample_count++;
                 return true;
               }
               break;
@@ -500,7 +530,7 @@ namespace Actuators
               break;
 
             case LUCL::CommandTypeInvalidVersion:
-              err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+              err("%s", DTR(Status::getString(Status::CODE_INVALID_VERSION)));
               break;
 
             case LUCL::CommandTypeError:
@@ -508,7 +538,7 @@ namespace Actuators
               break;
 
             case LUCL::CommandTypeInvalidChecksum:
-              err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+              m_faults_count++;
               break;
 
             case LUCL::CommandTypeNone:
@@ -525,6 +555,39 @@ namespace Actuators
       }
 
       void
+      reportEntityState(void)
+      {
+        if (m_wdog.overflow() && m_boot_timer.overflow())
+        {
+          std::string text = String::str(DTR("%0.1f seconds without valid data"),
+                                         m_wdog.getElapsed());
+
+          if (m_wdog.getElapsed() >= m_args.timeout_failure)
+            throw RestartNeeded(text, 0);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, text);
+
+          return;
+        }
+
+        if (!m_estate_timer.overflow())
+          return;
+
+        double time_elapsed = m_estate_timer.getElapsed();
+        double frequency = Math::round(m_sample_count / time_elapsed);
+
+        std::string text = String::str(DTR("active | timeouts: %u | faults: %u | frequency: %u"),
+                                       m_timeout_count,
+                                       m_faults_count,
+                                       (unsigned)frequency);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
+
+        m_estate_timer.reset();
+        m_sample_count = 0;
+      }
+
+      void
       task(void)
       {
         uint8_t actdata[] =
@@ -535,12 +598,10 @@ namespace Actuators
 
         // Send actuation.
         m_proto.sendCommand(CMD_ACTUATE, actdata, sizeof(actdata));
-        waitForCommand(CMD_ACTUATE);
+        if (!waitForCommand(CMD_ACTUATE))
+          m_timeout_count++;
 
-        if (m_wdog.overflow() && m_boot_timer.overflow())
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-        else
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_ACTIVE);
+        reportEntityState();
 
         if (!m_state_timer.overflow())
           return;
@@ -554,6 +615,10 @@ namespace Actuators
           // Check for internal errors
           if (m_dev_errors)
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+        }
+        else
+        {
+          m_timeout_count++;
         }
       }
     };
