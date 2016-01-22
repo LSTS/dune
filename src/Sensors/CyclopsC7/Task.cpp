@@ -67,7 +67,8 @@ namespace Sensors
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_msg(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -100,8 +101,12 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        Memory::clear(m_msg);
-        m_msg = IMC::Factory::produce(m_args.message_name);
+        if (paramChanged(m_args.message_name))
+        {
+          Memory::clear(m_msg);
+          m_msg = IMC::Factory::produce(m_args.message_name);
+        }
+
         m_power_channel_control.name = m_args.power_channel;
       }
 
@@ -130,6 +135,13 @@ namespace Sensors
         if (m_power_channel_state.state != IMC::PowerChannelState::PCS_ON)
           m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(m_power_channel_control);
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_msg);
       }
 
       void
