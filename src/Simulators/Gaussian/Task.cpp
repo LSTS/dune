@@ -127,6 +127,8 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
+        Memory::clear(m_msg);
+        m_msg = IMC::Factory::produce(m_args.message_name);
         m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
       }
 
