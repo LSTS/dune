@@ -137,6 +137,14 @@ namespace Sensors
         dispatch(m_power_channel_control);
       }
 
+      //! Acquire resources.
+      void
+      onResourceAcquisition(void)
+      {
+        Memory::clear(m_msg);
+        m_msg = IMC::Factory::produce(m_args.message_name);
+      }
+
       //! Release resources.
       void
       onResourceRelease(void)
