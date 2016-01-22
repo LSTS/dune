@@ -42,18 +42,26 @@ namespace Sensors
       std::string elabel;
       //! The message to be produced - must contain the field 'value'
       std::string message_name;
+      //! Power channel name.
+      std::string power_channel;
+      //! Active power channel control;
+      bool power_control;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       // Pointer to an IMC message.
       IMC::Message* m_msg;
-      // Task Arguments.
-      Arguments m_args;
       // Entity Id.
       unsigned m_entity_id;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
+      //! Power channel state.
+      IMC::PowerChannelState m_power_channel_state;
+      //! Power channel control.
+      IMC::PowerChannelControl m_power_channel_control;
+      // Task Arguments.
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -61,6 +69,9 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Conversion Factors", m_args.factor)
         .size(2)
         .defaultValue("1.0, 0.0");
@@ -71,6 +82,17 @@ namespace Sensors
         param("Name of message to produce", m_args.message_name)
         .defaultValue("RhodamineDye");
 
+        param("Power Channel Control", m_args.power_control)
+        .defaultValue("false")
+        .description("Active control of power channel");
+
+        param("Power Channel Name", m_args.power_channel)
+        .defaultValue("Wet Sensor Probe")
+        .description("Power channel that controls the power of the device");
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        bind<IMC::PowerChannelState>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Voltage>(this);
       }
@@ -80,6 +102,7 @@ namespace Sensors
       {
         Memory::clear(m_msg);
         m_msg = IMC::Factory::produce(m_args.message_name);
+        m_power_channel_control.name = m_args.power_channel;
       }
 
       void
@@ -96,6 +119,48 @@ namespace Sensors
       }
 
       void
+      onRequestActivation(void)
+      {
+        if (!m_args.power_control)
+        {
+          activate();
+          return;
+        }
+
+        if (m_power_channel_state.state != IMC::PowerChannelState::PCS_ON)
+          m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(m_power_channel_control);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        if (!m_args.power_control)
+          return;
+
+        if (m_power_channel_state.state != IMC::PowerChannelState::PCS_OFF)
+          m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(m_power_channel_control);
+      }
+
+      void
+      consume(const IMC::PowerChannelState* msg)
+      {
+        if (msg->name != m_args.power_channel)
+          return;
+
+        m_power_channel_state = *msg;
+
+        if (isActivating() && m_args.power_control)
+        {
+          if (m_power_channel_state.state == IMC::PowerChannelState::PCS_ON)
+            activate();
+        }
+      }
+
+      void
       consume(const IMC::VehicleMedium* msg)
       {
         m_hand.update(msg);
@@ -104,6 +169,9 @@ namespace Sensors
       void
       consume(const IMC::Voltage* msg)
       {
+        if (!isActive())
+          return;
+
         double v = msg->value;
 
         if (v < 0 || !m_hand.isUnderwater())
