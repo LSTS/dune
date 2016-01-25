@@ -307,7 +307,7 @@ namespace Actuators
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(e.what(), 5, false);
         }
       }
 
@@ -581,7 +581,8 @@ namespace Actuators
                                        m_faults_count,
                                        (unsigned)frequency);
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
+        if (m_sample_count && !m_dev_errors)
+          setEntityState(IMC::EntityState::ESTA_NORMAL, text);
 
         m_estate_timer.reset();
         m_sample_count = 0;
