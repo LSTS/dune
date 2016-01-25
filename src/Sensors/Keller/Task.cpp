@@ -544,8 +544,6 @@ namespace Sensors
                                        m_faults_count,
                                        (unsigned)frequency);
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
-
         m_state_timer.reset();
         m_sample_count = 0;
       }
