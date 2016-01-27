@@ -296,6 +296,9 @@ namespace Control
         onResourceAcquisition(void)
         {
           BasicAutopilot::onResourceAcquisition();
+
+          if (m_ca_args.enabled)
+            m_ca = new CoarseAltitude(&m_ca_args);
         }
 
         //! Release Resources.
