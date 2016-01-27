@@ -39,6 +39,7 @@ Sensors.prototype.m_msgs =
         'Phycocyanin': { },
         'Phycoerythrin': { },
         'RhodamineDye': { },
+        'Turbidity': { },
         'Depth': { },
         'Pressure': { },
         'Temperature': { },
