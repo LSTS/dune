@@ -40,7 +40,7 @@ function Power(root_id)
     // Save button.
     var btn = document.createElement('input');
     btn.type = 'button';
-    btn.onclick = function() { submitPowerForm(255, 'save', 0); };
+    btn.onclick = function() { submitPowerForm('all', 'save', 0); };
     btn.value = 'Save State';
 
     this.m_base.appendChild(this.m_sbase);

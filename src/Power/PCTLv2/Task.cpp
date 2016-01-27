@@ -636,6 +636,18 @@ namespace Power
           }
         }
 
+        if (msg->name == "all")
+        {
+          if (msg->op == IMC::PowerChannelControl::PCC_OP_SAVE)
+          {
+            uint8_t data = 0;
+            m_proto.sendCommand(CMD_PWR_SAVE, &data, 1);
+            waitForCommand(CMD_PWR_SAVE, 100);
+          }
+
+          return;
+        }
+
         std::map<std::string, PowerChannel*>::const_iterator itr = m_channels.find_by_name(msg->name);
         if (itr == m_channels.end_by_name())
           return;
@@ -653,12 +665,6 @@ namespace Power
           uint8_t data[] = {id, 1};
           m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
           waitForCommand(CMD_PWR_CTL);
-        }
-        else if (msg->op == IMC::PowerChannelControl::PCC_OP_SAVE)
-        {
-          uint8_t data = 0;
-          m_proto.sendCommand(CMD_PWR_SAVE, &data, 1);
-          waitForCommand(CMD_PWR_SAVE, 100);
         }
       }
 
