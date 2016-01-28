@@ -144,7 +144,7 @@ namespace Supervisors
       }
 
       void
-      onSetEntityParamaters(const IMC::SetEntityParameters* msg)
+      onSetEntityParameters(const IMC::SetEntityParameters* msg)
       {
         if (msg->name != getEntityLabel())
           return;
