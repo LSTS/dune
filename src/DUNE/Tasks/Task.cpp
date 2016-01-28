@@ -489,8 +489,6 @@ namespace DUNE
     void
     Task::onPushEntityParameters(const IMC::PushEntityParameters* msg)
     {
-      onPushEntityParameters(msg);
-
       if (msg->name != getEntityLabel())
         return;
 
