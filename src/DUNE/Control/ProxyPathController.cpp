@@ -41,8 +41,8 @@ namespace DUNE
     {
       param("EstimatedState Filter", m_state_src)
       .defaultValue("self")
-      .description("List of <System>+<System> that defines the source"
-                   " systems allowed to pass EstimatedState messages");
+      .description("List of <System>+<System> OR <Entity>+<Entity> that defines the source"
+                   " systems or entities allowed to pass EstimatedState messages");
     }
 
     ProxyPathController::~ProxyPathController(void)
@@ -55,8 +55,17 @@ namespace DUNE
     {
       PathController::onEntityResolution();
 
-      // Process the systems allowed to pass the EstimatedState
-      m_state_filter = new SourceFilter(*this, true, m_state_src, "EstimatedState");
+      // Check if first input is a Entity
+      if (m_state_src.size() > 0 && m_ctx.entities.labelExists(m_state_src[0]))
+      {
+        // Set up an Entity filter
+        m_state_filter = new SourceFilter(*this, false, m_state_src, "EstimatedState");
+      }
+      else
+      {
+        // Process the systems allowed to pass the EstimatedState
+        m_state_filter = new SourceFilter(*this, true, m_state_src, "EstimatedState");
+      }
     }
 
     bool
