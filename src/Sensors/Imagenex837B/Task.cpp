@@ -171,7 +171,7 @@ namespace Sensors
     //! Count of available ranges.
     static const unsigned c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
     //! List of repetition rates in ms.
-    static const unsigned c_rep_rate[] = {67, 73, 87, 100, 114, 128, 140, 167, 195};
+    static const unsigned c_rep_rate[] = {128, 134, 148, 160, 175, 187, 200, 226, 254};
     //! List of pulse lengths in us.
     static const unsigned c_pulse_len[] = {30, 60, 120, 180, 240, 300, 360, 480, 600};
     //! Switch data size.
