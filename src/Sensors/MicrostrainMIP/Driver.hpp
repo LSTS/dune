@@ -44,7 +44,8 @@ namespace Sensors
       Driver(Tasks::Task* parent, const std::string& uart_dev, unsigned uart_baud):
         m_parent(parent),
         m_timeout_count(0),
-        m_sample_count(0)
+        m_sample_count(0),
+        m_model_gx4(false)
       {
         m_uart = new SerialPort(uart_dev, uart_baud);
         m_bfr[0] = c_sync0;
@@ -60,6 +61,7 @@ namespace Sensors
       bool
       setToIdleNoAck(void)
       {
+        m_parent->debug("requesting idle mode without acknowledgement");
         sendPacket(CMD_SET_BASE, CMD_BASE_SET_TO_IDLE, NULL, 0);
         Delay::wait(0.5);
         m_uart->flush();
@@ -71,6 +73,7 @@ namespace Sensors
       bool
       setToIdle(void)
       {
+        m_parent->debug("requesting idle mode with acknowledgement");
         sendPacket(CMD_SET_BASE, CMD_BASE_SET_TO_IDLE, NULL, 0);
         if (readAck(CMD_SET_BASE, CMD_BASE_SET_TO_IDLE, 1.0))
           return true;
@@ -82,6 +85,7 @@ namespace Sensors
       bool
       getDeviceInfo(void)
       {
+        m_parent->debug("retrieving device information");
         char bfr[17] = {0};
 
         sendPacket(CMD_SET_BASE, CMD_BASE_GET_DEV_INFO, NULL, 0);
@@ -93,6 +97,10 @@ namespace Sensors
           m_model_number = String::trim(bfr);
           std::memcpy(bfr, m_parser.getPayload() + 40, 16);
           m_serial_number = String::trim(bfr);
+
+          if (String::startsWith(m_model_name, "3DM-GX4-"))
+            m_model_gx4 = true;
+
           return true;
         }
 
@@ -103,6 +111,7 @@ namespace Sensors
       bool
       getHardIronOffset(float& offset_x, float& offset_y, float& offset_z)
       {
+        m_parent->debug("retrieving hard-iron offset");
         uint8_t bfr[13] = {0x02, 0x00};
         sendPacket(CMD_SET_3DM, CMD_3DM_HARD_IRON_OFFSET, bfr, sizeof(bfr));
         if (readAck(CMD_SET_3DM, CMD_3DM_HARD_IRON_OFFSET, 1.0))
@@ -120,6 +129,7 @@ namespace Sensors
       bool
       setHardIronOffset(float offset_x, float offset_y, float offset_z)
       {
+        m_parent->debug("setting hard-iron offset");
         uint8_t bfr[13] = {0x01};
         ByteCopy::toBE(offset_x, bfr + 1);
         ByteCopy::toBE(offset_y, bfr + 5);
@@ -136,6 +146,7 @@ namespace Sensors
       bool
       enableContinuousStream(bool enabled)
       {
+        m_parent->debug("enabling continuous output stream");
         uint8_t payload[] = {0x01, 0x01, (uint8_t)(enabled ? 0x01 : 0x00)};
         sendPacket(CMD_SET_3DM, CMD_3DM_CONT_STREAM, payload, sizeof(payload));
         if (readAck(CMD_SET_3DM, CMD_3DM_CONT_STREAM, 1.0))
@@ -148,23 +159,40 @@ namespace Sensors
       bool
       setContinuousStreamFormat(uint16_t rate_decimation)
       {
-        uint8_t rate_dec_msb = rate_decimation >> 8;
-        uint8_t rate_dec_lsb = rate_decimation;
-        uint8_t payload[] = {0x01, // Action.
-                             0x05, // Number of descriptors.
-                             0x0e, rate_dec_msb, rate_dec_lsb, // Timestamp.
-                             0x04, rate_dec_msb, rate_dec_lsb, // Acceleration.
-                             0x05, rate_dec_msb, rate_dec_lsb, // Angular Rates.
-                             0x06, rate_dec_msb, rate_dec_lsb, // Magnetic Field.
-                             0x09, rate_dec_msb, rate_dec_lsb  // Orientation Matrix.
-        };
+        m_parent->debug("configuring continuous output stream format");
+        std::vector<uint8_t> format;
+        format.push_back(0x01); // Action.
+        format.push_back(0x00); // Number of descriptors.
 
-        sendPacket(CMD_SET_3DM, CMD_3DM_MSG_FORMAT, payload, sizeof(payload));
+        fillPayloadFormat(format, rate_decimation);
+
+        sendPacket(CMD_SET_3DM, CMD_3DM_MSG_FORMAT, &format[0], format.size());
         if (readAck(CMD_SET_3DM, CMD_3DM_MSG_FORMAT, 2.0))
           return true;
 
         ++m_timeout_count;
         return false;
+      }
+
+      unsigned
+      addPayloadFormatDescriptor(std::vector<uint8_t>& format, uint16_t rate_decimation, uint8_t descriptor)
+      {
+        format.push_back(descriptor);
+        format.push_back(rate_decimation >> 8);
+        format.push_back(rate_decimation);
+        return 1;
+      }
+
+      void
+      fillPayloadFormat(std::vector<uint8_t>& format, uint16_t rate_decimation)
+      {
+        format[1] = 0;
+        if (!m_model_gx4)
+          format[1] += addPayloadFormatDescriptor(format, rate_decimation, 0x0e);
+        format[1] += addPayloadFormatDescriptor(format, rate_decimation, 0x04);
+        format[1] += addPayloadFormatDescriptor(format, rate_decimation, 0x05);
+        format[1] += addPayloadFormatDescriptor(format, rate_decimation, 0x06);
+        format[1] += addPayloadFormatDescriptor(format, rate_decimation, 0x09);
       }
 
       bool
@@ -280,6 +308,8 @@ namespace Sensors
       size_t m_timeout_count;
       //! Sample count.
       size_t m_sample_count;
+      //! True if device is a GX4 model.
+      bool m_model_gx4;
 
       void
       extractRotatedVector(const uint8_t* data, Matrix& vector)
@@ -357,6 +387,7 @@ namespace Sensors
           rmat.fill(3, 3, &r8[0]);
           rmat = transpose(m_rotation_matrix * rmat);
 
+          m_euler.setTimeStamp(m_parser.getTimeStamp());
           m_euler.phi = std::atan2(rmat(2, 1), rmat(2, 2));
           m_euler.theta = std::asin(-rmat(2, 0));
           m_euler.psi = std::atan2(rmat(1, 0), rmat(0, 0));

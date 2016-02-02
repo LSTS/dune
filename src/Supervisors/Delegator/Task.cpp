@@ -44,6 +44,8 @@ namespace Supervisors
       std::string system_name;
       //! Surrogate entity.
       std::string entity_name;
+      //! Surrogate task name.
+      std::string task_name;
     };
 
     struct Task: public Tasks::Task
@@ -52,13 +54,15 @@ namespace Supervisors
       unsigned m_sid;
       //! Surrogate entity id.
       unsigned m_eid;
+      Counter<double> m_query_info_timer;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_sid(IMC::AddressResolver::invalid()),
-        m_eid(DUNE_IMC_CONST_UNK_EID)
+        m_eid(DUNE_IMC_CONST_UNK_EID),
+        m_query_info_timer(5.0)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -70,10 +74,40 @@ namespace Supervisors
         param("Surrogate Entity", m_args.entity_name)
         .description("Name of the slave system");
 
+        param("Surrogate Task", m_args.task_name)
+        .description("Name of the slave task");
+
         // Register handler routines.
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::EntityState>(this);
+        bind<IMC::EntityParameters>(this);
+      }
+
+      bool
+      onWriteParamsXML(std::ostream& os) const
+      {
+        if (m_args.task_name.empty())
+          return false;
+
+        Tasks::Task* task = Tasks::Factory::produce(m_args.task_name, "Surrogate", m_ctx);
+        if (task == NULL)
+          throw std::invalid_argument(Utils::String::str(DTR("invalid task name '%s'"), m_args.task_name.c_str()));
+
+        try
+        {
+          task->setEntityLabel(getEntityLabel());
+          task->loadConfig();
+          task->writeParamsXML(os);
+          Memory::clear(task);
+        }
+        catch (...)
+        {
+          Memory::clear(task);
+          throw;
+        }
+
+        return true;
       }
 
       void
@@ -86,6 +120,36 @@ namespace Supervisors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      consume(const IMC::EntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        if (!isFromSurrogate(msg))
+          return;
+
+        relayFrom(msg);
+      }
+
+      void
+      onQueryEntityParameters(const IMC::QueryEntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        relayTo(msg);
+      }
+
+      void
+      onSetEntityParameters(const IMC::SetEntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        relayTo(msg);
       }
 
       void
@@ -129,6 +193,7 @@ namespace Supervisors
           return;
 
         m_eid = msg->getSourceEntity();
+        debug("resolved surrogate entity: %d", m_eid);
       }
 
       void
@@ -153,11 +218,45 @@ namespace Supervisors
       }
 
       void
+      queryEntityInfo(void)
+      {
+        IMC::QueryEntityInfo msg;
+        msg.setDestination(m_sid);
+        dispatch(msg);
+      }
+
+      void
+      relayFrom(const IMC::Message* msg)
+      {
+        IMC::Message* clone = msg->clone();
+        clone->setSource(getSystemId());
+        clone->setSourceEntity(getEntityId());
+        dispatch(clone);
+        delete clone;
+      }
+
+      void
+      relayTo(const IMC::Message* msg)
+      {
+        IMC::Message* clone = msg->clone();
+        clone->setDestination(m_sid);
+        clone->setDestinationEntity(DUNE_IMC_CONST_UNK_EID);
+        dispatch(clone);
+        delete clone;
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if ((m_eid == DUNE_IMC_CONST_UNK_EID) && (m_query_info_timer.overflow()))
+          {
+            m_query_info_timer.reset();
+            queryEntityInfo();
+          }
         }
       }
     };

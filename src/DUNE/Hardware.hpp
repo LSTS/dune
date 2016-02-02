@@ -44,6 +44,7 @@ namespace DUNE
 #include <DUNE/Hardware/IntelHEX.hpp>
 #include <DUNE/Hardware/BasicModem.hpp>
 #include <DUNE/Hardware/HayesModem.hpp>
+#include <DUNE/Hardware/BasicDeviceDriver.hpp>
 #include <DUNE/Hardware/Exceptions.hpp>
 #include <DUNE/Hardware/UCTK/Constants.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>

@@ -56,8 +56,6 @@ namespace Transports
       double mbox_check_per;
       //! Maximum transmission rate.
       unsigned max_tx_rate;
-      //! Power channel name.
-      std::string pwr_name;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -96,10 +94,6 @@ namespace Transports
         param("Serial Port - Baud Rate", m_args.uart_baud)
         .defaultValue("19200")
         .description("Serial port baud rate");
-
-        param("Power Channel - Name", m_args.pwr_name)
-        .defaultValue("")
-        .description("Name of the power channel that supplies the modem");
 
         param("Mailbox Check - Periodicity", m_args.mbox_check_per)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
@@ -148,16 +142,6 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        if (!m_args.pwr_name.empty())
-        {
-          IMC::PowerChannelControl pcc;
-          pcc.name = m_args.pwr_name;
-          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-          dispatch(pcc);
-        }
-
-        Delay::wait(c_pwr_on_delay);
-
         try
         {
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);

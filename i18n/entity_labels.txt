@@ -1,7 +1,6 @@
 DTR_RT("A/D Board")
 DTR_RT("AHRS")
 DTR_RT("AIS Receiver")
-DTR_RT("AUV Simulator")
 DTR_RT("Acoustic Access Controller")
 DTR_RT("Acoustic Modem")
 DTR_RT("Allocator")

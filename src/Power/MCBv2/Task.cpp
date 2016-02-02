@@ -462,6 +462,17 @@ namespace Power
           return;
         }
 
+        if (msg->name == "all")
+        {
+          if (msg->op == IMC::PowerChannelControl::PCC_OP_SAVE)
+          {
+            uint8_t data[2] = {(uint8_t)(m_pwr_chns >> 8), (uint8_t)m_pwr_chns};
+            m_proto.sendCommand(CMD_SAVE, data, sizeof(data));
+          }
+
+          return;
+        }
+
         PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
         if (itr == m_pwr_chs.end())
           return;

@@ -45,16 +45,8 @@ namespace Simulators
       double std_dev_cond;
       //! Mean conductivity value.
       float mean_cond;
-      //! Standard deviation of salinity measurements.
-      double std_dev_sali;
-      //! Mean salinity value.
-      float mean_sali;
       //! Standard deviation of depth measurements.
       double std_dev_depth;
-      //! Mean sound speed value.
-      float mean_sspeed;
-      //! Standard deviation of sound speed measurements.
-      double std_dev_sspeed;
       //! PRNG type.
       std::string prng_type;
       //! PRNG seed.
@@ -97,18 +89,6 @@ namespace Simulators
 
         param("Standard Deviation - Depth", m_args.std_dev_depth)
         .defaultValue("0.1");
-
-        param("Standard Deviation - Salinity", m_args.std_dev_sali)
-        .defaultValue("1.0");
-
-        param("Mean Value - Salinity", m_args.mean_sali)
-        .defaultValue("35.5");
-
-        param("Standard Deviation - Sound Speed", m_args.std_dev_sspeed)
-        .defaultValue("5.0");
-
-        param("Mean Value - Sound Speed", m_args.mean_sspeed)
-        .defaultValue("1500.0");
 
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
@@ -169,11 +149,14 @@ namespace Simulators
         m_depth.setTimeStamp(m_temp.getTimeStamp());
         m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0);
 
+        // Compute pressure.
+        double pressure = (m_depth.value * c_gravity * c_seawater_density + c_sea_level_pressure) / c_pascal_per_bar;
+
         m_salinity.setTimeStamp(m_temp.getTimeStamp());
-        m_salinity.value = m_args.mean_sali + m_prng->gaussian() * m_args.std_dev_sali;
+        m_salinity.value = UNESCO1983::computeSalinity(m_cond.value, pressure, m_temp.value);
 
         m_sspeed.setTimeStamp(m_temp.getTimeStamp());
-        m_sspeed.value = m_args.mean_sspeed + m_prng->gaussian() * m_args.std_dev_sspeed;
+        m_sspeed.value = (m_salinity.value < 0.0) ? -1.0 : UNESCO1983::computeSoundSpeed(m_salinity.value, pressure, m_temp.value);
 
         dispatch(m_temp, DF_KEEP_TIME);
         dispatch(m_cond, DF_KEEP_TIME);
