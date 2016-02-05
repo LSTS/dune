@@ -62,6 +62,7 @@ namespace Sensors
         HDR_IDX_SAMPLES_PER_BEAM = 72,
         HDR_IDX_SECTOR_SIZE = 74,
         HDR_IDX_START_ANGLE = 76,
+        HDR_IDX_ANGLE_INCR = 78,
         HDR_IDX_RANGE = 79,
         HDR_IDX_FREQUENCY = 81,
         HDR_IDX_SOUND_SPEED = 83,
@@ -78,7 +79,7 @@ namespace Sensors
         HDR_IDX_DATA_LATENCY = 120,
         HDR_IDX_SAMPLE_RATE = 122,
         HDR_IDX_FLAGS = 123,
-        HDR_IDX_PINGS_AVERAGED = 125,
+        HDR_IDX_PINGS_AVG = 125,
         HDR_IDX_CENTER_PING_OFFSET = 126,
         HDR_IDX_HEAVE = 128,
         HDR_IDX_ALTITUDE = 133,
@@ -103,13 +104,8 @@ namespace Sensors
       //! Constructor.
       Frame83P(void)
       {
-        m_data.resize(getSize(), 0);
-        m_data[0] = '8';
-        m_data[1] = '3';
-        m_data[2] = 'P';
-        m_data[3] = 10;
-
-        setHeader();
+        m_size = 4 * c_beams;
+        m_data.resize(getMaxSize(), 0);
       }
 
       //! Destructor
@@ -126,51 +122,152 @@ namespace Sensors
 
       //! Retrieve the size of the frame.
       //! @return frame size.
-      unsigned
+      size_t
       getSize(void) const
       {
         return c_hdr_size + getMessageSize();
       }
 
+      //! Retrieve maximum size of the frame.
+      //! @return maximum frame size.
+      size_t
+      getMaxSize(void) const
+      {
+        return c_hdr_size + 4 * c_beams;
+      }
+
       //! Retrieve message size.
       //! @return message size.
-      uint32_t
+      size_t
       getMessageSize(void) const
       {
-        // @todo verify.
-        return 4 * c_beams;
+        return m_size;
       }
 
-      //! Define total bytes in header.
-      void
-      setTotalBytes(void)
+      //! Retrieve message header size.
+      //! @return message header size.
+      size_t
+      getHeaderSize(void) const
       {
-        // Total bytes.
-        m_data[HDR_IDX_TBYTES_HI] = (uint8_t)(getSize() >> 8);
-        m_data[HDR_IDX_TBYTES_LO] = (uint8_t)getSize();
+        return c_hdr_size;
       }
 
-      void
-      setExtendedDataPoints(bool mode)
+      //! Get current range.
+      //! @return current multibeam range.
+      uint16_t
+      getRange(void)
       {
-        (void)mode;
-        setTotalBytes();
+        uint16_t r;
+        r = ((uint16_t)m_data[HDR_IDX_RANGE] << 8) + m_data[HDR_IDX_RANGE + 1];
+        return r;
+      }
+
+      //! Verify sonar return.
+      //! @param[in] rv return size.
+      void
+      verifyReturn(size_t size)
+      {
+        if (m_size != size - c_hdr_size)
+          m_size = size - c_hdr_size;
+      }
+
+      //! Get range index.
+      unsigned
+      getIndexRange(void)
+      {
+        return HDR_IDX_RANGE;
+      }
+
+      //! Get tilt angle index.
+      unsigned
+      getIndexTiltAngle(void)
+      {
+        return HDR_IDX_TILT_ANGLE;
+      }
+
+      //! Get latitude index.
+      unsigned
+      getIndexLatitude(void)
+      {
+        return HDR_IDX_LATITUDE;
+      }
+
+      //! Get longitude index.
+      unsigned
+      getIndexLongitude(void)
+      {
+        return HDR_IDX_LONGITUDE;
+      }
+
+      //! Get speed index.
+      unsigned
+      getIndexSpeed(void)
+      {
+        return HDR_IDX_SPEED;
+      }
+
+      //! Get speed index.
+      unsigned
+      getIndexSoundSpeed(void)
+      {
+        return HDR_IDX_SOUND_SPEED;
+      }
+
+      //! Get course index.
+      unsigned
+      getIndexCourse(void)
+      {
+        return HDR_IDX_COURSE;
+      }
+
+      //! Get milliseconds index.
+      unsigned
+      getIndexMilli(void)
+      {
+        return HDR_IDX_MILLI;
+      }
+
+      //! Get roll index.
+      unsigned
+      getIndexRoll(void)
+      {
+        return HDR_IDX_ROLL;
+      }
+
+      //! Get pitch index.
+      unsigned
+      getIndexPitch(void)
+      {
+        return HDR_IDX_PITCH;
+      }
+
+      //! Get heading index.
+      unsigned
+      getIndexHeading(void)
+      {
+        return HDR_IDX_HEADING;
+      }
+
+      //! Get repetition rate index.
+      unsigned
+      getIndexRepRate(void)
+      {
+        return HDR_IDX_REP_RATE;
+      }
+
+      //! Get frequency index.
+      unsigned
+      getIndexFrequency(void)
+      {
+        return HDR_IDX_FREQUENCY;
       }
 
     private:
-      //! Define frame constant header.
-      void
-      setHeader(void)
-      {
-        // Number of pings averaged.
-        //m_data[HDR_IDX_PINGS_AVG] = 0x00;
-        setFrequency();
-      }
-
+      size_t m_size;
       //! Size of the header.
-      static const unsigned c_hdr_size = 256;
+      static const size_t c_hdr_size = 256;
       //! Number of beams.
-      static const unsigned c_beams = 480;
+      static const size_t c_beams = 480;
     };
   }
 }

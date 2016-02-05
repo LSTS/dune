@@ -61,17 +61,12 @@ namespace Sensors
       enum HeaderIndices
       {
         HDR_IDX_N_TO_READ = 3,
-        HDR_IDX_TBYTES_HI = 4,
-        HDR_IDX_TBYTES_LO = 5,
         HDR_IDX_BYTES_TO_READ_HI = 6,
         HDR_IDX_BYTES_TO_READ_LO = 7,
-        HDR_IDX_DATE = 8,
-        HDR_IDX_TIME = 20,
-        HDR_IDX_TIME_HSEC = 29,
         HDR_IDX_VIDEO_FRAME = 33,
         HDR_IDX_DISPLAY_MODE = 37,
         HDR_IDX_START_GAIN = 38,
-        HDR_IDX_PROFILE = 39,
+        HDR_IDX_TILT_ANGLE = 39,
         HDR_IDX_PINGS_AVG = 43,
         HDR_IDX_PULSE_LENGTH = 44,
         HDR_IDX_SOUND_SPEED = 46,
@@ -130,7 +125,7 @@ namespace Sensors
 
       //! Retrieve the size of the frame.
       //! @return frame size.
-      unsigned
+      size_t
       getSize(void) const
       {
         return c_hdr_size + c_rhdr_size + getMessageSize() + getFooterSize();
@@ -138,7 +133,7 @@ namespace Sensors
 
       //! Retrieve message size.
       //! @return message size.
-      uint32_t
+      size_t
       getMessageSize(void) const
       {
         return m_ivx_mode ? c_ivx_body_size : c_iux_body_size;
@@ -146,7 +141,7 @@ namespace Sensors
 
       //! Retrieve footer size.
       //! @return footer size.
-      uint32_t
+      size_t
       getFooterSize(void) const
       {
         return m_ivx_mode ? c_ivx_frame_size : c_iux_frame_size;
@@ -253,6 +248,106 @@ namespace Sensors
         m_data[HDR_IDX_VERSION] = version;
       }
 
+      //! Set repetition rate using local Delta class.
+      void
+      setRepRate(void)
+      {
+        // Compute time delta.
+        double tstep = trimValue(m_delta.getDelta(), 0.0, 2.0);
+        Frame::setRepRate((uint16_t)(tstep * 1000));
+      }
+
+      //! Get range index.
+      unsigned
+      getIndexRange(void)
+      {
+        return HDR_IDX_RANGE;
+      }
+
+      //! Get tilt angle index.
+      unsigned
+      getIndexTiltAngle(void)
+      {
+        return HDR_IDX_TILT_ANGLE;
+      }
+
+      //! Get latitude index.
+      unsigned
+      getIndexLatitude(void)
+      {
+        return HDR_IDX_LATITUDE;
+      }
+
+      //! Get longitude index.
+      unsigned
+      getIndexLongitude(void)
+      {
+        return HDR_IDX_LONGITUDE;
+      }
+
+      //! Get speed index.
+      unsigned
+      getIndexSpeed(void)
+      {
+        return HDR_IDX_SPEED;
+      }
+
+      //! Get speed index.
+      unsigned
+      getIndexSoundSpeed(void)
+      {
+        return HDR_IDX_SOUND_SPEED;
+      }
+
+      //! Get course index.
+      unsigned
+      getIndexCourse(void)
+      {
+        return HDR_IDX_COURSE;
+      }
+
+      //! Get milliseconds index.
+      unsigned
+      getIndexMilli(void)
+      {
+        return HDR_IDX_MILLI;
+      }
+
+      //! Get roll index.
+      unsigned
+      getIndexRoll(void)
+      {
+        return HDR_IDX_ROLL;
+      }
+
+      //! Get pitch index.
+      unsigned
+      getIndexPitch(void)
+      {
+        return HDR_IDX_PITCH;
+      }
+
+      //! Get heading index.
+      unsigned
+      getIndexHeading(void)
+      {
+        return HDR_IDX_HEADING;
+      }
+
+      //! Get repetition rate index.
+      unsigned
+      getIndexRepRate(void)
+      {
+        return HDR_IDX_REP_RATE;
+      }
+
+      //! Get frequency index.
+      unsigned
+      getIndexFrequency(void)
+      {
+        return HDR_IDX_FREQUENCY;
+      }
+
     private:
       //! Define frame constant header.
       void
@@ -336,6 +431,8 @@ namespace Sensors
 
       //! IVX mode active.
       bool m_ivx_mode;
+      //! Repetition time delta.
+      Time::Delta m_delta;
       //! Size of the header.
       static const unsigned c_hdr_size = 100;
       //! Size of the sonar return data header.
