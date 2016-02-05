@@ -185,7 +185,7 @@ namespace DUNE
     }
 
     size_t
-    UDPSocket::read(uint8_t* buffer, size_t size, Address* addr)
+    UDPSocket::read(uint8_t* buffer, size_t size, Address* addr, uint16_t* port)
     {
       sockaddr_in host;
       socklen_t sock_len = sizeof(host);
@@ -198,6 +198,9 @@ namespace DUNE
 
       if (addr != NULL)
         *addr = (::sockaddr*)&host;
+
+      if (port != NULL)
+        *port = Utils::ByteCopy::fromBE(host.sin_port);
 
       return rv;
     }
