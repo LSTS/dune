@@ -23,6 +23,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Gomes                                                    *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -43,44 +44,42 @@ namespace Control
 
       struct Arguments
       {
-        // Maximum Tcom and Tdiff.
-        float max_motor;
+        // Maximum Motor thrust.
+        float max;
+        // Maximum heading error to thrust.
+        float max_yaw;
         // Proportional gain.
-        float kp_heading;
-        float kp_velocity;
+        float kp_yaw;
+        float kp_u;
         // Integral gain.
-        float ki_heading;
-        float ki_velocity;
+        float ki_yaw;
+        float ki_u;
         // Derivative gain.
-        float kd_heading;
-        float kd_velocity;
+        float kd_yaw;
+        float kd_u;
         // Control logic for saturation.
-        bool new_saturation;
+        bool share;
       };
 
       struct Task: public Tasks::Task
       {
         // Integral error.
-        float m_err_integral;
-        float m_err_integralV;
+        float m_err_ki_yaw;
+        float m_err_ki_u;
         // Derivative error.
-        float m_err_derivative;
-        float m_err_derivativeV;
+        float m_err_kd_yaw;
+        float m_err_kd_u;
         // Previous error.
-        float m_prev_err_heading;
+        float m_prev_err_yaw;
         float m_prev_err_vel;
         // Desired heading.
-        float m_dhead;
+        float m_desired_yaw;
         // Desired speed.
-        float m_dspeed;
+        float m_desired_speed;
         // Desired speed units.
         uint8_t m_speed_units;
-        // Differential Thrust.
-        float m_thrust_diff;
-        // Common Thrust.
-        float m_thrust_com;
         // Time of last estimated state message.
-        Delta m_last_estate;
+        Delta m_delta;
         // Motor Thrust.
         IMC::SetThrusterActuation m_motor[2];
         //! Control loops last reference
@@ -92,37 +91,41 @@ namespace Control
           Tasks::Task(name, ctx),
           m_scope_ref(0)
         {
-          param("Maximum Motor Command", m_args.max_motor)
+          param("Maximum Motor Command", m_args.max)
           .defaultValue("1.0")
           .description("Maximum Motor Command");
 
           // Heading control parameters.
-          param("Heading Proportional Gain", m_args.kp_heading)
+          param("Heading Proportional Gain", m_args.kp_yaw)
           .defaultValue("20.0")
           .description("Heading Proportional Gain");
 
-          param("Heading Integrative Gain", m_args.ki_heading)
+          param("Heading Integrative Gain", m_args.ki_yaw)
           .defaultValue("0.0")
           .description("Heading Integrative Gain");
 
-          param("Heading Derivative Gain", m_args.kd_heading)
+          param("Heading Derivative Gain", m_args.kd_yaw)
           .defaultValue("0.0")
           .description("Heading Derivative Gain");
 
           // Velocity control parameters.
-          param("Velocity Proportional Gain", m_args.kp_velocity)
+          param("Velocity Proportional Gain", m_args.kp_u)
           .defaultValue("20.0")
           .description("Velocity Proportional Gain");
 
-          param("Velocity Integrative Gain", m_args.ki_velocity)
+          param("Velocity Integrative Gain", m_args.ki_u)
           .defaultValue("0.0")
           .description("Velocity Integrative Gain");
 
-          param("Velocity Derivative Gain", m_args.kd_velocity)
+          param("Velocity Derivative Gain", m_args.kd_u)
           .defaultValue("0.0")
           .description("Velocity Derivative Gain");
 
-          param("Share Saturation", m_args.new_saturation)
+          param("Maximum Heading Error to Thrust", m_args.max_yaw)
+          .defaultValue("30.0")
+          .description("Maximum admissable heading error to thrust");
+
+          param("Share Saturation", m_args.share)
           .defaultValue("false")
           .description("Share saturation");
 
@@ -134,6 +137,13 @@ namespace Control
           bind<IMC::DesiredHeading>(this);
           bind<IMC::DesiredSpeed>(this);
           bind<IMC::ControlLoops>(this);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.max_yaw))
+            m_args.max_yaw = Angles::radians(m_args.max_yaw);
         }
 
         //! On activation
@@ -153,8 +163,8 @@ namespace Control
         void
         reset(void)
         {
-          m_err_integral = 0.0;
-          m_prev_err_heading = 0.0;
+          m_err_ki_yaw = 0.0;
+          m_prev_err_yaw = 0.0;
           m_prev_err_vel = 0.0;
 
           m_motor[0].id = 0;
@@ -162,7 +172,7 @@ namespace Control
           m_motor[0].value = 0.0;
           m_motor[1].value = 0.0;
 
-          m_dspeed = 0.0;
+          m_desired_speed = 0.0;
           dispatch(m_motor[0]);
           dispatch(m_motor[1]);
         }
@@ -181,79 +191,87 @@ namespace Control
 
           if (!isActive())
           {
-            m_dhead = msg->psi;
-            m_dspeed = msg->u;
+            m_desired_yaw = msg->psi;
+            m_desired_speed = msg->u;
             return;
           }
 
           // Compute time delta.
-          double delta_heading = m_last_estate.getDelta();
+          double tstep = m_delta.getDelta();
 
           // Check if we have a valid time delta.
-          if (delta_heading < 0.0)
+          if (tstep < 0.0)
             return;
 
-          // Heading error (Desired - Estimated)
-          float err_heading = Angles::normalizeRadian(m_dhead - msg->psi);
-
-          // Speed error (Desired - Estimated)
-          float err_vel = m_dspeed - msg->u;
+          // Reference errors.
+          float err_yaw = Angles::normalizeRadian(m_desired_yaw - msg->psi);
+          float err_vel = m_desired_speed - msg->u;
 
           // Common thrust increment
-          float thrust_com_inc = 0;
+          float com_inc = 0;
+          float thrust_com = 0;
 
-          // Velocity controller (PID)
-          switch (m_speed_units)
+          // Do not thrust forward if heading error is too large.
+          if (std::fabs(err_yaw) < m_args.max_yaw)
           {
-            case IMC::SUNITS_PERCENTAGE:
-              m_thrust_com = (m_dspeed / 100.0);
-              break;
-            case IMC::SUNITS_METERS_PS:
-              m_err_derivativeV = (err_vel - m_prev_err_vel) / delta_heading;
-              m_err_integralV += err_vel * delta_heading;
-              m_prev_err_vel = err_vel;
+            // Velocity controller (PID)
+            switch (m_speed_units)
+            {
+              case IMC::SUNITS_PERCENTAGE:
+                thrust_com = (m_desired_speed / 100.0);
+                break;
+              case IMC::SUNITS_METERS_PS:
+                m_err_kd_u = (err_vel - m_prev_err_vel) / tstep;
+                m_err_ki_u += err_vel * tstep;
+                m_prev_err_vel = err_vel;
 
-              thrust_com_inc = m_args.kp_velocity * err_vel + m_args.kd_velocity * m_err_derivativeV;
-              m_thrust_com = thrust_com_inc + m_args.ki_velocity * m_err_integralV;
-              break;
-            default:
-              break;
+                com_inc = m_args.kp_u * err_vel + m_args.kd_u * m_err_kd_u;
+                thrust_com = com_inc + m_args.ki_u * m_err_ki_u;
+                break;
+              default:
+                break;
+            }
+
+            // Saturation and anti-windup.
+            saturationAntiWindup(com_inc, m_args.ki_u, &thrust_com, &m_err_ki_u);
           }
 
-          // Saturation and anti-windup.
-          saturationAntiWindup(thrust_com_inc, m_args.ki_velocity,
-                               &m_thrust_com, &m_err_integralV);
+          // Heading controller.
+          m_err_kd_yaw = (err_yaw - m_prev_err_yaw) / tstep;
+          m_err_ki_yaw += err_yaw * tstep;
+          m_prev_err_yaw = err_yaw;
 
-          // Heading controller (PID)
-          m_err_derivative = (err_heading - m_prev_err_heading) / delta_heading;
-          m_err_integral += err_heading * delta_heading;
-          m_prev_err_heading = err_heading;
+          float diff_inc = m_args.kp_yaw * err_yaw + m_args.kd_yaw * m_err_kd_yaw;
+          float thrust_diff = diff_inc + m_args.ki_yaw * m_err_ki_yaw;
 
-          float thrust_diff_inc = m_args.kp_heading * err_heading + m_args.kd_heading * m_err_derivative;
-          m_thrust_diff = thrust_diff_inc + m_args.ki_heading * m_err_integral;
+          spew("parcels: %f | %f | %f", m_args.kp_yaw * err_yaw,
+               m_args.kd_yaw * m_err_kd_yaw,
+               m_args.ki_yaw * m_err_ki_yaw);
 
           // Saturation and anti-windup
-          saturationAntiWindup(thrust_diff_inc, m_args.ki_heading,
-                               &m_thrust_diff, &m_err_integral);
+          saturationAntiWindup(diff_inc, m_args.ki_yaw,
+                               &thrust_diff, &m_err_ki_yaw);
 
-          m_motor[0].value = m_thrust_com + m_thrust_diff;
-          m_motor[1].value = m_thrust_com - m_thrust_diff;
+          spew("common: %f | differential: %f", thrust_com, thrust_diff);
+
+          m_motor[0].value = thrust_com + thrust_diff;
+          m_motor[1].value = thrust_com - thrust_diff;
 
           // New control logic when saturation occurs
-          if (m_args.new_saturation)
+          if (m_args.share)
           {
             for (uint8_t i = 0; i < 2; i++)
             {
-              if (m_motor[i].value > m_args.max_motor)
+              if (m_motor[i].value > m_args.max)
               {
-                float delta_motor = m_motor[i].value - m_args.max_motor;
-                m_motor[i].value = m_args.max_motor;
+                float delta_motor = m_motor[i].value - m_args.max;
+                m_motor[i].value = m_args.max;
                 m_motor[(i + 1) % 2].value = m_motor[(i + 1) % 2].value - delta_motor;
               }
-              else if (m_motor[i].value < -m_args.max_motor)
+              else if (m_motor[i].value < -m_args.max)
               {
-                float delta_motor = m_motor[i].value + m_args.max_motor;
-                m_motor[i].value = -m_args.max_motor;
+                float delta_motor = m_motor[i].value + m_args.max;
+                m_motor[i].value = -m_args.max;
                 m_motor[(i + 1) % 2].value = m_motor[(i + 1) % 2].value - delta_motor;
               }
             }
@@ -267,21 +285,21 @@ namespace Control
         saturationAntiWindup(float thrust_inc, float ki_gain, float* thrust, float* err_integral)
         {
           // Saturation and anti-windup.
-          if (*thrust > m_args.max_motor)
+          if (*thrust > m_args.max)
           {
-            *thrust = m_args.max_motor;
-            if (thrust_inc > m_args.max_motor)
+            *thrust = m_args.max;
+            if (thrust_inc > m_args.max)
               *err_integral = 0;
             else
-              *err_integral = (m_args.max_motor - thrust_inc) / ki_gain;
+              *err_integral = (m_args.max - thrust_inc) / ki_gain;
           }
-          else if (*thrust < -m_args.max_motor)
+          else if (*thrust < -m_args.max)
           {
-            *thrust = -m_args.max_motor;
-            if (thrust_inc < -m_args.max_motor)
+            *thrust = -m_args.max;
+            if (thrust_inc < -m_args.max)
               *err_integral = 0;
             else
-              *err_integral = (-m_args.max_motor - thrust_inc) / ki_gain;
+              *err_integral = (-m_args.max - thrust_inc) / ki_gain;
           }
         }
 
@@ -290,7 +308,8 @@ namespace Control
         {
           if (!isActive())
             return;
-          m_dhead = msg->value;
+
+          m_desired_yaw = msg->value;
         }
 
         void
@@ -298,7 +317,8 @@ namespace Control
         {
           if (!isActive())
             return;
-          m_dspeed = msg->value;
+
+          m_desired_speed = msg->value;
           m_speed_units = msg->speed_units;
         }
 
