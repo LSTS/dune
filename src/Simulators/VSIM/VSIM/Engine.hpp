@@ -74,7 +74,7 @@ namespace Simulators
       inline static int
       encodeId(int id)
       {
-        return id + 1000;
+        return id;
       }
 
       //! Return vehicle actuation.

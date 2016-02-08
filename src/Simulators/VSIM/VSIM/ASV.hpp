@@ -39,9 +39,6 @@ namespace Simulators
 {
   namespace VSIM
   {
-    //! Maximum Torque Force
-    static const unsigned c_asv_base_id = 1000;
-
     //! %ASV Autonomous Surface Vehicle simulator.
     class ASV: public Vehicle
     {
