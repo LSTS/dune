@@ -122,9 +122,9 @@ namespace Control
           .defaultValue("0.0")
           .description("Velocity Derivative Gain");
 
-          param("New Saturation", m_args.new_saturation)
+          param("Share Saturation", m_args.new_saturation)
           .defaultValue("false")
-          .description("New saturation");
+          .description("Share saturation");
 
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -242,30 +242,20 @@ namespace Control
           // New control logic when saturation occurs
           if (m_args.new_saturation)
           {
-            if (m_motor[0].value > m_args.max_motor)
+            for (uint8_t i = 0; i < 2; i++)
             {
-              float delta_motor = m_motor[0].value - m_args.max_motor;
-              m_motor[0].value = m_args.max_motor;
-              m_motor[1].value = m_motor[1].value - delta_motor;
-            }
-            else if (m_motor[0].value < -m_args.max_motor)
-            {
-              float delta_motor = m_motor[0].value + m_args.max_motor;
-              m_motor[0].value = -m_args.max_motor;
-              m_motor[1].value = m_motor[1].value + delta_motor;
-            }
-
-            if (m_motor[1].value > m_args.max_motor)
-            {
-              float delta_motor = m_motor[1].value - m_args.max_motor;
-              m_motor[1].value = m_args.max_motor;
-              m_motor[0].value = m_motor[0].value - delta_motor;
-            }
-            else if (m_motor[1].value < -m_args.max_motor)
-            {
-              float delta_motor = m_motor[1].value + m_args.max_motor;
-              m_motor[1].value = -m_args.max_motor;
-              m_motor[0].value = m_motor[0].value + delta_motor;
+              if (m_motor[i].value > m_args.max_motor)
+              {
+                float delta_motor = m_motor[i].value - m_args.max_motor;
+                m_motor[i].value = m_args.max_motor;
+                m_motor[(i + 1) % 2].value = m_motor[(i + 1) % 2].value - delta_motor;
+              }
+              else if (m_motor[i].value < -m_args.max_motor)
+              {
+                float delta_motor = m_motor[i].value + m_args.max_motor;
+                m_motor[i].value = -m_args.max_motor;
+                m_motor[(i + 1) % 2].value = m_motor[(i + 1) % 2].value - delta_motor;
+              }
             }
           }
 
