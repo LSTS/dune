@@ -50,11 +50,12 @@ namespace Supervisors
     {
     public:
       //! Constructor.
-      Client(Tasks::Task* task, CommInterface interface, bool ack = false):
+      Client(Tasks::Task* task, CommInterface interface, float time = 0.0, bool wait_ack = false):
         m_task(task)
       {
         m_interface = interface;
-        m_wait_ack = ack;
+        m_wait_ack = wait_ack;
+        m_timer.setTop(time);
       }
 
       //! Destructor.
@@ -95,6 +96,9 @@ namespace Supervisors
       bool
       trigger(std::string* destination = NULL)
       {
+        if (!m_timer.overflow())
+          return false;
+
         if (m_list.size() > 0)
         {
           if (destination != NULL)
@@ -106,6 +110,7 @@ namespace Supervisors
             m_task->dispatch(m_list.front());
 
           m_list.erase(m_list.begin(), m_list.begin() + 1);
+          m_timer.reset();
 
           return true;
         }
@@ -117,11 +122,11 @@ namespace Supervisors
       //! @param[in] destination destination system.
       //! @return true if there acknowledge was sent, false otherwise.
       bool
-      ack(const std::string* destination = NULL)
+      ack(const std::string destination = "")
       {
         if (m_wait_ack && m_list_acks.size() > 0)
         {
-          if (destination == NULL)
+          if (destination.size() > 0)
           {
             m_task->dispatch(m_list_acks.front());
             m_list_acks.erase(m_list_acks.begin(), m_list_acks.begin() + 1);
@@ -133,7 +138,7 @@ namespace Supervisors
             for (; itr != m_list.end(); ++itr)
             {
               // Same ticket.
-              if (itr->sys_dst == *destination)
+              if (itr->sys_dst == destination)
               {
                 m_task->dispatch(*itr);
                 m_list_acks.erase(itr, itr + 1);
@@ -157,6 +162,8 @@ namespace Supervisors
       bool m_wait_ack;
       //! Local task interface;
       CommInterface m_interface;
+      //! Time to wait between triggers.
+      Time::Counter<float> m_timer;
     };
   }
 }
