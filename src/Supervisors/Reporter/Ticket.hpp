@@ -101,6 +101,12 @@ namespace Supervisors
         }
       }
 
+      ~Ticket(void)
+      {
+        Memory::clear(m_task);
+        Memory::clear(m_rc);
+      }
+
       //! Trigger a report.
       //! @return true if report was requested, false otherwise.
       bool
