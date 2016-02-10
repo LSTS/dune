@@ -590,17 +590,20 @@ namespace Control
 
           if (cloops->enable)
           {
-            m_cloops |= cloops->mask;
-            if ((!m_args.ardu_tracker) && (cloops->mask & IMC::CL_PATH))
-            {
-              inf("Ardupilot tracker is NOT enabled");
-              m_cloops &= ~IMC::CL_PATH;
-            }
+//            if ((!m_args.ardu_tracker) && (cloops->mask & IMC::CL_PATH))
+//            {
+//              inf("Ardupilot tracker is NOT enabled");
+//              m_cloops &= ~IMC::CL_PATH;
+//            }
 
-            if (!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
+            if (!m_args.ardu_tracker)
             {
-              onUpdateParameters();
-              activateFBW();
+              m_cloops |= cloops->mask;
+              if (cloops->mask & IMC::CL_ROLL)
+              {
+                onUpdateParameters();
+                activateFBW();
+              }
             }
           }
           else
@@ -860,7 +863,8 @@ namespace Control
             return;
           }
 
-          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
+//          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
+          if (!m_args.ardu_tracker)
           {
             inf(DTR("path control is NOT active"));
             return;
