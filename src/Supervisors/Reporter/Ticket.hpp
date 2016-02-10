@@ -79,7 +79,6 @@ namespace Supervisors
     public:
       //! Constructor.
       Ticket(Tasks::Task* task, unsigned id, const IMC::ReportControl* msg):
-        m_rc(NULL),
         m_task(task)
       {
         m_ticket.id = id;
@@ -92,19 +91,13 @@ namespace Supervisors
         {
           m_ticket.start = true;
           m_timer.setTop(m_ticket.period);
-          Memory::replace(m_rc, new IMC::ReportControl(*msg));
-          m_rc->op = IMC::ReportControl::OP_REQUEST_REPORT;
+          m_rc = *msg;
+          m_rc.op = IMC::ReportControl::OP_REQUEST_REPORT;
         }
         else
         {
           m_ticket.start = false;
         }
-      }
-
-      ~Ticket(void)
-      {
-        Memory::clear(m_task);
-        Memory::clear(m_rc);
       }
 
       //! Trigger a report.
@@ -113,13 +106,13 @@ namespace Supervisors
       trigger(void)
       {
         // Positive request.
-        if (m_ticket.start && m_rc != NULL)
+        if (m_ticket.start)
         {
           // It is time to report.
           if (m_timer.overflow())
           {
             m_timer.reset();
-            m_task->dispatch(*m_rc);
+            m_task->dispatch(m_rc);
             return true;
           }
         }
@@ -187,8 +180,8 @@ namespace Supervisors
       Request m_ticket;
       //! Ticket timer.
       Time::Counter<double> m_timer;
-      //! Pointer to ReportControl.
-      IMC::ReportControl* m_rc;
+      //! Report Control
+      IMC::ReportControl m_rc;
       //! Pointer to task.
       Tasks::Task* m_task;
     };

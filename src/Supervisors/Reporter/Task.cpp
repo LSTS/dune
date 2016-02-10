@@ -85,13 +85,12 @@ namespace Supervisors
         {
           if (m_args.acoustic)
           {
-            IMC::ReportControl* rc;
-            rc = new IMC::ReportControl;
-            rc->op = IMC::ReportControl::OP_REQUEST_START;
-            rc->comm_interface = IMC::ReportControl::CI_ACOUSTIC;
-            rc->period = m_args.acoustic_period;
-            rc->sys_dst = "broadcast";
-            m_dispatcher.add(Ticket(this, m_id++, rc));
+            IMC::ReportControl rc;
+            rc.op = IMC::ReportControl::OP_REQUEST_START;
+            rc.comm_interface = IMC::ReportControl::CI_ACOUSTIC;
+            rc.period = m_args.acoustic_period;
+            rc.sys_dst = "broadcast";
+            dispatch(rc, DF_LOOP_BACK);
           }
           else
           {
@@ -112,7 +111,6 @@ namespace Supervisors
         {
           case IMC::ReportControl::OP_REQUEST_START:
             m_dispatcher.add(Ticket(this, m_id++, msg));
-
             {
               IMC::ReportControl rc(*msg);
               rc.op = IMC::ReportControl::OP_STARTED;

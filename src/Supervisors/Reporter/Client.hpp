@@ -58,12 +58,6 @@ namespace Supervisors
         m_timer.setTop(time);
       }
 
-      //! Destructor.
-      ~Client(void)
-      {
-        Memory::clear(m_task);
-      }
-
       //! Consume report messages.
       //! @param[in] msg ReportControl message.
       void
