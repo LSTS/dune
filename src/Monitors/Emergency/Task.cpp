@@ -32,6 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Supervisors/Reporter/Client.hpp>
 
 namespace Monitors
 {
@@ -67,12 +68,15 @@ namespace Monitors
       Counter<double> m_lost_coms_timer;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
+      //! Reporter API.
+      Supervisors::Reporter::Client* m_reporter;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_in_mission(false)
+        m_in_mission(false),
+        m_reporter(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -106,8 +110,22 @@ namespace Monitors
         bind<IMC::GpsFix>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::PlanControlState>(this);
+        bind<IMC::ReportControl>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::TextMessage>(this);
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_reporter);
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_GSM,
+                                                       2.0, false);
       }
 
       void
@@ -160,6 +178,13 @@ namespace Monitors
 
           m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
         }
+      }
+
+      void
+      consume(const IMC::ReportControl* msg)
+      {
+        if (m_reporter != NULL)
+          m_reporter->consume(msg);
       }
 
       void
@@ -273,6 +298,16 @@ namespace Monitors
       {
         if (!isActive())
           return;
+
+        std::string number;
+        if (m_reporter != NULL && m_reporter->trigger(&number))
+        {
+          if (true)
+          {
+            sendSMS("R", m_args.sms_lost_coms_ttl, number);
+            spew("sent report to %s", number.c_str());
+          }
+        }
 
         if (m_lost_coms_timer.overflow())
         {
