@@ -2088,8 +2088,12 @@ namespace Control
 
           dispatch(d_roll);
           dispatch(d_pitch);
-          dispatch(d_head);
-          dispatch(d_z);
+
+          if (m_args.ardu_tracker)
+          {
+            dispatch(d_head);
+            dispatch(d_z);
+          }
 
           if (!m_args.ardu_tracker)
             return;
