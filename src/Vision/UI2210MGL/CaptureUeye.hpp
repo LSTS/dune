@@ -149,16 +149,29 @@ namespace Vision
         // Set target FPS
         double newFPS, fpsWish = fps;
         is_SetFrameRate(m_cam, fpsWish, &newFPS);
-        m_task->debug("Set FPS to %.1f, actual FPS is now %.1f", fpsWish, newFPS);
+        m_task->debug("Set FPS to %.2f, actual FPS is now %.2f", fpsWish, newFPS);
       }
 
       void
-      setAutoGain(bool autogain)
+      setExposure(float exp)
+      {
+        // Set target Exposure time
+        double newExp = exp;
+        is_Exposure (m_cam, IS_EXPOSURE_CMD_SET_EXPOSURE, (void*) &newExp, 8);
+        m_task->debug("Set Exposure time to %.2f, actual is now %.2f", exp, newExp);
+      }
+
+      void
+      setGain(bool autogain, int gain)
       {
         //Enable or disable auto gain control:
         double param = autogain ? 1 : 0;
         int ret = is_SetAutoParameter (m_cam, IS_SET_ENABLE_AUTO_GAIN, &param, 0);
-        m_task->debug("Set Auto Gain to %f. Status %d", param, ret);
+        m_task->debug("Set Auto Gain to %.0f. Status %d", param, ret);
+
+        //Set gain if not auto:
+        ret = is_SetHardwareGain (m_cam, gain, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER);
+        m_task->debug("Set Gain to %d. Status %d", gain, ret);
       }
 
       Frame*
@@ -232,7 +245,7 @@ namespace Vision
 
         // Set the pixel clock. This is capped at 30. Higher pixel clock
         // will enable higher FPS.
-        UINT nPixelClockDefault = 30;
+        UINT nPixelClockDefault = 20;
         tmp = is_PixelClock(m_cam, IS_PIXELCLOCK_CMD_SET,
             (void*)&nPixelClockDefault,
             sizeof(nPixelClockDefault));

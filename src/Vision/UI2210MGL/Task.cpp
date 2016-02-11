@@ -69,6 +69,10 @@ namespace Vision
       AOI aoi;
       //! Auto Gain
       bool auto_gain;
+      //! Gain
+      int gain;
+      //! Exposure time
+      float exposure;
       //! Calibration parameters
       double c1, c2, c3;
       //! Wavelength to send
@@ -128,12 +132,12 @@ namespace Vision
         .description("Y coordinate of upper left corner of AOI");
 
         param("AOI - Width", m_args.aoi.width)
-        .defaultValue("0")
+        .defaultValue("640")
         .minimumValue("0")
         .description("Width of AOI");
 
         param("AOI - Height", m_args.aoi.height)
-        .defaultValue("0")
+        .defaultValue("480")
         .minimumValue("0")
         .description("Height of AOI");
 
@@ -147,6 +151,20 @@ namespace Vision
         param("Auto Gain", m_args.auto_gain)
         .defaultValue("false")
         .description("Enable Auto Gain");
+
+        param("Gain", m_args.gain)
+        .defaultValue("50")
+        .units(Units::Percentage)
+        .minimumValue("0")
+        .maximumValue("100")
+        .description("Sensor Gain");
+
+        param("Exposure", m_args.exposure)
+        .defaultValue("4")
+        .units(Units::Millisecond)
+        .minimumValue("1")
+        .maximumValue("20")
+        .description("Exposure Time");
 
         param("Calib - C1", m_args.c1)
         .defaultValue("372.5")
@@ -186,7 +204,8 @@ namespace Vision
 
         m_capture->setAOI(m_args.aoi);
         m_capture->setFPS(m_args.fps);
-        m_capture->setAutoGain(m_args.auto_gain);
+        m_capture->setGain(m_args.auto_gain, m_args.gain);
+        m_capture->setExposure(m_args.exposure);
       }
 
       //! Acquire resources and buffers.
@@ -194,7 +213,8 @@ namespace Vision
       onResourceAcquisition(void)
       {
         m_capture = new CaptureUeye(this, m_args.aoi, m_cam, m_args.fps);
-        m_capture->setAutoGain(m_args.auto_gain);
+        m_capture->setGain(m_args.auto_gain, m_args.gain);
+        m_capture->setExposure(m_args.exposure);
       }
 
       //! Release allocated resources.
@@ -356,7 +376,7 @@ namespace Vision
           else
           {
             saveImage(m_frame);
-            sendData(m_args.wlen, m_frame->gain_factor, m_frame->timestamp);
+//            sendData(m_args.wlen, m_frame->gain_factor, m_frame->timestamp);
           }
         }
 
