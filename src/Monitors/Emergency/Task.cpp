@@ -296,9 +296,6 @@ namespace Monitors
       void
       task(void)
       {
-        if (!isActive())
-          return;
-
         std::string number;
         if (m_reporter != NULL && m_reporter->trigger(&number))
         {
@@ -308,6 +305,9 @@ namespace Monitors
             spew("sent report to %s", number.c_str());
           }
         }
+
+        if (!isActive())
+          return;
 
         if (m_lost_coms_timer.overflow())
         {
