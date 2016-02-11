@@ -130,6 +130,7 @@ namespace Supervisors
           case IMC::ReportControl::OP_STOPPED:
           case IMC::ReportControl::OP_REQUEST_REPORT:
           case IMC::ReportControl::OP_REPORT_SENT:
+            break;
           default:
             debug("caught unexpected transition");
             break;
