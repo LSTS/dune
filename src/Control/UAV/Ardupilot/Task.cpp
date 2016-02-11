@@ -610,7 +610,7 @@ namespace Control
           {
             m_cloops &= ~cloops->mask;
 
-            if ((cloops->mask & IMC::CL_ROLL) && !m_ground)
+            if ((cloops->mask & IMC::CL_ROLL) && !m_ground && m_vehicle_type == VEHICLE_FIXEDWING)
             {
               mavlink_message_t msg;
               uint8_t buf[512];
