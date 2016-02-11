@@ -644,16 +644,23 @@ namespace Control
         void
         activateFBW(void)
         {
-          uint8_t buf[512];
-          mavlink_message_t msg;
+          if (m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            uint8_t buf[512];
+            mavlink_message_t msg;
 
-          mavlink_msg_set_mode_pack(255, 0, &msg,
-                                    m_sysid,
-                                    1,
-                                    6); //! FBWB is mode 6
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      6); //! FBWB is mode 6
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          else
+          {
+            debug("Tried to set FBW on a non-supported vehicle!");
+          }
         }
 
         void
