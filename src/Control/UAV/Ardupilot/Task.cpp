@@ -1678,6 +1678,8 @@ namespace Control
 
           m_lat = (double)gp.lat * 1e-07;
           m_lon = (double)gp.lon * 1e-07;
+          if (m_vehicle_type == VEHICLE_COPTER)
+            m_hae_msl = gp.alt * 1e-3;
 
           double d = WGS84::distance(m_ref_lat, m_ref_lon, m_ref_hae,
                                      lat, lon, getHeight());
@@ -2190,7 +2192,8 @@ namespace Control
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
-          m_hae_msl = vfr_hud.alt;
+          if (m_vehicle_type != VEHICLE_COPTER)
+            m_hae_msl = vfr_hud.alt;
 
           dispatch(ias);
           dispatch(gs);
