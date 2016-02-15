@@ -933,9 +933,6 @@ namespace Sensors
           m_frame837->setRepRate();
         }
 
-        if (m_frame83P != NULL)
-          m_frame83P->setDateTime(Clock::getSinceEpochMsec());
-
         if (m_log_file.is_open())
         {
           if (m_frame837 != NULL)
