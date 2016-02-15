@@ -1729,6 +1729,9 @@ namespace Control
           m_estate.depth = -1;
           m_estate.alt = -1;
 
+          if (m_vehicle_type == VEHICLE_COPTER)
+            m_estate.alt = gp.relative_alt * 1e-3;
+
 
         }
 
