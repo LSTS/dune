@@ -174,10 +174,10 @@ namespace Sensors
       void
       setCourse(float course)
       {
-        if (course >= 0.0)
-          ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + getIndexCourse());
-        else
-          ByteCopy::toBE((uint16_t)(Angles::degrees(2 * Math::c_pi + course) * 10), getData() + getIndexCourse());
+        if (course < 0)
+          course += 2 * Math::c_pi;
+
+        ByteCopy::toBE((uint16_t)(Angles::degrees(course) * 10), getData() + getIndexCourse());
       }
 
       //! Set roll.
@@ -187,7 +187,7 @@ namespace Sensors
       {
         roll = Angles::degrees(roll);
 
-        ByteCopy::toBE((uint16_t)(((int)(roll * 10 + 900) & 0x7fff) | 0x8000),
+        ByteCopy::toBE(((uint16_t)(roll * 10 + 900) & 0x7fff) | 0x8000,
                        getData() + getIndexRoll());
 
         if (getFooterData() != NULL)
@@ -202,7 +202,7 @@ namespace Sensors
       {
         pitch = Angles::degrees(pitch);
 
-        ByteCopy::toBE((uint16_t)(((int)(pitch * 10 + 900) & 0x7fff) | 0x8000),
+        ByteCopy::toBE(((uint16_t)(pitch * 10 + 900) & 0x7fff) | 0x8000,
                        getData() + getIndexPitch());
 
         if (getFooterData() != NULL)
@@ -215,9 +215,12 @@ namespace Sensors
       void
       setHeading(float heading)
       {
+        if (heading < 0)
+          heading += 2 * Math::c_pi;
+
         heading = Angles::degrees(heading);
 
-        ByteCopy::toBE((uint16_t)(((int)(heading * 10) & 0x7fff) | 0x8000),
+        ByteCopy::toBE(((uint16_t)(heading * 10) & 0x7fff) | 0x8000,
                        getData() + getIndexHeading());
 
         if (getFooterData() != NULL)
