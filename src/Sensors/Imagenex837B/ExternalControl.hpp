@@ -97,7 +97,7 @@ namespace Sensors
         m_data[EC_PROFILE_MIN] = 0;      // 0 to 100m.
         m_data[EC_PROFILE_LEVEL] = 25;   // 10 to 90%.
         m_data[EC_ROLL_COMPENSATED] = 0; // 0=Off, 1=On
-        m_data[EC_837_START] = 0;        // 0=Disable, 1=Enable.
+        m_data[EC_837_START] = 1;        // 0=Disable, 1=Enable.
 
         // Set default sound velocity.
         setSoundVelocity(1500.0);
