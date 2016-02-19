@@ -166,7 +166,7 @@ namespace Sensors
       void
       setSpeed(float speed)
       {
-        m_data[getIndexSpeed()] = (int8_t)(speed * 10 * DUNE::Units::c_ms_to_knot);
+        m_data[getIndexSpeed()] = (uint8_t)(std::fabs(speed) * 10 * DUNE::Units::c_ms_to_knot);
       }
 
       //! Set GNSS ships course.
