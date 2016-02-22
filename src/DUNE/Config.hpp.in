@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,12 +34,12 @@
 #define DUNE_SHORT_NAME "@PROJECT_SHORT_NAME@"
 //! DUNE's version string.
 #define DUNE_VERSION_STR "@PROJECT_VERSION@"
-//! DUNE's version major.
-#define DUNE_VERSION_MAJ @PROJECT_VERSION_MAJ@
-//! DUNE's version minor.
-#define DUNE_VERSION_MIN @PROJECT_VERSION_MIN@
+//! DUNE's version year.
+#define DUNE_VERSION_YEAR @PROJECT_VERSION_YEAR@
+//! DUNE's version month.
+#define DUNE_VERSION_MONTH @PROJECT_VERSION_MONTH@
 //! DUNE's version patch level.
-#define DUNE_VERSION_PAT @PROJECT_VERSION_PAT@
+#define DUNE_VERSION_PATCH @PROJECT_VERSION_PATCH@
 //! DUNE's version release candidate number.
 #define DUNE_VERSION_RCN @PROJECT_VERSION_RCN@
 //! DUNE's copyright.

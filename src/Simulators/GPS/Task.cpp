@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -156,32 +156,30 @@ namespace Simulators
         m_origin.lon = Math::Angles::radians(m_args.position[1]);
         m_origin.type = IMC::GpsFix::GFT_MANUAL_INPUT;
         m_origin.validity = 0xffff;
+      }
 
+      void
+      onResourceInitialization(void)
+      {
         // Dispatching local origin.
         dispatch(m_origin);
-
-        // Activate task.
-        requestActivation();
       }
 
       void
       consume(const IMC::GpsFix* msg)
       {
+        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+
         if (msg->getSourceEntity() == getEntityId())
           return;
 
-        requestActivation();
         m_origin = *msg;
       }
 
       void
       consume(const IMC::SimulatedState* msg)
       {
-        if (!isActive())
-        {
-          return;
-        }
-
         if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -211,8 +209,8 @@ namespace Simulators
       void
       task(void)
       {
-        // Report invalid fixes when task not active or system is underwater.
-        if (!isActive() || m_sstate.z > m_args.act_depth)
+        // Report invalid fixes when system is underwater.
+        if (m_sstate.z > m_args.act_depth)
         {
           reportInvalidFix();
           return;

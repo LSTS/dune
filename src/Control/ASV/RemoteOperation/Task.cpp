@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -39,14 +39,26 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! Task arguments.
+      struct Arguments
+      {
+        //! Thrust scaling.
+        double scale;
+      };
+
       struct Task: public DUNE::Control::BasicRemoteOperation
       {
-        // Motor commands.
+        //! Motor commands.
         IMC::SetThrusterActuation m_thrust[2];
+        //! Task arguments.
+        Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicRemoteOperation(name, ctx)
         {
+          param("Thrust Scale", m_args.scale)
+          .defaultValue("1.0");
+
           // Add remote actions.
           addActionAxis("Port Motor");
           addActionAxis("Starboard Motor");
@@ -80,18 +92,26 @@ namespace Control
           actuate();
         }
 
+        double
+        applyScale(int value)
+        {
+          return Math::trimValue((value / 127.0) * m_args.scale, -1.0, 1.0);
+        }
+
         void
         onRemoteActions(const IMC::RemoteActions* msg)
         {
           TupleList tuples(msg->actions);
 
-          m_thrust[0].value = Math::trimValue(tuples.get("Port Motor", 0) / 127.0, -1.0, 1.0);
-          m_thrust[1].value = Math::trimValue(tuples.get("Starboard Motor", 0) / 127.0, -1.0, 1.0);
+          m_thrust[0].value = applyScale(tuples.get("Port Motor", 0));
+          m_thrust[1].value = applyScale(tuples.get("Starboard Motor", 0));
         }
 
         void
         actuate(void)
         {
+          debug("%0.2f %0.2f", m_thrust[0].value, m_thrust[1].value);
+
           dispatch(m_thrust[0]);
           dispatch(m_thrust[1]);
         }

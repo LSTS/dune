@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -42,8 +42,8 @@ namespace Power
   namespace LUEMB
   {
     using DUNE_NAMESPACES;
-    using Power::PCTLv2::PowerChannel;
-    using Power::PCTLv2::PowerChannels;
+    using ::Power::PCTLv2::PowerChannel;
+    using ::Power::PCTLv2::PowerChannels;
 
     //! Serial port baud rate.
     static const unsigned c_baud_rate = 115200;

@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -745,5 +745,11 @@ macro(dune_probe_functions)
     "double"
     "float.h"
     DUNE_SYS_HAS__ISNAN)
+
+  dune_test_function(popen
+    "FILE*"
+    "char*;char*"
+    "stdio.h"
+    DUNE_SYS_HAS_POPEN)
 
 endmacro(dune_probe_functions)

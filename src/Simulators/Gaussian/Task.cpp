@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -37,17 +37,19 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
-      //! Latitude of the peak's center
-      double peak_latitude;
-      //! Longitude of the peak's center
-      double peak_longitude;
-      //! Value at the center
-      float peak_value;
-      //! Value away from the center
-      float away_value;
-      //! The distance from the center where values become away_value
+      //! Latitude of the peak's center.
+      double peak_lat;
+      //! Longitude of the peak's center.
+      double peak_lon;
+      //! Value at the center.
+      float peak_val;
+      //! Value away from the center.
+      float away_val;
+      //! Standard deviation.
+      double std_dev;
+      //! The distance from the center where values becomes away value.
       float peak_width;
-      //! The message to be produced - should contain the field 'value'
+      //! The message to be produced. It must contain the field 'value'
       std::string message_name;
       //! PRNG type.
       std::string prng_type;
@@ -58,31 +60,31 @@ namespace Simulators
     //! Gaussian simulator task.
     struct Task: public Tasks::Periodic
     {
-      IMC::Message *m_msg;
+      //! IMC message to be produced.
+      IMC::Message* m_msg;
+      //! Last simulated state.
       IMC::SimulatedState m_last_state;
+      //! Pseudo-random number generator.
       Random::Generator* m_prng;
-      double m_lat, m_lon, m_height;
+      //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_msg(NULL),
-        m_prng(NULL),
-        m_lat(0),
-        m_lon(0),
-        m_height(0)
+        m_prng(NULL)
       {
         // Retrieve configuration values.
-        param("Latitude (degrees) of gaussian peak", m_args.peak_latitude)
+        param("Latitude (degrees) of gaussian peak", m_args.peak_lat)
         .defaultValue("41.185373");
 
-        param("Longitude (degrees) of gaussian peak", m_args.peak_longitude)
+        param("Longitude (degrees) of gaussian peak", m_args.peak_lon)
         .defaultValue("-8.704962");
 
-        param("Value at peak", m_args.peak_value)
+        param("Value at peak", m_args.peak_val)
         .defaultValue("20");
 
-        param("Value away from peak", m_args.away_value)
+        param("Value away from peak", m_args.away_val)
         .defaultValue("14");
 
         param("Width of gaussian", m_args.peak_width)
@@ -90,6 +92,9 @@ namespace Simulators
 
         param("Name of message to produce", m_args.message_name)
         .defaultValue("RhodamineDye");
+
+        param("Standard Deviation", m_args.std_dev)
+        .defaultValue("1.0");
 
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
@@ -105,32 +110,26 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
-        Memory::clear(m_msg);
-        init();
-      }
+        if (paramChanged(m_args.message_name))
+        {
+          Memory::clear(m_msg);
+          m_msg = IMC::Factory::produce(m_args.message_name);
+        }
 
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        requestDeactivation();
+        if (paramChanged(m_args.peak_lat))
+          m_args.peak_lat = Angles::radians(m_args.peak_lat);
+
+        if (paramChanged(m_args.peak_lon))
+          m_args.peak_lon = Angles::radians(m_args.peak_lon);
       }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
-        m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
-        init();
-      }
-
-      void init(void)
-      {
-        // Create message to be dispatched.
+        Memory::clear(m_msg);
         m_msg = IMC::Factory::produce(m_args.message_name);
-        m_lat = Angles::radians(m_args.peak_latitude);
-        m_lon = Angles::radians(m_args.peak_longitude);
-        m_height = m_args.peak_value - m_args.away_value;
+        m_prng = Random::Factory::create(m_args.prng_type, m_args.prng_seed);
       }
 
       //! Release resources.
@@ -168,14 +167,14 @@ namespace Simulators
         WGS84::displace(m_last_state.x, m_last_state.y, &slat, &slon);
 
         // compute offset from plume peak
-        WGS84::displacement(slat, slon, 0, m_lat, m_lon, 0, &dx, &dy, &dz);
+        WGS84::displacement(slat, slon, 0, m_args.peak_lat, m_args.peak_lon, 0, &dx, &dy, &dz);
 
         // calculate value based on 2d gaussian function
         double expn = exp(-1 * ((dx * dx + dy * dy)
-                                /(2 * (m_args.peak_width * m_args.peak_width))));
+                                /(2 * m_args.peak_width * m_args.peak_width)));
 
-        double val = m_args.away_value + m_height * expn;
-
+        double val = m_args.away_val + (m_args.peak_val - m_args.away_val) * expn;
+        val += m_prng->gaussian() * m_args.std_dev;
         m_msg->setValueFP(val);
         dispatch(m_msg);
       }

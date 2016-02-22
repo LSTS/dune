@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -49,6 +49,9 @@ namespace Actuators
       CMD_ACTUATE = 0x02,
       //! Configuration.
       CMD_CONFIG = 0x03,
+      CMD_CONFIG_DCYC = 0x04,
+      CMD_CONFIG_IADC = 0x05,
+      CMD_CONFIG_ERPM = 0x06,
       //! Debug.
       CMD_DEBUG = 0xd
     };
@@ -101,6 +104,17 @@ namespace Actuators
       MODE_RPM = 3
     };
 
+    enum SetupState
+    {
+      SS_VERSION_GET,
+      SS_VERSION_WAIT,
+      SS_CONFIG,
+      SS_CONFIG_DCYC,
+      SS_CONFIG_IADC,
+      SS_CONFIG_ERPM,
+      SS_DONE
+    };
+
     struct Arguments
     {
       //! Serial port device.
@@ -109,8 +123,6 @@ namespace Actuators
       double state_per;
       //! Numper of motor pole pairs
       int pole_pairs;
-      //! Maximum phase current value
-      float max_phase_current;
       //! Maximum rotor RPM value
       int max_rpm;
       //! Thrust control mode
@@ -125,6 +137,28 @@ namespace Actuators
       bool inv_rotation;
       //! Accept DesiredSpeed messages
       bool desired_speed;
+      //! Motor identifier.
+      unsigned motor_id;
+      //! Number of seconds without data before reporting an error.
+      double timeout_error;
+      //! Number of seconds without data before reporting a failure and
+      //! restarting.
+      double timeout_failure;
+      int8_t current_raw_offset;
+      uint8_t actuation_wdt;
+      uint8_t motor_temp_max;
+      uint8_t motor_temp_hyst;
+      uint8_t bridge_temp_max;
+      uint8_t bridge_temp_hyst;
+      uint16_t ctl_dcyc_max;
+      uint8_t ctl_dcyc_inc;
+      std::vector<int16_t> ctl_dcyc_negl;
+      uint16_t ctl_iadc_max;
+      uint8_t ctl_iadc_inc;
+      std::vector<int16_t> ctl_iadc_negl;
+      uint16_t ctl_erpm_max;
+      uint8_t ctl_erpm_inc;
+      std::vector<int16_t> ctl_erpm_negl;
     };
 
     struct Task: public Tasks::Periodic
@@ -145,16 +179,42 @@ namespace Actuators
       Entities::BasicEntity* m_bridge_ent;
       //! MCU entity.
       Entities::BasicEntity* m_mcu_ent;
-      //! Last state request.
-      double m_last_state;
-      //! Task arguments.
-      Arguments m_args;
       //! Device error mask.
       uint8_t m_dev_errors;
+      //! Motor identifier.
+      unsigned m_motor_id;
       //! Enable legacy protocol
       bool m_legacy;
       //! Used to silence some spurious boot errors.
       Counter<double> m_boot_timer;
+      //! State update timer.
+      Counter<double> m_state_timer;
+      //! Watchdog.
+      Counter<double> m_wdog;
+      //! Setup watchdog.
+      Counter<double> m_wdog_setup;
+      //! Entity state timer.
+      Counter<double> m_estate_timer;
+      //! Sample count.
+      size_t m_sample_count;
+      //! Faults count.
+      size_t m_faults_count;
+      //! Timeout count.
+      size_t m_timeout_count;
+      //! Version.
+      std::vector<unsigned> m_version;
+      //! EEPROM - General Config Area.
+      std::vector<uint8_t> m_eep_config;
+      //! EEPROM - DCYC Config Area.
+      std::vector<uint8_t> m_eep_dcyc;
+      //! EEPROM - IADC Config Area.
+      std::vector<uint8_t> m_eep_iadc;
+      //! EEPROM - RPM Config Area.
+      std::vector<uint8_t> m_eep_erpm;
+      //! Setup state.
+      SetupState m_setup_state;
+      //! Task arguments.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -164,7 +224,13 @@ namespace Actuators
         m_bridge_ent(NULL),
         m_mcu_ent(NULL),
         m_dev_errors(ERR_NONE),
-        m_legacy(false)
+        m_motor_id(0),
+        m_legacy(false),
+        m_estate_timer(1.0),
+        m_sample_count(0),
+        m_faults_count(0),
+        m_timeout_count(0),
+        m_setup_state(SS_VERSION_GET)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -181,11 +247,6 @@ namespace Actuators
         .defaultValue("12.0")
         .minimumValue("1.0")
         .description("Number of motor pole pairs");
-
-        param("Maximum Phase Current", m_args.max_phase_current)
-        .units(Units::Ampere)
-        .defaultValue("5.4")
-        .minimumValue("0.0");
 
         param("Maximum Rotor RPM", m_args.max_rpm)
         .units(Units::RPM)
@@ -212,8 +273,69 @@ namespace Actuators
         param("MCU - Entity Label", m_args.mcu_elabel)
         .defaultValue("");
 
-        // Initialize the state request clock
-        m_last_state = Clock::get();
+        param("Motor Identifier", m_args.motor_id)
+        .defaultValue("0");
+
+        param("Timeout - Error", m_args.timeout_error)
+        .defaultValue("2.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before reporting an error");
+
+        param("Timeout - Failure", m_args.timeout_failure)
+        .defaultValue("4.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before restarting task");
+
+        param("Current Raw Offset", m_args.current_raw_offset)
+        .defaultValue("0");
+
+        param("Actuation Watchdog", m_args.actuation_wdt)
+        .defaultValue("30");
+
+        param("Motor Temperature - Maximum", m_args.motor_temp_max)
+        .defaultValue("85");
+
+        param("Motor Temperature - Hysteresis", m_args.motor_temp_hyst)
+        .defaultValue("75");
+
+        param("Bridge Temperature - Maximum", m_args.bridge_temp_max)
+        .defaultValue("100");
+
+        param("Bridge Temperature - Hysteresis", m_args.bridge_temp_hyst)
+        .defaultValue("50");
+
+        param("Control DCYC - Maximum", m_args.ctl_dcyc_max)
+        .defaultValue("511");
+
+        param("Control DCYC - Increment", m_args.ctl_dcyc_inc)
+        .defaultValue("1");
+
+        param("Control DCYC - NegL", m_args.ctl_dcyc_negl)
+        .size(3)
+        .defaultValue("0, 0, 0");
+
+        param("Control IADC - Maximum", m_args.ctl_iadc_max)
+        .defaultValue("173")
+        .description("Maximum phase current times 32");
+
+        param("Control IADC - Increment", m_args.ctl_iadc_inc)
+        .defaultValue("2");
+
+        param("Control IADC - NegL", m_args.ctl_iadc_negl)
+        .size(3)
+        .defaultValue("82, -272, -610");
+
+        param("Control ERPM - Maximum", m_args.ctl_erpm_max)
+        .defaultValue("2400");
+
+        param("Control ERPM - Increment", m_args.ctl_erpm_inc)
+        .defaultValue("10");
+
+        param("Control ERPM - NegL", m_args.ctl_erpm_negl)
+        .size(3)
+        .defaultValue("-381, 329, -331");
 
         // Register handler routines.
         bind<IMC::SetThrusterActuation>(this);
@@ -223,8 +345,16 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
+        m_motor_id = m_args.motor_id;
+
         if (paramChanged(m_args.state_per))
+        {
           m_args.state_per = 1.0 / m_args.state_per;
+          m_state_timer.setTop(m_args.state_per);
+        }
+
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
 
         if (m_args.thrust_ctl_mode == "none")
           m_thrust_ctl_mode = MODE_NONE;
@@ -258,13 +388,186 @@ namespace Actuators
         {
           m_proto.setUART(m_args.uart_dev);
           m_proto.open();
-          m_proto.requestVersion();
           m_boot_timer.setTop(10.0);
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(e.what(), 5, false);
         }
+      }
+
+      void
+      setup(void)
+      {
+        switch (m_setup_state)
+        {
+          case SS_VERSION_GET:
+            debug("requesting firmware version");
+            m_wdog_setup.setTop(10.0);
+            m_version.clear();
+            m_proto.requestVersion();
+            m_setup_state = SS_VERSION_WAIT;
+            break;
+
+          case SS_VERSION_WAIT:
+            waitForCommand(0);
+            if (m_version.size() == 3)
+              m_setup_state = SS_CONFIG;
+            else if (m_wdog_setup.overflow())
+              m_setup_state = SS_VERSION_GET;
+            break;
+
+          case SS_CONFIG:
+            if (setupConfigGeneral())
+              m_setup_state = SS_CONFIG_DCYC;
+            else if (m_wdog_setup.overflow())
+              m_setup_state = SS_VERSION_GET;
+            break;
+
+          case SS_CONFIG_DCYC:
+            if (setupConfigDCYC())
+              m_setup_state = SS_CONFIG_IADC;
+            else if (m_wdog_setup.overflow())
+              m_setup_state = SS_VERSION_GET;
+            break;
+
+          case SS_CONFIG_IADC:
+            if (setupConfigIADC())
+              m_setup_state = SS_CONFIG_ERPM;
+            else if (m_wdog_setup.overflow())
+              m_setup_state = SS_VERSION_GET;
+            break;
+
+          case SS_CONFIG_ERPM:
+            if (setupConfigERPM())
+              m_setup_state = SS_DONE;
+            else if (m_wdog_setup.overflow())
+              m_setup_state = SS_VERSION_GET;
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      bool
+      getEEPROM(uint8_t command, const uint8_t* data = NULL, size_t data_size = 0)
+      {
+        m_dev_errors = ERR_NONE;
+        double deadline = Clock::get() + 2.0;
+
+        while (Clock::get() < deadline)
+        {
+          m_proto.sendCommand(command, data, data_size);
+
+          if (waitForCommand(command))
+          {
+            if (m_dev_errors == ERR_NONE)
+              return true;
+
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+          }
+          else
+          {
+            m_timeout_count++;
+          }
+        }
+
+        return false;
+      }
+
+      bool
+      updateConfigArea(uint8_t command, std::vector<uint8_t>& dev_values, const std::vector<uint8_t>& new_values)
+      {
+        int area_number = command - CMD_CONFIG;
+
+        debug("requesting configuration area %u", area_number);
+        dev_values.clear();
+        if (!getEEPROM(command))
+        {
+          return false;
+        }
+
+        if (dev_values == new_values)
+        {
+          debug("configuration area %u is up to date", area_number);
+          return true;
+        }
+
+        if (dev_values.size() != new_values.size())
+        {
+          debug("configuration area %u has size %u, expecting %u",
+                area_number,
+                (unsigned)dev_values.size(),
+                (unsigned)new_values.size());
+          return false;
+        }
+
+        debug("updating configuration area %u", area_number);
+        if (!getEEPROM(command, &new_values[0], new_values.size()))
+        {
+          debug("failed to update configuration area %u", area_number);
+          return false;
+        }
+
+        return true;
+      }
+
+      bool
+      setupConfigGeneral(void)
+      {
+        std::vector<uint8_t> cmd;
+        cmd.resize(6);
+        std::memcpy(&cmd[0], &m_args.current_raw_offset, 1);
+        std::memcpy(&cmd[1], &m_args.actuation_wdt, 1);
+        std::memcpy(&cmd[2], &m_args.motor_temp_max, 1);
+        std::memcpy(&cmd[3], &m_args.motor_temp_hyst, 1);
+        std::memcpy(&cmd[4], &m_args.bridge_temp_max, 1);
+        std::memcpy(&cmd[5], &m_args.bridge_temp_hyst, 1);
+
+        return updateConfigArea(CMD_CONFIG, m_eep_config, cmd);
+      }
+
+      bool
+      setupConfigDCYC(void)
+      {
+        std::vector<uint8_t> cmd;
+        cmd.resize(9);
+        std::memcpy(&cmd[0], &m_args.ctl_dcyc_max, 2);
+        std::memcpy(&cmd[2], &m_args.ctl_dcyc_inc, 1);
+        std::memcpy(&cmd[3], &m_args.ctl_dcyc_negl[0], 2);
+        std::memcpy(&cmd[5], &m_args.ctl_dcyc_negl[1], 2);
+        std::memcpy(&cmd[7], &m_args.ctl_dcyc_negl[2], 2);
+
+        return updateConfigArea(CMD_CONFIG_DCYC, m_eep_dcyc, cmd);
+      }
+
+      bool
+      setupConfigIADC(void)
+      {
+        std::vector<uint8_t> cmd;
+        cmd.resize(9);
+        std::memcpy(&cmd[0], &m_args.ctl_iadc_max, 2);
+        std::memcpy(&cmd[2], &m_args.ctl_iadc_inc, 1);
+        std::memcpy(&cmd[3], &m_args.ctl_iadc_negl[0], 2);
+        std::memcpy(&cmd[5], &m_args.ctl_iadc_negl[1], 2);
+        std::memcpy(&cmd[7], &m_args.ctl_iadc_negl[2], 2);
+
+        return updateConfigArea(CMD_CONFIG_IADC, m_eep_iadc, cmd);
+      }
+
+      bool
+      setupConfigERPM(void)
+      {
+        std::vector<uint8_t> cmd;
+        cmd.resize(9);
+        std::memcpy(&cmd[0], &m_args.ctl_erpm_max, 2);
+        std::memcpy(&cmd[2], &m_args.ctl_erpm_inc, 1);
+        std::memcpy(&cmd[3], &m_args.ctl_erpm_negl[0], 2);
+        std::memcpy(&cmd[5], &m_args.ctl_erpm_negl[1], 2);
+        std::memcpy(&cmd[7], &m_args.ctl_erpm_negl[2], 2);
+
+        return updateConfigArea(CMD_CONFIG_ERPM, m_eep_erpm, cmd);
       }
 
       void
@@ -358,12 +661,57 @@ namespace Actuators
             m_motor_ent->dispatch(cur, DF_KEEP_TIME);
 
             break;
+
+          case CMD_CONFIG:
+            if (data_size != 6)
+            {
+              // Error!
+              err(DTR("CMD_CONFIG data size doesn't match!"));
+              return;
+            }
+            m_eep_config.assign(data, data + 6);
+            break;
+
+          case CMD_CONFIG_DCYC:
+            if (data_size != 9)
+            {
+              // Error!
+              err(DTR("CMD_CONFIG_DCYC data size doesn't match!"));
+              return;
+            }
+            m_eep_dcyc.assign(data, data + 9);
+            break;
+
+          case CMD_CONFIG_IADC:
+            if (data_size != 9)
+            {
+              // Error!
+              err(DTR("CMD_CONFIG_IADC data size doesn't match!"));
+              return;
+            }
+            m_eep_iadc.assign(data, data + 9);
+            break;
+
+          case CMD_CONFIG_ERPM:
+            if (data_size != 9)
+            {
+              // Error!
+              err(DTR("CMD_CONFIG_ERPM data size doesn't match!"));
+              return;
+            }
+            m_eep_erpm.assign(data, data + 9);
+            break;
         }
       }
 
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
+        m_version.resize(3);
+        m_version[0] = major;
+        m_version[1] = minor;
+        m_version[2] = patch;
+
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
 
         // Enable legacy 1.0.0 protocol
@@ -394,7 +742,7 @@ namespace Actuators
       setRefCurrent(float value)
       {
         m_ctl_mode = MODE_CURRENT;
-        m_actuation = sanitizeRef((int16_t)(trimValue(value, -m_args.max_phase_current, m_args.max_phase_current) * 32.0));
+        m_actuation = sanitizeRef((int16_t)(trimValue(value, -m_args.ctl_iadc_max, m_args.ctl_iadc_max)));
       }
 
       //! Set rotor Rotations Per Minute value as actuation reference
@@ -417,7 +765,7 @@ namespace Actuators
             setRefDcycle(value);
             break;
           case MODE_CURRENT:
-            setRefCurrent(value * m_args.max_phase_current);
+            setRefCurrent(value * (m_args.ctl_iadc_max / 32.0));
             break;
           case MODE_RPM:
             setRefRPM((int)(value * m_args.max_rpm));
@@ -430,7 +778,8 @@ namespace Actuators
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
-        setRefThrust(msg->value);
+        if (msg->id == m_motor_id)
+          setRefThrust(msg->value);
       }
 
       void
@@ -472,15 +821,20 @@ namespace Actuators
             case LUCL::CommandTypeNormal:
               onCommand(cmd.command.code, cmd.command.data, cmd.command.size);
               if (cmd.command.code == code)
+              {
+                m_wdog.reset();
+                m_sample_count++;
                 return true;
+              }
               break;
 
             case LUCL::CommandTypeVersion:
               onVersion(cmd.version.major, cmd.version.minor, cmd.version.patch);
+              m_wdog.reset();
               break;
 
             case LUCL::CommandTypeInvalidVersion:
-              err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+              err("%s", DTR(Status::getString(Status::CODE_INVALID_VERSION)));
               break;
 
             case LUCL::CommandTypeError:
@@ -488,7 +842,7 @@ namespace Actuators
               break;
 
             case LUCL::CommandTypeInvalidChecksum:
-              err("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+              m_faults_count++;
               break;
 
             case LUCL::CommandTypeNone:
@@ -505,8 +859,50 @@ namespace Actuators
       }
 
       void
+      reportEntityState(void)
+      {
+        if (m_wdog.overflow() && m_boot_timer.overflow())
+        {
+          std::string text = String::str(DTR("%0.1f seconds without valid data"),
+                                         m_wdog.getElapsed());
+
+          if (m_wdog.getElapsed() >= m_args.timeout_failure)
+            throw RestartNeeded(text, 0);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, text);
+
+          return;
+        }
+
+        if (!m_estate_timer.overflow())
+          return;
+
+        double time_elapsed = m_estate_timer.getElapsed();
+        double frequency = Math::round(m_sample_count / time_elapsed);
+
+        std::string text = String::str(DTR("active | timeouts: %u | faults: %u | frequency: %u"),
+                                       m_timeout_count,
+                                       m_faults_count,
+                                       (unsigned)frequency);
+
+        if (m_sample_count && !m_dev_errors)
+          setEntityState(IMC::EntityState::ESTA_NORMAL, text);
+
+        m_estate_timer.reset();
+        m_sample_count = 0;
+      }
+
+      void
       task(void)
       {
+        if (m_setup_state != SS_DONE)
+        {
+          setup();
+          if (m_setup_state == SS_DONE)
+            inf("setup completed");
+          return;
+        }
+
         uint8_t actdata[] =
         {
           (uint8_t)(((m_actuation >> 8) & 0x3) | (m_ctl_mode << 6)),
@@ -516,33 +912,26 @@ namespace Actuators
         // Send actuation.
         m_proto.sendCommand(CMD_ACTUATE, actdata, sizeof(actdata));
         if (!waitForCommand(CMD_ACTUATE))
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-        }
-        else
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        }
+          m_timeout_count++;
 
-        double now = Clock::get();
-        if ((now - m_last_state) < m_args.state_per)
+        reportEntityState();
+
+        if (!m_state_timer.overflow())
           return;
 
-        m_last_state = now;
+        m_state_timer.reset();
 
-        // Request state:
+        // Request state.
         m_proto.sendCommand(CMD_STATE, &m_dev_errors, 1);
-        if (!waitForCommand(CMD_STATE))
+        if (waitForCommand(CMD_STATE))
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          // Check for internal errors
+          if (m_dev_errors)
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
         }
         else
         {
-          // Check for internal errors
-          if (!m_dev_errors)
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          else
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+          m_timeout_count++;
         }
       }
     };

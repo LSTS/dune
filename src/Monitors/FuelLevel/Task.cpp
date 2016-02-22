@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -52,10 +52,6 @@ namespace Monitors
       FuelFilter::Arguments filter_args;
       //! Entity label for measurement readings.
       std::string elb[BatteryData::BM_TOTAL];
-      //! Label of the operation modes.
-      std::vector<std::string> op_labels;
-      //! Corresponding value of power consumption in these modes.
-      std::vector<float> op_values;
       //! Level of battery below which a warning will be thrown.
       float war_lvl;
       //! Level of battery below which an error will be thrown.
@@ -66,6 +62,8 @@ namespace Monitors
       std::vector<std::string> est_list;
       //! List of estimated power consumed by the entities
       std::vector<float> est_power;
+      //! Number of battery packs.
+      unsigned battery_packs;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -80,6 +78,12 @@ namespace Monitors
       bool m_filter_ready;
       //! Set to gather estimated power consumption of certain entities
       EPMap m_epower;
+      //! Power model.
+      Power::Model* m_power_model;
+      //! Label of the operation modes.
+      std::vector<std::string> m_op_labels;
+      //! Corresponding value of power consumption in these modes.
+      std::vector<float> m_op_values;
       //! Task arguments.
       Arguments m_args;
 
@@ -88,6 +92,12 @@ namespace Monitors
         m_fuel_filter(NULL),
         m_filter_ready(false)
       {
+        m_power_model = new Power::Model(&ctx.config);
+        m_op_labels.push_back("Hotel");
+        m_op_values.push_back(m_power_model->getPowerConsumptionHotel());
+        m_op_labels.push_back("Full");
+        m_op_values.push_back(m_power_model->getPowerConsumptionFull());
+
         for (unsigned i = 0; i < BatteryData::BM_TOTAL; ++i)
         {
           param(c_measure_names[i] + " Moving Average Window", m_args.filter_args.avg_win[i])
@@ -134,13 +144,6 @@ namespace Monitors
           .description("Temperature of the " + c_model_names[i] + " model.");
         }
 
-        param("OP Mode Labels", m_args.op_labels)
-        .description("Label of the operation mode");
-
-        param("OP Mode Values", m_args.op_values)
-        .units(Units::Watt)
-        .description("Corresponding value of power consumption");
-
         param("Warning Level", m_args.war_lvl)
         .defaultValue("30.0")
         .minimumValue("0.0")
@@ -186,6 +189,7 @@ namespace Monitors
         .description("List of estimated power consumed by the entities");
 
         m_ctx.config.get("General", "Battery Capacity", "700.0", m_args.filter_args.full_capacity);
+        m_ctx.config.get("General", "Battery Packs", "4", m_args.battery_packs);
 
         // Register listeners.
         bind<IMC::Voltage>(this);
@@ -193,6 +197,11 @@ namespace Monitors
         bind<IMC::Temperature>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::EntityActivationState>(this);
+      }
+
+      ~Task(void)
+      {
+        delete m_power_model;
       }
 
       void
@@ -212,21 +221,6 @@ namespace Monitors
             throw std::runtime_error(msg_inv);
           }
         }
-
-        if (m_args.op_values.size() != m_args.op_labels.size())
-          throw std::runtime_error(DTR("operation mode list labels and values "
-                                       "have different sizes"));
-
-        // Validate opmodes
-        for (unsigned i = 0; i < m_args.op_values.size(); ++i)
-        {
-          if (m_args.op_values[i] == 0.0)
-          {
-            std::string msg_inv = DTR("invalid opmode value (zero)");
-            err("%s", msg_inv.c_str());
-            throw std::runtime_error(msg_inv);
-          }
-        }
       }
 
       void
@@ -238,6 +232,12 @@ namespace Monitors
       void
       onResourceAcquisition(void)
       {
+        for (unsigned i = 0; i < FuelFilter::MDL_TOTAL; ++i)
+        {
+          for (unsigned j = 0; j < m_args.filter_args.models[i].energy.size(); j++)
+            m_args.filter_args.models[i].energy[j] *= m_args.battery_packs;
+        }
+
         m_fuel_filter = new FuelFilter(&m_args.filter_args, m_eids, &m_epower, this);
       }
 
@@ -312,7 +312,7 @@ namespace Monitors
         }
 
         // Fill fuel level message
-        m_fuel_filter->fillMessage(m_fuel, m_args.op_labels, m_args.op_values);
+        m_fuel_filter->fillMessage(m_fuel, m_op_labels, m_op_values);
 
         if (m_fuel.value < m_args.err_lvl)
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);

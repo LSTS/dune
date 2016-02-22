@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -326,7 +326,7 @@ namespace Plan
       //! Pointer to speed model for speed conversions
       const Plans::SpeedModel* m_speed_model;
       //! Pointer to power model for power conversions and estimations
-      const Plans::PowerModel* m_power_model;
+      const Power::Model* m_power_model;
       //! Pointer to power conversion and estimation model
       Parsers::Config* m_config;
       //! Pointer to Fuel Prediction object

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -44,6 +44,7 @@ namespace DUNE
 #include <DUNE/Hardware/IntelHEX.hpp>
 #include <DUNE/Hardware/BasicModem.hpp>
 #include <DUNE/Hardware/HayesModem.hpp>
+#include <DUNE/Hardware/BasicDeviceDriver.hpp>
 #include <DUNE/Hardware/Exceptions.hpp>
 #include <DUNE/Hardware/UCTK/Constants.hpp>
 #include <DUNE/Hardware/UCTK/Errors.hpp>

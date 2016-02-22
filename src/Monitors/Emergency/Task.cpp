@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -152,10 +152,10 @@ namespace Monitors
 
           Time::BrokenDown bdt;
 
-          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%u c:%u",
+          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%d c:%d",
                                getSystemName(),
                                bdt.hour, bdt.minutes, bdt.seconds,
-                               lat_deg, lat_min, lon_deg, std::fabs(lon_min),
+                               lat_deg, lat_min, lon_deg, lon_min,
                                (int)m_fuel, (int)m_fuel_conf);
 
           m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
@@ -193,8 +193,6 @@ namespace Monitors
       void
       sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
       {
-        inf(DTR("sending SMS %s | %u"), prefix, timeout);
-
         IMC::Sms sms;
         if (recipient.size() == 0)
           sms.number = m_args.recipient;
@@ -211,7 +209,7 @@ namespace Monitors
         {
           std::string msg;
           Time::BrokenDown bdt;
-          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%u c:%u",
+          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d c:%d",
                                getSystemName(),
                                bdt.hour, bdt.minutes, bdt.seconds,
                                (int)m_fuel, (int)m_fuel_conf);
@@ -220,6 +218,9 @@ namespace Monitors
 
           sms.contents = String::str("(%s) %s", prefix, msg.c_str());
         }
+
+        inf(DTR("sending SMS (t:%u) to %s: %s"),
+            timeout, sms.number.c_str(), sms.contents.c_str());
 
         dispatch(sms);
       }
@@ -255,7 +256,7 @@ namespace Monitors
       void
       consume(const IMC::PlanControlState* msg)
       {
-        m_in_mission = (msg->state & IMC::PlanControlState::PCS_EXECUTING) != 0;
+        m_in_mission = msg->state == IMC::PlanControlState::PCS_EXECUTING;
         m_progress = msg->plan_progress;
       }
 

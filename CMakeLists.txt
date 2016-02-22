@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -41,27 +41,27 @@ project("DUNE")
 set(PROJECT_NAME "DUNE: Unified Navigation Environment")
 set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
-set(PROJECT_COPYRIGHT "Copyright (C) 2007-2015 - ${PROJECT_VENDOR}")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2016 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
-set(PROJECT_VERSION_MAJ "2")
-set(PROJECT_VERSION_MIN "6")
-set(PROJECT_VERSION_PAT "x")
-set(PROJECT_VERSION_RCN "0")
+set(PROJECT_VERSION_YEAR  "2016")
+set(PROJECT_VERSION_MONTH "01")
+set(PROJECT_VERSION_PATCH "0")
+set(PROJECT_VERSION_RCN   "0")
 
 # Version formats.
 set(PROJECT_VERSION
-  "${PROJECT_VERSION_MAJ}.${PROJECT_VERSION_MIN}.${PROJECT_VERSION_PAT}")
+  "${PROJECT_VERSION_YEAR}.${PROJECT_VERSION_MONTH}.${PROJECT_VERSION_PATCH}")
 
 if(PROJECT_VERSION_RCN GREATER 0)
   set(PROJECT_VERSION "${PROJECT_VERSION}-rc${PROJECT_VERSION_RCN}")
 endif(PROJECT_VERSION_RCN GREATER 0)
 
-if(PROJECT_VERSION_PAT STREQUAL "x")
+if(PROJECT_VERSION_PATCH STREQUAL "x")
   set(PROJECT_VERSION_PARTS
-    "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},99,${PROJECT_VERSION_RCN}")
+    "${PROJECT_VERSION_YEAR},${PROJECT_VERSION_MONTH},99,${PROJECT_VERSION_RCN}")
 else()
   set(PROJECT_VERSION_PARTS
-    "${PROJECT_VERSION_MAJ},${PROJECT_VERSION_MIN},${PROJECT_VERSION_PAT},${PROJECT_VERSION_RCN}")
+    "${PROJECT_VERSION_YEAR},${PROJECT_VERSION_MONTH},${PROJECT_VERSION_PATCH},${PROJECT_VERSION_RCN}")
 endif()
 
 # This directory will hold generated files.
@@ -327,9 +327,6 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   install(DIRECTORY user/etc DESTINATION ./user/)
 endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 
-# Install firmware files.
-install(DIRECTORY firmware DESTINATION .)
-
 # Install scripts.
 install(DIRECTORY programs/scripts DESTINATION .)
 
@@ -379,7 +376,7 @@ set(CPACK_NSIS_DISPLAY_NAME
   "${PROJECT_SHORT_NAME} ${PROJECT_VERSION}")
 
 if(DUNE_OS_WINDOWS)
-  set(CPACK_GENERATOR "NSIS")
+  set(CPACK_GENERATOR "NSIS;ZIP")
 else(DUNE_OS_WINDOWS)
   set(CPACK_GENERATOR "TBZ2")
 endif(DUNE_OS_WINDOWS)

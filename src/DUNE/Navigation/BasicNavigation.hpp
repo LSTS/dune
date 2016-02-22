@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -571,6 +571,8 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
+      //! Received LBL fix.
+      bool m_lbl_reading;
       //! Derivative for heave.
       Math::Derivative<double> m_deriv_heave;
 
@@ -625,6 +627,8 @@ namespace DUNE
       float m_dist_lbl_gps;
       //! Always reject LblRanges.
       bool m_reject_all_lbl;
+      //! Use a Depth sensor.
+      bool m_depth_sensor;
       //! LBL rejection constants.
       std::vector<float> m_lbl_reject_constants;
       //! Displacement between DVL and vehicle center of gravity.

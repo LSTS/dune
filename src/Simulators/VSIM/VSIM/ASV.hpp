@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -39,9 +39,6 @@ namespace Simulators
 {
   namespace VSIM
   {
-    //! Maximum Torque Force
-    static const unsigned c_asv_base_id = 1000;
-
     //! %ASV Autonomous Surface Vehicle simulator.
     class ASV: public Vehicle
     {

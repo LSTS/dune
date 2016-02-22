@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 46963dd0144367b7b8ebe169ae5edf4d                            *
+// IMC XML MD5: 6c347cdacbdacce16be764ef407e717b                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_HEADER_HPP_INCLUDED_

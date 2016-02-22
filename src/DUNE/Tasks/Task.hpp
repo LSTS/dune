@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -369,12 +369,6 @@ namespace DUNE
       void
       writeParamsXML(std::ostream& os) const;
 
-    protected:
-      //! Context.
-      Context& m_ctx;
-      //! Owned entity list
-      std::vector<Entities::BasicEntity*> m_entities;
-
       //! Retrieve the main entity label of the task.
       //! @return main entity label.
       const char*
@@ -390,6 +384,12 @@ namespace DUNE
       {
         m_entity->setLabel(label);
       }
+
+    protected:
+      //! Context.
+      Context& m_ctx;
+      //! Owned entity list
+      std::vector<Entities::BasicEntity*> m_entities;
 
       //! Set current entity state with an optional pre-defined
       //! description. If a status code is not given, then the
@@ -630,6 +630,13 @@ namespace DUNE
       void
       deactivationFailed(const std::string& reason);
 
+      virtual bool
+      onWriteParamsXML(std::ostream& os) const
+      {
+        (void)os;
+        return false;
+      }
+
       //! Called when the task is instructed to reserve all the entity
       //! identifiers it needs for normal execution. See
       //! reserveEntity(). Derived classes that need to reserve entity
@@ -725,6 +732,18 @@ namespace DUNE
       {
         spew("on deactivation");
       }
+
+      virtual void
+      onQueryEntityParameters(const IMC::QueryEntityParameters* msg);
+
+      virtual void
+      onSetEntityParameters(const IMC::SetEntityParameters* msg);
+
+      virtual void
+      onPushEntityParameters(const IMC::PushEntityParameters* msg);
+
+      virtual void
+      onPopEntityParameters(const IMC::PopEntityParameters* msg);
 
       virtual void
       onMain(void) = 0;

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -74,6 +74,9 @@ namespace Transports
         m_announce_req_id(75),
         m_rnd(NULL)
       {
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Device updates - Periodicity", m_args.delay_between_device_updates)
         .units(Units::Second)
         .defaultValue("600")
@@ -107,13 +110,25 @@ namespace Transports
         IMC::AnnounceService announce;
         announce.service = std::string("imc+any://iridium");
         dispatch(announce);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       onResourceRelease(void)
       {
         Memory::clear(m_rnd);
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -196,6 +211,7 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgRx* msg)
       {
+
         DUNE::IMC::IridiumMessage * m = DUNE::IMC::IridiumMessage::deserialize(msg);
         if (m == NULL)
         {
@@ -390,23 +406,25 @@ namespace Transports
       {
         while (!stopping())
         {
-          consumeMessages();
-          double now = Clock::get();
-          if ((m_args.delay_between_device_updates > 0)
-              && (now - m_last_dev_update_time) > m_args.delay_between_device_updates)
-            sendDeviceUpdates();
-          else
-            debug("Will send device updates in %f seconds.", (now - m_last_dev_update_time)
-                  - m_args.delay_between_device_updates);
+          waitForMessages(3.0);
 
-          if ((m_args.delay_between_announces > 0)
-              && (now - m_last_announce_time) > m_args.delay_between_announces)
-            sendAnnounce();
-          else
-            debug("Will send announce in %f seconds.", (now - m_last_announce_time)
-                  - m_args.delay_between_announces);
+          if (isActive())
+          {
+            double now = Clock::get();
+            if ((m_args.delay_between_device_updates > 0) &&
+                (now - m_last_dev_update_time) > m_args.delay_between_device_updates)
+              sendDeviceUpdates();
+            else
+              spew("Will send device updates in %f seconds.", (now - m_last_dev_update_time)
+                   - m_args.delay_between_device_updates);
 
-          Delay::wait(3.0);
+            if ((m_args.delay_between_announces > 0) &&
+                (now - m_last_announce_time) > m_args.delay_between_announces)
+              sendAnnounce();
+            else
+              spew("Will send announce in %f seconds.", (now - m_last_announce_time)
+                   - m_args.delay_between_announces);
+          }
         }
       }
     };

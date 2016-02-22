@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -33,7 +33,9 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "Frame.hpp"
+#include "ExternalControl.hpp"
+#include "Frame837.hpp"
+#include "Frame83P.hpp"
 
 namespace Sensors
 {
@@ -140,32 +142,30 @@ namespace Sensors
       float tilt_angle;
       //! Transducer mounting position.
       bool xdcr;
-      //! Save data in 837 format.
-      bool save_to_file;
-      //! Save data in 837 format.
-      bool fill_state;
+      //! Output Data Format.
+      std::string output_format;
       // Power channel name.
       std::string power_channel;
       //! Range Modifier.
-      bool range_modifier;
+      bool mod;
       //! Range Modifier Additive Constant.
-      float range_modifier_add_k;
+      float mod_add;
       //! Range Modifier Multiplicative Constant.
-      float range_modifier_mul_k;
+      float mod_mul;
       //! Range Modifier Timer.
-      float range_modifier_timer;
+      float mod_timer;
       //! Distance between GPS (navigation origin) and device.
       float offset;
-      //! 837 file name.
-      std::string file_name_837;
+      //! File name.
+      std::string file_name;
+      //! Number of seconds without data before reporting an error.
+      double timeout_error;
     };
 
     //! List of available ranges.
     static const unsigned c_ranges[] = {5, 10, 20, 30, 40, 50, 60, 80, 100};
     //! Count of available ranges.
     static const unsigned c_ranges_size = sizeof(c_ranges) / sizeof(c_ranges[0]);
-    //! List of repetition rates in ms.
-    static const unsigned c_rep_rate[] = {67, 73, 87, 100, 114, 128, 140, 167, 195};
     //! List of pulse lengths in us.
     static const unsigned c_pulse_len[] = {30, 60, 120, 180, 240, 300, 360, 480, 600};
     //! Switch data size.
@@ -186,20 +186,26 @@ namespace Sensors
     static const float c_min_alt = 0.3;
 
     //! %Task.
-    struct Task: public Tasks::Periodic
+    struct Task: public Tasks::Task
     {
       //! TCP socket.
-      TCPSocket* m_sock;
+      TCPSocket* m_tcp;
+      //! UDP socket.
+      UDPSocket* m_udp;
       //! 837 Frame.
-      Frame m_frame;
+      Frame837* m_frame837;
+      //! 83P Frame.
+      Frame83P* m_frame83P;
+      //! Sonar Return Data.
+      IMC::SonarData* m_data;
+      //! External Control frame.
+      ExternalControl* m_ec;
       //! Output switch data.
       uint8_t m_sdata[c_sdata_size];
       //! Header Return data.
       uint8_t m_rdata_hdr[c_rdata_hdr_size];
       //! Footer Return data.
       uint8_t m_rdata_ftr[c_rdata_ftr_size];
-      //! Single sidescan ping.
-      IMC::SonarData m_ping;
       //! Estimated state.
       IMC::EstimatedState m_estate;
       //! Log file.
@@ -212,13 +218,20 @@ namespace Sensors
       Counter<double> m_countdown;
       //! Range adaptive modifier counter.
       Counter<double> m_range_counter;
+      //! Watchdog.
+      Time::Counter<float> m_wdog;
       //! Configuration parameters.
       Arguments m_args;
 
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
-        m_sock(NULL)
+        Tasks::Task(name, ctx),
+        m_tcp(NULL),
+        m_udp(NULL),
+        m_frame837(NULL),
+        m_frame83P(NULL),
+        m_data(NULL),
+        m_ec(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -308,38 +321,35 @@ namespace Sensors
         .defaultValue("true")
         .description("Mounting position of the multibeam");
 
-        param("Save Data in 837 Format", m_args.save_to_file)
-        .defaultValue("true")
-        .description("Save multibeam in Imagenex proprietary 837 format");
+        param("Output Data Format", m_args.output_format)
+        .values("IMC (837), 837, 83P, IMC and 837, IMC and 83P")
+        .defaultValue("837")
+        .description("Multibeam output data format");
 
-        param("Fill State in 837 Format", m_args.fill_state)
-        .defaultValue("true")
-        .description("Fill state data in Imagenex proprietary 837 format");
-
-        param("837 File Name", m_args.file_name_837)
-        .defaultValue("Data.837")
-        .description("837 file name");
+        param("837/83P File Name", m_args.file_name)
+        .defaultValue("Data")
+        .description("837/83P file name");
 
         param("Power Channel", m_args.power_channel)
         .defaultValue("Multibeam")
         .description("Power channel that controls the power of the device");
 
-        param("Adaptive Range Modifier", m_args.range_modifier)
+        param("Adaptive Range Modifier", m_args.mod)
         .defaultValue("true")
         .description("Adaptive Multibeam range modifier");
 
-        param("Adaptive Range Modifier Additive Constant", m_args.range_modifier_add_k)
+        param("Adaptive Range Modifier Additive Constant", m_args.mod_add)
         .defaultValue("0")
         .minimumValue("0")
         .description("Adaptive Multibeam range modifier additive constant");
 
-        param("Adaptive Range Modifier Multiplicative Constant", m_args.range_modifier_mul_k)
+        param("Adaptive Range Modifier Multiplicative Constant", m_args.mod_mul)
         .defaultValue("2")
         .minimumValue("1")
         .maximumValue("3")
         .description("Adaptive Multibeam range modifier multiplicative constant");
 
-        param("Adaptive Range Modifier Timer", m_args.range_modifier_timer)
+        param("Adaptive Range Modifier Timer", m_args.mod_timer)
         .defaultValue("10")
         .minimumValue("0")
         .description("Adaptive Multibeam range modifier timer");
@@ -349,6 +359,12 @@ namespace Sensors
         .units(Units::Meter)
         .description("Position of the Multibeam relative to the GPS antenna in the x-axis of the body frame");
 
+        param("Timeout - Error", m_args.timeout_error)
+        .defaultValue("4.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before reporting an error");
+
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
         m_sdata[0] = 0xfe;
@@ -357,22 +373,10 @@ namespace Sensors
         m_sdata[9] = 0x01;
         m_sdata[20] = 0x08;
         m_sdata[26] = 0xfd;
-
-        IMC::BeamConfig bc;
-        bc.beam_width = Math::Angles::radians(c_beam_width);
-        bc.beam_height = Math::Angles::radians(c_beam_height);
-        m_ping.beam_config.clear();
-        m_ping.beam_config.push_back(bc);
-
-        // Initialize return data.
-        m_ping.type = IMC::SonarData::ST_MULTIBEAM;
-        m_ping.bits_per_point = 8;
-        m_ping.scale_factor = 1.0f;
-        m_ping.min_range = 0;
-
-        setFrequency();
+        m_sdata[SD_FREQUENCY] = (uint8_t)86;
 
         // Register consumers.
+        bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::SoundSpeed>(this);
       }
@@ -391,18 +395,80 @@ namespace Sensors
         }
 
         if (paramChanged(m_args.data_points))
-        {
           m_args.data_points /= 1000;
-          m_ping.data.resize(c_rdata_dat_size * m_args.data_points);
+
+        // Define output format.
+        if (m_args.output_format == "IMC (837)")
+        {
+            initializeSonarData(c_rdata_dat_size * m_args.data_points);
+            Memory::clear(m_frame83P);
+            Memory::clear(m_frame837);
+            Memory::clear(m_ec);
         }
 
+        if (m_args.output_format == "837")
+        {
+          if (m_frame837 == NULL)
+            m_frame837 = new Frame837();
+
+          m_frame837->setProfileTiltAngle(m_args.tilt_angle);
+
+          Memory::clear(m_data);
+          Memory::clear(m_frame83P);
+          Memory::clear(m_ec);
+        }
+
+        if (m_args.output_format == "83P")
+        {
+          if (m_ec == NULL)
+            m_ec = new ExternalControl();
+
+          m_ec->setProfileTiltAngle(m_args.tilt_angle);
+
+          if (m_frame83P == NULL)
+            m_frame83P = new Frame83P();
+
+          m_frame83P->setProfileTiltAngle(m_args.tilt_angle);
+
+          Memory::clear(m_data);
+          Memory::clear(m_frame837);
+        }
+
+        if (m_args.output_format == "IMC and 837")
+        {
+          initializeSonarData(c_rdata_dat_size * m_args.data_points);
+
+          if (m_frame837 == NULL)
+            m_frame837 = new Frame837();
+
+          m_frame837->setProfileTiltAngle(m_args.tilt_angle);
+
+          Memory::clear(m_frame83P);
+          Memory::clear(m_ec);
+        }
+
+        if (m_args.output_format == "IMC and 83P")
+        {
+          if (m_ec == NULL)
+            m_ec = new ExternalControl();
+
+          m_ec->setProfileTiltAngle(m_args.tilt_angle);
+
+          if (m_frame83P == NULL)
+            m_frame83P = new Frame83P();
+
+          m_frame83P->setProfileTiltAngle(m_args.tilt_angle);
+
+          initializeSonarData(m_frame83P->getMessageSize());
+          Memory::clear(m_frame837);
+        }
+
+        // Configure defaults.
         setRange(m_args.def_range);
         setStartGain(m_args.start_gain);
         setSwitchDelay(m_args.switch_delay);
         setAbsorption((unsigned)(m_args.absorption * 100));
         setDataPoints(m_args.data_points);
-
-        m_frame.setProfileTiltAngle(m_args.tilt_angle);
 
         if (m_args.auto_gain)
         {
@@ -419,11 +485,33 @@ namespace Sensors
 
         m_countdown.setTop(getActivationTime());
 
-        if (paramChanged(m_args.range_modifier_timer))
-          m_range_counter.setTop(m_args.range_modifier_timer);
+        if (paramChanged(m_args.mod_timer))
+          m_range_counter.setTop(m_args.mod_timer);
 
-        if (m_args.fill_state || m_args.range_modifier)
-          bind<IMC::EstimatedState>(this);
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
+      }
+
+      //! Initialize IMC sonar data holder.
+      void
+      initializeSonarData(unsigned data_size)
+      {
+        if (m_data == NULL)
+          m_data = new IMC::SonarData();
+
+        IMC::BeamConfig bc;
+        bc.beam_width = Math::Angles::radians(c_beam_width);
+        bc.beam_height = Math::Angles::radians(c_beam_height);
+        m_data->beam_config.clear();
+        m_data->beam_config.push_back(bc);
+
+        // Initialize return data.
+        m_data->type = IMC::SonarData::ST_MULTIBEAM;
+        m_data->bits_per_point = 8;
+        m_data->scale_factor = 1.0f;
+        m_data->min_range = 0;
+        m_data->frequency = c_freq;
+        m_data->data.resize(data_size);
       }
 
       void
@@ -437,6 +525,10 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_frame837);
+        Memory::clear(m_frame83P);
+        Memory::clear(m_data);
+        Memory::clear(m_ec);
         requestDeactivation();
       }
 
@@ -458,6 +550,8 @@ namespace Sensors
         IMC::LoggingControl lc;
         lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
         dispatch(lc);
+
+        m_wdog.reset();
       }
 
       void
@@ -465,7 +559,8 @@ namespace Sensors
       {
         closeLog();
 
-        Memory::clear(m_sock);
+        Memory::clear(m_tcp);
+        Memory::clear(m_udp);
 
         inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -485,9 +580,17 @@ namespace Sensors
 
         try
         {
-          m_sock = new TCPSocket;
-          m_sock->setNoDelay(true);
-          m_sock->connect(m_args.addr, m_args.port);
+          if (m_ec == NULL)
+          {
+            m_tcp = new TCPSocket;
+            m_tcp->setNoDelay(true);
+            m_tcp->connect(m_args.addr, m_args.port);
+          }
+          else
+          {
+            m_udp = new UDPSocket;
+            m_udp->bind(m_args.port, Address::Any, false);
+          }
 
           activate();
           debug("activation took %0.2f s", getActivationTime() -
@@ -497,6 +600,8 @@ namespace Sensors
         { }
       }
 
+      //! Open a log file to hold 837 or 83P files.
+      //! @param[in] path desired log path.
       void
       openLog(const Path& path)
       {
@@ -510,6 +615,7 @@ namespace Sensors
         debug("opening %s", m_log_path.c_str());
       }
 
+      //! Close current log file.
       void
       closeLog(void)
       {
@@ -541,14 +647,18 @@ namespace Sensors
         if (msg->getSource() != getSystemId())
           return;
 
-        if (!m_args.save_to_file)
+        if (m_frame837 == NULL && m_frame83P == NULL)
           return;
 
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
           case IMC::LoggingControl::COP_CURRENT_NAME:
-            openLog(m_ctx.dir_log / msg->name / m_args.file_name_837);
+            if (m_frame83P != NULL)
+              openLog(m_ctx.dir_log / msg->name / String::str("%s.83P", m_args.file_name.c_str()));
+
+            if (m_frame837 != NULL)
+              openLog(m_ctx.dir_log / msg->name / String::str("%s.837", m_args.file_name.c_str()));
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
@@ -564,7 +674,14 @@ namespace Sensors
         if (msg->value < 0)
           return;
 
-        m_frame.setSoundVelocity(msg->value);
+        if (m_frame837 != NULL)
+          m_frame837->setSoundVelocity(msg->value);
+
+        if (m_frame83P != NULL)
+          m_frame83P->setSoundVelocity(msg->value);
+
+        if (m_ec != NULL)
+          m_ec->setSoundVelocity(msg->value);
       }
 
       //! Get index from table according with given value.
@@ -584,14 +701,6 @@ namespace Sensors
         return table_size - 1;
       }
 
-      //! Define switch command data frequency value.
-      void
-      setFrequency(void)
-      {
-        m_sdata[SD_FREQUENCY] = (uint8_t)86;
-        m_ping.frequency = c_freq;
-      }
-
       //! Define switch command data range.
       //! @param[in] value range.
       void
@@ -602,12 +711,22 @@ namespace Sensors
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_sdata[SD_PULSE_LEN] = (uint8_t)(c_pulse_len[idx] / 10);
 
-        m_frame.setRange((uint8_t)c_ranges[idx]);
-        m_frame.setPulseLength((uint8_t)(c_pulse_len[idx] / 10));
+        trace("new range: %d m", (uint8_t)c_ranges[idx]);
 
-        m_ping.max_range = c_ranges[idx];
-        Periodic::setFrequency(1.0 / (c_rep_rate[idx] / 1000.0));
-        m_frame.setRepRate((uint16_t)c_rep_rate[idx]);
+        if (m_data != NULL)
+          m_data->max_range = c_ranges[idx];
+
+        if (m_frame837 != NULL)
+        {
+          m_frame837->setRange((uint8_t)c_ranges[idx]);
+          m_frame837->setPulseLength((uint8_t)(c_pulse_len[idx] / 10));
+        }
+
+        if (m_frame83P != NULL)
+          m_frame83P->setRange((uint8_t)c_ranges[idx]);
+
+        if (m_ec != NULL)
+          m_ec->setRange(idx + 2);
       }
 
       //! Define switch command data start gain.
@@ -616,7 +735,12 @@ namespace Sensors
       setStartGain(unsigned value)
       {
         m_sdata[SD_START_GAIN] = (uint8_t) Math::trimValue(value, 0u, 20u);
-        m_frame.setStartGain(value);
+
+        if (m_frame837 != NULL)
+          m_frame837->setStartGain(value);
+
+        if (m_ec != NULL)
+          m_ec->setGain(value);
       }
 
       //! Define switch command data switch delay.
@@ -642,10 +766,13 @@ namespace Sensors
       {
         m_sdata[SD_DATA_POINTS] = (uint8_t)value;
 
-        if (value == 16)
-          m_frame.setExtendedDataPoints(true);
-        if (value == 8)
-          m_frame.setExtendedDataPoints(false);
+        if (m_frame837 != NULL)
+        {
+          if (value == 16)
+            m_frame837->setExtendedDataPoints(true);
+          if (value == 8)
+            m_frame837->setExtendedDataPoints(false);
+        }
       }
 
       //! Define switch command data auto mode.
@@ -674,7 +801,11 @@ namespace Sensors
         m_sdata[SD_NADIR_HI] = (uint8_t)((value & 0xff00) >> 8);
         m_sdata[SD_NADIR_LO] = (uint8_t)(value & 0x00ff);
 
-        m_frame.setDisplayMode(m_args.xdcr);
+        if (m_frame837 != NULL)
+          m_frame837->setDisplayMode(m_args.xdcr);
+
+        if (m_ec != NULL)
+          m_ec->setDisplayMode(m_args.xdcr);
       }
 
       //! Define switch command data auto gain threshold.
@@ -687,54 +818,141 @@ namespace Sensors
 
       //! Request device to ping.
       //! @param[in] data_point data index.
-      void
+      bool
       ping(unsigned data_point)
       {
         m_sdata[SD_PACKET_NUM] = (uint8_t)data_point;
-        m_sock->write((char*)m_sdata, c_sdata_size);
+        m_tcp->write((const char*)m_sdata, c_sdata_size);
 
-        int rv = m_sock->read((char*)m_rdata_hdr, c_rdata_hdr_size);
+        int rv = m_tcp->read((char*)m_rdata_hdr, c_rdata_hdr_size);
         if (rv != c_rdata_hdr_size)
-          throw std::runtime_error(DTR("failed to read header"));
+          return false;
 
         unsigned dat_idx = data_point * c_rdata_dat_size;
 
-        if (m_args.save_to_file)
-          rv = m_sock->read((char*)(m_frame.getMessageData() + dat_idx), c_rdata_dat_size);
-        else
-          rv = m_sock->read(&m_ping.data[dat_idx], c_rdata_dat_size);
+        if (m_frame837 != NULL)
+        {
+          rv = m_tcp->read((char*)(m_frame837->getMessageData() + dat_idx), c_rdata_dat_size);
+          if (m_data != NULL)
+          {
+            std::memcpy((char*)(m_frame837->getMessageData() + dat_idx),
+                        &m_data->data[dat_idx], c_rdata_dat_size);
+          }
+        }
+        else if (m_data != NULL)
+        {
+          rv = m_tcp->read(&m_data->data[dat_idx], c_rdata_dat_size);
+        }
 
         if (rv != c_rdata_dat_size)
-          throw std::runtime_error(DTR("failed to read data"));
+          return false;
 
-        rv = m_sock->read((char*)m_rdata_ftr, c_rdata_ftr_size);
+        rv = m_tcp->read((char*)m_rdata_ftr, c_rdata_ftr_size);
         if (rv != c_rdata_ftr_size)
-          throw std::runtime_error(DTR("failed to read footer"));
+          return false;
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        return true;
       }
 
-      //! Handle sonar data to 837 file format.
       void
-      handleSonarData(void)
+      sendExternalControl(Address addr, unsigned port)
+      {
+        int sv = m_udp->write((const uint8_t*)m_ec->getData(), m_ec->getSize(),
+                              addr, port);
+
+        spew("sent %d external control command %s:%u", sv, addr.c_str(), port);
+
+        // Store sent command.
+        IMC::DevDataBinary data;
+        data.value.assign((const uint8_t*)m_ec->getData(),
+                          (const uint8_t*)m_ec->getData() + m_ec->getSize());
+        dispatch(data);
+      }
+
+      //! Request get echo using External Control frame.
+      bool
+      getEcho(void)
+      {
+        if (m_frame83P == NULL)
+          return false;
+
+        if (!Poll::poll(*m_udp, 1.0))
+        {
+          return false;
+        }
+
+        Address addr;
+        uint16_t port;
+        uint8_t bfr[2176];
+        size_t rv = m_udp->read((uint8_t*)bfr, m_frame83P->getMaxSize(),
+                                &addr, &port);
+
+        // Check incoming buffer.
+        if (!(bfr[0] == '8' && bfr[1] == '3' && bfr[2] == 'P'))
+          return false;
+
+        // Copy buffer to 83P object.
+        std::memcpy((char*)(m_frame83P->getData()), &bfr, rv);
+        m_frame83P->verifyReturn(rv);
+
+        spew("received %u bytes from %s:%u (range = %u)",
+             (unsigned)rv, addr.c_str(), port, m_frame83P->getRange());
+
+        // Send external control.
+        sendExternalControl(addr, port);
+
+        if (rv <= m_frame83P->getHeaderSize())
+        {
+          debug("no incoming data");
+          return false;
+        }
+
+        if (m_data != NULL)
+        {
+          m_data->data.resize(m_frame83P->getMessageSize());
+          std::memcpy((char*)(m_frame83P->getMessageData()),
+                      &m_data->data[0], m_frame83P->getMessageSize());
+        }
+
+        return true;
+      }
+
+      //! Handle sonar data to 837/83P file formats.
+      void
+      writeToFile(void)
       {
         // Update information.
-        updateState();
-        m_frame.setDateTime(Clock::getSinceEpochMsec());
-        m_frame.setSerialStatus(m_rdata_hdr[4]);
-        m_frame.setFirmwareVersion(m_rdata_hdr[6]);
+        update();
+
+        if (m_frame837 != NULL)
+        {
+          m_frame837->setDateTime(Clock::getSinceEpochMsec());
+          m_frame837->setSerialStatus(m_rdata_hdr[4]);
+          m_frame837->setFirmwareVersion(m_rdata_hdr[6]);
+          m_frame837->setRepRate();
+        }
 
         if (m_log_file.is_open())
-          m_log_file.write((const char*)m_frame.getData(), m_frame.getSize());
+        {
+          if (m_frame837 != NULL)
+            m_log_file.write((const char*)m_frame837->getData(), m_frame837->getSize());
+
+          if (m_frame83P != NULL)
+            m_log_file.write((const char*)m_frame83P->getData(), m_frame83P->getSize());
+        }
       }
 
-      //! Update vehicle state in 837 files.
+      //! Update state (to be logged in 837/83P file formats).
       void
-      updateState(void)
+      update(void)
       {
         setNadirAngle(m_args.nadir + Angles::degrees(m_estate.phi));
 
-        if (!m_args.fill_state)
+        if (m_frame837 == NULL && m_frame83P == NULL)
+          return;
+
+        if (m_estate.lat == 0 && m_estate.lon == 0)
           return;
 
         double lat, lon;
@@ -748,12 +966,25 @@ namespace Sensors
           Coordinates::WGS84::displace(x, y, &lat, &lon);
         }
 
-        m_frame.setGpsData(lat, lon);
-        m_frame.setSpeed(m_estate.u);
-        m_frame.setCourse(m_estate.psi);
-        m_frame.setRoll(m_estate.phi);
-        m_frame.setPitch(m_estate.theta);
-        m_frame.setHeading(m_estate.psi);
+        if (m_frame837 != NULL)
+        {
+          m_frame837->setGpsData(lat, lon);
+          m_frame837->setSpeed(m_estate.u);
+          m_frame837->setCourse(m_estate.psi);
+          m_frame837->setRoll(m_estate.phi);
+          m_frame837->setPitch(m_estate.theta);
+          m_frame837->setHeading(m_estate.psi);
+        }
+
+        if (m_frame83P != NULL)
+        {
+          m_frame83P->setGpsData(lat, lon);
+          m_frame83P->setSpeed(m_estate.u);
+          m_frame83P->setCourse(m_estate.psi);
+          m_frame83P->setRoll(m_estate.phi);
+          m_frame83P->setPitch(m_estate.theta);
+          m_frame83P->setHeading(m_estate.psi);
+        }
       }
 
       //! Check current water column.
@@ -761,40 +992,77 @@ namespace Sensors
       checkAltitude(void)
       {
         if (m_estate.alt > c_min_alt)
-          setRange((unsigned)(m_estate.alt * m_args.range_modifier_mul_k + m_args.range_modifier_add_k));
+          setRange((unsigned)(m_estate.alt * m_args.mod_mul + m_args.mod_add));
+      }
+
+      //! Request sonar data.
+      //! @return true if return is successful, false otherwise.
+      bool
+      request(void)
+      {
+        if (m_ec != NULL)
+        {
+          // Use external binary.
+          return getEcho();
+        }
+        else
+        {
+          // Direct communication with sonar head.
+          for (unsigned i = 0; i < m_args.data_points; ++i)
+          {
+            if (!ping(i))
+              return false;
+          }
+
+          return true;
+        }
+      }
+
+      //! Process return data.
+      void
+      process(void)
+      {
+        // Store data or dispatch to bus.
+        if (m_frame837 != NULL || m_frame83P != NULL)
+          writeToFile();
+
+        if (m_data != NULL)
+          dispatch(m_data);
+
+        m_wdog.reset();
+      }
+
+      //! Check sonar range.
+      void
+      checkRange(void)
+      {
+        // Modify range if needed.
+        if (m_args.mod)
+        {
+          if (m_range_counter.overflow())
+          {
+            checkAltitude();
+            m_range_counter.reset();
+          }
+        }
       }
 
       void
-      task(void)
+      onMain(void)
       {
         while (!stopping())
         {
           consumeMessages();
 
-          if (isActive() && (m_sock != NULL))
+          if (isActive() && (m_tcp != NULL || m_udp != NULL))
           {
-            try
-            {
-              for (unsigned i = 0; i < m_args.data_points; ++i)
-                ping(i);
+            if (request())
+              process();
+            checkRange();
 
-              if (m_args.save_to_file)
-                handleSonarData();
-              else
-                dispatch(m_ping);
-
-              if (m_args.range_modifier)
-              {
-                if (m_range_counter.overflow())
-                {
-                  checkAltitude();
-                  m_range_counter.reset();
-                }
-              }
-            }
-            catch (std::exception& e)
+            if (m_wdog.overflow())
             {
-              err("%s", e.what());
+              err("%s", DTR(Status::getString(CODE_COM_ERROR)));
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
               throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
             }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -136,9 +136,11 @@ namespace Power
         if (m_psu_ctl->sendFrame(frame, 2.0))
         {
           m_power_state.state = on ? IMC::PowerChannelState::PCS_ON : IMC::PowerChannelState::PCS_OFF;
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           return true;
         }
 
+        setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
         return false;
       }
 
@@ -201,8 +203,14 @@ namespace Power
           if (timer.overflow())
           {
             timer.reset();
+
             if (m_get_state)
-              dispatchState();
+            {
+              if (dispatchState())
+                setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              else
+                setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            }
           }
         }
       }

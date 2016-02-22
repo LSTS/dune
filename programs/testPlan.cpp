@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -148,17 +148,11 @@ main(int argc, char** argv)
     b0.lat = Angles::radians(41.18482);
     b0.lon = Angles::radians(-8.70450);
     b0.depth = 2;
-    b0.query_channel = 4;
-    b0.reply_channel = 1;
-    b0.transponder_delay = 49.37;
 
     b1.beacon = "b1";
     b1.lat = Angles::radians(41.18607);
     b1.lon = Angles::radians(-8.70588);
     b1.depth = 2;
-    b1.query_channel = 0;
-    b1.reply_channel = 3;
-    b1.transponder_delay = 49.50;
 
     LblConfig lbl_config;
     lbl_config.beacons.push_back(b0);

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -151,23 +151,16 @@ namespace Sensors
 
         Coordinates::toWGS84(m_estate, lat, lon);
 
-        int lat_deg;
-        double lat_min;
-        Angles::convertDecimalToDM(Angles::degrees(lat), lat_deg, lat_min);
-
-        int lon_deg;
-        double lon_min;
-        Angles::convertDecimalToDM(Angles::degrees(lon), lon_deg, lon_min);
+        std::string lat_nmea = latitudeToNMEA(lat);
+        std::string lon_nmea = longitudeToNMEA(lon);
 
         double vel = Math::norm(m_estate.vx, m_estate.vy);
 
         NMEAWriter stn("GPRMC");
         stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
             << "A"
-            << String::str("%02d%02.5f", std::abs(lat_deg), std::fabs(lat_min))
-            << ((lat_deg >= 0) ? "N" : "S")
-            << String::str("%03d%02.5f", std::abs(lon_deg), std::fabs(lon_min))
-            << ((lon_deg >= 0) ? "E" : "W")
+            << lat_nmea
+            << lon_nmea
             << vel * DUNE::Units::c_ms_to_knot
             << 0 // azimuth.
             << String::str("%02u%02u%02u", bdt.day, bdt.month, bdt.year - 2000)

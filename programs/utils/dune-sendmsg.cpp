@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -54,7 +54,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
       fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
       fprintf(stdout, "  FuelLevel\n");
-      fprintf(stdout, "  GpsFix, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
+      fprintf(stdout, "  GpsFix, GpsFixRtk, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
       fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
       fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
       fprintf(stdout, "  PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl\n");
@@ -345,6 +345,58 @@ main(int argc, char** argv)
       tmsg->height = atof(argv[6]);
   }
 
+  if (strcmp(argv[3], "GpsFixRtk") == 0)
+  {
+    IMC::GpsFixRtk* tmsg = new IMC::GpsFixRtk;
+    msg = tmsg;
+    tmsg->type = IMC::GpsFixRtk::RTK_FIXED;
+    tmsg->satellites = 10;
+    tmsg->iar_hyp = 1;
+    tmsg->setSource(0x2c01);
+
+    if (argc >= 5)
+      tmsg->setSource(tmsg->getSource() + atoi(argv[4]));
+
+    if (argc >= 6)
+    {
+      if (!strcmp(argv[5], "Float"))
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_FLOAT;
+      }
+      else if (!strcmp(argv[5], "Obs"))
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_OBS;
+      }
+      else if (!strcmp(argv[5], "None"))
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_NONE;
+      }
+      else
+      {
+        tmsg->type = IMC::GpsFixRtk::RTK_FIXED;
+      }
+    }
+    if (argc >= 9)
+    {
+      tmsg->n = atof(argv[6]);
+      tmsg->e = atof(argv[7]);
+      tmsg->d = atof(argv[8]);
+
+    }
+    else
+    {
+      // Default location
+      tmsg->n = 4.0;
+      tmsg->e = 3.0;
+      tmsg->d = -2.0;
+    }
+
+    if (argc == 7)
+    {
+      tmsg->iar_hyp = atoi(argv[6]);
+    }
+  }
+
   if (strcmp(argv[3], "Heartbeat") == 0)
   {
     IMC::Heartbeat* tmsg = new IMC::Heartbeat;
@@ -375,18 +427,14 @@ main(int argc, char** argv)
     tmsg->op = IMC::LblConfig::OP_SET_CFG;
 
     IMC::LblBeacon bc;
-    bc.beacon = "b2";
+    bc.beacon = "benthos2";
     bc.lat = 0.71883274;
     bc.lon = -0.15194732;
     bc.depth = 3;
-    bc.query_channel = 4;
-    bc.reply_channel = 5;
-    bc.transponder_delay = 0;
     tmsg->beacons.push_back(bc);
-    bc.beacon = "b3";
+    bc.beacon = "benthos3";
     bc.lat = 0.71881068;
     bc.lon = -0.15192335;
-    bc.reply_channel = 6;
     tmsg->beacons.push_back(bc);
   }
 

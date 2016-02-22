@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -263,6 +263,9 @@ namespace Sensors
             factors.push_back(tmp / 10e3);
           }
         }
+
+        if (factors.size() != c_hard_iron_count)
+          throw std::runtime_error("failed to retrieve hard-iron factors");
 
         return factors;
       }

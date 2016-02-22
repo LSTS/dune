@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -431,7 +431,7 @@ namespace DUNE
     }
 
     void
-    Task::consume(const IMC::QueryEntityParameters* msg)
+    Task::onQueryEntityParameters(const IMC::QueryEntityParameters* msg)
     {
       if (msg->name != getEntityLabel())
         return;
@@ -452,7 +452,13 @@ namespace DUNE
     }
 
     void
-    Task::consume(const IMC::SetEntityParameters* msg)
+    Task::consume(const IMC::QueryEntityParameters* msg)
+    {
+      onQueryEntityParameters(msg);
+    }
+
+    void
+    Task::onSetEntityParameters(const IMC::SetEntityParameters* msg)
     {
       if (msg->name != getEntityLabel())
         return;
@@ -475,7 +481,13 @@ namespace DUNE
     }
 
     void
-    Task::consume(const IMC::PushEntityParameters* msg)
+    Task::consume(const IMC::SetEntityParameters* msg)
+    {
+      onSetEntityParameters(msg);
+    }
+
+    void
+    Task::onPushEntityParameters(const IMC::PushEntityParameters* msg)
     {
       if (msg->name != getEntityLabel())
         return;
@@ -492,7 +504,13 @@ namespace DUNE
     }
 
     void
-    Task::consume(const IMC::PopEntityParameters* msg)
+    Task::consume(const IMC::PushEntityParameters* msg)
+    {
+      onPushEntityParameters(msg);
+    }
+
+    void
+    Task::onPopEntityParameters(const IMC::PopEntityParameters* msg)
     {
       if (msg->name != getEntityLabel())
         return;
@@ -510,8 +528,17 @@ namespace DUNE
     }
 
     void
+    Task::consume(const IMC::PopEntityParameters* msg)
+    {
+      onPopEntityParameters(msg);
+    }
+
+    void
     Task::writeParamsXML(std::ostream& os) const
     {
+      if (onWriteParamsXML(os))
+        return;
+
       using Utils::XML;
 
       os << "<section";

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -83,7 +83,7 @@ namespace Simulators
         ++itr;
 
       if (itr != m_vehicle_forces.end())
-        m_actuation[id - c_asv_base_id] = (*itr)->getActuation();
+        m_actuation[id] = (*itr)->getActuation();
     }
 
     void
@@ -93,8 +93,8 @@ namespace Simulators
       double T2CLeft[] = {-0.7428, 1.6420, 4.0325, -0.769};
       double T2CRight[] = {-0.7428, 1.6420, 4.0325, -0.769};
 
-      updateActuation(c_asv_base_id);
-      updateActuation(c_asv_base_id + 1);
+      updateActuation(0);
+      updateActuation(1);
 
       double Tl = m_actuation[0];
       double Tr = m_actuation[1];

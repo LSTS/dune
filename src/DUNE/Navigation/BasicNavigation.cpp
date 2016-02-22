@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -109,6 +109,10 @@ namespace DUNE
       .minimumValue("0.5")
       .description("No Depth readings from main provider timeout");
 
+      param("Depth Sensor", m_depth_sensor)
+      .defaultValue("true")
+      .description("This variable signals that a depth sensor device is installed on system");
+
       param("DVL sanity timeout", m_dvl_sanity_timeout)
       .units(Units::Second)
       .defaultValue("10.0")
@@ -216,6 +220,7 @@ namespace DUNE
       m_aligned = false;
       m_edelta_ts = 0.1;
       m_rpm = 0;
+      m_lbl_reading = false;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
@@ -881,17 +886,18 @@ namespace DUNE
       }
       else
       {
-        unsigned states = getNumberOutputs() + beacon;
+        unsigned index = getNumberOutputs() + beacon;
 
         // Define measurements matrix.
-        m_kal.setObservation(states, STATE_X, dx / exp_range);
-        m_kal.setObservation(states, STATE_Y, dy / exp_range);
+        m_kal.setObservation(index, STATE_X, dx / exp_range);
+        m_kal.setObservation(index, STATE_Y, dy / exp_range);
 
         // Define Output matrix.
-        m_kal.setOutput(states, range);
-        m_kal.setInnovation(states, range - exp_range);
+        m_kal.setOutput(index, range);
+        m_kal.setInnovation(index, range - exp_range);
         m_lbl_ac.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
         dispatch(m_lbl_ac, DF_KEEP_TIME);
+        m_lbl_reading = true;
       }
     }
 
@@ -1091,7 +1097,7 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
-            if (m_time_without_depth.overflow())
+            if (m_depth_sensor && m_time_without_depth.overflow())
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("no measurements available: %s"), DTR("Depth")));
               return;
@@ -1156,7 +1162,7 @@ namespace DUNE
 
       // Sensed angular velocities due to Earth rotation effect.
       Math::Matrix av(3,1);
-      av = inverse(ea.toDCM()) * we;
+      av = transpose(ea.toDCM()) * we;
 
       // Extract from angular velocities measurements.
       p -= av(0);

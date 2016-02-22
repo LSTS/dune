@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -76,8 +76,6 @@ namespace DUNE
       FileSystem::Path dir_log;
       //! Path to libraries directory.
       FileSystem::Path dir_lib;
-      //! Path to firmware directory.
-      FileSystem::Path dir_fmw;
       //! Path to internationalization directory.
       FileSystem::Path dir_i18n;
       //! Path to database directory.

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 OceanScan - Marine Systems & Technology, Lda.        *
+// Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -103,7 +103,7 @@ namespace DUNE
           if (m_pad_size == 4)
             m_pad_size = 0;
 
-          m_data_size = size;
+          m_data_size = (uint32_t)size;
         }
 
         //! Get size of chunk data.

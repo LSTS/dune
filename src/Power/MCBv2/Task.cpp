@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -125,8 +125,6 @@ namespace Power
       std::string pwr_names[c_pwrs_count];
       //! Initial power channels states.
       unsigned pwr_states[c_pwrs_count];
-      //! True to automatically upgrade firmware.
-      bool flash_upgrade;
       //! True to drived LCD from MCB.
       bool lcd;
     };
@@ -203,10 +201,6 @@ namespace Power
           param(option, m_args.pwr_states[i])
           .defaultValue("0");
         }
-
-        param("Firmware Upgrade", m_args.flash_upgrade)
-        .defaultValue("false")
-        .description("Automatically upgrade firmware");
 
         param("Drive LCD", m_args.lcd)
         .defaultValue("false")
@@ -468,6 +462,17 @@ namespace Power
           return;
         }
 
+        if (msg->name == "all")
+        {
+          if (msg->op == IMC::PowerChannelControl::PCC_OP_SAVE)
+          {
+            uint8_t data[2] = {(uint8_t)(m_pwr_chns >> 8), (uint8_t)m_pwr_chns};
+            m_proto.sendCommand(CMD_SAVE, data, sizeof(data));
+          }
+
+          return;
+        }
+
         PowerChannelMap::const_iterator itr = m_pwr_chs.find(msg->name);
         if (itr == m_pwr_chs.end())
           return;
@@ -573,7 +578,6 @@ namespace Power
             break;
 
           case LUCL::CommandTypeName:
-            onName(cmd.name.data);
             break;
 
           case LUCL::CommandTypeInvalidVersion:
@@ -598,32 +602,6 @@ namespace Power
         return false;
       }
 
-      //! Flash firmware.
-      //! @param[in] file file descriptor.
-      void
-      flashFirmware(const std::string& file)
-      {
-        if (!m_args.flash_upgrade)
-          return;
-
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-        inf(DTR("updating firmware"));
-        LUCL::BootLoader lucb(m_proto, true);
-        lucb.flash(file);
-      }
-
-      void
-      onName(const std::string& name)
-      {
-        if (name == "LUCB")
-        {
-          std::string fmw = m_proto.searchNewFirmware(m_ctx.dir_fmw);
-          if (!fmw.empty())
-            flashFirmware(fmw);
-        }
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
       //! On version call.
       //! @param[in] major major version number.
       //! @param[in] minor minor version number.
@@ -632,11 +610,6 @@ namespace Power
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
-
-        std::string fmw = m_proto.searchNewFirmware(m_ctx.dir_fmw, 2, minor, patch);
-        if (!fmw.empty())
-          flashFirmware(fmw);
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 

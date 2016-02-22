@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -125,6 +125,7 @@ namespace Transports
       {
         m_sock->bind(m_args.tcp_port);
         m_sock->listen(1024);
+        m_sock->setNoDelay(true);
         m_poll.add(*m_sock);
         m_poll.add(*m_uart);
       }

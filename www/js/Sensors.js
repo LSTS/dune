@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,6 +34,12 @@ Sensors.prototype = new BasicSection;
 
 Sensors.prototype.m_msgs =
     {
+        'Chlorophyll': { },
+        'Fluorescein': { },
+        'Phycocyanin': { },
+        'Phycoerythrin': { },
+        'RhodamineDye': { },
+        'Turbidity': { },
         'Depth': { },
         'Pressure': { },
         'Temperature': { },

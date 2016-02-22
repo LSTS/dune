@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -91,8 +91,9 @@ namespace DUNE
       //! @param buffer destination buffer.
       //! @param size destination buffer length.
       //! @param addr system specific host address.
+      //! @param port system specific host port.
       size_t
-      read(uint8_t* buffer, size_t size, Address* addr = NULL);
+      read(uint8_t* buffer, size_t size, Address* addr = NULL, uint16_t* port = NULL);
 
     private:
       //! Platform specific handle.
@@ -127,7 +128,7 @@ namespace DUNE
       size_t
       doRead(uint8_t* data, size_t data_size)
       {
-        return read(data, data_size, NULL);
+        return read(data, data_size, NULL, NULL);
       }
 
       void

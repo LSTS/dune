@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2014 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,87 +34,80 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    // Number of Channels
-    static const uint8_t c_channels = 5;
-
-    //! Channel Names
-    enum Channels
-    {
-      C_RHODAMINE = 0 ,
-      C_TURBIDITY = 1,
-      C_FINE_OIL = 2,
-      C_CRUDE_OIL = 3,
-      C_CHLOROPHYLL = 4
-    };
-
     struct Arguments
     {
       // Conversion factors.
-      std::vector<double> conversions[c_channels];
+      std::vector<double> factor;
       // Entity labels.
-      std::string elabels[c_channels];
+      std::string elabel;
+      //! The message to be produced - must contain the field 'value'
+      std::string message_name;
+      //! Power channel name.
+      std::string power_channel;
+      //! Active power channel control;
+      bool power_control;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Task Arguments.
-      Arguments m_args;
-      // Rhodamine Entity Id.
-      unsigned m_rhodamine_eid;
-      // Fine Oil Entity Id.
-      unsigned m_fine_oil_eid;
-      // Crude Oil Entity Id.
-      unsigned m_crude_oil_eid;
-      // Turbidity Entity Id.
-      unsigned m_turbidity_eid;
-      // Chlorophyll Entity Id.
-      unsigned m_chlorophyll_eid;
+      // Pointer to an IMC message.
+      IMC::Message* m_msg;
+      // Entity Id.
+      unsigned m_entity_id;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
+      //! Power channel state.
+      IMC::PowerChannelState m_power_channel_state;
+      //! Power channel control.
+      IMC::PowerChannelControl m_power_channel_control;
+      // Task Arguments.
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_msg(NULL)
       {
-        param("Rhodamine Conversion Factors", m_args.conversions[C_RHODAMINE])
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
+
+        param("Conversion Factors", m_args.factor)
         .size(2)
         .defaultValue("1.0, 0.0");
 
-        param("Rhodamine Label", m_args.elabels[C_RHODAMINE])
+        param("Voltage Entity Label", m_args.elabel)
         .defaultValue("Rhodamine");
 
-        param("Turbidity Conversion Factors", m_args.conversions[C_TURBIDITY])
-        .size(2)
-        .defaultValue("1.0, 0.0");
+        param("Name of message to produce", m_args.message_name)
+        .defaultValue("RhodamineDye");
 
-        param("Turbidity Label", m_args.elabels[C_TURBIDITY])
-        .defaultValue("Turbidity");
+        param("Power Channel Control", m_args.power_control)
+        .defaultValue("false")
+        .description("Active control of power channel");
 
-        param("Fine Oil Conversion Factors", m_args.conversions[C_FINE_OIL])
-        .size(2)
-        .defaultValue("1.0, 0.0");
+        param("Power Channel Name", m_args.power_channel)
+        .defaultValue("Wet Sensor Probe")
+        .description("Power channel that controls the power of the device");
 
-        param("Fine Oil Label", m_args.elabels[C_FINE_OIL])
-        .defaultValue("Fine Oil");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
-        param("Crude Oil Conversion Factors", m_args.conversions[C_CRUDE_OIL])
-        .size(2)
-        .defaultValue("1.0, 0.0");
-
-        param("Crude Oil Label", m_args.elabels[C_CRUDE_OIL])
-        .defaultValue("Crude Oil");
-
-        param("Chlorophyll Conversion Factors", m_args.conversions[C_CRUDE_OIL])
-        .size(2)
-        .defaultValue("1.0, 0.0");
-
-        param("Chlorophyll Label", m_args.elabels[C_CRUDE_OIL])
-        .defaultValue("Chlorophyll");
-
+        bind<IMC::PowerChannelState>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Voltage>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.message_name))
+        {
+          Memory::clear(m_msg);
+          m_msg = IMC::Factory::produce(m_args.message_name);
+        }
+
+        m_power_channel_control.name = m_args.power_channel;
       }
 
       void
@@ -122,46 +115,69 @@ namespace Sensors
       {
         try
         {
-          m_rhodamine_eid = resolveEntity(m_args.elabels[C_RHODAMINE]);
+          m_entity_id = resolveEntity(m_args.elabel);
         }
         catch (...)
         {
-          m_rhodamine_eid = UINT_MAX;
+          m_entity_id = UINT_MAX;
+        }
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        if (!m_args.power_control)
+        {
+          activate();
+          return;
         }
 
-        try
-        {
-          m_fine_oil_eid = resolveEntity(m_args.elabels[C_FINE_OIL]);
-        }
-        catch (...)
-        {
-          m_fine_oil_eid = UINT_MAX;
-        }
-        try
-        {
-          m_crude_oil_eid = resolveEntity(m_args.elabels[C_CRUDE_OIL]);
-        }
-        catch (...)
-        {
-          m_crude_oil_eid = UINT_MAX;
-        }
-        try
-        {
-          m_turbidity_eid = resolveEntity(m_args.elabels[C_TURBIDITY]);
-        }
-        catch (...)
-        {
-          m_turbidity_eid = UINT_MAX;
-        }
-        try
-        {
-          m_chlorophyll_eid = resolveEntity(m_args.elabels[C_CHLOROPHYLL]);
-        }
-        catch (...)
-        {
-          m_chlorophyll_eid = UINT_MAX;
-        }
+        if (m_power_channel_state.state != IMC::PowerChannelState::PCS_ON)
+          m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(m_power_channel_control);
+      }
 
+      //! Acquire resources.
+      void
+      onResourceAcquisition(void)
+      {
+        Memory::clear(m_msg);
+        m_msg = IMC::Factory::produce(m_args.message_name);
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_msg);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        if (!m_args.power_control)
+          return;
+
+        if (m_power_channel_state.state != IMC::PowerChannelState::PCS_OFF)
+          m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(m_power_channel_control);
+      }
+
+      void
+      consume(const IMC::PowerChannelState* msg)
+      {
+        if (msg->name != m_args.power_channel)
+          return;
+
+        m_power_channel_state = *msg;
+
+        if (isActivating() && m_args.power_control)
+        {
+          if (m_power_channel_state.state == IMC::PowerChannelState::PCS_ON)
+            activate();
+        }
       }
 
       void
@@ -173,45 +189,19 @@ namespace Sensors
       void
       consume(const IMC::Voltage* msg)
       {
-        double val = msg->value;
+        if (!isActive())
+          return;
 
-        if (val < 0 || !m_hand.isUnderwater())
-          val = 0.0;
+        double v = msg->value;
 
-        if (msg->getSourceEntity() == m_rhodamine_eid)
-        {
-          IMC::RhodamineDye dye;
-          dye.value = val * m_args.conversions[C_RHODAMINE][0] + m_args.conversions[C_RHODAMINE][1];
-          dispatch(dye);
-        }
+        if (v < 0 || !m_hand.isUnderwater())
+          v = 0.0;
 
-        if (msg->getSourceEntity() == m_fine_oil_eid)
-        {
-          IMC::FineOil oil;
-          oil.value = val * m_args.conversions[C_FINE_OIL][0] + m_args.conversions[C_FINE_OIL][1];
-          dispatch(oil);
-        }
+        if (msg->getSourceEntity() != m_entity_id)
+          return;
 
-        if (msg->getSourceEntity() == m_crude_oil_eid)
-        {
-          IMC::CrudeOil oil;
-          oil.value = val * m_args.conversions[C_CRUDE_OIL][0] + m_args.conversions[C_CRUDE_OIL][1];
-          dispatch(oil);
-        }
-
-        if (msg->getSourceEntity() == m_turbidity_eid)
-        {
-          IMC::Turbidity turb;
-          turb.value = val * m_args.conversions[C_TURBIDITY][0] + m_args.conversions[C_TURBIDITY][1];
-          dispatch(turb);
-        }
-
-        if (msg->getSourceEntity() == m_chlorophyll_eid)
-        {
-          IMC::Chlorophyll chlo;
-          chlo.value = val * m_args.conversions[C_CHLOROPHYLL][0] + m_args.conversions[C_CHLOROPHYLL][1];
-          dispatch(chlo);
-        }
+        m_msg->setValueFP(v * m_args.factor[0] + m_args.factor[1]);
+        dispatch(m_msg);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }

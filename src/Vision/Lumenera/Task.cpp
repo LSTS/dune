@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -23,6 +23,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Renato Caldas                                                    *
+// Author: Ricardo Martins                                                  *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -31,9 +32,9 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <DUNE/Media/ExifEditor.hpp>
 
 // Local headers.
+#include "Log.hpp"
 #include "HTTPClient.hpp"
 #include "EntityActivationMaster.hpp"
 
@@ -82,8 +83,8 @@ namespace Vision
       float gain_blue;
       //! LED strobe power channel.
       std::string strobe_pwr;
-      //! Number of photos per volume.
-      unsigned volume_size;
+      //! Maximum log file size.
+      unsigned max_file_size;
       //! Log folder prefix.
       std::string log_prefix;
       //! Power GPIO.
@@ -103,6 +104,10 @@ namespace Vision
     {
       //! HTTP camera port
       static const unsigned c_port = 80;
+      //! Default image width.
+      static const unsigned c_width = 1376;
+      //! Default image height.
+      static const unsigned c_height = 1032;
       //! Configuration parameters
       Arguments m_args;
       //! Video stream HTTP connection
@@ -111,12 +116,6 @@ namespace Vision
       std::string m_boundary;
       //! Destination log folder.
       Path m_log_dir;
-      //! Current destination volume.
-      Path m_volume;
-      //! Current number of volumes.
-      unsigned m_volume_count;
-      //! Number of files in current volume.
-      unsigned m_file_count;
       // Timestamp for last frame
       double m_timestamp;
       //! Power GPIO.
@@ -133,19 +132,26 @@ namespace Vision
       bool m_log_dir_updated;
       //! Last estimated state
       IMC::EstimatedState m_estate;
+      //! Cooldown timer.
+      Counter<double> m_cooldown_timer;
+      //! Log instance.
+      Log* m_log;
+      //! Actual frame rate.
+      int m_actual_frame_rate;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_http(NULL),
         m_boundary(""),
         m_log_dir(ctx.dir_log),
-        m_volume_count(0),
-        m_file_count(0),
+        m_timestamp(-1),
         m_pwr_gpio(NULL),
         m_led_gpio(NULL),
         m_cfg_dirty(false),
         m_slave_entities(NULL),
-        m_log_dir_updated(false)
+        m_log_dir_updated(false),
+        m_log(NULL),
+        m_actual_frame_rate(-1)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -263,9 +269,10 @@ namespace Vision
         param("Power Channel - Strobe", m_args.strobe_pwr)
         .description("Power channel of the strobe");
 
-        param("Volume Size", m_args.volume_size)
-        .defaultValue("1000")
-        .description("Number of photos per volume");
+        param("Maximum Log Size", m_args.max_file_size)
+        .defaultValue("524288000")
+        .units(Units::Byte)
+        .description("Maximum size of a log file");
 
         param("Log Prefix", m_args.log_prefix)
         .defaultValue("")
@@ -396,7 +403,7 @@ namespace Vision
 
         if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
         {
-          m_log_dir = m_ctx.dir_log / m_args.log_prefix / msg->name / "Photos";
+          m_log_dir = m_ctx.dir_log / m_args.log_prefix / msg->name;
           m_log_dir_updated = true;
           trace("received new log dir");
         }
@@ -492,16 +499,11 @@ namespace Vision
       void
       onActivation(void)
       {
-        m_file_count = 0;
-        m_volume_count = 0;
-
-        if (m_args.camera_capt)
-          changeVolume();
-
         setStrobePower(true);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         inf(DTR("activated"));
+        m_cooldown_timer.setTop(10.0);
       }
 
       void
@@ -509,6 +511,13 @@ namespace Vision
       {
         stopVideo();
         inf(DTR("stopped video stream"));
+
+        if (m_log != NULL)
+        {
+          m_log->stopAndJoin();
+          delete m_log;
+          m_log = NULL;
+        }
 
         setStrobePower(false);
         m_log_dir_updated = false;
@@ -610,35 +619,44 @@ namespace Vision
           m_led_gpio->setValue(0);
       }
 
-      void
-      captureFrame(ByteBuffer &dst, double timeout = 2.0)
+      bool
+      captureFrame(Log::Frame* frame, double timeout = 2.0)
       {
         std::vector<std::string> header;
         std::vector<std::string>::iterator it;
         size_t jpg_size = 0;
 
         m_http->skipToBoundary(m_boundary);
-        m_http->getHeader(header);
         m_timestamp = Clock::getSinceEpoch();
+        m_http->getHeader(header);
+        frame->setTimeStamp(m_timestamp);
 
         for (it = header.begin(); it != header.end(); it++)
         {
           if (String::startsWith(*it, "Content-length:"))
           {
-            jpg_size = std::atoi((*it).substr(15, (*it).size()-15).c_str());
-
+            jpg_size = std::atoi((*it).substr(15, (*it).size() - 15).c_str());
             if (jpg_size <= 0)
+            {
               spew("Content-length is zero");
+              return false;
+            }
+
             break;
           }
         }
 
         if (jpg_size <= 0)
+        {
           spew("jpeg size is zero after header");
+          return false;
+        }
 
-        // Retrieve JPEG data
-        dst.setSize(jpg_size);
-        m_http->getBinary(dst.getBufferSigned(), jpg_size, timeout);
+        // Retrieve JPEG data.
+        ByteBuffer* buffer = frame->getBuffer();
+        buffer->setSize(jpg_size);
+        m_http->getBinary(buffer->getBufferSigned(), jpg_size, timeout);
+        return true;
       }
 
       void
@@ -714,7 +732,7 @@ namespace Vision
           }
           else if (String::startsWith(*it, "<title>"))
           {
-            // setting the propery failed for some reason
+            // setting the property failed for some reason
             if( *it != "<title>Success</title>\r\n")
               throw std::runtime_error(DTR("failed to set property"));
           }
@@ -897,25 +915,51 @@ namespace Vision
       }
 
       void
-      changeVolume(void)
+      changeLogFile(void)
       {
-        m_volume = m_log_dir / String::str("%06u", m_volume_count);
-        m_volume.create();
-        ++m_volume_count;
+        if (m_log != NULL)
+        {
+          m_log->stopAndJoin();
+          delete m_log;
+          m_log = NULL;
+        }
+
+        m_log = new Log(this, m_log_dir, c_width, c_height, m_actual_frame_rate);
+        m_log->start();
       }
 
       void
       captureAndSave(void)
       {
-        // Take estimated state snapshot just before capture
-        IMC::EstimatedState es = m_estate;
+        if (m_actual_frame_rate <= 0)
+        {
+          if (!updateActualFrameRate())
+            return;
+        }
 
-        ByteBuffer dst;
+        if (m_log == NULL)
+          changeLogFile();
+
+        Log::Frame* frame = m_log->getFreeFrame();
+
         try
         {
-          captureFrame(dst);
-          if (dst.getSize() == 0)
-            spew("destination size is zero");
+          double previous_time = m_timestamp;
+          if (captureFrame(frame))
+          {
+            if (!m_cooldown_timer.overflow())
+            {
+              m_log->putFree(frame);
+            }
+            else
+            {
+              m_log->put(frame);
+              double frame_rate = 1.0 / (m_timestamp - previous_time);
+              if (std::fabs(frame_rate - m_actual_frame_rate) > 0.5)
+                inf("abnormal delta %.1f ms | %f | %u", (m_timestamp - previous_time) * 1000.0, frame_rate, m_actual_frame_rate);
+
+            }
+          }
         }
         catch (std::runtime_error& e)
         {
@@ -923,42 +967,8 @@ namespace Vision
           stopVideo();
         }
 
-        if (m_file_count++ == m_args.volume_size)
-        {
-          m_file_count = 0;
-          changeVolume();
-        }
-
-        // Modify EXIF tags to include the position
-        try
-        {
-          Media::ExifEditor ee;
-          ee.setBuffer(dst.getBuffer(), dst.getSize());
-          Media::ExifData* edata = ee.getExifData();
-
-          // Fill the exif position data.
-          double lat, lon;
-          Coordinates::toWGS84(es, lat, lon);
-          std::ostringstream ss;
-          ss << "latitude=" << Angles::degrees(lat);
-          ss << ", longitude=" << Angles::degrees(lon);
-          ss << ", depth=" << es.depth;
-          ss << ", altitude=" << es.alt;
-          ss << ", heading=" << Angles::degrees(es.psi);
-          ss << ", roll=" << Angles::degrees(es.phi);
-          ss << ", pitch=" << Angles::degrees(es.theta);
-          edata->setComment(ss.str());
-
-          // Save file.
-          double timestamp = Clock::getSinceEpoch();
-          Path file = m_volume / String::str("%0.4f.jpg", timestamp);
-          std::ofstream jpg(file.c_str(), std::ios::binary);
-          ee.outputToStream(jpg);
-        }
-        catch (std::runtime_error& e)
-        {
-          debug("frame save failed: %s", e.what());
-        }
+        if (m_log->getSize() >= m_args.max_file_size)
+          changeLogFile();
       }
 
       bool
@@ -980,6 +990,28 @@ namespace Vision
       }
 
       bool
+      updateActualFrameRate(void)
+      {
+        if (m_http == NULL)
+          return false;
+
+        try
+        {
+          std::string frame_rate_str;
+          getProperty("maximum_framerate", frame_rate_str);
+          m_actual_frame_rate = -1;
+          m_actual_frame_rate = castLexical<int>(frame_rate_str);
+          debug("actual frame rate is '%s'", sanitize(frame_rate_str).c_str());
+          if (m_actual_frame_rate > 0)
+            return true;
+        }
+        catch (...)
+        { }
+
+        return false;
+      }
+
+      bool
       checkCaptureOk(void)
       {
         if (m_http != NULL)
@@ -997,8 +1029,11 @@ namespace Vision
             setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_COM_ERROR);
             err("%s", e.what());
           }
+
           stopVideo();
+          Delay::wait(1.0);
         }
+
         return false;
       }
 
@@ -1038,7 +1073,6 @@ namespace Vision
           }
         }
       }
-
     };
   }
 }

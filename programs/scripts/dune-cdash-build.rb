@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -43,18 +43,20 @@ VBOX_TIMEOUT = '10800000'
 
 # Table of tools.
 TOOLS = {
-  'gnu32'   => [['Ninja', 'Unix Makefiles'] , 'gcc -m32'  , 'g++ -m32'    ],
-  'gnu64'   => [['Ninja', 'Unix Makefiles'] , 'gcc -m64'  , 'g++ -m64'    ],
-  'llvm32'  => [['Ninja', 'Unix Makefiles'] , 'clang -m32', 'clang++ -m32'],
-  'llvm64'  => [['Ninja', 'Unix Makefiles'] , 'clang -m64', 'clang++ -m64'],
-  'sun32'   => [['Ninja', 'Unix Makefiles'] , 'suncc -m32', 'sunCC -m32'  ],
-  'sun64'   => [['Ninja', 'Unix Makefiles'] , 'suncc -m64', 'sunCC -m64'  ],
-  'icc32'   => [['Ninja', 'Unix Makefiles'] , 'icc -m32'  , 'icpc -m32'   ],
-  'icc64'   => [['Ninja', 'Unix Makefiles'] , 'icc -m64'  , 'icpc -m64'   ],
-  'mvs32'   => [['Visual Studio 10']        , ''          , ''            ],
-  'mvs64'   => [['Visual Studio 10 Win64']  , ''          , ''            ],
-  'mgw32'   => [['MinGW Makefiles']         , 'gcc -m32'  , 'g++ -m32'    ],
-  'mgw64'   => [['MinGW Makefiles']         , 'gcc -m64'  , 'g++ -m64'    ],
+  'gnu32'   => [['Ninja', 'Unix Makefiles']    , 'gcc -m32'  , 'g++ -m32'    ],
+  'gnu64'   => [['Ninja', 'Unix Makefiles']    , 'gcc -m64'  , 'g++ -m64'    ],
+  'llvm32'  => [['Ninja', 'Unix Makefiles']    , 'clang -m32', 'clang++ -m32'],
+  'llvm64'  => [['Ninja', 'Unix Makefiles']    , 'clang -m64', 'clang++ -m64'],
+  'sun32'   => [['Ninja', 'Unix Makefiles']    , 'suncc -m32', 'sunCC -m32'  ],
+  'sun64'   => [['Ninja', 'Unix Makefiles']    , 'suncc -m64', 'sunCC -m64'  ],
+  'icc32'   => [['Ninja', 'Unix Makefiles']    , 'icc -m32'  , 'icpc -m32'   ],
+  'icc64'   => [['Ninja', 'Unix Makefiles']    , 'icc -m64'  , 'icpc -m64'   ],
+  'mvs32'   => [['Visual Studio 10',
+                 'Visual Studio 14 2015']      , ''          , ''            ],
+  'mvs64'   => [['Visual Studio 10 Win64',
+                 'Visual Studio 14 2015 Win64'], ''          , ''            ],
+  'mgw32'   => [['MinGW Makefiles']            , 'gcc -m32'  , 'g++ -m32'    ],
+  'mgw64'   => [['MinGW Makefiles']            , 'gcc -m64'  , 'g++ -m64'    ],
 }
 
 # CMake test code.
@@ -84,7 +86,7 @@ AUTH = {
   :config   => false
 }
 
-$log = File.new(__FILE__.sub('.rb', '.log'), 'w')
+$log = $stdout
 
 def banner(text)
   o = '#' * 50
@@ -363,7 +365,7 @@ class Docker
   def execute
     hostname = @name.gsub("dune-", "")
     puts hostname
-    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --target #{@target}`
+    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --no-log --target #{@target}`
   end
 end
 
@@ -379,11 +381,16 @@ options = {
   :machine     => nil,
   :vbox        => false,
   :docker      => false,
-  :native      => true
+  :native      => true,
+  :log         => true
 }
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: options.rb [options]"
+  opts.banner = "Usage: dune-cdash-build.rb [options]"
+
+  opts.on("--[no-]log", "Log output to a file") do |v|
+    options[:log] = v
+  end
 
   opts.on("-t", "--target TARGET", "Target name (Nightly, Experimental)") do |v|
     options[:target] = v
@@ -422,6 +429,10 @@ end.parse!
 ############################################################################
 # Execute.                                                                 #
 ############################################################################
+
+if options[:log]
+  $log = File.new(__FILE__.sub('.rb', '.log'), 'w')
+end
 
 # Docker.
 if options[:docker]

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -50,9 +50,12 @@ namespace Transports
     //! Asynchronous messages.
     static const char* c_async_msgs[] =
     {
+      "DELIVERED",
       "DELIVEREDIM",
+      "FAILED",
       "FAILEDIM",
       "CANCELEDIM",
+      "RECV",
       "RECVIMS",
       "RECVIM",
       "USBLLONG",
@@ -208,6 +211,20 @@ namespace Transports
         setBusy(true);
       }
 
+      //! Send burst data.
+      //! @param[in] data data to send.
+      //! @param[in] data_size number of bytes to send.
+      //! @param[in] dst destination address.
+      void
+      sendBurst(const uint8_t* data, size_t data_size, unsigned dst)
+      {
+        std::string cmd = String::str("*SEND,%u,%u,", data_size, dst);
+        cmd.append((char*)data, data_size);
+        sendAT(cmd);
+        expectOK();
+        setBusy(true);
+      }
+
       //! Send piggyback instant message.
       //! @param[in] data data to send.
       //! @param[in] data_size number of bytes to send.
@@ -336,6 +353,26 @@ namespace Transports
       }
 
       void
+      parseReceivedBurst(const std::string& str, RecvIM& msg)
+      {
+        int offset = 0;
+        long unsigned int data_size = 0;
+        int rv = 0;
+
+        unsigned int bitrate, propagation_time;
+
+        rv = std::sscanf(str.c_str(),
+                         "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
+                         &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
+                         &msg.integrity, &propagation_time, &msg.velocity, &offset);
+
+        if (rv != 8)
+          throw std::runtime_error("invalid format for RECV");
+
+        msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
+      }
+
+      void
       parse(const std::string& str, RecvIM& msg, bool piggyback)
       {
         int offset = 0;
@@ -354,7 +391,7 @@ namespace Transports
                              &msg.velocity, &offset);
 
             if (rv != 9)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVIM");
           }
           else
           {
@@ -365,7 +402,7 @@ namespace Transports
                              &msg.velocity, &offset);
 
             if (rv != 8)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVPBM");
           }
         }
         else
@@ -378,7 +415,7 @@ namespace Transports
                              &msg.rssi, &msg.integrity, &msg.velocity, &offset);
 
             if (rv != 8)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVIM");
           }
           else
           {
@@ -388,7 +425,7 @@ namespace Transports
                              &msg.rssi, &msg.integrity, &msg.velocity, &offset);
 
             if (rv != 7)
-              throw std::runtime_error("invalid format");
+              throw std::runtime_error("invalid format for RECVPBM");
           }
         }
 
@@ -465,6 +502,10 @@ namespace Transports
             last_comma = getCommaIndex(str, 9);
         }
         else if (std::sscanf(str.c_str(), "RECVIMS,%u", &length) == 1)
+        {
+          last_comma = getCommaIndex(str, 9);
+        }
+        else if (std::sscanf(str.c_str(), "RECV,%u", &length) == 1)
         {
           last_comma = getCommaIndex(str, 9);
         }

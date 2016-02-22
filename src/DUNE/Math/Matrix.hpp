@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -125,11 +125,11 @@ namespace DUNE
       int
       size(void) const;
 
-      //! Return true for zero sized matrices.
-      //! @return return true for zero sized matrices, false
+      //! Return true for empty matrices.
+      //! @return return true for empty matrices, false
       //! otherwise.
       bool
-      isZeroSized(void) const;
+      isEmpty(void) const;
 
       //! Fill the Matrix with a constant value.
       //! @param[in] value constant value to fill matrix with
@@ -157,11 +157,16 @@ namespace DUNE
       void
       minLimitValues(double min);
 
-      //! Limit the minimum and maximum Matrix elements values
+      //! Limit the minimum and maximum Matrix elements' values
       //! @param[in] min minimum value
       //! @param[in] max maximum value
       void
       trimValues(double min, double max);
+
+      //! Limit the minimum and maximum Matrix elements' values
+      //! @param[in] lim absolute limit value
+      void
+      trimValues(double lim);
 
       //! Retrieve a submatrix.
       //! @param[in] i1 initial row

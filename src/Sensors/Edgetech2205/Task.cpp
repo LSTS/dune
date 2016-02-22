@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2015 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -779,14 +779,14 @@ namespace Sensors
           return false;
 
         consumeMessages();
+        if (m_sock_dat == NULL || m_packet == NULL)
+          return false;
 
         size_t rv = m_sock_dat->read(&m_bfr[0], m_bfr.size());
         for (size_t i = 0; i < rv; ++i)
         {
           if (m_parser.parse(m_bfr[i], m_packet))
-          {
             handlePacket();
-          }
         }
 
         return true;
