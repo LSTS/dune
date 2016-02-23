@@ -540,7 +540,7 @@ namespace DUNE
 
       // Stream Estimator.
       IMC::EstimatedStreamVelocity stream;
-      if (m_stream_filter.consume(msg, stream))
+      if (m_stream_filter.consume(m_estate, msg, stream))
         dispatch(stream);
 
       // Correct for roll angle.
