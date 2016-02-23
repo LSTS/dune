@@ -228,12 +228,6 @@ namespace Transports
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Data to be reported acoustically");
 
-         param("Beacon Address", m_args.addr)
-        .defaultValue("1")
-        .minimumValue("1")
-        .maximumValue("15")
-        .description("Name of the configuration section with modem addresses");
-
         param("Address Section", m_args.addr_section)
         .defaultValue("Seatrac Addresses")
         .description("Name of the configuration section with modem addresses");
@@ -379,7 +373,7 @@ namespace Transports
             std::memcpy(&typemes, msg_raw,1);
             // std::cout << data  << std::endl;
             dataParser(typemes,msg_raw+1, data_Beacon);
-            //printSeatracFunction(typemes, data_Beacon);
+            printSeatracFunction(typemes, data_Beacon);
             // Initialize message validity flag
             typemes=0;
             data.clear();
@@ -445,7 +439,7 @@ namespace Transports
              }
             else
              {
-               inf("Cordinate system origin - %s - address - %d",modem_system_origin.c_str(), origin_number_adrr);
+               inf("Coordinate system origin - %s - address - %d",modem_system_origin.c_str(), origin_number_adrr);
              }
           }
 
@@ -519,6 +513,7 @@ namespace Transports
       void
       onResourceRelease(void)
       {
+        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
         Memory::clear(m_uart);
       }
 
@@ -537,11 +532,7 @@ namespace Transports
         if (m_stop_comms)
         {
           war(DTR(" NOT UNDERWATER or Configuration is not ready")) ; 
-          IMC::UamTxStatus tx_status; 
-          tx_status.value = IMC::UamTxStatus::UTS_DONE;
           data_Beacon.type_CID_DAT_SEND_t.lock_flag=0;
-          dispatch(tx_status);
-
           return ;
         }
         sendCommand(cmd);
@@ -596,18 +587,14 @@ namespace Transports
       {
          war(DTR("No ping replay")) ;
         //printSeatracFunction(CID_PING_ERROR, data_Beacon );
-        IMC::UamTxStatus tx_status; 
-        tx_status.value = IMC::UamTxStatus::UTS_DONE;
-        dispatch(tx_status);
       }
 
        void
       handle_PingReply()  
       {
         /*
-        IMC::UamTxStatus tx_status; 
-        tx_status.value = IMC::UamTxStatus::UTS_DONE;
-        dispatch(tx_status);
+
+
         */
         //printSeatracFunction(CID_PING_RESP, data_Beacon );
       }
@@ -622,9 +609,7 @@ namespace Transports
               sendProtectedCommand(ComandCreateSeatrac( CID_DAT_SEND , data_Beacon ));  
             else
               {
-              IMC::UamTxStatus tx_status; 
-              tx_status.value = IMC::UamTxStatus::UTS_DONE;
-              dispatch(tx_status);
+              clearTicket(IMC::UamTxStatus::UTS_DONE);
 
               }
             return;
@@ -674,6 +659,7 @@ namespace Transports
         {
           msg.sys_dst = "unknown";
         }
+
         // Fill flags.
         if (m_addr != data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.DEST_ID)
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
@@ -685,6 +671,7 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
+          war("passou aqui");
         std::string hex = String::toHex(msg->data);
         std::vector<char> data_t;
         std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
@@ -809,9 +796,14 @@ namespace Transports
                if(data_Beacon.newDataAvailable(CID_DAT_ERROR))  
                 {
                   if(data_Beacon.type_CID_DAT_SEND_t.packetDataNextPart(0)<MAX_MESSAGE_ERRORS)
+                  {
                   sendProtectedCommand(ComandCreateSeatrac( CID_DAT_SEND , data_Beacon )); 
+                  }
                   else
+                  {
                     war(DTR("Part of msg failed"));
+                    clearTicket(IMC::UamTxStatus::UTS_FAILED);
+                  }
                   //printSeatracFunction(CID_DAT_ERROR, data_Beacon );
                 }
            }

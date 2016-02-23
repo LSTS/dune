@@ -487,9 +487,10 @@ namespace Transports
     { 
        if (msgTimer.overflow())  
        {
-           msgTimer.reset();
+          
            lock_flag=0;
        }
+        msgTimer.reset();
 
       if(next==1)// next part of message
       { 
