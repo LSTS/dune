@@ -61,62 +61,88 @@ namespace DUNE
     public:
       //! Constructor.
       StreamEstimator(void):
-        m_avg_north(c_samples),
-        m_avg_east(c_samples),
-        m_estimate(false)
+        m_static_north(c_samples),
+        m_static_east(c_samples),
+        m_static(false),
+        m_dynamic_tstamp(0.0)
       {
-        m_timer_rpm.setTop(c_time_no_rpm);
-        m_timer_gps.setTop(c_sampler);
+        m_static_timer_rpm.setTop(c_time_no_rpm);
+        m_static_timer_gps.setTop(c_sampler);
       }
 
       //! Received GpsFix estimate.
       //! @param[in] msg new GpsFix.
       //! @param[out] stream Estimated stream velocity.
       bool
-      consume(const IMC::GpsFix* msg, IMC::EstimatedStreamVelocity& stream)
+      consume(const IMC::EstimatedState state, const IMC::GpsFix* gps, IMC::EstimatedStreamVelocity& stream)
       {
-        if (!m_estimate)
+        bool estimated = false;
+
+        // Dynamic estimation (using navigation jumps when popping up)
+        double lat, lon;
+        Coordinates::toWGS84(state, lat, lon);
+        double distance = Coordinates::WGS84::distance(lat, lon, 0.0,
+                                                       gps->lat, gps->lon, 0.0);
+
+        // Navigation jump.
+        if (distance > 10.0 && m_dynamic_tstamp > 0)
         {
-          if (m_timer_rpm.overflow())
-            m_estimate = true;
+          // North-East-Down displacement.
+          double n, e;
+          Coordinates::WGS84::displacement(lat, lon, 0.0,
+                                           gps->lat, gps->lon, 0.0,
+                                           &n, &e);
+
+          double time = gps->getTimeStamp() - m_dynamic_tstamp;
+
+          stream.x = n / time;
+          stream.y = e / time;
+          estimated = true;
+        }
+
+        m_dynamic_tstamp = gps->getTimeStamp();
+
+        // Static estimation.
+        if (!m_static)
+        {
+          if (m_static_timer_rpm.overflow())
+            m_static = true;
           else
             return false;
         }
 
-        bool estimated = false;
-
-        if (m_timer_gps.overflow())
+        if (m_static_timer_gps.overflow())
         {
-          m_timer_gps.reset();
+          m_static_timer_gps.reset();
 
           // Only if last fix is recent.
-          if (msg->getTimeStamp() - m_fix.getTimeStamp() < c_sampler * c_samp_f)
+          if (gps->getTimeStamp() - m_static_fix.getTimeStamp() < c_sampler * c_samp_f)
           {
             // North-East-Down displacement.
             double n, e;
-            Coordinates::WGS84::displacement(m_fix.lat, m_fix.lon, 0.0,
-                                             msg->lat, msg->lon, 0.0,
+            Coordinates::WGS84::displacement(m_static_fix.lat, m_static_fix.lon, 0.0,
+                                             gps->lat, gps->lon, 0.0,
                                              &n, &e);
 
-            double time = msg->getTimeStamp() - m_fix.getTimeStamp();
+            double time = gps->getTimeStamp() - m_static_fix.getTimeStamp();
 
             double x = n / time;
             double y = e / time;
 
-            stream.x = m_avg_north.update(x);
-            stream.y = m_avg_east.update(y);
+            stream.x = m_static_north.update(x);
+            stream.y = m_static_east.update(y);
 
             // Signal estimated only when enough samples are available.
-            if (m_avg_north.sampleSize() >= c_samples / 2)
+            if (m_static_north.sampleSize() >= c_samples / 2)
               estimated = true;
           }
           else
           {
-            m_avg_north.clear();
-            m_avg_east.clear();
+            m_static_north.clear();
+            m_static_east.clear();
           }
 
-          m_fix = *msg;
+          m_static_fix = *gps;
         }
 
         return estimated;
@@ -130,25 +156,27 @@ namespace DUNE
         if (msg->value == 0)
           return;
 
-        m_avg_north.clear();
-        m_avg_east.clear();
-        m_timer_rpm.reset();
-        m_estimate = false;
+        m_static_north.clear();
+        m_static_east.clear();
+        m_static_timer_rpm.reset();
+        m_static = false;
       }
 
     private:
       //! Time with propeller stopped.
-      Time::Counter<double> m_timer_rpm;
+      Time::Counter<double> m_static_timer_rpm;
       //! Time between accepted fixes.
-      Time::Counter<double> m_timer_gps;
-      //! Moving Average for North component.
-      Math::MovingAverage<double> m_avg_north;
-      //! Moving Average for East component.
-      Math::MovingAverage<double> m_avg_east;
+      Time::Counter<double> m_static_timer_gps;
       //! GPS fix.
-      IMC::GpsFix m_fix;
+      IMC::GpsFix m_static_fix;
+      //! Moving Average for North component.
+      Math::MovingAverage<double> m_static_north;
+      //! Moving Average for East component.
+      Math::MovingAverage<double> m_static_east;
       //! Estimate stream
-      bool m_estimate;
+      bool m_static;
+      //! Last GPS fix before diving.
+      double m_dynamic_tstamp;
     };
   }
 }
