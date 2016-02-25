@@ -109,19 +109,27 @@ namespace Maneuver
       void
       onStateReport(void)
       {
-        if (m_duration > 0 && m_end_time > 0)
-        {
-          double time_left = m_end_time - Clock::get();
+        if (m_skeep == NULL)
+          return;
 
-          if (time_left <= 0)
-            m_task->signalCompletion();
-          else
-            m_task->signalProgress((uint16_t)Math::round(time_left));
-        }
-        else if (m_skeep != NULL)
+        if (m_skeep->isInside())
         {
-          if (m_skeep->isMoving())
-            m_task->signalProgress(m_pcs.eta);
+          if (m_duration > 0 && m_end_time > 0)
+          {
+            double time_left = m_end_time - Clock::get();
+
+            if (time_left <= 0)
+              m_task->signalCompletion();
+            else
+              m_task->signalProgress((uint16_t)Math::round(time_left));
+          }
+        }
+        else
+        {
+          if (m_duration > 0)
+            m_task->signalProgress(m_pcs.eta + m_duration);
+          else
+            m_task->signalProgress();
         }
       }
 
