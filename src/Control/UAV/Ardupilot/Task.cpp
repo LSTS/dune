@@ -146,6 +146,14 @@ namespace Control
         std::string form_fl_ent;
         //! Convert MSL to WGS84 height
         bool convert_msl;
+        //! Max pitch in FBWA
+        float pitch_max;
+        //! Min pitch in FBWA
+        float pitch_min;
+        //! Min throttle in FBWA
+        float throttle_min;
+        //! Max throttle in FBWA
+        float throttle_max;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -212,7 +220,7 @@ namespace Control
         //! Vehicle is on ground
         bool m_ground;
         //! Desired control
-        float m_droll, m_dclimb, m_dspeed;
+        float m_droll, m_dclimb, m_dspeed, m_dthrottle,m_dpitch;
         //! Type of system to be controlled
         APM_Vehicle m_vehicle_type;
         //! Check if is in service
@@ -250,6 +258,8 @@ namespace Control
           m_droll(0),
           m_dclimb(0),
           m_dspeed(20),
+          m_dthrottle(60),
+          m_dpitch(7.0),
           m_vehicle_type(VEHICLE_UNKNOWN),
           m_service(false),
           m_last_wp(0)
@@ -389,6 +399,26 @@ namespace Control
           .defaultValue("false")
           .description("Convert altitude extracted from the Ardupilot to WGS84 height");
 
+          param("Pitch MAX", m_args.pitch_max)
+          .defaultValue("25.0")
+          .units(Units::Degree)
+          .description("Max Pitch in FBWA");
+
+          param("Pitch MIN", m_args.pitch_min)
+          .defaultValue("-20.0")
+          .units(Units::Degree)
+          .description("Min Pitch in FBWA");
+
+          param("Throttle MAX", m_args.throttle_max)
+          .defaultValue("100.0")
+          .units(Units::Percentage)
+          .description("Max Throttle in FBWA");
+
+          param("Throttle MIN", m_args.throttle_min)
+          .defaultValue("0.0")
+          .units(Units::Percentage)
+          .description("Min Throttle in FBWA");
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -413,6 +443,8 @@ namespace Control
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
+          bind<DesiredPitch>(this);
+          bind<DesiredThrottle>(this);
           bind<DesiredZ>(this);
           bind<DesiredVerticalRate>(this);
           bind<DesiredSpeed>(this);
@@ -602,7 +634,14 @@ namespace Control
               if (cloops->mask & IMC::CL_ROLL)
               {
                 onUpdateParameters();
-                activateFBW();
+                if(!(m_mode==PL_MODE_FBWA) && !(m_cloops & IMC::CL_PITCH)){
+                  activateFBWB();
+                }
+              }
+              if(cloops->mask & IMC::CL_PITCH)
+              {
+                onUpdateParameters();
+                activateFBWA();
               }
             }
           }
@@ -620,7 +659,7 @@ namespace Control
                                                     1,
                                                     1,
                                                     0, //! RC Channel 1 (roll)
-                                                    0, //! RC Channel 2 (vertical rate)
+                                                    0, //! RC Channel 2 (vertical rate/pitch)
                                                     0, //! RC Channel 3 (speed)
                                                     0, //! RC Channel 4 (rudder)
                                                     0, //! RC Channel 5 (not used)
@@ -633,16 +672,18 @@ namespace Control
           }
 
           info(prev, m_cloops, IMC::CL_SPEED, "speed control");
+          info(prev, m_cloops, IMC::CL_THROTTLE, "throttle control");
           info(prev, m_cloops, IMC::CL_ALTITUDE, "altitude control");
           info(prev, m_cloops, IMC::CL_VERTICAL_RATE, "vertical rate control");
           info(prev, m_cloops, IMC::CL_ROLL, "bank control");
           info(prev, m_cloops, IMC::CL_YAW, "heading control");
           info(prev, m_cloops, IMC::CL_PATH, "path control");
+          info(prev, m_cloops, IMC::CL_PITCH, "pitch control");
         }
 
         //! Messages for FBWB control (using DUNE's controllers)
         void
-        activateFBW(void)
+        activateFBWB(void)
         {
           if (m_vehicle_type == VEHICLE_FIXEDWING)
           {
@@ -652,14 +693,36 @@ namespace Control
             mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
-                                      6); //! FBWB is mode 6
+                                      PL_MODE_FBWB);
 
             uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
           }
           else
           {
-            debug("Tried to set FBW on a non-supported vehicle!");
+            debug("Tried to set FBWB on a non-supported vehicle!");
+          }
+        }
+
+        void
+        activateFBWA(void)
+        {
+          if (m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            uint8_t buf[512];
+            mavlink_message_t msg;
+
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      PL_MODE_FBWA);
+
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          else
+          {
+            debug("Tried to set FBWA on a non-supported vehicle!");
           }
         }
 
@@ -688,37 +751,74 @@ namespace Control
 
           //! Convert references to PWM and send all
 
-          int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
-                                 m_args.rc1.val_min, m_args.rc1.val_max,
-                                 m_droll, m_args.rc1.reverse);
+          if (m_mode == PL_MODE_FBWA)
+          {
+        	  int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
+        	                         m_args.rc1.val_min, m_args.rc1.val_max,
+        	                         m_droll, m_args.rc1.reverse);
 
-          int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
-                                  m_args.rc2.val_min, m_args.rc2.val_max,
-                                  m_dclimb, m_args.rc2.reverse);
+        	  int pwm_pitch = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
+        	                          m_args.pitch_min, m_args.pitch_max,
+        	                          m_dpitch, m_args.rc2.reverse);
 
-          int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
-                                  m_args.rc3.val_min, m_args.rc3.val_max,
-                                  m_dspeed, m_args.rc3.reverse);
+        	  int pwm_throttle = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
+        	                             m_args.throttle_min, m_args.throttle_max,
+        	                             m_dthrottle, m_args.rc3.reverse);
 
-          debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
-          debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
+        	  debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
+        	  debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_pitch, pwm_throttle);
 
-          uint8_t buf[512];
+        	  uint8_t buf[512];
 
-          mavlink_message_t msg;
-          mavlink_msg_rc_channels_override_pack(255, 0, &msg,
-                                                1,
-                                                1,
-                                                pwm_roll, //! RC Channel 1 (roll)
-                                                pwm_climb, //! RC Channel 2 (vertical rate)
-                                                pwm_speed, //! RC Channel 3 (speed)
-                                                1500, //! RC Channel 4 (rudder)
-                                                0, //! RC Channel 5 (not used)
-                                                0, //! RC Channel 6 (not used)
-                                                0, //! RC Channel 7 (not used)
-                                                0);//! RC Channel 8 (mode - do not override)
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+        	  mavlink_message_t msg;
+        	  mavlink_msg_rc_channels_override_pack(255, 0, &msg,
+        	                                        1,
+        	                                        1,
+        	                                        pwm_roll, //! RC Channel 1 (roll)
+        	                                        pwm_pitch, //! RC Channel 2 (pitch)
+        	                                        pwm_throttle, //! RC Channel 3 (throttle)
+        	                                        1500, //! RC Channel 4 (rudder)
+        	                                        0, //! RC Channel 5 (not used)
+        	                                        0, //! RC Channel 6 (not used)
+        	                                        0, //! RC Channel 7 (not used)
+        	                                        0);//! RC Channel 8 (mode - do not override)
+        	  uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+        	  sendData(buf, n);
+          }
+          else
+          { //FBWB
+            int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
+                                   m_args.rc1.val_min, m_args.rc1.val_max,
+                                   m_droll, m_args.rc1.reverse);
+
+            int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
+                                    m_args.rc2.val_min, m_args.rc2.val_max,
+                                    m_dclimb, m_args.rc2.reverse);
+
+            int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
+                                    m_args.rc3.val_min, m_args.rc3.val_max,
+                                    m_dspeed, m_args.rc3.reverse);
+
+            debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
+            debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
+
+            uint8_t buf[512];
+
+            mavlink_message_t msg;
+            mavlink_msg_rc_channels_override_pack(255, 0, &msg,
+                                                  1,
+                                                  1,
+                                                  pwm_roll, //! RC Channel 1 (roll)
+                                                  pwm_climb, //! RC Channel 2 (vertical rate)
+                                                  pwm_speed, //! RC Channel 3 (speed)
+                                                  1500, //! RC Channel 4 (rudder)
+                                                  0, //! RC Channel 5 (not used)
+                                                  0, //! RC Channel 6 (not used)
+                                                  0, //! RC Channel 7 (not used)
+                                                  0);//! RC Channel 8 (mode - do not override)
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
         }
 
         void
@@ -843,6 +943,32 @@ namespace Control
 
           //! Saving value
           m_dspeed = d_speed->value;
+        }
+
+        void
+        consume(const IMC::DesiredPitch* d_pitch)
+        {
+          if(!(m_cloops & IMC::CL_PITCH))
+          {
+            inf(DTR("pitch control is NOT active"));
+            return;
+          }
+
+          //! Saving value
+          m_dpitch = Angles::degrees(d_pitch->value);
+        }
+
+        void
+        consume(const IMC::DesiredThrottle* d_throttle)
+        {
+          if(!(m_cloops & IMC::CL_THROTTLE))
+          {
+            inf(DTR("throttle control is NOT active"));
+            return;
+          }
+
+          //! Saving value
+          m_dthrottle = d_throttle->value;
         }
 
         //! Converts value in range min_value:max_value to a value_pwm in range min_pwm:max_pwm
@@ -2043,6 +2169,13 @@ namespace Control
                 m_external = false;
                 m_critical = false;
                 break;
+              case PL_MODE_FBWA:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "FBWA";
+                trace("FBWA");
+                m_external = false;
+                m_critical = false;
+                break;
               case PL_MODE_GUIDED:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "GUIDED";
@@ -2113,7 +2246,7 @@ namespace Control
           if (m_vehicle_type == VEHICLE_COPTER)
             is_valid_mode = (m_mode == CP_MODE_GUIDED || (m_mode == CP_MODE_AUTO                     )) ? true : false;
           else
-            is_valid_mode = (m_mode == 15             || (m_mode == 10           && m_current_wp == 3)) ? true : false;
+            is_valid_mode = (m_mode == PL_MODE_GUIDED || (m_mode == PL_MODE_AUTO && m_current_wp == 3)) ? true : false;
 
           // Check Loiter tolerance
           if (m_vehicle_type == VEHICLE_COPTER)
