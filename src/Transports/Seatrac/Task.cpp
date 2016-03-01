@@ -373,7 +373,7 @@ namespace Transports
             std::memcpy(&typemes, msg_raw,1);
             // std::cout << data  << std::endl;
             dataParser(typemes,msg_raw+1, data_Beacon);
-            printSeatracFunction(typemes, data_Beacon);
+            //printSeatracFunction(typemes, data_Beacon);
             // Initialize message validity flag
             typemes=0;
             data.clear();
@@ -548,13 +548,12 @@ namespace Transports
       void
       ping( uint8_t DEST_ID)  //todo  
       {
-          if(m_args.Beacon==BT_X110 && DEST_ID!=0)
-           {
-            
+          //if(m_args.Beacon==BT_X110 && DEST_ID!=0)
+                      
            data_Beacon.type_CID_PING_SEND_m.DEST_ID= DEST_ID;
-           data_Beacon.type_CID_PING_SEND_m.MSG_TYPE=MSG_REQX;
+           data_Beacon.type_CID_PING_SEND_m.MSG_TYPE=MSG_REQU;
            sendProtectedCommand(ComandCreateSeatrac( CID_PING_SEND , data_Beacon )); 
-           }
+           
       }
 
       void
@@ -586,17 +585,14 @@ namespace Transports
       handle_PingReply_error() //Todo  
       {
          war(DTR("No ping replay")) ;
+        clearTicket(IMC::UamTxStatus::UTS_FAILED);
         //printSeatracFunction(CID_PING_ERROR, data_Beacon );
       }
 
        void
       handle_PingReply()  
       {
-        /*
 
-
-        */
-        //printSeatracFunction(CID_PING_RESP, data_Beacon );
       }
 
       void
@@ -609,8 +605,18 @@ namespace Transports
               sendProtectedCommand(ComandCreateSeatrac( CID_DAT_SEND , data_Beacon ));  
             else
               {
+                double range_dist = (double) data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.RANGE_DIST;
+                range_dist=range_dist/10;
+                if (range_dist > 0)
+                {
+                  IMC::UamRxRange range;
+                  range.sys = lookupSystemName(data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.DEST_ID);
+                  if (m_ticket != NULL)
+                    range.seq = m_ticket->seq;
+                  range.value = range_dist ;
+                  dispatch(range);
+                }
               clearTicket(IMC::UamTxStatus::UTS_DONE);
-
               }
             return;
           }
@@ -629,8 +635,7 @@ namespace Transports
              else if(data_rec_flag ==0) 
              {
               //inf(DTR(" Colecting data")) ;
-             }
-             //printSeatracFunction(CID_DAT_RECEIVE, data_Beacon );
+             }             
           } 
       }
 
@@ -644,7 +649,7 @@ namespace Transports
         // Lookup source system name.  
         try
         {
-          msg.sys_src = lookupSystemName(data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.SRC_ID); //para onde vai a msg 
+          msg.sys_src = lookupSystemName(data_Beacon.type_CID_DAT_RECEIVE_m.ACO_FIX.SRC_ID); 
         }
         catch (...)
         {
@@ -671,7 +676,6 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
-          war("passou aqui");
         std::string hex = String::toHex(msg->data);
         std::vector<char> data_t;
         std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
@@ -709,8 +713,14 @@ namespace Transports
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP); 
+         int error_code;
+        if(ticket.addr!=0)
+          data_Beacon.type_CID_DAT_SEND_t.MSG_TYPE=MSG_REQ;
+        else 
+          data_Beacon.type_CID_DAT_SEND_t.MSG_TYPE=MSG_OWAY;
 
-        int error_code= data_Beacon.type_CID_DAT_SEND_t.packetDataBuild( data_t , ticket.addr);
+        error_code= data_Beacon.type_CID_DAT_SEND_t.packetDataBuild( data_t , ticket.addr);
+
         if(error_code ==2)
           err(DTR("Previous message Failed timeout detected"));
         else if(error_code ==1)
@@ -793,6 +803,12 @@ namespace Transports
                  handle_PingReply_error();   
                if(data_Beacon.newDataAvailable(CID_DAT_RECEIVE))
                   handle_BinaryMessage();
+                if(data_Beacon.newDataAvailable(CID_DAT_SEND))
+                  if(data_Beacon.type_CID_DAT_SEND_t.MSG_TYPE==MSG_OWAY)
+                  {
+                    clearTicket(IMC::UamTxStatus::UTS_DONE);
+                    data_Beacon.type_CID_DAT_SEND_t.lock_flag=0;
+                  }
                if(data_Beacon.newDataAvailable(CID_DAT_ERROR))  
                 {
                   if(data_Beacon.type_CID_DAT_SEND_t.packetDataNextPart(0)<MAX_MESSAGE_ERRORS)
@@ -804,7 +820,6 @@ namespace Transports
                     war(DTR("Part of msg failed"));
                     clearTicket(IMC::UamTxStatus::UTS_FAILED);
                   }
-                  //printSeatracFunction(CID_DAT_ERROR, data_Beacon );
                 }
            }
 
@@ -862,22 +877,49 @@ namespace Transports
             processInput(0); 
 
             //USBL
-            if (isActive() && !m_stop_comms &&  m_pinger.overflow()) //if (!m_stop_comms &&  m_pinger.overflow()) 
+            //if (isActive() && !m_stop_comms &&  m_pinger.overflow()) //
+            if (!m_stop_comms &&  m_pinger.overflow()) 
              { 
-                //ping and localization functions  
-                //nav_query_send( origin_number_adrr);
-                //ping(origin_number_adrr); 
+
+
                 // IF THIS IS TRUE THIS IS THE BASE OF SYSTEM COORDINATES  
                 if( m_args.Beacon==BT_X150)
                  {
-                
-                 //data_Beacon.NAV_BEACON_POS_SEND.BEACON_ID=origin_number_adrr;
-                 //sendProtectedCommand(ComandCreateSeatrac( CID_NAV_BEACON_POS_SEND , data_Beacon )); 
+                  
+                    //ping(7); 
+
+                    /*
+                    //teste 1 - Apenas activar no lado a manta o envio desta localização actualizado.
+                    data_Beacon.NAV_BEACON_POS_SEND.BEACON_ID=origin_number_adrr;
+                    data_Beacon.NAV_BEACON_POS_SEND.POSITION_EASTING =0
+                    data_Beacon.NAV_BEACON_POS_SEND.POSITION_NORTHING =0;
+                    data_Beacon.NAV_BEACON_POS_SEND.POSITION_DEPTH =0; 
+                    sendProtectedCommand(ComandCreateSeatrac( CID_NAV_BEACON_POS_SEND , data_Beacon )); 
+                    */
+
+                    /* teste 3 - 
+                    CID_NAV_REF_POS_SEND 
+                    data_Beacon.NAV_REF_POS_SEND.POSITION_LATITUDE =0;
+                    data_Beacon.NAV_REF_POS_SEND.POSITION_LONGITUDE=0;
+                    sendProtectedCommand(ComandCreateSeatrac( CID_NAV_REF_POS_SEND , data_Beacon )); 
+                    */
+
+
                  }
                 // IF THIS IS TRUE THIS IS NOT THE SYSTEM COORDINATES
                 if( m_args.Beacon==BT_X110)
                  {
-                  //
+
+                  /* teste 2 - tentar verificar se o ecofix
+                    //ping and localization functions                  
+                  ping(origin_number_adrr); 
+                  */
+                  /*
+                  //  Teste 4 
+
+                  nav_query_send( origin_number_adrr);
+
+                  */
                  }
                m_pinger.reset(); 
              }

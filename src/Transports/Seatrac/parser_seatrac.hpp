@@ -456,7 +456,6 @@ namespace Transports
         error_number=0;
         lock_flag=1;
         DEST_ID=dest_id;
-        MSG_TYPE=MSG_REQU;
         message_indice=1;
         n_sub_messages=1;
          if (msg.size()<(MAX_PACKET_LEN*2-4))
@@ -496,18 +495,19 @@ namespace Transports
       { 
         error_number=0;
         message_indice++;
-        PACKET_DATA=String::str("%02X%02X", message_indice ,  n_sub_messages);
-        n_sub_rest=hex.size()-(message_indice-1)*(PACKET_LEN*2-4);
-        PACKET_LEN=MAX_PACKET_LEN; 
+
         if(message_indice<=n_sub_messages)
-        {   
+        { 
+          PACKET_DATA=String::str("%02X%02X", message_indice ,  n_sub_messages);
+          n_sub_rest=hex.size()-(message_indice-1)*(PACKET_LEN*2-4);
+          PACKET_LEN=MAX_PACKET_LEN; 
+          
             if (n_sub_rest<=(PACKET_LEN*2-4))
                 {
                     PACKET_DATA+=hex.substr(((PACKET_LEN*2-4)*(message_indice-1)), n_sub_rest );
                     PACKET_LEN=n_sub_rest/2+2; 
                  }
                else PACKET_DATA+=hex.substr(((PACKET_LEN*2-4)*(message_indice-1)), (PACKET_LEN*2-4) );   
-
          }   
         else
         {
@@ -544,12 +544,12 @@ namespace Transports
   
   struct AHRSCAL_T {
     
-    uint16_t ACC_MIN_X    ;     //The accelerometer X-axis sensor value that corresponds to -1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is -270.
-    uint16_t ACC_MIN_Y    ;     //The accelerometer Y-axis sensor value that corresponds to -1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is -270.
-    uint16_t ACC_MIN_Z    ;     //The accelerometer Z-axis sensor value that corresponds to -1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is -270.
-    uint16_t ACC_MAX_X    ;     //The accelerometer X-axis sensor value that corresponds to +1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is 270.
-    uint16_t ACC_MAX_Y    ;     //The accelerometer Y-axis sensor value that corresponds to +1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is 270.
-    uint16_t ACC_MAX_Z    ;     //The accelerometer Z-axis sensor value that corresponds to +1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is 270.
+    int16_t ACC_MIN_X    ;     //The accelerometer X-axis sensor value that corresponds to -1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is -270.
+    int16_t ACC_MIN_Y    ;     //The accelerometer Y-axis sensor value that corresponds to -1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is -270.
+    int16_t ACC_MIN_Z    ;     //The accelerometer Z-axis sensor value that corresponds to -1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is -270.
+    int16_t ACC_MAX_X    ;     //The accelerometer X-axis sensor value that corresponds to +1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is 270.
+    int16_t ACC_MAX_Y    ;     //The accelerometer Y-axis sensor value that corresponds to +1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is 270.
+    int16_t ACC_MAX_Z    ;     //The accelerometer Z-axis sensor value that corresponds to +1G of gravitational force. Valid values lie in the range -1000 to +1000. Default value is 270.
     uint8_t  MAG_VALID    ;     //Flag is true when the calibration contains (or represents) a valid set of coefficients. Writing an invalid calibration causes no compensation to be performed on sensor values. Reading this flag as false indicates no dynamic calibration has been computed or loaded from EEPROM memory.
     float    MAG_HARD_X   ;     //The magnetometer X-axis sensor offset value to compensate for Hard Iron effects. Valid values lie in the range -2000 to +2000. Default value is 0.
     float    MAG_HARD_Y   ;     //The magnetometer Y-axis sensor offset value to compensate for Hard Iron effects. Valid values lie in the range -2000 to +2000. Default value is 0.
@@ -559,9 +559,9 @@ namespace Transports
     float    MAG_SOFT_Z   ;     //The magnetometer Z-axis sensor scaling value to compensate for Soft Iron effects. Valid values lie in the range -10 to +10. Default value is 1.
     float    MAG_FIELD    ;     //The normalised (not actual) magnetic field used for magnetometer calibration. Valid values lie between 0 and 100, with a typical value for idea fit being 50. Default value is 0.
     float    MAG_ERROR    ;     //The fit error of the magnetic calibration. Values are expressed as a percentage between 0 and 100. Default value is 100 representing 100% error.
-    uint16_t GYRO_OFFSET_X;     //The rotational rate gyroscope X-axis sensor offset. Valid values lie in the range -1000 to +1000. Default value of 0.
-    uint16_t GYRO_OFFSET_Y;     //The rotational rate gyroscope Y-axis sensor offset. Valid values lie in the range -1000 to +1000. Default value of 0.
-    uint16_t GYRO_OFFSET_Z;     //The rotational rate gyroscope Z-axis sensor offset. Valid values lie in the range -1000 to +1000. Default value of 0.
+    int16_t GYRO_OFFSET_X;     //The rotational rate gyroscope X-axis sensor offset. Valid values lie in the range -1000 to +1000. Default value of 0.
+    int16_t GYRO_OFFSET_Y;     //The rotational rate gyroscope Y-axis sensor offset. Valid values lie in the range -1000 to +1000. Default value of 0.
+    int16_t GYRO_OFFSET_Z;     //The rotational rate gyroscope Z-axis sensor offset. Valid values lie in the range -1000 to +1000. Default value of 0.
    };
 
   struct Type_SETTINGS_T{ 
@@ -592,6 +592,12 @@ namespace Transports
     uint16_t XCVR_YAW       ;       //When the AHRS attitude is not used to specify the transceiver attitude, this value is used as the manually specified yaw attitude from which relative positions of remote beacons to the local beacon are computed. Attitudes are applied in the position calculation routine via a Direction-Cosine-Matrix, in the Euler sequence Yaw, Pitch then Roll. Values are encoded as deci-degrees, so divide the value by 10 to obtain a value in degrees. Valid values are cyclically wrapped to the range 0° to 359.9°.
     uint16_t XCVR_PITCH     ;       //When the AHRS attitude is not used to specify the transceiver attitude, this value is used as the manually specified pitch attitude from which relative positions of remote beacons to the local beacon are computed. Attitudes are applied in the position calculation routine via a Direction-Cosine-Matrix, in the Euler sequence Yaw, Pitch then Roll. Values are encoded as deci-degrees, so divide the value by 10 to obtain a value in degrees. Valid values are clipped to the range -90.0° to +90.0°.
     uint16_t XCVR_ROLL      ;       //When the AHRS attitude is not used to specify the transceiver attitude, this value is used as the manually specified roll attitude from which relative positions of remote beacons to the local beacon are computed. Attitudes are applied in the position calculation routine via a Direction-Cosine-Matrix, in the Euler sequence Yaw, Pitch then Roll. Values are encoded as deci-degrees, so divide the value by 10 to obtain a value in degrees. Valid values are clipped to the range -180.0° to +180.0°.
+    uint8_t XCVR_POSFLT_VEL ; //The maximum velocity limit (in metres per second) that the position filter expects to see a beacon move at. Position Fix outputs for Beacons that have moved faster than this in the time between pings will be marked as a position error.
+
+    uint8_t XCVR_POSFLT_ANG;   // For beacons that are further away, azimuth errors start to come into play. This value defines the angular limits that beacons can move (or position jitter) within without being marked as an error. Vales are specified in degrees, and typically this value is 10 degrees.
+
+    uint8_t XCVR_POSFLT_TMO ; // This timeout limit specified in seconds that maximum time that a beacon is not communicated with before its position filter is reset, allowing its next position (what ever that may be) to be marked as valid. For example, a value of 60 seconds means that if no communications have been made with the beacon for 60 seconds, then its position could be far outside the limits expected by the position filter, so allow its position and restart tracking on the next fix.
+
    };
 
   struct Type_CID_XCVR_FIX{
@@ -1006,6 +1012,9 @@ namespace Transports
           std::memcpy(&dataBeacon.Becon_settings.XCVR_YAW                  , msg_raw + 101, 2);   
           std::memcpy(&dataBeacon.Becon_settings.XCVR_PITCH                , msg_raw + 103, 2);   
           std::memcpy(&dataBeacon.Becon_settings.XCVR_ROLL                 , msg_raw + 105, 2);
+          std::memcpy(&dataBeacon.Becon_settings.XCVR_POSFLT_VEL           , msg_raw + 107, 1);
+          std::memcpy(&dataBeacon.Becon_settings.XCVR_POSFLT_ANG           , msg_raw + 108, 1);
+          std::memcpy(&dataBeacon.Becon_settings.XCVR_POSFLT_TMO           , msg_raw + 109, 1);
         
 
       break;
@@ -1326,7 +1335,7 @@ namespace Transports
           break;
           case CID_SETTINGS_SET:
                {
-                    std::vector<char> msg_temp( 107, 0);                  
+                    std::vector<char> msg_temp( 110, 0);                  
                     std::memcpy( &msg_temp[0]  ,  &dataBeacon.Becon_settings.STATUS_FLAGS              ,  1);       
                     std::memcpy( &msg_temp[1]  ,  &dataBeacon.Becon_settings.STATUS_OUTPUT             ,  1);   
                     std::memcpy( &msg_temp[2]  ,  &dataBeacon.Becon_settings.UART_MAIN_BAUD            ,  1);   
@@ -1367,9 +1376,12 @@ namespace Transports
                     std::memcpy( &msg_temp[96] ,  &dataBeacon.Becon_settings.XCVR_BEACON_ID            ,  1);   
                     std::memcpy( &msg_temp[97] ,  &dataBeacon.Becon_settings.XCVR_RANGE_TMO            ,  2);   
                     std::memcpy( &msg_temp[99] ,  &dataBeacon.Becon_settings.XCVR_RESP_TIME            ,  2);   
-                    std::memcpy( &msg_temp[101], &dataBeacon.Becon_settings.XCVR_YAW                   ,  2);   
-                    std::memcpy( &msg_temp[103], &dataBeacon.Becon_settings.XCVR_PITCH                 ,  2);   
-                    std::memcpy( &msg_temp[105], &dataBeacon.Becon_settings.XCVR_ROLL                  ,  2);
+                    std::memcpy( &msg_temp[101],  &dataBeacon.Becon_settings.XCVR_YAW                  ,  2);   
+                    std::memcpy( &msg_temp[103],  &dataBeacon.Becon_settings.XCVR_PITCH                ,  2);   
+                    std::memcpy( &msg_temp[105],  &dataBeacon.Becon_settings.XCVR_ROLL                 ,  2);
+                    std::memcpy(&msg_temp[107],   &dataBeacon.Becon_settings.XCVR_POSFLT_VEL           ,  1);
+                    std::memcpy(&msg_temp[108],   &dataBeacon.Becon_settings.XCVR_POSFLT_ANG           ,  1);
+                    std::memcpy(&msg_temp[109],   &dataBeacon.Becon_settings.XCVR_POSFLT_TMO           ,  1);
                 //converter data para string 
                 data_m+= String::toHex(msg_temp);
             }
@@ -1691,7 +1703,7 @@ namespace Transports
             std::cout << (int) dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_LEN           <<  "    dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_LEN               " << std::endl;
             for (i=0;i<(int) dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_LEN ;i++)
             {
-              std::cout << (int) dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_DATA[i]     <<  "    dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_DATA["<<i+1 <<"]   " << std::endl;
+              std::cout << (unsigned)  dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_DATA[i]     <<  "    dataBeacon.type_CID_DAT_RECEIVE_m.PACKET_DATA["<<i+1 <<"]   " << std::endl;
             }
         
   
@@ -1748,6 +1760,9 @@ namespace Transports
             std::cout <<  dataBeacon.Becon_settings.XCVR_YAW                <<  "         dataBeacon.Becon_settings.XCVR_YAW                "  <<std::endl;   
             std::cout <<  dataBeacon.Becon_settings.XCVR_PITCH              <<  "         dataBeacon.Becon_settings.XCVR_PITCH              "  <<std::endl;   
             std::cout <<  dataBeacon.Becon_settings.XCVR_ROLL               <<  "         dataBeacon.Becon_settings.XCVR_ROLL               "  <<std::endl;     
+            std::cout <<  (int) dataBeacon.Becon_settings.XCVR_POSFLT_VEL         <<  "         dataBeacon.Becon_settings.XCVR_POSFLT_VEL         "  <<std::endl; 
+            std::cout <<  (int) dataBeacon.Becon_settings.XCVR_POSFLT_ANG         <<  "         dataBeacon.Becon_settings.XCVR_POSFLT_ANG         "  <<std::endl; 
+            std::cout <<  (int) dataBeacon.Becon_settings.XCVR_POSFLT_TMO         <<  "         dataBeacon.Becon_settings.XCVR_POSFLT_TMO         "  <<std::endl; 
         break;
 
         case  CID_NAV_QUERY_REQ:
@@ -1783,9 +1798,9 @@ namespace Transports
             }
             if (dataBeacon.NAV_QUERY_REQ.ACO_FIX.OutputFlags_list[2]) //Position Fields
             {
-              std::cout << dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_EASTING  << "      dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_EASTING "  << std::endl; 
-              std::cout << dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_NORTHING << "      dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_NORTHING"  << std::endl; 
-              std::cout << dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_DEPTH    << "      dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_DEPTH   "  << std::endl; 
+              std::cout << (long int)dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_EASTING  << "      dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_EASTING "  << std::endl; 
+              std::cout << (long int)dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_NORTHING << "      dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_NORTHING"  << std::endl; 
+              std::cout << (long int)dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_DEPTH    << "      dataBeacon.NAV_QUERY_REQ.ACO_FIX.POSITION_DEPTH   "  << std::endl; 
              }
             std::cout << (int) dataBeacon.NAV_QUERY_REQ.NAV_QUERY_T  <<"       dataBeacon.NAV_QUERY_REQ.NAV_QUERY_T "  <<std::endl; 
         break;
@@ -1823,9 +1838,9 @@ namespace Transports
             }
             if (dataBeacon.XCVR_FIX.ACO_FIX.OutputFlags_list[2]) //Position Fields
             {
-              std::cout << dataBeacon.XCVR_FIX.ACO_FIX.POSITION_EASTING  << "      dataBeacon.XCVR_FIX.ACO_FIX.POSITION_EASTING "  << std::endl; 
-              std::cout << dataBeacon.XCVR_FIX.ACO_FIX.POSITION_NORTHING << "      dataBeacon.XCVR_FIX.ACO_FIX.POSITION_NORTHING"  << std::endl; 
-              std::cout << dataBeacon.XCVR_FIX.ACO_FIX.POSITION_DEPTH    << "      dataBeacon.XCVR_FIX.ACO_FIX.POSITION_DEPTH   "  << std::endl; 
+              std::cout <<(long int) dataBeacon.XCVR_FIX.ACO_FIX.POSITION_EASTING  << "      dataBeacon.XCVR_FIX.ACO_FIX.POSITION_EASTING "  << std::endl; 
+              std::cout <<(long int) dataBeacon.XCVR_FIX.ACO_FIX.POSITION_NORTHING << "      dataBeacon.XCVR_FIX.ACO_FIX.POSITION_NORTHING"  << std::endl; 
+              std::cout << (long int)dataBeacon.XCVR_FIX.ACO_FIX.POSITION_DEPTH    << "      dataBeacon.XCVR_FIX.ACO_FIX.POSITION_DEPTH   "  << std::endl; 
              }
    
         break;
@@ -1888,9 +1903,9 @@ namespace Transports
             }
             if (dataBeacon.NAV_QUERY_RESP.ACO_FIX.OutputFlags_list[2]) //Position Fields
             {
-              std::cout << dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_EASTING  << "      dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_EASTING "  << std::endl; 
-              std::cout << dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_NORTHING << "      dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_NORTHING"  << std::endl; 
-              std::cout << dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_DEPTH    << "      dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_DEPTH   "  << std::endl; 
+              std::cout <<(long int) dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_EASTING  << "      dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_EASTING "  << std::endl; 
+              std::cout <<(long int) dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_NORTHING << "      dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_NORTHING"  << std::endl; 
+              std::cout << (long int)dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_DEPTH    << "      dataBeacon.NAV_QUERY_RESP.ACO_FIX.POSITION_DEPTH   "  << std::endl; 
              }
 
             std::cout << (int) dataBeacon.NAV_QUERY_RESP.QUERY_FLAGS    << "      dataBeacon.NAV_QUERY_RESP.QUERY_FLAGS   "  << std::endl; 
@@ -1948,9 +1963,9 @@ namespace Transports
             }
             if (dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.OutputFlags_list[2]) //Position Fields
             {
-              std::cout <<   dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_EASTING  << "        dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_EASTING       " << std::endl;
-              std::cout <<   dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_NORTHING << "        dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_NORTHING      " << std::endl;
-              std::cout <<   dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_DEPTH    << "        dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_DEPTH         " << std::endl;
+              std::cout <<  (long int) dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_EASTING  << "        dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_EASTING       " << std::endl;
+              std::cout <<  (long int) dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_NORTHING << "        dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_NORTHING      " << std::endl;
+              std::cout <<   (long int)dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_DEPTH    << "        dataBeacon.NAV_BEACON_POS_UPDATE.ACO_FIX.POSITION_DEPTH         " << std::endl;
             }
               std::cout <<   (int )dataBeacon.NAV_BEACON_POS_UPDATE.BEACON_ID          << "       dataBeacon.NAV_BEACON_POS_UPDATE.BEACON_ID               " << std::endl;
               std::cout <<   dataBeacon.NAV_BEACON_POS_UPDATE.POSITION_EASTING   << "       dataBeacon.NAV_BEACON_POS_UPDATE.POSITION_EASTING        " << std::endl;
@@ -2005,9 +2020,9 @@ namespace Transports
             }
             if (dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.OutputFlags_list[2]) //Position Fields
             {
-              std::cout <<  dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_EASTING  << "dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_EASTING  " <<   std::endl;  
-              std::cout <<  dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_NORTHING << "dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_NORTHING " <<   std::endl;
-              std::cout <<  dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_DEPTH    << "dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_DEPTH    " <<   std::endl;
+              std::cout << (long int) dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_EASTING  << "dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_EASTING  " <<   std::endl;  
+              std::cout << (long int) dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_NORTHING << "dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_NORTHING " <<   std::endl;
+              std::cout << (long int) dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_DEPTH    << "dataBeacon.NAV_REF_POS_UPDATE.ACO_FIX.POSITION_DEPTH    " <<   std::endl;
               
             }
                 std::cout <<  dataBeacon.NAV_REF_POS_UPDATE.BEACON_ID            << "dataBeacon.NAV_REF_POS_UPDATE.BEACON_ID          "   <<    std::endl; 
