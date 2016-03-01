@@ -51,6 +51,8 @@
 #  include <windows.h>
 #endif
 
+#define PRIORITY 18
+
 using DUNE_NAMESPACES;
 
 static bool s_stop = false;
@@ -160,6 +162,10 @@ main(int argc, char** argv)
       argv[0] = name;
       execv(argv[0], argv);
     }
+
+    // set process priority
+    std::string cmd = String::str("renice +%d %d", PRIORITY, pid);
+    system(cmd.c_str());
 
     int rv = waitForDaemon(pid);
     if (rv == 0)
