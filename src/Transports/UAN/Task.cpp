@@ -350,8 +350,7 @@ namespace Transports
                 aop.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
                 break;
               case IMC::AcousticOperation::AOP_RANGE:
-                aop.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
-                break;
+                return;
               case IMC::AcousticOperation::AOP_MSG:
                 delete m_msg_requests.front();
                 m_msg_requests.erase(m_msg_requests.begin());
