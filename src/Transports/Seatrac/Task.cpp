@@ -373,7 +373,7 @@ namespace Transports
             std::memcpy(&typemes, msg_raw,1);
             // std::cout << data  << std::endl;
             dataParser(typemes,msg_raw+1, data_Beacon);
-            printSeatracFunction(typemes, data_Beacon);
+            //printSeatracFunction(typemes, data_Beacon);
             // Initialize message validity flag
             typemes=0;
             data.clear();
