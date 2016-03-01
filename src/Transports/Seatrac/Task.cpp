@@ -373,7 +373,7 @@ namespace Transports
             std::memcpy(&typemes, msg_raw,1);
             // std::cout << data  << std::endl;
             dataParser(typemes,msg_raw+1, data_Beacon);
-            //printSeatracFunction(typemes, data_Beacon);
+            printSeatracFunction(typemes, data_Beacon);
             // Initialize message validity flag
             typemes=0;
             data.clear();
@@ -474,7 +474,6 @@ namespace Transports
           sendCommand(ComandCreateSeatrac( CID_SETTINGS_GET , data_Beacon ));
           processInput(1);
           }while(data_Beacon.newDataAvailable(CID_SETTINGS_GET)==0);
-          //printSeatracFunction( CID_SETTINGS_GET, data_Beacon );
           if ( !((data_Beacon.Becon_settings.XCVR_BEACON_ID == m_addr) && (data_Beacon.Becon_settings.STATUS_FLAGS == 0x1)  && (data_Beacon.Becon_settings.STATUS_OUTPUT==63)) )
           {
             setAndSendState(STA_NO_BEACONS);
@@ -586,7 +585,6 @@ namespace Transports
       {
          war(DTR("No ping replay")) ;
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
-        //printSeatracFunction(CID_PING_ERROR, data_Beacon );
       }
 
        void
@@ -885,41 +883,10 @@ namespace Transports
                 // IF THIS IS TRUE THIS IS THE BASE OF SYSTEM COORDINATES  
                 if( m_args.Beacon==BT_X150)
                  {
-                  
-                    //ping(7); 
-
-                    /*
-                    //teste 1 - Apenas activar no lado a manta o envio desta localização actualizado.
-                    data_Beacon.NAV_BEACON_POS_SEND.BEACON_ID=origin_number_adrr;
-                    data_Beacon.NAV_BEACON_POS_SEND.POSITION_EASTING =0
-                    data_Beacon.NAV_BEACON_POS_SEND.POSITION_NORTHING =0;
-                    data_Beacon.NAV_BEACON_POS_SEND.POSITION_DEPTH =0; 
-                    sendProtectedCommand(ComandCreateSeatrac( CID_NAV_BEACON_POS_SEND , data_Beacon )); 
-                    */
-
-                    /* teste 3 - 
-                    CID_NAV_REF_POS_SEND 
-                    data_Beacon.NAV_REF_POS_SEND.POSITION_LATITUDE =0;
-                    data_Beacon.NAV_REF_POS_SEND.POSITION_LONGITUDE=0;
-                    sendProtectedCommand(ComandCreateSeatrac( CID_NAV_REF_POS_SEND , data_Beacon )); 
-                    */
-
-
                  }
                 // IF THIS IS TRUE THIS IS NOT THE SYSTEM COORDINATES
                 if( m_args.Beacon==BT_X110)
                  {
-
-                  /* teste 2 - tentar verificar se o ecofix
-                    //ping and localization functions                  
-                  ping(origin_number_adrr); 
-                  */
-                  /*
-                  //  Teste 4 
-
-                  nav_query_send( origin_number_adrr);
-
-                  */
                  }
                m_pinger.reset(); 
              }
