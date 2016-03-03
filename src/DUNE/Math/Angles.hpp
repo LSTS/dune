@@ -53,7 +53,7 @@ namespace DUNE
       inline static fp64_t
       normalizeRadian(fp64_t a)
       {
-        return a - c_two_pi * floor((a + c_pi) / c_two_pi);
+        return a - c_two_pi * std::floor((a + c_pi) / c_two_pi);
       }
 
       //! Convert a value given in degree to radian.
