@@ -32,6 +32,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+//Local headers
+#include "ServoPWM.hpp"
+
 namespace Actuators
 {
   namespace PWMBBB
@@ -45,18 +48,12 @@ namespace Actuators
         // - PinOut
         std::vector<int> portio;
       };
+
       Arguments m_args;
+      //Servo 1
+      ServoPwm* m_servo1;
       //GPIO for signal of servo
       int GPIOPin;
-      //Handle of servo pinout
-      FILE *myOutputHandle;
-      //Mode in/out of pinout
-      char setValue[4];
-      char GPIODirection[64];
-      //Name of pin to use
-      char GPIOString[4];
-      //Value to put in pinout
-      char GPIOValue[64];
       //state of update msg servo position
       bool updateMsg;
       //Value of servo position in deg
@@ -66,7 +63,8 @@ namespace Actuators
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-      DUNE::Tasks::Task(name, ctx)
+      DUNE::Tasks::Task(name, ctx),
+      m_servo1(NULL)
       {
         param("PinOut", m_args.portio)
           .defaultValue("60")
@@ -104,113 +102,29 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        GPIOPin = m_args.portio[0];
+        m_servo1 = new ServoPwm(this, GPIOPin, 40);
+        m_servo1->start();
       }
       
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        if (m_servo1 != NULL)
+        {
+          m_servo1->stopAndJoin();
+          delete m_servo1;
+          m_servo1 = NULL;
+        }
       }
       
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        setAngleServomotor(msg->value);
-      }
-
-      //!Inic of config to pinout of servomotor
-      bool
-      inicServo(void)
-      {
-        updateMsg = false;
-        valuePos = 0;
-        GPIOPin=m_args.portio[0]; /* GPIO1_28 or pin 12 on the P9 header */ 
-        sprintf(GPIOString, "%d", GPIOPin);
-        sprintf(GPIOValue, "/sys/class/gpio/gpio%d/value", GPIOPin);
-        sprintf(GPIODirection, "/sys/class/gpio/gpio%d/direction", GPIOPin);
-        // Export the pin
-        if ((myOutputHandle = fopen("/sys/class/gpio/export", "ab")) == NULL)
-        {
-          err(DTR("Unable to export GPIO pin"));
-          return false;
-        }
-        strcpy(setValue, GPIOString);
-        fwrite(&setValue, sizeof(char), 2, myOutputHandle);
-        fclose(myOutputHandle);
-        // Set direction of the pin to an output
-        if ((myOutputHandle = fopen(GPIODirection, "rb+")) == NULL)
-        {
-          err(DTR("Unable to open direction handle"));
-          return false;
-        }
-        strcpy(setValue,"out");
-        fwrite(&setValue, sizeof(char), 3, myOutputHandle);
-        fclose(myOutputHandle);
-
-        return true;
-      }
-
-      //!Set 0º to servomotor
-      bool
-      setAngleServomotor( double angle )
-      {
-        bool resultState = true;
-        valuePos = angle;
-        int cntRefreshservo = 0;
-        int degAngle = DUNE::Math::Angles::degrees(std::abs(angle));
-        if(degAngle < 0)
-          degAngle = 0;
-        if(degAngle > 180)
-          degAngle = 180;
-
-        int valueUP = (10 * degAngle) + 600;
-
-        while(cntRefreshservo < 20 && resultState)
-        {
-          if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
-          {
-            resultState = false;
-            err(DTR("Unable to open value handle"));
-          }
-          strcpy(setValue, "1"); // Set value high
-          fwrite(&setValue, sizeof(char), 1, myOutputHandle);
-          fclose(myOutputHandle);
-          usleep (valueUP);
-          // Set output to low
-          if ((myOutputHandle = fopen(GPIOValue, "rb+")) == NULL)
-          {
-            err(DTR("Unable to open value handle"));
-            resultState = false;
-          }
-          strcpy(setValue, "0"); // Set value low
-          fwrite(&setValue, sizeof(char), 1, myOutputHandle);
-          fclose(myOutputHandle);;
-          usleep (20000 - valueUP);
-
-          cntRefreshservo++;
-        }
-
-        if(resultState)
-          updateMsg = true;
-
-        return resultState;
-      }
-
-      //!Close PinOut config
-      bool
-      closeConfigServo(void)
-      {
-        // Unexport the pin
-        if ((myOutputHandle = fopen("/sys/class/gpio/unexport", "ab")) == NULL)
-        {
-          err(DTR("Unable to unexport GPIO pin"));
-          return false;
-        }
-        strcpy(setValue, GPIOString);
-        fwrite(&setValue, sizeof(char), 2, myOutputHandle);
-        fclose(myOutputHandle);
-
-        return true;
+        valuePos = msg->value;
+        m_servo1->SetPwmValue(valuePos);
+        updateMsg = true;
       }
 
       //! Main loop.
@@ -218,21 +132,31 @@ namespace Actuators
       onMain(void)
       {
         IMC::ServoPosition msgServoPos;
-        while(!inicServo())
+        
+        while(!m_servo1->CheckGPIOSate() && !stopping())
         {
-          waitForMessages(1.0);
+          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET")));
+          sleep(1);
         }
+
         while (!stopping())
         {
-          waitForMessages(0.1);
           if(updateMsg)
           {
             msgServoPos.value = valuePos;
             dispatch(msgServoPos);
             updateMsg = false;
           }
+
+          if(m_servo1->CheckGPIOSate())
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET")));
+
+          waitForMessages(1.0);
+
         }
-        closeConfigServo();
+        
       }
     };
   }
