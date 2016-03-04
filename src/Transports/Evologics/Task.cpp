@@ -84,9 +84,6 @@ namespace Transports
     typedef std::map<std::string, unsigned> MapName;
     typedef std::map<unsigned, std::string> MapAddr;
 
-    //! Broadcast address.
-    static const unsigned c_broadcast = 0x0f;
-
     struct Task: public Tasks::Task
     {
       //! Map of Evologics modems by name.
@@ -117,6 +114,7 @@ namespace Transports
         m_sock(NULL),
         m_address(0),
         m_driver(NULL),
+        m_sound_speed(0),
         m_sound_speed_eid(-1),
         m_ticket(NULL)
       {
@@ -619,6 +617,12 @@ namespace Transports
         {
           msg.sys_src = "unknown";
         }
+
+        IMC::AcousticLink link;
+        link.integrity = reply.integrity;
+        link.rssi = reply.rssi;
+        link.peer = msg.sys_src;
+        dispatch(link);
 
         // Lookup destination system name.
         try
