@@ -25,8 +25,8 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-#ifndef VISION_SERVOPWM_HPP_INCLUDED_
-#define VISION_SERVOPWM_HPP_INCLUDED_
+#ifndef ACTUATORS_SERVOPWM_HPP_INCLUDED_
+#define ACTUATORS_SERVOPWM_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>
@@ -43,16 +43,6 @@ namespace Actuators
 {
   namespace PWMBBB
   {
-    //Handle of servo pinout
-    FILE *myOutputHandle;
-    //Mode in/out of pinout
-    char setValue[4];
-    char GPIODirection[64];
-    //Name of pin to use
-    char GPIOString[4];
-    //Value to put in pinout
-    char GPIOValue[64];
-
     class ServoPwm: public Thread
     {
       public:
@@ -92,7 +82,6 @@ namespace Actuators
         //! Parent task.
         DUNE::Tasks::Task* m_task;
         
-
         void
         run(void)
         {
@@ -106,19 +95,6 @@ namespace Actuators
           while (!isStopping())
           {
               RefreshPWM(m_value);
-              //m_task->inf("VALUE: %f", m_value);
-              
-              //###################################
-              //!FOR DEBUG
-              /*cnt++;
-              if(cnt > 150)
-              {
-                m_value = m_value + 10;
-                if(m_value > 110)
-                  m_value = 40;
-                cnt = 0;
-              }*/
-              //###################################
           }
         }
 
@@ -172,7 +148,6 @@ namespace Actuators
         RefreshPWM( double angle )
         {
           int degAngle = DUNE::Math::Angles::degrees(std::abs(angle));
-          //int degAngle = angle;
           
           if(degAngle < 0)
             degAngle = 0;
@@ -202,6 +177,15 @@ namespace Actuators
           usleep (20000 - valueUP);
         }
 
+        //Handle of servo pinout
+        FILE *myOutputHandle;
+        //Mode in/out of pinout
+        char setValue[4];
+        char GPIODirection[64];
+        //Name of pin to use
+        char GPIOString[4];
+        //Value to put in pinout
+        char GPIOValue[64];
     };
   }
 }

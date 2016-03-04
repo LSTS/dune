@@ -89,7 +89,6 @@ namespace Actuators
       void
       onEntityResolution(void)
       {
-        
       }
       
       //! Acquire resources.
@@ -156,7 +155,6 @@ namespace Actuators
           waitForMessages(1.0);
 
         }
-        
       }
     };
   }
