@@ -75,8 +75,7 @@ namespace Actuators
       char msg[16];
       //Parser
       MessageParse* m_parse;
-      //! const string's for test/debug
-      std::vector<std::string> test;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -128,23 +127,6 @@ namespace Actuators
         m_parse = new MessageParse();
         m_parse->m_amc_state = MessageParse::PS_PREAMBLE;
         m_poll.add(*m_uart);
-        //!@MODE,ID,VALUE/INFO,
-        test.push_back("@S,2,100,*");
-        test.push_back("@S,3,100,*");
-        test.push_back("@R,0,tmp,*");
-        test.push_back("@R,1,tmp,*");
-        test.push_back("@R,2,rpm,*");
-        test.push_back("@R,3,rpm,*");
-
-        test.push_back("@R,2,pwr,*");
-
-        test.push_back("@S,0,100,*");
-        test.push_back("@R,0,tmp,*");
-        test.push_back("@S,0,1000,*");
-        test.push_back("@R,0,rpm,*");
-        test.push_back("@S,1,100,*");
-        test.push_back("@S,2,100,*");
-        test.push_back("@S,3,100,*");
       }
 
       //! Release resources.
