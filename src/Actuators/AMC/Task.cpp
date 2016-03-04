@@ -28,11 +28,25 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+//Local Headers
+#include "MessageControl.hpp"
+
 namespace Actuators
 {
   namespace AMC
   {
     using DUNE_NAMESPACES;
+
+    enum AMCFunc
+    {
+      // Read RPM
+      RPM,
+      // Read TEMPERATURE
+      TEMPERATURE,
+      // Read Voltage and current
+      PWR
+      
+    };
 
     struct Arguments
     {
@@ -47,14 +61,20 @@ namespace Actuators
     {
       //! Task arguments.
       Arguments m_args;
+      //!Func read name
+      AMCFunc m_func_name;
       //! Serial port device.
       SerialPort* m_uart;
       // I/O Multiplexer.
       Poll m_poll;
       //! Scratch buffer.
-      uint8_t m_buffer[128];
+      uint8_t m_buffer[16];
       //CSUM
       uint8_t m_csum[2];
+      //Buffer msg
+      char msg[16];
+      //Parser
+      MessageParse* m_parse;
       //! const string's for test/debug
       std::vector<std::string> test;
       //! Constructor.
@@ -97,6 +117,7 @@ namespace Actuators
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
       }
 
@@ -104,10 +125,21 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        m_parse = new MessageParse();
+        m_parse->m_amc_state = MessageParse::PS_PREAMBLE;
         m_poll.add(*m_uart);
         //!@MODE,ID,VALUE/INFO,
+        test.push_back("@S,2,100,*");
+        test.push_back("@S,3,100,*");
+        test.push_back("@R,0,tmp,*");
+        test.push_back("@R,1,tmp,*");
+        test.push_back("@R,2,rpm,*");
+        test.push_back("@R,3,rpm,*");
+
+        test.push_back("@R,2,pwr,*");
+
         test.push_back("@S,0,100,*");
-        test.push_back("@R,0,rpm,*");
+        test.push_back("@R,0,tmp,*");
         test.push_back("@S,0,1000,*");
         test.push_back("@R,0,rpm,*");
         test.push_back("@S,1,100,*");
@@ -138,7 +170,7 @@ namespace Actuators
 
           try
           {
-            rv = m_uart->read(m_buffer, sizeof(m_buffer));
+            rv = m_uart->read(m_buffer, 1);
           }
           catch (std::exception& e)
           {
@@ -146,58 +178,108 @@ namespace Actuators
             return;
           }
 
-          if (rv < 0)
+          if (rv <= 0)
           {
             err(DTR("unknown read error"));
             return;
           }
-
-          war("SIZE RECEIVED: %d", rv);
-          err("DATA RECEIVED: %s", m_buffer);
+          else
+            m_parse->ParserAMC(m_buffer[0]);
         }
       }
 
-      uint8_t
-      CRC8(unsigned char *data)
+      int
+      setRPM( int motor, int rpm )
       {
-        uint8_t csum = 0x00;
-        uint8_t t = 0;
-        while(data[t] != '*')
+        memset(&msg, '\0', sizeof(msg));
+        sprintf(msg, "@S,%d,%d,*", motor, rpm);
+        m_csum[0] = m_parse->CRC8((unsigned char *)msg);
+        int t = m_uart->write(msg, strlen(msg));
+        m_uart->write(m_csum, 1);
+        t++;
+        usleep(1000);
+        //war("SEND: %s%c   SIZE: %d", msg, m_csum[0], t + 1);
+
+        return t;
+      }
+
+      void
+      stopAllMotor(void)
+      {
+        setRPM(0, 0);
+        setRPM(1, 0);
+        setRPM(2, 0);
+        setRPM(3, 0);
+      }
+
+      void
+      readParameterAMC(int motor, AMCFunc _func_name)
+      {
+        int t;
+        if(_func_name == RPM)
         {
-          csum ^= data[t];
+          memset(&msg, '\0', sizeof(msg));
+          sprintf(msg, "@R,%d,rpm,*", motor);
+          m_csum[0] = m_parse->CRC8((unsigned char *)msg);
+          t = m_uart->write(msg, strlen(msg));
+          m_uart->write(m_csum, 1);
           t++;
         }
-          //(csum | 0x80)
-        return csum;
+        else if(_func_name == TEMPERATURE)
+        {
+          memset(&msg, '\0', sizeof(msg));
+          sprintf(msg, "@R,%d,tmp,*", motor);
+          m_csum[0] = m_parse->CRC8((unsigned char *)msg);
+          t = m_uart->write(msg, strlen(msg));
+          m_uart->write(m_csum, 1);
+          t++;
+        }
+        else if(_func_name == PWR)
+        {
+          memset(&msg, '\0', sizeof(msg));
+          sprintf(msg, "@R,%d,pwr,*", motor);
+          m_csum[0] = m_parse->CRC8((unsigned char *)msg);
+          t = m_uart->write(msg, strlen(msg));
+          m_uart->write(m_csum, 1);
+          t++;
+        }
+        usleep(1000);
+        //war("SEND: %s%c   SIZE: %d", msg, m_csum[0], t + 1);
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        int i = 0;
-        int t = 0;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        int t=0;
         while (!stopping())
         {
-
           if (m_poll.poll(0.5))
           {
             checkSerialPort();
           }
           else
           {
-            m_csum[0] = CRC8((unsigned char *)test[i].c_str());
-            t = m_uart->write(test[i].c_str(), test[i].size());
-            m_uart->write(m_csum, 1);
-            inf("SEND: %s%c   SIZE: %d", test[i].c_str(), m_csum[0], t + 1);
+            setRPM(0, t);
+            usleep(250000);
+            readParameterAMC(0, RPM);
+            readParameterAMC(0, TEMPERATURE);
+            readParameterAMC(0, PWR);
             
-            i++;
-            if(i > 3)
-              i = 0;
+            printf("RPM: %d SIGNAL_SEND: %d\n", (int)m_parse->m_motor.rpm[0], t);
+            printf("TEMPERATURE: %.2f\n", m_parse->m_motor.tmp[0]);
+            printf("VOLTAGE: %.2f\n", m_parse->m_motor.volt[0]);
+            printf("CURRENT: %.2f\n", m_parse->m_motor.current[0]);
+            war(" ");
 
+            t = t + 100;
+            if(t > 1800)
+              t = 0;
             waitForMessages(1.0);
           }
         }
+        stopAllMotor();
       }
     };
   }
