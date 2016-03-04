@@ -573,6 +573,12 @@ namespace Transports
           msg.sys_src = "unknown";
         }
 
+        IMC::AcousticLink link;
+        link.integrity = reply.integrity;
+        link.rssi = reply.rssi;
+        link.peer = msg.sys_src;
+        dispatch(link);
+
         // Lookup destination system name.
         try
         {
