@@ -45,19 +45,25 @@ namespace Actuators
       //!Variables
       struct Arguments
       {
-        // - PinOut
-        std::vector<int> portio;
+        // - PinOut1
+        std::vector<int> portio1;
+        // - PinOut2
+        std::vector<int> portio2;
       };
 
       Arguments m_args;
       //Servo 1
       ServoPwm* m_servo1;
+      //Servo 2
+      ServoPwm* m_servo2;
       //GPIO for signal of servo
       int GPIOPin;
       //state of update msg servo position
       bool updateMsg;
       //Value of servo position in deg
       double valuePos;
+      //ID servo
+      uint8_t idServo;
  
       //! Constructor.
       //! @param[in] name task name.
@@ -66,9 +72,13 @@ namespace Actuators
       DUNE::Tasks::Task(name, ctx),
       m_servo1(NULL)
       {
-        param("PinOut", m_args.portio)
+        param("PinOut1", m_args.portio1)
           .defaultValue("60")
-          .description("Port to use in PWMBBB");
+          .description("Port servo1 to use in PWMBBB");
+
+        param("PinOut2", m_args.portio2)
+          .defaultValue("48")
+          .description("Port servo2 to use in PWMBBB");
 
         bind<IMC::SetServoPosition>(this);
       }
@@ -101,9 +111,12 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        GPIOPin = m_args.portio[0];
-        m_servo1 = new ServoPwm(this, GPIOPin, 40);
+        GPIOPin = m_args.portio1[0];
+        m_servo1 = new ServoPwm(this, GPIOPin, 1.745329);
         m_servo1->start();
+        GPIOPin = m_args.portio2[0];
+        m_servo2 = new ServoPwm(this, GPIOPin, 1.745329);
+        m_servo2->start();
       }
       
       //! Release resources.
@@ -116,13 +129,30 @@ namespace Actuators
           delete m_servo1;
           m_servo1 = NULL;
         }
+        if (m_servo2 != NULL)
+        {
+          m_servo2->stopAndJoin();
+          delete m_servo2;
+          m_servo2 = NULL;
+        }
       }
       
       void
       consume(const IMC::SetServoPosition* msg)
       {
         valuePos = msg->value;
-        m_servo1->SetPwmValue(valuePos);
+        idServo = msg->id;
+        if(idServo == 1)
+        {
+          war("SERVO 1: %f", valuePos);
+          m_servo1->SetPwmValue(valuePos);
+        }
+        else if(idServo == 2)
+        {
+          war("SERVO 2: %f", valuePos);
+          m_servo2->SetPwmValue(valuePos);
+        }
+          
         updateMsg = true;
       }
 
@@ -134,7 +164,12 @@ namespace Actuators
         
         while(!m_servo1->CheckGPIOSate() && !stopping())
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET")));
+          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET1")));
+          sleep(1);
+        }
+        while(!m_servo2->CheckGPIOSate() && !stopping())
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET2")));
           sleep(1);
         }
 
@@ -143,6 +178,7 @@ namespace Actuators
           if(updateMsg)
           {
             msgServoPos.value = valuePos;
+            msgServoPos.id = idServo;
             dispatch(msgServoPos);
             updateMsg = false;
           }
@@ -150,7 +186,12 @@ namespace Actuators
           if(m_servo1->CheckGPIOSate())
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           else
-            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET")));
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET1")));
+
+          if(m_servo2->CheckGPIOSate())
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("GPIO_SET2")));
 
           waitForMessages(1.0);
 
