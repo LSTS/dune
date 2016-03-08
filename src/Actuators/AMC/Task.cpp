@@ -124,7 +124,7 @@ namespace Actuators
           .defaultValue("1.0")
           .description("Motor rpm conversion factor");
 
-          option = String::str("Motor %u - Conversion", i);
+          option = String::str("Motor %u - State", i);
           param(option, m_args.motor_state[i])
           .defaultValue("true")
           .description("Motor State");
@@ -217,16 +217,16 @@ namespace Actuators
       {
         if(msg->id == 0)
         {
-          setRPM(0, msg->value);
+          setRPM(0, (msg->value * 30000));
           usleep(c_sleep_time);
-          setRPM(1, msg->value);
+          setRPM(1, (msg->value * 30000));
           usleep(c_sleep_time);
         }
         else if(msg->id == 1)
         {
-          setRPM(2, msg->value);
+          setRPM(2, (msg->value * 30000));
           usleep(c_sleep_time);
-          setRPM(3, msg->value);
+          setRPM(3, (msg->value * 30000));
           usleep(c_sleep_time);
         }
       }
