@@ -378,8 +378,6 @@ namespace Actuators
       void
       onMain(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
         m_cnt_motor = 0;
 
         while (!stopping())
@@ -388,6 +386,7 @@ namespace Actuators
           {
             checkSerialPort();
             m_wdog.reset();
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
           else
           {
