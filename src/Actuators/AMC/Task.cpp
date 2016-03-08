@@ -22,7 +22,7 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Pedro_Gonçalves                                                 *
+// Author: Pedro Gonçalves                                                 *
 //***************************************************************************
 
 // DUNE headers.
@@ -37,44 +37,62 @@ namespace Actuators
   {
     using DUNE_NAMESPACES;
 
-    enum AMCFunc
+    static const int c_max_csum = 2;
+    static const int c_max_motors = 4;
+    static const int c_max_buffer = 16;
+    static const uint8_t c_poly = 0x00;
+    static const int c_sleep_time = 250000;
+
+    enum AmcMessages
     {
-      // Read RPM
+      // RPM
       RPM,
-      // Read TEMPERATURE
+      // TEMPERATURE
       TEMPERATURE,
-      // Read Voltage and current
-      PWR
-      
+      // Voltage and Current
+      PWR,
+      // State of motor
+      STATE
     };
 
     struct Arguments
     {
-      /* data */
       //! Serial port device.
       std::string uart_dev;
       //! Serial port baud rate.
       unsigned uart_baud;
+      //! Rpm entity labels
+      std::string motor_elabels[c_max_motors];
+      //! Internal conversion factors
+      double internal_factors[c_max_motors];
+      //! Motor state
+      bool motor_state[c_max_motors];
     };
 
     struct Task: public DUNE::Tasks::Task
     {
+      //! Rpm message
+      IMC::Rpm m_rpm_val[c_max_motors];
       //! Task arguments.
       Arguments m_args;
       //!Func read name
-      AMCFunc m_func_name;
+      AmcMessages m_func_name;
       //! Serial port device.
       SerialPort* m_uart;
       // I/O Multiplexer.
       Poll m_poll;
       //! Scratch buffer.
-      uint8_t m_buffer[16];
+      uint8_t m_buffer[c_max_buffer];
       //CSUM
-      uint8_t m_csum[2];
+      uint8_t m_csum[c_max_csum];
       //Buffer msg
-      char msg[16];
+      char m_msg[c_max_buffer];
       //Parser
       MessageParse* m_parse;
+      //! Watchdog.
+      Counter<double> m_wdog;
+      //Counter stage id motor
+      uint8_t m_cnt_motor;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -92,18 +110,66 @@ namespace Actuators
         .defaultValue("57600")
         .description("Serial port baud rate");
 
+        // Extract motor configurations
+        for (unsigned i = 0; i < c_max_motors; ++i)
+        {
+          std::string option = String::str("Motor %u - Entity Label", i);
+          param(option, m_args.motor_elabels[i])
+          .defaultValue("")
+          .description("Motor Entity Label");
+
+          option = String::str("Motor %u - Conversion", i);
+          param(option, m_args.internal_factors[i])
+          .size(1)
+          .defaultValue("1.0")
+          .description("Motor rpm conversion factor");
+
+          option = String::str("Motor %u - Conversion", i);
+          param(option, m_args.motor_state[i])
+          .defaultValue("true")
+          .description("Motor State");
+        }
+
+        bind<IMC::SetThrusterActuation>(this);
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
+        unsigned eid = 0;
+        for (unsigned i = 0; i < c_max_motors; ++i)
+        {
+          try
+          {
+            eid = resolveEntity(m_args.motor_elabels[i]);
+          }
+          catch (...)
+          { }
+
+          if (m_args.motor_elabels[i].empty())
+            continue;
+
+          m_rpm_val[i].setSourceEntity(eid);
+        }
       }
 
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
       {
+        for (unsigned i = 0; i < c_max_motors; ++i)
+        {
+        try
+          {
+            resolveEntity(m_args.motor_elabels[i]);
+          }
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            (void)e;
+            reserveEntity(m_args.motor_elabels[i]);
+          }
+        }
       }
 
       //! Resolve entity names.
@@ -127,6 +193,11 @@ namespace Actuators
         m_parse = new MessageParse();
         m_parse->m_amc_state = MessageParse::PS_PREAMBLE;
         m_poll.add(*m_uart);
+
+        checkStateMotor();
+        stopAllMotor();
+
+        m_wdog.setTop(10.0);
       }
 
       //! Release resources.
@@ -138,6 +209,25 @@ namespace Actuators
           m_poll.remove(*m_uart);
           delete m_uart;
           m_uart = NULL;
+        }
+      }
+
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        if(msg->id == 0)
+        {
+          setRPM(0, msg->value);
+          usleep(c_sleep_time);
+          setRPM(1, msg->value);
+          usleep(c_sleep_time);
+        }
+        else if(msg->id == 1)
+        {
+          setRPM(2, msg->value);
+          usleep(c_sleep_time);
+          setRPM(3, msg->value);
+          usleep(c_sleep_time);
         }
       }
 
@@ -173,60 +263,115 @@ namespace Actuators
       int
       setRPM( int motor, int rpm )
       {
-        memset(&msg, '\0', sizeof(msg));
-        sprintf(msg, "@S,%d,%d,*", motor, rpm);
-        m_csum[0] = m_parse->CRC8((unsigned char *)msg);
-        int t = m_uart->write(msg, strlen(msg));
+        Algorithms::CRC8 crc(c_poly);
+        memset(&m_msg, '\0', sizeof(m_msg));
+        sprintf(m_msg, "@S,%d,%d,*", motor, rpm);
+        m_csum[0] = crc.putArray((unsigned char *)m_msg, strlen(m_msg) - 1);
+        //m_csum[0] = m_parse->CRC8((unsigned char *)m_msg);
+        int t = m_uart->write(m_msg, strlen(m_msg));
         m_uart->write(m_csum, 1);
         t++;
-        usleep(1000);
-        //war("SEND: %s%c   SIZE: %d", msg, m_csum[0], t + 1);
+        //war("SEND: %s%c   SIZE: %d", m_msg, m_csum[0], t + 1);
 
         return t;
+      }
+
+      void
+      checkStateMotor(void)
+      {
+        for(int i = 0; i < 4; i++)
+        {
+          readParameterAMC(i, STATE);
+          usleep(c_sleep_time);
+          if (m_poll.poll(0.5))
+              checkSerialPort();
+        }
+
+        int cnt_war = 0;
+
+        for(int i = 0; i < 4; i++)
+        {
+          if(m_parse->m_motor.state[i] == 0)
+          {
+            war(DTR("AMC Motor %d - ERROR"), i);
+            cnt_war++;
+          }
+        }
+
+        if(cnt_war > 0)
+          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("AMC Motor")));
       }
 
       void
       stopAllMotor(void)
       {
         setRPM(0, 0);
+        usleep(c_sleep_time);
         setRPM(1, 0);
+        usleep(c_sleep_time);
         setRPM(2, 0);
+        usleep(c_sleep_time);
         setRPM(3, 0);
+        usleep(c_sleep_time);
       }
 
       void
-      readParameterAMC(int motor, AMCFunc _func_name)
+      readParameterAMC(int motor, AmcMessages _func_name)
       {
+        Algorithms::CRC8 crc(c_poly);
         int t;
         if(_func_name == RPM)
         {
-          memset(&msg, '\0', sizeof(msg));
-          sprintf(msg, "@R,%d,rpm,*", motor);
-          m_csum[0] = m_parse->CRC8((unsigned char *)msg);
-          t = m_uart->write(msg, strlen(msg));
+          memset(&m_msg, '\0', sizeof(m_msg));
+          sprintf(m_msg, "@R,%d,rpm,*", motor);
+          m_csum[0] = crc.putArray((unsigned char *)m_msg, strlen(m_msg) - 1);
+          //m_csum[0] = m_parse->CRC8((unsigned char *)m_msg);
+          t = m_uart->write(m_msg, strlen(m_msg));
           m_uart->write(m_csum, 1);
           t++;
         }
         else if(_func_name == TEMPERATURE)
         {
-          memset(&msg, '\0', sizeof(msg));
-          sprintf(msg, "@R,%d,tmp,*", motor);
-          m_csum[0] = m_parse->CRC8((unsigned char *)msg);
-          t = m_uart->write(msg, strlen(msg));
+          memset(&m_msg, '\0', sizeof(m_msg));
+          sprintf(m_msg, "@R,%d,tmp,*", motor);
+          m_csum[0] = crc.putArray((unsigned char *)m_msg, strlen(m_msg) - 1);
+          //m_csum[0] = m_parse->CRC8((unsigned char *)m_msg);
+          t = m_uart->write(m_msg, strlen(m_msg));
           m_uart->write(m_csum, 1);
           t++;
         }
         else if(_func_name == PWR)
         {
-          memset(&msg, '\0', sizeof(msg));
-          sprintf(msg, "@R,%d,pwr,*", motor);
-          m_csum[0] = m_parse->CRC8((unsigned char *)msg);
-          t = m_uart->write(msg, strlen(msg));
+          memset(&m_msg, '\0', sizeof(m_msg));
+          sprintf(m_msg, "@R,%d,pwr,*", motor);
+          m_csum[0] = crc.putArray((unsigned char *)m_msg, strlen(m_msg) - 1);
+          //m_csum[0] = m_parse->CRC8((unsigned char *)m_msg);
+          t = m_uart->write(m_msg, strlen(m_msg));
           m_uart->write(m_csum, 1);
           t++;
         }
-        usleep(1000);
-        //war("SEND: %s%c   SIZE: %d", msg, m_csum[0], t + 1);
+        else if(_func_name == STATE)
+        {
+          memset(&m_msg, '\0', sizeof(m_msg));
+          sprintf(m_msg, "@R,%d,sta,*", motor);
+          m_csum[0] = crc.putArray((unsigned char *)m_msg, strlen(m_msg) - 1);
+          //m_csum[0] = m_parse->CRC8((unsigned char *)m_msg);
+          t = m_uart->write(m_msg, strlen(m_msg));
+          m_uart->write(m_csum, 1);
+          t++;
+        }
+        //war("SEND: %s%c   SIZE: %d", m_msg, m_csum[0], t + 1);
+      }
+
+      void
+      dispatchRpm(int _id, int _rpm)
+      {
+        if(_id >= 0 && _id < c_max_motors)
+        {
+          m_rpm_val->setSourceEntity(resolveEntity(m_args.motor_elabels[_id]));
+          m_rpm_val->value = _rpm;
+          dispatch(m_rpm_val);
+        }
       }
 
       //! Main loop.
@@ -234,31 +379,36 @@ namespace Actuators
       onMain(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        int t=0;
+
+        m_cnt_motor = 0;
+
         while (!stopping())
         {
           if (m_poll.poll(0.5))
           {
             checkSerialPort();
+            m_wdog.reset();
           }
           else
           {
-            setRPM(0, t);
-            usleep(250000);
-            readParameterAMC(0, RPM);
-            readParameterAMC(0, TEMPERATURE);
-            readParameterAMC(0, PWR);
-            
-            printf("RPM: %d SIGNAL_SEND: %d\n", (int)m_parse->m_motor.rpm[0], t);
-            printf("TEMPERATURE: %.2f\n", m_parse->m_motor.tmp[0]);
-            printf("VOLTAGE: %.2f\n", m_parse->m_motor.volt[0]);
-            printf("CURRENT: %.2f\n", m_parse->m_motor.current[0]);
-            war(" ");
+            readParameterAMC(m_cnt_motor, RPM);
+            usleep(c_sleep_time);
+            // Dispatch rpm motors.
+            dispatchRpm(m_cnt_motor, (int)m_parse->m_motor.rpm[m_cnt_motor]);
 
-            t = t + 100;
-            if(t > 1800)
-              t = 0;
-            waitForMessages(1.0);
+            m_cnt_motor++;
+            if(m_cnt_motor >= 4)
+              m_cnt_motor = 0;
+
+            waitForMessages(0.75);
+            m_wdog.reset();
+
+          }
+
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("Watchdog Overflow")));
+            throw RestartNeeded(DTR("Watchdog Overflow"), 2.0, false);
           }
         }
         stopAllMotor();

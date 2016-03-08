@@ -69,6 +69,8 @@ namespace Actuators
           double volt[4];
           //!Current
           double current[4];
+          //!State of motor
+          bool state[4];
         };
 
         enum AMCParserstates
@@ -210,23 +212,29 @@ namespace Actuators
           //printf("FUNC: %s\n", _amc_data.func);
           if(strstr((char*)_amc_data.func, "rpm") != NULL)
           {
-            /* RPM */
+            // RPM 
             m_motor.rpm[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.value);
             //printf("RPM: %.0f\n", m_motor.rpm[atoi((const char*)_amc_data.id)]);
           }
           else if(strstr((char*)_amc_data.func, "tmp") != NULL)
           {
-            /* TMP */
+            // TMP
             m_motor.tmp[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.value);
             //printf("TEMPERATURE: %.2f\n", m_motor.tmp[atoi((const char*)_amc_data.id)]);
           }
           else if(strstr((char*)_amc_data.func, "pwr") != NULL)
           {
-            /* VOLT/CURRENT */
+            // VOLT/CURRENT
             m_motor.volt[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.voltage);
             //printf("VOLTAGE: %.2f\n", m_motor.volt[atoi((const char*)_amc_data.id)]);
             m_motor.current[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.current);
             //printf("CURRENT: %.2f\n", m_motor.current[atoi((const char*)_amc_data.id)]);
+          }
+          else if(strstr((char*)_amc_data.func, "sta") != NULL)
+          {
+            // State
+            m_motor.state[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.value);
+            //printf("STATE: %d\n", m_motor.state[atoi((const char*)_amc_data.id)]);
           }
         }
         
