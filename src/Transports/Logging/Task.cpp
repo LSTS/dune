@@ -419,6 +419,9 @@ namespace Transports
       void
       logMessage(const IMC::Message* msg)
       {
+        if (m_lsf == NULL)
+          return;
+
         IMC::Packet::serialize(msg, m_buffer);
         m_lsf->write(m_buffer.getBufferSigned(), m_buffer.getSize());
       }
