@@ -51,12 +51,16 @@ namespace Actuators
           uint8_t id[4];
           //!Func: rpm, tmp, pwr
           uint8_t func[8];
-          //!Value of read
-          uint8_t value[16];
+          //!RPM
+          uint8_t rpm[16];
+          //!temperature
+          uint8_t tmp[16];
           //!Voltage
-          uint8_t voltage[16];
+          uint8_t volt[16];
           //!Current
           uint8_t current[16];
+          //!State
+          uint8_t state[16];
         };
 
         struct AMCMotorState
@@ -81,10 +85,16 @@ namespace Actuators
           PS_ID,
           // Read mode
           PS_MODE,
-          // Read data
-          PS_VALUE,
+          // Read rpm data
+          PS_RPM,
+          // Read temperature data
+          PS_TMP,
           //Read volt and current
           PS_PWR,
+          //Read all parameters
+          PS_ALL,
+          //Read state of motors
+          PS_STATE,
           // Read checksum
           PS_CS
         }; 
@@ -99,7 +109,6 @@ namespace Actuators
             csum ^= data[t];
             t++;
           }
-
           return csum;
         }
 
@@ -113,7 +122,7 @@ namespace Actuators
               {
                 m_csum = byte;
                 m_amc_state = PS_ID;
-                cnt = 0;
+                m_cnt = 0;
                 memset(&m_amc_data.id, '\0', sizeof(m_amc_data.id));
               }
               break;
@@ -121,14 +130,14 @@ namespace Actuators
             case PS_ID:
               if(byte != ',')
               {
-                m_amc_data.id[cnt++] = byte;
+                m_amc_data.id[m_cnt++] = byte;
                 m_csum ^= byte;
               }
               else
               {
                 m_csum ^= byte;
                 m_amc_state = PS_MODE;
-                cnt = 0;
+                m_cnt = 0;
                 memset(&m_amc_data.func, '\0', sizeof(m_amc_data.func));
               }
               break;
@@ -136,56 +145,156 @@ namespace Actuators
             case PS_MODE:
               if(byte != ',')
               {
-                m_amc_data.func[cnt++] = byte;
+                m_amc_data.func[m_cnt++] = byte;
                 m_csum ^= byte;
               }
               else
               {
                 m_csum ^= byte;
                 if(strstr((char*)m_amc_data.func, "pwr") != NULL)
+                {
+                  memset(&m_amc_data.volt, '\0', sizeof(m_amc_data.volt));
+                  memset(&m_amc_data.current, '\0', sizeof(m_amc_data.current));
                   m_amc_state = PS_PWR;
+                  m_switch_pwr = 0;
+                }
+                else if(strstr((char*)m_amc_data.func, "all") != NULL)
+                {
+                  memset(&m_amc_data.volt, '\0', sizeof(m_amc_data.volt));
+                  memset(&m_amc_data.current, '\0', sizeof(m_amc_data.current));
+                  memset(&m_amc_data.rpm, '\0', sizeof(m_amc_data.rpm));
+                  memset(&m_amc_data.tmp, '\0', sizeof(m_amc_data.tmp));
+                  m_amc_state = PS_ALL;
+                  m_switch_all = 0;
+                }
+                else if(strstr((char*)m_amc_data.func, "rpm") != NULL)
+                {
+                  m_amc_state = PS_RPM;
+                  memset(&m_amc_data.rpm, '\0', sizeof(m_amc_data.rpm));
+                }
+                else if(strstr((char*)m_amc_data.func, "tmp") != NULL)
+                {
+                  m_amc_state = PS_TMP;
+                  memset(&m_amc_data.tmp, '\0', sizeof(m_amc_data.tmp));
+                }
+                else if(strstr((char*)m_amc_data.func, "sta") != NULL)
+                {
+                  m_amc_state = PS_STATE;
+                  memset(&m_amc_data.state, '\0', sizeof(m_amc_data.state));
+                }
                 else
-                  m_amc_state = PS_VALUE;
-                cnt = 0;
-                memset(&m_amc_data.value, '\0', sizeof(m_amc_data.value));
-                switch_pwr = 0;
+                  m_amc_state = PS_PREAMBLE;
+                  
+                m_cnt = 0;
               }
               break;
 
-            case PS_VALUE:
+            case PS_RPM:
               if(byte != '*')
               {
-                m_amc_data.value[cnt++] = byte;
+                m_amc_data.rpm[m_cnt++] = byte;
                 m_csum ^= byte;
               }
               else
               {
                 m_amc_state = PS_CS;
-                cnt = 0;
+                m_cnt = 0;
+              }
+              break;
+
+            case PS_STATE:
+              if(byte != '*')
+              {
+                m_amc_data.state[m_cnt++] = byte;
+                m_csum ^= byte;
+              }
+              else
+              {
+                m_amc_state = PS_CS;
+                m_cnt = 0;
+              }
+              break;
+
+            case PS_TMP:
+              if(byte != '*')
+              {
+                m_amc_data.tmp[m_cnt++] = byte;
+                m_csum ^= byte;
+              }
+              else
+              {
+                m_amc_state = PS_CS;
+                m_cnt = 0;
+              }
+              break;
+
+            case PS_ALL:
+              if(byte != '*' && byte != ',')
+              {
+                if(m_switch_all == 0)
+                {
+                  m_amc_data.rpm[m_cnt++] = byte;
+                  m_csum ^= byte;
+                }
+                else if(m_switch_all == 1)
+                {
+                  m_amc_data.tmp[m_cnt++] = byte;
+                  m_csum ^= byte;
+                }
+                else if(m_switch_all == 2)
+                {
+                  m_amc_data.volt[m_cnt++] = byte;
+                  m_csum ^= byte;
+                }
+                else if(m_switch_all == 3)
+                {
+                  m_amc_data.current[m_cnt++] = byte;
+                  m_csum ^= byte;
+                }
+              }
+              else
+              {
+                if(m_switch_all <= 2)
+                {
+                  m_switch_all++;;
+                  m_cnt = 0;
+                  m_csum ^= byte;
+                }
+                else
+                {
+                  m_amc_state = PS_CS;
+                  m_cnt = 0;
+                }
               }
               break;
 
             case PS_PWR:
               if(byte != '*' && byte != ',')
               {
-                m_amc_data.value[cnt++] = byte;
-                m_csum ^= byte;
-              }
-              else
-              {
-                if(!switch_pwr)
+                if(!m_switch_pwr)
                 {
-                  sprintf((char*)m_amc_data.voltage, "%s", (char*)m_amc_data.value);
-                  switch_pwr = 1;
-                  memset(&m_amc_data.value, '\0', sizeof(m_amc_data.value));
-                  cnt = 0;
+                  m_amc_data.volt[m_cnt++] = byte;
                   m_csum ^= byte;
                 }
                 else
                 {
-                  sprintf((char*)m_amc_data.current, "%s", (char*)m_amc_data.value);
+                  m_amc_data.current[m_cnt++] = byte;
+                  m_csum ^= byte;
+                }
+                
+              }
+              else
+              {
+                if(!m_switch_pwr)
+                {
+                  m_switch_pwr = 1;
+                  m_cnt = 0;
+                  m_csum ^= byte;
+                }
+                else
+                {
                   m_amc_state = PS_CS;
-                  cnt = 0;
+                  m_cnt = 0;
                 }
               }
               break;
@@ -193,9 +302,8 @@ namespace Actuators
             case PS_CS:
               //printf("MEU: %2x REC: %2x\n", m_csum, byte);
               if(m_csum == byte)
-              {
                 FilterData(m_amc_data);
-              }
+
               m_amc_state = PS_PREAMBLE;
               break;
 
@@ -208,44 +316,54 @@ namespace Actuators
         void
         FilterData (struct AMCDataParser _amc_data)
         {
-          //printf("ID: %d\n", atoi((const char*)_amc_data.id));
-          //printf("FUNC: %s\n", _amc_data.func);
           if(strstr((char*)_amc_data.func, "rpm") != NULL)
           {
             // RPM 
-            m_motor.rpm[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.value);
-            //printf("RPM: %.0f\n", m_motor.rpm[atoi((const char*)_amc_data.id)]);
+            memset(&m_motor.rpm[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.rpm[atoi((const char*)_amc_data.id)]));
+            m_motor.rpm[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.rpm);
           }
           else if(strstr((char*)_amc_data.func, "tmp") != NULL)
           {
             // TMP
-            m_motor.tmp[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.value);
-            //printf("TEMPERATURE: %.2f\n", m_motor.tmp[atoi((const char*)_amc_data.id)]);
+            memset(&m_motor.tmp[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.tmp[atoi((const char*)_amc_data.id)]));
+            m_motor.tmp[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.tmp);
           }
           else if(strstr((char*)_amc_data.func, "pwr") != NULL)
           {
+            memset(&m_motor.volt[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.volt[atoi((const char*)_amc_data.id)]));
+            memset(&m_motor.current[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.current[atoi((const char*)_amc_data.id)]));
             // VOLT/CURRENT
-            m_motor.volt[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.voltage);
-            //printf("VOLTAGE: %.2f\n", m_motor.volt[atoi((const char*)_amc_data.id)]);
+            m_motor.volt[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.volt);
             m_motor.current[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.current);
-            //printf("CURRENT: %.2f\n", m_motor.current[atoi((const char*)_amc_data.id)]);
           }
           else if(strstr((char*)_amc_data.func, "sta") != NULL)
           {
+            memset(&m_motor.state[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.state[atoi((const char*)_amc_data.id)]));
             // State
-            m_motor.state[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.value);
-            //printf("STATE: %d\n", m_motor.state[atoi((const char*)_amc_data.id)]);
+            m_motor.state[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.state);
+          }
+          else if(strstr((char*)_amc_data.func, "all") != NULL)
+          {
+            memset(&m_motor.rpm[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.rpm[atoi((const char*)_amc_data.id)]));
+            m_motor.rpm[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.rpm);
+            memset(&m_motor.tmp[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.tmp[atoi((const char*)_amc_data.id)]));
+            m_motor.tmp[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.tmp);
+            memset(&m_motor.volt[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.volt[atoi((const char*)_amc_data.id)]));
+            m_motor.volt[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.volt);
+            memset(&m_motor.current[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.current[atoi((const char*)_amc_data.id)]));
+            m_motor.current[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.current);
           }
         }
-        
+
         // Parser variables
         AMCParserstates m_amc_state;
         AMCDataParser m_amc_data;
         AMCMotorState m_motor;
 
         uint8_t m_csum;
-        uint8_t cnt;
-        bool switch_pwr;
+        uint8_t m_cnt;
+        bool m_switch_pwr;
+        uint8_t m_switch_all;
 
       private:
         static const uint8_t c_preamble = '$';
