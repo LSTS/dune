@@ -103,9 +103,14 @@ namespace Actuators
       Counter<double> m_wdog;
       //Counter stage id motor
       uint8_t m_cnt_motor;
-      
+      //Value for motor 0 and 1
       double motorId0;
+      //Value for motor 2 and 3
       double motorId1;
+      //count for fail rx uart
+      uint8_t fail_uart;
+      //counter to check state of motors
+      uint8_t cnt_motor_check;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -215,10 +220,12 @@ namespace Actuators
         m_parse->m_amc_state = MessageParse::PS_PREAMBLE;
         m_poll.add(*m_uart);
 				setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        checkStateMotor();
+        checkStateMotor(1);
         stopAllMotor();
         m_wdog.setTop(10.0);
         m_cnt_motor = 0;
+        fail_uart = 0;
+        cnt_motor_check = 0;
       }
 
       //! Release resources.
@@ -301,21 +308,24 @@ namespace Actuators
         return t;
       }
 
-      void
-      checkStateMotor(void)
+      int
+      checkStateMotor(bool spew_ok)
       {
       	int cnt_rx = 0;
         for(int i = 0; i < 4; i++)
         {
           readParameterAMC(i, STATE);
           cnt_rx = 0;
-          while(cnt_rx < 10 && !stopping())
+          fail_uart = 0;
+          while(cnt_rx < 10 && !stopping() && fail_uart < 4)
           {
-            if (m_poll.poll(0.5))
+            if (m_poll.poll(0.1))
             {
               checkSerialPort();
               cnt_rx++;
             }
+            else
+              fail_uart++;
           }
         }
 
@@ -330,32 +340,54 @@ namespace Actuators
           }
         }
 
-        if(cnt_war > 0)
-          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("AMC Motor ERROR")));
-        else if(cnt_war == 0)
-        	war("ALL AMC MOTOR STATE OK");
+        if(fail_uart > 3)
+        {
+          err(DTR("AMC UART ERROR"));
+          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("AMC UART ERROR")));
+          return -1;
+        } 
+        else
+        {
+          if(cnt_war > 0)
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("AMC Motor ERROR")));
+          else if(cnt_war == 0)
+          {
+            if(spew_ok)
+              war("ALL AMC MOTOR STATE OK");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
+
+          return cnt_war;
+        }
+        return 0;
       }
 
       void
       checkAllMotor(uint8_t id_motor)
       {
         uint8_t checkEnd = 0x00;
+        uint8_t jump_read_uart = 0;
         readParameterAMC(id_motor, ALL);
-        while(checkEnd != '*' && !stopping())
+        while(checkEnd != '*' && !stopping() &&  jump_read_uart < 6)
         {
-          if (m_poll.poll(0.5))
+          if (m_poll.poll(0.1))
             checkEnd = checkSerialPort();
+          else
+            jump_read_uart++;
         }
-        if (m_poll.poll(0.5))
+        if (m_poll.poll(0.1))
           checkEnd = checkSerialPort();
 
-        dispatchRpm(id_motor, (int)m_parse->m_motor.rpm[id_motor]);
-        usleep(c_sleep_time);
-        dispatchTmp(id_motor, (int)m_parse->m_motor.tmp[id_motor]);
-        usleep(c_sleep_time);
-        dispatchPwr(id_motor, m_parse->m_motor.volt[id_motor], m_parse->m_motor.current[id_motor]);
-        usleep(c_sleep_time);
-        m_uart->flush();
+        if(jump_read_uart < 6)
+        {
+          dispatchRpm(id_motor, (int)m_parse->m_motor.rpm[id_motor]);
+          usleep(c_sleep_time);
+          dispatchTmp(id_motor, (int)m_parse->m_motor.tmp[id_motor]);
+          usleep(c_sleep_time);
+          dispatchPwr(id_motor, m_parse->m_motor.volt[id_motor], m_parse->m_motor.current[id_motor]);
+          usleep(c_sleep_time);
+          m_uart->flush();
+        }
       }
 
       void
@@ -530,21 +562,40 @@ namespace Actuators
         }
       }
 
+      void
+      setRpmValues(void)
+      {
+        if(m_parse->m_motor.state[0] == 1)
+          setRPM(0, motorId0);
+        if(m_parse->m_motor.state[1] == 1)
+          setRPM(1, -motorId0);
+        if(m_parse->m_motor.state[2] == 1)
+          setRPM(2, motorId1);
+        if(m_parse->m_motor.state[3] == 1)
+          setRPM(3, -motorId1);
+      }
+
       //! Main loop.
       void
       task(void)
-      {      
-				setRPM(0, motorId0);
-		    setRPM(1, -motorId0);
-		    setRPM(2, motorId1);
-		    setRPM(3, -motorId1);
+      {
+        setRpmValues();
         
         //wait for update data in firmware motor
         usleep(c_sleep_time * 5);
 		    
+        //Read values of active motor
         for(uint8_t i = 0; i <= 3; i++)
-          checkAllMotor( i );
+          if(m_parse->m_motor.state[i] == 1)
+            checkAllMotor( i );
 
+        usleep(c_sleep_time);
+        cnt_motor_check++;
+        if(cnt_motor_check > 8)
+        {
+          checkStateMotor(0);
+          cnt_motor_check = 0;
+        }
       }
     };
   }
