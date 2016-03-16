@@ -184,7 +184,7 @@ namespace Power
         param("Minimum Operating Voltage", m_args.vol_min)
         .units(Units::Volt)
         .defaultValue("22")
-        .minimumValue("20")
+        .minimumValue("9")
         .maximumValue("25")
         .description("Once this value is hit the system will enter emergency mode");
 
