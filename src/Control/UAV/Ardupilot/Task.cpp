@@ -1624,6 +1624,7 @@ namespace Control
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
               m_error_missing = true;
+              m_has_setup_rate = false;
               m_esta_ext = false;
             }
           }
