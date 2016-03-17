@@ -303,6 +303,7 @@ namespace Actuators
         int t = m_uart->write(m_msg, strlen(m_msg));
         m_uart->write(m_csum, 1);
         t++;
+        usleep(c_sleep_time);
         //war("SEND: %s%c   SIZE: %d", m_msg, m_csum[0], t + 1);
 
         return t;
@@ -335,7 +336,8 @@ namespace Actuators
         {
           if(m_parse->m_motor.state[i] == 0)
           {
-            war(DTR("AMC Motor %d - ERROR"), i);
+            if(spew_ok)
+              war(DTR("AMC Motor %d - ERROR"), i);
             cnt_war++;
           }
         }
@@ -580,16 +582,13 @@ namespace Actuators
       task(void)
       {
         setRpmValues();
-        
-        //wait for update data in firmware motor
-        usleep(c_sleep_time * 5);
 		    
-        //Read values of active motor
+        //Read values ...
         for(uint8_t i = 0; i <= 3; i++)
+          // ... of active motor
           if(m_parse->m_motor.state[i] == 1)
             checkAllMotor( i );
 
-        usleep(c_sleep_time);
         cnt_motor_check++;
         if(cnt_motor_check > 8)
         {
