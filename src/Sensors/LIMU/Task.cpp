@@ -110,6 +110,8 @@ namespace Sensors
       Counter<double> m_wdog;
       //! Error counts.
       ErrorCounts m_err_counts;
+      //! Hard-iron factors read from the device.
+      double m_hard_iron[c_hard_iron_count];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -246,28 +248,27 @@ namespace Sensors
       }
 
       //! Get current Hard-Iron calibration parameters.
-      //! @return hard-iron calibration parameters.
-      std::vector<double>
+      void
       getHardIronFactors(void)
       {
-        std::vector<double> factors;
-
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
         if (m_ctl->sendFrame(frame))
         {
+          if (frame.getPayloadSize() != (c_hard_iron_count * 2))
+            throw std::runtime_error(String::str("invalid hard iron size: %u", frame.getPayloadSize()));
+
           int16_t tmp = 0;
           for (unsigned i = 0; i < c_hard_iron_count; ++i)
           {
             frame.get(tmp, i * 2);
-            factors.push_back(tmp / 10e3);
+            m_hard_iron[i] = tmp / 10e3;
           }
         }
-
-        if (factors.size() != c_hard_iron_count)
+        else
+        {
           throw std::runtime_error("failed to retrieve hard-iron factors");
-
-        return factors;
+        }
       }
 
       //! Set Hard-Iron calibration parameters.
@@ -280,8 +281,8 @@ namespace Sensors
              factors[1],
              factors[2]);
 
-        std::vector<double> old = getHardIronFactors();
-        if ((factors[0] == old[0]) && (factors[1] == old[1]))
+        getHardIronFactors();
+        if ((factors[0] == m_hard_iron[0]) && (factors[1] == m_hard_iron[1]))
         {
           spew("no change in hard-iron parameters");
           return;
@@ -289,7 +290,7 @@ namespace Sensors
 
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
-        frame.setPayloadSize(6);
+        frame.setPayloadSize(c_hard_iron_count * 2);
         for (unsigned i = 0; i < c_hard_iron_count; ++i)
           frame.set<int16_t>(static_cast<int16_t>(factors[i] * 10e3), i * 2);
 
