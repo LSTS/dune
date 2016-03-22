@@ -1,6 +1,5 @@
 ############################################################################
-# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
-# Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
+# Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
 #                                                                          #
@@ -25,40 +24,12 @@
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
-[Include common/imc-addresses.ini]
+dune_test_lib(usb-1.0 libusb_init)
+dune_test_lib(ftd2xx FT_Open)
+dune_test_header(ftd2xx.h)
 
-[General]
-Vehicle                                 = doam
-
-[Sensors.ThermalZone]
-Enabled                                 = Hardware
-Entity Label                            = Thermal Zone
-Entity Label - Temperature              = Mainboard (Core)
-Path                                    = /sys/class/thermal/thermal_zone0/temp
-
-[Vision.DFK51BG02H]
-Enabled                                 = Hardware
-Entity Label                            = Camera
-Camera IPv4 Address                     = 10.0.10.52
-Local IPv4 Address                      = 10.0.10.53
-Frames Per Second                       = 3
-Gain                                    = 260
-Gamma                                   = 120
-Strobe Mode                             = Exposure
-Strobe Polarity                         = false
-Strobe Delay                            = 0
-Strobe Duration                         = 0
-Exposure Time                           = 0.00800
-Number of Buffers                       = 100
-
-[Transports.TCP.Client]
-Enabled                                 = Always
-Entity Label                            = TCP to Master
-Server - Address                        = 10.0.10.50
-Server - Port                           = 9999
-Transports                              = Heartbeat,
-                                          LoggingControl
-
-[Transports.FTP]
-Enabled                                 = Always
-Entity Label                            = FTP Server
+if(DUNE_SYS_HAS_LIB_FTD2XX AND DUNE_SYS_HAS_FTD2XX_H)
+  set(DUNE_USING_FTD2XX 1 CACHE INTERNAL "FTD2XX USB library")
+else()
+  set(DUNE_USING_FTD2XX 0 CACHE INTERNAL "FTD2XX USB library")
+endif()

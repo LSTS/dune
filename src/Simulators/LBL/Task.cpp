@@ -53,6 +53,7 @@ namespace Simulators
   //! @author Ricardo Martins
   //! @author Bruno Terra
   //! @author Eduardo Marques
+  //! @author José Braga
   namespace LBL
   {
     //! Constant for "bad range"
@@ -72,7 +73,7 @@ namespace Simulators
       //! PRNG seed.
       int prng_seed;
       //! Wait for incoming request;
-      bool wait_request;
+      bool wait_uam;
     };
 
     //! %LBL simulator task.
@@ -81,7 +82,7 @@ namespace Simulators
       //! Simulated state.
       IMC::SimulatedState m_sstate;
       //! WGS84 origin.
-      IMC::GpsFix* m_origin;
+      IMC::GpsFix* m_gps;
       //! LblConfig buffer.
       IMC::LblConfig* m_lbl_cfg;
       //! Cursor.
@@ -95,7 +96,7 @@ namespace Simulators
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_origin(NULL),
+        m_gps(NULL),
         m_lbl_cfg(NULL),
         m_prng(NULL)
       {
@@ -132,7 +133,7 @@ namespace Simulators
         param("PRNG Seed", m_args.prng_seed)
         .defaultValue("-1");
 
-        param("Wait for Ping Request", m_args.wait_request)
+        param("Wait for Ping Request", m_args.wait_uam)
         .defaultValue("false")
         .description("When this parameter is active, the task will wait for"
                      "ping requests from other entities");
@@ -165,30 +166,37 @@ namespace Simulators
       onResourceRelease(void)
       {
         Memory::clear(m_prng);
-        Memory::clear(m_origin);
+        Memory::clear(m_gps);
         Memory::clear(m_lbl_cfg);
       }
 
+      //! Check LBL is defined.
+      //! @return true if LBL is defined, false otherwise.
       bool
-      hasLBLConfig(void) const
+      checkLbl(void) const
       {
         return m_lbl_cfg != NULL;
       }
 
+      //! Check GPS is defined.
+      //! @return true if GPS is defined, false otherwise.
       bool
-      hasOrigin(void) const
+      checkGps(void) const
       {
-        return m_origin != NULL;
+        return m_gps != NULL;
       }
 
+      //! Check if we are ready to simulate LBL.
+      //! @return true if we are ready to simulate, false otherwise.
       bool
-      isInitialized(void) const
+      ready(void) const
       {
-        return hasOrigin() && hasLBLConfig() && (m_lbl_cfg->beacons.size() > 0);
+        return checkGps() && checkLbl() && (m_lbl_cfg->beacons.size() > 0);
       }
 
+      //! Reset ranger.
       void
-      updateBeacons(void)
+      reset(void)
       {
         m_cursor = m_lbl_cfg->beacons.begin();
         m_pinger.reset();
@@ -205,10 +213,10 @@ namespace Simulators
         if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
-        Memory::replace(m_origin, new IMC::GpsFix(*msg));
+        Memory::replace(m_gps, new IMC::GpsFix(*msg));
 
-        if (hasLBLConfig())
-          updateBeacons();
+        if (checkLbl())
+          reset();
         else
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_LBL_CFG);
       }
@@ -226,8 +234,8 @@ namespace Simulators
 
           Memory::replace(m_lbl_cfg, new IMC::LblConfig(*msg));
 
-          if (hasOrigin())
-            updateBeacons();
+          if (checkGps())
+            reset();
           else
             setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
@@ -235,7 +243,7 @@ namespace Simulators
         {
           IMC::LblConfig cfg;
           cfg.op = IMC::LblConfig::OP_CUR_CFG;
-          if (hasLBLConfig())
+          if (checkLbl())
             cfg.beacons = m_lbl_cfg->beacons;
 
           dispatchReply(*msg, cfg);
@@ -245,19 +253,22 @@ namespace Simulators
       void
       consume(const IMC::SimulatedState* msg)
       {
-        if (isInitialized())
+        if (ready())
           m_sstate = *msg;
       }
 
       void
       consume(const IMC::UamTxFrame* msg)
       {
-        if (!m_args.wait_request)
+        // This is meant to be used paired with acoustic ranger task
+        // through IMC::Uam interface irrelevant of activation state.
+        if (!m_args.wait_uam)
           return;
 
         if (msg->getSource() != getSystemId())
           return;
 
+        // Only if ack is defined.
         if (msg->flags & IMC::UamTxFrame::UTF_ACK)
           range(msg->sys_dst);
       }
@@ -280,7 +291,7 @@ namespace Simulators
       void
       range(const std::string& sys_name)
       {
-        if (!hasLBLConfig())
+        if (!checkLbl())
           return;
 
         IMC::LblBeacon* beacon = NULL;
@@ -322,7 +333,7 @@ namespace Simulators
         distance = WGS84::distance(lat, lon, m_sstate.z,
                                    beacon->lat, beacon->lon, beacon->depth);
 
-        if (m_args.wait_request)
+        if (m_args.wait_uam)
         {
           IMC::UamRxRange msg;
           msg.sys = sys_name;
@@ -344,23 +355,17 @@ namespace Simulators
       {
         while (!stopping())
         {
-          if (!isInitialized() || !isActive())
+          if (!isActive() || !ready() || m_args.wait_uam)
           {
             waitForMessages(1.0);
             continue;
           }
 
-          if (m_args.wait_request)
-            continue;
-
-          if (!m_pinger.overflow())
+          if (!m_pinger.overflow() || *m_cursor == NULL)
           {
-            waitForMessages(m_args.ping_delay);
+            waitForMessages(m_pinger.getRemaining());
             continue;
           }
-
-          if (*m_cursor == NULL)
-            continue;
 
           range((*m_cursor)->beacon);
 

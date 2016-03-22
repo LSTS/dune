@@ -627,6 +627,8 @@ namespace DUNE
       float m_dist_lbl_gps;
       //! Always reject LblRanges.
       bool m_reject_all_lbl;
+      //! Use a Depth sensor.
+      bool m_depth_sensor;
       //! LBL rejection constants.
       std::vector<float> m_lbl_reject_constants;
       //! Displacement between DVL and vehicle center of gravity.

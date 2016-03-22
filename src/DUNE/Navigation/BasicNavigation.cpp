@@ -109,6 +109,10 @@ namespace DUNE
       .minimumValue("0.5")
       .description("No Depth readings from main provider timeout");
 
+      param("Depth Sensor", m_depth_sensor)
+      .defaultValue("true")
+      .description("This variable signals that a depth sensor device is installed on system");
+
       param("DVL sanity timeout", m_dvl_sanity_timeout)
       .units(Units::Second)
       .defaultValue("10.0")
@@ -536,7 +540,7 @@ namespace DUNE
 
       // Stream Estimator.
       IMC::EstimatedStreamVelocity stream;
-      if (m_stream_filter.consume(msg, stream))
+      if (m_stream_filter.consume(m_estate, msg, stream))
         dispatch(stream);
 
       // Correct for roll angle.
@@ -1093,7 +1097,7 @@ namespace DUNE
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             break;
           case SM_STATE_NORMAL:
-            if (m_time_without_depth.overflow())
+            if (m_depth_sensor && m_time_without_depth.overflow())
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("no measurements available: %s"), DTR("Depth")));
               return;
