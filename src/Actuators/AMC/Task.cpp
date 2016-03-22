@@ -68,7 +68,7 @@ namespace Actuators
       //! Internal conversion factors RPM
       double internal_factors_rpm[c_max_motors];
       //! Internal conversion factors TEMPERATURE
-      char internal_factors_tmp[c_max_motors];
+      int internal_factors_orientation[c_max_motors];
       //! Motor state
       bool motor_state[c_max_motors];
     };
@@ -142,10 +142,10 @@ namespace Actuators
           .defaultValue("1.0")
           .description("Motor rpm conversion factor");
 
-          option = String::str("Motor %u - Conversion Temperature", i);
-          param(option, m_args.internal_factors_tmp[i])
-          .defaultValue("C")
-          .description("Motor Temperature conversion factor");
+          option = String::str("Motor %u - Orientation", i);
+          param(option, m_args.internal_factors_orientation[i])
+          .defaultValue("1")
+          .description("Motor Orientation ( 1, -1 )");
 
           option = String::str("Motor %u - State", i);
           param(option, m_args.motor_state[i])
@@ -567,14 +567,14 @@ namespace Actuators
       void
       setRpmValues(void)
       {
-        if(m_parse->m_motor.state[0] == 1)
-          setRPM(0, motorId0);
-        if(m_parse->m_motor.state[1] == 1)
-          setRPM(1, -motorId0);
-        if(m_parse->m_motor.state[2] == 1)
-          setRPM(2, motorId1);
-        if(m_parse->m_motor.state[3] == 1)
-          setRPM(3, -motorId1);
+        if(m_parse->m_motor.state[0] == 1 && m_args.motor_state[0] == 1)
+          setRPM(0, m_args.internal_factors_orientation[0] * motorId0);
+        if(m_parse->m_motor.state[1] == 1 && m_args.motor_state[1] == 1)
+          setRPM(1, m_args.internal_factors_orientation[1] * motorId0);
+        if(m_parse->m_motor.state[2] == 1 && m_args.motor_state[2] == 1)
+          setRPM(2, m_args.internal_factors_orientation[2] * motorId1);
+        if(m_parse->m_motor.state[3] == 1 && m_args.motor_state[3] == 1)
+          setRPM(3, m_args.internal_factors_orientation[3] * motorId1);
       }
 
       //! Main loop.
