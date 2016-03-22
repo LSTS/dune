@@ -315,18 +315,21 @@ namespace Actuators
       	int cnt_rx = 0;
         for(int i = 0; i < 4; i++)
         {
-          readParameterAMC(i, STATE);
-          cnt_rx = 0;
-          fail_uart = 0;
-          while(cnt_rx < 10 && !stopping() && fail_uart < 4)
+          if(m_args.motor_state[i] == 1)
           {
-            if (m_poll.poll(0.1))
+            readParameterAMC(i, STATE);
+            cnt_rx = 0;
+            fail_uart = 0;
+            while(cnt_rx < 10 && !stopping() && fail_uart < 4)
             {
-              checkSerialPort();
-              cnt_rx++;
+              if (m_poll.poll(0.1))
+              {
+                checkSerialPort();
+                cnt_rx++;
+              }
+              else
+                fail_uart++;
             }
-            else
-              fail_uart++;
           }
         }
 
@@ -334,11 +337,14 @@ namespace Actuators
 
         for(int i = 0; i < 4; i++)
         {
-          if(m_parse->m_motor.state[i] == 0)
+          if(m_args.motor_state[i] == 1)
           {
-            if(spew_ok)
-              war(DTR("AMC Motor %d - ERROR"), i);
-            cnt_war++;
+            if(m_parse->m_motor.state[i] == 0)
+            {
+              if(spew_ok)
+                war(DTR("AMC Motor %d - ERROR"), i);
+              cnt_war++;
+            }
           }
         }
 
@@ -586,7 +592,7 @@ namespace Actuators
         //Read values ...
         for(uint8_t i = 0; i <= 3; i++)
           // ... of active motor
-          if(m_parse->m_motor.state[i] == 1)
+          if(m_parse->m_motor.state[i] == 1 && m_args.motor_state[i] == 1)
             checkAllMotor( i );
 
         cnt_motor_check++;
