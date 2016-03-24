@@ -203,6 +203,12 @@ namespace Supervisors
           else if ((m_astate == ST_IDLE) || (m_astate == ST_CHECK_STUCK))
           {
             getFinishDepth(msg);
+
+            // Generate and execute dislodge.
+            if ((msg->type == IMC::PlanControl::PC_FAILURE) &&
+                (msg->op == IMC::PlanControl::PC_START) &&
+                (msg->plan_id == m_args.plan_id))
+              setState(ST_START_DISLODGE);
           }
         }
 
@@ -213,9 +219,6 @@ namespace Supervisors
         checkDislodgeResult(const IMC::PlanControl* msg)
         {
           if (msg->type == IMC::PlanControl::PC_REQUEST)
-            return;
-
-          if (msg->type != IMC::PlanControl::PC_START)
             return;
 
           if (msg->plan_id != m_args.plan_id)
@@ -356,13 +359,6 @@ namespace Supervisors
           }
         }
 
-        //! Routine to run when waiting for dislodge to end
-        void
-        onWaitDislodge(void)
-        {
-
-        }
-
         void
         task(void)
         {
@@ -378,7 +374,6 @@ namespace Supervisors
               onStartDislodge();
               break;
             case ST_WAIT_DISLODGE:
-              onWaitDislodge();
               break;
             default:
               break;
