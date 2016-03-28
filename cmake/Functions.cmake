@@ -164,12 +164,6 @@ macro(dune_probe_functions)
     "signal.h"
     DUNE_SYS_HAS_PTHREAD_SIGMASK)
 
-  dune_test_function(pthread_kill
-    "int"
-    "pthread_t;int"
-    "signal.h"
-    DUNE_SYS_HAS_PTHREAD_KILL)
-
   dune_test_function(pthread_barrier_init
     "int"
     "pthread_barrier_t*;pthread_barrierattr_t*;unsigned"
@@ -205,6 +199,12 @@ macro(dune_probe_functions)
     "pthread_condattr_t*;clockid_t"
     "pthread.h"
     DUNE_SYS_HAS_PTHREAD_CONDATTR_SETCLOCK)
+
+  dune_test_function(pthread_win32_process_attach_np
+    "int"
+    ""
+    "pthread.h"
+    DUNE_SYS_HAS_PTHREAD_WIN32_PROCESS_ATTACH_NP)
 
   dune_test_function(sigaction
     "int"
