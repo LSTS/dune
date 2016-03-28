@@ -42,16 +42,15 @@ namespace DUNE
       int rv = 0;
 
       if ((rv = pthread_mutexattr_init(&m_attr)) != 0)
-        throw MutexError(rv);
+        throw MutexError("attribute initialization", rv);
 
       // Enable priority inheritance if supported.
 #  if (_POSIX_THREAD_PRIO_INHERIT != -1) && defined(PTHREAD_PRIO_INHERIT)
-      if ((rv = pthread_mutexattr_setprotocol(&m_attr, PTHREAD_PRIO_INHERIT)) != 0)
-        throw MutexError(rv);
+      pthread_mutexattr_setprotocol(&m_attr, PTHREAD_PRIO_INHERIT);
 #  endif
 
       if ((rv = pthread_mutex_init(&m_mutex, &m_attr)) != 0)
-        throw MutexError(rv);
+        throw MutexError("initializing mutex", rv);
 #endif
     }
 
