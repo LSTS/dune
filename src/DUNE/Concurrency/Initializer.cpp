@@ -44,7 +44,7 @@ namespace DUNE
     {
       if (counter++ == 0)
       {
-#if defined(DUNE_OS_WINDOWS)
+#if defined(DUNE_SYS_HAS_PTHREAD_WIN32_PROCESS_ATTACH_NP)
         pthread_win32_process_attach_np();
 #endif
       }
@@ -54,7 +54,7 @@ namespace DUNE
     {
       if (--counter == 0)
       {
-#if defined(DUNE_OS_WINDOWS)
+#if defined(DUNE_SYS_HAS_PTHREAD_WIN32_PROCESS_ATTACH_NP)
         pthread_win32_process_detach_np();
 #endif
       }
