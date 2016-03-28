@@ -38,7 +38,8 @@ namespace DUNE
 {
   namespace Concurrency
   {
-    Condition::Condition(void)
+    Condition::Condition(void):
+      m_clock_monotonic(false)
     {
 #if defined(DUNE_SYS_HAS_PTHREAD_COND)
       int rv = 0;
@@ -51,7 +52,7 @@ namespace DUNE
         throw ConditionError(rv);
 
 #  if defined(DUNE_SYS_HAS_PTHREAD_CONDATTR_SETCLOCK) && defined(CLOCK_MONOTONIC)
-      pthread_condattr_setclock(&m_cond_attr, CLOCK_MONOTONIC);
+      m_clock_monotonic = pthread_condattr_setclock(&m_cond_attr, CLOCK_MONOTONIC) == 0;
 #  endif
 
       rv = pthread_cond_init(&m_cond, &m_cond_attr);
@@ -93,11 +94,8 @@ namespace DUNE
 
       if (t > 0)
       {
-#  if defined(DUNE_SYS_HAS_PTHREAD_CONDATTR_SETCLOCK) && defined(CLOCK_MONOTONIC)
-        t += Time::Clock::get();
-#  else
-        t += Time::Clock::getSinceEpoch();
-#  endif
+        t += m_clock_monotonic ? Time::Clock::get() : Time::Clock::getSinceEpoch();
+
         timespec ts = DUNE_TIMESPEC_INIT_SEC_FP(t);
         rv = pthread_cond_timedwait(&m_cond, &m_mutex, &ts);
       }
