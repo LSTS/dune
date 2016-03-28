@@ -331,14 +331,7 @@ endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 install(DIRECTORY programs/scripts DESTINATION .)
 
 # MinGW dependencies.
-if(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
-  get_filename_component(MINGW_BIN_PATH ${CMAKE_CXX_COMPILER} PATH)
-  install(FILES
-    ${MINGW_BIN_PATH}/libgcc_s_dw2-1.dll
-    ${MINGW_BIN_PATH}/libstdc++-6.dll
-    ${MINGW_BIN_PATH}/mingwm10.dll
-    DESTINATION bin)
-endif(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
+include(cmake/MinGW.cmake)
 
 # LAUV Simulator link.
 if(DUNE_OS_WINDOWS)
