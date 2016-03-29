@@ -36,6 +36,9 @@
 #  include <time.h>
 #endif
 
+// DUNE headers.
+#include <DUNE/Time/Constants.hpp>
+
 namespace DUNE
 {
   namespace Time
@@ -107,7 +110,7 @@ namespace DUNE
         timespec deadline = {(time_t)(m_deadline / 1000000000), (long)(m_deadline % 1000000000)};
 #  if defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, 0);
-#  elif defined(DUNE_SYS_HAS_CLOCK_NANOSLEE)
+#  elif defined(DUNE_SYS_HAS_NANOSLEEP)
         nanosleep(&deadline, 0);
 #  endif
 
