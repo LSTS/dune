@@ -131,6 +131,8 @@ ppp_start()
 
     log info "ppp: starting"
 
+    modprobe ppp_generic
+
     /usr/sbin/pppd \
         "$modem" \
         921600 \
