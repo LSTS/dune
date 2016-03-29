@@ -802,11 +802,12 @@ namespace Transports
                if(data_Beacon.newDataAvailable(CID_DAT_RECEIVE))
                   handle_BinaryMessage();
                 if(data_Beacon.newDataAvailable(CID_DAT_SEND))
+                 {
                   if(data_Beacon.type_CID_DAT_SEND_t.MSG_TYPE==MSG_OWAY)
                   {
-                    clearTicket(IMC::UamTxStatus::UTS_DONE);
                     data_Beacon.type_CID_DAT_SEND_t.lock_flag=0;
                   }
+                 }
                if(data_Beacon.newDataAvailable(CID_DAT_ERROR))  
                 {
                   if(data_Beacon.type_CID_DAT_SEND_t.packetDataNextPart(0)<MAX_MESSAGE_ERRORS)
