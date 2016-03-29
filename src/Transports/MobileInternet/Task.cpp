@@ -92,6 +92,8 @@ namespace Transports
       std::string uart_dev;
       //! Power channel name.
       std::string power_channel;
+      //! Enable IP forward.
+      bool ip_fwd;
     };
 
     struct Task: public Tasks::Task
@@ -168,6 +170,10 @@ namespace Transports
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("ppp0")
         .description("PPP Interface");
+
+        param("Enable IP Forwarding", m_args.ip_fwd)
+        .defaultValue("true")
+        .description("Enable or disable IP forward");
 
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
         m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
@@ -304,6 +310,9 @@ namespace Transports
       void
       startNAT(void)
       {
+        if (!m_args.ip_fwd)
+          return;
+
         if (std::system(m_command_nat_start.c_str()) == -1)
           err(DTR("failed to start NAT"));
       }
@@ -311,6 +320,9 @@ namespace Transports
       void
       stopNAT(void)
       {
+        if (!m_args.ip_fwd)
+          return;
+
         if (std::system(m_command_nat_stop.c_str()) == -1)
           err(DTR("failed to stop NAT"));
       }
