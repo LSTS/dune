@@ -27,6 +27,10 @@
 
 // ISO C++ 98 headers.
 #include <cstdio>
+#include <stdexcept>
+
+// ISO C 99 headers / POSIX headers.
+#include <stdio.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -41,25 +45,26 @@ namespace Sensors
   //! @author Jose Pinto
   namespace WifiRSSI
   {
+    using namespace std;
     using DUNE_NAMESPACES;
 
     //! Prefix to search for when processing iwconfig output
-    static const std::string c_prefix = "Link Quality=";
+    static const string c_prefix = "Link Quality=";
 
     struct Arguments
     {
       //! Temporary file where to store retrieved data.
-      std::string tmp_file;
+      string tmp_file;
       //! Whether to use SSH or run locally.
       bool use_ssh;
       //! Extra SSH flags to use.
-      std::string ssh_flags;
+      string ssh_flags;
       //! Where to connect via SSH.
-      std::string remote_host;
+      string remote_host;
       //! Username to use for SSH connection.
-      std::string remote_user;
+      string remote_user;
       //! File where private RSA key is stored.
-      std::string private_key;
+      string private_key;
       //! Period, in seconds, between polls.
       int period;
     };
@@ -74,14 +79,14 @@ namespace Sensors
       //! Message to send with RSSI information
       IMC::RSSI m_msg;
       //! Scanf format to be computed using prefix constant
-      std::string m_format;
+      string m_format;
       //! Task arguments
       Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
+      Task(const string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
         param("Connect via SSH", m_args.use_ssh)
@@ -115,7 +120,7 @@ namespace Sensors
                      "File paths shall be given in relation to DUNE configuration folder.");
 
         // Format to be used when scanning the output of 'iwconfig'
-        std::stringstream ss;
+        stringstream ss;
         ss << c_prefix << "%d/%d ";
         m_format = ss.str();
       }
@@ -142,7 +147,7 @@ namespace Sensors
       {
 #ifdef DUNE_SYS_HAS_POPEN
         // Compute command to be used for getting RSSI
-        std::stringstream ss;
+        stringstream ss;
 
         // If SSH is used, prepend SSH connection to the command
         if (m_args.use_ssh)
@@ -167,13 +172,13 @@ namespace Sensors
 
           while (fgets(line, 512, fd))
           {
-            std::string l = String::trim(line);
+            string l = String::trim(line);
             // Look for prefix in the output of 'iwconfig'
             if (String::startsWith(l, c_prefix))
             {
               int val, max;
               // Parse RSSI line according to format
-              std::sscanf(l.c_str(), m_format.c_str(), &val, &max);
+              sscanf(l.c_str(), m_format.c_str(), &val, &max);
               m_msg.value = (val * 100.0) / max;
               debug("Link quality: %f %% (%s).", m_msg.value, l.c_str());
               // Send received link quality as an RSSI message
@@ -184,10 +189,10 @@ namespace Sensors
           }
           pclose(fd);
           if (!found)
-            throw std::runtime_error("Unable to parse RSSI.");
+            throw runtime_error("Unable to parse RSSI.");
         }
 #else
-        throw std::runtime_error("popen() is not supported in this system.");
+        throw runtime_error("popen() is not supported in this system.");
 #endif
       }
 
@@ -207,7 +212,7 @@ namespace Sensors
             {
               poll();
             }
-            catch (std::exception& e)
+            catch (exception& e)
             {
               err("Error polling RSSI: %s.", e.what());
               setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
