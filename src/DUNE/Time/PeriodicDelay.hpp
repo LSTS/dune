@@ -105,14 +105,20 @@ namespace DUNE
         WaitForSingleObject(th, INFINITE);
         CloseHandle(th);
 
-        // POSIX.
-#elif defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP) || defined(DUNE_SYS_HAS_NANOSLEEP)
+        // POSIX clock_nanosleep().
+#elif defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP)
         timespec deadline = {(time_t)(m_deadline / 1000000000), (long)(m_deadline % 1000000000)};
-#  if defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP)
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, 0);
-#  elif defined(DUNE_SYS_HAS_NANOSLEEP)
-        nanosleep(&deadline, 0);
-#  endif
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
+
+        // POSIX nanosleep().
+#elif defined(DUNE_SYS_HAS_NANOSLEEP)
+	uint64_t now = Clock::getNsec();
+	if (now < m_deadline)
+        {
+	  uint64_t delay = m_deadline - now;
+          timespec delay_tspec = {(time_t)(delay / 1000000000), (long)(delay % 1000000000)};	
+          nanosleep(&delay_tspec, NULL);
+	}
 
 #else
 #  error PeriodicDelay::wait() is not yet implemented in this system
