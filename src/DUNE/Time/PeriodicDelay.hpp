@@ -81,10 +81,13 @@ namespace DUNE
         std::memcpy(&m_deadline, &ft, sizeof(uint64_t));
 
         // POSIX.
-#elif defined(DUNE_SYS_HAS_CLOCK_GETTIME) || defined(DUNE_SYS_HAS_NANOSLEEP)
+#elif defined(DUNE_SYS_HAS_CLOCK_GETTIME)
         timespec now;
         clock_gettime(CLOCK_MONOTONIC, &now);
         m_deadline = ((uint64_t)now.tv_sec * 1000000000U) + (uint64_t)now.tv_nsec;
+
+#elif defined(DUNE_SYS_HAS_NANOSLEEP)
+	m_deadline = Clock::getNsec();
 
 #else
 #  error PeriodicDelay::reset() is not yet implemented in this system
@@ -124,7 +127,7 @@ namespace DUNE
 #  error PeriodicDelay::wait() is not yet implemented in this system
 #endif
 
-        m_deadline = m_deadline + m_delay;
+        m_deadline += m_delay;
       }
 
     private:
