@@ -47,60 +47,61 @@ namespace Actuators
       public:
         struct AMCDataParser
         {
-          //!ID motor
+          //! ID motor
           uint8_t id[4];
-          //!Func: rpm, tmp, pwr
+          //! Func: rpm, tmp, pwr
           uint8_t func[8];
-          //!RPM
+          //! RPM
           uint8_t rpm[16];
-          //!temperature
+          //! temperature
           uint8_t tmp[16];
-          //!Voltage
+          //! Voltage
           uint8_t volt[16];
-          //!Current
+          //! Current
           uint8_t current[16];
-          //!State
+          //! State
           uint8_t state[16];
         };
 
         struct AMCMotorState
         {
-          //!RPM
+          //! RPM
           double rpm[4];
-          //!Temperature
+          //! Temperature
           double tmp[4];
-          //!Voltage
+          //! Voltage
           double volt[4];
-          //!Current
+          //! Current
           double current[4];
-          //!State of motor
+          //! State of motor
           bool state[4];
         };
 
         enum AMCParserstates
         {
-          // Read preamble
+          //! Read preamble
           PS_PREAMBLE,
-          // ID motor
+          //! ID motor
           PS_ID,
-          // Read mode
+          //! Read mode
           PS_MODE,
-          // Read rpm data
+          //! Read rpm data
           PS_RPM,
-          // Read temperature data
+          //! Read temperature data
           PS_TMP,
-          //Read volt and current
+          //! Read volt and current
           PS_PWR,
-          //Read all parameters
+          //! Read all parameters
           PS_ALL,
-          //Read state of motors
+          //! Read state of motors
           PS_STATE,
-          // Read checksum
+          //! Read checksum
           PS_CS
         }; 
 
+        //! Return csum of array
         uint8_t
-        CRC8(unsigned char *data)
+        getCsum(unsigned char *data)
         {
           uint8_t csum = 0x00;
           uint8_t t = 0;
@@ -112,6 +113,7 @@ namespace Actuators
           return csum;
         }
 
+        //! Parse message received
         void
         ParserAMC( uint8_t byte)
         {
@@ -300,7 +302,6 @@ namespace Actuators
               break;
 
             case PS_CS:
-              //printf("MEU: %2x REC: %2x\n", m_csum, byte);
               if(m_csum == byte)
                 FilterData(m_amc_data);
 
@@ -313,18 +314,17 @@ namespace Actuators
           }
         }
 
+        //! filter data received of AMC board
         void
         FilterData (struct AMCDataParser _amc_data)
         {
           if(strstr((char*)_amc_data.func, "rpm") != NULL)
           {
-            // RPM 
             memset(&m_motor.rpm[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.rpm[atoi((const char*)_amc_data.id)]));
             m_motor.rpm[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.rpm);
           }
           else if(strstr((char*)_amc_data.func, "tmp") != NULL)
           {
-            // TMP
             memset(&m_motor.tmp[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.tmp[atoi((const char*)_amc_data.id)]));
             m_motor.tmp[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.tmp);
           }
@@ -332,14 +332,12 @@ namespace Actuators
           {
             memset(&m_motor.volt[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.volt[atoi((const char*)_amc_data.id)]));
             memset(&m_motor.current[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.current[atoi((const char*)_amc_data.id)]));
-            // VOLT/CURRENT
             m_motor.volt[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.volt);
             m_motor.current[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.current);
           }
           else if(strstr((char*)_amc_data.func, "sta") != NULL)
           {
             memset(&m_motor.state[atoi((const char*)_amc_data.id)], '\0', sizeof(m_motor.state[atoi((const char*)_amc_data.id)]));
-            // State
             m_motor.state[atoi((const char*)_amc_data.id)] = atof((const char*)_amc_data.state);
           }
           else if(strstr((char*)_amc_data.func, "all") != NULL)
