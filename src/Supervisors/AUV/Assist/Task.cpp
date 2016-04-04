@@ -119,9 +119,7 @@ namespace Supervisors
           .units(Units::Second)
           .description("Amount of time, after meeting conditions, before triggering dislodging behavior");
 
-          param("Dislodge Plan Id", m_args.plan_id)
-          .defaultValue("dislodge")
-          .description("Dislodge plan id");
+          m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.plan_id);
 
           bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
@@ -205,7 +203,7 @@ namespace Supervisors
             getFinishDepth(msg);
 
             // Generate and execute dislodge.
-            if ((msg->type == IMC::PlanControl::PC_FAILURE) &&
+            if ((msg->type == IMC::PlanControl::PC_REQUEST) &&
                 (msg->op == IMC::PlanControl::PC_START) &&
                 (msg->plan_id == m_args.plan_id))
               setState(ST_START_DISLODGE);
@@ -255,6 +253,8 @@ namespace Supervisors
         inline void
         dispatchDislodge(void)
         {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
           IMC::PlanGeneration pg;
           pg.op = IMC::PlanGeneration::OP_REQUEST;
           pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
@@ -300,6 +300,9 @@ namespace Supervisors
         {
           switch (state)
           {
+            case ST_IDLE:
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+              break;
             case ST_CHECK_STUCK:
               m_dtimer.setTop(m_args.trigger_time);
               break;
