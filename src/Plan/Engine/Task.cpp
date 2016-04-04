@@ -76,8 +76,8 @@ namespace Plan
       std::string label_imu;
       //! Recovery plan
       std::string recovery_plan;
-      //! Entity label of the recovery supervisor.
-      std::string label_rec;
+      //! Entity label of the plan generator.
+      std::string label_gen;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -113,8 +113,8 @@ namespace Plan
       std::map<std::string, IMC::EntityInfo> m_cinfo;
       //! Source entity of the IMU
       unsigned m_eid_imu;
-      //! Source entity of the recovery supervisor
-      unsigned m_eid_rec;
+      //! Source entity of the plan generator
+      unsigned m_eid_gen;
       //! IMU is enabled or not
       bool m_imu_enabled;
       //! Queue of PlanControl messages
@@ -173,9 +173,9 @@ namespace Plan
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
 
-        param("Recovery Supervisor Entity Label", m_args.label_rec)
-        .defaultValue("Recovery Supervisor")
-        .description("Entity label of the Recovery Supervisor");
+        param("Plan Generator Entity Label", m_args.label_gen)
+        .defaultValue("Plan Generator")
+        .description("Entity label of the Plan Generator");
 
         m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
 
@@ -211,11 +211,11 @@ namespace Plan
 
         try
         {
-          m_eid_rec = resolveEntity(m_args.label_rec);
+          m_eid_gen = resolveEntity(m_args.label_gen);
         }
         catch (...)
         {
-          m_eid_rec = UINT_MAX;
+          m_eid_gen = UINT_MAX;
         }
       }
 
@@ -603,11 +603,11 @@ namespace Plan
           return;
 
         // Emergency plan needs to be requested by
-        // local recovery supervisor.
+        // local plan generator.
         if ((pc->plan_id == m_args.recovery_plan) &&
             (pc->op == IMC::PlanControl::PC_START) &&
-            (pc->getSource() != getSystemId()) &&
-            (pc->getSourceEntity() != m_eid_rec))
+            ((pc->getSource() != getSystemId()) ||
+             (pc->getSourceEntity() != m_eid_gen)))
           return;
 
         if (pendingReply())
