@@ -29,7 +29,7 @@
 #include <DUNE/DUNE.hpp>
 
 //Local Headers
-#include "MessageControl.hpp"
+#include "Parser.hpp"
 
 namespace Actuators
 {
@@ -37,10 +37,13 @@ namespace Actuators
   {
     using DUNE_NAMESPACES;
 
-    static const int c_max_csum = 2;
-    static const int c_max_motors = 4;
-    static const int c_max_buffer = 16;
-    static const int c_sleep_time = 25000;
+    static const unsigned int c_max_csum = 2;
+    static const unsigned int c_max_motors = 4;
+    static const unsigned int c_max_buffer = 32;
+    static const unsigned int c_numb_motor_id = 2;
+    static const float c_time_check_motor = 2.0f;
+    static const unsigned int c_sleep_time = 25000;
+    static const unsigned int c_max_value_motor = 25000;
 
     enum AmcMessages
     {
@@ -82,10 +85,10 @@ namespace Actuators
       IMC::Voltage m_volt_val[c_max_motors];
       //! Current message
       IMC::Current m_amp_val[c_max_motors];
+      //! eid id labels for motors
+      unsigned eid_labels[c_max_motors];
       //! Task arguments.
       Arguments m_args;
-      //! Func read name
-      AmcMessages m_func_name;
       //! Serial port device.
       SerialPort* m_uart;
       //! I/O Multiplexer.
@@ -98,25 +101,21 @@ namespace Actuators
       char m_msg[c_max_buffer];
       //! Parser for message
       MessageParse* m_parse;
-      //! Watchdog.
-      Counter<double> m_wdog;
       //! Counter stage id motor
       uint8_t m_cnt_motor;
-      //! Value for motor 0 and 1
-      double m_motorId0;
-      //! Value for motor 2 and 3
-      double m_motorId1;
+      //! Values for motors
+      double m_motorId[c_numb_motor_id];
       //! count for fail rx uart
       uint8_t m_fail_uart;
-      //! counter to check state of motors
-      uint8_t m_cnt_motor_check;
+      //! state time to check state of motors
+      Time::Counter<float> m_cnt_motor_check;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
-        m_uart(NULL)
+      Tasks::Periodic(name, ctx),
+      m_uart(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -128,7 +127,7 @@ namespace Actuators
         .description("Serial port baud rate");
 
         // Extract motor configurations
-        for (unsigned i = 0; i < c_max_motors; ++i)
+        for(unsigned i = 0; i < c_max_motors; ++i)
         {
           std::string option = String::str("Motor %u - Entity Label", i);
           param(option, m_args.motor_elabels[i])
@@ -155,47 +154,30 @@ namespace Actuators
         bind<IMC::SetThrusterActuation>(this);
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
       {
+        unsigned eid = 0;
         for (unsigned i = 0; i < c_max_motors; ++i)
         {
-        	try
-          {
-            resolveEntity(m_args.motor_elabels[i]);
-          }
-          catch (Entities::EntityDataBase::NonexistentLabel& e)
-          {
-            (void)e;
-            reserveEntity(m_args.motor_elabels[i]);
-          }
-        }
-      }
+          if(m_args.motor_state[i] == false)
+            continue;
 
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      	unsigned eid = 0;
-        for (unsigned i = 0; i < c_max_motors; ++i)
-        {
+          if(m_args.motor_elabels[i].empty())
+            continue;
+
           try
           {
             eid = resolveEntity(m_args.motor_elabels[i]);
           }
-          catch (...)
-          { }
+          catch(Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            (void)e;
+            eid = reserveEntity(m_args.motor_elabels[i]);
+          }
 
-          if (m_args.motor_elabels[i].empty())
-            continue;
-
+          eid_labels[i] = eid;
           m_rpm_val[i].setSourceEntity(eid);
           m_tmp_val[i].setSourceEntity(eid);
           m_volt_val[i].setSourceEntity(eid);
@@ -218,92 +200,83 @@ namespace Actuators
         m_parse = new MessageParse();
         m_parse->m_amc_state = MessageParse::PS_PREAMBLE;
         m_poll.add(*m_uart);
-				setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        checkStateMotor(1);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        checkStateMotor(true);
         stopAllMotor();
-        m_wdog.setTop(10.0);
         m_cnt_motor = 0;
         m_fail_uart = 0;
-        m_cnt_motor_check = 0;
+        m_cnt_motor_check.setTop(c_time_check_motor);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        if (m_uart != NULL)
+        if(m_uart != NULL)
         {
           m_poll.remove(*m_uart);
           delete m_uart;
           m_uart = NULL;
         }
+        delete m_parse;
       }
 
       //! Consume message IMC::SetThrusterActuation
       void
       consume(const IMC::SetThrusterActuation* msg)
-      {          
-          if(msg->id == 0)
-		      {
-		      	if(msg->value != 0)
-		      		m_motorId0 = msg->value * 30000;
-		        else
-		        	m_motorId0 = 0;
-		      }
-		      else if(msg->id == 1)
-		      {
-		      	if(msg->value != 0)
-		      		m_motorId1 = msg->value * 30000;
-		        else
-		        	m_motorId1 = 0;
-		      }
+      {
+        m_motorId[msg->id] = msg->value * c_max_value_motor;
       }
 
       //! Read data send by AMC board.
-      uint8_t
+      bool
       checkSerialPort(void)
       {
         if (m_poll.wasTriggered(*m_uart))
         {
-          memset(&m_buffer, '\0', sizeof(m_buffer));
+          std::memset(&m_buffer, '0', sizeof(m_buffer));
           int rv = 0;
 
           try
           {
-            rv = m_uart->read(m_buffer, 1);
+            rv = m_uart->read(m_buffer, sizeof(m_buffer));
           }
           catch (std::exception& e)
           {
             err(DTR("read error: %s"), e.what());
-            return 0;
+            return false;
           }
 
           if (rv <= 0)
           {
             err(DTR("unknown read error"));
-            return 0;
+            return false;
           }
           else
           {
-            m_parse->ParserAMC(m_buffer[0]);
-            return m_buffer[0];
+            for (uint8_t i = 0; i < rv; ++i)
+            {
+              if (!m_parse->ParserAMC(m_buffer[i]))
+                continue;
+
+              return true;
+            }
           }
         }
-        return 0;
+        return false;
       }
 
       //! Send value of rpm to motor
       int
       setRPM( int motor, int rpm )
       {
-        memset(&m_msg, '\0', sizeof(m_msg));
-        sprintf(m_msg, "@S,%d,%d,*", motor, rpm);
-        m_csum[0] = m_parse->getCsum((unsigned char *)m_msg);
+        std::memset(&m_msg, '\0', sizeof(m_msg));
+        std::sprintf(m_msg, "@S,%d,%d,*", motor, rpm);
+        m_csum[0] = Algorithms::XORChecksum::compute((uint8_t*)m_msg, strlen(m_msg) - 1);
         int t = m_uart->write(m_msg, strlen(m_msg));
         m_uart->write(m_csum, 1);
         t++;
         usleep(c_sleep_time);
-
         return t;
       }
 
@@ -311,19 +284,23 @@ namespace Actuators
       int
       checkStateMotor(bool spew_ok)
       {
-      	int cnt_rx = 0;
+      	uint8_t cnt_rx = 0;
         for(int i = 0; i < 4; i++)
         {
-          if(m_args.motor_state[i] == 1)
+          if(m_args.motor_state[i] == true)
           {
             readParameterAMC(i, STATE);
             cnt_rx = 0;
             m_fail_uart = 0;
             while(cnt_rx < 10 && !stopping() && m_fail_uart < 4)
             {
-              if (m_poll.poll(0.1))
+              if (m_poll.poll(0.2))
               {
-                checkSerialPort();
+                if(checkSerialPort())
+                {
+                  if(m_parse->getData())
+                    cnt_rx = 10;
+                }
                 cnt_rx++;
               }
               else
@@ -332,13 +309,13 @@ namespace Actuators
           }
         }
 
-        int cnt_war = 0;
+        uint8_t cnt_war = 0;
 
-        for(int i = 0; i < 4; i++)
+        for(uint8_t i = 0; i < 4; i++)
         {
-          if(m_args.motor_state[i] == 1)
+          if(m_args.motor_state[i] == true)
           {
-            if(m_parse->m_motor.state[i] == 0)
+            if(m_parse->m_motor.state[i] == false)
             {
               if(spew_ok)
                 war(DTR("AMC Motor %d - ERROR"), i);
@@ -350,21 +327,20 @@ namespace Actuators
         if(m_fail_uart > 3)
         {
           err(DTR("AMC UART ERROR"));
-          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("AMC UART ERROR")));
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           return -1;
-        } 
+        }
         else
         {
           if(cnt_war > 0)
             setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("AMC Motor ERROR")));
-          else if(cnt_war == 0)
+          else
           {
             if(spew_ok)
-              war(DTR("ALL AMC MOTOR STATE OK"));
+              war(DTR("ALL MOTORS OK"));
 
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
-
           return cnt_war;
         }
         return 0;
@@ -372,102 +348,40 @@ namespace Actuators
 
       //! Request/read all info of motor to AMC board
       void
-      checkAllMotor(uint8_t id_motor)
+      checkDataMotor(uint8_t id_motor)
       {
-        uint8_t checkEnd = 0x00;
+        bool checkEnd = false;
         uint8_t jump_read_uart = 0;
         readParameterAMC(id_motor, ALL);
-        while(checkEnd != '*' && !stopping() &&  jump_read_uart < 6)
+        while(!checkEnd && !stopping() &&  jump_read_uart < 6)
         {
-          if (m_poll.poll(0.1))
-            checkEnd = checkSerialPort();
+          if(m_poll.poll(0.1)){
+            if(checkSerialPort())
+              checkEnd = m_parse->getData();
+          }
           else
             jump_read_uart++;
         }
-        if (m_poll.poll(0.1))
-          checkEnd = checkSerialPort();
 
         if(jump_read_uart < 6)
         {
-          dispatchRpm(id_motor, (int)m_parse->m_motor.rpm[id_motor]);
-          usleep(c_sleep_time);
-          dispatchTmp(id_motor, (int)m_parse->m_motor.tmp[id_motor]);
-          usleep(c_sleep_time);
-          dispatchPwr(id_motor, m_parse->m_motor.volt[id_motor], m_parse->m_motor.current[id_motor]);
-          usleep(c_sleep_time);
+          dispatchAllData(id_motor, m_parse);
           m_uart->flush();
         }
-      }
-
-      //! Request/read rpm value of motor to AMC board
-      void
-      checkRpmMotor(uint8_t id_motor)
-      {
-        readParameterAMC(id_motor, RPM);
-        uint8_t checkEnd = 0x00;
-        while(checkEnd != '*' && !stopping())
-        {
-          if (m_poll.poll(0.5))
-            checkEnd = checkSerialPort();
-        }
-        if (m_poll.poll(0.5))
-          checkEnd = checkSerialPort();
-
-        dispatchRpm(id_motor, (int)m_parse->m_motor.rpm[id_motor]);
-        usleep(c_sleep_time);
-        m_uart->flush();
-      }
-
-      //! Request/read temperature value of motor to AMC board
-      void
-      checkTmpMotor(uint8_t id_motor)
-      {
-        readParameterAMC(id_motor, TEMPERATURE);
-        uint8_t checkEnd = 0x00;
-        while(checkEnd != '*' && !stopping())
-        {
-          if (m_poll.poll(0.5))
-            checkEnd = checkSerialPort();
-        }
-        if (m_poll.poll(0.5))
-          checkEnd = checkSerialPort();
-
-        dispatchTmp(id_motor, (int)m_parse->m_motor.tmp[id_motor]);
-        usleep(c_sleep_time);
-        m_uart->flush();
-      }
-
-      //! Request/read voltage & current values of motor to AMC board
-      void
-      checkPwrMotor( uint8_t id_motor)
-      {
-        readParameterAMC(id_motor, PWR);
-        uint8_t checkEnd = 0x00;
-        while(checkEnd != '*' && !stopping())
-        {
-          if (m_poll.poll(0.5))
-            checkEnd = checkSerialPort();
-        }
-        if (m_poll.poll(0.5))
-          checkEnd = checkSerialPort();
-
-        dispatchPwr(id_motor, m_parse->m_motor.volt[id_motor], m_parse->m_motor.current[id_motor]);
-        usleep(c_sleep_time);
-        m_uart->flush();
       }
 
       //! Stop all motors
       void
       stopAllMotor(void)
       {
-        setRPM(0, 0);
-        usleep(c_sleep_time);
-        setRPM(1, 0);
-        usleep(c_sleep_time);
-        setRPM(2, 0);
-        usleep(c_sleep_time);
-        setRPM(3, 0);
-        usleep(c_sleep_time);
+        for(uint8_t i = 0; i < c_max_motors; i++)
+        {
+          if(m_args.motor_state[i] == true)
+          {
+            setRPM(i, 0);
+            usleep(c_sleep_time);
+          }
+        }
       }
 
       //! Requests specific data type
@@ -475,89 +389,62 @@ namespace Actuators
       readParameterAMC(int motor, AmcMessages _func_name)
       {
         int t = 0;
-        if(_func_name == RPM)
+        std::memset(&m_msg, '\0', sizeof(m_msg));
+        switch(_func_name)
         {
-          memset(&m_msg, '\0', sizeof(m_msg));
-          sprintf(m_msg, "@R,%d,rpm,*", motor);
-          m_csum[0] = m_parse->getCsum((unsigned char *)m_msg);
-          t = m_uart->write(m_msg, strlen(m_msg));
-          m_uart->write(m_csum, 1);
-          t++;
+          case RPM:
+          std::sprintf(m_msg, "@R,%d,rpm,*", motor);
+          break;
+
+          case TEMPERATURE:
+          std::sprintf(m_msg, "@R,%d,tmp,*", motor);
+          break;
+
+          case PWR:
+          std::sprintf(m_msg, "@R,%d,pwr,*", motor);
+          break;
+
+          case STATE:
+          std::sprintf(m_msg, "@R,%d,sta,*", motor);
+          break;
+
+          case ALL:
+          std::sprintf(m_msg, "@R,%d,all,*", motor);
+          break;
+
+          default:
+          war(DTR("Wrong parameter request"));
+          t = -1;
+          break;
         }
-        else if(_func_name == TEMPERATURE)
+
+        if(t == 0)
         {
-          memset(&m_msg, '\0', sizeof(m_msg));
-          sprintf(m_msg, "@R,%d,tmp,*", motor);
-          m_csum[0] = m_parse->getCsum((unsigned char *)m_msg);
-          t = m_uart->write(m_msg, strlen(m_msg));
+          m_csum[0] = Algorithms::XORChecksum::compute((uint8_t*)m_msg, strlen(m_msg) - 1);
+          m_uart->write(m_msg, strlen(m_msg));
           m_uart->write(m_csum, 1);
-          t++;
-        }
-        else if(_func_name == PWR)
-        {
-          memset(&m_msg, '\0', sizeof(m_msg));
-          sprintf(m_msg, "@R,%d,pwr,*", motor);
-          m_csum[0] = m_parse->getCsum((unsigned char *)m_msg);
-          t = m_uart->write(m_msg, strlen(m_msg));
-          m_uart->write(m_csum, 1);
-          t++;
-        }
-        else if(_func_name == STATE)
-        {
-          memset(&m_msg, '\0', sizeof(m_msg));
-          sprintf(m_msg, "@R,%d,sta,*", motor);
-          m_csum[0] = m_parse->getCsum((unsigned char *)m_msg);
-          t = m_uart->write(m_msg, strlen(m_msg));
-          m_uart->write(m_csum, 1);
-          t++;
-        }
-        else if(_func_name == ALL)
-        {
-          memset(&m_msg, '\0', sizeof(m_msg));
-          sprintf(m_msg, "@R,%d,all,*", motor);
-          m_csum[0] = m_parse->getCsum((unsigned char *)m_msg);
-          t = m_uart->write(m_msg, strlen(m_msg));
-          m_uart->write(m_csum, 1);
-          t++;
         }
         usleep(c_sleep_time);
       }
 
       //! Dispatch rpm value to IMC message
       void
-      dispatchRpm(int _id, int _rpm)
+      dispatchAllData(uint8_t id, MessageParse* parse)
       {
-        if(_id >= 0 && _id < c_max_motors)
+        if(id < c_max_motors)
         {
-          m_rpm_val->setSourceEntity(resolveEntity(m_args.motor_elabels[_id]));
-          m_rpm_val->value = _rpm;
+          m_rpm_val->setSourceEntity(eid_labels[id]);
+          m_rpm_val->value = parse->m_motor.rpm[id];
+          m_tmp_val->setSourceEntity(eid_labels[id]);
+          m_tmp_val->value = parse->m_motor.tmp[id];
+          m_volt_val->setSourceEntity(eid_labels[id]);
+          m_volt_val->value = parse->m_motor.volt[id];
+          m_amp_val->setSourceEntity(eid_labels[id]);
+          m_amp_val->value = parse->m_motor.current[id];
+
           dispatch(m_rpm_val);
-        }
-      }
-
-      //! Dispatch temperature value to IMC message
-      void
-      dispatchTmp(int _id, float _tmp)
-      {
-        if(_id >= 0 && _id < c_max_motors)
-        {
-          m_tmp_val->setSourceEntity(resolveEntity(m_args.motor_elabels[_id]));
-          m_tmp_val->value = _tmp;
           dispatch(m_tmp_val);
-        }
-      }
-
-      //! Dispatch voltage & current values to IMC message
-      void
-      dispatchPwr(int _id, float _volt, float _amp)
-      {
-        if(_id >= 0 && _id < c_max_motors)
-        {
-          m_volt_val->setSourceEntity(resolveEntity(m_args.motor_elabels[_id]));
-          m_volt_val->value = _volt;
           dispatch(m_volt_val);
-          m_amp_val->setSourceEntity(resolveEntity(m_args.motor_elabels[_id]));
-          m_amp_val->value = _amp;
           dispatch(m_amp_val);
         }
       }
@@ -566,14 +453,13 @@ namespace Actuators
       void
       setRpmValues(void)
       {
-        if(m_parse->m_motor.state[0] == 1 && m_args.motor_state[0] == 1)
-          setRPM(0, m_args.internal_factors_orientation[0] * m_motorId0);
-        if(m_parse->m_motor.state[1] == 1 && m_args.motor_state[1] == 1)
-          setRPM(1, m_args.internal_factors_orientation[1] * m_motorId0);
-        if(m_parse->m_motor.state[2] == 1 && m_args.motor_state[2] == 1)
-          setRPM(2, m_args.internal_factors_orientation[2] * m_motorId1);
-        if(m_parse->m_motor.state[3] == 1 && m_args.motor_state[3] == 1)
-          setRPM(3, m_args.internal_factors_orientation[3] * m_motorId1);
+        for(uint8_t i = 0; i < c_max_motors; i++)
+        {
+          if(m_parse->m_motor.state[i] == true && m_args.motor_state[i] == true && i < 2)
+            setRPM(i, m_args.internal_factors_orientation[i] * m_motorId[0]);
+          else if(m_parse->m_motor.state[i] == true && m_args.motor_state[i] == true && i >= 2)
+            setRPM(i, m_args.internal_factors_orientation[i] * m_motorId[1]);
+        }
       }
 
       //! Main loop.
@@ -581,18 +467,18 @@ namespace Actuators
       task(void)
       {
         setRpmValues();
-		    
         //Read values ...
         for(uint8_t i = 0; i <= 3; i++)
-          // ... of active motor
-          if(m_parse->m_motor.state[i] == 1 && m_args.motor_state[i] == 1)
-            checkAllMotor( i );
-
-        m_cnt_motor_check++;
-        if(m_cnt_motor_check > 8)
         {
-          checkStateMotor(0);
-          m_cnt_motor_check = 0;
+          // ... of active motor
+          if(m_parse->m_motor.state[i] == true && m_args.motor_state[i] == true)
+            checkDataMotor(i);
+        }
+
+        if(m_cnt_motor_check.overflow())
+        {
+          checkStateMotor(false);
+          m_cnt_motor_check.reset();
         }
       }
     };
