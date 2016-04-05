@@ -45,13 +45,90 @@ namespace Transports
 
     using DUNE_NAMESPACES;
 
+    class DataSample
+    {
+    public:
+      double latDegs, lonDegs, zMeters, timestamp;
+      int priority, source;
+      IMC::Message * sample;
+
+      DataSample()
+      {
+        latDegs = lonDegs = zMeters = timestamp = 0;
+        priority = source = -1;
+        sample = NULL;
+      }
+
+      ~DataSample()
+      {
+        if (sample != NULL)
+          delete sample;
+      }
+
+      // comparison based on timestamp of sample
+      bool operator<(DataSample other) const
+      {
+        return timestamp > other.timestamp;
+      }
+
+      int
+      serializationSize()
+      {
+        return sample->getPayloadSerializationSize() + MINIMUM_SAMPLE_SIZE;
+      }
+    };
+
+    HistoricSample*
+    parse(DataSample* sample, double base_lat, double base_lon, long base_time)
+    {
+      HistoricSample* s = new HistoricSample();
+
+      double lat1 = Angles::radians(base_lat), lat2 = Angles::radians(sample->latDegs);
+      double lon1 = Angles::radians(base_lon), lon2 = Angles::radians(sample->lonDegs);
+      double x, y, z;
+
+      WGS84::displacement(lat1, lon1, 0, lat2, lon2, 0, &x, &y, &z);
+
+      s->x = (int16_t) x;
+      s->y = (int16_t) y;
+      s->z = (int16_t) (sample->zMeters * 10);
+      s->t = (int16_t) (sample->timestamp - base_time);
+      s->sys_id = sample->source;
+      s->sample.set(sample->sample);
+      return s;
+    }
+
+
+    std::vector<DataSample *>
+    parse(const IMC::HistoricData* data)
+    {
+      std::vector<DataSample *> samples;
+      MessageList<HistoricSample>::const_iterator it;
+
+      for (it = data->data.begin(); it != data->data.end(); it++)
+      {
+        DataSample* s = new DataSample();
+        s->latDegs = data->base_lat;
+        s->lonDegs = data->base_lon;
+        double z;
+        WGS84::displace((*it)->x, (*it)->y, 0, &s->latDegs, &s->lonDegs, &z);
+        s->source = (*it)->sys_id;
+        s->timestamp = data->base_time + (*it)->t;
+        s->zMeters = (*it)->z / 10.0;
+        s->sample = (*it)->sample.get()->clone();
+        samples.push_back(s);
+      }
+
+      return samples;
+    }
+
     class DataStore
     {
     public:
       DataStore()
-      {
+    {
 
-      }
+    }
 
       void
       addSample(DataSample* sample)
@@ -61,11 +138,11 @@ namespace Transports
       }
 
       void
-      addData(const IMC::HistoricData& data)
+      addData(const IMC::HistoricData * data)
       {
-        std::vector<DataSample *> samples = parse(data);
+        std::vector<DataSample *> tmp = parse(data);
         std::vector<DataSample *>::iterator it;
-        for (it = samples.begin(); it != samples.end(); it++)
+        for (it = tmp.begin(); it != tmp.end(); it++)
         {
           addSample(*it);
         }
@@ -122,89 +199,9 @@ namespace Transports
       }
 
     private:
-      std::priority_queue<DataSample *, std::vector<DataSample *>, SampleComparator> samples;
+      std::priority_queue<DataSample *, std::vector<DataSample *> > samples;
       Concurrency::RWLock m_lock;
     };
-
-    class SampleComparator
-    {
-      bool Compare(DataSample * s1, DataSample * s2)
-      {
-        return s1->timestamp < s2->timestamp;
-      }
-    };
-
-    class DataSample
-    {
-    public:
-      double latDegs, lonDegs, zMeters, timestamp;
-      int priority, source;
-      IMC::Message * sample;
-
-      DataSample()
-      {
-        latDegs = lonDegs = zMeters = timestamp = 0d;
-        priority = source = -1;
-        sample = NULL;
-      }
-
-      ~DataSample()
-      {
-        if (sample != NULL)
-          delete sample;
-      }
-
-      int
-      serializationSize()
-      {
-        return sample->getPayloadSerializationSize() + MINIMUM_SAMPLE_SIZE;
-      }
-    };
-
-
-    HistoricSample*
-    parse(DataSample* sample, double base_lat, double base_lon, long base_time)
-    {
-        HistoricSample* s = new HistoricSample();
-
-        double lat1 = Angles::radians(base_lat), lat2 = Angles::radians(sample->latDegs);
-        double lon1 = Angles::radians(base_lon), lon2 = Angles::radians(sample->lonDegs);
-        double x, y, z;
-
-        WGS84::displacement(lat1, lon1, 0, lat2, lon2, 0, &x, &y, &z);
-
-        s->x = (int16_t) x;
-        s->y = (int16_t) y;
-        s->z = (int16_t) (sample->zMeters * 10);
-        s->t = (int16_t) (sample->timestamp() - base_time);
-        s->sys_id = sample->source;
-        s->sample.set(sample->sample);
-        return s;
-      }
-
-
-    std::vector<DataSample *>
-    parse(const IMC::HistoricData& data)
-    {
-      std::vector<DataSample *> samples;
-      MessageList<HistoricSample>::const_iterator it;
-
-      for (it = data.data.begin(); it != data.data.end(); it++)
-      {
-        DataSample* s = new DataSample();
-        s->latDegs = data.base_lat;
-        s->lonDegs = data.base_lon;
-        double z;
-        WGS84::displace((*it)->x, (*it)->y, 0, &s->latDegs, &s->lonDegs, &z);
-        s->source = (*it)->sys_id;
-        s->timestamp = data.base_time + (*it)->t;
-        s->zMeters = (*it)->z / 10.0;
-        s->sample = (*it)->sample.get()->clone();
-        samples.push_back(s);
-      }
-
-      return samples;
-    }
   } /* namespace DataStore */
 } /* namespace Transports */
 

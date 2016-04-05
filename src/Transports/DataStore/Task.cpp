@@ -30,6 +30,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include "DataStore.hpp"
 
 namespace Transports
 {
@@ -37,17 +38,66 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+
     struct Arguments
     {
-
+      // List of messages to store.
+      std::vector<std::string> messages;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
+      DataStore m_store;
+      Arguments m_args;
+      IMC::EstimatedState m_state;
+
       Task(const std::string& name, Tasks::Context& ctx) :
           DUNE::Tasks::Task(name, ctx)
       {
+        param("Messages", m_args.messages)
+        .defaultValue("")
+        .description("List of messages to store");
 
+        bind<IMC::HistoricData>(this);
+        bind<IMC::EstimatedState>(this);
+        bind(this, m_args.messages);
+      }
+
+      void
+      consume(const IMC::Message * msg)
+      {
+        if (m_ctx.resolver.isLocal(msg->getSource()))
+        {
+          DataSample* sample = new DataSample();
+
+          double lat = m_state.lat, lon = m_state.lon;
+          WGS84::displace(m_state.x, m_state.y, &lat, &lon);
+          sample->latDegs = Angles::degrees(lat);
+          sample->lonDegs = Angles::degrees(lon);
+          sample->zMeters = m_state.depth != -1? -m_state.depth : m_state.alt;
+          sample->source = msg->getSource();
+          sample->timestamp = msg->getTimeStamp();
+          sample->sample = msg->clone();
+          debug("Added message of type %s with size %d to data store.",
+              msg->getName(), sample->serializationSize());
+          m_store.addSample(sample);
+        }
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        m_state = *msg;
+      }
+
+      void
+      consume(const IMC::HistoricData* msg)
+      {
+        debug("Adding %d messages from %s (%d) to data store.", (int)msg->data.size(),
+              m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
+
+        // add all data to local store
+        m_store.addData(msg);
       }
 
       void
