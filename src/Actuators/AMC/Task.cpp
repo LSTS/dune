@@ -103,7 +103,7 @@ namespace Actuators
       //! Buffer for message received
       char m_msg[c_max_buffer];
       //! Parser for message
-      MessageParse* m_parse;
+      Parser* m_parse;
       //! Counter stage id motor
       uint8_t m_cnt_motor;
       //! Values for motors
@@ -203,8 +203,7 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        m_parse = new MessageParse();
-        m_parse->m_amc_state = MessageParse::PS_PREAMBLE;
+        m_parse = new Parser();
         m_poll.add(*m_uart);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         checkStateMotor(true);
@@ -264,7 +263,7 @@ namespace Actuators
           {
             for (uint8_t i = 0; i < rv; ++i)
             {
-              if (!m_parse->ParserAMC(m_buffer[i]))
+              if (!m_parse->parse(m_buffer[i]))
                 continue;
 
               return true;
@@ -308,7 +307,7 @@ namespace Actuators
               {
                 if (checkSerialPort())
                 {
-                  if (m_parse->getData())
+                  if (m_parse->translate())
                     cnt_rx = 10;
                 }
                 cnt_rx++;
@@ -373,7 +372,7 @@ namespace Actuators
           if (m_poll.poll(0.1))
           {
             if (checkSerialPort())
-              checkEnd = m_parse->getData();
+              checkEnd = m_parse->translate();
           }
           else
           {

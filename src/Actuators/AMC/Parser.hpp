@@ -42,10 +42,13 @@ namespace Actuators
 {
   namespace AMC
   {
-    // Auto exposure compensator
-    class MessageParse
+    //! Message Parser for AMC motor controller.
+    //!
+    //! @author Pedro Gonçalves
+    class Parser
     {
     public:
+      //! Motor data.
       struct AMCMotorState
       {
         //! RPM
@@ -60,7 +63,8 @@ namespace Actuators
         bool state[4];
       };
 
-      enum AMCParserstates
+      //! State machine states.
+      enum AMCParserStates
       {
         //! Read preamble
         PS_PREAMBLE,
@@ -70,12 +74,17 @@ namespace Actuators
         PS_CS
       };
 
+      Parser(void):
+        m_amc_state(Parser::PS_PREAMBLE)
+      { }
+
+      ~Parser(void)
+      { }
+
       //! Parse message received
       bool
-      ParserAMC(uint8_t byte)
+      parse(uint8_t byte)
       {
-        //printf("HEX: %c\n\r", byte);
-        bool result_parser = false;
         switch (m_amc_state)
         {
           case PS_PREAMBLE:
@@ -84,14 +93,14 @@ namespace Actuators
               m_csum = byte;
               m_amc_state = PS_DATA;
               m_cnt = 0;
-              std::memset(&m_message_received, '0', sizeof(m_message_received));
+              std::memset(&m_bfr, '0', sizeof(m_bfr));
             }
             break;
 
           case PS_DATA:
             if (byte != c_terminator)
             {
-              m_message_received[m_cnt++] = byte;
+              m_bfr[m_cnt++] = byte;
               m_csum ^= byte;
             }
             else
@@ -99,62 +108,66 @@ namespace Actuators
             break;
 
           case PS_CS:
-            if (m_csum == byte)
-              result_parser = true;
-
             m_amc_state = PS_PREAMBLE;
+
+            if (m_csum == byte)
+              return true;
             break;
 
           default:
             m_amc_state = PS_PREAMBLE;
             break;
         }
-        return result_parser;
+
+        return false;
       }
 
-      //! split info of message
+      //! Filter data received of AMC board
       bool
-      getData(void)
+      translate(void)
       {
-        return FilterData(m_message_received);
-      }
+        int id;
 
-      //! filter data received of AMC board
-      bool
-      FilterData(const char* amc_data)
-      {
-        result_filter_data = false;
-        if (amc_data[0] == c_all_data)
+        if (m_bfr[0] == c_all_data)
         {
-          std::sscanf(amc_data, "AI%d", &m_id);
-          std::sscanf(amc_data, "AI%*d,R%d,T%f,V%f,C%f", &m_motor.rpm[m_id], &m_motor.tmp[m_id], &m_motor.volt[m_id], &m_motor.current[m_id]);
-          result_filter_data = true;
+          std::sscanf(m_bfr, "AI%d", &id);
+          std::sscanf(m_bfr, "AI%*d,R%d,T%f,V%f,C%f",
+                      &m_motor.rpm[id],&m_motor.tmp[id],
+                      &m_motor.volt[id], &m_motor.current[id]);
+          return true;
         }
-        else if (amc_data[0] == c_state_motor)
+        else if (m_bfr[0] == c_state_motor)
         {
-          std::sscanf(amc_data, "SI%d", &m_id);
+          std::sscanf(m_bfr, "SI%d", &id);
           int state_motor;
-          std::sscanf(amc_data, "SI%*d,S%d", &state_motor);
-          m_motor.state[m_id] = (bool)state_motor;
-          result_filter_data = true;
+          std::sscanf(m_bfr, "SI%*d,S%d", &state_motor);
+          m_motor.state[id] = (bool)state_motor;
+          return true;
         }
 
-        return result_filter_data;
+        return false;
       }
 
-      // Parser variables
-      AMCParserstates m_amc_state;
+      //! Motor state.
       AMCMotorState m_motor;
-      bool result_filter_data;
-      uint8_t m_csum;
-      uint8_t m_cnt;
-      char m_message_received[64];
-      int m_id;
 
     private:
+      //! State machine state.
+      AMCParserStates m_amc_state;
+      //! Checksum.
+      uint8_t m_csum;
+      //! Position in buffer.
+      uint8_t m_cnt;
+      //! Received buffer.
+      char m_bfr[64];
+
+      //! Frame preamble.
       static const uint8_t c_preamble = '$';
+      //! Frame terminator.
       static const uint8_t c_terminator = '*';
+      //! Frame all data identifier.
       static const uint8_t c_all_data = 'A';
+      //! Frame state identifier.
       static const uint8_t c_state_motor = 'S';
     };
   }
