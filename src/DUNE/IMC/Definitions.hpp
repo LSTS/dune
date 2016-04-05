@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6c347cdacbdacce16be764ef407e717b                            *
+// IMC XML MD5: fb518ea37f5ba0224ab0eb1bbc93cede                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -3358,6 +3358,263 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Historic Data Sample.
+    class HistoricSample: public Message
+    {
+    public:
+      //! Original System Id.
+      uint16_t sys_id;
+      //! Priority.
+      int8_t priority;
+      //! X offset.
+      int16_t x;
+      //! Y offset.
+      int16_t y;
+      //! Z offset.
+      int16_t z;
+      //! Time offset.
+      int16_t t;
+      //! Data Sample.
+      InlineMessage<Message> sample;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 186;
+      }
+
+      HistoricSample(void);
+
+      Message*
+      clone(void) const
+      {
+        return new HistoricSample(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HistoricSample::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HistoricSample";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 11;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return sample.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Historic Data Series.
+    class HistoricData: public Message
+    {
+    public:
+      //! Base Latitude.
+      fp32_t base_lat;
+      //! Base Longitude.
+      fp32_t base_lon;
+      //! Base Timestamp.
+      fp32_t base_time;
+      //! Data.
+      MessageList<HistoricSample> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 184;
+      }
+
+      HistoricData(void);
+
+      Message*
+      clone(void) const
+      {
+        return new HistoricData(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HistoricData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HistoricData";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 12;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return data.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Compressed Historic Data Series.
+    class CompressedHistory: public Message
+    {
+    public:
+      //! Base Latitude.
+      fp32_t base_lat;
+      //! Base Longitude.
+      fp32_t base_lon;
+      //! Base Timestamp.
+      fp32_t base_time;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 185;
+      }
+
+      CompressedHistory(void);
+
+      Message*
+      clone(void) const
+      {
+        return new CompressedHistory(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return CompressedHistory::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CompressedHistory";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 12;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! LBL Range.
     class LblRange: public Message
     {
@@ -3927,6 +4184,77 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(list);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Acoustic Link Quality.
+    class AcousticLink: public Message
+    {
+    public:
+      //! Peer Name.
+      std::string peer;
+      //! Received Signal Strength Indicator.
+      fp32_t rssi;
+      //! Signal Integrity Level.
+      uint16_t integrity;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 214;
+      }
+
+      AcousticLink(void);
+
+      Message*
+      clone(void) const
+      {
+        return new AcousticLink(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AcousticLink::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticLink";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(peer);
       }
 
       void
@@ -13766,6 +14094,92 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Scheduled Goto.
+    class ScheduledGoto: public Maneuver
+    {
+    public:
+      //! Delayed Behavior.
+      enum DelayedBehaviorEnum
+      {
+        //! Resume.
+        DBEH_RESUME = 0,
+        //! Skip.
+        DBEH_SKIP = 1,
+        //! Fail.
+        DBEH_FAIL = 2
+      };
+
+      //! Time of arrival.
+      fp64_t arrival_time;
+      //! Destination Latitude WGS-84.
+      fp64_t lat;
+      //! Destination Longitude WGS-84.
+      fp64_t lon;
+      //! Destination Z Reference.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+      //! Travel Z Reference.
+      fp32_t travel_z;
+      //! Travel Z Units.
+      uint8_t travel_z_units;
+      //! Delayed Behavior.
+      uint8_t delayed;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 487;
+      }
+
+      ScheduledGoto(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ScheduledGoto(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ScheduledGoto::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ScheduledGoto";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 35;
       }
 
       void

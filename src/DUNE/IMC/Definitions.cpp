@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6c347cdacbdacce16be764ef407e717b                            *
+// IMC XML MD5: fb518ea37f5ba0224ab0eb1bbc93cede                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -3162,6 +3162,323 @@ namespace DUNE
       IMC::toJSON(os__, "units", units, nindent__);
     }
 
+    HistoricSample::HistoricSample(void)
+    {
+      m_header.mgid = 186;
+      clear();
+      sample.setParent(this);
+    }
+
+    void
+    HistoricSample::clear(void)
+    {
+      sys_id = 0;
+      priority = 0;
+      x = 0;
+      y = 0;
+      z = 0;
+      t = 0;
+      sample.clear();
+    }
+
+    bool
+    HistoricSample::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::HistoricSample& other__ = static_cast<const HistoricSample&>(msg__);
+      if (sys_id != other__.sys_id) return false;
+      if (priority != other__.priority) return false;
+      if (x != other__.x) return false;
+      if (y != other__.y) return false;
+      if (z != other__.z) return false;
+      if (t != other__.t) return false;
+      if (sample != other__.sample) return false;
+      return true;
+    }
+
+    int
+    HistoricSample::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    HistoricSample::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(sys_id, ptr__);
+      ptr__ += IMC::serialize(priority, ptr__);
+      ptr__ += IMC::serialize(x, ptr__);
+      ptr__ += IMC::serialize(y, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(t, ptr__);
+      ptr__ += sample.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    HistoricSample::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sys_id, bfr__, size__);
+      bfr__ += IMC::deserialize(priority, bfr__, size__);
+      bfr__ += IMC::deserialize(x, bfr__, size__);
+      bfr__ += IMC::deserialize(y, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(t, bfr__, size__);
+      bfr__ += sample.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    HistoricSample::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(sys_id, bfr__, size__);
+      bfr__ += IMC::deserialize(priority, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(x, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(y, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(t, bfr__, size__);
+      bfr__ += sample.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    HistoricSample::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "sys_id", sys_id, nindent__);
+      IMC::toJSON(os__, "priority", priority, nindent__);
+      IMC::toJSON(os__, "x", x, nindent__);
+      IMC::toJSON(os__, "y", y, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "t", t, nindent__);
+      sample.toJSON(os__, "sample", nindent__);
+    }
+
+    void
+    HistoricSample::setTimeStampNested(double value__)
+    {
+      if (!sample.isNull())
+      {
+        sample.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    HistoricSample::setSourceNested(uint16_t value__)
+    {
+      if (!sample.isNull())
+      {
+        sample.get()->setSource(value__);
+      }
+    }
+
+    void
+    HistoricSample::setSourceEntityNested(uint8_t value__)
+    {
+      if (!sample.isNull())
+      {
+        sample.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    HistoricSample::setDestinationNested(uint16_t value__)
+    {
+      if (!sample.isNull())
+      {
+        sample.get()->setDestination(value__);
+      }
+    }
+
+    void
+    HistoricSample::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!sample.isNull())
+      {
+        sample.get()->setDestinationEntity(value__);
+      }
+    }
+
+    HistoricData::HistoricData(void)
+    {
+      m_header.mgid = 184;
+      clear();
+      data.setParent(this);
+    }
+
+    void
+    HistoricData::clear(void)
+    {
+      base_lat = 0;
+      base_lon = 0;
+      base_time = 0;
+      data.clear();
+    }
+
+    bool
+    HistoricData::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::HistoricData& other__ = static_cast<const HistoricData&>(msg__);
+      if (base_lat != other__.base_lat) return false;
+      if (base_lon != other__.base_lon) return false;
+      if (base_time != other__.base_time) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    HistoricData::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    HistoricData::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(base_lat, ptr__);
+      ptr__ += IMC::serialize(base_lon, ptr__);
+      ptr__ += IMC::serialize(base_time, ptr__);
+      ptr__ += data.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    HistoricData::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(base_lat, bfr__, size__);
+      bfr__ += IMC::deserialize(base_lon, bfr__, size__);
+      bfr__ += IMC::deserialize(base_time, bfr__, size__);
+      bfr__ += data.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    HistoricData::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(base_lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(base_lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(base_time, bfr__, size__);
+      bfr__ += data.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    HistoricData::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "base_lat", base_lat, nindent__);
+      IMC::toJSON(os__, "base_lon", base_lon, nindent__);
+      IMC::toJSON(os__, "base_time", base_time, nindent__);
+      data.toJSON(os__, "data", nindent__);
+    }
+
+    void
+    HistoricData::setTimeStampNested(double value__)
+    {
+      data.setTimeStamp(value__);
+    }
+
+    void
+    HistoricData::setSourceNested(uint16_t value__)
+    {
+      data.setSource(value__);
+    }
+
+    void
+    HistoricData::setSourceEntityNested(uint8_t value__)
+    {
+      data.setSourceEntity(value__);
+    }
+
+    void
+    HistoricData::setDestinationNested(uint16_t value__)
+    {
+      data.setDestination(value__);
+    }
+
+    void
+    HistoricData::setDestinationEntityNested(uint8_t value__)
+    {
+      data.setDestinationEntity(value__);
+    }
+
+    CompressedHistory::CompressedHistory(void)
+    {
+      m_header.mgid = 185;
+      clear();
+    }
+
+    void
+    CompressedHistory::clear(void)
+    {
+      base_lat = 0;
+      base_lon = 0;
+      base_time = 0;
+      data.clear();
+    }
+
+    bool
+    CompressedHistory::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::CompressedHistory& other__ = static_cast<const CompressedHistory&>(msg__);
+      if (base_lat != other__.base_lat) return false;
+      if (base_lon != other__.base_lon) return false;
+      if (base_time != other__.base_time) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    CompressedHistory::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    CompressedHistory::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(base_lat, ptr__);
+      ptr__ += IMC::serialize(base_lon, ptr__);
+      ptr__ += IMC::serialize(base_time, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    CompressedHistory::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(base_lat, bfr__, size__);
+      bfr__ += IMC::deserialize(base_lon, bfr__, size__);
+      bfr__ += IMC::deserialize(base_time, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    CompressedHistory::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(base_lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(base_lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(base_time, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    CompressedHistory::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "base_lat", base_lat, nindent__);
+      IMC::toJSON(os__, "base_lon", base_lon, nindent__);
+      IMC::toJSON(os__, "base_time", base_time, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
     LblRange::LblRange(void)
     {
       m_header.mgid = 200;
@@ -3736,6 +4053,74 @@ namespace DUNE
     AcousticSystems::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "list", list, nindent__);
+    }
+
+    AcousticLink::AcousticLink(void)
+    {
+      m_header.mgid = 214;
+      clear();
+    }
+
+    void
+    AcousticLink::clear(void)
+    {
+      peer.clear();
+      rssi = 0;
+      integrity = 0;
+    }
+
+    bool
+    AcousticLink::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AcousticLink& other__ = static_cast<const AcousticLink&>(msg__);
+      if (peer != other__.peer) return false;
+      if (rssi != other__.rssi) return false;
+      if (integrity != other__.integrity) return false;
+      return true;
+    }
+
+    int
+    AcousticLink::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    AcousticLink::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(peer, ptr__);
+      ptr__ += IMC::serialize(rssi, ptr__);
+      ptr__ += IMC::serialize(integrity, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AcousticLink::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(peer, bfr__, size__);
+      bfr__ += IMC::deserialize(rssi, bfr__, size__);
+      bfr__ += IMC::deserialize(integrity, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AcousticLink::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(peer, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rssi, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(integrity, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AcousticLink::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "peer", peer, nindent__);
+      IMC::toJSON(os__, "rssi", rssi, nindent__);
+      IMC::toJSON(os__, "integrity", integrity, nindent__);
     }
 
     Rpm::Rpm(void)
@@ -14605,6 +14990,104 @@ namespace DUNE
       IMC::toJSON(os__, "speed", speed, nindent__);
       IMC::toJSON(os__, "speed_units", speed_units, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    ScheduledGoto::ScheduledGoto(void)
+    {
+      m_header.mgid = 487;
+      clear();
+    }
+
+    void
+    ScheduledGoto::clear(void)
+    {
+      arrival_time = 0;
+      lat = 0;
+      lon = 0;
+      z = 0;
+      z_units = 0;
+      travel_z = 0;
+      travel_z_units = 0;
+      delayed = 0;
+    }
+
+    bool
+    ScheduledGoto::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ScheduledGoto& other__ = static_cast<const ScheduledGoto&>(msg__);
+      if (arrival_time != other__.arrival_time) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z != other__.z) return false;
+      if (z_units != other__.z_units) return false;
+      if (travel_z != other__.travel_z) return false;
+      if (travel_z_units != other__.travel_z_units) return false;
+      if (delayed != other__.delayed) return false;
+      return true;
+    }
+
+    int
+    ScheduledGoto::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    ScheduledGoto::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(arrival_time, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(travel_z, ptr__);
+      ptr__ += IMC::serialize(travel_z_units, ptr__);
+      ptr__ += IMC::serialize(delayed, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ScheduledGoto::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(arrival_time, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(travel_z, bfr__, size__);
+      bfr__ += IMC::deserialize(travel_z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(delayed, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ScheduledGoto::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(arrival_time, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(travel_z, bfr__, size__);
+      bfr__ += IMC::deserialize(travel_z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(delayed, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ScheduledGoto::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "arrival_time", arrival_time, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "travel_z", travel_z, nindent__);
+      IMC::toJSON(os__, "travel_z_units", travel_z_units, nindent__);
+      IMC::toJSON(os__, "delayed", delayed, nindent__);
     }
 
     VehicleState::VehicleState(void)

@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6c347cdacbdacce16be764ef407e717b                            *
+// IMC XML MD5: fb518ea37f5ba0224ab0eb1bbc93cede                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -72,6 +72,9 @@ MESSAGE(180, GroupMembershipState)
 MESSAGE(181, SystemGroup)
 MESSAGE(182, LinkLatency)
 MESSAGE(183, ExtendedRSSI)
+MESSAGE(184, HistoricData)
+MESSAGE(185, CompressedHistory)
+MESSAGE(186, HistoricSample)
 MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)
@@ -79,6 +82,7 @@ MESSAGE(206, AcousticMessage)
 MESSAGE(211, AcousticOperation)
 MESSAGE(212, AcousticSystemsQuery)
 MESSAGE(213, AcousticSystems)
+MESSAGE(214, AcousticLink)
 MESSAGE(250, Rpm)
 MESSAGE(251, Voltage)
 MESSAGE(252, Current)
@@ -204,6 +208,7 @@ MESSAGE(483, Dislodge)
 MESSAGE(484, Formation)
 MESSAGE(485, Launch)
 MESSAGE(486, Drop)
+MESSAGE(487, ScheduledGoto)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
 MESSAGE(502, MonitorEntityState)
