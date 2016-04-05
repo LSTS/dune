@@ -46,34 +46,16 @@ namespace Actuators
     class MessageParse
     {
     public:
-      struct AMCDataParser
-      {
-        //! ID motor
-        uint8_t id[4];
-        //! Func: rpm, tmp, pwr
-        uint8_t func[8];
-        //! RPM
-        uint8_t rpm[16];
-        //! temperature
-        uint8_t tmp[16];
-        //! Voltage
-        uint8_t volt[16];
-        //! Current
-        uint8_t current[16];
-        //! State
-        uint8_t state[16];
-      };
-
       struct AMCMotorState
       {
         //! RPM
-        double rpm[4];
+        int rpm[4];
         //! Temperature
-        double tmp[4];
+        float tmp[4];
         //! Voltage
-        double volt[4];
+        float volt[4];
         //! Current
-        double current[4];
+        float current[4];
         //! State of motor
         bool state[4];
       };
@@ -82,20 +64,8 @@ namespace Actuators
       {
         //! Read preamble
         PS_PREAMBLE,
-        //! ID motor
-        PS_ID,
-        //! Read mode
-        PS_MODE,
-        //! Read rpm data
-        PS_RPM,
-        //! Read temperature data
-        PS_TMP,
-        //! Read volt and current
-        PS_PWR,
-        //! Read all parameters
-        PS_ALL,
-        //! Read state of motors
-        PS_STATE,
+        //! Data received
+        PS_DATA,
         //! Read checksum
         PS_CS
       };
@@ -104,6 +74,7 @@ namespace Actuators
       bool
       ParserAMC(uint8_t byte)
       {
+        //printf("HEX: %c\n\r", byte);
         bool result_parser = false;
         switch (m_amc_state)
         {
@@ -111,182 +82,20 @@ namespace Actuators
             if (byte == c_preamble)
             {
               m_csum = byte;
-              m_amc_state = PS_ID;
+              m_amc_state = PS_DATA;
               m_cnt = 0;
-              std::memset(&mamc_data.id, '\0', sizeof(mamc_data.id));
+              std::memset(&m_message_received, '0', sizeof(m_message_received));
             }
             break;
 
-          case PS_ID:
-            if (byte != c_separator)
-            {
-              mamc_data.id[m_cnt++] = byte;
-              m_csum ^= byte;
-            }
-            else
-            {
-              m_csum ^= byte;
-              m_amc_state = PS_MODE;
-              m_cnt = 0;
-              std::memset(&mamc_data.func, '\0', sizeof(mamc_data.func));
-            }
-            break;
-
-          case PS_MODE:
-            if (byte != c_separator)
-            {
-              mamc_data.func[m_cnt++] = byte;
-              m_csum ^= byte;
-            }
-            else
-            {
-              m_csum ^= byte;
-              if (std::strstr((char*)mamc_data.func, "pwr") != NULL)
-              {
-                std::memset(&mamc_data.volt, '\0', sizeof(mamc_data.volt));
-                std::memset(&mamc_data.current, '\0', sizeof(mamc_data.current));
-                m_amc_state = PS_PWR;
-                m_switch_pwr = 0;
-              }
-              else if (std::strstr((char*)mamc_data.func, "all") != NULL)
-              {
-                std::memset(&mamc_data.volt, '\0', sizeof(mamc_data.volt));
-                std::memset(&mamc_data.current, '\0', sizeof(mamc_data.current));
-                std::memset(&mamc_data.rpm, '\0', sizeof(mamc_data.rpm));
-                std::memset(&mamc_data.tmp, '\0', sizeof(mamc_data.tmp));
-                m_amc_state = PS_ALL;
-                m_switch_all = 0;
-              }
-              else if (std::strstr((char*)mamc_data.func, "rpm") != NULL)
-              {
-                m_amc_state = PS_RPM;
-                std::memset(&mamc_data.rpm, '\0', sizeof(mamc_data.rpm));
-              }
-              else if (std::strstr((char*)mamc_data.func, "tmp") != NULL)
-              {
-                m_amc_state = PS_TMP;
-                std::memset(&mamc_data.tmp, '\0', sizeof(mamc_data.tmp));
-              }
-              else if (std::strstr((char*)mamc_data.func, "sta") != NULL)
-              {
-                m_amc_state = PS_STATE;
-                std::memset(&mamc_data.state, '\0', sizeof(mamc_data.state));
-              }
-              else
-                m_amc_state = PS_PREAMBLE;
-
-              m_cnt = 0;
-            }
-            break;
-
-          case PS_RPM:
+          case PS_DATA:
             if (byte != c_terminator)
             {
-              mamc_data.rpm[m_cnt++] = byte;
+              m_message_received[m_cnt++] = byte;
               m_csum ^= byte;
             }
             else
-            {
               m_amc_state = PS_CS;
-              m_cnt = 0;
-            }
-            break;
-
-          case PS_STATE:
-            if (byte != c_terminator)
-            {
-              mamc_data.state[m_cnt++] = byte;
-              m_csum ^= byte;
-            }
-            else
-            {
-              m_amc_state = PS_CS;
-              m_cnt = 0;
-            }
-            break;
-
-          case PS_TMP:
-            if (byte != c_terminator)
-            {
-              mamc_data.tmp[m_cnt++] = byte;
-              m_csum ^= byte;
-            }
-            else
-            {
-              m_amc_state = PS_CS;
-              m_cnt = 0;
-            }
-            break;
-
-          case PS_ALL:
-            if (byte != c_terminator && byte != c_separator)
-            {
-              if (m_switch_all == 0)
-              {
-                mamc_data.rpm[m_cnt++] = byte;
-                m_csum ^= byte;
-              }
-              else if (m_switch_all == 1)
-              {
-                mamc_data.tmp[m_cnt++] = byte;
-                m_csum ^= byte;
-              }
-              else if (m_switch_all == 2)
-              {
-                mamc_data.volt[m_cnt++] = byte;
-                m_csum ^= byte;
-              }
-              else if (m_switch_all == 3)
-              {
-                mamc_data.current[m_cnt++] = byte;
-                m_csum ^= byte;
-              }
-            }
-            else
-            {
-              if (m_switch_all <= 2)
-              {
-                m_switch_all++;;
-                m_cnt = 0;
-                m_csum ^= byte;
-              }
-              else
-              {
-                m_amc_state = PS_CS;
-                m_cnt = 0;
-              }
-            }
-            break;
-
-          case PS_PWR:
-            if (byte != c_terminator && byte != c_separator)
-            {
-              if (!m_switch_pwr)
-              {
-                mamc_data.volt[m_cnt++] = byte;
-                m_csum ^= byte;
-              }
-              else
-              {
-                mamc_data.current[m_cnt++] = byte;
-                m_csum ^= byte;
-              }
-
-            }
-            else
-            {
-              if (!m_switch_pwr)
-              {
-                m_switch_pwr = 1;
-                m_cnt = 0;
-                m_csum ^= byte;
-              }
-              else
-              {
-                m_amc_state = PS_CS;
-                m_cnt = 0;
-              }
-            }
             break;
 
           case PS_CS:
@@ -307,51 +116,26 @@ namespace Actuators
       bool
       getData(void)
       {
-        return FilterData(mamc_data);
+        return FilterData(m_message_received);
       }
 
       //! filter data received of AMC board
       bool
-      FilterData(struct AMCDataParser amc_data)
+      FilterData(const char* amc_data)
       {
-        bool result_filter_data = false;
-
-        if (std::strstr((char*)amc_data.func, "rpm") != NULL)
+        result_filter_data = false;
+        if (amc_data[0] == c_all_data)
         {
-          std::memset(&m_motor.rpm[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.rpm[std::atoi((const char*)amc_data.id)]));
-          m_motor.rpm[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.rpm);
+          std::sscanf(amc_data, "AI%d", &m_id);
+          std::sscanf(amc_data, "AI%*d,R%d,T%f,V%f,C%f", &m_motor.rpm[m_id], &m_motor.tmp[m_id], &m_motor.volt[m_id], &m_motor.current[m_id]);
           result_filter_data = true;
         }
-        else if (std::strstr((char*)amc_data.func, "tmp") != NULL)
+        else if (amc_data[0] == c_state_motor)
         {
-          std::memset(&m_motor.tmp[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.tmp[std::atoi((const char*)amc_data.id)]));
-          m_motor.tmp[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.tmp);
-          result_filter_data = true;
-        }
-        else if (std::strstr((char*)amc_data.func, "pwr") != NULL)
-        {
-          std::memset(&m_motor.volt[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.volt[std::atoi((const char*)amc_data.id)]));
-          std::memset(&m_motor.current[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.current[std::atoi((const char*)amc_data.id)]));
-          m_motor.volt[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.volt);
-          m_motor.current[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.current);
-          result_filter_data = true;
-        }
-        else if (std::strstr((char*)amc_data.func, "sta") != NULL)
-        {
-          std::memset(&m_motor.state[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.state[std::atoi((const char*)amc_data.id)]));
-          m_motor.state[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.state);
-          result_filter_data = true;
-        }
-        else if (std::strstr((char*)amc_data.func, "all") != NULL)
-        {
-          std::memset(&m_motor.rpm[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.rpm[std::atoi((const char*)amc_data.id)]));
-          m_motor.rpm[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.rpm);
-          std::memset(&m_motor.tmp[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.tmp[std::atoi((const char*)amc_data.id)]));
-          m_motor.tmp[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.tmp);
-          std::memset(&m_motor.volt[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.volt[std::atoi((const char*)amc_data.id)]));
-          m_motor.volt[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.volt);
-          std::memset(&m_motor.current[std::atoi((const char*)amc_data.id)], '\0', sizeof(m_motor.current[std::atoi((const char*)amc_data.id)]));
-          m_motor.current[std::atoi((const char*)amc_data.id)] = atof((const char*)amc_data.current);
+          std::sscanf(amc_data, "SI%d", &m_id);
+          int state_motor;
+          std::sscanf(amc_data, "SI%*d,S%d", &state_motor);
+          m_motor.state[m_id] = (bool)state_motor;
           result_filter_data = true;
         }
 
@@ -360,18 +144,18 @@ namespace Actuators
 
       // Parser variables
       AMCParserstates m_amc_state;
-      AMCDataParser mamc_data;
       AMCMotorState m_motor;
-
+      bool result_filter_data;
       uint8_t m_csum;
       uint8_t m_cnt;
-      bool m_switch_pwr;
-      uint8_t m_switch_all;
+      char m_message_received[64];
+      int m_id;
 
     private:
       static const uint8_t c_preamble = '$';
       static const uint8_t c_terminator = '*';
-      static const uint8_t c_separator = ',';
+      static const uint8_t c_all_data = 'A';
+      static const uint8_t c_state_motor = 'S';
     };
   }
 }
