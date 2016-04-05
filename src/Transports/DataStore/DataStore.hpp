@@ -110,8 +110,7 @@ namespace Transports
         DataSample* s = new DataSample();
         s->latDegs = data->base_lat;
         s->lonDegs = data->base_lon;
-        double z;
-        WGS84::displace((*it)->x, (*it)->y, 0, &s->latDegs, &s->lonDegs, &z);
+        WGS84::displace((*it)->x, (*it)->y, &s->latDegs, &s->lonDegs);
         s->source = (*it)->sys_id;
         s->timestamp = data->base_time + (*it)->t;
         s->zMeters = (*it)->z / 10.0;
