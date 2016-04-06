@@ -203,6 +203,10 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Maximum distance from station keeping radial circle");
 
+        param("PopUp -- Report at PopUps", m_args.popup.report)
+        .defaultValue("false")
+        .description("Request reports when popping at surface");
+
         param("Dislodge -- Bursts", m_args.dislodge.bursts)
         .defaultValue("5")
         .description("Number of bursts with the motor");
