@@ -66,7 +66,7 @@ namespace Supervisors
         if (msg->op != IMC::ReportControl::OP_REQUEST_REPORT)
           return;
 
-        if (msg->comm_interface != m_interface)
+        if (!(msg->comm_interface & m_interface))
           return;
 
         // Iterate through list and add if necessary.
