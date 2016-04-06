@@ -302,6 +302,10 @@ namespace Monitors
         {
           if (!m_hand.isUnderwater())
           {
+            // Use current emergency number.
+            if (number == "default")
+              number = m_args.recipient;
+
             sendSMS("R", m_args.sms_lost_coms_ttl, number);
             spew("sent report to %s", number.c_str());
           }
