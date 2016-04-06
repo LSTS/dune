@@ -300,7 +300,7 @@ namespace Monitors
         std::string number;
         if (m_reporter != NULL && m_reporter->trigger(&number))
         {
-          if (true)
+          if (!m_hand.isUnderwater())
           {
             sendSMS("R", m_args.sms_lost_coms_ttl, number);
             spew("sent report to %s", number.c_str());
