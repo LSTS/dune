@@ -84,9 +84,6 @@ namespace Transports
     typedef std::map<std::string, unsigned> MapName;
     typedef std::map<unsigned, std::string> MapAddr;
 
-    //! Broadcast address.
-    static const unsigned c_broadcast = 0x0f;
-
     struct Task: public Tasks::Task
     {
       //! Map of Evologics modems by name.
