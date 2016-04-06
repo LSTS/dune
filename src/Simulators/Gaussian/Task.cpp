@@ -51,6 +51,10 @@ namespace Simulators
       float peak_width;
       //! The message to be produced. It must contain the field 'value'
       std::string message_name;
+      //! Invalid reading at surface.
+      bool invalid;
+      //! Depth threshold
+      float depth_threshold;
       //! PRNG type.
       std::string prng_type;
       //! PRNG seed.
@@ -96,11 +100,16 @@ namespace Simulators
         param("Standard Deviation", m_args.std_dev)
         .defaultValue("1.0");
 
+        param("Invalid at Surface", m_args.invalid)
+        .defaultValue("true");
+
         param("PRNG Type", m_args.prng_type)
         .defaultValue(Random::Factory::c_default);
 
         param("PRNG Seed", m_args.prng_seed)
         .defaultValue("-1");
+
+        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
 
         // Register consumers.
         bind<IMC::SimulatedState>(this);
@@ -158,6 +167,16 @@ namespace Simulators
         // Return if task is not active.
         if (!isActive())
           return;
+
+        // Send invalid readings at surface.
+        if (m_args.invalid)
+        {
+          if (m_last_state.z < m_args.depth_threshold)
+          {
+            m_msg->setValueFP(-1.0);
+            dispatch(m_msg);
+          }
+        }
 
         double slat, slon, dx, dy, dz;
         slat = m_last_state.lat;
