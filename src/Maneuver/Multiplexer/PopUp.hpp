@@ -52,6 +52,8 @@ namespace Maneuver
       float elev_radius;
       //! Maximum distance from station keeping radial circle
       float max_sk_dist;
+      //! Request report when at surface.
+      bool report;
     };
 
     //! PopUp maneuver
@@ -193,6 +195,18 @@ namespace Maneuver
           case ST_NEAR_SURFACE:
             if (msg->medium == IMC::VehicleMedium::VM_WATER)
             {
+              // Send report.
+              if (m_args->report)
+              {
+                IMC::ReportControl rc;
+                rc.op = IMC::ReportControl::OP_REQUEST_REPORT;
+                rc.comm_interface = IMC::ReportControl::CI_SATELLITE
+                                    | IMC::ReportControl::CI_GSM;
+                rc.period = 0;
+                rc.sys_dst = "default";
+                m_task->dispatch(rc);
+              }
+
               if (mustKeep())
               {
                 m_pstate = ST_SKEEP;
