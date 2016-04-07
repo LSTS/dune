@@ -454,6 +454,9 @@ namespace Actuators
 
           // Set values.
           m_rpm[id].value = m_parse->m_motor.rpm[id];
+          if(m_args.ifactor_orientation[id] == -1)
+            m_rpm[id].value = -m_rpm[id].value;
+
           m_tmp[id].value = m_parse->m_motor.tmp[id];
           m_volt[id].value = m_parse->m_motor.volt[id];
           m_amp[id].value = m_parse->m_motor.current[id];
