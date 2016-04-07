@@ -222,6 +222,9 @@ namespace Control
           .defaultValue("false")
           .description("Log the size of each PID parcel");
 
+          m_desired_speed = 0.0;
+          m_speed_units = IMC::SUNITS_PERCENTAGE;
+
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
@@ -300,8 +303,6 @@ namespace Control
           m_yaw_pid.reset();
 
           m_previous_rpm = 0;
-          m_desired_speed = 0.0;
-          m_speed_units = IMC::SUNITS_PERCENTAGE;
 
           for (uint8_t i = 0; i < 2; i++)
           {
