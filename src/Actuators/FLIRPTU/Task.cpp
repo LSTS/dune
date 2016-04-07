@@ -100,12 +100,19 @@ namespace Actuators
       // Pan and tilt angles
       float m_pan, m_tilt;
 
+	int old_pan_pos =0;
+	int old_tilt_pos=0;
+
+	// I/O Multiplexer.
+	Poll m_poll;
+
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_uart(NULL),
         m_pan(0),
         m_tilt(Math::c_half_pi)
       {
+
         param("PTU Model", m_args.model)
         .defaultValue("D48")
         .values("D48, D300")
@@ -190,11 +197,11 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+		m_poll.add(*m_uart);
+
         debug("initializing");
         // Send execute immediatly command.
-        //sendCommand("i ");
-        // Send execute slave command.
-                sendCommand("s ");
+		sendCommand("i ");
 
 
         // Send reset.
@@ -205,6 +212,27 @@ namespace Actuators
            }
         // Wait for reset.
         sendCommand("a ");
+
+		bool endloop = false;
+		while(!endloop){
+			if (m_poll.poll(2))
+			{
+				if (m_poll.wasTriggered(*m_uart))
+				{
+					char bfr[1024];
+					int rv = m_uart->read(bfr, sizeof(bfr));
+					if(rv <= 0){
+						endloop = true;
+					}
+				}else{
+					endloop = true;
+				}
+
+			}else{
+				endloop = true;
+			}
+		}
+
         // Send position control command.
         sendCommand("ci ");
         // Wait.
@@ -271,6 +299,12 @@ namespace Actuators
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
+		if (m_uart != NULL)
+		{
+			m_poll.remove(*m_uart);
+			delete m_uart;
+			m_uart = NULL;
+		}
       }
 
       void
@@ -320,8 +354,7 @@ namespace Actuators
         return trimValue(pos, min_pos, max_pos);
       }
 
-      int old_pan_pos =0;
-      int old_tilt_pos=0;
+
 
       void
       task(void)
@@ -333,6 +366,13 @@ namespace Actuators
         debug("Pan: %f rad", pan_rad);
         debug("Pan: %d", pan_pos);
 
+		if(old_pan_pos != pan_pos){
+			// Send pan command.
+			createCommand("pp", pan_pos);
+
+			debug("Pan bounded: %d", pan_pos);
+			old_pan_pos = pan_pos;
+		}
 
 
         // TILT
@@ -343,16 +383,9 @@ namespace Actuators
         debug("Tilt: %f rad", m_tilt);
         debug("Tilt: %d", tilt_pos);
 
-        if((old_tilt_pos != tilt_pos)||(old_pan_pos != pan_pos)){
-			// Send pan command.
-			createCommand("pp", pan_pos);
-
-			debug("Pan bounded: %d", pan_pos);
-			old_pan_pos = pan_pos;
-
+		if(old_tilt_pos != tilt_pos){
 			// Send tilt command.
 			createCommand("tp", tilt_pos);
-			sendCommand("a "); //to avoid resetting of axle
 
 			debug("Tilt bounded: %d", tilt_pos);
 			old_tilt_pos = tilt_pos;
