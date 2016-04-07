@@ -100,11 +100,11 @@ namespace Actuators
       // Pan and tilt angles
       float m_pan, m_tilt;
 
-	int old_pan_pos =0;
-	int old_tilt_pos=0;
+      int old_pan_pos =0;
+      int old_tilt_pos=0;
 
-	// I/O Multiplexer.
-	Poll m_poll;
+      // I/O Multiplexer.
+      Poll m_poll;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -114,9 +114,9 @@ namespace Actuators
       {
 
         param("PTU Model", m_args.model)
-        .defaultValue("D48")
-        .values("D48, D300")
-        .description("Pan-Til Unit model name");
+            .defaultValue("D48")
+            .values("D48, D300")
+            .description("Pan-Til Unit model name");
 
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("/dev/ttyUSB0")
@@ -159,7 +159,7 @@ namespace Actuators
         .defaultValue("true")
         .description("reseting PTU on boot");
 
-         param("Non-Standard Position on Boot", m_args.begin_non_standard)
+        param("Non-Standard Position on Boot", m_args.begin_non_standard)
         .defaultValue("false")
         .description("PTU non-standard position after DUNE start");
 
@@ -168,12 +168,12 @@ namespace Actuators
         .minimumValue("-10.0")
         .maximumValue("90.0")
         .description("PTU tilt angle after boot in degrees: 90 degrees points up");
-        
-         param("Pan Angle After Boot", m_args.begin_pan)
-         .defaultValue("0.0")
-         .minimumValue("-180.0")
-         .maximumValue("180.0")
-         .description("PTU pan angle after boot in degrees");
+
+        param("Pan Angle After Boot", m_args.begin_pan)
+        .defaultValue("0.0")
+        .minimumValue("-180.0")
+        .maximumValue("180.0")
+        .description("PTU pan angle after boot in degrees");
 
 
         // Setup entity states.
@@ -197,41 +197,41 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-		m_poll.add(*m_uart);
+        m_poll.add(*m_uart);
 
         debug("initializing");
         // Send execute immediatly command.
-		sendCommand("i ");
+        sendCommand("i ");
 
 
         // Send reset.
         if (m_args.reset_on_boot)
-           {
-           sendCommand("r ");
-           debug("resetting PTU");
-           }
+        {
+          sendCommand("r ");
+          debug("resetting PTU");
+        }
         // Wait for reset.
         sendCommand("a ");
 
-		bool endloop = false;
-		while(!endloop){
-			if (m_poll.poll(2))
-			{
-				if (m_poll.wasTriggered(*m_uart))
-				{
-					char bfr[1024];
-					int rv = m_uart->read(bfr, sizeof(bfr));
-					if(rv <= 0){
-						endloop = true;
-					}
-				}else{
-					endloop = true;
-				}
+        bool endloop = false;
+        while(!endloop){
+          if (m_poll.poll(2))
+          {
+            if (m_poll.wasTriggered(*m_uart))
+            {
+              char bfr[1024];
+              int rv = m_uart->read(bfr, sizeof(bfr));
+              if(rv <= 0){
+                endloop = true;
+              }
+            }else{
+              endloop = true;
+            }
 
-			}else{
-				endloop = true;
-			}
-		}
+          }else{
+            endloop = true;
+          }
+        }
 
         // Send position control command.
         sendCommand("ci ");
@@ -258,11 +258,11 @@ namespace Actuators
         sendCommand("a ");
         // Set non-standard position after boot
         if(m_args.begin_non_standard){
-        m_pan = Math::c_pi / 180.0 * m_args.begin_pan;
-        m_tilt = Math::c_pi / 180.0 * m_args.begin_tilt;
+          m_pan = Math::c_pi / 180.0 * m_args.begin_pan;
+          m_tilt = Math::c_pi / 180.0 * m_args.begin_tilt;
         }
         // Set non-standard position after boot
-/*        
+        /*
             if(m_args.begin_non_standard){
             createCommand("tp", m_args.begin_tilt);
             // Wait.
@@ -299,12 +299,12 @@ namespace Actuators
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
-		if (m_uart != NULL)
-		{
-			m_poll.remove(*m_uart);
-			delete m_uart;
-			m_uart = NULL;
-		}
+        if (m_uart != NULL)
+        {
+          m_poll.remove(*m_uart);
+          delete m_uart;
+          m_uart = NULL;
+        }
       }
 
       void
@@ -366,13 +366,13 @@ namespace Actuators
         debug("Pan: %f rad", pan_rad);
         debug("Pan: %d", pan_pos);
 
-		if(old_pan_pos != pan_pos){
-			// Send pan command.
-			createCommand("pp", pan_pos);
+        if(old_pan_pos != pan_pos){
+          // Send pan command.
+          createCommand("pp", pan_pos);
 
-			debug("Pan bounded: %d", pan_pos);
-			old_pan_pos = pan_pos;
-		}
+          debug("Pan bounded: %d", pan_pos);
+          old_pan_pos = pan_pos;
+        }
 
 
         // TILT
@@ -383,12 +383,12 @@ namespace Actuators
         debug("Tilt: %f rad", m_tilt);
         debug("Tilt: %d", tilt_pos);
 
-		if(old_tilt_pos != tilt_pos){
-			// Send tilt command.
-			createCommand("tp", tilt_pos);
+        if(old_tilt_pos != tilt_pos){
+          // Send tilt command.
+          createCommand("tp", tilt_pos);
 
-			debug("Tilt bounded: %d", tilt_pos);
-			old_tilt_pos = tilt_pos;
+          debug("Tilt bounded: %d", tilt_pos);
+          old_tilt_pos = tilt_pos;
         }
         //float pan_rate_rad =  tuples.get("PanRate", 0.0f);
         //int pan_rate_pos = radToPos(pan_rate_rad);
