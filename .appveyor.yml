@@ -15,4 +15,4 @@ build_script:
   - md build
   - cd build
   - cmake -DTESTS:BOOL=ON -G "Visual Studio 14 2015 Win64" ..
-  - cmake --build --target Experimental
+  - cmake --build . --target Experimental
