@@ -43,6 +43,7 @@ namespace Transports
     {
       // List of messages to store.
       std::vector<std::string> messages;
+
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -50,22 +51,65 @@ namespace Transports
       DataStore m_store;
       Arguments m_args;
       IMC::EstimatedState m_state;
+      std::map<std::string, int> m_priorities;
 
       Task(const std::string& name, Tasks::Context& ctx) :
-          DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx)
       {
         param("Messages", m_args.messages)
-        .defaultValue("")
-        .description("List of messages to store");
+        .description("List of <Message>:<Frequency>");
+      }
 
-        bind<IMC::HistoricData>(this);
-        bind<IMC::EstimatedState>(this);
-        bind(this, m_args.messages);
+      void
+      onUpdateParameters()
+      {
+        m_priorities.clear();
+        std::vector<std::string> consumed;
+        int priority = 0;
+        std::vector<std::string> parts;
+
+        for (unsigned int i = 0; i < m_args.messages.size(); ++i)
+        {
+          parts.clear();
+          Utils::String::split(m_args.messages[i], ":", parts);
+          if (parts.size() == 2)
+          {
+            if (std::sscanf(parts[1].c_str(), "%d", &priority) && priority > 0)
+            {
+              m_priorities[parts[0]] = priority;
+              consumed.push_back(parts[0]);
+              debug("Will store message %s with priority %d.", parts[0].c_str(), priority);
+              continue;
+            }
+          }
+          throw std::runtime_error(Utils::String::str(DTR("invalid format: %s"), m_args.messages[i].c_str()));
+        }
+
+        consumed.push_back("HistoricData");
+        consumed.push_back("EstimatedState");
+
+        std::stringstream ss;
+        for (std::vector<std::string>::const_iterator it = consumed.begin(); it != consumed.end(); it++)
+          ss << *it << " ";
+
+        bind(this, consumed);
       }
 
       void
       consume(const IMC::Message * msg)
       {
+
+
+
+        if (msg->getId() == EstimatedState::getIdStatic())
+          process(static_cast<const IMC::EstimatedState *>(msg));
+        else if (msg->getId() == HistoricData::getIdStatic())
+          process(static_cast<const IMC::HistoricData *>(msg));
+
+        // only store messages with some defined priority
+        if (m_priorities.find(msg->getName()) == m_priorities.end())
+          return;
+
         if (m_ctx.resolver.isLocal(msg->getSource()))
         {
           DataSample* sample = new DataSample();
@@ -78,20 +122,21 @@ namespace Transports
           sample->source = msg->getSource();
           sample->timestamp = msg->getTimeStamp();
           sample->sample = msg->clone();
-          debug("Added message of type %s with size %d to data store.",
-              msg->getName(), sample->serializationSize());
+          sample->priority = m_priorities[msg->getName()];
+          debug("Added message of type %s with size %d and priority %d to data store.",
+              msg->getName(), sample->serializationSize(), sample->priority);
           m_store.addSample(sample);
         }
       }
 
       void
-      consume(const IMC::EstimatedState* msg)
+      process(const IMC::EstimatedState* msg)
       {
         m_state = *msg;
       }
 
       void
-      consume(const IMC::HistoricData* msg)
+      process(const IMC::HistoricData* msg)
       {
         debug("Adding %d messages from %s (%d) to data store.", (int)msg->data.size(),
               m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
@@ -106,6 +151,8 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+
+
         }
       }
     };

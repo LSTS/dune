@@ -68,7 +68,7 @@ namespace Transports
       // comparison based on timestamp of sample
       bool operator<(DataSample other) const
       {
-        return timestamp > other.timestamp;
+        return priority < other.priority || timestamp < other.timestamp;
       }
 
       int
