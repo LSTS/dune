@@ -8,8 +8,8 @@ compiler:
 before_install:
   - cmake --version
 
-script: 
-  - mkdir build && cd build && cmake -DTESTS=1 .. && make -j4 && make test
+script:
+  - mkdir build && cd build && cmake -DTESTS=1 .. && cmake --build . --target Experimental
 
 env:
   global:
