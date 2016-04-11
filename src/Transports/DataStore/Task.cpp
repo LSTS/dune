@@ -43,7 +43,6 @@ namespace Transports
     {
       // List of messages to store.
       std::vector<std::string> messages;
-
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -52,6 +51,7 @@ namespace Transports
       Arguments m_args;
       IMC::EstimatedState m_state;
       std::map<std::string, int> m_priorities;
+      std::map<std::pair<int, int>, IMC::HistoricData> m_sending;
 
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx)
@@ -87,6 +87,7 @@ namespace Transports
 
         consumed.push_back("HistoricData");
         consumed.push_back("EstimatedState");
+        consumed.push_back("HistoricDataQuery");
 
         std::stringstream ss;
         for (std::vector<std::string>::const_iterator it = consumed.begin(); it != consumed.end(); it++)
@@ -98,17 +99,21 @@ namespace Transports
       void
       consume(const IMC::Message * msg)
       {
-
-
-
         if (msg->getId() == EstimatedState::getIdStatic())
           process(static_cast<const IMC::EstimatedState *>(msg));
         else if (msg->getId() == HistoricData::getIdStatic())
           process(static_cast<const IMC::HistoricData *>(msg));
+        else if (msg->getId() == HistoricDataQuery::getIdStatic())
+          process(static_cast<const IMC::HistoricDataQuery *>(msg));
 
         // only store messages with some defined priority
         if (m_priorities.find(msg->getName()) == m_priorities.end())
           return;
+
+        // only start storing messages after there is a known system position
+        if (m_state.lat == 0)
+          return;
+
 
         if (m_ctx.resolver.isLocal(msg->getSource()))
         {
@@ -146,13 +151,58 @@ namespace Transports
       }
 
       void
+      process(const IMC::HistoricDataQuery* msg)
+      {
+        std::pair<int, int> source = std::pair<int, int>(msg->getSource(), msg->getSourceEntity());
+
+        if (msg->type == IMC::HistoricDataQuery::HRTYPE_QUERY)
+        {
+
+          if (m_sending.find(source) != m_sending.end())
+          {
+            debug("Adding back data previously queried from same peer as it wasn't cleared with HRTYPE_CLEAR.");
+            m_store.addData(&m_sending[source]);
+          }
+
+          IMC::HistoricDataQuery reply;
+          IMC::HistoricData* data = m_store.pollData(msg->max_size);
+          if (data != NULL)
+          {
+            m_sending[source] = *data;
+            reply.data.set(data);
+            delete data;
+          }
+          reply.max_size = msg->max_size;
+          reply.req_id = msg->req_id;
+          reply.type = IMC::HistoricDataQuery::HRTYPE_REPLY;
+          reply.setDestination(msg->getSource());
+          reply.setDestinationEntity(msg->getSourceEntity());
+          dispatch(reply);
+
+          debug("Sending historic data with size %d (< %d) to %s.",
+                data != NULL ? data->getPayloadSerializationSize() : 0,
+                msg->max_size, m_ctx.resolver.resolve(msg->getSource()));
+        }
+        else if (msg->type == IMC::HistoricDataQuery::HRTYPE_CLEAR)
+        {
+          if (m_sending.find(source) != m_sending.end())
+          {
+            debug("Clearing previously queried data from store");
+            m_sending.erase(source);
+          }
+          else
+          {
+            war("No previously queried data to clear.");
+          }
+        }
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
         {
           waitForMessages(1.0);
-
-
         }
       }
     };

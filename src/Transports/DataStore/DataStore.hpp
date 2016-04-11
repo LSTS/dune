@@ -68,7 +68,7 @@ namespace Transports
       // comparison based on timestamp of sample
       bool operator<(DataSample other) const
       {
-        return priority < other.priority || timestamp < other.timestamp;
+        return priority <= other.priority && timestamp < other.timestamp;
       }
 
       int
@@ -95,6 +95,7 @@ namespace Transports
       s->t = (int16_t) (sample->timestamp - base_time);
       s->sys_id = sample->source;
       s->sample.set(sample->sample);
+      s->priority = sample->priority;
       return s;
     }
 
@@ -125,9 +126,19 @@ namespace Transports
     {
     public:
       DataStore()
-    {
+      {
 
-    }
+      }
+
+      ~DataStore()
+      {
+        Concurrency::ScopedRWLock(m_lock, true);
+        while (!samples.empty())
+        {
+          delete samples.top();
+          samples.pop();
+        }
+      }
 
       void
       addSample(DataSample* sample)
