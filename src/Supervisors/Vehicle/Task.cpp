@@ -58,8 +58,9 @@ namespace Supervisors
 
     struct Arguments
     {
-      //! Relevant entities when performing a safe plan.
-      std::vector<std::string> safe_ents;
+      //! Entities that set the vehicle in error regardless
+      //! of ignoring errors during plan execution.
+      std::vector<std::string> vital_ents;
       //! Allow external control
       bool ext_control;
       //! Timeout for starting or stopping a maneuver
@@ -70,8 +71,8 @@ namespace Supervisors
     {
       //! Timer to wait for calibration and maneuver requests.
       float m_switch_time;
-      //! Currently performing a safe plan.
-      bool m_in_safe_plan;
+      //! Currently ignoring errors while executing plan.
+      bool m_ignore_errors;
       //! Counter for printing errors
       Time::Counter<float> m_err_timer;
       //! Vehicle command message.
@@ -102,13 +103,14 @@ namespace Supervisors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_switch_time(-1.0),
-        m_in_safe_plan(false),
+        m_ignore_errors(false),
         m_scope_ref(0),
         m_man_sup(NULL)
       {
-        param("Safe Entities", m_args.safe_ents)
+        param("Vital Entities", m_args.vital_ents)
         .defaultValue("")
-        .description("Relevant entities when performing a safe plan");
+        .description("Relevant entities that are always considered "
+                     "regardless of ignoring errors during plan execution");
 
         param("Allows External Control", m_args.ext_control)
         .defaultValue("true")
@@ -152,7 +154,7 @@ namespace Supervisors
       {
         m_man_sup->addStop();
 
-        m_in_safe_plan = false;
+        m_ignore_errors = false;
 
         m_err_timer.reset();
 
@@ -439,9 +441,9 @@ namespace Supervisors
         {
           // check if plan is supposed to ignore some errors
           if (msg->flags & IMC::PlanControl::FLG_IGNORE_ERRORS)
-            m_in_safe_plan = true;
+            m_ignore_errors = true;
           else
-            m_in_safe_plan = false;
+            m_ignore_errors = false;
         }
       }
 
@@ -661,23 +663,28 @@ namespace Supervisors
       bool
       entityError(void)
       {
+        // no errors found.
         if (!m_vs.error_count)
           return false;
 
-        if (!m_in_safe_plan)
+        // errors detected and vehicle not ignoring errors.
+        if (!m_ignore_errors)
           return true;
 
-        if (!m_args.safe_ents.size())
+        // there are vital entities to be considered.
+        if (!m_args.vital_ents.size())
           return false;
 
         std::vector<std::string>::const_iterator it_ents = m_ents_in_error.begin();
 
         for (; it_ents != m_ents_in_error.end(); ++it_ents)
         {
-          std::vector<std::string>::const_iterator it_safe = m_args.safe_ents.begin();
-          for (; it_safe != m_args.safe_ents.end(); ++it_safe)
+          std::vector<std::string>::const_iterator it_vital = m_args.vital_ents.begin();
+          for (; it_vital != m_args.vital_ents.end(); ++it_vital)
           {
-            if (!(*it_ents).compare((*it_safe)))
+            // although vehicle is currently ignoring errors,
+            // vital entities must never ignored.
+            if (!(*it_ents).compare((*it_vital)))
               return true;
           }
         }
