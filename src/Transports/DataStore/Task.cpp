@@ -179,9 +179,7 @@ namespace Transports
           reply.setDestinationEntity(msg->getSourceEntity());
           dispatch(reply);
 
-          debug("Sending historic data with size %d (< %d) to %s.",
-                data != NULL ? data->getPayloadSerializationSize() : 0,
-                msg->max_size, m_ctx.resolver.resolve(msg->getSource()));
+          debug("Sending historic data to %s.", m_ctx.resolver.resolve(msg->getSource()));
         }
         else if (msg->type == IMC::HistoricDataQuery::HRTYPE_CLEAR)
         {

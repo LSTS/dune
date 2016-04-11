@@ -65,16 +65,16 @@ namespace Transports
           delete sample;
       }
 
-      // comparison based on timestamp of sample
-      bool operator<(DataSample other) const
-      {
-        return priority <= other.priority && timestamp < other.timestamp;
-      }
-
       int
       serializationSize()
       {
         return sample->getPayloadSerializationSize() + MINIMUM_SAMPLE_SIZE;
+      }
+    };
+
+    struct CompareSamples {
+      bool operator()(const DataSample* p1, const DataSample* p2) {
+        return p1->priority <= p2->priority && p1->timestamp < p2->timestamp;
       }
     };
 
@@ -209,7 +209,7 @@ namespace Transports
       }
 
     private:
-      std::priority_queue<DataSample *, std::vector<DataSample *> > samples;
+      std::priority_queue<DataSample *, std::vector<DataSample *> , CompareSamples> samples;
       Concurrency::RWLock m_lock;
     };
   } /* namespace DataStore */
