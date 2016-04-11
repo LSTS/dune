@@ -97,6 +97,12 @@ namespace Transports
       }
 
       void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
       consume(const IMC::Message * msg)
       {
         if (msg->getId() == EstimatedState::getIdStatic())
