@@ -558,21 +558,21 @@ namespace Control
         }
 
         //! Check if we are facing our waypoint to thrust.
-        //! @param[in] err yaw error.
+        //! @param[in] yaw_err yaw error.
         //! @return true to thrust forward, false otherwise.
         bool
-        thrustForward(float err)
+        thrustForward(float yaw_err)
         {
           // Check if we can thrust.
           if (m_common)
           {
             // Do not thrust forward if heading error is too large.
-            if (std::fabs(err) > m_args.yaw_max * (1 + c_yaw_tol))
+            if (std::fabs(yaw_err) > m_args.yaw_max * (1 + c_yaw_tol))
               m_common = false;
           }
           else
           {
-            if (std::fabs(err) < m_args.yaw_max)
+            if (std::fabs(yaw_err) < m_args.yaw_max)
               m_common = true;
           }
 
