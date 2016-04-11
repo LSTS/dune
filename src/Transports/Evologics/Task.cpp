@@ -323,6 +323,19 @@ namespace Transports
         return itr->second;
       }
 
+      std::string
+      safeLookup(unsigned addr)
+      {
+        try
+        {
+          return lookupSystemName(addr);
+        }
+        catch (...)
+        { }
+
+        return "unknown";
+      }
+
       void
       consume(const IMC::SoundSpeed* msg)
       {
@@ -560,25 +573,9 @@ namespace Transports
         IMC::UamRxFrame msg;
         msg.data.assign((char*)&reply.data[0], (char*)&reply.data[0] + reply.data.size());
 
-        // Lookup source system name.
-        try
-        {
-          msg.sys_src = lookupSystemName(reply.src);
-        }
-        catch (...)
-        {
-          msg.sys_src = "unknown";
-        }
-
-        // Lookup destination system name.
-        try
-        {
-          msg.sys_dst = lookupSystemName(reply.dst);
-        }
-        catch (...)
-        {
-          msg.sys_dst = "unknown";
-        }
+        // Lookup system names.
+        msg.sys_src = safeLookup(reply.src);
+        msg.sys_dst = safeLookup(reply.dst);
 
         // Fill flags.
         if (m_address != reply.dst)
@@ -601,25 +598,10 @@ namespace Transports
         IMC::UamRxFrame msg;
         msg.data.assign((char*)&reply.data[0], (char*)&reply.data[0] + reply.data.size());
 
-        // Lookup source system name.
-        try
-        {
-          msg.sys_src = lookupSystemName(reply.src);
-        }
-        catch (...)
-        {
-          msg.sys_src = "unknown";
-        }
+        // Lookup system names.
+        msg.sys_src = safeLookup(reply.src);
+        msg.sys_dst = safeLookup(reply.dst);
 
-        // Lookup destination system name.
-        try
-        {
-          msg.sys_dst = lookupSystemName(reply.dst);
-        }
-        catch (...)
-        {
-          msg.sys_dst = "unknown";
-        }
         dispatch(msg);
 
         m_driver->getMultipathStructure();
