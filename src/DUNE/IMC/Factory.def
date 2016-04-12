@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fb518ea37f5ba0224ab0eb1bbc93cede                            *
+// IMC XML MD5: 4663673b775daaf6b93edc177859e286                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -54,6 +54,10 @@ MESSAGE(103, LogBookEntry)
 MESSAGE(104, LogBookControl)
 MESSAGE(105, ReplayControl)
 MESSAGE(106, ClockControl)
+MESSAGE(107, HistoricCTD)
+MESSAGE(108, HistoricTelemetry)
+MESSAGE(109, HistoricSonarData)
+MESSAGE(110, HistoricEvent)
 MESSAGE(150, Heartbeat)
 MESSAGE(151, Announce)
 MESSAGE(152, AnnounceService)
@@ -75,6 +79,8 @@ MESSAGE(183, ExtendedRSSI)
 MESSAGE(184, HistoricData)
 MESSAGE(185, CompressedHistory)
 MESSAGE(186, HistoricSample)
+MESSAGE(187, HistoricDataQuery)
+MESSAGE(188, RemoteCommand)
 MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)
