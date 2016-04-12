@@ -412,6 +412,10 @@ namespace Transports
           handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
           handleMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "USBLLONG"))
+          handleUsblPosition(msg->value);
+        else if (String::startsWith(msg->value, "USBLANGLES"))
+          handleUsblAngles(msg->value);
       }
 
       void
@@ -599,6 +603,20 @@ namespace Transports
         dispatch(msg);
 
         m_driver->getMultipathStructure();
+      }
+
+      void
+      handleUsblPosition(const std::string& str)
+      {
+        RecvUsblPos reply;
+        m_driver->parseUsblPosition(str, reply);
+      }
+
+      void
+      handleUsblAngles(const std::string& str)
+      {
+        RecvUsblAng reply;
+        m_driver->parseUsblAngles(str, reply);
       }
 
       void

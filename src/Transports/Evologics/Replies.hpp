@@ -58,9 +58,71 @@ namespace Transports
       float rssi;
       unsigned integrity;
       float velocity;
-      float propagation_time;
+      unsigned propagation_time;
       std::vector<uint8_t> data;
       unsigned duration;
+    };
+
+    struct RecvUsblPos
+    {
+      RecvUsblPos(void):
+        ctime(0),
+        mtime(0),
+        addr(0),
+        x(0),
+        y(0),
+        z(0),
+        e(0),
+        n(0),
+        u(0),
+        roll(0),
+        pitch(0),
+        yaw(0),
+        propagation_time(0),
+        rssi(0),
+        integrity(0),
+        accuracy(0)
+      { }
+
+      double ctime;
+      double mtime;
+      unsigned addr;
+      float x, y, z;
+      float e, n, u;
+      float roll, pitch, yaw;
+      unsigned propagation_time;
+      float rssi;
+      unsigned integrity;
+      float accuracy;
+    };
+
+    struct RecvUsblAng
+    {
+      RecvUsblAng(void):
+        ctime(0),
+        mtime(0),
+        addr(0),
+        lbearing(0),
+        lelevation(0),
+        bearing(0),
+        elevation(0),
+        roll(0),
+        pitch(0),
+        yaw(0),
+        rssi(0),
+        integrity(0),
+        accuracy(0)
+      { }
+
+      double ctime;
+      double mtime;
+      unsigned addr;
+      float lbearing, lelevation;
+      float bearing, elevation;
+      float roll, pitch, yaw;
+      float rssi;
+      unsigned integrity;
+      float accuracy;
     };
   }
 }
