@@ -610,6 +610,13 @@ namespace Transports
       {
         RecvUsblPos reply;
         m_driver->parseUsblPosition(str, reply);
+
+        IMC::UsblPosition up;
+        up.target = resolveSystemName(safeLookup(reply.addr));
+        up.x = reply.x;
+        up.y = reply.y;
+        up.z = reply.z;
+        dispatch(up);
       }
 
       void
@@ -617,6 +624,12 @@ namespace Transports
       {
         RecvUsblAng reply;
         m_driver->parseUsblAngles(str, reply);
+
+        IMC::UsblAngles ua;
+        ua.target = resolveSystemName(safeLookup(reply.addr));
+        ua.bearing = reply.lbearing;
+        ua.elevation = reply.lelevation;
+        dispatch(ua);
       }
 
       void
