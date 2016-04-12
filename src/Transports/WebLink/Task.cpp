@@ -39,148 +39,187 @@ namespace Transports
     using DUNE_NAMESPACES;
     using namespace happyhttp;
 
+    //! Task arguments.
+    struct Arguments
+    {
+      //! Data Store
+      std::string store;
+      //! Server Name
+      std::string server_name;
+      //! Server Path
+      std::string server_path;
+      //! Server Port
+      int server_port;
+      //! Period of message
+      double period;
+    };
+
     struct Task : public DUNE::Tasks::Task
     {
-        int m_count;
-        uint16_t m_size;
-        Connection* m_conn;
-        uint8_t *m_params;
+        // Parameters.
+      int m_count;
+      long int m_size;
+      Connection* m_conn;
+      uint8_t *m_params;
 
-        IMC::EntityParameters m_hist;
+      IMC::HistoricDataQuery m_hist;
+
+        //! Task arguments.
+      Arguments m_args;
+
         //! Constructor.
         //! @param[in] name task name.
         //! @param[in] ctx context.
-        Task(const std::string& name, Tasks::Context& ctx) :
-            DUNE::Tasks::Task(name, ctx),
-            m_count(0),
-            m_size(0),
-            m_conn(0),
-            m_params(0)
-        {
-        }
+      Task(const std::string& name, Tasks::Context& ctx) :
+      DUNE::Tasks::Task(name, ctx), m_count(0), m_size(0), m_conn(0), m_params(
+                                                                               0)
+      {
+        param("Target", m_args.store)
+        .description("Target of data store")
+        .defaultValue("Data Store");
+
+        param("Server Name", m_args.server_name)
+        .description("Name of Server")
+        .defaultValue("ripples.lsts.pt");
+
+        param("Server Path", m_args.server_path)
+        .description("Path http for Server")
+        .defaultValue("/datastore");
+
+        param("Server Port", m_args.server_port)
+        .description("Port http for Server")
+        .defaultValue("80");
+
+        param("Period Message", m_args.period)
+        .description("Period to send message (in mili-seconds)")
+        .minimumValue("2000")
+        .defaultValue("4000");
+
+        bind<IMC::HistoricDataQuery>(this);
+      }
 
         //! Update internal state with new parameter values.
-        void
-        onUpdateParameters(void)
+      void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.server_name) || paramChanged(m_args.server_port))
+          m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
+        if (paramChanged(m_args.period))
         {
+          if (m_args.period < 2000)
+            m_args.period = 2000;
         }
+      }
 
         //! Reserve entity identifiers.
-        void
-        onEntityReservation(void)
-        {
-        }
+      void
+      onEntityReservation(void)
+      {
+      }
 
         //! Resolve entity names.
-        void
-        onEntityResolution(void)
-        {
-        }
+      void
+      onEntityResolution(void)
+      {
+      }
 
         //! Acquire resources.
-        void
-        onResourceAcquisition(void)
-        {
-        }
+      void
+      onResourceAcquisition(void)
+      {
+      }
 
         //! Initialize resources.
-        void
-        onResourceInitialization(void)
-        {
-        }
+      void
+      onResourceInitialization(void)
+      {
+        m_size = 8;
+        m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
+        m_params = (unsigned char*)malloc(m_size + 1);
+        std::sprintf((char*)m_params, "INIT");
+          //IMC::Packet::serialize(&m_hist, &m_params[0], m_hist.data);
+      }
 
         //! Release resources.
-        void
-        onResourceRelease(void)
+      void
+      onResourceRelease(void)
+      {
+        free(m_params);
+        Memory::clear(m_conn);
+      }
+
+      void
+      consume(const IMC::HistoricDataQuery* msg)
+      {
+        if (m_args.store == resolveEntity(msg->getSourceEntity()))
+          war("TEXT: %s - %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->type);
+        else
+          war("TEXT: %s - %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->type);
+
+          /*if(msg->getSerializationSize() <= msg->max_size)
+           m_size = msg->getSerializationSize();
+           else
+           m_size = msg->max_size;
+
+           const char *dataMsg;
+           if(!std::realloc(m_params, m_size))
+           war("ERROR in realloc");
+
+           IMC::Packet::serialize(msg, &m_params[0], m_size);
+
+           war("info: Size: %d   ID: %d  SIZE: %ld", msg->max_size, msg->req_id, m_size);*/
+      }
+
+      //! test
+      bool
+      sendDataRequest()
+      {
+        m_count = 0;
+        m_conn->putrequest("POST", m_args.server_path.c_str());
+        m_conn->putheader("Content-Length", m_size);
+        m_conn->putheader("Content-type", "text/plain");
+        m_conn->putheader("Accept", "text/plain");
+        if (!m_conn->endheaders())
         {
-          free(m_params);
-          Memory::clear(m_conn);
+          return false;
         }
-
-        /* Begin handler */
-        void
-        onBeginCal(const Response* r)
+        else
         {
-          std::printf("%d : %s\n\r", r->getstatus(), r->getreason());
-          m_count = 0;
-        }
-
-        static void
-        onBegin(const happyhttp::Response* r, void* opt)
-        {
-          Task* cal1 = (Task*)opt; // cast back to 'this'
-          // now call your member-function.
-          cal1->onBeginCal(r);
-        }
-
-        /* Data handler */
-        void
-        onDataCal(const unsigned char* data, int n)
-        {
-          std::fwrite(data, 1, n, stdout);
-          m_count += n;
-          std::cout << std::endl;
-        }
-
-        static void
-        onData(const unsigned char* data, int numbytes, void* opt)
-        {
-          Task* cal2 = (Task*)opt; // cast back to 'this'
-          // now call your member-function.
-          cal2->onDataCal(data, numbytes);
-        }
-
-        //! test
-        void
-        teste(uint16_t l)
-        {
-          m_count = 0;
-          //m_conn->setcallbacksBegin(onBegin);
-          //m_conn->setcallbacksData (onData);
-          //m_conn->putrequest( "POST", "/post.php?dir=pedro2" );
-          m_conn->putrequest("POST", "/datastore");
-          m_conn->putheader("Content-Length", m_size);
-          m_conn->putheader("Content-type", "text/plain");
-          m_conn->putheader("Accept", "text/plain");
-          m_conn->endheaders();
-          bool state = m_conn->send((const unsigned char*)m_params, l);
-
+          bool state = m_conn->send((const unsigned char*)m_params, m_size);
           if (state)
+          {
             while (m_conn->outstanding())
               m_conn->pump();
-
-          m_conn->close();
-
-        }
-
-        //! Main loop.
-        void
-        onMain(void)
-        {
-          Delay::waitMsec(5000);
-          m_hist.setTimeStamp();
-          m_size = m_hist.getSerializationSize();
-          m_conn = new Connection("ripples.lsts.pt", 80);
-          //m_conn = new Connection("posttestserver.com", 80);
-          m_params = (unsigned char*)malloc(m_size + 1);
-          IMC::Packet::serialize(&m_hist, &m_params[0], m_hist.getSerializationSize());
-          while (!stopping())
-          {
-            m_hist.setTimeStamp();
-            m_size = m_hist.getSerializationSize();
-            //m_params = (unsigned char*)malloc(m_size + 1);
-            if (!std::realloc(m_params, m_size))
-              war("ERROR in realloc");
-            IMC::Packet::serialize(&m_hist, &m_params[0], m_hist.getSerializationSize());
-            war("SEND...");
-            teste(m_size);
-            err("SEND OK");
-            //consumeMessages();
-            Delay::waitMsec(2000);
           }
+          m_conn->close();
+          return true;
         }
+        return false;
+      }
+
+      //! Main loop.
+      void
+      onMain(void)
+      {
+        //Wait for other task
+        Delay::waitMsec(5000);
+        while (!stopping())
+        {
+          war("SEND...");
+          if(!sendDataRequest())
+          {
+            err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
+          }
+          else
+          {
+            if(happyhttp::getStatusValue() != 200)
+              war("%d - %s", happyhttp::getStatusValue(), happyhttp::getStatusMessage());
+          }
+          waitForMessages(0.1);
+          Delay::waitMsec(m_args.period);
+        }
+      }
     };
   }
 }
-
 DUNE_TASK
