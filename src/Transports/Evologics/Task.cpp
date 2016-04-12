@@ -391,13 +391,13 @@ namespace Transports
         else if (String::startsWith(msg->value, "RECVPBM"))
           handleInstantMessage(msg->value, true);
         else if (String::startsWith(msg->value, "DELIVEREDIM"))
-          handleInstantMessageDelivered(msg->value);
+          handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "CANCELEDIM"))
-          handleInstantMessageCanceled(msg->value);
+          return;
         else if (String::startsWith(msg->value, "CANCELEDPBM"))
-          handleInstantMessageCanceled(msg->value);
+          return;
         else if (String::startsWith(msg->value, "FAILEDIM"))
-          handleInstantMessageFailed(msg->value);
+          handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))
@@ -409,9 +409,9 @@ namespace Transports
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVERED"))
-          handleBurstMessageDelivered(msg->value);
+          handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
-          handleBurstMessageFailed(msg->value);
+          handleMessageFailed(msg->value);
       }
 
       void
@@ -504,26 +504,20 @@ namespace Transports
       }
 
       void
-      handleInstantMessageFailed(const std::string& str)
+      handleMessageFailed(const std::string& str)
       {
         (void)str;
-
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
       }
 
       void
-      handleInstantMessageCanceled(const std::string& str)
-      {
-        (void)str;
-      }
-
-      void
-      handleInstantMessageDelivered(const std::string& str)
+      handleMessageDelivered(const std::string& str)
       {
         //! Query propagation time.
         unsigned dst = 0;
-        if (std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1)
+        if ((std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1) ||
+            (std::sscanf(str.c_str(), "DELIVERED,%u", &dst) == 1))
         {
           try
           {
@@ -605,45 +599,6 @@ namespace Transports
         dispatch(msg);
 
         m_driver->getMultipathStructure();
-      }
-
-      void
-      handleBurstMessageFailed(const std::string& str)
-      {
-        (void)str;
-        m_driver->setBusy(false);
-        clearTicket(IMC::UamTxStatus::UTS_FAILED);
-      }
-
-      void
-      handleBurstMessageDelivered(const std::string& str)
-      {
-        //! Query propagation time.
-        unsigned dst = 0;
-        if (std::sscanf(str.c_str(), "DELIVERED,%u", &dst) == 1)
-        {
-          try
-          {
-            double ptime = m_driver->getPropagationTime();
-            if (ptime > 0)
-            {
-              IMC::UamRxRange range;
-              range.sys = lookupSystemName(dst);
-              if (m_ticket != NULL)
-                range.seq = m_ticket->seq;
-              range.value = (ptime * m_sound_speed) / 1000000.0;
-              dispatch(range);
-            }
-          }
-          catch (...)
-          { }
-        }
-
-        m_driver->getMultipathStructure();
-
-        // Clear ticket.
-        m_driver->setBusy(false);
-        clearTicket(IMC::UamTxStatus::UTS_DONE);
       }
 
       void
