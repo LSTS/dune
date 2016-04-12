@@ -38,19 +38,11 @@ struct in_addr;
 
 namespace happyhttp
 {
-  class Response;
-  // Helper Functions
-  void
-  BailOnSocketError (const char* context);
-  struct in_addr *
-  atoaddr (const char* address);
+  char *
+  getStatusMessage();
 
-  typedef void
-  (*ResponseBegin_CB) (const Response* r, void* opt);
-  typedef void
-  (*ResponseData_CB) (const unsigned char* data, int numbytes, void* opt);
-  typedef void
-  (*ResponseComplete_CB) (void* opt);
+  int
+  getStatusValue();
 
   // HTTP status codes
   enum
@@ -115,13 +107,29 @@ namespace happyhttp
     NOT_EXTENDED = 510
   };
 
+  class Response;
+  // Helper Functions
+  void
+  BailOnSocketError(const char* context);
+  struct in_addr *
+  atoaddr(const char* address);
+
+  typedef void
+  (*ResponseBegin_CB)(const Response* r, void* opt);
+  typedef void
+  (*ResponseData_CB)(const unsigned char* data, int numbytes, void* opt);
+  typedef void
+  (*ResponseComplete_CB)(void* opt);
+
+  //int responseCode;
+
   // Exception class
   class Wobbly
   {
     public:
-      Wobbly (const char* fmt, ...);
+      Wobbly(const char* fmt, ...);
       const char*
-      what () const
+      what() const
       {
         return m_Message;
       }
@@ -145,8 +153,8 @@ namespace happyhttp
       friend class Response;
     public:
       // doesn't connect immediately
-      Connection (const char* host, int port);
-      ~Connection ();
+      Connection(const char* host, int port);
+      ~Connection();
 
       // Set up the response handling callbacks. These will be invoked during
       // calls to pump().
@@ -155,37 +163,37 @@ namespace happyhttp
       // completecb	- response is completed
       // userdata is passed as a param to all callbacks.
       void
-      setcallbacks (ResponseBegin_CB begincb, ResponseData_CB datacb,
-                    ResponseComplete_CB completecb, void* userdata);
+      setcallbacks(ResponseBegin_CB begincb, ResponseData_CB datacb,
+                   ResponseComplete_CB completecb, void* userdata);
 
       void
-      setcallbacksBegin (ResponseBegin_CB begincb);
+      setcallbacksBegin(ResponseBegin_CB begincb);
       void
-      setcallbacksData (ResponseData_CB datacb);
+      setcallbacksData(ResponseData_CB datacb);
       void
-      setcallbacksComplete (ResponseComplete_CB completecb);
+      setcallbacksComplete(ResponseComplete_CB completecb);
 
       // Don't need to call connect() explicitly as issuing a request will
       // call it automatically if needed.
       // But it could block (for name lookup etc), so you might prefer to
       // call it in advance.
       bool
-      connect ();
+      connect();
 
       // close connection, discarding any pending requests.
       void
-      close ();
+      close();
 
       // Update the connection (non-blocking)
       // Just keep calling this regularly to service outstanding requests.
       void
-      pump ();
+      pump();
 
       // any requests still outstanding?
       bool
-      outstanding () const
+      outstanding() const
       {
-        return !m_Outstanding.empty ();
+        return !m_Outstanding.empty();
       }
 
       // ---------------------------
@@ -197,8 +205,8 @@ namespace happyhttp
       // headers is array of name/value pairs, terminated by a null-ptr
       // body & bodysize specify body data of request (eg values for a form)
       void
-      request (const char* method, const char* url, const char* headers[] = 0,
-               const unsigned char* body = 0, int bodysize = 0);
+      request(const char* method, const char* url, const char* headers[] = 0,
+              const unsigned char* body = 0, int bodysize = 0);
 
       // ---------------------------
       // low-level request interface
@@ -208,22 +216,22 @@ namespace happyhttp
       // method is "GET", "POST" etc...
       // url is only path part: eg  "/index.html"
       void
-      putrequest (const char* method, const char* url);
+      putrequest(const char* method, const char* url);
 
       // Add a header to the request (call after putrequest() )
       void
-      putheader (const char* header, const char* value);
+      putheader(const char* header, const char* value);
       void
-      putheader (const char* header, int numericvalue); // alternate version
+      putheader(const char* header, int numericvalue); // alternate version
 
       // Finished adding headers, issue the request.
-      void
-      endheaders ();
+      bool
+      endheaders();
 
       // send body data if any.
       // To be called after endheaders()
       bool
-      send (const unsigned char* buf, int numbytes);
+      send(const unsigned char* buf, int numbytes);
 
     protected:
       // some bits of implementation exposed to Response class
@@ -257,6 +265,11 @@ namespace happyhttp
       friend class Connection;
     public:
       Connection& m_Connection; // to access callback ptrs
+
+      // only Connection creates Responses.
+      Response(const char* method, Connection& conn);
+      //Response();
+
       enum
       {
         STATUSLINE, // start here. status line is first line of response.
@@ -270,25 +283,25 @@ namespace happyhttp
 
       // retrieve a header (returns 0 if not present)
       const char*
-      getheader (const char* name) const;
+      getheader(const char* name) const;
 
       bool
-      completed () const
+      completed() const
       {
         return m_State == COMPLETE;
       }
 
       // get the HTTP status code
       int
-      getstatus () const;
+      getstatus() const;
 
       // get the HTTP response reason string
       const char*
-      getreason () const;
+      getreason() const;
 
       // true if connection is expected to close after this response.
       bool
-      willclose () const
+      willclose() const
       {
         return m_WillClose;
       }
@@ -296,18 +309,15 @@ namespace happyhttp
     protected:
       // interface used by Connection
 
-      // only Connection creates Responses.
-      Response (const char* method, Connection& conn);
-
       // pump some data in for processing.
       // Returns the number of bytes used.
       // Will always return 0 when response is complete.
       int
-      pump (const unsigned char* data, int datasize);
+      pump(const unsigned char* data, int datasize);
 
       // tell response that connection has closed
       void
-      notifyconnectionclosed ();
+      notifyconnectionclosed();
 
     private:
       std::string m_Method; // req method: "GET", "POST" etc...
@@ -331,27 +341,27 @@ namespace happyhttp
       std::string m_HeaderAccum; // accumulation buffer for headers
 
       void
-      FlushHeader ();
+      FlushHeader();
       void
-      ProcessStatusLine (std::string const& line);
+      ProcessStatusLine(std::string const& line);
       void
-      ProcessHeaderLine (std::string const& line);
+      ProcessHeaderLine(std::string const& line);
       void
-      ProcessTrailerLine (std::string const& line);
+      ProcessTrailerLine(std::string const& line);
       void
-      ProcessChunkLenLine (std::string const& line);
+      ProcessChunkLenLine(std::string const& line);
 
       int
-      ProcessDataChunked (const unsigned char* data, int count);
+      ProcessDataChunked(const unsigned char* data, int count);
       int
-      ProcessDataNonChunked (const unsigned char* data, int count);
+      ProcessDataNonChunked(const unsigned char* data, int count);
 
       void
-      BeginBody ();
+      BeginBody();
       bool
-      CheckClose ();
+      CheckClose();
       void
-      Finish ();
+      Finish();
   };
 } // end namespace happyhttp
 

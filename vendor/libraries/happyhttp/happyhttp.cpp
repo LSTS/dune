@@ -56,6 +56,9 @@
 
 using namespace std;
 
+int responseCode = 0;
+char messageCode[128];
+
 namespace happyhttp
 {
 #ifdef WIN32
@@ -67,15 +70,15 @@ namespace happyhttp
   //---------------------------------------------------------------------
 
   void
-  BailOnSocketError (const char* context)
+  BailOnSocketError(const char* context)
   {
 #ifdef WIN32
     int e = WSAGetLastError();
     const char* msg = GetWinsockErrorString( e );
 #else
-    const char* msg = strerror ( errno);
+    const char* msg = strerror( errno);
 #endif
-    printf ("%s: %s\n\r", context, msg);
+    printf("%s: %s\n\r", context, msg);
   }
 
 #ifdef WIN32
@@ -142,7 +145,7 @@ namespace happyhttp
 
   // return true if socket has data waiting to be read
   bool
-  datawaiting (int sock)
+  datawaiting(int sock)
   {
     fd_set fds;
     FD_ZERO(&fds);
@@ -152,9 +155,9 @@ namespace happyhttp
     tv.tv_sec = 0;
     tv.tv_usec = 0;
 
-    int r = select (sock + 1, &fds, NULL, NULL, &tv);
+    int r = select(sock + 1, &fds, NULL, NULL, &tv);
     if (r < 0)
-      BailOnSocketError ("select");
+      BailOnSocketError("select");
 
     if (FD_ISSET(sock, &fds))
       return true;
@@ -165,19 +168,19 @@ namespace happyhttp
   // Try to work out address from string
   // returns 0 if bad
   struct in_addr *
-  atoaddr (const char* address)
+  atoaddr(const char* address)
   {
     struct hostent *host;
     static struct in_addr saddr;
 
     // First try nnn.nnn.nnn.nnn form
-    saddr.s_addr = inet_addr (address);
+    saddr.s_addr = inet_addr(address);
     if (saddr.s_addr == 0)
       return &saddr;
 
-    host = gethostbyname (address);
+    host = gethostbyname(address);
     if (host != NULL)
-      return (struct in_addr *) *host->h_addr_list;
+      return (struct in_addr *)*host->h_addr_list;
 
     return 0;
   }
@@ -187,15 +190,15 @@ namespace happyhttp
   // Connection
   //
   //---------------------------------------------------------------------
-  Connection::Connection (const char* host, int port) :
-      m_ResponseBeginCB (0), m_ResponseDataCB (0), m_ResponseCompleteCB (0), m_UserData (
-          0), m_State (IDLE), m_Host (host), m_Port (port), m_Sock (-1)
+  Connection::Connection(const char* host, int port) :
+      m_ResponseBeginCB(0), m_ResponseDataCB(0), m_ResponseCompleteCB(0), m_UserData(
+          0), m_State(IDLE), m_Host(host), m_Port(port), m_Sock(-1)
   {
   }
 
   void
-  Connection::setcallbacks (ResponseBegin_CB begincb, ResponseData_CB datacb,
-                            ResponseComplete_CB completecb, void* userdata)
+  Connection::setcallbacks(ResponseBegin_CB begincb, ResponseData_CB datacb,
+                           ResponseComplete_CB completecb, void* userdata)
   {
     m_ResponseBeginCB = begincb;
     m_ResponseDataCB = datacb;
@@ -204,51 +207,51 @@ namespace happyhttp
   }
 
   void
-  Connection::setcallbacksBegin (ResponseBegin_CB begincb)
+  Connection::setcallbacksBegin(ResponseBegin_CB begincb)
   {
     m_ResponseBeginCB = begincb;
   }
 
   void
-  Connection::setcallbacksData (ResponseData_CB datacb)
+  Connection::setcallbacksData(ResponseData_CB datacb)
   {
     m_ResponseDataCB = datacb;
   }
 
   void
-  Connection::setcallbacksComplete (ResponseComplete_CB completecb)
+  Connection::setcallbacksComplete(ResponseComplete_CB completecb)
   {
     m_ResponseCompleteCB = completecb;
   }
 
   bool
-  Connection::connect ()
+  Connection::connect()
   {
-    in_addr* addr = atoaddr (m_Host.c_str ());
+    in_addr* addr = atoaddr(m_Host.c_str());
     if (!addr)
     {
-      printf ("Invalid network address\n\r");
+      //printf("Invalid network address\n\r");
       return false;
     }
     else
     {
       sockaddr_in address;
-      memset ((char*) &address, 0, sizeof(address));
+      memset((char*)&address, 0, sizeof(address));
       address.sin_family = AF_INET;
-      address.sin_port = htons (m_Port);
+      address.sin_port = htons(m_Port);
       address.sin_addr.s_addr = addr->s_addr;
 
-      m_Sock = socket ( AF_INET, SOCK_STREAM, 0);
+      m_Sock = socket( AF_INET, SOCK_STREAM, 0);
       if (m_Sock < 0)
       {
-        BailOnSocketError ("socket()");
+        BailOnSocketError("socket()");
         return false;
       }
       //	printf("Connecting to %s on port %d.\n",inet_ntoa(*addr), port);
 
-      if (::connect (m_Sock, (sockaddr const*) &address, sizeof(address)) < 0)
+      if (::connect(m_Sock, (sockaddr const*)&address, sizeof(address)) < 0)
       {
-        BailOnSocketError ("connect()");
+        BailOnSocketError("connect()");
         return false;
       }
 
@@ -259,34 +262,34 @@ namespace happyhttp
   }
 
   void
-  Connection::close ()
+  Connection::close()
   {
 #ifdef WIN32
     if( m_Sock >= 0 )
     ::closesocket( m_Sock );
 #else
     if (m_Sock >= 0)
-      ::close (m_Sock);
+      ::close(m_Sock);
 #endif
     m_Sock = -1;
 
     // discard any incomplete responses
-    while (!m_Outstanding.empty ())
+    while (!m_Outstanding.empty())
     {
-      delete m_Outstanding.front ();
-      m_Outstanding.pop_front ();
+      delete m_Outstanding.front();
+      m_Outstanding.pop_front();
     }
   }
 
-  Connection::~Connection ()
+  Connection::~Connection()
   {
-    close ();
+    close();
   }
 
   void
-  Connection::request (const char* method, const char* url,
-                       const char* headers[], const unsigned char* body,
-                       int bodysize)
+  Connection::request(const char* method, const char* url,
+                      const char* headers[], const unsigned char* body,
+                      int bodysize)
   {
 
     bool gotcontentlength = false; // already in headers?
@@ -303,15 +306,15 @@ namespace happyhttp
         //const char* value = *h++;
         //assert(value != 0); // name with no value!
 
-        if (0 == _stricmp (name, "content-length"))
+        if (0 == _stricmp(name, "content-length"))
           gotcontentlength = true;
       }
     }
 
-    putrequest (method, url);
+    putrequest(method, url);
 
     if (body && !gotcontentlength)
-      putheader ("Content-Length", bodysize);
+      putheader("Content-Length", bodysize);
 
     if (headers)
     {
@@ -320,91 +323,92 @@ namespace happyhttp
       {
         const char* name = *h++;
         const char* value = *h++;
-        putheader (name, value);
+        putheader(name, value);
       }
     }
-    endheaders ();
+    endheaders();
 
     if (body)
-      send (body, bodysize);
+      send(body, bodysize);
 
   }
 
   void
-  Connection::putrequest (const char* method, const char* url)
+  Connection::putrequest(const char* method, const char* url)
   {
     if (m_State != IDLE)
     {
-      printf ("Request already issued\n\r");
+      printf("Request already issued\n\r");
     }
     else
     {
       m_State = REQ_STARTED;
 
       char req[512];
-      sprintf (req, "%s %s HTTP/1.1", method, url);
-      m_Buffer.push_back (req);
+      sprintf(req, "%s %s HTTP/1.1", method, url);
+      m_Buffer.push_back(req);
 
-      putheader ("Host", m_Host.c_str ()); // required for HTTP1.1
+      putheader("Host", m_Host.c_str()); // required for HTTP1.1
 
       // don't want any fancy encodings please
-      putheader ("Accept-Encoding", "identity");
+      putheader("Accept-Encoding", "identity");
 
       // Push a new response onto the queue
-      Response *r = new Response (method, *this);
-      m_Outstanding.push_back (r);
+      Response *r = new Response(method, *this);
+      m_Outstanding.push_back(r);
     }
   }
 
   void
-  Connection::putheader (const char* header, const char* value)
+  Connection::putheader(const char* header, const char* value)
   {
     if (m_State != REQ_STARTED)
-      printf ("putheader() failed\n\r");
+      printf("putheader() failed\n\r");
     else
-      m_Buffer.push_back (string (header) + ": " + string (value));
+      m_Buffer.push_back(string(header) + ": " + string(value));
   }
 
   void
-  Connection::putheader (const char* header, int numericvalue)
+  Connection::putheader(const char* header, int numericvalue)
   {
     char buf[32];
-    sprintf (buf, "%d", numericvalue);
-    putheader (header, buf);
+    sprintf(buf, "%d", numericvalue);
+    putheader(header, buf);
   }
 
-  void
-  Connection::endheaders ()
+  bool
+  Connection::endheaders()
   {
     if (m_State != REQ_STARTED)
     {
-      printf ("Cannot send header\n\r");
+      printf("Cannot send header\n\r");
     }
     else
     {
       m_State = IDLE;
 
-      m_Buffer.push_back ("");
+      m_Buffer.push_back("");
 
       string msg;
       vector<string>::const_iterator it;
-      for (it = m_Buffer.begin (); it != m_Buffer.end (); ++it)
+      for (it = m_Buffer.begin(); it != m_Buffer.end(); ++it)
         msg += (*it) + "\r\n";
 
-      m_Buffer.clear ();
+      m_Buffer.clear();
 
       //	printf( "%s", msg.c_str() );
-      send ((const unsigned char*) msg.c_str (), msg.size ());
+      return send((const unsigned char*)msg.c_str(), msg.size());
     }
 
+    return false;
   }
 
   bool
-  Connection::send (const unsigned char* buf, int numbytes)
+  Connection::send(const unsigned char* buf, int numbytes)
   {
     //	fwrite( buf, 1,numbytes, stdout );
     if (m_Sock < 0)
-      if (!connect ())
+      if (!connect())
         return false;
 
     while (numbytes > 0)
@@ -412,12 +416,12 @@ namespace happyhttp
 #ifdef WIN32
       int n = ::send( m_Sock, (const char*)buf, numbytes, 0 );
 #else
-      int n = ::send (m_Sock, buf, numbytes, 0);
+      int n = ::send(m_Sock, buf, numbytes, 0);
 #endif
 
       if (n < 0)
       {
-        BailOnSocketError ("send()");
+        BailOnSocketError("send()");
         return false;
         break;
       }
@@ -429,48 +433,49 @@ namespace happyhttp
   }
 
   void
-  Connection::pump ()
+  Connection::pump()
   {
-    if (m_Outstanding.empty ())
+    if (m_Outstanding.empty())
       return; // no requests outstanding
 
     assert(m_Sock > 0); // outstanding requests but no connection!
 
-    if (!datawaiting (m_Sock))
+    if (!datawaiting(m_Sock))
       return; // recv will block
 
     unsigned char buf[2048];
-    int a = recv (m_Sock, (char*) buf, sizeof(buf), 0);
+    int a = recv(m_Sock, (char*)buf, sizeof(buf), 0);
     if (a < 0)
-      BailOnSocketError ("recv()");
+      BailOnSocketError("recv()");
 
     if (a == 0)
     {
       // connection has closed
 
-      Response* r = m_Outstanding.front ();
-      r->notifyconnectionclosed ();
-      assert(r->completed ());
+      Response* r = m_Outstanding.front();
+      r->notifyconnectionclosed();
+      assert(r->completed());
       delete r;
-      m_Outstanding.pop_front ();
+      m_Outstanding.pop_front();
 
       // any outstanding requests will be discarded
-      close ();
+      close();
     }
     else
     {
       int used = 0;
-      while (used < a && !m_Outstanding.empty ())
+      while (used < a && !m_Outstanding.empty())
       {
 
-        Response* r = m_Outstanding.front ();
-        int u = r->pump (&buf[used], a - used);
-
+        Response* r = m_Outstanding.front();
+        int u = r->pump(&buf[used], a - used);
+        //TODO
+        //printf("SIZE: %d - Data: %s\n\r", u, buf);
         // delete response once completed
-        if (r->completed ())
+        if (r->completed())
         {
           delete r;
-          m_Outstanding.pop_front ();
+          m_Outstanding.pop_front();
         }
         used += u;
       }
@@ -488,33 +493,41 @@ namespace happyhttp
   //
   //---------------------------------------------------------------------
 
-  Response::Response (const char* method, Connection& conn) :
-      m_Connection (conn), m_State (STATUSLINE), m_Method (method), m_Version (
-          0), m_Status (0), m_BytesRead (0), m_Chunked (false), m_ChunkLeft (0), m_Length (
-          -1), m_WillClose (false)
+  /*Response::Response(const char* method, Connection& conn) :
+      m_Connection(conn), m_State(STATUSLINE), m_Method(method), m_Version(0), m_Status(
+          0), m_BytesRead(0), m_Chunked(false), m_ChunkLeft(0), m_Length(-1), m_WillClose(
+          false)
   {
-  }
+  }*/
+
+  Response::Response(const char* method, Connection& conn) :
+        m_Connection(conn), m_State(STATUSLINE), m_Method(method), m_Version(0), m_Status(
+            0), m_BytesRead(0), m_Chunked(false), m_ChunkLeft(0), m_Length(-1), m_WillClose(
+            false)
+    {
+
+    }
 
   const char*
-  Response::getheader (const char* name) const
+  Response::getheader(const char* name) const
   {
-    std::string lname (name);
+    std::string lname(name);
 #ifdef _MSC_VER
     std::transform( lname.begin(), lname.end(), lname.begin(), tolower );
 #else
-    std::transform (lname.begin (), lname.end (), lname.begin (), ::tolower);
+    std::transform(lname.begin(), lname.end(), lname.begin(), ::tolower);
 #endif
 
-    std::map<std::string, std::string>::const_iterator it = m_Headers.find (
+    std::map<std::string, std::string>::const_iterator it = m_Headers.find(
         lname);
-    if (it == m_Headers.end ())
+    if (it == m_Headers.end())
       return 0;
     else
-      return it->second.c_str ();
+      return it->second.c_str();
   }
 
   int
-  Response::getstatus () const
+  Response::getstatus() const
   {
     // only valid once we've got the statusline
     assert(m_State != STATUSLINE);
@@ -522,16 +535,16 @@ namespace happyhttp
   }
 
   const char*
-  Response::getreason () const
+  Response::getreason() const
   {
     // only valid once we've got the statusline
     assert(m_State != STATUSLINE);
-    return m_Reason.c_str ();
+    return m_Reason.c_str();
   }
 
   // Connection has closed
   void
-  Response::notifyconnectionclosed ()
+  Response::notifyconnectionclosed()
   {
     if (m_State == COMPLETE)
       return;
@@ -539,16 +552,16 @@ namespace happyhttp
     // eof can be valid...
     if (m_State == BODY && !m_Chunked && m_Length == -1)
     {
-      Finish (); // we're all done!
+      Finish(); // we're all done!
     }
     else
     {
-      printf ("Connection closed unexpectedly\r\n");
+      printf("Connection closed unexpectedly\r\n");
     }
   }
 
   int
-  Response::pump (const unsigned char* data, int datasize)
+  Response::pump(const unsigned char* data, int datasize)
   {
     assert(datasize != 0);
     int count = datasize;
@@ -561,24 +574,24 @@ namespace happyhttp
         // we want to accumulate a line
         while (count > 0)
         {
-          char c = (char) *data++;
+          char c = (char)*data++;
           --count;
           if (c == '\n')
           {
             // now got a whole line!
             switch (m_State)
-              {
+            {
               case STATUSLINE:
-                ProcessStatusLine (m_LineBuf);
+                ProcessStatusLine(m_LineBuf);
                 break;
               case HEADERS:
-                ProcessHeaderLine (m_LineBuf);
+                ProcessHeaderLine(m_LineBuf);
                 break;
               case TRAILERS:
-                ProcessTrailerLine (m_LineBuf);
+                ProcessTrailerLine(m_LineBuf);
                 break;
               case CHUNKLEN:
-                ProcessChunkLenLine (m_LineBuf);
+                ProcessChunkLenLine(m_LineBuf);
                 break;
               case CHUNKEND:
                 // just soak up the crlf after body and go to next state
@@ -587,8 +600,8 @@ namespace happyhttp
                 break;
               default:
                 break;
-              }
-            m_LineBuf.clear ();
+            }
+            m_LineBuf.clear();
             break; // break out of line accumulation!
           }
           else
@@ -602,9 +615,9 @@ namespace happyhttp
       {
         int bytesused = 0;
         if (m_Chunked)
-          bytesused = ProcessDataChunked (data, count);
+          bytesused = ProcessDataChunked(data, count);
         else
-          bytesused = ProcessDataNonChunked (data, count);
+          bytesused = ProcessDataNonChunked(data, count);
         data += bytesused;
         count -= bytesused;
       }
@@ -615,16 +628,16 @@ namespace happyhttp
   }
 
   void
-  Response::ProcessChunkLenLine (std::string const& line)
+  Response::ProcessChunkLenLine(std::string const& line)
   {
     // chunklen in hex at beginning of line
-    m_ChunkLeft = strtol (line.c_str (), NULL, 16);
+    m_ChunkLeft = strtol(line.c_str(), NULL, 16);
 
     if (m_ChunkLeft == 0)
     {
       // got the whole body, now check for trailing headers
       m_State = TRAILERS;
-      m_HeaderAccum.clear ();
+      m_HeaderAccum.clear();
     }
     else
     {
@@ -635,7 +648,7 @@ namespace happyhttp
   // handle some body data in chunked mode
   // returns number of bytes used.
   int
-  Response::ProcessDataChunked (const unsigned char* data, int count)
+  Response::ProcessDataChunked(const unsigned char* data, int count)
   {
     assert(m_Chunked);
 
@@ -645,7 +658,7 @@ namespace happyhttp
 
     // invoke callback to pass out the data
     if (m_Connection.m_ResponseDataCB)
-      (m_Connection.m_ResponseDataCB) (data, n, this);
+      (m_Connection.m_ResponseDataCB)(data, n, this);
 
     m_BytesRead += n;
 
@@ -662,7 +675,7 @@ namespace happyhttp
   // handle some body data in non-chunked mode.
   // returns number of bytes used.
   int
-  Response::ProcessDataNonChunked (const unsigned char* data, int count)
+  Response::ProcessDataNonChunked(const unsigned char* data, int count)
   {
     int n = count;
     if (m_Length != -1)
@@ -675,31 +688,48 @@ namespace happyhttp
 
     // invoke callback to pass out the data
     if (m_Connection.m_ResponseDataCB)
-      (m_Connection.m_ResponseDataCB) (data, n, this);
+      (m_Connection.m_ResponseDataCB)(data, n, this);
 
     m_BytesRead += n;
 
     // Finish if we know we're done. Else we're waiting for connection close.
     if (m_Length != -1 && m_BytesRead == m_Length)
-      Finish ();
+      Finish();
 
     return n;
   }
 
   void
-  Response::Finish ()
+  Response::Finish()
   {
     m_State = COMPLETE;
 
     // invoke the callback
     if (m_Connection.m_ResponseCompleteCB)
-      (m_Connection.m_ResponseCompleteCB) (this);
+      (m_Connection.m_ResponseCompleteCB)(this);
+  }
+
+  char*
+  getStatusMessage()
+  {
+    if(responseCode < 100 || responseCode > 999)
+    {
+      std::memset(messageCode, '\0', sizeof(messageCode));
+      std::sprintf(messageCode, "UNKNOW ERROR HTTP");
+    }
+    return messageCode;
+  }
+
+  int
+  getStatusValue()
+  {
+    return responseCode;
   }
 
   void
-  Response::ProcessStatusLine (std::string const& line)
+  Response::ProcessStatusLine(std::string const& line)
   {
-    const char* p = line.c_str ();
+    const char* p = line.c_str();
 
     // skip any leading space
     while (*p && *p == ' ')
@@ -722,10 +752,15 @@ namespace happyhttp
     while (*p)
       m_Reason += *p++;
 
-    m_Status = atoi (status.c_str ());
+    m_Status = atoi(status.c_str());
+    responseCode = m_Status;
+    std::memset(messageCode, '\0', sizeof(messageCode));
+    std::sprintf(messageCode, "%s", line.c_str());
+    //printf("STATUS: %s - %s\n\r", status.c_str(), line.c_str());
+
     if (m_Status < 100 || m_Status > 999)
     {
-      printf ("BadStatusLine (%s)", line.c_str ());
+      printf("BadStatusLine (%s)", line.c_str());
     }
     else
     {
@@ -740,18 +775,18 @@ namespace happyhttp
         m_Version = 10;
         // OK, now we expect headers!
         m_State = HEADERS;
-        m_HeaderAccum.clear ();
+        m_HeaderAccum.clear();
       }
-      else if (0 == m_VersionString.compare (0, 7, "HTTP/1."))
+      else if (0 == m_VersionString.compare(0, 7, "HTTP/1."))
       {
         m_Version = 11;
         // OK, now we expect headers!
         m_State = HEADERS;
-        m_HeaderAccum.clear ();
+        m_HeaderAccum.clear();
       }
       else
       {
-        printf ("UnknownProtocol (%s)\n\r", m_VersionString.c_str ());
+        printf("UnknownProtocol (%s)\n\r", m_VersionString.c_str());
       }
 
     }
@@ -759,17 +794,17 @@ namespace happyhttp
 
   // process accumulated header data
   void
-  Response::FlushHeader ()
+  Response::FlushHeader()
   {
-    if (m_HeaderAccum.empty ())
+    if (m_HeaderAccum.empty())
       return; // no flushing required
 
-    const char* p = m_HeaderAccum.c_str ();
+    const char* p = m_HeaderAccum.c_str();
 
     std::string header;
     std::string value;
     while (*p && *p != ':')
-      header += tolower (*p++);
+      header += tolower(*p++);
 
     // skip ':'
     if (*p)
@@ -784,31 +819,31 @@ namespace happyhttp
     m_Headers[header] = value;
     //	printf("header: ['%s': '%s']\n", header.c_str(), value.c_str() );
 
-    m_HeaderAccum.clear ();
+    m_HeaderAccum.clear();
   }
 
   void
-  Response::ProcessHeaderLine (std::string const& line)
+  Response::ProcessHeaderLine(std::string const& line)
   {
-    const char* p = line.c_str ();
-    if (line.empty ())
+    const char* p = line.c_str();
+    if (line.empty())
     {
-      FlushHeader ();
+      FlushHeader();
       // end of headers
 
       // HTTP code 100 handling (we ignore 'em)
       if (m_Status == CONTINUE)
         m_State = STATUSLINE; // reset parsing, expect new status line
       else
-        BeginBody (); // start on body now!
+        BeginBody(); // start on body now!
       return;
     }
 
-    if (isspace (*p))
+    if (isspace(*p))
     {
       // it's a continuation line - just add it to previous data
       ++p;
-      while (*p && isspace (*p))
+      while (*p && isspace(*p))
         ++p;
 
       m_HeaderAccum += ' ';
@@ -817,18 +852,18 @@ namespace happyhttp
     else
     {
       // begin a new header
-      FlushHeader ();
+      FlushHeader();
       m_HeaderAccum = p;
     }
   }
 
   void
-  Response::ProcessTrailerLine (std::string const& line)
+  Response::ProcessTrailerLine(std::string const& line)
   {
     // TODO: handle trailers?
     // (python httplib doesn't seem to!)
-    if (line.empty ())
-      Finish ();
+    if (line.empty())
+      Finish();
 
     // just ignore all the trailers...
   }
@@ -837,7 +872,7 @@ namespace happyhttp
 // on the body. But we need to see what info we can glean from the headers
 // first...
   void
-  Response::BeginBody ()
+  Response::BeginBody()
   {
 
     m_Chunked = false;
@@ -845,20 +880,20 @@ namespace happyhttp
     m_WillClose = false;
 
     // using chunked encoding?
-    const char* trenc = getheader ("transfer-encoding");
-    if (trenc && 0 == _stricmp (trenc, "chunked"))
+    const char* trenc = getheader("transfer-encoding");
+    if (trenc && 0 == _stricmp(trenc, "chunked"))
     {
       m_Chunked = true;
       m_ChunkLeft = -1; // unknown
     }
 
-    m_WillClose = CheckClose ();
+    m_WillClose = CheckClose();
 
     // length supplied?
-    const char* contentlen = getheader ("content-length");
+    const char* contentlen = getheader("content-length");
     if (contentlen && !m_Chunked)
     {
-      m_Length = atoi (contentlen);
+      m_Length = atoi(contentlen);
     }
 
     // check for various cases where we expect zero-length body
@@ -876,7 +911,9 @@ namespace happyhttp
 
     // Invoke the user callback, if any
     if (m_Connection.m_ResponseBeginCB)
-      (m_Connection.m_ResponseBeginCB) (this, this);
+      (m_Connection.m_ResponseBeginCB)(this, this);
+
+
 
     /*
      printf("---------BeginBody()--------\n");
@@ -895,14 +932,14 @@ namespace happyhttp
 
 // return true if we think server will automatically close connection
   bool
-  Response::CheckClose ()
+  Response::CheckClose()
   {
     if (m_Version == 11)
     {
       // HTTP1.1
       // the connection stays open unless "connection: close" is specified.
-      const char* conn = getheader ("connection");
-      if (conn && 0 == _stricmp (conn, "close"))
+      const char* conn = getheader("connection");
+      if (conn && 0 == _stricmp(conn, "close"))
         return true;
       else
         return false;
@@ -910,7 +947,7 @@ namespace happyhttp
 
     // Older HTTP
     // keep-alive header indicates persistant connection
-    if (getheader ("keep-alive"))
+    if (getheader("keep-alive"))
       return false;
 
     // TODO: some special case handling for Akamai and netscape maybe?
