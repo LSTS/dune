@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: fb518ea37f5ba0224ab0eb1bbc93cede                            *
+// IMC XML MD5: 4663673b775daaf6b93edc177859e286                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -82,6 +82,14 @@
 #define DUNE_IMC_REPLAYCONTROL 105
 //! ClockControl identification number.
 #define DUNE_IMC_CLOCKCONTROL 106
+//! HistoricCTD identification number.
+#define DUNE_IMC_HISTORICCTD 107
+//! HistoricTelemetry identification number.
+#define DUNE_IMC_HISTORICTELEMETRY 108
+//! HistoricSonarData identification number.
+#define DUNE_IMC_HISTORICSONARDATA 109
+//! HistoricEvent identification number.
+#define DUNE_IMC_HISTORICEVENT 110
 //! Heartbeat identification number.
 #define DUNE_IMC_HEARTBEAT 150
 //! Announce identification number.
@@ -124,6 +132,10 @@
 #define DUNE_IMC_COMPRESSEDHISTORY 185
 //! HistoricSample identification number.
 #define DUNE_IMC_HISTORICSAMPLE 186
+//! HistoricDataQuery identification number.
+#define DUNE_IMC_HISTORICDATAQUERY 187
+//! RemoteCommand identification number.
+#define DUNE_IMC_REMOTECOMMAND 188
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblBeacon identification number.

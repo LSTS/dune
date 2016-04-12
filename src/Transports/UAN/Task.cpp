@@ -27,6 +27,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Supervisors/Reporter/Client.hpp>
 
 namespace Transports
 {
@@ -64,16 +65,12 @@ namespace Transports
     {
       //! Enable reports.
       bool report_enable;
-      //! Report periodicity.
-      double report_period;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Estimated state.
       IMC::EstimatedState m_estate;
-      //! Report timer.
-      Counter<double> m_report_timer;
       //! Last progress.
       float m_progress;
       //! Last fuel level.
@@ -82,8 +79,6 @@ namespace Transports
       float m_fuel_conf;
       //! Saved plan control.
       IMC::PlanControl* m_pc;
-      //! Report timer.
-      Counter<double> m_rep_timer;
       //! Sequence number.
       uint16_t m_seq;
       //! Last acoustic operation.
@@ -94,7 +89,8 @@ namespace Transports
       Counter<double> m_msg_send_timer;
       //! When set should wait and send next message
       bool m_send_next;
-
+      //! Reporter API.
+      Supervisors::Reporter::Client* m_reporter;
       //! Task arguments.
       Arguments m_args;
 
@@ -109,7 +105,8 @@ namespace Transports
         m_pc(NULL),
         m_seq(0),
         m_last_acop(NULL),
-        m_send_next(false)
+        m_send_next(false),
+        m_reporter(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -121,14 +118,6 @@ namespace Transports
         .defaultValue("false")
         .description("Enable system state reporting");
 
-        param(DTR_RT("Reports Periodicity"), m_args.report_period)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .units(Units::Second)
-        .defaultValue("60")
-        .minimumValue("30")
-        .maximumValue("600")
-        .description("Reports periodicity");
-
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::PlanControlState>(this);
@@ -136,6 +125,7 @@ namespace Transports
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
+        bind<IMC::ReportControl>(this);
       }
 
       ~Task(void)
@@ -143,12 +133,11 @@ namespace Transports
         onResourceRelease();
       }
 
-      //! Update internal state with new parameter values.
       void
-      onUpdateParameters(void)
+      onResourceAcquisition(void)
       {
-        if (paramChanged(m_args.report_period))
-          m_rep_timer.setTop(m_args.report_period);
+        m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
+                                                       2.0, false);
       }
 
       //! Initialize resources.
@@ -160,8 +149,6 @@ namespace Transports
         + URL::encode(getEntityLabel());
         dispatch(announce);
 
-        m_rep_timer.reset();
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
@@ -169,7 +156,6 @@ namespace Transports
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_rep_timer.reset();
       }
 
       void
@@ -418,6 +404,13 @@ namespace Transports
           aop.range = msg->value;
           dispatch(aop);
         }
+      }
+
+      void
+      consume(const IMC::ReportControl* msg)
+      {
+        if (m_reporter != NULL)
+          m_reporter->consume(msg);
       }
 
       void
@@ -697,11 +690,8 @@ namespace Transports
 
           if (m_args.report_enable && isActive())
           {
-            if (m_rep_timer.overflow())
-            {
-              m_rep_timer.reset();
+            if (m_reporter != NULL && m_reporter->trigger())
               sendReport();
-            }
           }
 
           if (m_send_next && m_msg_send_timer.overflow())

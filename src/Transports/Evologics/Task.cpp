@@ -84,9 +84,6 @@ namespace Transports
     typedef std::map<std::string, unsigned> MapName;
     typedef std::map<unsigned, std::string> MapAddr;
 
-    //! Broadcast address.
-    static const unsigned c_broadcast = 0x0f;
-
     struct Task: public Tasks::Task
     {
       //! Map of Evologics modems by name.
@@ -326,6 +323,19 @@ namespace Transports
         return itr->second;
       }
 
+      std::string
+      safeLookup(unsigned addr)
+      {
+        try
+        {
+          return lookupSystemName(addr);
+        }
+        catch (...)
+        { }
+
+        return "unknown";
+      }
+
       void
       consume(const IMC::SoundSpeed* msg)
       {
@@ -381,13 +391,13 @@ namespace Transports
         else if (String::startsWith(msg->value, "RECVPBM"))
           handleInstantMessage(msg->value, true);
         else if (String::startsWith(msg->value, "DELIVEREDIM"))
-          handleInstantMessageDelivered(msg->value);
+          handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "CANCELEDIM"))
-          handleInstantMessageCanceled(msg->value);
+          return;
         else if (String::startsWith(msg->value, "CANCELEDPBM"))
-          handleInstantMessageCanceled(msg->value);
+          return;
         else if (String::startsWith(msg->value, "FAILEDIM"))
-          handleInstantMessageFailed(msg->value);
+          handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))
@@ -399,9 +409,9 @@ namespace Transports
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
         else if (String::startsWith(msg->value, "DELIVERED"))
-          handleBurstMessageDelivered(msg->value);
+          handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
-          handleBurstMessageFailed(msg->value);
+          handleMessageFailed(msg->value);
       }
 
       void
@@ -494,26 +504,20 @@ namespace Transports
       }
 
       void
-      handleInstantMessageFailed(const std::string& str)
+      handleMessageFailed(const std::string& str)
       {
         (void)str;
-
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
       }
 
       void
-      handleInstantMessageCanceled(const std::string& str)
-      {
-        (void)str;
-      }
-
-      void
-      handleInstantMessageDelivered(const std::string& str)
+      handleMessageDelivered(const std::string& str)
       {
         //! Query propagation time.
         unsigned dst = 0;
-        if (std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1)
+        if ((std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1) ||
+            (std::sscanf(str.c_str(), "DELIVERED,%u", &dst) == 1))
         {
           try
           {
@@ -563,25 +567,9 @@ namespace Transports
         IMC::UamRxFrame msg;
         msg.data.assign((char*)&reply.data[0], (char*)&reply.data[0] + reply.data.size());
 
-        // Lookup source system name.
-        try
-        {
-          msg.sys_src = lookupSystemName(reply.src);
-        }
-        catch (...)
-        {
-          msg.sys_src = "unknown";
-        }
-
-        // Lookup destination system name.
-        try
-        {
-          msg.sys_dst = lookupSystemName(reply.dst);
-        }
-        catch (...)
-        {
-          msg.sys_dst = "unknown";
-        }
+        // Lookup system names.
+        msg.sys_src = safeLookup(reply.src);
+        msg.sys_dst = safeLookup(reply.dst);
 
         // Fill flags.
         if (m_address != reply.dst)
@@ -604,67 +592,13 @@ namespace Transports
         IMC::UamRxFrame msg;
         msg.data.assign((char*)&reply.data[0], (char*)&reply.data[0] + reply.data.size());
 
-        // Lookup source system name.
-        try
-        {
-          msg.sys_src = lookupSystemName(reply.src);
-        }
-        catch (...)
-        {
-          msg.sys_src = "unknown";
-        }
+        // Lookup system names.
+        msg.sys_src = safeLookup(reply.src);
+        msg.sys_dst = safeLookup(reply.dst);
 
-        // Lookup destination system name.
-        try
-        {
-          msg.sys_dst = lookupSystemName(reply.dst);
-        }
-        catch (...)
-        {
-          msg.sys_dst = "unknown";
-        }
         dispatch(msg);
 
         m_driver->getMultipathStructure();
-      }
-
-      void
-      handleBurstMessageFailed(const std::string& str)
-      {
-        (void)str;
-        m_driver->setBusy(false);
-        clearTicket(IMC::UamTxStatus::UTS_FAILED);
-      }
-
-      void
-      handleBurstMessageDelivered(const std::string& str)
-      {
-        //! Query propagation time.
-        unsigned dst = 0;
-        if (std::sscanf(str.c_str(), "DELIVERED,%u", &dst) == 1)
-        {
-          try
-          {
-            double ptime = m_driver->getPropagationTime();
-            if (ptime > 0)
-            {
-              IMC::UamRxRange range;
-              range.sys = lookupSystemName(dst);
-              if (m_ticket != NULL)
-                range.seq = m_ticket->seq;
-              range.value = (ptime * m_sound_speed) / 1000000.0;
-              dispatch(range);
-            }
-          }
-          catch (...)
-          { }
-        }
-
-        m_driver->getMultipathStructure();
-
-        // Clear ticket.
-        m_driver->setBusy(false);
-        clearTicket(IMC::UamTxStatus::UTS_DONE);
       }
 
       void
