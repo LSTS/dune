@@ -56,11 +56,12 @@ namespace Transports
 
     struct Task : public DUNE::Tasks::Task
     {
-        // Parameters.
+      // Parameters.
       int m_count;
       long int m_size;
       Connection* m_conn;
       uint8_t *m_params;
+      int m_id;
 
       IMC::HistoricDataQuery m_hist;
 
@@ -71,8 +72,7 @@ namespace Transports
         //! @param[in] name task name.
         //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx) :
-      DUNE::Tasks::Task(name, ctx), m_count(0), m_size(0), m_conn(0), m_params(
-                                                                               0)
+      DUNE::Tasks::Task(name, ctx), m_count(0), m_size(0), m_conn(0), m_params(0), m_id(0)
       {
         param("Target", m_args.store)
         .description("Target of data store")
@@ -151,10 +151,28 @@ namespace Transports
       void
       consume(const IMC::HistoricDataQuery* msg)
       {
-        if (m_args.store == resolveEntity(msg->getSourceEntity()))
-          war("TEXT: %s - %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->type);
-        else
-          war("TEXT: %s - %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->type);
+        if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
+        {
+          war("TRY SEND... %s >> REPLY( %d )", resolveEntity(msg->getSourceEntity()).c_str(), msg->type);
+          if (!sendDataRequest())
+          {
+            err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          }
+          else
+          {
+            if (happyhttp::getStatusValue() != 200)
+            {
+              setEntityState(IMC::EntityState::ESTA_BOOT, Utils::String::str(DTR("%s"), happyhttp::getStatusMessage()));
+              war("%s", happyhttp::getStatusMessage());
+            }
+            else if (happyhttp::getStatusValue() == 200)
+            {
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+          }
+          war("END SEND...");
+        }
 
           /*if(msg->getSerializationSize() <= msg->max_size)
            m_size = msg->getSerializationSize();
@@ -205,18 +223,20 @@ namespace Transports
         Delay::waitMsec(5000);
         while (!stopping())
         {
-          war("SEND...");
-          if(!sendDataRequest())
-          {
-            err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
-          }
-          else
-          {
-            if(happyhttp::getStatusValue() != 200)
-              war("%d - %s", happyhttp::getStatusValue(), happyhttp::getStatusMessage());
-          }
+
+          m_hist.req_id = 0;
+          m_hist.max_size = 1000;
+          m_hist.type = m_hist.HRTYPE_QUERY;
+          dispatch(m_hist);
           waitForMessages(0.1);
+
           Delay::waitMsec(m_args.period);
+
+          m_hist.req_id = 0;
+          m_hist.type = m_hist.HRTYPE_CLEAR;
+          dispatch(m_hist);
+          waitForMessages(0.1);
+
         }
       }
     };
