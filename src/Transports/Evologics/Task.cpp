@@ -77,6 +77,8 @@ namespace Transports
       unsigned src_level_water;
       //! Source Level - Underwater.
       unsigned src_level_underwater;
+      //! Report USBL in local frame.
+      bool local_frame;
     };
 
     // Type definition for mapping addresses.
@@ -199,6 +201,10 @@ namespace Transports
         param("Source Level - Underwater", m_args.src_level_underwater)
         .defaultValue("1")
         .description("Source level when medium is underwater");
+
+        param("Report USBL in local frame", m_args.local_frame)
+        .defaultValue("false")
+        .description("Report USBL data in the local frame or in the navigation frame");
 
         // Process modem addresses.
         std::string system = getSystemName();
@@ -613,9 +619,21 @@ namespace Transports
 
         IMC::UsblPosition up;
         up.target = resolveSystemName(safeLookup(reply.addr));
-        up.x = reply.x;
-        up.y = reply.y;
-        up.z = reply.z;
+
+        // Report data in device's local frame.
+        if (m_args.local_frame)
+        {
+          up.x = reply.x;
+          up.y = reply.y;
+          up.z = reply.z;
+        }
+        else
+        {
+          up.x = reply.n;
+          up.y = reply.e;
+          up.z = - reply.u;
+        }
+
         dispatch(up);
       }
 
@@ -627,8 +645,19 @@ namespace Transports
 
         IMC::UsblAngles ua;
         ua.target = resolveSystemName(safeLookup(reply.addr));
-        ua.bearing = reply.lbearing;
-        ua.elevation = reply.lelevation;
+
+        // Report data in device's local frame.
+        if (m_args.local_frame)
+        {
+          ua.bearing = reply.lbearing;
+          ua.elevation = reply.lelevation;
+        }
+        else
+        {
+          ua.bearing = reply.bearing;
+          ua.elevation = reply.elevation;
+        }
+
         dispatch(ua);
       }
 
