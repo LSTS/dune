@@ -25,22 +25,57 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NAVIGATION_HPP_INCLUDED_
-#define DUNE_NAVIGATION_HPP_INCLUDED_
+#ifndef DUNE_NAVIGATION_USBL_TOOLS_HPP_INCLUDED_
+#define DUNE_NAVIGATION_USBL_TOOLS_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Coordinates.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
-  //! %Navigation related routines and classes.
   namespace Navigation
-  { }
-}
+  {
+    //! %UsblTools provides converter methods for IMC's USBL messages.
+    //!
+    //! @author José Braga.
+    class UsblTools
+    {
+    public:
+      static IMC::UsblFixExtended
+      toFix(const IMC::UsblPositionExtended& usbl, const IMC::GpsFix& gps)
+      {
+        return toFix(usbl, gps.lat, gps.lon, gps.height, IMC::Z_HEIGHT);
+      }
 
-#include <DUNE/Navigation/BasicNavigation.hpp>
-#include <DUNE/Navigation/BeamFilter.hpp>
-#include <DUNE/Navigation/CompassCalibration.hpp>
-#include <DUNE/Navigation/KalmanFilter.hpp>
-#include <DUNE/Navigation/Ranging.hpp>
-#include <DUNE/Navigation/StreamEstimator.hpp>
-#include <DUNE/Navigation/UsblTools.hpp>
+      static IMC::UsblFixExtended
+      toFix(const IMC::UsblPositionExtended& usbl, const IMC::EstimatedState& state)
+      {
+        double lat, lon;
+        Coordinates::toWGS84(state, lat, lon);
+        return toFix(usbl, lat, lon, state.depth, IMC::Z_DEPTH);
+      }
+
+      static IMC::UsblFixExtended
+      toFix(const IMC::UsblPositionExtended& usbl, double lat, double lon, float z, IMC::ZUnits z_units)
+      {
+        Coordinates::WGS84::displace(usbl.n, usbl.e, &lat, &lon);
+
+        IMC::UsblFixExtended fix;
+        fix.lat = lat;
+        fix.lon = lon;
+        fix.z_units = z_units;
+        fix.accuracy = usbl.accuracy;
+
+        if (z_units == IMC::Z_ALTITUDE)
+          fix.z = z - usbl.d;
+        else
+          fix.z = z + usbl.d;
+
+        return fix;
+      }
+    };
+  }
+}
 
 #endif
