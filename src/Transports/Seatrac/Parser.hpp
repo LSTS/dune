@@ -102,11 +102,11 @@ namespace Transports
       {
         if(setdata< MESSAGE_NUMBER)
         {
-            if(new_message[setdata]==1)
-            {
-              new_message[setdata]=0;
-              return 1;
-            }
+          if(new_message[setdata]==1)
+          {
+            new_message[setdata]=0;
+            return 1;
+          }
         }
         return 0;
       }
@@ -144,9 +144,9 @@ namespace Transports
       {
         std::memcpy(&(*aco_fix).usbl_channels, msg_raw + ind, 1);
         for (i=0; i<aco_fix->usbl_channels;i++)
-          {
-            std::memcpy(&(*aco_fix).usbl_rssi[i], msg_raw + ind + 1+2*i, 2);
-          }
+        {
+          std::memcpy(&(*aco_fix).usbl_rssi[i], msg_raw + ind + 1+2*i, 2);
+        }
         std::memcpy(&(*aco_fix).usbl_azimuth, msg_raw + ind + 1+2*i, 2);
         std::memcpy(&(*aco_fix).usbl_elevation, msg_raw + ind + 3+2*i, 2);
         std::memcpy(&(*aco_fix).usbl_fit_error, msg_raw + ind + 5+2*i, 2);
@@ -181,70 +181,70 @@ namespace Transports
           ind=9;
           //ENVIRONMENT
           if (data_Beacon.cid_status_msg.outputflags_list[0])
-            {
-              std::memcpy(&data_Beacon.cid_status_msg.environment_supply, msg_raw + ind, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.environment_temperature,
-                          msg_raw + ind + 2, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.environment_pressure, msg_raw + ind + 4, 4);
-              std::memcpy(&data_Beacon.cid_status_msg.EnvironmentDepth, msg_raw + ind + 8, 4);
-              std::memcpy(&data_Beacon.cid_status_msg.EnvironmentVos, msg_raw + ind + 12, 2);
-              ind=ind+14;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_status_msg.environment_supply, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_temperature,
+                        msg_raw + ind + 2, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_pressure, msg_raw + ind + 4, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.EnvironmentDepth, msg_raw + ind + 8, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.EnvironmentVos, msg_raw + ind + 12, 2);
+            ind=ind+14;
+          }
           //ATTITUDE
           if (data_Beacon.cid_status_msg.outputflags_list[1])
-            {
-              std::memcpy(&data_Beacon.cid_status_msg.attitude_yaw, msg_raw + ind, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.attitude_pitch, msg_raw + ind + 2, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.attitude_roll, msg_raw + ind + 4, 2);
-              ind=ind+6;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_status_msg.attitude_yaw, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.attitude_pitch, msg_raw + ind + 2, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.attitude_roll, msg_raw + ind + 4, 2);
+            ind=ind+6;
+          }
           //MAG_CAL
           if (data_Beacon.cid_status_msg.outputflags_list[2])
-            {
-              std::memcpy(&data_Beacon.cid_status_msg.mag_cal_buf, msg_raw + ind, 1);
-              std::memcpy(&data_Beacon.cid_status_msg.mag_cal_valid, msg_raw + ind  + 1, 1);
-              std::memcpy(&data_Beacon.cid_status_msg.mag_cal_age, msg_raw + ind  + 2, 4);
-              std::memcpy(&data_Beacon.cid_status_msg.mag_cal_fit, msg_raw + ind  + 6, 1);
-              ind=ind+7;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_status_msg.mag_cal_buf, msg_raw + ind, 1);
+            std::memcpy(&data_Beacon.cid_status_msg.mag_cal_valid, msg_raw + ind  + 1, 1);
+            std::memcpy(&data_Beacon.cid_status_msg.mag_cal_age, msg_raw + ind  + 2, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.mag_cal_fit, msg_raw + ind  + 6, 1);
+            ind=ind+7;
+          }
           //ACC_CAL
           if (data_Beacon.cid_status_msg.outputflags_list[3])
-            {
-              std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_y, msg_raw + ind, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_z, msg_raw + ind + 2, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_x, msg_raw + ind + 4, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_x, msg_raw + ind + 6, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_y, msg_raw + ind + 8, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_z, msg_raw + ind + 10, 2);
-              ind=ind+12;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_y, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_z, msg_raw + ind + 2, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_x, msg_raw + ind + 4, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_x, msg_raw + ind + 6, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_y, msg_raw + ind + 8, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_z, msg_raw + ind + 10, 2);
+            ind=ind+12;
+          }
           //AHRS_RAW_DATA
           if (data_Beacon.cid_status_msg.outputflags_list[4])
-            {
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_x, msg_raw + ind, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_y, msg_raw + ind + 2, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_z, msg_raw + ind + 4, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_mag_x, msg_raw + ind + 6, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_mag_y, msg_raw + ind + 8, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_mag_z, msg_raw + ind + 10, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_x, msg_raw + ind + 12, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_y, msg_raw + ind + 14, 2);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_z, msg_raw + ind + 16, 2);
-              ind=ind+18;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_x, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_y, msg_raw + ind + 2, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_z, msg_raw + ind + 4, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_mag_x, msg_raw + ind + 6, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_mag_y, msg_raw + ind + 8, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_mag_z, msg_raw + ind + 10, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_x, msg_raw + ind + 12, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_y, msg_raw + ind + 14, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_z, msg_raw + ind + 16, 2);
+            ind=ind+18;
+          }
           //AHRS_COMP_DATA
           if (data_Beacon.cid_status_msg.outputflags_list[5])
-            {
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_x, msg_raw + ind, 4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_y, msg_raw + ind + 4, 4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_z, msg_raw + ind + 8, 4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_mag_x, msg_raw + ind + 12,4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_mag_y, msg_raw + ind + 16,4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_mag_z, msg_raw + ind + 20,4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_gyro_x, msg_raw + ind + 24,4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_gyro_y, msg_raw + ind + 28,4);
-              std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_gyro_z, msg_raw + ind + 32,4);
-            }
+          {
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_x, msg_raw + ind, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_y, msg_raw + ind + 4, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_z, msg_raw + ind + 8, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_mag_x, msg_raw + ind + 12,4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_mag_y, msg_raw + ind + 16,4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_mag_z, msg_raw + ind + 20,4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_gyro_x, msg_raw + ind + 24,4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_gyro_y, msg_raw + ind + 28,4);
+            std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_gyro_z, msg_raw + ind + 32,4);
+          }
           break;
 
         case CID_PING_REQ:
@@ -274,9 +274,9 @@ namespace Transports
           std::memcpy(&data_Beacon.cid_dat_send_msg.status, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_send_msg.beacon_id, msg_raw + ind + 1, 1);
           if(data_Beacon.cid_dat_send_msg.status!=0)
-            {
-              data_Beacon.cid_dat_send_msg.lock_flag=0;
-            }
+          {
+            data_Beacon.cid_dat_send_msg.lock_flag=0;
+          }
           break;
 
         case CID_DAT_RECEIVE:
@@ -285,9 +285,9 @@ namespace Transports
           std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind   +1, 1);
           ind=ind+2;
           for (i=0;i<data_Beacon.cid_dat_receive_msg.packet_len;i++)
-            {
-              std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i], msg_raw + ind  + i, 1);
-            }
+          {
+            std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i], msg_raw + ind  + i, 1);
+          }
           data_Beacon.set(CID_DAT_RECEIVE);
           break;
 
@@ -365,26 +365,26 @@ namespace Transports
           ind=ind+1;
           data_Beacon.cid_nav_querry_resp_msg.queryFlagsExtract();
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
-            {
-              std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_depth, msg_raw + ind,4);
-              ind=ind+4;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_depth, msg_raw + ind,4);
+            ind=ind+4;
+          }
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
-            {
-              std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_supply, msg_raw + ind, 2);
-              ind=ind+2;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_supply, msg_raw + ind, 2);
+            ind=ind+2;
+          }
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
-            {
-              std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_temp, msg_raw + ind, 2);
-              ind=ind+2;
-            }
+          {
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_temp, msg_raw + ind, 2);
+            ind=ind+2;
+          }
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
-            {
-              std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_yaw, msg_raw + ind, 2);
-              std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_pitch, msg_raw + ind  +2, 2);
-              std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_roll, msg_raw + ind   +4, 2);
-            }
+          {
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_yaw, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_pitch, msg_raw + ind  +2, 2);
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_roll, msg_raw + ind   +4, 2);
+          }
           break;
 
         case  CID_SYS_REBOOT:

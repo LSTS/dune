@@ -65,6 +65,7 @@ namespace Transports
       BT_X150,
       BT_NONE
     };
+
     // Configuration parameters.
     struct Arguments
     {
@@ -198,6 +199,7 @@ namespace Transports
         DTR("failed to configure modem, possible serial port communication error");
         m_states[STA_ERR_SRC].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_SRC].description = DTR("failed to set modem address");
+
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxFrame>(this);
       }
@@ -207,9 +209,7 @@ namespace Transports
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.ping_period))
-          {
-            m_pinger.setTop(m_args.ping_period);
-          }
+          m_pinger.setTop(m_args.ping_period);
       }
 
       void
@@ -224,13 +224,13 @@ namespace Transports
       parse(void)
       {
         char msg_validity=false;
+
         switch (m_state_rs)
-          {
+        {
           case PS_PRE:// Parse preamble.
             if (m_bfr[0] == c_preamble)
-              {
-                m_state_rs = PS_DATA;
-              }
+              m_state_rs = PS_DATA;
+
             // Clear parser variables
             m_data.clear();
             break;
@@ -243,13 +243,9 @@ namespace Transports
             else
             {
               if (m_bfr[0] !=  '\r')
-              {
                 m_data.push_back(m_bfr[0]);
-              }
               else
-              {
                 m_state_rs = PS_COMPLETE;
-              }
             }
             break;
           case PS_COMPLETE: // Check message validity
@@ -268,7 +264,7 @@ namespace Transports
               std::memcpy(&crc2,msg.data(),2);
               m_datahex = String::fromHex(m_data);
               crc =CRC16::compute((uint8_t*) m_datahex.data(),m_datahex.size(),0);
-              if(crc==crc2)
+              if(crc == crc2)
               {
                 msg_validity=true;
                 m_state_rs = PS_NONE;
@@ -289,7 +285,7 @@ namespace Transports
           default:
             m_state_rs = PS_PRE;
             break;
-          }
+        }
 
         return msg_validity;
       }
@@ -302,32 +298,32 @@ namespace Transports
         const char* msg_raw;
         m_state_rs = PS_PRE;
         size_t rv;
+
         // Initialize overflow timer
         while(m_state_rs != PS_NONE)
         {
           // Check if passed
-          if(Clock::get() >= (m_last_input + (double) c_input_tout))
-          {
+          if (Clock::get() >= (m_last_input + (double) c_input_tout))
             return false;
-          }
+
           if (!Poll::poll(*m_uart, 0.001))
-          {
             continue;
-          }
-          rv=m_uart->readString(m_bfr, c_bfr_size);
+
+          rv = m_uart->readString(m_bfr, c_bfr_size);
           m_last_input = Clock::get();
-          if (rv > 0 && parse() == true)
+          if (rv > 0 && parse())
           {
-            msg_raw=m_datahex.data();
+            msg_raw = m_datahex.data();
             std::memcpy(&typemes, msg_raw,1);
-            // std::cout << m_data  << std::endl;
-            dataParser(typemes,msg_raw+1, data_Beacon);
+
+            dataParser(typemes, msg_raw+1, data_Beacon);
             printDebugFunction(typemes, data_Beacon, this);
             // Initialize message validity flag
-            typemes=0;
+            typemes = 0;
             m_data.clear();
           }
         }
+
         return true;
       }
 
@@ -356,6 +352,7 @@ namespace Transports
         m_stop_comms = true;
         std::string agent = getSystemName();
         std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+
         // verify modem local addres value.
         for (unsigned i = 0; i < addrs.size(); ++i)
         {
@@ -364,12 +361,14 @@ namespace Transports
           m_modem_names[addrs[i]] = addr;
           m_modem_addrs[addr] = addrs[i];
         }
+
         m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
-        if (m_addr<1 || m_addr >15)
+        if (m_addr < 1 || m_addr > 15)
         {
           throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"),
                                                agent.c_str()));
         }
+
         //verify system condinates  name
         m_ctx.config.get(m_args.origin, "BT_X150", "1024", m_modem_system_origin);
         if (m_modem_system_origin.compare("1024")==0)
@@ -381,7 +380,7 @@ namespace Transports
         {
           m_ctx.config.get(m_args.addr_section, m_modem_system_origin, "1024",
                            m_origin_number_adrr);
-          if(m_origin_number_adrr<1 || m_origin_number_adrr> 15)
+          if (m_origin_number_adrr < 1 || m_origin_number_adrr > 15)
           {
             war(DTR("Localization disable - address of origin not valid "));
             m_origin_number_adrr=0;
@@ -392,6 +391,7 @@ namespace Transports
                 m_modem_system_origin.c_str(), m_origin_number_adrr);
           }
         }
+
         //verify if i am origin
         if (m_modem_system_origin.compare(agent) == 0)
         {
@@ -400,7 +400,7 @@ namespace Transports
         }
         else // verify if my adds is not iqual
         {
-          if (m_origin_number_adrr==m_addr)
+          if (m_origin_number_adrr == m_addr)
           {
             war(DTR("No localization activated - address conflict"));
             m_origin_number_adrr=0;
@@ -411,6 +411,7 @@ namespace Transports
             m_args.beacon=BT_X110;
           }
         }
+
         m_last_input = Clock::get();
         processInput(1);
         if (hasTransducer())
@@ -419,19 +420,23 @@ namespace Transports
           {
             sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, data_Beacon));
             processInput(1);
-          }while(data_Beacon.newDataAvailable(CID_SETTINGS_GET)==0);
+          }
+          while (data_Beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
+
           if (!((data_Beacon.cid_settings_msg.xcvr_beacon_id == m_addr) &&
-                (data_Beacon.cid_settings_msg.status_flags == 0x1)  &&
-                (data_Beacon.cid_settings_msg.status_output==63)))
+                (data_Beacon.cid_settings_msg.status_flags == 0x1) &&
+                (data_Beacon.cid_settings_msg.status_output == 63)))
           {
             setAndSendState(STA_NO_BEACONS);
-            data_Beacon.cid_settings_msg.status_flags=0x1;
-            data_Beacon.cid_settings_msg.status_output=63;
-            data_Beacon.cid_settings_msg.xcvr_beacon_id= m_addr;
-            sendDelayedCommand(commandCreateSeatrac(CID_SETTINGS_SET, data_Beacon),0,2);
-            sendDelayedCommand(commandCreateSeatrac(CID_SETTINGS_SAVE, data_Beacon),0,2);
-            sendDelayedCommand(commandCreateSeatrac(CID_SYS_REBOOT, data_Beacon),0,6);
-            sendDelayedCommand(commandCreateSeatrac(CID_SETTINGS_GET, data_Beacon),0,2);
+            data_Beacon.cid_settings_msg.status_flags = 0x1;
+            data_Beacon.cid_settings_msg.status_output = 63;
+            data_Beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
+
+            sendDelayedCommand(commandCreateSeatrac(CID_SETTINGS_SET, data_Beacon), 0, 2);
+            sendDelayedCommand(commandCreateSeatrac(CID_SETTINGS_SAVE, data_Beacon), 0, 2);
+            sendDelayedCommand(commandCreateSeatrac(CID_SYS_REBOOT, data_Beacon), 0, 6);
+            sendDelayedCommand(commandCreateSeatrac(CID_SETTINGS_GET, data_Beacon), 0, 2);
+
             if (data_Beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
             {
               setAndSendState(STA_ERR_STP);
@@ -509,12 +514,13 @@ namespace Transports
       void
       handleBinaryMessage(void)
       {
-        if (data_Beacon.cid_dat_receive_msg.ack_flag !=0)
+        if (data_Beacon.cid_dat_receive_msg.ack_flag != 0)
         {
           // ACK message that the message was successfully delivered
-          data_Beacon.cid_dat_receive_msg.ack_flag =0;
+          data_Beacon.cid_dat_receive_msg.ack_flag = 0;
+
           //if msg have more than 1 packet, send next part
-          if(data_Beacon.cid_dat_send_msg.packetDataNextPart(1)!=-1)
+          if (data_Beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
           }
@@ -522,42 +528,41 @@ namespace Transports
           {
             //Last paket has send
             //range can be computed when the target beacon respond  with ACK Msg
-            double range_dist = (double) data_Beacon.cid_dat_receive_msg.aco_fix.range_dist;
-            range_dist=range_dist/10;
+            double range_dist = (double)data_Beacon.cid_dat_receive_msg.aco_fix.range_dist;
+            range_dist /= 10;
+
             if (range_dist > 0)
             {
               IMC::UamRxRange range;
               range.sys = lookupSystemName(data_Beacon.cid_dat_receive_msg.aco_fix.dest_id);
               if (m_ticket != NULL)
-              {
                 range.seq = m_ticket->seq;
-              }
+
               range.value = range_dist;
               dispatch(range);
             }
-            //Data comunicaton Done
+
+            // Data comunicaton Done
             clearTicket(IMC::UamTxStatus::UTS_DONE);
           }
           return;
         }
         else
         {
-          int data_rec_flag=data_Beacon.cid_dat_receive_msg.packetDataDecode();
-          if (data_rec_flag==1)
+          int data_rec_flag = data_Beacon.cid_dat_receive_msg.packetDataDecode();
+          if (data_rec_flag == 1)
           {
             std::string msg;
             data_Beacon.cid_dat_receive_msg.getFullMsg(msg);
             handleInstantMessage(msg);
-            debug(" New Data");
+            debug("New Data");
           }
-          else if(data_rec_flag ==-1)
-          {
-            war(DTR(" Previos msg Fail - Wrong msg order "));
-          }
-          else if(data_rec_flag ==0)
-          {
-            debug(" Colecting data");
-          }
+
+          if (data_rec_flag == -1)
+            war(DTR("Previous msg Fail - Wrong msg order"));
+
+          if (data_rec_flag == 0)
+            debug("Colecting data");
         }
       }
 
@@ -604,9 +609,8 @@ namespace Transports
         std::vector<char> data_t;
         std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
         if (msg->getDestination() != getSystemId())
-        {
           return;
-        }
+
         // Create and fill new ticket.
         Ticket ticket;
         ticket.imc_sid = msg->getSource();
@@ -631,39 +635,41 @@ namespace Transports
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
           return;
         }
+
         // Fail if busy.
         if (data_Beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
           return;
         }
+
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
-        int error_code;
-        if(ticket.addr!=0)
+
+        if (ticket.addr != 0)
           data_Beacon.cid_dat_send_msg.msg_type=MSG_REQ;
         else
           data_Beacon.cid_dat_send_msg.msg_type=MSG_OWAY;
 
-        error_code= data_Beacon.cid_dat_send_msg.packetDataBuild(data_t, ticket.addr);
-        if(error_code ==2)
+        int error_code = data_Beacon.cid_dat_send_msg.packetDataBuild(data_t, ticket.addr);
+
+        switch (error_code)
         {
-          err(DTR("Previous message Failed timeout detected"));
-        }
-        else if(error_code ==1)
-        {
-          err(DTR("channel is busy"));
-        }
-        else if(error_code ==3)
-        {
-          err(DTR("IMC DATA do not have the correct SIZE"));
-        }
-        else
-        {
-          sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
+          case 1:
+            err(DTR("channel is busy"));
+            break;
+          case 2:
+            err(DTR("Previous message Failed timeout detected"));
+            break;
+          case 3:
+            err(DTR("IMC DATA do not have the correct SIZE"));
+            break;
+          default:
+            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
         }
       }
+
       //! updates UamTxStatus
       void
       sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
@@ -727,18 +733,18 @@ namespace Transports
         do
         {
           consumeMessages();
-          if (parserManager()== true)
+          if (parserManager())
           {
-            if(data_Beacon.newDataAvailable(CID_DAT_RECEIVE))
+            if (data_Beacon.newDataAvailable(CID_DAT_RECEIVE))
               handleBinaryMessage();
-            if(data_Beacon.newDataAvailable(CID_DAT_SEND))
+
+            if (data_Beacon.newDataAvailable(CID_DAT_SEND))
             {
-              if(data_Beacon.cid_dat_send_msg.msg_type==MSG_OWAY)
-              {
+              if(data_Beacon.cid_dat_send_msg.msg_type == MSG_OWAY)
                 data_Beacon.cid_dat_send_msg.lock_flag=0;
-              }
             }
-            if(data_Beacon.newDataAvailable(CID_DAT_ERROR))
+
+            if (data_Beacon.newDataAvailable(CID_DAT_ERROR))
             {
               if(data_Beacon.cid_dat_send_msg.packetDataNextPart(0)<MAX_MESSAGE_ERRORS)
               {
@@ -751,44 +757,35 @@ namespace Transports
               }
             }
           }
+
           if (m_state_entity != STA_NO_BEACONS)
           {
             if (isActive())
-            {
               setAndSendState(STA_ACTIVE);
-            }
             else
-            {
               setAndSendState(STA_IDLE);
-            }
           }
         } while (Clock::get() <= deadline );
       }
 
-      //!verifies the medium in which it is to operate
+      //! Verifies the medium in which it is to operate
       void
       consume(const IMC::VehicleMedium* msg)
       {
         if (m_args.only_underwater)
         {
           if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-          {
             m_stop_comms = false;
-          }
           else
-          {
             m_stop_comms = true;
-          }
+
           return;
         }
+
         if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-        {
           m_stop_comms = true;
-        }
         else
-        {
           m_stop_comms = false;
-        }
       }
 
       //! Main loop.
@@ -797,19 +794,15 @@ namespace Transports
       {
         while (!stopping())
         {
-          //Modem
+          // Modem
           processInput(0);
 
+          // @todo: USBL
           if (isActive() && !m_stop_comms &&  m_pinger.overflow())
-          {
-            //USBL
-            //TODO
             m_pinger.reset();
-          }
+
           if (Clock::get() >= (m_last_input + c_input_tout))
-          {
             setAndSendState(STA_ERR_COM);
-          }
         }
       }
     };

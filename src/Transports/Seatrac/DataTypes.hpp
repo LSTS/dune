@@ -40,24 +40,23 @@ namespace Transports
 
     //! Input Timeout (s).
     static const double c_input_tout =  5;
+
     // States of the internal SM.
     enum ParserStates
-      {
-        // No message is being parsed.
-        PS_NONE,
-        // Preamble.
-        PS_PRE,
-        // Data bytes.
-        PS_DATA,
-        // Parsing complete
-        PS_COMPLETE
-
-      };
+    {
+      // No message is being parsed.
+      PS_NONE,
+      // Preamble.
+      PS_PRE,
+      // Data bytes.
+      PS_DATA,
+      // Parsing complete
+      PS_COMPLETE
+    };
 
     // Command Identification Codes
     enum CommandID
     {
-
       CID_SYS_ALIVE = 0x01,
       CID_SYS_INFO = 0x02,
       CID_SYS_REBOOT = 0x03,
@@ -116,13 +115,11 @@ namespace Transports
       CID_DEX_SEND = 0x75,
       CID_DEX_SOCKETS = 0x76,
       CID_DEX_RECEIVE = 0x77
-
     };
 
-    //Msg status
+    // Msg status
     enum AmsgType_E
     {
-
       MSG_OWAY = 0x0,
       MSG_OWAYU = 0x1,
       MSG_REQ = 0x2,
@@ -136,21 +133,21 @@ namespace Transports
 
     enum CST_E
     {
-      //  General status Codes
+      // General status Codes
       CST_OK = 0x00,
       CST_FAIL = 0x01,
       CST_EEPROM_ERROR = 0x03,
-      //  Command Processor status Codes
+      // Command Processor status Codes
       CST_CMD_PARAM_MISSING = 0x04,
       CST_CMD_PARAM_INVALID = 0x05,
-      //  Firmware Programming status Codes
+      // Firmware Programming status Codes
       CST_PROG_FLASH_ERROR = 0x0A,
       CST_PROG_FIRMWARE_ERROR = 0x0B,
       CST_PROG_SECTION_ERROR = 0x0C,
       CST_PROG_LENGTH_ERROR = 0x0D,
       CST_PROG_DATA_ERROR = 0x0E,
       CST_PROG_CHECKSUM_ERROR = 0x0F,
-      //  Acoustic Transceiver status Codes
+      // Acoustic Transceiver status Codes
       CST_XCVR_BUSY = 0x30,
       CST_XCVR_ID_REJECTED = 0x31,
       CST_XCVR_CSUM_ERROR = 0x32,
@@ -165,7 +162,7 @@ namespace Transports
       CST_XCVR_STATE_REQ = 0x3D,
       CST_XCVR_STATE_RX = 0x3E,
       CST_XCVR_STATE_RESP = 0x3F,
-      //  DEX Protocol status Codes
+      // DEX Protocol status Codes
       CST_DEX_SOCKET_ERROR = 0x70,
       CST_DEX_RX_SYNC = 0x71,
       CST_DEX_RX_DATA = 0x72,
@@ -197,7 +194,6 @@ namespace Transports
 
     struct AhrsCal_t
     {
-
       int16_t acc_min_x;
       int16_t acc_min_y;
       int16_t acc_min_z;
@@ -218,8 +214,8 @@ namespace Transports
       int16_t gyro_offset_z;
     };
 
-    struct Acofix_t{
-
+    struct Acofix_t
+    {
       uint8_t dest_id;
       uint8_t src_id;
       uint8_t flags;
@@ -230,22 +226,23 @@ namespace Transports
       int16_t depth_local;
       uint16_t vos;
       int16_t rssi;
-      //Range fields
+      // Range fields
       uint32_t range_count;
       uint32_t range_time;
       uint16_t range_dist;
-      //USBL Fields
+      // USBL Fields
       uint8_t usbl_channels;
       int16_t usbl_rssi[4];
       int16_t usbl_azimuth;
       int16_t usbl_elevation;
       int16_t usbl_fit_error;
-      //Position Fields
+      // Position Fields
       int16_t position_easting;
       int16_t position_northing;
       int16_t position_depth;
 
       uint8_t outputflags_list[4];
+
       void outputFlagsComp()
       {
         outputflags_list[0]=(0x01 & flags);
@@ -254,7 +251,6 @@ namespace Transports
         outputflags_list[3]=(0x08 & flags);
       }
     };
-
   }
 }
 #endif

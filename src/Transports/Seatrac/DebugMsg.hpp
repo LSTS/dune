@@ -72,22 +72,22 @@ namespace Transports
                   aco_fix->rssi);
       if (aco_fix->outputflags_list[0]) //Range fields
       {
-      task->debug("data_Beacon.%s.aco_fix.range_count  %d ", msg_name.c_str(),
-                  aco_fix->range_count);
-      task->debug("data_Beacon.%s.aco_fix.range_time   %d ", msg_name.c_str(),
-                  aco_fix->range_time);
-      task->debug("data_Beacon.%s.aco_fix.range_dist   %d ", msg_name.c_str(),
-                  aco_fix->range_dist);
+        task->debug("data_Beacon.%s.aco_fix.range_count  %d ", msg_name.c_str(),
+                    aco_fix->range_count);
+        task->debug("data_Beacon.%s.aco_fix.range_time   %d ", msg_name.c_str(),
+                    aco_fix->range_time);
+        task->debug("data_Beacon.%s.aco_fix.range_dist   %d ", msg_name.c_str(),
+                    aco_fix->range_dist);
       }
       if (aco_fix->outputflags_list[1]) //USBL Fields
       {
         task->debug("data_Beacon.%s.aco_fix.usbl_channels %d", msg_name.c_str(),
                     aco_fix->usbl_channels);
         for (i=0; i<aco_fix->usbl_channels;i++)
-          {
-            task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d", msg_name.c_str(),
-                        aco_fix->usbl_rssi[i]);
-          }
+        {
+          task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d", msg_name.c_str(),
+                      aco_fix->usbl_rssi[i]);
+        }
         task->debug("data_Beacon.%s.aco_fix.usbl_azimuth    %d", msg_name.c_str(),
                     aco_fix->usbl_azimuth);
         task->debug("data_Beacon.%s.aco_fix.usbl_elevation  %d", msg_name.c_str(),
@@ -221,7 +221,7 @@ namespace Transports
           task->debug("MESSAGE  CID_PING_REQ");
           printAcoFixData("cid_ping_req_msg %d",
                           &data_Beacon.cid_ping_req_msg.aco_fix, task);
-         break;
+          break;
 
         case CID_PING_RESP:  //Message sent when a PING response is received
           task->debug("MESSAGE  CID_PING_RESP");
@@ -234,19 +234,19 @@ namespace Transports
           task->debug("data_Beacon.cid_ping_error_msg.status %d",
                       (int) data_Beacon.cid_ping_error_msg.status);
           switch(data_Beacon.cid_ping_error_msg.status)
-            {
-              case CST_XCVR_RESP_TIMEOUT:
-                task->debug("CST_XCVR_RESP_TIMEOUT");
-                 break;
-              case CST_XCVR_RESP_WRONG:
-                task->debug("CST_XCVR_RESP_WRONG");
-                break;
-              case CST_XCVR_RESP_ERROR:
-                task->debug("CST_XCVR_RESP_ERROR");
-                break;
-              default:
-                break;
-            }
+          {
+            case CST_XCVR_RESP_TIMEOUT:
+              task->debug("CST_XCVR_RESP_TIMEOUT");
+              break;
+            case CST_XCVR_RESP_WRONG:
+              task->debug("CST_XCVR_RESP_WRONG");
+              break;
+            case CST_XCVR_RESP_ERROR:
+              task->debug("CST_XCVR_RESP_ERROR");
+              break;
+            default:
+              break;
+          }
           task->debug("data_Beacon.cid_ping_error_msg.beacon_id %d",
                       (int) data_Beacon.cid_ping_error_msg.beacon_id);
           break;
@@ -425,29 +425,29 @@ namespace Transports
           task->debug("data_Beacon.cid_nav_querry_resp_msg.query_flags %d ",
                       data_Beacon.cid_nav_querry_resp_msg.query_flags);
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
-            {
-              task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_depth %d",
-                          data_Beacon.cid_nav_querry_resp_msg.remote_depth);
-            }
+          {
+            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_depth %d",
+                        data_Beacon.cid_nav_querry_resp_msg.remote_depth);
+          }
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
-            {
-              task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_supply %d",
-                          data_Beacon.cid_nav_querry_resp_msg.remote_supply);
-            }
+          {
+            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_supply %d",
+                        data_Beacon.cid_nav_querry_resp_msg.remote_supply);
+          }
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
-            {
-              task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_temp %d",
-                          data_Beacon.cid_nav_querry_resp_msg.remote_temp);
-            }
+          {
+            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_temp %d",
+                        data_Beacon.cid_nav_querry_resp_msg.remote_temp);
+          }
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
-            {
-              task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_yaw %d",
-                          data_Beacon.cid_nav_querry_resp_msg.remote_yaw);
-              task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_pitch %d",
-                          data_Beacon.cid_nav_querry_resp_msg.remote_pitch);
-              task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_roll %d",
-                          data_Beacon.cid_nav_querry_resp_msg.remote_roll);
-            }
+          {
+            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_yaw %d",
+                        data_Beacon.cid_nav_querry_resp_msg.remote_yaw);
+            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_pitch %d",
+                        data_Beacon.cid_nav_querry_resp_msg.remote_pitch);
+            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_roll %d",
+                        data_Beacon.cid_nav_querry_resp_msg.remote_roll);
+          }
           break;
 
         case CID_NAV_BEACON_POS_UPDATE:

@@ -95,12 +95,12 @@ namespace Transports
       //!define the message structure fields
       void outputFlagsComp(void)
       {
-          outputflags_list[0]=(0x01 & output_flags);
-          outputflags_list[1]=(0x02 & output_flags);
-          outputflags_list[2]=(0x04 & output_flags);
-          outputflags_list[3]=(0x08 & output_flags);
-          outputflags_list[4]=(0x10 & output_flags);
-          outputflags_list[5]=(0x20 & output_flags);
+        outputflags_list[0]=(0x01 & output_flags);
+        outputflags_list[1]=(0x02 & output_flags);
+        outputflags_list[2]=(0x04 & output_flags);
+        outputflags_list[3]=(0x08 & output_flags);
+        outputflags_list[4]=(0x10 & output_flags);
+        outputflags_list[5]=(0x20 & output_flags);
       }
 
     };
@@ -195,7 +195,7 @@ namespace Transports
       uint8_t n_sub_messages_last;
       std::string full_msg;
 
-     //! decoding the data packet
+      //! decoding the data packet
       int
       packetDataDecode(void)
       {
@@ -314,7 +314,7 @@ namespace Transports
           }
           return 0;
         }
-       return erro_code;
+        return erro_code;
       }
 
       //! builds the next msg package
