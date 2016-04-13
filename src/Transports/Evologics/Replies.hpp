@@ -38,6 +38,8 @@ namespace Transports
 {
   namespace Evologics
   {
+    using DUNE_NAMESPACES;
+
     struct RecvIM
     {
       RecvIM(void):
@@ -84,6 +86,22 @@ namespace Transports
         accuracy(0)
       { }
 
+      void
+      fill(IMC::UsblPositionExtended& msg)
+      {
+        msg.x = x;
+        msg.y = y;
+        msg.z = z;
+        msg.n = n;
+        msg.e = e;
+        msg.d = -u;
+        msg.phi = roll;
+        msg.theta = pitch;
+        msg.psi = yaw;
+        msg.accuracy = accuracy;
+      }
+
+      // Variables
       double ctime;
       double mtime;
       unsigned addr;
@@ -113,6 +131,19 @@ namespace Transports
         integrity(0),
         accuracy(0)
       { }
+
+      void
+      fill(IMC::UsblAnglesExtended& msg)
+      {
+        msg.lbearing = lbearing;
+        msg.lelevation = lelevation;
+        msg.bearing = bearing;
+        msg.elevation = elevation;
+        msg.phi = roll;
+        msg.theta = pitch;
+        msg.psi = yaw;
+        msg.accuracy = accuracy;
+      }
 
       double ctime;
       double mtime;
