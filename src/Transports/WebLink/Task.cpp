@@ -39,8 +39,6 @@ namespace Transports
     using DUNE_NAMESPACES;
     using namespace happyhttp;
 
-    static const unsigned int c_max_size_msg = 32768;
-
     enum RequestMode
     {
       // Get data
@@ -74,6 +72,10 @@ namespace Transports
       int server_port;
       //! Period of message
       double period;
+      //! Max Size of Message
+      double max_size_msg;
+      //! Max Size of Message
+      int uploud_timeout;
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -91,6 +93,8 @@ namespace Transports
       IMC::HistoricDataQuery m_hist;
       // State of message
       RequestSate m_state;
+      // Setup watchdog for timeout.
+      Counter<double> m_wdog;
 
       //! Task arguments.
       Arguments m_args;
@@ -99,7 +103,12 @@ namespace Transports
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx) :
-      DUNE::Tasks::Task(name, ctx), m_size(0), m_conn(0), m_params(0), m_id(0), m_state(S_QUERY)
+      DUNE::Tasks::Task(name, ctx),
+      m_size(0),
+      m_conn(0),
+      m_params(0),
+      m_id(0),
+      m_state(S_QUERY)
       {
         param("Target", m_args.store)
         .description("Target of data store")
@@ -118,9 +127,21 @@ namespace Transports
         .defaultValue("80");
 
         param("Period Message", m_args.period)
-        .description("Period to send message (in mili-seconds)")
+        .description("Period to send message (ms)")
         .minimumValue("2000")
         .defaultValue("4000");
+
+        param("Max Size of Message", m_args.max_size_msg)
+        .description("Max Size of Message (byte)")
+        .minimumValue("1024")
+        .maximumValue("32768")
+        .defaultValue("10240");
+
+        param("Upload Timeout", m_args.uploud_timeout)
+        .description("Upload Timeout (s)")
+        .minimumValue("1")
+        .maximumValue("60")
+        .defaultValue("10");
 
         bind<IMC::HistoricDataQuery>(this);
       }
@@ -131,10 +152,29 @@ namespace Transports
       {
         if (paramChanged(m_args.server_name) || paramChanged(m_args.server_port))
           m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
+
         if (paramChanged(m_args.period))
         {
           if (m_args.period < 2000)
             m_args.period = 2000;
+        }
+
+        if (paramChanged(m_args.max_size_msg))
+        {
+          if (m_args.max_size_msg < 1024)
+            m_args.max_size_msg = 1024;
+          else if (m_args.max_size_msg > 32768)
+            m_args.max_size_msg = 32768;
+        }
+
+        if (paramChanged(m_args.uploud_timeout))
+        {
+          if (m_args.uploud_timeout < 1)
+            m_args.uploud_timeout = 1;
+          else if (m_args.uploud_timeout > 60)
+            m_args.uploud_timeout = 60;
+
+          m_wdog.setTop(m_args.uploud_timeout);
         }
       }
 
@@ -142,11 +182,12 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        m_wdog.setTop(m_args.uploud_timeout);
         m_state = S_QUERY;
         m_id = 0;
         m_size = 8;
         m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
-        m_params.resize(m_size + 1);
+        m_params.resize(m_size);
       }
 
       //! Release resources.
@@ -163,18 +204,11 @@ namespace Transports
       {
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
         {
-          inf("TRY SEND... %s >> ID: %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->req_id);
-
-          //TODO ####################################################################
           const IMC::HistoricData * dataToSend =  msg->data.get();
           m_size = dataToSend->getSerializationSize();
           m_params.resize(m_size);
-          //if(!std::realloc(m_params, m_size))
-          //  war("ERROR in realloc");
-
           IMC::Packet::serialize(dataToSend, &m_params[0], m_size);
 
-          //#########################################################################
           if (!sendDataRequest())
           {
             err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
@@ -193,12 +227,10 @@ namespace Transports
             }
           }
           m_state = S_CLEAR;
-          inf("DONE SEND...");
         }
 
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_CLEAR)
         {
-          inf("Data clear for id: %d\n\r", m_id);
           m_id++;
           m_state = S_QUERY;
         }
@@ -210,8 +242,6 @@ namespace Transports
       {
         m_conn->putrequest("POST", m_args.server_path.c_str());
         m_conn->putheader("Content-Length", m_size);
-        m_conn->putheader("Content-type", "text/plain");
-        m_conn->putheader("Accept", "text/plain");
         if (!m_conn->endheaders())
         {
           return false;
@@ -221,12 +251,15 @@ namespace Transports
           bool state = m_conn->send(reinterpret_cast<const unsigned char*> (&m_params[0]), m_size);
           if (state)
           {
-            while (m_conn->outstanding())
-            {
-              inf("pumping...");
+            m_wdog.reset();
+            while (m_conn->outstanding() && !m_wdog.overflow())
               m_conn->pump();
-            }
 
+            if(m_wdog.overflow())
+            {
+              err(DTR("Watch Dog Overflow"));
+              setEntityState(IMC::EntityState::ESTA_BOOT, Utils::String::str(DTR("Watch Dog Overflow")));
+            }
           }
           m_conn->close();
           return true;
@@ -241,7 +274,7 @@ namespace Transports
         if (mode == GET_DATA)
         {
             m_hist.req_id = id;
-            m_hist.max_size = c_max_size_msg;
+            m_hist.max_size = m_args.max_size_msg;
             m_hist.type = m_hist.HRTYPE_QUERY;
             dispatch(m_hist);
         }
@@ -274,7 +307,6 @@ namespace Transports
               break;
 
             case S_CLEAR:
-              inf("Try clear data id: %d", m_id);
               requestToImcMsg(CLEAR_DATA, m_id);
               m_state = S_WAIT;
               break;
