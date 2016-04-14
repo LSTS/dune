@@ -39,7 +39,7 @@ namespace Transports
     using DUNE_NAMESPACES;
     using namespace happyhttp;
 
-    static const unsigned int c_max_size_msg = 1024;
+    static const unsigned int c_max_size_msg = 32768;
 
     enum RequestMode
     {
@@ -84,7 +84,7 @@ namespace Transports
       // Header for connection HTTP
       Connection* m_conn;
       // Buffer for data to send
-      uint8_t *m_params;
+      std::vector<uint8_t> m_params;
       // ID number for sync
       int m_id;
       // IMC message of datastore
@@ -146,15 +146,14 @@ namespace Transports
         m_id = 0;
         m_size = 8;
         m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
-        m_params = (unsigned char*)malloc(m_size + 1);
-        std::sprintf((char*)m_params, "INIT");
+        m_params.resize(m_size + 1);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        free(m_params);
+        m_params.clear();
         Memory::clear(m_conn);
       }
 
@@ -165,6 +164,17 @@ namespace Transports
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
         {
           inf("TRY SEND... %s >> ID: %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->req_id);
+
+          //TODO ####################################################################
+          const IMC::HistoricData * dataToSend =  msg->data.get();
+          m_size = dataToSend->getSerializationSize();
+          m_params.resize(m_size);
+          //if(!std::realloc(m_params, m_size))
+          //  war("ERROR in realloc");
+
+          IMC::Packet::serialize(dataToSend, &m_params[0], m_size);
+
+          //#########################################################################
           if (!sendDataRequest())
           {
             err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
@@ -192,19 +202,6 @@ namespace Transports
           m_id++;
           m_state = S_QUERY;
         }
-
-          /*if(msg->getSerializationSize() <= msg->max_size)
-           m_size = msg->getSerializationSize();
-           else
-           m_size = msg->max_size;
-
-           const char *dataMsg;
-           if(!std::realloc(m_params, m_size))
-           war("ERROR in realloc");
-
-           IMC::Packet::serialize(msg, &m_params[0], m_size);
-
-           war("info: Size: %d   ID: %d  SIZE: %ld", msg->max_size, msg->req_id, m_size);*/
       }
 
       //! Send Data to HTTP Server
@@ -221,11 +218,15 @@ namespace Transports
         }
         else
         {
-          bool state = m_conn->send((const unsigned char*)m_params, m_size);
+          bool state = m_conn->send(reinterpret_cast<const unsigned char*> (&m_params[0]), m_size);
           if (state)
           {
             while (m_conn->outstanding())
+            {
+              inf("pumping...");
               m_conn->pump();
+            }
+
           }
           m_conn->close();
           return true;
@@ -235,7 +236,7 @@ namespace Transports
 
       //! Send request to datastore
       void
-      requestToImcMsg( RequestMode mode, int id)
+      requestToImcMsg(RequestMode mode, int id)
       {
         if (mode == GET_DATA)
         {
