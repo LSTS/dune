@@ -189,6 +189,12 @@ namespace Transports
         }
         else if (msg->type == IMC::HistoricDataQuery::HRTYPE_CLEAR)
         {
+          IMC::HistoricDataQuery reply;
+          reply.req_id = msg->req_id;
+          reply.type = IMC::HistoricDataQuery::HRTYPE_CLEAR;
+          reply.setDestination(msg->getSource());
+          reply.setDestinationEntity(msg->getSourceEntity());
+          dispatch(reply);
           if (m_sending.find(source) != m_sending.end())
           {
             debug("Clearing previously queried data from store");
