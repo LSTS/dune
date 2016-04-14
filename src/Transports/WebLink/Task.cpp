@@ -39,6 +39,28 @@ namespace Transports
     using DUNE_NAMESPACES;
     using namespace happyhttp;
 
+    static const unsigned int c_max_size_msg = 1024;
+
+    enum RequestMode
+    {
+      // Get data
+      GET_DATA,
+      // Clear data
+      CLEAR_DATA
+    };
+
+    enum RequestSate
+    {
+      // Query data
+      S_QUERY,
+      // Reply data
+      S_REPLY,
+      // Clear data
+      S_CLEAR,
+      // Wait jump to other state
+      S_WAIT
+    };
+
     //! Task arguments.
     struct Arguments
     {
@@ -56,23 +78,28 @@ namespace Transports
 
     struct Task : public DUNE::Tasks::Task
     {
-      // Parameters.
-      int m_count;
+      //! Parameters.
+      // Size of Message
       long int m_size;
+      // Header for connection HTTP
       Connection* m_conn;
+      // Buffer for data to send
       uint8_t *m_params;
+      // ID number for sync
       int m_id;
-
+      // IMC message of datastore
       IMC::HistoricDataQuery m_hist;
+      // State of message
+      RequestSate m_state;
 
-        //! Task arguments.
+      //! Task arguments.
       Arguments m_args;
 
-        //! Constructor.
-        //! @param[in] name task name.
-        //! @param[in] ctx context.
+      //! Constructor.
+      //! @param[in] name task name.
+      //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx) :
-      DUNE::Tasks::Task(name, ctx), m_count(0), m_size(0), m_conn(0), m_params(0), m_id(0)
+      DUNE::Tasks::Task(name, ctx), m_size(0), m_conn(0), m_params(0), m_id(0), m_state(S_QUERY)
       {
         param("Target", m_args.store)
         .description("Target of data store")
@@ -98,7 +125,7 @@ namespace Transports
         bind<IMC::HistoricDataQuery>(this);
       }
 
-        //! Update internal state with new parameter values.
+      //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
@@ -111,36 +138,19 @@ namespace Transports
         }
       }
 
-        //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-        //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-        //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-        //! Initialize resources.
+      //! Initialize resources.
       void
       onResourceInitialization(void)
       {
+        m_state = S_QUERY;
+        m_id = 0;
         m_size = 8;
         m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
         m_params = (unsigned char*)malloc(m_size + 1);
         std::sprintf((char*)m_params, "INIT");
-          //IMC::Packet::serialize(&m_hist, &m_params[0], m_hist.data);
       }
 
-        //! Release resources.
+      //! Release resources.
       void
       onResourceRelease(void)
       {
@@ -148,12 +158,13 @@ namespace Transports
         Memory::clear(m_conn);
       }
 
+      //! Consume Message HistoricDataQuery
       void
       consume(const IMC::HistoricDataQuery* msg)
       {
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
         {
-          war("TRY SEND... %s >> REPLY( %d )", resolveEntity(msg->getSourceEntity()).c_str(), msg->type);
+          inf("TRY SEND... %s >> ID: %d", resolveEntity(msg->getSourceEntity()).c_str(), msg->req_id);
           if (!sendDataRequest())
           {
             err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
@@ -171,7 +182,15 @@ namespace Transports
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             }
           }
-          war("END SEND...");
+          m_state = S_CLEAR;
+          inf("DONE SEND...");
+        }
+
+        if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_CLEAR)
+        {
+          inf("Data clear for id: %d\n\r", m_id);
+          m_id++;
+          m_state = S_QUERY;
         }
 
           /*if(msg->getSerializationSize() <= msg->max_size)
@@ -188,11 +207,10 @@ namespace Transports
            war("info: Size: %d   ID: %d  SIZE: %ld", msg->max_size, msg->req_id, m_size);*/
       }
 
-      //! test
+      //! Send Data to HTTP Server
       bool
       sendDataRequest()
       {
-        m_count = 0;
         m_conn->putrequest("POST", m_args.server_path.c_str());
         m_conn->putheader("Content-Length", m_size);
         m_conn->putheader("Content-type", "text/plain");
@@ -215,28 +233,59 @@ namespace Transports
         return false;
       }
 
+      //! Send request to datastore
+      void
+      requestToImcMsg( RequestMode mode, int id)
+      {
+        if (mode == GET_DATA)
+        {
+            m_hist.req_id = id;
+            m_hist.max_size = c_max_size_msg;
+            m_hist.type = m_hist.HRTYPE_QUERY;
+            dispatch(m_hist);
+        }
+        else if (mode == CLEAR_DATA)
+        {
+            m_hist.req_id = id;
+            m_hist.type = m_hist.HRTYPE_CLEAR;
+            dispatch(m_hist);
+        }
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
-        //Wait for other task
+        // Wait for other task
         Delay::waitMsec(5000);
         while (!stopping())
         {
+          switch ( m_state )
+          {
+            case S_QUERY:
+              Delay::waitMsec(m_args.period);
+              requestToImcMsg(GET_DATA, m_id);
+              m_state = S_REPLY;
+              break;
 
-          m_hist.req_id = 0;
-          m_hist.max_size = 1000;
-          m_hist.type = m_hist.HRTYPE_QUERY;
-          dispatch(m_hist);
-          waitForMessages(0.1);
+            case S_REPLY:
+              consumeMessages();
+              break;
 
-          Delay::waitMsec(m_args.period);
+            case S_CLEAR:
+              inf("Try clear data id: %d", m_id);
+              requestToImcMsg(CLEAR_DATA, m_id);
+              m_state = S_WAIT;
+              break;
 
-          m_hist.req_id = 0;
-          m_hist.type = m_hist.HRTYPE_CLEAR;
-          dispatch(m_hist);
-          waitForMessages(0.1);
+            case S_WAIT:
+              consumeMessages();
+              break;
 
+            default:
+              m_state = S_QUERY;
+              break;
+          }
         }
       }
     };
