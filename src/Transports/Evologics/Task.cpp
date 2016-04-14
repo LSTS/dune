@@ -612,7 +612,7 @@ namespace Transports
         m_driver->parseUsblPosition(str, reply);
 
         IMC::UsblPositionExtended up;
-        up.target = resolveSystemName(safeLookup(reply.addr));
+        up.target = safeLookup(reply.addr);
         reply.fill(up);
 
         dispatch(up);
@@ -625,7 +625,7 @@ namespace Transports
         m_driver->parseUsblAngles(str, reply);
 
         IMC::UsblAnglesExtended ua;
-        ua.target = resolveSystemName(safeLookup(reply.addr));
+        ua.target = safeLookup(reply.addr);
         reply.fill(ua);
 
         dispatch(ua);
