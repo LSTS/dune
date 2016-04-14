@@ -46,7 +46,8 @@ namespace Transports
       CODE_PLAN    = 0x02,
       CODE_REPORT  = 0x03,
       CODE_RESTART = 0x04,
-      CODE_RAW     = 0x05
+      CODE_RAW     = 0x05,
+      CODE_USBL    = 0x06
     };
 
     struct Report
@@ -77,8 +78,6 @@ namespace Transports
       float m_fuel_level;
       //! Last fuel level confidence.
       float m_fuel_conf;
-      //! Saved plan control.
-      IMC::PlanControl* m_pc;
       //! Sequence number.
       uint16_t m_seq;
       //! Last acoustic operation.
@@ -91,6 +90,8 @@ namespace Transports
       bool m_send_next;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
+      //! USBL Handler.
+      UsblTools::Handler* m_usbl;
       //! Task arguments.
       Arguments m_args;
 
@@ -102,11 +103,11 @@ namespace Transports
         m_progress(0),
         m_fuel_level(0),
         m_fuel_conf(0),
-        m_pc(NULL),
         m_seq(0),
         m_last_acop(NULL),
         m_send_next(false),
-        m_reporter(NULL)
+        m_reporter(NULL),
+        m_usbl(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -125,6 +126,8 @@ namespace Transports
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
+        bind<IMC::UsblPositionExtended>(this);
+        bind<IMC::UsblAnglesExtended>(this);
         bind<IMC::ReportControl>(this);
       }
 
@@ -169,6 +172,8 @@ namespace Transports
       onResourceRelease(void)
       {
         clearLastOp();
+        Memory::clear(m_reporter);
+        Memory::clear(m_usbl);
       }
 
       void
@@ -297,6 +302,11 @@ namespace Transports
           case CODE_RAW:
             recvMessage(imc_addr_src, imc_addr_dst, msg);
             break;
+
+          case CODE_USBL:
+            if (m_usbl != NULL)
+              m_usbl->parse(imc_addr_src, msg);
+            break;
         }
       }
 
@@ -404,6 +414,27 @@ namespace Transports
           aop.range = msg->value;
           dispatch(aop);
         }
+      }
+
+      void
+      consume(const IMC::UsblPositionExtended* msg)
+      {
+        if (m_usbl == NULL)
+        {
+          m_usbl = new UsblTools::Handler(this, true);
+          return;
+        }
+
+        m_usbl->parsePos(msg);
+      }
+
+      void
+      consume(const IMC::UsblAnglesExtended* msg)
+      {
+        if (m_usbl == NULL)
+          m_usbl = new UsblTools::Handler(this, true);
+
+        m_usbl->parseAng(msg);
       }
 
       void
