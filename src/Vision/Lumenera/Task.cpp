@@ -81,8 +81,6 @@ namespace Vision
       float gain_green;
       //! White balance blue gain.
       float gain_blue;
-      //! LED strobe power channel.
-      std::string strobe_pwr;
       //! Maximum log file size.
       unsigned max_file_size;
       //! Log folder prefix.
@@ -263,11 +261,8 @@ namespace Vision
         .values("OFF, ON, STROBE")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("ON")
+        .defaultValue("STROBE")
         .description("LED type");
-
-        param("Power Channel - Strobe", m_args.strobe_pwr)
-        .description("Power channel of the strobe");
 
         param("Maximum Log Size", m_args.max_file_size)
         .defaultValue("524288000")
@@ -499,8 +494,6 @@ namespace Vision
       void
       onActivation(void)
       {
-        setStrobePower(true);
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         inf(DTR("activated"));
         m_cooldown_timer.setTop(10.0);
@@ -519,7 +512,6 @@ namespace Vision
           m_log = NULL;
         }
 
-        setStrobePower(false);
         m_log_dir_updated = false;
 
         if (m_pwr_gpio != NULL)
@@ -543,26 +535,6 @@ namespace Vision
       consume(const IMC::EntityInfo* msg)
       {
         m_slave_entities->onEntityInfo(msg);
-      }
-
-      void
-      setStrobePower(bool value)
-      {
-        if (m_args.led_type != "STROBE")
-          return;
-
-        if (m_args.strobe_pwr.empty())
-          return;
-
-        IMC::PowerChannelControl pcc;
-        pcc.name = m_args.strobe_pwr;
-
-        if (value)
-          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-        else
-          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-
-        dispatch(pcc);
       }
 
       void
