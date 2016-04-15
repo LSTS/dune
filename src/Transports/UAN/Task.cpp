@@ -66,6 +66,8 @@ namespace Transports
     {
       //! Enable reports.
       bool report_enable;
+      //! USBL Modem maximum waiting time.
+      float usbl_max_wait;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -145,6 +147,11 @@ namespace Transports
                      "there's only a two-way travel between the node "
                      "and the USBL modem. The node actively requests "
                      "data. This parameter overrides absolute fix");
+
+        param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
+        .defaultValue("10.0")
+        .description("Maximum amount of time that the modem will wait"
+                     "for target system's reply.");
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
@@ -778,6 +785,13 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (m_usbl_modem != NULL)
+          {
+            std::string sys;
+            if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
+              sendRange(sys);
+          }
 
           if (m_args.report_enable && isActive())
           {
