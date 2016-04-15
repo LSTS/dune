@@ -46,53 +46,77 @@ namespace DUNE
     class UsblTools
     {
     public:
-      //! Start mask.
+      //! Request frame: start/stop mask.
       static const uint8_t c_mask_start = 0x10;
-      //! Frame mask.
-      static const uint8_t c_mask_frame = 0x03;
+      //! Request frame: absolute fix mask.
+      static const uint8_t c_mask_fix = 0x01;
+      //! Request frame: size of frame.Size of frame: request.
+      static const uint8_t c_fsize_req = 5;
+      //! Node or modem destination identifier mask.
+      static const uint8_t c_target_mask = 0x80;
+      //! Code placement in received frame messages.
+      static const uint8_t c_code = 2;
+      //! Minimum time interval between consecutive requests from node.
+      static const uint16_t c_requests_interval = 30;
 
       enum Codes
       {
         CODE_REQ = 0x00,
-        CODE_FIX = 0x01,
-        CODE_POS = 0x02,
-        CODE_ANG = 0x03
+        CODE_RPL = c_target_mask,
+        CODE_FIX = c_target_mask | 0x01,
+        CODE_POS = c_target_mask | 0x02,
+        CODE_ANG = c_target_mask | 0x03
       };
 
       enum ReqIndexes
       {
-        ST_START  = 3,
-        ST_PERIOD = 4
+        REQ_START  = 3,
+        REQ_PERIOD = 4
       };
 
-      enum FixIndexes
+      //! Fix data structure.
+      struct Fix
       {
-        FIX_LAT = 3,
-        FIX_LON = 11,
-        FIX_Z   = 19,
-        FIX_ZU  = 23,
-        FIX_ACC = 24
+        fp64_t lat;
+        fp64_t lon;
+        fp32_t z;
+        uint8_t z_units;
+        fp32_t accuracy;
       };
 
-      enum PosIndexes
+      //! Position data structure.
+      struct Pos
       {
-        POS_X   = 3,
-        POS_Y   = 7,
-        POS_Z   = 11,
-        POS_N   = 15,
-        POS_E   = 19,
-        POS_D   = 23,
-        POS_ACC = 27
+        fp32_t x;
+        fp32_t y;
+        fp32_t z;
+        fp32_t n;
+        fp32_t e;
+        fp32_t d;
+        fp32_t accuracy;
       };
 
-      enum AngIndexes
+      //! Angles data structure.
+      struct Ang
       {
-        ANG_LBEAR = 3,
-        ANG_LELEV = 7,
-        ANG_BEAR  = 11,
-        ANG_ELEV  = 15,
-        ANG_ACC   = 19
+        fp32_t lbearing;
+        fp32_t lelevation;
+        fp32_t bearing;
+        fp32_t elevation;
+        fp32_t accuracy;
       };
+
+      //! This method checks if code is intended for nodes or USBL modem.
+      //! @param[in] code message code identifier.
+      //! @return true if message is for node, false if it's for modem.
+      static bool
+      toNode(uint8_t code)
+      {
+        if (code & c_target_mask)
+          return true;
+
+        return false;
+      }
 
       static IMC::UsblFixExtended
       toFix(const IMC::UsblPositionExtended& usbl, const IMC::GpsFix& gps)
@@ -127,25 +151,204 @@ namespace DUNE
         return fix;
       }
 
+      //! USBL tools node (that actively requests fixes from USBL modem).
+      class Node
+      {
+      public:
+        //! Target arguments.
+        struct Arguments
+        {
+          //! True to enable target request.
+          bool enabled;
+          //! Period for USBL requests
+          uint16_t period;
+          //! Get absolute fix.
+          bool fix;
+          //! Quick mode, without range.
+          bool no_range;
+        };
+
+        //! Constructor.
+        Node(Tasks::Task* task, const Arguments* args):
+          m_usbl_alive(false),
+          m_wait_reply(false),
+          m_args(args),
+          m_task(task)
+        {
+          m_period = m_args->period;
+          m_fix = m_args->fix;
+          m_no_range = m_args->no_range;
+
+          // in quick mode, we actively ping the modem
+          if (m_no_range)
+            m_timer.setTop(m_period);
+          else
+            m_timer.setTop(c_requests_interval);
+        }
+
+        //! Check if node has anything to request.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        step(std::vector<uint8_t>& data)
+        {
+          if (m_args->enabled && m_args->no_range)
+            return sendRequest(data, 0x0000);
+
+          // Activation or deactivation.
+          if (m_args->enabled != m_usbl_alive)
+            return sendRequest(data, m_period);
+
+          // Changed period or reference frame while still alive.
+          if (m_args->enabled && m_usbl_alive)
+          {
+            if (m_args->period != m_period ||
+                m_args->fix != m_fix)
+              return sendRequest(data, m_period);
+          }
+        }
+
+        //! A request will be transmitted by node.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        sendRequest(std::vector<uint8_t>& data, uint16_t period)
+        {
+          // Do not flood the channel with requests.
+          if (!m_timer.overflow())
+            return false;
+
+          m_timer.reset();
+
+          data.resize(c_fsize_req);
+          data[c_code - 1] = CODE_REQ;
+          data[REQ_START - 1] = 0x00;
+
+          if (m_args->fix)
+            data[REQ_START - 1] |= c_mask_fix;
+
+          if (m_args->enabled)
+            data[REQ_START - 1] |= c_mask_start;
+
+          std::memcpy(&data[REQ_PERIOD - 1], &period, sizeof(uint16_t));
+
+          return true;
+        }
+
+        //! Parse incoming frame.
+        //! @param[in] msg received acoustic frame.
+        void
+        parse(uint16_t imc_src, const IMC::UamRxFrame* msg)
+        {
+          switch ((uint8_t)msg->data[c_code])
+          {
+            // Request reply.
+            case CODE_RPL:
+              if (msg->data[REQ_START] & c_mask_start)
+              {
+                std::memcpy(&m_period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
+                m_fix = msg->data[REQ_START] & c_mask_fix;
+                m_usbl_alive = true;
+              }
+              else
+              {
+                m_usbl_alive = false;
+              }
+
+              m_usbl_name = msg->sys_src;
+              break;
+
+            case CODE_FIX:
+            {
+              UsblTools::Fix fs;
+              std::memcpy(&fs, &msg->data[c_code + 1], sizeof(UsblTools::Fix));
+
+              IMC::UsblFixExtended fix;
+              fix.setSource(imc_src);
+              fix.target = msg->sys_dst;
+              fix.lat = fs.lat;
+              fix.lon = fs.lon;
+              fix.z = fs.z;
+              fix.z_units = fs.z_units;
+              fix.accuracy = fs.accuracy;
+
+              m_task->dispatch(fix);
+              break;
+            }
+
+            case CODE_POS:
+            {
+              UsblTools::Pos ps;
+              std::memcpy(&ps, &msg->data[c_code + 1], sizeof(UsblTools::Pos));
+
+              IMC::UsblPositionExtended pos;
+              pos.setSource(imc_src);
+              pos.target = msg->sys_dst;
+              pos.x = ps.x;
+              pos.y = ps.y;
+              pos.z = ps.z;
+              pos.n = ps.n;
+              pos.e = ps.e;
+              pos.d = ps.d;
+              pos.accuracy = ps.accuracy;
+
+              m_task->dispatch(pos);
+              break;
+            }
+
+            case CODE_ANG:
+            {
+              UsblTools::Ang as;
+              std::memcpy(&as, &msg->data[c_code + 1], sizeof(UsblTools::Ang));
+
+              IMC::UsblAnglesExtended ang;
+              ang.setSource(imc_src);
+              ang.target = msg->sys_dst;
+              ang.lbearing = as.lbearing;
+              ang.lelevation = as.lelevation;
+              ang.bearing = as.bearing;
+              ang.elevation = as.elevation;
+              ang.accuracy = as.accuracy;
+
+              m_task->dispatch(ang);
+              break;
+            }
+          }
+        }
+
+      private:
+        //! True if USBL is on.
+        bool m_usbl_alive;
+        //! True if waiting reply.
+        bool m_wait_reply;
+        //! USBL system.
+        std::string m_usbl_name;
+        //! Absolute fix or request relative position.
+        bool m_fix;
+        //! Quick mode, no range.
+        bool m_no_range;
+        //! Periodicity.
+        uint16_t m_period;
+        //! Request timer.
+        Time::Counter<double> m_timer;
+        //! Class arguments.
+        const Arguments* m_args;
+        //! Pointer to task.
+        Tasks::Task* m_task;
+      };
+
       //! USBL tools handler ticket.
       class Target
       {
       public:
-        //! Reference frame.
-        enum Frame
-        {
-          ST_BODY = 0x01,
-          ST_NAVIGATION = 0x02
-        };
-
         //! Constructor.
         //! @param[in] name target's name.
-        //! @param[in] frame current reference frame.
+        //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
-        Target(std::string name, Target::Frame frame, uint16_t period)
+        Target(std::string name, bool fix, uint16_t period)
         {
           m_name = name;
-          m_frame = frame;
+          m_fix = fix;
           m_period = period;
           m_timer.setTop(m_period);
         }
@@ -177,12 +380,12 @@ namespace DUNE
         }
 
         //! Reset variables of target.
-        //! @param[in] frame current reference frame.
+        //! @param[in] return absolute fixes or relative position.
         //! @param[in] period desired periodicity.
         void
-        reset(Target::Frame frame, uint16_t period)
+        reset(bool fix, uint16_t period)
         {
-          m_frame = frame;
+          m_fix = fix;
           m_period = period;
           m_timer.setTop(m_period);
         }
@@ -195,19 +398,20 @@ namespace DUNE
           return m_name;
         }
 
-        //! Get target's reference frame.
-        //! @return target's reference frame.
-        Target::Frame
-        getFrame(void)
+        //! Check if target node wants absolute fix.
+        //! @return true if target's wants absolute fix,
+        //! false otherwise.
+        bool
+        getFix(void)
         {
-          return m_frame;
+          return m_fix;
         }
 
       private:
         //! Target name.
         std::string m_name;
-        //! Frame reference;
-        Target::Frame m_frame;
+        //! Absolute or relative fix.
+        bool m_fix;
         //! Periodicity.
         uint16_t m_period;
         //! Target timer.
@@ -215,30 +419,29 @@ namespace DUNE
       };
 
       //! USBL tools handler.
-      class Handler
+      class Modem
       {
       public:
         //! State Machine.
         enum State
         {
-          ST_OFF,
-          ST_ON,
-          ST_RANGE,
-          ST_SEND
+          SM_OFF,
+          SM_ON,
+          SM_RANGE,
+          SM_SEND
         };
 
         //! Constructor.
-        Handler(Tasks::Task* task, bool usbl):
-          m_usbl(usbl),
+        Modem(Tasks::Task* task):
           m_task(task)
         { }
 
         //! Add target to handler.
         //! @param[in] target target's name.
-        //! @param[in] frame current reference frame.
+        //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
         void
-        add(std::string name, Target::Frame frame, uint16_t period)
+        add(std::string name, bool fix, uint16_t period)
         {
           // Iterate through list and add if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
@@ -247,12 +450,11 @@ namespace DUNE
             // Same target
             if (itr->compare(name))
             {
-              itr->reset(frame, period);
-              return;
+              itr->reset(fix, period);
             }
           }
 
-          m_list.push_back(Target(name, frame, period));
+          m_list.push_back(Target(name, fix, period));
         }
 
         //! Remove target.
@@ -269,7 +471,6 @@ namespace DUNE
             {
               // Erase from list.
               m_list.erase(itr, itr + 1);
-              break;
             }
           }
         }
@@ -301,10 +502,11 @@ namespace DUNE
           m_list.clear();
         }
 
-        //! Get target's frame.
-        //! @return target's reference frame.
-        Target::Frame
-        check(std::string name)
+        //! Get if target's wants an absolute fix.
+        //! @return true if target wants an absolute fix,
+        //! false if it wants a relative position.
+        bool
+        isFix(std::string name)
         {
           // Iterate through list and add if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
@@ -312,102 +514,154 @@ namespace DUNE
           {
             // Same target
             if (itr->compare(name))
-              return itr->getFrame();
+              return itr->getFix();
           }
 
-          // default frame.
-          return Target::ST_NAVIGATION;
+          // default is relative positioning to be
+          // translated by node.
+          return false;
         }
 
         //! Parse incoming frame.
         //! @param[in] imc_src IMC source address.
         //! @param[in] msg received acoustic frame.
-        void
-        parse(uint16_t imc_src, const IMC::UamRxFrame* msg)
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        parse(uint16_t imc_src, const IMC::UamRxFrame* msg, std::vector<uint8_t>& data)
         {
-          switch (msg->data[2])
+          (void)imc_src;
+
+          switch ((uint8_t)msg->data[c_code])
           {
             case CODE_REQ:
             {
-              // Do not process request if not capable.
-              if (!m_usbl)
-                return;
-
-              if (msg->data[ST_START] & c_mask_start)
+              if (msg->data[REQ_START] & c_mask_start)
               {
                 uint16_t period;
-                std::memcpy(&period, &msg->data[ST_PERIOD], sizeof(uint16_t));
-                Target::Frame frame = (Target::Frame)(msg->data[ST_START] & c_mask_frame);
-                add(msg->sys_src, frame, period);
+                std::memcpy(&period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
+
+                // if period is 0, nothing will be added to scheduler.
+                if (!period)
+                {
+                  // this system is waiting for reply.
+                  m_system = msg->sys_src;
+                  return false;
+                }
+
+                bool fix = msg->data[REQ_START] & c_mask_fix;
+                add(msg->sys_src, fix, period);
               }
               else
               {
-                // stop.
                 remove(msg->sys_src);
               }
-              break;
+
+              // reply.
+              data.resize(c_fsize_req);
+              // no sync byte yet.
+              std::memcpy(&data[0], &msg->data[1], c_fsize_req);
+              data[c_code - 1] = CODE_RPL;
+              return true;
             }
-            case CODE_FIX:
-            {
-              IMC::UsblFixExtended fix;
-              fix.setSource(imc_src);
-              fix.target = msg->sys_dst;
-              std::memcpy(&fix.lat, &msg->data[FIX_LAT], sizeof(fp64_t));
-              std::memcpy(&fix.lon, &msg->data[FIX_LON], sizeof(fp64_t));
-              std::memcpy(&fix.z, &msg->data[FIX_Z], sizeof(fp32_t));
-              std::memcpy(&fix.z_units, &msg->data[FIX_ZU], sizeof(uint8_t));
-              std::memcpy(&fix.accuracy, &msg->data[FIX_ACC], sizeof(fp32_t));
-              m_task->dispatch(fix);
-              break;
-            }
-            case CODE_POS:
-            {
-              IMC::UsblPositionExtended pos;
-              pos.setSource(imc_src);
-              pos.target = msg->sys_dst;
-              std::memcpy(&pos.x, &msg->data[POS_X], sizeof(fp32_t));
-              std::memcpy(&pos.y, &msg->data[POS_Y], sizeof(fp32_t));
-              std::memcpy(&pos.z, &msg->data[POS_Z], sizeof(fp32_t));
-              std::memcpy(&pos.n, &msg->data[POS_N], sizeof(fp32_t));
-              std::memcpy(&pos.e, &msg->data[POS_E], sizeof(fp32_t));
-              std::memcpy(&pos.d, &msg->data[POS_D], sizeof(fp32_t));
-              std::memcpy(&pos.accuracy, &msg->data[POS_ACC], sizeof(fp32_t));
-              m_task->dispatch(pos);
-              break;
-            }
-            case CODE_ANG:
-            {
-              IMC::UsblAnglesExtended ang;
-              ang.setSource(imc_src);
-              ang.target = msg->sys_dst;
-              std::memcpy(&ang.lbearing, &msg->data[ANG_LBEAR], sizeof(fp32_t));
-              std::memcpy(&ang.lelevation, &msg->data[ANG_LELEV], sizeof(fp32_t));
-              std::memcpy(&ang.bearing, &msg->data[ANG_BEAR], sizeof(fp32_t));
-              std::memcpy(&ang.elevation, &msg->data[ANG_ELEV], sizeof(fp32_t));
-              std::memcpy(&ang.accuracy, &msg->data[ANG_ACC], sizeof(fp32_t));
-              m_task->dispatch(ang);
-              break;
-            }
+            default:
+              // nothing to do.
+              return false;
           }
         }
 
-        void
-        parsePos(const IMC::UsblPositionExtended* msg)
+        //! Parse USBL fix message.
+        //! @param[in] msg pointer to message.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        parse(const IMC::UsblFixExtended* msg, std::vector<uint8_t>& data)
         {
-          (void)msg;
+          if (m_system.empty())
+            return false;
+
+          if (m_system != msg->target)
+            return false;
+
+          data.resize(sizeof(UsblTools::Fix) + 2);
+
+          UsblTools::Fix fix;
+          fix.lat = msg->lat;
+          fix.lon = msg->lon;
+          fix.z = msg->z;
+          fix.z_units = msg->z_units;
+          fix.accuracy = msg->accuracy;
+
+          std::memcpy(&data[c_code], &fix, sizeof(UsblTools::Fix));
+          m_system.clear();
+
+          return true;
         }
 
-        void
-        parseAng(const IMC::UsblAnglesExtended* msg)
+        //! Parse USBL position message.
+        //! @param[in] msg pointer to message.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        parse(const IMC::UsblPositionExtended* msg, std::vector<uint8_t>& data)
         {
-          (void)msg;
+          if (m_system.empty())
+            return false;
+
+          if (m_system != msg->target)
+            return false;
+
+          data.resize(sizeof(UsblTools::Pos) + 2);
+
+          UsblTools::Pos pos;
+          pos.x = msg->x;
+          pos.y = msg->y;
+          pos.z = msg->z;
+          pos.n = msg->n;
+          pos.e = msg->e;
+          pos.d = msg->d;
+          pos.accuracy = msg->accuracy;
+
+          std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Pos));
+          m_system.clear();
+
+          return true;
+        }
+
+        //! Parse USBL angles message.
+        //! @param[in] msg pointer to message.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        parse(const IMC::UsblAnglesExtended* msg, std::vector<uint8_t>& data)
+        {
+          // Quick mode
+          if (m_system.empty())
+            return false;
+
+          if (m_system != msg->target)
+            return false;
+
+          data.resize(sizeof(UsblTools::Ang) + 2);
+
+          UsblTools::Ang ang;
+          ang.lbearing = msg->lbearing;
+          ang.lelevation = msg->lelevation;
+          ang.bearing = msg->bearing;
+          ang.elevation = msg->elevation;
+          ang.accuracy = msg->accuracy;
+
+          std::memcpy(&data[c_code], &ang, sizeof(UsblTools::Ang));
+          m_system.clear();
+
+          return true;
         }
 
       private:
-        //! True if handler is local modem is USBL.
-        bool m_usbl;
-        //! List of targets.
+        //! List of scheduled targets.
         std::vector<Target> m_list;
+        //! System waiting for reply.
+        std::string m_system;
         //! Task pointer
         Tasks::Task* m_task;
       };
