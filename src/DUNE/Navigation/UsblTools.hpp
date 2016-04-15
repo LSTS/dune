@@ -422,15 +422,6 @@ namespace DUNE
       class Modem
       {
       public:
-        //! State Machine.
-        enum State
-        {
-          SM_OFF,
-          SM_ON,
-          SM_RANGE,
-          SM_SEND
-        };
-
         //! Constructor.
         Modem(Tasks::Task* task):
           m_task(task)
@@ -477,17 +468,33 @@ namespace DUNE
 
         //! Trigger through all targets.
         //! @param[out] name target's name to be tracked.
+        //! @param[in] time to wait for target system's reply.
         //! @return true, if we have a system to track now.
         bool
-        run(std::string& name)
+        run(std::string& name, float time)
         {
+          // Do not check any more targets if we are
+          // still waiting for a target's reply.
+          if (!m_system.empty())
+          {
+            if (m_timer.overflow())
+              m_system.clear();
+
+            return false;
+          }
+
           // Iterate and call triggers.
           std::vector<Target>::iterator itr = m_list.begin();
           for (; itr != m_list.end(); ++itr)
           {
             if (itr->trigger())
             {
+              // we'll track this system
+              m_system = itr->getName();
               name = itr->getName();
+
+              // reset timer.
+              m_timer.setTop(time);
               return true;
             }
           }
@@ -662,6 +669,8 @@ namespace DUNE
         std::vector<Target> m_list;
         //! System waiting for reply.
         std::string m_system;
+        //! Maximum amount of time waiting for system's reply.
+        Time::Counter<double> m_timer;
         //! Task pointer
         Tasks::Task* m_task;
       };
