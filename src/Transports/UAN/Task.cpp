@@ -90,8 +90,12 @@ namespace Transports
       bool m_send_next;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
-      //! USBL Handler.
-      UsblTools::Handler* m_usbl;
+      //! USBL Node arguments.
+      UsblTools::Node::Arguments m_node_args;
+      //! USBL Node.
+      UsblTools::Node* m_usbl_node;
+      //! USBL Modem.
+      UsblTools::Modem* m_usbl_modem;
       //! Task arguments.
       Arguments m_args;
 
@@ -107,7 +111,8 @@ namespace Transports
         m_last_acop(NULL),
         m_send_next(false),
         m_reporter(NULL),
-        m_usbl(NULL)
+        m_usbl_node(NULL),
+        m_usbl_modem(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -118,6 +123,28 @@ namespace Transports
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("false")
         .description("Enable system state reporting");
+
+        param("USBL Node -- Enabled", m_node_args.enabled)
+        .defaultValue("false")
+        .description("USBL target request activation");
+
+        param("USBL Node -- Period", m_node_args.period)
+        .defaultValue("60.0")
+        .minimumValue("5.0")
+        .description("USBL target necessary period");
+
+        param("USBL Node -- Absolute Fix", m_node_args.fix)
+        .defaultValue("false")
+        .description("USBL can either send an absolute fix, or"
+                     "relative positioning.");
+
+        param("USBL Node -- Quick, No Range", m_node_args.no_range)
+        .defaultValue("false")
+        .description("In this mode, the USBL node does not require "
+                     "ranging information. With this mode enabled, "
+                     "there's only a two-way travel between the node "
+                     "and the USBL modem. The node actively requests "
+                     "data. This parameter overrides absolute fix");
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
@@ -173,7 +200,8 @@ namespace Transports
       {
         clearLastOp();
         Memory::clear(m_reporter);
-        Memory::clear(m_usbl);
+        Memory::clear(m_usbl_node);
+        Memory::clear(m_usbl_modem);
       }
 
       void
@@ -304,8 +332,22 @@ namespace Transports
             break;
 
           case CODE_USBL:
-            if (m_usbl != NULL)
-              m_usbl->parse(imc_addr_src, msg);
+            if (UsblTools::toNode(msg->data[2]))
+            {
+              if (m_usbl_node != NULL)
+                m_usbl_node->parse(imc_addr_src, msg);
+            }
+            else
+            {
+              // handle request to USBL modem.
+              if (m_usbl_modem != NULL)
+              {
+                std::vector<uint8_t> data;
+                data.push_back(CODE_USBL);
+                if (m_usbl_modem->parse(imc_addr_src, msg, data))
+                  sendFrame(msg->sys_src, data, false);
+              }
+            }
             break;
         }
       }
@@ -419,22 +461,40 @@ namespace Transports
       void
       consume(const IMC::UsblPositionExtended* msg)
       {
-        if (m_usbl == NULL)
+        if (m_usbl_modem == NULL)
         {
-          m_usbl = new UsblTools::Handler(this, true);
+          m_usbl_modem = new UsblTools::Modem(this);
           return;
         }
 
-        m_usbl->parsePos(msg);
+        std::vector<uint8_t> data;
+        data.push_back(CODE_USBL);
+
+        // Send fix depending on need.
+        if (m_usbl_modem->isFix(msg->target))
+        {
+          // transform data.
+          IMC::UsblFixExtended fix = UsblTools::toFix(*msg, m_estate);
+          if (m_usbl_modem->parse(&fix, data))
+            sendFrame(msg->target, data, false);
+        }
+        else
+        {
+          if (m_usbl_modem->parse(msg, data))
+            sendFrame(msg->target, data, false);
+        }
       }
 
       void
       consume(const IMC::UsblAnglesExtended* msg)
       {
-        if (m_usbl == NULL)
-          m_usbl = new UsblTools::Handler(this, true);
+        if (m_usbl_modem == NULL)
+          m_usbl_modem = new UsblTools::Modem(this);
 
-        m_usbl->parseAng(msg);
+        std::vector<uint8_t> data;
+        data.push_back(CODE_USBL);
+        if (m_usbl_modem->parse(msg, data))
+          sendFrame(msg->target, data, false);
       }
 
       void
