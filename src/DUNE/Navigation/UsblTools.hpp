@@ -1,6 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
