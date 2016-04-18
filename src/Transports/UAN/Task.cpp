@@ -175,6 +175,8 @@ namespace Transports
       {
         m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
                                                        2.0, false);
+        if (m_node_args.enabled)
+          m_usbl_node = new UsblTools::Node(this, &m_node_args);
       }
 
       //! Initialize resources.
@@ -778,6 +780,31 @@ namespace Transports
         dispatch(fuel);
       }
 
+      //! Main loop of USBL modem.
+      void
+      onUsblModem(void)
+      {
+        if (m_usbl_modem != NULL)
+        {
+          std::string sys;
+          if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
+            sendRange(sys);
+        }
+      }
+
+      //! Main loop of USBL node.
+      void
+      onUsblNode(void)
+      {
+        if (m_usbl_node != NULL)
+        {
+          std::vector<uint8_t> data;
+          data.push_back(CODE_USBL);
+          if (m_usbl_node->run(data))
+            sendFrame("broadcast", data, false);
+        }
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -786,12 +813,8 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_usbl_modem != NULL)
-          {
-            std::string sys;
-            if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
-              sendRange(sys);
-          }
+          onUsblModem();
+          onUsblNode();
 
           if (m_args.report_enable && isActive())
           {
