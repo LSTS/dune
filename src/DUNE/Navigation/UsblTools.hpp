@@ -424,8 +424,7 @@ namespace DUNE
       {
       public:
         //! Constructor.
-        Modem(Tasks::Task* task):
-          m_task(task)
+        Modem(void)
         { }
 
         //! Add target to handler.
@@ -672,8 +671,6 @@ namespace DUNE
         std::string m_system;
         //! Maximum amount of time waiting for system's reply.
         Time::Counter<double> m_timer;
-        //! Task pointer
-        Tasks::Task* m_task;
       };
     };
   }
