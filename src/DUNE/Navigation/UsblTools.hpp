@@ -189,7 +189,7 @@ namespace DUNE
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        step(std::vector<uint8_t>& data)
+        run(std::vector<uint8_t>& data)
         {
           if (m_args->enabled && m_args->no_range)
             return sendRequest(data, 0x0000);
@@ -205,6 +205,8 @@ namespace DUNE
                 m_args->fix != m_fix)
               return sendRequest(data, m_period);
           }
+
+          return false;
         }
 
         //! A request will be transmitted by node.
