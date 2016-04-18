@@ -472,7 +472,7 @@ namespace Transports
       {
         if (m_usbl_modem == NULL)
         {
-          m_usbl_modem = new UsblTools::Modem(this);
+          m_usbl_modem = new UsblTools::Modem();
           return;
         }
 
@@ -498,7 +498,7 @@ namespace Transports
       consume(const IMC::UsblAnglesExtended* msg)
       {
         if (m_usbl_modem == NULL)
-          m_usbl_modem = new UsblTools::Modem(this);
+          m_usbl_modem = new UsblTools::Modem();
 
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
