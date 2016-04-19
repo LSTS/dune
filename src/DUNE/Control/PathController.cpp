@@ -52,6 +52,8 @@ namespace DUNE
     static const double c_lkeep_distance = 30.0;
     //! Maximum admissible time for disabling monitors due to navigation jump
     static const float c_max_jump_time = 100.0;
+    //! Maximum admissible time for disabling monitors due to braking
+    static const float c_max_brake_time = 30.0;
     //! Depth margin when limiting depth in bottom tracker
     static const float c_depth_margin = 1.0;
 
@@ -288,9 +290,14 @@ namespace DUNE
     PathController::consume(const IMC::Brake* brake)
     {
       if (brake->op == IMC::Brake::OP_START)
+      {
         m_braking = true;
+        m_brake_timer.setTop(c_max_brake_time);
+      }
       else
+      {
         m_braking = false;
+      }
     }
 
     void
@@ -669,9 +676,9 @@ namespace DUNE
       else
         loiter(*es, m_ts);
 
-      // If we're braking or there has been a jump in the navigation filter
-      // then do not check for errors in monitoring
-      if (m_braking || m_jump_monitors)
+      // If we're braking or there has been a jump in the navigation
+      // filter then do not check for errors in monitoring
+      if ((m_braking && m_brake_timer.overflow()) || m_jump_monitors)
       {
         m_running_monitors = false;
       }
