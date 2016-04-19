@@ -108,13 +108,7 @@ namespace Transports
         m_send_next(false),
         m_reporter(NULL)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER,
-                    true);
-
-        param(DTR_RT("Enable Reports"), m_args.report_enable)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        param("Enable Reports", m_args.report_enable)
         .defaultValue("false")
         .description("Enable system state reporting");
 
@@ -149,19 +143,7 @@ namespace Transports
         + URL::encode(getEntityLabel());
         dispatch(announce);
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      void
-      onActivation(void)
-      {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
-      void
-      onDeactivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       //! Release resources.
@@ -689,7 +671,7 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_args.report_enable && isActive())
+          if (m_args.report_enable)
           {
             if (m_reporter != NULL && m_reporter->trigger())
               sendReport();
