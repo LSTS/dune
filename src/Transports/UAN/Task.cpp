@@ -132,26 +132,30 @@ namespace Transports
 
         param("USBL Node -- Period", m_node_args.period)
         .defaultValue("60.0")
-        .minimumValue("5.0")
+        .minimumValue("2.0")
+        .units(Units::Second)
         .description("USBL target necessary period");
 
         param("USBL Node -- Absolute Fix", m_node_args.fix)
         .defaultValue("false")
         .description("USBL can either send an absolute fix, or"
-                     "relative positioning.");
+                     " relative positioning.");
 
         param("USBL Node -- Quick, No Range", m_node_args.no_range)
         .defaultValue("false")
-        .description("In this mode, the USBL node does not require "
-                     "ranging information. With this mode enabled, "
-                     "there's only a two-way travel between the node "
-                     "and the USBL modem. The node actively requests "
-                     "data. This parameter overrides absolute fix");
+        .description("In this mode, the USBL node does not require"
+                     " ranging information. With this mode enabled,"
+                     " there's only a two-way travel between the node"
+                     " and the USBL modem. The node actively requests"
+                     " data. This parameter overrides absolute fix");
 
         param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
         .defaultValue("10.0")
+        .minimumValue("2.0")
+        .maximumValue("20.0")
+        .units(Units::Second)
         .description("Maximum amount of time that the modem will wait"
-                     "for target system's reply.");
+                     " for target system's reply.");
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
@@ -175,8 +179,8 @@ namespace Transports
       {
         m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
                                                        2.0, false);
-        if (m_node_args.enabled)
-          m_usbl_node = new UsblTools::Node(this, &m_node_args);
+
+        m_usbl_node = new UsblTools::Node(this, &m_node_args);
       }
 
       //! Initialize resources.
@@ -353,7 +357,7 @@ namespace Transports
               {
                 std::vector<uint8_t> data;
                 data.push_back(CODE_USBL);
-                if (m_usbl_modem->parse(imc_addr_src, msg, data))
+                if (m_usbl_modem->parse(msg, data))
                   sendFrame(msg->sys_src, data, false);
               }
             }
@@ -476,20 +480,24 @@ namespace Transports
           return;
         }
 
+        // check if we are waiting for this system.
+        if (!m_usbl_modem->waitingForSystem(msg->target))
+          return;
+
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
 
-        // Send fix depending on need.
-        if (m_usbl_modem->isFix(msg->target))
+        // The target wants an absolute fix?
+        if (m_usbl_modem->wantsFix(msg->target))
         {
           // transform data.
           IMC::UsblFixExtended fix = UsblTools::toFix(*msg, m_estate);
-          if (m_usbl_modem->parse(&fix, data))
+          if (m_usbl_modem->encode(&fix, data))
             sendFrame(msg->target, data, false);
         }
         else
         {
-          if (m_usbl_modem->parse(msg, data))
+          if (m_usbl_modem->encode(msg, data))
             sendFrame(msg->target, data, false);
         }
       }
@@ -498,11 +506,18 @@ namespace Transports
       consume(const IMC::UsblAnglesExtended* msg)
       {
         if (m_usbl_modem == NULL)
+        {
           m_usbl_modem = new UsblTools::Modem();
+          return;
+        }
+
+        // check if we are waiting for this system.
+        if (!m_usbl_modem->waitingForSystem(msg->target))
+          return;
 
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
-        if (m_usbl_modem->parse(msg, data))
+        if (m_usbl_modem->encode(msg, data))
           sendFrame(msg->target, data, false);
       }
 
@@ -786,6 +801,7 @@ namespace Transports
       {
         if (m_usbl_modem != NULL)
         {
+          // Trigger target.
           std::string sys;
           if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
             sendRange(sys);
