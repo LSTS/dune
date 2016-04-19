@@ -78,6 +78,7 @@ namespace Maneuver
           setServo.id = 0;
           setServo.value = 0;
           m_task->dispatch(setServo);
+
           m_task->signalCompletion();
         }
         else

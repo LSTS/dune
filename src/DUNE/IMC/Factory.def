@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 1475fa614638846a72a0c7d1f7be82a9                            *
+// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -195,7 +195,6 @@ MESSAGE(482, RelativeState)
 MESSAGE(483, Dislodge)
 MESSAGE(484, Formation)
 MESSAGE(485, Launch)
-MESSAGE(486, Drop)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
 MESSAGE(502, MonitorEntityState)
@@ -273,5 +272,4 @@ MESSAGE(893, ParametersXml)
 MESSAGE(894, GetParametersXml)
 MESSAGE(2001, NecMsg)
 MESSAGE(2002, JsonObject)
-MESSAGE(2003, pwmBBB)
 #undef MESSAGE
