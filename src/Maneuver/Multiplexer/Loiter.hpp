@@ -161,6 +161,7 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
+      	std::cout << "Receiving estimated State" << std::endl;
         m_ltr->onEstimatedState(msg);
       }
 

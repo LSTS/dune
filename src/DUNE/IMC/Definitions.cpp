@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: b6cb49aa5642d80650daf495a50ba0dd                            *
+// IMC XML MD5: 1475fa614638846a72a0c7d1f7be82a9                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -13839,6 +13839,104 @@ namespace DUNE
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 
+    Drop::Drop(void)
+    {
+      m_header.mgid = 486;
+      clear();
+    }
+
+    void
+    Drop::clear(void)
+    {
+      timeout = 0;
+      lat = 0;
+      lon = 0;
+      z = 0;
+      z_units = 0;
+      speed = 0;
+      speed_units = 0;
+      custom.clear();
+    }
+
+    bool
+    Drop::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Drop& other__ = static_cast<const Drop&>(msg__);
+      if (timeout != other__.timeout) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z != other__.z) return false;
+      if (z_units != other__.z_units) return false;
+      if (speed != other__.speed) return false;
+      if (speed_units != other__.speed_units) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    Drop::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Drop::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(timeout, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(speed_units, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Drop::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(timeout, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Drop::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Drop::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "timeout", timeout, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;
@@ -20265,6 +20363,80 @@ namespace DUNE
     JsonObject::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "json", json, nindent__);
+    }
+
+    pwmBBB::pwmBBB(void)
+    {
+      m_header.mgid = 2003;
+      clear();
+    }
+
+    void
+    pwmBBB::clear(void)
+    {
+      name.clear();
+      servstat = 0;
+      servmin = 0;
+      servmax = 0;
+    }
+
+    bool
+    pwmBBB::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::pwmBBB& other__ = static_cast<const pwmBBB&>(msg__);
+      if (name != other__.name) return false;
+      if (servstat != other__.servstat) return false;
+      if (servmin != other__.servmin) return false;
+      if (servmax != other__.servmax) return false;
+      return true;
+    }
+
+    int
+    pwmBBB::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    pwmBBB::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      ptr__ += IMC::serialize(servstat, ptr__);
+      ptr__ += IMC::serialize(servmin, ptr__);
+      ptr__ += IMC::serialize(servmax, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    pwmBBB::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(servstat, bfr__, size__);
+      bfr__ += IMC::deserialize(servmin, bfr__, size__);
+      bfr__ += IMC::deserialize(servmax, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    pwmBBB::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(servstat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(servmin, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(servmax, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    pwmBBB::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+      IMC::toJSON(os__, "servstat", servstat, nindent__);
+      IMC::toJSON(os__, "servmin", servmin, nindent__);
+      IMC::toJSON(os__, "servmax", servmax, nindent__);
     }
   }
 }
