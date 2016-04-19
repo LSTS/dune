@@ -1678,41 +1678,29 @@ namespace Control
 
           m_lat = (double)gp.lat * 1e-07;
           m_lon = (double)gp.lon * 1e-07;
+          m_hae_msl = (double) gp.alt * 1e-3;   //MSL
 
-          double d = WGS84::distance(m_ref_lat, m_ref_lon, m_ref_hae,
-                                     lat, lon, getHeight());
-
-          if (d > 1000.0)
+          if (m_args.convert_msl && m_ground)
           {
-            if (m_args.convert_msl)
-            {
-              Coordinates::WMM wmm(m_ctx.dir_cfg);
-              m_hae_offset = wmm.height(lat, lon);
-            }
-            else
-            {
-              m_hae_offset = 0;
-            }
-
-            m_estate.lat = lat;
-            m_estate.lon = lon;
-            m_estate.height = getHeight();
-
-            m_estate.x = 0;
-            m_estate.y = 0;
-            m_estate.z = 0;
+            Coordinates::WMM wmm(m_ctx.dir_cfg);
+            m_hae_offset = wmm.height(lat, lon);
 
             m_ref_lat = lat;
             m_ref_lon = lon;
             m_ref_hae = getHeight();
-
           }
           else
           {
-            WGS84::displacement(m_ref_lat, m_ref_lon, m_ref_hae,
-                                lat, lon, getHeight(),
-                                &m_estate.x, &m_estate.y, &m_estate.z);
+            m_hae_offset = 0;
           }
+
+          m_estate.lat = lat;
+          m_estate.lon = lon;
+          m_estate.height = getHeight();
+
+          m_estate.x = 0;
+          m_estate.y = 0;
+          m_estate.z = 0;
 
           m_estate.vx = 1e-02 * gp.vx;
           m_estate.vy = 1e-02 * gp.vy;
@@ -1724,10 +1712,8 @@ namespace Control
                                       m_estate.vx, m_estate.vy, m_estate.vz,
                                       &m_estate.u, &m_estate.v, &m_estate.w);
 
+          m_estate.alt = (double) gp.relative_alt * 1e-3;   //AGL (relative to home altitude)
           m_estate.depth = -1;
-          m_estate.alt = -1;
-
-
         }
 
         float
@@ -2190,7 +2176,6 @@ namespace Control
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
-          m_hae_msl = vfr_hud.alt;
 
           dispatch(ias);
           dispatch(gs);
