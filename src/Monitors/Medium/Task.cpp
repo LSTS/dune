@@ -220,7 +220,7 @@ namespace Monitors
 
         m_depth = msg->depth;
         // For UAVs: Height is positive upwards, z is positive downwards.
-        m_altitude = msg->height - msg->z;
+        m_altitude = msg->alt;
       }
 
       void
@@ -344,9 +344,9 @@ namespace Monitors
             }
             else
             {
-              if (m_airspeed < m_args.airspeed_threshold)
+              if (m_airspeed < m_args.airspeed_threshold && m_altitude < m_args.altitude_threshold)
                 m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-              else
+              else if (m_airspeed > m_args.airspeed_threshold && m_altitude > m_args.altitude_threshold)
                 m_vm.medium = IMC::VehicleMedium::VM_AIR;
             }
           }
@@ -387,7 +387,7 @@ namespace Monitors
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
               else {
-                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
+                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2 && m_altitude < m_args.altitude_threshold)
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
             }
@@ -403,7 +403,7 @@ namespace Monitors
               }
               else
               {
-                if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
+                if (m_airspeed > m_args.airspeed_threshold && m_altitude > m_args.altitude_threshold && m_args.vtype == "UAV")
                   m_vm.medium = IMC::VehicleMedium::VM_AIR;
               }
             }
