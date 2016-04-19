@@ -1306,7 +1306,7 @@ namespace Sensors
             continue;
           }
 
-          if (isActive() && !m_stop_comms &&  m_pinger.overflow())
+          if (isActive() && !m_stop_comms && m_pinger.overflow())
           {
             m_pinger.reset();
             ping();
