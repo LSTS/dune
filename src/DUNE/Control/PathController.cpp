@@ -678,7 +678,7 @@ namespace DUNE
 
       // If we're braking or there has been a jump in the navigation
       // filter then do not check for errors in monitoring
-      if ((m_braking && m_brake_timer.overflow()) || m_jump_monitors)
+      if ((m_braking && !m_brake_timer.overflow()) || m_jump_monitors)
       {
         m_running_monitors = false;
       }
