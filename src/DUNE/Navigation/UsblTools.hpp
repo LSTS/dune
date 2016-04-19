@@ -67,7 +67,7 @@ namespace DUNE
         CODE_ANG = c_target_mask | 0x03
       };
 
-      enum ReqIndexes
+      enum RequestIndexes
       {
         REQ_START  = 3,
         REQ_PERIOD = 4
@@ -180,9 +180,9 @@ namespace DUNE
 
           // in quick mode, we actively ping the modem
           if (m_no_range)
-            m_timer.setTop(m_period);
+            m_node_timer.setTop(m_period);
           else
-            m_timer.setTop(c_requests_interval);
+            m_node_timer.setTop(c_requests_interval);
         }
 
         //! Check if node has anything to request.
@@ -191,49 +191,22 @@ namespace DUNE
         bool
         run(std::vector<uint8_t>& data)
         {
+          // Quick reply mode.
           if (m_args->enabled && m_args->no_range)
-            return sendRequest(data, 0x0000);
+            return encode(data, 0x0000);
 
-          // Activation or deactivation.
+          // Activation or deactivation request.
           if (m_args->enabled != m_usbl_alive)
-            return sendRequest(data, m_period);
+            return encode(data, m_period);
 
           // Changed period or reference frame while still alive.
           if (m_args->enabled && m_usbl_alive)
           {
-            if (m_args->period != m_period ||
-                m_args->fix != m_fix)
-              return sendRequest(data, m_period);
+            if (m_args->period != m_period || m_args->fix != m_fix)
+              return encode(data, m_period);
           }
 
           return false;
-        }
-
-        //! A request will be transmitted by node.
-        //! @param[out] data frame to be send.
-        //! @return true if there's data to be sent, false otherwise.
-        bool
-        sendRequest(std::vector<uint8_t>& data, uint16_t period)
-        {
-          // Do not flood the channel with requests.
-          if (!m_timer.overflow())
-            return false;
-
-          m_timer.reset();
-
-          data.resize(c_fsize_req);
-          data[c_code - 1] = CODE_REQ;
-          data[REQ_START - 1] = 0x00;
-
-          if (m_args->fix)
-            data[REQ_START - 1] |= c_mask_fix;
-
-          if (m_args->enabled)
-            data[REQ_START - 1] |= c_mask_start;
-
-          std::memcpy(&data[REQ_PERIOD - 1], &period, sizeof(uint16_t));
-
-          return true;
         }
 
         //! Parse incoming frame.
@@ -318,6 +291,33 @@ namespace DUNE
         }
 
       private:
+        //! Encode a request to be transmitted by node.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        encode(std::vector<uint8_t>& data, uint16_t period)
+        {
+          // Do not flood the channel with requests.
+          if (!m_node_timer.overflow())
+            return false;
+
+          m_node_timer.reset();
+
+          data.resize(c_fsize_req);
+          data[c_code - 1] = CODE_REQ;
+          data[REQ_START - 1] = 0x00;
+
+          if (m_args->fix)
+            data[REQ_START - 1] |= c_mask_fix;
+
+          if (m_args->enabled)
+            data[REQ_START - 1] |= c_mask_start;
+
+          std::memcpy(&data[REQ_PERIOD - 1], &period, sizeof(uint16_t));
+
+          return true;
+        }
+
         //! True if USBL is on.
         bool m_usbl_alive;
         //! True if waiting reply.
@@ -330,8 +330,8 @@ namespace DUNE
         bool m_no_range;
         //! Periodicity.
         uint16_t m_period;
-        //! Request timer.
-        Time::Counter<double> m_timer;
+        //! Quick modem request timer.
+        Time::Counter<double> m_node_timer;
         //! Class arguments.
         const Arguments* m_args;
         //! Pointer to task.
@@ -351,7 +351,7 @@ namespace DUNE
           m_name = name;
           m_fix = fix;
           m_period = period;
-          m_timer.setTop(m_period);
+          m_target_timer.setTop(m_period);
         }
 
         //! Time to track target.
@@ -359,9 +359,9 @@ namespace DUNE
         bool
         trigger(void)
         {
-          if (m_timer.overflow())
+          if (m_target_timer.overflow())
           {
-            m_timer.reset();
+            m_target_timer.reset();
             return true;
           }
 
@@ -388,7 +388,7 @@ namespace DUNE
         {
           m_fix = fix;
           m_period = period;
-          m_timer.setTop(m_period);
+          m_target_timer.setTop(m_period);
         }
 
         //! Get target's name.
@@ -403,7 +403,7 @@ namespace DUNE
         //! @return true if target's wants absolute fix,
         //! false otherwise.
         bool
-        getFix(void)
+        wantsFix(void)
         {
           return m_fix;
         }
@@ -415,8 +415,8 @@ namespace DUNE
         bool m_fix;
         //! Periodicity.
         uint16_t m_period;
-        //! Target timer.
-        Time::Counter<double> m_timer;
+        //! Target's desired period timer.
+        Time::Counter<double> m_target_timer;
       };
 
       //! USBL tools handler.
@@ -427,43 +427,19 @@ namespace DUNE
         Modem(void)
         { }
 
-        //! Add target to handler.
-        //! @param[in] target target's name.
-        //! @param[in] fix absolute fix or relative positioning
-        //! @param[in] period target's desired periodicity.
-        void
-        add(std::string name, bool fix, uint16_t period)
+        //! This function verifies if we are waiting for the target's reply.
+        //! @param[in] name name of the target.
+        //! @return true if we are waiting, false otherwise.
+        bool
+        waitingForSystem(std::string name)
         {
-          // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
-          {
-            // Same target
-            if (itr->compare(name))
-            {
-              itr->reset(fix, period);
-            }
-          }
+          if (m_system.empty())
+            return false;
 
-          m_list.push_back(Target(name, fix, period));
-        }
+          if (name == m_system)
+            return true;
 
-        //! Remove target.
-        //! @param[in] target target's name.
-        void
-        remove(std::string name)
-        {
-          // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
-          {
-            // Same target
-            if (itr->compare(name))
-            {
-              // Erase from list.
-              m_list.erase(itr, itr + 1);
-            }
-          }
+          return false;
         }
 
         //! Trigger through all targets.
@@ -477,7 +453,7 @@ namespace DUNE
           // still waiting for a target's reply.
           if (!m_system.empty())
           {
-            if (m_timer.overflow())
+            if (m_modem_wdog.overflow())
               m_system.clear();
 
             return false;
@@ -494,7 +470,7 @@ namespace DUNE
               name = itr->getName();
 
               // reset timer.
-              m_timer.setTop(time);
+              m_modem_wdog.setTop(time);
               return true;
             }
           }
@@ -502,18 +478,11 @@ namespace DUNE
           return false;
         }
 
-        //! Clear current list of targets.
-        void
-        clear(void)
-        {
-          m_list.clear();
-        }
-
         //! Get if target's wants an absolute fix.
         //! @return true if target wants an absolute fix,
         //! false if it wants a relative position.
         bool
-        isFix(std::string name)
+        wantsFix(std::string name)
         {
           // Iterate through list and add if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
@@ -521,7 +490,7 @@ namespace DUNE
           {
             // Same target
             if (itr->compare(name))
-              return itr->getFix();
+              return itr->wantsFix();
           }
 
           // default is relative positioning to be
@@ -530,59 +499,52 @@ namespace DUNE
         }
 
         //! Parse incoming frame.
-        //! @param[in] imc_src IMC source address.
         //! @param[in] msg received acoustic frame.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        parse(uint16_t imc_src, const IMC::UamRxFrame* msg, std::vector<uint8_t>& data)
+        parse(const IMC::UamRxFrame* msg, std::vector<uint8_t>& data)
         {
-          (void)imc_src;
-
-          switch ((uint8_t)msg->data[c_code])
+          if ((uint8_t)msg->data[c_code] == CODE_REQ)
           {
-            case CODE_REQ:
+            if (msg->data[REQ_START] & c_mask_start)
             {
-              if (msg->data[REQ_START] & c_mask_start)
-              {
-                uint16_t period;
-                std::memcpy(&period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
+              uint16_t period;
+              std::memcpy(&period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
 
-                // if period is 0, nothing will be added to scheduler.
-                if (!period)
-                {
-                  // this system is waiting for reply.
-                  m_system = msg->sys_src;
-                  return false;
-                }
-
-                bool fix = msg->data[REQ_START] & c_mask_fix;
-                add(msg->sys_src, fix, period);
-              }
-              else
+              // if period is 0, nothing will be added to scheduler.
+              if (!period)
               {
-                remove(msg->sys_src);
+                // this system is waiting for reply.
+                m_system = msg->sys_src;
+                return false;
               }
 
-              // reply.
-              data.resize(c_fsize_req);
-              // no sync byte yet.
-              std::memcpy(&data[0], &msg->data[1], c_fsize_req);
-              data[c_code - 1] = CODE_RPL;
-              return true;
+              bool fix = msg->data[REQ_START] & c_mask_fix;
+              add(msg->sys_src, fix, period);
             }
-            default:
-              // nothing to do.
-              return false;
+            else
+            {
+              remove(msg->sys_src);
+            }
+
+            // reply.
+            data.resize(c_fsize_req);
+            // no sync byte yet.
+            std::memcpy(&data[0], &msg->data[1], c_fsize_req);
+            data[c_code - 1] = CODE_RPL;
+            return true;
           }
+
+          return false;
         }
 
-        //! Parse USBL fix message.
+        //! Encode USBL fix message to be transmitted.
         //! @param[in] msg pointer to message.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        parse(const IMC::UsblFixExtended* msg, std::vector<uint8_t>& data)
+        encode(const IMC::UsblFixExtended* msg, std::vector<uint8_t>& data)
         {
           if (m_system.empty())
             return false;
@@ -599,18 +561,19 @@ namespace DUNE
           fix.z_units = msg->z_units;
           fix.accuracy = msg->accuracy;
 
+          data[c_code - 1] = CODE_FIX;
           std::memcpy(&data[c_code], &fix, sizeof(UsblTools::Fix));
           m_system.clear();
 
           return true;
         }
 
-        //! Parse USBL position message.
+        //! Encode USBL position message to be transmitted.
         //! @param[in] msg pointer to message.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        parse(const IMC::UsblPositionExtended* msg, std::vector<uint8_t>& data)
+        encode(const IMC::UsblPositionExtended* msg, std::vector<uint8_t>& data)
         {
           if (m_system.empty())
             return false;
@@ -629,18 +592,19 @@ namespace DUNE
           pos.d = msg->d;
           pos.accuracy = msg->accuracy;
 
+          data[c_code - 1] = CODE_POS;
           std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Pos));
           m_system.clear();
 
           return true;
         }
 
-        //! Parse USBL angles message.
+        //! Encode USBL angles message to be transmitted.
         //! @param[in] msg pointer to message.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        parse(const IMC::UsblAnglesExtended* msg, std::vector<uint8_t>& data)
+        encode(const IMC::UsblAnglesExtended* msg, std::vector<uint8_t>& data)
         {
           // Quick mode
           if (m_system.empty())
@@ -658,6 +622,7 @@ namespace DUNE
           ang.elevation = msg->elevation;
           ang.accuracy = msg->accuracy;
 
+          data[c_code - 1] = CODE_ANG;
           std::memcpy(&data[c_code], &ang, sizeof(UsblTools::Ang));
           m_system.clear();
 
@@ -665,12 +630,56 @@ namespace DUNE
         }
 
       private:
+        //! Add target to handler.
+        //! @param[in] target target's name.
+        //! @param[in] fix absolute fix or relative positioning
+        //! @param[in] period target's desired periodicity.
+        void
+        add(std::string name, bool fix, uint16_t period)
+        {
+          // Iterate through list and add if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(name))
+            {
+              itr->reset(fix, period);
+              return;
+            }
+          }
+
+          m_list.push_back(Target(name, fix, period));
+        }
+
+        //! Remove target.
+        //! @param[in] target target's name.
+        void
+        remove(std::string name)
+        {
+          // Iterate through list and add if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Erase target from list.
+            if (itr->compare(name))
+              m_list.erase(itr, itr + 1);
+          }
+        }
+
+        //! Clear current list of targets.
+        void
+        clear(void)
+        {
+          m_list.clear();
+        }
+
         //! List of scheduled targets.
         std::vector<Target> m_list;
         //! System waiting for reply.
         std::string m_system;
         //! Maximum amount of time waiting for system's reply.
-        Time::Counter<double> m_timer;
+        Time::Counter<double> m_modem_wdog;
       };
     };
   }
