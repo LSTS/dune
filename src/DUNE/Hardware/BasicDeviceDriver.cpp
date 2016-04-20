@@ -40,9 +40,9 @@ namespace DUNE
     BasicDeviceDriver::BasicDeviceDriver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx),
       m_sm_state(SM_IDLE),
-      m_powered(false),
       m_log_opened(false),
       m_log_name_pending(false),
+      m_post_power_on_delay(0.0),
       m_power_off_delay(0.0),
       m_fault_count(0),
       m_timeout_count(0)
@@ -243,15 +243,6 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::logPacket(void)
-    {
-      if (!m_log_opened)
-        return;
-
-      onLogPacket();
-    }
-
-    void
     BasicDeviceDriver::closeLog(void)
     {
       if (!m_log_opened)
@@ -264,18 +255,21 @@ namespace DUNE
     }
 
     //! Consume power channel state messages.
+    //! @param[in] msg power channel state.
     void
     BasicDeviceDriver::consume(const IMC::PowerChannelState* msg)
     {
-      if (m_power_channels.find(msg->name) == m_power_channels.end())
+      std::map<std::string, bool>::iterator itr = m_power_channels.find(msg->name);
+
+      if (itr == m_power_channels.end())
         return;
 
-      bool old_state = m_powered;
-      m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
-      if (!old_state && m_powered)
-        debug("device is powered");
-      else if (old_state && !m_powered)
-        debug("device is no longer powered");
+      bool old_state = itr->second;
+      itr->second = (msg->state == IMC::PowerChannelState::PCS_ON);
+      if (!old_state && itr->second)
+        debug("device %s is powered", msg->name.c_str());
+      else if (old_state && !itr->second)
+        debug("device %s is no longer powered", msg->name.c_str());
     }
 
     //! Power-on device.
@@ -302,22 +296,29 @@ namespace DUNE
       if (m_power_channels.empty())
         return;
 
-      std::set<std::string>::const_iterator itr = m_power_channels.begin();
+      std::map<std::string, bool>::iterator itr = m_power_channels.begin();
       for ( ; itr != m_power_channels.end(); ++itr)
       {
         IMC::PowerChannelControl pcc;
         pcc.op = op;
-        pcc.name = *itr;
+        pcc.name = itr->first;
         dispatch(pcc);
       }
     }
 
-    //! Test if device is powered.
-    //! @return true if device is powered, false otherwise.
+    //! Test if devices are powered.
+    //! @return true if all devices are powered, false otherwise.
     bool
     BasicDeviceDriver::isPowered(void)
     {
-      return m_powered;
+      std::map<std::string, bool>::iterator itr = m_power_channels.begin();
+      for (; itr != m_power_channels.end(); ++itr)
+      {
+        if (!itr->second)
+          return false;
+      }
+
+      return true;
     }
 
     void
@@ -505,10 +506,6 @@ namespace DUNE
     {
       trace("handled close log request");
     }
-
-    void
-    BasicDeviceDriver::onLogPacket(void)
-    { }
 
     void
     BasicDeviceDriver::onMain(void)

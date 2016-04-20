@@ -30,6 +30,7 @@
 // ISO C++ 98 headers.
 #include <cstring>
 #include <string>
+#include <map>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -95,7 +96,7 @@ namespace DUNE
       void
       addPowerChannelName(const std::string& name)
       {
-        m_power_channels.insert(name);
+        m_power_channels.insert(std::make_pair(name, false));
       }
 
       virtual bool
@@ -121,9 +122,6 @@ namespace DUNE
 
       virtual void
       onCloseLog(void);
-
-      virtual void
-      onLogPacket(void);
 
       virtual void
       onInitializeDevice(void) = 0;
@@ -182,10 +180,8 @@ namespace DUNE
       StateMachineStates m_sm_state;
       //! State machine state queue.
       std::queue<StateMachineStates> m_sm_state_queue;
-      //! True if device is powered on.
-      bool m_powered;
-      //! Power channel names.
-      std::set<std::string> m_power_channels;
+      //! Power channel names and states.
+      std::map<std::string, bool> m_power_channels;
       //! True if log is opened.
       bool m_log_opened;
       //! True if log name request is pending.
@@ -268,9 +264,6 @@ namespace DUNE
 
       void
       closeLog(void);
-
-      void
-      logPacket(void);
 
       //! Power-on device.
       void
