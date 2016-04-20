@@ -306,15 +306,13 @@ namespace DUNE
       }
     }
 
-    //! Test if devices are powered.
-    //! @return true if all devices are powered, false otherwise.
     bool
-    BasicDeviceDriver::isPowered(void)
+    BasicDeviceDriver::isPowered(bool state)
     {
       std::map<std::string, bool>::iterator itr = m_power_channels.begin();
       for (; itr != m_power_channels.end(); ++itr)
       {
-        if (!itr->second)
+        if (state == !itr->second)
           return false;
       }
 
@@ -345,7 +343,7 @@ namespace DUNE
 
           // Wait for power to be on.
         case SM_ACT_POWER_WAIT:
-          if (isPowered())
+          if (isPowered(true))
           {
             m_power_on_timer.setTop(m_post_power_on_delay);
             queueState(SM_ACT_DEV_WAIT);
@@ -455,7 +453,7 @@ namespace DUNE
 
           // Wait for power to be turned off.
         case SM_DEACT_POWER_WAIT:
-          if (!isPowered())
+          if (isPowered(false))
             queueState(SM_DEACT_DONE);
           break;
 

@@ -278,11 +278,13 @@ namespace DUNE
       void
       controlPower(IMC::PowerChannelControl::OperationEnum op);
 
-      //! Test if device is powered.
-      //! @return true if device is powered, false otherwise.
+      //! Test if all devices are powered or not.
+      //! @param[in] state desired power state.
+      //! @return true if all devices are powered or not, false otherwise.
       bool
-      isPowered(void);
+      isPowered(bool state);
 
+      //! Update state machine.
       void
       updateStateMachine(void);
 
