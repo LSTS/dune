@@ -57,10 +57,11 @@ namespace Transports
       CidDatReceiveMsg cid_dat_receive_msg;
       CidDatSendMsg  cid_dat_send_msg;
       //conf protocol
-      CidSettingsMsg   cid_settings_msg;
-      CidSysRebootMsg  cid_sys_reboot_msg;
+      CidSysInfo cid_sys_info;
+      CidSettingsMsg cid_settings_msg;
+      CidSysRebootMsg cid_sys_reboot_msg;
       CidSettingsSetMsg cid_sys_settings_set_msg;
-      CidSettingsSaveMsg  cid_settings_save_msg;
+      CidSettingsSaveMsg cid_settings_save_msg;
       //NAV protocol
       CidXcvrFixMsg  cid_xcvr_fix_msg;
       CidNavQueryReqMsg cid_nav_query_req_msg;
@@ -419,7 +420,7 @@ namespace Transports
           std::memcpy(&data_Beacon.cid_nav_ref_pos_send_msg.status, msg_raw,1);
           break;
 
-        case  CID_NAV_REF_POS_UPDATE:
+        case CID_NAV_REF_POS_UPDATE:
           data_Beacon.set(CID_NAV_REF_POS_UPDATE);
           ind=updateEcoFix(&data_Beacon.cid_nav_ref_pos_update_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.beacon_id, msg_raw + ind, 1);
@@ -427,6 +428,29 @@ namespace Transports
                       msg_raw + ind + 1, 4);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.position_longitude,
                       msg_raw + ind + 5, 4);
+          break;
+
+        case CID_SYS_INFO:
+          data_Beacon.set(CID_SYS_INFO);
+          std::memcpy(&data_Beacon.cid_sys_info.seconds, msg_raw + 0, 4);
+          std::memcpy(&data_Beacon.cid_sys_info.section, msg_raw + 4, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.part_number, msg_raw + 5, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.part_rev, msg_raw + 7, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.serial_number, msg_raw + 8, 4);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.flags_sys, msg_raw + 12, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.flags_user, msg_raw + 14, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.valid, msg_raw + 16, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.part_number, msg_raw + 17, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.version_maj, msg_raw + 19, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.version_min, msg_raw + 20, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.version_build, msg_raw + 21, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.checksum, msg_raw + 23, 4);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.valid, msg_raw + 27, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.part_number, msg_raw + 28, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.version_maj, msg_raw + 30, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.version_min, msg_raw + 31, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.version_build, msg_raw + 33, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.checksum, msg_raw + 35, 4);
           break;
 
           // Should never get here.
@@ -530,7 +554,13 @@ namespace Transports
           }
           break;
 
-        case  CID_SETTINGS_SAVE:
+        case CID_SETTINGS_SAVE:
+          {
+            //not require parameters
+          }
+          break;
+
+        case CID_SYS_INFO:
           {
             //not require parameters
           }

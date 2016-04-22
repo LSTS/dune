@@ -40,8 +40,11 @@ namespace Transports
 
     //! Input Timeout (s).
     static const double c_input_tout =  5;
-
-    // States of the internal SM.
+    //! Message preamble
+    static const char c_preamble = '$';
+    //! Maximum buffer size.
+    static const int c_bfr_size = 256;
+    //! States of the internal SM.
     enum ParserStates
     {
       // No message is being parsed.
@@ -174,6 +177,20 @@ namespace Transports
       CST_DEX_RESP_REMOTE_ERROR = 0x78
     };
 
+    struct Ticket
+    {
+      //! IMC source address.
+      uint16_t imc_sid;
+      //! IMC source entity.
+      uint8_t imc_eid;
+      //! Sequence number.
+      uint16_t seq;
+      //! Destination modem address.
+      uint16_t addr;
+      //! Wait for ack.
+      bool ack;
+    };
+
     struct MacAddr_T
     {
       union
@@ -212,6 +229,25 @@ namespace Transports
       int16_t gyro_offset_x;
       int16_t gyro_offset_y;
       int16_t gyro_offset_z;
+    };
+
+    struct Hardware_t
+    {
+      uint16_t part_number;
+      uint8_t part_rev;
+      uint32_t serial_number;
+      uint16_t flags_sys;
+      uint16_t flags_user;
+    };
+
+    struct Firmware_t
+    {
+      uint8_t valid;
+      uint16_t part_number;
+      uint8_t version_maj;
+      uint8_t version_min;
+      uint16_t version_build;
+      uint32_t checksum;
     };
 
     struct Acofix_t
