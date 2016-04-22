@@ -34,6 +34,12 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    struct Arguments
+    {
+      float loitering_radius;
+      bool loiter_when_idle;
+    };
+
     struct Task: public DUNE::Maneuvers::Maneuver
     {
       IMC::CommsRelay m_maneuver;
@@ -54,6 +60,8 @@ namespace Maneuver
 
       double m_start_time;
 
+      Arguments m_args;
+
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_moving(false)
@@ -61,6 +69,16 @@ namespace Maneuver
         bindToManeuver<Task, IMC::CommsRelay>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::Announce>(this);
+
+        param("Loiter When Idle", m_args.loiter_when_idle)
+        .defaultValue("false")
+        .units(Units::Meter)
+        .description("Whether to loiter if close to the target point (otherwise stops movement)");
+
+        param("Loitering Radius", m_args.loitering_radius)
+        .defaultValue("75")
+        .units(Units::Meter)
+        .description("Radius of loitering circle after arriving at destination");
       }
 
       void
@@ -100,8 +118,14 @@ namespace Maneuver
       void
       consume(const IMC::EstimatedState* msg)
       {
+        // update positions of other systems received via acoustic modem
         if (msg->getSource() != getSystemId())
+        {
+          double lat = msg->lat, lon = msg->lon;
+          WGS84::displace(msg->x, msg->y, &lat, &lon);
+          updatePosition(msg->getSource(), lat, lon);
           return;
+        }
 
         // set vehicle's position from estimated state
         m_cur_lat = msg->lat;
@@ -113,7 +137,7 @@ namespace Maneuver
         {
           double dist;
           dist = WGS84::distance(m_cur_lat, m_cur_lon, 0,
-                                 m_lat_center, m_lon_center, 0);
+              m_lat_center, m_lon_center, 0);
 
           // if stopped but too far from center position, start moving again
           if (dist > m_maneuver.move_threshold)
@@ -124,24 +148,23 @@ namespace Maneuver
         }
       }
 
-      void
-      consume(const IMC::Announce* msg)
+      void updatePosition(uint16_t system, double lat, double lon)
       {
         bool centerChanged = false;
 
-        if (msg->getSource() == m_maneuver.sys_a)
+        if (system == m_maneuver.sys_a)
         {
-          debug("%s updated its position", msg->sys_name.c_str());
-          m_lat_a = msg->lat;
-          m_lon_a = msg->lon;
+          debug("%s updated its position", m_ctx.resolver.resolve(system));
+          m_lat_a = lat;
+          m_lon_a = lon;
           centerChanged = true;
         }
 
-        if (msg->getSource() == m_maneuver.sys_b)
+        if (system == m_maneuver.sys_b)
         {
-          debug("%s updated its position", msg->sys_name.c_str());
-          m_lat_b = msg->lat;
-          m_lon_b = msg->lon;
+          debug("%s updated its position", m_ctx.resolver.resolve(system));
+          m_lat_b = lat;
+          m_lon_b =  lon;
           centerChanged = true;
         }
 
@@ -154,12 +177,18 @@ namespace Maneuver
           m_path.end_lon = m_lon_center;
 
           debug("new center: %0.5f / %0.5f",
-                Angles::degrees(m_lat_center), Angles::degrees(m_lon_center));
+              Angles::degrees(m_lat_center), Angles::degrees(m_lon_center));
 
           // if we are moving, set new target position (new center)
           if (m_moving)
             dispatch(m_path);
         }
+      }
+
+      void
+      consume(const IMC::Announce* msg)
+      {
+        updatePosition(msg->getSource(), msg->lat, msg->lon);
       }
 
       // Function to check if the vehicle is getting near to the next waypoint
