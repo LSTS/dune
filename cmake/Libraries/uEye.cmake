@@ -37,20 +37,3 @@ if(UEYE)
   endif(DUNE_SYS_HAS_LIB_UEYE_API AND DUNE_SYS_HAS_UEYE_H)
 endif(UEYE)
 
-#if(UEYE)
-#  CHECK_LIBRARY_EXISTS(ueye_api is_GetImageMem "" DUNE_SYS_HAS_LIB_UEYE_API)
-#
-#  if(DUNE_SYS_HAS_LIB_UEYE_API)
-#    set(DUNE_SYS_HAS_UEYE_H 1 CACHE INTERNAL "uEye library")
-#    set(DUNE_USING_UEYE 1 CACHE INTERNAL "uEye library")
-#
-#    dune_add_lib(ueye_api)
-#
-#    dune_test_header(ueye.h)
-#
-#  else(DUNE_SYS_HAS_LIB_UEYE_API)
-#    message(SEND_ERROR "uEye was not found on the system.")
-#    set(DUNE_SYS_HAS_UEYE_H 0 CACHE INTERNAL "uEye library")
-#    set(DUNE_USING_UEYE 0 CACHE INTERNAL "uEye library")
-#  endif(DUNE_SYS_HAS_LIB_UEYE_API)
-#endif(UEYE)
