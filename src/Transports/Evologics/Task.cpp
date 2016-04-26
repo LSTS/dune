@@ -114,6 +114,7 @@ namespace Transports
         m_sock(NULL),
         m_address(0),
         m_driver(NULL),
+        m_sound_speed(0),
         m_sound_speed_eid(-1),
         m_ticket(NULL)
       {
@@ -571,6 +572,12 @@ namespace Transports
         msg.sys_src = safeLookup(reply.src);
         msg.sys_dst = safeLookup(reply.dst);
 
+        IMC::AcousticLink link;
+        link.integrity = reply.integrity;
+        link.rssi = reply.rssi;
+        link.peer = msg.sys_src;
+        dispatch(link);
+
         // Fill flags.
         if (m_address != reply.dst)
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
@@ -595,6 +602,12 @@ namespace Transports
         // Lookup system names.
         msg.sys_src = safeLookup(reply.src);
         msg.sys_dst = safeLookup(reply.dst);
+
+        IMC::AcousticLink link;
+        link.integrity = reply.integrity;
+        link.rssi = reply.rssi;
+        link.peer = msg.sys_src;
+        dispatch(link);
 
         dispatch(msg);
 
