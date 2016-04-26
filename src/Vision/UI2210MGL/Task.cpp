@@ -102,8 +102,6 @@ namespace Vision
       CaptureUeye* m_capture;
       //! OpenCV frame.
       cv::Mat m_image_cv;
-      //! Wavelengths.
-//      float m_wlengths[3];
       //! Frame
       Frame* m_frame;
       //! Current calibration gain
@@ -208,7 +206,6 @@ namespace Vision
         .description("Time interval for each gain in calibration mode");
 
         bind<IMC::LoggingControl>(this);
-//        bind<IMC::HyperSnapRequest>(this);
       }
 
       //! Update internal parameters.
@@ -326,33 +323,6 @@ namespace Vision
         return (int) ((-m_args.c2 + std::sqrt(m_args.c2 * m_args.c2 - 4 * m_args.c3 * (m_args.c1 - wlen))) / (2 * m_args.c3));
       }
 
-//      void
-//      consume(const IMC::HyperSnapRequest* msg)
-//      {
-//        std::vector<std::string> vec;
-//        String::split(msg->wavelengths, ",", vec);
-//
-//        for (int i = 0; i < vec.size(); i++)
-//          m_wlengths[i] = std::atof(vec[i].c_str());
-//      }
-
-//      void
-//      sendData(float wlen, int gain, double timestamp)
-//      {
-//        IMC::HyperSpecData hyper;
-//
-//        hyper.setTimeStamp(timestamp);
-//
-//        int col = wlen2pixel(wlen);
-//
-//        cv::Mat slice = m_image_cv.col(col);
-//        hyper.data.assign(slice.data, slice.data+slice.rows);
-//        hyper.gain = (float)gain / 100;
-//        hyper.wavelen = pixel2wlen(col);
-//
-//        dispatch(hyper);
-//      }
-
       void
       stopCapture(void)
       {
@@ -397,7 +367,6 @@ namespace Vision
           else
           {
             saveImage(m_frame);
-//            sendData(m_args.wlen, m_frame->gain_factor, m_frame->timestamp);
 
             double now = Time::Clock::get();
             double delta = now - m_calib_time;
