@@ -77,6 +77,10 @@ namespace Vision
       double c1, c2, c3;
       //! Wavelength to send
       float wlen;
+      //! Calibration mode
+      bool calib_mode;
+      //! Calibration delta
+      float calib_delta;
     };
 
     //! Device driver task.
@@ -102,6 +106,10 @@ namespace Vision
 //      float m_wlengths[3];
       //! Frame
       Frame* m_frame;
+      //! Current calibration gain
+      int m_calib_gain;
+      //! Time of last calibration gain change
+      double m_calib_time;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -109,7 +117,9 @@ namespace Vision
         m_cam(1),
         m_starting(true),
         m_capture(NULL),
-        m_frame(NULL)
+        m_frame(NULL),
+        m_calib_gain(0),
+        m_calib_time(0.0)
       {
         // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -185,6 +195,17 @@ namespace Vision
         param("Log Dir", m_args.log_dir)
         .defaultValue("")
         .description("Path to Log Directory");
+
+        param("Calibration Mode", m_args.calib_mode)
+        .defaultValue("false")
+        .description("Enable calibration mode");
+
+        param("Calibration Delta", m_args.calib_delta)
+        .defaultValue("1.0")
+        .units(Units::Second)
+        .minimumValue("0.1")
+        .maximumValue("10.0")
+        .description("Time interval for each gain in calibration mode");
 
         bind<IMC::LoggingControl>(this);
 //        bind<IMC::HyperSnapRequest>(this);
@@ -315,22 +336,22 @@ namespace Vision
 //          m_wlengths[i] = std::atof(vec[i].c_str());
 //      }
 
-      void
-      sendData(float wlen, int gain, double timestamp)
-      {
-        IMC::HyperSpecData hyper;
-
-        hyper.setTimeStamp(timestamp);
-
-        int col = wlen2pixel(wlen);
-
-        cv::Mat slice = m_image_cv.col(col);
-        hyper.data.assign(slice.data, slice.data+slice.rows);
-        hyper.gain = (float)gain / 100;
-        hyper.wavelen = pixel2wlen(col);
-
-        dispatch(hyper);
-      }
+//      void
+//      sendData(float wlen, int gain, double timestamp)
+//      {
+//        IMC::HyperSpecData hyper;
+//
+//        hyper.setTimeStamp(timestamp);
+//
+//        int col = wlen2pixel(wlen);
+//
+//        cv::Mat slice = m_image_cv.col(col);
+//        hyper.data.assign(slice.data, slice.data+slice.rows);
+//        hyper.gain = (float)gain / 100;
+//        hyper.wavelen = pixel2wlen(col);
+//
+//        dispatch(hyper);
+//      }
 
       void
       stopCapture(void)
@@ -377,6 +398,19 @@ namespace Vision
           {
             saveImage(m_frame);
 //            sendData(m_args.wlen, m_frame->gain_factor, m_frame->timestamp);
+
+            double now = Time::Clock::get();
+            double delta = now - m_calib_time;
+
+            if (m_args.calib_mode && (delta > m_args.calib_delta))
+            {
+              m_calib_gain++;
+              if (m_calib_gain > 100)
+                m_calib_gain = 0;
+
+              m_capture->setGain(false, m_calib_gain);
+              m_calib_time = now;
+            }
           }
         }
 
