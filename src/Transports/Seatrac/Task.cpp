@@ -254,10 +254,7 @@ namespace Transports
               {
                 m_data.clear();
               }
-              else if (bfr[i] == '\r')
-              {
-              }
-              else
+              else if (bfr[i] != '\r')
               {
                 m_data.push_back(bfr[i]);
               }
