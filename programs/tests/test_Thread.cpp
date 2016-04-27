@@ -46,9 +46,10 @@ public:
   {
     m_counter = 0;
 
-    while (!isStopping() && m_counter < 100)
+    while (m_counter < 5)
     {
-      DUNE::Time::Delay::wait(0.25);
+      DUNE::Time::Delay::wait(1.0);
+      std::cerr << "loop " << m_counter;
       ++m_counter;
     }
   }
@@ -73,6 +74,22 @@ main(void)
       test.failed(DUNE::Utils::String::str("run: %s", e.what()).c_str());
     }
   }
+
+
+  // {
+  //   try
+  //   {
+  //     ThreadA thread;
+  //     thread.start();
+  //     DUNE::Time::Delay::wait(4.0);
+  //     thread.stopAndJoin();
+  //     test.boolean("start()/stopAndJoin()", thread.m_counter > 2);
+  //   }
+  //   catch (std::exception& e)
+  //   {
+  //     test.failed(DUNE::Utils::String::str("run: %s", e.what()).c_str());
+  //   }
+  // }
 
   return 0;
 }
