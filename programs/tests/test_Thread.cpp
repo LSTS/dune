@@ -46,7 +46,7 @@ public:
   {
     m_counter = 0;
 
-    while (!isStopping())
+    while (!isStopping() && m_counter < 100)
     {
       DUNE::Time::Delay::wait(0.25);
       ++m_counter;
