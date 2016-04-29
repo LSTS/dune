@@ -76,12 +76,15 @@ namespace Sensors
       std::vector<double> hard_iron;
       //! Rotation matrix values.
       std::vector<double> rotation_mx;
+      //! Number of seconds without data before reporting an error.
+      double timeout_error;
+      //! Number of seconds without data before
+      //! reporting a failure and restarting.
+      double timeout_failure;
     };
 
     struct Task: public Tasks::Task
     {
-      //! Task arguments.
-      Arguments m_args;
       //! Angular velocity.
       IMC::AngularVelocity m_ang_vel;
       //! Acceleration.
@@ -112,15 +115,29 @@ namespace Sensors
       Math::Matrix m_rotation;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! Entity state timer.
+      Counter<double> m_state_timer;
       //! Error counts.
       ErrorCounts m_err_counts;
       //! Rotated hard-iron calibration parameters.
       double m_hard_iron[c_axes_count];
+      //! Sample count.
+      size_t m_sample_count;
+      //! Faults count.
+      size_t m_faults_count;
+      //! Timeout count.
+      size_t m_timeout_count;
+      //! Task arguments.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_ctl(NULL)
+        m_ctl(NULL),
+        m_state_timer(1.0),
+        m_sample_count(0),
+        m_faults_count(0),
+        m_timeout_count(0)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -152,6 +169,18 @@ namespace Sensors
         .size(9)
         .description("Rotation matrix which is dependent of the mounting position");
 
+        param("Timeout - Error", m_args.timeout_error)
+        .defaultValue("3.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before reporting an error");
+
+        param("Timeout - Failure", m_args.timeout_failure)
+        .defaultValue("6.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before restarting task");
+
         bind<IMC::MagneticField>(this);
       }
 
@@ -176,6 +205,9 @@ namespace Sensors
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
+
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
       }
 
       //! Acquire resources.
@@ -222,7 +254,6 @@ namespace Sensors
       {
         setHardIronFactors();
         setOutputFrequency(m_args.output_frq);
-        m_wdog.setTop(2.0);
       }
 
       void
@@ -423,6 +454,7 @@ namespace Sensors
           m_err_counts.increment(ERR_FLAG_SPI_ERR);
 
         m_wdog.reset();
+        m_sample_count++;
       }
 
       //! Decode output raw data.
@@ -484,6 +516,40 @@ namespace Sensors
       }
 
       void
+      reportEntityState(void)
+      {
+        if (m_wdog.overflow())
+        {
+          if (getEntityState() == IMC::EntityState::ESTA_NORMAL)
+            m_faults_count++;
+
+          std::string text = String::str(DTR("%0.1f seconds without valid data"),
+                                         m_wdog.getElapsed());
+
+          if (m_wdog.getElapsed() >= m_args.timeout_failure)
+            throw RestartNeeded(text, 0);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, text);
+
+          return;
+        }
+
+        if (!m_state_timer.overflow())
+          return;
+
+        double time_elapsed = m_state_timer.getElapsed();
+        double frequency = Math::round(m_sample_count / time_elapsed);
+
+        std::string text = String::str(DTR("active | timeouts: %u | faults: %u | frequency: %u"),
+                                       m_timeout_count,
+                                       m_faults_count,
+                                       (unsigned)frequency);
+
+        m_state_timer.reset();
+        m_sample_count = 0;
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
@@ -492,12 +558,10 @@ namespace Sensors
 
           if (Poll::poll(*m_uart, 1.0))
             readInput();
+          else
+            m_timeout_count++;
 
-          if (m_wdog.overflow())
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR(Status::getString(Status::CODE_COM_ERROR)), 5);
-          }
+          reportEntityState();
         }
       }
     };
