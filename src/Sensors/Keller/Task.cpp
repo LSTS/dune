@@ -149,7 +149,7 @@ namespace Sensors
         Tasks::Periodic(name, ctx),
         m_handle(NULL),
         m_crc_err_count(0),
-        m_state_timer(0),
+        m_state_timer(1),
         m_sample_count(0),
         m_faults_count(0),
         m_timeout_count(0)
