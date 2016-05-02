@@ -43,11 +43,21 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Class used to store a single sample.
+    //! All samples have a location, timestamp, priority and a message (IMC).
     class DataSample
     {
     public:
+      //! Sample global coordinates
       double latDegs, lonDegs, zMeters, timestamp;
-      int priority, source;
+
+      //! Priority of the sample (higher priority samples are transmitted first)
+      int priority;
+
+      //! The system that generated this sample
+      int source;
+
+      //! Actual data gathered at these coords
       IMC::Message* sample;
 
       DataSample(void)
@@ -70,6 +80,7 @@ namespace Transports
       }
     };
 
+    //! Sample comparator based on timestamp
     struct CompareSamples
     {
       bool operator()(const DataSample* p1, const DataSample* p2)
@@ -78,6 +89,7 @@ namespace Transports
       }
     };
 
+    //! Translate a (global coordinates) Data Sample into an IMC HistoricSample message
     HistoricSample*
     parse(DataSample* sample, double base_lat, double base_lon, long base_time)
     {
@@ -89,21 +101,25 @@ namespace Transports
       double lon2 = Angles::radians(sample->lonDegs);
       double x, y, z;
 
+      // compute displacement to used relative to base coordinates
       WGS84::displacement(lat1, lon1, 0, lat2, lon2, 0, &x, &y, &z);
-
       s->x = (int16_t) x;
       s->y = (int16_t) y;
       s->z = (int16_t) (sample->zMeters * 10);
       s->t = (int16_t) (sample->timestamp - base_time);
+
+      // other fields are copied from original
       s->sys_id = sample->source;
       s->sample.set(sample->sample);
       s->priority = sample->priority;
       return s;
     }
 
+    //! Given an HistoricData message, extract all samples
     std::vector<DataSample*>
     parse(const IMC::HistoricData* data)
     {
+      //! retrieved samples
       std::vector<DataSample *> samples;
       MessageList<HistoricSample>::const_iterator it;
 
@@ -123,6 +139,7 @@ namespace Transports
       return samples;
     }
 
+    //! This class is used to store samples locally until they are forwarded to other node
     class DataStore
     {
     public:
@@ -139,6 +156,7 @@ namespace Transports
         }
       }
 
+      //! Add sample to this store
       void
       addSample(DataSample* sample)
       {
@@ -146,6 +164,7 @@ namespace Transports
         samples.push(sample);
       }
 
+      //! Add a series of historic samples packed as an HistoricData message
       void
       addData(const IMC::HistoricData * data)
       {
@@ -155,6 +174,7 @@ namespace Transports
           addSample(*it);
       }
 
+      //! Retrieve a series of sample that take up to 'size'
       IMC::HistoricData*
       pollData(int size)
       {

@@ -40,16 +40,25 @@ namespace Transports
 
     struct Arguments
     {
-      // List of messages to store.
+      //! List of messages to store.
       std::vector<std::string> messages;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
+      //! object used to store samples locally
       DataStore m_store;
+
+      //! task arguments
       Arguments m_args;
+
+      //! last position from local platform
       IMC::EstimatedState m_state;
+
+      //! priority for each message type
       std::map<std::string, int> m_priorities;
+
+      //! messages currently on the way to their destination
       std::map<std::pair<int, int>, IMC::HistoricData> m_sending;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -67,6 +76,7 @@ namespace Transports
         int priority = 0;
         std::vector<std::string> parts;
 
+        // initialize list of messages to be consumed
         for (unsigned int i = 0; i < m_args.messages.size(); ++i)
         {
           parts.clear();
@@ -84,6 +94,7 @@ namespace Transports
           throw std::runtime_error(Utils::String::str(DTR("invalid format: %s"), m_args.messages[i].c_str()));
         }
 
+        // consume these messages on top of transported messages
         consumed.push_back("HistoricData");
         consumed.push_back("EstimatedState");
         consumed.push_back("HistoricDataQuery");
@@ -111,7 +122,7 @@ namespace Transports
         else if (msg->getId() == HistoricDataQuery::getIdStatic())
           process(static_cast<const IMC::HistoricDataQuery*>(msg));
 
-        // only store messages with some defined priority
+        // only store messages with some defined priority (transported)
         if (m_priorities.find(msg->getName()) == m_priorities.end())
           return;
 
@@ -123,6 +134,7 @@ namespace Transports
         {
           DataSample* sample = new DataSample();
 
+          // use last EstimatedState for this sample's position
           double lat = m_state.lat, lon = m_state.lon;
           WGS84::displace(m_state.x, m_state.y, &lat, &lon);
           sample->latDegs = Angles::degrees(lat);
@@ -131,6 +143,7 @@ namespace Transports
           sample->source = msg->getSource();
           sample->timestamp = msg->getTimeStamp();
           sample->sample = msg->clone();
+          // retrieve priority set in the configuration
           sample->priority = m_priorities[msg->getName()];
           debug("Added message of type %s with size %d and priority %d to data store.",
               msg->getName(), sample->serializationSize(), sample->priority);
@@ -138,12 +151,15 @@ namespace Transports
         }
       }
 
+      //! Updates position of this platform
       void
       process(const IMC::EstimatedState* msg)
       {
-        m_state = *msg;
+        if (m_ctx.resolver.isLocal(msg->getSource()))
+          m_state = *msg;
       }
 
+      //! Process incoming HistoricData (multi-hop forwarding)
       void
       process(const IMC::HistoricData* msg)
       {
@@ -154,6 +170,7 @@ namespace Transports
         m_store.addData(msg);
       }
 
+      //! Handle incoming HistoricDataQuery messages
       void
       process(const IMC::HistoricDataQuery* msg)
       {
