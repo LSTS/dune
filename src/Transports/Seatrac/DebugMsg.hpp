@@ -362,7 +362,7 @@ namespace Transports
                       data_Beacon.cid_settings_msg.xcvr_flags);
           task->debug("data_Beacon.cid_settings_msg.xcvr_beacon_id %d",
                       data_Beacon.cid_settings_msg.xcvr_beacon_id);
-          task->debug("data_Beacon.cid_settings_msg.xcvr_beacon_id %d",
+          task->debug("data_Beacon.cid_settings_msg.xcvr_range_tmo %d",
                       data_Beacon.cid_settings_msg.xcvr_range_tmo);
           task->debug("data_Beacon.cid_settings_msg.xcvr_resp_time %d",
                       data_Beacon.cid_settings_msg.xcvr_resp_time);
