@@ -91,7 +91,21 @@ namespace DUNE
       float
       getDistance(void)
       {
-        float dist = (float)max(m_beams);
+        float dist = 0.0;
+        unsigned valid = 0;
+        for (int i = 0; i < m_beams.size(); i++)
+        {
+          if (m_beams(i) > 0)
+          {
+            valid++;
+            dist += m_beams(i);
+          }
+        }
+
+        if (!valid)
+          return -1;
+
+        dist /= valid;
 
         if (dist < c_max)
         {
