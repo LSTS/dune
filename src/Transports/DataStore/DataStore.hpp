@@ -25,7 +25,6 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
-
 #ifndef SRC_TRANSPORTS_DATASTORE_DATASTORE_HPP_
 #define SRC_TRANSPORTS_DATASTORE_DATASTORE_HPP_
 
@@ -42,7 +41,6 @@ namespace Transports
 {
   namespace DataStore
   {
-
     using DUNE_NAMESPACES;
 
     class DataSample
@@ -50,30 +48,32 @@ namespace Transports
     public:
       double latDegs, lonDegs, zMeters, timestamp;
       int priority, source;
-      IMC::Message * sample;
+      IMC::Message* sample;
 
-      DataSample()
+      DataSample(void)
       {
         latDegs = lonDegs = zMeters = timestamp = 0;
         priority = source = -1;
         sample = NULL;
       }
 
-      ~DataSample()
+      ~DataSample(void)
       {
         if (sample != NULL)
           delete sample;
       }
 
       int
-      serializationSize()
+      serializationSize(void)
       {
         return sample->getPayloadSerializationSize() + MINIMUM_SAMPLE_SIZE;
       }
     };
 
-    struct CompareSamples {
-      bool operator()(const DataSample* p1, const DataSample* p2) {
+    struct CompareSamples
+    {
+      bool operator()(const DataSample* p1, const DataSample* p2)
+      {
         return p1->priority <= p2->priority && p1->timestamp < p2->timestamp;
       }
     };
@@ -83,8 +83,10 @@ namespace Transports
     {
       HistoricSample* s = new HistoricSample();
 
-      double lat1 = Angles::radians(base_lat), lat2 = Angles::radians(sample->latDegs);
-      double lon1 = Angles::radians(base_lon), lon2 = Angles::radians(sample->lonDegs);
+      double lat1 = Angles::radians(base_lat);
+      double lat2 = Angles::radians(sample->latDegs);
+      double lon1 = Angles::radians(base_lon);
+      double lon2 = Angles::radians(sample->lonDegs);
       double x, y, z;
 
       WGS84::displacement(lat1, lon1, 0, lat2, lon2, 0, &x, &y, &z);
@@ -99,8 +101,7 @@ namespace Transports
       return s;
     }
 
-
-    std::vector<DataSample *>
+    std::vector<DataSample*>
     parse(const IMC::HistoricData* data)
     {
       std::vector<DataSample *> samples;
@@ -125,12 +126,10 @@ namespace Transports
     class DataStore
     {
     public:
-      DataStore()
-      {
+      DataStore(void)
+      { }
 
-      }
-
-      ~DataStore()
+      ~DataStore(void)
       {
         Concurrency::ScopedRWLock(m_lock, true);
         while (!samples.empty())
@@ -150,25 +149,24 @@ namespace Transports
       void
       addData(const IMC::HistoricData * data)
       {
-        std::vector<DataSample *> tmp = parse(data);
-        std::vector<DataSample *>::iterator it;
+        std::vector<DataSample*> tmp = parse(data);
+        std::vector<DataSample*>::iterator it;
         for (it = tmp.begin(); it != tmp.end(); it++)
-        {
           addSample(*it);
-        }
       }
 
-      IMC::HistoricData * pollData(int size)
+      IMC::HistoricData*
+      pollData(int size)
       {
-        std::vector<DataSample *> added, rejected;
-        IMC::HistoricData * ret = new IMC::HistoricData();
+        std::vector<DataSample*> added, rejected;
+        IMC::HistoricData* ret = new IMC::HistoricData();
         size -= BASE_HISTORY_SIZE; // base fields from HistoricData
 
         Concurrency::ScopedRWLock(m_lock, true);
         while (!samples.empty() && size > MINIMUM_SAMPLE_SIZE)
         {
           // pop next sample
-          DataSample * sample = samples.top();
+          DataSample* sample = samples.top();
           samples.pop();
 
           // check if there is space left for this sample
@@ -183,6 +181,7 @@ namespace Transports
             added.push_back(sample);
           }
         }
+
         // add back samples that didn't fit on the message
         std::vector<DataSample *>::iterator it;
         for (it = rejected.begin(); it != rejected.end(); it++)
@@ -201,7 +200,8 @@ namespace Transports
         for (it = added.begin(); it != added.end(); it++)
         {
           DataSample * sample = *it;
-          ret->data.push_back(parse(sample, ret->base_lat, ret->base_lon, ret->base_time));
+          ret->data.push_back(parse(sample, ret->base_lat,
+                                    ret->base_lon, ret->base_time));
           delete sample;
         }
 
@@ -212,7 +212,7 @@ namespace Transports
       std::priority_queue<DataSample *, std::vector<DataSample *> , CompareSamples> samples;
       Concurrency::RWLock m_lock;
     };
-  } /* namespace DataStore */
-} /* namespace Transports */
+  }
+}
 
-#endif /* SRC_TRANSPORTS_DATASTORE_DATASTORE_HPP_ */
+#endif

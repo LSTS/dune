@@ -38,7 +38,6 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-
     struct Arguments
     {
       // List of messages to store.
@@ -53,7 +52,7 @@ namespace Transports
       std::map<std::string, int> m_priorities;
       std::map<std::pair<int, int>, IMC::HistoricData> m_sending;
 
-      Task(const std::string& name, Tasks::Context& ctx) :
+      Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
         param("Messages", m_args.messages)
@@ -61,7 +60,7 @@ namespace Transports
       }
 
       void
-      onUpdateParameters()
+      onUpdateParameters(void)
       {
         m_priorities.clear();
         std::vector<std::string> consumed;
@@ -103,14 +102,14 @@ namespace Transports
       }
 
       void
-      consume(const IMC::Message * msg)
+      consume(const IMC::Message* msg)
       {
         if (msg->getId() == EstimatedState::getIdStatic())
-          process(static_cast<const IMC::EstimatedState *>(msg));
+          process(static_cast<const IMC::EstimatedState*>(msg));
         else if (msg->getId() == HistoricData::getIdStatic())
-          process(static_cast<const IMC::HistoricData *>(msg));
+          process(static_cast<const IMC::HistoricData*>(msg));
         else if (msg->getId() == HistoricDataQuery::getIdStatic())
-          process(static_cast<const IMC::HistoricDataQuery *>(msg));
+          process(static_cast<const IMC::HistoricDataQuery*>(msg));
 
         // only store messages with some defined priority
         if (m_priorities.find(msg->getName()) == m_priorities.end())
@@ -119,7 +118,6 @@ namespace Transports
         // only start storing messages after there is a known system position
         if (m_state.lat == 0)
           return;
-
 
         if (m_ctx.resolver.isLocal(msg->getSource()))
         {
@@ -163,7 +161,6 @@ namespace Transports
 
         if (msg->type == IMC::HistoricDataQuery::HRTYPE_QUERY)
         {
-
           if (m_sending.find(source) != m_sending.end())
           {
             debug("Adding back data previously queried from same peer as it wasn't cleared with HRTYPE_CLEAR.");
