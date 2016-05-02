@@ -22,7 +22,7 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Jose Pinto                                                       *
+// Author: José Pinto                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -36,7 +36,6 @@ namespace Sensors
   namespace DataStore
   {
     using DUNE_NAMESPACES;
-
 
     struct Arguments
     {
@@ -97,7 +96,7 @@ namespace Sensors
       }
 
       void
-      onUpdateParameters()
+      onUpdateParameters(void)
       {
         m_ctd_counter.setTop(m_args.ctd_period);
         m_tel_counter.setTop(m_args.telemetry_period);
@@ -180,30 +179,28 @@ namespace Sensors
         if (msg->type == IMC::PlanControl::PC_REQUEST
             && msg->op == IMC::PlanControl::PC_START)
         {
-
-          event.text = DUNE::Utils::String::str(
-              "Request to start plan '%s' issued by '%s'.", msg->plan_id.c_str(),
-              srcname.c_str());
+          event.text = Utils::String::str("Request to start plan '%s' issued by '%s'.",
+                                          msg->plan_id.c_str(), srcname.c_str());
         }
         else if (msg->type == IMC::PlanControl::PC_REQUEST
             && msg->op == IMC::PlanControl::PC_STOP)
         {
-          event.text = DUNE::Utils::String::str(
-              "Request to stop plan '%s' issued by '%s'.", msg->plan_id.c_str(),
-              srcname.c_str());
+          event.text = Utils::String::str("Request to stop plan '%s' issued by '%s'.",
+                                          msg->plan_id.c_str(), srcname.c_str());
         }
         else if (msg->type == IMC::PlanControl::PC_SUCCESS
             && msg->op == IMC::PlanControl::PC_START)
         {
-          event.text = DUNE::Utils::String::str(
-              "Successfully finished executing plan '%s'.", msg->plan_id.c_str());
+          event.text = Utils::String::str("Successfully finished executing plan '%s'.",
+                                          msg->plan_id.c_str());
         }
         else if (msg->type == IMC::PlanControl::PC_FAILURE
             && msg->op == IMC::PlanControl::PC_START)
         {
-          event.text = DUNE::Utils::String::str(
-              "Execution of plan '%s' was interrupted.", msg->plan_id.c_str());
+          event.text = Utils::String::str("Execution of plan '%s' was interrupted.",
+                                          msg->plan_id.c_str());
         }
+
         dispatch(event);
       }
 
