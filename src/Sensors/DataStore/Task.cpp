@@ -39,7 +39,6 @@ namespace Sensors
 
     struct Arguments
     {
-      // List of messages to store.
       fp32_t ctd_period;
       fp32_t telemetry_period;
       fp32_t sss_period;
