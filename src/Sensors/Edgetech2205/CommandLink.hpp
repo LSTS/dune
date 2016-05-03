@@ -280,14 +280,10 @@ namespace Sensors
     private:
       //! Maximum packet size.
       static const unsigned c_max_size = 4096;
-      //! Time difference estimation: samples per average.
-      static const unsigned c_time_diff_sample_count = 10;
       //! Parent task.
       Tasks::Task* m_parent;
       //! TCP socket.
       TCPSocket m_sock;
-      //! I/O multiplexer.
-      Poll m_poll;
       //! Parser.
       Parser m_parser;
       //! Packet.
