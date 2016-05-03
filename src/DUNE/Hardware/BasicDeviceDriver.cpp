@@ -56,7 +56,8 @@ namespace DUNE
     void
     BasicDeviceDriver::onResourceRelease(void)
     {
-      closeLog();
+      if (enableLogControl())
+        closeLog();
     }
 
     void
@@ -168,6 +169,9 @@ namespace DUNE
     void
     BasicDeviceDriver::requestLogName(void)
     {
+      if (!enableLogControl())
+        return;
+
       debug("requesting current log path");
       IMC::LoggingControl lc;
       lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
@@ -190,6 +194,9 @@ namespace DUNE
     void
     BasicDeviceDriver::consume(const IMC::LoggingControl* msg)
     {
+      if (!enableLogControl())
+        return;
+
       if ((msg->getDestination() != getSystemId())
           || (msg->getDestinationEntity() != getEntityId()))
         return;
@@ -232,6 +239,9 @@ namespace DUNE
     void
     BasicDeviceDriver::openLog(const Path& path)
     {
+      if (!enableLogControl())
+        return;
+
       if (!isActive() && !isActivating())
         return;
 
@@ -245,6 +255,9 @@ namespace DUNE
     void
     BasicDeviceDriver::closeLog(void)
     {
+      if (!enableLogControl())
+        return;
+
       if (!m_log_opened)
         return;
 
@@ -381,7 +394,12 @@ namespace DUNE
           else
           {
             if (synchronize())
-              queueState(SM_ACT_LOG_REQUEST);
+            {
+              if (enableLogControl())
+                queueState(SM_ACT_LOG_REQUEST);
+              else
+                queueState(SM_ACT_DONE);
+            }
           }
           break;
 
@@ -435,7 +453,9 @@ namespace DUNE
           // Gracefully disconnect from device.
         case SM_DEACT_DISCONNECT:
           disconnect();
-          closeLog();
+
+          if (enableLogControl())
+            closeLog();
 
           m_power_off_timer.setTop(m_power_off_delay);
 
