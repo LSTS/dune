@@ -95,7 +95,7 @@ namespace DUNE
         if (m_teleop_src == 0 || msg->getSource() == m_teleop_src)
           onRemoteActions(msg);
         else
-          war("Ignoring remote operations from %s", m_ctx.resolver.resolve(msg->getSource()));
+          debug(DTR("Ignoring remote control from %s"), m_ctx.resolver.resolve(msg->getSource()));
       }
     }
 
@@ -128,7 +128,8 @@ namespace DUNE
         requestActivation();
         if (m_teleop_src != 0)
         {
-          std::string state = Utils::String::str("Teleoperation by %s", m_ctx.resolver.resolve(m_teleop_src));
+
+          std::string state = Utils::String::str(DTR("teleoperation by %s"), m_ctx.resolver.resolve(m_teleop_src));
           setEntityState(IMC::EntityState::ESTA_NORMAL, state);
         }
         else
