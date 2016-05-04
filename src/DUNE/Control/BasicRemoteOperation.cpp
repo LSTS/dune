@@ -65,9 +65,16 @@ namespace DUNE
       m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
 
       // Register handler routines.
+      bind<IMC::Teleoperation>(this);
       bind<IMC::RemoteActions>(this);
       bind<IMC::RemoteActionsRequest>(this);
       bind<IMC::ControlLoops>(this);
+    }
+
+    void
+    BasicRemoteOperation::consume(const IMC::Teleoperation* msg)
+    {
+      m_teleop_src = Utils::TupleList(msg->custom).get("src", 0);
     }
 
     void
@@ -85,7 +92,10 @@ namespace DUNE
           dispatch(top);
         }
 
-        onRemoteActions(msg);
+        if (m_teleop_src == 0 || msg->getSource() == m_teleop_src)
+          onRemoteActions(msg);
+        else
+          debug(DTR("Ignoring remote control from %s"), m_ctx.resolver.resolve(msg->getSource()));
       }
     }
 
@@ -116,7 +126,13 @@ namespace DUNE
       if (msg->enable == IMC::ControlLoops::CL_ENABLE)
       {
         requestActivation();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        if (m_teleop_src != 0)
+        {
+          std::string state = Utils::String::str(DTR("teleoperation by %s"), m_ctx.resolver.resolve(m_teleop_src));
+          setEntityState(IMC::EntityState::ESTA_NORMAL, state);
+        }
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
       else
       {
