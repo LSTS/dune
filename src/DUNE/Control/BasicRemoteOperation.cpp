@@ -128,7 +128,6 @@ namespace DUNE
         requestActivation();
         if (m_teleop_src != 0)
         {
-
           std::string state = Utils::String::str(DTR("teleoperation by %s"), m_ctx.resolver.resolve(m_teleop_src));
           setEntityState(IMC::EntityState::ESTA_NORMAL, state);
         }
