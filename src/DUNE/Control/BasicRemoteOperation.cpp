@@ -95,7 +95,7 @@ namespace DUNE
         if (m_teleop_src == 0 || msg->getSource() == m_teleop_src)
           onRemoteActions(msg);
         else
-          debug(DTR("Ignoring remote control from %s"), m_ctx.resolver.resolve(msg->getSource()));
+          debug("ignoring remote control from %s", m_ctx.resolver.resolve(msg->getSource()));
       }
     }
 
