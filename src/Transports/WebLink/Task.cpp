@@ -204,7 +204,8 @@ namespace Transports
       {
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
         {
-          const IMC::HistoricData * dataToSend =  msg->data.get();
+          IMC::HistoricData * dataToSend =  (IMC::HistoricData*) msg->data.get()->clone();
+          dispatch(dataToSend);
           m_size = dataToSend->getSerializationSize();
           m_params.resize(m_size);
           IMC::Packet::serialize(dataToSend, &m_params[0], m_size);
@@ -227,6 +228,7 @@ namespace Transports
             }
           }
           m_state = S_CLEAR;
+          delete dataToSend;
         }
 
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_CLEAR)
