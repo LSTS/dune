@@ -503,48 +503,6 @@ namespace Transports
                       data_Beacon.cid_nav_ref_pos_update_msg.position_longitude);
           break;
 
-        case CID_SYS_INFO:
-          task->debug("CID_SYS_INFO");
-          task->debug("data_Beacon.cid_sys_info.seconds %d",
-                      data_Beacon.cid_sys_info.seconds);
-          task->debug("data_Beacon.cid_sys_info.section %d",
-                      data_Beacon.cid_sys_info.section);
-          task->debug("data_Beacon.cid_sys_info.hardware.part_number %d",
-                      data_Beacon.cid_sys_info.hardware.part_number);
-          task->debug("data_Beacon.cid_sys_info.hardware.part_rev %d",
-                      data_Beacon.cid_sys_info.hardware.part_rev);
-          task->debug("data_Beacon.cid_sys_info.hardware,serial_number %d",
-                      data_Beacon.cid_sys_info.hardware.serial_number);
-          task->debug("data_Beacon.cid_sys_info.hardware.flags_sys %d",
-                      data_Beacon.cid_sys_info.hardware.flags_sys);
-          task->debug("data_Beacon.cid_sys_info.hardware.flags_user %d",
-                      data_Beacon.cid_sys_info.hardware.flags_user);
-          task->debug("data_Beacon.cid_sys_info.boot_firmware.valid %d",
-                      data_Beacon.cid_sys_info.boot_firmware.valid);
-          task->debug("data_Beacon.cid_sys_info.boot_firmware.part_number %d",
-                      data_Beacon.cid_sys_info.boot_firmware.part_number);
-          task->debug("data_Beacon.cid_sys_info.boot_firmware.version_maj %d",
-                      data_Beacon.cid_sys_info.boot_firmware.version_maj);
-          task->debug("data_Beacon.cid_sys_info.boot_firmware.version_min %d",
-                      data_Beacon.cid_sys_info.boot_firmware.version_min);
-          task->debug("data_Beacon.cid_sys_info.boot_firmware.version_build %d",
-                      data_Beacon.cid_sys_info.boot_firmware.version_build);
-          task->debug("data_Beacon.cid_sys_info.boot_firmware.checksum %d",
-                      data_Beacon.cid_sys_info.boot_firmware.checksum);
-          task->debug("data_Beacon.cid_sys_info.main_firmware.valid %d",
-                      data_Beacon.cid_sys_info.main_firmware.valid);
-          task->debug("data_Beacon.cid_sys_info.main_firmware.part_number %d",
-                      data_Beacon.cid_sys_info.main_firmware.part_number);
-          task->debug("data_Beacon.cid_sys_info.main_firmware.version_maj %d",
-                      data_Beacon.cid_sys_info.main_firmware.version_maj);
-          task->debug("data_Beacon.cid_sys_info.main_firmware.version_min %d",
-                      data_Beacon.cid_sys_info.main_firmware.version_min);
-          task->debug("data_Beacon.cid_sys_info.main_firmware.version_build %d",
-                      data_Beacon.cid_sys_info.main_firmware.version_build);
-          task->debug("data_Beacon.cid_sys_info.main_firmware.checksum %d",
-                      data_Beacon.cid_sys_info.main_firmware.checksum);
-          break;
-
         default:
           task->debug("Beacon MESSAGE  unknown ID: %d", message_type);
           break;

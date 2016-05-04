@@ -233,25 +233,6 @@ namespace Transports
       int16_t gyro_offset_z;
     };
 
-    struct Hardware_t
-    {
-      uint16_t part_number;
-      uint8_t part_rev;
-      uint32_t serial_number;
-      uint16_t flags_sys;
-      uint16_t flags_user;
-    };
-
-    struct Firmware_t
-    {
-      uint8_t valid;
-      uint16_t part_number;
-      uint8_t version_maj;
-      uint8_t version_min;
-      uint16_t version_build;
-      uint32_t checksum;
-    };
-
     struct Acofix_t
     {
       uint8_t dest_id;

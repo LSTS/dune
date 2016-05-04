@@ -126,15 +126,6 @@ namespace Transports
       Acofix_t aco_fix;
     };
 
-    struct CidSysInfo
-    {
-      uint32_t seconds;
-      uint8_t section;
-      Hardware_t hardware;
-      Firmware_t boot_firmware;
-      Firmware_t main_firmware;
-    };
-
     struct CidNavBeaconPosSendMsg
     {
       uint8_t beacon_id;

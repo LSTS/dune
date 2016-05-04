@@ -60,14 +60,6 @@ namespace Transports
       STA_MAX
     };
 
-    //! Beacon type.
-    enum BeaconType
-    {
-      BT_X110,
-      BT_X150,
-      BT_NONE
-    };
-
     //! Task arguments.
     struct Arguments
     {
@@ -75,17 +67,16 @@ namespace Transports
       std::string uart_dev;
       //! Serial port baud rate.
       unsigned uart_baud;
-      //! Ping Period.
-      double ping_period;
       //! Transmit only underwater.
       bool only_underwater;
-      //! Addresses Number - modem
-      uint8_t addr;
       //Addresses Number - modem
       std::string addr_section;
-      // Model do beacon
-      BeaconType beacon;
     };
+
+    //! Map of system's names.
+    typedef std::map<std::string, unsigned> MapName;
+    //! Map of system's addresses.
+    typedef std::map<unsigned, std::string> MapAddr;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -109,10 +100,6 @@ namespace Transports
       DataSeatrac m_data_beacon;
       //! Time of last serial port input.
       double m_last_input;
-      //! Map of system's names.
-      typedef std::map<std::string, unsigned> MapName;
-      //! Map of system's addresses.
-      typedef std::map<unsigned, std::string> MapAddr;
       //! Map of seatrac modems by name.
       MapName m_modem_names;
       //! Map of seatrac modems by address.
@@ -345,24 +332,6 @@ namespace Transports
             processInput();
           }
           while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
-
-          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
-
-          if( m_data_beacon.cid_sys_info.hardware.part_number == 795)
-          {
-            m_args.beacon = BT_X150;
-            debug("BT_X150");
-          }
-          else if(m_data_beacon.cid_sys_info.hardware.part_number == 843)
-          {
-            m_args.beacon = BT_X110;
-            debug("BT_X110");
-          }
-          else
-          {
-            m_args.beacon = BT_NONE;
-            debug("BT_NONE");
-          }
 
           if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr) &&
                 (m_data_beacon.cid_settings_msg.status_flags == 0x1) &&
