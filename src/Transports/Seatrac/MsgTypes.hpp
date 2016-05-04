@@ -339,7 +339,7 @@ namespace Transports
       packetDataNextPart(int next)
       {
         if (msg_timer.overflow())
-          lock_flag=0;
+          lock_flag = 0;
 
         msg_timer.reset();
 
@@ -376,7 +376,7 @@ namespace Transports
           error_number++;
 
           if (MAX_MESSAGE_ERRORS == error_number)
-            lock_flag=0;
+            lock_flag = 0;
 
           return error_number;
         }

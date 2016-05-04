@@ -298,7 +298,7 @@ namespace Transports
           std::memcpy(&data_Beacon.cid_dat_receive_msg.ack_flag, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind   +1, 1);
           ind += 2;
-          for (i=0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
+          for (i = 0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
           {
             std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i],
                         msg_raw + ind  + i, 1);
@@ -422,7 +422,7 @@ namespace Transports
 
         case CID_NAV_BEACON_POS_UPDATE:
           data_Beacon.set(CID_NAV_BEACON_POS_UPDATE);
-          ind=updateEcoFix(&data_Beacon.cid_nav_beacon_pos_update_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_nav_beacon_pos_update_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_beacon_pos_update_msg.beacon_id, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_nav_beacon_pos_update_msg.position_easting,
                       msg_raw + ind + 1, 2);

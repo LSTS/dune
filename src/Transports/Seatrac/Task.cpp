@@ -101,15 +101,17 @@ namespace Transports
       bool m_stop_comms;
       //! Modem address.
       unsigned m_addr;
-      // Initialize serial buffer reader
-      std::string  m_data;
-      // Initialize serial buffer conversion
+      //! Data buffer.
+      std::string m_data;
+      //! Converted data buffer.
       std::string m_datahex;
-      //seatrac Memory Allocation
-      DataSeatrac data_Beacon;
+      //! Seatrac data structures.
+      DataSeatrac m_data_beacon;
       //! Time of last serial port input.
       double m_last_input;
+      //! Map of system's names.
       typedef std::map<std::string, unsigned> MapName;
+      //! Map of system's addresses.
       typedef std::map<unsigned, std::string> MapAddr;
       //! Map of seatrac modems by name.
       MapName m_modem_names;
@@ -200,20 +202,20 @@ namespace Transports
       void
       processNewData(void)
       {
-        if (data_Beacon.newDataAvailable(CID_DAT_RECEIVE))
+        if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
           handleBinaryMessage();
 
-        if (data_Beacon.newDataAvailable(CID_DAT_SEND))
+        if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
         {
-          if(data_Beacon.cid_dat_send_msg.msg_type == MSG_OWAY)
-            data_Beacon.cid_dat_send_msg.lock_flag = 0;
+          if(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY)
+            m_data_beacon.cid_dat_send_msg.lock_flag = 0;
         }
 
-        if (data_Beacon.newDataAvailable(CID_DAT_ERROR))
+        if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
         {
-          if(data_Beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+          if(m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
           {
-            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
+            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
           {
@@ -248,9 +250,9 @@ namespace Transports
               {
                 msg_raw = m_datahex.data();
                 std::memcpy(&typemes, msg_raw,1);
-                dataParser(typemes, msg_raw + 1, data_Beacon);
+                dataParser(typemes, msg_raw + 1, m_data_beacon);
                 processNewData();
-                printDebugFunction(typemes, data_Beacon, this);
+                printDebugFunction(typemes, m_data_beacon, this);
                 typemes = 0;
               }
               m_data.clear();
@@ -339,19 +341,19 @@ namespace Transports
         {
           do
           {
-            sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, data_Beacon));
+            sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
             processInput();
           }
-          while (data_Beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
+          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
 
-          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, data_Beacon), 1);
+          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
 
-          if( data_Beacon.cid_sys_info.hardware.part_number == 795)
+          if( m_data_beacon.cid_sys_info.hardware.part_number == 795)
           {
             m_args.beacon = BT_X150;
             debug("BT_X150");
           }
-          else if(data_Beacon.cid_sys_info.hardware.part_number == 843)
+          else if(m_data_beacon.cid_sys_info.hardware.part_number == 843)
           {
             m_args.beacon = BT_X110;
             debug("BT_X110");
@@ -362,19 +364,19 @@ namespace Transports
             debug("BT_NONE");
           }
 
-          if (!((data_Beacon.cid_settings_msg.xcvr_beacon_id == m_addr) &&
-                (data_Beacon.cid_settings_msg.status_flags == 0x1) &&
-                (data_Beacon.cid_settings_msg.status_output == 63)))
+          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr) &&
+                (m_data_beacon.cid_settings_msg.status_flags == 0x1) &&
+                (m_data_beacon.cid_settings_msg.status_output == 63)))
           {
-            data_Beacon.cid_settings_msg.status_flags = 0x1;
-            data_Beacon.cid_settings_msg.status_output = 63;
-            data_Beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
-            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, data_Beacon), 2);
-            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, data_Beacon), 2);
-            sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, data_Beacon), 6);
-            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, data_Beacon), 2);
+            m_data_beacon.cid_settings_msg.status_flags = 0x1;
+            m_data_beacon.cid_settings_msg.status_output = 63;
+            m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
+            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
+            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
+            sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
+            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon), 2);
 
-            if (data_Beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
+            if (m_data_beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
             {
               setAndSendState(STA_ERR_STP);
               war(DTR("failed to configure device"));
@@ -423,7 +425,7 @@ namespace Transports
       {
         if (m_stop_comms)
         {
-          data_Beacon.cid_dat_send_msg.lock_flag=0;
+          m_data_beacon.cid_dat_send_msg.lock_flag = 0;
           return;
         }
         sendCommand(cmd);
@@ -444,34 +446,34 @@ namespace Transports
       bool
       hasConnection(void)
       {
-        return data_Beacon.new_message[CID_STATUS];
+        return m_data_beacon.new_message[CID_STATUS];
       }
 
       //! Processing incoming data.
       void
       handleBinaryMessage(void)
       {
-        if (data_Beacon.cid_dat_receive_msg.ack_flag != 0)
+        if (m_data_beacon.cid_dat_receive_msg.ack_flag != 0)
         {
           // ACK message that the message was successfully delivered
-          data_Beacon.cid_dat_receive_msg.ack_flag = 0;
+          m_data_beacon.cid_dat_receive_msg.ack_flag = 0;
 
           // if msg have more than 1 packet, send next part
-          if (data_Beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
+          if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
-            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
+            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
           {
             // Last packet sent.
             // Range can be computed when the target beacon replies with ACK.
-            double range_dist = (double)data_Beacon.cid_dat_receive_msg.aco_fix.range_dist;
+            double range_dist = (double)m_data_beacon.cid_dat_receive_msg.aco_fix.range_dist;
             range_dist /= 10;
 
             if (range_dist > 0)
             {
               IMC::UamRxRange range;
-              range.sys = lookupSystemName(data_Beacon.cid_dat_receive_msg.aco_fix.dest_id);
+              range.sys = lookupSystemName(m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id);
               if (m_ticket != NULL)
                 range.seq = m_ticket->seq;
 
@@ -486,11 +488,11 @@ namespace Transports
         }
         else
         {
-          int data_rec_flag = data_Beacon.cid_dat_receive_msg.packetDataDecode();
+          int data_rec_flag = m_data_beacon.cid_dat_receive_msg.packetDataDecode();
           if (data_rec_flag == 1)
           {
             std::string msg;
-            data_Beacon.cid_dat_receive_msg.getFullMsg(msg);
+            m_data_beacon.cid_dat_receive_msg.getFullMsg(msg);
             handleRxMessage(msg);
             debug("new data");
           }
@@ -514,7 +516,7 @@ namespace Transports
         // Lookup source system name.
         try
         {
-          msg.sys_src = lookupSystemName(data_Beacon.cid_dat_receive_msg.aco_fix.src_id);
+          msg.sys_src = lookupSystemName(m_data_beacon.cid_dat_receive_msg.aco_fix.src_id);
         }
         catch (...)
         {
@@ -524,7 +526,7 @@ namespace Transports
         // Lookup destination system name.
         try
         {
-          msg.sys_dst = lookupSystemName(data_Beacon.cid_dat_receive_msg.aco_fix.dest_id);
+          msg.sys_dst = lookupSystemName(m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id);
         }
         catch (...)
         {
@@ -532,7 +534,7 @@ namespace Transports
         }
 
         // Fill flags.
-        if (m_addr != data_Beacon.cid_dat_receive_msg.aco_fix.dest_id)
+        if (m_addr != m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id)
         {
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
         }
@@ -574,7 +576,7 @@ namespace Transports
         }
 
         // Fail if busy.
-        if (data_Beacon.cid_dat_send_msg.packetDataSendStatus())
+        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
           return;
@@ -585,11 +587,11 @@ namespace Transports
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
         if (ticket.addr != 0)
-          data_Beacon.cid_dat_send_msg.msg_type=MSG_REQ;
+          m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQ;
         else
-          data_Beacon.cid_dat_send_msg.msg_type=MSG_OWAY;
+          m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAY;
 
-        int error_code = data_Beacon.cid_dat_send_msg.packetDataBuild(data_t, ticket.addr);
+        int error_code = m_data_beacon.cid_dat_send_msg.packetDataBuild(data_t, ticket.addr);
 
         switch (error_code)
         {
@@ -603,7 +605,7 @@ namespace Transports
             err(DTR("size mismatch"));
             break;
           default:
-            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
+            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
         }
       }
 
