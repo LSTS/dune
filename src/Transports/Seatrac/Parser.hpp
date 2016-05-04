@@ -24,6 +24,7 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 //***************************************************************************
+
 #ifndef TRANSPORTS_SEATRAC_PARSER_HPP_INCLUDED_
 #define TRANSPORTS_SEATRAC_PARSER_HPP_INCLUDED_
 
@@ -43,26 +44,27 @@ namespace Transports
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
-    //Seatrac data structure
+
+    //! Seatrac data structure.
     struct DataSeatrac
     {
-      //status
+      // Status message.
       CidStatusMsg cid_status_msg;
-      //ping protocol
+      // Ping protocol messages.
       CidPingRequestMsg  cid_ping_req_msg;
       CidPingSendMsg  cid_ping_send_msg;
       CidPingRespMsg cid_ping_resp_msg;
       CidPingErrorMsg cid_ping_error_msg;
-      //data protocol
+      // Data protocol messages.
       CidDatReceiveMsg cid_dat_receive_msg;
       CidDatSendMsg  cid_dat_send_msg;
-      //conf protocol
+      // Configuration protocol messages.
       CidSysInfo cid_sys_info;
       CidSettingsMsg cid_settings_msg;
       CidSysRebootMsg cid_sys_reboot_msg;
       CidSettingsSetMsg cid_sys_settings_set_msg;
       CidSettingsSaveMsg cid_settings_save_msg;
-      //NAV protocol
+      // Navigation protocol messages.
       CidXcvrFixMsg  cid_xcvr_fix_msg;
       CidNavQueryReqMsg cid_nav_query_req_msg;
       CidNavQuerySendMsg cid_nav_query_send_msg;
@@ -71,52 +73,51 @@ namespace Transports
       CidNavBeaconPosSendMsg cid_nav_beacon_pos_send_msg;
       CidNavRefPosSendMsg  cid_nav_ref_pos_send_msg;
       CidNavRefPosUpdateMsg  cid_nav_ref_pos_update_msg;
-      //aco_fix
+      // aco_fix
       Acofix_t ACO_seatrac;
       uint8_t new_message[MESSAGE_NUMBER];
       std::string data_message;
 
-      //!constructor DataSeatrac type
-      DataSeatrac()
+      //! Constructor.
+      DataSeatrac(void)
       {
-        cid_dat_send_msg.lock_flag=0;
-        cid_dat_receive_msg.data_rec_flag=0;
-        for (int i=0; i<MESSAGE_NUMBER;i++)
-        {
-          new_message[i]= 0;
-        }
+        cid_dat_send_msg.lock_flag = 0;
+        cid_dat_receive_msg.data_rec_flag = 0;
+        for (int i = 0; i < MESSAGE_NUMBER; i++)
+          new_message[i] = 0;
       }
 
-      //!set when new message is recived
-      //! @param[in] setdata type of msg that was recived
+      //! Set when new message is received.
+      //! @param[in] setdata type of msg that was received.
       void
       set(CommandID setdata)
       {
-        new_message[setdata]=1;
+        new_message[setdata] = 1;
       }
 
-      //! verify if new message was recived
-      //! @param[in] setdata type of msg that was recived
-      //! @return true if was recived new message and flag is clean
+      //! Verify if new message was received.
+      //! @param[in] setdata type of msg that was received.
+      //! @return true if was received new message and flag is clean.
       uint8_t
       newDataAvailable(unsigned setdata)
       {
-        if(setdata< MESSAGE_NUMBER)
+        if (setdata < MESSAGE_NUMBER)
         {
-          if(new_message[setdata]==1)
+          if (new_message[setdata] == 1)
           {
-            new_message[setdata]=0;
+            new_message[setdata] = 0;
             return 1;
           }
         }
+
         return 0;
       }
     };
 
-    //! Extract data  to a Acofix_t structure
-    //! @ @param[out] aco_fix pointer hwre data is stored
-    //! @ @param[in] ind raw messagem index
-    //! @ @param[in] msg_raw pointer to raw message
+    //! Extract data to a Acofix_t structure.
+    //! @param[out] aco_fix pointer hwre data is stored.
+    //! @param[in] ind raw messagem index.
+    //! @param[in] msg_raw pointer to raw message.
     uint16_t
     updateEcoFix(Acofix_t* aco_fix, uint16_t ind, const char* msg_raw)
     {
@@ -132,83 +133,95 @@ namespace Transports
       std::memcpy(&(*aco_fix).vos, msg_raw + ind + 12, 2);
       std::memcpy(&(*aco_fix).rssi, msg_raw + ind + 14, 2);
       aco_fix->outputFlagsComp();
-      ind=ind+16;
+      ind += 16;
 
-      if (aco_fix->outputflags_list[0]) //Range fields
+      // Range fields.
+      if (aco_fix->outputflags_list[0])
       {
         std::memcpy(&(*aco_fix).range_count, msg_raw + ind, 4);
         std::memcpy(&(*aco_fix).range_time, msg_raw + ind + 4, 4);
         std::memcpy(&(*aco_fix).range_dist, msg_raw + ind + 8, 2);
-        ind=ind+10;
+        ind += 10;
       }
-      if (aco_fix->outputflags_list[1]) //USBL Fields
+
+      // USBL Fields.
+      if (aco_fix->outputflags_list[1])
       {
         std::memcpy(&(*aco_fix).usbl_channels, msg_raw + ind, 1);
-        for (i=0; i<aco_fix->usbl_channels;i++)
-        {
-          std::memcpy(&(*aco_fix).usbl_rssi[i], msg_raw + ind + 1+2*i, 2);
-        }
-        std::memcpy(&(*aco_fix).usbl_azimuth, msg_raw + ind + 1+2*i, 2);
-        std::memcpy(&(*aco_fix).usbl_elevation, msg_raw + ind + 3+2*i, 2);
-        std::memcpy(&(*aco_fix).usbl_fit_error, msg_raw + ind + 5+2*i, 2);
-        ind=ind+7+i*2;
+
+        for (i = 0; i < aco_fix->usbl_channels; i++)
+          std::memcpy(&(*aco_fix).usbl_rssi[i], msg_raw + ind + 1 + 2 * i, 2);
+
+        std::memcpy(&(*aco_fix).usbl_azimuth, msg_raw + ind + 1 + 2 * i, 2);
+        std::memcpy(&(*aco_fix).usbl_elevation, msg_raw + ind + 3 + 2 * i, 2);
+        std::memcpy(&(*aco_fix).usbl_fit_error, msg_raw + ind + 5 + 2 * i, 2);
+        ind += (7 + i * 2);
       }
-      if (aco_fix->outputflags_list[2]) //Position Fields
+
+      // Position Fields.
+      if (aco_fix->outputflags_list[2])
       {
         std::memcpy(&(*aco_fix).position_easting, msg_raw + ind, 2);
         std::memcpy(&(*aco_fix).position_northing, msg_raw + ind + 2, 2);
         std::memcpy(&(*aco_fix).position_depth, msg_raw + ind + 4, 2);
-        ind=ind+12;
+        ind += 12;
       }
+
       return ind;
     }
 
-    //! Extract  to  DataSeatrac data structure
-    //! @param[in] message_type type of msessage to decode
-    //! @param[in] msg_raw raw messagem recived by uart
-    //! @param[out] data_Beacon pointer where the data is stored
+    //! Extract to DataSeatrac data structure.
+    //! @param[in] message_type type of msessage to decode.
+    //! @param[in] msg_raw raw messagem received by uart
+    //! @param[out] data_Beacon pointer where the data is stored.
     void
     dataParser(uint16_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
     {
-      uint16_t ind=0;
-      int i=0;
-      switch(message_type)
+      uint16_t ind = 0;
+      int i = 0;
+
+      switch (message_type)
       {
         case CID_STATUS:
           data_Beacon.set(CID_STATUS);
           std::memcpy(&data_Beacon.cid_status_msg.output_flags, msg_raw, 1);
           data_Beacon.cid_status_msg.outputFlagsComp();
           std::memcpy(&data_Beacon.cid_status_msg.timestamp, msg_raw + 1, 8);
-          ind=9;
-          //ENVIRONMENT
+          ind = 9;
+
+          // Environment.
           if (data_Beacon.cid_status_msg.outputflags_list[0])
           {
             std::memcpy(&data_Beacon.cid_status_msg.environment_supply, msg_raw + ind, 2);
             std::memcpy(&data_Beacon.cid_status_msg.environment_temperature,
                         msg_raw + ind + 2, 2);
-            std::memcpy(&data_Beacon.cid_status_msg.environment_pressure, msg_raw + ind + 4, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_pressure,
+                        msg_raw + ind + 4, 4);
             std::memcpy(&data_Beacon.cid_status_msg.EnvironmentDepth, msg_raw + ind + 8, 4);
             std::memcpy(&data_Beacon.cid_status_msg.EnvironmentVos, msg_raw + ind + 12, 2);
-            ind=ind+14;
+            ind += 14;
           }
-          //ATTITUDE
+
+          // Attitude.
           if (data_Beacon.cid_status_msg.outputflags_list[1])
           {
             std::memcpy(&data_Beacon.cid_status_msg.attitude_yaw, msg_raw + ind, 2);
             std::memcpy(&data_Beacon.cid_status_msg.attitude_pitch, msg_raw + ind + 2, 2);
             std::memcpy(&data_Beacon.cid_status_msg.attitude_roll, msg_raw + ind + 4, 2);
-            ind=ind+6;
+            ind += 6;
           }
-          //MAG_CAL
+
+          // Mag cal.
           if (data_Beacon.cid_status_msg.outputflags_list[2])
           {
             std::memcpy(&data_Beacon.cid_status_msg.mag_cal_buf, msg_raw + ind, 1);
             std::memcpy(&data_Beacon.cid_status_msg.mag_cal_valid, msg_raw + ind  + 1, 1);
             std::memcpy(&data_Beacon.cid_status_msg.mag_cal_age, msg_raw + ind  + 2, 4);
             std::memcpy(&data_Beacon.cid_status_msg.mag_cal_fit, msg_raw + ind  + 6, 1);
-            ind=ind+7;
+            ind += 7;
           }
-          //ACC_CAL
+
+          // Acc cal.
           if (data_Beacon.cid_status_msg.outputflags_list[3])
           {
             std::memcpy(&data_Beacon.cid_status_msg.acc_lim_min_y, msg_raw + ind, 2);
@@ -217,9 +230,10 @@ namespace Transports
             std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_x, msg_raw + ind + 6, 2);
             std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_y, msg_raw + ind + 8, 2);
             std::memcpy(&data_Beacon.cid_status_msg.acc_lim_max_z, msg_raw + ind + 10, 2);
-            ind=ind+12;
+            ind += 12;
           }
-          //AHRS_RAW_DATA
+
+          // AHRS raw data.
           if (data_Beacon.cid_status_msg.outputflags_list[4])
           {
             std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_acc_x, msg_raw + ind, 2);
@@ -231,9 +245,10 @@ namespace Transports
             std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_x, msg_raw + ind + 12, 2);
             std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_y, msg_raw + ind + 14, 2);
             std::memcpy(&data_Beacon.cid_status_msg.ahrs_raw_gyro_z, msg_raw + ind + 16, 2);
-            ind=ind+18;
+            ind += 18;
           }
-          //AHRS_COMP_DATA
+
+          // AHRS computed data.
           if (data_Beacon.cid_status_msg.outputflags_list[5])
           {
             std::memcpy(&data_Beacon.cid_status_msg.ahrs_comp_acc_x, msg_raw + ind, 4);
@@ -250,12 +265,12 @@ namespace Transports
 
         case CID_PING_REQ:
           data_Beacon.set(CID_PING_REQ);
-          ind=updateEcoFix(&data_Beacon.cid_ping_req_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_ping_req_msg.aco_fix, ind, msg_raw);
           break;
 
-        case CID_PING_RESP:  //Message sent when a PING response is received
+        case CID_PING_RESP:  // Message sent when a PING response is received.
           data_Beacon.set(CID_PING_RESP);
-          ind=updateEcoFix(&data_Beacon.cid_ping_resp_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_ping_resp_msg.aco_fix, ind, msg_raw);
           break;
 
         case CID_PING_ERROR:
@@ -274,20 +289,19 @@ namespace Transports
           data_Beacon.set(CID_DAT_SEND);
           std::memcpy(&data_Beacon.cid_dat_send_msg.status, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_send_msg.beacon_id, msg_raw + ind + 1, 1);
-          if(data_Beacon.cid_dat_send_msg.status!=0)
-          {
-            data_Beacon.cid_dat_send_msg.lock_flag=0;
-          }
+          if (data_Beacon.cid_dat_send_msg.status != 0)
+            data_Beacon.cid_dat_send_msg.lock_flag = 0;
           break;
 
         case CID_DAT_RECEIVE:
-          ind=updateEcoFix(&data_Beacon.cid_dat_receive_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_dat_receive_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.ack_flag, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind   +1, 1);
-          ind=ind+2;
-          for (i=0;i<data_Beacon.cid_dat_receive_msg.packet_len;i++)
+          ind += 2;
+          for (i=0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
           {
-            std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i], msg_raw + ind  + i, 1);
+            std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i],
+                        msg_raw + ind  + i, 1);
           }
           data_Beacon.set(CID_DAT_RECEIVE);
           break;
@@ -350,41 +364,47 @@ namespace Transports
 
         case  CID_NAV_QUERY_REQ:
           data_Beacon.set(CID_NAV_QUERY_REQ);
-          ind=updateEcoFix(&data_Beacon.cid_nav_query_req_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_nav_query_req_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_query_req_msg.nav_query_t, msg_raw + ind  + i, 1);
           break;
 
         case  CID_XCVR_FIX:
           data_Beacon.set(CID_XCVR_FIX);
-          ind=updateEcoFix(&data_Beacon.cid_xcvr_fix_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_xcvr_fix_msg.aco_fix, ind, msg_raw);
           break;
 
         case CID_NAV_QUERY_RESP:
           data_Beacon.set(CID_NAV_QUERY_RESP);
-          ind=updateEcoFix(&data_Beacon.cid_nav_querry_resp_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_nav_querry_resp_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.query_flags, msg_raw + ind, 1);
-          ind=ind+1;
+          ind += 1;
           data_Beacon.cid_nav_querry_resp_msg.queryFlagsExtract();
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
           {
             std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_depth, msg_raw + ind,4);
-            ind=ind+4;
+            ind += 4;
           }
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
           {
             std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_supply, msg_raw + ind, 2);
-            ind=ind+2;
+            ind += 2;
           }
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
           {
             std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_temp, msg_raw + ind, 2);
-            ind=ind+2;
+            ind += 2;
           }
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
           {
             std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_yaw, msg_raw + ind, 2);
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_pitch, msg_raw + ind  +2, 2);
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_roll, msg_raw + ind   +4, 2);
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_pitch,
+                        msg_raw + ind + 2, 2);
+            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_roll,
+                        msg_raw + ind + 4, 2);
           }
           break;
 
@@ -400,7 +420,7 @@ namespace Transports
           std::memcpy(&data_Beacon.cid_nav_query_send_msg.status, msg_raw, 1);
           break;
 
-        case CID_NAV_BEACON_POS_UPDATE  :
+        case CID_NAV_BEACON_POS_UPDATE:
           data_Beacon.set(CID_NAV_BEACON_POS_UPDATE);
           ind=updateEcoFix(&data_Beacon.cid_nav_beacon_pos_update_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_beacon_pos_update_msg.beacon_id, msg_raw + ind, 1);
@@ -422,7 +442,7 @@ namespace Transports
 
         case CID_NAV_REF_POS_UPDATE:
           data_Beacon.set(CID_NAV_REF_POS_UPDATE);
-          ind=updateEcoFix(&data_Beacon.cid_nav_ref_pos_update_msg.aco_fix, ind, msg_raw);
+          ind = updateEcoFix(&data_Beacon.cid_nav_ref_pos_update_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.beacon_id, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.position_latitude,
                       msg_raw + ind + 1, 4);
@@ -459,149 +479,142 @@ namespace Transports
           break;
       }
     }
-    //! creates a command to the modem acoustic
-    //! @param[in] cid_type type of message
-    //! @param[in] data_Beacon message structure
-    //! @return srting with the command
+    //! Creates a command to the modem acoustic.
+    //! @param[in] cid_type type of message.
+    //! @param[in] data_Beacon message structure.
+    //! @return string with the command.
     std::string
     commandCreateSeatrac(CommandID cid_type, DataSeatrac& data_Beacon)
     {
       std::string cmd = "#";
       std::string check_sum;
-      std::string message_build=String::str("%02X",(uint16_t) cid_type);
+      std::string message_build = String::str("%02X",(uint16_t) cid_type);
       std::string tmp;
-      switch(cid_type)
+
+      switch (cid_type)
       {
         case CID_PING_SEND:
-          message_build+= String::str("%02X%02X",((uint8_t)data_Beacon.cid_ping_send_msg.dest_id),
-                                      ((uint8_t) data_Beacon.cid_ping_send_msg.msg_type));
+          message_build += String::str("%02X%02X",
+                                       ((uint8_t)data_Beacon.cid_ping_send_msg.dest_id),
+                                       ((uint8_t)data_Beacon.cid_ping_send_msg.msg_type));
           break;
 
         case CID_DAT_SEND:
-          message_build+= String::str("%02X%02X%02X",
-                                      ((uint8_t)data_Beacon.cid_dat_send_msg.dest_id),
-                                      ((uint8_t)data_Beacon.cid_dat_send_msg.msg_type),
-                                      ((uint8_t)data_Beacon.cid_dat_send_msg.packet_len));
-          message_build+= data_Beacon.cid_dat_send_msg.packet_data;
+          message_build += String::str("%02X%02X%02X",
+                                       ((uint8_t)data_Beacon.cid_dat_send_msg.dest_id),
+                                       ((uint8_t)data_Beacon.cid_dat_send_msg.msg_type),
+                                       ((uint8_t)data_Beacon.cid_dat_send_msg.packet_len));
+          message_build += data_Beacon.cid_dat_send_msg.packet_data;
           break;
 
         case CID_SETTINGS_SET:
-          {
-            std::vector<char> msg_temp(110, 0);
-            std::memcpy(&msg_temp[0], &data_Beacon.cid_settings_msg.status_flags, 1);
-            std::memcpy(&msg_temp[1], &data_Beacon.cid_settings_msg.status_output, 1);
-            std::memcpy(&msg_temp[2], &data_Beacon.cid_settings_msg.uart_main_baud, 1);
-            std::memcpy(&msg_temp[3], &data_Beacon.cid_settings_msg.uart_aux_baud, 1);
-            std::memcpy(&msg_temp[4], &data_Beacon.cid_settings_msg.net_mac_addr.bytes, 6);
-            std::memcpy(&msg_temp[10], &data_Beacon.cid_settings_msg.net_ip_addr.bytes, 4);
-            std::memcpy(&msg_temp[14], &data_Beacon.cid_settings_msg.net_ip_subnet.bytes, 4);
-            std::memcpy(&msg_temp[18], &data_Beacon.cid_settings_msg.net_ip_gateway.bytes, 4);
-            std::memcpy(&msg_temp[22], &data_Beacon.cid_settings_msg.net_ip_dns.bytes, 4);
-            std::memcpy(&msg_temp[26], &data_Beacon.cid_settings_msg.net_tcp_port, 2);
-            std::memcpy(&msg_temp[28], &data_Beacon.cid_settings_msg.env_flags, 1);
-            std::memcpy(&msg_temp[29], &data_Beacon.cid_settings_msg.env_pressure_ofs, 4);
-            std::memcpy(&msg_temp[33], &data_Beacon.cid_settings_msg.env_salinity, 2);
-            std::memcpy(&msg_temp[35], &data_Beacon.cid_settings_msg.env_vos, 2);
-            std::memcpy(&msg_temp[37], &data_Beacon.cid_settings_msg.ahrs_flags, 1);
-            std::memcpy(&msg_temp[38], &data_Beacon.cid_settings_msg.ahrs_cal.acc_min_x, 2);
-            std::memcpy(&msg_temp[40], &data_Beacon.cid_settings_msg.ahrs_cal.acc_min_y, 2);
-            std::memcpy(&msg_temp[42], &data_Beacon.cid_settings_msg.ahrs_cal.acc_min_z, 2);
-            std::memcpy(&msg_temp[44], &data_Beacon.cid_settings_msg.ahrs_cal.acc_max_x, 2);
-            std::memcpy(&msg_temp[46], &data_Beacon.cid_settings_msg.ahrs_cal.acc_max_y, 2);
-            std::memcpy(&msg_temp[48], &data_Beacon.cid_settings_msg.ahrs_cal.acc_max_z, 2);
-            std::memcpy(&msg_temp[50], &data_Beacon.cid_settings_msg.ahrs_cal.mag_valid, 1);
-            std::memcpy(&msg_temp[51], &data_Beacon.cid_settings_msg.ahrs_cal.mag_hard_x, 4);
-            std::memcpy(&msg_temp[55], &data_Beacon.cid_settings_msg.ahrs_cal.mag_hard_y, 4);
-            std::memcpy(&msg_temp[59], &data_Beacon.cid_settings_msg.ahrs_cal.mag_hard_z, 4);
-            std::memcpy(&msg_temp[63], &data_Beacon.cid_settings_msg.ahrs_cal.mag_soft_x, 4);
-            std::memcpy(&msg_temp[67], &data_Beacon.cid_settings_msg.ahrs_cal.mag_soft_y, 4);
-            std::memcpy(&msg_temp[71], &data_Beacon.cid_settings_msg.ahrs_cal.mag_soft_z, 4);
-            std::memcpy(&msg_temp[75], &data_Beacon.cid_settings_msg.ahrs_cal.mag_field, 4);
-            std::memcpy(&msg_temp[79], &data_Beacon.cid_settings_msg.ahrs_cal.mag_error, 4);
-            std::memcpy(&msg_temp[83], &data_Beacon.cid_settings_msg.ahrs_cal.gyro_offset_x, 2);
-            std::memcpy(&msg_temp[85], &data_Beacon.cid_settings_msg.ahrs_cal.gyro_offset_y, 2);
-            std::memcpy(&msg_temp[87], &data_Beacon.cid_settings_msg.ahrs_cal.gyro_offset_z, 2);
-            std::memcpy(&msg_temp[89], &data_Beacon.cid_settings_msg.ahrs_yaw_ofs, 2);
-            std::memcpy(&msg_temp[91], &data_Beacon.cid_settings_msg.ahrs_pitch_ofs, 2);
-            std::memcpy(&msg_temp[93], &data_Beacon.cid_settings_msg.ahrs_roll_ofs, 2);
-            std::memcpy(&msg_temp[95], &data_Beacon.cid_settings_msg.xcvr_flags, 1);
-            std::memcpy(&msg_temp[96], &data_Beacon.cid_settings_msg.xcvr_beacon_id, 1);
-            std::memcpy(&msg_temp[97], &data_Beacon.cid_settings_msg.xcvr_range_tmo, 2);
-            std::memcpy(&msg_temp[99], &data_Beacon.cid_settings_msg.xcvr_resp_time, 2);
-            std::memcpy(&msg_temp[101], &data_Beacon.cid_settings_msg.xcvr_yaw, 2);
-            std::memcpy(&msg_temp[103], &data_Beacon.cid_settings_msg.xcvr_pitch, 2);
-            std::memcpy(&msg_temp[105], &data_Beacon.cid_settings_msg.xcvr_roll, 2);
-            std::memcpy(&msg_temp[107], &data_Beacon.cid_settings_msg.xcvr_posflt_vel, 1);
-            std::memcpy(&msg_temp[108], &data_Beacon.cid_settings_msg.xcvr_posflt_ang, 1);
-            std::memcpy(&msg_temp[109], &data_Beacon.cid_settings_msg.xcvr_posflt_tmo, 1);
-            message_build+= String::toHex(msg_temp);
-          }
+        {
+          std::vector<char> msg_temp(110, 0);
+          std::memcpy(&msg_temp[0], &data_Beacon.cid_settings_msg.status_flags, 1);
+          std::memcpy(&msg_temp[1], &data_Beacon.cid_settings_msg.status_output, 1);
+          std::memcpy(&msg_temp[2], &data_Beacon.cid_settings_msg.uart_main_baud, 1);
+          std::memcpy(&msg_temp[3], &data_Beacon.cid_settings_msg.uart_aux_baud, 1);
+          std::memcpy(&msg_temp[4], &data_Beacon.cid_settings_msg.net_mac_addr.bytes, 6);
+          std::memcpy(&msg_temp[10], &data_Beacon.cid_settings_msg.net_ip_addr.bytes, 4);
+          std::memcpy(&msg_temp[14], &data_Beacon.cid_settings_msg.net_ip_subnet.bytes, 4);
+          std::memcpy(&msg_temp[18], &data_Beacon.cid_settings_msg.net_ip_gateway.bytes, 4);
+          std::memcpy(&msg_temp[22], &data_Beacon.cid_settings_msg.net_ip_dns.bytes, 4);
+          std::memcpy(&msg_temp[26], &data_Beacon.cid_settings_msg.net_tcp_port, 2);
+          std::memcpy(&msg_temp[28], &data_Beacon.cid_settings_msg.env_flags, 1);
+          std::memcpy(&msg_temp[29], &data_Beacon.cid_settings_msg.env_pressure_ofs, 4);
+          std::memcpy(&msg_temp[33], &data_Beacon.cid_settings_msg.env_salinity, 2);
+          std::memcpy(&msg_temp[35], &data_Beacon.cid_settings_msg.env_vos, 2);
+          std::memcpy(&msg_temp[37], &data_Beacon.cid_settings_msg.ahrs_flags, 1);
+          std::memcpy(&msg_temp[38], &data_Beacon.cid_settings_msg.ahrs_cal.acc_min_x, 2);
+          std::memcpy(&msg_temp[40], &data_Beacon.cid_settings_msg.ahrs_cal.acc_min_y, 2);
+          std::memcpy(&msg_temp[42], &data_Beacon.cid_settings_msg.ahrs_cal.acc_min_z, 2);
+          std::memcpy(&msg_temp[44], &data_Beacon.cid_settings_msg.ahrs_cal.acc_max_x, 2);
+          std::memcpy(&msg_temp[46], &data_Beacon.cid_settings_msg.ahrs_cal.acc_max_y, 2);
+          std::memcpy(&msg_temp[48], &data_Beacon.cid_settings_msg.ahrs_cal.acc_max_z, 2);
+          std::memcpy(&msg_temp[50], &data_Beacon.cid_settings_msg.ahrs_cal.mag_valid, 1);
+          std::memcpy(&msg_temp[51], &data_Beacon.cid_settings_msg.ahrs_cal.mag_hard_x, 4);
+          std::memcpy(&msg_temp[55], &data_Beacon.cid_settings_msg.ahrs_cal.mag_hard_y, 4);
+          std::memcpy(&msg_temp[59], &data_Beacon.cid_settings_msg.ahrs_cal.mag_hard_z, 4);
+          std::memcpy(&msg_temp[63], &data_Beacon.cid_settings_msg.ahrs_cal.mag_soft_x, 4);
+          std::memcpy(&msg_temp[67], &data_Beacon.cid_settings_msg.ahrs_cal.mag_soft_y, 4);
+          std::memcpy(&msg_temp[71], &data_Beacon.cid_settings_msg.ahrs_cal.mag_soft_z, 4);
+          std::memcpy(&msg_temp[75], &data_Beacon.cid_settings_msg.ahrs_cal.mag_field, 4);
+          std::memcpy(&msg_temp[79], &data_Beacon.cid_settings_msg.ahrs_cal.mag_error, 4);
+          std::memcpy(&msg_temp[83], &data_Beacon.cid_settings_msg.ahrs_cal.gyro_offset_x, 2);
+          std::memcpy(&msg_temp[85], &data_Beacon.cid_settings_msg.ahrs_cal.gyro_offset_y, 2);
+          std::memcpy(&msg_temp[87], &data_Beacon.cid_settings_msg.ahrs_cal.gyro_offset_z, 2);
+          std::memcpy(&msg_temp[89], &data_Beacon.cid_settings_msg.ahrs_yaw_ofs, 2);
+          std::memcpy(&msg_temp[91], &data_Beacon.cid_settings_msg.ahrs_pitch_ofs, 2);
+          std::memcpy(&msg_temp[93], &data_Beacon.cid_settings_msg.ahrs_roll_ofs, 2);
+          std::memcpy(&msg_temp[95], &data_Beacon.cid_settings_msg.xcvr_flags, 1);
+          std::memcpy(&msg_temp[96], &data_Beacon.cid_settings_msg.xcvr_beacon_id, 1);
+          std::memcpy(&msg_temp[97], &data_Beacon.cid_settings_msg.xcvr_range_tmo, 2);
+          std::memcpy(&msg_temp[99], &data_Beacon.cid_settings_msg.xcvr_resp_time, 2);
+          std::memcpy(&msg_temp[101], &data_Beacon.cid_settings_msg.xcvr_yaw, 2);
+          std::memcpy(&msg_temp[103], &data_Beacon.cid_settings_msg.xcvr_pitch, 2);
+          std::memcpy(&msg_temp[105], &data_Beacon.cid_settings_msg.xcvr_roll, 2);
+          std::memcpy(&msg_temp[107], &data_Beacon.cid_settings_msg.xcvr_posflt_vel, 1);
+          std::memcpy(&msg_temp[108], &data_Beacon.cid_settings_msg.xcvr_posflt_ang, 1);
+          std::memcpy(&msg_temp[109], &data_Beacon.cid_settings_msg.xcvr_posflt_tmo, 1);
+          message_build += String::toHex(msg_temp);
+          break;
+        }
+        case CID_SYS_REBOOT:
+          message_build += String::str("%02X%02X",0x95,0x6A);
           break;
 
-        case  CID_SYS_REBOOT:
-          message_build+= String::str("%02X%02X",0x95,0x6A);
+        case CID_NAV_BEACON_POS_SEND:
+        {
+          std::vector<char> msg_temp(7, 0);
+          std::memcpy(&msg_temp[0], &data_Beacon.cid_nav_beacon_pos_send_msg.beacon_id, 1);
+          std::memcpy(&msg_temp[1], &data_Beacon.cid_nav_beacon_pos_send_msg.position_easting, 2);
+          std::memcpy(&msg_temp[3],
+                      &data_Beacon.cid_nav_beacon_pos_send_msg.position_northing, 2);
+          std::memcpy(&msg_temp[5], &data_Beacon.cid_nav_beacon_pos_send_msg.position_depth, 2);
+          message_build += String::toHex(msg_temp);
           break;
-
-        case  CID_NAV_BEACON_POS_SEND:
-          {
-            std::vector<char> msg_temp(7, 0);
-            std::memcpy(&msg_temp[0], &data_Beacon.cid_nav_beacon_pos_send_msg.beacon_id, 1);
-            std::memcpy(&msg_temp[1], &data_Beacon.cid_nav_beacon_pos_send_msg.position_easting, 2);
-            std::memcpy(&msg_temp[3],
-                        &data_Beacon.cid_nav_beacon_pos_send_msg.position_northing, 2);
-            std::memcpy(&msg_temp[5], &data_Beacon.cid_nav_beacon_pos_send_msg.position_depth, 2);
-            message_build+= String::toHex(msg_temp);
-          }
-          break;
-
+        }
         case CID_SETTINGS_SAVE:
-          {
-            //not require parameters
-          }
+          // not require parameters.
           break;
 
         case CID_SYS_INFO:
-          {
-            //not require parameters
-          }
+          // not require parameters.
           break;
 
         case CID_NAV_REF_POS_SEND:
-          {
-            std::vector<char> msg_temp(8, 0);
-            std::memcpy(&msg_temp[0], &data_Beacon.cid_nav_ref_pos_send_msg.position_latitude, 4);
-            std::memcpy(&msg_temp[4], &data_Beacon.cid_nav_ref_pos_send_msg.position_longitude, 4);
-            message_build+= String::toHex(msg_temp);
-          }
+        {
+          std::vector<char> msg_temp(8, 0);
+          std::memcpy(&msg_temp[0], &data_Beacon.cid_nav_ref_pos_send_msg.position_latitude, 4);
+          std::memcpy(&msg_temp[4], &data_Beacon.cid_nav_ref_pos_send_msg.position_longitude, 4);
+          message_build += String::toHex(msg_temp);
           break;
-
+        }
         case CID_NAV_QUERY_SEND:
-          {
-            message_build+= String::str("%02X%02X",
-                                        ((uint8_t)data_Beacon.cid_nav_query_send_msg.dest_id),
-                                        ((uint8_t) data_Beacon.cid_nav_query_send_msg.query_flags));
-          }
+          message_build+= String::str("%02X%02X",
+                                      ((uint8_t)data_Beacon.cid_nav_query_send_msg.dest_id),
+                                      ((uint8_t) data_Beacon.cid_nav_query_send_msg.query_flags));
           break;
 
-          //Should never get here.
+          // should never get here.
         default:
-
           break;
       }
-      //calc CRC
+
+      // Compute CRC.
       std::string msg = String::fromHex(message_build);
       const char* msg_raw = msg.data();
-      uint16_t temp_crc =CRC16::compute((uint8_t*) msg_raw,msg.size(),0);
-      uint16_t crc= ((0x00ff & temp_crc)<<8) + ((0xff00 & temp_crc) >> 8);
-      check_sum=String::str("%04X",(uint16_t) crc);
-      // ADD params to message
-      cmd+= message_build;
-      cmd+=  check_sum;
-      cmd+= "\n\r";
-      //std::cout << "COMANDO: " << cmd << std::endl;
+      uint16_t temp_crc = CRC16::compute((uint8_t*) msg_raw, msg.size(), 0);
+      uint16_t crc = ((0x00ff & temp_crc) << 8) + ((0xff00 & temp_crc) >> 8);
+      check_sum = String::str("%04X",(uint16_t) crc);
+      // Add parameters to the message.
+      cmd += message_build;
+      cmd += check_sum;
+      cmd += "\n\r";
       return cmd;
     }
 
   }
 }
+
 #endif

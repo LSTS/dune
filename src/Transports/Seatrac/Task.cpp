@@ -42,10 +42,14 @@
 
 namespace Transports
 {
+  //! Blueprint Subsea's Seatrac acoustic modem driver.
+  //!
+  //! @author João Teixeira.
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
 
+    //! Entity states.
     enum EntityStates
     {
       STA_BOOT,
@@ -56,7 +60,7 @@ namespace Transports
       STA_MAX
     };
 
-    //Model do beacon
+    //! Beacon type.
     enum BeaconType
     {
       BT_X110,
@@ -64,7 +68,7 @@ namespace Transports
       BT_NONE
     };
 
-    // Configuration parameters.
+    //! Task arguments.
     struct Arguments
     {
       //! Serial port device.
@@ -162,6 +166,8 @@ namespace Transports
         bind<IMC::UamTxFrame>(this);
       }
 
+      //! Set entity state.
+      //! @param[in] state new entity state.
       void
       setAndSendState(EntityStates state)
       {
@@ -170,59 +176,60 @@ namespace Transports
                        m_states[m_state_entity].description);
       }
 
+      //! Process sentence.
+      //! @return true if message was correctly processed, false otherwise.
       bool
       processSentence(void)
       {
-        char msg_validity=false;
-        uint16_t crc,crc2;
-        std::string msg = String::fromHex(m_data.substr((m_data.size()-4),4));
-        std::memcpy(&crc2,msg.data(),2);
-        m_datahex = String::fromHex(m_data.erase((m_data.size()-4),4));
-        crc =CRC16::compute((uint8_t*) m_datahex.data(),m_datahex.size(),0);
-        if(crc == crc2)
-        {
-          msg_validity=true;
-        }
+        bool msg_validity = false;
+        uint16_t crc, crc2;
+        std::string msg = String::fromHex(m_data.substr((m_data.size() - 4), 4));
+        std::memcpy(&crc2, msg.data(), 2);
+        m_datahex = String::fromHex(m_data.erase((m_data.size() - 4), 4));
+        crc = CRC16::compute((uint8_t*) m_datahex.data(), m_datahex.size(), 0);
+
+        if (crc == crc2)
+          msg_validity = true;
         else
-        {
-          war(DTR("invalid ckecksum"));
-          msg_validity=false;
-        }
+          war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+
         return msg_validity;
       }
 
+      //! Process new data.
       void
-      precessNewData(void)
+      processNewData(void)
       {
         if (data_Beacon.newDataAvailable(CID_DAT_RECEIVE))
-              handleBinaryMessage();
+          handleBinaryMessage();
 
         if (data_Beacon.newDataAvailable(CID_DAT_SEND))
         {
           if(data_Beacon.cid_dat_send_msg.msg_type == MSG_OWAY)
-            data_Beacon.cid_dat_send_msg.lock_flag=0;
+            data_Beacon.cid_dat_send_msg.lock_flag = 0;
         }
 
         if (data_Beacon.newDataAvailable(CID_DAT_ERROR))
         {
-          if(data_Beacon.cid_dat_send_msg.packetDataNextPart(0)<MAX_MESSAGE_ERRORS)
+          if(data_Beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
           {
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
           }
           else
           {
-            war(DTR("Part of msg failed"));
+            war(DTR("part of message failed"));
             clearTicket(IMC::UamTxStatus::UTS_FAILED);
           }
         }
       }
 
+      //! Read sentence.
       void
       readSentence(void)
       {
         // Initialize received message parser
         char bfr[c_bfr_size];
-        uint16_t typemes=0;
+        uint16_t typemes = 0;
         const char* msg_raw;
         size_t rv;
 
@@ -237,12 +244,12 @@ namespace Transports
             {
               m_dev_data.value.assign(sanitize(m_data));
               dispatch(m_dev_data);
-              if(processSentence())
+              if (processSentence())
               {
                 msg_raw = m_datahex.data();
                 std::memcpy(&typemes, msg_raw,1);
-                dataParser(typemes, msg_raw+1, data_Beacon);
-                precessNewData();
+                dataParser(typemes, msg_raw + 1, data_Beacon);
+                processNewData();
                 printDebugFunction(typemes, data_Beacon, this);
                 typemes = 0;
               }
@@ -263,6 +270,8 @@ namespace Transports
         }
       }
 
+      //! Open TCP socket.
+      //! @return true if socket was opened, false otherwise.
       bool
       openSocket(void)
       {
@@ -277,6 +286,7 @@ namespace Transports
         m_handle = sock;
         return true;
       }
+
       //! Acquire resources.
       void
       onResourceAcquisition(void)
@@ -284,9 +294,8 @@ namespace Transports
         setAndSendState(STA_BOOT);
         try
         {
-
           if (openSocket())
-           return;
+            return;
 
           SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
           port->setCanonicalInput(true);
@@ -324,29 +333,32 @@ namespace Transports
         }
 
         m_last_input = Clock::get();
-        processInput(1);
+        processInput();
+
         if (hasConnection())
         {
           do
           {
             sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, data_Beacon));
-            processInput(1);
+            processInput();
           }
           while (data_Beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
+
           sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, data_Beacon), 1);
-          if(data_Beacon.cid_sys_info.hardware.part_number == 795)
+
+          if( data_Beacon.cid_sys_info.hardware.part_number == 795)
           {
-            m_args.beacon=BT_X150;
+            m_args.beacon = BT_X150;
             debug("BT_X150");
           }
           else if(data_Beacon.cid_sys_info.hardware.part_number == 843)
           {
-            m_args.beacon=BT_X110;
+            m_args.beacon = BT_X110;
             debug("BT_X110");
           }
           else
           {
-            m_args.beacon=BT_NONE;
+            m_args.beacon = BT_NONE;
             debug("BT_NONE");
           }
 
@@ -365,20 +377,21 @@ namespace Transports
             if (data_Beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
             {
               setAndSendState(STA_ERR_STP);
-              war(DTR("Seatrac change of configuration failed"));
+              war(DTR("failed to configure device"));
             }
-            inf(DTR("Seatrac ready"));
+
+            debug("ready");
             setAndSendState(STA_IDLE);
           }
           else
           {
-            inf(DTR("Seatrac ready"));
+            debug("ready");
             setAndSendState(STA_IDLE);
           }
         }
         else
         {
-          war(DTR("NO beacon Connection"));
+          err("%s", DTR(Status::getString(CODE_COM_ERROR)));
           setAndSendState(STA_ERR_STP);
           throw std::runtime_error(m_states[m_state_entity].description);
         }
@@ -392,10 +405,10 @@ namespace Transports
         Memory::clear(m_handle);
       }
 
-      //! send command and waits for response
-      //! @param[in] cmd command string
-      //! @param[in] delay_bef delay before send comamnd
-      //! @param[in] delay_aft delay after send comamnd
+      //! Send command and waits for response.
+      //! @param[in] cmd command string.
+      //! @param[in] delay_bef delay before send comamnd.
+      //! @param[in] delay_aft delay after send comamnd.
       void
       sendCommandAndWait(const std::string& cmd, double delay_aft)
       {
@@ -403,8 +416,8 @@ namespace Transports
         processInput(delay_aft);
       }
 
-      //!send command if the modem has conditions to operate
-      //! @param[in] cmd command string
+      //! Send command if the modem has conditions to operate.
+      //! @param[in] cmd command string.
       void
       sendProtectedCommand(const std::string& cmd)
       {
@@ -415,8 +428,9 @@ namespace Transports
         }
         sendCommand(cmd);
       }
-      //! send command to the acoustic modem
-      //! @param[in] cmd command string
+
+      //! Send command to the acoustic modem.
+      //! @param[in] cmd command string.
       void
       sendCommand(const std::string& cmd)
       {
@@ -425,15 +439,15 @@ namespace Transports
         dispatch(m_dev_data);
       }
 
-      //!checks if the modem is working
-      //! @return true if have a new message
+      //! Checks if the modem is working.
+      //! @return true if modem has a new message.
       bool
       hasConnection(void)
       {
         return data_Beacon.new_message[CID_STATUS];
       }
 
-      //!processing data received by acoustic modem
+      //! Processing incoming data.
       void
       handleBinaryMessage(void)
       {
@@ -442,15 +456,15 @@ namespace Transports
           // ACK message that the message was successfully delivered
           data_Beacon.cid_dat_receive_msg.ack_flag = 0;
 
-          //if msg have more than 1 packet, send next part
+          // if msg have more than 1 packet, send next part
           if (data_Beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
           }
           else
           {
-            //Last paket has send
-            //range can be computed when the target beacon respond  with ACK Msg
+            // Last packet sent.
+            // Range can be computed when the target beacon replies with ACK.
             double range_dist = (double)data_Beacon.cid_dat_receive_msg.aco_fix.range_dist;
             range_dist /= 10;
 
@@ -478,25 +492,25 @@ namespace Transports
             std::string msg;
             data_Beacon.cid_dat_receive_msg.getFullMsg(msg);
             handleRxMessage(msg);
-            debug("New Data");
+            debug("new data");
           }
 
           if (data_rec_flag == -1)
-            war(DTR("Previous msg Fail - Wrong msg order"));
+            war(DTR("wrong message order"));
 
           if (data_rec_flag == 0)
-            debug("Colecting data");
+            debug("colecting data");
         }
       }
 
-      //!publish received acoustic message
-      //! @param[in] string whith new acoustic message
+      //! Publish received acoustic message.
+      //! @param[in] str received message.
       void
       handleRxMessage(const std::string& str)
       {
-
         IMC::UamRxFrame msg;
         msg.data.assign((uint8_t*)&str[0], (uint8_t*)&str[str.size()]);
+
         // Lookup source system name.
         try
         {
@@ -506,6 +520,7 @@ namespace Transports
         {
           msg.sys_src = "unknown";
         }
+
         // Lookup destination system name.
         try
         {
@@ -515,6 +530,7 @@ namespace Transports
         {
           msg.sys_dst = "unknown";
         }
+
         // Fill flags.
         if (m_addr != data_Beacon.cid_dat_receive_msg.aco_fix.dest_id)
         {
@@ -524,7 +540,6 @@ namespace Transports
         dispatch(msg);
       }
 
-      //!checks for messages to transmit
       void
       consume(const IMC::UamTxFrame* msg)
       {
@@ -579,20 +594,23 @@ namespace Transports
         switch (error_code)
         {
           case 1:
-            err(DTR("channel is busy"));
+            inf(DTR("device is busy"));
             break;
           case 2:
-            err(DTR("Previous message Failed timeout detected"));
+            err(DTR("previous message failed, timeout detected"));
             break;
           case 3:
-            err(DTR("IMC DATA do not have the correct SIZE"));
+            err(DTR("size mismatch"));
             break;
           default:
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, data_Beacon));
         }
       }
 
-      //! updates UamTxStatus
+      //! Updates transmission status.
+      //! @param[in] ticket ticket status to be transmitted.
+      //! @param[in] value status index.
+      //! @param[in] error error message.
       void
       sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
                    const std::string& error = "")
@@ -606,6 +624,9 @@ namespace Transports
         dispatch(status);
       }
 
+      //! Clear ticket.
+      //! @param[in] reason reason value.
+      //! @param[in] error error message.
       void
       clearTicket(IMC::UamTxStatus::ValueEnum reason, const std::string& error = "")
       {
@@ -617,6 +638,8 @@ namespace Transports
         }
       }
 
+      //! Replace ticket.
+      //! @param[in] ticket new ticket to replace previous one.
       void
       replaceTicket(const Ticket& ticket)
       {
@@ -624,7 +647,9 @@ namespace Transports
         m_ticket = new Ticket(ticket);
       }
 
-      //!searching the system address
+      //! Lookup system address.
+      //! @param[in] name system name
+      //! @return system address.
       unsigned
       lookupSystemAddress(const std::string& name)
       {
@@ -635,7 +660,10 @@ namespace Transports
         }
         return itr->second;
       }
-      //!Search the system name
+
+      //! Lookup system name.
+      //! @param[in] addr system address.
+      //! @return system name.
       std::string
       lookupSystemName(unsigned addr)
       {
@@ -647,9 +675,10 @@ namespace Transports
         return itr->second;
       }
 
-      //! processes all task inputs
+      //! Check for incoming data.
+      //! @param[in] timeout timeout time.
       void
-      processInput(double timeout)
+      processInput(double timeout = 1.0)
       {
         double deadline = Clock::get() + timeout;
         do
@@ -664,10 +693,9 @@ namespace Transports
             else
               setAndSendState(STA_IDLE);
           }
-        } while (Clock::get() <= deadline );
+        } while (Clock::get() <= deadline);
       }
 
-      //! Verifies the medium in which it is to operate
       void
       consume(const IMC::VehicleMedium* msg)
       {
@@ -693,8 +721,8 @@ namespace Transports
       {
         while (!stopping())
         {
-          // Modem
-          processInput(1);
+          // Modem.
+          processInput();
 
           if (Clock::get() >= (m_last_input + c_input_tout))
             setAndSendState(STA_ERR_COM);
@@ -703,4 +731,5 @@ namespace Transports
     };
   }
 }
+
 DUNE_TASK

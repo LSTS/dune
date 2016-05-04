@@ -24,8 +24,9 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 //***************************************************************************
-#ifndef TRANSPORTS_SEATRAC_DATATYPES_HPP_INCLUDED_
-#define TRANSPORTS_SEATRAC_DATATYPES_HPP_INCLUDED_
+
+#ifndef TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
+#define TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
 
 #define MESSAGE_NUMBER (0x77 +0x1)
 #define MAX_MESSAGE_ERRORS 5
@@ -44,6 +45,7 @@ namespace Transports
     static const char c_preamble = '$';
     //! Maximum buffer size.
     static const int c_bfr_size = 256;
+
     //! States of the internal SM.
     enum ParserStates
     {
@@ -262,31 +264,32 @@ namespace Transports
       int16_t depth_local;
       uint16_t vos;
       int16_t rssi;
-      // Range fields
+      // Range fields.
       uint32_t range_count;
       uint32_t range_time;
       uint16_t range_dist;
-      // USBL Fields
+      // USBL Fields.
       uint8_t usbl_channels;
       int16_t usbl_rssi[4];
       int16_t usbl_azimuth;
       int16_t usbl_elevation;
       int16_t usbl_fit_error;
-      // Position Fields
+      // Position Fields.
       int16_t position_easting;
       int16_t position_northing;
       int16_t position_depth;
-
       uint8_t outputflags_list[4];
 
-      void outputFlagsComp()
+      void
+      outputFlagsComp(void)
       {
-        outputflags_list[0]=(0x01 & flags);
-        outputflags_list[1]=(0x02 & flags);
-        outputflags_list[2]=(0x04 & flags);
-        outputflags_list[3]=(0x08 & flags);
+        outputflags_list[0] = (0x01 & flags);
+        outputflags_list[1] = (0x02 & flags);
+        outputflags_list[2] = (0x04 & flags);
+        outputflags_list[3] = (0x08 & flags);
       }
     };
   }
 }
+
 #endif

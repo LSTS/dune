@@ -24,8 +24,9 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 //***************************************************************************
-#ifndef TRANSPORTS_SEATRAC_DEBUGMSG_HPP_INCLUDED_
-#define TRANSPORTS_SEATRAC_DEBUGMSG_HPP_INCLUDED_
+
+#ifndef TRANSPORTS_SEATRAC_DEBUG_MSG_HPP_INCLUDED_
+#define TRANSPORTS_SEATRAC_DEBUG_MSG_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -42,81 +43,88 @@ namespace Transports
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
-    //!ecofix data type debug print
-    // @param[in] string whith name of message
-    // @param[in] aco_fix data poiter
-    // @param[in] task task where is to repor debug msg
+
+    //! Ecofix data type debug print.
+    //! @param[in] msg_name string with name of message.
+    //! @param[in] aco_fix data pointer.
+    //! @param[in] task parent task.
     void
-    printAcoFixData(std::string msg_name, Acofix_t* aco_fix,Tasks::Task* task = NULL)
+    printAcoFixData(std::string msg_name, Acofix_t* aco_fix, Tasks::Task* task = NULL)
     {
       int i;
-      task->debug("data_Beacon.%s.aco_fix.dest_id        %d ", msg_name.c_str(),
-                  aco_fix->dest_id);
-      task->debug("data_Beacon.%s.aco_fix.src_id         %d ", msg_name.c_str(),
-                  aco_fix->src_id);
-      task->debug("data_Beacon.%s.aco_fix.flags          %d ", msg_name.c_str(),
-                  aco_fix->flags);
-      task->debug("data_Beacon.%s.aco_fix.amsgtype_e     %d ", msg_name.c_str(),
-                  aco_fix->amsgtype_e);
-      task->debug("data_Beacon.%s.aco_fix.attitude_yaw   %d ", msg_name.c_str(),
-                  aco_fix->attitude_yaw);
-      task->debug("data_Beacon.%s.aco_fix.attitude_pitch %d ", msg_name.c_str(),
-                  aco_fix->attitude_pitch);
-      task->debug("data_Beacon.%s.aco_fix.attitude_roll  %d ", msg_name.c_str(),
-                  aco_fix->attitude_roll);
-      task->debug("data_Beacon.%s.aco_fix.depth_local    %d ", msg_name.c_str(),
-                  aco_fix->depth_local);
-      task->debug("data_Beacon.%s.aco_fix.vos            %d ", msg_name.c_str(),
-                  aco_fix->vos);
-      task->debug("data_Beacon.%s.aco_fix.rssi           %d ", msg_name.c_str(),
-                  aco_fix->rssi);
-      if (aco_fix->outputflags_list[0]) //Range fields
-      {
-        task->debug("data_Beacon.%s.aco_fix.range_count  %d ", msg_name.c_str(),
-                    aco_fix->range_count);
-        task->debug("data_Beacon.%s.aco_fix.range_time   %d ", msg_name.c_str(),
-                    aco_fix->range_time);
-        task->debug("data_Beacon.%s.aco_fix.range_dist   %d ", msg_name.c_str(),
-                    aco_fix->range_dist);
-      }
-      if (aco_fix->outputflags_list[1]) //USBL Fields
-      {
-        task->debug("data_Beacon.%s.aco_fix.usbl_channels %d", msg_name.c_str(),
-                    aco_fix->usbl_channels);
-        for (i=0; i<aco_fix->usbl_channels;i++)
-        {
-          task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d", msg_name.c_str(),
-                      aco_fix->usbl_rssi[i]);
-        }
-        task->debug("data_Beacon.%s.aco_fix.usbl_azimuth    %d", msg_name.c_str(),
-                    aco_fix->usbl_azimuth);
-        task->debug("data_Beacon.%s.aco_fix.usbl_elevation  %d", msg_name.c_str(),
-                    aco_fix->usbl_elevation);
-        task->debug("data_Beacon.%s.aco_fix.usbl_fit_error  %d", msg_name.c_str(),
-                    aco_fix->usbl_fit_error);
-      }
-      if (aco_fix->outputflags_list[2]) //Position Fields
-      {
+      task->debug("data_Beacon.%s.aco_fix.dest_id        %d ",
+                  msg_name.c_str(), aco_fix->dest_id);
+      task->debug("data_Beacon.%s.aco_fix.src_id         %d ",
+                  msg_name.c_str(), aco_fix->src_id);
+      task->debug("data_Beacon.%s.aco_fix.flags          %d ",
+                  msg_name.c_str(), aco_fix->flags);
+      task->debug("data_Beacon.%s.aco_fix.amsgtype_e     %d ",
+                  msg_name.c_str(), aco_fix->amsgtype_e);
+      task->debug("data_Beacon.%s.aco_fix.attitude_yaw   %d ",
+                  msg_name.c_str(), aco_fix->attitude_yaw);
+      task->debug("data_Beacon.%s.aco_fix.attitude_pitch %d ",
+                  msg_name.c_str(), aco_fix->attitude_pitch);
+      task->debug("data_Beacon.%s.aco_fix.attitude_roll  %d ",
+                  msg_name.c_str(), aco_fix->attitude_roll);
+      task->debug("data_Beacon.%s.aco_fix.depth_local    %d ",
+                  msg_name.c_str(), aco_fix->depth_local);
+      task->debug("data_Beacon.%s.aco_fix.vos            %d ",
+                  msg_name.c_str(), aco_fix->vos);
+      task->debug("data_Beacon.%s.aco_fix.rssi           %d ",
+                  msg_name.c_str(), aco_fix->rssi);
 
-        task->debug("data_Beacon.%s.aco_fix.position_easting  %ld", msg_name.c_str(),
-                    (long int) aco_fix->position_easting);
-        task->debug("data_Beacon.%s.aco_fix.position_northing %ld", msg_name.c_str(),
-                    (long int) aco_fix->position_northing);
-        task->debug("data_Beacon.%s.aco_fix.position_depth    %ld", msg_name.c_str(),
-                    (long int) aco_fix->position_depth);
+      // Range fields.
+      if (aco_fix->outputflags_list[0])
+      {
+        task->debug("data_Beacon.%s.aco_fix.range_count  %d ",
+                    msg_name.c_str(), aco_fix->range_count);
+        task->debug("data_Beacon.%s.aco_fix.range_time   %d ",
+                    msg_name.c_str(), aco_fix->range_time);
+        task->debug("data_Beacon.%s.aco_fix.range_dist   %d ",
+                    msg_name.c_str(), aco_fix->range_dist);
       }
 
+      // USBL fields.
+      if (aco_fix->outputflags_list[1])
+      {
+        task->debug("data_Beacon.%s.aco_fix.usbl_channels %d",
+                    msg_name.c_str(), aco_fix->usbl_channels);
+
+        for (i = 0; i < aco_fix->usbl_channels; i++)
+          task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d",
+                      msg_name.c_str(), aco_fix->usbl_rssi[i]);
+
+        task->debug("data_Beacon.%s.aco_fix.usbl_azimuth    %d",
+                    msg_name.c_str(), aco_fix->usbl_azimuth);
+        task->debug("data_Beacon.%s.aco_fix.usbl_elevation  %d",
+                    msg_name.c_str(), aco_fix->usbl_elevation);
+        task->debug("data_Beacon.%s.aco_fix.usbl_fit_error  %d",
+                    msg_name.c_str(), aco_fix->usbl_fit_error);
+      }
+
+      // Position fields.
+      if (aco_fix->outputflags_list[2])
+      {
+        task->debug("data_Beacon.%s.aco_fix.position_easting  %ld",
+                    msg_name.c_str(), (long int) aco_fix->position_easting);
+        task->debug("data_Beacon.%s.aco_fix.position_northing %ld",
+                    msg_name.c_str(), (long int) aco_fix->position_northing);
+        task->debug("data_Beacon.%s.aco_fix.position_depth    %ld",
+                    msg_name.c_str(), (long int) aco_fix->position_depth);
+      }
     }
 
-    //!Msg Debug print
-    // @param[in] message_type type of message
-    // @param[in] data_Beacon data structure
-    // @param[in] task task where is to repor debug msg
+    //! Msg Debug print
+    //! @param[in] message_type type of message.
+    //! @param[in] data_Beacon data structure.
+    //! @param[in] task parent task.
     void
-    printDebugFunction(unsigned message_type, DataSeatrac& data_Beacon, Tasks::Task* task = NULL)
+    printDebugFunction(unsigned message_type, DataSeatrac& data_Beacon,
+                       Tasks::Task* task = NULL)
     {
 
       int i;
+
       switch(message_type)
       {
         case CID_STATUS:
@@ -124,8 +132,10 @@ namespace Transports
           task->spew("data_Beacon.cid_status_msg.output_flags %d",
                      data_Beacon.cid_status_msg.output_flags);
           task->spew("data_Beacon.cid_status_msg.timestamp    %f",
-                     (float)((int)data_Beacon.cid_status_msg.timestamp)/1000);
-          if (data_Beacon.cid_status_msg.outputflags_list[0]) //ENVIRONMENT
+                     (float)((int)data_Beacon.cid_status_msg.timestamp) / 1000);
+
+          // Environment.
+          if (data_Beacon.cid_status_msg.outputflags_list[0])
           {
             task->spew("data_Beacon.cid_status_msg.environment_supply %d",
                        data_Beacon.cid_status_msg.environment_supply);
@@ -138,7 +148,9 @@ namespace Transports
             task->spew("data_Beacon.cid_status_msg.EnvironmentVos/10 %d",
                        data_Beacon.cid_status_msg.EnvironmentVos/10);
           }
-          if (data_Beacon.cid_status_msg.outputflags_list[1]) //ATTITUDE
+
+          // Attitude.
+          if (data_Beacon.cid_status_msg.outputflags_list[1])
           {
             task->spew("data_Beacon.cid_status_msg.attitude_yaw/10 %d",
                        data_Beacon.cid_status_msg.attitude_yaw/10);
@@ -147,7 +159,9 @@ namespace Transports
             task->spew("data_Beacon.cid_status_msg.attitude_roll/10 %d",
                        data_Beacon.cid_status_msg.attitude_roll/10);
           }
-          if (data_Beacon.cid_status_msg.outputflags_list[2]) //MAG_CAL
+
+          // Mag cal.
+          if (data_Beacon.cid_status_msg.outputflags_list[2])
           {
             task->spew("data_Beacon.cid_status_msg.mag_cal_buf %d",
                        (int) data_Beacon.cid_status_msg.mag_cal_buf);
@@ -158,7 +172,9 @@ namespace Transports
             task->spew("data_Beacon.cid_status_msg.mag_cal_fit %d",
                        (int) data_Beacon.cid_status_msg.mag_cal_fit);
           }
-          if (data_Beacon.cid_status_msg.outputflags_list[3]) //ACC_CAL
+
+          // Acc cal.
+          if (data_Beacon.cid_status_msg.outputflags_list[3])
           {
             task->spew("data_Beacon.cid_status_msg.acc_lim_min_y %d",
                        data_Beacon.cid_status_msg.acc_lim_min_y);
@@ -173,7 +189,9 @@ namespace Transports
             task->spew("data_Beacon.cid_status_msg.acc_lim_max_z %d",
                        data_Beacon.cid_status_msg.acc_lim_max_z);
           }
-          if (data_Beacon.cid_status_msg.outputflags_list[4])//AHRS_RAW_DATA
+
+          // AHRS raw data.
+          if (data_Beacon.cid_status_msg.outputflags_list[4])
           {
             task->spew("data_Beacon.cid_status_msg.ahrs_raw_acc_x %d",
                        data_Beacon.cid_status_msg.ahrs_raw_acc_x);
@@ -194,7 +212,9 @@ namespace Transports
             task->spew("data_Beacon.cid_status_msg.ahrs_raw_gyro_z %d",
                        data_Beacon.cid_status_msg.ahrs_raw_gyro_z);
           }
-          if (data_Beacon.cid_status_msg.outputflags_list[5])//AHRS_COMP_DATA
+
+          // AHRS computed data.
+          if (data_Beacon.cid_status_msg.outputflags_list[5])
           {
             task->spew("data_Beacon.cid_status_msg.ahrs_comp_acc_x %f",
                        data_Beacon.cid_status_msg.ahrs_comp_acc_x);
@@ -248,23 +268,23 @@ namespace Transports
               break;
           }
           task->debug("data_Beacon.cid_ping_error_msg.beacon_id %d",
-                      (int) data_Beacon.cid_ping_error_msg.beacon_id);
+                      (int)data_Beacon.cid_ping_error_msg.beacon_id);
           break;
 
         case CID_PING_SEND:
           task->debug("MESSAGE  CID_PING_SEND AK");
           task->debug("data_Beacon.cid_ping_send_msg.status %d",
-                      (int) data_Beacon.cid_ping_send_msg.status);
+                      (int)data_Beacon.cid_ping_send_msg.status);
           task->debug("data_Beacon.cid_ping_send_msg.beacon_id %d",
-                      (int) data_Beacon.cid_ping_send_msg.beacon_id);
+                      (int)data_Beacon.cid_ping_send_msg.beacon_id);
           break;
 
         case CID_DAT_SEND: // Report of CID_DAT_SEND opeeration
           task->debug("MESSAGE  CID_DAT_SEND AK ");
           task->debug("data_Beacon.cid_dat_send_msg.status %d",
-                      (int) data_Beacon.cid_dat_send_msg.status);
+                      (int)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
-                      (int) data_Beacon.cid_dat_send_msg.beacon_id);
+                      (int)data_Beacon.cid_dat_send_msg.beacon_id);
           break;
         case CID_DAT_RECEIVE: //8.3. DAT Protocol Messages
 
@@ -272,14 +292,12 @@ namespace Transports
           printAcoFixData("cid_dat_receive_msg",
                           &data_Beacon.cid_dat_receive_msg.aco_fix, task);
           task->debug("data_Beacon.cid_dat_receive_msg.ack_flag %d",
-                      (int) data_Beacon.cid_dat_receive_msg.ack_flag);
+                      (int)data_Beacon.cid_dat_receive_msg.ack_flag);
           task->debug("data_Beacon.cid_dat_receive_msg.packet_len %d",
-                      (int) data_Beacon.cid_dat_receive_msg.packet_len);
-          for (i=0;i<(int) data_Beacon.cid_dat_receive_msg.packet_len;i++)
-          {
-            task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%d] %d ",i,
-                        (unsigned)  data_Beacon.cid_dat_receive_msg.packet_data[i]);
-          }
+                      (int)data_Beacon.cid_dat_receive_msg.packet_len);
+          for (i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
+            task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%d] %d ", i,
+                        (unsigned)data_Beacon.cid_dat_receive_msg.packet_data[i]);
           break;
 
         case CID_DAT_ERROR:
@@ -388,7 +406,7 @@ namespace Transports
                       data_Beacon.cid_nav_query_req_msg.nav_query_t);
           break;
 
-        case CID_XCVR_FIX :
+        case CID_XCVR_FIX:
           task->debug("MESSAGE  CID_XCVR_FIX");
           printAcoFixData("cid_xcvr_fix_msg",
                           &data_Beacon.cid_xcvr_fix_msg.aco_fix, task);
@@ -425,20 +443,17 @@ namespace Transports
           task->debug("data_Beacon.cid_nav_querry_resp_msg.query_flags %d ",
                       data_Beacon.cid_nav_querry_resp_msg.query_flags);
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
-          {
             task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_depth %d",
                         data_Beacon.cid_nav_querry_resp_msg.remote_depth);
-          }
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
-          {
             task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_supply %d",
                         data_Beacon.cid_nav_querry_resp_msg.remote_supply);
-          }
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
-          {
             task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_temp %d",
                         data_Beacon.cid_nav_querry_resp_msg.remote_temp);
-          }
+
           if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
           {
             task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_yaw %d",
@@ -464,7 +479,7 @@ namespace Transports
                       data_Beacon.cid_nav_beacon_pos_update_msg.position_depth);
           break;
 
-        case  CID_NAV_BEACON_POS_SEND:
+        case CID_NAV_BEACON_POS_SEND:
           task->debug("CID_NAV_BEACON_POS_SEND");
           task->debug("data_Beacon.cid_nav_beacon_pos_send_msg.status %d",
                       data_Beacon.cid_nav_beacon_pos_send_msg.status);
@@ -476,7 +491,7 @@ namespace Transports
                       data_Beacon.cid_nav_ref_pos_send_msg.status);
           break;
 
-        case  CID_NAV_REF_POS_UPDATE:
+        case CID_NAV_REF_POS_UPDATE:
           task->debug("CID_NAV_REF_POS_UPDATE");
           printAcoFixData("cid_nav_ref_pos_update_msg",
                           &data_Beacon.cid_nav_ref_pos_update_msg.aco_fix, task);
@@ -538,4 +553,5 @@ namespace Transports
 
   }
 }
+
 #endif
