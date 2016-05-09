@@ -123,21 +123,6 @@ namespace Supervisors
         m_list.clear();
       }
 
-      //! Clear all acoustic interface tickets.
-      void
-      clearAcoustic(void)
-      {
-        // Iterate through list and remove if necessary.
-        std::vector<Ticket>::iterator itr = m_list.begin();
-        while (itr != m_list.end())
-        {
-          if (itr->getInterface() == IS_ACOUSTIC)
-            m_list.erase(itr, itr + 1);
-          else
-            ++itr;
-        }
-      }
-
       //! Check if dispatcher is empty.
       //! @return true if dispatcher is empty, false otherwise.
       bool
