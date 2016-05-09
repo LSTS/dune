@@ -95,6 +95,8 @@ namespace Transports
       RequestSate m_state;
       // Setup watchdog for timeout.
       Counter<double> m_wdog;
+      //! Timer counter for waiting
+      Time::Counter<float> timer;
 
       //! Task arguments.
       Arguments m_args;
@@ -128,8 +130,8 @@ namespace Transports
 
         param("Period Message", m_args.period)
         .description("Period to send message (ms)")
-        .minimumValue("2000")
-        .defaultValue("4000");
+        .minimumValue("30")
+        .defaultValue("60");
 
         param("Max Size of Message", m_args.max_size_msg)
         .description("Max Size of Message (byte)")
@@ -155,8 +157,8 @@ namespace Transports
 
         if (paramChanged(m_args.period))
         {
-          if (m_args.period < 2000)
-            m_args.period = 2000;
+          if (m_args.period < 30)
+            m_args.period = 30;
         }
 
         if (paramChanged(m_args.max_size_msg))
@@ -183,11 +185,14 @@ namespace Transports
       onResourceInitialization(void)
       {
         m_wdog.setTop(m_args.uploud_timeout);
+        timer.setTop(m_args.period);
+        war("VALUE: %f", m_args.period);
         m_state = S_QUERY;
         m_id = 0;
         m_size = 8;
         m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
         m_params.resize(m_size);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
@@ -235,6 +240,8 @@ namespace Transports
         {
           m_id++;
           m_state = S_QUERY;
+          timer.reset();
+          inf(DTR("Sending http request Done"));
         }
       }
 
@@ -299,9 +306,12 @@ namespace Transports
           switch ( m_state )
           {
             case S_QUERY:
-              Delay::waitMsec(m_args.period);
-              requestToImcMsg(GET_DATA, m_id);
-              m_state = S_REPLY;
+              if (timer.overflow())
+              {
+                inf(DTR("Sending http request"));
+                requestToImcMsg(GET_DATA, m_id);
+                m_state = S_REPLY;
+              }
               break;
 
             case S_REPLY:
@@ -319,6 +329,7 @@ namespace Transports
 
             default:
               m_state = S_QUERY;
+              timer.reset();
               break;
           }
         }
