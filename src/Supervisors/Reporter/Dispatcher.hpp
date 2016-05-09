@@ -101,7 +101,7 @@ namespace Supervisors
           {
             // Erase from list.
             m_list.erase(itr, itr + 1);
-            break;
+            return;
           }
         }
       }
@@ -129,10 +129,12 @@ namespace Supervisors
       {
         // Iterate through list and remove if necessary.
         std::vector<Ticket>::iterator itr = m_list.begin();
-        for (; itr != m_list.end(); ++itr)
+        while (itr != m_list.end())
         {
           if (itr->getInterface() == IS_ACOUSTIC)
             m_list.erase(itr, itr + 1);
+          else
+            ++itr;
         }
       }
 
