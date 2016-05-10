@@ -657,13 +657,16 @@ namespace DUNE
         void
         remove(std::string name)
         {
-          // Iterate through list and add if necessary.
+          // Iterate through list and remove target.
           std::vector<Target>::iterator itr = m_list.begin();
           for (; itr != m_list.end(); ++itr)
           {
             // Erase target from list.
             if (itr->compare(name))
+            {
               m_list.erase(itr, itr + 1);
+              return;
+            }
           }
         }
 
