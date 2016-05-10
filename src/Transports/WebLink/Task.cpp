@@ -219,6 +219,7 @@ namespace Transports
           {
             err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            m_state = S_QUERY;
           }
           else
           {
@@ -226,13 +227,14 @@ namespace Transports
             {
               setEntityState(IMC::EntityState::ESTA_BOOT, Utils::String::str(DTR("%s"), happyhttp::getStatusMessage()));
               war("%s", happyhttp::getStatusMessage());
+              m_state = S_QUERY;
             }
             else if (happyhttp::getStatusValue() == 200)
             {
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+              m_state = S_CLEAR;
             }
           }
-          m_state = S_CLEAR;
           delete dataToSend;
         }
 
@@ -310,12 +312,14 @@ namespace Transports
               {
                 inf(DTR("Sending http request"));
                 requestToImcMsg(GET_DATA, m_id);
+                timer.reset();
                 m_state = S_REPLY;
               }
+              Delay::waitMsec(1000);
               break;
 
             case S_REPLY:
-              consumeMessages();
+              waitForMessages(1);
               break;
 
             case S_CLEAR:
@@ -324,12 +328,11 @@ namespace Transports
               break;
 
             case S_WAIT:
-              consumeMessages();
+              waitForMessages(1);
               break;
 
             default:
               m_state = S_QUERY;
-              timer.reset();
               break;
           }
         }
