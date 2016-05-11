@@ -249,6 +249,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         setHardIronFactors();
         setOutputFrequency(m_args.output_frq);
       }
@@ -478,8 +479,6 @@ namespace Sensors
       void
       decode(const UCTK::Frame& frame)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
         switch (frame.getId())
         {
           case PKT_ID_OUTPUT_DATA:
@@ -551,6 +550,7 @@ namespace Sensors
                                        m_faults_count,
                                        (unsigned)frequency);
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
         m_state_timer.reset();
         m_sample_count = 0;
       }
