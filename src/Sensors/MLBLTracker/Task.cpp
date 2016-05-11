@@ -485,6 +485,7 @@ namespace Sensors
         NarrowBandMap::iterator nitr = m_nbmap.find(sys);
         if (nitr != m_nbmap.end())
         {
+          m_acop_out.system = sys;
           m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
           dispatch(m_acop_out);
           return;
@@ -493,6 +494,7 @@ namespace Sensors
         MicroModemMap::iterator itr = m_ummap.find(sys);
         if (itr == m_ummap.end())
         {
+          m_acop_out.system = sys;
           m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
           dispatch(m_acop_out);
           return;
