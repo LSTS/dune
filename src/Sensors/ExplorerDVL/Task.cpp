@@ -96,7 +96,7 @@ namespace Sensors
       //! Heading alignment.
       double heading_alignment;
       //! True to use DVL at surface.
-      bool activate_at_surface;
+      bool surface;
       //! True to enable automatic activation/deactivation based on medium.
       bool auto_activation;
       //! Beam angle.
@@ -153,10 +153,10 @@ namespace Sensors
         m_powered(false),
         m_triggered(false)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param(DTR_RT("Use Device at Surface"), m_args.activate_at_surface)
+        param(DTR_RT("Use Device at Surface"), m_args.surface)
         .defaultValue("true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_IDLE)
@@ -410,10 +410,16 @@ namespace Sensors
 
         m_medium.update(msg);
 
-        if ((m_medium.isWaterSurface() && m_args.activate_at_surface) || m_medium.isUnderwater())
+        if ((m_medium.isWaterSurface() && m_args.surface) || m_medium.isUnderwater())
         {
           if (canRequestActivation())
             requestActivation();
+        }
+
+        if (m_medium.outWater() || (m_medium.isWaterSurface() && !m_args.surface))
+        {
+          if (isActive())
+            requestDeactivation();
         }
       }
 
