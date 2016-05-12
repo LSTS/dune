@@ -677,7 +677,7 @@ namespace Sensors
         {
           case ST_ACT_BEGIN:
             trace("activation begin");
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
             m_act_state = ST_ACT_TURN_ON;
             break;
 
