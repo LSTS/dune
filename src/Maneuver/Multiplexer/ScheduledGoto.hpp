@@ -64,11 +64,15 @@ namespace Maneuver
       onStart(const IMC::ScheduledGoto* maneuver)
       {
 
-        timer.setTop(0.5);
+        timer.setTop(0.2);
 
         isblock = false;
 
         scheduled = *maneuver;
+
+        flag = false;
+
+        start_time = Clock::getSinceEpoch();
 
       }
 
@@ -81,9 +85,17 @@ namespace Maneuver
 
         time_left = t_arrival - Clock::getSinceEpoch();
 
+         if (!flag)
+        {
+          flag = true;
+          total_time = time_left;
+        }
 
-        if (pcs->flags & (time_left <= 0) )//& IMC::PathControlState::FL_NEAR)
+        if (pcs->flags & (time_left <= 0) & (IMC::PathControlState::FL_NEAR))
+          {
           m_task->signalCompletion();
+          m_task->inf("Task completed");
+          }
         else
           m_task->signalProgress(pcs->eta);
       }
@@ -113,11 +125,21 @@ namespace Maneuver
           travel_z = scheduled.travel_z;
           travel_z_units = scheduled.travel_z_units;
 
+          d_behavior = scheduled.delayed;
+
           path.speed_units = 0;
 
           isblock = true;
 
           path.speed = speedCalc(msg);
+
+          if (path.speed > 2.0)
+          {
+            path.speed = 2.0;
+            m_task->inf("path speed %f", path.speed);
+          }
+
+
           m_task->dispatch(path);
 
         }
@@ -150,17 +172,23 @@ namespace Maneuver
         //! Calculates distance from maneuver point
         dist = WGS84::distance(lat, lon, 0.0,
                                                 m_lat, m_lon, 0.0);
-        //! Calculates diference from initial maneuver time to arrival time
 
+        //! Calculates diference from initial maneuver time to arrival time
         deltat = t_arrival - Clock::getSinceEpoch();
 
         //! Calculates speed of the vehicule
         speed = dist/deltat;
 
+        /*
         m_task->inf("dist: %f", dist);
         m_task->inf("t_arrival: %f", deltat);
         m_task->inf("Speed: %f", speed);
         m_task->inf("Time left %f", time_left);
+        m_task->inf("Total time %f", total_time);
+        m_task->inf("Start time %f", start_time);
+        m_task->inf("Stop time %f", t_arrival);
+        m_task->inf("Delayed Behavior %d", d_behavior);
+        */
 
         return speed;
       }
@@ -169,8 +197,26 @@ namespace Maneuver
       { }
 
       private:
+
+        enum DelayedBehavior
+        {
+          //! Resume maneuver at top speed until it's completed
+          DBEH_RESUME,
+          //! It will stop current maneuver and advance to the next one
+          DBEH_SKIP,
+          //! It will stop the vehicle and show a FAILED result
+          DBEH_FAIL
+        };
+
+        enum ScheduledTime
+        {
+          ST_ONTIME,
+          ST_DELAYED
+        };
+
+
         //! Time of arrival
-        float t_arrival;
+        double t_arrival;
         //! Travel Z value
         float travel_z;
         //! Travel Z units
@@ -181,6 +227,13 @@ namespace Maneuver
         double m_lon;
         //! Dispatch block flag
         bool isblock;
+        //!
+        uint8_t d_behavior;
+        //!
+        DelayedBehavior m_dbeh;
+
+        ScheduledTime m_sche_time;
+
         //! Timer counter for duration
         Time::Counter<float> timer;
         //! ScheduledGoto maneuver message
@@ -189,6 +242,12 @@ namespace Maneuver
         IMC::EstimatedState m_state;
 
         double time_left;
+
+        double total_time;
+
+        double start_time;
+
+        bool flag;
     };
   }
 }
