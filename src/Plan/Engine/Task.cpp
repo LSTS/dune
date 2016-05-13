@@ -81,6 +81,10 @@ namespace Plan
       float sk_rpm;
       //! Entity label of the IMU
       std::string label_imu;
+      //! Recovery plan
+      std::string recovery_plan;
+      //! Entity label of the plan generator.
+      std::string label_gen;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -116,6 +120,8 @@ namespace Plan
       std::map<std::string, IMC::EntityInfo> m_cinfo;
       //! Source entity of the IMU
       unsigned m_eid_imu;
+      //! Source entity of the plan generator
+      unsigned m_eid_gen;
       //! IMU is enabled or not
       bool m_imu_enabled;
       //! Queue of PlanControl messages
@@ -174,6 +180,12 @@ namespace Plan
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
 
+        param("Plan Generator Entity Label", m_args.label_gen)
+        .defaultValue("Plan Generator")
+        .description("Entity label of the Plan Generator");
+
+        m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -201,7 +213,16 @@ namespace Plan
         }
         catch (...)
         {
-          m_eid_imu = 0;
+          m_eid_imu = UINT_MAX;
+        }
+
+        try
+        {
+          m_eid_gen = resolveEntity(m_args.label_gen);
+        }
+        catch (...)
+        {
+          m_eid_gen = UINT_MAX;
         }
       }
 
@@ -586,6 +607,14 @@ namespace Plan
       consume(const IMC::PlanControl* pc)
       {
         if (pc->type != IMC::PlanControl::PC_REQUEST)
+          return;
+
+        // Emergency plan needs to be requested by
+        // local plan generator.
+        if ((pc->plan_id == m_args.recovery_plan) &&
+            (pc->op == IMC::PlanControl::PC_START) &&
+            ((pc->getSource() != getSystemId()) ||
+             (pc->getSourceEntity() != m_eid_gen)))
           return;
 
         if (pendingReply())

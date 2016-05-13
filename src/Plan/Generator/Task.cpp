@@ -62,6 +62,8 @@ namespace Plan
       float max_rpms;
       //! Plans to be generated at boot (example: dislodge:rpm=1200.0)
       std::vector<std::string> generate_at_boot;
+      //! Recovery plan
+      std::string recovery_plan;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -106,6 +108,7 @@ namespace Plan
         .defaultValue("");
 
         m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpms);
+        m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
 
         bind<IMC::Announce>(this);
         bind<IMC::PlanGeneration>(this);
@@ -797,7 +800,7 @@ namespace Plan
         }
 
         // This template generates a plan that attempts to dislodge the vehicle (dislodge)
-        if (plan_id == "dislodge")
+        if (plan_id == m_args.recovery_plan)
         {
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
