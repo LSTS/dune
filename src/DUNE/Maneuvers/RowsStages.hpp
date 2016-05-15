@@ -51,7 +51,16 @@ namespace DUNE
     {
     public:
       //! Default constructor.
-      //! @param[in] maneuver pointer to rows maneuver
+      //! @param[in] lat Latitude as in IMC::Rows
+      //! @param[in] lon Longitude as in IMC::Rows
+      //! @param[in] bearing Bearing in radians as in IMC::Rows
+      //! @param[in] cross_angle Cross angle in radians as in IMC::Rows
+      //! @param[in] width Width as in IMC::Rows
+      //! @param[in] length Length as in IMC::Rows
+      //! @param[in] hstep Horizantal step as in IMC::Rows
+      //! @param[in] coff Coff as in IMC::Rows
+      //! @param[in] alternation Alternation as in IMC::Rows
+      //! @param[in] flags Flags as in IMC::Rows
       //! @param[in] task pointer to task object (debug and inf)
       RowsStages(const fp64_t lat, const fp64_t lon, const fp64_t bearing,
           const fp64_t cross_angle, const fp32_t width, const fp32_t length,
