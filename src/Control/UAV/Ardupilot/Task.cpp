@@ -192,6 +192,8 @@ namespace Control
         float m_hae_msl;
         //! Height offset to convert to WGS-84 ellipsoid.
         float m_hae_offset;
+        //! Flag used to recalculate height offset in case of dune reboot.
+        bool m_reboot;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -235,6 +237,7 @@ namespace Control
           m_lon(0.0),
           m_hae_msl(0.0),
           m_hae_offset(0.0),
+          m_reboot(true),
           m_external(true),
           m_current_wp(0),
           m_critical(false),
@@ -1680,14 +1683,19 @@ namespace Control
           m_lon = (double)gp.lon * 1e-07;
           m_hae_msl = (double) gp.alt * 1e-3;   //MSL
 
-          if (m_args.convert_msl && m_ground)
+          if (m_args.convert_msl)
           {
-            Coordinates::WMM wmm(m_ctx.dir_cfg);
-            m_hae_offset = wmm.height(lat, lon);
+            if(m_ground || m_reboot)
+            {
+              Coordinates::WMM wmm(m_ctx.dir_cfg);
+              m_hae_offset = wmm.height(lat, lon);
 
-            m_ref_lat = lat;
-            m_ref_lon = lon;
-            m_ref_hae = getHeight();
+              m_ref_lat = lat;
+              m_ref_lon = lon;
+              m_ref_hae = getHeight();
+
+              m_reboot = 0;
+            }
           }
           else
           {
