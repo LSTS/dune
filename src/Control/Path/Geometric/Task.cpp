@@ -38,6 +38,9 @@ namespace Control
 
       struct Task: public DUNE::Control::PathController
       {
+
+        IMC::DesiredHeading m_heading;
+
         //! Constructor.
         //! @param[in] name task name.
         //! @param[in] ctx context.
@@ -45,13 +48,39 @@ namespace Control
           DUNE::Control::PathController(name, ctx)
         {
         }
+
+	void
+	onUpdateParameters(void)
+	{
+	  // parameters were set
+	  PathController::onUpdateParameters();
+	}
+
+	void
+	onPathActivation(void)
+	{
+	  // path control activated
+	}
+
+	void
+	onPathDeactivation(void)
+	{
+	  // path control deactivated
+	}
 	
 	void 
         step(const IMC::EstimatedState& state, const TrackingState& ts)
 	{
-	  (void) state;
-          (void) ts;
+	double ref;
+	ref = getBearing(state, ts.end);
+        ref = Angles::normalizeRadian(ref);	
+	m_heading.value = ref;
+        dispatch(m_heading);
+	debug("ref id %f.", Angles::degrees(ref));
+	
 	}
+
+
       };
     }
   }
