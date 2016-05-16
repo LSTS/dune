@@ -40,6 +40,8 @@ namespace Control
       {
 
         IMC::DesiredHeading m_heading;
+        Time::Counter<float> m_realpos;
+        double m_yaw, m_u, m_v, m_svelx, m_svely;
 
         //! Constructor.
         //! @param[in] name task name.
@@ -47,40 +49,97 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
         {
+          bind<IMC::GpsFix>(this);
+          // for dev purposes only
+          bind<IMC::SimulatedState>(this);
+          bind<IMC::WaterVelocity>(this);
+          m_realpos.setTop(60);
         }
 
-	void
-	onUpdateParameters(void)
-	{
-	  // parameters were set
-	  PathController::onUpdateParameters();
-	}
+        void
+        onUpdateParameters(void)
+        {
+          // parameters were set
+          PathController::onUpdateParameters();
+        }
 
-	void
-	onPathActivation(void)
-	{
-	  // path control activated
-	}
+        void
+        onPathActivation(void)
+        {
+          // path control activated
+          m_realpos.reset();
+        }
 
-	void
-	onPathDeactivation(void)
-	{
-	  // path control deactivated
-	}
-	
-	void 
+        void
+        onPathDeactivation(void)
+        {
+          // path control deactivated
+          inf("Not updating anymore.");
+        }
+
+        void
+        consume(const IMC::GpsFix* msg)
+        {
+
+          if ((msg->validity & GpsFix::GFV_VALID_POS) == 0)
+            return;
+
+          debug("Processing gpxfix");
+
+
+        }
+
+        void
+        consume(const IMC::SimulatedState* msg)
+        {
+          if (m_realpos.overflow())
+          {
+            debug("Processing simulated state");
+            m_realpos.reset();
+          }
+        }
+
+        void
+        consume(const IMC::WaterVelocity* msg)
+        {
+
+
+          if (msg->validity <= (WaterVelocity::VAL_VEL_X | WaterVelocity::VAL_VEL_Y))
+            return;
+
+          processBodyVel(msg->x, msg->y);
+        }
+
+
+
+        void
+        processBodyVel(double bx, double by)
+        {
+          double gx, gy;
+          gx = bx;
+          gy = by;
+
+          m_svelx = - gx + m_u;
+          m_svely = - gy + m_v;
+
+          Angles::rotate(m_yaw, false, m_svelx,m_svely);
+          debug("The current is %.2f, %.2f.", m_svelx, m_svely);
+        }
+
+        void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
-	{
-	double ref;
-	ref = getBearing(state, ts.end);
-        ref = Angles::normalizeRadian(ref);	
-	m_heading.value = ref;
-        dispatch(m_heading);
-	debug("ref id %f.", Angles::degrees(ref));
-	
-	}
-
-
+        {
+          double ref;
+          ref = getBearing(state, ts.end);
+          ref = Angles::normalizeRadian(ref);
+          m_heading.value = ref;
+          m_yaw = state.psi;
+          m_u   = state.u;
+          m_v   = state.v;
+          dispatch(m_heading);
+          //debug("ref id %f.", Angles::degrees(ref));
+          //debug("x: %f, y: %f -- x: %f, y: %f", ts.track_pos.x, ts.track_pos.y, state.x, state.y);
+        }
       };
     }
   }
