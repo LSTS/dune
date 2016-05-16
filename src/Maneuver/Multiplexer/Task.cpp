@@ -108,8 +108,6 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
-      //! ScheduledGoto Arguments
-      ScheduledGotoArgs scheduled;
 
     };
 

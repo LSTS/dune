@@ -40,12 +40,7 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    struct ScheduledGotoArgs
-    {
-      //!
-    };
-
-    //! Goto maneuver
+    //! ScheduledGoto maneuver
     class ScheduledGoto: public MuxedManeuver<IMC::ScheduledGoto, void>
 
     {
@@ -53,10 +48,9 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       ScheduledGoto(Maneuvers::Maneuver* task):
-        MuxedManeuver<IMC::ScheduledGoto, void>(task)
-      {
-        //bind<IMC::GpsFix>(this);
-      }
+        MuxedManeuver<IMC::ScheduledGoto, void>(task),
+        m_dbeh(DBEH_RESUME)
+      { }
 
       //! Start maneuver function
       //! @param[in] maneuver goto maneuver message
@@ -70,9 +64,7 @@ namespace Maneuver
 
         scheduled = *maneuver;
 
-        flag = false;
-
-        start_time = Clock::getSinceEpoch();
+        ontime = false;
 
       }
 
@@ -82,22 +74,52 @@ namespace Maneuver
       onPathControlState(const IMC::PathControlState* pcs)
       {
 
+      time_left = t_arrival - Clock::getSinceEpoch();
 
-        time_left = t_arrival - Clock::getSinceEpoch();
-
-         if (!flag)
-        {
-          flag = true;
-          total_time = time_left;
-        }
-
-        if (pcs->flags & (time_left <= 0) & (IMC::PathControlState::FL_NEAR))
+        if(time_left <= 0)
           {
-          m_task->signalCompletion();
-          m_task->inf("Task completed");
+            ontime = false;
+            if (pcs->flags & IMC::PathControlState::FL_NEAR)
+              m_task->signalCompletion();
           }
         else
-          m_task->signalProgress(pcs->eta);
+          {
+            m_task->signalProgress(pcs->eta);
+            ontime = true;
+          }
+        if ((ontime == false) & !(pcs->flags
+                              & IMC::PathControlState::FL_NEAR))
+            {
+
+               switch(m_dbeh)
+              {
+                case DBEH_RESUME:
+                if (d_behavior == 0)
+                {
+                  if (!(pcs->flags
+                              & IMC::PathControlState::FL_NEAR))
+                    m_task->signalProgress(pcs->eta);
+                  else
+                    m_task->signalCompletion();
+                }
+                else
+                m_dbeh = DBEH_SKIP;
+                break;
+
+                case DBEH_SKIP:
+                if (d_behavior == 1)
+                  m_task->signalCompletion();
+                else
+                m_dbeh = DBEH_FAIL;
+                break;
+
+                case DBEH_FAIL:
+                if (d_behavior == 2)
+                  m_task->signalError("FAIL");
+                break;
+
+              }
+            }
       }
 
       //! On message EstimatedState
@@ -106,11 +128,11 @@ namespace Maneuver
       onEstimatedState(const IMC::EstimatedState* msg)
       {
 
-        IMC::DesiredPath path;
+      IMC::DesiredPath path;
 
-        if (!isblock)
+        if (timer.overflow())
         {
-
+          timer.reset();
           m_task->setControl(IMC::CL_PATH);
 
           path.end_lat = scheduled.lat;
@@ -127,30 +149,16 @@ namespace Maneuver
 
           d_behavior = scheduled.delayed;
 
+          //! Meters per Second Speed Units
           path.speed_units = 0;
-
-          isblock = true;
 
           path.speed = speedCalc(msg);
 
-          if (path.speed > 2.0)
-          {
-            path.speed = 2.0;
-            m_task->inf("path speed %f", path.speed);
-          }
-
+          if ((path.speed > 2.0) |
+                    ((ontime == false) & (d_behavior == 0)))
+              path.speed = 2.0;
 
           m_task->dispatch(path);
-
-        }
-        else
-        {
-          if(timer.overflow())
-          {
-            timer.reset();
-
-            isblock = false;
-          }
         }
       }
 
@@ -179,16 +187,15 @@ namespace Maneuver
         //! Calculates speed of the vehicule
         speed = dist/deltat;
 
-        /*
-        m_task->inf("dist: %f", dist);
+        //m_task->inf("dist: %f", dist);
         m_task->inf("t_arrival: %f", deltat);
         m_task->inf("Speed: %f", speed);
-        m_task->inf("Time left %f", time_left);
-        m_task->inf("Total time %f", total_time);
-        m_task->inf("Start time %f", start_time);
-        m_task->inf("Stop time %f", t_arrival);
-        m_task->inf("Delayed Behavior %d", d_behavior);
-        */
+        //m_task->inf("Time left %f", time_left);
+        //m_task->inf("Total time %f", total_time);
+        //m_task->inf("Start time %f", start_time);
+        //m_task->inf("Stop time %f", t_arrival);
+        //m_task->inf("Delayed Behavior %d", d_behavior);
+        //m_task->inf("Ontime %d", ontime);
 
         return speed;
       }
@@ -201,19 +208,12 @@ namespace Maneuver
         enum DelayedBehavior
         {
           //! Resume maneuver at top speed until it's completed
-          DBEH_RESUME,
+          DBEH_RESUME = 0,
           //! It will stop current maneuver and advance to the next one
-          DBEH_SKIP,
+          DBEH_SKIP = 1,
           //! It will stop the vehicle and show a FAILED result
-          DBEH_FAIL
+          DBEH_FAIL = 2
         };
-
-        enum ScheduledTime
-        {
-          ST_ONTIME,
-          ST_DELAYED
-        };
-
 
         //! Time of arrival
         double t_arrival;
@@ -232,8 +232,6 @@ namespace Maneuver
         //!
         DelayedBehavior m_dbeh;
 
-        ScheduledTime m_sche_time;
-
         //! Timer counter for duration
         Time::Counter<float> timer;
         //! ScheduledGoto maneuver message
@@ -247,7 +245,7 @@ namespace Maneuver
 
         double start_time;
 
-        bool flag;
+        bool ontime;
     };
   }
 }
