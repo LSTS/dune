@@ -2195,15 +2195,20 @@ namespace Control
 
           IMC::IndicatedSpeed ias;
           IMC::TrueSpeed gs;
+          IMC::Throttle thr;
 
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
+          thr.value = (uint16_t)vfr_hud.throttle;
+
           m_gnd_speed = (int)vfr_hud.groundspeed;
           if (m_vehicle_type != VEHICLE_COPTER)
             m_hae_msl = vfr_hud.alt;
 
+
           dispatch(ias);
           dispatch(gs);
+          dispatch(thr);
         }
 
         void
