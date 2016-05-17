@@ -108,6 +108,8 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
+      //!
+      ScheduledArgs scheduled;
 
     };
 
@@ -241,6 +243,8 @@ namespace Maneuver
 
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
+        m_ctx.config.get("General", "Maximum Absolute Speed", "1.6", m_args.scheduled.max_speed);
+
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;
 
@@ -317,7 +321,7 @@ namespace Maneuver
         m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
-        m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>();
+        m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
       }
 
       void

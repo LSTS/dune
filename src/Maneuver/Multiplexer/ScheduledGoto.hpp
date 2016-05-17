@@ -40,17 +40,22 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    struct ScheduledArgs
+    {
+      float max_speed;
+    };
+
     //! ScheduledGoto maneuver
-    class ScheduledGoto: public MuxedManeuver<IMC::ScheduledGoto, void>
+    class ScheduledGoto: public MuxedManeuver<IMC::ScheduledGoto, ScheduledArgs>
 
     {
     public:
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
-      ScheduledGoto(Maneuvers::Maneuver* task):
-        MuxedManeuver<IMC::ScheduledGoto, void>(task),
+      ScheduledGoto(Maneuvers::Maneuver* task, ScheduledArgs* args):
+        MuxedManeuver<IMC::ScheduledGoto, ScheduledArgs>(task,args),
         m_dbeh(DBEH_RESUME)
-      { }
+      {}
 
       //! Start maneuver function
       //! @param[in] maneuver goto maneuver message
@@ -88,7 +93,8 @@ namespace Maneuver
             ontime = true;
           }
         if ((ontime == false) & !(pcs->flags
-                              & IMC::PathControlState::FL_NEAR))
+                              & IMC::PathControlState::FL_NEAR)
+                              || speed >= m_args->max_speed)
             {
 
                switch(m_dbeh)
@@ -115,7 +121,7 @@ namespace Maneuver
 
                 case DBEH_FAIL:
                 if (d_behavior == 2)
-                  m_task->signalError("FAIL");
+                  m_task->signalError("Unable to reach destination on scheduled time.");
                 break;
 
               }
@@ -154,14 +160,15 @@ namespace Maneuver
 
           path.speed = speedCalc(msg);
 
-          if ((path.speed > 2.0) |
+          if ((path.speed > m_args->max_speed) |
                     ((ontime == false) & (d_behavior == 0)))
-              path.speed = 2.0;
+              path.speed = m_args->max_speed;
 
           m_task->dispatch(path);
         }
       }
 
+      //! Calculates vehicle speed
       double
       speedCalc(const IMC::EstimatedState* msg)
       {
@@ -170,7 +177,7 @@ namespace Maneuver
 
         double lat;
         double lon;
-        double speed;
+
         double dist;
         double deltat;
 
@@ -190,6 +197,7 @@ namespace Maneuver
         //m_task->inf("dist: %f", dist);
         m_task->inf("t_arrival: %f", deltat);
         m_task->inf("Speed: %f", speed);
+        m_task->inf("max speed: %f",m_args->max_speed);
         //m_task->inf("Time left %f", time_left);
         //m_task->inf("Total time %f", total_time);
         //m_task->inf("Start time %f", start_time);
@@ -241,11 +249,9 @@ namespace Maneuver
 
         double time_left;
 
-        double total_time;
-
-        double start_time;
-
         bool ontime;
+
+        double speed;
     };
   }
 }
