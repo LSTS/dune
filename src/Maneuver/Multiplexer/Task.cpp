@@ -46,6 +46,7 @@
 #include "Elevator.hpp"
 #include "PopUp.hpp"
 #include "Dislodge.hpp"
+#include "Sample.hpp"
 #include "MuxedManeuver.hpp"
 
 namespace Maneuver
@@ -57,7 +58,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge"};
+                                          "Dislodge", "Sample"};
 
     enum ManeuverType
     {
@@ -83,6 +84,8 @@ namespace Maneuver
       TYPE_POPUP,
       //! Type Dislodge
       TYPE_DISLODGE,
+      //! Type Sample
+      TYPE_SAMPLE,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -105,6 +108,8 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
+      //! Sample Arguments
+      SampleArgs sample;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -237,6 +242,22 @@ namespace Maneuver
 
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
+        param("Sample -- Syringe 0 Id", m_args.sample.syringe0Id)
+        .defaultValue("60")
+        .description("Port to use for syringe 0 servo");
+
+        param("Sample -- Syringe 1 Id", m_args.sample.syringe1Id)
+        .defaultValue("48")
+        .description("Port to use for syringe 1 servo");
+
+        param("Sample -- Syringe 2 Id", m_args.sample.syringe2Id)
+        .defaultValue("31")
+        .description("Port to use for syringe 2 servo");
+
+        param("Sample -- Servo Value", m_args.sample.servoValue)
+        .defaultValue("3.14159")
+        .description("Value to open servo");
+
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;
 
@@ -313,6 +334,7 @@ namespace Maneuver
         m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
+        m_maneuvers[TYPE_SAMPLE] = create<Sample>(&m_args.sample);
       }
 
       void
@@ -384,6 +406,12 @@ namespace Maneuver
       consume(const IMC::VehicleMedium* msg)
       {
         m_maneuvers[m_type]->onVehicleMedium(msg);
+      }
+
+      void
+      consume(const IMC::Throttle* msg)
+      {
+        m_maneuvers[m_type]->onThrottle(msg);
       }
 
       void
