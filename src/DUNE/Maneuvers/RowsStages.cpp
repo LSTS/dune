@@ -251,7 +251,7 @@ namespace DUNE
 
       if (std::fabs(ady) > c_y_margin)
       {
-        if (m_sabs.y > m_width)
+        if (std::abs(m_sabs.y) > m_width)
           return true;
 
         --m_curves;
