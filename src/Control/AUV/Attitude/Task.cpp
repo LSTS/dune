@@ -34,6 +34,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Control/DiscretePID_head.hpp>
 
 namespace Control
 {
@@ -133,6 +134,8 @@ namespace Control
       {
         //! PID Controllers.
         DiscretePID m_pid[LP_MAX_LOOPS];
+        //! PID Controller for headin
+        DiscretePID_head m_pid_head[LP_MAX_LOOPS];
         //! Heading controller heading rate reference.
         IMC::DesiredHeadingRate m_hrate_ref;
         //! Depth controller pitch reference.
@@ -395,9 +398,15 @@ namespace Control
             m_pid[i].setOutputLimits(-output_limits[i], output_limits[i]);
             m_pid[i].setIntegralLimits(m_args.max_int[i]);
 
+            // For the heading PID
+            m_pid_head[i].setGains(m_args.gains[i]);
+            m_pid_head[i].setOutputLimits(-output_limits[i], output_limits[i]);
+            m_pid_head[i].setIntegralLimits(m_args.max_int[i]);
+
             // Debug parcels.
             if (m_args.log_parcels)
               m_pid[i].enableParcels(this, &m_parcels[i]);
+              m_pid_head[i].enableParcels(this, &m_parcels[i]);
           }
         }
 
@@ -408,8 +417,12 @@ namespace Control
           BasicAutopilot::reset();
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
+            {
             m_pid[i].reset();
+            m_pid_head[i].reset();
+            }
         }
+
 
         //! Reserve entities for messages.
         void
@@ -616,7 +629,7 @@ namespace Control
           {
             case YAW_MODE_HEADING:
               // Outer heading controller
-              cmd = m_pid[LP_HEADING].step(timestep, Angles::normalizeRadian(getYawRef() - msg->psi), -(sin(msg->phi) * msg->q + cos(msg->phi) * msg->r) / cos(msg->theta));
+              cmd = m_pid_head[LP_HEADING].step(timestep, Angles::normalizeRadian(getYawRef() - msg->psi), -(sin(msg->phi) * msg->q + cos(msg->phi) * msg->r) / cos(msg->theta));
 
               // Log the desired hrate
               m_hrate_ref.value = cmd;
