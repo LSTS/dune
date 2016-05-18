@@ -35,11 +35,11 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    static const float c_min_alt = 0.3;
+    static const unsigned c_avrg_size = 4;
+
     struct Task: public Maneuvers::Maneuver
     {
-      static const float c_min_alt = 0.3;
-      static const int c_avrg_size = 4;
-
       IMC::RowsCoverage m_maneuver;
       IMC::EstimatedState m_state;
       IMC::DesiredPath m_path;
@@ -50,17 +50,18 @@ namespace Maneuver
       double m_cov_pred;
       double m_cov_actual_min;
 
-      Math::MovingAverage<float> m_alt_avrg;
+      Math::MovingAverage<float>* m_alt_avrg;
 
-      uInt m_stage = 0;
+      unsigned int m_stage;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        Maneuvers::Maneuver(name, ctx)
+        DUNE::Maneuvers::Maneuver(name, ctx)
       {
-        m_alt_avrg = Math::MovingAverage<double>(c_avrg_size);
+        m_stage = 0;
+        m_alt_avrg = new Math::MovingAverage<float>(c_avrg_size);
 
         bindToManeuver<Task, IMC::RowsCoverage>();
         bind<IMC::EstimatedState>(this);
@@ -69,12 +70,14 @@ namespace Maneuver
       //! Destructor
       virtual
       ~Task(void)
-      { }
+      {
+        Memory::clear(m_alt_avrg);
+      }
 
       void
       onManeuverDeactivation(void)
       {
-        Memory::clear(m_parser);
+        Memory::clear(m_stages_parser);
       }
 
       void
@@ -91,11 +94,9 @@ namespace Maneuver
         m_cov_pred = hstep * (1 - maneuver->overlap / 100);
         m_cov_actual_min = m_cov_pred;
 
-        m_alt_avrg.clear();
+        m_alt_avrg->clear();
 
-        uInt stage = 0;
-
-        Memory::clear(m_parser);
+        Memory::clear(m_stages_parser);
 
         // parameters initialization
         m_stages_parser = new Maneuvers::RowsStages(maneuver->lat, maneuver->lon,
@@ -128,9 +129,9 @@ namespace Maneuver
 
         if (msg->alt > c_min_alt)
         {
-          m_alt_avrg.update(msg->alt);
-          if (m_alt_avrg.sampleSize() >= c_avrg_size) {
-            float avg = m_alt_avrg.mean();
+          m_alt_avrg->update(msg->alt);
+          if (m_alt_avrg->sampleSize() >= c_avrg_size) {
+            float avg = m_alt_avrg->mean();
             if (m_alt_min < 0)
               m_alt_min = avg;
             else
@@ -160,9 +161,10 @@ namespace Maneuver
         bool res;
         switch (m_stage) {
           case 2:
-            m_alt_min = std::min(m_alt_min, m_alt_avrg.mean());
-            float min = m_alt_min;
-            m_alt_avrg.clear();
+            m_alt_min = std::min(m_alt_min, m_alt_avrg->mean());
+            float min;
+            min = m_alt_min;
+            m_alt_avrg->clear();
             m_alt_min = -1;
             if (min > 0)
             {
@@ -177,7 +179,7 @@ namespace Maneuver
             }
             break;
           default:
-            m_alt_avrg.clear();
+            m_alt_avrg->clear();
             m_alt_min = -1;
             res = m_stages_parser->getNextPoint(&lat, &lon);
             break;
@@ -190,7 +192,7 @@ namespace Maneuver
         }
 
         m_stage++;
-        int stage_max = 2;
+        unsigned int stage_max = 2;
         if ((m_maneuver.flags & IMC::RowsCoverage::FLG_SQUARE_CURVE) != 0)
           stage_max = 3;
         if (m_stage > stage_max)
