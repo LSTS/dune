@@ -24,6 +24,7 @@
 //***************************************************************************
 // Author: Eduardo Marques (original stage implementation)                  *
 // Author: Pedro Calado                                                     *
+// Author: Paulo Dias                                                       *
 //***************************************************************************
 
 // DUNE headers.
