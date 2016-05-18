@@ -42,6 +42,7 @@ namespace Control
         IMC::DesiredHeading m_heading;
         Time::Counter<float> m_realpos;
         double m_yaw, m_u, m_v, m_svelx, m_svely;
+        double V_x, V_y;
 
         //! Constructor.
         //! @param[in] name task name.
@@ -51,9 +52,9 @@ namespace Control
         {
           bind<IMC::GpsFix>(this);
           // for dev purposes only
-          bind<IMC::SimulatedState>(this);
-          bind<IMC::WaterVelocity>(this);
+          bind<IMC::EstimatedStreamVelocity>(this);
           m_realpos.setTop(60);
+          V_x = V_y = 0;
         }
 
         void
@@ -90,53 +91,28 @@ namespace Control
         }
 
         void
-        consume(const IMC::SimulatedState* msg)
+        consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          if (m_realpos.overflow())
-          {
-            debug("Processing simulated state");
-            m_realpos.reset();
-          }
-        }
-
-        void
-        consume(const IMC::WaterVelocity* msg)
-        {
-
-
-          if (msg->validity <= (WaterVelocity::VAL_VEL_X | WaterVelocity::VAL_VEL_Y))
-            return;
-
-          processBodyVel(msg->x, msg->y);
-        }
-
-
-
-        void
-        processBodyVel(double bx, double by)
-        {
-          double gx, gy;
-          gx = bx;
-          gy = by;
-
-          m_svelx = - gx + m_u;
-          m_svely = - gy + m_v;
-
-          Angles::rotate(m_yaw, false, m_svelx,m_svely);
-          debug("The current is %.2f, %.2f.", m_svelx, m_svely);
+          V_x = msg->x;
+          V_y = msg->y;
         }
 
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref;
-          ref = getBearing(state, ts.end);
+          double ref; double k = 0.1; double ux = 1; double uy = 0; double ey = ts.track_pos.y;
+          double Vrx = V_x; double Vry = V_y;
+//          ref = ts.track_bearing + std::atan((-k*std::cos(ts.track_bearing)*ts.track_pos.y + std::sin(ts.track_bearing))/(std::cos(ts.track_bearing) + k*std::sin(ts.track_bearing)*ts.track_pos.y ));
+          DUNE::Math::Angles::rotate(ts.track_bearing, true, Vrx , Vry);
+         // ref = ts.track_bearing - std::atan((+k*ey + Vry)/(u + Vrx));
+          ref = ts.track_bearing - std::atan((k*ey + Vry)/(1));
+          m_heading.value = Angles::normalizeRadian(ref);
+          dispatch(m_heading);
+          debug("psi = %f, track_bearing = %f V_x = %f, V_y = %f, e =%f, u= %f",Angles::degrees(m_heading.value), Angles::degrees(ts.track_bearing),V_x, V_y,ey, state.u);
+         /* ref = getBearing(state, ts.end);
           ref = Angles::normalizeRadian(ref);
           m_heading.value = ref;
-          m_yaw = state.psi;
-          m_u   = state.u;
-          m_v   = state.v;
-          dispatch(m_heading);
+          dispatch(m_heading);*/
           //debug("ref id %f.", Angles::degrees(ref));
           //debug("x: %f, y: %f -- x: %f, y: %f", ts.track_pos.x, ts.track_pos.y, state.x, state.y);
         }
