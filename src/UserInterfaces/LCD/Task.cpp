@@ -110,7 +110,7 @@ namespace UserInterfaces
       // Task arguments.
       Arguments m_args;
       // I2C handle.
-      std::auto_ptr<I2C> m_i2c;
+      Hardware::I2C* m_i2c;
       // LCD Lines.
       std::string m_lines[2];
       // Last LCD Lines.
@@ -128,7 +128,8 @@ namespace UserInterfaces
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_blight(0),
+        m_i2c(NULL),
+        m_blight(NULL),
         m_blight_time(0),
         m_blight_state(false),
         m_display_state(false)
@@ -155,16 +156,19 @@ namespace UserInterfaces
       ~Task(void)
       {
         setDisplay(false);
+      }
 
-        // Turn off backlight.
-        if (m_blight)
-          delete m_blight;
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_blight);
+        Memory::clear(m_i2c);
       }
 
       void
       onResourceAcquisition(void)
       {
-        m_i2c = std::auto_ptr<I2C>(new I2C(m_args.i2c_dev));
+        m_i2c = new I2C(m_args.i2c_dev);
         m_i2c->connect(c_addr);
 
         if (m_args.blight_gpio > 0)
@@ -209,7 +213,7 @@ namespace UserInterfaces
 
         if (m_args.blight_gpio > 0)
         {
-          if (m_blight)
+          if (m_blight != NULL)
             m_blight->setValue(state);
         }
 
