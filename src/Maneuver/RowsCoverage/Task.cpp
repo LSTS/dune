@@ -86,10 +86,9 @@ namespace Maneuver
         m_maneuver = *maneuver;
 
         double hstep = 2 * maneuver->range * std::sin(maneuver->apperture / 2);
-        hstep = hstep * (1 - maneuver->overlap / 100);
 
         m_alt_min = -1;
-        m_cov_pred = hstep;
+        m_cov_pred = hstep * (1 - maneuver->overlap / 100);
         m_cov_actual_min = m_cov_pred;
 
         m_alt_avrg.clear();
@@ -174,7 +173,7 @@ namespace Maneuver
             }
             else
             {
-              res = m_stages_parser->getNextPoint(&lat, &lon);
+              res = m_stages_parser->getNextPoint(&lat, &lon, m_cov_pred);
             }
             break;
           default:
