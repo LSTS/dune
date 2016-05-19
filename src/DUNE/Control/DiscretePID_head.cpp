@@ -137,7 +137,8 @@ namespace DUNE
 
       float cmd;
 
-      cmd = m_kp * error + m_kd * std::sin(err_derivative) + m_int_err;
+//      cmd = m_kp * error + m_kd * std::sin(err_derivative) + m_int_err;
+      cmd = m_kp * error + m_kd * err_derivative + m_int_err;
 
       if (m_limit_out)
         cmd = Math::trimValue(cmd, m_lower_limit, m_upper_limit);
