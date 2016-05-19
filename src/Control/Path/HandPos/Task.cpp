@@ -107,14 +107,16 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref; double k = 0.2; double ey = ts.track_pos.y; double d = 1;
-          double k_int = 0.02;
+          double ref; double k = 0.3; double ey = ts.track_pos.y; double d = 1.0;
+          double k_int = 0.01;
           double time_step = m_last_step.getDelta();
 
-          ey_int += (ey + std::sin(state.psi- ts.track_bearing))*time_step;
+          ey_int += (ey + std::sin(state.psi - ts.track_bearing))*time_step;
+//          ey_int += (ey + std::sin(state.psi))*time_step;
           ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k*std::cos(state.psi- ts.track_bearing)*std::sin(state.psi- ts.track_bearing) - k_int*ey_int*std::cos(state.psi - ts.track_bearing)/d;
+//          ref = ts.track_bearing - (k*ey/d) - k*std::sin(state.psi) - k_int*ey_int/d;
           m_heading.value =  Angles::normalizeRadian(ref);
-          debug("Actual psi = %f, bearing = %f, cross track error e = %f, cos(psi) = %f, e_int=%f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), ey, std::cos(state.psi), ey_int );
+          debug("Actual psi = %f, bearing = %f, extra term = %f, cross track error e = %f, cos(psi) = %f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), k*std::cos(state.psi)*std::sin(state.psi), ey, std::cos(state.psi) );
           dispatch(m_heading);
 
         }
