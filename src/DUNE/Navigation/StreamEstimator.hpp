@@ -82,7 +82,7 @@ namespace DUNE
             stream.x = state.u - wvel.x;
             stream.y = state.v - wvel.y;
             DUNE::Math::Angles::rotate(state.psi, false, stream.x, stream.y);
-            printf("Estimated current from water velocity (%f,%f)\n", stream.x, stream.y);
+  //          printf("Estimated current from water velocity (%f,%f)\n", stream.x, stream.y);
             return true;
           }
         }
