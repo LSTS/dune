@@ -91,9 +91,10 @@ namespace Maneuver
         double hstep = 2 * maneuver->range * std::sin(maneuver->apperture / 2);
 
         m_alt_min = -1;
-        m_cov_pred = hstep * (1 - maneuver->overlap / 100);
+        m_cov_pred = hstep * (1 - maneuver->overlap / 100.);
         m_cov_actual_min = m_cov_pred;
 
+        m_stage = 0;
         m_alt_avrg->clear();
 
         Memory::clear(m_stages_parser);
@@ -118,7 +119,7 @@ namespace Maneuver
           return;
         }
 
-        dispatch(m_path);
+        sendPath(lat, lon);
       }
 
       void
@@ -169,7 +170,7 @@ namespace Maneuver
             if (min > 0)
             {
               m_cov_actual_min = 2 * min * std::tan(m_maneuver.apperture / 2);
-              m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 100);
+              m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 100.);
               double new_hstep = std::min(m_cov_pred, m_cov_actual_min);
               res = m_stages_parser->getNextPoint(&lat, &lon, new_hstep);
             }
