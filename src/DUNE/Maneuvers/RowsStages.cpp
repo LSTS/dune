@@ -245,7 +245,13 @@ namespace DUNE
       double ady = new_stage.y;
 
       if (m_hstep != m_hstep_updated)
+      {
+        if (m_cross_angle != 0.0)
+          Angles::rotate(-m_cross_angle, curveLeft(), adx, ady);
         ady = ady * m_hstep_updated / m_hstep;
+        if (m_cross_angle != 0.0)
+          Angles::rotate(m_cross_angle, curveLeft(), adx, ady);
+      }
 
       m_sabs.x += adx;
       m_sabs.y += ady;
