@@ -113,6 +113,11 @@ namespace Control
         //! Task arguments
         Arguments m_args;
 
+        //! Cross track error
+        double ey;
+        //! yaw angle
+        double psi;
+
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
           m_u_active(false),
@@ -188,6 +193,7 @@ namespace Control
           bind<IMC::DesiredSpeed>(this);
           bind<IMC::ControlLoops>(this);
           bind<IMC::EstimatedState>(this);
+          bind<IMC::PathControlState>(this);
         }
 
         void
@@ -289,14 +295,18 @@ namespace Control
             m_braking = false;
         }
 
-        void
-        consume(const IMC::DesiredSpeed* msg)
-        {
-          if (!isActive())
-            return;
 
-          m_desired_speed = msg->value;
-          m_speed_units = msg->speed_units;
+       /* IMC::DesiredSpeed* change(const IMC::DesiredSpeed* msg)
+        {
+          IMC::DesiredSpeed* newMsg = (IMC::DesiredSpeed*) msg->clone();
+          return newMsg;
+        }*/
+
+        void
+        consume(const IMC::PathControlState* msg)
+        {
+          ey = msg->y;
+
         }
 
         void
@@ -325,7 +335,28 @@ namespace Control
             // Enable u controller
             m_u_active = true;
           }
+
+          // assgin yaw angle
+          psi = msg->psi;
+
         }
+
+        void
+        consume(const IMC::DesiredSpeed* msg)
+        {
+          if (!isActive())
+            return;
+          //msg = change(msg);
+
+          double k = 0.01; double d = 1;
+          m_desired_speed = msg->value;
+          m_speed_units = msg->speed_units;
+          m_desired_speed = m_desired_speed - 0*k*(ey + d*std::sin(psi))*std::sin(psi);
+
+          //delete msg;
+        }
+
+
 
         void
         consume(const IMC::ControlLoops* msg)
