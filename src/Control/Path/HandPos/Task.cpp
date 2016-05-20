@@ -104,19 +104,40 @@ namespace Control
           V_y = msg->y;
         }
 
+        inline double
+        computeK( double ts_y, double factor, double timestep)
+        {
+          return ts_y + factor + 0*timestep*factor;
+        }
+
+
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref; double k = 0.3; double ey = ts.track_pos.y; double d = 1.0;
-          double k_int = 0.01;
+          double ref; double k = 0.35; double d = 1.0; double ey = ts.track_pos.y + d*std::sin(state.psi - ts.track_bearing);
+          double k_int = 0.002;
           double time_step = m_last_step.getDelta();
 
-          ey_int += (ey + std::sin(state.psi - ts.track_bearing))*time_step;
-//          ey_int += (ey + std::sin(state.psi))*time_step;
-          ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k*std::cos(state.psi- ts.track_bearing)*std::sin(state.psi- ts.track_bearing) - k_int*ey_int*std::cos(state.psi - ts.track_bearing)/d;
-//          ref = ts.track_bearing - (k*ey/d) - k*std::sin(state.psi) - k_int*ey_int/d;
+          // Euler integration
+//          ey_int += (ey + std::sin(state.psi - ts.track_bearing))*time_step;
+//          ey_int += ey*time_step;
+
+          double k1, k2 ,k3, k4;
+
+          // Inside corridor, m_integrator ON
+          // RK4 integration
+          k1 = computeK(ey, 0.0,time_step);
+          k2 = computeK(ey, k1/2,time_step);
+          k3 = computeK(ey, k2/2,time_step);
+          k4 = computeK(ey, k3,time_step);
+
+          ey_int += time_step * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+
+
+//          ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k*std::cos(state.psi- ts.track_bearing)*std::sin(state.psi- ts.track_bearing) - k_int*ey_int*std::cos(state.psi - ts.track_bearing)/d;
+          ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k_int*ey_int*std::cos(state.psi- ts.track_bearing)/d;
           m_heading.value =  Angles::normalizeRadian(ref);
-          debug("Actual psi = %f, bearing = %f, extra term = %f, cross track error e = %f, cos(psi) = %f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), k*std::cos(state.psi)*std::sin(state.psi), ey, std::cos(state.psi) );
+          debug("Actual psi = %f, bearing = %f, extra term = %f,  ey = %f, ey_int = %f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), k*std::cos(state.psi)*std::sin(state.psi), ey, ey_int );
           dispatch(m_heading);
 
         }
