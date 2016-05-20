@@ -44,10 +44,10 @@ namespace Sensors
     //! Task arguments.
     struct Arguments
     {
-      //! IPv4 address.
-      Address addr;
-      //! TCP command port.
-      unsigned port;
+      //! IO device.
+      std::string io_dev;
+      //! UART baud rate.
+      unsigned uart_baud;
       //! Sampling rate.
       float sampling_rate;
       //! Use at water surface.
@@ -56,6 +56,10 @@ namespace Sensors
 
     struct Task: public Hardware::BasicDeviceDriver
     {
+      //! IO device handle.
+      IO::Handle* m_handle;
+      //! IO device Handle for TCP data socket.
+      IO::Handle* m_data_h;
       //! Driver.
       Driver* m_driver;
       //! Parser.
@@ -69,18 +73,19 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(NULL),
+        m_data_h(NULL),
         m_driver(NULL),
         m_parser(NULL)
       {
-        param("IPv4 Address", m_args.addr)
-        .defaultValue("192.168.61.187")
-        .description("IP address of the sonar");
+        // Define configuration parameters.
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("")
+        .description("IO device used to communicate with the sensor");
 
-        param("TCP Port", m_args.port)
-        .defaultValue("9000")
-        .minimumValue("0")
-        .maximumValue("65535")
-        .description("TCP command port");
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("115200")
+        .description("Serial port baud rate");
 
         param("Sampling Rate", m_args.sampling_rate)
         .defaultValue("5.0")
@@ -100,23 +105,12 @@ namespace Sensors
       }
 
       void
-      onUpdateParameters(void)
-      {
-        if (isActive())
-        {
-          if (paramChanged(m_args.addr))
-            throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
-
-          if (paramChanged(m_args.port))
-            throw RestartNeeded(DTR("restarting to change TCP command port"), 1);
-        }
-      }
-
-      void
       onResourceRelease(void)
       {
-        Memory::clear(m_driver);
         Memory::clear(m_parser);
+        Memory::clear(m_driver);
+        Memory::clear(m_handle);
+        Memory::clear(m_data_h);
       }
 
       void
@@ -170,6 +164,40 @@ namespace Sensors
           m_driver->setSalinity(msg->value);
       }
 
+      //! Check if our IO device is a TCP socket.
+      //! @return true if IO device is a TCP socket, false otherwise.
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.io_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        // Create two TCP sockets, the first for command link,
+        // the second to parse the data coming from the device.
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+
+        TCPSocket* data_sock = new TCPSocket;
+        data_sock->setNoDelay(true);
+        data_sock->setSendTimeout(1.0);
+        data_sock->setReceiveTimeout(1.0);
+        data_sock->connect(addr, port + 2);
+        m_data_h = data_sock;
+
+        // generate driver and parser.
+        m_driver = new Driver(this, m_handle, m_args.sampling_rate);
+        m_parser = new Parser(this, m_data_h);
+
+        if (!m_driver->login())
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+
+        return true;
+      }
+
       //! Test if the task can request activation.
       //! @return true if we can request activation, false otherwise.
       bool
@@ -183,10 +211,21 @@ namespace Sensors
       bool
       onConnect(void)
       {
-        m_driver = new Driver(this, m_args.addr, m_args.port,
-                              m_args.sampling_rate);
+        try
+        {
+          if (!openSocket())
+          {
+            // The serial port is used as command link and data.
+            m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
+            m_driver = new Driver(this, m_handle, m_args.sampling_rate);
+            m_parser = new Parser(this, m_handle);
+          }
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
 
-        m_parser = new Parser(this, m_args.addr, m_args.port + 2);
         return true;
       }
 
@@ -232,8 +271,10 @@ namespace Sensors
       void
       onDisconnect(void)
       {
-        Memory::clear(m_driver);
         Memory::clear(m_parser);
+        Memory::clear(m_driver);
+        Memory::clear(m_handle);
+        Memory::clear(m_data_h);
       }
 
       void

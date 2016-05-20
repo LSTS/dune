@@ -71,16 +71,16 @@ namespace Sensors
     public:
       //! Constructor.
       //! @param[in] task parent task.
-      //! @param[in] addr IPv4 address.
-      //! @param[in] port tcp port.
+      //! @param[in] handle io handle.
       //! @param[in] rate sampling rate.
-      Driver(Tasks::Task* task, const Address& addr, unsigned port, float rate):
+      Driver(Tasks::Task* task, IO::Handle* handle, float rate):
         m_task(task),
+        m_handle(handle),
         m_salinity(35.0),
         m_sampling_rate(5.0),
-        m_cmd_mode(false)
+        m_cmd_mode(false),
+        m_firmware(false)
       {
-        m_sock.connect(addr, port);
         setSamplingRate(rate);
       }
 
@@ -91,14 +91,28 @@ namespace Sensors
         sendCommand("POWERDOWN");
       }
 
+      //! Login into device.
+      //! @return true if login succeeded, false otherwise
+      bool
+      login(void)
+      {
+        replyLogin("Username: ");
+        replyLogin("Password: ");
+
+        if (readUntil("Command Interface\r\r\n", 2.0, true))
+        {
+          Delay::wait(1.0);
+          return true;
+        }
+
+        return false;
+      }
+
       //! Device's setup sequence.
       //! @return true if command succeeded, false otherwise.
       bool
       setup(void)
       {
-        if (!login())
-          return false;
-
         if (!enterCommandMode())
           return false;
 
@@ -159,23 +173,6 @@ namespace Sensors
       }
 
     private:
-      //! Login into device.
-      //! @return true if login succeeded, false otherwise
-      bool
-      login(void)
-      {
-        replyLogin("Username: ");
-        replyLogin("Password: ");
-
-        if (readUntil("Command Interface\r\r\n", 2.0, true))
-        {
-          Delay::wait(1.0);
-          return true;
-        }
-
-        return false;
-      }
-
       //! Reply with credentials
       bool
       replyLogin(const std::string& reply)
@@ -323,7 +320,7 @@ namespace Sensors
       write(const std::string& cmd)
       {
         std::string bfr(cmd + "\r\n");
-        m_sock.write(bfr.c_str(), bfr.size());
+        m_handle->write(bfr.c_str(), bfr.size());
         m_task->spew("sent: '%s'", sanitize(bfr).c_str());
       }
 
@@ -342,15 +339,26 @@ namespace Sensors
 
         while (!timer.overflow())
         {
-          if (!Poll::poll(m_sock, timer.getRemaining()))
+          if (!Poll::poll(*m_handle, timer.getRemaining()))
             break;
 
-          offset += m_sock.read(bfr + offset, sizeof(bfr) - offset);
+          offset += m_handle->read(bfr + offset, sizeof(bfr) - offset);
           if (offset > sizeof(bfr))
             break;
 
           if (String::endsWith(bfr, sequence))
           {
+            if (!m_firmware)
+            {
+              unsigned v1 = 0;
+              unsigned v2 = 0;
+              if (std::sscanf(bfr, "NortekDVL - NORTEK AS.\r\nVersion %u_%u", &v1, &v2) == 2)
+              {
+                m_firmware = true;
+                m_task->debug("firmware version: %u_%u", v1, v2);
+              }
+            }
+
             if (print)
               m_task->spew("recv: '%s'", sanitize(bfr).c_str());
 
@@ -367,14 +375,16 @@ namespace Sensors
 
       //! Parent task.
       Tasks::Task* m_task;
-      //! TCP socket.
-      TCPSocket m_sock;
+      //! IO Handle.
+      IO::Handle* m_handle;
       //! Salinity value.
       double m_salinity;
       //! Sampling rate.
       float m_sampling_rate;
       //! Command Mode;
       bool m_cmd_mode;
+      //! Show firmware once.
+      bool m_firmware;
     };
   }
 }

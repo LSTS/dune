@@ -44,20 +44,18 @@ namespace Sensors
     {
     public:
       //! Constructor.
-      Parser(Tasks::Task* task, const Address& addr, unsigned port):
+      //! @param[in] task parent task.
+      //! @param[in] handle io handle.
+      Parser(Tasks::Task* task, IO::Handle* handle):
         m_task(task),
+        m_handle(handle),
         m_state(ST_SYNC),
         m_timestamp(-1),
         m_index(0),
         m_data_size(0),
         m_checksum(0)
       {
-        m_sock.setNoDelay(true);
-        m_sock.setSendTimeout(1.0);
-        m_sock.setReceiveTimeout(1.0);
-        m_sock.connect(addr, port);
         m_bfr.resize(c_max_size);
-
         // @todo beamconfig and devicestate.
       }
 
@@ -76,9 +74,9 @@ namespace Sensors
 
         while (!timer.overflow())
         {
-          if (Poll::poll(m_sock, timer.getRemaining()))
+          if (Poll::poll(*m_handle, timer.getRemaining()))
           {
-            size_t rv = m_sock.read(bfr, sizeof(bfr));
+            size_t rv = m_handle->read(bfr, sizeof(bfr));
 
             m_raw_data.value.assign(bfr, bfr + rv);
             m_task->dispatch(m_raw_data);
@@ -108,7 +106,6 @@ namespace Sensors
           case ST_SYNC:
             if (byte == c_sync)
             {
-              m_task->err("parse #1");
               m_timestamp = Clock::getSinceEpoch();
               m_index = 0;
               m_bfr[m_index++] = byte;
@@ -220,11 +217,12 @@ namespace Sensors
         if (size > 0)
           checksum += (uint16_t)m_bfr[m_index] << 8;
 
-        m_task->spew("checking checksum: %d == %d ?", checksum, m_checksum);
-        if (checksum != m_checksum)
-          return true;
 
-        return false;
+        if (checksum == m_checksum)
+          return false;
+
+        m_task->debug("checking failed (computed: %d | received: %d)", checksum, m_checksum);
+        return true;
       }
 
       //! Interpret data received from device.
@@ -266,8 +264,8 @@ namespace Sensors
         m_task->dispatch(pres, DF_KEEP_TIME);
         m_task->dispatch(dept, DF_KEEP_TIME);
 
-        m_task->spew("status: %08X", m_status);
-        m_task->spew("sound: %0.2f, temperature: %0.2f, pressure: %0.2f, depth: %0.2f",
+        m_task->spew("status bits: %08X", m_status);
+        m_task->spew("sound: %0.1f, temp: %0.1f, press: %0.1f, depth: %0.1f",
                      sspe.value, temp.value, pres.value, dept.value);
 
         // verify wake up status bits.
@@ -312,8 +310,12 @@ namespace Sensors
           m_distance[i].validity = m_status & (1 << (SB_VAL_DIS + i));
           m_task->dispatch(m_distance[i], DF_KEEP_TIME);
 
-          m_task->spew("beam %d: %0.2f (m)", i, m_distance[i].value);
+
         }
+
+        m_task->spew("beams: %0.1f, %0.1f, %0.1f, %0.1f (m)",
+                     m_distance[0].value, m_distance[1].value,
+                     m_distance[2].value, m_distance[3].value);
 
         // get filtered distance.
         float alt = m_filter.getDistance();
@@ -360,7 +362,7 @@ namespace Sensors
 
         m_task->dispatch(m_gvel, DF_KEEP_TIME);
 
-        m_task->spew("velocity: %0.2f, %0.2f, %0.2f", m_gvel.x, m_gvel.y, m_gvel.z);
+        m_task->spew("speed: %0.1f, %0.1f, %0.1f (m/s)", m_gvel.x, m_gvel.y, m_gvel.z);
       }
 
       //! Parser state machine.
@@ -437,8 +439,8 @@ namespace Sensors
       static const uint16_t c_csum_start = 0xb58c;
       //! Parent task.
       Tasks::Task* m_task;
-      //! TCP socket.
-      TCPSocket m_sock;
+      //! IO Handle.
+      IO::Handle* m_handle;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
       //! Ground velocity message.
