@@ -117,6 +117,8 @@ namespace Control
         double ey;
         //! yaw angle
         double psi;
+        // Bearing and range of desired trajectory
+        double bearing, range;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
@@ -306,7 +308,8 @@ namespace Control
         consume(const IMC::PathControlState* msg)
         {
           ey = msg->y;
-
+          WGS84::getNEBearingAndRange(msg->start_lat, msg->start_lon, msg->end_lat, msg->end_lon, &bearing, &range);
+  //        inf("bearing in speed control = %f, range = %f", bearing, range);
         }
 
         void
@@ -336,7 +339,7 @@ namespace Control
             m_u_active = true;
           }
 
-          // assgin yaw angle
+          // assign yaw angle
           psi = msg->psi;
 
         }
