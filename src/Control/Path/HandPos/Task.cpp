@@ -137,7 +137,8 @@ namespace Control
 //          ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k*std::cos(state.psi- ts.track_bearing)*std::sin(state.psi- ts.track_bearing) - k_int*ey_int*std::cos(state.psi - ts.track_bearing)/d;
           ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k_int*ey_int*std::cos(state.psi- ts.track_bearing)/d;
           m_heading.value =  Angles::normalizeRadian(ref);
-          debug("Actual psi = %f, bearing = %f, extra term = %f,  ey = %f, ey_int = %f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), k*std::cos(state.psi)*std::sin(state.psi), ey, ey_int );
+ //         debug("Actual psi = %f, bearing = %f, extra term = %f,  ey = %f, ey_int = %f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), k*std::cos(state.psi)*std::sin(state.psi), ey, ey_int );
+          debug("bearing = %f", ts.track_bearing);
           dispatch(m_heading);
 
         }
