@@ -224,46 +224,6 @@ namespace Maneuver
       onUpdateParameters(void)
       {
       }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-      }
-
-//      //! Main loop.
-//      void
-//      onMain(void)
-//      {
-//        while (!stopping())
-//        {
-//          waitForMessages(1.0);
-//        }
-//      }
     };
   }
 }
