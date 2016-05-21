@@ -36,7 +36,12 @@ namespace Maneuver
     using DUNE_NAMESPACES;
 
     static const float c_min_alt = 0.3;
-    static const unsigned c_avrg_size = 4;
+
+    struct Arguments
+    {
+      //! Altitude Moving Average Samples
+      double altitude_average_size;
+    };
 
     struct Task: public Maneuvers::Maneuver
     {
@@ -49,10 +54,13 @@ namespace Maneuver
       float m_alt_min;
       double m_cov_pred;
       double m_cov_actual_min;
+      double m_cur_hstep;
 
       Math::MovingAverage<float>* m_alt_avrg;
 
       unsigned int m_stage;
+      //! Task arguments
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -60,8 +68,13 @@ namespace Maneuver
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx)
       {
+        param("Altitude Moving Average Samples", m_args.altitude_average_size)
+        .defaultValue("40")
+        .minimumValue("5")
+        .description("Number of moving average samples to smooth heave");
+
         m_stage = 0;
-        m_alt_avrg = new Math::MovingAverage<float>(c_avrg_size);
+        m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
 
         bindToManeuver<Task, IMC::RowsCoverage>();
         bind<IMC::EstimatedState>(this);
@@ -97,13 +110,14 @@ namespace Maneuver
         m_alt_min = -1;
         m_cov_pred = hstep * (1 - maneuver->overlap / 100.);
         m_cov_actual_min = m_cov_pred;
+        m_cur_hstep = m_cov_pred;
 
         m_stage = 0;
-        m_alt_avrg->clear();
+
+        Memory::clear(m_alt_avrg);
+        m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
 
         Memory::clear(m_stages_parser);
-
-        // parameters initialization
         m_stages_parser = new Maneuvers::RowsStages(maneuver->lat, maneuver->lon,
             maneuver->bearing, maneuver->cross_angle, maneuver->width, maneuver->length,
             hstep, maneuver->coff, 100, maneuver->flags, this);
@@ -135,7 +149,7 @@ namespace Maneuver
         if (msg->alt > c_min_alt)
         {
           m_alt_avrg->update(msg->alt);
-          if (m_alt_avrg->sampleSize() >= c_avrg_size) {
+          if (m_alt_avrg->sampleSize() >= m_alt_avrg->windowSize()) {
             float avg = m_alt_avrg->mean();
             if (m_alt_min < 0)
               m_alt_min = avg;
@@ -154,6 +168,8 @@ namespace Maneuver
         ss << "waypoint=" << m_stages_parser->getIndex();
         ss << "; stage=" << m_stage;
         ss << "; minAlt=" << m_alt_min;
+        ss << "; curHstep=" << m_cur_hstep;
+        ss << "; stdHstep=" << m_cov_pred;
 
         signalProgress(pcs->eta, ss.str());
 
@@ -175,8 +191,8 @@ namespace Maneuver
             {
               m_cov_actual_min = 2 * min * std::tan(m_maneuver.apperture / 2);
               m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 100.);
-              double new_hstep = std::min(m_cov_pred, m_cov_actual_min);
-              res = m_stages_parser->getNextPoint(&lat, &lon, new_hstep);
+              m_cur_hstep = std::min(m_cov_pred, m_cov_actual_min);
+              res = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
             }
             else
             {
