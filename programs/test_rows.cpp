@@ -83,7 +83,9 @@ main(int32_t argc, char** argv)
     lat = latP;
     lon = lonP;
     i++;
-    ret = rows_stages->getNextPoint(&latP, &lonP, 10 * i >= 80 ? 0 : 10 * i);
+    // ret = rows_stages->getNextPoint(&latP, &lonP, 10 * i >= 80 ? 0 : 10 * i);
+    ret = rows_stages->getNextPoint(&latP, &lonP, 2 * i >= 80 ? 0 : 2 * i);
+    // ret = rows_stages->getNextPoint(&latP, &lonP, 30);
     Coordinates::WGS84::displacement(lat, lon, 0, latP, lonP, 0, &n, &e);
     std::cout << "#" << c++ << "\t";
     std::cout << "deltas n: " << roundf(n * 10) / 10;
