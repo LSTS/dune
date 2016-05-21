@@ -24,7 +24,7 @@
 //***************************************************************************
 // Author: Eduardo Marques (original stage implementation)                  *
 // Author: Pedro Calado                                                     *
-// Author: Paulo Dias                                                       *
+// Author: Paulo Dias (possibility to change hstep on new point call)       *
 //***************************************************************************
 
 #ifndef DUNE_MANEUVERS_ROWS_STAGES_HPP_INCLUDED_
