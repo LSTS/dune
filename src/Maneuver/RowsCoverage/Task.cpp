@@ -118,8 +118,6 @@ namespace Maneuver
         m_cov_actual_min = m_cov_pred;
         m_cur_hstep = m_cov_pred;
 
-        std::cout << "Hstep " << hstep << "  " << m_cur_hstep << "\n";
-
         m_stage = 0;
 
         Memory::clear(m_alt_avrg);
