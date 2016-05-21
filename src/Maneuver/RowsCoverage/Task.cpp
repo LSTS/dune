@@ -45,19 +45,25 @@ namespace Maneuver
 
     struct Task: public Maneuvers::Maneuver
     {
+      //! Maneuver
       IMC::RowsCoverage m_maneuver;
+      //! EstimatedState
       IMC::EstimatedState m_state;
+      //! DesiredPath
       IMC::DesiredPath m_path;
-
+      //! Rows stages parser
       Maneuvers::RowsStages* m_stages_parser;
-
+      //! Minimum altitude holder for hstep calculation
       float m_alt_min;
+      //! Predicted coverage
       double m_cov_pred;
+      //! Calculated coverage with min. altitude
       double m_cov_actual_min;
+      //! Current hstep in use
       double m_cur_hstep;
-
+      //! Moving average for min. altitude  calculation
       Math::MovingAverage<float>* m_alt_avrg;
-
+      //! Stage counter
       unsigned int m_stage;
       //! Task arguments
       Arguments m_args;
@@ -111,6 +117,8 @@ namespace Maneuver
         m_cov_pred = hstep * (1 - maneuver->overlap / 100.);
         m_cov_actual_min = m_cov_pred;
         m_cur_hstep = m_cov_pred;
+
+        std::cout << "Hstep " << hstep << "  " << m_cur_hstep << "\n";
 
         m_stage = 0;
 
@@ -196,12 +204,14 @@ namespace Maneuver
             }
             else
             {
-              res = m_stages_parser->getNextPoint(&lat, &lon, m_cov_pred);
+              m_cur_hstep = m_cov_pred;
+              res = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
             }
             break;
           default:
             m_alt_avrg->clear();
             m_alt_min = -1;
+            m_cur_hstep = m_cov_pred;
             res = m_stages_parser->getNextPoint(&lat, &lon);
             break;
         }
