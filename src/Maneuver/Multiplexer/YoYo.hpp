@@ -50,6 +50,8 @@ namespace Maneuver
       double u_course;
       //! Max cross. track error.
       double u_ctrack;
+      //! Minimum altitude.
+      float min_alt;
     };
 
     //! Yoyo maneuver
@@ -123,8 +125,8 @@ namespace Maneuver
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
 
-        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, zref,
-                                maneuver->amplitude, m_args->variation);
+        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, zref, maneuver->amplitude,
+                                m_args->variation, m_args->min_alt);
       }
 
       //! On PathControlState message

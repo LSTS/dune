@@ -164,6 +164,12 @@ namespace Maneuver
         .units(Units::Degree)
         .description("Maximum course error admissible");
 
+        param("YoYo -- Minimum Altitude Reference", m_args.yoyo.min_alt)
+        .defaultValue("5.0")
+        .minimumValue("1.0")
+        .units(Units::Meter)
+        .description("Minimum admissible altitude reference");
+
         param("Elevator -- Radius Tolerance", m_args.elevator.radius_tolerance)
         .defaultValue("2.0")
         .units(Units::Meter)
