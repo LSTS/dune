@@ -72,6 +72,10 @@ namespace Sensors
         Hardware::BasicDeviceDriver(name, ctx),
         m_driver(NULL)
       {
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
@@ -169,6 +173,9 @@ namespace Sensors
       bool
       onReadData(void)
       {
+        if (!isConnected())
+          return false;
+
         // Check if we have data to receive.
         if (m_driver->read())
         {
@@ -224,14 +231,16 @@ namespace Sensors
       void
       onOpenLog(const DUNE::FileSystem::Path& path)
       {
-        m_driver->onOpenLog(path);
+        if (isConnected())
+          m_driver->onOpenLog(path);
       }
 
       //! Close log file.
       void
       onCloseLog(void)
       {
-        m_driver->onCloseLog();
+        if (isConnected())
+          m_driver->onCloseLog();
       }
     };
   }

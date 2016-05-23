@@ -85,8 +85,9 @@ namespace Sensors
       //! Destructor.
       ~Driver(void)
       {
-        Memory::clear(m_uart);
+        onCloseLog();
         Memory::clear(m_parser);
+        Memory::clear(m_uart);
       }
 
       //! Device's setup sequence.
