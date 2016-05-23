@@ -363,15 +363,15 @@ namespace Sensors
           return false;
         }
 
+        // Check if we have a response to our query.
+        if (m_bfr[0] != cmd)
+          return false;
+
         if (rv != (size_t)cmd_size)
         {
           m_faults_count++;
           return false;
         }
-
-        // Check if we have a response to our query.
-        if (m_bfr[0] != cmd)
-          return false;
 
         // Validate checksum.
         if (!validateChecksum(m_bfr, cmd_size))
