@@ -41,6 +41,7 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM Clock;
 
+
     //! %System clock routines.
     class Clock
     {
@@ -120,6 +121,19 @@ namespace DUNE
       //! @param value time in seconds.
       static void
       set(double value);
+
+      //! Time multiplier for non-realtime simulations
+      //! @param mul multiplier (e.g. 4.0 for 4x speed)
+      static void
+      setTimeMultiplier(double mul);
+
+      //! Return configured time multipler
+      //! @return simulation time multiplier (1.0 for real-time)
+      static double
+      getTimeMultiplier();
+
+    private:
+      static uint64_t s_starttime;
     };
   }
 }
