@@ -59,16 +59,6 @@ namespace Sensors
       PL_MAX
     };
 
-    //! Device's available modes of operation.
-    enum Modes
-    {
-      M_FIRMWARE = 0,
-      M_MEASUREMENT = 1,
-      M_COMMAND = 2,
-      M_DATA = 4,
-      M_CONFIRMATION = 5
-    };
-
     //! Driver class to configure Nortek's DVL.
     class Driver
     {
