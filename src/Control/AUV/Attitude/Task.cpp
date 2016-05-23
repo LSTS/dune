@@ -519,14 +519,16 @@ namespace Control
             switch (getVerticalMode())
             {
               case VERTICAL_MODE_DEPTH:
-                if ((getVerticalRef() < m_args.depth_threshold) && m_args.force_pitch)
-                  surface = true;
-
                 z_error = getVerticalRef() - msg->depth;
 
-                if ((getVerticalRef() < m_args.depth_threshold) && (m_args.depth_offset > 0))
-                  use_offset = false;
+                if (getVerticalRef() < m_args.depth_threshold)
+                {
+                  if (m_args.force_pitch && std::fabs(z_error) < m_args.depth_threshold)
+                    surface = true;
 
+                  if (m_args.depth_offset > 0)
+                    use_offset = false;
+                }
                 break;
               case VERTICAL_MODE_ALTITUDE:
                 if (msg->alt < m_args.min_dvl_alt && msg->depth < m_args.min_dvl_depth)
@@ -568,7 +570,7 @@ namespace Control
               if (m_extra_pitch)
               {
                 // remove extra pitch.
-                if (z_error < m_args.zref_extra - c_depth_hyst)
+                if (std::fabs(z_error) < m_args.zref_extra - c_depth_hyst)
                 {
                   m_extra_pitch = false;
                   m_pid[LP_DEPTH].setOutputLimits(-m_args.max_pitch, m_args.max_pitch);
@@ -577,7 +579,7 @@ namespace Control
               else
               {
                 // add extra pitch.
-                if ((z_error > m_args.zref_extra) && (m_args.extra_pitch > 0.0))
+                if ((std::fabs(z_error) > m_args.zref_extra) && (m_args.extra_pitch > 0.0))
                 {
                   m_extra_pitch = true;
                   float pitch = m_args.max_pitch + m_args.extra_pitch;
