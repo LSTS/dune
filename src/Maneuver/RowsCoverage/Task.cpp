@@ -241,12 +241,6 @@ namespace Maneuver
         m_path.flags = 0;
         dispatch(m_path);
       }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
     };
   }
 }
