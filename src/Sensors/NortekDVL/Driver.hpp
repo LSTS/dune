@@ -43,6 +43,10 @@ namespace Sensors
     static const std::string c_cmd_break = "K1W%!Q";
     //! Credentials
     static const std::string c_cmd_nortek = "nortek";
+    //! No input trigger.
+    static const std::string c_cmd_trg_no = "INTSR";
+    //! Configured input trigger.
+    static const std::string c_cmd_trg_yes = "TTLRISE";
 
     //! Available power levels.
     enum PowerLevel
@@ -73,9 +77,11 @@ namespace Sensors
       //! @param[in] task parent task.
       //! @param[in] handle io handle.
       //! @param[in] rate sampling rate.
-      Driver(Tasks::Task* task, IO::Handle* handle, float rate):
+      //! @param[in] trigger input trigger.
+      Driver(Tasks::Task* task, IO::Handle* handle, float rate, bool trigger):
         m_task(task),
         m_handle(handle),
+        m_trigger(trigger),
         m_salinity(35.0),
         m_sampling_rate(5.0),
         m_cmd_mode(false),
@@ -172,6 +178,21 @@ namespace Sensors
         return r;
       }
 
+      //! Set device's input trigger type.
+      //! @param[in] trigger true if trigger is available, false otherwise.
+      //! @return true if configured successfully, false otherwise.
+      bool
+      setInputTrigger(bool trigger)
+      {
+        if (trigger != m_trigger)
+        {
+          m_trigger = trigger;
+          return setDVL(true);
+        }
+
+        return true;
+      }
+
     private:
       //! Reply with credentials
       bool
@@ -255,18 +276,28 @@ namespace Sensors
       }
 
       //! Set DVL parameters.
+      //! @param[in] boot set command and start device.
       //! @return true if configured successfully, false otherwise.
       bool
-      setDVL(void)
+      setDVL(bool boot = false)
       {
         std::string cmd;
-        cmd = String::str("SETDVL,SR=%f,SA=%f",
-                          m_sampling_rate, m_salinity);
+        cmd = String::str("SETDVL,TRIG=\"%s\",SR=%f,SA=%f,",
+                          getTrigger(), m_sampling_rate, m_salinity);
 
-        if (!sendCommand(cmd))
-          return false;
+        if (boot)
+        {
+          bool r = sendCommand(cmd);
+          start();
+          return r;
+        }
+        else
+        {
+          if (!sendCommand(cmd))
+            return false;
 
-        return true;
+          return true;
+        }
       }
 
       //! Save configuration.
@@ -373,10 +404,23 @@ namespace Sensors
         return false;
       }
 
+      //! Get trigger configuration argument.
+      //! @return trigger argument.
+      std::string
+      getTrigger(void)
+      {
+        if (m_trigger)
+          return c_cmd_trg_yes;
+        else
+          return c_cmd_trg_no;
+      }
+
       //! Parent task.
       Tasks::Task* m_task;
       //! IO Handle.
       IO::Handle* m_handle;
+      //! Input trigger.
+      bool m_trigger;
       //! Salinity value.
       double m_salinity;
       //! Sampling rate.

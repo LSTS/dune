@@ -52,6 +52,12 @@ namespace Sensors
       float sampling_rate;
       //! Use at water surface.
       bool use_at_surface;
+      //! DVL position.
+      std::vector<float> pos;
+      //! DVL orientation.
+      std::vector<float> ang;
+      //! Enable input trigger.
+      bool input_trigger;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -68,6 +74,10 @@ namespace Sensors
       Monitors::MediumHandler m_hand;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! List of entities.
+      std::vector<unsigned> m_entities;
+      //! True if pings are externally triggered.
+      bool m_triggered;
       //! Configuration parameters.
       Arguments m_args;
 
@@ -76,7 +86,8 @@ namespace Sensors
         m_handle(NULL),
         m_data_h(NULL),
         m_driver(NULL),
-        m_parser(NULL)
+        m_parser(NULL),
+        m_triggered(false)
       {
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_dev)
@@ -91,6 +102,7 @@ namespace Sensors
         .defaultValue("5.0")
         .minimumValue("1.0")
         .maximumValue("8.0")
+        .units(Units::Hertz)
         .description("Device sampling rate");
 
         param(DTR_RT("Use Device at Surface"), m_args.use_at_surface)
@@ -99,9 +111,33 @@ namespace Sensors
         .scope(Tasks::Parameter::SCOPE_IDLE)
         .description("Enable to activate device when at surface");
 
+        param("Device Position", m_args.pos)
+        .defaultValue("0.50, 0, 0.20")
+        .size(3)
+        .units(Units::Meter)
+        .description("Device position relative to navigation estimation (relative to GPS sensor)");
+
+        param("Device Orientation", m_args.ang)
+        .defaultValue("0, -90, 45")
+        .size(3)
+        .units(Units::Degree)
+        .description("Device orientation");
+
+        param("Enable Input Trigger", m_args.input_trigger)
+        .defaultValue("false")
+        .description("Enable input trigger");
+
         bind<IMC::PulseDetectionControl>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::VehicleMedium>(this);
+      }
+
+      void
+      onEntityReservation(void)
+      {
+        m_entities.clear();
+        for (unsigned i = 0; i < c_beam_count; i++)
+          m_entities.push_back(reserveEntity(String::str("%s - Beam %u", getEntityLabel(), i)));
       }
 
       void
@@ -150,8 +186,19 @@ namespace Sensors
       void
       consume(const IMC::PulseDetectionControl* msg)
       {
-        // @todo trigger/pulse ?
-        (void)msg;
+        if (!m_args.input_trigger)
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->op == IMC::PulseDetectionControl::POP_ON)
+          m_triggered = true;
+        else if (msg->op == IMC::PulseDetectionControl::POP_OFF)
+          m_triggered = false;
+
+        if (isConnected())
+          m_driver->setInputTrigger(m_triggered);
       }
 
       void
@@ -189,8 +236,8 @@ namespace Sensors
         m_data_h = data_sock;
 
         // generate driver and parser.
-        m_driver = new Driver(this, m_handle, m_args.sampling_rate);
-        m_parser = new Parser(this, m_data_h);
+        m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered);
+        m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities);
 
         if (!m_driver->login())
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
@@ -217,8 +264,8 @@ namespace Sensors
           {
             // The serial port is used as command link and data.
             m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
-            m_driver = new Driver(this, m_handle, m_args.sampling_rate);
-            m_parser = new Parser(this, m_handle);
+            m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered);
+            m_parser = new Parser(this, m_handle, m_args.pos, m_args.ang, m_entities);
           }
         }
         catch (...)

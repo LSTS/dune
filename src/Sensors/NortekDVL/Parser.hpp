@@ -39,6 +39,15 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Number of distance measurements.
+    static const unsigned c_beam_count = 4;
+    //! Beam width.
+    static const float c_beam_width = 1.0f;
+    //! Beam offset.
+    static const float c_beam_offset = 0.45f;
+    //! Beam angle.
+    static const float c_beam_angle = 22.0f;
+
     //! Parser class to interpret Nortek DVL's incoming data.
     class Parser
     {
@@ -46,22 +55,29 @@ namespace Sensors
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] handle io handle.
-      Parser(Tasks::Task* task, IO::Handle* handle):
+      Parser(Tasks::Task* task, IO::Handle* handle, std::vector<float>& pos,
+             std::vector<float>& ang, std::vector<unsigned>& entities):
         m_task(task),
         m_handle(handle),
+        m_filter(NULL),
         m_state(ST_SYNC),
         m_timestamp(-1),
         m_index(0),
         m_data_size(0),
         m_checksum(0)
       {
+        m_filter = new BeamFilter(m_task, c_beam_count, c_beam_width, c_beam_offset,
+                                  c_beam_angle, pos, ang, BeamFilter::STANDARD);
+
+        m_filter->setSourceEntities(entities);
         m_bfr.resize(c_max_size);
-        // @todo beamconfig and devicestate.
       }
 
       //! Destructor.
       ~Parser(void)
-      { }
+      {
+        Memory::clear(m_filter);
+      }
 
       //! Read data.
       //! @param[in] timeout polling timeout.
@@ -303,22 +319,22 @@ namespace Sensors
       {
         for (unsigned i = 0; i < c_beam_count; i++)
         {
-          std::memcpy(&m_distance[i].value, &m_bfr[c_hdr_size + IND_BEAM_D + i * 4], 4);
+          float altitude;
+          std::memcpy(&altitude, &m_bfr[c_hdr_size + IND_BEAM_D + i * 4], 4);
+          m_filter->update(i, altitude);
 
-          m_filter.updateBeam(i, m_distance[i]);
-          m_distance[i].setTimeStamp(m_timestamp);
-          m_distance[i].validity = m_status & (1 << (SB_VAL_DIS + i));
-          m_task->dispatch(m_distance[i], DF_KEEP_TIME);
+          if (m_status & (1 << (SB_VAL_DIS + i)))
+            m_filter->setValidity(i, IMC::Distance::DV_VALID);
+          else
+            m_filter->setValidity(i, IMC::Distance::DV_INVALID);
 
-
+          m_task->spew("beam #%d: %0.1f (m)", i, altitude);
         }
 
-        m_task->spew("beams: %0.1f, %0.1f, %0.1f, %0.1f (m)",
-                     m_distance[0].value, m_distance[1].value,
-                     m_distance[2].value, m_distance[3].value);
+        m_filter->dispatch(m_timestamp);
 
         // get filtered distance.
-        float alt = m_filter.getDistance();
+        float alt = m_filter->get();
         m_filt_distance.setTimeStamp(m_timestamp);
         m_filt_distance.value = alt;
         m_filt_distance.validity = (alt > 0.0 ? IMC::Distance::DV_VALID :
@@ -431,8 +447,6 @@ namespace Sensors
       static const uint8_t c_bt_type = 0x1b;
       //! Instrument family.
       static const uint8_t c_family = 0x10;
-      //! Number of distance measurements.
-      static const unsigned c_beam_count = 4;
       //! Wake Up status bitmask.
       static const uint32_t c_wake_mask = 0xf0000000;
       //! Initial checksum mask.
@@ -441,16 +455,14 @@ namespace Sensors
       Tasks::Task* m_task;
       //! IO Handle.
       IO::Handle* m_handle;
+      //! Beam Filter.
+      Navigation::BeamFilter* m_filter;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
       //! Ground velocity message.
       IMC::GroundVelocity m_gvel;
-      //! Distances.
-      IMC::Distance m_distance[c_beam_count];
       //! Filtered distance.
       IMC::Distance m_filt_distance;
-      //! Beam Filter.
-      Navigation::BeamFilter m_filter;
       //! Raw messages.
       IMC::DevDataBinary m_raw_data;
       //! Parser state.
