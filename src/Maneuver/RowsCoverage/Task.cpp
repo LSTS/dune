@@ -77,7 +77,7 @@ namespace Maneuver
         param("Altitude Moving Average Samples", m_args.altitude_average_size)
         .defaultValue("40")
         .minimumValue("5")
-        .description("Number of moving average samples to smooth heave");
+        .description("Number of moving average samples to smooth altitude measurements");
 
         m_stage = 0;
         m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
@@ -108,13 +108,13 @@ namespace Maneuver
         m_maneuver = *maneuver;
 
         double hstep;
-        if (maneuver->apperture <= 0)
+        if (maneuver->angaperture <= 0)
           hstep = 2 * maneuver->range;
         else
-          hstep = 2 * maneuver->range * std::sin(maneuver->apperture / 2);
+          hstep = 2 * maneuver->range * std::sin(maneuver->angaperture / 2);
 
         m_alt_min = -1;
-        m_cov_pred = hstep * (1 - maneuver->overlap / 100.);
+        m_cov_pred = hstep * (1 - maneuver->overlap / 200.);
         m_cov_actual_min = m_cov_pred;
         m_cur_hstep = m_cov_pred;
 
@@ -195,8 +195,8 @@ namespace Maneuver
             m_alt_min = -1;
             if (min > 0)
             {
-              m_cov_actual_min = 2 * min * std::tan(m_maneuver.apperture / 2);
-              m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 100.);
+              m_cov_actual_min = 2 * min * std::tan(m_maneuver.angaperture / 2);
+              m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 200.);
               m_cur_hstep = std::min(m_cov_pred, m_cov_actual_min);
               res = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
             }
@@ -209,7 +209,6 @@ namespace Maneuver
           default:
             m_alt_avrg->clear();
             m_alt_min = -1;
-            m_cur_hstep = m_cov_pred;
             res = m_stages_parser->getNextPoint(&lat, &lon);
             break;
         }
