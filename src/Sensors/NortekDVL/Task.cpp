@@ -52,12 +52,16 @@ namespace Sensors
       float sampling_rate;
       //! Use at water surface.
       bool use_at_surface;
+      //! True to enable automatic activation/deactivation based on medium.
+      bool auto_activation;
       //! DVL position.
       std::vector<float> pos;
       //! DVL orientation.
       std::vector<float> ang;
       //! Enable input trigger.
       bool input_trigger;
+      //! Name of sidescan's power channel.
+      std::string power_channel;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -89,6 +93,9 @@ namespace Sensors
         m_parser(NULL),
         m_triggered(false)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
@@ -111,6 +118,12 @@ namespace Sensors
         .scope(Tasks::Parameter::SCOPE_IDLE)
         .description("Enable to activate device when at surface");
 
+        param(DTR_RT("Automatic Activation"), m_args.auto_activation)
+        .defaultValue("true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_IDLE)
+        .description("Operator is able to control device");
+
         param("Device Position", m_args.pos)
         .defaultValue("0.50, 0, 0.20")
         .size(3)
@@ -127,9 +140,26 @@ namespace Sensors
         .defaultValue("false")
         .description("Enable input trigger");
 
+        param("Power Channel", m_args.power_channel)
+        .defaultValue("Private (DVL)")
+        .description("Name of device's power channel");
+
+        setPostPowerOnDelay(5.0);
+        setPowerOffDelay(1.0);
+
         bind<IMC::PulseDetectionControl>(this);
         bind<IMC::Salinity>(this);
         bind<IMC::VehicleMedium>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.power_channel))
+        {
+          clearPowerChannelNames();
+          addPowerChannelName(m_args.power_channel);
+        }
       }
 
       void
@@ -152,6 +182,9 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (!m_args.auto_activation)
+          return;
+
         m_hand.update(msg);
 
         // Request activation.
