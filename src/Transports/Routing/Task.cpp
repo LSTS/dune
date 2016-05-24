@@ -25,12 +25,11 @@
 // Author: Yonca Bayrakdar                                                  *
 //***************************************************************************
 
-// DUNE headers.
-/**/
-
-
+// ISO C++ 98 headers.
 #include <iostream>
 #include <sstream>
+
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 namespace Transports
@@ -42,7 +41,7 @@ namespace Transports
     // Synchronization byte.
     static const uint8_t c_sync = 0xA1;
     static const uint8_t c_poly = 0x07;
-    static const int RSSI_TRESHOLD = -47;
+    static const int c_rssi_threshold = -47;
 
     struct Node
     {
@@ -95,14 +94,13 @@ namespace Transports
       double report_period;
       //! Data period.
       double data_period;
-      //! sink lat
+      //! sink latitude.
       float sink_lat;
-      //! sink lon
+      //! sink longitude.
       float sink_lon;
-      //! if the node is sink
+      //! True if the node is sink
       bool i_am_sink;
-      //!ID of the sink
-      //uint16_t sink_id;
+      //! ID of the sink
       std::string sys_sink;
     };
 
@@ -110,13 +108,8 @@ namespace Transports
     {
       //! Routing neighbors.
       struct Node m_neighbors[5];
-      int m_where_is;
-      unsigned m_neighbor_count;
-
       //! Estimated state.
       IMC::EstimatedState m_estate;
-      //! Report timer.
-      Counter<double> m_report_timer;
       //Data timer
       Counter<double> m_data_timer;
       //! Last progress.
@@ -125,8 +118,6 @@ namespace Transports
       float m_fuel_level;
       //! Last fuel level confidence.
       float m_fuel_conf;
-      //! Saved plan control.
-      IMC::PlanControl* m_pc;
       //! Report timer.
       Counter<double> m_rep_timer;
       //! Sequence number.
@@ -135,8 +126,12 @@ namespace Transports
       IMC::AcousticOperation* m_last_acop;
       //! Task arguments.
       Arguments m_args;
+      //! Where is id.
+      int m_where_is;
+      //! Number of neighbors.
+      unsigned m_neighbor_count;
+      //! Distance from sink
       float m_dist_from_sink;
-
 
       //! Constructor.
       //! @param[in] name task name.
@@ -187,12 +182,10 @@ namespace Transports
         .defaultValue("false")
         .description("If the node is sink");
 
-
         param(DTR_RT("Sink"), m_args.sys_sink)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("0")
         .description("Name of the sink node");
-
 
         m_where_is = -1;
         m_neighbor_count = 0;
@@ -648,7 +641,6 @@ namespace Transports
         Coordinates::toWGS84(m_estate, lat, lon);
 
         Report dat;
-
         dat.lat = lat;
         dat.lon = lon;
         dat.depth = (uint8_t)m_estate.depth;
@@ -704,7 +696,6 @@ namespace Transports
       {
         /*
         Data dat;
-
         std::vector<uint8_t> data;
         data.resize(sizeof(dat) + 1);
         data[0] = CODE_DATA;
@@ -732,20 +723,20 @@ namespace Transports
       {
         //! Will find the best relay according to ......
         //! Will be totally updated
-        if(m_neighbor_count == 0)
+        if (m_neighbor_count == 0)
           return "";
         unsigned i;
-        int best=0;
-        float bestRssi=0.0;
+        int best = 0;
+        float bestRssi = 0.0;
 
         bestRssi = m_neighbors[0].rssi;
         for (i = 1; i < m_neighbor_count ; i++)
         {
-          if(m_neighbors[i].forward == true)
+          if (m_neighbors[i].forward)
           {
-            if(m_neighbors[i].is_sink)
+            if (m_neighbors[i].is_sink)
             {
-              if(m_neighbors[i].rssi>=RSSI_TRESHOLD)
+              if (m_neighbors[i].rssi >= c_rssi_threshold)
                 return m_neighbors[i].id;
             }
             if (m_neighbors[i].rssi < bestRssi)
@@ -810,7 +801,8 @@ namespace Transports
         else
         {
           //if neighbor is in the list
-          //komsunun hangi indekste oldugunu bul, o indeksteki bilgileri guncelle
+          // Find that in which the index of the neighbor ,
+          // it updates the information in the index
           inf("this one exists");
           m_neighbors[m_where_is].is_sink=dat.i_am_sink;
           m_neighbors[m_where_is].lat=dat.lat;
