@@ -55,14 +55,13 @@ namespace DUNE
 {
   namespace Time
   {
-
     uint64_t Clock::s_starttime = getSinceEpochNsec();
+    double Clock::s_time_multiplier = 1.0;
 
     uint64_t
     Clock::getNsec(void)
     {
-
-      if (s_time_multiplier != 1.0)
+      if (Clock::s_time_multiplier != 1.0)
         return getSinceEpochNsec() - s_starttime;
 
       // POSIX RT.
@@ -89,51 +88,22 @@ namespace DUNE
     uint64_t
     Clock::getSinceEpochNsec(void)
     {
-
-      uint64_t time = 0;
-
-      // POSIX RT.
-#if defined(DUNE_SYS_HAS_CLOCK_GETTIME)
-      timespec ts;
-      clock_gettime(CLOCK_REALTIME, &ts);
-      time = (uint64_t)ts.tv_sec * c_nsec_per_sec + (uint64_t)ts.tv_nsec;
-
-      // POSIX.
-#elif defined(DUNE_SYS_HAS_GETTIMEOFDAY)
-      timeval tv;
-      gettimeofday(&tv, 0);
-      time = (uint64_t)tv.tv_sec * c_nsec_per_sec + (uint64_t)tv.tv_usec * 1000;
-
-      // Microsoft Windows.
-#elif defined(DUNE_SYS_HAS_GET_SYSTEM_TIME_AS_FILE_TIME)
-      FILETIME ft;
-      uint64_t tm;
-      GetSystemTimeAsFileTime(&ft);
-      std::memcpy(&tm, &ft, sizeof(uint64_t));
-
-      // Subtract number of 100-nanosecond intervals between the beginning of the Windows
-      // epoch (Jan. 1, 1601) and the Unix epoch (Jan. 1, 1970).
-      tm -= 116444736000000000ULL;
-
-      time = tm * 100;
-
-      // Unsupported system.
-#else
-#  error Clock::getSinceEpochNsec() is not yet implemented in this system.
-
-#endif
-      //if (s_time_multiplier != 1.0)
-      //  time = (time - s_starttime) * s_time_multiplier + s_starttime;
-
+      uint64_t time = getSinceEpochNsecRT();
+      if (Clock::s_time_multiplier != 1.0) {
+        double ellapsed_time = (time - s_starttime);
+        time = ellapsed_time * Clock::s_time_multiplier + s_starttime;
+      }
       return time;
     }
 
     void
     Clock::set(double value)
     {
-
-      if (s_time_multiplier != 1.0)
+      if (Clock::s_time_multiplier != 1.0) {
+        s_starttime = value * c_nsec_per_sec;
+        setTimeMultiplier(Clock::s_time_multiplier);
         return;
+      }
 
 #if defined(DUNE_SYS_HAS_SETTIMEOFDAY)
       timeval tv;
@@ -149,9 +119,62 @@ namespace DUNE
     void
     Clock::setTimeMultiplier(double mul)
     {
-      s_time_multiplier = 1.0;
+      Clock::s_time_multiplier = 1.0;
       s_starttime = getSinceEpochNsec();
-      s_time_multiplier = mul;
+      Clock::s_time_multiplier = mul;
+    }
+
+    double
+    Clock::getTimeMultiplier(void)
+    {
+      return Clock::s_time_multiplier;
+    }
+
+
+
+    double
+    Clock::getSinceEpochNsecRT(void)
+    {
+      // POSIX RT.
+#if defined(DUNE_SYS_HAS_CLOCK_GETTIME)
+      timespec ts;
+      clock_gettime(CLOCK_REALTIME, &ts);
+      return (uint64_t)ts.tv_sec * c_nsec_per_sec + (uint64_t)ts.tv_nsec;
+
+      // POSIX.
+#elif defined(DUNE_SYS_HAS_GETTIMEOFDAY)
+      timeval tv;
+      gettimeofday(&tv, 0);
+      return (uint64_t)tv.tv_sec * c_nsec_per_sec + (uint64_t)tv.tv_usec * 1000;
+
+      // Microsoft Windows.
+#elif defined(DUNE_SYS_HAS_GET_SYSTEM_TIME_AS_FILE_TIME)
+      FILETIME ft;
+      uint64_t tm;
+      GetSystemTimeAsFileTime(&ft);
+      std::memcpy(&tm, &ft, sizeof(uint64_t));
+
+      // Subtract number of 100-nanosecond intervals between the beginning of the Windows
+      // epoch (Jan. 1, 1601) and the Unix epoch (Jan. 1, 1970).
+      tm -= 116444736000000000ULL;
+
+      return tm * 100;
+
+      // Unsupported system.
+#else
+#  error Clock::getSinceEpochNsec() is not yet implemented in this system.
+
+#endif
+    }
+
+    double
+    Clock::toSimTime(double timestamp)
+    {
+      double starttime = s_starttime / c_nsec_per_sec_fp;
+      if (timestamp < starttime)
+        return timestamp;
+
+      return ((timestamp - starttime) * Time::Clock::s_time_multiplier) + starttime;
     }
   }
 }

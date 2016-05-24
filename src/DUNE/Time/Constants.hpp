@@ -58,7 +58,6 @@ namespace DUNE
     //! Number of nanoseconds in a second (floating point).
     static const double c_nsec_per_sec_fp = 1000000000.0;
     //! Time multiplier to use in simulation
-    static double s_time_multiplier = 1.0;
   }
 }
 

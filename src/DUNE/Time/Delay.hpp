@@ -33,7 +33,7 @@
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Time/Constants.hpp>
-
+#include <DUNE/Time/Clock.hpp>
 namespace DUNE
 {
   namespace Time
@@ -78,6 +78,7 @@ namespace DUNE
         uint64_t secs = (uint64_t)s;
         uint64_t nsecs = secs * c_nsec_per_sec + (uint64_t)((s - secs) * c_nsec_per_sec_fp);
 
+        nsecs /= Time::Clock::getTimeMultiplier();
         waitNsec(nsecs);
       }
     };

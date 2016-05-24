@@ -50,9 +50,6 @@ namespace DUNE
     Delay::waitNsec(uint64_t nsec)
     {
 
-      if (s_time_multiplier != 1.0)
-        nsec = (uint64_t) (nsec / s_time_multiplier);
-
       // Microsoft Windows.
 #if defined(DUNE_SYS_HAS_CREATE_WAITABLE_TIMER)
       HANDLE t = CreateWaitableTimer(0, TRUE, 0);

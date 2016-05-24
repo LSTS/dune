@@ -132,8 +132,27 @@ namespace DUNE
       static double
       getTimeMultiplier();
 
+      static double
+      getStartTime()
+      {
+        return s_starttime;
+      }
+
+      static double
+      getSinceEpochNsecRT(void);
+
+      static double
+      getSinceEpochRT(void)
+      {
+        return getSinceEpochNsecRT() / c_nsec_per_sec_fp;
+      }
+
+      static double
+      toSimTime(double timestamp);
+
     private:
       static uint64_t s_starttime;
+      static double s_time_multiplier;
     };
   }
 }
