@@ -96,7 +96,13 @@ namespace DUNE
 
       if (t > 0)
       {
-        t += m_clock_monotonic ? Time::Clock::get() : Time::Clock::getSinceEpoch();
+        if (Time::Clock::getTimeMultiplier() != 1.0)
+        {
+          t /= Time::Clock::getTimeMultiplier();
+          t += Time::Clock::getSinceEpochNsecRT() / Time::c_nsec_per_sec_fp;
+        }
+        else
+          t += m_clock_monotonic ? Time::Clock::get() : Time::Clock::getSinceEpoch();
 
         timespec ts = DUNE_TIMESPEC_INIT_SEC_FP(t);
         rv = pthread_cond_timedwait(&m_cond, &m_mutex, &ts);
