@@ -47,6 +47,7 @@
 #include "PopUp.hpp"
 #include "Dislodge.hpp"
 #include "MuxedManeuver.hpp"
+#include "ScheduledGoto.hpp"
 
 namespace Maneuver
 {
@@ -57,7 +58,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge"};
+                                          "Dislodge","ScheduledGoto",};
 
     enum ManeuverType
     {
@@ -83,6 +84,8 @@ namespace Maneuver
       TYPE_POPUP,
       //! Type Dislodge
       TYPE_DISLODGE,
+      //! Type ScheduledGoto
+      TYPE_SCHEDULEDGOTO,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -105,6 +108,9 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
+      //!
+      ScheduledArgs scheduled;
+
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -243,6 +249,8 @@ namespace Maneuver
 
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
+        m_ctx.config.get("General", "Maximum Absolute Speed", "1.6", m_args.scheduled.max_speed);
+
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;
 
@@ -319,6 +327,7 @@ namespace Maneuver
         m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
+        m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
       }
 
       void
