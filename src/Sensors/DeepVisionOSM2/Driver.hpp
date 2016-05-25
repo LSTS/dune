@@ -46,7 +46,7 @@ namespace Sensors
     //! Line rate constant.
     static const float c_lrate = 750.0f;
     //! Hardware sampling rate.
-    static const float c_hdwr_rate = 0.17813030f;
+    static const float c_hdwr_rate = 0.00017813030f;
     //! Minimum device resolution.
     static const float c_min_res = 0.02f;
     //! Maximum device resolution.
@@ -107,7 +107,6 @@ namespace Sensors
         // @todo correct values.
         setPulse(periods, 640000, 60000);
         setSampling(samples, getDecimation(range, speed), left, right, false);
-
         m_parser->setup(getResolution(range, speed), getLineRate(range));
         run(m_baud);
       }
@@ -270,9 +269,7 @@ namespace Sensors
             break;
         }
 
-        Delay::wait(0.1);
-        m_uart->flush();
-        m_uart->setBaudRate(m_baud);
+        changeBaud(m_baud);
       }
 
       //! Set device's DSP register.
@@ -300,6 +297,16 @@ namespace Sensors
                      bfr[2], bfr[3], bfr[4], bfr[5], bfr[6], bfr[7]);
 
         m_uart->write((const char*)bfr, c_cmd_size);
+      }
+
+      //! Change serial port baud rate.
+      //! @param[in] baud desired baud rate.
+      void
+      changeBaud(unsigned baud)
+      {
+        Delay::wait(0.1);
+        m_uart->flush();
+        m_uart->setBaudRate(baud);
       }
 
       //! Parent task.

@@ -132,7 +132,14 @@ namespace Sensors
 
         if (paramChanged(m_args.range) || paramChanged(m_args.samples) ||
             paramChanged(m_args.periods) || paramChanged(m_args.channels))
-          setup();
+        {
+          if (isActive())
+          {
+            Memory::clear(m_driver);
+            m_driver = new Driver(this, m_args.uart_dev, m_args.uart_baud);
+            setup();
+          }
+        }
       }
 
       void
@@ -206,10 +213,7 @@ namespace Sensors
       onInitializeDevice(void)
       {
         if (isConnected())
-        {
-          m_iwdog.reset();
           setup();
-        }
       }
 
       //! Setup device.
@@ -223,6 +227,7 @@ namespace Sensors
 
           // @todo setup speed ?!
           m_driver->setup(m_args.periods, m_args.samples, m_args.range, 1.0, left, right);
+          m_iwdog.reset();
         }
       }
 
