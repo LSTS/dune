@@ -191,12 +191,20 @@ namespace Sensors
       setup(float res, float rate, uint32_t size, bool left, bool right)
       {
         unsigned sides = 0;
+        m_left = false;
+        m_right = false;
 
         if (left)
+        {
+          m_left = true;
           sides++;
+        }
 
         if (right)
+        {
+          m_right = true;
           sides++;
+        }
 
         if (!sides)
           return;

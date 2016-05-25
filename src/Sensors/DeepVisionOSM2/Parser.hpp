@@ -50,25 +50,46 @@ namespace Sensors
     class Parser
     {
     public:
+      //! Data register identifier.
+      static const uint8_t c_data_id = 0xfe;
+      //! Data register sub-identifier.
+      static const uint8_t c_data_subid = 0x05;
+      //! Command register identifier.
+      static const uint8_t c_cmd_id = 0xa5;
+      //! Dual channel sidescan sonar indicator.
+      static const uint8_t c_cmd_type = 0x03;
+      //! OEM version identifier.
+      static const uint8_t c_cmd_oem = 0x81;
+      //! Left channel mask.
+      static const uint8_t c_chn_left = 0x01;
+      //! Right channel mask.
+      static const uint8_t c_chn_right = 0x02;
+      //! Some header bytes are included in size return.
+      static const unsigned c_extra_bytes = 4;
+
       enum State
       {
-        ST_CMD1,
-        ST_CMD2,
-        ST_SIZE_H,
-        ST_SIZE_L,
-        ST_TYPE,
-        ST_SEQ,
-        ST_SIDES,
-        ST_TIME_H,
-        ST_TIME_L,
-        ST_DATA,
-        ST_CSUM
+        ST_INI,
+        ST_SONAR_CMD2,
+        ST_SONAR_SIZE_H,
+        ST_SONAR_SIZE_L,
+        ST_SONAR_TYPE,
+        ST_SONAR_SEQ,
+        ST_SONAR_SIDES,
+        ST_SONAR_TIME_H,
+        ST_SONAR_TIME_L,
+        ST_SONAR_DATA,
+        ST_SONAR_CSUM,
+        ST_CMD_TYPE,
+        ST_CMD_VERSION,
+        ST_CMD_CSUM
       };
 
       //! Constructor.
       Parser(void):
-        m_state(ST_CMD1),
+        m_state(ST_INI),
         m_size(0),
+        m_cmd_csum(0),
         m_has_hdr(false)
       {
         m_frame = new Frame();
@@ -88,76 +109,111 @@ namespace Sensors
       {
         switch (m_state)
         {
-          case (ST_CMD1):
-            if (byte == 0xfe)
-              m_state = ST_CMD2;
+          case (ST_INI):
+            if (byte == c_data_id)
+              m_state = ST_SONAR_CMD2;
+
+            if (byte == c_cmd_id)
+            {
+              m_cmd_csum = byte;
+              m_state = ST_CMD_TYPE;
+            }
+
             break;
-          case (ST_CMD2):
-            if (byte == 0x05)
-              m_state = ST_SIZE_H;
+          case (ST_SONAR_CMD2):
+            if (byte == c_data_subid)
+              m_state = ST_SONAR_SIZE_H;
             else
-              m_state = ST_CMD1;
+              m_state = ST_INI;
             break;
-          case (ST_SIZE_H):
-            m_state = ST_SIZE_L;
+          case (ST_SONAR_SIZE_H):
+            m_state = ST_SONAR_SIZE_L;
             m_size |= ((uint16_t)byte << 8);
             break;
-          case (ST_SIZE_L):
-            m_state = ST_TYPE;
+          case (ST_SONAR_SIZE_L):
+            m_state = ST_SONAR_TYPE;
             m_size |= byte;
+            m_size -= c_extra_bytes;
             break;
-          case (ST_TYPE):
+          case (ST_SONAR_TYPE):
             if (byte == 0x11)
-              m_state = ST_SEQ;
+              m_state = ST_SONAR_SEQ;
             else
-              m_state = ST_CMD1;
+              m_state = ST_INI;
             break;
-          case (ST_SEQ):
-            m_state = ST_SIDES;
+          case (ST_SONAR_SEQ):
+            m_state = ST_SONAR_SIDES;
             break;
-          case (ST_SIDES):
-            m_state = ST_TIME_H;
+          case (ST_SONAR_SIDES):
+            m_state = ST_SONAR_TIME_H;
 
             // setup header.
             if (!m_has_hdr)
             {
-              bool left = byte & 0x01;
-              bool right = byte & 0x02;
+              bool left = byte & c_chn_left;
+              bool right = byte & c_chn_right;
               m_frame->setup(m_resolution, m_rate, m_size, left, right);
             }
 
             break;
-          case (ST_TIME_H):
-            m_state = ST_TIME_L;
+          case (ST_SONAR_TIME_H):
+            m_state = ST_SONAR_TIME_L;
             break;
-          case (ST_TIME_L):
-            m_state = ST_DATA;
-
-            // header is missing.
-            if (!m_has_hdr)
-            {
-              m_has_hdr = true;
-              m_log_file.write((const char*)m_frame->getHeader(),
-                               m_frame->getHeaderSize());
-            }
-
-            m_log_file.write((const char*)m_frame->getPosition(),
-                             m_frame->getPositionSize());
+          case (ST_SONAR_TIME_L):
+            m_state = ST_SONAR_DATA;
             break;
-          case (ST_DATA):
+          case (ST_SONAR_DATA):
             m_frame->add(byte);
 
             if (m_frame->getSize() >= m_size)
             {
+              // header is missing from file.
+              if (!m_has_hdr)
+              {
+                m_has_hdr = true;
+                m_log_file.write((const char*)m_frame->getHeader(), m_frame->getHeaderSize());
+              }
+
+              // write position and data.
+              m_log_file.write((const char*)m_frame->getPosition(), m_frame->getPositionSize());
               m_log_file.write((const char*)m_frame->getPortData(), m_frame->getPortSize());
               m_log_file.write((const char*)m_frame->getStarboardData(), m_frame->getStarboardSize());
               m_frame->clear();
-              m_state = ST_CSUM;
+              m_state = ST_SONAR_CSUM;
             }
             break;
-          case (ST_CSUM):
-            m_state = ST_CMD1;
+          case (ST_SONAR_CSUM):
+            m_state = ST_INI;
             return true;
+          case (ST_CMD_TYPE):
+            if (byte == c_cmd_type)
+            {
+              m_cmd_csum += byte;
+              m_state = ST_CMD_VERSION;
+              break;
+            }
+
+            m_state = ST_INI;
+            break;
+          case (ST_CMD_VERSION):
+            if (byte == c_cmd_oem)
+            {
+              m_cmd_csum += byte;
+              m_state = ST_CMD_CSUM;
+              break;
+            }
+
+            m_state = ST_INI;
+            break;
+          case (ST_CMD_CSUM):
+            m_state = ST_INI;
+
+            if (byte == m_cmd_csum)
+            {
+              m_cmd_csum = 0;
+              return true;
+            }
+            break;
         }
 
         return false;
@@ -181,7 +237,7 @@ namespace Sensors
                                                   bdt.year, bdt.month, bdt.day,
                                                   bdt.hour, bdt.minutes, bdt.seconds);
 
-        m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
+        m_log_file.open(log.c_str(), std::ofstream::app | std::ios::binary);
       }
 
       //! Close log file.
@@ -241,6 +297,8 @@ namespace Sensors
       float m_rate;
       //! Data size.
       uint16_t m_size;
+      //! Command checksum;
+      uint8_t m_cmd_csum;
       //! Log file.
       std::ofstream m_log_file;
       //! Header inserted.

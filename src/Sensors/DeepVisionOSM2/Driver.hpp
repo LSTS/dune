@@ -51,6 +51,10 @@ namespace Sensors
     static const float c_min_res = 0.02f;
     //! Maximum device resolution.
     static const float c_max_res = 1.0f;
+    //! Command register identifier.
+    static const uint8_t c_reg_id = 0xf5;
+    //! Maximum packet size.
+    static const unsigned c_max_size = 256;
 
     //! Driver class to configure DeepVision's OEM Sonar Module OSM2.
     //!
@@ -79,7 +83,6 @@ namespace Sensors
       {
         m_uart = new SerialPort(uart.c_str(), c_ini_baud);
         m_parser = new Parser();
-        m_bfr.resize(c_max_size);
       }
 
       //! Destructor.
@@ -115,21 +118,23 @@ namespace Sensors
       read(void)
       {
         Counter<double> timer(1.0);
+        bool parsed = false;
 
         while (!timer.overflow())
         {
           if (!Poll::poll(*m_uart, timer.getRemaining()))
             continue;
 
-          size_t rv = m_uart->read(&m_bfr[0], m_bfr.size());
+          size_t rv = m_uart->read(&m_bfr[0], c_max_size);
+
           for (size_t i = 0; i < rv; ++i)
           {
             if (m_parser->parse(m_bfr[i]))
-              return true;
+              parsed = true;
           }
         }
 
-        return false;
+        return parsed;
       }
 
       //! Open new log file.
@@ -226,10 +231,10 @@ namespace Sensors
 
         uint32_t chns = 0;
         if (left)
-          chns |= 0x01;
+          chns |= Parser::c_chn_left;
 
         if (right)
-          chns |= 0x02;
+          chns |= Parser::c_chn_right;
 
         setRegister(c_reg_mode, (decimation << 16) | (chns << 3) | mode);
         setRegister(c_reg_samples, samples);
@@ -265,6 +270,7 @@ namespace Sensors
             break;
         }
 
+        Delay::wait(0.1);
         m_uart->flush();
         m_uart->setBaudRate(m_baud);
       }
@@ -290,6 +296,9 @@ namespace Sensors
         for (int i = 0; i < 7; i++)
           bfr[7] += bfr[i];
 
+        m_task->spew("send: %02X%02X%02X%02X%02X%02X%02X%02X", bfr[0], bfr[1],
+                     bfr[2], bfr[3], bfr[4], bfr[5], bfr[6], bfr[7]);
+
         m_uart->write((const char*)bfr, c_cmd_size);
       }
 
@@ -302,13 +311,11 @@ namespace Sensors
       //! Serial Port baud rate.
       unsigned m_baud;
       //! Internal buffer.
-      std::vector<uint8_t> m_bfr;
+      uint8_t m_bfr[c_max_size];
       //! Device's initial baud rate.
       static const unsigned c_ini_baud = 9600;
       //! Size of command.
       static const unsigned c_cmd_size = 8;
-      //! Register identifier.
-      static const uint8_t c_reg_id = 0xf5;
       //! Register command.
       static const uint16_t c_reg_cmd = 0x01;
       //! Register pulser address 1.
@@ -321,8 +328,6 @@ namespace Sensors
       static const uint16_t c_reg_mode = 0x21;
       //! Register for number of samples.
       static const uint16_t c_reg_samples = 0x25;
-      //! Maximum packet size.
-      static const unsigned c_max_size = 1024;
     };
   }
 }
