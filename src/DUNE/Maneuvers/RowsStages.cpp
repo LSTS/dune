@@ -151,10 +151,8 @@ namespace DUNE
       }
 
       // Other init
-      m_curves = (int)std::floor(m_width / m_hstep);
       m_curr = 0;
       m_sabs = Stage("undefined", 0, 0);
-
       m_index = 0;
     }
 
@@ -260,8 +258,6 @@ namespace DUNE
       {
         if (std::abs(m_sabs.y) > m_width)
           return true;
-
-        --m_curves;
       }
 
       // Rotate according to row maneuver bearing angle

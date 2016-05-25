@@ -58,8 +58,8 @@ namespace DUNE
       //! @param[in] cross_angle Cross angle in radians as in IMC::Rows
       //! @param[in] width Width as in IMC::Rows
       //! @param[in] length Length as in IMC::Rows
-      //! @param[in] hstep Horizantal step as in IMC::Rows
-      //! @param[in] coff Coff as in IMC::Rows
+      //! @param[in] hstep Horizontal step as in IMC::Rows
+      //! @param[in] coff Curve offset as in IMC::Rows
       //! @param[in] alternation Alternation as in IMC::Rows
       //! @param[in] flags Flags as in IMC::Rows
       //! @param[in] task pointer to task object (debug and inf)
@@ -207,9 +207,7 @@ namespace DUNE
       unsigned m_curr;
       //! Current point index
       unsigned m_index;
-      //! Number of curves in the rows maneuver
-      int m_curves;
-      //! Vector of acumulated distances
+      //! Vector of accumulated distances
       std::vector<float> m_all_distances;
       //! Horizontal Step updated.
       fp32_t m_hstep_updated;
