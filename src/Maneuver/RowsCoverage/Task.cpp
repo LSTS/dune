@@ -90,6 +90,7 @@ namespace Maneuver
       virtual
       ~Task(void)
       {
+        Memory::clear(m_stages_parser);
         Memory::clear(m_alt_avrg);
       }
 
