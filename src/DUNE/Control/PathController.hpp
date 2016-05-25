@@ -414,9 +414,11 @@ namespace DUNE
       bool m_setup;
       //! In braking procedures
       bool m_braking;
+      //! Timer with amount of time ignoring monitors when braking.
+      Time::Counter<float> m_brake_timer;
       //! True if monitors are being disabled because of navigation jump
       bool m_jump_monitors;
-      //! Navigation jump timer to  disable monitors
+      //! Navigation jump timer to disable monitors
       Time::Counter<float> m_jump_timer;
 
       // Arguments

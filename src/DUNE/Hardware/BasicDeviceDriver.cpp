@@ -40,9 +40,9 @@ namespace DUNE
     BasicDeviceDriver::BasicDeviceDriver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx),
       m_sm_state(SM_IDLE),
-      m_powered(false),
       m_log_opened(false),
       m_log_name_pending(false),
+      m_post_power_on_delay(0.0),
       m_power_off_delay(0.0),
       m_fault_count(0),
       m_timeout_count(0)
@@ -56,7 +56,8 @@ namespace DUNE
     void
     BasicDeviceDriver::onResourceRelease(void)
     {
-      closeLog();
+      if (enableLogControl())
+        closeLog();
     }
 
     void
@@ -168,6 +169,9 @@ namespace DUNE
     void
     BasicDeviceDriver::requestLogName(void)
     {
+      if (!enableLogControl())
+        return;
+
       debug("requesting current log path");
       IMC::LoggingControl lc;
       lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
@@ -190,6 +194,9 @@ namespace DUNE
     void
     BasicDeviceDriver::consume(const IMC::LoggingControl* msg)
     {
+      if (!enableLogControl())
+        return;
+
       if ((msg->getDestination() != getSystemId())
           || (msg->getDestinationEntity() != getEntityId()))
         return;
@@ -232,6 +239,9 @@ namespace DUNE
     void
     BasicDeviceDriver::openLog(const Path& path)
     {
+      if (!enableLogControl())
+        return;
+
       if (!isActive() && !isActivating())
         return;
 
@@ -243,17 +253,11 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::logPacket(void)
-    {
-      if (!m_log_opened)
-        return;
-
-      onLogPacket();
-    }
-
-    void
     BasicDeviceDriver::closeLog(void)
     {
+      if (!enableLogControl())
+        return;
+
       if (!m_log_opened)
         return;
 
@@ -264,18 +268,21 @@ namespace DUNE
     }
 
     //! Consume power channel state messages.
+    //! @param[in] msg power channel state.
     void
     BasicDeviceDriver::consume(const IMC::PowerChannelState* msg)
     {
-      if (m_power_channels.find(msg->name) == m_power_channels.end())
+      std::map<std::string, bool>::iterator itr = m_power_channels.find(msg->name);
+
+      if (itr == m_power_channels.end())
         return;
 
-      bool old_state = m_powered;
-      m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
-      if (!old_state && m_powered)
-        debug("device is powered");
-      else if (old_state && !m_powered)
-        debug("device is no longer powered");
+      bool old_state = itr->second;
+      itr->second = (msg->state == IMC::PowerChannelState::PCS_ON);
+      if (!old_state && itr->second)
+        debug("device %s is powered", msg->name.c_str());
+      else if (old_state && !itr->second)
+        debug("device %s is no longer powered", msg->name.c_str());
     }
 
     //! Power-on device.
@@ -302,22 +309,27 @@ namespace DUNE
       if (m_power_channels.empty())
         return;
 
-      std::set<std::string>::const_iterator itr = m_power_channels.begin();
+      std::map<std::string, bool>::iterator itr = m_power_channels.begin();
       for ( ; itr != m_power_channels.end(); ++itr)
       {
         IMC::PowerChannelControl pcc;
         pcc.op = op;
-        pcc.name = *itr;
+        pcc.name = itr->first;
         dispatch(pcc);
       }
     }
 
-    //! Test if device is powered.
-    //! @return true if device is powered, false otherwise.
     bool
-    BasicDeviceDriver::isPowered(void)
+    BasicDeviceDriver::isPowered(bool state)
     {
-      return m_powered;
+      std::map<std::string, bool>::iterator itr = m_power_channels.begin();
+      for (; itr != m_power_channels.end(); ++itr)
+      {
+        if (state == !itr->second)
+          return false;
+      }
+
+      return true;
     }
 
     void
@@ -344,7 +356,7 @@ namespace DUNE
 
           // Wait for power to be on.
         case SM_ACT_POWER_WAIT:
-          if (isPowered())
+          if (isPowered(true))
           {
             m_power_on_timer.setTop(m_post_power_on_delay);
             queueState(SM_ACT_DEV_WAIT);
@@ -382,7 +394,12 @@ namespace DUNE
           else
           {
             if (synchronize())
-              queueState(SM_ACT_LOG_REQUEST);
+            {
+              if (enableLogControl())
+                queueState(SM_ACT_LOG_REQUEST);
+              else
+                queueState(SM_ACT_DONE);
+            }
           }
           break;
 
@@ -435,8 +452,10 @@ namespace DUNE
 
           // Gracefully disconnect from device.
         case SM_DEACT_DISCONNECT:
+          if (enableLogControl())
+            closeLog();
+
           disconnect();
-          closeLog();
 
           m_power_off_timer.setTop(m_power_off_delay);
 
@@ -454,7 +473,7 @@ namespace DUNE
 
           // Wait for power to be turned off.
         case SM_DEACT_POWER_WAIT:
-          if (!isPowered())
+          if (isPowered(false))
             queueState(SM_DEACT_DONE);
           break;
 
@@ -505,10 +524,6 @@ namespace DUNE
     {
       trace("handled close log request");
     }
-
-    void
-    BasicDeviceDriver::onLogPacket(void)
-    { }
 
     void
     BasicDeviceDriver::onMain(void)

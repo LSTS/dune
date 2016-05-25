@@ -353,7 +353,7 @@ namespace Supervisors
 
         if (prev_count && !m_vs.error_count)
         {
-          war(DTR("entity errors cleared"));
+          inf(DTR("entity errors cleared"));
         }
         else if ((prev_count != m_vs.error_count) && m_err_timer.overflow())
         {

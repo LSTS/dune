@@ -1673,11 +1673,17 @@ namespace Control
           mavlink_global_position_int_t gp;
           mavlink_msg_global_position_int_decode(msg, &gp);
 
+          // We need to wait untill we know the vehicle type to handle this
+          if (m_vehicle_type == VEHICLE_UNKNOWN)
+            return;
+
           double lat = Angles::radians((double)gp.lat * 1e-07);
           double lon = Angles::radians((double)gp.lon * 1e-07);
 
           m_lat = (double)gp.lat * 1e-07;
           m_lon = (double)gp.lon * 1e-07;
+          if (m_vehicle_type == VEHICLE_COPTER)
+            m_hae_msl = (double) gp.alt * 1.0e-3;
 
           double d = WGS84::distance(m_ref_lat, m_ref_lon, m_ref_hae,
                                      lat, lon, getHeight());
@@ -1726,6 +1732,9 @@ namespace Control
 
           m_estate.depth = -1;
           m_estate.alt = -1;
+
+          if (m_vehicle_type == VEHICLE_COPTER)
+            m_estate.alt = gp.relative_alt * 1e-3;
 
 
         }
@@ -2190,7 +2199,8 @@ namespace Control
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
-          m_hae_msl = vfr_hud.alt;
+          if (m_vehicle_type != VEHICLE_COPTER)
+            m_hae_msl = vfr_hud.alt;
 
           dispatch(ias);
           dispatch(gs);

@@ -61,7 +61,7 @@ namespace Sensors
       //! Parse one byte of data.
       //! @param[in] byte data byte.
       //! @param[in] pkt destination packet.
-      //! @return true if a message was parsed, falsed otherwise.
+      //! @return true if a message was parsed, false otherwise.
       bool
       parse(uint8_t byte, Packet* pkt)
       {

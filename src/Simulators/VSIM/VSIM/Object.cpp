@@ -229,6 +229,9 @@ namespace Simulators
           m_angular_velocity[i] = d_vel[i + 3];
         }
       }
+
+      if (m_position[2] <= 0.0)
+        m_position[2] = 0.0;
     }
   }
 }

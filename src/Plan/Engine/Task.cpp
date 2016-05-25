@@ -39,6 +39,13 @@ namespace Plan
   {
     using DUNE_NAMESPACES;
 
+    enum OutputType
+    {
+      TYPE_NONE,
+      TYPE_INF,
+      TYPE_WAR
+    };
+
     //! Timeout for the vehicle command reply.
     const double c_vc_reply_timeout = 2.5;
     //! Timeout for the vehicle state
@@ -74,6 +81,10 @@ namespace Plan
       float sk_rpm;
       //! Entity label of the IMU
       std::string label_imu;
+      //! Recovery plan
+      std::string recovery_plan;
+      //! Entity label of the plan generator.
+      std::string label_gen;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -109,6 +120,8 @@ namespace Plan
       std::map<std::string, IMC::EntityInfo> m_cinfo;
       //! Source entity of the IMU
       unsigned m_eid_imu;
+      //! Source entity of the plan generator
+      unsigned m_eid_gen;
       //! IMU is enabled or not
       bool m_imu_enabled;
       //! Queue of PlanControl messages
@@ -167,6 +180,12 @@ namespace Plan
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
 
+        param("Plan Generator Entity Label", m_args.label_gen)
+        .defaultValue("Plan Generator")
+        .description("Entity label of the Plan Generator");
+
+        m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
+
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
@@ -194,7 +213,16 @@ namespace Plan
         }
         catch (...)
         {
-          m_eid_imu = 0;
+          m_eid_imu = UINT_MAX;
+        }
+
+        try
+        {
+          m_eid_gen = resolveEntity(m_args.label_gen);
+        }
+        catch (...)
+        {
+          m_eid_gen = UINT_MAX;
         }
       }
 
@@ -319,7 +347,7 @@ namespace Plan
                 m_reply.plan_id = m_spec.plan_id;
               }
 
-              changeMode(IMC::PlanControlState::PCS_READY, error, false);
+              changeMode(IMC::PlanControlState::PCS_READY, error, TYPE_NONE);
             }
             else
             {
@@ -407,7 +435,7 @@ namespace Plan
         if (initMode() || execMode())
         {
           if (error)
-            changeMode(IMC::PlanControlState::PCS_READY, vc->info, false);
+            changeMode(IMC::PlanControlState::PCS_READY, vc->info, TYPE_NONE);
           return;
         }
       }
@@ -469,7 +497,7 @@ namespace Plan
         switch (m_pcs.state)
         {
           case IMC::PlanControlState::PCS_BLOCKED:
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"));
+            changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"), TYPE_INF);
             break;
           case IMC::PlanControlState::PCS_INITIALIZING:
             if (!pendingReply())
@@ -507,7 +535,7 @@ namespace Plan
             onSuccess(comp, false);
             m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
             m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_READY, comp);
+            changeMode(IMC::PlanControlState::PCS_READY, comp, TYPE_INF);
           }
           else
           {
@@ -544,7 +572,7 @@ namespace Plan
             m_reply.plan_id = m_spec.plan_id;
           }
 
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, false);
+          changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, TYPE_NONE);
         }
       }
 
@@ -559,7 +587,7 @@ namespace Plan
         if (!blockedMode())
         {
           changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                     DTR("vehicle in CALIBRATION mode"), false);
+                     DTR("vehicle in CALIBRATION mode"), TYPE_NONE);
         }
       }
 
@@ -572,13 +600,21 @@ namespace Plan
           return;
 
         changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                   DTR("vehicle in EXTERNAL mode"), false);
+                   DTR("vehicle in EXTERNAL mode"), TYPE_NONE);
       }
 
       void
       consume(const IMC::PlanControl* pc)
       {
         if (pc->type != IMC::PlanControl::PC_REQUEST)
+          return;
+
+        // Emergency plan needs to be requested by
+        // local plan generator.
+        if ((pc->plan_id == m_args.recovery_plan) &&
+            (pc->op == IMC::PlanControl::PC_START) &&
+            ((pc->getSource() != getSystemId()) ||
+             (pc->getSourceEntity() != m_eid_gen)))
           return;
 
         if (pendingReply())
@@ -713,7 +749,7 @@ namespace Plan
             m_reply.plan_id = m_spec.plan_id;
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             onSuccess();
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"));
+            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"), TYPE_INF);
           }
           else
           {
@@ -868,7 +904,7 @@ namespace Plan
         bool stopped = stopPlan(true);
 
         changeMode(IMC::PlanControlState::PCS_INITIALIZING,
-                   DTR("plan initializing: ") + plan_id);
+                   DTR("plan initializing: ") + plan_id, TYPE_INF);
 
         if (!loadPlan(plan_id, spec, true))
           return stopped;
@@ -957,7 +993,7 @@ namespace Plan
 
         changeMode(IMC::PlanControlState::PCS_EXECUTING,
                    pman->maneuver_id + DTR(": executing maneuver"),
-                   pman->maneuver_id, pman->data.get());
+                   pman->maneuver_id, pman->data.get(), TYPE_INF);
 
         m_plan->maneuverStarted(pman->maneuver_id);
       }
@@ -1020,12 +1056,14 @@ namespace Plan
       //! @param[in] print true if the messages should be printed to output
       void
       changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
-                 const std::string& nid, const IMC::Message* maneuver, bool print = true)
+                 const std::string& nid, const IMC::Message* maneuver, OutputType print = TYPE_WAR)
       {
         double now = Clock::getSinceEpoch();
 
-        if (print)
+        if (print == TYPE_WAR)
           war("%s", event_desc.c_str());
+        else if (print == TYPE_INF)
+          inf("%s", event_desc.c_str());
 
         m_last_event = event_desc;
 
@@ -1067,7 +1105,7 @@ namespace Plan
       //! @param[in] print true if the messages should be printed to output
       void
       changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
-                 bool print = true)
+                 OutputType print = TYPE_WAR)
       {
         changeMode(s, event_desc, "", NULL, print);
       }

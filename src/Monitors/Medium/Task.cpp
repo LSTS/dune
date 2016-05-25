@@ -219,8 +219,8 @@ namespace Monitors
           return;
 
         m_depth = msg->depth;
-        // For UAVs: Height is positive upwards, z is positive downwards.
-        m_altitude = msg->height - msg->z;
+        // For UAV Copters: Use the altitude field. Will be -1 for fixed-wings.
+        m_altitude = msg->alt;
       }
 
       void

@@ -181,7 +181,7 @@ namespace Simulators
         double sim_time = Clock::get() - m_start_time;
         m_sstate.x = position[0] + sim_time * m_args.wx;
         m_sstate.y = position[1] + sim_time * m_args.wy;
-        m_sstate.z = position[2];
+        m_sstate.z = std::max(position[2], 0.0);
 
         // Fill attitude.
         double* attitude = m_vehicle->getOrientation();
