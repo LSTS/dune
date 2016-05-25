@@ -56,8 +56,7 @@ namespace DUNE
     void
     BasicDeviceDriver::onResourceRelease(void)
     {
-      if (enableLogControl())
-        closeLog();
+      requestDeactivation();
     }
 
     void
@@ -452,10 +451,10 @@ namespace DUNE
 
           // Gracefully disconnect from device.
         case SM_DEACT_DISCONNECT:
+          disconnect();
+
           if (enableLogControl())
             closeLog();
-
-          disconnect();
 
           m_power_off_timer.setTop(m_power_off_delay);
 
