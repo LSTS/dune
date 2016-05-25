@@ -241,9 +241,22 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Safe depth change to consider the maneuver was successful");
 
-        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
+        param("Dislodge -- Safe Depth Gap", m_args.dislodge.safe_gap)
+        .defaultValue("3.0")
+        .units(Units::Meter)
+        .description("Safe depth change to consider the maneuver was successful");
 
-        m_ctx.config.get("General", "Maximum Absolute Speed", "1.6", m_args.scheduled.max_speed);
+        param("ScheduledGoto -- Minimum Speed", m_args.scheduled.min_speed)
+        .defaultValue("0.7")
+        .units(Units::MeterPerSecond)
+        .description("Move only at speeds higher than the minimum speed");
+
+        param("ScheduledGoto -- Maximum Speed", m_args.scheduled.max_speed)
+        .defaultValue("1.6")
+        .units(Units::MeterPerSecond)
+        .description("Maximum commanded speed");
+
+        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;

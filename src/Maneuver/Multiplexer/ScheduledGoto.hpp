@@ -43,11 +43,11 @@ namespace Maneuver
     struct ScheduledArgs
     {
       float max_speed;
+      float min_speed;
     };
 
     //! ScheduledGoto maneuver
     class ScheduledGoto: public MuxedManeuver<IMC::ScheduledGoto, ScheduledArgs>
-
     {
     public:
       //! Default constructor.
@@ -139,13 +139,21 @@ namespace Maneuver
               break;
           }
 
-          m_task->setControl(control);
-
           double prev_speed = m_speed;
+
           //! Calculate speed to arrive on time, in mps
           path.speed_units = IMC::SUNITS_METERS_PS;
           m_speed = speedCalc(msg);
           path.speed = m_speed;
+
+          if (!m_dispatched && m_speed < m_args->min_speed)
+          {
+            // start moving only when necessary...
+            m_task->setControl(0);
+            return;
+          }
+
+          m_task->setControl(control);
 
           if (!m_dispatched || m_speed != prev_speed)
           {
