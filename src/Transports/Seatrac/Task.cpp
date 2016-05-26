@@ -328,21 +328,31 @@ namespace Transports
         m_last_input = Clock::get();
         processInput();
 
-      if (hasConnection())
+        if (hasConnection())
         {
           do
           {
             sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
             processInput();
-          }
-          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
+          } while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
 
-          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr) &&
-                (m_data_beacon.cid_settings_msg.status_flags == 0x1) &&
-                (m_data_beacon.cid_settings_msg.status_output == 63)))
+          uint8_t output_flags = ENVIRONMENT_FLAG | ATTITUDE_FLAG
+              | MAG_CAL_FLAG | ACC_CAL_FLAG | AHRS_RAW_DATA_FLAG
+              | AHRS_COMP_DATA_FLAG;
+
+          uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
+
+          if (m_args.usbl_receiver)
+            xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
+
+          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
+              && (m_data_beacon.cid_settings_msg.status_flags == STATUS_MODE_1HZ)
+              && (m_data_beacon.cid_settings_msg.status_output == output_flags)
+              && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)))
           {
-            m_data_beacon.cid_settings_msg.status_flags = 0x1;
-            m_data_beacon.cid_settings_msg.status_output = 63;
+            m_data_beacon.cid_settings_msg.status_flags = STATUS_MODE_1HZ;
+            m_data_beacon.cid_settings_msg.status_output = output_flags;
+            m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);

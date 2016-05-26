@@ -97,12 +97,12 @@ namespace Transports
       void
       outputFlagsComp(void)
       {
-        outputflags_list[0] = (0x01 & output_flags);
-        outputflags_list[1] = (0x02 & output_flags);
-        outputflags_list[2] = (0x04 & output_flags);
-        outputflags_list[3] = (0x08 & output_flags);
-        outputflags_list[4] = (0x10 & output_flags);
-        outputflags_list[5] = (0x20 & output_flags);
+        outputflags_list[0] = (ENVIRONMENT_FLAG & output_flags);
+        outputflags_list[1] = (ATTITUDE_FLAG & output_flags);
+        outputflags_list[2] = (MAG_CAL_FLAG & output_flags);
+        outputflags_list[3] = (ACC_CAL_FLAG & output_flags);
+        outputflags_list[4] = (AHRS_RAW_DATA_FLAG & output_flags);
+        outputflags_list[5] = (AHRS_COMP_DATA_FLAG & output_flags);
       }
 
     };

@@ -122,6 +122,50 @@ namespace Transports
       CID_DEX_RECEIVE = 0x77
     };
 
+    // Status Output Mode
+    enum StatusMode_E
+    {
+      STATUS_MODE_MANUAL = 0x0,
+      STATUS_MODE_1HZ = 0x1,
+      STATUS_MODE_2HZ5 = 0x2,
+      STATUS_MODE_5HZ = 0x3,
+      STATUS_MODE_10HZ = 0x4,
+      STATUS_MODE_25HZ = 0x5
+    };
+
+    // Status output flags
+    enum StatusOutputFlags_E
+    {
+      ENVIRONMENT_FLAG = 0x1,
+      ATTITUDE_FLAG = 0x2,
+      MAG_CAL_FLAG = 0x4,
+      ACC_CAL_FLAG = 0x8,
+      AHRS_RAW_DATA_FLAG = 0x10,
+      AHRS_COMP_DATA_FLAG = 0x20
+    };
+
+    // Control environment flags
+    enum ControlEnvFlags_E
+    {
+      AUTO_VOS_FLAG = 0x1,
+      AUTO_PRESSURE_OFS_FLAG = 0x2
+    };
+
+    // Control AHRS flags
+    enum ControlAhrsFlags_E
+    {
+      AUTO_CAL_MAG_FLAG = 0x1
+    };
+
+    // Control XCVR flags
+    enum ControlXcvrFlags_E {
+      USBL_USE_AHRS_FLAG = 0x1,
+      XCVR_POSFLT_ENABLE_FLAG = 0x2,
+      XCVR_USBL_MSGS_FLAG = 0x20,
+      XCVR_FIX_MSGS_FLAG = 0x40,
+      XCVR_DIAG_MSGS_FLAG = 0x80
+    };
+
     // Msg status
     enum AmsgType_E
     {
