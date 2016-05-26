@@ -163,7 +163,7 @@ namespace Transports
         std::memcpy(&(*aco_fix).position_easting, msg_raw + ind, 2);
         std::memcpy(&(*aco_fix).position_northing, msg_raw + ind + 2, 2);
         std::memcpy(&(*aco_fix).position_depth, msg_raw + ind + 4, 2);
-        ind += 12;
+        ind += 6;
       }
 
       return ind;
