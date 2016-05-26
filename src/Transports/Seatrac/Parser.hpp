@@ -291,8 +291,6 @@ namespace Transports
           data_Beacon.set(CID_DAT_SEND);
           std::memcpy(&data_Beacon.cid_dat_send_msg.status, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_send_msg.beacon_id, msg_raw + ind + 1, 1);
-          if (data_Beacon.cid_dat_send_msg.status != 0)
-            data_Beacon.cid_dat_send_msg.lock_flag = 0;
           break;
 
         case CID_DAT_RECEIVE:
