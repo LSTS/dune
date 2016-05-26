@@ -137,6 +137,7 @@ namespace DUNE
         Coordinates::WGS84::displace(usbl.n, usbl.e, &lat, &lon);
 
         IMC::UsblFixExtended fix;
+        fix.target = usbl.target;
         fix.lat = lat;
         fix.lon = lon;
         fix.z_units = z_units;
