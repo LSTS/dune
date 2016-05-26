@@ -72,10 +72,13 @@ namespace Transports
       CidNavBeaconPosSendMsg cid_nav_beacon_pos_send_msg;
       CidNavRefPosSendMsg  cid_nav_ref_pos_send_msg;
       CidNavRefPosUpdateMsg  cid_nav_ref_pos_update_msg;
+      // USBL status message
+      CidXcvrUsblMsg cid_xcvr_usbl_msg;
       // aco_fix
       Acofix_t ACO_seatrac;
       uint8_t new_message[MESSAGE_NUMBER];
       std::string data_message;
+
 
       //! Constructor.
       DataSeatrac(void)
@@ -120,7 +123,6 @@ namespace Transports
     uint16_t
     updateEcoFix(Acofix_t* aco_fix, uint16_t ind, const char* msg_raw)
     {
-      int i;
       std::memcpy(&(*aco_fix).dest_id, msg_raw + ind, 1);
       std::memcpy(&(*aco_fix).src_id, msg_raw + ind + 1, 1);
       std::memcpy(&(*aco_fix).flags, msg_raw + ind + 2, 1);
@@ -148,6 +150,8 @@ namespace Transports
       {
         std::memcpy(&(*aco_fix).usbl_channels, msg_raw + ind, 1);
 
+        int i;
+        aco_fix->usbl_rssi.reserve(aco_fix->usbl_channels);
         for (i = 0; i < aco_fix->usbl_channels; i++)
           std::memcpy(&(*aco_fix).usbl_rssi[i], msg_raw + ind + 1 + 2 * i, 2);
 
@@ -177,7 +181,6 @@ namespace Transports
     dataParser(uint16_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
     {
       uint16_t ind = 0;
-      int i = 0;
 
       switch (message_type)
       {
@@ -295,9 +298,9 @@ namespace Transports
         case CID_DAT_RECEIVE:
           ind = updateEcoFix(&data_Beacon.cid_dat_receive_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.ack_flag, msg_raw + ind, 1);
-          std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind   +1, 1);
+          std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind +1, 1);
           ind += 2;
-          for (i = 0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
+          for (int i = 0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
           {
             std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i],
                         msg_raw + ind  + i, 1);
@@ -364,7 +367,7 @@ namespace Transports
         case  CID_NAV_QUERY_REQ:
           data_Beacon.set(CID_NAV_QUERY_REQ);
           ind = updateEcoFix(&data_Beacon.cid_nav_query_req_msg.aco_fix, ind, msg_raw);
-          std::memcpy(&data_Beacon.cid_nav_query_req_msg.nav_query_t, msg_raw + ind  + i, 1);
+          std::memcpy(&data_Beacon.cid_nav_query_req_msg.nav_query_t, msg_raw + ind, 1);
           break;
 
         case  CID_XCVR_FIX:
@@ -447,6 +450,39 @@ namespace Transports
                       msg_raw + ind + 1, 4);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.position_longitude,
                       msg_raw + ind + 5, 4);
+          break;
+
+        case CID_XCVR_USBL:
+          data_Beacon.set(CID_XCVR_USBL);
+          ind = ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_sig_peak, (const uint8_t*)msg_raw);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_threshold, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_cross_point, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_cross_mag, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_detect, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_length, (const uint8_t*)&msg_raw[ind]);
+
+          data_Beacon.cid_xcvr_usbl_msg.xcor_data.reserve(data_Beacon.cid_xcvr_usbl_msg.xcor_length);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.xcor_length; i++)
+          {
+            ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_data[i], (const uint8_t*)&msg_raw[ind]);
+          }
+
+          data_Beacon.cid_xcvr_usbl_msg.channels = msg_raw[ind++];
+          data_Beacon.cid_xcvr_usbl_msg.channel_rssi.reserve(data_Beacon.cid_xcvr_usbl_msg.channels);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.channels; i++)
+          {
+            ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.channel_rssi[i], (const uint8_t*)&msg_raw[ind]);
+          }
+
+          data_Beacon.cid_xcvr_usbl_msg.baselines = msg_raw[ind++];
+          data_Beacon.cid_xcvr_usbl_msg.phase_angle.reserve(data_Beacon.cid_xcvr_usbl_msg.baselines);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.baselines; i++)
+          {
+            ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.phase_angle[i], (const uint8_t*)&msg_raw[ind]);
+          }
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_azimuth, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_elevation, (const uint8_t*)&msg_raw[ind]);
+          ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_fit_error, (const uint8_t*)&msg_raw[ind]);
           break;
 
           // Should never get here.

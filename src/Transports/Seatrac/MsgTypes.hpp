@@ -458,6 +458,24 @@ namespace Transports
         query_flags_list[3]=(0x08 & query_flags);
       }
     };
+
+    struct CidXcvrUsblMsg
+    {
+      float xcor_sig_peak;
+      float xcor_threshold;
+      uint16_t xcor_cross_point;
+      float xcor_cross_mag;
+      uint16_t xcor_detect;
+      uint16_t xcor_length;
+      std::vector<float> xcor_data;
+      uint8_t channels;
+      std::vector<int16_t> channel_rssi;
+      uint8_t baselines;
+      std::vector<float> phase_angle;
+      int16_t signal_azimuth;
+      int16_t signal_elevation;
+      float signal_fit_error;
+    };
   }
 }
 

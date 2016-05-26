@@ -51,7 +51,6 @@ namespace Transports
     void
     printAcoFixData(std::string msg_name, Acofix_t* aco_fix, Tasks::Task* task = NULL)
     {
-      int i;
       task->debug("data_Beacon.%s.aco_fix.dest_id        %d ",
                   msg_name.c_str(), aco_fix->dest_id);
       task->debug("data_Beacon.%s.aco_fix.src_id         %d ",
@@ -90,7 +89,7 @@ namespace Transports
         task->debug("data_Beacon.%s.aco_fix.usbl_channels %d",
                     msg_name.c_str(), aco_fix->usbl_channels);
 
-        for (i = 0; i < aco_fix->usbl_channels; i++)
+        for (int i = 0; i < aco_fix->usbl_channels; i++)
           task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d",
                       msg_name.c_str(), aco_fix->usbl_rssi[i]);
 
@@ -122,8 +121,6 @@ namespace Transports
     printDebugFunction(unsigned message_type, DataSeatrac& data_Beacon,
                        Tasks::Task* task = NULL)
     {
-
-      int i;
 
       switch(message_type)
       {
@@ -272,15 +269,15 @@ namespace Transports
           break;
 
         case CID_PING_SEND:
-          task->debug("MESSAGE  CID_PING_SEND AK");
+          task->debug("MESSAGE  CID_PING_SEND ACK");
           task->debug("data_Beacon.cid_ping_send_msg.status %d",
                       (int)data_Beacon.cid_ping_send_msg.status);
           task->debug("data_Beacon.cid_ping_send_msg.beacon_id %d",
                       (int)data_Beacon.cid_ping_send_msg.beacon_id);
           break;
 
-        case CID_DAT_SEND: // Report of CID_DAT_SEND opeeration
-          task->debug("MESSAGE  CID_DAT_SEND AK ");
+        case CID_DAT_SEND: // Report of CID_DAT_SEND operation
+          task->debug("MESSAGE  CID_DAT_SEND ACK ");
           task->debug("data_Beacon.cid_dat_send_msg.status %d",
                       (int)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
@@ -295,7 +292,7 @@ namespace Transports
                       (int)data_Beacon.cid_dat_receive_msg.ack_flag);
           task->debug("data_Beacon.cid_dat_receive_msg.packet_len %d",
                       (int)data_Beacon.cid_dat_receive_msg.packet_len);
-          for (i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
+          for (int i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
             task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%d] %d ", i,
                         (unsigned)data_Beacon.cid_dat_receive_msg.packet_data[i]);
           break;
@@ -501,6 +498,51 @@ namespace Transports
                       data_Beacon.cid_nav_ref_pos_update_msg.position_latitude);
           task->debug("data_Beacon.cid_nav_ref_pos_update_msg.position_longitude %d",
                       data_Beacon.cid_nav_ref_pos_update_msg.position_longitude);
+          break;
+
+        case CID_XCVR_USBL:
+          task->debug("CID_XCVR_USBL");
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_sig_peak %f",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_sig_peak);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_threshold %f",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_threshold);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_cross_point %d",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_cross_point);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_cross_mag %f",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_cross_mag);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_detect %d",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_detect);
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_length %d",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_length);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.xcor_length; i++)
+          {
+            task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_data[%d] %f", i,
+                        data_Beacon.cid_xcvr_usbl_msg.xcor_data[i]);
+          }
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.channels %d",
+                      data_Beacon.cid_xcvr_usbl_msg.channels);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.channels; i++)
+          {
+            task->debug("data_Beacon.cid_xcvr_usbl_msg.channel_rssi[%d] %d", i,
+                        data_Beacon.cid_xcvr_usbl_msg.channel_rssi[i]);
+          }
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.baselines %d",
+                      data_Beacon.cid_xcvr_usbl_msg.baselines);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.baselines; i++)
+          {
+            task->debug("data_Beacon.cid_xcvr_usbl_msg.phase_angle[%d] %f", i,
+                        data_Beacon.cid_xcvr_usbl_msg.phase_angle[i]);
+          }
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.signal_azimuth %d",
+                      data_Beacon.cid_xcvr_usbl_msg.signal_azimuth);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.signal_elevation %d",
+                      data_Beacon.cid_xcvr_usbl_msg.signal_elevation);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.signal_fit_error %f",
+                      data_Beacon.cid_xcvr_usbl_msg.signal_fit_error);
           break;
 
         default:

@@ -251,7 +251,7 @@ namespace Transports
       uint16_t range_dist;
       // USBL Fields.
       uint8_t usbl_channels;
-      int16_t usbl_rssi[4];
+      std::vector<int16_t> usbl_rssi;
       int16_t usbl_azimuth;
       int16_t usbl_elevation;
       int16_t usbl_fit_error;
