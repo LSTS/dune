@@ -258,6 +258,9 @@ namespace Sensors
         // Create two TCP sockets, the first for command link,
         // the second to parse the data coming from the device.
         TCPSocket* sock = new TCPSocket;
+        sock->setNoDelay(true);
+        sock->setSendTimeout(1.0);
+        sock->setReceiveTimeout(1.0);
         sock->connect(addr, port);
         m_handle = sock;
 
@@ -291,6 +294,8 @@ namespace Sensors
       bool
       onConnect(void)
       {
+        consumeMessages();
+
         try
         {
           if (!openSocket())

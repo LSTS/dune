@@ -272,7 +272,7 @@ namespace Sensors
       setDVL(bool boot = false)
       {
         std::string cmd;
-        cmd = String::str("SETDVL,TRIG=\"%s\",SR=%f,SA=%f,",
+        cmd = String::str("SETDVL,TRIG=\"%s\",SR=%f,SA=%f",
                           getTrigger().c_str(), m_sampling_rate, m_salinity);
 
         if (boot)
