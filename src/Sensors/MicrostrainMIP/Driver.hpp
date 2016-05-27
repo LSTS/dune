@@ -99,7 +99,10 @@ namespace Sensors
           m_serial_number = String::trim(bfr);
 
           if (String::startsWith(m_model_name, "3DM-GX4-"))
+          {
+            m_parent->debug("device is a GX4 model");
             m_model_gx4 = true;
+          }
 
           return true;
         }
@@ -350,7 +353,7 @@ namespace Sensors
         // Acceleration.
         if (payload[offset] == DD_SCALED_ACCL_VEC)
         {
-          extractRotatedVector(payload + 8, data);
+          extractRotatedVector(payload + offset + 1, data);
           m_accel.setTimeStamp(m_parser.getTimeStamp());
           m_accel.x = Math::c_gravity * data(0);
           m_accel.y = Math::c_gravity * data(1);
@@ -361,7 +364,7 @@ namespace Sensors
         // Extract angular rates.
         if (payload[offset] == DD_SCALED_GYRO_VEC)
         {
-          extractRotatedVector(payload + 22, data);
+          extractRotatedVector(payload + offset + 1, data);
           m_agvel.setTimeStamp(m_parser.getTimeStamp());
           m_agvel.x = data(0);
           m_agvel.y = data(1);
@@ -372,7 +375,7 @@ namespace Sensors
         // Extract magnetic field.
         if (payload[offset] == DD_SCALED_MAGN_VEC)
         {
-          extractRotatedVector(payload + 36, data);
+          extractRotatedVector(payload + offset + 1, data);
           m_magfield.setTimeStamp(m_parser.getTimeStamp());
           m_magfield.x = data(0);
           m_magfield.y = data(1);
