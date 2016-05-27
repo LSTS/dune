@@ -256,33 +256,40 @@ namespace Sensors
       {
         uint8_t bits_old = (uint8_t)((c_wake_mask & m_status) >> SB_WAKE_ST);
 
-        IMC::Depth dept;
-        IMC::Pressure pres;
+        float pres;
         IMC::SoundSpeed sspe;
         IMC::Temperature temp;
 
         std::memcpy(&m_status, &m_bfr[c_hdr_size + IND_STATUS], 4);
         std::memcpy(&sspe.value, &m_bfr[c_hdr_size + IND_SSPEED], 4);
         std::memcpy(&temp.value, &m_bfr[c_hdr_size + IND_TEMPER], 4);
-        std::memcpy(&pres.value, &m_bfr[c_hdr_size + IND_PRESSU], 4);
+        std::memcpy(&pres, &m_bfr[c_hdr_size + IND_PRESSU], 4);
 
-        pres.value *= c_pascal_per_bar;
-        dept.value = ((pres.value - Math::c_sea_level_pressure) /
-                      (Math::c_gravity * c_seawater_density));
+        // check if pressure data is valid.
+        if (pres > 0.0)
+        {
+          IMC::Pressure pre;
+          IMC::Depth dep;
+          pre.value *= pres * c_pascal_per_bar;
+          dep.value = ((pre.value - Math::c_sea_level_pressure) /
+                       (Math::c_gravity * c_seawater_density));
+
+          pre.setTimeStamp(m_timestamp);
+          dep.setTimeStamp(m_timestamp);
+          m_task->dispatch(pre, DF_KEEP_TIME);
+          m_task->dispatch(dep, DF_KEEP_TIME);
+
+          m_task->spew("pressure: %0.1f, depth: %0.1f", pre.value, dep.value);
+        }
 
         sspe.setTimeStamp(m_timestamp);
         temp.setTimeStamp(m_timestamp);
-        pres.setTimeStamp(m_timestamp);
-        dept.setTimeStamp(m_timestamp);
 
         m_task->dispatch(sspe, DF_KEEP_TIME);
         m_task->dispatch(temp, DF_KEEP_TIME);
-        m_task->dispatch(pres, DF_KEEP_TIME);
-        m_task->dispatch(dept, DF_KEEP_TIME);
 
-        m_task->spew("status bits: %08X", m_status);
-        m_task->spew("sound: %0.1f, temp: %0.1f, press: %0.1f, depth: %0.1f",
-                     sspe.value, temp.value, pres.value, dept.value);
+        m_task->spew("status bits: %08X | sound: %0.1f | temperature: %0.1f",
+                     m_status, sspe.value, temp.value);
 
         // verify wake up status bits.
         uint8_t bits_new = (uint8_t)((c_wake_mask & m_status) >> SB_WAKE_ST);
@@ -367,6 +374,8 @@ namespace Sensors
           m_gvel.z = z2;
 
         // Validity flags.
+        m_gvel.validity = 0;
+
         if (m_status & (1 << SB_VAL_VEL))
           m_gvel.validity |= IMC::GroundVelocity::VAL_VEL_X;
 
@@ -376,6 +385,7 @@ namespace Sensors
         if (z1valid || z2valid)
           m_gvel.validity |= IMC::GroundVelocity::VAL_VEL_Z;
 
+        m_gvel.setTimeStamp(m_timestamp);
         m_task->dispatch(m_gvel, DF_KEEP_TIME);
 
         m_task->spew("speed: %0.1f, %0.1f, %0.1f (m/s)", m_gvel.x, m_gvel.y, m_gvel.z);
