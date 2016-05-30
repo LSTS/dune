@@ -348,10 +348,7 @@ namespace Actuators
         m_motor_id = m_args.motor_id;
 
         if (paramChanged(m_args.state_per))
-        {
-          m_args.state_per = 1.0 / m_args.state_per;
-          m_state_timer.setTop(m_args.state_per);
-        }
+          m_state_timer.setTop(1.0 / m_args.state_per);
 
         if (paramChanged(m_args.timeout_error))
           m_wdog.setTop(m_args.timeout_error);

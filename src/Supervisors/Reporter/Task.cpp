@@ -94,7 +94,12 @@ namespace Supervisors
           }
           else
           {
-            m_dispatcher.clearAcoustic();
+            IMC::ReportControl rc;
+            rc.op = IMC::ReportControl::OP_REQUEST_STOP;
+            rc.comm_interface = IMC::ReportControl::CI_ACOUSTIC;
+            rc.period = m_args.acoustic_period;
+            rc.sys_dst = "broadcast";
+            dispatch(rc, DF_LOOP_BACK);
           }
         }
 

@@ -626,7 +626,7 @@ namespace Sensors
       }
 
       void
-      handleConfigParam(std::auto_ptr<NMEAReader>& stn)
+      handleConfigParam(NMEAReader* const stn)
       {
         std::string arg;
         *stn >> arg;
@@ -669,7 +669,7 @@ namespace Sensors
       }
 
       void
-      handleMiniPacket(std::auto_ptr<NMEAReader>& stn)
+      handleMiniPacket(NMEAReader* const stn)
       {
         unsigned src = 0;
         *stn >> src;
@@ -721,7 +721,7 @@ namespace Sensors
       }
 
       void
-      handleTransponderTravelTimes(std::auto_ptr<NMEAReader>& stn)
+      handleTransponderTravelTimes(NMEAReader* const stn)
       {
         //! Range.
         IMC::LblRange lrange;
@@ -773,7 +773,7 @@ namespace Sensors
       }
 
       void
-      handlePingReply(std::auto_ptr<NMEAReader>& stn)
+      handlePingReply(NMEAReader* const stn)
       {
         unsigned src = 0;
         *stn >> src;
@@ -852,9 +852,9 @@ namespace Sensors
           text.value.assign(sanitize(m_bfr));
           dispatch(text);
 
+          NMEAReader* const stn = new NMEAReader(m_bfr);
           try
           {
-            std::auto_ptr<NMEAReader> stn = std::auto_ptr<NMEAReader>(new NMEAReader(m_bfr));
             if (std::strcmp(stn->code(), "CAMUA") == 0)
               handleMiniPacket(stn);
             else if (std::strcmp(stn->code(), "SNTTA") == 0)
@@ -878,11 +878,13 @@ namespace Sensors
           {
             err("%s", e.what());
           }
+
+          delete stn;
         }
       }
 
       void
-      handleBinaryMessage(std::auto_ptr<NMEAReader>& stn)
+      handleBinaryMessage(NMEAReader* const stn)
       {
         unsigned src;
         unsigned dst;

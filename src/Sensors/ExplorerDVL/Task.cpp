@@ -96,7 +96,7 @@ namespace Sensors
       //! Heading alignment.
       double heading_alignment;
       //! True to use DVL at surface.
-      bool activate_at_surface;
+      bool surface;
       //! True to enable automatic activation/deactivation based on medium.
       bool auto_activation;
       //! Beam angle.
@@ -115,13 +115,11 @@ namespace Sensors
       //! Driver.
       Driver* m_driver;
       //! Beam Filter.
-      Navigation::BeamFilter m_filter;
+      Navigation::BeamFilter* m_filter;
       //! Ground velocity message.
       IMC::GroundVelocity m_gvel;
       //! Water velocity message.
       IMC::WaterVelocity m_wvel;
-      //! Measured Altitudes.
-      IMC::Distance m_altitude[c_beam_count];
       //! Filtered Altitude.
       IMC::Distance m_altitude_filtered;
       //! Last sound speed value.
@@ -144,19 +142,22 @@ namespace Sensors
       Counter<double> m_bottom_lock_timer;
       //! True if pings are externally triggered.
       bool m_triggered;
+      //! List of entities.
+      std::vector<unsigned> m_entities;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_driver(NULL),
+        m_filter(NULL),
         m_powered(false),
         m_triggered(false)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param(DTR_RT("Use Device at Surface"), m_args.activate_at_surface)
+        param(DTR_RT("Use Device at Surface"), m_args.surface)
         .defaultValue("true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_IDLE)
@@ -245,80 +246,45 @@ namespace Sensors
         }
 
         if (!(paramChanged(m_args.beam_width)
-              || paramChanged(m_args.beam_angle)
-              || paramChanged(m_args.heading_alignment)
               || paramChanged(m_args.orientation)
               || paramChanged(m_args.position)))
           return;
 
+        // Filtered altitude.
         IMC::BeamConfig bc;
         bc.beam_width = Angles::radians(m_args.beam_width);
         bc.beam_height = bc.beam_width;
 
         IMC::DeviceState ds;
-        ds.z = m_args.position[2];
-
-        for (unsigned i = 0; i < c_beam_count; i++)
-        {
-          m_altitude[i].location.clear();
-          m_altitude[i].beam_config.clear();
-          m_altitude[i].beam_config.push_back(bc);
-        }
-
-        double heading_alignment = Angles::radians(m_args.heading_alignment);
-        double beam_rel_x = m_args.xdcr_offset * std::cos(-heading_alignment);
-        double beam_rel_y = m_args.xdcr_offset * std::sin(-heading_alignment);
-        double beam_angle = Angles::radians(m_args.beam_angle);
-
-        // Beam 1.
-        ds.x = m_args.position[0] - beam_rel_y;
-        ds.y = m_args.position[1] + beam_rel_x;
-        ds.phi = 0;
-        ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
-        ds.psi = Angles::radians(m_args.heading_alignment - 90);
-        m_altitude[0].location.push_back(ds);
-
-        // Beam 2.
-        ds.x = m_args.position[0] + beam_rel_y;
-        ds.y = m_args.position[1] - beam_rel_x;
-        ds.phi = 0;
-        ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
-        ds.psi = Angles::radians(m_args.heading_alignment + 90);
-        m_altitude[1].location.push_back(ds);
-
-        // Beam 3.
-        ds.x = m_args.position[0] + beam_rel_x;
-        ds.y = m_args.position[1] + beam_rel_y;
-        ds.phi = 0;
-        ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
-        ds.psi = Angles::radians(m_args.heading_alignment);
-        m_altitude[2].location.push_back(ds);
-
-        // Beam 4.
-        ds.x = m_args.position[0] - beam_rel_x;
-        ds.y = m_args.position[1] - beam_rel_y;
-        ds.phi = 0;
-        ds.theta = Angles::radians(m_args.orientation[1] + beam_angle);
-        ds.psi = Angles::radians(m_args.heading_alignment - 180);
-        m_altitude[3].location.push_back(ds);
-
-        // Filtered altitude.
-        m_altitude_filtered.location.clear();
-        m_altitude_filtered.beam_config.clear();
-        m_altitude_filtered.beam_config.push_back(bc);
-
         ds.x = m_args.position[0];
         ds.y = m_args.position[1];
+        ds.z = m_args.position[2];
         ds.phi = Angles::radians(m_args.orientation[0]);
         ds.theta = Angles::radians(m_args.orientation[1]);
         ds.psi = Angles::radians(m_args.orientation[2]);
+
+        m_altitude_filtered.location.clear();
         m_altitude_filtered.location.push_back(ds);
+        m_altitude_filtered.beam_config.clear();
+        m_altitude_filtered.beam_config.push_back(bc);
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        m_args.position[2] -= m_args.heading_alignment;
+        m_filter = new BeamFilter(this, c_beam_count, m_args.beam_width, m_args.xdcr_offset,
+                                  m_args.beam_angle, m_args.position, m_args.orientation,
+                                  BeamFilter::CROSSED);
+
+        m_filter->setSourceEntities(m_entities);
       }
 
       void
       onResourceRelease(void)
       {
         Memory::clear(m_driver);
+        Memory::clear(m_filter);
       }
 
       void
@@ -350,10 +316,10 @@ namespace Sensors
       void
       onEntityReservation(void)
       {
-        m_altitude[0].setSourceEntity(reserveEntity("DVL Beam 0"));
-        m_altitude[1].setSourceEntity(reserveEntity("DVL Beam 1"));
-        m_altitude[2].setSourceEntity(reserveEntity("DVL Beam 2"));
-        m_altitude[3].setSourceEntity(reserveEntity("DVL Beam 3"));
+        m_entities.clear();
+        for (unsigned i = 0; i < c_beam_count; i++)
+          m_entities.push_back(reserveEntity(String::str("%s - Beam %u", getEntityLabel(), i)));
+
         m_altitude_filtered.setSourceEntity(reserveEntity("DVL Filtered"));
       }
 
@@ -410,10 +376,16 @@ namespace Sensors
 
         m_medium.update(msg);
 
-        if ((m_medium.isWaterSurface() && m_args.activate_at_surface) || m_medium.isUnderwater())
+        if ((m_medium.isWaterSurface() && m_args.surface) || m_medium.isUnderwater())
         {
           if (canRequestActivation())
             requestActivation();
+        }
+
+        if (m_medium.outWater() || (m_medium.isWaterSurface() && !m_args.surface))
+        {
+          if (isActive())
+            requestDeactivation();
         }
       }
 
@@ -521,14 +493,12 @@ namespace Sensors
       processAltitude(void)
       {
         for (size_t i = 0; i < c_beam_count; ++i)
-        {
-          m_parser.fillAltitude(m_altitude[i], i, m_sound_speed);
-          m_filter.updateBeam(i, m_altitude[i]);
-          dispatch(m_altitude[i], DF_KEEP_TIME);
-        }
+          m_parser.fillAltitude(m_filter->getAltitude(i), i, m_sound_speed);
 
-        m_altitude_filtered.setTimeStamp(m_altitude[0].getTimeStamp());
-        m_altitude_filtered.value = m_filter.getDistance();
+        m_filter->dispatch();
+
+        m_altitude_filtered.setTimeStamp(m_filter->getAltitude(0).getTimeStamp());
+        m_altitude_filtered.value = m_filter->get();
         if (m_altitude_filtered.value > 0.0)
           m_altitude_filtered.validity = IMC::Distance::DV_VALID;
         else
@@ -677,7 +647,7 @@ namespace Sensors
         {
           case ST_ACT_BEGIN:
             trace("activation begin");
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
             m_act_state = ST_ACT_TURN_ON;
             break;
 
