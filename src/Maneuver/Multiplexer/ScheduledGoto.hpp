@@ -28,10 +28,11 @@
 #ifndef MANEUVER_MULTIPLEXER_SCHEDULEDGOTO_HPP_INCLUDED_
 #define MANEUVER_MULTIPLEXER_SCHEDULEDGOTO_HPP_INCLUDED_
 
-#include "Constants.hpp"
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers
+// Local headers.
+#include "Constants.hpp"
 #include "MuxedManeuver.hpp"
 
 namespace Maneuver
@@ -40,9 +41,14 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    //! Timer to recompute speed.
+    static const float c_speed_timer = 2.0f;
+
     struct ScheduledArgs
     {
+      //! Maximum speed allowed.
       float max_speed;
+      //! Minimum speed allowed.
       float min_speed;
     };
 
@@ -53,23 +59,20 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       ScheduledGoto(Maneuvers::Maneuver* task, ScheduledArgs* args):
-        MuxedManeuver<IMC::ScheduledGoto, ScheduledArgs>(task,args)
-      {
-        m_dbeh = IMC::ScheduledGoto::DBEH_RESUME;
-        m_speed = 0;
-        m_dispatched = false;
-      }
+        MuxedManeuver<IMC::ScheduledGoto, ScheduledArgs>(task,args),
+        m_speed(0),
+        m_dispatched(false)
+      { }
 
       //! Start maneuver function
       //! @param[in] maneuver goto maneuver message
       void
       onStart(const IMC::ScheduledGoto* maneuver)
       {
-        m_timer.setTop(0.2);
         m_maneuver = *maneuver;
-        m_dbeh = maneuver->delayed;
-        m_dispatched = false;
+        m_timer.setTop(c_speed_timer);
         m_speed = 0;
+        m_dispatched = false;
       }
 
       //! On PathControlState message
@@ -77,19 +80,19 @@ namespace Maneuver
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        bool time_ran_out = m_maneuver.arrival_time - Clock::getSinceEpoch() <= 0;
+        bool timeout = m_maneuver.arrival_time - Clock::getSinceEpoch() <= 0;
         bool nearby = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
         bool delayed = m_speed >= m_args->max_speed;
 
-        if(time_ran_out && nearby)
+        if (timeout && nearby)
         {
           m_task->signalCompletion();
           return;
         }
 
-        if (time_ran_out || delayed)
+        if (timeout || delayed)
         {
-          switch(m_dbeh)
+          switch (m_maneuver.delayed)
           {
             case IMC::ScheduledGoto::DBEH_RESUME:
               if (!nearby)
@@ -103,7 +106,7 @@ namespace Maneuver
               break;
 
             case IMC::ScheduledGoto::DBEH_FAIL:
-              m_task->signalError("Unable to reach destination on scheduled time.");
+              m_task->signalError(DTR("Unable to reach destination on scheduled time."));
               break;
           }
         }
@@ -114,7 +117,6 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
-
         IMC::DesiredPath path;
 
         if (m_timer.overflow())
@@ -128,7 +130,8 @@ namespace Maneuver
           path.end_z = m_maneuver.z;
           path.end_z_units = m_maneuver.z_units;
 
-          switch (path.end_z_units) {
+          switch (path.end_z_units)
+          {
             case Z_DEPTH:
               control |= IMC::CL_DEPTH;
               break;
@@ -143,12 +146,12 @@ namespace Maneuver
 
           //! Calculate speed to arrive on time, in mps
           path.speed_units = IMC::SUNITS_METERS_PS;
-          m_speed = speedCalc(msg);
+          m_speed = update(msg);
           path.speed = m_speed;
 
           if (!m_dispatched && m_speed < m_args->min_speed)
           {
-            // start moving only when necessary...
+            // Start moving only when necessary...
             m_task->setControl(0);
             return;
           }
@@ -163,40 +166,37 @@ namespace Maneuver
         }
       }
 
-      //! Calculates vehicle speed
+      //! Update the maneuver with a new reference speed.
+      //! @param[in] msg estimated state message.
+      //! @return new speed reference.
       double
-      speedCalc(const IMC::EstimatedState* msg)
+      update(const IMC::EstimatedState* msg)
       {
-
-        m_state = *msg;
-
         double lat;
         double lon;
         double dist;
-        double deltat;
-
+        double timeout;
         double speed;
 
         //! Calculates actual position
-        Coordinates::toWGS84(m_state, lat, lon);
+        Coordinates::toWGS84(*msg, lat, lon);
 
         //! Calculates distance from maneuver point
         dist = WGS84::distance(lat, lon, 0.0, m_maneuver.lat, m_maneuver.lon, 0.0);
 
         //! Calculates diference from initial maneuver time to arrival time
-        deltat = m_maneuver.arrival_time - Clock::getSinceEpoch();
+        timeout = m_maneuver.arrival_time - Clock::getSinceEpoch();
 
         //! Calculates speed of the vehicule
-        speed = dist/deltat;
+        speed = dist / timeout;
 
-        if (deltat < 0)
+        if (timeout < 0)
           speed = m_args->max_speed;
         else
           speed = speed > m_args->max_speed ? m_args->max_speed : speed;
 
-        m_task->debug("dist: %f, delta_t: %f", dist, deltat);
-        m_task->debug("Speed: %f", speed);
-        m_task->debug("max speed: %f",m_args->max_speed);
+        m_task->debug("distance to target: %0.1f m(%0.1f s)", dist, timeout);
+        m_task->debug("new speed (max is %0.1f): %0.1f", m_args->max_speed, speed);
 
         return speed;
       }
@@ -205,16 +205,11 @@ namespace Maneuver
       { }
 
     private:
-
-      //! What to do if not able to reach on time
-      uint8_t m_dbeh;
-      //! Timer counter for duration
+      //! Timer counter to update speed
       Time::Counter<float> m_timer;
       //! ScheduledGoto maneuver message
       IMC::ScheduledGoto m_maneuver;
-      //! EstimatedState message
-      IMC::EstimatedState m_state;
-      //! Calculated desired speed
+      //! Current desired speed
       double m_speed;
       //! Has dispatched any paths yet
       bool m_dispatched;
