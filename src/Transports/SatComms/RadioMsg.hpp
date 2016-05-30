@@ -1,6 +1,6 @@
 //***************************************************************************
 // Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Laboratï¿½rio de Sistemas e Tecnologia Subaquï¿½tica (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -47,9 +47,9 @@ namespace Transports {
 
         //! Which data is to be sent
         enum DataToSend {
-            Estimated_State,     //! For now just EstimatedState
+            DTS_Estimated_State,     //! For now just EstimatedState
             //! Possibly other in the future...
-            All                 //! All data allowed (!MUST BE THE LAST!)
+            DTS_All                 //! All data allowed (!MUST BE THE LAST!)
         };
 
         //! Data to send to spacecraft
@@ -97,7 +97,7 @@ namespace Transports {
             UserData u_data;                    //! Data to be sent to the satellite
             DataCheckList data_check;           //! Check which data was set
 
-            bool data_options[DataToSend::All];  //! Array with which data is to be sent (size equal to number of possibilities)
+            bool data_options[DTS_All];  //! Array with which data is to be sent (size equal to number of possibilities)
 
             DataBuffer data_buffer;
 
@@ -307,7 +307,7 @@ namespace Transports {
                 //! Auxiliary value
                 bool all_true_false = true;
 
-                if (msg_option == DataToSend::All) {                    //! All data is to be sent
+                if (msg_option == DTS_All) {                    //! All data is to be sent
                     //! Check if all elements of data_options are true or false
                     for (size_t i = 0; i < sizeof(data_options)-1; i++) {
                         if (data_options[i] != data_options[i + 1]) {
@@ -327,8 +327,8 @@ namespace Transports {
                         }
                     }
                 }
-                else if (msg_option == DataToSend::Estimated_State) {   //! Send EstimatedState data
-                    data_options[DataToSend::Estimated_State] = !data_options[DataToSend::Estimated_State];
+                else if (msg_option == DTS_Estimated_State) {   //! Send EstimatedState data
+                    data_options[DTS_Estimated_State] = !data_options[DTS_Estimated_State];
                 }
                 return;
             }
@@ -341,7 +341,7 @@ namespace Transports {
                 for (size_t i = 0; i < sizeof(data_options); i++) {
                     if (data_options[i] == true) { //! Check if this data is to be sent
                         switch (i) {
-                        case DataToSend::Estimated_State:   //! Send EstimatedState data
+                        case DTS_Estimated_State:   //! Send EstimatedState data
                             if (data_check.estimated_state == true) {
                                 if (cutSend_EstimatedState(HSradio) == false) {
                                     m_task->inf(DTR("EstimatedState has not been sent/transmitted."));

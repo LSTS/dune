@@ -1,6 +1,6 @@
 //***************************************************************************
 // Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Laboratï¿½rio de Sistemas e Tecnologia Subaquï¿½tica (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -61,11 +61,11 @@ namespace Transports {
         };
 
         //! Orbital parameters available
-        enum class OrbitalParam {
-            Orbital_Period,
-            Communication_Window,
-            Last_Passage,
-            All
+        enum OrbitalParam {
+            ORB_Orbital_Period,
+            ORB_Communication_Window,
+            ORB_Last_Passage,
+            ORB_All
         };
 
         /////////////
@@ -98,7 +98,7 @@ namespace Transports {
                 //! Initialise variables
                 sat_in_view = false;
                 time_stamp = Clock::getSinceEpoch();
-                resetOrbitalParm(OrbitalParam::All);
+                resetOrbitalParm(ORB_All);
             }
 
             /////////////////////
@@ -112,10 +112,10 @@ namespace Transports {
             //! Set orbital parameters
             //! @param[in]  param_val       - Orbital parameter value.
             //! @return     boolean         - If orbital parameter was set correctly or not.
-            bool setOrbitalParam(OrbitalParam orbit_param, double param_val) {
+            bool setOrbitalParam(int orbit_param, double param_val) {
                 switch (orbit_param) {
                     ////////////
-                case OrbitalParam::Orbital_Period:
+                case ORB_Orbital_Period:
                     if (param_val <= 0) {
                         m_task->err(DTR("ERROR: SETORB: Error, communications window has to be positive."));
                         return false;
@@ -126,7 +126,7 @@ namespace Transports {
 
                     //! Check agreement with other values
                     if (orbit_check.comm_window_c == true && orbit.orbit_period <= orbit.comm_window) {
-                        resetOrbitalParm(OrbitalParam::Communication_Window);
+                        resetOrbitalParm(ORB_Communication_Window);
                         m_task->inf(DTR("SETPARM: Re-set communications window value."));
                     }
                     if (orbit_check.last_passage_c == true) {
@@ -141,7 +141,7 @@ namespace Transports {
                     m_task->inf(DTR("SETPARM: Orbital period set OK."));
                     break;
                     ////////////
-                case OrbitalParam::Communication_Window:
+                case ORB_Communication_Window:
                     //! Check if it can be set correctly
                     if (orbit_check.orbit_period_c == true && param_val > orbit.orbit_period) {
                         m_task->err(DTR("ERROR: SETORB: Error, communications window cannot be higher to orbital period."));
@@ -163,7 +163,7 @@ namespace Transports {
                     m_task->inf(DTR("SETPARM: Communications window set OK."));
                     break;
                     ////////////
-                case OrbitalParam::Last_Passage:
+                case ORB_Last_Passage:
                     //! Check if it can be set correctly
                     if (orbit_check.orbit_period_c == true && param_val > orbit.orbit_period) {
                         m_task->err(DTR("ERROR: SETORB: Error, last passage has to be less than the orbital period."));
@@ -199,15 +199,15 @@ namespace Transports {
             //! Get orbital parameter
             //! @param[in]  orbit_param     - Orbital parameter to check
             //! @return     param_val       - Orbital parameter value.
-            double getOrbitalParm(OrbitalParam orbit_param) {
+            double getOrbitalParm(int orbit_param) {
                 switch (orbit_param) {
-                case OrbitalParam::Orbital_Period:
+                case ORB_Orbital_Period:
                     return orbit.orbit_period;
                     break;
-                case OrbitalParam::Communication_Window:
+                case ORB_Communication_Window:
                     return orbit.comm_window;
                     break;
-                case OrbitalParam::Last_Passage:
+                case ORB_Last_Passage:
                     return orbit.last_passage;
                     break;
                     ////////////
@@ -221,18 +221,18 @@ namespace Transports {
             //! Check if orbital parameter was set
             //! @param[in]  orbit_param     - Orbital parameter to check
             //! @return     boolean         - If parameter was set or not.
-            bool checkOrbitalParm(OrbitalParam orbit_param) {
+            bool checkOrbitalParm(int orbit_param) {
                 switch (orbit_param) {
-                case OrbitalParam::Orbital_Period:
+                case ORB_Orbital_Period:
                     return orbit_check.orbit_period_c;
                     break;
-                case OrbitalParam::Communication_Window:
+                case ORB_Communication_Window:
                     return orbit_check.comm_window_c;
                     break;
-                case OrbitalParam::Last_Passage:
+                case ORB_Last_Passage:
                     return orbit_check.last_passage_c;
                     break;
-                case OrbitalParam::All:
+                case ORB_All:
                     return (orbit_check.orbit_period_c && orbit_check.comm_window_c && orbit_check.last_passage_c);
                     break;
                 }
@@ -241,21 +241,21 @@ namespace Transports {
 
             //! Reset orbital parameter
             //! @param[in]  orbit_param     - Orbital parameter to reset
-            void resetOrbitalParm(OrbitalParam orbit_param) {
+            void resetOrbitalParm(int orbit_param) {
                 switch (orbit_param) {
-                case OrbitalParam::Orbital_Period:
+                case ORB_Orbital_Period:
                     orbit.orbit_period = 0;
                     orbit_check.orbit_period_c = false;
                     break;
-                case OrbitalParam::Communication_Window:
+                case ORB_Communication_Window:
                     orbit.comm_window = 0;
                     orbit_check.comm_window_c = false;
                     break;
-                case OrbitalParam::Last_Passage:
+                case ORB_Last_Passage:
                     orbit.last_passage = -1;
                     orbit_check.last_passage_c = false;
                     break;
-                case OrbitalParam::All:
+                case ORB_All:
                     orbit.orbit_period = 0;
                     orbit_check.orbit_period_c = false;
                     orbit.comm_window = 0;
@@ -280,7 +280,7 @@ namespace Transports {
                 //! Maybe it could have a orbit propagator? Is it too heavy?
                 //! For now it just simulates the presence of the satellite with a time counter
                 
-                if (checkOrbitalParm(OrbitalParam::All)) {
+                if (checkOrbitalParm(ORB_All)) {
                     //! Time since last passage
                     orbit.last_passage = Clock::getSinceEpoch() - time_stamp;
                     //Use difftime(time(NULL), m_args.sat.time_stamp); if ctime is used
