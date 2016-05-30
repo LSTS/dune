@@ -1,6 +1,6 @@
 //***************************************************************************
 // Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
-// Laborat�rio de Sistemas e Tecnologia Subaqu�tica (LSTS)                  *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -112,7 +112,7 @@ namespace Transports {
             //! Set orbital parameters
             //! @param[in]  param_val       - Orbital parameter value.
             //! @return     boolean         - If orbital parameter was set correctly or not.
-            bool setOrbitalParam(int orbit_param, double param_val) {
+            bool setOrbitalParam(OrbitalParam orbit_param, double param_val) {
                 switch (orbit_param) {
                     ////////////
                 case ORB_Orbital_Period:
@@ -199,7 +199,7 @@ namespace Transports {
             //! Get orbital parameter
             //! @param[in]  orbit_param     - Orbital parameter to check
             //! @return     param_val       - Orbital parameter value.
-            double getOrbitalParm(int orbit_param) {
+            double getOrbitalParm(OrbitalParam orbit_param) {
                 switch (orbit_param) {
                 case ORB_Orbital_Period:
                     return orbit.orbit_period;
@@ -221,7 +221,7 @@ namespace Transports {
             //! Check if orbital parameter was set
             //! @param[in]  orbit_param     - Orbital parameter to check
             //! @return     boolean         - If parameter was set or not.
-            bool checkOrbitalParm(int orbit_param) {
+            bool checkOrbitalParm(OrbitalParam orbit_param) {
                 switch (orbit_param) {
                 case ORB_Orbital_Period:
                     return orbit_check.orbit_period_c;
@@ -241,7 +241,7 @@ namespace Transports {
 
             //! Reset orbital parameter
             //! @param[in]  orbit_param     - Orbital parameter to reset
-            void resetOrbitalParm(int orbit_param) {
+            void resetOrbitalParm(OrbitalParam orbit_param) {
                 switch (orbit_param) {
                 case ORB_Orbital_Period:
                     orbit.orbit_period = 0;
