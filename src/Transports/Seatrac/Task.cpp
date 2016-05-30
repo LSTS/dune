@@ -189,16 +189,17 @@ namespace Transports
       {
         bool msg_validity = false;
         uint16_t crc, crc2;
-        std::string msg = String::fromHex(m_data.substr((m_data.size() - 4), 4));
-        std::memcpy(&crc2, msg.data(), 2);
-        m_datahex = String::fromHex(m_data.erase((m_data.size() - 4), 4));
-        crc = CRC16::compute((uint8_t*) m_datahex.data(), m_datahex.size(),0);
-
-        if (crc == crc2)
-          msg_validity = true;
-        else
-          war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
-
+        if(m_data.size() >= MIN_MESSAGE_LENGTH)
+        {
+          std::string msg = String::fromHex(m_data.substr((m_data.size() - 4), 4));
+          std::memcpy(&crc2, msg.data(), 2);
+          m_datahex = String::fromHex(m_data.erase((m_data.size() - 4), 4));
+          crc = CRC16::compute((uint8_t*) m_datahex.data(), m_datahex.size(),0);
+          if (crc == crc2)
+            msg_validity = true;
+          else
+            war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+        }
         return msg_validity;
       }
 
@@ -408,6 +409,8 @@ namespace Transports
       {
         if (m_stop_comms)
         {
+          war(DTR("Sending stopped: Communication out of water forbidden."));
+          clearTicket(IMC::UamTxStatus::UTS_FAILED);
           m_data_beacon.cid_dat_send_msg.lock_flag = 0;
           return;
         }
@@ -631,7 +634,7 @@ namespace Transports
           }
             break;
 
-          case CST_XCVR_BUSY: //Pool the modem until it's free
+          case CST_XCVR_BUSY: //Poll the modem until it's free
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             break;
 
