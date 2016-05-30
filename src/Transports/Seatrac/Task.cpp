@@ -552,12 +552,12 @@ namespace Transports
           //usblPosition.x = ??;
           //usblPosition.y = ??;
           //usblPosition.z = ??;
-          usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10);
-          usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10);
-          usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10);
-          usblPosition.e = aco_fix.position_easting / 10;
-          usblPosition.n = aco_fix.position_northing / 10;
-          usblPosition.d = aco_fix.position_depth / 10;
+          usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
+          usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
+          usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
+          usblPosition.e = aco_fix.position_easting / 10.0;
+          usblPosition.n = aco_fix.position_northing / 10.0;
+          usblPosition.d = aco_fix.position_depth / 10.0;
           //usblPosition.accuracy = ??;
           dispatch(usblPosition);
         }
@@ -570,11 +570,11 @@ namespace Transports
           {
             IMC::UsblAnglesExtended usblAnglesMsg;
             usblAnglesMsg.target = sys_src;
-            usblAnglesMsg.lbearing = Angles::radians(aco_fix.usbl_azimuth / 10);
-            usblAnglesMsg.lelevation = Angles::radians(aco_fix.usbl_elevation / 10);
-            usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10);
-            usblAnglesMsg.theta = Angles::radians(aco_fix.attitude_pitch / 10);
-            usblAnglesMsg.psi = Angles::radians(aco_fix.attitude_yaw / 10);
+            usblAnglesMsg.lbearing = Angles::radians(aco_fix.usbl_azimuth / 10.0);
+            usblAnglesMsg.lelevation = Angles::radians(aco_fix.usbl_elevation / 10.0);
+            usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
+            usblAnglesMsg.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
+            usblAnglesMsg.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
             //usblAngleMsg.bearing = ??;
             //usblAngleMsg.elevation = ??;
             //usblAnglesMsg.accuracy != aco_fix.usbl_fit_error;
@@ -605,29 +605,39 @@ namespace Transports
       //! If the acknowledged message is an OWAY and it is compound
       //! by more than one packet, the method sends the following packet.
       //! If the sending fails, it tries to send the packet again.
+      //! If the modem is busy, it tries to send the packet to poll the status. 
+
       void
       handleDatSendResponse(void)
       {
-        if (m_data_beacon.cid_dat_send_msg.status == CST_OK)
-        {
-          AmsgType_E msg_type = m_data_beacon.cid_dat_send_msg.msg_type;
-          if ((msg_type == MSG_OWAY) || (msg_type == MSG_OWAYU))
+        switch (m_data_beacon.cid_dat_send_msg.status) {
+
+          case CST_OK:
           {
-            // if msg has more than 1 packet, send next part
-            if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
+            AmsgType_E msg_type = m_data_beacon.cid_dat_send_msg.msg_type;
+            if ((msg_type == MSG_OWAY) || (msg_type == MSG_OWAYU))
             {
-              sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
-            }
-            else
-            {
-              // Data communication done
-              clearTicket(IMC::UamTxStatus::UTS_DONE);
+              // if msg has more than 1 packet, send next part
+              if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
+              {
+                sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+              }
+              else
+              {
+                // Data communication done
+                clearTicket(IMC::UamTxStatus::UTS_DONE);
+              }
             }
           }
-        }
-        else
-        {
-          handleCommunicationError();
+            break;
+
+          case CST_XCVR_BUSY: //Pool the modem until it's free
+            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+            break;
+
+          default:
+            handleCommunicationError();
+            break;
         }
       }
 
