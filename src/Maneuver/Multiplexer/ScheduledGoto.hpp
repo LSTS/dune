@@ -78,10 +78,10 @@ namespace Maneuver
       onPathControlState(const IMC::PathControlState* pcs)
       {
         bool time_ran_out = m_maneuver.arrival_time - Clock::getSinceEpoch() <= 0;
-        bool near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
+        bool m_near = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
         bool delayed = m_speed >= m_args->max_speed;
 
-        if(time_ran_out && near)
+        if(time_ran_out && m_near)
         {
           m_task->signalCompletion();
           return;
@@ -92,7 +92,7 @@ namespace Maneuver
           switch(m_dbeh)
           {
             case IMC::ScheduledGoto::DBEH_RESUME:
-              if (!near)
+              if (!m_near)
                 m_task->signalProgress(pcs->eta);
               else
                 m_task->signalCompletion();
