@@ -354,12 +354,14 @@ namespace Sensors
       processVelocity(void)
       {
         // z1 comes from beams 1 and 3, z2 comes from beams 2 and 4.
-        float z1, z2;
-
-        std::memcpy(&m_gvel.x, &m_bfr[c_hdr_size + IND_VEL_XX], 4);
-        std::memcpy(&m_gvel.y, &m_bfr[c_hdr_size + IND_VEL_YY], 4);
+        float x, y, z1, z2;
+        std::memcpy(&x, &m_bfr[c_hdr_size + IND_VEL_XX], 4);
+        std::memcpy(&y, &m_bfr[c_hdr_size + IND_VEL_YY], 4);
         std::memcpy(&z1, &m_bfr[c_hdr_size + IND_VEL_Z1], 4);
         std::memcpy(&z2, &m_bfr[c_hdr_size + IND_VEL_Z2], 4);
+
+        m_gvel.x = x;
+        m_gvel.y = y;
 
         // Verify validity of z-axis velocities.
         bool z1valid = m_status & (1 << (SB_VAL_VEL + 2));
