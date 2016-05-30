@@ -392,7 +392,7 @@ namespace Sensors
 
           for (unsigned i = 0; i < 9; ++i)
           {
-            ByteCopy::fromBE(r[i], payload + offset + 5 * i);
+            ByteCopy::fromBE(r[i], payload + offset + 1 + 4 * i);
             r8[i] = r[i];
           }
 
