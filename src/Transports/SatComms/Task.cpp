@@ -214,22 +214,22 @@ namespace Transports {
                 
                 //! Changes to orbital period
                 if (paramChanged(m_args.sat_orbparm.orbit_period)) {
-                    if (!satellite->setOrbitalParam(OrbitalParam::Orbital_Period, m_args.sat_orbparm.orbit_period)) {
-                        m_args.sat_orbparm.orbit_period = satellite->getOrbitalParm(OrbitalParam::Orbital_Period);
+                    if (!satellite->setOrbitalParam(ORB_Orbital_Period, m_args.sat_orbparm.orbit_period)) {
+                        m_args.sat_orbparm.orbit_period = satellite->getOrbitalParm(ORB_Orbital_Period);
                     }
                 }
 
                 //! Changes to the time from last satellite pass
                 if (paramChanged(m_args.sat_orbparm.last_passage)) {
-                    if (!satellite->setOrbitalParam(OrbitalParam::Last_Passage, m_args.sat_orbparm.last_passage)) {
-                        m_args.sat_orbparm.last_passage = satellite->getOrbitalParm(OrbitalParam::Last_Passage);
+                    if (!satellite->setOrbitalParam(ORB_Last_Passage, m_args.sat_orbparm.last_passage)) {
+                        m_args.sat_orbparm.last_passage = satellite->getOrbitalParm(ORB_Last_Passage);
                     }
                 }
 
                 //! Changes to communication window
                 if (paramChanged(m_args.sat_orbparm.comm_window)) {
-                    if (!satellite->setOrbitalParam(OrbitalParam::Communication_Window, m_args.sat_orbparm.comm_window)) {
-                        m_args.sat_orbparm.comm_window = satellite->getOrbitalParm(OrbitalParam::Communication_Window);
+                    if (!satellite->setOrbitalParam(ORB_Communication_Window, m_args.sat_orbparm.comm_window)) {
+                        m_args.sat_orbparm.comm_window = satellite->getOrbitalParm(ORB_Communication_Window);
                     }
                 }
 
@@ -238,12 +238,12 @@ namespace Transports {
 
                 //! Changes the option of sending EstimatedState
                 if (paramChanged(m_args.data_to_send.estimated_state)) {
-                    msg_radio->selectData(DataToSend::Estimated_State);
+                    msg_radio->selectData(DTS_Estimated_State);
                 }
 
                 //! Changes the option of sending All data
                 if (paramChanged(m_args.data_to_send.all)) {
-                    msg_radio->selectData(DataToSend::All);
+                    msg_radio->selectData(DTS_All);
                 }
 
                 /////////////
@@ -359,25 +359,25 @@ namespace Transports {
                     Time::Delay::wait(5);  // Remove when deploying
 
                     //! Reset orbital parameters
-                    satellite->resetOrbitalParm(OrbitalParam::All);
+                    satellite->resetOrbitalParm(ORB_All);
 
                     //! Wait for user to input the satellite parameters
-                    while (!satellite->checkOrbitalParm(OrbitalParam::All)) {
+                    while (!satellite->checkOrbitalParm(ORB_All)) {
                         //! Now in simulation we just set ourselves
                         m_args.sat_orbparm.orbit_period = 60; // !!!!WRN: Has to be changed!!!!
-                        satellite->setOrbitalParam(OrbitalParam::Orbital_Period, m_args.sat_orbparm.orbit_period);
+                        satellite->setOrbitalParam(ORB_Orbital_Period, m_args.sat_orbparm.orbit_period);
                         m_args.sat_orbparm.last_passage = 20;
-                        satellite->setOrbitalParam(OrbitalParam::Last_Passage, m_args.sat_orbparm.last_passage);
+                        satellite->setOrbitalParam(ORB_Last_Passage, m_args.sat_orbparm.last_passage);
                         m_args.sat_orbparm.comm_window = 10;
-                        satellite->setOrbitalParam(OrbitalParam::Communication_Window, m_args.sat_orbparm.comm_window);
+                        satellite->setOrbitalParam(ORB_Communication_Window, m_args.sat_orbparm.comm_window);
 
                         //! Check if radio is connected before beginning operations
-                        if (!m_args.radio_state && satellite->checkOrbitalParm(OrbitalParam::All)) {
+                        if (!m_args.radio_state && satellite->checkOrbitalParm(ORB_All)) {
                             war(DTR("Radio is not connected! Connect first and re-set satellite last pass"));
 
                             //! Reset satellite last passage
-                            satellite->resetOrbitalParm(OrbitalParam::Last_Passage);
-                            m_args.sat_orbparm.last_passage = satellite->getOrbitalParm(OrbitalParam::Last_Passage);
+                            satellite->resetOrbitalParm(ORB_Last_Passage);
+                            m_args.sat_orbparm.last_passage = satellite->getOrbitalParm(ORB_Last_Passage);
 
                             // Simulate
                             m_args.radio_state = 1;  // !!!!WRN: Has to be changed!!!!
