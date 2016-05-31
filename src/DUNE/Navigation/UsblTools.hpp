@@ -520,6 +520,8 @@ namespace DUNE
               // if period is 0, nothing will be added to scheduler.
               if (!period)
               {
+                // remove this system from the target list.
+                remove(msg->sys_src);
                 // this system is waiting for reply.
                 m_system = msg->sys_src;
                 return false;
