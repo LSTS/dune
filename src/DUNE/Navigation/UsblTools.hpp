@@ -194,8 +194,12 @@ namespace DUNE
         {
           // Quick reply mode.
           if (m_args->enabled && m_args->no_range)
-            return encode(data, 0x0000);
-
+          {
+            bool send = encode(data, 0x0000);
+            if (m_args->period != m_node_timer.getTop())
+              m_node_timer.setTop(m_args->period);
+            return send;
+          }
           // Activation or deactivation request.
           if (m_args->enabled != m_usbl_alive)
             return encode(data, m_period);
@@ -204,7 +208,7 @@ namespace DUNE
           if (m_args->enabled && m_usbl_alive)
           {
             if (m_args->period != m_period || m_args->fix != m_fix)
-              return encode(data, m_period);
+              return encode(data, m_args->period);
           }
 
           return false;
