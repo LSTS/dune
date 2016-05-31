@@ -1,3 +1,4 @@
+
 //***************************************************************************
 // Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
@@ -80,6 +81,8 @@ namespace Sensors
       Counter<double> m_wdog;
       //! List of entities.
       std::vector<unsigned> m_entities;
+      //! Filtered DVL entity.
+      unsigned m_entity;
       //! True if pings are externally triggered.
       bool m_triggered;
       //! Configuration parameters.
@@ -168,6 +171,8 @@ namespace Sensors
         m_entities.clear();
         for (unsigned i = 0; i < c_beam_count; i++)
           m_entities.push_back(reserveEntity(String::str("%s - Beam %u", getEntityLabel(), i)));
+
+        m_entity = reserveEntity("DVL Filtered");
       }
 
       void
@@ -273,7 +278,7 @@ namespace Sensors
 
         // generate driver and parser.
         m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered);
-        m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities);
+        m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
 
         if (!m_driver->login())
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
@@ -303,7 +308,7 @@ namespace Sensors
             // The serial port is used as command link and data.
             m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
             m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered);
-            m_parser = new Parser(this, m_handle, m_args.pos, m_args.ang, m_entities);
+            m_parser = new Parser(this, m_handle, m_args.pos, m_args.ang, m_entities, m_entity);
           }
         }
         catch (...)

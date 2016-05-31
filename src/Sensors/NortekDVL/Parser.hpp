@@ -55,8 +55,12 @@ namespace Sensors
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] handle io handle.
+      //! @param[in] pos device position.
+      //! @param[in] ang device orientation.
+      //! @param[in] entities beam entities.
+      //! @param[in] entity filtered dvl entity.
       Parser(Tasks::Task* task, IO::Handle* handle, std::vector<float>& pos,
-             std::vector<float>& ang, std::vector<unsigned>& entities):
+             std::vector<float>& ang, std::vector<unsigned>& entities, unsigned entity):
         m_task(task),
         m_handle(handle),
         m_filter(NULL),
@@ -70,6 +74,7 @@ namespace Sensors
                                   c_beam_angle, pos, ang, BeamFilter::STANDARD);
 
         m_filter->setSourceEntities(entities);
+        m_filt_distance.setSourceEntity(entity);
         m_bfr.resize(c_max_size);
       }
 
@@ -270,7 +275,7 @@ namespace Sensors
         {
           IMC::Pressure pre;
           IMC::Depth dep;
-          pre.value *= pres * c_pascal_per_bar;
+          pre.value = pres * c_pascal_per_bar;
           dep.value = ((pre.value - Math::c_sea_level_pressure) /
                        (Math::c_gravity * c_seawater_density));
 
