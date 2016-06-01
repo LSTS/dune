@@ -73,8 +73,6 @@ namespace Transports
       std::string addr_section;
       //! Enable usbl mode
       bool usbl_mode;
-      //! True if the beacon has an USBL receiver.
-      bool usbl_receiver;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
     };
@@ -96,6 +94,8 @@ namespace Transports
       IMC::EntityState m_states[STA_MAX];
       //! Stop reports on the ground.
       bool m_stop_comms;
+      //! True if the beacon has an USBL receiver.
+      bool m_usbl_receiver;
       //! Modem address.
       unsigned m_addr;
       //! Data buffer.
@@ -121,7 +121,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
-        m_stop_comms(false)
+        m_stop_comms(false),
+        m_usbl_receiver(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -147,14 +148,10 @@ namespace Transports
               .defaultValue("false")
               .description("Enable the USBL mode. USBL receivers can obtain position information.");
 
-        param("Has USBL receiver", m_args.usbl_receiver)
-              .defaultValue("false")
-              .description("Indicate if the beacon has an USBL receiver.");
-
         param("Enhanced USBL", m_args.enhanced_usbl)
               .defaultValue("false")
               .description("Request Enhanced USBL information. USBL receivers request enhanced information in transmissions."
-                           "This parameter is valid when the beacon has an USBL receiver.");
+                           "This parameter is useful only when the beacon has an USBL receiver.");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -337,13 +334,18 @@ namespace Transports
             processInput();
           } while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
 
+          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
+
+          if( m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
+            m_usbl_receiver = true;
+          
           uint8_t output_flags = ENVIRONMENT_FLAG | ATTITUDE_FLAG
               | MAG_CAL_FLAG | ACC_CAL_FLAG | AHRS_RAW_DATA_FLAG
               | AHRS_COMP_DATA_FLAG;
 
           uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
 
-          if (m_args.usbl_receiver)
+          if (m_usbl_receiver)
             xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
 
           if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
@@ -569,7 +571,7 @@ namespace Transports
           // Compute USBL angles from received data only if the beacon has an USBL receiver.
           // Seatrac X110/X010 set this flag but it hasn't an USBL able to calculate
           // all angles appropriately.
-          if (aco_fix.outputflags_list[1] && m_args.usbl_receiver)
+          if (aco_fix.outputflags_list[1] && m_usbl_receiver)
           {
             IMC::UsblAnglesExtended usblAnglesMsg;
             usblAnglesMsg.target = sys_src;

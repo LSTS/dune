@@ -124,6 +124,14 @@ namespace Transports
       CID_DEX_RECEIVE = 0x77
     };
 
+    // Beacon Type
+    enum BeaconType_E
+    {
+      BT_X110 = 0x34B,
+      BT_X150 = 0x31B
+    };
+
+
     // Status Output Mode
     enum StatusMode_E
     {
@@ -277,6 +285,25 @@ namespace Transports
       int16_t gyro_offset_x;
       int16_t gyro_offset_y;
       int16_t gyro_offset_z;
+    };
+
+    struct Hardware_t
+    {
+      uint16_t part_number;
+      uint8_t part_rev;
+      uint32_t serial_number;
+      uint16_t flags_sys;
+      uint16_t flags_user;
+    };
+
+    struct Firmware_t
+    {
+      uint8_t valid;
+      uint16_t part_number;
+      uint8_t version_maj;
+      uint8_t version_min;
+      uint16_t version_build;
+      uint32_t checksum;
     };
 
     struct Acofix_t
