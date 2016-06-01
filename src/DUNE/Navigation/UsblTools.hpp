@@ -57,6 +57,8 @@ namespace DUNE
       static const uint8_t c_code = 2;
       //! Minimum time interval between consecutive requests from node.
       static const uint16_t c_requests_interval = 30;
+      //! Number of communication timeouts before considering that a system has failed.
+      static const uint8_t c_max_comm_timeout = 5;
 
       enum Codes
       {
@@ -181,9 +183,14 @@ namespace DUNE
 
           // in quick mode, we actively ping the modem
           if (m_no_range)
+          {
             m_node_timer.setTop(m_period);
+          }
           else
+          {
             m_node_timer.setTop(c_requests_interval);
+            m_comm_timeout_timer.setTop(c_max_comm_timeout * c_requests_interval);
+          }
         }
 
         //! Check if node has anything to request.
@@ -203,6 +210,10 @@ namespace DUNE
             }
             return send;
           }
+          // Check if Usbl modem is dead.
+          if(m_usbl_alive && m_comm_timeout_timer.overflow())
+            m_usbl_alive = false;
+
           // Activation or deactivation request.
           if (m_args->enabled != m_usbl_alive)
             return encode(data, m_period);
@@ -231,6 +242,7 @@ namespace DUNE
                 std::memcpy(&m_period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
                 m_fix = msg->data[REQ_START] & c_mask_fix;
                 m_usbl_alive = true;
+                m_comm_timeout_timer.setTop(c_max_comm_timeout * m_period);
               }
               else
               {
@@ -255,6 +267,7 @@ namespace DUNE
               fix.accuracy = fs.accuracy;
 
               m_task->dispatch(fix);
+              m_comm_timeout_timer.reset();
               break;
             }
 
@@ -275,6 +288,7 @@ namespace DUNE
               pos.accuracy = ps.accuracy;
 
               m_task->dispatch(pos);
+              m_comm_timeout_timer.reset();
               break;
             }
 
@@ -340,6 +354,8 @@ namespace DUNE
         uint16_t m_period;
         //! Quick modem request timer.
         Time::Counter<double> m_node_timer;
+        //! Communication timeout timer.
+        Time::Counter<double> m_comm_timeout_timer;
         //! Class arguments.
         const Arguments* m_args;
         //! Pointer to task.
@@ -354,7 +370,8 @@ namespace DUNE
         //! @param[in] name target's name.
         //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
-        Target(std::string name, bool fix, uint16_t period)
+        Target(std::string name, bool fix, uint16_t period):
+          m_comm_errors(0)
         {
           m_name = name;
           m_fix = fix;
@@ -397,6 +414,7 @@ namespace DUNE
           m_fix = fix;
           m_period = period;
           m_target_timer.setTop(m_period);
+          m_comm_errors = 0;
         }
 
         //! Get target's name.
@@ -415,6 +433,22 @@ namespace DUNE
         {
           return m_fix;
         }
+        
+        //! Check if the target node has failed.
+        bool
+        hasFailed(void)
+        {
+          if (++m_comm_errors >= c_max_comm_timeout)
+            return true;
+          return false;
+        }
+
+        //! Reset count of errors.
+        void
+        resetErrors(void)
+        {
+          m_comm_errors = 0;
+        }
 
       private:
         //! Target name.
@@ -423,6 +457,8 @@ namespace DUNE
         bool m_fix;
         //! Periodicity.
         uint16_t m_period;
+        //! Number of communication errors
+        uint8_t m_comm_errors;
         //! Target's desired period timer.
         Time::Counter<double> m_target_timer;
       };
@@ -462,8 +498,10 @@ namespace DUNE
           if (!m_system.empty())
           {
             if (m_modem_wdog.overflow())
+            {
+              handleTargetCommError(m_system);
               m_system.clear();
-
+            }
             return false;
           }
 
@@ -573,6 +611,7 @@ namespace DUNE
 
           data[c_code - 1] = CODE_FIX;
           std::memcpy(&data[c_code], &fix, sizeof(UsblTools::Fix));
+          handleTargetCommOk(m_system);
           m_system.clear();
 
           return true;
@@ -604,6 +643,7 @@ namespace DUNE
 
           data[c_code - 1] = CODE_POS;
           std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Pos));
+          handleTargetCommOk(m_system);
           m_system.clear();
 
           return true;
@@ -685,6 +725,48 @@ namespace DUNE
         clear(void)
         {
           m_list.clear();
+        }
+        
+
+        //! Handle a successful communication with a target.
+        //! @param[in] target target's name.
+        void
+        handleTargetCommOk(std::string name)
+        {
+          m_task->inf("Limpio errorrrr");
+          // Iterate through list and remove if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(name))
+            {
+              itr->resetErrors();
+            }
+          }
+        }
+
+        //! Handle a communication error with a target.
+        //! @param[in] target target's name.
+        void
+        handleTargetCommError(std::string name)
+        {
+          m_task->inf("Limpiado por errorrrr");
+          // Iterate through list and remove if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(name))
+            {
+              // The target has failed
+              if(itr->hasFailed())
+              {
+                m_list.erase(itr, itr + 1);
+                return;
+              }
+            }
+          }
         }
 
         //! List of scheduled targets.
