@@ -196,8 +196,11 @@ namespace DUNE
           if (m_args->enabled && m_args->no_range)
           {
             bool send = encode(data, 0x0000);
-            if (m_args->period != m_node_timer.getTop())
-              m_node_timer.setTop(m_args->period);
+            if (m_args->period != m_period)
+            {
+              m_period = m_args->period;
+              m_node_timer.setTop(m_period);
+            }
             return send;
           }
           // Activation or deactivation request.
