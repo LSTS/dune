@@ -53,10 +53,14 @@ namespace Sensors
       unsigned samples;
       //! Number of periods.
       unsigned periods;
+      //! Default frequency.
+      std::string frequency;
       //! Default range.
       unsigned range;
       //! Sidescan channels.
       std::string channels;
+      //! Default speed.
+      float speed;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -107,6 +111,13 @@ namespace Sensors
                      "to noise ratio (SNR). A shorter pulse gives a \"crispier\""
                      " image but with a lower SNR");
 
+        param(DTR_RT("Frequency"), m_args.frequency)
+        .values(DTR_RT("Low, High"))
+        .defaultValue("High")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description(DTR("Operating frequency"));
+
         param(DTR_RT("Range"), m_args.range)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
@@ -121,6 +132,15 @@ namespace Sensors
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .description(DTR("Subsystem channels"));
 
+        param(DTR_RT("Optimize for this Speed"), m_args.speed)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .defaultValue("1.0")
+        .minimumValue("0.8")
+        .maximumValue("2.6")
+        .units(Units::MeterPerSecond)
+        .description(DTR("Average system speed to compute longitudinal resolution"));
+
         bind<IMC::EstimatedState>(this);
       }
 
@@ -130,8 +150,9 @@ namespace Sensors
         if (paramChanged(m_args.input_timeout))
           m_iwdog.setTop(m_args.input_timeout);
 
-        if (paramChanged(m_args.range) || paramChanged(m_args.samples) ||
-            paramChanged(m_args.periods) || paramChanged(m_args.channels))
+        if (paramChanged(m_args.frequency) || paramChanged(m_args.range) ||
+            paramChanged(m_args.samples) || paramChanged(m_args.periods) ||
+            paramChanged(m_args.channels) || paramChanged(m_args.speed))
         {
           if (isActive())
           {
@@ -224,9 +245,11 @@ namespace Sensors
         {
           bool left = m_args.channels == "Port" || m_args.channels == "Both";
           bool right = m_args.channels == "Starboard" || m_args.channels == "Both";
+          bool high_freq = m_args.frequency == "High";
 
-          // @todo setup speed ?!
-          m_driver->setup(m_args.periods, m_args.samples, m_args.range, 1.0, left, right);
+          m_driver->setup(high_freq, m_args.periods, m_args.samples,
+                          m_args.range, m_args.speed, left, right);
+
           m_iwdog.reset();
         }
       }

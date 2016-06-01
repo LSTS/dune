@@ -55,6 +55,14 @@ namespace Sensors
     static const uint8_t c_reg_id = 0xf5;
     //! Maximum packet size.
     static const unsigned c_max_size = 256;
+    //! High-frequency channel start.
+    static const float c_high_start = 640000;
+    //! High-frequency channel delta.
+    static const float c_high_delta = 60000;
+    //! Low-frequency channel start.
+    static const float c_low_start = 340000;
+    //! Low-frequency channel delta.
+    static const float c_low_delta = 30000;
 
     //! Driver class to configure DeepVision's OEM Sonar Module OSM2.
     //!
@@ -94,6 +102,7 @@ namespace Sensors
       }
 
       //! Device's setup sequence.
+      //! @param[in] frequency true for high frequency, false for low.
       //! @param[in] periods number of periods.
       //! @param[in] samples number of samples.
       //! @param[in] range sidescan range.
@@ -101,11 +110,16 @@ namespace Sensors
       //! @param[in] left true if port transducer is enabled.
       //! @param[in] right true if starboard transducer is enabled.
       void
-      setup(unsigned periods, unsigned samples, unsigned range, float speed, bool left, bool right)
+      setup(bool high_frequency, unsigned periods, unsigned samples,
+            unsigned range, float speed, bool left, bool right)
       {
         reset();
-        // @todo correct values.
-        setPulse(periods, 640000, 60000);
+
+        if (high_frequency)
+          setPulse(periods, c_high_start, c_high_delta);
+        else
+          setPulse(periods, c_low_start, c_low_delta);
+
         setSampling(samples, getDecimation(range, speed), left, right, false);
         m_parser->setup(getResolution(range, speed), getLineRate(range));
         run(m_baud);
