@@ -212,7 +212,10 @@ namespace DUNE
           }
           // Check if Usbl modem is dead.
           if(m_usbl_alive && m_comm_timeout_timer.overflow())
+          {
             m_usbl_alive = false;
+            m_node_timer.setTop(c_requests_interval);
+          }
 
           // Activation or deactivation request.
           if (m_args->enabled != m_usbl_alive)
