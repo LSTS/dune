@@ -1023,6 +1023,7 @@ namespace DUNE
       m_pcs.vy = m_ts.track_vel.y;
       m_pcs.vz = m_ts.track_vel.z;
       m_pcs.course_error = m_ts.course_error;
+      m_pcs.lradius = m_ts.loiter.radius;
 
       if (m_ts.nearby)
         m_pcs.flags |= IMC::PathControlState::FL_NEAR;
@@ -1030,15 +1031,9 @@ namespace DUNE
         m_pcs.flags &= ~IMC::PathControlState::FL_NEAR;
 
       if (m_ts.loitering)
-      {
         m_pcs.flags |= IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = m_ts.loiter.radius;
-      }
       else
-      {
         m_pcs.flags &= ~IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = 0;
-      }
       m_pcs.eta = (uint16_t) Math::round(m_ts.eta);
       dispatch(m_pcs);
     }
