@@ -23,6 +23,7 @@
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
 // Author: Tiago Rodrigues                                                  *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -44,8 +45,7 @@
 
 namespace Sensors
 {
-  //! Device driver for the AML OEM MetrecX
-  //!
+  //! Device driver for the AML OEM Metrec•X.
   //!
   //! Metrec•X is an externally-powered, multi-parameter
   //! instrument that allows you to change the
@@ -66,7 +66,6 @@ namespace Sensors
   //! @author Tiago Rodrigues
   namespace MetrecX
   {
-    // using DUNE_NAMESPACES;
     using DUNE_NAMESPACES;
 
     //! Commands
@@ -92,54 +91,56 @@ namespace Sensors
     static const char* c_rc_st_monit[] = { GET_COMMAND("receive", SAMPLING),
                                            GET_COMMAND("receive", MONITOR)};
 
-    //! Internal Channels Cases.
-    enum InternalChannelsModes
+    //! Digital sensor options.
+    static const std::string c_di_options[] = { "Conductivity",
+                                                "SoundSpeed",
+                                                "Temperature",
+                                                "Pressure"};
+
+    //! Internal channel options.
+    static const std::string c_in_options[] = { "WaterDensity",
+                                                "Salinity",
+                                                "SoundSpeed"};
+
+    //! Internal Channels.
+    enum InternalModes
     {
       ICM_DENSITY = 0,
       ICM_SALINITY,
       ICM_SV
     };
 
-    //! Templates Index.
-    enum TemplatesIndex
+    //! Digital flags.
+    enum DigitalFlags
     {
-      TI_CONDUCTIVITY = 0,
-      TI_SV,
-      TI_TEMPERATURE,
-      TI_PRESSURE,
-      TI_TOTAL
+      DSF_CONDUCTIVITY = 1,
+      DSF_SV = 2,
+      DSF_TEMPERATURE = 4,
+      DSF_PRESSURE = 8
     };
 
-    enum DigSensFlag
-    {
-      DSF_CONDUCTIVITY = 1 << TI_CONDUCTIVITY,
-      DSF_SV = 1 << TI_SV,
-      DSF_TEMPERATURE = 1 << TI_TEMPERATURE,
-      DSF_PRESSURE = 1 << TI_PRESSURE
-    };
-
-    //! Number of max Dig channels.
-    static const unsigned c_digs_count = 5;
-    //! Number of max Analog channels.
-    static const unsigned c_analogs_count = 3;
-    //! Number of max Internal channels.
-    static const unsigned c_internals_count = 3;
+    //! Digital channels.
+    static const unsigned c_di_count = 5;
+    //! Analog channels.
+    static const unsigned c_an_count = 3;
+    //! Internal channels.
+    static const unsigned c_in_count = 3;
+    //! Offset for internal channels.
+    static const unsigned c_in_offset = c_di_count + c_an_count;
+    //! Number of total channels.
+    static const unsigned c_channels = c_di_count + c_an_count + c_in_count;
     //! Number of commands to start monitor.
     static const unsigned c_st_comm_count = 2;
-
-    //! Template for digital sensors.
-    static const std::string c_digital_templates[] = { "Conductivity",
-                                                       "SoundSpeed",
-                                                       "Temperature",
-                                                       "Pressure"};
-
-    //! Template for internal channels.
-    static const std::string c_internal_templates[] = { "WaterDensity",
-                                                        "Salinity",
-                                                        "SoundSpeed"};
-
+    //! Number of digital sensors possible.
+    static const unsigned c_di_sensors = 4;
     //! Const to transform dbar to Bar.
     static const unsigned c_dbar_to_bar = 10;
+    //! Internal Channels mask.
+    static const unsigned c_mask_pt = DSF_PRESSURE | DSF_TEMPERATURE;
+    //! Sound velocity internal mask.
+    static const unsigned c_mask_sv = DSF_SV | c_mask_pt;
+    //! Conductivity internal mask.
+    static const unsigned c_mask_cond = DSF_CONDUCTIVITY | c_mask_pt;
 
     //! %Task arguments.
     struct Arguments
@@ -152,60 +153,34 @@ namespace Sensors
       double input_timeout;
       //! Geopotential Anomaly.
       double geop_anomaly;
-
-      //! Dig Messages.
-      std::string dig_messages[c_digs_count];
-      //! Dig entity labels.
-      std::string dig_elabels[c_digs_count];
-      //! Dig conversion factors.
-      double dig_factors[c_digs_count];
-
-      //! Analog Messages.
-      std::string analog_messages[c_analogs_count];
-      //! Analog entity labels.
-      std::string analog_elabels[c_analogs_count];
-      //! Analog conversion factors.
-      double analog_factors[c_analogs_count];
-
-      //! Internal Messages.
-      std::string internal_messages[c_internals_count];
-      //! Internal entity labels.
-      std::string internal_elabels[c_internals_count];
-      //! Internal conversion factors.
-      double internal_factors[c_internals_count];
-
+      //! Messages.
+      std::string msgs[c_channels];
+      //! Entity Labels.
+      std::string labels[c_channels];
+      //! Conversion factors.
+      double factors[c_channels];
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
       SerialPort* m_uart;
-      //! Dig messages.
-      IMC::Message* m_digs[c_digs_count];
-      //! Analog messages.
-      IMC::Message* m_analogs[c_analogs_count];
-      //! Internal messages.
-      IMC::Message* m_internals[c_internals_count];
-      //! Depth Messages.
-      IMC::Depth m_depth;
-      //! Task arguments.
-      Arguments m_args;
+      //! Digital messages.
+      IMC::Message* m_msgs[c_channels];
       //! Task Watchdog.
       Counter<double> m_wdog;
       //! Array of active slots
-      int m_active_slots_array[c_digs_count + c_analogs_count + c_internals_count];
-      //! Number of dig active channels.
-      int m_dig_active;
-      //! Number of analog active channels.
-      int m_analog_active;
+      bool m_slots[c_channels];
       //! Number of internal active channels.
-      int m_internal_active;
+      int m_in_active;
       //! Vehicle Latitude.
       double m_lat;
-      //! Bitmask flag for digital sensors.
-      int m_bit_flag;
-      //! Parameter has changed.
-      bool m_param_chang;
+      //! Bitmask for digital sensors.
+      int m_di_mask;
+      //! Waiting setup.
+      bool m_need_setup;
+      //! Task arguments.
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -233,66 +208,73 @@ namespace Sensors
         .description("Geopotential Anomaly to convert from pressure to depth");
 
         // Extract digital channels configuration.
-        for (unsigned i = 0; i < c_digs_count; ++i)
+        for (unsigned i = 0; i < c_di_count; ++i)
         {
-          std::string option = String::str("Dig Channel %u - Message", i + 1);
-          param(option, m_args.dig_messages[i])
+          std::string option = String::str("Digital Channel %u - Message", i + 1);
+          param(option, m_args.msgs[i])
           .defaultValue("")
           .description("Digital channel %u IMC Message");
 
-          option = String::str("Dig Channel %u - Entity Label", i + 1);
-          param(option, m_args.dig_elabels[i])
+          option = String::str("Digital Channel %u - Entity Label", i + 1);
+          param(option, m_args.labels[i])
           .defaultValue("")
           .description("Digital channel Entity Label");
 
-          option = String::str("Dig Channel %u - Conversion", i + 1);
-          param(option, m_args.dig_factors[i])
-          .size(1)
+          option = String::str("Digital Channel %u - Conversion", i + 1);
+          param(option, m_args.factors[i])
           .defaultValue("1.0")
           .description("Digital channel conversion factor");
         }
 
         // Extract analog channels configuration.
-        for (unsigned i = 0; i < c_analogs_count; ++i)
+        for (unsigned i = 0; i < c_an_count; ++i)
         {
           std::string option = String::str("Analog Channel %u - Message", i + 1);
-          param(option, m_args.analog_messages[i])
+          param(option, m_args.msgs[i + c_di_count])
           .defaultValue("")
           .description("Analogic channel IMC Message");
 
           option = String::str("Analog Channel %u - Entity Label", i + 1);
-          param(option, m_args.analog_elabels[i])
+          param(option, m_args.labels[i + c_di_count])
           .defaultValue("")
           .description("Analogic channel Entity Label");
 
           option = String::str("Analog Channel %u - Conversion", i + 1);
-          param(option, m_args.analog_factors[i])
-          .size(1)
+          param(option, m_args.factors[i + c_di_count])
           .defaultValue("1.0")
           .description("Analogic channel conversion factor");
         }
 
         // Extract internal channels configuration.
-        for (unsigned i = 0; i < c_internals_count; ++i)
+        for (unsigned i = 0; i < c_in_count; ++i)
         {
           std::string option = String::str("Internal Channel %u - Message", i + 1);
-          param(option, m_args.internal_messages[i])
+          param(option, m_args.msgs[i + c_in_offset])
           .defaultValue("")
           .description("Internal channel IMC Message");
 
           option = String::str("Internal Channel %u - Entity Label", i + 1);
-          param(option, m_args.internal_elabels[i])
+          param(option, m_args.labels[i + c_in_offset])
           .defaultValue("")
           .description("Internal channel Entity Label");
 
           option = String::str("Internal Channel %u - Conversion", i + 1);
-          param(option, m_args.internal_factors[i])
-          .size(1)
+          param(option, m_args.factors[i + c_in_offset])
           .defaultValue("1.0")
           .description("Internal channel conversion factor");
         }
 
-        variablesInitializer();
+        // initialize variables.
+        for (unsigned i = 0; i < c_channels; ++i)
+        {
+          m_msgs[i] = NULL;
+          m_slots[i] = false;
+        }
+
+        m_need_setup = true;
+        m_in_active = 0;
+        m_di_mask = 0;
+        m_lat = 0.0;
 
         bind<IMC::EstimatedState>(this);
       }
@@ -302,36 +284,8 @@ namespace Sensors
         // To clear uart if an exception is thrown.
         onResourceRelease();
 
-        for (unsigned i = 0; i < c_digs_count; ++i)
-          Memory::clear(m_digs[i]);
-
-        for (unsigned i = 0; i < c_analogs_count; ++i)
-          Memory::clear(m_analogs[i]);
-
-        for (unsigned i = 0; i < c_internals_count; ++i)
-          Memory::clear(m_internals[i]);
-      }
-
-      void
-      variablesInitializer()
-      {
-        for (unsigned i = 0; i < c_digs_count; ++i)
-          m_digs[i] = NULL;
-        for (unsigned i = 0; i < c_analogs_count; ++i)
-          m_analogs[i] = NULL;
-        for (unsigned i = 0; i < c_internals_count; ++i)
-          m_internals[i] = NULL;
-
-        std::memset(m_active_slots_array, 0, sizeof(m_active_slots_array));
-        m_param_chang = true;
-
-        m_dig_active = 0;
-        m_analog_active = 0;
-        m_internal_active = 0;
-
-        m_bit_flag = 0;
-
-        m_lat = 0.0;
+        for (unsigned i = 0; i < c_channels; ++i)
+          Memory::clear(m_msgs[i]);
       }
 
       void
@@ -344,144 +298,61 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        std::memset(m_active_slots_array, 0, sizeof(m_active_slots_array));
-        m_dig_active = 0;
-        m_analog_active = 0;
-        m_internal_active = 0;
-        m_param_chang = true;
+        m_need_setup = true;
 
-        // Message produce and update for dig channels.
-        for (unsigned i = 0; i < c_digs_count; ++i)
+        // Produce and update messages.
+        for (unsigned i = 0; i < c_channels; ++i)
         {
-          Memory::clear(m_digs[i]);
+          Memory::clear(m_msgs[i]);
+          m_slots[i] = false;
 
-          if (m_args.dig_messages[i].empty())
+          // no message allocated.
+          if (m_args.msgs[i].empty())
             continue;
 
-          // Produce a message object by name.
-          // @param name message name.
-          // @return message object allocated on the heap.
-          m_digs[i] = IMC::Factory::produce(m_args.dig_messages[i]);
+          m_msgs[i] = IMC::Factory::produce(m_args.msgs[i]);
+          m_slots[i] = true;
+
+          // use task entity label.
+          if (m_args.labels[i].empty())
+            continue;
 
           unsigned eid = 0;
           try
           {
-            eid = resolveEntity(m_args.dig_elabels[i]);
+            eid = resolveEntity(m_args.labels[i]);
+            m_msgs[i]->setSourceEntity(eid);
           }
           catch (...)
           { }
-
-          if (m_args.dig_elabels[i].empty())
-            continue;
-          m_digs[i]->setSourceEntity(eid);
-          m_active_slots_array[m_dig_active] = i;
-          m_dig_active++;
         }
 
-        // Message produce and update for analog channels.
-        for (unsigned i = 0; i < c_analogs_count; ++i)
+        m_in_active = 0;
+        for (unsigned i = 0; i < c_in_count; ++i)
         {
-          Memory::clear(m_analogs[i]);
-
-          if (m_args.analog_messages[i].empty())
-            continue;
-
-          // Produce a message object by name.
-          // @param name message name.
-          // @return message object allocated on the heap.
-          m_analogs[i] = IMC::Factory::produce(m_args.analog_messages[i]);
-
-          unsigned eid = 0;
-          try
-          {
-            eid = resolveEntity(m_args.analog_elabels[i]);
-          }
-          catch (...)
-          { }
-
-          if (m_args.analog_elabels[i].empty())
-            continue;
-          m_analogs[i]->setSourceEntity(eid);
-          m_active_slots_array[digAndAnalogActive()] = i;
-          m_analog_active++;
+          if (m_slots[i + c_in_offset] == true)
+            m_in_active++;
         }
-
-        // Message produce and update for internal channels.
-        for (unsigned i = 0; i < c_internals_count; ++i)
-        {
-          Memory::clear(m_internals[i]);
-
-          if (m_args.internal_messages[i].empty())
-            continue;
-
-          // Produce a message object by name.
-          // @param name message name.
-          // @return message object allocated on the heap.
-          m_internals[i] = IMC::Factory::produce(m_args.internal_messages[i]);
-
-          unsigned eid = 0;
-          try
-          {
-            eid = resolveEntity(m_args.internal_elabels[i]);
-          }
-          catch (...)
-          { }
-
-          if (m_args.internal_elabels[i].empty())
-            continue;
-          m_internals[i]->setSourceEntity(eid);
-          m_active_slots_array[allActive()] = i;
-          m_internal_active++;
-        }
-
       }
 
       //! Reserve entities.
       void
       onEntityReservation(void)
       {
-        // Entity reservation for dig channels.
-        for (unsigned i = 0; i < c_digs_count; ++i)
+        for (unsigned i = 0; i < c_channels; ++i)
         {
           try
           {
-            resolveEntity(m_args.dig_elabels[i]);
+            resolveEntity(m_args.labels[i]);
           }
           catch (Entities::EntityDataBase::NonexistentLabel& e)
           {
             (void)e;
-            reserveEntity(m_args.dig_elabels[i]);
+            reserveEntity(m_args.labels[i]);
           }
         }
 
-        // Entity reservation for analog channels.
-        for (unsigned i = 0; i < c_analogs_count; ++i)
-        {
-          try
-          {
-            resolveEntity(m_args.analog_elabels[i]);
-          }
-          catch (Entities::EntityDataBase::NonexistentLabel& e)
-          {
-            (void)e;
-            reserveEntity(m_args.analog_elabels[i]);
-          }
-        }
-
-        // Entity reservation for internal channels.
-        for (unsigned i = 0; i < c_internals_count; ++i)
-        {
-          try
-          {
-            resolveEntity(m_args.internal_elabels[i]);
-          }
-          catch (Entities::EntityDataBase::NonexistentLabel& e)
-          {
-            (void)e;
-            reserveEntity(m_args.internal_elabels[i]);
-          }
-        }
-        // Set entitties after their reservation.
+        // Set entities after their reservation.
         onUpdateParameters();
       }
 
@@ -519,24 +390,23 @@ namespace Sensors
         if (!sendCommand("\r", "\r\n"))
           throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
 
+        setup();
+      }
+
+      //! Setup device.
+      void
+      setup(void)
+      {
+        m_need_setup = false;
+        m_di_mask = 0;
         turnOffChannels();
-
-        // Check what digital sensors are active.
-        checkDigitalSensors();
-
-        // Configure internal channels, accordingly to active
-        // digital sensors and configuration file.
-        configureInternalChannels();
-
-        // Start monitoring.
+        checkDigital();
+        setupInternal();
         startMonitoring();
-
-        if (m_param_chang)
-          m_param_chang = false;
-
         m_wdog.setTop(m_args.input_timeout);
       }
 
+      //! Start monitoring device.
       void
       startMonitoring(void)
       {
@@ -548,6 +418,7 @@ namespace Sensors
         }
       }
 
+      //! Stop monitoring device.
       void
       stopMonitoring(void)
       {
@@ -555,103 +426,108 @@ namespace Sensors
         sendCommand("\x03", "");
       }
 
+      //! Power off channels.
       void
       turnOffChannels(void)
       {
         // Turn off all internal channels.
-        for (unsigned i = 0; i < c_internals_count; i++)
+        for (unsigned i = 0; i < c_in_count; i++)
         {
           if (!sendCommand(c_nset_ichn[i], c_rc_nset_ichn[i]))
             throw RestartNeeded(DTR("failed to turn off internal channels"), 5, false);
         }
       }
 
+      //! Setup internal channels.
       void
-      configureInternalChannels(void)
+      setupInternal(void)
       {
         // Start by turning off internal channels.
         turnOffChannels();
 
+        if (!m_in_active)
+          return;
+
         // Check if there are two equal internal channels.
-        for (unsigned i = 0; i < c_internals_count; i++)
+        if (m_args.msgs[c_in_offset] != NULL)
         {
-          for (unsigned j = 0; j < c_internals_count; j++)
-          {
-            // If two channels have the same message, then restart task.
-            if (m_args.internal_messages[i].compare(m_args.internal_messages[j]) == 0 &&
-                !m_args.internal_messages[i].empty() &&
-                i != j)
-            {
-              throw RestartNeeded(DTR("Two equal internal channels"), 5, true);
-            }
-          }
+          if ((m_args.msgs[c_in_offset] == m_args.msgs[c_in_offset + 1]) ||
+              (m_args.msgs[c_in_offset] == m_args.msgs[c_in_offset + 2]))
+            throw RestartNeeded(DTR("two equal internal channels"), 30.0, true);
         }
 
-        unsigned mask_sv = DSF_SV | DSF_PRESSURE | DSF_TEMPERATURE;
-        unsigned mask_cond = DSF_CONDUCTIVITY | DSF_PRESSURE | DSF_TEMPERATURE;
-        // Configure internal channels.
-        for (unsigned i = 0; i < c_internals_count; i++)
+        if (m_args.msgs[c_in_offset + 1] != NULL)
         {
-          // To prevent errors from trying to turn on SV channel
-          // without the proper configuration.
-          if (m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) == 0 && (m_bit_flag & mask_sv) == mask_sv)
-            throw RestartNeeded(DTR("Tried to turn on SV channel without proper configuration"), 5, true);
-
-          for (unsigned j = 0; j < c_internals_count; j++)
-          {
-            // If there are conditions to turn any internal channel.
-            if ((m_bit_flag & mask_cond) == mask_cond &&
-                m_args.internal_messages[i].compare(c_internal_templates[j]) == 0)
-            {
-              if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
-                throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
-            }
-            if ((m_bit_flag & mask_sv) == mask_sv &&
-                m_args.internal_messages[i].compare(c_internal_templates[j]) == 0 &&
-                m_args.internal_messages[i].compare(c_internal_templates[ICM_SV]) != 0)
-            {
-              if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
-                throw RestartNeeded(DTR("failed to turn on internal channels"), 5, false);
-            }
-          }
+          if (m_args.msgs[c_in_offset + 1] == m_args.msgs[c_in_offset + 2])
+            throw RestartNeeded(DTR("two equal internal channels"), 30.0, true);
         }
 
-        unsigned mask_pt = DSF_PRESSURE | DSF_TEMPERATURE;
-        // If no temperature sensor or no pressure sensor is
-        // available, then turn off all internal channels.
-        if (!(m_bit_flag & mask_pt))
+        // If no temperature sensor or no pressure sensor are available,
+        // do not bother to check any further.
+        if ((m_di_mask & c_mask_pt) != c_mask_pt)
         {
           turnOffChannels();
 
-          if (m_internal_active != 0)
-            war(DTR("Internal channels can not be turned on. Please check sensor configuration."));
-          m_internal_active = 0;
+          if (m_in_active != 0)
+            err(DTR("unable to compute internal channels"));
+
+          m_in_active = 0;
+
+          for (unsigned i = 0; i < c_in_count; ++i)
+            m_slots[i + c_in_offset] = false;
+
+          return;
         }
 
+        // Configure internal channels.
+        for (unsigned i = 0; i < c_in_count; i++)
+        {
+          unsigned ix = i + c_in_offset;
+
+          // To prevent errors from trying to turn on sound velocity channel
+          // when we have that probe installed.
+          if (m_args.msgs[ix] == c_in_options[ICM_SV]
+              && (m_di_mask & c_mask_sv) == c_mask_sv)
+            throw RestartNeeded(DTR("disable sound speed internal channel"), 30.0, true);
+
+          for (unsigned j = 0; j < c_in_count; j++)
+          {
+            // If there are conditions to turn any internal channel.
+            if (m_args.msgs[ix] == c_in_options[j])
+            {
+              // with conductivity, temperature and pressure, any available
+              // internal channel option may be computed. With sound speed
+              // probe available, do not recompute sound speed internally.
+              if ((m_di_mask & c_mask_cond) == c_mask_cond ||
+                  (m_di_mask & c_mask_sv) == c_mask_sv)
+              {
+                if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
+                  throw RestartNeeded(DTR("failed to turn on internal channels"), 30.0, false);
+              }
+            }
+          }
+        }
       }
 
       //! Cross check of what internal channels may be turned on
       //! and what channels the user want turned on.
       void
-      checkDigitalSensors(void)
+      checkDigital(void)
       {
-        if (m_internal_active == 0)
+        for (unsigned i = 0; i < c_di_count; ++i)
         {
-          m_bit_flag = 0;
-        }
-        else
-        {
-          for (unsigned i = 0; i < c_digs_count; ++i)
+          for (unsigned j = 0; j < c_di_sensors; ++j)
           {
-            for (unsigned j = 0; j < TI_TOTAL; ++j)
-            {
-              if (m_args.dig_messages[i].compare(c_digital_templates[j]) == 0)
-                m_bit_flag |= 1 << j;
-            }
+            if (m_args.msgs[i] == c_di_options[j])
+              m_di_mask |= 1 << j;
           }
         }
       }
 
+      //! Send command to device
+      //! @param[in] cmd command.
+      //! @param[in] reply expected reply.
+      //! @return true if command was received successfully, false otherwise.
       bool
       sendCommand(const char* cmd, const char* reply)
       {
@@ -669,33 +545,53 @@ namespace Sensors
         return false;
       }
 
+      //! Dispatch value.
+      //! @param[in] msg IMC message.
+      //! @param[in] label entity label.
+      //! @param[in] value depth value.
+      //! @param[in] factor multiplication factor.
+      //! @param[in] tstamp current timestamp.
       void
-      dispatchSensValues(IMC::Message* message, double value, std::string label, double factor)
+      dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp)
       {
-        message->setValueFP(value * factor);
-        dispatch(message);
-        if (c_digital_templates[TI_PRESSURE].compare(message->getName()) == 0)
-          dispatchDepth(label, value, factor);
+        msg->setValueFP(value * factor);
+        msg->setTimeStamp(tstamp);
+        dispatch(msg, DF_KEEP_TIME);
+
+        if (msg->getId() == DUNE_IMC_PRESSURE)
+          dispatchDepth(label, value, factor, tstamp);
       }
 
+      //! Dispatch depth.
+      //! @param[in] label entity label.
+      //! @param[in] value depth value.
+      //! @param[in] factor multiplication factor.
+      //! @param[in] tstamp current timestamp.
       void
-      dispatchDepth(std::string label, double value, double factor)
+      dispatchDepth(std::string label, double value, double factor, double tstamp)
       {
-        m_depth.setSourceEntity(resolveEntity(label));
-        m_depth.value = UNESCO1983::computeDepth(value * factor / c_dbar_to_bar, m_lat, m_args.geop_anomaly);
-        dispatch(m_depth);
+        IMC::Depth depth;
+        depth.setSourceEntity(resolveEntity(label));
+        depth.setTimeStamp(tstamp);
+        depth.value = UNESCO1983::computeDepth(value * factor / c_dbar_to_bar, m_lat, m_args.geop_anomaly);
+        dispatch(depth, DF_KEEP_TIME);
       }
 
-      inline int
-      digAndAnalogActive(void)
+      //! Get active channels.
+      //! @return active channels.
+      inline unsigned
+      getChannels(void)
       {
-        return m_dig_active + m_analog_active;
-      }
+        unsigned active = 0;
 
-      inline int
-      allActive(void)
-      {
-        return m_dig_active + m_analog_active + m_internal_active;
+        // Count number of active channels.
+        for (unsigned i = 0; i < c_channels; ++i)
+        {
+          if (m_slots[i] == true)
+            active++;
+        }
+
+        return active;
       }
 
       //! Main loop.
@@ -703,33 +599,16 @@ namespace Sensors
       onMain(void)
       {
         char bfr[255];
-        char *ptr;
-        double tmp_bfr[c_digs_count + c_analogs_count + c_internals_count];
-        double extracted_value;
-        int k;
-        int n;
+        double values[c_channels];
 
-        // Receiving messages from sensor
-        // and continuously dispatching them.
         while (!stopping())
         {
           consumeMessages();
 
-          // If change digital sensor or internal channel
-          // it is needed to reconfigure internal channels.
-          if (m_param_chang)
+          if (m_need_setup)
           {
-            m_param_chang = false;
             stopMonitoring();
-
-            turnOffChannels();
-
-            m_bit_flag = 0;
-            checkDigitalSensors();
-
-            configureInternalChannels();
-
-            startMonitoring();
+            setup();
           }
 
           if (m_wdog.overflow())
@@ -742,51 +621,47 @@ namespace Sensors
             continue;
 
           size_t rv = m_uart->readString(bfr, sizeof(bfr));
-          ptr = bfr;
-          k = 0;
-          n = 0;
-          // You can use the %n conversion specifier, which doesn't consume any input
-          // instead, it expects an int * parameter, and writes the number of characters
-          // consumed from the input into it.
-          while (std::sscanf(ptr, "%lf%n", &extracted_value, &n) == true)
-          {
-            ptr +=n;
-            // Save to temporary buffer the sensor output.
-            if (k < allActive())
-              tmp_bfr[k] = extracted_value;
-            k++;
-          }
-
-          // Check if there is some mismatch between configuration file
-          // and sensor output. If true, doesn't dispatch any message.
-          if (k != allActive())
-          {
-            war(DTR("Mismatch between sensor output and configuration file!"));
-            continue;
-          }
-
-          // Dispatch digital active channels.
-          for (int j = 0; j < m_dig_active; j++)
-            dispatchSensValues(m_digs[m_active_slots_array[j]], tmp_bfr[j], m_args.dig_elabels[m_active_slots_array[j]], m_args.dig_factors[m_active_slots_array[j]]);
-
-          // Dispatch analog active channels.
-          for (int j = m_dig_active; j < digAndAnalogActive(); j++)
-            dispatchSensValues(m_analogs[m_active_slots_array[j]], tmp_bfr[j], m_args.analog_elabels[m_active_slots_array[j]], m_args.analog_factors[m_active_slots_array[j]]);
-
-          // Dispatch internal active channels.
-          for (int j = digAndAnalogActive(); j < allActive(); j++)
-            dispatchSensValues(m_internals[m_active_slots_array[j]], tmp_bfr[j], m_args.internal_elabels[m_active_slots_array[j]], m_args.analog_factors[m_active_slots_array[j]]);
+          double tstamp = Clock::getSinceEpoch();
 
           if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          char* ptr = bfr;
+          unsigned k = 0;
+          int n = 0;
 
+          double value;
+          while (std::sscanf(ptr, "%lf%n", &value, &n))
+          {
+            ptr += n;
+
+            // Save to temporary buffer.
+            if (k < getChannels())
+              values[k] = value;
+            k++;
+          }
+
+          // Check if there is some mismatch between the configuration file
+          // and sensor output. If true, doesn't dispatch any message.
+          if (k != getChannels())
+          {
+            err(DTR("Mismatch between sensor output and configuration file!"));
+            continue;
+          }
+
+          // Dispatch data.
+          unsigned index = 0;
+          for (unsigned i = 0; i < c_channels; i++)
+          {
+            if (m_slots[i])
+              dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
+          }
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           m_wdog.reset();
         }
 
         stopMonitoring();
-
         turnOffChannels();
       }
 
