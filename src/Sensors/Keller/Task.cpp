@@ -362,7 +362,6 @@ namespace Sensors
         }
 
         // No data received.
-        m_timeout_count++;
         return false;
       }
 
