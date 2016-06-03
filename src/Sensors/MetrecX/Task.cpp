@@ -33,16 +33,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#define SET        "SET SCAN"
-#define DENSITY    "DENSITY"
-#define SALINITY   "SALINITY"
-#define SV         "SV"
-#define SAMPLING   "SET S 1 s"
-#define MONITOR    "MONITOR"
-
-#define GET_COMMAND(operationType, command)                             \
-  (std::strcmp(operationType, "send") == 0 ? (command "\r") : (">" command "\r\n"))
-
 namespace Sensors
 {
   //! Device driver for the AML OEM Metrec•X.
@@ -69,54 +59,33 @@ namespace Sensors
     using DUNE_NAMESPACES;
 
     //! Commands
-    static const char* c_set_ichn[]= { GET_COMMAND("send", SET " " DENSITY),
-                                       GET_COMMAND("send", SET " " SALINITY),
-                                       GET_COMMAND("send", SET " " SV)};
+    static const char* c_cmd_ops[] = { "DENSITY", "SALINITY", "SV" };
+    static const char* c_cmd_icset = "SET SCAN ";
+    static const char* c_cmd_icnos = "SET SCAN NO";
+    static const char* c_cmd_sampl = "SET S 1s";
+    static const char* c_cmd_start = "MONITOR";
 
-    static const char* c_rc_set_ichn[] = { GET_COMMAND("receive", SET " " DENSITY),
-                                           GET_COMMAND("receive", SET " " SALINITY),
-                                           GET_COMMAND("receive", SET " " SV)};
-
-    static const char* c_nset_ichn[] = { GET_COMMAND("send", SET " NO" DENSITY),
-                                         GET_COMMAND("send", SET " NO" SALINITY),
-                                         GET_COMMAND("send", SET " NO" SV)};
-
-    static const char* c_rc_nset_ichn[] = { GET_COMMAND("receive", SET " NO" DENSITY),
-                                            GET_COMMAND("receive", SET " NO" SALINITY),
-                                            GET_COMMAND("receive", SET " NO" SV)};
-
-    static const char* c_st_monit[] = { GET_COMMAND("send", SAMPLING),
-                                        GET_COMMAND("send", MONITOR)};
-
-    static const char* c_rc_st_monit[] = { GET_COMMAND("receive", SAMPLING),
-                                           GET_COMMAND("receive", MONITOR)};
-
+    //! Number of digital sensors possible.
+    static const unsigned c_di_sensors = 4;
     //! Digital sensor options.
-    static const std::string c_di_options[] = { "Conductivity",
-                                                "SoundSpeed",
-                                                "Temperature",
-                                                "Pressure"};
-
+    static const std::string c_di_options[] = { "Conductivity", "SoundSpeed",
+                                                "Temperature", "Pressure" };
     //! Internal channel options.
-    static const std::string c_in_options[] = { "WaterDensity",
-                                                "Salinity",
-                                                "SoundSpeed"};
+    static const std::string c_in_options[] = { "WaterDensity", "Salinity", "SoundSpeed" };
 
-    //! Internal Channels.
-    enum InternalModes
-    {
-      ICM_DENSITY = 0,
-      ICM_SALINITY,
-      ICM_SV
-    };
-
-    //! Digital flags.
-    enum DigitalFlags
+    //! Digital Sensor Options indexes.
+    enum DigitalIndex
     {
       DSF_CONDUCTIVITY = 1,
       DSF_SV = 2,
       DSF_TEMPERATURE = 4,
       DSF_PRESSURE = 8
+    };
+
+    //! Internal Channal Options indexes.
+    enum InternalIndex
+    {
+      ICM_SSPEED = 2
     };
 
     //! Digital channels.
@@ -129,18 +98,8 @@ namespace Sensors
     static const unsigned c_in_offset = c_di_count + c_an_count;
     //! Number of total channels.
     static const unsigned c_channels = c_di_count + c_an_count + c_in_count;
-    //! Number of commands to start monitor.
-    static const unsigned c_st_comm_count = 2;
-    //! Number of digital sensors possible.
-    static const unsigned c_di_sensors = 4;
     //! Const to transform dbar to Bar.
     static const unsigned c_dbar_to_bar = 10;
-    //! Internal Channels mask.
-    static const unsigned c_mask_pt = DSF_PRESSURE | DSF_TEMPERATURE;
-    //! Sound velocity internal mask.
-    static const unsigned c_mask_sv = DSF_SV | c_mask_pt;
-    //! Conductivity internal mask.
-    static const unsigned c_mask_cond = DSF_CONDUCTIVITY | c_mask_pt;
 
     //! %Task arguments.
     struct Arguments
@@ -175,10 +134,12 @@ namespace Sensors
       int m_in_active;
       //! Vehicle Latitude.
       double m_lat;
-      //! Bitmask for digital sensors.
-      int m_di_mask;
       //! Waiting setup.
       bool m_need_setup;
+      //! Ready with conductivity, temperature and pressure.
+      bool m_ready_cond;
+      //! Ready with sound speed, temperature and pressure.
+      bool m_ready_sspe;
       //! Task arguments.
       Arguments m_args;
 
@@ -271,9 +232,10 @@ namespace Sensors
           m_slots[i] = false;
         }
 
+        m_ready_cond = false;
+        m_ready_sspe = false;
         m_need_setup = true;
         m_in_active = 0;
-        m_di_mask = 0;
         m_lat = 0.0;
 
         bind<IMC::EstimatedState>(this);
@@ -313,14 +275,13 @@ namespace Sensors
           m_msgs[i] = IMC::Factory::produce(m_args.msgs[i]);
           m_slots[i] = true;
 
-          // use task entity label.
+          // use task's entity label.
           if (m_args.labels[i].empty())
             continue;
 
-          unsigned eid = 0;
           try
           {
-            eid = resolveEntity(m_args.labels[i]);
+            unsigned eid = resolveEntity(m_args.labels[i]);
             m_msgs[i]->setSourceEntity(eid);
           }
           catch (...)
@@ -330,7 +291,7 @@ namespace Sensors
         m_in_active = 0;
         for (unsigned i = 0; i < c_in_count; ++i)
         {
-          if (m_slots[i + c_in_offset] == true)
+          if (m_slots[i + c_in_offset])
             m_in_active++;
         }
       }
@@ -341,6 +302,10 @@ namespace Sensors
       {
         for (unsigned i = 0; i < c_channels; ++i)
         {
+          // both message and entity label have to be defined.
+          if (m_args.msgs[i].empty() || m_args.labels[i].empty())
+            continue;
+
           try
           {
             resolveEntity(m_args.labels[i]);
@@ -351,9 +316,6 @@ namespace Sensors
             reserveEntity(m_args.labels[i]);
           }
         }
-
-        // Set entities after their reservation.
-        onUpdateParameters();
       }
 
       //! Acquire resources.
@@ -387,7 +349,7 @@ namespace Sensors
         Delay::wait(1.0);
         m_uart->flush();
 
-        if (!sendCommand("\r", "\r\n"))
+        if (!sendCommand(""))
           throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
 
         setup();
@@ -398,12 +360,10 @@ namespace Sensors
       setup(void)
       {
         m_need_setup = false;
-        m_di_mask = 0;
-        turnOffChannels();
+        disableInChannels();
         checkDigital();
         setupInternal();
         startMonitoring();
-        m_wdog.setTop(m_args.input_timeout);
       }
 
       //! Start monitoring device.
@@ -411,11 +371,13 @@ namespace Sensors
       startMonitoring(void)
       {
         // Start Monitoring.
-        for (unsigned i = 0; i < c_st_comm_count; i++)
-        {
-          if (!sendCommand(c_st_monit[i], c_rc_st_monit[i]))
-            throw RestartNeeded(DTR("failed to start monitoring"), 5, false);
-        }
+        if (!sendCommand(c_cmd_sampl))
+          throw RestartNeeded(DTR("failed to set sampling rate"), 5, false);
+
+        if (!sendCommand(c_cmd_start))
+          throw RestartNeeded(DTR("failed to start monitoring"), 5, false);
+
+        m_wdog.setTop(m_args.input_timeout);
       }
 
       //! Stop monitoring device.
@@ -423,18 +385,17 @@ namespace Sensors
       stopMonitoring(void)
       {
         // To exit sensor talk mode (stop monitoring).
-        sendCommand("\x03", "");
+        m_uart->writeString("\x03");
       }
 
-      //! Power off channels.
+      //! Disable all input channels.
       void
-      turnOffChannels(void)
+      disableInChannels(void)
       {
-        // Turn off all internal channels.
         for (unsigned i = 0; i < c_in_count; i++)
         {
-          if (!sendCommand(c_nset_ichn[i], c_rc_nset_ichn[i]))
-            throw RestartNeeded(DTR("failed to turn off internal channels"), 5, false);
+          if (!setSensor(c_cmd_icnos, c_cmd_ops[i]))
+            throw RestartNeeded(DTR("failed to disable internal channels"), 5, false);
         }
       }
 
@@ -443,20 +404,20 @@ namespace Sensors
       setupInternal(void)
       {
         // Start by turning off internal channels.
-        turnOffChannels();
+        disableInChannels();
 
         if (!m_in_active)
           return;
 
         // Check if there are two equal internal channels.
-        if (m_args.msgs[c_in_offset] != NULL)
+        if (!m_args.msgs[c_in_offset].empty())
         {
           if ((m_args.msgs[c_in_offset] == m_args.msgs[c_in_offset + 1]) ||
               (m_args.msgs[c_in_offset] == m_args.msgs[c_in_offset + 2]))
             throw RestartNeeded(DTR("two equal internal channels"), 30.0, true);
         }
 
-        if (m_args.msgs[c_in_offset + 1] != NULL)
+        if (!m_args.msgs[c_in_offset + 1].empty())
         {
           if (m_args.msgs[c_in_offset + 1] == m_args.msgs[c_in_offset + 2])
             throw RestartNeeded(DTR("two equal internal channels"), 30.0, true);
@@ -464,9 +425,9 @@ namespace Sensors
 
         // If no temperature sensor or no pressure sensor are available,
         // do not bother to check any further.
-        if ((m_di_mask & c_mask_pt) != c_mask_pt)
+        if (!(m_ready_cond || m_ready_sspe))
         {
-          turnOffChannels();
+          disableInChannels();
 
           if (m_in_active != 0)
             err(DTR("unable to compute internal channels"));
@@ -479,15 +440,18 @@ namespace Sensors
           return;
         }
 
+        // with conductivity, temperature and pressure, any available
+        // internal channel option may be computed. With sound speed
+        // probe available, do not recompute sound speed internally.
+
         // Configure internal channels.
         for (unsigned i = 0; i < c_in_count; i++)
         {
           unsigned ix = i + c_in_offset;
 
-          // To prevent errors from trying to turn on sound velocity channel
-          // when we have that probe installed.
-          if (m_args.msgs[ix] == c_in_options[ICM_SV]
-              && (m_di_mask & c_mask_sv) == c_mask_sv)
+          // To prevent errors from trying to turn on sound speed
+          // channel when we have that probe installed.
+          if (m_args.msgs[ix] == c_in_options[ICM_SSPEED] && m_ready_sspe)
             throw RestartNeeded(DTR("disable sound speed internal channel"), 30.0, true);
 
           for (unsigned j = 0; j < c_in_count; j++)
@@ -495,15 +459,8 @@ namespace Sensors
             // If there are conditions to turn any internal channel.
             if (m_args.msgs[ix] == c_in_options[j])
             {
-              // with conductivity, temperature and pressure, any available
-              // internal channel option may be computed. With sound speed
-              // probe available, do not recompute sound speed internally.
-              if ((m_di_mask & c_mask_cond) == c_mask_cond ||
-                  (m_di_mask & c_mask_sv) == c_mask_sv)
-              {
-                if (!sendCommand(c_set_ichn[j], c_rc_set_ichn[j]))
-                  throw RestartNeeded(DTR("failed to turn on internal channels"), 30.0, false);
-              }
+              if (!setSensor(c_cmd_icset, c_cmd_ops[j]))
+                throw RestartNeeded(DTR("failed to enable internal channels"), 30.0, false);
             }
           }
         }
@@ -514,14 +471,46 @@ namespace Sensors
       void
       checkDigital(void)
       {
+        uint8_t mask = 0;
         for (unsigned i = 0; i < c_di_count; ++i)
         {
           for (unsigned j = 0; j < c_di_sensors; ++j)
           {
             if (m_args.msgs[i] == c_di_options[j])
-              m_di_mask |= 1 << j;
+              mask |= 1 << j;
           }
         }
+
+        m_ready_cond = false;
+        m_ready_sspe = false;
+        if (mask & DSF_PRESSURE && mask & DSF_TEMPERATURE)
+        {
+          if (mask & DSF_CONDUCTIVITY)
+            m_ready_cond = true;
+          if (mask & DSF_SV)
+            m_ready_sspe = true;
+        }
+      }
+
+      //! Set sensor option.
+      //! @param[in] cmd command.
+      //! @return true if command was received successfully, false otherwise.
+      bool
+      setSensor(const std::string& cmd, const std::string& option)
+      {
+        std::string str = cmd + option;
+        return sendCommand(str);
+      }
+
+      //! Send command to device
+      //! @param[in] cmd command.
+      //! @return true if command was received successfully, false otherwise.
+      bool
+      sendCommand(const std::string& cmd)
+      {
+        std::string str = cmd + "\r";
+        std::string reply = str + "\n";
+        return sendCommand(str, reply);
       }
 
       //! Send command to device
@@ -529,16 +518,19 @@ namespace Sensors
       //! @param[in] reply expected reply.
       //! @return true if command was received successfully, false otherwise.
       bool
-      sendCommand(const char* cmd, const char* reply)
+      sendCommand(const std::string& cmd, const std::string& reply)
       {
+        m_uart->writeString(cmd.c_str());
+
         char bfr[128];
-
-        m_uart->writeString(cmd);
-
-        if (Poll::poll(*m_uart, 1.0))
+        Counter<double> timer(1.0);
+        while (!timer.overflow())
         {
+          if (!Poll::poll(*m_uart, timer.getRemaining()))
+            break;
+
           m_uart->readString(bfr, sizeof(bfr));
-          if (std::strcmp(bfr, reply) == 0)
+          if (String::endsWith(bfr, reply))
             return true;
         }
 
@@ -573,7 +565,8 @@ namespace Sensors
         IMC::Depth depth;
         depth.setSourceEntity(resolveEntity(label));
         depth.setTimeStamp(tstamp);
-        depth.value = UNESCO1983::computeDepth(value * factor / c_dbar_to_bar, m_lat, m_args.geop_anomaly);
+        double val = value * factor / c_dbar_to_bar;
+        depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
         dispatch(depth, DF_KEEP_TIME);
       }
 
@@ -587,7 +580,7 @@ namespace Sensors
         // Count number of active channels.
         for (unsigned i = 0; i < c_channels; ++i)
         {
-          if (m_slots[i] == true)
+          if (m_slots[i])
             active++;
         }
 
@@ -627,23 +620,23 @@ namespace Sensors
             throw RestartNeeded(DTR("I/O error"), 5);
 
           char* ptr = bfr;
-          unsigned k = 0;
-          int n = 0;
+          unsigned ix_read = 0;
+          int pos = 0;
 
           double value;
-          while (std::sscanf(ptr, "%lf%n", &value, &n))
+          while (std::sscanf(ptr, "%lf%n", &value, &pos))
           {
-            ptr += n;
+            ptr += pos;
 
             // Save to temporary buffer.
-            if (k < getChannels())
-              values[k] = value;
-            k++;
+            if (ix_read < getChannels())
+              values[ix_read] = value;
+            ix_read++;
           }
 
           // Check if there is some mismatch between the configuration file
           // and sensor output. If true, doesn't dispatch any message.
-          if (k != getChannels())
+          if (ix_read != getChannels())
           {
             err(DTR("Mismatch between sensor output and configuration file!"));
             continue;
@@ -662,7 +655,7 @@ namespace Sensors
         }
 
         stopMonitoring();
-        turnOffChannels();
+        disableInChannels();
       }
 
     };
