@@ -284,7 +284,7 @@ namespace Sensors
                           getTrigger().c_str(), m_sampling_rate, m_salinity);
 
         if (m_debug)
-          cmd += ",FN=DataDebug.ad2cp";
+          cmd += ",FN=\"DataDebug.ad2cp\"";
 
         if (boot)
         {
