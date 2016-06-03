@@ -68,14 +68,16 @@ namespace Sensors
       //! @param[in] handle io handle.
       //! @param[in] rate sampling rate.
       //! @param[in] trigger input trigger.
-      Driver(Tasks::Task* task, IO::Handle* handle, float rate, bool trigger):
+      //! @param[in] debug enable hardware diagnostics.
+      Driver(Tasks::Task* task, IO::Handle* handle, float rate, bool trigger, bool dbg):
         m_task(task),
         m_handle(handle),
         m_trigger(trigger),
         m_salinity(35.0),
         m_sampling_rate(5.0),
         m_cmd_mode(false),
-        m_firmware(false)
+        m_firmware(false),
+        m_debug(dbg)
       {
         setSamplingRate(rate);
       }
@@ -123,6 +125,12 @@ namespace Sensors
 
         if (!setDVL())
           return false;
+
+        if (m_debug)
+        {
+          if (!sendCommand("SETBTHW,NDFEN=199"))
+            return false;
+        }
 
         if (!save())
           return false;
@@ -275,6 +283,9 @@ namespace Sensors
         cmd = String::str("SETDVL,TRIG=\"%s\",SR=%f,SA=%f",
                           getTrigger().c_str(), m_sampling_rate, m_salinity);
 
+        if (m_debug)
+          cmd += ",FN=DataDebug.ad2cp";
+
         if (boot)
         {
           bool r = sendCommand(cmd);
@@ -419,6 +430,8 @@ namespace Sensors
       bool m_cmd_mode;
       //! Show firmware once.
       bool m_firmware;
+      //! Hardware debug mode.
+      bool m_debug;
     };
   }
 }

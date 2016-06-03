@@ -1,4 +1,3 @@
-
 //***************************************************************************
 // Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
@@ -63,6 +62,8 @@ namespace Sensors
       bool input_trigger;
       //! Name of sidescan's power channel.
       std::string power_channel;
+      //! Hardware Debug Mode.
+      bool hw_debug;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -146,6 +147,10 @@ namespace Sensors
         param("Power Channel", m_args.power_channel)
         .defaultValue("Private (DVL)")
         .description("Name of device's power channel");
+
+        param("Hardware Debug Mode", m_args.hw_debug)
+        .defaultValue("false")
+        .description("Record data internally with diagnostics");
 
         setPostPowerOnDelay(5.0);
         setPowerOffDelay(1.0);
@@ -276,9 +281,7 @@ namespace Sensors
         data_sock->connect(addr, port + 2);
         m_data_h = data_sock;
 
-        // generate driver and parser.
-        m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered);
-        m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
+        generate();
 
         if (!m_driver->login())
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
@@ -307,8 +310,7 @@ namespace Sensors
           {
             // The serial port is used as command link and data.
             m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
-            m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered);
-            m_parser = new Parser(this, m_handle, m_args.pos, m_args.ang, m_entities, m_entity);
+            generate();
           }
         }
         catch (...)
@@ -381,6 +383,14 @@ namespace Sensors
           requestDeactivation();
           requestActivation();
         }
+      }
+
+      //! Generate driver and parser.
+      void
+      generate(void)
+      {
+        m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered, m_args.hw_debug);
+        m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
       }
 
       void
