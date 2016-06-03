@@ -316,6 +316,8 @@ namespace Sensors
             reserveEntity(m_args.labels[i]);
           }
         }
+
+        onUpdateParameters();
       }
 
       //! Acquire resources.
@@ -452,7 +454,7 @@ namespace Sensors
           // To prevent errors from trying to turn on sound speed
           // channel when we have that probe installed.
           if (m_args.msgs[ix] == c_in_options[ICM_SSPEED] && m_ready_sspe)
-            throw RestartNeeded(DTR("disable sound speed internal channel"), 30.0, true);
+            throw RestartNeeded(DTR("no need to compute sound speed"), 30.0, true);
 
           for (unsigned j = 0; j < c_in_count; j++)
           {
@@ -521,6 +523,7 @@ namespace Sensors
       sendCommand(const std::string& cmd, const std::string& reply)
       {
         m_uart->writeString(cmd.c_str());
+        spew("cmd: %s", sanitize(cmd).c_str());
 
         char bfr[128];
         Counter<double> timer(1.0);
@@ -530,6 +533,8 @@ namespace Sensors
             break;
 
           m_uart->readString(bfr, sizeof(bfr));
+          spew("reply: %s", sanitize(bfr).c_str());
+
           if (String::endsWith(bfr, reply))
             return true;
         }
@@ -563,7 +568,9 @@ namespace Sensors
       dispatchDepth(std::string label, double value, double factor, double tstamp)
       {
         IMC::Depth depth;
-        depth.setSourceEntity(resolveEntity(label));
+        if (!label.empty())
+          depth.setSourceEntity(resolveEntity(label));
+
         depth.setTimeStamp(tstamp);
         double val = value * factor / c_dbar_to_bar;
         depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
@@ -624,21 +631,22 @@ namespace Sensors
           int pos = 0;
 
           double value;
-          while (std::sscanf(ptr, "%lf%n", &value, &pos))
+          unsigned chn_active = getChannels();
+          while (std::sscanf(ptr, "%lf%n", &value, &pos) == 1)
           {
             ptr += pos;
 
             // Save to temporary buffer.
-            if (ix_read < getChannels())
+            if (ix_read < chn_active)
               values[ix_read] = value;
             ix_read++;
           }
 
           // Check if there is some mismatch between the configuration file
           // and sensor output. If true, doesn't dispatch any message.
-          if (ix_read != getChannels())
+          if (ix_read != chn_active)
           {
-            err(DTR("Mismatch between sensor output and configuration file!"));
+            err(DTR("mismatch between output and configuration"));
             continue;
           }
 
