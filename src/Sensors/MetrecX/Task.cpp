@@ -37,21 +37,13 @@ namespace Sensors
 {
   //! Device driver for the AML OEM Metrec•X.
   //!
-  //! Metrec•X is an externally-powered, multi-parameter
-  //! instrument that allows you to change the
-  //! instrument’s sensor load, in the field and on-demand.
-  //! and log data to its internal memory simultaneously.
+  //! This device enables to change sensors like plug'n'play.
+  //! It supports a maximum of 5 digital sensors and 10 analogic
+  //! probes. Currently, this driver supports 3 analog sensors.
   //!
-  //! This device enables to change sensors like plug and
-  //! play. It may be equipped with a maximum of 5 digital
-  //! ports and 10 analogic ports.
-  //!
-  //! The sensor output is made by the following order:
-  //! 1 - Digital Sensors;
-  //! 2 - Analog Sensors;
-  //! 3 - Calculation Channels;
-  //! The output is only composed by active channels,
-  //! and the output order is incremented from channel 1.
+  //! Water density, salinity or sound velocity may be computed
+  //! internally if temperature, pressure and conductivity or
+  //! sound velocity probes are available.
   //!
   //! @author Tiago Rodrigues
   namespace MetrecX
@@ -85,6 +77,8 @@ namespace Sensors
     //! Internal Channal Options indexes.
     enum InternalIndex
     {
+      ICM_DENSITY = 0,
+      ICM_SALINITY = 1,
       ICM_SSPEED = 2
     };
 
@@ -94,10 +88,10 @@ namespace Sensors
     static const unsigned c_an_count = 3;
     //! Internal channels.
     static const unsigned c_in_count = 3;
-    //! Offset for internal channels.
-    static const unsigned c_in_offset = c_di_count + c_an_count;
     //! Number of total channels.
-    static const unsigned c_channels = c_di_count + c_an_count + c_in_count;
+    static const unsigned c_channels = c_di_count + c_an_count;
+    //! Number of total readings.
+    static const unsigned c_total = c_channels + c_in_count;
     //! Const to transform dbar to Bar.
     static const unsigned c_dbar_to_bar = 10;
 
@@ -125,13 +119,11 @@ namespace Sensors
       //! Serial port handle.
       SerialPort* m_uart;
       //! Digital messages.
-      IMC::Message* m_msgs[c_channels];
+      IMC::Message* m_msgs[c_total];
       //! Task Watchdog.
       Counter<double> m_wdog;
       //! Array of active slots
-      bool m_slots[c_channels];
-      //! Number of internal active channels.
-      int m_in_active;
+      bool m_slots[c_total];
       //! Vehicle Latitude.
       double m_lat;
       //! Waiting setup.
@@ -206,27 +198,8 @@ namespace Sensors
           .description("Analogic channel conversion factor");
         }
 
-        // Extract internal channels configuration.
-        for (unsigned i = 0; i < c_in_count; ++i)
-        {
-          std::string option = String::str("Internal Channel %u - Message", i + 1);
-          param(option, m_args.msgs[i + c_in_offset])
-          .defaultValue("")
-          .description("Internal channel IMC Message");
-
-          option = String::str("Internal Channel %u - Entity Label", i + 1);
-          param(option, m_args.labels[i + c_in_offset])
-          .defaultValue("")
-          .description("Internal channel Entity Label");
-
-          option = String::str("Internal Channel %u - Conversion", i + 1);
-          param(option, m_args.factors[i + c_in_offset])
-          .defaultValue("1.0")
-          .description("Internal channel conversion factor");
-        }
-
         // initialize variables.
-        for (unsigned i = 0; i < c_channels; ++i)
+        for (unsigned i = 0; i < c_total; ++i)
         {
           m_msgs[i] = NULL;
           m_slots[i] = false;
@@ -235,7 +208,6 @@ namespace Sensors
         m_ready_cond = false;
         m_ready_sspe = false;
         m_need_setup = true;
-        m_in_active = 0;
         m_lat = 0.0;
 
         bind<IMC::EstimatedState>(this);
@@ -246,7 +218,7 @@ namespace Sensors
         // To clear uart if an exception is thrown.
         onResourceRelease();
 
-        for (unsigned i = 0; i < c_channels; ++i)
+        for (unsigned i = 0; i < c_total; ++i)
           Memory::clear(m_msgs[i]);
       }
 
@@ -288,11 +260,11 @@ namespace Sensors
           { }
         }
 
-        m_in_active = 0;
         for (unsigned i = 0; i < c_in_count; ++i)
         {
-          if (m_slots[i + c_in_offset])
-            m_in_active++;
+          unsigned ix = i + c_channels;
+          m_msgs[ix] = IMC::Factory::produce(c_in_options[i]);
+          m_slots[ix] = true;
         }
       }
 
@@ -362,7 +334,6 @@ namespace Sensors
       setup(void)
       {
         m_need_setup = false;
-        disableInChannels();
         checkDigital();
         setupInternal();
         startMonitoring();
@@ -408,64 +379,36 @@ namespace Sensors
         // Start by turning off internal channels.
         disableInChannels();
 
-        if (!m_in_active)
-          return;
-
-        // Check if there are two equal internal channels.
-        if (!m_args.msgs[c_in_offset].empty())
-        {
-          if ((m_args.msgs[c_in_offset] == m_args.msgs[c_in_offset + 1]) ||
-              (m_args.msgs[c_in_offset] == m_args.msgs[c_in_offset + 2]))
-            throw RestartNeeded(DTR("two equal internal channels"), 30.0, true);
-        }
-
-        if (!m_args.msgs[c_in_offset + 1].empty())
-        {
-          if (m_args.msgs[c_in_offset + 1] == m_args.msgs[c_in_offset + 2])
-            throw RestartNeeded(DTR("two equal internal channels"), 30.0, true);
-        }
-
         // If no temperature sensor or no pressure sensor are available,
         // do not bother to check any further.
         if (!(m_ready_cond || m_ready_sspe))
         {
-          disableInChannels();
-
-          if (m_in_active != 0)
-            err(DTR("unable to compute internal channels"));
-
-          m_in_active = 0;
-
-          for (unsigned i = 0; i < c_in_count; ++i)
-            m_slots[i + c_in_offset] = false;
+          for (unsigned i = c_channels; i < c_total; ++i)
+          {
+            m_slots[i] = false;
+            Memory::clear(m_msgs[i]);
+          }
 
           return;
         }
 
-        // with conductivity, temperature and pressure, any available
-        // internal channel option may be computed. With sound speed
-        // probe available, do not recompute sound speed internally.
-
         // Configure internal channels.
-        for (unsigned i = 0; i < c_in_count; i++)
+        if (!setSensor(c_cmd_icset, c_cmd_ops[ICM_DENSITY]))
+          err(DTR("failed to set water density"));
+
+        if (!setSensor(c_cmd_icset, c_cmd_ops[ICM_SALINITY]))
+          err(DTR("failed to set salinity"));
+
+        if (m_ready_sspe)
         {
-          unsigned ix = i + c_in_offset;
-
-          // To prevent errors from trying to turn on sound speed
-          // channel when we have that probe installed.
-          if (m_args.msgs[ix] == c_in_options[ICM_SSPEED] && m_ready_sspe)
-            throw RestartNeeded(DTR("no need to compute sound speed"), 30.0, true);
-
-          for (unsigned j = 0; j < c_in_count; j++)
-          {
-            // If there are conditions to turn any internal channel.
-            if (m_args.msgs[ix] == c_in_options[j])
-            {
-              if (!setSensor(c_cmd_icset, c_cmd_ops[j]))
-                throw RestartNeeded(DTR("failed to enable internal channels"), 30.0, false);
-            }
-          }
+          unsigned ix = c_channels + ICM_SSPEED;
+          m_slots[ix] = false;
+          Memory::clear(m_msgs[ix]);
+          return;
         }
+
+        if (!setSensor(c_cmd_icset, c_cmd_ops[ICM_SSPEED]))
+          err(DTR("failed to set sound speed"));
       }
 
       //! Cross check of what internal channels may be turned on
@@ -544,8 +487,8 @@ namespace Sensors
 
       //! Dispatch value.
       //! @param[in] msg IMC message.
+      //! @param[in] value measurement value.
       //! @param[in] label entity label.
-      //! @param[in] value depth value.
       //! @param[in] factor multiplication factor.
       //! @param[in] tstamp current timestamp.
       void
@@ -557,6 +500,18 @@ namespace Sensors
 
         if (msg->getId() == DUNE_IMC_PRESSURE)
           dispatchDepth(label, value, factor, tstamp);
+      }
+
+      //! Dispatch value.
+      //! @param[in] msg IMC message.
+      //! @param[in] value value.
+      //! @param[in] tstamp current timestamp.
+      void
+      dispatchValue(IMC::Message* msg, double value, double tstamp)
+      {
+        msg->setValueFP(value);
+        msg->setTimeStamp(tstamp);
+        dispatch(msg, DF_KEEP_TIME);
       }
 
       //! Dispatch depth.
@@ -585,7 +540,7 @@ namespace Sensors
         unsigned active = 0;
 
         // Count number of active channels.
-        for (unsigned i = 0; i < c_channels; ++i)
+        for (unsigned i = 0; i < c_total; ++i)
         {
           if (m_slots[i])
             active++;
@@ -599,7 +554,7 @@ namespace Sensors
       onMain(void)
       {
         char bfr[255];
-        double values[c_channels];
+        double values[c_total];
 
         while (!stopping())
         {
@@ -645,17 +600,19 @@ namespace Sensors
           // Check if there is some mismatch between the configuration file
           // and sensor output. If true, doesn't dispatch any message.
           if (ix_read != chn_active)
-          {
-            err(DTR("mismatch between output and configuration"));
-            continue;
-          }
+            throw RestartNeeded(DTR("mismatch between output and configuration"), 30, true);
 
           // Dispatch data.
           unsigned index = 0;
-          for (unsigned i = 0; i < c_channels; i++)
+          for (unsigned i = 0; i < c_total; i++)
           {
             if (m_slots[i])
-              dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
+            {
+              if (i < c_channels)
+                dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
+              else
+                dispatchValue(m_msgs[i], values[index++], tstamp);
+            }
           }
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
