@@ -256,30 +256,7 @@ namespace DUNE
       pos.z = maneuver->z;
       pos.z_units = maneuver->z_units;
 
-      rstages.getFirstPoint(&pos.lat, &pos.lon);
-
-      float distance = distance3D(pos, last_pos);
-      m_accum_dur->addDuration(distance / speed);
-
-      last_pos = pos;
-
-      distance += rstages.getDistance(&last_pos.lat, &last_pos.lon);
-
-      std::vector<float>::const_iterator itr = rstages.getDistancesBegin();
-
-      for (; itr != rstages.getDistancesEnd(); ++itr)
-      {
-        // compensate with path controller's eta factor
-        float travelled = compensate(*itr, speed);
-        float duration = travelled / speed;
-
-        // Update speed profile
-        m_speed_vec->push_back(SpeedProfile(maneuver, duration));
-
-        m_accum_dur->addDuration(duration);
-      }
-
-      return true;
+      return parseWorkerRowsStages(&rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
     }
 
     bool
