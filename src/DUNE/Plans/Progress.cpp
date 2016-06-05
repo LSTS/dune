@@ -32,20 +32,35 @@ namespace DUNE
 {
   namespace Plans
   {
+    const std::string WAYPOINT_STR = "waypoint";
+
     bool
     Progress::getPoint(const IMC::ManeuverControlState* mcs, unsigned& number)
     {
-      std::vector<std::string> lst;
-      Utils::String::split(mcs->info, "=", lst);
+      std::vector<std::vector<std::string> > lstElems;
+      Utils::String::splitMulti(mcs->info, ";", "=", lstElems);
 
-      if (!lst.size())
-        return false;
-      else if (lst.back() == "")
+      if (!lstElems.size())
         return false;
 
-      number = std::atoi(lst.back().c_str());
+      std::vector<std::vector<std::string> >::iterator itr = lstElems.begin();
+      for (; itr != lstElems.end(); ++itr)
+      {
+        if (!itr->size() || itr->size() < 2 || itr->front() == "" || itr->back() == "")
+          continue;
 
-      return true;
+        std::string name = itr->front().c_str();
+        name = Utils::String::trim(name);
+        Utils::String::toLowerCase(name);
+
+        if (!WAYPOINT_STR.compare(name))
+        {
+          number = std::atoi(itr->back().c_str());
+          return true;
+        }
+      }
+
+      return false;
     }
 
     float
