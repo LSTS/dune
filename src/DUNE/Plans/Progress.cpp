@@ -97,6 +97,15 @@ namespace DUNE
     }
 
     float
+    Progress::compute(const IMC::RowsCoverage* maneuver, const IMC::ManeuverControlState* mcs,
+                      const std::vector<float>& durations, float total_duration)
+    {
+      (void)maneuver;
+
+      return compute(mcs, durations, total_duration);
+    }
+
+    float
     Progress::compute(const IMC::Message* man, const IMC::ManeuverControlState* mcs,
                       const std::vector<float>& durations, float total_duration)
     {
@@ -125,6 +134,10 @@ namespace DUNE
           break;
         case DUNE_IMC_ROWS:
           time_left = compute(static_cast<const IMC::Rows*>(man), mcs,
+                              durations, total_duration);
+          break;
+        case DUNE_IMC_ROWSCOVERAGE:
+          time_left = compute(static_cast<const IMC::RowsCoverage*>(man), mcs,
                               durations, total_duration);
           break;
         default:
