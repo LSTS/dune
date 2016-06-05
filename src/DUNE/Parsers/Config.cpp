@@ -136,8 +136,23 @@ namespace DUNE
 
           String::rtrim(option);
           String::rtrim(arg);
+
+          std::string strOption = String::str(option);
+          bool append = false;
+          if (String::endsWith(strOption, "+")) {
+            option[strOption.size()-1] = '\0';
+            // append if a previous value already exists
+            append = m_data[section].find(option) != m_data[section].end();
+          }
+
           std::strncpy(tmp, option, c_max_bfr_size);
-          m_data[section][option] = arg;
+          if (append)
+          {
+            m_data[section][option] += ", ";
+            m_data[section][option] += arg;
+          }
+          else
+            m_data[section][option] = arg;
 
           if (std::strlen(arg) < 4)
             continue;
@@ -160,6 +175,9 @@ namespace DUNE
         {
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
+
+          if (String::endsWith(String::str(option), "+"))
+            option[strlen(option)-1] = '\0';
 
           String::rtrim(arg);
           m_data[section][tmp] += " ";
