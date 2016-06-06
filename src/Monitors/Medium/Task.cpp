@@ -60,6 +60,8 @@ namespace Monitors
       float depth_threshold;
       //! Air Speed threshold.
       float airspeed_threshold;
+      //! Ground Speed threshold.
+      float gndspeed_threshold;
       //! Altitude threshold
       float altitude_threshold;
       //! Vehicle type.
@@ -139,6 +141,11 @@ namespace Monitors
         .units(Units::Meter)
         .defaultValue("12.0")
         .description("Minimum air speed necessary to consider a vehicle in air");
+
+        param("Ground Speed Threshold", m_args.gndspeed_threshold)
+        .units(Units::Meter)
+        .defaultValue("2.0")
+        .description("Minimum ground speed necessary to consider a vehicle has landed");
 
         param("Altitude Threshold", m_args.altitude_threshold)
         .units(Units::Meter)
@@ -387,7 +394,7 @@ namespace Monitors
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
               else {
-                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2 && m_altitude < m_args.altitude_threshold)
+                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < m_args.gndspeed_threshold && m_altitude < m_args.altitude_threshold)
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
             }
