@@ -187,6 +187,7 @@ namespace DUNE
     std::vector<std::string>
     Config::sections(void)
     {
+      Concurrency::ScopedRWLock l(m_lock, false);
       std::vector<std::string> vec;
       for (Sections::iterator itr = m_data.begin(); itr != m_data.end(); ++itr)
         vec.push_back(itr->first);
@@ -196,6 +197,7 @@ namespace DUNE
     std::vector<std::string>
     Config::options(const std::string& section)
     {
+      Concurrency::ScopedRWLock l(m_lock, false);
       Sections::const_iterator sitr = m_data.find(section);
 
       if (sitr == m_data.end())
