@@ -394,7 +394,7 @@ namespace Monitors
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
               else {
-                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < m_args.gndspeed_threshold && m_altitude < m_args.altitude_threshold)
+                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < m_args.gndspeed_threshold)
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
             }
