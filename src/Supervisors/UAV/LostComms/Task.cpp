@@ -180,7 +180,7 @@ namespace Supervisors
         void
         consume(const IMC::VehicleMedium* msg)
         {
-            m_medium = *msg;
+          m_medium = *msg;
         }
 
         void
@@ -248,7 +248,7 @@ namespace Supervisors
             return;
 
           if (m_medium.medium != IMC::VehicleMedium::VM_AIR)
-              return;
+            return;
 
           if ((m_in_mission && m_tout_mission.overflow()) ||
               (!m_in_mission && m_tout_heartbeat.overflow()))
