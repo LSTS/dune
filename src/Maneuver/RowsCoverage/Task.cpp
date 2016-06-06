@@ -35,12 +35,13 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    static const float c_min_alt = 0.3;
-
     struct Arguments
     {
       //! Altitude Moving Average Samples
       double altitude_average_size;
+
+      //! Minimum altitude values to consider for average
+      double min_altitude;
     };
 
     struct Task: public Maneuvers::Maneuver
@@ -72,14 +73,24 @@ namespace Maneuver
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
+        DUNE::Maneuvers::Maneuver(name, ctx),
+        m_stages_parser(NULL),
+        m_alt_min(0),
+        m_cov_pred(0),
+        m_cov_actual_min(0),
+        m_cur_hstep(0),
+        m_stage(0)
       {
         param("Altitude Moving Average Samples", m_args.altitude_average_size)
         .defaultValue("40")
         .minimumValue("5")
-        .description("Number of moving average samples to smooth altitude measurements");
+        .description("Number of samples to average altitude measurements (moving window size)");
 
-        m_stage = 0;
+        param("Minimum Altitude Value", m_args.min_altitude)
+        .defaultValue("0.3")
+        .minimumValue("0")
+        .description("Process measured altitude values only if above this threshold");
+
         m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
 
         bindToManeuver<Task, IMC::RowsCoverage>();
@@ -98,6 +109,7 @@ namespace Maneuver
       onManeuverDeactivation(void)
       {
         Memory::clear(m_stages_parser);
+        Memory::clear(m_alt_avrg);
       }
 
       void
@@ -121,6 +133,7 @@ namespace Maneuver
 
         m_stage = 0;
 
+        // Creates a new instance as this is the only way to change window size
         Memory::clear(m_alt_avrg);
         m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
 
@@ -153,7 +166,7 @@ namespace Maneuver
         if (msg->getSource() != getSystemId())
           return;
 
-        if (msg->alt > c_min_alt)
+        if (msg->alt > m_args.min_altitude)
         {
           m_alt_avrg->update(msg->alt);
           if (m_alt_avrg->sampleSize() >= m_alt_avrg->windowSize()) {
@@ -186,45 +199,41 @@ namespace Maneuver
         double lat;
         double lon;
 
-        bool res;
+        bool last_pt;
         switch (m_stage) {
           case 2:
             m_alt_min = std::min(m_alt_min, m_alt_avrg->mean());
-            float min;
-            min = m_alt_min;
-            m_alt_avrg->clear();
-            m_alt_min = -1;
-            if (min > 0)
+            if (m_alt_min > 0)
             {
-              m_cov_actual_min = 2 * min * std::tan(m_maneuver.angaperture / 2);
+              m_cov_actual_min = 2 * m_alt_min * std::tan(m_maneuver.angaperture / 2);
               m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 200.);
               m_cur_hstep = std::min(m_cov_pred, m_cov_actual_min);
-              res = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
+              last_pt = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
             }
             else
             {
               m_cur_hstep = m_cov_pred;
-              res = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
+              last_pt = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
             }
             break;
           default:
-            m_alt_avrg->clear();
-            m_alt_min = -1;
-            res = m_stages_parser->getNextPoint(&lat, &lon);
+            last_pt = m_stages_parser->getNextPoint(&lat, &lon);
             break;
         }
 
-        if (res)
+        m_alt_avrg->clear();
+        m_alt_min = -1;
+
+        if (last_pt)
         {
           signalCompletion();
           return;
         }
 
         m_stage++;
-        unsigned int stage_max = 2;
-        if ((m_maneuver.flags & IMC::RowsCoverage::FLG_SQUARE_CURVE) != 0)
-          stage_max = 3;
-        if (m_stage > stage_max)
+        unsigned int num_stages = (m_maneuver.flags & IMC::RowsCoverage::FLG_SQUARE_CURVE)? 3 : 2;
+
+        if (m_stage > num_stages)
           m_stage = 1;
 
         sendPath(lat, lon);
