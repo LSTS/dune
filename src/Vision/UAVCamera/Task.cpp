@@ -39,6 +39,8 @@ namespace Vision
     {
       //! Camera
       std::string camera;
+      //! Power channel name.
+      std::string power;
       //! Horizontal FOV (cross-track) for AXIS
       int axis_hfov;
       //! Vertical FOV (along-track) for AXIS
@@ -78,6 +80,10 @@ namespace Vision
         .defaultValue("AXIS")
         .description("Onboard camera.");
 
+        param("Power Channel Name", m_args.power)
+        .defaultValue("")
+        .description("Default power channel name");
+
         param("(AXIS) Horizontal AOV", m_args.axis_hfov)
         .description("Cross-Track Angle of View, in degrees.");
 
@@ -91,19 +97,21 @@ namespace Vision
         .description("Cross-Track Angle of View, in degrees.");
 
         param("(FLIR) Vertical AOV", m_args.flir_vfov)
-        .description("Along-Track Angle of View, in degrees.");
+       .description("Along-Track Angle of View, in degrees.");
 
         param("(FLIR) Tilt Angle", m_args.flir_tilt)
         .description("Camera mount tilt angle, in degrees.");
       }
 
+      //! Set camera power channel.
+      //! @param[in] power true to enable power control.
       void
       cameraControl(bool power)
       {
         // Camera power actuation
         IMC::PowerChannelControl pcc;
-        pcc.name = "48V C";
-        pcc.op = (power ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF);
+        pcc.name = m_args.power;
+        pcc.op = power ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(pcc);
 
         // Update power status
@@ -116,18 +124,21 @@ namespace Vision
       {
         while (!stopping())
         {
-          if(isActive())
+          if (isActive())
           {
-            if(!m_status)
-              cameraControl(1); //Turn ON camera
+            if (!m_status)
+              cameraControl(true);
+
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
           else
           {
-            if(m_status)
-              cameraControl(0); //Turn OFF camera
+            if (m_status)
+              cameraControl(false);
+
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           }
+
           waitForMessages(1.0);
         }
       }
