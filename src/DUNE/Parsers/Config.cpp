@@ -137,10 +137,10 @@ namespace DUNE
           String::rtrim(option);
           String::rtrim(arg);
 
-          std::string strOption = String::str(option);
           bool append = false;
-          if (String::endsWith(strOption, "+")) {
-            option[strOption.size()-1] = '\0';
+          if (String::endsWith(String::str(option), "+"))
+          {
+            String::resize(option, -1);
             // append if a previous value already exists
             append = m_data[section].find(option) != m_data[section].end();
           }
@@ -177,7 +177,7 @@ namespace DUNE
             throw SyntaxError(fname, line_count);
 
           if (String::endsWith(String::str(option), "+"))
-            option[strlen(option)-1] = '\0';
+            String::resize(option, -1);
 
           String::rtrim(arg);
           m_data[section][tmp] += " ";
