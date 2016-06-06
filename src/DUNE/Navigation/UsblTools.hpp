@@ -169,6 +169,16 @@ namespace DUNE
           //! Quick mode, without range.
           bool no_range;
         };
+        
+        //! Usbl modem fix structure
+        struct ModemFix
+        {
+          std::string name;
+          double lat;
+          double lon;
+          float z;
+          uint8_t z_units;
+        };
 
         //! Constructor.
         Node(Tasks::Task* task, const Arguments* args):
@@ -289,8 +299,10 @@ namespace DUNE
               pos.e = ps.e;
               pos.d = ps.d;
               pos.accuracy = ps.accuracy;
+              
+              if(!getFix(msg->sys_src, pos))
+                m_task->dispatch(pos);
 
-              m_task->dispatch(pos);
               m_comm_timeout_timer.reset();
               break;
             }
@@ -313,6 +325,35 @@ namespace DUNE
               break;
             }
           }
+        }
+        
+        //! Sets a modem fix.
+        //! The node will use the modem fix to convert its position into a fix.
+        //! param[in] msg The UsblModem message where the modem fix is stored.
+        void
+        setModemFix(const IMC::UsblModem* msg)
+        {
+          std::vector<ModemFix>::iterator itr = m_modem_fix.begin();
+          for (; itr != m_modem_fix.end(); ++itr)
+          {
+            // Modem Found
+            if (itr->name == msg->target)
+            {
+              itr->lat = msg->lat;
+              itr->lon = msg->lon;
+              itr->z = msg->z;
+              itr->z_units = msg->z_units;
+              return;
+            }
+          }
+          //Modem not found; Add it.
+          ModemFix fix;
+          fix.name = msg->target;
+          fix.lat = msg->lat;
+          fix.lon = msg->lon;
+          fix.z = msg->z;
+          fix.z_units = msg->z_units;
+          m_modem_fix.push_back(fix);
         }
 
       private:
@@ -342,6 +383,28 @@ namespace DUNE
 
           return true;
         }
+        
+        //! Get a fix from a UsblPositionExtended and dispatch it.
+        //! param[in] modem  The name of the modem that has sent the position.
+        //! param[in] pos    The position stored into a UsblPositionExtended.
+        //! True if the fix has been dispatched.
+        bool
+        getFix(std::string modem, const IMC::UsblPositionExtended &pos)
+        {
+          std::vector<ModemFix>::iterator itr = m_modem_fix.begin();
+          for (; itr != m_modem_fix.end(); ++itr)
+          {
+            // Modem found
+            if (itr->name == modem)
+            {
+              IMC:: UsblFixExtended fix = toFix(pos, itr->lat, itr->lon,
+                                                itr->z, (IMC::ZUnits)itr->z_units);
+              m_task->dispatch(fix);
+              return true;
+            }
+          }
+          return false;
+        }
 
         //! True if USBL is on.
         bool m_usbl_alive;
@@ -355,6 +418,8 @@ namespace DUNE
         bool m_no_range;
         //! Periodicity.
         uint16_t m_period;
+        //! The modem fix list.
+        std::vector<ModemFix> m_modem_fix;
         //! Quick modem request timer.
         Time::Counter<double> m_node_timer;
         //! Communication timeout timer.
