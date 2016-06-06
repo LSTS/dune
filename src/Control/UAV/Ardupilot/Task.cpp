@@ -179,9 +179,6 @@ namespace Control
         IMC::DesiredPath m_dpath;
         //! DesiredPath message
         IMC::ControlLoops m_controllps;
-        //! Localization origin (WGS-84)
-        fp64_t m_ref_lat, m_ref_lon;
-        fp32_t m_ref_hae;
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
         //! System ID
@@ -192,7 +189,7 @@ namespace Control
         float m_hae_msl;
         //! Height offset to convert to WGS-84 ellipsoid.
         float m_hae_offset;
-        //! Flag used to recalculate height offset in case of dune reboot.
+        //! Flag indicating task is booting.
         bool m_reboot;
         //! External control
         bool m_external;
@@ -228,9 +225,6 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          m_ref_lat(0.0),
-          m_ref_lon(0.0),
-          m_ref_hae(0.0),
           m_TCP_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
@@ -999,8 +993,8 @@ namespace Control
 
           m_changing_wp = true;
 
-          m_pcs.start_lat = Angles::radians(m_lat);
-          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_lat = m_lat;
+          m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
@@ -1032,8 +1026,8 @@ namespace Control
           // Convert altitude to geoid height (MSL).
           sendCommandPacket(MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, alt - m_hae_offset);
 
-          m_pcs.start_lat = Angles::radians(m_lat);
-          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_lat = m_lat;
+          m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
@@ -1163,8 +1157,8 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
 
-          m_pcs.start_lat = Angles::radians(m_lat);
-          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_lat = m_lat;
+          m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
@@ -1676,25 +1670,17 @@ namespace Control
           mavlink_global_position_int_t gp;
           mavlink_msg_global_position_int_decode(msg, &gp);
 
-          double lat = Angles::radians((double)gp.lat * 1e-07);
-          double lon = Angles::radians((double)gp.lon * 1e-07);
-
-          m_lat = (double)gp.lat * 1e-07;
-          m_lon = (double)gp.lon * 1e-07;
+          m_lat = Angles::radians((double)gp.lat * 1e-07);
+          m_lon = Angles::radians((double)gp.lon * 1e-07);
           m_hae_msl = (double) gp.alt * 1e-3;   //MSL
 
           if (m_args.convert_msl)
           {
-            if(m_ground || m_reboot)
+            if (m_ground || m_reboot)
             {
               Coordinates::WMM wmm(m_ctx.dir_cfg);
-              m_hae_offset = wmm.height(lat, lon);
-
-              m_ref_lat = lat;
-              m_ref_lon = lon;
-              m_ref_hae = getHeight();
-
-              m_reboot = 0;
+              m_hae_offset = wmm.height(m_lat, m_lon);
+              m_reboot = false;
             }
           }
           else
@@ -1702,8 +1688,8 @@ namespace Control
             m_hae_offset = 0;
           }
 
-          m_estate.lat = lat;
-          m_estate.lon = lon;
+          m_estate.lat = m_lat;
+          m_estate.lon = m_lon;
           m_estate.height = getHeight();
 
           m_estate.x = 0;
