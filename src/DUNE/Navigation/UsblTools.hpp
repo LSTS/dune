@@ -801,7 +801,6 @@ namespace DUNE
         void
         handleTargetCommOk(std::string name)
         {
-          m_task->inf("Limpio errorrrr");
           // Iterate through list and remove if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
           for (; itr != m_list.end(); ++itr)
@@ -819,7 +818,6 @@ namespace DUNE
         void
         handleTargetCommError(std::string name)
         {
-          m_task->inf("Limpiado por errorrrr");
           // Iterate through list and remove if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
           for (; itr != m_list.end(); ++itr)
