@@ -116,44 +116,48 @@ namespace Transports
     }
 
     //! Given an HistoricData message, extract all samples
-    std::vector<DataSample*>
-    parse(const IMC::HistoricData* data)
+    void
+    parse(const IMC::HistoricData* data, std::vector<DataSample*> samples, std::vector<RemoteCommand*> commands)
     {
-      //! retrieved samples
-      std::vector<DataSample *> samples;
       MessageList<RemoteData>::const_iterator it;
 
       for (it = data->data.begin(); it != data->data.end(); it++)
       {
-        const HistoricSample* sample = static_cast<const HistoricSample*>(*it);
-        DataSample* s = new DataSample();
-        s->latDegs = data->base_lat;
-        s->lonDegs = data->base_lon;
-        WGS84::displace((sample)->x, (sample)->y, &s->latDegs, &s->lonDegs);
-        s->source = (sample)->sys_id;
-        s->timestamp = data->base_time + (sample)->t;
-        s->zMeters = (sample)->z / 10.0;
-        s->sample = (sample)->sample.get()->clone();
-        samples.push_back(s);
+        if ((*it)->getId() == HistoricSample::getIdStatic())
+        {
+          const HistoricSample* sample = static_cast<const HistoricSample*>(*it);
+          DataSample* s = new DataSample();
+          s->latDegs = data->base_lat;
+          s->lonDegs = data->base_lon;
+          WGS84::displace((sample)->x, (sample)->y, &s->latDegs, &s->lonDegs);
+          s->source = (sample)->sys_id;
+          s->timestamp = data->base_time + (sample)->t;
+          s->zMeters = (sample)->z / 10.0;
+          s->sample = (sample)->sample.get()->clone();
+          samples.push_back(s);
+        }
+        else if ((*it)->getId() == RemoteCommand::getIdStatic())
+        {
+          commands.push_back(static_cast<RemoteCommand*>((*it)->clone()));
+        }
       }
-
-      return samples;
     }
 
     //! This class is used to store samples locally until they are forwarded to other node
     class DataStore
     {
     public:
-      DataStore(void)
+      DataStore(Task* task):
+        m_task(task)
       { }
 
       ~DataStore(void)
       {
         Concurrency::ScopedRWLock(m_lock, true);
-        while (!samples.empty())
+        while (!m_samples.empty())
         {
-          delete samples.top();
-          samples.pop();
+          delete m_samples.top();
+          m_samples.pop();
         }
       }
 
@@ -162,33 +166,67 @@ namespace Transports
       addSample(DataSample* sample)
       {
         Concurrency::ScopedRWLock(m_lock, true);
-        samples.push(sample);
+        m_samples.push(sample);
       }
 
       //! Add a series of historic samples packed as an HistoricData message
       void
       addData(const IMC::HistoricData * data)
       {
-        std::vector<DataSample*> tmp = parse(data);
+        std::vector<DataSample*> new_samples;
+        std::vector<RemoteCommand*> commands;
+        parse(data, new_samples, commands);
         std::vector<DataSample*>::iterator it;
-        for (it = tmp.begin(); it != tmp.end(); it++)
+        std::vector<RemoteCommand*>::iterator cmd;
+        for (it = new_samples.begin(); it != new_samples.end(); it++)
           addSample(*it);
+
+        for (cmd = commands.begin(); cmd != commands.end(); cmd++)
+        {
+          uint16_t dst = (*cmd)->destination;
+          double timeout = (*cmd)->timeout;
+
+          // if command has timed-out, drop it
+          if (Clock::getSinceEpoch() > timeout)
+          {
+            m_task->debug("Dropping expired remote command.");
+            continue;
+          }
+
+          // if message's destination is this system, dispatch it locally
+          if (dst == m_task->getSystemId())
+          {
+            Message * msg = (*cmd)->cmd.get();
+            msg->setDestination(dst);
+            msg->setSource((*cmd)->original_source);
+            m_task->debug("Dispatching remote command of type %s sent by %s.",
+                          msg->getName(),
+                          m_task->resolveSystemId((*cmd)->original_source));
+
+            m_task->dispatch(msg, DF_KEEP_SRC_EID);
+          }
+          else
+          {
+            m_task->debug("Adding (multi-hop) remote command.");
+            m_commands.push_back(*cmd);
+          }
+        }
       }
 
       //! Retrieve a series of sample that take up to 'size'
       IMC::HistoricData*
-      pollData(int size)
+      pollSamples(int size)
       {
         std::vector<DataSample*> added, rejected;
         IMC::HistoricData* ret = new IMC::HistoricData();
         size -= BASE_HISTORY_SIZE; // base fields from HistoricData
 
         Concurrency::ScopedRWLock(m_lock, true);
-        while (!samples.empty() && size > MINIMUM_SAMPLE_SIZE)
+        while (!m_samples.empty() && size > MINIMUM_SAMPLE_SIZE)
         {
           // pop next sample
-          DataSample* sample = samples.top();
-          samples.pop();
+          DataSample* sample = m_samples.top();
+          m_samples.pop();
 
           // check if there is space left for this sample
           int sample_size = sample->serializationSize();
@@ -207,7 +245,7 @@ namespace Transports
         std::vector<DataSample *>::iterator it;
         for (it = rejected.begin(); it != rejected.end(); it++)
         {
-          samples.push(*it);
+          m_samples.push(*it);
         }
 
         // no data can be added
@@ -230,8 +268,10 @@ namespace Transports
       }
 
     private:
-      std::priority_queue<DataSample *, std::vector<DataSample *> , CompareSamples> samples;
+      std::priority_queue<DataSample *, std::vector<DataSample *> , CompareSamples> m_samples;
+      std::vector<RemoteCommand* > m_commands;
       Concurrency::RWLock m_lock;
+      Task* m_task;
     };
   }
 }

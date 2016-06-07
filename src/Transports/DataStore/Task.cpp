@@ -62,7 +62,8 @@ namespace Transports
       std::map<std::pair<int, int>, IMC::HistoricData> m_sending;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_store(this)
       {
         param("Messages", m_args.messages)
         .description("List of <Message>:<Frequency>");
@@ -185,7 +186,7 @@ namespace Transports
           }
 
           IMC::HistoricDataQuery reply;
-          IMC::HistoricData* data = m_store.pollData(msg->max_size);
+          IMC::HistoricData* data = m_store.pollSamples(msg->max_size);
           if (data != NULL)
           {
             m_sending[source] = *data;
