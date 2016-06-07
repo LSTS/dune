@@ -121,18 +121,19 @@ namespace Transports
     {
       //! retrieved samples
       std::vector<DataSample *> samples;
-      MessageList<HistoricSample>::const_iterator it;
+      MessageList<RemoteData>::const_iterator it;
 
       for (it = data->data.begin(); it != data->data.end(); it++)
       {
+        const HistoricSample* sample = static_cast<const HistoricSample*>(*it);
         DataSample* s = new DataSample();
         s->latDegs = data->base_lat;
         s->lonDegs = data->base_lon;
-        WGS84::displace((*it)->x, (*it)->y, &s->latDegs, &s->lonDegs);
-        s->source = (*it)->sys_id;
-        s->timestamp = data->base_time + (*it)->t;
-        s->zMeters = (*it)->z / 10.0;
-        s->sample = (*it)->sample.get()->clone();
+        WGS84::displace((sample)->x, (sample)->y, &s->latDegs, &s->lonDegs);
+        s->source = (sample)->sys_id;
+        s->timestamp = data->base_time + (sample)->t;
+        s->zMeters = (sample)->z / 10.0;
+        s->sample = (sample)->sample.get()->clone();
         samples.push_back(s);
       }
 
