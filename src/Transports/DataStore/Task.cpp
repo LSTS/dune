@@ -164,6 +164,10 @@ namespace Transports
       void
       process(const IMC::HistoricData* msg)
       {
+        // avoid loop back
+        if (m_ctx.resolver.isLocal(msg->getSource()) && getEntityId() == msg->getSourceEntity())
+          return;
+
         debug("Adding %d messages from %s (%d) to data store.", (int)msg->data.size(),
               m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
 
@@ -193,14 +197,18 @@ namespace Transports
             reply.data.set(data);
             delete data;
           }
+
+          if (m_ctx.resolver.isLocal(msg->getSource()))
+            debug("Sending historic data to entity %s.", m_ctx.entities.resolve(msg->getSourceEntity()).c_str());
+          else
+            debug("Sending historic data to system %s.", m_ctx.resolver.resolve(msg->getSource()));
+
           reply.max_size = msg->max_size;
           reply.req_id = msg->req_id;
           reply.type = IMC::HistoricDataQuery::HRTYPE_REPLY;
           reply.setDestination(msg->getSource());
           reply.setDestinationEntity(msg->getSourceEntity());
           dispatch(reply);
-
-          debug("Sending historic data to %s.", m_ctx.resolver.resolve(msg->getSource()));
         }
         else if (msg->type == IMC::HistoricDataQuery::HRTYPE_CLEAR)
         {
