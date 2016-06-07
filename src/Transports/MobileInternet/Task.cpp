@@ -408,7 +408,10 @@ namespace Transports
 
           case SM_DEACT_DISCONNECT:
             disconnect();
-            m_sm_state = SM_DEACT_POWER_OFF;
+            if (m_args.power_channel.empty())
+              m_sm_state = SM_DEACT_DONE;
+            else
+              m_sm_state = SM_DEACT_POWER_OFF;
             break;
 
           case SM_DEACT_POWER_OFF:
