@@ -450,6 +450,7 @@ namespace Control
           bind<SimulatedState>(this);
           bind<DevCalibrationControl>(this);
           bind<AutopilotMode>(this);
+          bind<Takeoff>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -1056,6 +1057,25 @@ namespace Control
           m_last_wp = Clock::get();
 
           debug("Waypoint packet sent to Ardupilot");
+        }
+
+        void
+        consume(const IMC::Takeoff* takeoff)
+        {
+          IMC::DesiredPath path;
+
+          path.start_lat = m_lat;
+          path.start_lon = m_lon;
+          path.start_z = getHeight();
+          path.start_z_units = IMC::Z_HEIGHT;
+
+          path.end_lat = takeoff->lat;
+          path.end_lon = takeoff->lon;
+          path.end_z = takeoff->z;
+          path.end_z_units = takeoff->z_units;
+
+          //Trigger automatic takeoff
+          (m_vehicle_type == VEHICLE_COPTER) ? takeoff_copter(&path) : takeoff_plane(&path);
         }
 
         void
