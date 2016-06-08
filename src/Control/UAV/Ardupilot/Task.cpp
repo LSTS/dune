@@ -1074,22 +1074,44 @@ namespace Control
           path.end_z = takeoff->z;
           path.end_z_units = takeoff->z_units;
 
-          //Trigger automatic takeoff
+          // Trigger automatic takeoff
           (m_vehicle_type == VEHICLE_COPTER) ? takeoff_copter(&path) : takeoff_plane(&path);
         }
 
         void
         takeoff_copter(const IMC::DesiredPath* dpath)
         {
-          /* As of AC 3.1, we can now send takeoff as a guided command. */
-          // We need to be in guided for this to work.
+          // Local variables
+          uint8_t buf[512];
+          mavlink_message_t msg;
 
-          // Altitude in WGS84
-          float alt = (dpath->end_z_units & IMC::Z_NONE) ? m_args.alt : (float) dpath->end_z;
+          // As of AC 3.1, we can now send takeoff as a guided command.
+          mavlink_msg_set_mode_pack(255, 0, &msg,
+                                    m_sysid,
+                                    1,
+                                    CP_MODE_GUIDED);
+          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+          debug("Guided MODE on ardupilot is set");
 
-          // Convert altitude to geoid height (MSL).
-          sendCommandPacket(MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, alt - m_hae_offset);
+          // Send takeoff command to ardupilot
+          mavlink_msg_mission_item_pack(255, 0, &msg,
+                                        m_sysid, //! target_system System ID
+                                        0, //! target_component Component ID
+                                        1, //! seq Sequence
+                                        MAV_FRAME_GLOBAL,    //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                        MAV_CMD_NAV_TAKEOFF, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                        2, //! current false:0, true:1, guided mode:2
+                                        0, //! autocontinue to next wp
+                                        0, //! Pitch Angle (not used for COPTER)
+                                        0, //! Not used
+                                        0, //! Not used
+                                        0, //! Not used
+                                        0, //! Not used
+                                        0, //! Not used
+                                        dpath->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
+          // Update PathControlState
           m_pcs.start_lat = m_lat;
           m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
@@ -1097,9 +1119,9 @@ namespace Control
 
           m_pcs.end_lat = dpath->end_lat;
           m_pcs.end_lon = dpath->end_lon;
+          m_pcs.end_z = dpath->end_z;
+          m_pcs.end_z_units = dpath->end_z_units;
 
-          m_pcs.end_z = alt;
-          m_pcs.end_z_units = IMC::Z_HEIGHT;
           m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
           m_pcs.flags &= dpath->flags;
           m_pcs.lradius = dpath->lradius;
@@ -1107,7 +1129,8 @@ namespace Control
 
           dispatch(m_pcs);
 
-          debug("Takeoff command sent to Ardupilot");
+          // Debug output message
+          debug("Takeoff command sent to ArduCopter.");
         }
 
         void
