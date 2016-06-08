@@ -445,6 +445,13 @@ namespace DUNE
         return entity;
       }
 
+      //! Retrieve pointer to a previously stored entity object
+      //! object.
+      //! @param[in] label entity name/label.
+      //! @return pointer to entity object.
+      Entities::BasicEntity*
+      getEntity(const std::string& label);
+
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.
       bool
