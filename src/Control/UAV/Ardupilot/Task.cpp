@@ -1110,6 +1110,8 @@ namespace Control
                                         0, //! Not used
                                         0, //! Not used
                                         dpath->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
+          n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
 
           // Update PathControlState
           m_pcs.start_lat = m_lat;
