@@ -209,7 +209,12 @@ namespace Transports
       {
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
         {
-          IMC::HistoricData * dataToSend =  (IMC::HistoricData*) msg->data.get()->clone();
+          if (msg->data.isNull())
+          {
+            debug("No data to be sent.");
+            return;
+          }
+          IMC::HistoricData * dataToSend = (IMC::HistoricData*) msg->data.get()->clone();
           dispatch(dataToSend);
           m_size = dataToSend->getSerializationSize();
           m_params.resize(m_size);
