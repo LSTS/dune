@@ -58,7 +58,7 @@ namespace Transports
       //! Activation sequence is complete.
       SM_ACT_DONE,
       //! Task is active but a connection was not yet established.
-      SM_ACT_DISCONNECTED,
+      SM_ACT_CONNECTING,
       //! Task is active and connected to the Internet.
       SM_ACT_CONNECTED,
       //! Start deactivation sequence.
@@ -114,6 +114,7 @@ namespace Transports
       StateMachineStates m_sm_state;
       //! Interface IPv4 address.
       Address m_address;
+      Time::Counter<double> m_conn_watchdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -182,6 +183,8 @@ namespace Transports
         m_command_nat_stop = String::str("/bin/sh %s nat_stop > /dev/null 2>&1", script.c_str());
 
         bind<IMC::PowerChannelState>(this);
+
+        m_conn_watchdog.setTop(60);
       }
 
       ~Task(void)
@@ -261,7 +264,7 @@ namespace Transports
         return m_powered;
       }
 
-      void
+      bool
       connect(void)
       {
         debug("connecting");
@@ -279,15 +282,24 @@ namespace Transports
         Environment::set("GSM_MODE", m_args.gsm_mode);
 
         if (std::system(m_command_connect.c_str()) == -1)
+        {
           err(DTR("failed to execute connect command"));
+          return false;
+        }
+        return true;
+
       }
 
-      void
+      bool
       disconnect(void)
       {
         debug("disconnecting");
         if (std::system(m_command_disconnect.c_str()) == -1)
+        {
           err(DTR("failed to execute disconnect command"));
+          return false;
+        }
+        return true;
       }
 
       bool
@@ -338,13 +350,16 @@ namespace Transports
           case SM_ACT_BEGIN:
             debug("starting activation sequence");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-            m_sm_state = SM_ACT_POWER_ON;
-            // Fall through.
+            if (!m_args.power_channel.empty())
+              m_sm_state = SM_ACT_POWER_ON;
+            else
+              m_sm_state = SM_ACT_MODEM_WAIT;
+            /* no break */
 
           case SM_ACT_POWER_ON:
             turnPowerOn();
             m_sm_state = SM_ACT_POWER_WAIT;
-            // Fall through.
+            /* no break */
 
           case SM_ACT_POWER_WAIT:
             if (isPowered())
@@ -357,30 +372,40 @@ namespace Transports
             {
               break;
             }
+            /* no break */
 
           case SM_ACT_MODEM_WAIT:
             if (Path(m_args.uart_dev).isDevice())
             {
-              debug("UART detected");
+              debug("Modem detected: %s", m_args.uart_dev.c_str());
               m_sm_state = SM_ACT_CONNECT;
             }
             else
             {
+              debug("No modem detected in %s, retrying...", m_args.uart_dev.c_str());
               break;
             }
 
           case SM_ACT_CONNECT:
             connect();
+            debug("connection succeeded");
             m_sm_state = SM_ACT_DONE;
-            // Fall through.
+            m_conn_watchdog.reset();
+            /* no break */
 
           case SM_ACT_DONE:
             debug("activation complete");
             activate();
-            m_sm_state = SM_ACT_DISCONNECTED;
-            // Fall through
+            m_sm_state = SM_ACT_CONNECTING;
+            /* no break */
 
-          case SM_ACT_DISCONNECTED:
+          case SM_ACT_CONNECTING:
+            if (m_conn_watchdog.overflow())
+            {
+              err("Connection timed out");
+              requestDeactivation();
+              requestActivation();
+            }
             if (isConnected(&m_address))
             {
               debug("connected: %s", m_address.c_str());
@@ -397,14 +422,15 @@ namespace Transports
               stopNAT();
               debug("disconnected");
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CONNECTING);
-              m_sm_state = SM_ACT_DISCONNECTED;
+              m_conn_watchdog.reset();
+              m_sm_state = SM_ACT_CONNECTING;
             }
             break;
 
           case SM_DEACT_BEGIN:
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
             m_sm_state = SM_DEACT_DISCONNECT;
-            // Fall through.
+            /* no break */
 
           case SM_DEACT_DISCONNECT:
             disconnect();
@@ -417,7 +443,7 @@ namespace Transports
           case SM_DEACT_POWER_OFF:
             turnPowerOff();
             m_sm_state = SM_DEACT_POWER_WAIT;
-            // Fall through.
+            /* no break */
 
           case SM_DEACT_POWER_WAIT:
             if (!isPowered())
@@ -429,6 +455,7 @@ namespace Transports
             {
               break;
             }
+            /* no break */
 
           case SM_DEACT_DONE:
             debug("deactivation complete");
