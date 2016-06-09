@@ -80,10 +80,10 @@ namespace Transports
       }
     };
 
-    //! Sample comparator based on timestamp
-    struct CompareSamples
+    class CompareSamples
     {
-      bool operator()(const DataSample* p1, const DataSample* p2)
+    public:
+      bool operator()(const DataSample* p1, const DataSample* p2) const
       {
         return p1->priority <= p2->priority && p1->timestamp < p2->timestamp;
       }
@@ -117,13 +117,17 @@ namespace Transports
 
     //! Given an HistoricData message, extract all samples
     void
-    parse(const IMC::HistoricData* data, std::vector<DataSample*> samples, std::vector<RemoteCommand*> commands)
+    parse(const IMC::HistoricData* data, std::vector<DataSample*>& samples, std::vector<RemoteCommand*>& commands)
     {
       MessageList<RemoteData>::const_iterator it;
 
       for (it = data->data.begin(); it != data->data.end(); it++)
       {
-        if ((*it)->getId() == HistoricSample::getIdStatic())
+        if ((*it)->getId() == RemoteCommand::getIdStatic())
+        {
+          commands.push_back(static_cast<RemoteCommand*>((*it)->clone()));
+        }
+        else
         {
           const HistoricSample* sample = static_cast<const HistoricSample*>(*it);
           DataSample* s = new DataSample();
@@ -135,10 +139,6 @@ namespace Transports
           s->zMeters = (sample)->z / 10.0;
           s->sample = (sample)->sample.get()->clone();
           samples.push_back(s);
-        }
-        else if ((*it)->getId() == RemoteCommand::getIdStatic())
-        {
-          commands.push_back(static_cast<RemoteCommand*>((*it)->clone()));
         }
       }
     }
@@ -166,6 +166,7 @@ namespace Transports
       addSample(DataSample* sample)
       {
         Concurrency::ScopedRWLock(m_lock, true);
+        m_task->debug("Adding sample %d/%f", sample->sample->getId(), sample->timestamp);
         m_samples.push(sample);
       }
 
@@ -178,9 +179,10 @@ namespace Transports
         parse(data, new_samples, commands);
         std::vector<DataSample*>::iterator it;
         std::vector<RemoteCommand*>::iterator cmd;
+        m_task->debug("Samples before: %d", m_samples.size());
         for (it = new_samples.begin(); it != new_samples.end(); it++)
           addSample(*it);
-
+        m_task->debug("Samples after: %d", m_samples.size());
         for (cmd = commands.begin(); cmd != commands.end(); cmd++)
         {
           uint16_t dst = (*cmd)->destination;

@@ -59,7 +59,7 @@ namespace Transports
       std::map<std::string, int> m_priorities;
 
       //! messages currently on the way to their destination
-      std::map<std::pair<int, int>, IMC::HistoricData> m_sending;
+      std::map<std::pair<int, int>, IMC::HistoricData*> m_sending;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -186,14 +186,16 @@ namespace Transports
           if (m_sending.find(source) != m_sending.end())
           {
             debug("Adding back data previously queried from same peer as it wasn't cleared with HRTYPE_CLEAR.");
-            m_store.addData(&m_sending[source]);
+            m_store.addData(m_sending[source]);
+            delete m_sending[source];
+            m_sending.erase(source);
           }
 
           IMC::HistoricDataQuery reply;
           IMC::HistoricData* data = m_store.pollSamples(msg->max_size);
           if (data != NULL)
           {
-            m_sending[source] = *data;
+            m_sending[source] = static_cast<IMC::HistoricData*>(data->clone());
             reply.data.set(data);
             delete data;
           }
