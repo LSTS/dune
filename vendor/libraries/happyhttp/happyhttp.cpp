@@ -326,7 +326,7 @@ namespace happyhttp
         putheader(name, value);
       }
     }
-    endheaders();
+    sendheaders();
 
     if (body)
       send(body, bodysize);
@@ -377,7 +377,7 @@ namespace happyhttp
   }
 
   bool
-  Connection::endheaders()
+  Connection::sendheaders()
   {
     if (m_State != REQ_STARTED)
     {

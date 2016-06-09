@@ -226,7 +226,7 @@ namespace happyhttp
 
       // Finished adding headers, issue the request.
       bool
-      endheaders();
+      sendheaders();
 
       // send body data if any.
       // To be called after endheaders()
