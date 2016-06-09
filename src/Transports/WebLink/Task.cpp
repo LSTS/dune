@@ -211,10 +211,12 @@ namespace Transports
         {
           if (msg->data.isNull())
           {
-            debug("No data to be sent.");
+            inf(DTR("No data to be sent."));
+            m_state = S_QUERY;
             return;
           }
           IMC::HistoricData * dataToSend = (IMC::HistoricData*) msg->data.get()->clone();
+          debug("Sending historic data with %d samples.", dataToSend->data.size());
           dispatch(dataToSend);
           m_size = dataToSend->getSerializationSize();
           m_params.resize(m_size);
@@ -222,7 +224,7 @@ namespace Transports
 
           if (!sendDataRequest())
           {
-            err(DTR("ERROR CONNECTING TO SERVER - %s"), m_args.server_name.c_str());
+            err(DTR("Error connecting to %s"), m_args.server_name.c_str());
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             m_state = S_QUERY;
           }
@@ -258,7 +260,7 @@ namespace Transports
       {
         m_conn->putrequest("POST", m_args.server_path.c_str());
         m_conn->putheader("Content-Length", m_size);
-        if (!m_conn->endheaders())
+        if (!m_conn->sendheaders())
         {
           return false;
         }
@@ -306,37 +308,38 @@ namespace Transports
       void
       onMain(void)
       {
-        // Wait for other task
-        Delay::waitMsec(5000);
-        while (!stopping())
+        while(!stopping())
         {
+          waitForMessages(1);
           switch ( m_state )
           {
             case S_QUERY:
+              spew("State: QUERY");
               if (timer.overflow())
               {
-                inf(DTR("Sending http request"));
+                inf(DTR("Sending HTTP Request"));
                 requestToImcMsg(GET_DATA, m_id);
                 timer.reset();
                 m_state = S_REPLY;
               }
-              Delay::waitMsec(1000);
-              break;
-
-            case S_REPLY:
-              waitForMessages(1);
               break;
 
             case S_CLEAR:
+              spew("State: CLEAR");
               requestToImcMsg(CLEAR_DATA, m_id);
               m_state = S_WAIT;
               break;
 
+            case S_REPLY:
+              spew("State: REPLY");
+              break;
+
             case S_WAIT:
-              waitForMessages(1);
+              spew("State: WAIT");
               break;
 
             default:
+              spew("State: UNKNOWN?");
               m_state = S_QUERY;
               break;
           }
