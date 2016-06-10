@@ -74,8 +74,11 @@ namespace Transports
       double period;
       //! Max Size of Message
       double max_size_msg;
-      //! Max Size of Message
-      int uploud_timeout;
+      //! Upload timeout, in seconds
+      int upload_timeout;
+      //! Deactivate underwater and activate when vehicle is at surface
+      bool control_mobileinet;
+      
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -96,7 +99,9 @@ namespace Transports
       // Setup watchdog for timeout.
       Counter<double> m_wdog;
       //! Timer counter for waiting
-      Time::Counter<float> timer;
+      Time::Counter<float> m_timer, m_uwtimer;
+      //! Flag that indicates if vehicle is underwater
+      bool m_underwater;
 
       //! Task arguments.
       Arguments m_args;
@@ -110,7 +115,8 @@ namespace Transports
       m_conn(0),
       m_params(0),
       m_id(0),
-      m_state(S_QUERY)
+      m_state(S_QUERY),
+      m_underwater(false)
       {
         param("Target", m_args.store)
         .description("Target of data store")
@@ -139,13 +145,19 @@ namespace Transports
         .maximumValue("32768")
         .defaultValue("10240");
 
-        param("Upload Timeout", m_args.uploud_timeout)
+        param("Upload Timeout", m_args.upload_timeout)
         .description("Upload Timeout (s)")
         .minimumValue("1")
         .maximumValue("60")
         .defaultValue("10");
 
+        param("Deactivate Connection Underwater", m_args.control_mobileinet)
+        .description("Deactivate Mobile Inet when vehicle is underwater and activate when at surface.")
+        .defaultValue("false");
+
         bind<IMC::HistoricDataQuery>(this);
+        bind<IMC::VehicleMedium>(this);
+        m_uwtimer.setTop(10);
       }
 
       //! Update internal state with new parameter values.
@@ -169,14 +181,14 @@ namespace Transports
             m_args.max_size_msg = 32768;
         }
 
-        if (paramChanged(m_args.uploud_timeout))
+        if (paramChanged(m_args.upload_timeout))
         {
-          if (m_args.uploud_timeout < 1)
-            m_args.uploud_timeout = 1;
-          else if (m_args.uploud_timeout > 60)
-            m_args.uploud_timeout = 60;
+          if (m_args.upload_timeout < 1)
+            m_args.upload_timeout = 1;
+          else if (m_args.upload_timeout > 60)
+            m_args.upload_timeout = 60;
 
-          m_wdog.setTop(m_args.uploud_timeout);
+          m_wdog.setTop(m_args.upload_timeout);
         }
       }
 
@@ -184,8 +196,8 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        m_wdog.setTop(m_args.uploud_timeout);
-        timer.setTop(m_args.period);
+        m_wdog.setTop(m_args.upload_timeout);
+        m_timer.setTop(m_args.period);
         war("VALUE: %f", m_args.period);
         m_state = S_QUERY;
         m_id = 0;
@@ -193,6 +205,22 @@ namespace Transports
         m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
         m_params.resize(m_size);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      setMobileInetState(bool active)
+      {
+        IMC::SetEntityParameters ep;
+        ep.name = "Mobile Internet";
+        IMC::EntityParameter ea;
+        ea.name = "Active";
+        ea.value = active ? "true" : "false";
+        ep.params.push_back(ea);
+        if (active)
+          inf(DTR("Activating Internet connection"));
+        else
+          inf(DTR("Terminating Internet connection"));
+        dispatch(ep);
       }
 
       //! Release resources.
@@ -203,6 +231,22 @@ namespace Transports
         Memory::clear(m_conn);
       }
 
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (!isActive())
+          return;
+
+        if (m_uwtimer.overflow())
+        {
+          bool was_uw = m_underwater;
+          m_underwater = msg->medium == IMC::VehicleMedium::VM_UNDERWATER;
+          // if underwater state changed, disable if underwater
+          if (m_underwater != was_uw)
+            setMobileInetState(!m_underwater);
+          m_uwtimer.reset();
+        }
+      }
       //! Consume Message HistoricDataQuery
       void
       consume(const IMC::HistoricDataQuery* msg)
@@ -249,7 +293,7 @@ namespace Transports
         {
           m_id++;
           m_state = S_QUERY;
-          timer.reset();
+          m_timer.reset();
           inf(DTR("Sending http request Done"));
         }
       }
@@ -315,11 +359,11 @@ namespace Transports
           {
             case S_QUERY:
               spew("State: QUERY");
-              if (timer.overflow())
+              if (m_timer.overflow())
               {
                 inf(DTR("Sending HTTP Request"));
                 requestToImcMsg(GET_DATA, m_id);
-                timer.reset();
+                m_timer.reset();
                 m_state = S_REPLY;
               }
               break;
