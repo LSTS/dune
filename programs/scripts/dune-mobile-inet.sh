@@ -55,7 +55,7 @@ if [ -z "$FWL_INT_ITF" ]; then
 fi
 
 if [ -z "$GSM_USBMODESWITCH" ]; then
-    $GSM_USBMODESWITCH='ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
+    GSM_USBMODESWITCH='ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
 fi
 
 

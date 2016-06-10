@@ -293,7 +293,7 @@ namespace Transports
         if (m_args.usb_mode_switch)
           Environment::set("GSM_USBMODESWITCH", "ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0");
         else
-          Environment::set("GSM_USBMODESWITCH", "ATQ0");
+          Environment::set("GSM_USBMODESWITCH", "AT");
 
         if (std::system(m_command_connect.c_str()) == -1)
         {
