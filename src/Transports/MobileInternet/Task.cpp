@@ -94,6 +94,9 @@ namespace Transports
       std::string power_channel;
       //! Enable IP forward.
       bool ip_fwd;
+      //! Enable USB Mode switch (USB pen).
+      bool usb_mode_switch;
+
     };
 
     struct Task: public Tasks::Task
@@ -165,6 +168,13 @@ namespace Transports
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("AT\\^SYSCFG=2,2,3fffffff,0,1")
         .description("GSM/GPRS mode.");
+
+        param("USB Mode Switch", m_args.usb_mode_switch)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("true")
+        .description("USB mode switch required");
+
 
         param("PPP - Interface", m_args.ppp_interface)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -280,6 +290,10 @@ namespace Transports
         Environment::set("GSM_APN", m_args.gsm_apn);
         Environment::set("GSM_PIN", pin);
         Environment::set("GSM_MODE", m_args.gsm_mode);
+        if (m_args.usb_mode_switch)
+          Environment::set("GSM_USBMODESWITCH", "ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0");
+        else
+          Environment::set("GSM_USBMODESWITCH", "ATQ0");
 
         if (std::system(m_command_connect.c_str()) == -1)
         {
