@@ -165,7 +165,9 @@ namespace Transports
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.server_name) || paramChanged(m_args.server_port))
+        {
           m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
+        }
 
         if (paramChanged(m_args.period))
         {
@@ -323,6 +325,21 @@ namespace Transports
               setEntityState(IMC::EntityState::ESTA_BOOT, Utils::String::str(DTR("Watch Dog Overflow")));
             }
           }
+
+          debug("Response body has %d bytes.", m_conn->bodySize());
+          if (m_conn->bodySize())
+          {
+            try {
+              Message * msg = Packet::deserialize((const uint8_t *) m_conn->body(), m_conn->bodySize());
+              debug("Dispatching received %s...", msg->getName());
+              dispatch(msg);
+              Memory::clear(msg);
+            }
+            catch (std::exception& e) {
+              err("Error deserializing response: %s", e.what());
+            }
+          }
+
           m_conn->close();
           return true;
         }
@@ -358,7 +375,6 @@ namespace Transports
           switch ( m_state )
           {
             case S_QUERY:
-              spew("State: QUERY");
               if (m_timer.overflow())
               {
                 inf(DTR("Sending HTTP Request"));
@@ -369,21 +385,17 @@ namespace Transports
               break;
 
             case S_CLEAR:
-              spew("State: CLEAR");
               requestToImcMsg(CLEAR_DATA, m_id);
               m_state = S_WAIT;
               break;
 
             case S_REPLY:
-              spew("State: REPLY");
               break;
 
             case S_WAIT:
-              spew("State: WAIT");
               break;
 
             default:
-              spew("State: UNKNOWN?");
               m_state = S_QUERY;
               break;
           }
