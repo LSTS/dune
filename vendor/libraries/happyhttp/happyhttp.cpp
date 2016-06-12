@@ -192,7 +192,7 @@ namespace happyhttp
   //---------------------------------------------------------------------
   Connection::Connection(const char* host, int port) :
       m_ResponseBeginCB(0), m_ResponseDataCB(0), m_ResponseCompleteCB(0), m_UserData(
-          0), m_State(IDLE), m_Host(host), m_Port(port), m_Sock(-1)
+          0), m_State(IDLE), m_Host(host), m_Port(port), m_Sock(-1), m_body(0), m_body_size(0)
   {
   }
 
@@ -279,6 +279,11 @@ namespace happyhttp
       delete m_Outstanding.front();
       m_Outstanding.pop_front();
     }
+
+    if (m_body)
+      delete m_body;
+    m_body = 0;
+    m_body_size = 0;
   }
 
   Connection::~Connection()
@@ -288,7 +293,7 @@ namespace happyhttp
 
   void
   Connection::request(const char* method, const char* url,
-                      const char* headers[], const unsigned char* body,
+                      const char* headers[], const unsigned char* req_body,
                       int bodysize)
   {
 
@@ -313,7 +318,7 @@ namespace happyhttp
 
     putrequest(method, url);
 
-    if (body && !gotcontentlength)
+    if (req_body && !gotcontentlength)
       putheader("Content-Length", bodysize);
 
     if (headers)
@@ -328,8 +333,8 @@ namespace happyhttp
     }
     sendheaders();
 
-    if (body)
-      send(body, bodysize);
+    if (req_body)
+      send(req_body, bodysize);
 
   }
 
@@ -485,6 +490,18 @@ namespace happyhttp
       // anything outstanding anyway)
       assert(used == a); // all bytes should be used up by here.
     }
+  }
+
+  void
+  Connection::receivedBodyData(int nbytes, const unsigned char * data)
+  {
+    if (!m_body_size)
+      m_body = (char *) malloc(nbytes);
+    else
+      m_body = (char *) realloc(m_body, m_body_size + nbytes);
+
+    memcpy(m_body + m_body_size, data, nbytes);
+    m_body_size += nbytes;
   }
 
   //---------------------------------------------------------------------
@@ -659,6 +676,8 @@ namespace happyhttp
     // invoke callback to pass out the data
     if (m_Connection.m_ResponseDataCB)
       (m_Connection.m_ResponseDataCB)(data, n, this);
+    else
+      m_Connection.receivedBodyData(n, data);
 
     m_BytesRead += n;
 
@@ -689,6 +708,8 @@ namespace happyhttp
     // invoke callback to pass out the data
     if (m_Connection.m_ResponseDataCB)
       (m_Connection.m_ResponseDataCB)(data, n, this);
+    else
+      m_Connection.receivedBodyData(n, data);
 
     m_BytesRead += n;
 

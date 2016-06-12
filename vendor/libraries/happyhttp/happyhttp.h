@@ -233,6 +233,16 @@ namespace happyhttp
       bool
       send(const unsigned char* buf, int numbytes);
 
+      int bodySize()
+      {
+        return m_body_size;
+      }
+
+      void * body()
+      {
+        return m_body;
+      }
+
     protected:
       // some bits of implementation exposed to Response class
 
@@ -241,6 +251,7 @@ namespace happyhttp
       ResponseData_CB m_ResponseDataCB;
       ResponseComplete_CB m_ResponseCompleteCB;
       void* m_UserData;
+      void receivedBodyData(int nbytes, const unsigned char * data);
 
     private:
       enum
@@ -253,6 +264,10 @@ namespace happyhttp
       std::vector<std::string> m_Buffer; // lines of request
 
       std::deque<Response*> m_Outstanding; // responses for outstanding requests
+
+      // received data (body)
+      char * m_body;
+      int m_body_size;
   };
 
   //-------------------------------------------------
