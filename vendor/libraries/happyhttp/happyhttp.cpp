@@ -355,6 +355,9 @@ namespace happyhttp
 
       putheader("Host", m_Host.c_str()); // required for HTTP1.1
 
+      // Set user agent
+      putheader("User-Agent", "HappyHTTP");
+
       // don't want any fancy encodings please
       putheader("Accept-Encoding", "identity");
 
