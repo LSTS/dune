@@ -104,13 +104,33 @@ namespace Sensors
       {
         try
         {
-          m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_handle->flush();
+          if (!openSocket()) // Check if instead of serial is a tcp port
+          {
+            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+            m_handle->flush();
+          }
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+      }
+
+      //! Check if we have a TCP socket as device input argument.
+      //! @return true if it is a TCP socket, false otherwise.
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
       }
 
       void
