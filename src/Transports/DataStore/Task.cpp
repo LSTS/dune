@@ -90,11 +90,15 @@ namespace Transports
 
         param("WiFi Gateway", m_args.wifi_gateway)
         .description("If set, messages will be forwarded to gateway using wifi")
-        .defaultValue("lauv-seacon-2");
+        .defaultValue("");
+
+        param("Acoustic Gateway", m_args.acoustic_gateway)
+        .description("If set, messages will be forwarded to gateway using acoustic modem")
+        .defaultValue("");
 
         param("WiFi Forward Period", m_args.wifi_forward_period)
         .description("WiFi forwarding period, in seconds")
-        .defaultValue("5");
+        .defaultValue("60");
 
         param("Acoustic Forward Period", m_args.wifi_forward_period)
         .description("Acoustic forwarding period, in seconds")
