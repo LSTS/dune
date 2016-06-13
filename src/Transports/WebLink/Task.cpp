@@ -262,7 +262,7 @@ namespace Transports
             return;
           }
           IMC::HistoricData * dataToSend = (IMC::HistoricData*) msg->data.get()->clone();
-          debug("Sending historic data with %d samples.", dataToSend->data.size());
+          debug("Sending historic data with %lu samples.", dataToSend->data.size());
           dispatch(dataToSend);
           m_size = dataToSend->getSerializationSize();
           m_params.resize(m_size);
