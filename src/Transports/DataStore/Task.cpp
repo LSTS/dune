@@ -31,6 +31,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include "DataStore.hpp"
+#include "Router.hpp"
 
 namespace Transports
 {
@@ -42,6 +43,18 @@ namespace Transports
     {
       //! List of messages to store.
       std::vector<std::string> messages;
+
+      //! If set, messages will be forwarded to gateway using wifi
+      std::string wifi_gateway;
+
+      //! If set, messages will be forwarded to gateway using acoustic modem
+      std::string acoustic_gateway;
+
+      //! Period, in seconds, between wifi forwarding
+      int wifi_forward_period;
+
+      //! Period, in seconds, between acoustic forwarding
+      int acoustic_forward_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -61,12 +74,34 @@ namespace Transports
       //! messages currently on the way to their destination
       std::map<std::pair<int, int>, IMC::HistoricData*> m_sending;
 
+      Time::Counter<double> m_acoustic_forward_timer;
+
+      Time::Counter<double> m_wifi_forward_timer;
+
+      Router m_router;
+
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_store(this)
+        m_store(this),
+        m_router(this)
       {
         param("Messages", m_args.messages)
         .description("List of <Message>:<Frequency>");
+
+        param("WiFi Gateway", m_args.wifi_gateway)
+        .description("If set, messages will be forwarded to gateway using wifi")
+        .defaultValue("lauv-seacon-2");
+
+        param("WiFi Forward Period", m_args.wifi_forward_period)
+        .description("WiFi forwarding period, in seconds")
+        .defaultValue("5");
+
+        param("Acoustic Forward Period", m_args.wifi_forward_period)
+        .description("Acoustic forwarding period, in seconds")
+        .defaultValue("300");
+
+        m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
+        m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
       }
 
       void
@@ -99,12 +134,17 @@ namespace Transports
         consumed.push_back("HistoricData");
         consumed.push_back("EstimatedState");
         consumed.push_back("HistoricDataQuery");
+        consumed.push_back("Announce");
+        consumed.push_back("UamRxFrame");
 
         std::stringstream ss;
         for (std::vector<std::string>::const_iterator it = consumed.begin(); it != consumed.end(); it++)
           ss << *it << " ";
 
         bind(this, consumed);
+
+        m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
+        m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
       }
 
       void
@@ -117,11 +157,18 @@ namespace Transports
       consume(const IMC::Message* msg)
       {
         if (msg->getId() == EstimatedState::getIdStatic())
+        {
+          m_router.process(static_cast<const IMC::EstimatedState*>(msg));
           process(static_cast<const IMC::EstimatedState*>(msg));
+        }
         else if (msg->getId() == HistoricData::getIdStatic())
           process(static_cast<const IMC::HistoricData*>(msg));
         else if (msg->getId() == HistoricDataQuery::getIdStatic())
           process(static_cast<const IMC::HistoricDataQuery*>(msg));
+        else if (msg->getId() == UamRxFrame::getIdStatic())
+          m_router.process(static_cast<const IMC::UamRxFrame*>(msg));
+        else if (msg->getId() == Announce::getIdStatic())
+          m_router.process(static_cast<const IMC::Announce*>(msg));
 
         // only store messages with some defined priority (transported)
         if (m_priorities.find(msg->getName()) == m_priorities.end())
@@ -233,11 +280,60 @@ namespace Transports
       }
 
       void
+      acousticRouting()
+      {
+        debug("Starting acoustic routing");
+        IMC::HistoricData* data = m_store.pollSamples(1000);
+        if (!m_router.routeOverAcoustic(m_args.acoustic_gateway, data))
+        {
+          war("not possible to forward data acoustically at this time.");
+          m_store.addData(data);
+        }
+        else
+          inf("Routed data with %lu samples to %s (ACOUSTIC)", data->data.size(), m_args.wifi_gateway.c_str());
+
+        Memory::clear(data);
+      }
+
+      void
+      wifiRouting()
+      {
+        IMC::HistoricData* data = m_store.pollSamples(32 * 1024);
+        if (data == NULL)
+        {
+          debug("no to be routed.");
+          return;
+        }
+        if (!m_router.routeOverWifi(m_args.wifi_gateway, data))
+        {
+          war("not possible to forward data over WiFi at this time.");
+          m_store.addData(data);
+        }
+        else
+          inf("Routed data with %lu samples to %s (WIFI)", data->data.size(), m_args.wifi_gateway.c_str());
+
+        Memory::clear(data);
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (!m_args.acoustic_gateway.empty() && m_acoustic_forward_timer.overflow())
+          {
+            acousticRouting();
+            m_acoustic_forward_timer.reset();
+          }
+
+          if (!m_args.wifi_gateway.empty() && m_wifi_forward_timer.overflow())
+          {
+            wifiRouting();
+            m_wifi_forward_timer.reset();
+          }
+
         }
       }
     };

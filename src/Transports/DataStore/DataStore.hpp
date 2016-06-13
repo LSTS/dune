@@ -179,10 +179,10 @@ namespace Transports
         parse(data, new_samples, commands);
         std::vector<DataSample*>::iterator it;
         std::vector<RemoteCommand*>::iterator cmd;
-        m_task->debug("Samples before: %d", m_samples.size());
+        m_task->debug("Samples before: %lu", m_samples.size());
         for (it = new_samples.begin(); it != new_samples.end(); it++)
           addSample(*it);
-        m_task->debug("Samples after: %d", m_samples.size());
+        m_task->debug("Samples after: %lu", m_samples.size());
         for (cmd = commands.begin(); cmd != commands.end(); cmd++)
         {
           uint16_t dst = (*cmd)->destination;
