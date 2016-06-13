@@ -80,6 +80,8 @@ namespace Transports
       bool dynamic_nodes;
       // Only transmit messages from local system
       bool only_local;
+      // Transmit addressed messages
+      bool addressed;
     };
 
     // Internal buffer size.
@@ -175,6 +177,11 @@ namespace Transports
         param("Local Messages Only", m_args.only_local)
         .defaultValue("false")
         .description("Only transmit messsages from local system.");
+
+        param("Send Addressed Messages", m_args.addressed)
+        .defaultValue("true")
+        .description("Send messages that have been addressed to a unique system even if it is not a peer.");
+
 
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
@@ -312,6 +319,15 @@ namespace Transports
         if (m_args.only_local && msg->getSource() != this->getSystemId())
           return;
 
+        uint16_t rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
+
+        // has this message has been addressed specifically to somebody?
+        if (msg->getDestination() != 0xFFFF && m_args.addressed)
+        {
+          m_node_table.sendTo(msg->getDestination(), m_sock, m_bfr, rv, msg->getId());
+          return;
+        }
+
         if (m_node_table.getActiveCount() == 0 && m_static_dsts.size() == 0)
           return;
 
@@ -320,8 +336,6 @@ namespace Transports
 
         if (m_args.trace_out)
           msg->toText(std::cerr);
-
-        uint16_t rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
 
         // Send to static nodes.
         std::set<NodeAddress>::iterator itr = m_static_dsts.begin();
