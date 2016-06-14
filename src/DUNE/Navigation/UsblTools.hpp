@@ -482,7 +482,7 @@ namespace DUNE
           m_fix = fix;
           m_period = period;
           m_target_timer.setTop(m_period);
-          m_comm_errors = 0;
+          resetErrors();
         }
 
         //! Get target's name.
@@ -503,11 +503,13 @@ namespace DUNE
         }
         
         //! Check if the target node has failed.
+        //! @return true if target has reached threshold, false otherwise.
         bool
         hasFailed(void)
         {
           if (++m_comm_errors >= c_max_comm_timeout)
             return true;
+
           return false;
         }
 
@@ -567,7 +569,7 @@ namespace DUNE
           {
             if (m_modem_wdog.overflow())
             {
-              handleTargetCommError(m_system);
+              targetFailed(m_system);
               m_system.clear();
             }
             return false;
@@ -679,7 +681,7 @@ namespace DUNE
 
           data[c_code - 1] = CODE_FIX;
           std::memcpy(&data[c_code], &fix, sizeof(UsblTools::Fix));
-          handleTargetCommOk(m_system);
+          targetReplied(m_system);
           m_system.clear();
 
           return true;
@@ -711,7 +713,7 @@ namespace DUNE
 
           data[c_code - 1] = CODE_POS;
           std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Pos));
-          handleTargetCommOk(m_system);
+          targetReplied(m_system);
           m_system.clear();
 
           return true;
@@ -794,12 +796,11 @@ namespace DUNE
         {
           m_list.clear();
         }
-        
 
-        //! Handle a successful communication with a target.
-        //! @param[in] target target's name.
+        //! Target is alive and replying.
+        //! @param[in] name target's name.
         void
-        handleTargetCommOk(std::string name)
+        targetReplied(std::string name)
         {
           // Iterate through list and remove if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
@@ -809,14 +810,15 @@ namespace DUNE
             if (itr->compare(name))
             {
               itr->resetErrors();
+              return;
             }
           }
         }
 
-        //! Handle a communication error with a target.
-        //! @param[in] target target's name.
+        //! Target failed to reply.
+        //! @param[in] name target's name.
         void
-        handleTargetCommError(std::string name)
+        targetFailed(std::string name)
         {
           // Iterate through list and remove if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
@@ -825,8 +827,8 @@ namespace DUNE
             // Same target
             if (itr->compare(name))
             {
-              // The target has failed
-              if(itr->hasFailed())
+              // The target has failed.
+              if (itr->hasFailed())
               {
                 m_list.erase(itr, itr + 1);
                 return;
