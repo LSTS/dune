@@ -304,7 +304,7 @@ namespace Transports
           }
           else
           {
-            war("No previously queried data to clear.");
+            debug("No previously queried data to clear.");
           }
         }
       }
@@ -317,11 +317,11 @@ namespace Transports
         IMC::HistoricData* data = m_store.pollSamples(1000);
         if (!m_router.routeOverAcoustic(m_args.acoustic_gateway, data))
         {
-          war("not possible to forward data acoustically at this time.");
+          debug("not possible to forward data acoustically at this time.");
           m_store.addData(data);
         }
         else
-          inf("Routed data with %lu samples to %s (ACOUSTIC)", data->data.size(), m_args.wifi_gateway.c_str());
+          inf("Routed %lu samples to %s using Acoustic Modem", data->data.size(), m_args.wifi_gateway.c_str());
 
         Memory::clear(data);
       }
@@ -334,17 +334,14 @@ namespace Transports
 
         IMC::HistoricData* data = m_store.pollSamples(32 * 1024);
         if (data == NULL)
-        {
-          debug("no to be routed.");
           return;
-        }
         if (!m_router.routeOverWifi(m_args.wifi_gateway, data))
         {
-          war("not possible to forward data over WiFi at this time.");
+          debug("not possible to forward data over WiFi at this time.");
           m_store.addData(data);
         }
         else
-          debug("Routed data with %lu samples to %s (WIFI)", data->data.size(), m_args.wifi_gateway.c_str());
+          inf("Routed %lu samples to %s using UDP", data->data.size(), m_args.wifi_gateway.c_str());
 
         Memory::clear(data);
       }
