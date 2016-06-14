@@ -123,10 +123,12 @@ namespace Transports
                 continue;
               }
             }
-
-            m_contacts_lock.lockWrite();
-            m_contacts.update(msg->getSource(), addr);
-            m_contacts_lock.unlock();
+            if (msg->getId() == DUNE_IMC_HEARTBEAT)
+            {
+              m_contacts_lock.lockWrite();
+              m_contacts.update(msg->getSource(), addr);
+              m_contacts_lock.unlock();
+            }
 
             m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 

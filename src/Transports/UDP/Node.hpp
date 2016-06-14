@@ -156,11 +156,22 @@ namespace Transports
       void
       forceSend(UDPSocket& sock, const uint8_t* data, unsigned data_len)
       {
+        if (m_active != m_addrs.end())
+        {
+          try
+          {
+            sock.write(data, data_len, m_active->first, m_active->second);
+          }
+          catch (...)
+          { }
+          return;
+        }
+
         std::map<Address, unsigned>::iterator it;
         for (it = m_addrs.begin(); it != m_addrs.end(); it++) {
           try
           {
-            sock.write(data, data_len, m_active->first, m_active->second);
+            sock.write(data, data_len, it->first, it->second);
           }
           catch (...)
           { }
