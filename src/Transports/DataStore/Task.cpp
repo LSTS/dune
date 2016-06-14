@@ -55,6 +55,10 @@ namespace Transports
 
       //! Period, in seconds, between acoustic forwarding
       int acoustic_forward_period;
+
+      //! Variable priorities will result in older
+      //! data being sent through low bandwidth connections
+      bool variable_priorities;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -77,6 +81,8 @@ namespace Transports
       Time::Counter<double> m_acoustic_forward_timer;
 
       Time::Counter<double> m_wifi_forward_timer;
+
+      int sample_count;
 
       Router m_router;
 
@@ -103,6 +109,11 @@ namespace Transports
         param("Acoustic Forward Period", m_args.wifi_forward_period)
         .description("Acoustic forwarding period, in seconds")
         .defaultValue("300");
+
+        param("Variable priorities", m_args.variable_priorities)
+        .description("Apply variable priorities to local samples")
+        .defaultValue("true");
+
 
         m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
         m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
@@ -186,6 +197,17 @@ namespace Transports
         {
           DataSample* sample = new DataSample();
 
+          int num = sample_count++;
+          int add_priority = 0;
+          if (m_args.variable_priorities)
+          {
+            while (num % 2)
+            {
+              add_priority++;
+              num /= 2;
+            }
+          }
+
           // use last EstimatedState for this sample's position
           double lat = m_state.lat, lon = m_state.lon;
           WGS84::displace(m_state.x, m_state.y, &lat, &lon);
@@ -196,7 +218,7 @@ namespace Transports
           sample->timestamp = msg->getTimeStamp();
           sample->sample = msg->clone();
           // retrieve priority set in the configuration
-          sample->priority = m_priorities[msg->getName()];
+          sample->priority = m_priorities[msg->getName()] + add_priority;
           debug("Added message of type %s with size %d and priority %d to data store.",
               msg->getName(), sample->serializationSize(), sample->priority);
           m_store.addSample(sample);
