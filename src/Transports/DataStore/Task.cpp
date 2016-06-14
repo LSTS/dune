@@ -93,8 +93,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_store(this),
-        m_router(this),
-        sample_count(0)
+        sample_count(0),
+        m_router(this)
       {
         param("Messages", m_args.messages)
         .description("List of <Message>:<Frequency>");
@@ -109,7 +109,7 @@ namespace Transports
 
         param("WiFi Forward Period", m_args.wifi_forward_period)
         .description("WiFi forwarding period, in seconds")
-        .defaultValue("60");
+        .defaultValue("30");
 
         param("Acoustic Forward Period", m_args.wifi_forward_period)
         .description("Acoustic forwarding period, in seconds")
@@ -344,7 +344,7 @@ namespace Transports
           m_store.addData(data);
         }
         else
-          inf("Routed data with %lu samples to %s (WIFI)", data->data.size(), m_args.wifi_gateway.c_str());
+          debug("Routed data with %lu samples to %s (WIFI)", data->data.size(), m_args.wifi_gateway.c_str());
 
         Memory::clear(data);
       }
@@ -356,7 +356,7 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_acoustic_forward_timer.overflow())
+          if (m_args.acoustic_forward_period > 0 && m_acoustic_forward_timer.overflow())
           {
             m_acoustic_forward_timer.reset();
             m_router.forwardCommandsAcoustic(&m_store);
@@ -365,7 +365,7 @@ namespace Transports
               acousticRouting();
           }
 
-          if (m_wifi_forward_timer.overflow())
+          if (m_args.wifi_forward_period > 0 && m_wifi_forward_timer.overflow())
           {
             m_wifi_forward_timer.reset();
             m_router.forwardCommandsWifi(&m_store);

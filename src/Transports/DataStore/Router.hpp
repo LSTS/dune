@@ -38,6 +38,7 @@ namespace Transports
 {
   namespace DataStore
   {
+
     using DUNE_NAMESPACES;
 
     class Router
@@ -79,7 +80,7 @@ namespace Transports
         Concurrency::ScopedRWLock l(m_lock, false);
 
         it = m_wifiVisibility.find(system);
-        return (it !=  m_wifiVisibility.end() && curTime - it->second.getTimeStamp() < 30);
+        return (it !=  m_wifiVisibility.end() && curTime - it->second.getTimeStamp() < 15);
       }
 
       bool
@@ -96,11 +97,7 @@ namespace Transports
       bool
       routeOverAcoustic(std::string destination, HistoricData* data)
       {
-        std::map<std::string, double>::iterator it;
-        Concurrency::ScopedRWLock l(m_lock, false);
-        it = m_acousticVisibility.find(destination);
-
-        if (it == m_acousticVisibility.end())
+        if (!visibleOverAcoustic(destination))
           return false;
 
         AcousticOperation acOp;
@@ -114,14 +111,10 @@ namespace Transports
       bool
       routeOverWifi(std::string destination, HistoricData* data)
       {
-        std::map<std::string, IMC::Announce>::iterator it;
-        Concurrency::ScopedRWLock l(m_lock, false);
-        it = m_wifiVisibility.find(destination);
-
-        if (it == m_wifiVisibility.end())
+        if (!visibleOverWiFi(destination))
           return false;
 
-        data->setDestination(it->second.getSource());
+        data->setDestination(m_parent->resolveSystemName(destination));
         m_parent->dispatch(data);
 
         return true;
@@ -136,7 +129,7 @@ namespace Transports
 
         for (it = m_wifiVisibility.begin(); it != m_wifiVisibility.end(); it++)
         {
-          if (curTime - it->second.getTimeStamp() < 30)
+          if (curTime - it->second.getTimeStamp() < 15)
           {
             IMC::HistoricData* cmds = store->pollCommands(it->second.getSource(), 32*1024);
             if (cmds != NULL)
