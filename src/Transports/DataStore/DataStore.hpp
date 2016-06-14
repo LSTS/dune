@@ -149,7 +149,7 @@ namespace Transports
     public:
       DataStore(Task* task):
         m_task(task)
-      { }
+    { }
 
       ~DataStore(void)
       {
@@ -179,10 +179,8 @@ namespace Transports
         parse(data, new_samples, commands);
         std::vector<DataSample*>::iterator it;
         std::vector<RemoteCommand*>::iterator cmd;
-        m_task->debug("Samples before: %lu", m_samples.size());
         for (it = new_samples.begin(); it != new_samples.end(); it++)
           addSample(*it);
-        m_task->debug("Samples after: %lu", m_samples.size());
         for (cmd = commands.begin(); cmd != commands.end(); cmd++)
         {
           uint16_t dst = (*cmd)->destination;
@@ -215,13 +213,49 @@ namespace Transports
         }
       }
 
+      //! Retrieve a series of commands that take up to 'size'
+      IMC::HistoricData*
+      pollCommands(int destination, int size)
+      {
+        size -= BASE_HISTORY_SIZE; // base fields from HistoricData
+        IMC::HistoricData* ret = new IMC::HistoricData();
+
+        // add commands for that destination
+        std::vector<RemoteCommand*> commands;
+        std::vector<RemoteCommand*>::iterator cmd_it;
+
+        for (cmd_it = m_commands.begin(); cmd_it != m_commands.end(); cmd_it++)
+        {
+          if ((*cmd_it)->destination != destination)
+            continue;
+
+          int ser_size = (*cmd_it)->getSerializationSize();
+          if (ser_size < size)
+          {
+            size -= ser_size;
+            commands.push_back(*cmd_it);
+            cmd_it = m_commands.erase(cmd_it);
+          }
+        }
+
+        // add commands that fit on the message
+        for (cmd_it = commands.begin(); cmd_it != commands.end(); cmd_it++)
+          ret->data.push_back(*cmd_it);
+
+        if (commands.empty())
+          return NULL;
+        else
+          return ret;
+      }
+
       //! Retrieve a series of sample that take up to 'size'
       IMC::HistoricData*
       pollSamples(int size)
       {
-        std::vector<DataSample*> added, rejected;
-        IMC::HistoricData* ret = new IMC::HistoricData();
         size -= BASE_HISTORY_SIZE; // base fields from HistoricData
+        IMC::HistoricData* ret = new IMC::HistoricData();
+
+        std::vector<DataSample*> added, rejected;
 
         Concurrency::ScopedRWLock(m_lock, true);
         while (!m_samples.empty() && size > MINIMUM_SAMPLE_SIZE)
@@ -261,8 +295,8 @@ namespace Transports
         for (it = added.begin(); it != added.end(); it++)
         {
           DataSample * sample = *it;
-          ret->data.push_back(parse(sample, ret->base_lat,
-                                    ret->base_lon, ret->base_time));
+          ret->data.push_back(
+              parse(sample, ret->base_lat, ret->base_lon, ret->base_time));
           delete sample;
         }
 

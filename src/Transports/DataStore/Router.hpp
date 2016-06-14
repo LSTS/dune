@@ -127,6 +127,56 @@ namespace Transports
         return true;
       }
 
+      void
+      forwardCommandsWifi(DataStore* store)
+      {
+        std::map<std::string, IMC::Announce>::iterator it;
+        Concurrency::ScopedRWLock l(m_lock, false);
+        double curTime = Clock::getSinceEpoch();
+
+        for (it = m_wifiVisibility.begin(); it != m_wifiVisibility.end(); it++)
+        {
+          if (curTime - it->second.getTimeStamp() < 30)
+          {
+            IMC::HistoricData* cmds = store->pollCommands(it->second.getSource(), 32*1024);
+            if (cmds != NULL)
+            {
+              m_parent->inf("Forwarding commands over Wifi to %s.", it->first.c_str());
+              cmds->setDestination(it->second.getSource());
+              m_parent->dispatch(cmds);
+            }
+          }
+        }
+      }
+
+      void
+      forwardCommandsAcoustic(DataStore* store)
+      {
+        std::map<std::string, double>::iterator it;
+        Concurrency::ScopedRWLock l(m_lock, false);
+        double curTime = Clock::getSinceEpoch();
+
+        for (it = m_acousticVisibility.begin(); it != m_acousticVisibility.end(); it++)
+        {
+          if (curTime - it->second < 120)
+          {
+            int id = m_parent->resolveSystemName(it->first);
+
+            IMC::HistoricData* cmds = store->pollCommands(id, 1000);
+            if (cmds != NULL)
+            {
+              cmds->setDestination(id);
+              AcousticOperation acOp;
+              acOp.msg.set(cmds);
+              acOp.op = AcousticOperation::AOP_MSG;
+              acOp.system = it->first;
+              m_parent->inf("Forwarding commands over Acoustic Modem to %s.", it->first.c_str());
+              m_parent->dispatch(acOp);
+            }
+          }
+        }
+      }
+
       ~Router()
       {
 

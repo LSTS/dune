@@ -78,18 +78,23 @@ namespace Transports
       //! messages currently on the way to their destination
       std::map<std::pair<int, int>, IMC::HistoricData*> m_sending;
 
+      //! Timer used for forwarding data over acoustic modem
       Time::Counter<double> m_acoustic_forward_timer;
 
+      //! Timer used for forwarding data over wifi
       Time::Counter<double> m_wifi_forward_timer;
 
+      //! Number of stored local samples
       int sample_count;
 
+      //! Router is used to forward data to other systems
       Router m_router;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_store(this),
-        m_router(this)
+        m_router(this),
+        sample_count(0)
       {
         param("Messages", m_args.messages)
         .description("List of <Message>:<Frequency>");
@@ -113,7 +118,6 @@ namespace Transports
         param("Variable priorities", m_args.variable_priorities)
         .description("Apply variable priorities to local samples")
         .defaultValue("true");
-
 
         m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
         m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
@@ -308,7 +312,8 @@ namespace Transports
       void
       acousticRouting()
       {
-        debug("Starting acoustic routing");
+        debug("forwarding to gateway over acoustic");
+
         IMC::HistoricData* data = m_store.pollSamples(1000);
         if (!m_router.routeOverAcoustic(m_args.acoustic_gateway, data))
         {
@@ -324,6 +329,9 @@ namespace Transports
       void
       wifiRouting()
       {
+
+        debug("forwarding to gateway over wifi");
+
         IMC::HistoricData* data = m_store.pollSamples(32 * 1024);
         if (data == NULL)
         {
@@ -348,18 +356,23 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (!m_args.acoustic_gateway.empty() && m_acoustic_forward_timer.overflow())
+          if (m_acoustic_forward_timer.overflow())
           {
-            acousticRouting();
             m_acoustic_forward_timer.reset();
+            m_router.forwardCommandsAcoustic(&m_store);
+
+            if (!m_args.acoustic_gateway.empty())
+              acousticRouting();
           }
 
-          if (!m_args.wifi_gateway.empty() && m_wifi_forward_timer.overflow())
+          if (m_wifi_forward_timer.overflow())
           {
-            wifiRouting();
             m_wifi_forward_timer.reset();
-          }
+            m_router.forwardCommandsWifi(&m_store);
 
+            if (!m_args.wifi_gateway.empty())
+              wifiRouting();
+          }
         }
       }
     };
