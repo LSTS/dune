@@ -644,6 +644,7 @@ namespace DUNE
                 remove(msg->sys_src);
                 // this system is waiting for reply.
                 m_system = msg->sys_src;
+                m_modem_wdog.setTop(c_requests_interval/2.0);
                 return false;
               }
 
