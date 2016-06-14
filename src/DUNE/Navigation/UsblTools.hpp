@@ -281,9 +281,12 @@ namespace DUNE
               fix.z = fs.z;
               fix.z_units = fs.z_units;
               fix.accuracy = fs.accuracy;
-
               m_task->dispatch(fix);
-              m_comm_timeout_timer.reset();
+              
+              if (msg->sys_dst == m_task->getSystemName()) //Msg to this node
+              {
+                m_comm_timeout_timer.reset();
+              }
               break;
             }
 
@@ -303,10 +306,13 @@ namespace DUNE
               pos.d = ps.d;
               pos.accuracy = ps.accuracy;
               
-              if(!getFix(msg->sys_src, pos))
+              if (!getFix(msg->sys_src, pos))
                 m_task->dispatch(pos);
 
-              m_comm_timeout_timer.reset();
+              if (msg->sys_dst == m_task->getSystemName()) //Msg to this node
+              {
+                m_comm_timeout_timer.reset();
+              }
               break;
             }
 
