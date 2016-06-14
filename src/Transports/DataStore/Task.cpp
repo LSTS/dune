@@ -56,6 +56,9 @@ namespace Transports
       //! Period, in seconds, between acoustic forwarding
       int acoustic_forward_period;
 
+      //! Period, in seconds, between iridium uploads (0 == deactivated)
+      int iridium_upload_period;
+
       //! Variable priorities will result in older
       //! data being sent through low bandwidth connections
       bool variable_priorities;
@@ -83,6 +86,9 @@ namespace Transports
 
       //! Timer used for forwarding data over wifi
       Time::Counter<double> m_wifi_forward_timer;
+
+      //! Timer used for uploading data over iridium
+      Time::Counter<double> m_iridium_upload_timer;
 
       //! Number of stored local samples
       int sample_count;
@@ -115,12 +121,17 @@ namespace Transports
         .description("Acoustic forwarding period, in seconds")
         .defaultValue("300");
 
+        param("Iridium Upload Period", m_args.iridium_upload_period)
+        .description("Iridium upload period, in seconds. 0 Deactivates uploading via Iridium.")
+        .defaultValue("0");
+
         param("Variable priorities", m_args.variable_priorities)
         .description("Apply variable priorities to local samples")
         .defaultValue("true");
 
         m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
         m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
+        m_iridium_upload_timer.setTop(m_args.iridium_upload_period);
       }
 
       void
@@ -164,6 +175,7 @@ namespace Transports
 
         m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
         m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
+        m_iridium_upload_timer.setTop(m_args.iridium_upload_period);
       }
 
       void
@@ -369,6 +381,12 @@ namespace Transports
 
             if (!m_args.wifi_gateway.empty())
               wifiRouting();
+          }
+
+          if (m_args.iridium_upload_period > 0 && m_iridium_upload_timer.overflow())
+          {
+            m_iridium_upload_timer.reset();
+            m_router.iridiumUpload(&m_store);
           }
         }
       }

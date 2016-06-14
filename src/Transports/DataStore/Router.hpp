@@ -38,6 +38,12 @@ namespace Transports
 {
   namespace DataStore
   {
+    const int c_max_size_wifi = 32 * 1024;
+    const int c_max_size_acoustic = 1000;
+    const int c_max_size_iridium = 220;
+
+    const int c_wifi_timeout = 15;
+    const int c_acoustic_timeout = 300;
 
     using DUNE_NAMESPACES;
 
@@ -80,7 +86,7 @@ namespace Transports
         Concurrency::ScopedRWLock l(m_lock, false);
 
         it = m_wifiVisibility.find(system);
-        return (it !=  m_wifiVisibility.end() && curTime - it->second.getTimeStamp() < 15);
+        return (it !=  m_wifiVisibility.end() && curTime - it->second.getTimeStamp() < c_wifi_timeout);
       }
 
       bool
@@ -91,7 +97,7 @@ namespace Transports
         Concurrency::ScopedRWLock l(m_lock, false);
 
         it = m_acousticVisibility.find(system);
-        return (it !=  m_acousticVisibility.end() && curTime - it->second < 120);
+        return (it !=  m_acousticVisibility.end() && curTime - it->second < c_acoustic_timeout);
       }
 
       bool
@@ -129,9 +135,9 @@ namespace Transports
 
         for (it = m_wifiVisibility.begin(); it != m_wifiVisibility.end(); it++)
         {
-          if (curTime - it->second.getTimeStamp() < 15)
+          if (curTime - it->second.getTimeStamp() < c_wifi_timeout)
           {
-            IMC::HistoricData* cmds = store->pollCommands(it->second.getSource(), 32*1024);
+            IMC::HistoricData* cmds = store->pollCommands(it->second.getSource(), c_max_size_wifi);
             if (cmds != NULL)
             {
               m_parent->inf("Forwarding commands over Wifi to %s.", it->first.c_str());
@@ -151,11 +157,11 @@ namespace Transports
 
         for (it = m_acousticVisibility.begin(); it != m_acousticVisibility.end(); it++)
         {
-          if (curTime - it->second < 120)
+          if (curTime - it->second < c_acoustic_timeout)
           {
             int id = m_parent->resolveSystemName(it->first);
 
-            IMC::HistoricData* cmds = store->pollCommands(id, 1000);
+            IMC::HistoricData* cmds = store->pollCommands(id, c_max_size_acoustic);
             if (cmds != NULL)
             {
               cmds->setDestination(id);
@@ -170,10 +176,27 @@ namespace Transports
         }
       }
 
-      ~Router()
+      void iridiumUpload(DataStore* store)
       {
-
+        IMC::HistoricData* data = store->pollSamples(c_max_size_iridium);
+        if (data == NULL)
+          return;
+        IMC::ImcIridiumMessage msg(data);
+        msg.source = m_parent->getSystemId();
+        msg.destination = 65535;
+        uint8_t buffer[65535];
+        int len = msg.serialize(buffer);
+        Memory::clear(data);
+        m_parent->inf("Requesting upload of %lu samples via Iridium.", data->data.size());
+        DUNE::IMC::IridiumMsgTx m;
+        m.data.assign(buffer, buffer + len);
+        m.ttl = 120;
+        m.setTimeStamp();
+        m_parent->dispatch(m);
       }
+
+      ~Router()
+      { }
     private:
       Task* m_parent;
       std::map<std::string, double> m_acousticVisibility;
