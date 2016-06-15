@@ -257,8 +257,14 @@ namespace Transports
         if (m_ctx.resolver.isLocal(msg->getSource()) && getEntityId() == msg->getSourceEntity())
           return;
 
-        debug("Adding %d messages from %s (%d) to data store.", (int)msg->data.size(),
-              m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
+        if (!m_ctx.resolver.isLocal(msg->getSource()))
+        {
+          inf("Received %lu samples from %s.", msg->data.size(), resolveSystemId(msg->getSource()));
+          msg->toJSON(std::cout);
+        }
+        else
+          debug("Adding %lu samples from %s (%d) to data store.", msg->data.size(),
+                m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
 
         // add all data to local store
         m_store.addData(msg);
@@ -349,7 +355,7 @@ namespace Transports
           return;
         if (!m_router.routeOverWifi(m_args.wifi_gateway, data))
         {
-          debug("not possible to forward data over WiFi at this time.");
+          inf("not possible to forward data over WiFi at this time.");
           m_store.addData(data);
         }
         else

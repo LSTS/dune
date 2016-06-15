@@ -131,9 +131,12 @@ namespace Transports
         {
           const HistoricSample* sample = static_cast<const HistoricSample*>(*it);
           DataSample* s = new DataSample();
-          s->latDegs = data->base_lat;
-          s->lonDegs = data->base_lon;
-          WGS84::displace((sample)->x, (sample)->y, &s->latDegs, &s->lonDegs);
+
+          double lat = Angles::radians(data->base_lat);
+          double lon = Angles::radians(data->base_lon);
+          WGS84::displace((sample)->x, (sample)->y, &lat, &lon);
+          s->latDegs = Angles::degrees(lat);
+          s->lonDegs = Angles::degrees(lon);
           s->source = (sample)->sys_id;
           s->timestamp = data->base_time + (sample)->t;
           s->zMeters = (sample)->z / 10.0;
@@ -221,28 +224,24 @@ namespace Transports
         IMC::HistoricData* ret = new IMC::HistoricData();
 
         // add commands for that destination
-        std::vector<RemoteCommand*> commands;
         std::vector<RemoteCommand*>::iterator cmd_it;
 
-        for (cmd_it = m_commands.begin(); cmd_it != m_commands.end(); cmd_it++)
-        {
-          if ((*cmd_it)->destination != destination)
-            continue;
-
-          int ser_size = (*cmd_it)->getSerializationSize();
-          if (ser_size < size)
-          {
-            size -= ser_size;
-            commands.push_back(*cmd_it);
-            cmd_it = m_commands.erase(cmd_it);
+        cmd_it = m_commands.begin();
+        while(cmd_it != m_commands.end()) {
+          if ((*cmd_it)->destination == destination) {
+            int ser_size = (*cmd_it)->getSerializationSize();
+            if (ser_size < size)
+            {
+              size -= ser_size;
+              ret->data.push_back(*cmd_it);
+              cmd_it = m_commands.erase(cmd_it);
+              continue;
+            }
           }
+          cmd_it++;
         }
 
-        // add commands that fit on the message
-        for (cmd_it = commands.begin(); cmd_it != commands.end(); cmd_it++)
-          ret->data.push_back(*cmd_it);
-
-        if (commands.empty())
+        if (ret->data.size() == 0)
           return NULL;
         else
           return ret;
