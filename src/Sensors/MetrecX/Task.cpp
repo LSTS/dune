@@ -29,6 +29,7 @@
 // ISO C++ 98 headers.
 #include <cstring>
 #include <cstdio>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -74,7 +75,7 @@ namespace Sensors
       DSF_PRESSURE = 8
     };
 
-    //! Internal Channal Options indexes.
+    //! Internal Channel Options indexes.
     enum InternalIndex
     {
       ICM_DENSITY = 0,
@@ -112,6 +113,18 @@ namespace Sensors
       std::string labels[c_channels];
       //! Conversion factors.
       double factors[c_channels];
+      //! Calibration buffer value.
+      double calbuffer;
+      //! pH Vout during calibration in V.
+      double offset;
+      //! pH slope in V. Depends on pH range.
+      double slope;
+      //! Nerst value in V at 20ºC
+      double nerst20;
+      //! Nerst value in V at 0ºC
+      double nerst0;
+      //! V per pH unit per ºC
+      double vperph;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -134,6 +147,9 @@ namespace Sensors
       bool m_ready_sspe;
       //! Task arguments.
       Arguments m_args;
+      //! Temperature for pH calculation
+      double temperature;
+
 
       //! Constructor.
       //! @param[in] name task name.
@@ -197,6 +213,31 @@ namespace Sensors
           .defaultValue("1.0")
           .description("Analogic channel conversion factor");
         }
+
+        param("CalBuffer", m_args.calbuffer)
+        .defaultValue("7.0")
+        .description("Buffer value corrected in fuction of the temperature used during calibration");
+
+        param("Offset", m_args.offset)
+        .defaultValue("2.496")
+        .description("pH Vout during calibration in V");
+
+        param("Slope", m_args.slope)
+        .defaultValue("0.634")
+        .description("pH slope in V. Depends on the selected pH range");
+
+        param("Nerst20", m_args.nerst20)
+        .defaultValue("0.058168")
+        .description("Nerst constant at 20ºC in V");
+
+        param("Nerst0", m_args.nerst0)
+        .defaultValue("0.0542")
+        .description("Nerst constant at 0ºC in V");
+
+        param("VperpH", m_args.vperph)
+        .defaultValue("0.1984")
+        .description("V per pH unit per ºC");
+
 
         // initialize variables.
         for (unsigned i = 0; i < c_total; ++i)
@@ -549,6 +590,28 @@ namespace Sensors
         return active;
       }
 
+      //! Calculates pH value.
+      double
+      calcPH(double value)
+      {
+
+        double pHVout = value;
+
+        double ph = m_args.calbuffer + (((pHVout-m_args.offset)*(m_args.nerst20/m_args.slope))
+                                /(m_args.nerst0+(temperature*m_args.vperph)));
+
+        return ph;
+      }
+
+      //! Calculates redox value.
+      double
+      calcEh(double value)
+      {
+
+        double redox = (value+2.5)/2.0;
+        return redox;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -597,6 +660,7 @@ namespace Sensors
             ix_read++;
           }
 
+
           // Check if there is some mismatch between the configuration file
           // and sensor output. If true, doesn't dispatch any message.
           if (ix_read != chn_active)
@@ -609,7 +673,20 @@ namespace Sensors
             if (m_slots[i])
             {
               if (i < c_channels)
-                dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
+              {
+                if (m_args.msgs[i] == "Temperature")
+                  temperature = values[i];
+
+                if (m_args.labels[i] == "WQS - pH")
+                  dispatchValue(m_msgs[i], calcPH(values[index++]),
+                                m_args.labels[i], m_args.factors[i], tstamp);
+                else if (m_args.labels[i] == "WQS - Eh")
+                  dispatchValue(m_msgs[i], calcEh(values[index++]),
+                                m_args.labels[i], m_args.factors[i], tstamp);
+                else
+                  dispatchValue(m_msgs[i], values[index++],
+                                m_args.labels[i], m_args.factors[i], tstamp);
+              }
               else
                 dispatchValue(m_msgs[i], values[index++], tstamp);
             }
