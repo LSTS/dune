@@ -113,17 +113,17 @@ namespace Sensors
       std::string labels[c_channels];
       //! Conversion factors.
       double factors[c_channels];
-      //! Calibration buffer value.
+      //! pH variable - Calibration buffer value.
       double calbuffer;
-      //! pH Vout during calibration in V.
+      //! pH variable - pH Vout during calibration in V.
       double offset;
-      //! pH slope in V. Depends on pH range.
+      //! pH variable - pH slope in V. Depends on pH range.
       double slope;
-      //! Nerst value in V at 20ºC
+      //! pH variable - Nerst value in V at 20ºC
       double nerst20;
-      //! Nerst value in V at 0ºC
+      //! pH variable - Nerst value in V at 0ºC
       double nerst0;
-      //! V per pH unit per ºC
+      //! pH variable - V per pH unit per ºC
       double vperph;
     };
 
@@ -149,6 +149,9 @@ namespace Sensors
       Arguments m_args;
       //! Temperature for pH calculation
       double temperature;
+      //! Redox offset
+      double redox_offset;
+
 
 
       //! Constructor.
@@ -595,11 +598,8 @@ namespace Sensors
       calcPH(double value)
       {
 
-        double pHVout = value;
-
-        double ph = m_args.calbuffer + (((pHVout-m_args.offset)*(m_args.nerst20/m_args.slope))
+        double ph = m_args.calbuffer + (((value-m_args.offset)*(m_args.nerst20/m_args.slope))
                                 /(m_args.nerst0+(temperature*m_args.vperph)));
-
         return ph;
       }
 
@@ -607,8 +607,8 @@ namespace Sensors
       double
       calcEh(double value)
       {
-
-        double redox = (value+2.5)/2.0;
+        redox_offset = 2.5;
+        double redox = (value + redox_offset)/2.0;
         return redox;
       }
 
