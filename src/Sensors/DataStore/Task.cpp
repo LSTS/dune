@@ -57,10 +57,12 @@ namespace Sensors
       Time::Counter<fp64_t> m_sss_counter;
       Time::Counter<fp64_t> m_tel_counter;
       int m_ctd_entity;
+      bool m_got_ctd;
 
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
-        m_ctd_entity(-1)
+        m_ctd_entity(-1),
+        m_got_ctd(false)
       {
         param("CTD Sample Period", m_args.ctd_period)
         .defaultValue("-1")
@@ -138,6 +140,7 @@ namespace Sensors
           return;
 
         m_ctd.temperature = msg->value;
+        m_got_ctd = true;
       }
 
       void
@@ -147,6 +150,7 @@ namespace Sensors
           return;
 
         m_ctd.conductivity = msg->value;
+        m_got_ctd = true;
       }
 
       void
@@ -216,11 +220,12 @@ namespace Sensors
       void
       sendHistoricMessages()
       {
-        if (m_args.ctd_period > 0 && m_ctd_counter.overflow())
+        if (m_args.ctd_period > 0 && m_got_ctd && m_ctd_counter.overflow())
         {
           m_ctd.depth = m_state.depth;
           dispatch(m_ctd);
           m_ctd_counter.reset();
+          m_got_ctd = false;
         }
 
         if (m_args.telemetry_period > 0 && m_tel_counter.overflow())
