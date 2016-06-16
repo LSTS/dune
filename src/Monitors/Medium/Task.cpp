@@ -60,6 +60,8 @@ namespace Monitors
       float depth_threshold;
       //! Air Speed threshold.
       float airspeed_threshold;
+      //! Ground Speed threshold.
+      float gndspeed_threshold;
       //! Altitude threshold
       float altitude_threshold;
       //! Vehicle type.
@@ -140,6 +142,11 @@ namespace Monitors
         .defaultValue("12.0")
         .description("Minimum air speed necessary to consider a vehicle in air");
 
+        param("Ground Speed Threshold", m_args.gndspeed_threshold)
+        .units(Units::Meter)
+        .defaultValue("2.0")
+        .description("Minimum ground speed necessary to consider a vehicle has landed");
+
         param("Altitude Threshold", m_args.altitude_threshold)
         .units(Units::Meter)
         .defaultValue("1")
@@ -219,7 +226,7 @@ namespace Monitors
           return;
 
         m_depth = msg->depth;
-        // For UAV Copters: Use the altitude field. Will be -1 for fixed-wings.
+        // For UAVs: Height is positive upwards, z is positive downwards.
         m_altitude = msg->alt;
       }
 
@@ -344,9 +351,9 @@ namespace Monitors
             }
             else
             {
-              if (m_airspeed < m_args.airspeed_threshold)
+              if (m_airspeed < m_args.airspeed_threshold && m_altitude < m_args.altitude_threshold)
                 m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-              else
+              else if (m_airspeed > m_args.airspeed_threshold && m_altitude > m_args.altitude_threshold)
                 m_vm.medium = IMC::VehicleMedium::VM_AIR;
             }
           }
@@ -387,7 +394,7 @@ namespace Monitors
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
               else {
-                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < 2)
+                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < m_args.gndspeed_threshold)
                   m_vm.medium = IMC::VehicleMedium::VM_GROUND;
               }
             }
@@ -403,7 +410,7 @@ namespace Monitors
               }
               else
               {
-                if (m_airspeed > m_args.airspeed_threshold && m_args.vtype == "UAV")
+                if (m_airspeed > m_args.airspeed_threshold && m_altitude > m_args.altitude_threshold && m_args.vtype == "UAV")
                   m_vm.medium = IMC::VehicleMedium::VM_AIR;
               }
             }
