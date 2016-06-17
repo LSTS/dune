@@ -30,6 +30,7 @@
 #include <map>
 #include <string>
 #include <cstring>
+#include <iterator>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
