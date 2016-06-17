@@ -47,8 +47,12 @@ namespace Maneuver
       int syringe1Id;
       // Syringe 2 Id
       int syringe2Id;
-      // Syringe Value
-      float servoValue;
+      // Servo Open Value
+      float openValue;
+      // Servo Close Value
+      float closeValue;
+      // Time tolerance to execute maneuver
+      double max_time;
     };
 
     //! Sample maneuver
@@ -72,13 +76,18 @@ namespace Maneuver
       onStart(const IMC::Sample* maneuver)
       {
         m_maneuver = *maneuver;
-        timeout = maneuver->timeout;
-        timer.setTop(timeout);
+        timer.setTop(m_args->max_time);
 
-        IMC::ControlLoops c_loops;
-        c_loops.enable = IMC::ControlLoops::CL_DISABLE;
+        //ensure syringes to be used are closed
 
-        m_task->dispatch(c_loops);
+        if (m_maneuver.syringe0 == IMC::BOOL_TRUE)
+          setSyringeState(m_args->syringe0Id, m_args->closeValue);
+
+        if (m_maneuver.syringe1 == IMC::BOOL_TRUE)
+          setSyringeState(m_args->syringe1Id, m_args->closeValue);
+
+        if (m_maneuver.syringe2 == IMC::BOOL_TRUE)
+          setSyringeState(m_args->syringe2Id, m_args->closeValue);
 
       }
 
@@ -86,43 +95,38 @@ namespace Maneuver
       onThrottle(const IMC::Throttle* throttle)
       {
 
+        if (throttle->value == 0 && m_medium.medium == IMC::VehicleMedium::VM_GROUND && !m_done)
+        {
+
+          if (m_maneuver.syringe0 == IMC::BOOL_TRUE)
+            setSyringeState(m_args->syringe0Id, m_args->openValue);
+
+          if (m_maneuver.syringe1 == IMC::BOOL_TRUE)
+            setSyringeState(m_args->syringe1Id, m_args->openValue);
+
+          if (m_maneuver.syringe2 == IMC::BOOL_TRUE)
+            setSyringeState(m_args->syringe2Id, m_args->openValue);
+
+          m_done = true;
+        }
+
         if (timer.overflow())
         {
-          if (!m_done)
+          if (m_done)
+            m_task->signalCompletion();
+          else
             m_task->signalError(DTR("sample failed"));
         }
-        else
-        {
-          if (throttle->value == 0 && m_medium.medium == IMC::VehicleMedium::VM_GROUND)
-          {
-            if (m_maneuver.syringe0 == IMC::BOOL_TRUE)
-            {
-              IMC::SetServoPosition setSyringe0;
-              setSyringe0.id = m_args->syringe0Id;
-              setSyringe0.value = m_args->servoValue;
-              m_task->dispatch(setSyringe0);
-            }
 
-            if (m_maneuver.syringe1 == IMC::BOOL_TRUE)
-            {
-              IMC::SetServoPosition setSyringe1;
-              setSyringe1.id = m_args->syringe1Id;
-              setSyringe1.value = m_args->servoValue;
-              m_task->dispatch(setSyringe1);
-            }
+      }
 
-            if (m_maneuver.syringe2 == IMC::BOOL_TRUE)
-            {
-              IMC::SetServoPosition setSyringe2;
-              setSyringe2.id = m_args->syringe2Id;
-              setSyringe2.value = m_args->servoValue;
-              m_task->dispatch(setSyringe2);
-            }
-
-            m_task->signalCompletion();
-            m_done = true;
-          }
-        }
+      void
+      setSyringeState(int syringe, float value)
+      {
+        IMC::SetServoPosition updateSyringe;
+        updateSyringe.id = syringe;
+        updateSyringe.value = value;
+        m_task->dispatch(updateSyringe);
       }
 
       void
@@ -134,8 +138,6 @@ namespace Maneuver
     private:
       IMC::Sample m_maneuver;
       IMC::VehicleMedium m_medium;
-      //! Max time allowed for maneuver execution
-      double timeout;
       //! Timer counter for duration
       Time::Counter<float> timer;
       bool m_done;

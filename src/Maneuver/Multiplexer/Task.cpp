@@ -243,20 +243,28 @@ namespace Maneuver
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
         param("Sample -- Syringe 0 Id", m_args.sample.syringe0Id)
-        .defaultValue("60")
+        .defaultValue("0")
         .description("Port to use for syringe 0 servo");
 
         param("Sample -- Syringe 1 Id", m_args.sample.syringe1Id)
-        .defaultValue("48")
+        .defaultValue("1")
         .description("Port to use for syringe 1 servo");
 
         param("Sample -- Syringe 2 Id", m_args.sample.syringe2Id)
-        .defaultValue("31")
+        .defaultValue("2")
         .description("Port to use for syringe 2 servo");
 
-        param("Sample -- Servo Value", m_args.sample.servoValue)
+        param("Sample -- Servo Open Value", m_args.sample.openValue)
         .defaultValue("3.14159")
         .description("Value to open servo");
+
+        param("Sample -- Servo Close Value", m_args.sample.closeValue)
+        .defaultValue("1.57079")
+        .description("Value to close servo");
+
+        param("Sample -- Execution Tolerance", m_args.sample.max_time)
+        .defaultValue("30")
+        .description("Default time tolerance to execute maneuver");
 
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;
@@ -264,6 +272,7 @@ namespace Maneuver
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::Throttle>(this);
       }
 
       void
