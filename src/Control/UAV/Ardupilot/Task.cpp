@@ -302,7 +302,7 @@ namespace Control
           .description("Altitude to be used if desired Z has no units");
 
           param("Default loiter radius", m_args.lradius)
-          .defaultValue("-150.0")
+          .defaultValue("-100.0")
           .units(Units::Meter)
           .description("Loiter radius used in LoiterHere (idle)");
 
@@ -1085,8 +1085,16 @@ namespace Control
           uint16_t n;
           mavlink_message_t msg;
 
+          // Check if in manual mode
+          if (m_external)
+          {
+            m_dpath = *dpath;
+            debug(DTR("ArduPilot is in Manual mode, saving desired path."));
+            return;
+          }
+
           // Set mode GUIDED.
-          mode = (m_vehicle_type == VEHICLE_COPTER) ? CP_MODE_GUIDED : PL_MODE_GUIDED;
+          mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
           mavlink_msg_set_mode_pack(255, 0, &msg,
                                     m_sysid,
                                     1,
