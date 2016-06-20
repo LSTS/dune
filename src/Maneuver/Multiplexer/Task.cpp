@@ -60,7 +60,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge","ScheduledGoto"};
+                                          "Dislodge","ScheduledGoto", "Takeoff"};
 
     enum ManeuverType
     {
@@ -110,9 +110,8 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
-      //!
+      //! Scheduled Arguments
       ScheduledArgs scheduled;
-
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -346,6 +345,7 @@ namespace Maneuver
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
         m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
+        m_maneuvers[TYPE_TAKEOFF] = create<Takeoff>();
       }
 
       void
