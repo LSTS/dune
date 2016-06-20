@@ -44,7 +44,7 @@ set(PROJECT_VENDOR "Universidade do Porto - LSTS")
 set(PROJECT_COPYRIGHT "Copyright (C) 2007-2016 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_YEAR  "2016")
-set(PROJECT_VERSION_MONTH "01")
+set(PROJECT_VERSION_MONTH "05")
 set(PROJECT_VERSION_PATCH "0")
 set(PROJECT_VERSION_RCN   "0")
 
@@ -87,6 +87,7 @@ dune_option(XENETH "Enable support for the Xeneth SDK")
 dune_option(BLUEVIEW "Enable support for the BlueView SDK")
 dune_option(OPENCV "Enable support for OpenCV")
 dune_option(NO_RTTI "Disable support for RTTI")
+dune_option(UEYE "Enable support for IDS uEye cameras")
 
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
@@ -331,14 +332,7 @@ endif(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
 install(DIRECTORY programs/scripts DESTINATION .)
 
 # MinGW dependencies.
-if(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
-  get_filename_component(MINGW_BIN_PATH ${CMAKE_CXX_COMPILER} PATH)
-  install(FILES
-    ${MINGW_BIN_PATH}/libgcc_s_dw2-1.dll
-    ${MINGW_BIN_PATH}/libstdc++-6.dll
-    ${MINGW_BIN_PATH}/mingwm10.dll
-    DESTINATION bin)
-endif(DUNE_OS_WINDOWS AND DUNE_CLIB_MINGW)
+include(cmake/MinGW.cmake)
 
 # LAUV Simulator link.
 if(DUNE_OS_WINDOWS)

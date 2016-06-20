@@ -1,0 +1,18 @@
+branches:
+  only:
+  - master
+
+clone_folder: c:\dev\dune
+
+os: Visual Studio 2015
+platform: x64
+configuration: Release
+
+build:
+
+build_script:
+  - cd c:\dev\dune
+  - md build
+  - cd build
+  - cmake -DTESTS:BOOL=ON -G "Visual Studio 14 2015 Win64" ..
+  - cmake --build . --target Experimental

@@ -77,8 +77,6 @@ namespace Control
         float yaw_max;
         //! PID gains for heading controller.
         std::vector<float> yaw_gains;
-        //! Maximum heading rate reference for heading controller.
-        float yaw_max_hrate;
         //! Control logic for saturation.
         bool share;
         //! Port Motor entity id.
@@ -183,11 +181,6 @@ namespace Control
           .size(3)
           .description("PID gains for YAW controller");
 
-          param("Maximum Heading Rate", m_args.yaw_max_hrate)
-          .defaultValue("45.0")
-          .units(Units::DegreePerSecond)
-          .description("Maximum heading rate reference");
-
           param("Maximum Heading Error to Thrust", m_args.yaw_max)
           .defaultValue("30.0")
           .description("Maximum admissable heading error to thrust");
@@ -222,6 +215,9 @@ namespace Control
           .defaultValue("false")
           .description("Log the size of each PID parcel");
 
+          m_desired_speed = 0.0;
+          m_speed_units = IMC::SUNITS_PERCENTAGE;
+
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
@@ -240,9 +236,6 @@ namespace Control
           if (paramChanged(m_args.yaw_max))
             m_args.yaw_max = Angles::radians(m_args.yaw_max);
 
-          if (paramChanged(m_args.yaw_max_hrate))
-            m_args.yaw_max_hrate = Angles::radians(m_args.yaw_max_hrate);
-
           if (paramChanged(m_args.rpm_gains) ||
               paramChanged(m_args.mps_gains) ||
               paramChanged(m_args.yaw_gains) ||
@@ -256,6 +249,20 @@ namespace Control
           }
         }
 
+        //! Reserve entities.
+        void
+        onEntityReservation(void)
+        {
+          if (m_args.log_parcels)
+          {
+            std::string label = getEntityLabel();
+            m_parcel_rpm.setSourceEntity(reserveEntity(label + " - RPM Parcel"));
+            m_parcel_mps.setSourceEntity(reserveEntity(label + " - MPS Parcel"));
+            m_parcel_yaw.setSourceEntity(reserveEntity(label + " - Yaw Parcel"));
+          }
+        }
+
+        //! Resolve entities.
         void
         onEntityResolution(void)
         {
@@ -292,6 +299,7 @@ namespace Control
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
+        //! Reset PIDs and actuation references.
         void
         reset(void)
         {
@@ -300,8 +308,6 @@ namespace Control
           m_yaw_pid.reset();
 
           m_previous_rpm = 0;
-          m_desired_speed = 0.0;
-          m_speed_units = IMC::SUNITS_PERCENTAGE;
 
           for (uint8_t i = 0; i < 2; i++)
           {
@@ -313,20 +319,20 @@ namespace Control
           }
         }
 
+        //! Setup PIDs.
         void
         setup(void)
         {
           m_rpm_pid.setGains(m_args.rpm_gains);
           m_rpm_pid.setOutputLimits(-m_args.act_max, m_args.act_max);
 
+          // Do not set MPS PID output limits since we use a feedforward gain.
           m_mps_pid.setGains(m_args.mps_gains);
           m_mps_pid.setIntegralLimits(m_args.mps_max_int);
-          // Do not set MPS pid output limits since we use a feedforward gain
 
           m_yaw_pid.setGains(m_args.yaw_gains);
-          m_yaw_pid.setOutputLimits(-m_args.yaw_max_hrate, m_args.yaw_max_hrate);
 
-          // Log parcels
+          // Log parcels.
           if (m_args.log_parcels)
           {
             m_rpm_pid.enableParcels(this, &m_parcel_rpm);
@@ -367,34 +373,21 @@ namespace Control
 
           // Compute time delta.
           double tstep = m_delta.getDelta();
-
           // Check if we have a valid time delta.
           if (tstep < 0.0)
             return;
 
-          // Reference errors.
-          float err_yaw = Angles::normalizeRadian(m_desired_yaw - msg->psi);
-
-          // Common thrust increment
           float thrust_com = 0;
+          float err_yaw = Angles::normalizeRadian(m_desired_yaw - msg->psi);
           float rpm = (m_rpm[0].value + m_rpm[1].value) / 2;
 
-          // Check if we can thrust.
-          if (m_common)
-          {
-            if (std::fabs(err_yaw) > m_args.yaw_max * (1 + c_yaw_tol))
-              m_common = false;
-          }
-          else
-          {
-            if (std::fabs(err_yaw) < m_args.yaw_max)
-              m_common = true;
-          }
+          // Yaw controller.
+          float thrust_diff = m_yaw_pid.step(tstep, err_yaw);
 
-          // Do not thrust forward if heading error is too large.
-          if (m_common)
+          // Thrust forward.
+          if (thrustForward(err_yaw))
           {
-            // Velocity controller (PID)
+            // Velocity controller.
             switch (m_speed_units)
             {
               case IMC::SUNITS_PERCENTAGE:
@@ -409,47 +402,17 @@ namespace Control
               default:
                 break;
             }
-          }
 
-          // Heading controller.
-          float thrust_diff = m_yaw_pid.step(tstep, err_yaw);
-
-          // Reduce differential when thrusting forward.
-          if (m_common)
-          {
+            // Limit differential when thrusting forward.
             thrust_diff = Math::trimValue(thrust_diff,
                                           - m_args.act_diff_max,
                                           m_args.act_diff_max);
           }
 
-          spew("yaw (p: %0.2f, i: %0.2f, d:%0.2f)",
-               m_parcel_yaw.p, m_parcel_yaw.i, m_parcel_yaw.d);
-
-          spew("thrust (c: %0.2f | d: %0.2f) = %0.1f",
-               thrust_com, thrust_diff, msg->u);
-
           m_act[0].value = thrust_com + thrust_diff;
           m_act[1].value = thrust_com - thrust_diff;
 
-          // New control logic when saturation occurs
-          if (m_args.share)
-          {
-            for (uint8_t i = 0; i < 2; i++)
-            {
-              if (m_act[i].value > m_args.act_max)
-              {
-                float delta = m_act[i].value - m_args.act_max;
-                m_act[i].value = m_args.act_max;
-                m_act[(i + 1) % 2].value -= delta;
-              }
-              else if (m_act[i].value < -m_args.act_max)
-              {
-                float delta = m_act[i].value + m_args.act_max;
-                m_act[i].value = -m_args.act_max;
-                m_act[(i + 1) % 2].value -= delta;
-              }
-            }
-          }
+          shareSaturation();
 
           dispatchThrust(m_act[0].value, tstep, 0);
           dispatchThrust(m_act[1].value, tstep, 1);
@@ -525,9 +488,6 @@ namespace Control
             double value;
             value = m_rpm_pid.step(timestep, desired_rpm - rpm);
             m_parcel_rpm.a = desired_rpm * m_args.rpm_ffgain;
-            spew("rpm to act #1: (%f), %f | %f",
-                 desired_rpm - rpm, value, m_parcel_rpm.a);
-
             value += m_parcel_rpm.a;
 
             return value;
@@ -556,18 +516,12 @@ namespace Control
 
           float rpm = m_mps_pid.step(timestep, m_desired_speed - vel);
           m_parcel_mps.a = m_desired_speed * m_args.mps_ffgain;
-
-          spew("mps to rpm #1: (%f) %f | %f",
-               m_desired_speed - vel, rpm, m_parcel_mps.a);
-
           rpm += m_parcel_mps.a;
 
           // trim acceleration in rpms
-          rpm = Math::trimValue(rpm,
-                                m_previous_rpm - m_args.max_accel * timestep,
+          rpm = Math::trimValue(rpm, m_previous_rpm - m_args.max_accel * timestep,
                                 m_previous_rpm + m_args.max_accel * timestep);
 
-          spew("mps to rpm #2: %f", rpm);
           // trim rpm value
           rpm = Math::trimValue(rpm, m_args.min_rpm, m_args.max_rpm);
           m_previous_rpm = rpm;
@@ -590,6 +544,53 @@ namespace Control
           dispatch(m_act[id]);
 
           m_last_act[id].value = m_act[id].value;
+        }
+
+        //! Check if we are facing our waypoint to thrust.
+        //! @param[in] yaw_err yaw error.
+        //! @return true to thrust forward, false otherwise.
+        bool
+        thrustForward(float yaw_err)
+        {
+          // Check if we can thrust.
+          if (m_common)
+          {
+            // Do not thrust forward if heading error is too large.
+            if (std::fabs(yaw_err) > m_args.yaw_max * (1 + c_yaw_tol))
+              m_common = false;
+          }
+          else
+          {
+            if (std::fabs(yaw_err) < m_args.yaw_max)
+              m_common = true;
+          }
+
+          return m_common;
+        }
+
+        //! Distribute actuation references if over-saturated.
+        void
+        shareSaturation(void)
+        {
+          // New control logic when saturation occurs
+          if (!m_args.share)
+            return;
+
+          for (uint8_t i = 0; i < 2; i++)
+          {
+            if (m_act[i].value > m_args.act_max)
+            {
+              float delta = m_act[i].value - m_args.act_max;
+              m_act[i].value = m_args.act_max;
+              m_act[(i + 1) % 2].value -= delta;
+            }
+            else if (m_act[i].value < -m_args.act_max)
+            {
+              float delta = m_act[i].value + m_args.act_max;
+              m_act[i].value = -m_args.act_max;
+              m_act[(i + 1) % 2].value -= delta;
+            }
+          }
         }
 
         void

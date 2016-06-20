@@ -47,6 +47,7 @@
 #include "PopUp.hpp"
 #include "Dislodge.hpp"
 #include "MuxedManeuver.hpp"
+#include "ScheduledGoto.hpp"
 
 namespace Maneuver
 {
@@ -57,7 +58,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge"};
+                                          "Dislodge","ScheduledGoto",};
 
     enum ManeuverType
     {
@@ -83,6 +84,8 @@ namespace Maneuver
       TYPE_POPUP,
       //! Type Dislodge
       TYPE_DISLODGE,
+      //! Type ScheduledGoto
+      TYPE_SCHEDULEDGOTO,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -105,6 +108,9 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
+      //!
+      ScheduledArgs scheduled;
+
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -164,6 +170,12 @@ namespace Maneuver
         .units(Units::Degree)
         .description("Maximum course error admissible");
 
+        param("YoYo -- Minimum Altitude Reference", m_args.yoyo.min_alt)
+        .defaultValue("5.0")
+        .minimumValue("1.0")
+        .units(Units::Meter)
+        .description("Minimum admissible altitude reference");
+
         param("Elevator -- Radius Tolerance", m_args.elevator.radius_tolerance)
         .defaultValue("2.0")
         .units(Units::Meter)
@@ -203,6 +215,10 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Maximum distance from station keeping radial circle");
 
+        param("PopUp -- Report at PopUps", m_args.popup.report)
+        .defaultValue("false")
+        .description("Request reports when popping at surface");
+
         param("Dislodge -- Bursts", m_args.dislodge.bursts)
         .defaultValue("5")
         .description("Number of bursts with the motor");
@@ -230,6 +246,21 @@ namespace Maneuver
         .defaultValue("3.0")
         .units(Units::Meter)
         .description("Safe depth change to consider the maneuver was successful");
+
+        param("Dislodge -- Safe Depth Gap", m_args.dislodge.safe_gap)
+        .defaultValue("3.0")
+        .units(Units::Meter)
+        .description("Safe depth change to consider the maneuver was successful");
+
+        param("ScheduledGoto -- Minimum Speed", m_args.scheduled.min_speed)
+        .defaultValue("0.7")
+        .units(Units::MeterPerSecond)
+        .description("Move only at speeds higher than the minimum speed");
+
+        param("ScheduledGoto -- Maximum Speed", m_args.scheduled.max_speed)
+        .defaultValue("1.6")
+        .units(Units::MeterPerSecond)
+        .description("Maximum commanded speed");
 
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
@@ -309,6 +340,7 @@ namespace Maneuver
         m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
+        m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
       }
 
       void

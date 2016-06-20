@@ -76,8 +76,9 @@ CODE
 TEST_CXX = <<CODE
 #include <cstdlib>
 #include <stdexcept>
+#include <string>
 #include <new>
-int main(void) { int* v = new int; return *v; }
+int main(void) { std::string s; s[0] = 0; int* v = new int; return *v; }
 CODE
 
 AUTH = {
@@ -363,9 +364,9 @@ class Docker
   end
 
   def execute
-    hostname = @name.gsub("dune-", "")
+    hostname = @name.gsub("dune-", "docker-")
     puts hostname
-    `docker run -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --no-log --target #{@target}`
+    system "docker run --rm -h #{hostname} #{@name} ruby /root/dune-cdash-build.rb --no-log --target #{@target}"
   end
 end
 

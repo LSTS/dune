@@ -74,6 +74,7 @@ namespace DUNE
       pthread_cond_t m_cond;
       pthread_condattr_t m_cond_attr;
       pthread_mutex_t m_mutex;
+      bool m_clock_monotonic;
 #endif
 
       // Non - copyable.

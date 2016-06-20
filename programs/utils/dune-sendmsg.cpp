@@ -57,9 +57,9 @@ main(int argc, char** argv)
       fprintf(stdout, "  GpsFix, GpsFixRtk, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
       fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
       fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
-      fprintf(stdout, "  PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl\n");
+      fprintf(stdout, "  PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl, PowerChannelState\n");
       fprintf(stdout, "  PushEntityParameters, QueryEntityInfo, QueryEntityParameters\n");
-      fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, RestartSystem\n");
+      fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl, RestartSystem\n");
       fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
       fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed, Target, TeleoperationDone, Temperature\n");
       fprintf(stdout, "  TextMessage, TrexCommand, VehicleCommand, VehicleMedium\n");
@@ -560,6 +560,14 @@ main(int argc, char** argv)
     tmsg->op = atoi(argv[5]);
   }
 
+  if (strcmp(argv[3], "PowerChannelState") == 0)
+  {
+    IMC::PowerChannelState* tmsg = new IMC::PowerChannelState;
+    msg = tmsg;
+    tmsg->name = argv[4];
+    tmsg->state = atoi(argv[5]);
+  }
+
   if (strcmp(argv[3], "PushEntityParameters") == 0)
   {
     IMC::PushEntityParameters* tmsg = new IMC::PushEntityParameters;
@@ -608,6 +616,16 @@ main(int argc, char** argv)
     tmsg->op = atoi(argv[4]);
     if (tmsg->op == IMC::ReplayControl::ROP_START)
       tmsg->file = argv[5];
+    msg = tmsg;
+  }
+
+  if (strcmp(argv[3], "ReportControl") == 0)
+  {
+    IMC::ReportControl* tmsg = new IMC::ReportControl;
+    tmsg->op = atoi(argv[4]);
+    tmsg->comm_interface = atoi(argv[5]);
+    tmsg->period = atoi(argv[6]);
+    tmsg->sys_dst = argv[7];
     msg = tmsg;
   }
 

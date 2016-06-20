@@ -99,7 +99,10 @@ namespace Sensors
           m_serial_number = String::trim(bfr);
 
           if (String::startsWith(m_model_name, "3DM-GX4-"))
+          {
+            m_parent->debug("device is a GX4 model");
             m_model_gx4 = true;
+          }
 
           return true;
         }
@@ -330,49 +333,58 @@ namespace Sensors
         Math::Matrix data(c_axes_count, 1);
         const uint8_t* payload = m_parser.getPayload();
 
+        int offset = 1;
+
         // Device Timestamp.
-        if (payload[1] == DD_INTERNAL_TIME)
+        if (!m_model_gx4)
         {
-          uint32_t timer = 0;
-          ByteCopy::fromBE(timer, payload + 2);
-          m_euler.time = timer / 62500.0;
-          m_accel.time = m_euler.time;
-          m_agvel.time = m_euler.time;
-          m_magfield.time = m_euler.time;
+          if (payload[offset] == DD_INTERNAL_TIME)
+          {
+            uint32_t timer = 0;
+            ByteCopy::fromBE(timer, payload + 2);
+            m_euler.time = timer / 62500.0;
+            m_accel.time = m_euler.time;
+            m_agvel.time = m_euler.time;
+            m_magfield.time = m_euler.time;
+            offset += 6;
+          }
         }
 
         // Acceleration.
-        if (payload[7] == DD_SCALED_ACCL_VEC)
+        if (payload[offset] == DD_SCALED_ACCL_VEC)
         {
-          extractRotatedVector(payload + 8, data);
+          extractRotatedVector(payload + offset + 1, data);
           m_accel.setTimeStamp(m_parser.getTimeStamp());
           m_accel.x = Math::c_gravity * data(0);
           m_accel.y = Math::c_gravity * data(1);
           m_accel.z = Math::c_gravity * data(2);
+          offset += 14;
         }
 
         // Extract angular rates.
-        if (payload[21] == DD_SCALED_GYRO_VEC)
+        if (payload[offset] == DD_SCALED_GYRO_VEC)
         {
-          extractRotatedVector(payload + 22, data);
+          extractRotatedVector(payload + offset + 1, data);
           m_agvel.setTimeStamp(m_parser.getTimeStamp());
           m_agvel.x = data(0);
           m_agvel.y = data(1);
           m_agvel.z = data(2);
+          offset += 14;
         }
 
         // Extract magnetic field.
-        if (payload[35] == DD_SCALED_MAGN_VEC)
+        if (payload[offset] == DD_SCALED_MAGN_VEC)
         {
-          extractRotatedVector(payload + 36, data);
+          extractRotatedVector(payload + offset + 1, data);
           m_magfield.setTimeStamp(m_parser.getTimeStamp());
           m_magfield.x = data(0);
           m_magfield.y = data(1);
           m_magfield.z = data(2);
+          offset += 14;
         }
 
         // Extract orientation matrix and compute Euler angles.
-        if (payload[49] == DD_ORIENTATION_MATRIX)
+        if (payload[offset] == DD_ORIENTATION_MATRIX)
         {
           Matrix rmat(3, 3);
           float r[9] = {0};
@@ -380,7 +392,7 @@ namespace Sensors
 
           for (unsigned i = 0; i < 9; ++i)
           {
-            ByteCopy::fromBE(r[i], payload + 50 + 4 * i);
+            ByteCopy::fromBE(r[i], payload + offset + 1 + 4 * i);
             r8[i] = r[i];
           }
 

@@ -36,6 +36,9 @@
 #  include <time.h>
 #endif
 
+// DUNE headers.
+#include <DUNE/Time/Constants.hpp>
+
 namespace DUNE
 {
   namespace Time
@@ -53,49 +56,51 @@ namespace DUNE
       void
       set(uint32_t delay_usec)
       {
-#if defined(DUNE_SYS_HAS_CLOCK_GETTIME)
+        // Microsoft Windows.
+#if defined(DUNE_SYS_HAS_GET_SYSTEM_TIME_AS_FILE_TIME)
+        m_delay = delay_usec * 10;
+
+        // POSIX.
+#elif defined(DUNE_SYS_HAS_CLOCK_GETTIME) || defined(DUNE_SYS_HAS_NANOSLEEP)
         m_delay = delay_usec * 1000;
-#elif defined(DUNE_SYS_HAS_GET_SYSTEM_TIME_AS_FILE_TIME)
-        m_delay = delay_usec / 10;
-#elif defined(DUNE_SYS_HAS_NANOSLEEP)
-        // No delta computation is needed.
-        (void)delay_usec;
+
 #else
 #  error PeriodicDelay::set() is not yet implemented in this system
 #endif
+
         reset();
       }
 
       void
       reset(void)
       {
-#if defined(DUNE_SYS_HAS_CLOCK_GETTIME)
-        timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        m_deadline = ((uint64_t)now.tv_sec * 1000000000U) + (uint64_t)now.tv_nsec;
-
-        // Microsoft Windows implementation.
-#elif defined(DUNE_SYS_HAS_GET_SYSTEM_TIME_AS_FILE_TIME)
+        // Microsoft Windows.
+#if defined(DUNE_SYS_HAS_GET_SYSTEM_TIME_AS_FILE_TIME)
         FILETIME ft;
         GetSystemTimeAsFileTime(&ft);
         std::memcpy(&m_deadline, &ft, sizeof(uint64_t));
 
+        // POSIX.
+#elif defined(DUNE_SYS_HAS_CLOCK_GETTIME)
+        timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        m_deadline = ((uint64_t)now.tv_sec * 1000000000U) + (uint64_t)now.tv_nsec;
+
 #elif defined(DUNE_SYS_HAS_NANOSLEEP)
-        // No delta computation is needed.
+	m_deadline = Clock::getNsec();
+
 #else
 #  error PeriodicDelay::reset() is not yet implemented in this system
 #endif
+
+        m_deadline += m_delay;
       }
 
       void
       wait(void)
       {
-#if defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP)
-        timespec deadline = {(time_t)(m_deadline / 1000000000), (long)(m_deadline % 1000000000)};
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, 0);
-
-        // Microsoft Windows implementation.
-#elif defined(DUNE_SYS_HAS_CREATE_WAITABLE_TIMER)
+        // Microsoft Windows.
+#if defined(DUNE_SYS_HAS_CREATE_WAITABLE_TIMER)
         HANDLE th = CreateWaitableTimer(0, TRUE, 0);
         LARGE_INTEGER dl;
         std::memcpy(&dl, &m_deadline, sizeof(LARGE_INTEGER));
@@ -103,15 +108,26 @@ namespace DUNE
         WaitForSingleObject(th, INFINITE);
         CloseHandle(th);
 
+        // POSIX clock_nanosleep().
+#elif defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP)
+        timespec deadline = {(time_t)(m_deadline / 1000000000), (long)(m_deadline % 1000000000)};
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
+
+        // POSIX nanosleep().
 #elif defined(DUNE_SYS_HAS_NANOSLEEP)
-        timespec deadline = {(time_t)(m_delay / 1000000000), (long)(m_delay % 1000000000)};
-        nanosleep(&deadline, 0);
+	uint64_t now = Clock::getNsec();
+	if (now < m_deadline)
+        {
+	  uint64_t delay = m_deadline - now;
+          timespec delay_tspec = {(time_t)(delay / 1000000000), (long)(delay % 1000000000)};	
+          nanosleep(&delay_tspec, NULL);
+	}
 
 #else
 #  error PeriodicDelay::wait() is not yet implemented in this system
 #endif
 
-        m_deadline = m_deadline + m_delay;
+        m_deadline += m_delay;
       }
 
     private:

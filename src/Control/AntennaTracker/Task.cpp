@@ -149,7 +149,7 @@ namespace Control
         dispatch(ref);
 
         ref.id = 't';
-        ref.angle = elevation - Math::c_half_pi;
+        ref.angle = elevation;
         dispatch(ref);
       }
 

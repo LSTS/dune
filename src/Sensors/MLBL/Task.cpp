@@ -33,6 +33,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Supervisors/Reporter/Client.hpp>
 
 namespace Sensors
 {
@@ -130,8 +131,6 @@ namespace Sensors
       double mpk_delay_aft;
       //! Maximum age of a good range (for reporting).
       double good_range_age;
-      //! Time between range reports.
-      double report_period;
       //! Ping Period.
       double ping_period;
       //! Transponder Ping Timeout.
@@ -317,8 +316,6 @@ namespace Sensors
       int m_sound_speed_eid;
       //! Estimated state.
       IMC::EstimatedState m_estate;
-      //! Report timer.
-      Counter<double> m_report_timer;
       //! Stop reports on the ground.
       bool m_stop_comms;
       //! Last progress.
@@ -329,12 +326,15 @@ namespace Sensors
       float m_fuel_conf;
       //! Pinger.
       Time::Counter<float> m_pinger;
+      //! Reporter API.
+      Supervisors::Reporter::Client* m_reporter;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_result(RS_NONE),
-        m_sound_speed_eid(-1)
+        m_sound_speed_eid(-1),
+        m_reporter(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -393,14 +393,6 @@ namespace Sensors
         .defaultValue("Ranges")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Data to be reported acoustically");
-
-        param(DTR_RT("Reports Periodicity"), m_args.report_period)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .units(Units::Second)
-        .defaultValue("60")
-        .minimumValue("30")
-        .maximumValue("600")
-        .description("Reports periodicity");
 
         param("Good Range Age", m_args.good_range_age)
         .units(Units::Second)
@@ -474,6 +466,7 @@ namespace Sensors
         bind<IMC::PlanControlState>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::ReportControl>(this);
       }
 
       void
@@ -491,21 +484,22 @@ namespace Sensors
         {
           throw RestartNeeded(e.what(), 30);
         }
+
+        m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
+                                                       10.0, true);
       }
 
       void
       onResourceRelease(void)
       {
         Memory::clear(m_uart);
+        Memory::clear(m_reporter);
       }
 
       void
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
-
-        if (paramChanged(m_args.report_period))
-          m_report_timer.setTop(m_args.report_period);
 
         if (paramChanged(m_args.ping_period))
           m_pinger.setTop(m_args.ping_period);
@@ -632,7 +626,7 @@ namespace Sensors
       }
 
       void
-      handleConfigParam(std::auto_ptr<NMEAReader>& stn)
+      handleConfigParam(NMEAReader* const stn)
       {
         std::string arg;
         *stn >> arg;
@@ -675,7 +669,7 @@ namespace Sensors
       }
 
       void
-      handleMiniPacket(std::auto_ptr<NMEAReader>& stn)
+      handleMiniPacket(NMEAReader* const stn)
       {
         unsigned src = 0;
         *stn >> src;
@@ -727,7 +721,7 @@ namespace Sensors
       }
 
       void
-      handleTransponderTravelTimes(std::auto_ptr<NMEAReader>& stn)
+      handleTransponderTravelTimes(NMEAReader* const stn)
       {
         //! Range.
         IMC::LblRange lrange;
@@ -779,7 +773,7 @@ namespace Sensors
       }
 
       void
-      handlePingReply(std::auto_ptr<NMEAReader>& stn)
+      handlePingReply(NMEAReader* const stn)
       {
         unsigned src = 0;
         *stn >> src;
@@ -858,9 +852,9 @@ namespace Sensors
           text.value.assign(sanitize(m_bfr));
           dispatch(text);
 
+          NMEAReader* const stn = new NMEAReader(m_bfr);
           try
           {
-            std::auto_ptr<NMEAReader> stn = std::auto_ptr<NMEAReader>(new NMEAReader(m_bfr));
             if (std::strcmp(stn->code(), "CAMUA") == 0)
               handleMiniPacket(stn);
             else if (std::strcmp(stn->code(), "SNTTA") == 0)
@@ -884,11 +878,13 @@ namespace Sensors
           {
             err("%s", e.what());
           }
+
+          delete stn;
         }
       }
 
       void
-      handleBinaryMessage(std::auto_ptr<NMEAReader>& stn)
+      handleBinaryMessage(NMEAReader* const stn)
       {
         unsigned src;
         unsigned dst;
@@ -1080,6 +1076,9 @@ namespace Sensors
 
         tx_status.value = IMC::UamTxStatus::UTS_DONE;
         dispatch(tx_status);
+
+        if (m_reporter != NULL)
+          m_reporter->ack();
       }
 
       void
@@ -1190,6 +1189,13 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::ReportControl* msg)
+      {
+        if (m_reporter != NULL)
+          m_reporter->consume(msg);
+      }
+
+      void
       reportRanges(double now)
       {
         bool first = true;
@@ -1217,6 +1223,9 @@ namespace Sensors
               debug("reported range to %s = %u m", m_lbl(i).name.c_str(), m_lbl(i).range);
             else
               debug("failed to report range to %s", m_lbl(i).name.c_str());
+
+            if (m_reporter != NULL)
+              m_reporter->ack();
           }
         }
 
@@ -1278,17 +1287,13 @@ namespace Sensors
       void
       onMain(void)
       {
-        m_report_timer.reset();
-
         while (!stopping())
         {
           // Report.
           if (m_args.report != "None" && !m_stop_comms)
           {
-            if (m_report_timer.overflow())
+            if (m_reporter != NULL && m_reporter->trigger())
             {
-              m_report_timer.reset();
-
               if (m_args.report == "Full")
                 fullAcousticReport();
               else
@@ -1303,7 +1308,7 @@ namespace Sensors
             continue;
           }
 
-          if (isActive() && !m_stop_comms &&  m_pinger.overflow())
+          if (isActive() && !m_stop_comms && m_pinger.overflow())
           {
             m_pinger.reset();
             ping();

@@ -52,6 +52,8 @@ namespace DUNE
     static const double c_lkeep_distance = 30.0;
     //! Maximum admissible time for disabling monitors due to navigation jump
     static const float c_max_jump_time = 100.0;
+    //! Maximum admissible time for disabling monitors due to braking
+    static const float c_max_brake_time = 30.0;
     //! Depth margin when limiting depth in bottom tracker
     static const float c_depth_margin = 1.0;
 
@@ -288,9 +290,14 @@ namespace DUNE
     PathController::consume(const IMC::Brake* brake)
     {
       if (brake->op == IMC::Brake::OP_START)
+      {
         m_braking = true;
+        m_brake_timer.setTop(c_max_brake_time);
+      }
       else
+      {
         m_braking = false;
+      }
     }
 
     void
@@ -669,9 +676,9 @@ namespace DUNE
       else
         loiter(*es, m_ts);
 
-      // If we're braking or there has been a jump in the navigation filter
-      // then do not check for errors in monitoring
-      if (m_braking || m_jump_monitors)
+      // If we're braking or there has been a jump in the navigation
+      // filter then do not check for errors in monitoring
+      if ((m_braking && !m_brake_timer.overflow()) || m_jump_monitors)
       {
         m_running_monitors = false;
       }
@@ -1016,6 +1023,7 @@ namespace DUNE
       m_pcs.vy = m_ts.track_vel.y;
       m_pcs.vz = m_ts.track_vel.z;
       m_pcs.course_error = m_ts.course_error;
+      m_pcs.lradius = m_ts.loiter.radius;
 
       if (m_ts.nearby)
         m_pcs.flags |= IMC::PathControlState::FL_NEAR;
@@ -1023,15 +1031,9 @@ namespace DUNE
         m_pcs.flags &= ~IMC::PathControlState::FL_NEAR;
 
       if (m_ts.loitering)
-      {
         m_pcs.flags |= IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = m_ts.loiter.radius;
-      }
       else
-      {
         m_pcs.flags &= ~IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = 0;
-      }
       m_pcs.eta = (uint16_t) Math::round(m_ts.eta);
       dispatch(m_pcs);
     }

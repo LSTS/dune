@@ -35,25 +35,31 @@ if(OPENCV)
 
     # FIND_PACKAGE(OpenCV REQUIRED)
     dune_add_lib(opencv_calib3d)
-    dune_add_lib(opencv_contrib)
     dune_add_lib(opencv_core)
     dune_add_lib(opencv_features2d)
     dune_add_lib(opencv_flann)
-    dune_add_lib(opencv_gpu)
     dune_add_lib(opencv_highgui)
     dune_add_lib(opencv_imgproc)
-    dune_add_lib(opencv_legacy)
     dune_add_lib(opencv_ml)
     dune_add_lib(opencv_video)
     dune_add_lib(opencv_objdetect)
-    #dune_add_lib(opencv_photo)
-    #dune_add_lib(opencv_stitcing)
+    dune_add_lib(opencv_photo)
+    dune_add_lib(opencv_stitching)
+
     #dune_add_lib(opencv_ts)
     #dune_add_lib(opencv_videostab)
     #dune_add_lib(opencv_nonfree)
+    #dune_add_lib(opencv_contrib)
+    #dune_add_lib(opencv_gpu)
+    #dune_add_lib(opencv_legacy)
 
     # Check Header
     dune_test_header(opencv2/opencv.hpp)
+    
+    dune_test_header(opencv2/imgcodecs.hpp)
+    if(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
+      dune_add_lib(opencv_imgcodecs)
+    endif(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
 
   else(HAVE_LIB_OPENCV)
     # OpenCV not found on the system.

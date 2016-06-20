@@ -396,7 +396,7 @@ namespace Monitors
         else
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
-          err("%s", m_error_str.c_str());
+          war("%s", m_error_str.c_str());
         }
       }
 
