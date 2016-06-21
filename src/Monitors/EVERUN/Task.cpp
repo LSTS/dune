@@ -206,10 +206,8 @@ namespace Monitors
           war("Sending: pruinit");
           //m_conn->request( "GET", "/post.php?dir=pedro&teste_de_envio", 0, 0, 0);
           m_conn->request( "GET", "/pruinit", 0, 0, 0);
-          while( m_conn->outstanding() && !stopping())
-            m_conn->pump();
 
-          war("Response body has %d bytes - %d.", m_conn->bodySize(), happyhttp::getStatusValue());
+          war("pruinit Done.");
           m_conn->close();
         }
         else
