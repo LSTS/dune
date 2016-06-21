@@ -31,12 +31,27 @@
 // Vendor headers
 #include "../../../vendor/libraries/happyhttp/happyhttp.h"
 
+// System headers
+#include <sys/time.h>
+
 namespace Monitors
 {
   namespace EVERUN
   {
     using DUNE_NAMESPACES;
     using namespace happyhttp;
+
+    static const unsigned int c_max_buffer = 32;
+
+    enum RequestState
+    {
+      // Send init
+      SEND_INIT,
+      // Send start
+      SEND_START,
+      // Send stop
+      SEND_STOP
+    };
 
     //! %Task arguments.
     struct Arguments
@@ -67,8 +82,12 @@ namespace Monitors
     {
       //! Task arguments.
       Arguments m_args;
+      //
+      IMC::QueryPowerChannelState m_query_power_channel_state;
       //! Header for connection HTTP
       Connection* m_conn;
+      //! Buffer to save time
+      char m_buffer_time[c_max_buffer];
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -79,13 +98,13 @@ namespace Monitors
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param("Slave System Name", m_args.slave_system).description(
-            "Name of the slave system");
+        param("Slave System Name", m_args.slave_system)
+        .description("Name of the slave system");
 
         param("Power Channel", m_args.pwr_chn)
         .description("Power channel");
 
-        param("Active System", m_args.initial_state)
+        param("Turn On System", m_args.initial_state)
         .description("Initial state of power in slave.");
 
         param("Ip Host", m_args.ip_host)
@@ -110,7 +129,8 @@ namespace Monitors
         .description("Input Data.");
 
         // Register listeners.
-        bind<IMC::PowerChannelControl>(this);
+        bind<IMC::LoggingControl>(this);
+        bind<IMC::PowerChannelState>(this);
 
       }
 
@@ -145,7 +165,7 @@ namespace Monitors
         if (m_args.initial_state)
         {
           setEntityState(IMC::EntityState::ESTA_FAILURE, Status::CODE_ACTIVATING);
-          rebootSystem();
+          initSystem();
           m_conn = new Connection(m_args.ip_host.c_str(), m_args.server_port);
         }
       }
@@ -158,20 +178,34 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::PowerChannelControl* msg)
+      consume(const IMC::LoggingControl* msg)
       {
-        if (msg->name == m_args.pwr_chn)
+        if (msg->op == IMC::LoggingControl::COP_STARTED)
         {
-          if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON)
-            war("ON");
-          else if (msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
-            war("OFF");
+          currentDateTimeMili();
+          sendComandHttp(SEND_STOP, msg->name);
+          Delay::wait(1);
+          sendComandHttp(SEND_START, msg->name);
         }
       }
 
       void
-      rebootSystem(void)
+      consume(const IMC::PowerChannelState* msg)
       {
+        if (msg->name == m_args.pwr_chn)
+        {
+          if (msg->state == IMC::PowerChannelState::PCS_ON)
+            err("ON");
+          else if (msg->state == IMC::PowerChannelState::PCS_OFF)
+            err("OFF");
+        }
+      }
+
+      void
+      initSystem(void)
+      {
+        dispatch(m_query_power_channel_state);
+
         sendPowerChannelControl(m_args.pwr_chn, false);
         Delay::wait(1);
         sendPowerChannelControl(m_args.pwr_chn, true);
@@ -196,33 +230,78 @@ namespace Monitors
       isServerOn()
       {
         return m_conn->connect();
+        return true;
       }
 
       void
-      sendComandHttp(bool init)
+      sendComandHttp(RequestState mode, std::string file_name)
       {
-        if (!init)
+        if (mode == SEND_INIT)
         {
           war("Sending: pruinit");
-          //m_conn->request( "GET", "/post.php?dir=pedro&teste_de_envio", 0, 0, 0);
           m_conn->request( "GET", "/pruinit", 0, 0, 0);
 
-          war("pruinit Done.");
           m_conn->close();
         }
-        else
+        else if (mode == SEND_START)
         {
           war("Sending: start");
           char data_to_send[128];
-          //sprintf(data_to_send, "/post.php?dir=pedro&time=%d&rate=%d&filename=%s&input=%s", m_args.sampling_time, m_args.rate, m_args.file_name.c_str(), m_args.input_data.c_str());
-          sprintf(data_to_send, "/start?time=%d&rate=%d&filename=%s&input=%s", m_args.sampling_time, m_args.rate, m_args.file_name.c_str(), m_args.input_data.c_str());
+          std::string log_name_dune = file_name.substr(file_name.find("/") + 1, file_name.size());
+          sprintf(data_to_send, "/start?time=%d&rate=%d&filename=%s&input=%s&time=%s", m_args.sampling_time, m_args.rate, log_name_dune.c_str(), m_args.input_data.c_str(), m_buffer_time);
           m_conn->request( "GET", data_to_send, 0, 0, 0);
           while( m_conn->outstanding() && !stopping())
             m_conn->pump();
 
           war("Response body has %d bytes - %d.", m_conn->bodySize(), happyhttp::getStatusValue());
-          //war("Data: %s", data_to_send);
+          inf("Data Send: %s", data_to_send);
           m_conn->close();
+        }
+        else if (mode == SEND_STOP)
+        {
+          war("Sending: stop");
+          m_conn->request( "GET", "/stop", 0, 0, 0);
+
+          m_conn->close();
+        }
+      }
+
+      void
+      currentDateTimeMili()
+      {
+        time_t now;
+        struct tm *current;
+        struct timeval detail_time;
+        gettimeofday(&detail_time,NULL);
+        now = time(0);
+        current = localtime(&now);
+        memset(&m_buffer_time, '\0', sizeof(m_buffer_time));
+        std::sprintf(m_buffer_time, "%d:%d:%d.%ld", current->tm_hour - 1, current->tm_min, current->tm_sec, detail_time.tv_usec/1000);
+      }
+
+      void tryConnectToServer()
+      {
+        int m_cnt = 0;
+        inf("Trying to connect to server: %s in port: %d", m_args.ip_host.c_str(), m_args.server_port);
+        while (!isServerOn() && !stopping())
+        {
+          m_cnt++;
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          err("Error in connection to server: %s in port: %d", m_args.ip_host.c_str(), m_args.server_port);
+          if (m_cnt >= m_args.counter_attempts)
+          {
+            break;
+          }
+        }
+        if (m_cnt >= m_args.counter_attempts)
+        {
+          throw RestartNeeded(DTR("failed to connect to server"), 5, true);
+        }
+
+        if (isServerOn())
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          inf("Connect to server: %s in port: %d", m_args.ip_host.c_str(), m_args.server_port);
         }
       }
 
@@ -232,35 +311,7 @@ namespace Monitors
       {
         if (m_args.initial_state)
         {
-          int m_cnt = 0;
-          inf("Trying to connect to server: %s in port: %d",
-              m_args.ip_host.c_str(), m_args.server_port);
-          while (!isServerOn() && !stopping())
-          {
-            m_cnt++;
-            setEntityState(IMC::EntityState::ESTA_ERROR,
-                           Status::CODE_COM_ERROR);
-            err("Error in connection to server: %s in port: %d",
-                m_args.ip_host.c_str(), m_args.server_port);
-            if (m_cnt >= m_args.counter_attempts)
-            {
-              break;
-            }
-          }
-          if (m_cnt >= m_args.counter_attempts)
-          {
-            throw RestartNeeded(DTR("failed to connect to server"), 5, true);
-          }
-
-          if (isServerOn())
-          {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            inf("Connect to server: %s in port: %d", m_args.ip_host.c_str(),
-                m_args.server_port);
-            sendComandHttp(0);
-            Delay::wait(2);
-            sendComandHttp(1);
-          }
+          tryConnectToServer();
         }
 
         while (!stopping())
