@@ -22,6 +22,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef DUNE_NAVIGATION_USBL_TOOLS_HPP_INCLUDED_
@@ -169,16 +170,6 @@ namespace DUNE
           //! Quick mode, without range.
           bool no_range;
         };
-        
-        //! Usbl modem fix structure
-        struct ModemFix
-        {
-          std::string name;
-          double lat;
-          double lon;
-          float z;
-          uint8_t z_units;
-        };
 
         //! Constructor.
         Node(Tasks::Task* task, const Arguments* args):
@@ -220,7 +211,8 @@ namespace DUNE
             }
             return send;
           }
-          // Check if Usbl modem is dead.
+
+          // Check if USBL modem is dead.
           if(m_usbl_alive && m_comm_timeout_timer.overflow())
           {
             m_usbl_alive = false;
@@ -250,7 +242,8 @@ namespace DUNE
           {
             // Request reply.
             case CODE_RPL:
-              if (msg->sys_dst == m_task->getSystemName()) //Msg to this node
+              // this message was addressed to this system.
+              if (msg->sys_dst == m_task->getSystemName())
               {
                 if (msg->data[REQ_START] & c_mask_start)
                 {
@@ -282,11 +275,10 @@ namespace DUNE
               fix.z_units = fs.z_units;
               fix.accuracy = fs.accuracy;
               m_task->dispatch(fix);
-              
-              if (msg->sys_dst == m_task->getSystemName()) //Msg to this node
-              {
+
+              // this message was addressed to this system.
+              if (msg->sys_dst == m_task->getSystemName())
                 m_comm_timeout_timer.reset();
-              }
               break;
             }
 
@@ -305,14 +297,13 @@ namespace DUNE
               pos.e = ps.e;
               pos.d = ps.d;
               pos.accuracy = ps.accuracy;
-              
+
               if (!getFix(msg->sys_src, pos))
                 m_task->dispatch(pos);
 
-              if (msg->sys_dst == m_task->getSystemName()) //Msg to this node
-              {
+              // this message was addressed to this system.
+              if (msg->sys_dst == m_task->getSystemName())
                 m_comm_timeout_timer.reset();
-              }
               break;
             }
 
@@ -335,34 +326,24 @@ namespace DUNE
             }
           }
         }
-        
-        //! Sets a modem fix.
-        //! The node will use the modem fix to convert its position into a fix.
-        //! param[in] msg The UsblModem message where the modem fix is stored.
+
+        //! Consume a USBL configuration message.
+        //! param[in] msg The UsblConfig message with a list of UsblModem messages.
         void
-        setModemFix(const IMC::UsblModem* msg)
+        consume(const IMC::UsblConfig* msg)
         {
-          std::vector<ModemFix>::iterator itr = m_modem_fix.begin();
-          for (; itr != m_modem_fix.end(); ++itr)
+          if (msg->op == IMC::UsblConfig::OP_SET_CFG)
           {
-            // Modem Found
-            if (itr->name == msg->target)
-            {
-              itr->lat = msg->lat;
-              itr->lon = msg->lon;
-              itr->z = msg->z;
-              itr->z_units = msg->z_units;
-              return;
-            }
+            m_config = *msg;
           }
-          //Modem not found; Add it.
-          ModemFix fix;
-          fix.name = msg->target;
-          fix.lat = msg->lat;
-          fix.lon = msg->lon;
-          fix.z = msg->z;
-          fix.z_units = msg->z_units;
-          m_modem_fix.push_back(fix);
+          else if (msg->op == IMC::UsblConfig::OP_GET_CFG)
+          {
+            IMC::UsblConfig cfg(m_config);
+            cfg.op = IMC::UsblConfig::OP_CUR_CFG;
+            cfg.setSource(m_task->getSystemId());
+            cfg.setSourceEntity(m_task->getEntityId());
+            m_task->dispatchReply(*msg, cfg);
+          }
         }
 
       private:
@@ -392,26 +373,29 @@ namespace DUNE
 
           return true;
         }
-        
+
         //! Get a fix from a UsblPositionExtended and dispatch it.
-        //! param[in] modem  The name of the modem that has sent the position.
-        //! param[in] pos    The position stored into a UsblPositionExtended.
-        //! True if the fix has been dispatched.
+        //! @param[in] modem the name of the modem that has sent the position.
+        //! @param[in] pos the position stored into a UsblPositionExtended.
+        //! @return true if the fix has been dispatched, false otherwise.
         bool
-        getFix(std::string modem, const IMC::UsblPositionExtended &pos)
+        getFix(std::string modem, const IMC::UsblPositionExtended& pos)
         {
-          std::vector<ModemFix>::iterator itr = m_modem_fix.begin();
-          for (; itr != m_modem_fix.end(); ++itr)
+          IMC::MessageList<IMC::UsblModem>::const_iterator itr = m_config.modems.begin();
+          for (; itr < m_config.modems.end(); ++itr)
           {
-            // Modem found
-            if (itr->name == modem)
+            if ((*itr) == NULL)
+              continue;
+
+            if ((*itr)->name == modem)
             {
-              IMC:: UsblFixExtended fix = toFix(pos, itr->lat, itr->lon,
-                                                itr->z, (IMC::ZUnits)itr->z_units);
+              IMC::UsblFixExtended fix = toFix(pos, (*itr)->lat, (*itr)->lon, (*itr)->z,
+                                               (IMC::ZUnits)(*itr)->z_units);
               m_task->dispatch(fix);
               return true;
             }
           }
+
           return false;
         }
 
@@ -427,8 +411,8 @@ namespace DUNE
         bool m_no_range;
         //! Periodicity.
         uint16_t m_period;
-        //! The modem fix list.
-        std::vector<ModemFix> m_modem_fix;
+        //! USBL configuration.
+        IMC::UsblConfig m_config;
         //! Quick modem request timer.
         Time::Counter<double> m_node_timer;
         //! Communication timeout timer.
@@ -644,7 +628,7 @@ namespace DUNE
                 remove(msg->sys_src);
                 // this system is waiting for reply.
                 m_system = msg->sys_src;
-                m_modem_wdog.setTop(c_requests_interval/2.0);
+                m_modem_wdog.setTop(c_requests_interval / 2.0);
                 return false;
               }
 
