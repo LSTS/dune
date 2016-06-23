@@ -166,7 +166,7 @@ namespace Transports
         bind<IMC::UamRxRange>(this);
         bind<IMC::UsblPositionExtended>(this);
         bind<IMC::UsblAnglesExtended>(this);
-        bind<IMC::UsblModem>(this);
+        bind<IMC::UsblConfig>(this);
         bind<IMC::ReportControl>(this);
       }
 
@@ -521,12 +521,12 @@ namespace Transports
         if (m_usbl_modem->encode(msg, data))
           sendFrame(msg->target, data, false);
       }
-      
+
       void
-      consume(const IMC::UsblModem* msg)
+      consume(const IMC::UsblConfig* msg)
       {
         if (m_usbl_node != NULL)
-          m_usbl_node->setModemFix(msg);
+          m_usbl_node->consume(msg);
       }
 
       void
