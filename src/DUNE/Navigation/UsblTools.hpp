@@ -22,6 +22,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef DUNE_NAVIGATION_USBL_TOOLS_HPP_INCLUDED_
@@ -210,7 +211,8 @@ namespace DUNE
             }
             return send;
           }
-          // Check if Usbl modem is dead.
+
+          // Check if USBL modem is dead.
           if(m_usbl_alive && m_comm_timeout_timer.overflow())
           {
             m_usbl_alive = false;
@@ -240,19 +242,23 @@ namespace DUNE
           {
             // Request reply.
             case CODE_RPL:
-              if (msg->data[REQ_START] & c_mask_start)
+              // this message was addressed to this system.
+              if (msg->sys_dst == m_task->getSystemName())
               {
-                std::memcpy(&m_period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
-                m_fix = msg->data[REQ_START] & c_mask_fix;
-                m_usbl_alive = true;
-                m_comm_timeout_timer.setTop(c_max_comm_timeout * m_period);
-              }
-              else
-              {
-                m_usbl_alive = false;
-              }
+                if (msg->data[REQ_START] & c_mask_start)
+                {
+                  std::memcpy(&m_period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
+                  m_fix = msg->data[REQ_START] & c_mask_fix;
+                  m_usbl_alive = true;
+                  m_comm_timeout_timer.setTop(c_max_comm_timeout * m_period);
+                }
+                else
+                {
+                  m_usbl_alive = false;
+                }
 
-              m_usbl_name = msg->sys_src;
+                m_usbl_name = msg->sys_src;
+              }
               break;
 
             case CODE_FIX:
@@ -268,9 +274,11 @@ namespace DUNE
               fix.z = fs.z;
               fix.z_units = fs.z_units;
               fix.accuracy = fs.accuracy;
-
               m_task->dispatch(fix);
-              m_comm_timeout_timer.reset();
+
+              // this message was addressed to this system.
+              if (msg->sys_dst == m_task->getSystemName())
+                m_comm_timeout_timer.reset();
               break;
             }
 
@@ -290,8 +298,12 @@ namespace DUNE
               pos.d = ps.d;
               pos.accuracy = ps.accuracy;
 
-              m_task->dispatch(pos);
-              m_comm_timeout_timer.reset();
+              if (!getFix(msg->sys_src, pos))
+                m_task->dispatch(pos);
+
+              // this message was addressed to this system.
+              if (msg->sys_dst == m_task->getSystemName())
+                m_comm_timeout_timer.reset();
               break;
             }
 
@@ -312,6 +324,25 @@ namespace DUNE
               m_task->dispatch(ang);
               break;
             }
+          }
+        }
+
+        //! Consume a USBL configuration message.
+        //! param[in] msg The UsblConfig message with a list of UsblModem messages.
+        void
+        consume(const IMC::UsblConfig* msg)
+        {
+          if (msg->op == IMC::UsblConfig::OP_SET_CFG)
+          {
+            m_config = *msg;
+          }
+          else if (msg->op == IMC::UsblConfig::OP_GET_CFG)
+          {
+            IMC::UsblConfig cfg(m_config);
+            cfg.op = IMC::UsblConfig::OP_CUR_CFG;
+            cfg.setSource(m_task->getSystemId());
+            cfg.setSourceEntity(m_task->getEntityId());
+            m_task->dispatchReply(*msg, cfg);
           }
         }
 
@@ -343,6 +374,31 @@ namespace DUNE
           return true;
         }
 
+        //! Get a fix from a UsblPositionExtended and dispatch it.
+        //! @param[in] modem the name of the modem that has sent the position.
+        //! @param[in] pos the position stored into a UsblPositionExtended.
+        //! @return true if the fix has been dispatched, false otherwise.
+        bool
+        getFix(std::string modem, const IMC::UsblPositionExtended& pos)
+        {
+          IMC::MessageList<IMC::UsblModem>::const_iterator itr = m_config.modems.begin();
+          for (; itr < m_config.modems.end(); ++itr)
+          {
+            if ((*itr) == NULL)
+              continue;
+
+            if ((*itr)->name == modem)
+            {
+              IMC::UsblFixExtended fix = toFix(pos, (*itr)->lat, (*itr)->lon, (*itr)->z,
+                                               (IMC::ZUnits)(*itr)->z_units);
+              m_task->dispatch(fix);
+              return true;
+            }
+          }
+
+          return false;
+        }
+
         //! True if USBL is on.
         bool m_usbl_alive;
         //! True if waiting reply.
@@ -355,6 +411,8 @@ namespace DUNE
         bool m_no_range;
         //! Periodicity.
         uint16_t m_period;
+        //! USBL configuration.
+        IMC::UsblConfig m_config;
         //! Quick modem request timer.
         Time::Counter<double> m_node_timer;
         //! Communication timeout timer.
@@ -570,6 +628,7 @@ namespace DUNE
                 remove(msg->sys_src);
                 // this system is waiting for reply.
                 m_system = msg->sys_src;
+                m_modem_wdog.setTop(c_requests_interval / 2.0);
                 return false;
               }
 
