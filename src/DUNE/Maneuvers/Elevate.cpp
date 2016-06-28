@@ -36,7 +36,7 @@ namespace DUNE
   namespace Maneuvers
   {
     //! Tolerance when elevating towards a new depth
-    static const float c_elevator_tolerance = 1.0f;
+    static const float c_elevator_tolerance = 0.3f;
 
     //! Default constructor.
     Elevate::Elevate(const IMC::Elevator* maneuver, Maneuvers::Maneuver* task,
@@ -115,8 +115,7 @@ namespace DUNE
           // Check if water column is not deep enough for desired altitude
           if (m_elevator.end_z_units == IMC::Z_ALTITUDE)
           {
-            if ((m_elevator.end_z > msg->depth + msg->alt)
-                && msg->depth < c_elevator_tolerance)
+            if (m_elevator.end_z > msg->depth + msg->alt)
             {
               // water column is not deep enough so we bail
               m_els = ST_DONE;
