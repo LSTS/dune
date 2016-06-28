@@ -115,7 +115,8 @@ namespace DUNE
           // Check if water column is not deep enough for desired altitude
           if (m_elevator.end_z_units == IMC::Z_ALTITUDE)
           {
-            if (m_elevator.end_z > msg->depth + msg->alt)
+            if ((m_elevator.end_z > msg->depth + msg->alt)
+                && msg->depth < c_elevator_tolerance)
             {
               // water column is not deep enough so we bail
               m_els = ST_DONE;
