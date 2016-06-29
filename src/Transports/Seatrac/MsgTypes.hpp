@@ -23,6 +23,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        * 
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_MSG_TYPES_HPP_INCLUDED_

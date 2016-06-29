@@ -22,7 +22,8 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.hhtml.                                    *
 //***************************************************************************
-// Author: Joao teixeira                                                    *
+// Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -554,16 +555,13 @@ namespace Transports
         {
           IMC::UsblPositionExtended usblPosition;
           usblPosition.target = sys_src;
-          //usblPosition.x = ??;
-          //usblPosition.y = ??;
-          //usblPosition.z = ??;
           usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
           usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
           usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
           usblPosition.e = aco_fix.position_easting / 10.0;
           usblPosition.n = aco_fix.position_northing / 10.0;
           usblPosition.d = aco_fix.position_depth / 10.0;
-          //usblPosition.accuracy = ??;
+          
           dispatch(usblPosition);
         }
         else // Mimics Evologic: Only if position is not computed, compute angles.
@@ -580,9 +578,6 @@ namespace Transports
             usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
             usblAnglesMsg.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
             usblAnglesMsg.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
-            //usblAngleMsg.bearing = ??;
-            //usblAngleMsg.elevation = ??;
-            //usblAnglesMsg.accuracy != aco_fix.usbl_fit_error;
 
             dispatch(usblAnglesMsg);
           }
@@ -626,11 +621,6 @@ namespace Transports
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
               {
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
-              }
-              else
-              {
-                // Data communication done
-                clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
             }
           }
