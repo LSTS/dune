@@ -33,12 +33,23 @@
 
 namespace Sensors
 {
-  namespace Optode4531
+  namespace Optode4831
   {
     using DUNE_NAMESPACES;
 
     //! Dissolved oxygen depth compensation factor.
     static const float c_depth_factor = 3.2e-05;
+    //! Data input timeout.
+    static const float c_timeout = 2.0f;
+    //! List of configuration commands.
+    static const char* c_cmds[] = {"set passkey(1000)", "set flow control(none)", "set enable text(no)",
+                                   "set passkey(1)", "set enable sleep(yes)", "set enable rawdata(yes)",
+                                   "set enable airsaturation(yes)", "set enable temperature(yes)",
+                                   "set enable decimalformat(yes)", "set enable polled mode(no)"};
+    //! Number of setup commands.
+    static const unsigned c_cmds_size = 10;
+    //! Reply acknowledgement.
+    static const char* c_ack = "#\r\n";
 
     struct Arguments
     {
@@ -48,6 +59,8 @@ namespace Sensors
       unsigned uart_baud;
       //! Sampling period.
       double period;
+      //! Measurement command string identifier.
+      std::string cmd;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -85,11 +98,15 @@ namespace Sensors
         .description("Serial port baud rate");
 
         param("Sampling Interval", m_args.period)
-        .defaultValue("5.0")
-        .minimumValue("2.0")
-        .maximumValue("15300")
+        .defaultValue("1.0")
+        .minimumValue("1.0")
+        .maximumValue("1400")
         .units(Units::Second)
         .description("Amount of seconds between samplings");
+
+        param("Measurement String Identifier", m_args.cmd)
+        .defaultValue("4831F")
+        .description("Measurement command string identifier");
 
         bind<IMC::EstimatedState>(this);
         bind<IMC::Salinity>(this);
@@ -100,7 +117,13 @@ namespace Sensors
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.period))
-          setPeriod(m_args.period);
+        {
+          if (stop())
+          {
+            setPeriod(m_args.period);
+            start();
+          }
+        }
       }
 
       //! Acquire resources.
@@ -125,28 +148,27 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        // Wake-up device.
-        sendCommand(";");
-        Delay::wait(0.1);
-
+        stop();
         getVersion();
-        sendCommand("set passkey(1)");
-        sendCommand("set enable text(yes)");
-        sendCommand("set enable decimalformat(yes)");
-        sendCommand("set enable AirSaturation(yes)");
-        sendCommand("set enable Temperature(yes)");
-        sendCommand("set enable RawData(yes)");
-        sendCommand("set enable Polled Mode(no)");
-        sendCommand("set enable sleep(yes)");
-        sendCommand("start");
-        m_wdog.reset();
+
+        for (unsigned i = 0; i < c_cmds_size; ++i)
+        {
+          if (!sendCommand(c_cmds[i]))
+            return;
+        }
+
+        if (!setPeriod(m_args.period))
+          return;
+
+        if (start())
+          m_wdog.reset();
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        sendCommand("stop");
+        stop();
         Memory::clear(m_uart);
       }
 
@@ -170,10 +192,51 @@ namespace Sensors
 
         if (std::fabs(msg->value - m_salinity) > 3.0)
         {
-          sendCommand("set passkey(1000)");
-          sendCommand(String::str("set salinity(%f)", msg->value));
+          if (stop())
+          {
+            sendCommand("set passkey(1000)");
+            sendCommand(String::str("set salinity(%f)", msg->value));
+            sendCommand("set passkey(1)");
+          }
           m_salinity = msg->value;
         }
+      }
+
+      //! Wake Up device.
+      void
+      wakeUp(void)
+      {
+        if (m_uart != NULL)
+        {
+          std::string bfr(";\r\n");
+          m_uart->write(bfr.c_str(), bfr.size());
+        }
+      }
+
+      //! Stop sampling.
+      //! @return true if device was stopped, false otherwise.
+      bool
+      stop(void)
+      {
+        if (m_uart == NULL)
+          return false;
+
+        wakeUp();
+        if (!sendCommand("stop"))
+          return false;
+
+        return true;
+      }
+
+      //! Start sampling.
+      //! @return true if device was started, false otherwise.
+      bool
+      start(void)
+      {
+        if (!sendCommand("start"))
+          return false;
+
+        return true;
       }
 
       //! Request device's firmware version.
@@ -186,15 +249,14 @@ namespace Sensors
 
       //! Set device's sampling rate interval.
       //! @param[in] period desired sampling rate interval.
-      void
+      //! @return true if command was acknowledged, false otherwise.
+      bool
       setPeriod(double period)
       {
-        // Watchdog will be twice desired sampling rate interval.
+        // Watchdog will be twice the desired sampling rate interval.
         m_wdog.setTop(m_args.period * 2);
 
-        std::string cmd = String::str("set interval(%f)", period);
-        sendCommand(cmd);
-        sendCommand("save");
+        return sendCommand(String::str("set interval(%0.1f)", period));
       }
 
       //! Process incoming sentence.
@@ -207,24 +269,24 @@ namespace Sensors
         m_dev_data.setTimeStamp(tstamp);
         dispatch(m_dev_data, DF_KEEP_TIME);
 
-        if (String::startsWith(msg, "MEASUREMENT"))
-          publish(msg, tstamp);
+        if (String::startsWith(msg, m_args.cmd))
+          parse(msg, tstamp);
         else if (String::startsWith(msg, "SW Version"))
           onVersion(msg);
       }
 
-      //! Process and dispatch measurement data.
+      //! Parse and dispatch incoming data.
       //! @param[in] msg sentence.
       //! @param[in] tstamp current timestamp.
       void
-      publish(const std::string& msg, double tstamp)
+      parse(const std::string& msg, double tstamp)
       {
         IMC::Temperature temp;
         IMC::AirSaturation air;
         IMC::DissolvedOxygen oxy;
 
         std::sscanf(msg.c_str(),
-                    "%*[^\t]\t%*u\t%*u\t%*s\t%f\t%*s\t%f\t%*s\t%f%*[^\n]\n",
+                    "%*[^\t]\t%*s\t%*u\t%f\t%f\t%f%*[^\n]\n",
                     &oxy.value, &air.value, &temp.value);
 
         air.value *= (1 + c_depth_factor * m_depth);
@@ -237,6 +299,8 @@ namespace Sensors
         dispatch(air, DF_KEEP_TIME);
         dispatch(oxy, DF_KEEP_TIME);
 
+        trace("temperature: %0.1f | saturation: %0.1f | oxygen: %0.2f",
+              temp.value, air.value, oxy.value);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.reset();
       }
@@ -246,8 +310,8 @@ namespace Sensors
       void
       onVersion(const std::string& msg)
       {
-        int major, minor, patch;
-        std::sscanf(msg.c_str(), "%*[^\t]\t%*u\t%*u\t%d, %d, %d%*[^\n]\n",
+        unsigned major, minor, patch;
+        std::sscanf(msg.c_str(), "%*[^\t]\t%*s\t%*u\t%u\t%u\t%u%*[^\n]\n",
                     &major, &minor, &patch);
 
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
@@ -255,16 +319,20 @@ namespace Sensors
 
       //! Send command to device.
       //! @param[in] cmd command to send.
-      void
+      //! @return true if command was successful, false otherwise.
+      bool
       sendCommand(const std::string& cmd)
       {
         if (m_uart == NULL)
-          return;
+          return false;
 
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
 
-        m_uart->writeString(String::str("%s\r\n", cmd).c_str());
+        std::string bfr(cmd + "\r\n");
+        m_uart->write(bfr.c_str(), bfr.size());
+        spew("sent: '%s'", sanitize(bfr).c_str());
+        return readUntil(c_ack, c_timeout);
       }
 
       //! Check serial port for incoming transmissions.
@@ -285,10 +353,38 @@ namespace Sensors
           // Detect line termination.
           if (bfr[i] == '\n')
           {
+            spew("recv: '%s'", sanitize(m_line).c_str());
             process(m_line);
             m_line.clear();
           }
         }
+      }
+
+      //! Read input until a given sequence is received. Note that
+      //! data after the sequence might be discarded.
+      //! @param[in] reply sequence to search.
+      //! @param[in] timeout timeout in second.
+      //! @return true if command was acknowledged, false otherwise.
+      bool
+      readUntil(const std::string& reply, float timeout)
+      {
+        Counter<float> timer(timeout);
+
+        while (!timer.overflow())
+        {
+          if (!Poll::poll(*m_uart, timer.getRemaining()))
+            break;
+
+          char bfr[256] = {0};
+          m_uart->read(bfr, sizeof(bfr));
+
+          spew("reply: '%s'", sanitize(bfr).c_str());
+
+          if (String::endsWith(bfr, reply))
+            return true;
+        }
+
+        return false;
       }
 
       //! Main loop.
