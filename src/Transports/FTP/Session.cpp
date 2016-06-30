@@ -534,9 +534,10 @@ namespace Transports
     Session::handleUSPC(const std::string& arg)
     {
       (void)arg;
-      std::string reply = String::str("%lu %lu",
-                                      Path::storageAvailable(m_root),
-                                      Path::storageCapacity(m_root));
+      std::ostringstream ss;
+      ss << Path::storageAvailable(m_root) << " " << Path::storageCapacity(m_root);
+      std::string reply = ss.str();
+
       sendReply(258, reply.c_str());
     }
 
