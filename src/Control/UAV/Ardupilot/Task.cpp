@@ -2170,13 +2170,16 @@ namespace Control
 
           IMC::IndicatedSpeed ias;
           IMC::TrueSpeed gs;
+          IMC::Throttle thr;
 
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
+          thr.value = (uint16_t)vfr_hud.throttle;
 
           dispatch(ias);
           dispatch(gs);
+          dispatch(thr);
         }
 
         void
