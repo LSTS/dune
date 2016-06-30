@@ -531,6 +531,16 @@ namespace Transports
     }
 
     void
+    Session::handleUSPC(const std::string& arg)
+    {
+      (void)arg;
+      std::string reply = String::str("%lu %lu",
+                                      Path::storageAvailable(m_root),
+                                      Path::storageCapacity(m_root));
+      sendReply(258, reply.c_str());
+    }
+
+    void
     Session::handleNotImplemented(const std::string& arg)
     {
       (void)arg;
@@ -576,6 +586,8 @@ namespace Transports
         handleQUIT(arg);
       else if (cmd == "MLSD")
         handleMLSD(arg);
+      else if (cmd == "USPC")
+        handleUSPC(arg);
       else
         handleNotImplemented(arg);
     }
