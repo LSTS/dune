@@ -62,7 +62,7 @@ Sensors.prototype.m_msgs =
         {
             'label': 'RPMs'
         },
-        'pH':{},
+        'PH':{},
         'Redox':{}
     };
 
