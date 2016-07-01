@@ -68,12 +68,6 @@ namespace Monitors
         param("Entity Label - Temperature", m_args.elabel_temp)
         .defaultValue("Mainboard (Core)")
         .description("Entity label of temperature sensor");
-
-      }
-
-      void
-      onResourceRelease(void)
-      {
       }
 
       //! Reserve entity identifiers.
