@@ -95,6 +95,8 @@ namespace Sensors
     static const unsigned c_total = c_channels + c_in_count;
     //! Const to transform dbar to Bar.
     static const unsigned c_dbar_to_bar = 10;
+    //! Redox offset
+    static const unsigned redox_offset = 2500;
 
     //! %Task arguments.
     struct Arguments
@@ -125,6 +127,8 @@ namespace Sensors
       double nerst0;
       //! pH variable - V per pH unit per ºC
       double vperph;
+      //!
+      std::string temp_label;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -149,10 +153,6 @@ namespace Sensors
       Arguments m_args;
       //! Temperature for pH calculation
       double temperature;
-      //! Redox offset
-      double redox_offset;
-
-
 
       //! Constructor.
       //! @param[in] name task name.
@@ -241,7 +241,6 @@ namespace Sensors
         .defaultValue("0.1984")
         .description("V per pH unit per ºC");
 
-
         // initialize variables.
         for (unsigned i = 0; i < c_total; ++i)
         {
@@ -255,6 +254,7 @@ namespace Sensors
         m_lat = 0.0;
 
         bind<IMC::EstimatedState>(this);
+        //bind<IMC::Temperature>(this);
       }
 
       ~Task(void)
@@ -271,6 +271,13 @@ namespace Sensors
       {
         m_lat = msg->lat;
       }
+
+      /*void
+      consume(const IMC::Temperature* msg)
+      {
+        inf("Temp: %f", msg->value);
+      }
+      */
 
       //! Update internal state with new parameter values.
       void
@@ -544,6 +551,10 @@ namespace Sensors
 
         if (msg->getId() == DUNE_IMC_PRESSURE)
           dispatchDepth(label, value, factor, tstamp);
+        if (msg->getId() == DUNE_IMC_PH)
+          dispatchPH(label, value, factor, tstamp);
+        if (msg->getId() == DUNE_IMC_REDOX)
+          dispatchRedox(label, value, factor, tstamp);
       }
 
       //! Dispatch value.
@@ -576,6 +587,42 @@ namespace Sensors
         dispatch(depth, DF_KEEP_TIME);
       }
 
+      //! Dispatch pH.
+      //! @param[in] label entity label.
+      //! @param[in] value depth value.
+      //! @param[in] factor multiplication factor.
+      //! @param[in] tstamp current timestamp.
+      void
+      dispatchPH(std::string label, double value, double factor, double tstamp)
+      {
+        IMC::PH pH;
+        if (!label.empty())
+          pH.setSourceEntity(resolveEntity(label));
+
+        pH.setTimeStamp(tstamp);
+        pH.value = (m_args.calbuffer + (((value-m_args.offset)*(m_args.nerst20/m_args.slope))
+                                /(m_args.nerst0+(temperature*m_args.vperph))))*factor;
+        dispatch(pH, DF_KEEP_TIME);
+      }
+
+      //! Dispatch Redox.
+      //! @param[in] label entity label.
+      //! @param[in] value depth value.
+      //! @param[in] factor multiplication factor.
+      //! @param[in] tstamp current timestamp.
+      void
+      dispatchRedox(std::string label, double value, double factor, double tstamp)
+      {
+        IMC::Redox redox;
+        if (!label.empty()
+)          redox.setSourceEntity(resolveEntity(label));
+
+        redox.setTimeStamp(tstamp);
+        redox.value = ((value*1000 + redox_offset)/2.0)*factor;
+        dispatch(redox, DF_KEEP_TIME);
+      }
+
+
       //! Get active channels.
       //! @return active channels.
       inline unsigned
@@ -591,25 +638,6 @@ namespace Sensors
         }
 
         return active;
-      }
-
-      //! Calculates pH value.
-      double
-      calcPH(double value)
-      {
-
-        double ph = m_args.calbuffer + (((value-m_args.offset)*(m_args.nerst20/m_args.slope))
-                                /(m_args.nerst0+(temperature*m_args.vperph)));
-        return ph;
-      }
-
-      //! Calculates redox value.
-      double
-      calcEh(double value)
-      {
-        redox_offset = 2.5;
-        double redox = (value + redox_offset)/2.0;
-        return redox;
       }
 
       //! Main loop.
@@ -677,14 +705,7 @@ namespace Sensors
                 if (m_args.msgs[i] == "Temperature")
                   temperature = values[i];
 
-                if (m_args.labels[i] == "WQS - pH")
-                  dispatchValue(m_msgs[i], calcPH(values[index++]),
-                                m_args.labels[i], m_args.factors[i], tstamp);
-                else if (m_args.labels[i] == "WQS - Eh")
-                  dispatchValue(m_msgs[i], calcEh(values[index++]),
-                                m_args.labels[i], m_args.factors[i], tstamp);
-                else
-                  dispatchValue(m_msgs[i], values[index++],
+                dispatchValue(m_msgs[i], values[index++],
                                 m_args.labels[i], m_args.factors[i], tstamp);
               }
               else
