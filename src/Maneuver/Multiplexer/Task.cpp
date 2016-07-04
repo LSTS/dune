@@ -51,6 +51,7 @@
 #include "MuxedManeuver.hpp"
 #include "ScheduledGoto.hpp"
 #include "Takeoff.hpp"
+#include "Land.hpp"
 #include "Drop.hpp"
 #include "Sample.hpp"
 
@@ -63,7 +64,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge","ScheduledGoto", "Takeoff","Drop","Sample"};
+                                          "Dislodge","ScheduledGoto", "Takeoff", "Land","Drop","Sample"};
 
     enum ManeuverType
     {
@@ -93,6 +94,8 @@ namespace Maneuver
       TYPE_SCHEDULEDGOTO,
       //! Type Takeoff
       TYPE_TAKEOFF,
+      //! Type Land
+      TYPE_LAND,
       //! Type Drop
       TYPE_DROP,
       //! Type Sample
@@ -393,6 +396,7 @@ namespace Maneuver
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
         m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
         m_maneuvers[TYPE_TAKEOFF] = create<Takeoff>();
+        m_maneuvers[TYPE_LAND] = create<Land>();
         m_maneuvers[TYPE_DROP] = create<Drop>(&m_args.drop);
         m_maneuvers[TYPE_SAMPLE] = create<Sample>(&m_args.sample);
       }
