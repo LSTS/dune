@@ -1037,20 +1037,14 @@ namespace Control
         void
         consume(const IMC::Land* land)
         {
-          IMC::DesiredPath path;
-
-          path.start_lat = m_lat;
-          path.start_lon = m_lon;
-          path.start_z = getHeight();
-          path.start_z_units = IMC::Z_HEIGHT;
-
-          path.end_lat = land->lat;
-          path.end_lon = land->lon;
-          path.end_z = land->z;
-          path.end_z_units = land->z_units;
+          if(!(m_dpath.flags & IMC::DesiredPath::FL_LAND))
+          {
+            debug("\n\r Land consume: doesn't have order to issue command yet!");
+            return;
+          }
 
           // Trigger automatic landing
-          autoLand(&path, land->abort_z);
+          autoLand(land);
         }
 
         void
@@ -1121,7 +1115,7 @@ namespace Control
         }
 
         void
-        autoLand(const IMC::DesiredPath* dpath, float abort_z)
+        autoLand(const IMC::Land* land)
         {
           // Local variables
           uint8_t buf[512], mode;
@@ -1131,8 +1125,7 @@ namespace Control
           // Check if in manual mode
           if (m_external)
           {
-            m_dpath = *dpath;
-            debug(DTR("ArduPilot is in Manual mode, saving desired path."));
+            debug(DTR("ArduPilot is in Manual mode, unable to perform automatic landing."));
             return;
           }
 
@@ -1146,42 +1139,24 @@ namespace Control
           sendData(buf, n);
           debug("Guided MODE on ardupilot is set");
 
-          // Send takeoff command to ardupilot
+          // Send land command to ardupilot
           mavlink_msg_mission_item_pack(255, 0, &msg,
                                         m_sysid, //! target_system System ID
                                         0, //! target_component Component ID
                                         1, //! seq Sequence
-                                        MAV_FRAME_GLOBAL,    //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
                                         MAV_CMD_NAV_LAND, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
                                         2, //! current false:0, true:1, guided mode:2
                                         0, //! autocontinue to next wp
-                                        abort_z, //! Abort Altitude
+                                        land->abort_z,    //! Abort Altitude
                                         0, //! Not used
                                         0, //! Not used
                                         0, //! Not used
-                                        dpath->end_lat, //! Not used
-                                        dpath->end_lon, //! Not used
-                                        0);//! z PARAM7 / z position: global: altitude
+                                        (float)Angles::degrees(land->lat), //! Touchdown Latitude
+                                        (float)Angles::degrees(land->lon), //! Touchdown Longitude
+                                        land->z);  //! z PARAM7 / z position: global: altitude
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
-
-          // Update PathControlState
-          m_pcs.start_lat = m_lat;
-          m_pcs.start_lon = m_lon;
-          m_pcs.start_z = getHeight();
-          m_pcs.start_z_units = IMC::Z_HEIGHT;
-
-          m_pcs.end_lat = dpath->end_lat;
-          m_pcs.end_lon = dpath->end_lon;
-          m_pcs.end_z = dpath->end_z;
-          m_pcs.end_z_units = dpath->end_z_units;
-
-          m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
-          m_pcs.flags &= dpath->flags;
-          m_pcs.lradius = dpath->lradius;
-          m_pcs.path_ref = dpath->path_ref;
-
-          dispatch(m_pcs);
 
           // Debug output message
           debug("Land command sent to Ardupilot.");
@@ -1505,7 +1480,7 @@ namespace Control
                 switch ((int)m_msg.msgid)
                 {
                   default:
-                    debug("UNDEF: %u", m_msg.msgid);
+                    trace("UNDEF: %u", m_msg.msgid);
                     break;
                   case MAVLINK_MSG_ID_HEARTBEAT:
                     trace("HEARTBEAT");
