@@ -203,6 +203,16 @@ namespace Transports
       {
         if (String::startsWith(str, "^SYSSTART"))
           return true;
+        if (String::startsWith(str, "^MODE"))
+          return true;
+        if (String::startsWith(str, "+CUSATEND"))
+          return true;
+        if (String::startsWith(str, "^ECCLIST"))
+          return true;
+        if (String::startsWith(str, "+CUSATP"))
+          return true;
+        if (String::startsWith(str, "^HCSQ"))
+          return true;
 
         return false;
       }
