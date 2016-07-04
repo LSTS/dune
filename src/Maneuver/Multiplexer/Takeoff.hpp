@@ -66,6 +66,7 @@ namespace Maneuver
         m_path.speed = maneuver->speed;
         m_path.speed_units = maneuver->speed_units;
         m_path.lradius = 0;
+        m_path.flags = DesiredPath::FL_3DTRACK;
       }
 
       //! On PathControlState message
