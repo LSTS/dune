@@ -27,15 +27,15 @@
 ############################################################################
 
 if [ -z "$GSM_USER" ]; then
-    GSM_USER='vodafone'
+    GSM_USER='internet'
 fi
 
 if [ -z "$GSM_PASS" ]; then
-    GSM_PASS='vodafone'
+    GSM_PASS=''
 fi
 
 if [ -z "$GSM_APN" ]; then
-    GSM_APN='internet.vodafone.pt'
+    GSM_APN='internet'
 fi
 
 if [ -z "$GSM_MODE" ]; then
@@ -54,6 +54,11 @@ if [ -z "$FWL_INT_ITF" ]; then
     FWL_INT_ITF='eth0'
 fi
 
+if [ -z "$GSM_USBMODESWITCH" ]; then
+    GSM_USBMODESWITCH='AT'
+fi
+
+
 CHAT_SCRIPT=$(cat <<EOF
 ABORT 'BUSY' \
 ABORT 'NO CARRIER' \
@@ -70,7 +75,7 @@ TIMEOUT 3 \
 'OK' '$GSM_PIN' \
 'OK-AT-OK' 'ATI' \
 'OK' 'ATZ' \
-'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0' \
+'OK' '$GSM_USBMODESWITCH' \
 'OK' '$GSM_MODE' \
 'OK-AT-OK' 'AT+CGDCONT=1,\"IP\",\"$GSM_APN\"' \
 'OK' 'ATDT*99***1#' \
@@ -131,8 +136,6 @@ ppp_start()
 
     log info "ppp: starting"
 
-    modprobe ppp_generic > /dev/null 2>&1
-
     /usr/sbin/pppd \
         "$modem" \
         921600 \
@@ -170,6 +173,7 @@ ppp_stop()
 
 nat_start()
 {
+
     log info "nat: enabling IP forwarding"
     echo '1' > /proc/sys/net/ipv4/ip_forward
     echo '1' > /proc/sys/net/ipv4/ip_dynaddr
