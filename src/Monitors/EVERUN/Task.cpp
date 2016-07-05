@@ -45,8 +45,6 @@ namespace Monitors
 
     enum RequestState
     {
-      // Send init
-      SEND_INIT,
       // Send start
       SEND_START,
       // Send stop
@@ -134,30 +132,6 @@ namespace Monitors
 
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
       //! Initialize resources.
       void
       onResourceInitialization(void)
@@ -182,10 +156,13 @@ namespace Monitors
       {
         if (msg->op == IMC::LoggingControl::COP_STARTED)
         {
-          currentDateTimeMili();
-          sendComandHttp(SEND_STOP, msg->name);
-          Delay::wait(1);
-          sendComandHttp(SEND_START, msg->name);
+          if (m_args.initial_state)
+          {
+            std::sprintf(m_buffer_time, "%d", (int)time(NULL));
+            sendComandHttp(SEND_STOP, msg->name);
+            Delay::wait(1);
+            sendComandHttp(SEND_START, msg->name);
+          }
         }
       }
 
@@ -230,53 +207,31 @@ namespace Monitors
       isServerOn()
       {
         return m_conn->connect();
-        return true;
       }
 
       void
       sendComandHttp(RequestState mode, std::string file_name)
       {
-        if (mode == SEND_INIT)
+        if (mode == SEND_START)
         {
-          war("Sending: pruinit");
-          m_conn->request( "GET", "/pruinit", 0, 0, 0);
-
-          m_conn->close();
-        }
-        else if (mode == SEND_START)
-        {
-          war("Sending: start");
+          inf("Sending: start");
           char data_to_send[128];
           std::string log_name_dune = file_name.substr(file_name.find("/") + 1, file_name.size());
-          sprintf(data_to_send, "/start?time=%d&rate=%d&filename=%s&input=%s&time=%s", m_args.sampling_time, m_args.rate, log_name_dune.c_str(), m_args.input_data.c_str(), m_buffer_time);
+          sprintf(data_to_send, "/start?time=%d&rate=%d&filename=%s&input=%s&unix_time=%s", m_args.sampling_time, m_args.rate, log_name_dune.c_str(), m_args.input_data.c_str(), m_buffer_time);
           m_conn->request( "GET", data_to_send, 0, 0, 0);
           while( m_conn->outstanding() && !stopping())
             m_conn->pump();
 
-          war("Response body has %d bytes - %d.", m_conn->bodySize(), happyhttp::getStatusValue());
+          inf("Response body has %d bytes - %d.", m_conn->bodySize(), happyhttp::getStatusValue());
           inf("Data Send: %s", data_to_send);
           m_conn->close();
         }
         else if (mode == SEND_STOP)
         {
-          war("Sending: stop");
+          inf("Sending: stop");
           m_conn->request( "GET", "/stop", 0, 0, 0);
-
           m_conn->close();
         }
-      }
-
-      void
-      currentDateTimeMili()
-      {
-        time_t now;
-        struct tm *current;
-        struct timeval detail_time;
-        gettimeofday(&detail_time,NULL);
-        now = time(0);
-        current = localtime(&now);
-        memset(&m_buffer_time, '\0', sizeof(m_buffer_time));
-        std::sprintf(m_buffer_time, "%d:%d:%d.%ld", current->tm_hour - 1, current->tm_min, current->tm_sec, detail_time.tv_usec/1000);
       }
 
       void tryConnectToServer()
