@@ -98,7 +98,8 @@ namespace DUNE
       //! @param[in] msg sonar distance message
       //! @param[in] state estimatedstate message
       //! @param[in] cparcel control parcel message
-      void
+      //! @return true if slope was estimated, false otherwise.
+      bool
       onDistance(const IMC::Distance* msg, const IMC::EstimatedState& state, IMC::ControlParcel& cparcel)
       {
         if (!m_sonar_conf && msg->location.size())
@@ -114,14 +115,20 @@ namespace DUNE
             m_sonar_entity = msg->getSourceEntity();
 
             if (msg->validity == IMC::Distance::DV_VALID)
+            {
               update(msg->value, state, cparcel);
+              return true;
+            }
           }
         }
         else if ((m_sonar_entity == msg->getSourceEntity()) &&
                  (msg->validity == IMC::Distance::DV_VALID))
         {
           update(msg->value, state, cparcel);
+          return true;
         }
+
+        return false;
       }
 
       //! Update slope top

@@ -263,6 +263,8 @@ namespace DUNE
       bool m_valid_alt;
       //! Last time main routine was ran
       float m_last_run;
+      //! True if slope was estimated.
+      bool m_slope;
       //! Control parcel message for debug
       DUNE::IMC::ControlParcel m_cparcel;
     };
