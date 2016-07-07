@@ -38,7 +38,7 @@ namespace DUNE
   namespace Utils
   {
     //! Blank characters.
-    static const std::string BLANK_CHARACTERS = " \n\r\t";
+    static const std::string c_blank = " \n\r\t";
 
     std::string
     String::filterDuplicates(char element, const std::string& subject)
@@ -68,7 +68,7 @@ namespace DUNE
     String::ltrim(const std::string& s)
     {
       size_t first = 0;
-      first = s.find_first_not_of(BLANK_CHARACTERS);
+      first = s.find_first_not_of(c_blank);
 
       if (first != std::string::npos)
         return s.substr(first);
@@ -91,7 +91,7 @@ namespace DUNE
     {
       size_t last = 0;
 
-      last = s.find_last_not_of(BLANK_CHARACTERS);
+      last = s.find_last_not_of(c_blank);
 
       if (last != std::string::npos)
         return s.substr(0, last + 1);
