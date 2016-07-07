@@ -229,6 +229,7 @@ namespace Transports
           m_comm_limitations = false;
         }
 
+        m_args.messages.push_back("HistoricData");
         // Register normal messages.
         bind(this, m_args.messages);
       }
