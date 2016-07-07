@@ -147,11 +147,14 @@ namespace Actuators
 
           option = String::str("Motor %u - Orientation", i);
           param(option, m_args.ifactor_orientation[i])
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("1")
+          .values("-1, 1")
           .description("Motor Orientation ( 1, -1 )");
 
           option = String::str("Motor %u - State", i);
           param(option, m_args.motor_state[i])
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Motor State");
         }
@@ -476,10 +479,7 @@ namespace Actuators
         {
           if (m_parse->m_motor.state[i] && m_args.motor_state[i])
           {
-            if (i < 2)
-              setRPM(i, m_args.ifactor_orientation[i] * m_act[0]);
-            else
-              setRPM(i, m_args.ifactor_orientation[i] * m_act[1]);
+            setRPM(i, m_args.ifactor_orientation[i] * m_act[(unsigned)std::floor(i / 2.0)]);
           }
         }
       }

@@ -179,9 +179,6 @@ namespace Control
         IMC::DesiredPath m_dpath;
         //! DesiredPath message
         IMC::ControlLoops m_controllps;
-        //! Localization origin (WGS-84)
-        fp64_t m_ref_lat, m_ref_lon;
-        fp32_t m_ref_hae;
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
         //! System ID
@@ -192,6 +189,10 @@ namespace Control
         float m_hae_msl;
         //! Height offset to convert to WGS-84 ellipsoid.
         float m_hae_offset;
+        //! Flag indicating task is booting.
+        bool m_reboot;
+        //! Flag indicating MSL-WGS84 offset has already been calculated.
+        bool m_offset_st;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -226,15 +227,14 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
-          m_ref_lat(0.0),
-          m_ref_lon(0.0),
-          m_ref_hae(0.0),
           m_TCP_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
           m_hae_msl(0.0),
           m_hae_offset(0.0),
+          m_reboot(true),
+          m_offset_st(false),
           m_external(true),
           m_current_wp(0),
           m_critical(false),
@@ -996,8 +996,8 @@ namespace Control
 
           m_changing_wp = true;
 
-          m_pcs.start_lat = Angles::radians(m_lat);
-          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_lat = m_lat;
+          m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
@@ -1029,8 +1029,8 @@ namespace Control
           // Convert altitude to geoid height (MSL).
           sendCommandPacket(MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, alt - m_hae_offset);
 
-          m_pcs.start_lat = Angles::radians(m_lat);
-          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_lat = m_lat;
+          m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
@@ -1160,8 +1160,8 @@ namespace Control
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
 
-          m_pcs.start_lat = Angles::radians(m_lat);
-          m_pcs.start_lon = Angles::radians(m_lon);
+          m_pcs.start_lat = m_lat;
+          m_pcs.start_lon = m_lon;
           m_pcs.start_z = getHeight();
           m_pcs.start_z_units = IMC::Z_HEIGHT;
 
@@ -1243,6 +1243,9 @@ namespace Control
         consume(const IMC::VehicleMedium* vm)
         {
           m_ground = (vm->medium == IMC::VehicleMedium::VM_GROUND);
+
+          if (!m_ground)
+            m_offset_st = false;
         }
 
         void
@@ -1673,52 +1676,36 @@ namespace Control
           mavlink_global_position_int_t gp;
           mavlink_msg_global_position_int_decode(msg, &gp);
 
-          // We need to wait untill we know the vehicle type to handle this
+          // We need to wait until we know the vehicle type to handle this
           if (m_vehicle_type == VEHICLE_UNKNOWN)
             return;
 
-          double lat = Angles::radians((double)gp.lat * 1e-07);
-          double lon = Angles::radians((double)gp.lon * 1e-07);
+          m_lat = Angles::radians((double)gp.lat * 1e-07);
+          m_lon = Angles::radians((double)gp.lon * 1e-07);
+          m_hae_msl = (double) gp.alt * 1e-3;   //MSL
 
-          m_lat = (double)gp.lat * 1e-07;
-          m_lon = (double)gp.lon * 1e-07;
-          if (m_vehicle_type == VEHICLE_COPTER)
-            m_hae_msl = (double) gp.alt * 1.0e-3;
-
-          double d = WGS84::distance(m_ref_lat, m_ref_lon, m_ref_hae,
-                                     lat, lon, getHeight());
-
-          if (d > 1000.0)
+          if (m_args.convert_msl)
           {
-            if (m_args.convert_msl)
+            if ((m_ground && !m_offset_st) || m_reboot)
             {
               Coordinates::WMM wmm(m_ctx.dir_cfg);
-              m_hae_offset = wmm.height(lat, lon);
+              m_hae_offset = wmm.height(m_lat, m_lon);
+              m_reboot = false;
+              m_offset_st = true;
             }
-            else
-            {
-              m_hae_offset = 0;
-            }
-
-            m_estate.lat = lat;
-            m_estate.lon = lon;
-            m_estate.height = getHeight();
-
-            m_estate.x = 0;
-            m_estate.y = 0;
-            m_estate.z = 0;
-
-            m_ref_lat = lat;
-            m_ref_lon = lon;
-            m_ref_hae = getHeight();
-
           }
           else
           {
-            WGS84::displacement(m_ref_lat, m_ref_lon, m_ref_hae,
-                                lat, lon, getHeight(),
-                                &m_estate.x, &m_estate.y, &m_estate.z);
+            m_hae_offset = 0;
           }
+
+          m_estate.lat = m_lat;
+          m_estate.lon = m_lon;
+          m_estate.height = getHeight();
+
+          m_estate.x = 0;
+          m_estate.y = 0;
+          m_estate.z = 0;
 
           m_estate.vx = 1e-02 * gp.vx;
           m_estate.vy = 1e-02 * gp.vy;
@@ -1730,13 +1717,8 @@ namespace Control
                                       m_estate.vx, m_estate.vy, m_estate.vz,
                                       &m_estate.u, &m_estate.v, &m_estate.w);
 
+          m_estate.alt = (double) gp.relative_alt * 1e-3;   //AGL (relative to home altitude)
           m_estate.depth = -1;
-          m_estate.alt = -1;
-
-          if (m_vehicle_type == VEHICLE_COPTER)
-            m_estate.alt = gp.relative_alt * 1e-3;
-
-
         }
 
         float
@@ -2199,8 +2181,6 @@ namespace Control
           ias.value = (fp64_t)vfr_hud.airspeed;
           gs.value = (fp64_t)vfr_hud.groundspeed;
           m_gnd_speed = (int)vfr_hud.groundspeed;
-          if (m_vehicle_type != VEHICLE_COPTER)
-            m_hae_msl = vfr_hud.alt;
 
           dispatch(ias);
           dispatch(gs);

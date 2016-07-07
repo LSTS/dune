@@ -59,7 +59,8 @@ namespace DUNE
   {
     BottomTracker::BottomTracker(const Arguments* args):
       m_args(args),
-      m_active(false)
+      m_active(false),
+      m_slope(false)
     {
       m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
                               m_args->safe_pitch, m_args->slope_hyst);
@@ -114,7 +115,8 @@ namespace DUNE
     BottomTracker::onDistance(const IMC::Distance* msg)
     {
       // Use control parcel for debug
-      m_sdata->onDistance(msg, m_estate, m_cparcel);
+      if (m_sdata->onDistance(msg, m_estate, m_cparcel))
+        m_slope = true;
     }
 
     void
@@ -179,7 +181,11 @@ namespace DUNE
         m_last_run = Time::Clock::get();
 
         // dispatch debug message
-        m_args->entity->dispatch(m_cparcel, Tasks::DF_KEEP_TIME);
+        if (m_slope)
+        {
+          m_args->entity->dispatch(m_cparcel, Tasks::DF_KEEP_TIME);
+          m_slope = false;
+        }
       }
     }
 

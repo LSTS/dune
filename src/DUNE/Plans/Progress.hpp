@@ -87,6 +87,16 @@ namespace DUNE
       compute(const IMC::Rows* maneuver, const IMC::ManeuverControlState* mcs,
               const std::vector<float>& durations, float total_duration);
 
+      //! Compute progress of RowsCoverage maneuver
+      //! @param[in] maneuver pointer to maneuver message
+      //! @param[in] mcs pointer to ManeuverControlState message
+      //! @param[in] durations reference to durations vector
+      //! @param[in] total_duration full duration of the plan
+      //! @return time left in seconds
+      static float
+      compute(const IMC::RowsCoverage* maneuver, const IMC::ManeuverControlState* mcs,
+              const std::vector<float>& durations, float total_duration);
+
     public:
       //! Compute a plan's progress from maneuver and ManeuverControlState
       //! @param[in] man pointer to maneuver message
