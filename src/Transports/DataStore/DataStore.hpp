@@ -119,7 +119,7 @@ namespace Transports
     void
     parse(const IMC::HistoricData* data, std::vector<DataSample*>& samples, std::vector<RemoteCommand*>& commands)
     {
-      MessageList<RemoteData>::const_iterator it;
+      IMC::MessageList<RemoteData>::const_iterator it;
 
       for (it = data->data.begin(); it != data->data.end(); it++)
       {

@@ -189,17 +189,17 @@ namespace Transports
       {
         if (msg->getId() == EstimatedState::getIdStatic())
         {
-          m_router.process(static_cast<const IMC::EstimatedState*>(msg));
-          process(static_cast<const IMC::EstimatedState*>(msg));
+          m_router.process(static_cast<const IMC::EstimatedState*>(msg->clone()));
+          process(static_cast<const IMC::EstimatedState*>(msg->clone()));
         }
         else if (msg->getId() == HistoricData::getIdStatic())
-          process(static_cast<const IMC::HistoricData*>(msg));
+          process(static_cast<const IMC::HistoricData*>(msg->clone()));
         else if (msg->getId() == HistoricDataQuery::getIdStatic())
-          process(static_cast<const IMC::HistoricDataQuery*>(msg));
+          process(static_cast<const IMC::HistoricDataQuery*>(msg->clone()));
         else if (msg->getId() == UamRxFrame::getIdStatic())
-          m_router.process(static_cast<const IMC::UamRxFrame*>(msg));
+          m_router.process(static_cast<const IMC::UamRxFrame*>(msg->clone()));
         else if (msg->getId() == Announce::getIdStatic())
-          m_router.process(static_cast<const IMC::Announce*>(msg));
+          m_router.process(static_cast<const IMC::Announce*>(msg->clone()));
 
         // only store messages with some defined priority (transported)
         if (m_priorities.find(msg->getName()) == m_priorities.end())
@@ -258,12 +258,9 @@ namespace Transports
           return;
 
         if (!m_ctx.resolver.isLocal(msg->getSource()))
-        {
-          inf("Received %lu samples from %s.", msg->data.size(), resolveSystemId(msg->getSource()));
-          msg->toJSON(std::cout);
-        }
+          debug("Received %lu items from %s.", msg->data.size(), resolveSystemId(msg->getSource()));
         else
-          debug("Adding %lu samples from %s (%d) to data store.", msg->data.size(),
+          debug("Adding %lu items from %s (%d) to data store.", msg->data.size(),
                 m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
 
         // add all data to local store
@@ -292,7 +289,7 @@ namespace Transports
           {
             m_sending[source] = static_cast<IMC::HistoricData*>(data->clone());
             reply.data.set(data);
-            delete data;
+            Memory::clear(data);
           }
 
           if (m_ctx.resolver.isLocal(msg->getSource()))
@@ -325,6 +322,7 @@ namespace Transports
             debug("No previously queried data to clear.");
           }
         }
+        Memory::clear(msg);
       }
 
       void

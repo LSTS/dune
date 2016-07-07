@@ -61,6 +61,7 @@ namespace Transports
         Concurrency::ScopedRWLock l(m_lock, true);
         std::string name = String::str(m_parent->resolveSystemId(msg->getSource()));
         m_states[name] = *msg;
+        Memory::clear(msg);
       }
 
       void
@@ -68,6 +69,7 @@ namespace Transports
       {
         Concurrency::ScopedRWLock l(m_lock, true);
         m_acousticVisibility[msg->sys_src] = msg->getTimeStamp();
+        Memory::clear(msg);
       }
 
       void
@@ -75,6 +77,7 @@ namespace Transports
       {
         Concurrency::ScopedRWLock l(m_lock, true);
         m_wifiVisibility[msg->sys_name] = *msg;
+        Memory::clear(msg);
       }
 
 
