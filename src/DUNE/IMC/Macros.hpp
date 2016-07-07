@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c2f889e53b9d70fdd28a9f839289af4a                            *
+// IMC XML MD5: 82d995ea19249b2dcead077e3d43741a                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -244,6 +244,8 @@
 #define DUNE_IMC_DISSOLVEDOXYGEN 295
 //! AirSaturation identification number.
 #define DUNE_IMC_AIRSATURATION 296
+//! Throttle identification number.
+#define DUNE_IMC_THROTTLE 297
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -414,6 +416,14 @@
 #define DUNE_IMC_SCHEDULEDGOTO 487
 //! RowsCoverage identification number.
 #define DUNE_IMC_ROWSCOVERAGE 488
+//! Sample identification number.
+#define DUNE_IMC_SAMPLE 489
+//! ImageTracking identification number.
+#define DUNE_IMC_IMAGETRACKING 490
+//! Takeoff identification number.
+#define DUNE_IMC_TAKEOFF 491
+//! Land identification number.
+#define DUNE_IMC_LAND 492
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
