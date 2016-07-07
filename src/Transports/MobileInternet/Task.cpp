@@ -96,7 +96,6 @@ namespace Transports
       bool ip_fwd;
       //! Enable USB Mode switch (USB pen).
       bool usb_mode_switch;
-
     };
 
     struct Task: public Tasks::Task
@@ -169,23 +168,12 @@ namespace Transports
         .defaultValue("AT\\^SYSCFG=2,2,3fffffff,0,1")
         .description("GSM/GPRS mode.");
 
-<<<<<<< HEAD
         param("USB Mode Switch", m_args.usb_mode_switch)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("USB mode switch required");
 
-
-||||||| merged common ancestors
-=======
-        param("USB Mode Switch", m_args.usb_mode_switch)
-        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("true")
-        .description("USB mode switch required");
-
->>>>>>> feature/gsm_net
         param("PPP - Interface", m_args.ppp_interface)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
@@ -308,17 +296,9 @@ namespace Transports
         if (std::system(m_command_connect.c_str()) == -1)
         {
           err(DTR("failed to execute connect command"));
-<<<<<<< HEAD
           return false;
         }
         return true;
-
-||||||| merged common ancestors
-=======
-          return false;
-        }
-        return true;
->>>>>>> feature/gsm_net
       }
 
       bool
@@ -381,22 +361,11 @@ namespace Transports
           case SM_ACT_BEGIN:
             debug("starting activation sequence");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-<<<<<<< HEAD
-            if (!m_args.power_channel.empty())
-              m_sm_state = SM_ACT_POWER_ON;
-            else
-              m_sm_state = SM_ACT_MODEM_WAIT;
-            /* no break */
-||||||| merged common ancestors
-            m_sm_state = SM_ACT_POWER_ON;
-            // Fall through.
-=======
             if (!m_args.power_channel.empty())
              m_sm_state = SM_ACT_POWER_ON;
             else
               m_sm_state = SM_ACT_MODEM_WAIT;
             /* no break */
->>>>>>> feature/gsm_net
 
           case SM_ACT_POWER_ON:
             turnPowerOn();
