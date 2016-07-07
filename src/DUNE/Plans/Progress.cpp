@@ -32,7 +32,7 @@ namespace DUNE
 {
   namespace Plans
   {
-    const std::string WAYPOINT_STR = "waypoint";
+    static const std::string c_waypoint_str = "waypoint";
 
     bool
     Progress::getPoint(const IMC::ManeuverControlState* mcs, unsigned& number)
@@ -53,7 +53,7 @@ namespace DUNE
         name = Utils::String::trim(name);
         Utils::String::toLowerCase(name);
 
-        if (!WAYPOINT_STR.compare(name))
+        if (c_waypoint_str == name)
         {
           number = std::atoi(itr->back().c_str());
           return true;
