@@ -171,7 +171,7 @@ namespace Transports
         param("USB Mode Switch", m_args.usb_mode_switch)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("false")
+        .defaultValue("true")
         .description("USB mode switch required");
 
         param("PPP - Interface", m_args.ppp_interface)
