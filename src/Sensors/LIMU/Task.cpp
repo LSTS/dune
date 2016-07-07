@@ -197,17 +197,14 @@ namespace Sensors
         for (unsigned i = 0; i < c_axes_count; i++)
           m_hard_iron[i] = data(i);
 
-        if (m_ctl == NULL)
-          return;
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
 
         if (paramChanged(m_args.hard_iron) || paramChanged(m_args.rotation_mx))
           setHardIronFactors();
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
-
-        if (paramChanged(m_args.timeout_error))
-          m_wdog.setTop(m_args.timeout_error);
       }
 
       //! Acquire resources.
@@ -252,6 +249,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         setHardIronFactors();
         setOutputFrequency(m_args.output_frq);
       }
@@ -285,6 +283,9 @@ namespace Sensors
       void
       setOutputFrequency(uint8_t frequency)
       {
+        if (m_ctl == NULL)
+          return;
+
         if (m_args.raw_data)
           frequency |= 0x80;
 
@@ -301,6 +302,9 @@ namespace Sensors
       void
       getHardIronFactors(void)
       {
+        if (m_ctl == NULL)
+          return;
+
         UCTK::Frame frame;
         frame.setId(PKT_ID_HARD_IRON);
         if (m_ctl->sendFrame(frame))
@@ -325,6 +329,9 @@ namespace Sensors
       void
       setHardIronFactors(void)
       {
+        if (m_ctl == NULL)
+          return;
+
         double factors[c_axes_count];
         factors[0] = m_hard_iron[0];
         factors[1] = m_hard_iron[1];
@@ -472,8 +479,6 @@ namespace Sensors
       void
       decode(const UCTK::Frame& frame)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
         switch (frame.getId())
         {
           case PKT_ID_OUTPUT_DATA:
@@ -545,6 +550,7 @@ namespace Sensors
                                        m_faults_count,
                                        (unsigned)frequency);
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
         m_state_timer.reset();
         m_sample_count = 0;
       }

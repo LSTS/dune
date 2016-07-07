@@ -94,6 +94,12 @@ namespace Transports
         return m_active_count;
       }
 
+      bool
+      isActive(unsigned system)
+      {
+        return m_table.find(system) != m_table.end();
+      }
+
       void
       send(UDPSocket& sock, const uint8_t* data, unsigned data_len, unsigned msgid)
       {
@@ -113,6 +119,22 @@ namespace Transports
 
         for (Table::iterator itr = m_table.begin(); itr != m_table.end(); ++itr)
           itr->second.send(sock, data, data_len);
+      }
+
+      void
+      sendTo(unsigned destination, UDPSocket& sock, const uint8_t* data, unsigned data_len, unsigned msgid)
+      {
+        Table::iterator it = m_table.find(destination);
+        if (it == m_table.end())
+          return;
+
+        if (m_lcomms != NULL && m_lcomms->isActive())
+        {
+          if (!(m_lcomms->isNodeWithinRange(destination, msgid)))
+            return;
+        }
+
+        it->second.forceSend(sock, data, data_len);
       }
 
       void

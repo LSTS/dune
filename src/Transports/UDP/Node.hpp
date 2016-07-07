@@ -153,6 +153,20 @@ namespace Transports
         { }
       }
 
+      void
+      forceSend(UDPSocket& sock, const uint8_t* data, unsigned data_len)
+      {
+        std::map<Address, unsigned>::iterator it;
+        for (it = m_addrs.begin(); it != m_addrs.end(); it++) {
+          try
+          {
+            sock.write(data, data_len, it->first, it->second);
+          }
+          catch (...)
+          { }
+        }
+      }
+
     private:
       // Node name.
       std::string m_name;
