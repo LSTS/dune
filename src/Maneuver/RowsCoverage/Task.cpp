@@ -39,7 +39,6 @@ namespace Maneuver
     {
       //! Altitude Moving Average Samples
       double altitude_average_size;
-
       //! Minimum altitude values to consider for average
       double min_altitude;
     };
@@ -79,6 +78,7 @@ namespace Maneuver
         m_cov_pred(0),
         m_cov_actual_min(0),
         m_cur_hstep(0),
+        m_alt_avrg(NULL),
         m_stage(0)
       {
         param("Altitude Moving Average Samples", m_args.altitude_average_size)
@@ -90,8 +90,6 @@ namespace Maneuver
         .defaultValue("0.3")
         .minimumValue("0")
         .description("Process measured altitude values only if above this threshold");
-
-        m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
 
         bindToManeuver<Task, IMC::RowsCoverage>();
         bind<IMC::EstimatedState>(this);
@@ -169,7 +167,8 @@ namespace Maneuver
         if (msg->alt > m_args.min_altitude)
         {
           m_alt_avrg->update(msg->alt);
-          if (m_alt_avrg->sampleSize() >= m_alt_avrg->windowSize()) {
+          if (m_alt_avrg->sampleSize() >= m_alt_avrg->windowSize())
+          {
             float avg = m_alt_avrg->mean();
             if (m_alt_min < 0)
               m_alt_min = avg;
@@ -200,7 +199,8 @@ namespace Maneuver
         double lon;
 
         bool last_pt;
-        switch (m_stage) {
+        switch (m_stage)
+        {
           case 2:
             m_alt_min = std::min(m_alt_min, m_alt_avrg->mean());
             if (m_alt_min > 0)
@@ -231,7 +231,7 @@ namespace Maneuver
         }
 
         m_stage++;
-        unsigned int num_stages = (m_maneuver.flags & IMC::RowsCoverage::FLG_SQUARE_CURVE)? 3 : 2;
+        unsigned num_stages = (m_maneuver.flags & IMC::RowsCoverage::FLG_SQUARE_CURVE) ? 3 : 2;
 
         if (m_stage > num_stages)
           m_stage = 1;
