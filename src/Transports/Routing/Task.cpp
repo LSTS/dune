@@ -99,8 +99,6 @@ namespace Transports
       float sink_lat;
       //! sink longitude.
       float sink_lon;
-      //! True if the node is sink
-      bool i_am_sink;
       //! ID of the sink
       std::string sys_sink;
     };
@@ -135,15 +133,22 @@ namespace Transports
       float m_dist_from_sink;
       //! HistoricData request id
       unsigned m_request_id;
+      //! Whether this node is the sink
+      bool m_i_am_sink;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
+        m_progress(0),
+        m_fuel_level(0),
+        m_fuel_conf(0),
         m_seq(0),
         m_last_acop(NULL),
-        m_request_id(0)
+        m_dist_from_sink(0),
+        m_request_id(0),
+        m_i_am_sink(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -181,11 +186,6 @@ namespace Transports
         .defaultValue("0.0")
         .description("Sink Longitude");
 
-        param(DTR_RT("I am Sink"), m_args.i_am_sink)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .defaultValue("false")
-        .description("If the node is sink");
-
         param(DTR_RT("Sink"), m_args.sys_sink)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("0")
@@ -219,6 +219,7 @@ namespace Transports
         {
           m_rep_timer.setTop(m_args.report_period);
           m_data_timer.setTop(m_args.data_period);
+          m_i_am_sink = m_args.sys_sink == String::str(getSystemName());
         }
       }
 
@@ -699,7 +700,7 @@ namespace Transports
         dat.fuel_level = (uint8_t)m_fuel_level;
         dat.fuel_conf = (uint8_t)m_fuel_conf;
         dat.progress = (int8_t)m_progress;
-        dat.i_am_sink = m_args.i_am_sink;
+        dat.i_am_sink = m_i_am_sink;
 
         std::vector<uint8_t> data;
         data.resize(sizeof(dat) + 1);
@@ -744,7 +745,7 @@ namespace Transports
       void
       sendData(void)
       {
-        if (m_args.i_am_sink)
+        if (m_i_am_sink)
           return;
 
         debug("Querying data store for data to send.");
@@ -808,9 +809,8 @@ namespace Transports
       {
         //! Calculates the weight value for each neighbor
         //! considering the distance and fuel level
-        //!But now it is only distance
-        float dist,depDif;
-        uint8_t depth = (uint8_t)m_estate.depth;
+        //! But now it is only distance
+        float dist;
         double lat = 0;
         double lon = 0;
         Coordinates::toWGS84(m_estate, lat, lon);
