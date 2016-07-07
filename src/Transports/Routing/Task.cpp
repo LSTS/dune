@@ -70,8 +70,9 @@ namespace Transports
       CODE_PLAN    = 0x02,
       CODE_REPORT  = 0x03,
       CODE_RESTART = 0x04,
-      CODE_DATA    = 0x05
+      CODE_RAW     = 0x05
     };
+
 
     struct Report
     {
@@ -132,6 +133,8 @@ namespace Transports
       unsigned m_neighbor_count;
       //! Distance from sink
       float m_dist_from_sink;
+      //! HistoricData request id
+      unsigned m_request_id;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -139,7 +142,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_seq(0),
-        m_last_acop(NULL)
+        m_last_acop(NULL),
+        m_request_id(0)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -198,6 +202,7 @@ namespace Transports
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
         bind<IMC::AcousticLink>(this);
+        bind<IMC::HistoricDataQuery>(this);
       }
 
 
@@ -393,9 +398,8 @@ namespace Transports
           case CODE_PLAN:
             recvPlanControl(imc_addr_src, imc_addr_dst, msg);
             break;
-          case CODE_DATA:
-            if (imc_addr_src!=imc_addr_dst)
-              recvData(imc_addr_src, imc_addr_dst, msg);
+          case CODE_RAW:
+            recvMessage(imc_addr_src, imc_addr_dst, msg);
             break;
             /**************************************************/
         }
@@ -569,13 +573,59 @@ namespace Transports
           case DUNE_IMC_PLANCONTROL:
             sendPlanControl(sys, static_cast<const IMC::PlanControl*>(msg));
             break;
+          default:
+            sendRawMessage(sys, msg);
+            break;
         }
       }
 
       void
-      recvMessage(const IMC::UamRxFrame* msg)
+      sendRawMessage(const std::string& sys, const IMC::Message * msg)
       {
-        (void)msg;
+        std::vector<uint8_t> data;
+        data.push_back(CODE_RAW);
+
+        // leave 1 byte for CODE_RAW and another for CRC8
+        uint8_t buf[1022];
+
+        // start with message id
+        uint16_t id = msg->getId();
+        std::memcpy(&buf[0], &id, sizeof(uint16_t));
+
+        // followed by all message fields
+        uint8_t* end = msg->serializeFields(&buf[2]);
+
+        int length = end - buf;
+        data.insert(data.end(), buf, buf + length);
+        sendFrame(sys, data, true);
+      }
+
+      void
+      recvMessage(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
+      {
+        debug("Parsing message received via acoustic message.");
+
+        try
+        {
+          uint16_t msg_type;
+          std::memcpy(&msg_type, &msg->data[2], sizeof(uint16_t));
+          Message *m = IMC::Factory::produce(msg_type);
+          if (m == NULL)
+          {
+            err("Invalid message type received: %d", msg_type);
+            return;
+          }
+
+          m->setSource(imc_src);
+          m->setDestination(imc_dst);
+          m->setTimeStamp(msg->getTimeStamp());
+          m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
+          dispatch(m, DF_KEEP_TIME);
+          debug("Acoustic message successfully parsed as '%s'.", m->getName());
+        }
+        catch (std::exception& ex) {
+          err("Error parsing raw message from UAM frame: %s.", ex.what());
+        }
       }
 
       void
@@ -694,28 +744,32 @@ namespace Transports
       void
       sendData(void)
       {
-        /*
-        Data dat;
-        std::vector<uint8_t> data;
-        data.resize(sizeof(dat) + 1);
-        data[0] = CODE_DATA;
-        std::memcpy(&data[1], &dat, sizeof(dat));
-        */
+        if (m_args.i_am_sink)
+          return;
+
+        debug("Querying data store for data to send.");
+        IMC::HistoricDataQuery query;
+        query.max_size = 1000;
+        query.req_id = m_request_id++;
+        query.type = IMC::HistoricDataQuery::HRTYPE_QUERY;
+        dispatch(query);
       }
 
       void
-      recvData(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
+      consume(const IMC::HistoricDataQuery* msg)
       {
-        (void)imc_src;
-        (void)imc_dst;
-        /*
-        Data dat;
-        std::memcpy(&dat, &msg->data[2], sizeof(dat));
-        std::vector<uint8_t> data;
-        data.resize(sizeof(dat) + 1);
-        data[0] = CODE_DATA;
-        std::memcpy(&data[1], &dat, sizeof(dat));
-        */
+        if (msg->getDestinationEntity() != getEntityId() || msg->getDestination() != getSystemId())
+        {
+          spew("Not processing HistoricData for other entity.");
+          return;
+        }
+
+        if (msg->type == IMC::HistoricDataQuery::HRTYPE_REPLY)
+        {
+          std::string relay = findRelay();
+          inf("Sending data to relay (%s)", relay.c_str());
+          sendRawMessage(relay, msg->data.get());
+        }
       }
 
       std::string
