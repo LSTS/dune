@@ -164,6 +164,9 @@ namespace Maneuver
         if (msg->getSource() != getSystemId())
           return;
 
+        if (m_alt_avrg == NULL)
+          return;
+
         if (msg->alt > m_args.min_altitude)
         {
           m_alt_avrg->update(msg->alt);
@@ -183,6 +186,9 @@ namespace Maneuver
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
+        if (m_alt_avrg == NULL)
+          return;
+
         std::stringstream ss;
         ss << "waypoint=" << m_stages_parser->getIndex();
         ss << "; stage=" << m_stage;
