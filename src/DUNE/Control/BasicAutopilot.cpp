@@ -67,7 +67,7 @@ namespace DUNE
       .description("Timeout for ignoring invalid altitude");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
-
+      m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_min_alt);
       // Initialize entity state.
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
@@ -178,6 +178,12 @@ namespace DUNE
         m_vertical_mode = VERTICAL_MODE_ALTITUDE;
         // Avoid possible rough transition when changing from depth to altitude
         m_bottom_follow_depth = m_estate.depth;
+
+        if (m_vertical_ref < m_min_alt)
+        {
+          m_vertical_ref = m_min_alt;
+          war(DTR("limiting altitude to %.1f"), m_min_alt);
+        }
 
         // reset altitude timer
         m_timer_alt.setTop(m_alt_timeout);
