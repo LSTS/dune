@@ -45,6 +45,9 @@ using std::tan;
 
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
+//! Altitude hysteresis.
+static const float c_alt_hyst = 0.2;
+
 //! State to string for debug messages
 static const std::string c_str_states[] = {DTR_RT("Idle"), DTR_RT("Tracking"),
                                            DTR_RT("Depth"), DTR_RT("LimitDepth"),
@@ -534,7 +537,8 @@ namespace DUNE
       // check if buoyancy has pulled the vehicle up to a safe depth/altitude
       if (!m_sdata->isTooSteep() && !m_sdata->isRangeLow())
       {
-        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value))
+        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value) &&
+            m_estate.alt >= m_args->min_alt + c_alt_hyst)
         {
           debug("above altitude reference and slope is safe");
 
