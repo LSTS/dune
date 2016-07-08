@@ -46,6 +46,8 @@ namespace DUNE
     static const char* c_no_alt = DTR_RT("no valid altitude measurements");
     //! Depth margin when checking for maximum admissible depth
     static const float c_depth_margin = 1.0;
+    //! Altitude margin when checking for minimum admissible altitude.
+    static const float c_alt_margin = 0.2;
 
     BasicAutopilot::BasicAutopilot(const std::string& name, Tasks::Context& ctx,
                                    const uint32_t controllable_loops, const uint32_t required_loops):
@@ -179,10 +181,12 @@ namespace DUNE
         // Avoid possible rough transition when changing from depth to altitude
         m_bottom_follow_depth = m_estate.depth;
 
-        if (m_vertical_ref < m_min_alt)
+        float limit = m_min_alt + c_alt_margin;
+
+        if (m_vertical_ref < limit)
         {
-          m_vertical_ref = m_min_alt;
-          war(DTR("limiting altitude to %.1f"), m_min_alt);
+          m_vertical_ref = limit;
+          war(DTR("limiting altitude to %.1f"), limit);
         }
 
         // reset altitude timer
