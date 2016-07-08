@@ -291,6 +291,7 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        m_driver->setControl();
         m_driver->setAddress(m_address);
         m_driver->setSourceLevel(m_args.source_level);
         m_driver->setLowGain(m_args.low_gain);
