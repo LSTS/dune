@@ -61,7 +61,9 @@ Sensors.prototype.m_msgs =
         'Rpm':
         {
             'label': 'RPMs'
-        }
+        },
+        'PH':{},
+        'Redox':{}
     };
 
 Sensors.prototype.updateSubSection = function(msg)

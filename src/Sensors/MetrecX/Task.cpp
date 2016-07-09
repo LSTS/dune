@@ -29,6 +29,7 @@
 // ISO C++ 98 headers.
 #include <cstring>
 #include <cstdio>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -49,6 +50,9 @@ namespace Sensors
   namespace MetrecX
   {
     using DUNE_NAMESPACES;
+
+    //! Internal temperature presence timeout.
+    static const float c_temp_tout = 5.0f;
 
     //! Commands
     static const char* c_cmd_ops[] = { "DENSITY", "SALINITY", "SV" };
@@ -74,7 +78,7 @@ namespace Sensors
       DSF_PRESSURE = 8
     };
 
-    //! Internal Channal Options indexes.
+    //! Internal Channel Options indexes.
     enum InternalIndex
     {
       ICM_DENSITY = 0,
@@ -94,6 +98,14 @@ namespace Sensors
     static const unsigned c_total = c_channels + c_in_count;
     //! Const to transform dbar to Bar.
     static const unsigned c_dbar_to_bar = 10;
+    //! Redox mV offset
+    static const unsigned c_redox_offset = 2500;
+    //! PH: Nernst value in Volts at 20ºC.
+    static const float c_nernst20 = 58.168f;
+    //! PH: Nernst value in Volts at 0ºC
+    static const float c_nernst0 = 54.2f;
+    //! PH: voltage per PH unit per degree.
+    static const float c_vperph = 0.1984f;
 
     //! %Task arguments.
     struct Arguments
@@ -112,6 +124,14 @@ namespace Sensors
       std::string labels[c_channels];
       //! Conversion factors.
       double factors[c_channels];
+      //! pH variable - Calibration buffer value.
+      double calbuffer;
+      //! pH variable - pH Vout during calibration in V.
+      double offset;
+      //! pH variable - pH slope in V. Depends on pH range.
+      double slope;
+      //! External temperature entity label.
+      std::string elabel_temp;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -134,6 +154,12 @@ namespace Sensors
       bool m_ready_sspe;
       //! Task arguments.
       Arguments m_args;
+      //! Internal temperature presence watchdog.
+      Counter<double> m_temp_wdog;
+      //! Temperature entity id.
+      unsigned m_temp_eid;
+      //! Temperature for pH calculation
+      float m_temp;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -198,6 +224,23 @@ namespace Sensors
           .description("Analogic channel conversion factor");
         }
 
+        param("Entity Label - Temperature Backup", m_args.elabel_temp)
+        .description("Entity label of the temperature backup");
+
+        param("PH Calibration Buffer", m_args.calbuffer)
+        .defaultValue("7.0")
+        .description("Buffer value corrected in fuction of the temperature used during calibration");
+
+        param("PH Voltage Calibration Reading", m_args.offset)
+        .defaultValue("2.496")
+        .units(Units::Volt)
+        .description("pH Vout during calibration in V");
+
+        param("PH Slope", m_args.slope)
+        .defaultValue("0.634")
+        .units(Units::Volt)
+        .description("pH slope in V. Depends on the selected pH range");
+
         // initialize variables.
         for (unsigned i = 0; i < c_total; ++i)
         {
@@ -205,12 +248,14 @@ namespace Sensors
           m_slots[i] = false;
         }
 
+        m_temp_wdog.setTop(c_temp_tout);
         m_ready_cond = false;
         m_ready_sspe = false;
         m_need_setup = true;
         m_lat = 0.0;
 
         bind<IMC::EstimatedState>(this);
+        bind<IMC::Temperature>(this);
       }
 
       ~Task(void)
@@ -223,9 +268,37 @@ namespace Sensors
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_temp_eid = resolveEntity(m_args.elabel_temp);
+        }
+        catch (...)
+        {
+          m_temp_eid = UINT_MAX;
+        }
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_lat = msg->lat;
+      }
+
+      void
+      consume(const IMC::Temperature* msg)
+      {
+        if (msg->getSourceEntity() != m_temp_eid)
+          return;
+
+        if (!m_temp_wdog.overflow())
+          return;
+
+        m_temp = msg->value;
       }
 
       //! Update internal state with new parameter values.
@@ -491,15 +564,47 @@ namespace Sensors
       //! @param[in] label entity label.
       //! @param[in] factor multiplication factor.
       //! @param[in] tstamp current timestamp.
+      //! @param[in] raw dispatch raw voltage.
       void
-      dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp)
+      dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp, bool raw = false)
       {
+        if (raw)
+        {
+          IMC::Voltage volt;
+          if (!label.empty())
+            volt.setSourceEntity(resolveEntity(label));
+
+          volt.value = value;
+          volt.setTimeStamp(tstamp);
+          dispatch(msg, DF_KEEP_TIME);
+        }
+
+        // Internal temperature available.
+        if (msg->getId() == DUNE_IMC_TEMPERATURE)
+        {
+          m_temp = value * factor;
+          m_temp_wdog.reset();
+        }
+
         msg->setValueFP(value * factor);
         msg->setTimeStamp(tstamp);
+
+        // only send calibrated PH and Redox.
+        if (msg->getId() == DUNE_IMC_PH)
+        {
+          dispatchPH(label, value * factor, tstamp);
+          return;
+        }
+        else if (msg->getId() == DUNE_IMC_REDOX)
+        {
+          dispatchRedox(label, value * factor, tstamp);
+          return;
+        }
+
         dispatch(msg, DF_KEEP_TIME);
 
         if (msg->getId() == DUNE_IMC_PRESSURE)
-          dispatchDepth(label, value, factor, tstamp);
+          dispatchDepth(label, value * factor, tstamp);
       }
 
       //! Dispatch value.
@@ -517,20 +622,54 @@ namespace Sensors
       //! Dispatch depth.
       //! @param[in] label entity label.
       //! @param[in] value depth value.
-      //! @param[in] factor multiplication factor.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchDepth(std::string label, double value, double factor, double tstamp)
+      dispatchDepth(std::string label, double value, double tstamp)
       {
         IMC::Depth depth;
         if (!label.empty())
           depth.setSourceEntity(resolveEntity(label));
 
         depth.setTimeStamp(tstamp);
-        double val = value * factor / c_dbar_to_bar;
+        double val = value / c_dbar_to_bar;
         depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
         dispatch(depth, DF_KEEP_TIME);
       }
+
+      //! Dispatch pH.
+      //! @param[in] label entity label.
+      //! @param[in] value ph reading.
+      //! @param[in] tstamp current timestamp.
+      void
+      dispatchPH(std::string label, double value, double tstamp)
+      {
+        IMC::PH pH;
+        if (!label.empty())
+          pH.setSourceEntity(resolveEntity(label));
+
+        pH.setTimeStamp(tstamp);
+        pH.value = m_args.calbuffer;
+        pH.value += (((value - m_args.offset) * (c_nernst20 / m_args.slope))
+                     /(c_nernst0 + (m_temp * c_vperph)));
+        dispatch(pH, DF_KEEP_TIME);
+      }
+
+      //! Dispatch Redox.
+      //! @param[in] label entity label.
+      //! @param[in] value redox reading.
+      //! @param[in] tstamp current timestamp.
+      void
+      dispatchRedox(std::string label, double value, double tstamp)
+      {
+        IMC::Redox redox;
+        if (!label.empty())
+          redox.setSourceEntity(resolveEntity(label));
+
+        redox.setTimeStamp(tstamp);
+        redox.value = (value * 1000 + c_redox_offset) / 2.0;
+        dispatch(redox, DF_KEEP_TIME);
+      }
+
 
       //! Get active channels.
       //! @return active channels.
@@ -609,9 +748,17 @@ namespace Sensors
             if (m_slots[i])
             {
               if (i < c_channels)
-                dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
+              {
+                // dispatch raw voltage (analog).
+                if (i > c_di_count)
+                  dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp, true);
+                else
+                  dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp, false);
+              }
               else
+              {
                 dispatchValue(m_msgs[i], values[index++], tstamp);
+              }
             }
           }
 
