@@ -51,6 +51,9 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Internal temperature presence timeout.
+    static const float c_temp_tout = 5.0f;
+
     //! Commands
     static const char* c_cmd_ops[] = { "DENSITY", "SALINITY", "SV" };
     static const char* c_cmd_icset = "SET SCAN ";
@@ -95,8 +98,14 @@ namespace Sensors
     static const unsigned c_total = c_channels + c_in_count;
     //! Const to transform dbar to Bar.
     static const unsigned c_dbar_to_bar = 10;
-    //! Redox offset
-    static const unsigned redox_offset = 2500;
+    //! Redox mV offset
+    static const unsigned c_redox_offset = 2500;
+    //! PH: Nernst value in Volts at 20ºC.
+    static const float c_nernst20 = 58.168f;
+    //! PH: Nernst value in Volts at 0ºC
+    static const float c_nernst0 = 54.2f;
+    //! PH: voltage per PH unit per degree.
+    static const float c_vperph = 0.1984f;
 
     //! %Task arguments.
     struct Arguments
@@ -121,14 +130,8 @@ namespace Sensors
       double offset;
       //! pH variable - pH slope in V. Depends on pH range.
       double slope;
-      //! pH variable - Nerst value in V at 20ºC
-      double nerst20;
-      //! pH variable - Nerst value in V at 0ºC
-      double nerst0;
-      //! pH variable - V per pH unit per ºC
-      double vperph;
-      //!
-      std::string temp_label;
+      //! External temperature entity label.
+      std::string elabel_temp;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -151,8 +154,12 @@ namespace Sensors
       bool m_ready_sspe;
       //! Task arguments.
       Arguments m_args;
+      //! Internal temperature presence watchdog.
+      Counter<double> m_temp_wdog;
+      //! Temperature entity id.
+      unsigned m_temp_eid;
       //! Temperature for pH calculation
-      double temperature;
+      float m_temp;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -217,29 +224,22 @@ namespace Sensors
           .description("Analogic channel conversion factor");
         }
 
-        param("CalBuffer", m_args.calbuffer)
+        param("Entity Label - Temperature Backup", m_args.elabel_temp)
+        .description("Entity label of the temperature backup");
+
+        param("PH Calibration Buffer", m_args.calbuffer)
         .defaultValue("7.0")
         .description("Buffer value corrected in fuction of the temperature used during calibration");
 
-        param("Offset", m_args.offset)
+        param("PH Voltage Calibration Reading", m_args.offset)
         .defaultValue("2.496")
+        .units(Units::Volt)
         .description("pH Vout during calibration in V");
 
-        param("Slope", m_args.slope)
+        param("PH Slope", m_args.slope)
         .defaultValue("0.634")
+        .units(Units::Volt)
         .description("pH slope in V. Depends on the selected pH range");
-
-        param("Nerst20", m_args.nerst20)
-        .defaultValue("0.058168")
-        .description("Nerst constant at 20ºC in V");
-
-        param("Nerst0", m_args.nerst0)
-        .defaultValue("0.0542")
-        .description("Nerst constant at 0ºC in V");
-
-        param("VperpH", m_args.vperph)
-        .defaultValue("0.1984")
-        .description("V per pH unit per ºC");
 
         // initialize variables.
         for (unsigned i = 0; i < c_total; ++i)
@@ -248,13 +248,14 @@ namespace Sensors
           m_slots[i] = false;
         }
 
+        m_temp_wdog.setTop(c_temp_tout);
         m_ready_cond = false;
         m_ready_sspe = false;
         m_need_setup = true;
         m_lat = 0.0;
 
         bind<IMC::EstimatedState>(this);
-        //bind<IMC::Temperature>(this);
+        bind<IMC::Temperature>(this);
       }
 
       ~Task(void)
@@ -267,17 +268,38 @@ namespace Sensors
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_temp_eid = resolveEntity(m_args.elabel_temp);
+        }
+        catch (...)
+        {
+          m_temp_eid = UINT_MAX;
+        }
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_lat = msg->lat;
       }
 
-      /*void
+      void
       consume(const IMC::Temperature* msg)
       {
-        inf("Temp: %f", msg->value);
+        if (msg->getSourceEntity() != m_temp_eid)
+          return;
+
+        if (!m_temp_wdog.overflow())
+          return;
+
+        m_temp = msg->value;
       }
-      */
 
       //! Update internal state with new parameter values.
       void
@@ -545,16 +567,32 @@ namespace Sensors
       void
       dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp)
       {
+        // Internal temperature available.
+        if (msg->getId() == DUNE_IMC_TEMPERATURE)
+        {
+          m_temp = value * factor;
+          m_temp_wdog.reset();
+        }
+
         msg->setValueFP(value * factor);
         msg->setTimeStamp(tstamp);
+
+        // only send calibrated PH and Redox.
+        if (msg->getId() == DUNE_IMC_PH)
+        {
+          dispatchPH(label, value * factor, tstamp);
+          return;
+        }
+        else if (msg->getId() == DUNE_IMC_REDOX)
+        {
+          dispatchRedox(label, value * factor, tstamp);
+          return;
+        }
+
         dispatch(msg, DF_KEEP_TIME);
 
         if (msg->getId() == DUNE_IMC_PRESSURE)
-          dispatchDepth(label, value, factor, tstamp);
-        if (msg->getId() == DUNE_IMC_PH)
-          dispatchPH(label, value, factor, tstamp);
-        if (msg->getId() == DUNE_IMC_REDOX)
-          dispatchRedox(label, value, factor, tstamp);
+          dispatchDepth(label, value * factor, tstamp);
       }
 
       //! Dispatch value.
@@ -572,53 +610,51 @@ namespace Sensors
       //! Dispatch depth.
       //! @param[in] label entity label.
       //! @param[in] value depth value.
-      //! @param[in] factor multiplication factor.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchDepth(std::string label, double value, double factor, double tstamp)
+      dispatchDepth(std::string label, double value, double tstamp)
       {
         IMC::Depth depth;
         if (!label.empty())
           depth.setSourceEntity(resolveEntity(label));
 
         depth.setTimeStamp(tstamp);
-        double val = value * factor / c_dbar_to_bar;
+        double val = value / c_dbar_to_bar;
         depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
         dispatch(depth, DF_KEEP_TIME);
       }
 
       //! Dispatch pH.
       //! @param[in] label entity label.
-      //! @param[in] value depth value.
-      //! @param[in] factor multiplication factor.
+      //! @param[in] value ph reading.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchPH(std::string label, double value, double factor, double tstamp)
+      dispatchPH(std::string label, double value, double tstamp)
       {
         IMC::PH pH;
         if (!label.empty())
           pH.setSourceEntity(resolveEntity(label));
 
         pH.setTimeStamp(tstamp);
-        pH.value = (m_args.calbuffer + (((value-m_args.offset)*(m_args.nerst20/m_args.slope))
-                                /(m_args.nerst0+(temperature*m_args.vperph))))*factor;
+        pH.value = m_args.calbuffer;
+        pH.value += (((value - m_args.offset) * (c_nernst20 / m_args.slope))
+                     /(c_nernst0 + (m_temp * c_vperph)));
         dispatch(pH, DF_KEEP_TIME);
       }
 
       //! Dispatch Redox.
       //! @param[in] label entity label.
-      //! @param[in] value depth value.
-      //! @param[in] factor multiplication factor.
+      //! @param[in] value redox reading.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchRedox(std::string label, double value, double factor, double tstamp)
+      dispatchRedox(std::string label, double value, double tstamp)
       {
         IMC::Redox redox;
-        if (!label.empty()
-)          redox.setSourceEntity(resolveEntity(label));
+        if (!label.empty())
+          redox.setSourceEntity(resolveEntity(label));
 
         redox.setTimeStamp(tstamp);
-        redox.value = ((value*1000 + redox_offset)/2.0)*factor;
+        redox.value = (value * 1000 + c_redox_offset) / 2.0;
         dispatch(redox, DF_KEEP_TIME);
       }
 
@@ -688,7 +724,6 @@ namespace Sensors
             ix_read++;
           }
 
-
           // Check if there is some mismatch between the configuration file
           // and sensor output. If true, doesn't dispatch any message.
           if (ix_read != chn_active)
@@ -701,13 +736,7 @@ namespace Sensors
             if (m_slots[i])
             {
               if (i < c_channels)
-              {
-                if (m_args.msgs[i] == "Temperature")
-                  temperature = values[i];
-
-                dispatchValue(m_msgs[i], values[index++],
-                                m_args.labels[i], m_args.factors[i], tstamp);
-              }
+                dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
               else
                 dispatchValue(m_msgs[i], values[index++], tstamp);
             }
