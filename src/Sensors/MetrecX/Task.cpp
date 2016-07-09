@@ -564,9 +564,21 @@ namespace Sensors
       //! @param[in] label entity label.
       //! @param[in] factor multiplication factor.
       //! @param[in] tstamp current timestamp.
+      //! @param[in] raw dispatch raw voltage.
       void
-      dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp)
+      dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp, bool raw = false)
       {
+        if (raw)
+        {
+          IMC::Voltage volt;
+          if (!label.empty())
+            volt.setSourceEntity(resolveEntity(label));
+
+          volt.value = value;
+          volt.setTimeStamp(tstamp);
+          dispatch(msg, DF_KEEP_TIME);
+        }
+
         // Internal temperature available.
         if (msg->getId() == DUNE_IMC_TEMPERATURE)
         {
@@ -736,9 +748,17 @@ namespace Sensors
             if (m_slots[i])
             {
               if (i < c_channels)
-                dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp);
+              {
+                // dispatch raw voltage (analog).
+                if (i > c_di_count)
+                  dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp, true);
+                else
+                  dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp, false);
+              }
               else
+              {
                 dispatchValue(m_msgs[i], values[index++], tstamp);
+              }
             }
           }
 
