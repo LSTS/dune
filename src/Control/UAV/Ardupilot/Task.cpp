@@ -205,6 +205,8 @@ namespace Control
         bool m_reboot;
         //! Flag indicating MSL-WGS84 offset has already been calculated.
         bool m_offset_st;
+        //! WGS84 height on ground
+        float m_href;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -247,6 +249,7 @@ namespace Control
           m_hae_offset(0.0),
           m_reboot(true),
           m_offset_st(false),
+          m_href(0),
           m_external(true),
           m_current_wp(0),
           m_critical(false),
@@ -1118,23 +1121,29 @@ namespace Control
           debug("Guided MODE on ardupilot is set");
 
           // Send takeoff command to ardupilot
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        1, //! seq Sequence
-                                        MAV_FRAME_GLOBAL,    //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_NAV_TAKEOFF, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                        2, //! current false:0, true:1, guided mode:2
-                                        0, //! autocontinue to next wp
-                                        pitch, //! Pitch Angle (not used for COPTER)
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        dpath->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+          if (m_vehicle_type == VEHICLE_COPTER)
+            sendCommandPacket(MAV_CMD_NAV_TAKEOFF, (float)Angles::degrees(pitch), 0, 0, 0, 0, 0, dpath->end_z - m_href);
+          else
+          {
+            mavlink_msg_mission_item_pack(255, 0, &msg,
+                                          m_sysid, //! target_system System ID
+                                          0, //! target_component Component ID
+                                          1, //! seq Sequence
+                                          MAV_FRAME_GLOBAL,    //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                          MAV_CMD_NAV_TAKEOFF, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                          2, //! current false:0, true:1, guided mode:2
+                                          0, //! autocontinue to next wp
+                                          (float)Angles::degrees(pitch), //! Pitch Angle (not used for COPTER)
+                                          0, //! Not used
+                                          0, //! Not used
+                                          0, //! Not used
+                                          0, //! Not used
+                                          0, //! Not used
+                                          dpath->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          sendCommandPacket(MAV_CMD_MISSION_START);
 
           // Update PathControlState
           m_pcs.start_lat = m_lat;
@@ -1184,23 +1193,28 @@ namespace Control
           debug("Guided MODE on ardupilot is set");
 
           // Send land command to ardupilot
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        1, //! seq Sequence
-                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_NAV_LAND, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                        2, //! current false:0, true:1, guided mode:2
-                                        0, //! autocontinue to next wp
-                                        land->abort_z,    //! Abort Altitude
-                                        0, //! Not used
-                                        0, //! Not used
-                                        0, //! Not used
-                                        (float)Angles::degrees(land->lat), //! Touchdown Latitude
-                                        (float)Angles::degrees(land->lon), //! Touchdown Longitude
-                                        land->z);  //! z PARAM7 / z position: global: altitude
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+          if (m_vehicle_type == VEHICLE_COPTER)
+            sendCommandPacket(MAV_CMD_NAV_LAND, land->abort_z - m_href, 0, 0, 0, (float)Angles::degrees(land->lat), (float)Angles::degrees(land->lon), 0);
+          else
+          {
+            mavlink_msg_mission_item_pack(255, 0, &msg,
+                                          m_sysid,          //! target_system System ID
+                                          0, //! target_component Component ID
+                                          1, //! seq Sequence
+                                          MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                          MAV_CMD_NAV_LAND, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                          2, //! current false:0, true:1, guided mode:2
+                                          0, //! autocontinue to next wp
+                                          land->abort_z - m_hae_offset,      //! Abort Altitude
+                                          0, //! Not used
+                                          0, //! Not used
+                                          0, //! Not used
+                                          (float)Angles::degrees(land->lat), //! Touchdown Latitude
+                                          (float)Angles::degrees(land->lon), //! Touchdown Longitude
+                                          land->z - m_hae_offset);           //! z PARAM7 / z position: global: altitude
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
 
           // Debug output message
           debug("Land command sent to Ardupilot.");
@@ -1754,6 +1768,9 @@ namespace Control
 
           m_estate.alt = (double) gp.relative_alt * 1e-3;   //AGL (relative to home altitude)
           m_estate.depth = -1;
+
+          // Save WGS84 height on the ground
+          m_href = m_estate.height;
         }
 
         float
