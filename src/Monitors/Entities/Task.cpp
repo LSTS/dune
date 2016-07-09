@@ -185,6 +185,9 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
           err(DTR("EntityState message without source entity"));

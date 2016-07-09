@@ -45,6 +45,9 @@ using std::tan;
 
 //! Depth hysteresis for ignoring ranges and altitude
 static const float c_depth_hyst = 0.5;
+//! Altitude hysteresis.
+static const float c_alt_hyst = 0.2;
+
 //! State to string for debug messages
 static const std::string c_str_states[] = {DTR_RT("Idle"), DTR_RT("Tracking"),
                                            DTR_RT("Depth"), DTR_RT("LimitDepth"),
@@ -199,7 +202,7 @@ namespace DUNE
       // Check if forward range is too low
       if (m_sdata->isRangeLow())
       {
-        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
+        debug(String::str("frange is too low: %.2f -> avoiding", m_sdata->getFRange()));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -209,7 +212,7 @@ namespace DUNE
       // if slope is too steep
       if (m_sdata->isTooSteep())
       {
-        debug(String::str("slope is too steep: %.2f > %.2f",
+        debug(String::str("slope is too steep: %.2f > %.2f -> unsafe",
                           Angles::degrees(m_sdata->getSlope()),
                           Angles::degrees(m_args->safe_pitch)));
 
@@ -273,8 +276,6 @@ namespace DUNE
     {
       if (m_z_ref.z_units == IMC::Z_ALTITUDE)
       {
-        debug("units are now altitude. moving to tracking");
-
         m_mstate = SM_TRACKING;
 
         m_valid_alt = (m_estate.depth > m_args->depth_tol);
@@ -295,22 +296,22 @@ namespace DUNE
       // Render slope top as invalid here
       m_sdata->renderSlopeInvalid();
 
-      float depth_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
+      float z_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
 
       // if units are now altitude
       if (m_forced == FC_ALTITUDE)
       {
         if  (m_z_ref.z_units == IMC::Z_ALTITUDE)
         {
-          debug("units are altitude now. moving to tracking");
+          debug("tracking: units are altitude now -> tracking");
 
           m_forced = FC_NONE;
           m_mstate = SM_TRACKING;
           return;
         }
-        else if (depth_ref >= m_args->adm_alt + c_depth_hyst)
+        else if (z_ref >= m_args->adm_alt + c_depth_hyst)
         {
-          debug("depth reference is now safe");
+          debug("tracking: depth reference is now safe -> depth");
 
           m_forced = FC_NONE;
           dispatchSameZ();
@@ -318,9 +319,9 @@ namespace DUNE
           return;
         }
       } // if reference is for depth now
-      else if ((m_forced != FC_ALTITUDE) && (m_z_ref.z_units == IMC::Z_DEPTH))
+      else if (m_z_ref.z_units == IMC::Z_DEPTH)
       {
-        debug("units are depth now");
+        debug("tracking: units are depth now -> depth");
 
         m_mstate = SM_DEPTH;
         return;
@@ -333,7 +334,8 @@ namespace DUNE
       // check if altitude value is becoming dangerous
       if (m_estate.alt < m_args->min_alt)
       {
-        debug(String::str("altitude is too low: %.2f.", m_estate.alt));
+        debug(String::str("tracking: altitude is too low: %.2f -> avoiding",
+                          m_estate.alt));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -345,7 +347,7 @@ namespace DUNE
         return;
 
       // if reaching a limit in altitude
-      if (depth_ref > m_args->depth_limit + c_depth_hyst &&
+      if (z_ref > m_args->depth_limit + c_depth_hyst &&
           m_estate.depth > m_args->depth_limit)
       {
         info(DTR("depth is reaching unacceptable values, forcing depth control"));
@@ -366,7 +368,7 @@ namespace DUNE
       // if reference is for altitude now
       if (m_z_ref.z_units == IMC::Z_ALTITUDE)
       {
-        debug("units are altitude now. moving to tracking");
+        debug("depth: units are altitude now -> tracking");
 
         m_mstate = SM_TRACKING;
         return;
@@ -377,12 +379,12 @@ namespace DUNE
         return;
 
       // if reaching a limit in altitude
-      float depth_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
+      float alt_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
 
       // if altitude is not admissible for depth control
-      if (depth_ref < m_args->adm_alt && m_estate.alt < m_args->adm_alt)
+      if (alt_ref < m_args->adm_alt && m_estate.alt < m_args->adm_alt)
       {
-        debug("below admissible depth. moving to altitude control.");
+        debug("depth: below admissible depth -> tracking");
 
         m_forced = FC_ALTITUDE;
         m_mstate = SM_TRACKING;
@@ -401,7 +403,7 @@ namespace DUNE
       // if reference is for altitude now
       if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_forced != FC_DEPTH))
       {
-        debug("units are altitude now. moving to altitude control");
+        debug("limit depth: units are altitude now -> tracking");
 
         m_forced = FC_NONE;
         dispatchSameZ();
@@ -411,7 +413,7 @@ namespace DUNE
 
       if ((m_z_ref.z_units == IMC::Z_DEPTH) && (m_z_ref.value < m_args->depth_limit))
       {
-        debug("units are depth now. moving to idle");
+        debug("limit depth: units are depth now -> idle");
 
         m_forced = FC_NONE;
         m_mstate = SM_IDLE;
@@ -421,7 +423,8 @@ namespace DUNE
 
       if (m_sdata->isRangeLow())
       {
-        debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
+        debug(String::str("limit depth: frange is too low: %.2f -> avoiding",
+                          m_sdata->getFRange()));
 
         m_forced = FC_NONE;
         brake(true);
@@ -433,7 +436,7 @@ namespace DUNE
       if ((m_forced == FC_DEPTH) &&
           (m_estate.depth + m_estate.alt - m_z_ref.value < m_args->depth_limit))
       {
-        debug("depth is no longer near the limit");
+        debug("limit depth: depth is no longer near the limit -> tracking");
 
         m_forced = FC_NONE;
         dispatchSameZ();
@@ -455,11 +458,10 @@ namespace DUNE
       {
         if (away_top)
         {
-          debug("cannot use altitude");
+          debug("unsafe: cannot use altitude");
           debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f",
+          debug(String::str("distance to slope top is short: %.2f -> tracking",
                             m_sdata->getDistanceToSlope()));
-          debug("moving to tracking");
 
           dispatchSameZ();
           m_mstate = SM_TRACKING;
@@ -473,9 +475,9 @@ namespace DUNE
       if ((m_estate.alt < m_args->min_alt) || m_sdata->isRangeLow())
       {
         if (m_estate.alt < m_args->min_alt)
-          debug(String::str("altitude is too low: %.2f.", m_estate.alt));
+          debug(String::str("unsafe: altitude is too low: %.2f -> avoiding", m_estate.alt));
         else
-          debug(String::str("frange is too low: %.2f.", m_sdata->getFRange()));
+          debug(String::str("unsafe: frange is too low: %.2f -> avoiding", m_sdata->getFRange()));
 
         brake(true);
         m_mstate = SM_AVOIDING;
@@ -484,7 +486,7 @@ namespace DUNE
 
       if (m_sdata->isSurface(m_estate))
       {
-        debug("cannot use range. tracking");
+        debug("unsafe: cannot use range -> tracking");
 
         dispatchSameZ();
         m_mstate = SM_TRACKING;
@@ -496,10 +498,9 @@ namespace DUNE
       {
         if (away_top)
         {
-          debug("moving away from slope top or ");
-          debug(String::str("distance to slope top is short: %.2f",
+          debug("unsafe: moving away from slope top or ");
+          debug(String::str("distance to slope top is short: %.2f -> tracking",
                             m_sdata->getDistanceToSlope()));
-          debug("moving to tracking");
 
           // dispatch same z reference sent by upper layer
           dispatchSameZ();
@@ -512,7 +513,7 @@ namespace DUNE
       {
         if (m_args->check_trend || (!m_args->check_trend && m_estate.theta < 0.0))
         {
-          debug(String::str("slope is becoming steeper %.2f",
+          debug(String::str("unsafe: slope is becoming steeper %.2f",
                             Angles::degrees(m_sdata->getSlope())));
 
           dispatchSafeDepth();
@@ -534,9 +535,10 @@ namespace DUNE
       // check if buoyancy has pulled the vehicle up to a safe depth/altitude
       if (!m_sdata->isTooSteep() && !m_sdata->isRangeLow())
       {
-        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value))
+        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value) &&
+            m_estate.alt >= m_args->min_alt + c_alt_hyst)
         {
-          debug("above altitude reference and slope is safe");
+          debug("avoiding: above altitude reference and slope is safe -> tracking");
 
           // Stop braking
           brake(false);
@@ -546,7 +548,7 @@ namespace DUNE
         }
         else if ((m_forced == FC_ALTITUDE) && (m_estate.alt >= m_args->adm_alt))
         {
-          debug("slope is safe, keep forcing altitude");
+          debug("avoiding: slope is safe, keep forcing altitude -> tracking");
 
           // Stop braking
           brake(false);
@@ -554,19 +556,9 @@ namespace DUNE
           m_mstate = SM_TRACKING;
           return;
         }
-        else if ((m_z_ref.z_units == IMC::Z_DEPTH) && (!m_args->depth_avoid))
+        else if (m_z_ref.z_units == IMC::Z_DEPTH)
         {
-          debug("units are depth, carry on");
-
-          // Stop braking
-          brake(false);
-          dispatchSameZ();
-          m_mstate = SM_DEPTH;
-          return;
-        }
-        else if ((m_z_ref.z_units == IMC::Z_DEPTH) && (m_args->depth_avoid))
-        {
-          debug("situation is now safe, carry on");
+          debug("avoiding: units are depth, carry on -> depth");
 
           // Stop braking
           brake(false);

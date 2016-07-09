@@ -162,11 +162,6 @@ namespace DUNE
       .units(Units::Degree)
       .description("Slope hysteresis when recovering from avoidance");
 
-      param("Bottom Track -- Minimum Altitude", m_btd.args.min_alt)
-      .defaultValue("1.0")
-      .units(Units::Meter)
-      .description("Minimum admissible altitude for bottom tracking");
-
       param("Bottom Track -- Minimum Range", m_btd.args.min_range)
       .defaultValue("4.0")
       .units(Units::Meter)
@@ -202,6 +197,8 @@ namespace DUNE
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
+
+      m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_btd.args.min_alt);
 
       m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
 

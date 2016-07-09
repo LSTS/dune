@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 82d995ea19249b2dcead077e3d43741a                            *
+// IMC XML MD5: 26cacc3dc3beefce27c2f4c57be495c3                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -8435,6 +8435,142 @@ namespace DUNE
 
     void
     Throttle::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    PH::PH(void)
+    {
+      m_header.mgid = 298;
+      clear();
+    }
+
+    void
+    PH::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    PH::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::PH& other__ = static_cast<const PH&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    PH::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    PH::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    PH::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    PH::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    PH::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    PH::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    PH::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    Redox::Redox(void)
+    {
+      m_header.mgid = 299;
+      clear();
+    }
+
+    void
+    Redox::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    Redox::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Redox& other__ = static_cast<const Redox&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    Redox::validate(void) const
+    {
+      return false;
+    }
+
+    uint8_t*
+    Redox::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Redox::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Redox::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Redox::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Redox::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Redox::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
     }

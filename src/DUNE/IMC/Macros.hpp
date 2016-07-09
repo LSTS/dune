@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 82d995ea19249b2dcead077e3d43741a                            *
+// IMC XML MD5: 26cacc3dc3beefce27c2f4c57be495c3                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -246,6 +246,10 @@
 #define DUNE_IMC_AIRSATURATION 296
 //! Throttle identification number.
 #define DUNE_IMC_THROTTLE 297
+//! PH identification number.
+#define DUNE_IMC_PH 298
+//! Redox identification number.
+#define DUNE_IMC_REDOX 299
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
