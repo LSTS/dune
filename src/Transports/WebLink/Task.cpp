@@ -56,7 +56,9 @@ namespace Transports
       // Clear data
       S_CLEAR,
       // Wait jump to other state
-      S_WAIT
+      S_WAIT,
+      // Do not do anything
+      S_IDLE
     };
 
     //! Task arguments.
@@ -155,6 +157,8 @@ namespace Transports
         .description("Deactivate Mobile Inet when vehicle is underwater and activate when at surface.")
         .defaultValue("false");
 
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL, Tasks::Parameter::VISIBILITY_USER, false);
+
         bind<IMC::HistoricDataQuery>(this);
         bind<IMC::VehicleMedium>(this);
         m_uwtimer.setTop(10);
@@ -194,19 +198,39 @@ namespace Transports
         }
       }
 
+      void
+      onActivation(void)
+      {
+        debug("Activating");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_state = S_QUERY;
+      }
+
+      void
+      onDeactivation(void)
+      {
+        debug("Deactivating");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        m_state = S_IDLE;
+      }
+
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
         m_wdog.setTop(m_args.upload_timeout);
         m_timer.setTop(m_args.period);
-        war("VALUE: %f", m_args.period);
+        debug("Upload period: %f seconds", m_args.period);
         m_state = S_QUERY;
         m_id = 0;
         m_size = 8;
         m_conn = new Connection(m_args.server_name.c_str(), m_args.server_port);
         m_params.resize(m_size);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        if (isActive())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -253,6 +277,9 @@ namespace Transports
       void
       consume(const IMC::HistoricDataQuery* msg)
       {
+        if (!isActive())
+          return;
+
         if (m_args.store == resolveEntity(msg->getSourceEntity()) && msg->req_id == m_id && msg->type == msg->HRTYPE_REPLY)
         {
           if (msg->data.isNull())
@@ -393,6 +420,9 @@ namespace Transports
               break;
 
             case S_WAIT:
+              break;
+
+            case S_IDLE:
               break;
 
             default:
