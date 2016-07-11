@@ -323,7 +323,22 @@ namespace Sensors
 
           // use task's entity label.
           if (m_args.labels[i].empty())
+          {
+            // analog entity labels need to be defined.
+            if (i >= c_di_count && i < c_channels)
+            {
+              try
+              {
+                unsigned eid;
+                eid = resolveEntity(String::str("%s - Analog %u", getEntityLabel(), i + 1 - c_di_count));
+                m_msgs[i]->setSourceEntity(eid);
+              }
+              catch (...)
+              { }
+            }
+
             continue;
+          }
 
           try
           {
@@ -348,13 +363,16 @@ namespace Sensors
       {
         for (unsigned i = 0; i < c_channels; ++i)
         {
-          // both message and entity label have to be defined.
-          if (m_args.msgs[i].empty() || m_args.labels[i].empty())
+          // message not defined.
+          if (m_args.msgs[i].empty())
+            continue;
+
+          // entity label not defined
+          if (m_args.labels[i].empty())
           {
-            // analog are a special case.
+            // analog entity labels need to be defined.
             if (i >= c_di_count && i < c_channels)
               reserveEntity(String::str("%s - Analog %u", getEntityLabel(), i + 1 - c_di_count));
-
             continue;
           }
 
