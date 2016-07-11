@@ -350,7 +350,13 @@ namespace Sensors
         {
           // both message and entity label have to be defined.
           if (m_args.msgs[i].empty() || m_args.labels[i].empty())
+          {
+            // analog are a special case.
+            if (i >= c_di_count && i < c_channels)
+              reserveEntity(String::str("%s - Analog %u", getEntityLabel(), i + 1 - c_di_count));
+
             continue;
+          }
 
           try
           {
@@ -562,18 +568,23 @@ namespace Sensors
       //! Dispatch value.
       //! @param[in] msg IMC message.
       //! @param[in] value measurement value.
-      //! @param[in] label entity label.
       //! @param[in] factor multiplication factor.
       //! @param[in] tstamp current timestamp.
       //! @param[in] raw dispatch raw voltage.
       void
-      dispatchValue(IMC::Message* msg, double value, std::string label, double factor, double tstamp, bool raw = false)
+      dispatchValue(IMC::Message* msg, double value, double factor,
+                    double tstamp, bool raw = false, unsigned analog = 0)
       {
+        // send raw voltages.
         if (raw)
         {
           IMC::Voltage volt;
-          if (!label.empty())
-            volt.setSourceEntity(resolveEntity(label));
+
+          unsigned eid = msg->getSourceEntity();
+          if (eid == getEntityId())
+            volt.setSourceEntity(resolveEntity(String::str("%s - Analog %u", getEntityLabel(), analog + 1)));
+          else
+            volt.setSourceEntity(eid);
 
           volt.value = value;
           volt.setTimeStamp(tstamp);
@@ -593,19 +604,19 @@ namespace Sensors
         // only send calibrated PH and Redox.
         if (msg->getId() == DUNE_IMC_PH)
         {
-          dispatchPH(label, value * factor, tstamp);
+          dispatchPH(msg->getSourceEntity(), value * factor, tstamp);
           return;
         }
         else if (msg->getId() == DUNE_IMC_REDOX)
         {
-          dispatchRedox(label, value * factor, tstamp);
+          dispatchRedox(msg->getSourceEntity(), value * factor, tstamp);
           return;
         }
 
         dispatch(msg, DF_KEEP_TIME);
 
         if (msg->getId() == DUNE_IMC_PRESSURE)
-          dispatchDepth(label, value * factor, tstamp);
+          dispatchDepth(msg->getSourceEntity(), value * factor, tstamp);
       }
 
       //! Dispatch value.
@@ -621,16 +632,14 @@ namespace Sensors
       }
 
       //! Dispatch depth.
-      //! @param[in] label entity label.
+      //! @param[in] id entity id.
       //! @param[in] value depth value.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchDepth(std::string label, double value, double tstamp)
+      dispatchDepth(unsigned id, double value, double tstamp)
       {
         IMC::Depth depth;
-        if (!label.empty())
-          depth.setSourceEntity(resolveEntity(label));
-
+        depth.setSourceEntity(id);
         depth.setTimeStamp(tstamp);
         double val = value / c_dbar_to_bar;
         depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
@@ -638,16 +647,14 @@ namespace Sensors
       }
 
       //! Dispatch pH.
-      //! @param[in] label entity label.
+      //! @param[in] id entity id.
       //! @param[in] value ph reading.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchPH(std::string label, double value, double tstamp)
+      dispatchPH(unsigned id, double value, double tstamp)
       {
         IMC::PH pH;
-        if (!label.empty())
-          pH.setSourceEntity(resolveEntity(label));
-
+        pH.setSourceEntity(id);
         pH.setTimeStamp(tstamp);
         pH.value = m_args.calbuffer;
         pH.value += (((value - m_args.offset) * (c_nernst20 / m_args.slope))
@@ -656,16 +663,14 @@ namespace Sensors
       }
 
       //! Dispatch Redox.
-      //! @param[in] label entity label.
+      //! @param[in] id entity id.
       //! @param[in] value redox reading.
       //! @param[in] tstamp current timestamp.
       void
-      dispatchRedox(std::string label, double value, double tstamp)
+      dispatchRedox(unsigned id, double value, double tstamp)
       {
         IMC::Redox redox;
-        if (!label.empty())
-          redox.setSourceEntity(resolveEntity(label));
-
+        redox.setSourceEntity(id);
         redox.setTimeStamp(tstamp);
         redox.value = (value * 1000 + c_redox_offset) / 2.0;
         dispatch(redox, DF_KEEP_TIME);
@@ -751,10 +756,10 @@ namespace Sensors
               if (i < c_channels)
               {
                 // dispatch raw voltage (analog).
-                if (i > c_di_count)
-                  dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp, true);
+                if (i >= c_di_count)
+                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, true, i - c_di_count);
                 else
-                  dispatchValue(m_msgs[i], values[index++], m_args.labels[i], m_args.factors[i], tstamp, false);
+                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, false);
               }
               else
               {
