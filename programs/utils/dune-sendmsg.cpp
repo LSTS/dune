@@ -62,7 +62,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl, RestartSystem\n");
       fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
       fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed, Target, TeleoperationDone, Temperature\n");
-      fprintf(stdout, "  TextMessage, TrexCommand, VehicleCommand, VehicleMedium\n");
+      fprintf(stdout, "  TextMessage, TrexCommand, UASimulation, UsblConfig, VehicleCommand, VehicleMedium\n");
       return 1;
     }
 
@@ -776,6 +776,21 @@ main(int argc, char** argv)
     tmsg->type = IMC::UASimulation::UAS_DATA;
     tmsg->data.assign(atoi(argv[7]), '0');
     msg = tmsg;
+  }
+
+  if (strcmp(argv[3], "UsblConfig") == 0)
+  {
+    IMC::UsblConfig* tmsg = new IMC::UsblConfig;
+    msg = tmsg;
+    tmsg->op = IMC::UsblConfig::OP_SET_CFG;
+
+    IMC::UsblModem modem;
+    modem.name = "UsblModem";
+    modem.lat = atoi(argv[4]);
+    modem.lon = atoi(argv[5]);
+    modem.z = atoi(argv[6]);
+    modem.z_units = static_cast<IMC::ZUnits>(1);
+    tmsg->modems.push_back(modem);
   }
 
   if (strcmp(argv[3], "VehicleCommand") == 0)
