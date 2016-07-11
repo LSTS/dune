@@ -50,8 +50,6 @@ namespace Sensors
       unsigned uart_baud;
       //! Sampling rate.
       float sampling_rate;
-      //! Use at water surface.
-      bool use_at_surface;
       //! True to enable automatic activation/deactivation based on medium.
       bool auto_activation;
       //! DVL position.
@@ -115,12 +113,6 @@ namespace Sensors
         .maximumValue("8.0")
         .units(Units::Hertz)
         .description("Device sampling rate");
-
-        param(DTR_RT("Use Device at Surface"), m_args.use_at_surface)
-        .defaultValue("true")
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_IDLE)
-        .description("Enable to activate device when at surface");
 
         param(DTR_RT("Automatic Activation"), m_args.auto_activation)
         .defaultValue("true")
@@ -198,15 +190,14 @@ namespace Sensors
         m_hand.update(msg);
 
         // Request activation.
-        if ((m_hand.isWaterSurface() && m_args.use_at_surface) ||
-            m_hand.isUnderwater())
+        if (m_hand.isWaterSurface() || m_hand.isUnderwater())
         {
           if (canRequestActivation())
             requestActivation();
         }
 
         // Request deactivation.
-        if (m_hand.outWater() || (m_hand.isWaterSurface() && !m_args.use_at_surface))
+        if (m_hand.outWater())
         {
           if (isActive())
             requestDeactivation();
