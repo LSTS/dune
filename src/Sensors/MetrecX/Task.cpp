@@ -24,6 +24,7 @@
 //***************************************************************************
 // Author: Tiago Rodrigues                                                  *
 // Author: José Braga                                                       *
+// Author: Miguel Rosa                                                      *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -101,9 +102,9 @@ namespace Sensors
     //! Redox mV offset
     static const unsigned c_redox_offset = 2500;
     //! PH: Nernst value in Volts at 20ºC.
-    static const float c_nernst20 = 58.168f;
+    static const float c_nernst20 = 0.058168f;
     //! PH: Nernst value in Volts at 0ºC
-    static const float c_nernst0 = 54.2f;
+    static const float c_nernst0 = 0.0542f;
     //! PH: voltage per PH unit per degree.
     static const float c_vperph = 0.1984f;
 
