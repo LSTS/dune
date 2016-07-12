@@ -84,6 +84,8 @@ namespace Sensors
       unsigned m_entity;
       //! True if pings are externally triggered.
       bool m_triggered;
+      //! True if we're using serial link.
+      bool m_serial;
       //! Configuration parameters.
       Arguments m_args;
 
@@ -93,7 +95,8 @@ namespace Sensors
         m_data_h(NULL),
         m_driver(NULL),
         m_parser(NULL),
-        m_triggered(false)
+        m_triggered(false),
+        m_serial(false)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -175,10 +178,7 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_parser);
-        Memory::clear(m_driver);
-        Memory::clear(m_handle);
-        Memory::clear(m_data_h);
+        onDisconnect();
       }
 
       void
@@ -271,6 +271,7 @@ namespace Sensors
         data_sock->setReceiveTimeout(1.0);
         data_sock->connect(addr, port + 2);
         m_data_h = data_sock;
+        m_serial = false;
 
         generate();
 
@@ -301,6 +302,8 @@ namespace Sensors
           {
             // The serial port is used as command link and data.
             m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
+            m_data_h = m_handle;
+            m_serial = true;
             generate();
           }
         }
@@ -357,7 +360,9 @@ namespace Sensors
         Memory::clear(m_parser);
         Memory::clear(m_driver);
         Memory::clear(m_handle);
-        Memory::clear(m_data_h);
+
+        if (!m_serial)
+          Memory::clear(m_data_h);
       }
 
       void

@@ -68,7 +68,8 @@ namespace Sensors
         m_timestamp(-1),
         m_index(0),
         m_data_size(0),
-        m_checksum(0)
+        m_checksum(0),
+        m_status(0)
       {
         m_filter = new BeamFilter(m_task, c_beam_count, c_beam_width, c_beam_offset,
                                   c_beam_angle, pos, ang, BeamFilter::STANDARD);
