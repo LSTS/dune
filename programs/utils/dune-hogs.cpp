@@ -38,6 +38,7 @@
 #if defined(__linux__)
 
 // Linux headers.
+#include <stdint.h>
 #include <dirent.h>
 #include <unistd.h>
 
