@@ -39,6 +39,8 @@ namespace Transports
     using DUNE_NAMESPACES;
     using namespace happyhttp;
 
+    const unsigned int c_m_delay = 10;
+
     enum RequestMode
     {
       // Get data
@@ -344,7 +346,10 @@ namespace Transports
           {
             m_wdog.reset();
             while (m_conn->outstanding() && !m_wdog.overflow())
+            {
               m_conn->pump();
+              Delay::waitMsec(c_m_delay);
+            }
 
             if(m_wdog.overflow())
             {
