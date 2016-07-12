@@ -96,7 +96,7 @@ namespace DUNE
     Math::MovingAverage<double>* m_cpu_avg;
 
     void
-    dispatchCpuUsagePerTask(bool report_hog);
+    dispatchCpuUsagePerTask(bool report_hogs);
 
     void
     dispatchPeriodic(void);

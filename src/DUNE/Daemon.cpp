@@ -30,6 +30,7 @@
 #include <sstream>
 #include <cstddef>
 #include <limits>
+#include <queue>
 
 // DUNE headers.
 #include <DUNE/Daemon.hpp>
@@ -43,6 +44,21 @@
 
 namespace DUNE
 {
+  //! Number of CPU hogs to report.
+  static const int c_cpu_report_hogs = 3;
+
+  struct TaskCpuUsage
+  {
+    std::string name;
+    int usage;
+
+    bool
+    operator<(const TaskCpuUsage& other) const
+    {
+      return usage < other.usage;
+    }
+  };
+
   Daemon::Daemon(DUNE::Tasks::Context& ctx, const std::string& profiles):
     DUNE::Tasks::Task("Daemon", ctx),
     m_tman(NULL),
@@ -251,21 +267,22 @@ namespace DUNE
   }
 
   void
-  Daemon::dispatchCpuUsagePerTask(bool report_hog)
+  Daemon::dispatchCpuUsagePerTask(bool report_hogs)
   {
+    std::priority_queue<TaskCpuUsage> list;
     IMC::CpuUsage cpu_usage;
-    std::string hog_name;
-    int hog_usage = std::numeric_limits<int>::min();
     std::map<std::string, Task*>::const_iterator itr = m_tman->begin();
     for ( ; itr != m_tman->end(); ++itr)
     {
       int value = itr->second->getProcessorUsage();
       if (value >= 0 && value <= 100)
       {
-        if (value > hog_usage && report_hog)
+        if (report_hogs && value > 0)
         {
-          hog_usage = value;
-          hog_name = itr->second->getName();
+          TaskCpuUsage entry;
+          entry.usage = value;
+          entry.name = itr->second->getName();
+          list.push(entry);
         }
 
         cpu_usage.setSourceEntity(itr->second->getEntityId());
@@ -274,14 +291,21 @@ namespace DUNE
       }
     }
 
-    if (report_hog && hog_usage > 0)
-      war("task '%s' is hogging the CPU (%u %%)", hog_name.c_str(), hog_usage);
+    int count = 0;
+    while (!list.empty() && count < 3)
+    {
+      TaskCpuUsage entry = list.top();
+      list.pop();
+
+      war("task '%s' is consuming too much CPU (%u %%)", entry.name.c_str(), entry.usage);
+      ++count;
+    }
   }
 
   void
   Daemon::dispatchPeriodic(void)
   {
-    bool report_hog = false;
+    bool report_hogs = false;
 
     // Dispatch global CPU usage.
     IMC::CpuUsage cpu_usage;
@@ -295,7 +319,7 @@ namespace DUNE
       if (cpu_avg >= m_cpu_max_usage)
       {
         setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_CPU_TOO_HIGH);
-        report_hog = true;
+        report_hogs = true;
       }
       else
       {
@@ -303,7 +327,7 @@ namespace DUNE
       }
     }
 
-    dispatchCpuUsagePerTask(report_hog);
+    dispatchCpuUsagePerTask(report_hogs);
 
     // Dispatch available storage.
     if (m_fs_capacity > 0)
