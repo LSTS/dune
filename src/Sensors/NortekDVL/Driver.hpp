@@ -86,6 +86,7 @@ namespace Sensors
       ~Driver(void)
       {
         // Gracefully disconnect from device.
+        sendBreak();
         sendCommand("POWERDOWN");
       }
 
