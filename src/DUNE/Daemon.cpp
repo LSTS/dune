@@ -292,7 +292,7 @@ namespace DUNE
     }
 
     int count = 0;
-    while (!list.empty() && count < 3)
+    while (!list.empty() && count < c_cpu_report_hogs)
     {
       TaskCpuUsage entry = list.top();
       list.pop();
