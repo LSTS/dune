@@ -59,9 +59,9 @@ static const long CLOCK_TICK = sysconf(_SC_CLK_TCK);
 static std::map<int, TaskEntry> task_table;
 
 int
-get_dune_pid(void)
+get_pid(const char* cmd)
 {
-  FILE* fd = popen("pgrep -x dune", "r");
+  FILE* fd = popen(cmd, "r");
   if (fd == NULL)
   {
     std::fprintf(stderr, "ERROR: failed to execute popen(): %s\n", strerror(errno));
@@ -74,6 +74,16 @@ get_dune_pid(void)
   pclose(fd);
 
   return pid;
+}
+
+int
+get_dune_pid(void)
+{
+  int pid = get_pid("pgrep -x dune");
+  if (pid > 0)
+    return pid;
+
+  return get_pid("pgrep -x /opt/lsts/dune/bin/dune");
 }
 
 int
