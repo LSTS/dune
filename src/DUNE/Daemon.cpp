@@ -150,7 +150,7 @@ namespace DUNE
     }
     catch (...)
     {
-      war("failed to set maximum priority");
+      war(DTR("failed to set maximum priority"));
     }
 
     // CPU usage.
@@ -297,7 +297,7 @@ namespace DUNE
       TaskCpuUsage entry = list.top();
       list.pop();
 
-      war("task '%s' is consuming too much CPU (%u %%)", entry.name.c_str(), entry.usage);
+      war(DTR("task '%s' is consuming too much CPU (%u %%)"), entry.name.c_str(), entry.usage);
       ++count;
     }
   }
