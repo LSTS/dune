@@ -297,7 +297,7 @@ namespace DUNE
       TaskCpuUsage entry = list.top();
       list.pop();
 
-      war(DTR("task '%s' is consuming too much CPU (%u %%)"), entry.name.c_str(), entry.usage);
+      war(DTR("task '%s' is consuming too much CPU (%d %%)"), entry.name.c_str(), entry.usage);
       ++count;
     }
   }
