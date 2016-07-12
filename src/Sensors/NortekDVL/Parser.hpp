@@ -69,7 +69,8 @@ namespace Sensors
         m_index(0),
         m_data_size(0),
         m_checksum(0),
-        m_status(0)
+        m_status(0),
+        m_type(RT_NONE)
       {
         m_filter = new BeamFilter(m_task, c_beam_count, c_beam_width, c_beam_offset,
                                   c_beam_angle, pos, ang, BeamFilter::STANDARD);
@@ -152,6 +153,15 @@ namespace Sensors
             {
               m_bfr[m_index++] = byte;
               m_state = ST_FAMILY;
+              m_type = RT_BT;
+              std::printf("\r\n\r\nBOTTOM\r\n\r\n");
+            }
+            else if (byte == c_wt_type)
+            {
+              m_bfr[m_index++] = byte;
+              m_state = ST_FAMILY;
+              m_type = RT_WT;
+              std::printf("\r\n\r\nWATER\r\n\r\n");
             }
             else
             {
@@ -360,14 +370,11 @@ namespace Sensors
       processVelocity(void)
       {
         // z1 comes from beams 1 and 3, z2 comes from beams 2 and 4.
-        float x, y, z1, z2;
+        float x, y, z, z1, z2;
         std::memcpy(&x, &m_bfr[c_hdr_size + IND_VEL_XX], 4);
         std::memcpy(&y, &m_bfr[c_hdr_size + IND_VEL_YY], 4);
         std::memcpy(&z1, &m_bfr[c_hdr_size + IND_VEL_Z1], 4);
         std::memcpy(&z2, &m_bfr[c_hdr_size + IND_VEL_Z2], 4);
-
-        m_gvel.x = x;
-        m_gvel.y = y;
 
         // Verify validity of z-axis velocities.
         bool z1valid = m_status & (1 << (SB_VAL_VEL + 2));
@@ -375,28 +382,50 @@ namespace Sensors
 
         // Average if both valid/invalid, or just use valid velocity.
         if ((z1valid && z2valid) || (!z1valid && !z2valid))
-          m_gvel.z = (z1 + z2) / 2;
+          z = (z1 + z2) / 2;
         else if (z1valid)
-          m_gvel.z = z1;
+          z = z1;
         else
-          m_gvel.z = z2;
+          z = z2;
+
+        m_gvel.x = x;
+        m_gvel.y = y;
+        m_gvel.z = z;
+        m_wvel.x = x;
+        m_wvel.y = y;
+        m_wvel.z = z;
 
         // Validity flags.
         m_gvel.validity = 0;
+        m_wvel.validity = 0;
 
         if (m_status & (1 << SB_VAL_VEL))
+        {
           m_gvel.validity |= IMC::GroundVelocity::VAL_VEL_X;
+          m_wvel.validity |= IMC::WaterVelocity::VAL_VEL_X;
+        }
 
         if (m_status & (1 << (SB_VAL_VEL + 1)))
+        {
           m_gvel.validity |= IMC::GroundVelocity::VAL_VEL_Y;
+          m_wvel.validity |= IMC::WaterVelocity::VAL_VEL_Y;
+        }
 
         if (z1valid || z2valid)
+        {
           m_gvel.validity |= IMC::GroundVelocity::VAL_VEL_Z;
+          m_wvel.validity |= IMC::WaterVelocity::VAL_VEL_Z;
+        }
 
         m_gvel.setTimeStamp(m_timestamp);
-        m_task->dispatch(m_gvel, DF_KEEP_TIME);
+        m_wvel.setTimeStamp(m_timestamp);
 
-        m_task->spew("speed: %0.1f, %0.1f, %0.1f (m/s)", m_gvel.x, m_gvel.y, m_gvel.z);
+        if (m_type == RT_BT)
+          m_task->dispatch(m_gvel, DF_KEEP_TIME);
+        else if (m_type == RT_WT)
+          m_task->dispatch(m_wvel, DF_KEEP_TIME);
+
+        m_task->spew("speed: %0.1f, %0.1f, %0.1f (m/s)", x, y, z);
       }
 
       //! Parser state machine.
@@ -455,6 +484,15 @@ namespace Sensors
         WS_RTC_ALARM = 0x11
       };
 
+      //! Return type
+      enum ReturnType
+      {
+        RT_NONE,
+        RT_BT,
+        RT_WT,
+        RT_CP
+      };
+
       //! Maximum packet size.
       static const unsigned c_max_size = 256;
       //! Sync number.
@@ -463,6 +501,8 @@ namespace Sensors
       static const uint8_t c_hdr_size = 10;
       //! Data record bottom track identifier.
       static const uint8_t c_bt_type = 0x1b;
+      //! Data record water track identifier.
+      static const uint8_t c_wt_type = 0x1d;
       //! Instrument family.
       static const uint8_t c_family = 0x10;
       //! Wake Up status bitmask.
@@ -479,6 +519,8 @@ namespace Sensors
       std::vector<uint8_t> m_bfr;
       //! Ground velocity message.
       IMC::GroundVelocity m_gvel;
+      //! Water velocity message.
+      IMC::WaterVelocity m_wvel;
       //! Filtered distance.
       IMC::Distance m_filt_distance;
       //! Raw messages.
@@ -495,6 +537,8 @@ namespace Sensors
       uint16_t m_checksum;
       //! Status bits.
       uint32_t m_status;
+      //! Return data type.
+      ReturnType m_type;
     };
   }
 }

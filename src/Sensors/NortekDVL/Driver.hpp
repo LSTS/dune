@@ -98,13 +98,7 @@ namespace Sensors
         replyLogin("Username: ");
         replyLogin("Password: ");
 
-        if (readUntil("Command Interface\r\r\n", 2.0, true))
-        {
-          Delay::wait(1.0);
-          return true;
-        }
-
-        return false;
+        return readUntil("Command Interface\r\r\n", 2.0, true);
       }
 
       //! Device's setup sequence.
@@ -122,6 +116,9 @@ namespace Sensors
           return false;
 
         if (!setTime())
+          return false;
+
+        if (!setBT())
           return false;
 
         if (!setDVL())
@@ -246,12 +243,7 @@ namespace Sensors
       sendBreak(void)
       {
         if (!sendCommand(c_cmd_break, true, 2.0))
-        {
-          if (sendCommand(c_cmd_break, true, 2.0))
-            return true;
-          else
-            return false;
-        }
+          return sendCommand(c_cmd_break, true, 2.0);
 
         return true;
       }
@@ -268,10 +260,15 @@ namespace Sensors
                           tm.year, tm.month, tm.day, tm.hour,
                           tm.minutes, tm.seconds);
 
-        if (!sendCommand(cmd))
-          return false;
+        return sendCommand(cmd);
+      }
 
-        return true;
+      //! Set DVL Bottom-Track parameters.
+      //! @return true if command succeeded, false otherwise.
+      bool
+      setBT(void)
+      {
+        return sendCommand("SETBT,RANGE=50,NB=0,CH=0,WT=\"ON\",WTDF=22");
       }
 
       //! Set DVL parameters.
@@ -295,10 +292,7 @@ namespace Sensors
         }
         else
         {
-          if (!sendCommand(cmd))
-            return false;
-
-          return true;
+          return sendCommand(cmd);
         }
       }
 
