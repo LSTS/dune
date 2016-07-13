@@ -51,19 +51,19 @@ namespace Monitors
       //! Wet measurements timeout.
       float water_timeout;
       //! Wet measurements threshold.
-      float water_threshold;
+      float water_lm;
       //! Initialization time.
       float init_time;
       //! GPS timeout.
       float gps_timeout;
       //! Depth threshold to be considered surface.
-      float depth_threshold;
+      float depth_lm;
       //! Air Speed threshold.
-      float airspeed_threshold;
+      float airspeed_lm;
       //! Ground Speed threshold.
-      float gndspeed_threshold;
+      float gndspeed_lm;
       //! Altitude threshold
-      float altitude_threshold;
+      float altitude_lm;
       //! Vehicle type.
       std::string vtype;
       //! Vehicle subtype
@@ -78,9 +78,9 @@ namespace Monitors
       //! Vehicle Medium.
       IMC::VehicleMedium m_vm;
       //! Timer to check status of water measurements.
-      Time::Counter<float> m_water_status;
-      //! Timer to check presence of water measurements.
-      Time::Counter<float> m_water_presence;
+      Time::Counter<float> m_in_water;
+      //! Timer to check if we're capable of detecting water.
+      Time::Counter<float> m_wet_devs;
       //! Timer to check presence of GPS fixes.
       Time::Counter<float> m_gps_status;
       //! Initialization timer.
@@ -123,7 +123,7 @@ namespace Monitors
         .minimumValue("1.5")
         .description("No valid wet sensor data timeout");
 
-        param("Wet Data Threshold", m_args.water_threshold)
+        param("Wet Data Threshold", m_args.water_lm)
         .defaultValue("1.0")
         .minimumValue("0.0")
         .maximumValue("5.0")
@@ -135,19 +135,21 @@ namespace Monitors
         .minimumValue("2.0")
         .description("No valid GPS fixes timeout");
 
-        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
+        m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_lm);
 
-        param("Air Speed Threshold", m_args.airspeed_threshold)
-        .units(Units::Meter)
+        param("Air Speed Threshold", m_args.airspeed_lm)
+        .units(Units::MeterPerSecond)
         .defaultValue("12.0")
+        .minimumValue("0.0")
         .description("Minimum air speed necessary to consider a vehicle in air");
 
-        param("Ground Speed Threshold", m_args.gndspeed_threshold)
-        .units(Units::Meter)
+        param("Ground Speed Threshold", m_args.gndspeed_lm)
+        .units(Units::MeterPerSecond)
         .defaultValue("2.0")
+        .minimumValue("0.0")
         .description("Minimum ground speed necessary to consider a vehicle has landed");
 
-        param("Altitude Threshold", m_args.altitude_threshold)
+        param("Altitude Threshold", m_args.altitude_lm)
         .units(Units::Meter)
         .defaultValue("1")
         .description("Minimum altitude necessary to consider a vehicle (Copter) in air");
@@ -158,24 +160,21 @@ namespace Monitors
         .description("Type of vehicle");
 
         param("Vehicle Sub-Type", m_args.stype)
-        .defaultValue("FixedWing")
-        .values("FixedWing, Copter")
-        .description("Sub-Type of vehicle");
+        .defaultValue("None")
+        .values("None, FixedWing, Copter")
+        .description("Sub-Type of vehicle, if applicable");
 
         param("Entity Label - Medium Sensor", m_args.label_medium)
         .defaultValue("Medium Sensor")
         .description("Entity label of 'EntityState' Medium Sensor messages");
 
         // GPS validity.
-        m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE |
-                          IMC::GpsFix::GFV_VALID_TIME |
-                          IMC::GpsFix::GFV_VALID_POS |
-                          IMC::GpsFix::GFV_VALID_HACC |
-                          IMC::GpsFix::GFV_VALID_VACC |
-                          IMC::GpsFix::GFV_VALID_HDOP |
-                          IMC::GpsFix::GFV_VALID_VDOP);
+        m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE | IMC::GpsFix::GFV_VALID_TIME |
+                          IMC::GpsFix::GFV_VALID_HACC | IMC::GpsFix::GFV_VALID_VACC |
+                          IMC::GpsFix::GFV_VALID_HDOP | IMC::GpsFix::GFV_VALID_VDOP |
+                          IMC::GpsFix::GFV_VALID_POS);
 
-        m_water_presence.setTop(c_water_presence);
+        m_wet_devs.setTop(c_water_presence);
 
         // Register consumers.
         bind<IMC::EntityState>(this);
@@ -203,7 +202,7 @@ namespace Monitors
       onResourceInitialization(void)
       {
         m_init.setTop(m_args.init_time);
-        m_water_status.setTop(m_args.water_timeout);
+        m_in_water.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
       }
 
@@ -216,10 +215,10 @@ namespace Monitors
         if (msg->getSourceEntity() != m_medium_eid)
           return;
 
-        m_water_presence.reset();
+        m_wet_devs.reset();
 
         if (msg->description == DTR("water"))
-          m_water_status.reset();
+          m_in_water.reset();
       }
 
       void
@@ -236,11 +235,8 @@ namespace Monitors
       void
       consume(const IMC::IndicatedSpeed* msg)
       {
-        if (m_args.vtype != "UAV")
-        {
-          (void) msg;
+        if (!isUAV())
           return;
-        }
 
         m_airspeed = msg->value;
       }
@@ -257,39 +253,33 @@ namespace Monitors
       void
       consume(const IMC::Salinity* msg)
       {
-        if (m_args.vtype == "UAV")
-        {
-          (void) msg;
+        if (isUAV())
           return;
-        }
 
-        m_water_presence.reset();
+        m_wet_devs.reset();
 
-        if (msg->value >= m_args.water_threshold)
-          m_water_status.reset();
+        if (msg->value >= m_args.water_lm)
+          m_in_water.reset();
       }
 
       void
       consume(const IMC::SoundSpeed* msg)
       {
-        if (m_args.vtype == "UAV")
-        {
-          (void) msg;
+        if (isUAV())
           return;
-        }
 
-        m_water_presence.reset();
+        m_wet_devs.reset();
 
-        if (msg->value >= m_args.water_threshold)
-          m_water_status.reset();
+        if (msg->value >= m_args.water_lm)
+          m_in_water.reset();
       }
 
       //! Routine to check if we have recent wet sensor measurements.
       //! @return true if we have recent measurements, false otherwise.
       bool
-      hasWaterParameters(void)
+      inWater(void)
       {
-        return (!m_water_status.overflow());
+        return (!m_in_water.overflow());
       }
 
       //! Routine to check if we have recent valid GPS measurements.
@@ -300,136 +290,126 @@ namespace Monitors
         return (!m_gps_status.overflow());
       }
 
+      //! Check presence of water sensors.
       void
-      checkWaterPresence(void)
+      checkWater(void)
       {
-        if (m_water_presence.overflow())
+        if (m_wet_devs.overflow())
         {
           m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
           return;
         }
 
-        if (hasWaterParameters())
+        if (inWater())
           m_vm.medium = IMC::VehicleMedium::VM_WATER;
         else
           m_vm.medium = IMC::VehicleMedium::VM_GROUND;
       }
 
+      //! Check data input. Only for water going vehicles.
       void
-      checkDepth(void)
+      checkUUV(void)
       {
-        if ((m_depth > m_args.depth_threshold) && !isGpsAvailable())
+        if (isUAV())
+          return;
+
+        checkWater();
+
+        if ((m_depth > m_args.depth_lm) && !isGpsAvailable())
           m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
       }
 
+      //! Check data input. Only for aerial vehicles.
       void
-      check(void)
+      checkUAV(void)
       {
-        if (m_args.vtype == "UAV")
+        if (!isUAV())
           return;
 
-        checkWaterPresence();
-        checkDepth();
+        if (isCopter())
+        {
+          if (m_altitude < m_args.altitude_lm)
+            m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+          else
+            m_vm.medium = IMC::VehicleMedium::VM_AIR;
+        }
+        else
+        {
+          if (m_airspeed < m_args.airspeed_lm && m_gndspeed < m_args.gndspeed_lm)
+            m_vm.medium = IMC::VehicleMedium::VM_GROUND;
+
+          if (m_airspeed > m_args.airspeed_lm && m_altitude > m_args.altitude_lm)
+            m_vm.medium = IMC::VehicleMedium::VM_AIR;
+        }
       }
 
-      void
-      task(void)
+      //! Check if vehicle is a copter.
+      //! @return true if vehicle is a UAV of sub-type Copter.
+      bool
+      isCopter(void)
       {
-        // Wait to stabilize at beginning.
-        if (!m_init.overflow())
-          return;
+        if (isUAV() && m_args.stype == "Copter")
+          return true;
 
-        // Initialization.
-        if (getEntityState() == IMC::EntityState::ESTA_BOOT)
-        {
-          check();
-          if (m_args.vtype == "UAV")
-          {
-            if (m_args.stype == "Copter")
-            {
-              if (m_altitude < m_args.altitude_threshold)
-                m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-              else
-                m_vm.medium = IMC::VehicleMedium::VM_AIR;
-            }
-            else
-            {
-              if (m_airspeed < m_args.airspeed_threshold && m_altitude < m_args.altitude_threshold)
-                m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-              else if (m_airspeed > m_args.airspeed_threshold && m_altitude > m_args.altitude_threshold)
-                m_vm.medium = IMC::VehicleMedium::VM_AIR;
-            }
-          }
+        return false;
+      }
 
-          if (isActive())
-          {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            dispatch(m_vm);
-          }
-          else
-          {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          }
+      //! Check if vehicle is a UAV.
+      //! @return true if vehicle is a UAV.
+      bool
+      isUAV(void)
+      {
+        if (m_args.vtype == "UAV")
+          return true;
 
-          return;
-        }
+        return false;
+      }
+
+      //! Check water medium presence.
+      //! @return true if water medium can be detected or if it can be ignored.
+      bool
+      waterMediumCheck(void)
+      {
+        if (isUAV())
+          return true;
 
         // No way to detect medium properly.
-        if (m_water_presence.overflow() && m_args.vtype != "UAV" && isActive())
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
-
-        if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+        if (isActive() && m_wet_devs.overflow())
         {
-          if (!m_water_presence.overflow() && m_args.vtype != "UAV" && isActive())
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          else
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+          return false;
         }
 
+        return true;
+      }
+
+      //! Update state machine.
+      void
+      updateStateMachine(void)
+      {
         // Task state machine.
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
-            {
-              if (m_args.stype == "Copter")
-              {
-                if (m_altitude < m_args.altitude_threshold)
-                  m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-              }
-              else {
-                if (m_airspeed < m_args.airspeed_threshold && m_gndspeed < m_args.gndspeed_threshold)
-                  m_vm.medium = IMC::VehicleMedium::VM_GROUND;
-              }
-            }
+            checkUAV();
             break;
 
           case (IMC::VehicleMedium::VM_GROUND):
-            {
-              check();
-              if (m_args.stype == "Copter")
-              {
-                if (m_altitude > m_args.altitude_threshold)
-                  m_vm.medium = IMC::VehicleMedium::VM_AIR;
-              }
-              else
-              {
-                if (m_airspeed > m_args.airspeed_threshold && m_altitude > m_args.altitude_threshold && m_args.vtype == "UAV")
-                  m_vm.medium = IMC::VehicleMedium::VM_AIR;
-              }
-            }
+            checkUUV();
+            checkUAV();
             break;
 
           case (IMC::VehicleMedium::VM_WATER):
-            check();
+            checkUUV();
             break;
 
           case (IMC::VehicleMedium::VM_UNDERWATER):
-            if ((m_depth < m_args.depth_threshold - c_depth_hyst) && isGpsAvailable())
+            if ((m_depth < m_args.depth_lm - c_depth_hyst) && isGpsAvailable())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
             break;
 
           case (IMC::VehicleMedium::VM_UNKNOWN):
-            check();
+            checkUUV();
             break;
         }
 
@@ -442,6 +422,20 @@ namespace Monitors
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
+      }
+
+      void
+      task(void)
+      {
+        // Wait to stabilize at beginning.
+        if (!m_init.overflow())
+          return;
+
+        // Check presence of water.
+        if (!waterMediumCheck())
+          return;
+
+        updateStateMachine();
       }
     };
   }
