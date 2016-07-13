@@ -283,6 +283,20 @@ namespace Transports
       }
 
       void
+      popMessages(void)
+      {
+        if (!m_msg_requests.empty())
+        {
+          delete m_msg_requests.front();
+          m_msg_requests.erase(m_msg_requests.begin());
+        }
+        else
+        {
+          war(DTR("Received duplicated status."));
+        }
+      }
+
+      void
       consume(const IMC::UamTxStatus* msg)
       {
         if (msg->getDestination() != getSystemId())
@@ -291,7 +305,7 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (m_last_acop == NULL)
+        if (!m_last_acop)
           return;
 
         IMC::AcousticOperation aop(*m_last_acop);
@@ -305,10 +319,7 @@ namespace Transports
           case IMC::UamTxStatus::UTS_INV_ADDR:
             aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
             if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
-            {
-              delete m_msg_requests.front();
-              m_msg_requests.erase(m_msg_requests.begin());
-            }
+              popMessages();
             break;
 
           case IMC::UamTxStatus::UTS_DONE:
@@ -316,14 +327,15 @@ namespace Transports
             {
               case IMC::AcousticOperation::AOP_ABORT:
                 aop.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
+                inf(DTR("Abort acknowledged by remote system."));
                 break;
               case IMC::AcousticOperation::AOP_RANGE:
                 // do nothing.
                 return;
                 break;
               case IMC::AcousticOperation::AOP_MSG:
-                delete m_msg_requests.front();
-                m_msg_requests.erase(m_msg_requests.begin());
+                popMessages();
+                inf(DTR("Message sent successfully to remote system."));
                 aop.op = IMC::AcousticOperation::AOP_MSG_DONE;
                 break;
             }
@@ -349,14 +361,16 @@ namespace Transports
             {
               case IMC::AcousticOperation::AOP_ABORT:
                 aop.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
+                war(DTR("Unable to send abort to remote system."));
                 break;
               case IMC::AcousticOperation::AOP_RANGE:
                 aop.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
+                war(DTR("Did not receive range reply."));
                 break;
               case IMC::AcousticOperation::AOP_MSG:
-                delete m_msg_requests.front();
-                m_msg_requests.erase(m_msg_requests.begin());
+                popMessages();
                 aop.op = IMC::AcousticOperation::AOP_MSG_FAILURE;
+                war(DTR("Unable to send message to remote system."));
                 break;
             }
             break;
