@@ -45,7 +45,7 @@
 namespace DUNE
 {
   //! Number of CPU hogs to report.
-  static const int c_cpu_report_hogs = 3;
+  static const int c_cpu_report_hogs = 1;
 
   struct TaskCpuUsage
   {
@@ -169,10 +169,8 @@ namespace DUNE
   {
     try
     {
-      Thread::setPriority(Concurrency::Scheduler::POLICY_RR,
-                          Concurrency::Scheduler::maximumPriority());
-
-      inf(DTR("daemon running with maximum priority"));
+      setPriority(Concurrency::Scheduler::maximumPriority());
+      inf(DTR("daemon running with maximum priority: %d"), Concurrency::Scheduler::maximumPriority());
     }
     catch (...)
     {
@@ -299,8 +297,39 @@ namespace DUNE
       TaskCpuUsage entry = list.top();
       list.pop();
 
-      war(DTR("task '%s' is consuming too much CPU (%d %%)"), entry.name.c_str(), entry.usage);
+      std::pair<std::set<std::string>::iterator, bool> rv = m_cpu_task_hogs.insert(entry.name);
+      if (rv.second)
+      {
+        war(DTR("task '%s' is consuming too much CPU"), entry.name.c_str());
+        lowerTaskPriority(entry.name);
+      }
+
       ++count;
+    }
+  }
+
+  void
+  Daemon::lowerTaskPriority(const std::string& task_name)
+  {
+    if (m_tman == NULL)
+      return;
+
+    try
+    {
+      Task* task = m_tman->getTaskByName(task_name);
+      if (task == NULL)
+        return;
+
+      unsigned current_priority = task->getPriority();
+      unsigned minimum_priority = Concurrency::Scheduler::minimumPriority();
+      if (current_priority != minimum_priority)
+      {
+        task->setPriority(minimum_priority);
+      }
+    }
+    catch (...)
+    {
+      inf(DTR("failed to reduce task '%s' priority"), task_name.c_str());
     }
   }
 
@@ -326,6 +355,7 @@ namespace DUNE
       else
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_cpu_task_hogs.clear();
       }
     }
 
