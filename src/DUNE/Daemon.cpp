@@ -143,16 +143,6 @@ namespace DUNE
       inf(DTR("execution profiles: %s"), profiles.c_str());
     }
 
-    try
-    {
-      Thread::setPriority(Concurrency::Scheduler::POLICY_RR,
-                          Concurrency::Scheduler::maximumPriority());
-    }
-    catch (...)
-    {
-      war(DTR("failed to set maximum priority"));
-    }
-
     // CPU usage.
     m_ctx.config.get("General", "CPU Usage - Maximum", "65", m_cpu_max_usage);
     m_ctx.config.get("General", "CPU Usage - Moving Average Samples", "10", m_cpu_avg_samples);
@@ -177,6 +167,18 @@ namespace DUNE
   void
   Daemon::onResourceInitialization(void)
   {
+    try
+    {
+      Thread::setPriority(Concurrency::Scheduler::POLICY_RR,
+                          Concurrency::Scheduler::maximumPriority());
+
+      inf(DTR("daemon running with maximum priority"));
+    }
+    catch (...)
+    {
+      inf(DTR("daemon not running with maximum priority"));
+    }
+
     m_ctx.mbus.resume();
     m_tman->start();
     m_periodic_counter.setTop(1.0);
