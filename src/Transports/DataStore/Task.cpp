@@ -117,7 +117,7 @@ namespace Transports
         .description("WiFi forwarding period, in seconds")
         .defaultValue("30");
 
-        param("Acoustic Forward Period", m_args.wifi_forward_period)
+        param("Acoustic Forward Period", m_args.acoustic_forward_period)
         .description("Acoustic forwarding period, in seconds")
         .defaultValue("300");
 
