@@ -369,6 +369,8 @@ namespace Transports
         {
           waitForMessages(1.0);
 
+          std::stringstream ss;
+
           if (m_args.acoustic_forward_period > 0 && m_acoustic_forward_timer.overflow())
           {
             m_acoustic_forward_timer.reset();
@@ -377,6 +379,10 @@ namespace Transports
             if (!m_args.acoustic_gateway.empty())
               acousticRouting();
           }
+          else if (m_args.acoustic_forward_period > 0)
+            ss << "  Acoustic: " << m_acoustic_forward_timer.getRemaining();
+          else
+            ss << "  Acoustic: N/A";
 
           if (m_args.wifi_forward_period > 0 && m_wifi_forward_timer.overflow())
           {
@@ -386,12 +392,21 @@ namespace Transports
             if (!m_args.wifi_gateway.empty())
               wifiRouting();
           }
+          else if (m_args.wifi_forward_period > 0)
+            ss << "  Wi-Fi: " << m_wifi_forward_timer.getRemaining();
+          else
+            ss << " Wi-Fi: N/A";
 
           if (m_args.iridium_upload_period > 0 && m_iridium_upload_timer.overflow())
           {
             m_iridium_upload_timer.reset();
             m_router.iridiumUpload(&m_store);
           }
+          else if (m_args.iridium_upload_period > 0)
+            ss << "  Iridium: " << m_iridium_upload_timer.getRemaining();
+          else
+            ss << "  Iridium: N/A";
+          debug("Upload tasks: %s", ss.str().c_str());
         }
       }
     };
