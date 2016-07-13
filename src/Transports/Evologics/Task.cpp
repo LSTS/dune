@@ -77,6 +77,8 @@ namespace Transports
       unsigned src_level_water;
       //! Source Level - Underwater.
       unsigned src_level_underwater;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     // Type definition for mapping addresses.
@@ -201,19 +203,9 @@ namespace Transports
         .defaultValue("1")
         .description("Source level when medium is underwater");
 
-        // Process modem addresses.
-        std::string system = getSystemName();
-        std::vector<std::string> addrs = ctx.config.options("Evologics Addresses");
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned addr = 0;
-          ctx.config.get("Evologics Addresses", addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-
-          if (addrs[i] == system)
-            m_address = addr;
-        }
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Evologics Addresses")
+        .description("Name of the configuration section with modem addresses");
 
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
@@ -291,6 +283,20 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        // Process modem addresses.
+        std::string system = getSystemName();
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned addr = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
+          m_modem_names[addrs[i]] = addr;
+          m_modem_addrs[addr] = addrs[i];
+
+          if (addrs[i] == system)
+            m_address = addr;
+        }
+
         m_driver->setControl();
         m_driver->setAddress(m_address);
         m_driver->setSourceLevel(m_args.source_level);
