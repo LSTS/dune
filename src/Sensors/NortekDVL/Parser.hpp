@@ -220,6 +220,7 @@ namespace Sensors
                 return false;
 
               interpret();
+              m_type = RT_NONE;
               return true;
             }
 
@@ -340,6 +341,10 @@ namespace Sensors
       void
       processDistance(void)
       {
+        // Water track data seems to carry no valid distance measurements.
+        if (m_type != RT_BT)
+          return;
+
         for (unsigned i = 0; i < c_beam_count; i++)
         {
           float altitude;
