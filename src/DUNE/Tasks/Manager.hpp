@@ -96,6 +96,12 @@ namespace DUNE
         return m_tasks.end();
       }
 
+      Task*
+      getTaskByName(const std::string& name)
+      {
+        return m_tasks[name];
+      }
+
     private:
       //! Task list.
       std::vector<std::string> m_list;
