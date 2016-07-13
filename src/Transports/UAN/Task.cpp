@@ -218,7 +218,7 @@ namespace Transports
       {
         if (msg->data.size() < 2)
         {
-          debug("invalid message size");
+          war("invalid message size");
           return;
         }
 
@@ -229,7 +229,7 @@ namespace Transports
         }
         catch (...)
         {
-          debug("unknown system name: %s", msg->sys_src.c_str());
+          war("unknown system name: %s", msg->sys_src.c_str());
           return;
         }
 
@@ -240,13 +240,13 @@ namespace Transports
         }
         catch (...)
         {
-          debug("unknown system name: %s", msg->sys_dst.c_str());
+          war("unknown system name: %s", msg->sys_dst.c_str());
           return;
         }
 
         if ((uint8_t)msg->data[0] != c_sync)
         {
-          debug("invalid synchronization number: %02X", msg->data[0]);
+          war("invalid synchronization number: %02X", msg->data[0]);
           return;
         }
 
@@ -254,7 +254,7 @@ namespace Transports
         crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
         if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
         {
-          debug("invalid CRC");
+          war("invalid CRC");
           return;
         }
 
@@ -314,12 +314,14 @@ namespace Transports
         {
           case IMC::UamTxStatus::UTS_BUSY:
             aop.op = IMC::AcousticOperation::AOP_BUSY;
+            clearLastOp();
             break;
 
           case IMC::UamTxStatus::UTS_INV_ADDR:
             aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
             if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
               popMessages();
+            clearLastOp();
             break;
 
           case IMC::UamTxStatus::UTS_DONE:
@@ -339,6 +341,7 @@ namespace Transports
                 aop.op = IMC::AcousticOperation::AOP_MSG_DONE;
                 break;
             }
+            clearLastOp();
             break;
 
           case IMC::UamTxStatus::UTS_IP:
@@ -373,6 +376,7 @@ namespace Transports
                 war(DTR("Unable to send message to remote system."));
                 break;
             }
+            clearLastOp();
             break;
         }
 
@@ -523,7 +527,7 @@ namespace Transports
       void
       recvMessage(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
-        debug("Parsing message received via acoustic message.");
+        inf("Parsing message received via acoustic message.");
 
         try
         {
@@ -541,7 +545,7 @@ namespace Transports
           m->setTimeStamp(msg->getTimeStamp());
           m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
           dispatch(m, DF_KEEP_TIME);
-          debug("Acoustic message successfully parsed as '%s'.", m->getName());
+          inf("Acoustic message successfully parsed as '%s'.", m->getName());
         }
         catch (std::exception& ex) {
           err("Error parsing raw message from UAM frame: %s.", ex.what());
@@ -553,6 +557,8 @@ namespace Transports
       {
         std::vector<uint8_t> data;
         data.push_back(CODE_RAW);
+
+        inf ("Sending %s to %s.", msg->getName(), sys.c_str());
 
         // leave 1 byte for CODE_RAW and another for CRC8
         uint8_t buf[1022];
