@@ -328,16 +328,16 @@ namespace Transports
       void
       acousticRouting()
       {
-        debug("forwarding to gateway over acoustic");
+        inf("forwarding to gateway over acoustic");
 
         IMC::HistoricData* data = m_store.pollSamples(1000);
         if (!m_router.routeOverAcoustic(m_args.acoustic_gateway, data))
         {
-          debug("not possible to forward data acoustically at this time.");
+          war("not possible to forward data through %s acoustically at this time.", m_args.acoustic_gateway.c_str());
           m_store.addData(data);
         }
         else
-          inf("Routed %lu samples to %s using Acoustic Modem", data->data.size(), m_args.wifi_gateway.c_str());
+          inf("Routed %lu samples to %s using Acoustic Modem", data->data.size(), m_args.acoustic_gateway.c_str());
 
         Memory::clear(data);
       }
@@ -346,14 +346,14 @@ namespace Transports
       wifiRouting()
       {
 
-        debug("forwarding to gateway over wifi");
+        inf("forwarding to gateway over wifi");
 
         IMC::HistoricData* data = m_store.pollSamples(32 * 1024);
         if (data == NULL)
           return;
         if (!m_router.routeOverWifi(m_args.wifi_gateway, data))
         {
-          inf("not possible to forward data over WiFi at this time.");
+          war("not possible to forward data over WiFi through %s at this time.", m_args.wifi_gateway.c_str());
           m_store.addData(data);
         }
         else
