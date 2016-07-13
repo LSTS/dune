@@ -95,14 +95,9 @@ namespace DUNE
     int m_cpu_max_usage;
     //! Overall CPU usage - moving average.
     Math::MovingAverage<double>* m_cpu_avg;
-    //! Set of task names whose CPU hogging has been reported.
-    std::set<std::string> m_cpu_task_hogs;
 
     void
-    lowerTaskPriority(const std::string& task_name);
-
-    void
-    dispatchCpuUsagePerTask(bool report_hogs);
+    measureCpuUsage(void);
 
     void
     dispatchPeriodic(void);

@@ -44,21 +44,6 @@
 
 namespace DUNE
 {
-  //! Number of CPU hogs to report.
-  static const int c_cpu_report_hogs = 1;
-
-  struct TaskCpuUsage
-  {
-    std::string name;
-    int usage;
-
-    bool
-    operator<(const TaskCpuUsage& other) const
-    {
-      return usage < other.usage;
-    }
-  };
-
   Daemon::Daemon(DUNE::Tasks::Context& ctx, const std::string& profiles):
     DUNE::Tasks::Task("Daemon", ctx),
     m_tman(NULL),
@@ -267,76 +252,10 @@ namespace DUNE
   }
 
   void
-  Daemon::dispatchCpuUsagePerTask(bool report_hogs)
+  Daemon::measureCpuUsage(void)
   {
-    std::priority_queue<TaskCpuUsage> list;
-    IMC::CpuUsage cpu_usage;
-    std::map<std::string, Task*>::const_iterator itr = m_tman->begin();
-    for ( ; itr != m_tman->end(); ++itr)
-    {
-      int value = itr->second->getProcessorUsage();
-      if (value >= 0 && value <= 100)
-      {
-        if (report_hogs && value > 0)
-        {
-          TaskCpuUsage entry;
-          entry.usage = value;
-          entry.name = itr->second->getName();
-          list.push(entry);
-        }
-
-        cpu_usage.setSourceEntity(itr->second->getEntityId());
-        cpu_usage.value = value;
-        dispatch(cpu_usage);
-      }
-    }
-
-    int count = 0;
-    while (!list.empty() && count < c_cpu_report_hogs)
-    {
-      TaskCpuUsage entry = list.top();
-      list.pop();
-
-      std::pair<std::set<std::string>::iterator, bool> rv = m_cpu_task_hogs.insert(entry.name);
-      if (rv.second)
-      {
-        war(DTR("task '%s' is consuming too much CPU"), entry.name.c_str());
-        lowerTaskPriority(entry.name);
-      }
-
-      ++count;
-    }
-  }
-
-  void
-  Daemon::lowerTaskPriority(const std::string& task_name)
-  {
-    if (m_tman == NULL)
-      return;
-
-    try
-    {
-      Task* task = m_tman->getTaskByName(task_name);
-      if (task == NULL)
-        return;
-
-      unsigned current_priority = task->getPriority();
-      unsigned minimum_priority = Concurrency::Scheduler::minimumPriority();
-      if (current_priority != minimum_priority)
-      {
-        task->setPriority(minimum_priority);
-      }
-    }
-    catch (...)
-    {
-      inf(DTR("failed to reduce task '%s' priority"), task_name.c_str());
-    }
-  }
-
-  void
-  Daemon::dispatchPeriodic(void)
-  {
-    bool report_hogs = false;
+    // Measure CPU usage per task.
+    m_tman->measureCpuUsage();
 
     // Dispatch global CPU usage.
     IMC::CpuUsage cpu_usage;
@@ -347,19 +266,23 @@ namespace DUNE
       dispatch(cpu_usage);
 
       double cpu_avg = m_cpu_avg->update(value);
+
       if (cpu_avg >= m_cpu_max_usage)
       {
         setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_CPU_TOO_HIGH);
-        report_hogs = true;
+        m_tman->adjustPriorities();
       }
       else
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_cpu_task_hogs.clear();
       }
     }
+  }
 
-    dispatchCpuUsagePerTask(report_hogs);
+  void
+  Daemon::dispatchPeriodic(void)
+  {
+    measureCpuUsage();
 
     // Dispatch available storage.
     if (m_fs_capacity > 0)
