@@ -310,7 +310,7 @@ namespace Navigation
           }
           catch (...)
           {
-            m_imu_eid = UINT_MAX;
+            m_imu_eid = std::numeric_limits<unsigned>::max();
           }
         }
 
@@ -325,7 +325,7 @@ namespace Navigation
             as.state = IMC::AlignmentState::AS_NOT_ALIGNED;
 
           // No IMU unit available.
-          if (m_imu_eid == UINT_MAX)
+          if (m_imu_eid == std::numeric_limits<unsigned>::max())
             as.state = IMC::AlignmentState::AS_NOT_SUPPORTED;
 
           dispatch(as);
