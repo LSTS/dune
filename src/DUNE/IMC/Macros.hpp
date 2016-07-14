@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 26cacc3dc3beefce27c2f4c57be495c3                            *
+// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -592,5 +592,13 @@
 #define DUNE_IMC_USBLPOSITIONEXTENDED 899
 //! UsblFixExtended identification number.
 #define DUNE_IMC_USBLFIXEXTENDED 900
+//! UsblModem identification number.
+#define DUNE_IMC_USBLMODEM 901
+//! UsblConfig identification number.
+#define DUNE_IMC_USBLCONFIG 902
+//! DissolvedOrganicMatter identification number.
+#define DUNE_IMC_DISSOLVEDORGANICMATTER 903
+//! OpticalBackscatter identification number.
+#define DUNE_IMC_OPTICALBACKSCATTER 904
 
 #endif
