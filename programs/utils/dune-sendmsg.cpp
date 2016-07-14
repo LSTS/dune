@@ -786,9 +786,9 @@ main(int argc, char** argv)
 
     IMC::UsblModem modem;
     modem.name = "UsblModem";
-    modem.lat = atoi(argv[4]);
-    modem.lon = atoi(argv[5]);
-    modem.z = atoi(argv[6]);
+    modem.lat = atof(argv[4]);
+    modem.lon = atof(argv[5]);
+    modem.z = atof(argv[6]);
     modem.z_units = static_cast<IMC::ZUnits>(1);
     tmsg->modems.push_back(modem);
   }
