@@ -180,10 +180,9 @@ namespace DUNE
         {
           m_period = m_args->period;
           m_fix = m_args->fix;
-          m_no_range = m_args->no_range;
 
           // in quick mode, we actively ping the modem
-          if (m_no_range)
+          if (m_args->no_range)
           {
             m_node_timer.setTop(m_period);
           }
@@ -407,8 +406,6 @@ namespace DUNE
         std::string m_usbl_name;
         //! Absolute fix or request relative position.
         bool m_fix;
-        //! Quick mode, no range.
-        bool m_no_range;
         //! Periodicity.
         uint16_t m_period;
         //! USBL configuration.
