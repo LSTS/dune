@@ -46,7 +46,8 @@ namespace Transports
       CODE_PLAN    = 0x02,
       CODE_REPORT  = 0x03,
       CODE_RESTART = 0x04,
-      CODE_RAW     = 0x05
+      CODE_RAW     = 0x05,
+      CODE_TXT     = 0x06
     };
 
     struct Report
@@ -206,7 +207,6 @@ namespace Transports
               sendMessage(msg->system, msg->msg);
             }
             break;
-
           default:
             return;
         }
@@ -278,6 +278,10 @@ namespace Transports
 
           case CODE_RAW:
             recvMessage(imc_addr_src, imc_addr_dst, msg);
+            break;
+
+          case CODE_TXT:
+            recvText(imc_addr_src, imc_addr_dst, msg);
             break;
         }
       }
@@ -550,6 +554,20 @@ namespace Transports
         catch (std::exception& ex) {
           err("Error parsing raw message from UAM frame: %s.", ex.what());
         }
+      }
+
+      void
+      recvText(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
+      {
+        uint8_t size = msg->data[2];
+        char txt[size+1];
+        std::memcpy(txt, &msg->data[3], size);
+        IMC::TextMessage m;
+        m.origin = m_ctx.resolver.resolve(imc_src);
+        txt[size] = 0;
+        m.text = txt;
+        debug("Received message: %s", txt);
+        dispatch(m);
       }
 
       void
