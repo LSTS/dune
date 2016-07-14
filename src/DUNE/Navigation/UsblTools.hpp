@@ -87,7 +87,7 @@ namespace DUNE
       };
 
       //! Position data structure.
-      struct Pos
+      struct Position
       {
         fp32_t x;
         fp32_t y;
@@ -99,7 +99,7 @@ namespace DUNE
       };
 
       //! Angles data structure.
-      struct Ang
+      struct Angles
       {
         fp32_t lbearing;
         fp32_t lelevation;
@@ -283,8 +283,8 @@ namespace DUNE
 
             case CODE_POS:
             {
-              UsblTools::Pos ps;
-              std::memcpy(&ps, &msg->data[c_code + 1], sizeof(UsblTools::Pos));
+              UsblTools::Position ps;
+              std::memcpy(&ps, &msg->data[c_code + 1], sizeof(UsblTools::Position));
 
               IMC::UsblPositionExtended pos;
               pos.setSource(imc_src);
@@ -308,8 +308,8 @@ namespace DUNE
 
             case CODE_ANG:
             {
-              UsblTools::Ang as;
-              std::memcpy(&as, &msg->data[c_code + 1], sizeof(UsblTools::Ang));
+              UsblTools::Angles as;
+              std::memcpy(&as, &msg->data[c_code + 1], sizeof(UsblTools::Angles));
 
               IMC::UsblAnglesExtended ang;
               ang.setSource(imc_src);
@@ -691,9 +691,9 @@ namespace DUNE
           if (m_system != msg->target)
             return false;
 
-          data.resize(sizeof(UsblTools::Pos) + 2);
+          data.resize(sizeof(UsblTools::Position) + 2);
 
-          UsblTools::Pos pos;
+          UsblTools::Position pos;
           pos.x = msg->x;
           pos.y = msg->y;
           pos.z = msg->z;
@@ -703,7 +703,7 @@ namespace DUNE
           pos.accuracy = msg->accuracy;
 
           data[c_code - 1] = CODE_POS;
-          std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Pos));
+          std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Position));
           targetReplied(m_system);
           m_system.clear();
 
@@ -724,9 +724,9 @@ namespace DUNE
           if (m_system != msg->target)
             return false;
 
-          data.resize(sizeof(UsblTools::Ang) + 2);
+          data.resize(sizeof(UsblTools::Angles) + 2);
 
-          UsblTools::Ang ang;
+          UsblTools::Angles ang;
           ang.lbearing = msg->lbearing;
           ang.lelevation = msg->lelevation;
           ang.bearing = msg->bearing;
@@ -734,7 +734,7 @@ namespace DUNE
           ang.accuracy = msg->accuracy;
 
           data[c_code - 1] = CODE_ANG;
-          std::memcpy(&data[c_code], &ang, sizeof(UsblTools::Ang));
+          std::memcpy(&data[c_code], &ang, sizeof(UsblTools::Angles));
           m_system.clear();
 
           return true;
