@@ -196,10 +196,12 @@ namespace Maneuver
         ss << "; curHstep=" << m_cur_hstep;
         ss << "; stdHstep=" << m_cov_pred;
 
-        signalProgress(pcs->eta, ss.str());
 
         if (!(pcs->flags & IMC::PathControlState::FL_NEAR))
+        {
+          signalProgress(pcs->eta, ss.str());
           return;
+        }
 
         double lat;
         double lon;
@@ -215,17 +217,21 @@ namespace Maneuver
               m_cov_actual_min = m_cov_actual_min * (1 - m_maneuver.overlap / 200.);
               m_cur_hstep = std::min(m_cov_pred, m_cov_actual_min);
               last_pt = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
+              ss << "; calculated=" << m_cur_hstep;
             }
             else
             {
               m_cur_hstep = m_cov_pred;
               last_pt = m_stages_parser->getNextPoint(&lat, &lon, m_cur_hstep);
+              ss << "; not-calculated=" << m_cov_pred;
             }
             break;
           default:
             last_pt = m_stages_parser->getNextPoint(&lat, &lon);
             break;
         }
+
+        signalProgress(pcs->eta, ss.str());
 
         m_alt_avrg->clear();
         m_alt_min = -1;

@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 26cacc3dc3beefce27c2f4c57be495c3                            *
+// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -22358,6 +22358,322 @@ namespace DUNE
       {
         return IMC::getSerializationSize(target);
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! USBL Modem Configuration.
+    class UsblModem: public Message
+    {
+    public:
+      //! Modem Name.
+      std::string name;
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z Reference.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 901;
+      }
+
+      UsblModem(void);
+
+      Message*
+      clone(void) const
+      {
+        return new UsblModem(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return UsblModem::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UsblModem";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 21;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! USBL Configuration.
+    class UsblConfig: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Set LBL Configuration.
+        OP_SET_CFG = 0,
+        //! Retrieve LBL Configuration.
+        OP_GET_CFG = 1,
+        //! Reply to a GET command.
+        OP_CUR_CFG = 2
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Modems.
+      MessageList<UsblModem> modems;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 902;
+      }
+
+      UsblConfig(void);
+
+      Message*
+      clone(void) const
+      {
+        return new UsblConfig(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return UsblConfig::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UsblConfig";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return modems.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Dissolved Organic Matter.
+    class DissolvedOrganicMatter: public Message
+    {
+    public:
+      //! Type of measurement.
+      enum TypeofmeasurementEnum
+      {
+        //! Colored.
+        DT_COLORED = 0,
+        //! Fluorescent.
+        DT_FLUORESCENT = 1
+      };
+
+      //! Value.
+      fp32_t value;
+      //! Type of measurement.
+      uint8_t type;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 903;
+      }
+
+      DissolvedOrganicMatter(void);
+
+      Message*
+      clone(void) const
+      {
+        return new DissolvedOrganicMatter(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DissolvedOrganicMatter::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DissolvedOrganicMatter";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Optical Backscattering Coefficient.
+    class OpticalBackscatter: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 904;
+      }
+
+      OpticalBackscatter(void);
+
+      Message*
+      clone(void) const
+      {
+        return new OpticalBackscatter(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return OpticalBackscatter::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "OpticalBackscatter";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
