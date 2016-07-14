@@ -187,9 +187,9 @@ namespace DUNE
         {
           pitch = std::fabs(pitch);
           float beam = m_beam_width / 2.0;
-          if (pitch > beam && pitch < m_safe_pitch * 2.0)
+          if (pitch > beam && pitch < m_safe_pitch)
           {
-            float lim = m_frange->mean() * (1 - std::sin(pitch + beam));
+            float lim = m_frange->mean() * (1 - std::sin(pitch));
             return m_frange->mean() < lim;
           }
         }
