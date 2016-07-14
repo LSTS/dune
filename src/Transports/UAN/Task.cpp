@@ -523,6 +523,12 @@ namespace Transports
             return;
           }
         }
+        else if (msg->getId() == IMC::TextMessage::getIdStatic())
+        {
+          const IMC::TextMessage* m = static_cast<const IMC::TextMessage*>(msg);
+          sendText(sys, m);
+          return;
+        }
 
         // For all other cases, send the raw message across
         sendRawMessage(sys, msg);
@@ -531,7 +537,7 @@ namespace Transports
       void
       recvMessage(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
-        inf("Parsing message received via acoustic message.");
+        inf("Parsing message received via acoustic modem.");
 
         try
         {
@@ -559,15 +565,18 @@ namespace Transports
       void
       recvText(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
+        (void)imc_dst;
+        debug("Parsing text received via acoustic modem.");
         uint8_t size = msg->data[2];
-        char txt[size+1];
+        char *txt = (char*)malloc(size + 1);
         std::memcpy(txt, &msg->data[3], size);
         IMC::TextMessage m;
         m.origin = m_ctx.resolver.resolve(imc_src);
         txt[size] = 0;
         m.text = txt;
-        debug("Received message: %s", txt);
+        inf("Received message: %s", txt);
         dispatch(m);
+        Memory::clear(txt);
       }
 
       void
@@ -607,6 +616,21 @@ namespace Transports
         for (size_t i = 0; i < msg->plan_id.size(); ++i)
           data.push_back((uint8_t)msg->plan_id[i]);
         sendFrame(sys, data, true);
+      }
+
+      void
+      sendText(const std::string& sys, const IMC::TextMessage* msg)
+      {
+        std::vector<uint8_t> data;
+        data.push_back(CODE_TXT);
+        for (size_t i = 0; i < msg->text.size(); ++i)
+          data.push_back((uint8_t)msg->text[i]);
+        data.push_back(0);
+
+        if (sys.empty())
+          sendFrame("broadcast", data, true);
+        else
+          sendFrame(sys, data, true);
       }
 
       void
