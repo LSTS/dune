@@ -299,13 +299,13 @@ namespace Sensors
 
         try
         {
-          if (openSocket())
-            return;
-
-          SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          port->setCanonicalInput(true);
-          port->flush();
-          m_handle = port;
+          if (!openSocket())
+          {
+             SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+             port->setCanonicalInput(true);
+             port->flush();
+             m_handle = port;
+           }
         }
         catch (std::runtime_error& e)
         {

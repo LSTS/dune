@@ -38,6 +38,12 @@
 
 namespace Supervisors
 {
+  //! This task executes commands during power down and power down abort
+  //! to safely shutdown the systems. Moreover, it allows slave system
+  //! names to be added so that they are notified. To do so, requires a
+  //! TCP/UDP link with the slave system to exchange messages.
+  //!
+  //! @author Ricardo Martins
   namespace Power
   {
     using DUNE_NAMESPACES;

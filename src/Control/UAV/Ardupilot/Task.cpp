@@ -1684,7 +1684,7 @@ namespace Control
           m_lon = Angles::radians((double)gp.lon * 1e-07);
           m_hae_msl = (double) gp.alt * 1e-3;   //MSL
 
-          if (m_args.convert_msl)
+          if (m_args.convert_msl && m_fix.type == IMC::GpsFix::GFT_STANDALONE)
           {
             if ((m_ground && !m_offset_st) || m_reboot)
             {

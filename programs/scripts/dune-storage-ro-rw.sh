@@ -1,6 +1,6 @@
+#! /bin/sh
 ############################################################################
-# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
-# Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
+# Copyright 2007-2016 OceanScan - Marine Systems & Technology, Lda.        #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
 #                                                                          #
@@ -25,28 +25,60 @@
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
-[Sensors.LIMU]
-Enabled                               = Hardware
-Execution Priority                    = 50
-Entity Label                          = AHRS
-Activation Time                       = 0
-Deactivation Time                     = 0
-Serial Port - Device                  = /dev/uart/1
-Power Channel - Name                  = AHRS
-Output Frequency                      = 50
-Debug Level                           = Spew
-Hard-Iron Calibration                 = 0.0, 0.0, 0.0
-Raw Data                              = false
-Timeout - Error                       = 3.0
-Timeout - Failure                     = 6.0
-Rotation Matrix                       = 1.0, 0.0, 0.0,
-                                        0.0, 1.0, 0.0,
-                                        0.0, 0.0, 1.0
+# Test if lauv-storage-client script is present.
+grep lauv-storage-client /etc/config | grep cfg_services > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    STORAGE_NFS=1
+else
+    STORAGE_NFS=0
+fi
 
-[Simulators.IMU/AHRS]
-Enabled                               = Simulation
-Entity Label                          = AHRS
-Standard Deviation - Euler Angles     = 0.05
-Standard Deviation - Angular Velocity = 0.05
-Standard Deviation - Heading Offset   = 0
-Gyro Rate Bias                        = 0
+# Test if /opt/lsts/dune/log is a separate mount.
+grep /opt/lsts/dune/log /proc/mounts | grep -v nfs
+if [ $? -eq 0 ]; then
+    STORAGE_OPT=1
+else
+    STORAGE_OPT=0
+fi
+
+mount_ro()
+{
+    services syslog stop || return 1
+    mount -o remount,ro /opt || return 1
+
+    if [ $STORAGE_NFS -eq 1 ]; then
+        services lauv-storage-client stop || return 1
+    fi
+
+    if [ $STORAGE_OPT -eq 1 ]; then
+        mount -o remount,ro /opt/lsts/dune/log || return 1
+    fi
+}
+
+mount_rw()
+{
+    if [ $STORAGE_OPT -eq 1 ]; then
+        mount -o remount,rw /opt/lsts/dune/log || return 1
+    fi
+
+    if [ $STORAGE_NFS -eq 1 ]; then
+        services lauv-storage-client start || return 1
+    fi
+
+    mount -o remount,rw /opt || return 1
+    services syslog restart || return 1
+}
+
+case "$1" in
+    ro)
+        mount_ro
+        ;;
+
+    rw)
+        mount_rw
+        ;;
+
+    *)
+        echo "Usage: $0 <ro|rw>"
+        ;;
+esac

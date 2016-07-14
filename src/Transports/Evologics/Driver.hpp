@@ -99,6 +99,20 @@ namespace Transports
         sendAT("Z4");
       }
 
+      //! Set control over modem.
+      void
+      setControl(void)
+      {
+        if (getFirmwareVersion() == "1.6")
+          return;
+
+        if (getFirmwareVersion() == "1.7")
+          return;
+
+        sendAT("@CTRL");
+        expectOK();
+      }
+
       //! Set modem address.
       //! @param[in] addr address.
       void

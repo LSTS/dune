@@ -288,7 +288,7 @@ namespace DUNE
       }
       catch (...)
       {
-        m_depth_eid = 0;
+        m_depth_eid = std::numeric_limits<unsigned>::max();
       }
 
       try
@@ -297,11 +297,10 @@ namespace DUNE
       }
       catch (...)
       {
-        m_ahrs_eid = 0;
+        m_ahrs_eid = std::numeric_limits<unsigned>::max();
       }
 
       m_agvel_eid = m_ahrs_eid;
-      m_accel_eid = m_ahrs_eid;
 
       try
       {
@@ -309,7 +308,7 @@ namespace DUNE
       }
       catch (...)
       {
-        m_dvl_eid = 0;
+        m_dvl_eid = std::numeric_limits<unsigned>::max();
       }
 
       try
@@ -321,7 +320,7 @@ namespace DUNE
       }
       catch (...)
       {
-        m_alt_eid = 0;
+        m_alt_eid = std::numeric_limits<unsigned>::max();
       }
     }
 
@@ -336,8 +335,18 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::Acceleration* msg)
     {
-      if (msg->getSourceEntity() != m_accel_eid)
+      if (msg->getSourceEntity() != m_ahrs_eid)
         return;
+
+      if (std::fabs(msg->x) > c_max_accel ||
+          std::fabs(msg->y) > c_max_accel ||
+          std::fabs(msg->z) > c_max_accel)
+      {
+        err(DTR("received acceleration beyond range: %f, %f, %f"),
+            msg->x, msg->y, msg->z);
+
+        return;
+      }
 
       m_accel_bfr[AXIS_X] += msg->x;
       m_accel_bfr[AXIS_Y] += msg->y;
@@ -350,6 +359,16 @@ namespace DUNE
     {
       if (msg->getSourceEntity() != m_agvel_eid)
         return;
+
+      if (std::fabs(msg->x) > c_max_agvel ||
+          std::fabs(msg->y) > c_max_agvel ||
+          std::fabs(msg->z) > c_max_agvel)
+      {
+        err(DTR("received angular velocity beyond range: %f, %f, %f"),
+            msg->x, msg->y, msg->z);
+
+        return;
+      }
 
       m_agvel_bfr[AXIS_X] += msg->x;
       m_agvel_bfr[AXIS_Y] += msg->y;
@@ -431,6 +450,15 @@ namespace DUNE
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
+      if (std::fabs(msg->phi) > Math::c_pi ||
+          std::fabs(msg->theta) > Math::c_pi ||
+          std::fabs(msg->psi) > Math::c_pi)
+      {
+        err(DTR("received euler angles beyond range: %f, %f, %f"),
+            msg->phi, msg->theta, msg->psi);
+        return;
+      }
+
       m_euler_bfr[AXIS_X] += msg->phi;
       m_euler_bfr[AXIS_Y] += msg->theta;
 
@@ -449,6 +477,15 @@ namespace DUNE
     {
       if (msg->getSourceEntity() != m_imu_eid)
         return;
+
+      if (std::fabs(msg->x) > Math::c_pi / 10.0 ||
+          std::fabs(msg->y) > Math::c_pi / 10.0 ||
+          std::fabs(msg->z) > Math::c_pi / 10.0)
+      {
+        err(DTR("received euler angles delta beyond range: %f, %f, %f"),
+            msg->x, msg->y, msg->z);
+        return;
+      }
 
       m_edelta_bfr[AXIS_X] += msg->x;
       m_edelta_bfr[AXIS_Y] += msg->y;

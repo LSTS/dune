@@ -210,6 +210,9 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (msg->getSourceEntity() != m_medium_eid)
           return;
 
