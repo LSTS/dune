@@ -85,7 +85,7 @@ namespace Transports
       //! Last acoustic operation.
       IMC::AcousticOperation* m_last_acop;
       //! Vector of pending message requests
-      std::vector<const IMC::AcousticOperation*> m_msg_requests;
+      //std::vector<const IMC::AcousticOperation*> m_msg_requests;
       //! Timer for sending preceding message
       Counter<double> m_msg_send_timer;
       //! When set should wait and send next message
@@ -193,19 +193,7 @@ namespace Transports
             break;
 
           case IMC::AcousticOperation::AOP_MSG:
-            m_msg_requests.push_back((const IMC::AcousticOperation*)msg->msg.get());
-            // are there more messages being sent?
-            if (m_msg_requests.size() > 1)
-            {
-              IMC::AcousticOperation aop(*msg);
-              aop.op = IMC::AcousticOperation::AOP_MSG_QUEUED;
-              dispatch(aop);
-              return;
-            }
-            else
-            {
-              sendMessage(msg->system, msg->msg);
-            }
+            sendMessage(msg->system, msg->msg);
             break;
           default:
             return;
@@ -287,20 +275,6 @@ namespace Transports
       }
 
       void
-      popMessages(void)
-      {
-        if (!m_msg_requests.empty())
-        {
-          delete m_msg_requests.front();
-          m_msg_requests.erase(m_msg_requests.begin());
-        }
-        else
-        {
-          war(DTR("Received duplicated status."));
-        }
-      }
-
-      void
       consume(const IMC::UamTxStatus* msg)
       {
         if (msg->getDestination() != getSystemId())
@@ -324,7 +298,6 @@ namespace Transports
           case IMC::UamTxStatus::UTS_INV_ADDR:
             aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
             if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
-              popMessages();
             clearLastOp();
             break;
 
@@ -340,7 +313,7 @@ namespace Transports
                 return;
                 break;
               case IMC::AcousticOperation::AOP_MSG:
-                popMessages();
+                //popMessages();
                 inf(DTR("Message sent successfully to remote system."));
                 aop.op = IMC::AcousticOperation::AOP_MSG_DONE;
                 break;
@@ -375,7 +348,7 @@ namespace Transports
                 war(DTR("Did not receive range reply."));
                 break;
               case IMC::AcousticOperation::AOP_MSG:
-                popMessages();
+                //popMessages();
                 aop.op = IMC::AcousticOperation::AOP_MSG_FAILURE;
                 war(DTR("Unable to send message to remote system."));
                 break;
@@ -385,15 +358,6 @@ namespace Transports
         }
 
         dispatch(aop);
-
-        // If idle send pending messages.
-        if (msg->value != IMC::UamTxStatus::UTS_IP && !m_msg_requests.empty())
-        {
-          // wait (for clearing buffers) and send next message
-          m_msg_send_timer.setTop(2);
-          m_msg_send_timer.reset();
-          m_send_next = true;
-        }
       }
 
       void
@@ -513,6 +477,11 @@ namespace Transports
           return;
         }
 
+        std::stringstream ss;
+        msg->toJSON(ss);
+
+        inf("Message: %s", ss.str().c_str());
+
         // Check if special command can be used...
         if (msg->getId() == IMC::PlanControl::getIdStatic())
         {
@@ -529,6 +498,7 @@ namespace Transports
           sendText(sys, m);
           return;
         }
+
 
         // For all other cases, send the raw message across
         sendRawMessage(sys, msg);
@@ -568,6 +538,7 @@ namespace Transports
         (void)imc_dst;
         debug("Parsing text received via acoustic modem.");
         uint8_t size = msg->data[2];
+        inf("Size of text received is %d.", size);
         char *txt = (char*)malloc(size + 1);
         std::memcpy(txt, &msg->data[3], size);
         IMC::TextMessage m;
@@ -737,14 +708,6 @@ namespace Transports
           {
             if (m_reporter != NULL && m_reporter->trigger())
               sendReport();
-          }
-
-          if (m_send_next && m_msg_send_timer.overflow())
-          {
-            m_send_next = false;
-            const IMC::AcousticOperation * req = m_msg_requests.at(0);
-            replaceLastOp(req);
-            sendMessage(req->system, req->msg);
           }
         }
       }
