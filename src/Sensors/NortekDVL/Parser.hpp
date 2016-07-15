@@ -163,14 +163,12 @@ namespace Sensors
               m_bfr[m_index++] = byte;
               m_state = ST_FAMILY;
               m_type = RT_BT;
-              std::printf("\r\n\r\nBOTTOM\r\n\r\n");
             }
             else if (byte == c_wt_type)
             {
               m_bfr[m_index++] = byte;
               m_state = ST_FAMILY;
               m_type = RT_WT;
-              std::printf("\r\n\r\nWATER\r\n\r\n");
             }
             else
             {
