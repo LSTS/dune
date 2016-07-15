@@ -794,6 +794,21 @@ main(int argc, char** argv)
     msg = tmsg;
   }
 
+  if (strcmp(argv[3], "UsblConfig") == 0)
+  {
+    IMC::UsblConfig* tmsg = new IMC::UsblConfig;
+    msg = tmsg;
+    tmsg->op = IMC::UsblConfig::OP_SET_CFG;
+
+    IMC::UsblModem modem;
+    modem.name = argv[4];
+    modem.lat = atof(argv[5]);
+    modem.lon = atof(argv[6]);
+    modem.z = atof(argv[7]);
+    modem.z_units = static_cast<IMC::ZUnits>(1);
+    tmsg->modems.push_back(modem);
+  }
+
   if (strcmp(argv[3], "VehicleCommand") == 0)
   {
     IMC::VehicleCommand* tmsg = new IMC::VehicleCommand;
