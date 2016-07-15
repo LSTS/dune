@@ -70,6 +70,7 @@ namespace Sensors
         m_data_size(0),
         m_checksum(0),
         m_status(0),
+        m_water(false),
         m_type(RT_NONE)
       {
         m_filter = new BeamFilter(m_task, c_beam_count, c_beam_width, c_beam_offset,
@@ -115,6 +116,14 @@ namespace Sensors
         }
 
         return false;
+      }
+
+      //! Indicate to the parser if device is in a water environment.
+      //! @param[in] status true if device is in water, false otherwise.
+      void
+      setWater(bool status)
+      {
+        m_water = status;
       }
 
     private:
@@ -302,7 +311,10 @@ namespace Sensors
         sspe.setTimeStamp(m_timestamp);
         temp.setTimeStamp(m_timestamp);
 
-        m_task->dispatch(sspe, DF_KEEP_TIME);
+        // Sound speed measurements are correctly only in water.
+        if (m_water)
+          m_task->dispatch(sspe, DF_KEEP_TIME);
+
         m_task->dispatch(temp, DF_KEEP_TIME);
 
         m_task->spew("status bits: %08X | sound: %0.1f | temperature: %0.1f",
@@ -542,6 +554,8 @@ namespace Sensors
       uint16_t m_checksum;
       //! Status bits.
       uint32_t m_status;
+      //! Device is in water.
+      bool m_water;
       //! Return data type.
       ReturnType m_type;
     };

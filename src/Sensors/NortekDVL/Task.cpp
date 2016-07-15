@@ -184,10 +184,19 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        m_hand.update(msg);
+
+        // Indicate to parser if device is in water.
+        if (isParserOn())
+        {
+          if (m_hand.isWaterSurface() || m_hand.isUnderwater())
+            m_parser->setWater(true);
+          else
+            m_parser->setWater(false);
+        }
+
         if (!m_args.auto_activation)
           return;
-
-        m_hand.update(msg);
 
         // Request activation.
         if (m_hand.isWaterSurface() || m_hand.isUnderwater())
@@ -273,7 +282,7 @@ namespace Sensors
         m_data_h = data_sock;
         m_serial = false;
 
-        generate();
+        setup();
 
         if (!m_driver->login())
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
@@ -304,7 +313,7 @@ namespace Sensors
             m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
             m_data_h = m_handle;
             m_serial = true;
-            generate();
+            setup();
           }
         }
         catch (...)
@@ -381,19 +390,12 @@ namespace Sensors
         }
       }
 
-      //! Generate driver and parser.
+      //! Setup driver and parser.
       void
-      generate(void)
+      setup(void)
       {
         m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered, m_args.hw_debug);
         m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
-      }
-
-      void
-      onSoundSpeed(const IMC::SoundSpeed* msg)
-      {
-        // @todo setup external speed or is internal reliable ?
-        (void)msg;
       }
     };
   }
