@@ -113,6 +113,7 @@ namespace Transports
         acOp.msg.set(data);
         acOp.op = AcousticOperation::AOP_MSG;
         acOp.system = destination;
+        acOp.setDestination(m_parent->getSystemId());
         m_parent->dispatch(acOp);
         return true;
       }
