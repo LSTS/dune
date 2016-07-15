@@ -193,7 +193,7 @@ namespace Transports
             break;
 
           case IMC::AcousticOperation::AOP_MSG:
-            m_msg_requests.push_back((const IMC::AcousticOperation*)msg->clone());
+            m_msg_requests.push_back((const IMC::AcousticOperation*)msg->msg.get());
             // are there more messages being sent?
             if (m_msg_requests.size() > 1)
             {
