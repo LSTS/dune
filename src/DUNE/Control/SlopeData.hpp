@@ -174,12 +174,25 @@ namespace DUNE
       }
 
       //! Test if forward range is too low
+      //! @param[in] pitch current pitch angle
       //! @return true if forward range is low
       inline bool
-      isRangeLow(void) const
+      isRangeLow(float pitch = 0.0) const
       {
         if (!isRangeValid())
           return false;
+
+        // reduce limit if detection comes from bottom when pitching down.
+        if (pitch < 0.0)
+        {
+          pitch = std::fabs(pitch);
+          float beam = m_beam_width / 2.0;
+          if (pitch > beam && pitch < m_safe_pitch)
+          {
+            float lim = m_frange->mean() * (1 - std::sin(pitch));
+            return m_frange->mean() < lim;
+          }
+        }
 
         return m_frange->mean() < m_min_range;
       }
