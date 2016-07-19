@@ -23,6 +23,8 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
+// Author: João Fortuna                                                     *
+// Author: Maria Costa                                                      *
 //***************************************************************************
 
 // DUNE headers.
@@ -30,8 +32,7 @@
 
 namespace Monitors
 {
-  //! This task is responsible to monitor
-  //! system's current medium.
+  //! This task is responsible to monitor system's current medium.
   //!
   //! @author José Braga
   namespace Medium
@@ -40,9 +41,7 @@ namespace Monitors
 
     //! Depth hysteresis.
     static const float c_depth_hyst = 0.1;
-
-    //! Timeout to check presence of
-    //! wet measurement sensors.
+    //! Timeout to check presence of wet measurement sensors.
     static const float c_water_presence = 30.0;
 
     //! %Task arguments.
