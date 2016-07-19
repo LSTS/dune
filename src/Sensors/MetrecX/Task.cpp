@@ -606,7 +606,7 @@ namespace Sensors
 
           volt.value = value;
           volt.setTimeStamp(tstamp);
-          dispatch(msg, DF_KEEP_TIME);
+          dispatch(volt, DF_KEEP_TIME);
         }
 
         // Internal temperature available.
