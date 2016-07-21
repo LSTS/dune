@@ -61,7 +61,7 @@ namespace DUNE
     //! Weighted Moving Average filter value.
     static const float c_wma_filter = 0.1f;
     //! Maximum acceleration reading.
-    static const double c_max_accel = 18.0f;
+    static const double c_max_accel = 30.0f;
     //! Maximum angular velocity reading (5 times mathematical constant PI).
     static const double c_max_agvel = 15.708f;
 
