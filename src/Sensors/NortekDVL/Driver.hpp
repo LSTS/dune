@@ -234,7 +234,7 @@ namespace Sensors
           return false;
 
         Delay::wait(1.0);
-        if (!sendCommand("MC", 2.0, true))
+        if (!sendCommand("MC", true, true))
           return false;
 
         m_cmd_mode = true;
@@ -246,8 +246,8 @@ namespace Sensors
       bool
       sendBreak(void)
       {
-        if (!sendCommand(c_cmd_break, true, 2.0))
-          return sendCommand(c_cmd_break, true, 2.0);
+        if (!sendCommand(c_cmd_break, true, false))
+          return sendCommand(c_cmd_break, true, false);
 
         return true;
       }
