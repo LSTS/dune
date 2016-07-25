@@ -44,6 +44,8 @@ namespace Transports
 
     //! Input Timeout (s).
     static const double c_input_tout =  5;
+    //! The bitrate of acoustic communication (bits/second).
+    static const double c_acoustic_bitrate =  100;
     //! Message preamble
     static const char c_preamble = '$';
     //! Maximum buffer size.
