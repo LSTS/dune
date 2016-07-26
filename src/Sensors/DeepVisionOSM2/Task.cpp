@@ -59,6 +59,10 @@ namespace Sensors
       unsigned range;
       //! Sidescan channels.
       std::string channels;
+      //! Name of sidescan's power channel.
+      std::string power_channel;
+      //! Output Data Format.
+      std::string output_format;
       //! Default speed.
       float speed;
     };
@@ -141,18 +145,37 @@ namespace Sensors
         .units(Units::MeterPerSecond)
         .description(DTR("Average system speed to compute longitudinal resolution"));
 
+        param("Output Data Format", m_args.output_format)
+        .values("IMC, DVS")
+        .defaultValue("IMC")
+        .description("Sidescan output data format");
+
+        param("Power Channel", m_args.power_channel)
+        .defaultValue("")
+        .description("Name of sidescan's power channel");
+
+        setPostPowerOnDelay(2.0);
+        setPowerOffDelay(1.0);
+
         bind<IMC::EstimatedState>(this);
       }
 
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.power_channel))
+        {
+          clearPowerChannelNames();
+          addPowerChannelName(m_args.power_channel);
+        }
+
         if (paramChanged(m_args.input_timeout))
           m_iwdog.setTop(m_args.input_timeout);
 
         if (paramChanged(m_args.frequency) || paramChanged(m_args.range) ||
             paramChanged(m_args.samples) || paramChanged(m_args.periods) ||
-            paramChanged(m_args.channels) || paramChanged(m_args.speed))
+            paramChanged(m_args.channels) || paramChanged(m_args.speed) ||
+            paramChanged(m_args.output_format))
         {
           if (isActive())
           {
@@ -175,7 +198,7 @@ namespace Sensors
       bool
       enableLogControl(void)
       {
-        return true;
+        return m_args.output_format != "IMC";
       }
 
       //! Try to connect to the device.
@@ -246,9 +269,10 @@ namespace Sensors
           bool left = m_args.channels == "Port" || m_args.channels == "Both";
           bool right = m_args.channels == "Starboard" || m_args.channels == "Both";
           bool high_freq = m_args.frequency == "High";
+          bool imc = m_args.output_format == "IMC";
 
           m_driver->setup(high_freq, m_args.periods, m_args.samples,
-                          m_args.range, m_args.speed, left, right);
+                          m_args.range, m_args.speed, left, right, imc);
 
           m_iwdog.reset();
         }

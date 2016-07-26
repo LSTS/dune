@@ -90,7 +90,7 @@ namespace Sensors
         m_baud(baud)
       {
         m_uart = new SerialPort(uart.c_str(), c_ini_baud);
-        m_parser = new Parser();
+        m_parser = new Parser(task);
       }
 
       //! Destructor.
@@ -109,9 +109,10 @@ namespace Sensors
       //! @param[in] speed system speed.
       //! @param[in] left true if port transducer is enabled.
       //! @param[in] right true if starboard transducer is enabled.
+      //! @param[in] imc true to save data in IMC, false otherwise.
       void
       setup(bool high_frequency, unsigned periods, unsigned samples,
-            unsigned range, float speed, bool left, bool right)
+            unsigned range, float speed, bool left, bool right, bool imc)
       {
         reset();
 
@@ -120,8 +121,11 @@ namespace Sensors
         else
           setPulse(periods, c_low_start, c_low_delta);
 
+        float freq = high_frequency ? c_high_start : c_low_start;
+
         setSampling(samples, getDecimation(range, speed), left, right, false);
-        m_parser->setup(getResolution(range, speed), getLineRate(range));
+        m_parser->setup(getResolution(range, speed), getLineRate(range),
+                        range, freq, imc);
         run(m_baud);
       }
 

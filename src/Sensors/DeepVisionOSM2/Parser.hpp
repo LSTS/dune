@@ -86,13 +86,19 @@ namespace Sensors
       };
 
       //! Constructor.
-      Parser(void):
+      //! @param[in] task parent task.
+      Parser(Tasks::Task* task):
+        m_task(task),
         m_state(ST_INI),
         m_size(0),
         m_csum(0),
+        m_imc(false),
         m_has_hdr(false)
       {
         m_frame = new Frame();
+        m_ping.type = DUNE::IMC::SonarData::ST_SIDESCAN;
+        m_ping.bits_per_point = 8;
+        m_ping.scale_factor = 1.0f;
       }
 
       //! Destructor.
@@ -144,6 +150,10 @@ namespace Sensors
             m_state = ST_SONAR_TYPE;
             m_size |= byte;
             m_size -= c_extra_bytes;
+
+            if (m_imc && m_size != m_ping.data.size())
+              m_ping.data.resize(m_size);
+
             break;
           case (ST_SONAR_TYPE):
             if (byte == 0x11)
@@ -191,20 +201,35 @@ namespace Sensors
           case (ST_SONAR_CSUM):
             if (m_csum == byte)
             {
-              if (!m_log_file.is_open())
+              if (!m_imc && !m_log_file.is_open())
                 m_log_file.open(m_log_filename.c_str(), std::ofstream::app | std::ios::binary);
 
               // header is missing from file.
-              if (!m_has_hdr)
+              if (!m_imc && !m_has_hdr)
               {
                 m_has_hdr = true;
                 m_log_file.write((const char*)m_frame->getHeader(), m_frame->getHeaderSize());
               }
 
               // write position and data.
-              m_log_file.write((const char*)m_frame->getPosition(), m_frame->getPositionSize());
-              m_log_file.write((const char*)m_frame->getPortData(), m_frame->getPortSize());
-              m_log_file.write((const char*)m_frame->getStarboardData(), m_frame->getStarboardSize());
+              if (m_imc)
+              {
+                if (m_frame->getPortSize() > 0)
+                  std::reverse_copy(m_frame->getPortData(), m_frame->getPortData() + m_frame->getPortSize(),
+                                    &m_ping.data[0]);
+
+                if (m_frame->getStarboardSize() > 0)
+                  std::memcpy(&m_ping.data[m_frame->getPortSize()], m_frame->getStarboardData(),
+                              m_frame->getStarboardSize());
+
+                m_task->dispatch(m_ping);
+              }
+              else
+              {
+                m_log_file.write((const char*)m_frame->getPosition(), m_frame->getPositionSize());
+                m_log_file.write((const char*)m_frame->getPortData(), m_frame->getPortSize());
+                m_log_file.write((const char*)m_frame->getStarboardData(), m_frame->getStarboardSize());
+              }
             }
 
             m_frame->clear();
@@ -249,6 +274,9 @@ namespace Sensors
       void
       openLog(const FileSystem::Path& path)
       {
+        if (m_imc)
+          return;
+
         if (path == m_log_path)
           return;
 
@@ -267,6 +295,9 @@ namespace Sensors
       void
       closeLog(void)
       {
+        if (m_imc)
+          return;
+
         if (m_log_file.is_open())
         {
           m_log_file.close();
@@ -291,14 +322,21 @@ namespace Sensors
         m_frame->onState(msg);
       }
 
-      //! Setup size and sides.
+      //! Setup size and sides, and output format.
       //! @param[in] res sample resolution.
       //! @param[in] rate frequency of ping returns.
+      //! @param[in] range sonar range.
+      //! @param[in] frequency pulse frequency.
+      //! @param[in] imc true to save data in IMC, false otherwise.
       void
-      setup(float res, float rate)
+      setup(float res, float rate, unsigned range, float frequency, bool imc)
       {
         m_resolution = res;
         m_rate = rate;
+        m_ping.min_range = range;
+        m_ping.max_range = range;
+        m_ping.frequency = frequency;
+        m_imc = imc;
         changeLog();
       }
 
@@ -307,6 +345,9 @@ namespace Sensors
       void
       changeLog(void)
       {
+        if (m_imc)
+          return;
+
         if (!m_log_file.is_open())
           return;
 
@@ -315,6 +356,8 @@ namespace Sensors
         openLog(dir);
       }
 
+      //! Parent task.
+      Tasks::Task* m_task;
       //! Pointer to frame object.
       Frame* m_frame;
       //! Parser machine state.
@@ -327,6 +370,10 @@ namespace Sensors
       uint16_t m_size;
       //! Command checksum;
       uint8_t m_csum;
+      //! Use sonar data.
+      bool m_imc;
+      //! Sonar data file.
+      IMC::SonarData m_ping;
       //! Log file.
       std::ofstream m_log_file;
       //! Header inserted.
