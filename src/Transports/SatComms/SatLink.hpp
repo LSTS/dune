@@ -1,6 +1,6 @@
 //***************************************************************************
 // Copyright 2007-2013 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Laborat�rio de Sistemas e Tecnologia Subaqu�tica (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -34,6 +34,8 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
+#include <cmath>        // std::abs
+#include <algorithm>    // std::min
 
 
 namespace Transports {
@@ -80,10 +82,13 @@ namespace Transports {
             Tasks::Task* m_task;            //! Pointer to task
 
             bool sat_in_view;               //! Satellite is in view/or not (1/0)
-            double time_stamp;                   //! Timer to control passage of time for satellite
+            double time_stamp;              //! Timer to control passage of time for satellite
 
             SatOrbitParameters orbit;       //! Orbit parameters
             OrbitCheckList orbit_check;     //! Orbit check list
+
+            //! Control variables
+            int m_wwar_count = 0;           //! Number of warning messages for waiting for satellite
 
             /////////////////////
             //! Private Functions
@@ -112,12 +117,12 @@ namespace Transports {
             //! Set orbital parameters
             //! @param[in]  param_val       - Orbital parameter value.
             //! @return     boolean         - If orbital parameter was set correctly or not.
-            bool setOrbitalParam(OrbitalParam orbit_param, double param_val) {
+            bool setOrbitalParam(int orbit_param, double param_val) {
                 switch (orbit_param) {
                     ////////////
                 case ORB_Orbital_Period:
                     if (param_val <= 0) {
-                        m_task->err(DTR("ERROR: SETORB: Error, communications window has to be positive."));
+                        m_task->err(DTR("ERROR: SETORB: Error, orbital period has to be positive."));
                         return false;
                     }
 
@@ -199,7 +204,7 @@ namespace Transports {
             //! Get orbital parameter
             //! @param[in]  orbit_param     - Orbital parameter to check
             //! @return     param_val       - Orbital parameter value.
-            double getOrbitalParm(OrbitalParam orbit_param) {
+            double getOrbitalParm(int orbit_param) {
                 switch (orbit_param) {
                 case ORB_Orbital_Period:
                     return orbit.orbit_period;
@@ -221,7 +226,7 @@ namespace Transports {
             //! Check if orbital parameter was set
             //! @param[in]  orbit_param     - Orbital parameter to check
             //! @return     boolean         - If parameter was set or not.
-            bool checkOrbitalParm(OrbitalParam orbit_param) {
+            bool checkOrbitalParm(int orbit_param) {
                 switch (orbit_param) {
                 case ORB_Orbital_Period:
                     return orbit_check.orbit_period_c;
@@ -241,14 +246,14 @@ namespace Transports {
 
             //! Reset orbital parameter
             //! @param[in]  orbit_param     - Orbital parameter to reset
-            void resetOrbitalParm(OrbitalParam orbit_param) {
+            void resetOrbitalParm(int orbit_param) {
                 switch (orbit_param) {
                 case ORB_Orbital_Period:
-                    orbit.orbit_period = 0;
+                    orbit.orbit_period = -1;
                     orbit_check.orbit_period_c = false;
                     break;
                 case ORB_Communication_Window:
-                    orbit.comm_window = 0;
+                    orbit.comm_window = -1;
                     orbit_check.comm_window_c = false;
                     break;
                 case ORB_Last_Passage:
@@ -256,9 +261,9 @@ namespace Transports {
                     orbit_check.last_passage_c = false;
                     break;
                 case ORB_All:
-                    orbit.orbit_period = 0;
+                    orbit.orbit_period = -1;
                     orbit_check.orbit_period_c = false;
-                    orbit.comm_window = 0;
+                    orbit.comm_window = -1;
                     orbit_check.comm_window_c = false;
                     orbit.last_passage = -1;
                     orbit_check.last_passage_c = false;
@@ -290,9 +295,15 @@ namespace Transports {
                         if (orbit.last_passage >= orbit.orbit_period && orbit.last_passage < orbit.orbit_period + orbit.comm_window) {
                             //! Reset timer
                             time_stamp = Clock::getSinceEpoch();  // = time(NULL) if ctime is used
+
                             //! And return that the satellite is in view
                             sat_in_view = true;
+
+                            //! Inform the user
                             m_task->inf(DTR("Satellite is here!"));
+
+                            //! Reset warnings
+                            m_wwar_count = 0;
                         }
                         //! Remove extra orbital periods that have passed
                         else if (orbit.last_passage > orbit.orbit_period + orbit.comm_window) {
@@ -300,11 +311,41 @@ namespace Transports {
                                 time_stamp = time_stamp + orbit.orbit_period;
                             } while (Clock::getSinceEpoch() - time_stamp > orbit.orbit_period);
                         }
+                        else {
+                            if (m_wwar_count == 0) {    //! Show warning just for the first time
+                                m_task->war(DTR("Waiting for satellite to appear..."));
+                                m_wwar_count++;
+                            }
+                            // !!!!WRN: write a "." on the same line everytime....???
+
+                            //! Delay execution for satellite to appear again
+                            Concurrency::Scheduler::yield();
+                            Time::Delay::wait(0.1);
+                            ////Time::Delay::wait(std::max(std::abs(orbit.orbit_period - orbit.last_passage)*0.1, 1.0));
+                        }
                     }
                     else {              //! If satellite was in view
                         if (orbit.last_passage > orbit.comm_window) {       //! If the communications window has passed
+                            //! Return that the satellite is not in view
                             sat_in_view = false;
+
+                            //! Inform the user
                             m_task->inf(DTR("Satellite has gone away!"));
+
+                            //! Reset warnings
+                            m_wwar_count = 0;
+                        }
+                        else {
+                            if (m_wwar_count == 0) {    //! Show warning just for the first time
+                                m_task->war(DTR("Waiting for satellite next passage!"));
+                                m_wwar_count++;
+                            }
+
+                            m_task->inf(DTR("Waiting for satellite next passage!"));
+                            //! Delay execution for satellite to go away
+                            Concurrency::Scheduler::yield();   // !!!!WRN:
+                            Time::Delay::wait(0.1);
+                            ////Time::Delay::wait(std::max(std::abs(orbit.comm_window - orbit.last_passage), 1.0));
                         }
                     }
                     return sat_in_view;
