@@ -43,6 +43,8 @@
 #include <algorithm>        // std::min
 #include "HumSat_Utils.hpp"
 
+#include <inttypes.h>       //! For debug messages
+
 /////////////
 //! GLOBAL DEFINITIONS
 /////////////
@@ -50,7 +52,7 @@
 //////////////////////////////
 ///////	Endianness  //////////
 //////////////////////////////
-// !!!!WRN: define the endianness of your system, so that this code can run properly????!!!!
+//! Define the endianness of our system, so that this code can run properly
 #ifdef __ORDER_LITTLE_ENDIAN__
 #define uint16_be(x) (((x) >> 8) | ((x) << 8))
 #define uint32_be(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
@@ -61,33 +63,42 @@
 
 
 //! Simple debug print
-#define DEBUG_PRINT(x)         m_task->debug(DTR(x))
+#define DEBUG_PRINT(x)              m_task->debug(DTR(x))
+//! Debug print text and text
+#define DEBUG_PRINTTEXTEX(x,y)      m_task->debug("%s%s", x, y)
 //! Debug print decimal
-#define DEBUG_PRINTDEC(x)      m_task->debug(("%d",x))
-//! Debug print hexadecimal
-////#define DEBUG_PRINTHEX(x)      m_task->debug(("%X",x))
+#define DEBUG_PRINTDEC(x)           m_task->debug("%d", x)
+//! Debug print text and decimal
+#define DEBUG_PRINTTEXDEC(x,y)      m_task->debug("%s%d", x, y)
+//! Debug print (trace) text and decimal
+#define DEBUGTRE_PRINTTEXDEC(x,y)   m_task->trace("%s%d", x, y)
+//! Debug (spew) print text and decimal
+#define DEBUGSPE_PRINTTEXDEC(x,y)   m_task->spew("%s%d", x, y)
 //! Debug print with carrige return
-#define DEBUG_PRINTLN(x)       m_task->debug(("%s\r",x))
+#define DEBUG_PRINTLN(x)            m_task->debug("%s\r", x)
 
-// !!!!WRN: What is this????!!!!
+
+//! Redundacy: Creates three copies of the same message
 #define PACKET_NUMBER_OF_COPIES		3
-// !!!!WRN: What is this????!!!!
+//! Length of the packet preamble 
 #define PACKET_PREAMBLE_LENGTH		43
+
 
 //! Carriage return character (ASCII)
 #define HUMSNS_END_TRAMA_BYTE   (0x0D)
 //! Escape character (ASCII)
 #define HUMSNS_ESCAPE_BYTE      (0x5C)
-// !!!!WRN: What is this????!!!!
+//! Internal buffer 
 #define TRANSMISSION_BUFFER     (500)
 
-// !!!!WRN: Has to be changed!!!!
-// Max Radio Output Power
-#define HUMSAT_MAXPOWER		100000
+
+// !!!!WRN: Might need to be changed!!!!
+// Max Radio Output Power -> HEXADECIMAL
+#define HUMSAT_MAXPOWER		0x0AD0
 // Min Radio Output Power
 #define HUMSAT_MINPOWER		0
 // Max Radio Output Frequency
-#define HUMSAT_MAXFREQ		10000000000
+#define HUMSAT_MAXFREQ		0x1B5880F7
 // Min Radio Output Frequency
 #define HUMSAT_MINFREQ		0
 
@@ -157,7 +168,7 @@ namespace Transports {
             int32_t transmit_freq;      //! HumSat terminal output transmission frequency
         };
 
-        
+
         /////////////
         //! Satellite Radio Class
         /////////////
@@ -195,7 +206,7 @@ namespace Transports {
 
                 //! Initialise connection
                 m_uart = new SerialPort(device, baud_rate);
-                m_uart->setCanonicalInput(true);
+                //m_uart->setCanonicalInput(true);
 
                 //! Set timeout
                 m_wdog.setTop(device_timeout);
@@ -254,7 +265,7 @@ namespace Transports {
                 char *transmit_message_command = "OP T\r";                //! Get data command
 
                 //! Send command to terminal to transmit stored message frame
-                m_uart->write(transmit_message_command, sizeof(transmit_message_command));
+                m_uart->writeString(transmit_message_command);
 
                 //! Check if command was received
                 if (receiveOK() == RADIO_ERROR) {
@@ -279,6 +290,9 @@ namespace Transports {
             //! Check if HumSat terminal is sending an ok
             //! @return     HumSatRetCode.
             HumSatRetCode receiveOK() {
+                //! Debug message
+                DEBUG_PRINTLN("receive OK entered");
+
                 const size_t c_serial_receive_data_length = 3;              //! Received Data Length (constant value)
                 size_t serial_receive_data_length = 3;                      //! Received Data Length (non constant value, equal to const)
                 uint8_t serial_receive_data[c_serial_receive_data_length];  //! Received Data from terminal
@@ -292,6 +306,8 @@ namespace Transports {
                     return RADIO_ERROR;
                 }
 
+                //! Debug message
+                DEBUG_PRINTLN("receive OK left");
                 return RADIO_OK;
             }
 
@@ -300,10 +316,20 @@ namespace Transports {
             //! @param[in]  length   - number of bytes of command.
             //! @return     HumSatRetCode.
             HumSatRetCode sendCommand(uint8_t *data, size_t length) {
-                char escape_char = HUMSNS_ESCAPE_BYTE;  //! Escape character (ASCII)
-                char *final_char = "\r";                //! Final character
+                //! Debug messages
+                DEBUG_PRINTLN("Send Command entered");
+                DEBUG_PRINTTEXTEX("Data -> ", data);
+                DEBUGTRE_PRINTTEXDEC("Length = ", length);
 
-                for (int i = 0; i < length; i++) {
+                char escape_char = HUMSNS_ESCAPE_BYTE;  //! Escape character (ASCII)
+                char *final_char = "\r";                 //! Final character
+
+                for (int i = 0; i < (int)length; i++) {
+                    //! Debug messages
+                    DEBUGTRE_PRINTTEXDEC("I = ", i);
+                    m_task->trace("Data -> %c", data[i]);
+                    DEBUGTRE_PRINTTEXDEC("Data -> ", data[i]);
+
                     if ((data[i] == HUMSNS_END_TRAMA_BYTE) || (data[i] == HUMSNS_ESCAPE_BYTE)) {    //! If data has any of these characters
                         //! Write an escape character
                         m_uart->write(&escape_char, 1);
@@ -313,8 +339,15 @@ namespace Transports {
                     m_uart->write(&data[i], 1);
                 }
 
+                //! Debug messages
+                DEBUG_PRINTLN("Final char");
+                DEBUGTRE_PRINTTEXDEC("Data -> ", *final_char);
+
                 //! Write final character
-                m_uart->write(final_char, 1);
+                m_uart->write(final_char, sizeof(*final_char));
+
+                //! Debug message
+                DEBUG_PRINTLN("Send Command left");
 
                 return RADIO_OK;
             }
@@ -324,6 +357,10 @@ namespace Transports {
             //! @param[in]  data_length - number of bytes to receive.
             //! @return     HumSatRetCode.
             HumSatRetCode receivingData(uint8_t *data, size_t *data_length) {
+                //! Debug messages
+                DEBUG_PRINTLN("receiving Data entered");
+                DEBUGTRE_PRINTTEXDEC("Length = ", *data_length);
+
                 size_t length = 0;      //! Length control
                 bool escape = false;    //! Loop control
 
@@ -335,6 +372,8 @@ namespace Transports {
                         continue;
                     }
                     if (!escape) {  //! If an escape character was not read
+                        //! Debug message
+                        m_task->trace("No Escape -> %u", data[length]);
                         if (data[length] == HUMSNS_ESCAPE_BYTE) {           //! If escape byte is read
                             escape = true;
                         }
@@ -343,10 +382,17 @@ namespace Transports {
                         }
                     }
                     else {          //! If escape byte was read
+                        //! Debug message
+                        m_task->trace("Escape -> %u", data[length]);
                         escape = false;
                         length++;
                     }
                 }
+
+                //! Debug messages
+                DEBUGTRE_PRINTTEXDEC("Length = ", length);
+                DEBUG_PRINTTEXTEX("receiving Data left -> ", data);
+
                 return (length > 0) ? RADIO_OK : RADIO_ERROR;
             }
 
@@ -361,7 +407,7 @@ namespace Transports {
                 char *get_data_command = "DT\r";                             //! Get data command
 
                 //! Send command to terminal to get data stored
-                m_uart->write(get_data_command, sizeof(get_data_command));
+                m_uart->writeString(get_data_command);
 
                 //! Get data from terminal
                 if (receivingData(receive_data, &receive_data_length) == RADIO_ERROR) {
@@ -379,6 +425,9 @@ namespace Transports {
             //! Get current operational of terminal
             //! @return     HumSatRetCode.
             HumSatRetCode getOperationModeComm(void) {
+                //! Debug message
+                DEBUG_PRINTLN("get Operation Mode Comm entered");
+
                 const size_t c_receive_data_length = 2;         //! Received Data Length (constant value)
                 size_t receive_data_length = 2;                 //! Received Data Length (non constant value, equal to const)
                 uint8_t receive_data[c_receive_data_length];    //! Received Data from terminal
@@ -386,7 +435,7 @@ namespace Transports {
                 char *get_opmode_command = "OP\r";               //! Get operational mode command
 
                 //! Send command to terminal to get operational mode
-                m_uart->write(get_opmode_command, sizeof(get_opmode_command));
+                m_uart->writeString(get_opmode_command);
 
                 //! Get operational mode from terminal
                 if (receivingData(receive_data, &receive_data_length) == RADIO_ERROR) {
@@ -396,6 +445,8 @@ namespace Transports {
                 }
                 else {
                     op_mode = (HumSatOpMode)receive_data[0];
+                    //! Debug message
+                    DEBUG_PRINTTEXDEC("get Operation Mode Comm left -> ", op_mode);
                     return RADIO_OK;
                 }
             }
@@ -404,8 +455,15 @@ namespace Transports {
             //! @param[in]  power_calibration   - value of power to be set.
             //! @return     HumSatRetCode.
             HumSatRetCode setTransmissionPowerComm(uint16_t power_calibration) {
-                uint8_t power_array[2] = { power_calibration & 0xff, power_calibration >> 8 };      //! Power calibration
-                uint8_t set_power_command[] = { 'T', 'P', ' ', power_array[0], power_array[1] };    //! Set power command
+                //! Debug messages
+                DEBUG_PRINTLN("Set Transmission Power Comm entered");
+                m_task->debug("Power %" PRIu16 "", power_calibration);
+
+                uint8_t power_array[2] = {                      //! Power calibration
+                    (uint8_t)((power_calibration >> 8) & 0xFF),
+                    (uint8_t)(power_calibration & 0xFF)};
+
+                uint8_t set_power_command[] = {'T', 'P', ' ', power_array[0], power_array[1]};    //! Set power command
 
                 //! Send command to HumSat terminal
                 sendCommand(set_power_command, sizeof(set_power_command));
@@ -414,6 +472,7 @@ namespace Transports {
                 if (receiveOK() == RADIO_ERROR) {
                     return RADIO_ERROR;
                 }
+
                 DEBUG_PRINTLN("Terminal: Transmission power succesfully set.");
                 return RADIO_OK;
             }
@@ -428,7 +487,7 @@ namespace Transports {
                 char *get_power_command = "TP\r";                //! Get data command
 
                 //! Send command to terminal to get power calibration
-                m_uart->write(get_power_command, sizeof(get_power_command));
+                m_uart->writeString(get_power_command);
 
                 //! Get data from terminal
                 if (receivingData(receive_data, &receive_data_length) == RADIO_ERROR) {
@@ -437,8 +496,15 @@ namespace Transports {
                     return RADIO_ERROR;
                 }
                 else {
-                    // !!!!WRN: How does it work? What is returned???!!!!
-                    radio_arg.transmit_power = (uint16_t)receive_data[0];
+                    //! Debug message
+                    DEBUGTRE_PRINTTEXDEC("OLD Power = ", radio_arg.transmit_power);
+
+                    //! Write new power
+                    radio_arg.transmit_power = (uint16_t)((((uint16_t)receive_data[0]) << 8) | (((uint16_t)receive_data[1])));
+
+                    //! Debug message
+                    DEBUGTRE_PRINTTEXDEC("NEW Power = ", radio_arg.transmit_power);
+
                     return RADIO_OK;
                 }
             }
@@ -447,12 +513,16 @@ namespace Transports {
             //! @param[in]  frequency_calibration   - value of frequency to be set.
             //! @return     HumSatRetCode.
             HumSatRetCode setTransmissionFreqComm(int32_t frequency_calibration) {
+                //! Debug messages
+                DEBUG_PRINTLN("Set Transmission Frequency Comm entered");
+                m_task->debug("Freq %zu", frequency_calibration);
 
                 //! Set frequency command
-                uint8_t set_freq_command[] = { 'F', 'Q', ' ', (uint8_t)((frequency_calibration >> 24) & 0xFF),
+                uint8_t set_freq_command[] = {'F', 'Q', ' ',
+                    (uint8_t)((frequency_calibration >> 24) & 0xFF),
                     (uint8_t)((frequency_calibration >> 16) & 0xFF),
                     (uint8_t)((frequency_calibration >> 8) & 0xFF),
-                    (uint8_t)(frequency_calibration & 0xFF) };
+                    (uint8_t)(frequency_calibration & 0xFF)};
 
                 const size_t c_receive_data_length = 10;        //! Received Data Length (constant value)
                 size_t receive_data_length = 10;                //! Received Data Length (non constant value, equal to const)
@@ -469,7 +539,7 @@ namespace Transports {
                 }
 
                 //! Send command to terminal to get frequency calibration
-                m_uart->write(get_freq_command, sizeof(get_freq_command));
+                m_uart->writeString(get_freq_command);
 
                 //! Get data from terminal
                 if (receivingData(receive_data, &receive_data_length) == RADIO_ERROR) {
@@ -495,7 +565,7 @@ namespace Transports {
                 char *get_freq_command = "FQ\r";                //! Get data command
 
                 //! Send command to terminal to get frequency calibration
-                m_uart->write(get_freq_command, sizeof(get_freq_command));
+                m_uart->writeString(get_freq_command);
 
                 //! Get data from terminal
                 if (receivingData(receive_data, &receive_data_length) == RADIO_ERROR) {
@@ -504,8 +574,15 @@ namespace Transports {
                     return RADIO_ERROR;
                 }
                 else {
-                    // !!!!WRN: How does it work? What is returned???!!!!
-                    radio_arg.transmit_freq = (int32_t)receive_data[0];
+                    //! Debug message
+                    DEBUGTRE_PRINTTEXDEC("OLD Frequency = ", radio_arg.transmit_freq);
+
+                    //! Write new frequency
+                    radio_arg.transmit_freq = (int32_t)((((uint32_t)receive_data[0]) << 24) | (((uint32_t)receive_data[1]) << 16) | (((uint32_t)receive_data[2]) << 8) | (((uint32_t)receive_data[3])));
+
+                    //! Debug message
+                    DEBUGTRE_PRINTTEXDEC("NEW Frequency = ", radio_arg.transmit_freq);
+
                     return RADIO_OK;
                 }
             }
@@ -525,7 +602,7 @@ namespace Transports {
                 //Generates the Humsat packet cointaing the User Data (user_data) with the specified sensorID and RadioID
                 //! It is scrambled but it does not include the preamble (included later in sendMessageFrame)
 
-                uint8_t *raw_frame = (uint8_t*)&(radio_frame.raw_frame);    //! Raw message frame (size of HumSatPacket)
+                uint8_t *raw_frame = (uint8_t*)(radio_frame.raw_frame);     //! Raw message frame (size of HumSatPacket)
                 HumSatPacket *frame = &(radio_frame.frame);                 //! Message frame of type HumSatPacket
 
                 //! Construct HumSatPacket message fields
@@ -562,16 +639,12 @@ namespace Transports {
                 humpl_pkt_scramble(raw_frame, raw_frame, sizeof(HumSatPacket));
 
                 //! Debug - Print generated message
-                if (m_task->getDebugLevel() != DEBUG_LEVEL_NONE) {
-                    DEBUG_PRINT("Terminal: new data field: ");
+                if (m_task->getDebugLevel() == DEBUG_LEVEL_SPEW) {
+                    DEBUG_PRINT("Terminal: New data field:");
                     uint8_t* raw_data_field = (uint8_t*)&radio_frame;
                     for (int i = 0; i < sizeof(radio_frame); i++) {
-                        //DEBUG_PRINTHEX(raw_data_field[i]);
-                        char aux_str[10] = {};
-                        sprintf(aux_str, "%X", raw_data_field[i]);
-                        m_task->debug(aux_str);
+                        DEBUGSPE_PRINTTEXDEC("Message char -> ", raw_data_field[i]);
                     }
-                    DEBUG_PRINTLN("");
                 }
 
                 return RADIO_OK;
@@ -589,8 +662,8 @@ namespace Transports {
 
                 uint8_t* data = radio_frame.raw_frame;  //! HumSat message frame
 
-                uint16_t preamble_size = preamble_length + (sizeof(HumSatPacket)+HUMPL_PKT_END_PREAMBLE_LENGTH) * n_pakets_per_frame;   //! Preamble size
-                uint8_t dt_first[] = { 'D', 'T', ' ', (uint8_t)(preamble_size >> 8), (uint8_t)(preamble_size & 0xFF), ' ' };            //! Command begining code
+                uint16_t preamble_size = preamble_length + (sizeof(HumSatPacket) + HUMPL_PKT_END_PREAMBLE_LENGTH) * n_pakets_per_frame;     //! Preamble size
+                uint8_t dt_first[] = {'D', 'T', ' ', (uint8_t)(preamble_size >> 8), (uint8_t)(preamble_size & 0xFF), ' '};                  //! Command begining code
 
                 //! Send first command bytes
                 for (int i = 0; i < sizeof(dt_first); i++) {
@@ -646,6 +719,9 @@ namespace Transports {
             SatelliteRadio(Tasks::Task* task) :
                 m_task(task),
                 m_uart(NULL) {
+                //! Initialise variables
+                radio_arg.transmit_freq = 0;
+                radio_arg.transmit_power = 0;
             }
 
             //! Destructor
@@ -727,6 +803,11 @@ namespace Transports {
             //! @param[in]  transmit_power  - HumSat terminal output transmission power.
             //! @return     boolean         - If power was set correctly or not.
             bool setPower(uint16_t transmit_power) {
+                //! Debug messages
+                DEBUG_PRINTLN("Set Power entered");
+                DEBUGTRE_PRINTTEXDEC("ORIGINAL Power = ", radio_arg.transmit_power);
+                DEBUGTRE_PRINTTEXDEC("FUTURE   Power = ", transmit_power);
+
                 //! Old Value
                 uint16_t old_val = radio_arg.transmit_power;
 
@@ -776,6 +857,11 @@ namespace Transports {
             //! @param[in]  transmit_freq   - HumSat terminal output transmission frequency.
             //! @return     boolean         - If frequency was set correctly or not.
             bool setFreq(int32_t transmit_freq) {
+                //! Debug messages
+                DEBUG_PRINTLN("Set Frequency entered");
+                DEBUGTRE_PRINTTEXDEC("ORIGINAL Frequency = ", radio_arg.transmit_freq);
+                DEBUGTRE_PRINTTEXDEC("FUTURE   Frequency = ", transmit_freq);
+
                 //! Old Value
                 int32_t old_val = radio_arg.transmit_freq;
 
@@ -821,7 +907,7 @@ namespace Transports {
             }
 
 
-            
+
             //! Set radio main parameters
             //! @param[in]  radio_id        - user amateur call id.
             //! @param[in]  sensor_id       - internal terminal id.
@@ -839,12 +925,13 @@ namespace Transports {
 
             //! Sends HumSat message frame to terminal
             //! @param[in]  user_data       - user data to be sent.
+            //! @param[in]  data_length     - user data length.
             //! @return     boolean         - If message was set correctly to be sent or not.
-            bool sendMessage(uint8_t * user_data) {
+            bool sendMessage(uint8_t * user_data, uint8_t data_length) {
                 //! Check if it is possible to send the data
                 if (radio_ready.radio_param == true) {  //! Radio and sensor ID was set
                     //! Codify data
-                    if (generateMessageFrame(user_data, sizeof(user_data), radio_arg.sensor_id, radio_arg.radio_id) == RADIO_ERROR) {
+                    if (generateMessageFrame(user_data, data_length, radio_arg.sensor_id, radio_arg.radio_id) == RADIO_ERROR) {
                         m_task->err(DTR("ERROR: GENERATE_DATA: Error generating HumSat paket."));
                         return false;
                     }
