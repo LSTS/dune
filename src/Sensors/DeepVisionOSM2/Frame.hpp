@@ -236,8 +236,6 @@ namespace Sensors
       std::vector<uint8_t> m_left_data;
       //! Starboard transducer sonar data.
       std::vector<uint8_t> m_right_data;
-      //! Maximum frame size.
-      static const unsigned c_max_size = 1024;
       //! Frame header size.
       static const unsigned c_hdr_size = 18;
       //! Frame position size.
