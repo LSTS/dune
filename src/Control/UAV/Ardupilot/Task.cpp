@@ -191,6 +191,8 @@ namespace Control
         float m_hae_offset;
         //! Flag indicating task is booting.
         bool m_reboot;
+        //! Flag indicating MSL-WGS84 offset has already been calculated.
+        bool m_offset_st;
         //! External control
         bool m_external;
         //! Current waypoint
@@ -232,6 +234,7 @@ namespace Control
           m_hae_msl(0.0),
           m_hae_offset(0.0),
           m_reboot(true),
+          m_offset_st(false),
           m_external(true),
           m_current_wp(0),
           m_critical(false),
@@ -1240,6 +1243,9 @@ namespace Control
         consume(const IMC::VehicleMedium* vm)
         {
           m_ground = (vm->medium == IMC::VehicleMedium::VM_GROUND);
+
+          if (!m_ground)
+            m_offset_st = false;
         }
 
         void
@@ -1678,13 +1684,14 @@ namespace Control
           m_lon = Angles::radians((double)gp.lon * 1e-07);
           m_hae_msl = (double) gp.alt * 1e-3;   //MSL
 
-          if (m_args.convert_msl)
+          if (m_args.convert_msl && m_fix.type == IMC::GpsFix::GFT_STANDALONE)
           {
-            if (m_ground || m_reboot)
+            if ((m_ground && !m_offset_st) || m_reboot)
             {
               Coordinates::WMM wmm(m_ctx.dir_cfg);
               m_hae_offset = wmm.height(m_lat, m_lon);
               m_reboot = false;
+              m_offset_st = true;
             }
           }
           else

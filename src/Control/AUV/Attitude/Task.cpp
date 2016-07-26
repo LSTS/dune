@@ -202,15 +202,14 @@ namespace Control
           .minimumValue("0.0")
           .maximumValue("15.0")
           .units(Units::Degree)
-          .description("Extra pitch to increase maximum reference ('m_args.max_pitch')"
-                       " when vertical errors  are beyond 'm_ags.zref_extra'");
+          .description("Extra pitch beyond \"Maximum Pitch Reference\"");
 
-          param("Z Error to Apply Extra Pitch", m_args.zref_extra)
+          param("Extra Pitch -- Vertical Error", m_args.zref_extra)
           .defaultValue("10.0")
           .minimumValue("0.0")
           .units(Units::Meter)
-          .description("Error to vertical reference when we add extra pitch beyond"
-                       " what is configured as maximum reference ('m_args.max_pitch')");
+          .description("\"Extra Pitch\" is added to \"Maximum Pitch Reference\" if"
+                       " error to vertical reference is greater than this");
 
           param("Use Fixed Depth Offset", m_args.use_depth_offset)
           .defaultValue("false")

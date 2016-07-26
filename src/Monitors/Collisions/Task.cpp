@@ -37,6 +37,9 @@ namespace Monitors
   {
     using DUNE_NAMESPACES;
 
+    //! Time to wait once not in ground medium.
+    static const float c_time_ground = 10.0f;
+
     //! Task arguments.
     struct Arguments
     {
@@ -83,10 +86,10 @@ namespace Monitors
       Time::Counter<double> m_twindow;
       //! Collision message report period.
       Time::Counter<double> m_treport;
+      //! Time to wait to check collisions once out of ground.
+      Time::Counter<double> m_tground;
       //! Collision detected.
       IMC::Collision m_collision;
-      //! Vehicle Medium.
-      IMC::VehicleMedium m_vm;
       //! Device entity id.
       unsigned m_device_eid;
       //! Depth value
@@ -153,8 +156,8 @@ namespace Monitors
         .description("Entity label of the device");
 
         param("Minimum Depth", m_args.min_depth)
-        .defaultValue("1.0")
-        .minimumValue("0.5")
+        .defaultValue("0.5")
+        .minimumValue("0.3")
         .maximumValue("10.0")
         .description("Depth value below which collisions will be ignored");
 
@@ -188,6 +191,8 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
+        m_tground.setTop(c_time_ground);
+
         m_avg_x_innov = new MovingAverage<double>(m_args.avg_samples_innov);
         m_avg_z_innov = new MovingAverage<double>(m_args.avg_samples_innov);
         m_avg_x_abs = new MovingAverage<double>(m_args.avg_samples_abs);
@@ -266,10 +271,6 @@ namespace Monitors
           collided();
         }
 
-        // Ignore attitude if vehicle is on the ground.
-        if (m_vm.medium == IMC::VehicleMedium::VM_GROUND)
-          return;
-
         // Check absolute acceleration values in the x-axis.
         if ((mean_x_abs > m_args.max_x) || (mean_x_abs < - m_args.max_x))
         {
@@ -317,14 +318,20 @@ namespace Monitors
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        m_vm = *msg;
+        // Ignore collisions when transitioning from ground to water
+        // as the vehicle may have been intentionally launched.
+        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
+          m_tground.reset();
       }
 
       //! Check if the collision should be ignored
-      //! @return true if collision should be ignored
+      //! @return true if collision should be ignored, false otherwise.
       bool
-      ignoreCollision(void)
+      ignore(void)
       {
+        if (!m_tground.overflow())
+          return true;
+
         if (m_depth < m_args.min_depth)
           return true;
 
@@ -345,7 +352,7 @@ namespace Monitors
         m_twindow.reset();
 
         // If certain conditions are met, do not trigger an error
-        if (ignoreCollision())
+        if (ignore())
           return;
 
         // Dispatch collision.

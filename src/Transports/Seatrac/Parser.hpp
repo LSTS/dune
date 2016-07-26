@@ -23,6 +23,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_PARSER_HPP_INCLUDED_
@@ -59,6 +60,7 @@ namespace Transports
       CidDatReceiveMsg cid_dat_receive_msg;
       CidDatSendMsg  cid_dat_send_msg;
       // Configuration protocol messages.
+      CidSysInfo cid_sys_info;
       CidSettingsMsg cid_settings_msg;
       CidSysRebootMsg cid_sys_reboot_msg;
       CidSettingsSetMsg cid_sys_settings_set_msg;
@@ -72,10 +74,13 @@ namespace Transports
       CidNavBeaconPosSendMsg cid_nav_beacon_pos_send_msg;
       CidNavRefPosSendMsg  cid_nav_ref_pos_send_msg;
       CidNavRefPosUpdateMsg  cid_nav_ref_pos_update_msg;
+      // USBL status message
+      CidXcvrUsblMsg cid_xcvr_usbl_msg;
       // aco_fix
       Acofix_t ACO_seatrac;
       uint8_t new_message[MESSAGE_NUMBER];
       std::string data_message;
+
 
       //! Constructor.
       DataSeatrac(void)
@@ -120,7 +125,6 @@ namespace Transports
     uint16_t
     updateEcoFix(Acofix_t* aco_fix, uint16_t ind, const char* msg_raw)
     {
-      int i;
       std::memcpy(&(*aco_fix).dest_id, msg_raw + ind, 1);
       std::memcpy(&(*aco_fix).src_id, msg_raw + ind + 1, 1);
       std::memcpy(&(*aco_fix).flags, msg_raw + ind + 2, 1);
@@ -148,6 +152,8 @@ namespace Transports
       {
         std::memcpy(&(*aco_fix).usbl_channels, msg_raw + ind, 1);
 
+        int i;
+        aco_fix->usbl_rssi.reserve(aco_fix->usbl_channels);
         for (i = 0; i < aco_fix->usbl_channels; i++)
           std::memcpy(&(*aco_fix).usbl_rssi[i], msg_raw + ind + 1 + 2 * i, 2);
 
@@ -163,7 +169,7 @@ namespace Transports
         std::memcpy(&(*aco_fix).position_easting, msg_raw + ind, 2);
         std::memcpy(&(*aco_fix).position_northing, msg_raw + ind + 2, 2);
         std::memcpy(&(*aco_fix).position_depth, msg_raw + ind + 4, 2);
-        ind += 12;
+        ind += 6;
       }
 
       return ind;
@@ -177,7 +183,6 @@ namespace Transports
     dataParser(uint16_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
     {
       uint16_t ind = 0;
-      int i = 0;
 
       switch (message_type)
       {
@@ -288,16 +293,14 @@ namespace Transports
           data_Beacon.set(CID_DAT_SEND);
           std::memcpy(&data_Beacon.cid_dat_send_msg.status, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_send_msg.beacon_id, msg_raw + ind + 1, 1);
-          if (data_Beacon.cid_dat_send_msg.status != 0)
-            data_Beacon.cid_dat_send_msg.lock_flag = 0;
           break;
 
         case CID_DAT_RECEIVE:
           ind = updateEcoFix(&data_Beacon.cid_dat_receive_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.ack_flag, msg_raw + ind, 1);
-          std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind   +1, 1);
+          std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind +1, 1);
           ind += 2;
-          for (i = 0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
+          for (int i = 0; i < data_Beacon.cid_dat_receive_msg.packet_len; i++)
           {
             std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_data[i],
                         msg_raw + ind  + i, 1);
@@ -364,7 +367,7 @@ namespace Transports
         case  CID_NAV_QUERY_REQ:
           data_Beacon.set(CID_NAV_QUERY_REQ);
           ind = updateEcoFix(&data_Beacon.cid_nav_query_req_msg.aco_fix, ind, msg_raw);
-          std::memcpy(&data_Beacon.cid_nav_query_req_msg.nav_query_t, msg_raw + ind  + i, 1);
+          std::memcpy(&data_Beacon.cid_nav_query_req_msg.nav_query_t, msg_raw + ind, 1);
           break;
 
         case  CID_XCVR_FIX:
@@ -449,12 +452,69 @@ namespace Transports
                       msg_raw + ind + 5, 4);
           break;
 
+        case CID_SYS_INFO:
+          data_Beacon.set(CID_SYS_INFO);
+          std::memcpy(&data_Beacon.cid_sys_info.seconds, msg_raw + 0, 4);
+          std::memcpy(&data_Beacon.cid_sys_info.section, msg_raw + 4, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.part_number, msg_raw + 5, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.part_rev, msg_raw + 7, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.serial_number, msg_raw + 8, 4);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.flags_sys, msg_raw + 12, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.hardware.flags_user, msg_raw + 14, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.valid, msg_raw + 16, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.part_number, msg_raw + 17, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.version_maj, msg_raw + 19, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.version_min, msg_raw + 20, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.version_build, msg_raw + 21, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.boot_firmware.checksum, msg_raw + 23, 4);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.valid, msg_raw + 27, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.part_number, msg_raw + 28, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.version_maj, msg_raw + 30, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.version_min, msg_raw + 31, 1);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.version_build, msg_raw + 33, 2);
+          std::memcpy(&data_Beacon.cid_sys_info.main_firmware.checksum, msg_raw + 35, 4);
+          break;
+
+        case CID_XCVR_USBL:
+          data_Beacon.set(CID_XCVR_USBL);
+          ind = ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_sig_peak, (const uint8_t*)msg_raw);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_threshold, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_cross_point, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_cross_mag, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_detect, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_length, (const uint8_t*)&msg_raw[ind]);
+
+          data_Beacon.cid_xcvr_usbl_msg.xcor_data.reserve(data_Beacon.cid_xcvr_usbl_msg.xcor_length);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.xcor_length; i++)
+          {
+            ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.xcor_data[i], (const uint8_t*)&msg_raw[ind]);
+          }
+
+          data_Beacon.cid_xcvr_usbl_msg.channels = msg_raw[ind++];
+          data_Beacon.cid_xcvr_usbl_msg.channel_rssi.reserve(data_Beacon.cid_xcvr_usbl_msg.channels);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.channels; i++)
+          {
+            ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.channel_rssi[i], (const uint8_t*)&msg_raw[ind]);
+          }
+
+          data_Beacon.cid_xcvr_usbl_msg.baselines = msg_raw[ind++];
+          data_Beacon.cid_xcvr_usbl_msg.phase_angle.reserve(data_Beacon.cid_xcvr_usbl_msg.baselines);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.baselines; i++)
+          {
+            ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.phase_angle[i], (const uint8_t*)&msg_raw[ind]);
+          }
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_azimuth, (const uint8_t*)&msg_raw[ind]);
+          ind += ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_elevation, (const uint8_t*)&msg_raw[ind]);
+          ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_fit_error, (const uint8_t*)&msg_raw[ind]);
+          break;
+
           // Should never get here.
         default:
           //m_data_state = DP_COMPLETE;
           break;
       }
     }
+
     //! Creates a command to the modem acoustic.
     //! @param[in] cid_type type of message.
     //! @param[in] data_Beacon message structure.

@@ -94,7 +94,7 @@ namespace Plan
 
       //! Get component's active time
       //! @param[in] id component name
-      //! @return active time, -1.0 if canont find id
+      //! @return active time, -1.0 if cannot find id
       float
       getActiveTime(const std::string& id) const
       {

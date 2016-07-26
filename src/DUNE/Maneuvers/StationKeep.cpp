@@ -166,7 +166,7 @@ namespace DUNE
       switch (m_sks)
       {
         case ST_OFF_STATION:
-          if (pcs->flags & IMC::PathControlState::FL_NEAR)
+          if (pcs->flags & IMC::PathControlState::FL_NEAR && range < m_radius)
           {
             stopMoving(range);
             m_sks = ST_ON_STATION;

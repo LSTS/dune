@@ -23,6 +23,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
@@ -32,6 +33,8 @@
 #define MAX_MESSAGE_ERRORS 5
 #define MAX_PACKET_LEN 31
 #define MAX_MESSAGE_PERIOD 30
+//! Defines the minimum message length without preamble nor postamble
+#define MIN_MESSAGE_LENGTH 6
 
 namespace Transports
 {
@@ -120,6 +123,58 @@ namespace Transports
       CID_DEX_SEND = 0x75,
       CID_DEX_SOCKETS = 0x76,
       CID_DEX_RECEIVE = 0x77
+    };
+
+    // Beacon Type
+    enum BeaconType_E
+    {
+      BT_X110 = 0x34B,
+      BT_X150 = 0x31B
+    };
+
+
+    // Status Output Mode
+    enum StatusMode_E
+    {
+      STATUS_MODE_MANUAL = 0x0,
+      STATUS_MODE_1HZ = 0x1,
+      STATUS_MODE_2HZ5 = 0x2,
+      STATUS_MODE_5HZ = 0x3,
+      STATUS_MODE_10HZ = 0x4,
+      STATUS_MODE_25HZ = 0x5
+    };
+
+    // Status output flags
+    enum StatusOutputFlags_E
+    {
+      ENVIRONMENT_FLAG = 0x1,
+      ATTITUDE_FLAG = 0x2,
+      MAG_CAL_FLAG = 0x4,
+      ACC_CAL_FLAG = 0x8,
+      AHRS_RAW_DATA_FLAG = 0x10,
+      AHRS_COMP_DATA_FLAG = 0x20
+    };
+
+    // Control environment flags
+    enum ControlEnvFlags_E
+    {
+      AUTO_VOS_FLAG = 0x1,
+      AUTO_PRESSURE_OFS_FLAG = 0x2
+    };
+
+    // Control AHRS flags
+    enum ControlAhrsFlags_E
+    {
+      AUTO_CAL_MAG_FLAG = 0x1
+    };
+
+    // Control XCVR flags
+    enum ControlXcvrFlags_E {
+      USBL_USE_AHRS_FLAG = 0x1,
+      XCVR_POSFLT_ENABLE_FLAG = 0x2,
+      XCVR_USBL_MSGS_FLAG = 0x20,
+      XCVR_FIX_MSGS_FLAG = 0x40,
+      XCVR_DIAG_MSGS_FLAG = 0x80
     };
 
     // Msg status
@@ -233,6 +288,25 @@ namespace Transports
       int16_t gyro_offset_z;
     };
 
+    struct Hardware_t
+    {
+      uint16_t part_number;
+      uint8_t part_rev;
+      uint32_t serial_number;
+      uint16_t flags_sys;
+      uint16_t flags_user;
+    };
+
+    struct Firmware_t
+    {
+      uint8_t valid;
+      uint16_t part_number;
+      uint8_t version_maj;
+      uint8_t version_min;
+      uint16_t version_build;
+      uint32_t checksum;
+    };
+
     struct Acofix_t
     {
       uint8_t dest_id;
@@ -251,7 +325,7 @@ namespace Transports
       uint16_t range_dist;
       // USBL Fields.
       uint8_t usbl_channels;
-      int16_t usbl_rssi[4];
+      std::vector<int16_t> usbl_rssi;
       int16_t usbl_azimuth;
       int16_t usbl_elevation;
       int16_t usbl_fit_error;

@@ -77,6 +77,8 @@ namespace Transports
       unsigned src_level_water;
       //! Source Level - Underwater.
       unsigned src_level_underwater;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     // Type definition for mapping addresses.
@@ -201,19 +203,9 @@ namespace Transports
         .defaultValue("1")
         .description("Source level when medium is underwater");
 
-        // Process modem addresses.
-        std::string system = getSystemName();
-        std::vector<std::string> addrs = ctx.config.options("Evologics Addresses");
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned addr = 0;
-          ctx.config.get("Evologics Addresses", addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-
-          if (addrs[i] == system)
-            m_address = addr;
-        }
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Evologics Addresses")
+        .description("Name of the configuration section with modem addresses");
 
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
@@ -291,6 +283,21 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        // Process modem addresses.
+        std::string system = getSystemName();
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned addr = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
+          m_modem_names[addrs[i]] = addr;
+          m_modem_addrs[addr] = addrs[i];
+
+          if (addrs[i] == system)
+            m_address = addr;
+        }
+
+        m_driver->setControl();
         m_driver->setAddress(m_address);
         m_driver->setSourceLevel(m_args.source_level);
         m_driver->setLowGain(m_args.low_gain);
@@ -413,6 +420,10 @@ namespace Transports
           handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
           handleMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "USBLLONG"))
+          handleUsblPosition(msg->value);
+        else if (String::startsWith(msg->value, "USBLANGLES"))
+          handleUsblAngles(msg->value);
       }
 
       void
@@ -612,6 +623,32 @@ namespace Transports
         dispatch(msg);
 
         m_driver->getMultipathStructure();
+      }
+
+      void
+      handleUsblPosition(const std::string& str)
+      {
+        RecvUsblPos reply;
+        m_driver->parseUsblPosition(str, reply);
+
+        IMC::UsblPositionExtended up;
+        up.target = safeLookup(reply.addr);
+        reply.fill(up);
+
+        dispatch(up);
+      }
+
+      void
+      handleUsblAngles(const std::string& str)
+      {
+        RecvUsblAng reply;
+        m_driver->parseUsblAngles(str, reply);
+
+        IMC::UsblAnglesExtended ua;
+        ua.target = safeLookup(reply.addr);
+        reply.fill(ua);
+
+        dispatch(ua);
       }
 
       void
