@@ -54,7 +54,7 @@ namespace Power
     //! Number of Power channels.
     static const unsigned c_pwrs_count = 8;
     //! Number of ADC channels.
-    static const unsigned c_adcs_count = 8;
+    static const unsigned c_adcs_count = 7;
 
     //! Packet identifiers.
     enum PacketIds

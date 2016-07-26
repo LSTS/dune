@@ -345,9 +345,11 @@ namespace Sensors
         if (cx || svx)
         {
           Channel channel;
-          setChannel(channel, "WD.X", c_invalid_serial);
-          m_channels.push_back(channel);
+          // The manual has these two fields in opposite order.
           setChannel(channel, "S.X", c_invalid_serial);
+          m_channels.push_back(channel);
+
+          setChannel(channel, "WD.X", c_invalid_serial);
           m_channels.push_back(channel);
 
           if (cx)

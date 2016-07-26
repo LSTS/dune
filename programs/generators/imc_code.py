@@ -125,7 +125,18 @@ class Message:
 
         # validate() / fixme
         f = Function('validate', 'int', const = True)
-        f.body('return false;')
+        if self.has_fields():
+            for field in node.findall('field'):
+                fabbrev = get_name(field)
+                fmin = field.get('min')
+                fmax = field.get('max')
+                if fmin is not None and fmax is not None:
+                    f.add_body('if (%s < %s || %s > %s) return false;' % (fabbrev, fmin, fabbrev, fmax))
+                elif fmin is not None:
+                    f.add_body('if (%s < %s) return false;' % (fabbrev, fmin))
+                elif fmax is not None:
+                    f.add_body('if (%s > %s) return false;' % (fabbrev, fmax))
+        f.add_body('return true;')
         public.append(f);
 
         # serializeFields()

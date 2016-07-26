@@ -105,7 +105,9 @@ namespace Sensors
       //! Pattern maximum difference
       unsigned pattern_diff;
       //! True to activate device at surface.
-      bool activate_at_surface;
+      bool surface;
+      //! True to enable automatic activation/deactivation based on medium.
+      bool auto_activation;
     };
 
     //! Device uses this constant sound speed.
@@ -162,7 +164,6 @@ namespace Sensors
         m_pfilt(NULL),
         m_uam_tx_ip(false)
       {
-        // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
 
@@ -251,11 +252,15 @@ namespace Sensors
         .defaultValue("0")
         .description("Pattern maximum difference");
 
-        param(DTR_RT("Use Device at Surface"), m_args.activate_at_surface)
+        param("Use Device at Surface", m_args.surface)
         .defaultValue("false")
+        .description("Enable to activate device when at surface");
+
+        param(DTR_RT("Automatic Activation"), m_args.auto_activation)
+        .defaultValue("true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_IDLE)
-        .description("Enable to activate device when at surface");
+        .description("Operator is able to control device");
 
         m_dist.validity = IMC::Distance::DV_VALID;
 
@@ -398,10 +403,13 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (!m_args.auto_activation)
+          return;
+
         m_hand.update(msg);
 
         // Request activation.
-        if ((m_hand.isWaterSurface() && m_args.activate_at_surface) ||
+        if ((m_hand.isWaterSurface() && m_args.surface) ||
             m_hand.isUnderwater())
         {
           if (!isActive())
@@ -409,7 +417,7 @@ namespace Sensors
         }
 
         // Request deactivation.
-        if (m_hand.outWater() || (m_hand.isWaterSurface() && !m_args.activate_at_surface))
+        if (m_hand.outWater() || (m_hand.isWaterSurface() && !m_args.surface))
         {
           if (isActive())
             requestDeactivation();

@@ -39,7 +39,6 @@ namespace DUNE
 #include <DUNE/Utils/ByteCopy.hpp>
 #include <DUNE/Utils/CircularBuffer.hpp>
 #include <DUNE/Utils/Exceptions.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
 #include <DUNE/Utils/OptionParser.hpp>
 #include <DUNE/Utils/RawFifo.hpp>
 #include <DUNE/Utils/StateMachine.hpp>

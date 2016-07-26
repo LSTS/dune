@@ -77,8 +77,6 @@ namespace Control
         float yaw_max;
         //! PID gains for heading controller.
         std::vector<float> yaw_gains;
-        //! Maximum heading rate reference for heading controller.
-        float yaw_max_hrate;
         //! Control logic for saturation.
         bool share;
         //! Port Motor entity id.
@@ -183,11 +181,6 @@ namespace Control
           .size(3)
           .description("PID gains for YAW controller");
 
-          param("Maximum Heading Rate", m_args.yaw_max_hrate)
-          .defaultValue("45.0")
-          .units(Units::DegreePerSecond)
-          .description("Maximum heading rate reference");
-
           param("Maximum Heading Error to Thrust", m_args.yaw_max)
           .defaultValue("30.0")
           .description("Maximum admissable heading error to thrust");
@@ -242,9 +235,6 @@ namespace Control
         {
           if (paramChanged(m_args.yaw_max))
             m_args.yaw_max = Angles::radians(m_args.yaw_max);
-
-          if (paramChanged(m_args.yaw_max_hrate))
-            m_args.yaw_max_hrate = Angles::radians(m_args.yaw_max_hrate);
 
           if (paramChanged(m_args.rpm_gains) ||
               paramChanged(m_args.mps_gains) ||
@@ -341,7 +331,6 @@ namespace Control
           m_mps_pid.setIntegralLimits(m_args.mps_max_int);
 
           m_yaw_pid.setGains(m_args.yaw_gains);
-          m_yaw_pid.setOutputLimits(-m_args.yaw_max_hrate, m_args.yaw_max_hrate);
 
           // Log parcels.
           if (m_args.log_parcels)

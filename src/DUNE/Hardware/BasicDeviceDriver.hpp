@@ -106,6 +106,12 @@ namespace DUNE
       onDisconnect(void) = 0;
 
       virtual bool
+      enableLogControl(void)
+      {
+        return false;
+      }
+
+      virtual bool
       onReadData(void) = 0;
 
       virtual bool

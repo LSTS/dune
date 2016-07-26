@@ -33,9 +33,6 @@ namespace Simulators
 {
   namespace VSIM
   {
-    //! Depth at surface to signal rejection of lifting forces.
-    static const float c_depth_at_surface = -0.5;
-
     Vehicle::Vehicle(void)
     { }
 
@@ -79,7 +76,7 @@ namespace Simulators
         // The following avoids vertical forces when the vehicle's
         // center of gravity is above water (considered negative).
         // Applies for AUVs and ASVs only.
-        if (m_position[2] < c_depth_at_surface)
+        if (m_position[2] <= 0.0)
           f[2] = 0;
 
         // Adding Control forces to m_forces vector.

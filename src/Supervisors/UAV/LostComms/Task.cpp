@@ -67,6 +67,8 @@ namespace Supervisors
         bool m_got_plan;
         //! Plan specification for lost comms.
         IMC::PlanSpecification m_plan;
+        //! Vehicle Medium.
+        IMC::VehicleMedium m_medium;
         //! Task arguments.
         Arguments m_args;
 
@@ -99,6 +101,7 @@ namespace Supervisors
           bind<IMC::PlanControl>(this);
           bind<IMC::PlanDB>(this);
           bind<IMC::PlanControlState>(this);
+          bind<IMC::VehicleMedium>(this);
         }
 
         void
@@ -175,6 +178,12 @@ namespace Supervisors
         }
 
         void
+        consume(const IMC::VehicleMedium* msg)
+        {
+          m_medium = *msg;
+        }
+
+        void
         resetTimers(void)
         {
           m_tout_heartbeat.reset();
@@ -236,6 +245,9 @@ namespace Supervisors
             return;
 
           if (m_in_lc)
+            return;
+
+          if (m_medium.medium != IMC::VehicleMedium::VM_AIR)
             return;
 
           if ((m_in_mission && m_tout_mission.overflow()) ||

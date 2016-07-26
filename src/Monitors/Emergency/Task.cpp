@@ -216,41 +216,6 @@ namespace Monitors
       }
 
       void
-      sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
-      {
-        IMC::Sms sms;
-        if (recipient.size() == 0)
-          sms.number = m_args.recipient;
-        else
-          sms.number = recipient;
-
-        sms.timeout = timeout;
-
-        if (!m_emsg.empty())
-        {
-          sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
-        }
-        else
-        {
-          std::string msg;
-          Time::BrokenDown bdt;
-          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d c:%d",
-                               getSystemName(),
-                               bdt.hour, bdt.minutes, bdt.seconds,
-                               (int)m_fuel, (int)m_fuel_conf);
-
-          msg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
-
-          sms.contents = String::str("(%s) %s", prefix, msg.c_str());
-        }
-
-        inf(DTR("sending SMS (t:%u) to %s: %s"),
-            timeout, sms.number.c_str(), sms.contents.c_str());
-
-        dispatch(sms);
-      }
-
-      void
       consume(const IMC::Abort* msg)
       {
         if (msg->getDestination() != getSystemId())
@@ -294,8 +259,48 @@ namespace Monitors
           m_lost_coms_timer.reset();
       }
 
+      //! Send SMS request.
+      //! @param[in] prefix message prefix.
+      //! @param[in] timeout time to live.
+      //! @param[in] recipient destination recipient.
       void
-      task(void)
+      sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
+      {
+        IMC::Sms sms;
+        if (recipient.size() == 0)
+          sms.number = m_args.recipient;
+        else
+          sms.number = recipient;
+
+        sms.timeout = timeout;
+
+        if (!m_emsg.empty())
+        {
+          sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
+        }
+        else
+        {
+          std::string msg;
+          Time::BrokenDown bdt;
+          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d c:%d",
+                               getSystemName(),
+                               bdt.hour, bdt.minutes, bdt.seconds,
+                               (int)m_fuel, (int)m_fuel_conf);
+
+          msg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
+
+          sms.contents = String::str("(%s) %s", prefix, msg.c_str());
+        }
+
+        inf(DTR("sending SMS (t:%u) to %s: %s"),
+            timeout, sms.number.c_str(), sms.contents.c_str());
+
+        dispatch(sms);
+      }
+
+      //! Send all scheduled reports.
+      void
+      sendScheduled(void)
       {
         std::string number;
         if (m_reporter != NULL && m_reporter->trigger(&number))
@@ -310,17 +315,28 @@ namespace Monitors
             spew("sent report to %s", number.c_str());
           }
         }
+      }
 
-        if (!isActive())
-          return;
-
+      //! Send distress messages if active and not underwater, or,
+      //! if not executing mission and waiting at water surface.
+      void
+      sendDistress(void)
+      {
         if (m_lost_coms_timer.overflow())
         {
           m_lost_coms_timer.reset();
 
-          if (!m_hand.isUnderwater())
+          if ((isActive() && !m_hand.isUnderwater()) ||
+              (m_hand.isWaterSurface() && !m_in_mission))
             sendSMS("T", m_args.sms_lost_coms_ttl);
         }
+      }
+
+      void
+      task(void)
+      {
+        sendScheduled();
+        sendDistress();
       }
     };
   }

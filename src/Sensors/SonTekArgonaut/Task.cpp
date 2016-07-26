@@ -38,7 +38,7 @@ namespace Sensors
     using DUNE_NAMESPACES;
 
     //! Number of altitude measurements.
-    static const unsigned c_beam_count = 4;
+    static const unsigned c_beam_count = 3;
     //! Minimum measurable distance (m).
     static const double c_min_distance = 1.0;
 
@@ -79,7 +79,7 @@ namespace Sensors
       //! Water velocity.
       IMC::WaterVelocity m_wvel;
       //! Distance.
-      IMC::Distance m_dist[c_beam_count];
+      IMC::Distance m_dist[c_beam_count + 1];
       //! Input watchdog.
       Counter<double> m_wdog;
       //! Task arguments.
@@ -138,7 +138,7 @@ namespace Sensors
         ds.theta = Math::Angles::radians(m_args.orientation[1]);
         ds.psi = Math::Angles::radians(m_args.orientation[2]);
 
-        for (unsigned i = 0; i < c_beam_count; ++i)
+        for (unsigned i = 0; i < c_beam_count + 1; ++i)
         {
           m_dist[i].location.clear();
           m_dist[i].location.push_back(ds);
@@ -150,13 +150,13 @@ namespace Sensors
       void
       onEntityReservation(void)
       {
-        for (unsigned i = 0; i < c_beam_count - 1; ++i)
+        for (unsigned i = 0; i < c_beam_count; ++i)
         {
           std::string ename = String::str("%s - Beam %u", getEntityLabel(), i);
           m_dist[i].setSourceEntity(reserveEntity(ename));
         }
 
-        m_dist[c_beam_count - 1].setSourceEntity(reserveEntity("DVL Filtered"));
+        m_dist[c_beam_count].setSourceEntity(reserveEntity("DVL Filtered"));
       }
 
       void
@@ -167,7 +167,7 @@ namespace Sensors
                                 SerialPort::SP_STOPBITS_2,
                                 SerialPort::SP_DATABITS_8);
 
-        m_filter = new Navigation::BeamFilter(c_beam_count - 1);
+        m_filter = new Navigation::BeamFilter(this, c_beam_count);
 
         m_uart->setCanonicalInput(true);
       }
@@ -314,24 +314,24 @@ namespace Sensors
         dispatch(m_gvel, DF_KEEP_TIME);
 
         // Beam distances.
-        for (unsigned i = 0; i < c_beam_count - 1; ++i)
+        for (unsigned i = 0; i < c_beam_count; ++i)
         {
           if (m_dist[i].value < c_min_distance)
             m_dist[i].validity = IMC::Distance::DV_INVALID;
           else
             m_dist[i].validity = IMC::Distance::DV_VALID;
 
-          m_filter->updateBeam(i, m_dist[i]);
+          m_filter->update(i, m_dist[i].value);
           m_dist[i].setTimeStamp(tstamp);
           dispatch(m_dist[i], DF_KEEP_TIME);
         }
 
-        m_dist[c_beam_count - 1].value = m_filter->getDistance();
-        m_dist[c_beam_count - 1].validity = (m_dist[c_beam_count - 1].value > 0.0 ?
-                                             IMC::Distance::DV_VALID : IMC::Distance::DV_INVALID);
+        m_dist[c_beam_count].value = m_filter->get();
+        m_dist[c_beam_count].validity = (m_dist[c_beam_count].value > 0.0 ?
+                                         IMC::Distance::DV_VALID : IMC::Distance::DV_INVALID);
 
-        m_dist[c_beam_count - 1].setTimeStamp(tstamp);
-        dispatch(m_dist[c_beam_count - 1], DF_KEEP_TIME);
+        m_dist[c_beam_count].setTimeStamp(tstamp);
+        dispatch(m_dist[c_beam_count], DF_KEEP_TIME);
 
         // Temperature.
         m_temp.setTimeStamp(tstamp);

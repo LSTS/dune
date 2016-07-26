@@ -39,6 +39,9 @@ namespace DUNE
 {
   namespace Control
   {
+    //! Acceptable distance to reference to consider target reached.
+    static const float c_dist_to_ref = 0.2f;
+
     class YoYoMotion
     {
     public:
@@ -48,13 +51,15 @@ namespace DUNE
       //! @param[in] z_ref amplitude z reference for yoyo motion (negative if altitude)
       //! @param[in] amplitude z reference amplitude for yoyo motion
       //! @param[in] variation maximum variation for the pitch angle
+      //! @param[in] min_alt minimum altitude reference admissible
       YoYoMotion(DUNE::Tasks::Task* task, float pitch, float z_ref,
-                 float amplitude, float variation):
+                 float amplitude, float variation, float min_alt = 5.0f):
         m_task(task),
         m_pitch_ref(pitch),
         m_z_ref(z_ref),
         m_amplitude(amplitude),
         m_variation(variation),
+        m_min_alt(min_alt),
         m_dir(0)
       { }
 
@@ -70,7 +75,7 @@ namespace DUNE
         {
           double t_dist = m_dir * (state_z - m_target_z);
 
-          if (t_dist >= 0)
+          if (t_dist >= std::min(m_amplitude, c_dist_to_ref))
           {
             m_old_pitch = trimPitch(m_dir * m_pitch_ref, pitch);
             return m_old_pitch;
@@ -92,7 +97,10 @@ namespace DUNE
           m_source_z = state_z;
         }
 
-        m_target_z = m_z_ref - m_dir * m_amplitude;
+        if (m_z_ref >= 0)
+          m_target_z = std::max(0.0f, m_z_ref - m_dir * m_amplitude);
+        else
+          m_target_z = std::min(m_min_alt, m_z_ref - m_dir * m_amplitude);
 
         std::stringstream ss;
         ss << (m_dir < 0 ? "descending " : "ascending ")
@@ -156,6 +164,8 @@ namespace DUNE
       float m_source_z;
       //! Maximum variation in pitch
       float m_variation;
+      //! Minimum allowed altitude reference.
+      float m_min_alt;
       //! Direction
       int m_dir;
       //! Flag will be true if reference is altitude

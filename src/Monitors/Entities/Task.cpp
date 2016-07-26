@@ -185,6 +185,9 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
           err(DTR("EntityState message without source entity"));
@@ -206,7 +209,7 @@ namespace Monitors
 
           if (r.transitions < m_args.max_transitions)
           {
-            war("%s : %s -> %s | %s", DTR(r.label.c_str()), DTR(c_state_desc[r.state]),
+            inf("%s : %s -> %s | %s", DTR(r.label.c_str()), DTR(c_state_desc[r.state]),
                 DTR(c_state_desc[msg->state]), msg->description.c_str());
           }
           else if (r.transitions == m_args.max_transitions)

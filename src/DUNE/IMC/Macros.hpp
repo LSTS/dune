@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4663673b775daaf6b93edc177859e286                            *
+// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -238,6 +238,18 @@
 #define DUNE_IMC_PHYCOERYTHRIN 292
 //! GpsFixRtk identification number.
 #define DUNE_IMC_GPSFIXRTK 293
+//! ExternalNavData identification number.
+#define DUNE_IMC_EXTERNALNAVDATA 294
+//! DissolvedOxygen identification number.
+#define DUNE_IMC_DISSOLVEDOXYGEN 295
+//! AirSaturation identification number.
+#define DUNE_IMC_AIRSATURATION 296
+//! Throttle identification number.
+#define DUNE_IMC_THROTTLE 297
+//! PH identification number.
+#define DUNE_IMC_PH 298
+//! Redox identification number.
+#define DUNE_IMC_REDOX 299
 //! CameraZoom identification number.
 #define DUNE_IMC_CAMERAZOOM 300
 //! SetThrusterActuation identification number.
@@ -328,6 +340,8 @@
 #define DUNE_IMC_BRAKE 413
 //! DesiredLinearState identification number.
 #define DUNE_IMC_DESIREDLINEARSTATE 414
+//! DesiredThrottle identification number.
+#define DUNE_IMC_DESIREDTHROTTLE 415
 //! Goto identification number.
 #define DUNE_IMC_GOTO 450
 //! PopUp identification number.
@@ -404,6 +418,16 @@
 #define DUNE_IMC_DROP 486
 //! ScheduledGoto identification number.
 #define DUNE_IMC_SCHEDULEDGOTO 487
+//! RowsCoverage identification number.
+#define DUNE_IMC_ROWSCOVERAGE 488
+//! Sample identification number.
+#define DUNE_IMC_SAMPLE 489
+//! ImageTracking identification number.
+#define DUNE_IMC_IMAGETRACKING 490
+//! Takeoff identification number.
+#define DUNE_IMC_TAKEOFF 491
+//! Land identification number.
+#define DUNE_IMC_LAND 492
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -556,5 +580,25 @@
 #define DUNE_IMC_PARAMETERSXML 893
 //! GetParametersXml identification number.
 #define DUNE_IMC_GETPARAMETERSXML 894
+//! SetImageCoords identification number.
+#define DUNE_IMC_SETIMAGECOORDS 895
+//! GetImageCoords identification number.
+#define DUNE_IMC_GETIMAGECOORDS 896
+//! GetWorldCoordinates identification number.
+#define DUNE_IMC_GETWORLDCOORDINATES 897
+//! UsblAnglesExtended identification number.
+#define DUNE_IMC_USBLANGLESEXTENDED 898
+//! UsblPositionExtended identification number.
+#define DUNE_IMC_USBLPOSITIONEXTENDED 899
+//! UsblFixExtended identification number.
+#define DUNE_IMC_USBLFIXEXTENDED 900
+//! UsblModem identification number.
+#define DUNE_IMC_USBLMODEM 901
+//! UsblConfig identification number.
+#define DUNE_IMC_USBLCONFIG 902
+//! DissolvedOrganicMatter identification number.
+#define DUNE_IMC_DISSOLVEDORGANICMATTER 903
+//! OpticalBackscatter identification number.
+#define DUNE_IMC_OPTICALBACKSCATTER 904
 
 #endif

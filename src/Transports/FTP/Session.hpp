@@ -157,6 +157,9 @@ namespace Transports
       handleQUIT(const std::string& arg);
 
       void
+      handleUSPC(const std::string& arg);
+
+      void
       handleNotImplemented(const std::string& arg);
 
       void

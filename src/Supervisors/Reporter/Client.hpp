@@ -120,16 +120,17 @@ namespace Supervisors
       {
         if (m_wait_ack && m_list_acks.size() > 0)
         {
-          if (destination.size() > 0)
+          if (!destination.size())
           {
             m_task->dispatch(m_list_acks.front());
             m_list_acks.erase(m_list_acks.begin(), m_list_acks.begin() + 1);
+            return true;
           }
           else
           {
             // Iterate through list, dispatch and erase.
             std::vector<IMC::ReportControl>::iterator itr = m_list_acks.begin();
-            for (; itr != m_list.end(); ++itr)
+            for (; itr != m_list_acks.end(); ++itr)
             {
               // Same ticket.
               if (itr->sys_dst == destination)
