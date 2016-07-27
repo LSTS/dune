@@ -49,7 +49,7 @@ namespace Sensors
       //! UART baud rate.
       unsigned uart_baud;
       //! Sampling rate.
-      float sampling_rate;
+      float rate;
       //! True to enable automatic activation/deactivation based on medium.
       bool auto_activation;
       //! DVL position.
@@ -61,7 +61,15 @@ namespace Sensors
       //! Name of sidescan's power channel.
       std::string power_channel;
       //! Hardware Debug Mode.
-      bool hw_debug;
+      bool debug;
+      //! Current profiler at every N pings
+      unsigned cp_npings;
+      //! Current profiler's number of cells.
+      unsigned cp_ncells;
+      //! Current profiler's cell size.
+      float cp_csize;
+      //! Current profiler's blanking distance.
+      float cp_blankdist;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -110,7 +118,7 @@ namespace Sensors
         .defaultValue("115200")
         .description("Serial port baud rate");
 
-        param("Sampling Rate", m_args.sampling_rate)
+        param("Sampling Rate", m_args.rate)
         .defaultValue("5.0")
         .minimumValue("1.0")
         .maximumValue("8.0")
@@ -143,9 +151,35 @@ namespace Sensors
         .defaultValue("Private (DVL)")
         .description("Name of device's power channel");
 
-        param("Hardware Debug Mode", m_args.hw_debug)
+        param("Hardware Debug Mode", m_args.debug)
         .defaultValue("false")
         .description("Record data internally with diagnostics");
+
+        param("Collect Current Profile every Nth Ping", m_args.cp_npings)
+        .defaultValue("0")
+        .minimumValue("0")
+        .maximumValue("20")
+        .description("Collect current profiles at each Nth ping (0 to disable)");
+
+        param("Current Profiler -- Number of Cells", m_args.cp_ncells)
+        .defaultValue("30")
+        .minimumValue("1")
+        .maximumValue("200")
+        .description("Number of cells available for the current profiler");
+
+        param("Current Profiler -- Cell Size", m_args.cp_csize)
+        .defaultValue("1.0")
+        .minimumValue("0.5")
+        .maximumValue("4.0")
+        .units(Units::Meter)
+        .description("Cell size for the current profiler");
+
+        param("Current Profiler -- Blanking Distance", m_args.cp_blankdist)
+        .defaultValue("0.5")
+        .minimumValue("0.1")
+        .maximumValue("50.0")
+        .units(Units::Meter)
+        .description("Blanking Distance for the current profiler");
 
         setPostPowerOnDelay(5.0);
         setPowerOffDelay(1.0);
@@ -394,7 +428,10 @@ namespace Sensors
       void
       setup(void)
       {
-        m_driver = new Driver(this, m_handle, m_args.sampling_rate, m_triggered, m_args.hw_debug);
+        m_driver = new Driver(this, m_handle, m_args.rate, m_triggered, m_args.debug,
+                              m_args.cp_npings, m_args.cp_ncells, m_args.cp_csize,
+                              m_args.cp_blankdist);
+
         m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
       }
     };
