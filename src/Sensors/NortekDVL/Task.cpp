@@ -62,6 +62,8 @@ namespace Sensors
       std::string power_channel;
       //! Hardware Debug Mode.
       bool debug;
+      //! File name.
+      std::string cp_filename;
       //! Current profiler at every N pings
       unsigned cp_npings;
       //! Current profiler's number of cells.
@@ -155,7 +157,11 @@ namespace Sensors
         .defaultValue("false")
         .description("Record data internally with diagnostics");
 
-        param("Collect Current Profile every Nth Ping", m_args.cp_npings)
+        param("Current Profiler -- Record File", m_args.cp_filename)
+        .defaultValue("CurrentProfile.df3")
+        .description("Current profiler data filename");
+
+        param("Current Profiler -- Get At Nth Ping", m_args.cp_npings)
         .defaultValue("0")
         .minimumValue("0")
         .maximumValue("20")
@@ -422,6 +428,31 @@ namespace Sensors
           requestDeactivation();
           requestActivation();
         }
+      }
+
+      //! This derived task has direct log control.
+      //! @return true if it has log control, false otherwise.
+      bool
+      enableLogControl(void)
+      {
+        return true;
+      }
+
+      //! Open log file.
+      //! @param[in] path path to log file.
+      void
+      onOpenLog(const DUNE::FileSystem::Path& path)
+      {
+        if (isParserOn())
+          m_parser->openLog(path / m_args.cp_filename);
+      }
+
+      //! Close log file.
+      void
+      onCloseLog(void)
+      {
+        if (isParserOn())
+          m_parser->closeLog();
       }
 
       //! Setup driver and parser.

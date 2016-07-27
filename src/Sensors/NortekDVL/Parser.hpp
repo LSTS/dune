@@ -83,7 +83,6 @@ namespace Sensors
         m_filter->setSourceEntities(entities);
         m_filt_distance.setSourceEntity(entity);
         m_bfr.resize(c_max_size);
-        m_profile.beam_count = c_beam_count;
       }
 
       //! Destructor.
@@ -129,6 +128,33 @@ namespace Sensors
       setWater(bool status)
       {
         m_water = status;
+      }
+
+      //! Open new log file.
+      //! @param[in] path file system path.
+      void
+      openLog(const FileSystem::Path& path)
+      {
+        if (path == m_log_path)
+          return;
+
+        closeLog();
+        m_log_path = path;
+      }
+
+      //! Close log file.
+      void
+      closeLog(void)
+      {
+        if (m_log_file.is_open())
+        {
+          m_log_file.close();
+
+          if (m_log_path.size() == 0)
+            m_log_path.remove();
+        }
+
+        m_log_path.clear();
       }
 
     private:
@@ -289,108 +315,10 @@ namespace Sensors
       void
       decodeCurrentProfile(void)
       {
-        // Data types.
-        uint16_t u16;
-        int16_t i16;
-        uint8_t u8;
-        int8_t i8;
-        size_t data_bytes = 0;
+        if (!m_log_file.is_open())
+          m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
 
-        // Validity.
-        m_profile.validity = 0;
-        std::memcpy(&u16, &m_bfr[c_hdr_size + CP_IND_CONFIG], 2);
-
-        if (!(u16 & CP_BIT_VEL))
-          return;
-
-        m_profile.validity |= IMC::CurrentProfile::VAL_VELOCITY;
-        data_bytes += 2;
-
-        if (u16 & CP_BIT_AMP)
-        {
-          m_profile.validity |= IMC::CurrentProfile::VAL_AMPLITUDE;
-          data_bytes += 1;
-        }
-
-        if (u16 & CP_BIT_COR)
-        {
-          m_profile.validity |= IMC::CurrentProfile::VAL_CORRELATION;
-          data_bytes += 1;
-        }
-
-        // Angles
-        if (u16 & CP_BIT_EUL)
-        {
-          std::memcpy(&u16, &m_bfr[c_hdr_size + CP_IND_HEADING], 2);
-          m_profile.psi = Angles::normalizeRadian(Angles::radians((float)u16 / c_ang_scale));
-
-          std::memcpy(&i16, &m_bfr[c_hdr_size + CP_IND_PITCH], 2);
-          m_profile.theta = Angles::radians((float)i16 / c_ang_scale);
-
-          std::memcpy(&i16, &m_bfr[c_hdr_size + CP_IND_ROLL], 2);
-          m_profile.phi = Angles::radians((float)i16 / c_ang_scale);
-        }
-        else
-        {
-          m_profile.phi = 0;
-          m_profile.theta = 0;
-          m_profile.psi = 0;
-        }
-
-        // Number of cells
-        std::memcpy(&u16, &m_bfr[c_hdr_size + CP_IND_CELLS], 2);
-        m_profile.cell_count = (uint16_t)(c_ncells_mask & u16);
-
-        // Check if data return size is as expected.
-        size_t payload_size = m_profile.beam_count * m_profile.cell_count * data_bytes;
-        if (m_data_size != CP_IND_VELOCITY + payload_size)
-        {
-          m_task->err(DTR("size mismatch"));
-          return;
-        }
-
-        // Cell size.
-        std::memcpy(&u16, &m_bfr[c_hdr_size + CP_IND_CELLSIZE], 2);
-        m_profile.cell_size = (float)u16 / c_m_to_mm;
-
-        // Blanking distance.
-        std::memcpy(&u16, &m_bfr[c_hdr_size + CP_IND_BLANKING], 2);
-        m_profile.blanking_distance = (float)u16 / c_m_to_mm;
-
-        // Nominal correlation.
-        std::memcpy(&u8, &m_bfr[c_hdr_size + CP_IND_CORRELAT], 1);
-        m_profile.correlation = u8;
-
-        // Velocity scaling.
-        std::memcpy(&i8, &m_bfr[c_hdr_size + CP_IND_SCALING], 1);
-        m_vscale = std::pow(10.0, (float)i8);
-
-        // Assemble full message and dispatch to bus.
-        m_profile.points.clear();
-        IMC::CurrentProfilePoint cpp;
-        for (size_t i = 0; i < payload_size; i += data_bytes)
-        {
-          unsigned j = 2;
-          std::memcpy(&i16, &m_bfr[c_hdr_size + CP_IND_VELOCITY + i], 2);
-          cpp.velocity = (float)i16 / m_vscale;
-
-          if (m_profile.validity & IMC::CurrentProfile::VAL_AMPLITUDE)
-          {
-            std::memcpy(&u8, &m_bfr[c_hdr_size + CP_IND_VELOCITY + i + j], 1);
-            cpp.amplitude = (float)u8;
-            j += 1;
-          }
-
-          if (m_profile.validity & IMC::CurrentProfile::VAL_CORRELATION)
-          {
-            std::memcpy(&u8, &m_bfr[c_hdr_size + CP_IND_VELOCITY + i + j], 1);
-            cpp.correlation = (float)u8;
-          }
-
-          m_profile.points.push_back(cpp);
-        }
-
-        dispatch(m_profile);
+        m_log_file.write((const char*)&m_bfr[c_hdr_size], m_data_size);
       }
 
       //! Parse status and sensor data.
@@ -601,40 +529,6 @@ namespace Sensors
         IND_VEL_Z2 = 144
       };
 
-      //! Current profile data index.
-      enum CurrentProfileIndex
-      {
-        //! Config index.
-        CP_IND_CONFIG = 2,
-        //! Heading index.
-        CP_IND_HEADING = 24,
-        //! Pitch index.
-        CP_IND_PITCH = 26,
-        //! Roll index.
-        CP_IND_ROLL = 28,
-        //! Number of beams and cells.
-        CP_IND_CELLS = 30,
-        //! Cell size.
-        CP_IND_CELLSIZE = 32,
-        //! Blanking distance.
-        CP_IND_BLANKING = 34,
-        //! Nominal correlation.
-        CP_IND_CORRELAT = 36,
-        //! Velocity scaling.
-        CP_IND_SCALING = 58,
-        //! Velocity data.
-        CP_IND_VELOCITY = 76
-      };
-
-      //! Current Profile bits.
-      enum CurrentProfileBits
-      {
-        CP_BIT_EUL = 0x0004,
-        CP_BIT_VEL = 0x0010,
-        CP_BIT_AMP = 0x0020,
-        CP_BIT_COR = 0x0040
-      };
-
       //! Status bits
       enum StatusBits
       {
@@ -693,8 +587,6 @@ namespace Sensors
       IMC::WaterVelocity m_wvel;
       //! Filtered distance.
       IMC::Distance m_filt_distance;
-      //! Current Profile.
-      IMC::CurrentProfile m_profile;
       //! Raw messages.
       IMC::DevDataBinary m_raw_data;
       //! Parser state.
@@ -709,12 +601,14 @@ namespace Sensors
       uint16_t m_checksum;
       //! Status bits.
       uint32_t m_status;
-      //! Current profile velocity scaler.
-      float m_vscale;
       //! Device is in water.
       bool m_water;
       //! Return data type.
       ReturnType m_type;
+      //! Log file.
+      std::ofstream m_log_file;
+      //! Log path.
+      FileSystem::Path m_log_path;
     };
   }
 }
