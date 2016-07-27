@@ -201,6 +201,12 @@ namespace Sensors
               m_state = ST_FAMILY;
               m_type = RT_WT;
             }
+            else if (byte == c_cp_type)
+            {
+              m_bfr[m_index++] = byte;
+              m_state = ST_FAMILY;
+              m_type = RT_CP;
+            }
             else
             {
               m_task->err(DTR("unexpected type"));
@@ -561,6 +567,8 @@ namespace Sensors
       static const uint8_t c_sync = 0xa5;
       //! Size of header.
       static const uint8_t c_hdr_size = 10;
+      //! Data record current profile identifier.
+      static const uint8_t c_cp_type = 0x16;
       //! Data record bottom track identifier.
       static const uint8_t c_bt_type = 0x1b;
       //! Data record water track identifier.
