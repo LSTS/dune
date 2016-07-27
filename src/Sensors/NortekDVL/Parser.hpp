@@ -173,6 +173,7 @@ namespace Sensors
               m_index = 0;
               m_bfr[m_index++] = byte;
               m_state = ST_HEADER;
+              m_type = RT_NONE;
             }
             break;
 
@@ -234,6 +235,11 @@ namespace Sensors
           case ST_DATA_SIZE_MSB:
             m_bfr[m_index++] = byte;
             m_data_size |= byte << 8;
+
+            // increase buffer if necessary.
+            if (m_data_size + c_hdr_size > (int)m_bfr.size())
+              m_bfr.resize(m_data_size + c_hdr_size);
+
             m_state = ST_DATA_CSUM_LSB;
             break;
           case ST_DATA_CSUM_LSB:
@@ -270,7 +276,6 @@ namespace Sensors
               else
                 decodeBottomTrack();
 
-              m_type = RT_NONE;
               return true;
             }
 
@@ -287,9 +292,9 @@ namespace Sensors
       checksumFailed(void)
       {
         uint16_t checksum = c_csum_start;
-        unsigned size = m_index + 1 - c_hdr_size;
+        unsigned size = m_data_size;
 
-        for (unsigned i = c_hdr_size; i <= m_index; i += 2)
+        for (unsigned i = c_hdr_size; i < m_index; i += 2)
         {
           uint16_t nb;
           std::memcpy(&nb, &m_bfr[i], 2);
@@ -299,7 +304,6 @@ namespace Sensors
 
         if (size > 0)
           checksum += (uint16_t)m_bfr[m_index] << 8;
-
 
         if (checksum == m_checksum)
           return false;
@@ -325,6 +329,7 @@ namespace Sensors
           m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
 
         m_log_file.write((const char*)&m_bfr[c_hdr_size], m_data_size);
+        m_task->spew("parsed current profile data");
       }
 
       //! Parse status and sensor data.
