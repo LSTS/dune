@@ -62,6 +62,8 @@ namespace Sensors
       std::string power_channel;
       //! Hardware Debug Mode.
       bool debug;
+      //! Enable Current Profiler
+      bool cp_enable;
       //! File name.
       std::string cp_filename;
       //! Current profiler at every N pings
@@ -157,33 +159,37 @@ namespace Sensors
         .defaultValue("false")
         .description("Record data internally with diagnostics");
 
+        param("Current Profiler -- Enabled", m_args.cp_enable)
+        .defaultValue("false")
+        .description("Enable current profiler");
+
         param("Current Profiler -- Record File", m_args.cp_filename)
         .defaultValue("CurrentProfile.df3")
         .description("Current profiler data filename");
 
         param("Current Profiler -- Get At Nth Ping", m_args.cp_npings)
-        .defaultValue("0")
-        .minimumValue("0")
+        .defaultValue("20")
+        .minimumValue("2")
         .maximumValue("20")
         .description("Collect current profiles at each Nth ping (0 to disable)");
 
         param("Current Profiler -- Number of Cells", m_args.cp_ncells)
-        .defaultValue("30")
+        .defaultValue("10")
         .minimumValue("1")
         .maximumValue("200")
         .description("Number of cells available for the current profiler");
 
         param("Current Profiler -- Cell Size", m_args.cp_csize)
         .defaultValue("1.0")
-        .minimumValue("0.5")
-        .maximumValue("4.0")
+        .minimumValue("0.2")
+        .maximumValue("2.0")
         .units(Units::Meter)
         .description("Cell size for the current profiler");
 
         param("Current Profiler -- Blanking Distance", m_args.cp_blankdist)
         .defaultValue("0.5")
         .minimumValue("0.1")
-        .maximumValue("50.0")
+        .maximumValue("28.0")
         .units(Units::Meter)
         .description("Blanking Distance for the current profiler");
 
@@ -202,6 +208,17 @@ namespace Sensors
         {
           clearPowerChannelNames();
           addPowerChannelName(m_args.power_channel);
+        }
+
+        if (isActive())
+        {
+          if (paramChanged(m_args.rate) || paramChanged(m_args.cp_npings) ||
+              paramChanged(m_args.cp_enable) || paramChanged(m_args.cp_ncells) ||
+              paramChanged(m_args.cp_csize) || paramChanged(m_args.cp_blankdist))
+          {
+            requestDeactivation();
+            requestActivation();
+          }
         }
       }
 
@@ -459,6 +476,9 @@ namespace Sensors
       void
       setup(void)
       {
+        if (!m_args.cp_enable)
+          m_args.cp_npings = 0;
+
         m_driver = new Driver(this, m_handle, m_args.rate, m_triggered, m_args.debug,
                               m_args.cp_npings, m_args.cp_ncells, m_args.cp_csize,
                               m_args.cp_blankdist);
