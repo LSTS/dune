@@ -180,8 +180,6 @@ namespace Sensors
             paramChanged(m_args.channels) || paramChanged(m_args.speed) ||
             paramChanged(m_args.output_format))
         {
-          Memory::clear(m_driver);
-          m_driver = new Driver(this, m_args.uart_dev, m_args.uart_baud);
           setup();
         }
       }

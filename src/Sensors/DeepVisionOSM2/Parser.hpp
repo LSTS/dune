@@ -143,7 +143,7 @@ namespace Sensors
           case (ST_SONAR_SIZE_H):
             m_csum += byte;
             m_state = ST_SONAR_SIZE_L;
-            m_size |= ((uint16_t)byte << 8);
+            m_size = (uint16_t)byte << 8;
             break;
           case (ST_SONAR_SIZE_L):
             m_csum += byte;
