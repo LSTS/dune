@@ -93,6 +93,12 @@ namespace DUNE
         setPriorityImpl(policy, priority);
       }
 
+      unsigned
+      getPriority(void)
+      {
+        return getPriorityImpl();
+      }
+
       State
       getState(void)
       {
@@ -151,6 +157,9 @@ namespace DUNE
 
       virtual void
       setPriorityImpl(Scheduler::Policy policy, unsigned priority) = 0;
+
+      virtual unsigned
+      getPriorityImpl(void) = 0;
 
     private:
       bool m_created;
