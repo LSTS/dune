@@ -172,17 +172,17 @@ namespace Sensors
         if (paramChanged(m_args.input_timeout))
           m_iwdog.setTop(m_args.input_timeout);
 
+        if (!isActive())
+          return;
+
         if (paramChanged(m_args.frequency) || paramChanged(m_args.range) ||
             paramChanged(m_args.samples) || paramChanged(m_args.periods) ||
             paramChanged(m_args.channels) || paramChanged(m_args.speed) ||
             paramChanged(m_args.output_format))
         {
-          if (isActive())
-          {
-            Memory::clear(m_driver);
-            m_driver = new Driver(this, m_args.uart_dev, m_args.uart_baud);
-            setup();
-          }
+          Memory::clear(m_driver);
+          m_driver = new Driver(this, m_args.uart_dev, m_args.uart_baud);
+          setup();
         }
       }
 
