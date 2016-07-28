@@ -180,6 +180,8 @@ namespace Sensors
             paramChanged(m_args.channels) || paramChanged(m_args.speed) ||
             paramChanged(m_args.output_format))
         {
+          Memory::clear(m_driver);
+          onConnect();
           setup();
         }
       }
