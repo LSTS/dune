@@ -164,6 +164,24 @@ namespace Supervisors
       }
 
       void
+      onPopEntityParameters(const IMC::PopEntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        relayTo(msg);
+      }
+
+      void
+      onPushEntityParameters(const IMC::PushEntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        relayTo(msg);
+      }
+
+      void
       sendActiveParameter(const std::string& value)
       {
         IMC::EntityParameter p;
