@@ -83,7 +83,8 @@ namespace Transports
       //! @param[in] task parent task.
       //! @param[in] handle I/O handle.
       Driver(Tasks::Task* task, IO::Handle* handle):
-        HayesModem(task, handle)
+        HayesModem(task, handle),
+        m_declination(0)
       { }
 
       //! Destructor.
@@ -372,6 +373,13 @@ namespace Transports
 
         if (rv != 16)
           throw std::runtime_error("invalid format for USBLLONG");
+
+        double n0 = msg.n;
+        double e0 = msg.e;
+
+        msg.n = n0 * std::cos(m_declination) - e0 * std::sin(m_declination);
+        msg.e = n0 * std::sin(m_declination) + e0 * std::cos(m_declination);
+        msg.yaw += m_declination;
       }
 
       void
@@ -387,6 +395,8 @@ namespace Transports
 
         if (rv != 13)
           throw std::runtime_error("invalid format for USBLANGLES");
+
+        msg.yaw += m_declination;
       }
 
       void
@@ -475,6 +485,13 @@ namespace Transports
         msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
 
+      //! Set device's magnetic declination offset.
+      void
+      setDeclination(double value)
+      {
+        m_declination = value;
+      }
+
     private:
       //! Firmware version.
       std::string m_version;
@@ -482,6 +499,8 @@ namespace Transports
       std::string m_phy_ptl_version;
       //! Data-link layer protocol version.
       std::string m_mac_ptl_version;
+      //! Declination offset.
+      double m_declination;
 
       void
       sendInitialization(void)
