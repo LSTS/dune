@@ -47,6 +47,10 @@ namespace Sensors
     static const float c_beam_offset = 0.45f;
     //! Beam angle.
     static const float c_beam_angle = 22.0f;
+    //! Current profile angle scale.
+    static const float c_ang_scale = 0.01f;
+    //! Current profile cell size and blanking scale.
+    static const float c_m_to_mm = 1000.0f;
 
     //! Parser class to interpret Nortek DVL's incoming data.
     class Parser
@@ -126,6 +130,33 @@ namespace Sensors
         m_water = status;
       }
 
+      //! Open new log file.
+      //! @param[in] path file system path.
+      void
+      openLog(const FileSystem::Path& path)
+      {
+        if (path == m_log_path)
+          return;
+
+        closeLog();
+        m_log_path = path;
+      }
+
+      //! Close log file.
+      void
+      closeLog(void)
+      {
+        if (m_log_file.is_open())
+        {
+          m_log_file.close();
+
+          if (m_log_path.size() == 0)
+            m_log_path.remove();
+        }
+
+        m_log_path.clear();
+      }
+
     private:
       //! Parse one byte of data.
       //! @param[in] byte data byte.
@@ -142,6 +173,7 @@ namespace Sensors
               m_index = 0;
               m_bfr[m_index++] = byte;
               m_state = ST_HEADER;
+              m_type = RT_NONE;
             }
             break;
 
@@ -170,8 +202,15 @@ namespace Sensors
               m_state = ST_FAMILY;
               m_type = RT_WT;
             }
+            else if (byte == c_cp_type)
+            {
+              m_bfr[m_index++] = byte;
+              m_state = ST_FAMILY;
+              m_type = RT_CP;
+            }
             else
             {
+              m_task->err(DTR("unexpected type"));
               m_state = ST_SYNC;
             }
             break;
@@ -196,6 +235,11 @@ namespace Sensors
           case ST_DATA_SIZE_MSB:
             m_bfr[m_index++] = byte;
             m_data_size |= byte << 8;
+
+            // increase buffer if necessary.
+            if (m_data_size + c_hdr_size > (int)m_bfr.size())
+              m_bfr.resize(m_data_size + c_hdr_size);
+
             m_state = ST_DATA_CSUM_LSB;
             break;
           case ST_DATA_CSUM_LSB:
@@ -223,11 +267,15 @@ namespace Sensors
             {
               m_state = ST_SYNC;
 
+              // failed checksum.
               if (checksumFailed())
                 return false;
 
-              interpret();
-              m_type = RT_NONE;
+              if (m_type == RT_CP)
+                decodeCurrentProfile();
+              else
+                decodeBottomTrack();
+
               return true;
             }
 
@@ -244,9 +292,9 @@ namespace Sensors
       checksumFailed(void)
       {
         uint16_t checksum = c_csum_start;
-        unsigned size = m_index + 1 - c_hdr_size;
+        unsigned size = m_data_size;
 
-        for (unsigned i = c_hdr_size; i <= m_index; i += 2)
+        for (unsigned i = c_hdr_size; i < m_index; i += 2)
         {
           uint16_t nb;
           std::memcpy(&nb, &m_bfr[i], 2);
@@ -257,7 +305,6 @@ namespace Sensors
         if (size > 0)
           checksum += (uint16_t)m_bfr[m_index] << 8;
 
-
         if (checksum == m_checksum)
           return false;
 
@@ -265,13 +312,24 @@ namespace Sensors
         return true;
       }
 
-      //! Interpret data received from device.
+      //! Interpret bottom track data received from device.
       void
-      interpret(void)
+      decodeBottomTrack(void)
       {
         processStatus();
         processDistance();
         processVelocity();
+      }
+
+      //! Interpret current profile data received from device.
+      void
+      decodeCurrentProfile(void)
+      {
+        if (!m_log_file.is_open())
+          m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
+
+        m_log_file.write((const char*)&m_bfr[c_hdr_size], m_data_size);
+        m_task->spew("parsed current profile data");
       }
 
       //! Parse status and sensor data.
@@ -514,6 +572,8 @@ namespace Sensors
       static const uint8_t c_sync = 0xa5;
       //! Size of header.
       static const uint8_t c_hdr_size = 10;
+      //! Data record current profile identifier.
+      static const uint8_t c_cp_type = 0x16;
       //! Data record bottom track identifier.
       static const uint8_t c_bt_type = 0x1b;
       //! Data record water track identifier.
@@ -524,6 +584,8 @@ namespace Sensors
       static const uint32_t c_wake_mask = 0xf0000000;
       //! Initial checksum mask.
       static const uint16_t c_csum_start = 0xb58c;
+      //! Current profile number of cells bitmask.
+      static const uint16_t c_ncells_mask = 0x03ff;
       //! Parent task.
       Tasks::Task* m_task;
       //! IO Handle.
@@ -556,6 +618,10 @@ namespace Sensors
       bool m_water;
       //! Return data type.
       ReturnType m_type;
+      //! Log file.
+      std::ofstream m_log_file;
+      //! Log path.
+      FileSystem::Path m_log_path;
     };
   }
 }

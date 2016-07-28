@@ -69,7 +69,12 @@ namespace Sensors
       //! @param[in] rate sampling rate.
       //! @param[in] trigger input trigger.
       //! @param[in] debug enable hardware diagnostics.
-      Driver(Tasks::Task* task, IO::Handle* handle, float rate, bool trigger, bool dbg):
+      //! @param[in] npings collect current profile every n-th ping.
+      //! @param[in] ncells number of cells for the current profiler.
+      //! @param[in] cellsize cell size of the current profiler.
+      //! @param[in] blanking blanking distance of the current profiler.
+      Driver(Tasks::Task* task, IO::Handle* handle, float rate, bool trigger, bool dbg,
+             unsigned npings, unsigned ncells, float cellsize, float blanking):
         m_task(task),
         m_handle(handle),
         m_trigger(trigger),
@@ -77,7 +82,11 @@ namespace Sensors
         m_sampling_rate(5.0),
         m_cmd_mode(false),
         m_firmware(false),
-        m_debug(dbg)
+        m_debug(dbg),
+        m_cp_npings(npings),
+        m_cp_ncells(ncells),
+        m_cp_csize(cellsize),
+        m_cp_blankdist(blanking)
       {
         setSamplingRate(rate);
       }
@@ -112,17 +121,24 @@ namespace Sensors
         if (!sendCommand("SETDEFAULT,ALL"))
           return false;
 
-        if (!sendCommand("SETINST,LED=\"OFF\""))
+        if (!sendCommand("SETINST,LED=\"OFF\",ORIENT=\"ZDOWN\""))
           return false;
 
         if (!setTime())
           return false;
 
-        if (!setBT())
+        if (!setBottomTrack())
           return false;
 
         if (!setDVL())
           return false;
+
+        // Current profiler is not disabled.
+        if (m_cp_npings > 0)
+        {
+          if (!setCurrentProfile())
+            return false;
+        }
 
         // Use absolute pressure.
         if (!sendCommand("SETUSER,POFF=0.0"))
@@ -171,11 +187,10 @@ namespace Sensors
             break;
         }
 
-        std::string cmd;
-        cmd = String::str("SETBT,PL=%f", power);
-        bool r = sendCommand(cmd);
+        bool rb = sendCommand(String::str("SETBT,PL=%0.1f", power));
+        bool rc = sendCommand(String::str("SETCURPROF,PL=%0.1f", power));
         start();
-        return r;
+        return rb && rc;
       }
 
       //! Set device's input trigger type.
@@ -270,9 +285,21 @@ namespace Sensors
       //! Set DVL Bottom-Track parameters.
       //! @return true if command succeeded, false otherwise.
       bool
-      setBT(void)
+      setBottomTrack(void)
       {
         return sendCommand("SETBT,RANGE=50,NB=0,CH=0,WT=\"ON\",WTDF=22");
+      }
+
+      //! Set Current Profiler's parameters.
+      //! @return true if command succeeded, false otherwise.
+      bool
+      setCurrentProfile(void)
+      {
+        std::string cmd;
+        cmd = String::str("SETCURPROF,NC=%u,CS=%0.1f,BD=%0.1f,CY=\"XYZ\",DF=3,NB=0,CH=0",
+                         m_cp_ncells, m_cp_csize, m_cp_blankdist);
+
+        return sendCommand(cmd);
       }
 
       //! Set DVL parameters.
@@ -282,8 +309,8 @@ namespace Sensors
       setDVL(bool boot = false)
       {
         std::string cmd;
-        cmd = String::str("SETDVL,TRIG=\"%s\",SR=%f,SA=%f",
-                          getTrigger().c_str(), m_sampling_rate, m_salinity);
+        cmd = String::str("SETDVL,CP=%u,TRIG=\"%s\",SR=%0.1f,SA=%0.1f",
+                          m_cp_npings, getTrigger().c_str(), m_sampling_rate, m_salinity);
 
         if (m_debug)
           cmd += ",FN=\"DataDebug.ad2cp\"";
@@ -431,6 +458,14 @@ namespace Sensors
       bool m_firmware;
       //! Hardware debug mode.
       bool m_debug;
+      //! Current profiler at every N pings
+      unsigned m_cp_npings;
+      //! Current profiler's number of cells.
+      unsigned m_cp_ncells;
+      //! Current profiler's cell size.
+      float m_cp_csize;
+      //! Current profiler's blanking distance.
+      float m_cp_blankdist;
     };
   }
 }
