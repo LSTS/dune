@@ -210,15 +210,34 @@ namespace Sensors
           addPowerChannelName(m_args.power_channel);
         }
 
+        restart();
+      }
+
+      //! Check if we need to restart.
+      void
+      restart(void)
+      {
+        bool ret = false;
+
         if (isActive())
         {
-          if (paramChanged(m_args.rate) || paramChanged(m_args.cp_npings) ||
-              paramChanged(m_args.cp_enable) || paramChanged(m_args.cp_ncells) ||
-              paramChanged(m_args.cp_csize) || paramChanged(m_args.cp_blankdist))
+          if (paramChanged(m_args.rate) || paramChanged(m_args.cp_enable))
           {
-            requestDeactivation();
-            requestActivation();
+            ret = true;
           }
+          else if (m_args.cp_enable)
+          {
+            if (paramChanged(m_args.cp_ncells) || paramChanged(m_args.cp_csize) ||
+                paramChanged(m_args.cp_npings) || paramChanged(m_args.cp_blankdist))
+              ret = true;
+          }
+        }
+
+        // let's restart.
+        if (ret)
+        {
+          requestDeactivation();
+          requestActivation();
         }
       }
 
