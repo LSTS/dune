@@ -107,12 +107,10 @@ namespace Sensors
       //! @param[in] samples number of samples.
       //! @param[in] range sidescan range.
       //! @param[in] speed system speed.
-      //! @param[in] left true if port transducer is enabled.
-      //! @param[in] right true if starboard transducer is enabled.
       //! @param[in] imc true to save data in IMC, false otherwise.
       void
       setup(bool high_frequency, unsigned periods, unsigned samples,
-            unsigned range, float speed, bool left, bool right, bool imc)
+            unsigned range, float speed, bool imc)
       {
         reset();
 
@@ -123,7 +121,7 @@ namespace Sensors
 
         float freq = high_frequency ? c_high_start : c_low_start;
 
-        setSampling(samples, getDecimation(range, speed), left, right, false);
+        setSampling(samples, getDecimation(range, speed));
         m_parser->setup(getResolution(range, speed), getLineRate(range),
                         range, freq, imc);
         run(m_baud);
@@ -237,27 +235,22 @@ namespace Sensors
       //! Setup device's sampling.
       //! @param[in] samples number of samples in ping return packet.
       //! @param[in] decimation sample resolution.
-      //! @param[in] left true if port transducer is enabled.
-      //! @param[in] right true if starboard transducer is enabled.
-      //! @param[in] single false if continuous pinging.
       void
-      setSampling(uint32_t samples, uint32_t decimation, bool left, bool right, bool single)
+      setSampling(uint32_t samples, uint32_t decimation)
       {
         // Use 0 for sum, 1 for maximum.
         uint32_t mode = 1;
-
-        uint32_t chns = 0;
-        if (left)
-          chns |= Parser::c_chn_left;
-
-        if (right)
-          chns |= Parser::c_chn_right;
+        uint32_t chns = Parser::c_chn_left | Parser::c_chn_right;
 
         setRegister(c_reg_mode, (decimation << 16) | (chns << 3) | mode);
         setRegister(c_reg_samples, samples);
+      }
 
-        if (single)
-          setRegister(c_reg_single, 0x1 << 16);
+      //! Set single ping mode.
+      void
+      setSinglePing(void)
+      {
+        setRegister(c_reg_single, 0x1 << 16);
       }
 
       //! Start pinging and send data.

@@ -57,8 +57,6 @@ namespace Sensors
       std::string frequency;
       //! Default range.
       unsigned range;
-      //! Sidescan channels.
-      std::string channels;
       //! Name of sidescan's power channel.
       std::string power_channel;
       //! Output Data Format.
@@ -129,13 +127,6 @@ namespace Sensors
         .units(Units::Meter)
         .description(DTR("Operating range"));
 
-        param(DTR_RT("Channels"), m_args.channels)
-        .values(DTR_RT("Port, Starboard, Both"))
-        .defaultValue("Both")
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .description(DTR("Subsystem channels"));
-
         param(DTR_RT("Optimize for this Speed"), m_args.speed)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
@@ -177,8 +168,7 @@ namespace Sensors
 
         if (paramChanged(m_args.frequency) || paramChanged(m_args.range) ||
             paramChanged(m_args.samples) || paramChanged(m_args.periods) ||
-            paramChanged(m_args.channels) || paramChanged(m_args.speed) ||
-            paramChanged(m_args.output_format))
+            paramChanged(m_args.speed) || paramChanged(m_args.output_format))
         {
           Memory::clear(m_driver);
           onConnect();
@@ -266,13 +256,11 @@ namespace Sensors
       {
         if (isConnected())
         {
-          bool left = m_args.channels == "Port" || m_args.channels == "Both";
-          bool right = m_args.channels == "Starboard" || m_args.channels == "Both";
           bool high_freq = m_args.frequency == "High";
           bool imc = m_args.output_format == "IMC";
 
           m_driver->setup(high_freq, m_args.periods, m_args.samples,
-                          m_args.range, m_args.speed, left, right, imc);
+                          m_args.range, m_args.speed, imc);
 
           m_iwdog.reset();
         }
