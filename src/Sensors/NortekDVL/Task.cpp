@@ -164,7 +164,7 @@ namespace Sensors
         .description("Enable current profiler");
 
         param("Current Profiler -- Record File", m_args.cp_filename)
-        .defaultValue("CurrentProfile.df3")
+        .defaultValue("CurrentProfile.ad2cp")
         .description("Current profiler data filename");
 
         param("Current Profiler -- Get At Nth Ping", m_args.cp_npings)
