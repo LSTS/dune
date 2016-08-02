@@ -34,6 +34,20 @@
 
 namespace Supervisors
 {
+  //! %Task has direct control over a configurable power channel when (de)activated.
+  //! Task is activated only if a Heartbeat is received from the slave system
+  //! indicating the slave system is alive.
+  //! During system power down operations, it may also notify the slave system.
+  //! To do so, this task requires a TCP/UDP link with the slave system to
+  //! exchange messages.
+  //!
+  //! This task allows the following parameters to be defined
+  //!  - <em>pwr_chn</em>: slave system power channel name.
+  //!  - <em>slave_system</em>: slave system name.
+  //!  - <em>dispatch_power_op</em>: if true, slave system is notified during power
+  //     down operations.
+  //!
+  //! @author Ricardo Martins
   namespace SlaveCPU
   {
     using DUNE_NAMESPACES;

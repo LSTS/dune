@@ -44,6 +44,22 @@ namespace DUNE
 {
   namespace Tasks
   {
+    static const int c_high_task_cpu_usage = 10;
+
+    struct TaskCpuUsage
+    {
+      //! Task name.
+      std::string name;
+      //! Percentage of CPU usage.
+      int usage;
+
+      bool
+      operator<(const TaskCpuUsage& other) const
+      {
+        return usage < other.usage;
+      }
+    };
+
     Manager::Manager(Context& ctx):
       m_ctx(ctx)
     {
@@ -188,6 +204,61 @@ namespace DUNE
       std::map<std::string, Task*>::const_iterator itr = m_tasks.begin();
       for ( ; itr != m_tasks.end(); ++itr)
         itr->second->writeParamsXML(os);
+    }
+
+    void
+    Manager::measureCpuUsage(void)
+    {
+      std::map<std::string, Task*>::const_iterator itr = m_tasks.begin();
+
+      for ( ; itr != m_tasks.end(); ++itr)
+      {
+        Task* task = itr->second;
+        int value = task->getProcessorUsage();
+        if (value < 0 || value > 100)
+          continue;
+
+        m_task_cpu_usage.value = value;
+        task->dispatch(m_task_cpu_usage);
+
+        if (value >= c_high_task_cpu_usage)
+        {
+          TaskCpuUsage entry;
+          entry.usage = value;
+          entry.task = task;
+          m_cpu_usage_hogs.push(entry);
+        }
+      }
+    }
+
+    void
+    Manager::adjustPriorities(void)
+    {
+      while (!m_cpu_usage_hogs.empty())
+      {
+        TaskCpuUsage entry = m_cpu_usage_hogs.top();
+        m_cpu_usage_hogs.pop();
+        lowerHogPriority(entry.task, entry.usage);
+      }
+    }
+
+    void
+    Manager::lowerHogPriority(Task* task, int cpu_usage)
+    {
+      try
+      {
+        unsigned current_priority = task->getPriority();
+        unsigned minimum_priority = Concurrency::Scheduler::minimumPriority();
+        if (current_priority != minimum_priority)
+        {
+          task->setPriority(minimum_priority);
+          task->war(DTR("using %d%% of CPU, lowering the priority"), cpu_usage);
+        }
+      }
+      catch (...)
+      {
+        task->war(DTR("using %d%% of CPU, failed to lower the priority"), cpu_usage);
+      }
     }
   }
 }

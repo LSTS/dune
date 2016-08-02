@@ -410,6 +410,13 @@ namespace DUNE
       bool
       parse(const IMC::Rows* maneuver, Position& last_pos);
 
+      //! Parse a RowsCoverage maneuver
+      //! @param[in] maneuver pointer to maneuver message
+      //! @param[in,out] last_pos last position to consider when computing duration
+      //! @return true if parse successfully, false otherwise
+      bool
+      parse(const IMC::RowsCoverage* maneuver, Position& last_pos);
+
       //! Parse a YoYo maneuver
       //! @param[in] maneuver pointer to maneuver message
       //! @param[in,out] last_pos last position to consider when computing duration
@@ -452,6 +459,19 @@ namespace DUNE
         m_accum_dur->addDuration(value + maneuver->duration);
         return true;
       }
+
+      //! Parse worker for Rows and RowsCoverage maneuver
+      //! @param[in] rstages pointer to RowsStages
+      //! @param[in] pos position of the maneuver
+      //! @param[in] last_pos last position to consider when computing duration
+      //! @param[in] speed calculated speed
+      //! @param[in] man_speed maneuver speed
+      //! @param[in] man_speed_units maneuver speed units
+      //! @return true if parse successfully, false otherwise
+      bool
+      parseWorkerRowsStages(Maneuvers::RowsStages* rstages, Position& pos,
+          Position& last_pos, float speed, float man_speed,
+          uint8_t man_speed_units);
 
       //! Map of maneuvers to profiles
       ProfileMap m_profiles;

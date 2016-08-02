@@ -23,6 +23,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_MSG_TYPES_HPP_INCLUDED_
@@ -97,12 +98,12 @@ namespace Transports
       void
       outputFlagsComp(void)
       {
-        outputflags_list[0] = (0x01 & output_flags);
-        outputflags_list[1] = (0x02 & output_flags);
-        outputflags_list[2] = (0x04 & output_flags);
-        outputflags_list[3] = (0x08 & output_flags);
-        outputflags_list[4] = (0x10 & output_flags);
-        outputflags_list[5] = (0x20 & output_flags);
+        outputflags_list[0] = (ENVIRONMENT_FLAG & output_flags);
+        outputflags_list[1] = (ATTITUDE_FLAG & output_flags);
+        outputflags_list[2] = (MAG_CAL_FLAG & output_flags);
+        outputflags_list[3] = (ACC_CAL_FLAG & output_flags);
+        outputflags_list[4] = (AHRS_RAW_DATA_FLAG & output_flags);
+        outputflags_list[5] = (AHRS_COMP_DATA_FLAG & output_flags);
       }
 
     };
@@ -124,6 +125,15 @@ namespace Transports
     struct CidPingRequestMsg
     {
       Acofix_t aco_fix;
+    };
+
+    struct CidSysInfo
+    {
+      uint32_t seconds;
+      uint8_t section;
+      Hardware_t hardware;
+      Firmware_t boot_firmware;
+      Firmware_t main_firmware;
     };
 
     struct CidNavBeaconPosSendMsg
@@ -457,6 +467,24 @@ namespace Transports
         query_flags_list[2]=(0x04 & query_flags);
         query_flags_list[3]=(0x08 & query_flags);
       }
+    };
+
+    struct CidXcvrUsblMsg
+    {
+      float xcor_sig_peak;
+      float xcor_threshold;
+      uint16_t xcor_cross_point;
+      float xcor_cross_mag;
+      uint16_t xcor_detect;
+      uint16_t xcor_length;
+      std::vector<float> xcor_data;
+      uint8_t channels;
+      std::vector<int16_t> channel_rssi;
+      uint8_t baselines;
+      std::vector<float> phase_angle;
+      int16_t signal_azimuth;
+      int16_t signal_elevation;
+      float signal_fit_error;
     };
   }
 }

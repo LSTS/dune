@@ -89,8 +89,16 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_sock = new TCPSocket;
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        try
+        {
+          m_sock = new TCPSocket;
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
+
       }
 
       void

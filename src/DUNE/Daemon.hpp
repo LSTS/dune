@@ -29,6 +29,7 @@
 #define DUNE_DAEMON_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
+#include <set>
 #include <string>
 
 // DUNE headers.
@@ -37,6 +38,7 @@
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/System/Resources.hpp>
 #include <DUNE/Time/Counter.hpp>
+#include <DUNE/Math/MovingAverage.hpp>
 
 namespace DUNE
 {
@@ -87,6 +89,15 @@ namespace DUNE
     std::string m_scfg_file;
     //! Saved configuration parameters.
     Parsers::Config m_scfg;
+    //! Overall CPU usage - number of moving average samples.
+    unsigned m_cpu_avg_samples;
+    //! Overall CPU usage - maximum percentage before issuing error.
+    int m_cpu_max_usage;
+    //! Overall CPU usage - moving average.
+    Math::MovingAverage<double>* m_cpu_avg;
+
+    void
+    measureCpuUsage(void);
 
     void
     dispatchPeriodic(void);

@@ -106,6 +106,8 @@ namespace Sensors
       unsigned pattern_diff;
       //! True to activate device at surface.
       bool surface;
+      //! True to enable automatic activation/deactivation based on medium.
+      bool auto_activation;
     };
 
     //! Device uses this constant sound speed.
@@ -162,6 +164,9 @@ namespace Sensors
         m_pfilt(NULL),
         m_uam_tx_ip(false)
       {
+        paramActive(Tasks::Parameter::SCOPE_IDLE,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
         .description("Serial port device used to communicate with the sensor");
@@ -250,6 +255,12 @@ namespace Sensors
         param("Use Device at Surface", m_args.surface)
         .defaultValue("false")
         .description("Enable to activate device when at surface");
+
+        param(DTR_RT("Automatic Activation"), m_args.auto_activation)
+        .defaultValue("true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_IDLE)
+        .description("Operator is able to control device");
 
         m_dist.validity = IMC::Distance::DV_VALID;
 
@@ -392,6 +403,9 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (!m_args.auto_activation)
+          return;
+
         m_hand.update(msg);
 
         // Request activation.

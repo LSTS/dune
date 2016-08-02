@@ -502,6 +502,7 @@ namespace Plan
           case IMC::PlanControlState::PCS_INITIALIZING:
             if (!pendingReply())
             {
+              m_plan->updateCalibration(vs);
               IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }

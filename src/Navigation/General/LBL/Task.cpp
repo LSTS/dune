@@ -28,6 +28,7 @@
 // ISO C++ 98 headers.
 #include <iomanip>
 #include <cmath>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -50,22 +51,24 @@ namespace Navigation
       //! %Task arguments.
       struct Arguments
       {
-        //! LBL threshold.
-        float lbl_threshold;
         //! State covariance.
-        float state_cov;
+        float covariance;
         //! Measurement noise covariance.
-        float lbl_mnoise;
+        float mnoise;
         //! Process noise covariance.
-        float lbl_pnoise;
+        float pnoise;
         //! GPS timeout.
         float gps_timeout;
         //! Maximum Valid Horizontal Accuracy index.
         float max_hacc;
-        //! LBL rejection constants.
-        std::vector<float> k_rej;
         //! Distance between LBL and GPS.
-        float dist_lbl_gps;
+        float offset;
+        //! Number of moving average samples.
+        unsigned samples;
+        //! Minimum error displacement to trigger correction.
+        float error;
+        //! Standard Deviation of samples must fall below this value.
+        float std;
       };
 
       struct Task: public Tasks::Task
@@ -88,6 +91,10 @@ namespace Navigation
         uint16_t m_gps_val_bits;
         //! Time without GPS sensor readings deadline.
         Time::Counter<double> m_time_without_gps;
+        //! North (NED) displacement.
+        std::vector<MovingAverage<double> > m_north_avg;
+        //! East (NED) displacement.
+        std::vector<MovingAverage<double> > m_east_avg;
         //! Kalman Filter matrices.
         KalmanFilter m_kal;
         //! Task arguments.
@@ -97,29 +104,20 @@ namespace Navigation
           Tasks::Task(name, ctx),
           m_origin(NULL)
         {
-          param("State Covariance Initial State", m_args.state_cov)
+          param("State Covariance Initial State", m_args.covariance)
           .defaultValue("1.0")
           .minimumValue("1.0")
           .description("Kalman Filter State Covariance initial values");
 
-          param("LBL Threshold", m_args.lbl_threshold)
-          .defaultValue("4.0")
-          .minimumValue("2.0")
-          .description("LBL Threshold value for the LBL level check rejection scheme");
-
-          param("LBL Measure Noise Covariance", m_args.lbl_mnoise)
+          param("LBL Measure Noise Covariance", m_args.mnoise)
           .defaultValue("10.0")
           .minimumValue("0.1")
           .description("Kalman Filter LBL Measurement Noise Covariance value");
 
-          param("LBL Process Noise Covariance", m_args.lbl_pnoise)
+          param("LBL Process Noise Covariance", m_args.pnoise)
           .defaultValue("1e-5")
           .minimumValue("0.0")
           .description("Kalman Filter LBL Process Noise Covariance value");
-
-          param("LBL Expected Range Rejection Constants", m_args.k_rej)
-          .size(2)
-          .description("Constants used in current LBL rejection scheme");
 
           param("GPS timeout", m_args.gps_timeout)
           .units(Units::Second)
@@ -133,11 +131,27 @@ namespace Navigation
           .maximumValue("20.0")
           .description("Maximum Horizontal Accuracy Estimate value accepted for GPS fixes");
 
-          param("Distance Between LBL and GPS", m_args.dist_lbl_gps)
+          param("Distance Between LBL and GPS", m_args.offset)
           .units(Units::Meter)
           .defaultValue("0.50")
           .minimumValue("0.0")
           .description("Distance between LBL receiver and GPS in the vehicle");
+
+          param("Number of Moving Average Samples", m_args.samples)
+          .defaultValue("5")
+          .description("Number of moving average samples");
+
+          param("Displacement Error", m_args.error)
+          .units(Units::Meter)
+          .defaultValue("5.0")
+          .minimumValue("0.0")
+          .description("Minimum error displacement to trigger a beacon correction");
+
+          param("Error Standard Deviation", m_args.std)
+          .units(Units::Meter)
+          .defaultValue("5.0")
+          .minimumValue("0.0")
+          .description("Maximum error standard deviation to trigger a beacon correction");
 
           for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)
             m_estimate[i] = NULL;
@@ -239,13 +253,14 @@ namespace Navigation
 
           m_ranging.setup(msg);
 
+          for (unsigned i = 0; i < DUNE::Navigation::c_max_transponders; ++i)
+            Memory::clear(m_estimate[i]);
+
           IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
           for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
           {
             if (i >= DUNE::Navigation::c_max_transponders)
               return;
-
-            Memory::clear(m_estimate[i]);
 
             if (*itr == NULL)
               return;
@@ -255,7 +270,8 @@ namespace Navigation
             m_estimate[i]->beacon.set(*itr);
           }
 
-          setup();
+          if (isActive())
+            setup();
         }
 
         void
@@ -270,78 +286,85 @@ namespace Navigation
           if (!m_ranging.exists(msg->id) || (msg->id > m_ranging.getSize() - 1))
             return;
 
-          float range = msg->range;
+          unsigned xx = msg->id * 2;
+          unsigned yy = msg->id * 2 + 1;
 
-          double dx = m_args.dist_lbl_gps * std::cos(m_yaw) - m_last_n + m_kal.getState(msg->id * 2);
-          double dy = m_args.dist_lbl_gps * std::sin(m_yaw) - m_last_e + m_kal.getState(msg->id * 2 + 1);
+          double dx = m_kal.getState(xx) - (m_args.offset * std::cos(m_yaw) + m_last_n);
+          double dy = m_kal.getState(yy) - (m_args.offset * std::sin(m_yaw) + m_last_e);
           double dz = m_ranging.getDepth(msg->id) - m_last_depth;
           double exp_range = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-          m_kal.setObservation(msg->id, msg->id * 2, dx / exp_range);
-          m_kal.setObservation(msg->id, msg->id * 2 + 1, dy / exp_range);
+          // Set Kalman parameters.
+          m_kal.setObservation(msg->id, xx, dx / exp_range);
+          m_kal.setObservation(msg->id, yy, dy / exp_range);
+          m_kal.setOutput(msg->id, msg->range);
+          m_kal.setInnovation(msg->id, msg->range - exp_range);
 
-          // Outlier Rejection scheme.
-          Matrix H(1, 2, 0.0);
-          H(0, 0) = dx / exp_range;
-          H(0, 1) = dy / exp_range;
-          Matrix P(2, 2, 0.0);
-          P = m_kal.getCovariance(msg->id * 2, msg->id * 2 + 1,
-                                  msg->id * 2, msg->id * 2 + 1);
+          // Run Kalman Filter.
+          m_kal.update(0.0);
 
-          // "Outlier Rejection for Autonomous Acoustic Navigation"
-          // Jerome Vaganay, John J. Leonard and James G. Bellingham. MIT
-          double reject = m_args.k_rej[0] + m_args.k_rej[1] * std::pow(exp_range, 2);
-          double R = std::max(reject, (H * P * transpose (H))(0));
-          double d = range - exp_range;
-          double level = (d * (1 / ((H * P * transpose (H))(0) + R)) * d);
+          // Use displacement to get current position fix.
+          double x = m_kal.getState(xx);
+          double y = m_kal.getState(yy);
 
-          if (level < m_args.lbl_threshold)
+          double lat = m_origin->lat;
+          double lon = m_origin->lon;
+          Coordinates::WGS84::displace(x, y, &lat, &lon);
+
+          double rlat = m_estimate[msg->id]->beacon->lat;
+          double rlon = m_estimate[msg->id]->beacon->lon;
+          double n, e;
+          Coordinates::WGS84::displacement(rlat, rlon, 0.0, lat, lon, 0.0, &n, &e);
+
+          // Update estimate.
+          m_estimate[msg->id]->x = x;
+          m_estimate[msg->id]->y = y;
+          m_estimate[msg->id]->var_x = m_kal.getCovariance(xx);
+          m_estimate[msg->id]->var_y = m_kal.getCovariance(yy);
+          m_estimate[msg->id]->distance = std::sqrt(n * n + e * e);
+          dispatch(m_estimate[msg->id]);
+
+          double n_avg = m_north_avg[msg->id].update(n);
+          double e_avg = m_east_avg[msg->id].update(e);
+          double dev = std::sqrt(std::pow(m_north_avg[msg->id].stdev(), 2) +
+                                 std::pow(m_east_avg[msg->id].stdev(), 2));
+
+          spew("beacon #%d (%0.1f m): %0.2f, %0.2f (dev: %0.1f | xy: %0.1f, %0.1f)",
+               msg->id, msg->range, n_avg, e_avg, dev, x, y);
+
+          if (m_north_avg[msg->id].sampleSize() >= m_args.samples &&
+              std::sqrt(n_avg * n_avg + e_avg * e_avg) > m_args.error
+              && dev <= m_args.std)
           {
-            // Define Output matrix.
-            m_kal.setOutput(msg->id, range);
-            m_kal.setInnovation(msg->id, range - exp_range);
-
-            // Run Kalman Filter.
-            m_kal.update(0.0);
-
-            // Use displacement to get current position fix.
-            double x = m_kal.getState(msg->id * 2);
-            double y = m_kal.getState(msg->id * 2 + 1);
-
-            double lat = m_origin->lat;
-            double lon = m_origin->lon;
-            Coordinates::WGS84::displace(x, y, &lat, &lon);
-
-            // Update estimate.
             m_estimate[msg->id]->beacon->lat = lat;
             m_estimate[msg->id]->beacon->lon = lon;
-            m_estimate[msg->id]->var_x = m_kal.getCovariance(msg->id * 2);
-            m_estimate[msg->id]->var_y = m_kal.getCovariance(msg->id * 2 + 1);
 
-            dispatch(m_estimate[msg->id]);
+            IMC::LblConfig cfg;
+            cfg.op = LblConfig::OP_SET_CFG;
+            for (unsigned i = 0; i < m_ranging.getSize(); ++i)
+              cfg.beacons.push_back((const IMC::LblBeacon*)m_estimate[i]->beacon->clone());
 
-            spew("beacon %d WGS: %f | %f", msg->id, lat, lon);
-            spew("beacon %d COV: %f | %f", msg->id,
-                 std::sqrt(m_estimate[msg->id]->var_x),
-                 std::sqrt(m_estimate[msg->id]->var_y));
+            war(DTR("corrected beacon #%d (x: %0.2f, y: %0.2f, std dev: %0.2f)"),
+                msg->id, n_avg, e_avg, dev);
+
+            dispatch(cfg);
+            m_ranging.setup(&cfg);
+            reset(msg->id);
           }
-          else
-            spew("rejected range from %d", msg->id);
 
           m_kal.resetOutputs();
         }
 
         //! Setup filter.
-        //! @return true if successful, false otherwise.
         void
         setup(void)
         {
           if (!m_ranging.getSize())
           {
             m_kal.reset(1, 1);
-            m_kal.setMeasurementNoise(m_args.lbl_mnoise);
-            m_kal.setProcessNoise(m_args.lbl_pnoise);
-            m_kal.setCovariance(m_args.state_cov);
+            m_kal.setMeasurementNoise(m_args.mnoise);
+            m_kal.setProcessNoise(m_args.pnoise);
+            m_kal.setCovariance(m_args.covariance);
             m_kal.resetState();
             return;
           }
@@ -349,22 +372,23 @@ namespace Navigation
           m_kal.reset(m_ranging.getSize() * 2, m_ranging.getSize());
 
           // Initialize Kalman Filter.
-          m_kal.setMeasurementNoise(m_args.lbl_mnoise);
-          m_kal.setProcessNoise(m_args.lbl_pnoise);
-          m_kal.setCovariance(m_args.state_cov);
+          m_kal.setMeasurementNoise(m_args.mnoise);
+          m_kal.setProcessNoise(m_args.pnoise);
+          m_kal.setCovariance(m_args.covariance);
           m_kal.resetState();
+
+          m_north_avg.clear();
+          m_east_avg.clear();
+          Math::MovingAverage<double>* avg = new Math::MovingAverage<double>(m_args.samples);
 
           for (unsigned i = 0; i < m_ranging.getSize(); i++)
           {
-            double x = 0.0;
-            double y = 0.0;
-            double z = 0.0;
-
-            m_ranging.getLocation(i, &x, &y, &z);
-
-            m_kal.setState(i * 2, x);
-            m_kal.setState(i * 2 + 1, y);
+            setState(i);
+            m_north_avg.push_back(*avg);
+            m_east_avg.push_back(*avg);
           }
+
+          delete avg;
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           spew("setup completed");
@@ -401,7 +425,36 @@ namespace Navigation
           m_ranging.updateOrigin(m_origin);
 
           // Initial state
-          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_LBL_CFG);
+          if (!m_ranging.getSize())
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_LBL_CFG);
+
+          setup();
+        }
+
+        //! Reset moving averages and Kalman state.
+        //! @param[in] index state index.
+        void
+        reset(unsigned index)
+        {
+          // Reset moving averages and set Kalman state.
+          m_north_avg[index].clear();
+          m_east_avg[index].clear();
+
+          setState(index);
+        }
+
+        //! Reset moving averages and Kalman state.
+        //! @param[in] index state index.
+        void
+        setState(unsigned index)
+        {
+          double x = 0.0;
+          double y = 0.0;
+          double z = 0.0;
+
+          m_ranging.getLocation(index, &x, &y, &z);
+          m_kal.setState(index * 2, x);
+          m_kal.setState(index * 2 + 1, y);
         }
 
         void

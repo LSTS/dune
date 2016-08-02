@@ -225,17 +225,16 @@ namespace Sensors
           if (!m_driver->enableContinuousStream(true))
             continue;
 
+          inf("%s, %s, %s",
+              m_driver->getModelName().c_str(),
+              m_driver->getModelNumber().c_str(),
+              m_driver->getSerialNumber().c_str());
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          m_wdog.setTop(m_args.timeout_error);
+          m_wdog.reset();
           break;
         }
-
-        inf("%s, %s, %s",
-            m_driver->getModelName().c_str(),
-            m_driver->getModelNumber().c_str(),
-            m_driver->getSerialNumber().c_str());
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_wdog.setTop(m_args.timeout_error);
-        m_wdog.reset();
       }
 
       void

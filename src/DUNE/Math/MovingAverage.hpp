@@ -111,6 +111,14 @@ namespace DUNE
         return (unsigned)m_window.size();
       }
 
+      //! Know size of window.
+      //! @return size of the window.
+      unsigned
+      windowSize(void)
+      {
+        return m_window_size;
+      }
+
     private:
       //! Accumulator.
       T m_accum;
