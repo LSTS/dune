@@ -165,6 +165,7 @@ namespace Monitors
           if (m_is_reset_first_stop)
           {
             war("received command to disable everun service");
+            setEntityState(IMC::EntityState::ESTA_BOOT, "Everun board is OFF in config task");
             sendComandHttp(SEND_STOP, "");
             Delay::wait(2);
           }
