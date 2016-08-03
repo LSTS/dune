@@ -328,7 +328,7 @@ namespace Sensors
         if (!m_log_file.is_open())
           m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
 
-        m_log_file.write((const char*)&m_bfr[c_hdr_size], m_data_size);
+        m_log_file.write((const char*)&m_bfr, m_data_size + c_hdr_size);
         m_task->spew("parsed current profile data");
       }
 
