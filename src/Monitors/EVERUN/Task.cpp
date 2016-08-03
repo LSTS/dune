@@ -89,35 +89,40 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx) :
           DUNE::Tasks::Task(name, ctx)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
         param("Slave System Name", m_args.slave_system)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Name of the slave system");
 
         param("Power Channel", m_args.pwr_chn)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Power channel");
 
         param("Turn On System", m_args.initial_state)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Initial state of power in slave.");
 
         param("Ip Host", m_args.ip_host)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Ip Host.");
 
         param("Port Host", m_args.server_port)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Port Host.");
 
         param("Number of attempts to connect", m_args.counter_attempts)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Number of attempts to connect (1 ~ 2 mim).");
 
         param("Sampling Time", m_args.sampling_time)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Sampling Time.");
 
         param("Rate", m_args.rate)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Rate.");
 
         param("Input Data", m_args.input_data)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Input Data.");
 
         // Register listeners.
