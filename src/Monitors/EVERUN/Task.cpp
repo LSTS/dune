@@ -83,6 +83,8 @@ namespace Monitors
       Connection* m_conn;
       //! Buffer to save time
       char m_buffer_time[c_max_buffer];
+      //! Flag to reject first stop command
+      bool m_is_reset_first_stop;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -136,6 +138,7 @@ namespace Monitors
         if (m_args.initial_state)
         {
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+          m_is_reset_first_stop = false;
           m_conn = new Connection(m_args.ip_host.c_str(), m_args.server_port);
         }
       }
@@ -145,6 +148,31 @@ namespace Monitors
       onResourceRelease(void)
       {
         Memory::clear(m_conn);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.initial_state)
+        {
+          war("received command to enable everun service");
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+          m_conn = new Connection(m_args.ip_host.c_str(), m_args.server_port);
+          tryConnectToServer();
+        }
+        else if (!m_args.initial_state)
+        {
+          if (m_is_reset_first_stop)
+          {
+            war("received command to disable everun service");
+            sendComandHttp(SEND_STOP, "");
+            Delay::wait(2);
+          }
+          else
+          {
+            m_is_reset_first_stop = true;
+          }
+        }
       }
 
       void
