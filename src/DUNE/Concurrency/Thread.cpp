@@ -193,6 +193,37 @@ namespace DUNE
 #endif
     }
 
+    unsigned
+    Thread::getPriorityImpl(void)
+    {
+#if defined(DUNE_SYS_HAS_PTHREAD)
+      int native_policy;
+      sched_param sparam;
+      std::memset(&sparam, 0, sizeof(sparam));
+
+      if (isRunning())
+      {
+        int rv = pthread_getschedparam(m_handle, &native_policy, &sparam);
+        if (rv != 0)
+          throw ThreadError("unable to get thread priority", rv);
+
+        return sparam.sched_priority;
+      }
+
+      int rv = pthread_attr_getschedpolicy(&m_attr, &native_policy);
+      if (rv != 0)
+        throw ThreadError("unable to get thread scheduling policy", rv);
+
+      rv = pthread_attr_getschedparam(&m_attr, &sparam);
+      if (rv != 0)
+        throw ThreadError("unable to set thread priority", rv);
+
+      return sparam.sched_priority;
+#endif
+
+      return 0;
+    }
+
     Runnable::State
     Thread::getStateImpl(void)
     {

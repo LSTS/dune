@@ -121,9 +121,9 @@ namespace Monitors
         .description("Enable position fault detection");
 
         param("Position Error Threshold", m_args.pos_error_threshold)
-        .defaultValue("0.2")
+        .defaultValue("12.0")
         .minimumValue("0.0")
-        .units(Units::Radian)
+        .units(Units::Degree)
         .description("Threshold for position error in fault detection");
 
         param("Position Rate Factor", m_args.rate_factor)
@@ -206,6 +206,9 @@ namespace Monitors
       {
         if (paramChanged(m_args.max_rotation_rate))
           m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
+
+        if (paramChanged(m_args.pos_error_threshold))
+          m_args.pos_error_threshold = Angles::radians(m_args.pos_error_threshold);
 
         if (!m_args.pos_fault_detect && !m_args.curr_fault_detect)
           requestDeactivation();

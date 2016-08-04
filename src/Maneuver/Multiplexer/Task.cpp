@@ -58,7 +58,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge","ScheduledGoto",};
+                                          "Dislodge","ScheduledGoto"};
 
     enum ManeuverType
     {

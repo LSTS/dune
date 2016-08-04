@@ -342,7 +342,7 @@ namespace DUNE
           std::fabs(msg->y) > c_max_accel ||
           std::fabs(msg->z) > c_max_accel)
       {
-        err(DTR("received acceleration beyond range: %f, %f, %f"),
+        war(DTR("received acceleration beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
 
         return;
@@ -364,7 +364,7 @@ namespace DUNE
           std::fabs(msg->y) > c_max_agvel ||
           std::fabs(msg->z) > c_max_agvel)
       {
-        err(DTR("received angular velocity beyond range: %f, %f, %f"),
+        war(DTR("received angular velocity beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
 
         return;
@@ -454,7 +454,7 @@ namespace DUNE
           std::fabs(msg->theta) > Math::c_pi ||
           std::fabs(msg->psi) > Math::c_pi)
       {
-        err(DTR("received euler angles beyond range: %f, %f, %f"),
+        war(DTR("received euler angles beyond range: %f, %f, %f"),
             msg->phi, msg->theta, msg->psi);
         return;
       }
@@ -482,7 +482,7 @@ namespace DUNE
           std::fabs(msg->y) > Math::c_pi / 10.0 ||
           std::fabs(msg->z) > Math::c_pi / 10.0)
       {
-        err(DTR("received euler angles delta beyond range: %f, %f, %f"),
+        war(DTR("received euler angles delta beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
         return;
       }

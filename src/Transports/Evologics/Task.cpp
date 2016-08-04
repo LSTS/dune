@@ -102,6 +102,8 @@ namespace Transports
       double m_sound_speed;
       //! Sound speed entity id.
       int m_sound_speed_eid;
+      //! Declination flag;
+      bool m_declination;
       //! Current transmission ticket.
       Ticket* m_ticket;
       //! Keep-alive counter.
@@ -118,6 +120,7 @@ namespace Transports
         m_driver(NULL),
         m_sound_speed(0),
         m_sound_speed_eid(-1),
+        m_declination(false),
         m_ticket(NULL)
       {
         param("IPv4 Address", m_args.address)
@@ -209,9 +212,10 @@ namespace Transports
 
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
-        bind<IMC::UamTxFrame>(this);
         bind<IMC::DevDataText>(this);
+        bind<IMC::GpsFix>(this);
         bind<IMC::SoundSpeed>(this);
+        bind<IMC::UamTxFrame>(this);
         bind<IMC::VehicleMedium>(this);
       }
 
@@ -351,6 +355,30 @@ namespace Transports
       }
 
       void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (m_declination)
+          return;
+
+        if (m_driver == NULL)
+          return;
+
+        if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+
+        if (!(msg->validity & IMC::GpsFix::GFV_VALID_POS))
+          return;
+
+        if (!(msg->validity & IMC::GpsFix::GFV_VALID_HACC))
+          return;
+
+        // Check current declination value.
+        Coordinates::WMM wmm(m_ctx.dir_cfg);
+        m_driver->setDeclination(wmm.declination(msg->lat, msg->lon, msg->height));
+        m_declination = true;
+      }
+
+      void
       consume(const IMC::SoundSpeed* msg)
       {
         if ((int)msg->getSourceEntity() != m_sound_speed_eid)
@@ -426,6 +454,10 @@ namespace Transports
           handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
           handleMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "USBLLONG"))
+          handleUsblPosition(msg->value);
+        else if (String::startsWith(msg->value, "USBLANGLES"))
+          handleUsblAngles(msg->value);
       }
 
       void
@@ -625,6 +657,32 @@ namespace Transports
         dispatch(msg);
 
         m_driver->getMultipathStructure();
+      }
+
+      void
+      handleUsblPosition(const std::string& str)
+      {
+        RecvUsblPos reply;
+        m_driver->parseUsblPosition(str, reply);
+
+        IMC::UsblPositionExtended up;
+        up.target = safeLookup(reply.addr);
+        reply.fill(up);
+
+        dispatch(up);
+      }
+
+      void
+      handleUsblAngles(const std::string& str)
+      {
+        RecvUsblAng reply;
+        m_driver->parseUsblAngles(str, reply);
+
+        IMC::UsblAnglesExtended ua;
+        ua.target = safeLookup(reply.addr);
+        reply.fill(ua);
+
+        dispatch(ua);
       }
 
       void

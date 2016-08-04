@@ -93,9 +93,10 @@ namespace DUNE
             if (m_accum_pos < c_rate_factor * m_accum_com &&
                 std::fabs(position - command) > c_min_diff)
             {
-              *description = Utils::String::str("position change is %.2f, "
-                                                "command change is %.2f",
-                                                m_accum_pos, m_accum_com);
+              *description = Utils::String::str("position change is %.2fº, "
+                                                "command change is %.2fº",
+                                                Math::Angles::degrees(m_accum_pos),
+                                                Math::Angles::degrees(m_accum_com));
               return true;
             }
 
@@ -116,7 +117,8 @@ namespace DUNE
 
         if (m_pos_trigger->updateAndTest(std::fabs(position - command)))
         {
-          *description = Utils::String::str("position error above %.2f", c_error_threshold);
+          *description = Utils::String::str("position error above %.2fº",
+                                            Math::Angles::degrees(c_error_threshold));
           return true;
         }
 

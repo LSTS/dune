@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 26cacc3dc3beefce27c2f4c57be495c3                            *
+// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -75,7 +75,7 @@ namespace DUNE
     int
     EntityState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -130,7 +130,7 @@ namespace DUNE
     int
     QueryEntityState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -186,7 +186,7 @@ namespace DUNE
     int
     EntityInfo::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -270,7 +270,7 @@ namespace DUNE
     int
     QueryEntityInfo::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -340,7 +340,7 @@ namespace DUNE
     int
     EntityList::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -400,7 +400,8 @@ namespace DUNE
     int
     CpuUsage::validate(void) const
     {
-      return false;
+      if (value > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -470,7 +471,7 @@ namespace DUNE
     int
     TransportBindings::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -521,7 +522,7 @@ namespace DUNE
     int
     RestartSystem::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -569,7 +570,7 @@ namespace DUNE
     int
     DevCalibrationControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -631,7 +632,7 @@ namespace DUNE
     int
     DevCalibrationState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -701,7 +702,7 @@ namespace DUNE
     int
     EntityActivationState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -752,7 +753,7 @@ namespace DUNE
     int
     QueryEntityActivationState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -834,7 +835,22 @@ namespace DUNE
     int
     VehicleOperationalLimits::validate(void) const
     {
-      return false;
+      if (speed_min < 0) return false;
+      if (speed_max < 0) return false;
+      if (long_accel < 0) return false;
+      if (alt_max_msl < 0) return false;
+      if (dive_fraction_max < 0) return false;
+      if (climb_fraction_max < 0) return false;
+      if (bank_max < 0) return false;
+      if (p_max < 0) return false;
+      if (q_max < 0) return false;
+      if (g_min > 0) return false;
+      if (g_max < 0) return false;
+      if (g_lat_max < 0) return false;
+      if (rpm_min < 0) return false;
+      if (rpm_max < 0) return false;
+      if (rpm_rate_max < 0) return false;
+      return true;
     }
 
     uint8_t*
@@ -959,7 +975,7 @@ namespace DUNE
     int
     MsgList::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1079,7 +1095,15 @@ namespace DUNE
     int
     SimulatedState::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (p < -3.141592653589793 || p > 3.141592653589793) return false;
+      if (q < -3.141592653589793 || q > 3.141592653589793) return false;
+      if (r < -3.141592653589793 || r > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -1205,7 +1229,7 @@ namespace DUNE
     int
     LeakSimulation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1269,7 +1293,7 @@ namespace DUNE
     int
     UASimulation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1337,7 +1361,7 @@ namespace DUNE
     int
     DynamicsSimParam::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1403,7 +1427,8 @@ namespace DUNE
     int
     StorageUsage::validate(void) const
     {
-      return false;
+      if (value > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -1480,7 +1505,7 @@ namespace DUNE
     int
     CacheControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1591,7 +1616,7 @@ namespace DUNE
     int
     LoggingControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1657,7 +1682,7 @@ namespace DUNE
     int
     LogBookEntry::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1730,7 +1755,7 @@ namespace DUNE
     int
     LogBookControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1826,7 +1851,7 @@ namespace DUNE
     int
     ReplayControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -1890,7 +1915,8 @@ namespace DUNE
     int
     ClockControl::validate(void) const
     {
-      return false;
+      if (tz < -23 || tz > 23) return false;
+      return true;
     }
 
     uint8_t*
@@ -1958,7 +1984,7 @@ namespace DUNE
     int
     HistoricCTD::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2030,7 +2056,7 @@ namespace DUNE
     int
     HistoricTelemetry::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2114,7 +2140,7 @@ namespace DUNE
     int
     HistoricSonarData::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2196,7 +2222,7 @@ namespace DUNE
     int
     HistoricEvent::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2247,7 +2273,7 @@ namespace DUNE
     int
     Heartbeat::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2307,7 +2333,9 @@ namespace DUNE
     int
     Announce::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -2389,7 +2417,7 @@ namespace DUNE
     int
     AnnounceService::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2449,7 +2477,8 @@ namespace DUNE
     int
     RSSI::validate(void) const
     {
-      return false;
+      if (value > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -2517,7 +2546,7 @@ namespace DUNE
     int
     VSWR::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2585,7 +2614,7 @@ namespace DUNE
     int
     LinkLevel::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2657,7 +2686,7 @@ namespace DUNE
     int
     Sms::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2727,7 +2756,7 @@ namespace DUNE
     int
     SmsTx::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2797,7 +2826,7 @@ namespace DUNE
     int
     SmsRx::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2861,7 +2890,7 @@ namespace DUNE
     int
     SmsState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2927,7 +2956,7 @@ namespace DUNE
     int
     TextMessage::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -2995,7 +3024,7 @@ namespace DUNE
     int
     IridiumMsgRx::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3073,7 +3102,7 @@ namespace DUNE
     int
     IridiumMsgTx::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3145,7 +3174,7 @@ namespace DUNE
     int
     IridiumTxStatus::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3211,7 +3240,7 @@ namespace DUNE
     int
     GroupMembershipState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3275,7 +3304,7 @@ namespace DUNE
     int
     SystemGroup::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3341,7 +3370,8 @@ namespace DUNE
     int
     LinkLatency::validate(void) const
     {
-      return false;
+      if (value < 0) return false;
+      return true;
     }
 
     uint8_t*
@@ -3415,7 +3445,7 @@ namespace DUNE
     int
     ExtendedRSSI::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3494,7 +3524,7 @@ namespace DUNE
     int
     HistoricData::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3598,7 +3628,7 @@ namespace DUNE
     int
     CompressedHistory::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3679,7 +3709,7 @@ namespace DUNE
     int
     HistoricSample::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3811,7 +3841,7 @@ namespace DUNE
     int
     HistoricDataQuery::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -3931,7 +3961,7 @@ namespace DUNE
     int
     RemoteCommand::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4046,7 +4076,7 @@ namespace DUNE
     int
     LblRange::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4130,7 +4160,9 @@ namespace DUNE
     int
     LblBeacon::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -4213,7 +4245,7 @@ namespace DUNE
     int
     LblConfig::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4304,7 +4336,7 @@ namespace DUNE
     int
     AcousticMessage::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4412,7 +4444,7 @@ namespace DUNE
     int
     AcousticOperation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4516,7 +4548,7 @@ namespace DUNE
     int
     AcousticSystemsQuery::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4564,7 +4596,7 @@ namespace DUNE
     int
     AcousticSystems::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4624,7 +4656,7 @@ namespace DUNE
     int
     AcousticLink::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4688,7 +4720,7 @@ namespace DUNE
     int
     Rpm::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4756,7 +4788,7 @@ namespace DUNE
     int
     Voltage::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4824,7 +4856,7 @@ namespace DUNE
     int
     Current::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -4922,7 +4954,9 @@ namespace DUNE
     int
     GpsFix::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -5046,7 +5080,11 @@ namespace DUNE
     int
     EulerAngles::validate(void) const
     {
-      return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (psi_magnetic < -3.141592653589793 || psi_magnetic > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -5126,7 +5164,7 @@ namespace DUNE
     int
     EulerAnglesDelta::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5204,7 +5242,7 @@ namespace DUNE
     int
     AngularVelocity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5278,7 +5316,7 @@ namespace DUNE
     int
     Acceleration::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5352,7 +5390,7 @@ namespace DUNE
     int
     MagneticField::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5426,7 +5464,7 @@ namespace DUNE
     int
     GroundVelocity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5500,7 +5538,7 @@ namespace DUNE
     int
     WaterVelocity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5574,7 +5612,7 @@ namespace DUNE
     int
     VelocityDelta::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5652,7 +5690,7 @@ namespace DUNE
     int
     DeviceState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5730,7 +5768,9 @@ namespace DUNE
     int
     BeamConfig::validate(void) const
     {
-      return false;
+      if (beam_width < 0 || beam_width > 3.141592653589793) return false;
+      if (beam_height < 0 || beam_height > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -5798,7 +5838,7 @@ namespace DUNE
     int
     Distance::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5918,7 +5958,7 @@ namespace DUNE
     int
     Temperature::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -5986,7 +6026,7 @@ namespace DUNE
     int
     Pressure::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6054,7 +6094,7 @@ namespace DUNE
     int
     Depth::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6122,7 +6162,7 @@ namespace DUNE
     int
     DepthOffset::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6190,7 +6230,7 @@ namespace DUNE
     int
     SoundSpeed::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6258,7 +6298,7 @@ namespace DUNE
     int
     WaterDensity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6326,7 +6366,7 @@ namespace DUNE
     int
     Conductivity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6394,7 +6434,7 @@ namespace DUNE
     int
     Salinity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6466,7 +6506,7 @@ namespace DUNE
     int
     WindSpeed::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6530,7 +6570,8 @@ namespace DUNE
     int
     RelativeHumidity::validate(void) const
     {
-      return false;
+      if (value < 0 || value > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -6598,7 +6639,7 @@ namespace DUNE
     int
     DevDataText::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6654,7 +6695,7 @@ namespace DUNE
     int
     DevDataBinary::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6725,7 +6766,7 @@ namespace DUNE
     int
     SonarData::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6830,7 +6871,7 @@ namespace DUNE
     int
     Pulse::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6878,7 +6919,7 @@ namespace DUNE
     int
     PulseDetectionControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -6938,7 +6979,9 @@ namespace DUNE
     int
     FuelLevel::validate(void) const
     {
-      return false;
+      if (value < 0 || value > 100) return false;
+      if (confidence < 0 || confidence > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -7042,7 +7085,7 @@ namespace DUNE
     int
     GpsNavData::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7156,7 +7199,8 @@ namespace DUNE
     int
     ServoPosition::validate(void) const
     {
-      return false;
+      if (value < -1.5707963267948966 || value > 1.5707963267948966) return false;
+      return true;
     }
 
     uint8_t*
@@ -7240,7 +7284,7 @@ namespace DUNE
     int
     DataSanity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7296,7 +7340,7 @@ namespace DUNE
     int
     RhodamineDye::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7364,7 +7408,7 @@ namespace DUNE
     int
     CrudeOil::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7432,7 +7476,7 @@ namespace DUNE
     int
     FineOil::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7500,7 +7544,7 @@ namespace DUNE
     int
     Turbidity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7568,7 +7612,7 @@ namespace DUNE
     int
     Chlorophyll::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7636,7 +7680,7 @@ namespace DUNE
     int
     Fluorescein::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7704,7 +7748,7 @@ namespace DUNE
     int
     Phycocyanin::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7772,7 +7816,7 @@ namespace DUNE
     int
     Phycoerythrin::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -7868,7 +7912,9 @@ namespace DUNE
     int
     GpsFixRtk::validate(void) const
     {
-      return false;
+      if (base_lat < -1.5707963267948966 || base_lat > 1.5707963267948966) return false;
+      if (base_lon < -3.141592653589793 || base_lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -8018,7 +8064,15 @@ namespace DUNE
     int
     EstimatedState::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (p < -3.141592653589793 || p > 3.141592653589793) return false;
+      if (q < -3.141592653589793 || q > 3.141592653589793) return false;
+      if (r < -3.141592653589793 || r > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -8153,7 +8207,7 @@ namespace DUNE
     int
     ExternalNavData::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8258,7 +8312,7 @@ namespace DUNE
     int
     DissolvedOxygen::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8326,7 +8380,7 @@ namespace DUNE
     int
     AirSaturation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8394,7 +8448,7 @@ namespace DUNE
     int
     Throttle::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8462,7 +8516,7 @@ namespace DUNE
     int
     PH::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8530,7 +8584,7 @@ namespace DUNE
     int
     Redox::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8602,7 +8656,7 @@ namespace DUNE
     int
     CameraZoom::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8680,7 +8734,8 @@ namespace DUNE
     int
     SetThrusterActuation::validate(void) const
     {
-      return false;
+      if (value < -1 || value > 1) return false;
+      return true;
     }
 
     uint8_t*
@@ -8766,7 +8821,8 @@ namespace DUNE
     int
     SetServoPosition::validate(void) const
     {
-      return false;
+      if (value < -1.5707963267948966 || value > 1.5707963267948966) return false;
+      return true;
     }
 
     uint8_t*
@@ -8852,7 +8908,7 @@ namespace DUNE
     int
     SetControlSurfaceDeflection::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8926,7 +8982,7 @@ namespace DUNE
     int
     RemoteActionsRequest::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -8986,7 +9042,7 @@ namespace DUNE
     int
     RemoteActions::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9044,7 +9100,7 @@ namespace DUNE
     int
     ButtonEvent::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9118,7 +9174,7 @@ namespace DUNE
     int
     LcdControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9182,7 +9238,7 @@ namespace DUNE
     int
     PowerOperation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9250,7 +9306,8 @@ namespace DUNE
     int
     PowerChannelControl::validate(void) const
     {
-      return false;
+      if (op > 6) return false;
+      return true;
     }
 
     uint8_t*
@@ -9305,7 +9362,7 @@ namespace DUNE
     int
     QueryPowerChannelState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9355,7 +9412,7 @@ namespace DUNE
     int
     PowerChannelState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9417,7 +9474,7 @@ namespace DUNE
     int
     LedBrightness::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9489,7 +9546,7 @@ namespace DUNE
     int
     QueryLedBrightness::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9547,7 +9604,7 @@ namespace DUNE
     int
     SetLedBrightness::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9623,7 +9680,7 @@ namespace DUNE
     int
     SetPWM::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9703,7 +9760,7 @@ namespace DUNE
     int
     PWM::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9783,7 +9840,7 @@ namespace DUNE
     int
     EstimatedStreamVelocity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9847,7 +9904,7 @@ namespace DUNE
     int
     IndicatedSpeed::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -9915,7 +9972,7 @@ namespace DUNE
     int
     TrueSpeed::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10009,7 +10066,7 @@ namespace DUNE
     int
     NavigationUncertainty::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10133,7 +10190,7 @@ namespace DUNE
     int
     NavigationData::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10223,7 +10280,7 @@ namespace DUNE
     int
     GpsFixRejection::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10287,7 +10344,7 @@ namespace DUNE
     int
     LblRangeAcceptance::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10369,7 +10426,7 @@ namespace DUNE
     int
     DvlRejection::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10460,7 +10517,7 @@ namespace DUNE
     int
     LblEstimate::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10581,7 +10638,7 @@ namespace DUNE
     int
     AlignmentState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10641,7 +10698,7 @@ namespace DUNE
     int
     GroupStreamVelocity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10709,7 +10766,7 @@ namespace DUNE
     int
     Airflow::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10773,7 +10830,7 @@ namespace DUNE
     int
     DesiredHeading::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10843,7 +10900,7 @@ namespace DUNE
     int
     DesiredZ::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10917,7 +10974,7 @@ namespace DUNE
     int
     DesiredSpeed::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -10989,7 +11046,7 @@ namespace DUNE
     int
     DesiredRoll::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11057,7 +11114,7 @@ namespace DUNE
     int
     DesiredPitch::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11125,7 +11182,7 @@ namespace DUNE
     int
     DesiredVerticalRate::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11217,7 +11274,11 @@ namespace DUNE
     int
     DesiredPath::validate(void) const
     {
-      return false;
+      if (start_lat < -1.5707963267948966 || start_lat > 1.5707963267948966) return false;
+      if (start_lon < -3.141592653589793 || start_lon > 3.141592653589793) return false;
+      if (end_lat < -1.5707963267948966 || end_lat > 1.5707963267948966) return false;
+      if (end_lon < -3.141592653589793 || end_lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -11333,7 +11394,7 @@ namespace DUNE
     int
     DesiredControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11413,7 +11474,7 @@ namespace DUNE
     int
     DesiredHeadingRate::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11493,7 +11554,7 @@ namespace DUNE
     int
     DesiredVelocity::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11609,7 +11670,11 @@ namespace DUNE
     int
     PathControlState::validate(void) const
     {
-      return false;
+      if (start_lat < -1.5707963267948966 || start_lat > 1.5707963267948966) return false;
+      if (start_lon < -3.141592653589793 || start_lon > 3.141592653589793) return false;
+      if (end_lat < -1.5707963267948966 || end_lat > 1.5707963267948966) return false;
+      if (end_lon < -3.141592653589793 || end_lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -11741,7 +11806,7 @@ namespace DUNE
     int
     AllocatedControlTorques::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11811,7 +11876,7 @@ namespace DUNE
     int
     ControlParcel::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11879,7 +11944,7 @@ namespace DUNE
     int
     Brake::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -11953,7 +12018,7 @@ namespace DUNE
     int
     DesiredLinearState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -12045,7 +12110,7 @@ namespace DUNE
     int
     DesiredThrottle::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -12133,7 +12198,12 @@ namespace DUNE
     int
     Goto::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (roll < -1 || roll > 6.283185307179586) return false;
+      if (pitch < -1 || pitch > 6.283185307179586) return false;
+      if (yaw < -1 || yaw > 6.283185307179586) return false;
+      return true;
     }
 
     uint8_t*
@@ -12249,7 +12319,10 @@ namespace DUNE
     int
     PopUp::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (radius < 1 || radius > 100000) return false;
+      return true;
     }
 
     uint8_t*
@@ -12345,7 +12418,7 @@ namespace DUNE
     int
     Teleoperation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -12427,7 +12500,14 @@ namespace DUNE
     int
     Loiter::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (type > 4) return false;
+      if (radius < 1 || radius > 100000) return false;
+      if (length < 1 || length > 100000) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (direction > 3) return false;
+      return true;
     }
 
     uint8_t*
@@ -12537,7 +12617,7 @@ namespace DUNE
     int
     IdleManeuver::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -12602,7 +12682,7 @@ namespace DUNE
     int
     LowLevelControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -12741,7 +12821,15 @@ namespace DUNE
     int
     Rows::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (cross_angle < -1.047197551197 || cross_angle > 1.047197551197) return false;
+      if (width < 0) return false;
+      if (length < 0) return false;
+      if (hstep < 0) return false;
+      if (alternation > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -12861,7 +12949,7 @@ namespace DUNE
     int
     PathPoint::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -12942,7 +13030,9 @@ namespace DUNE
     int
     FollowPath::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -13078,7 +13168,10 @@ namespace DUNE
     int
     YoYo::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (pitch < 0 || pitch > 0.78539816) return false;
+      return true;
     }
 
     uint8_t*
@@ -13161,7 +13254,7 @@ namespace DUNE
     int
     TeleoperationDone::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -13225,7 +13318,9 @@ namespace DUNE
     int
     StationKeeping::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -13335,7 +13430,10 @@ namespace DUNE
     int
     Elevator::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (radius < 0) return false;
+      return true;
     }
 
     uint8_t*
@@ -13441,7 +13539,7 @@ namespace DUNE
     int
     TrajectoryPoint::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -13526,7 +13624,9 @@ namespace DUNE
     int
     FollowTrajectory::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -13648,7 +13748,7 @@ namespace DUNE
     int
     CustomManeuver::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -13718,7 +13818,7 @@ namespace DUNE
     int
     VehicleFormationParticipant::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -13806,7 +13906,9 @@ namespace DUNE
     int
     VehicleFormation::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -13929,7 +14031,7 @@ namespace DUNE
     int
     StopManeuver::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -13977,7 +14079,7 @@ namespace DUNE
     int
     RegisterManeuver::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -14037,7 +14139,7 @@ namespace DUNE
     int
     ManeuverControlState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -14115,7 +14217,7 @@ namespace DUNE
     int
     FollowSystem::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -14213,7 +14315,9 @@ namespace DUNE
     int
     CommsRelay::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -14299,7 +14403,9 @@ namespace DUNE
     int
     PolygonVertex::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -14374,7 +14480,9 @@ namespace DUNE
     int
     CoverArea::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -14512,7 +14620,12 @@ namespace DUNE
     int
     CompassCalibration::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (pitch < -1.5707963267948966 || pitch > 1.5707963267948966) return false;
+      if (radius < 1 || radius > 100000) return false;
+      if (direction > 3) return false;
+      return true;
     }
 
     uint8_t*
@@ -14623,7 +14736,7 @@ namespace DUNE
     int
     FormationParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -14747,7 +14860,7 @@ namespace DUNE
     int
     FormationPlanExecution::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -14863,7 +14976,7 @@ namespace DUNE
     int
     FollowReference::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -14947,7 +15060,7 @@ namespace DUNE
     int
     Reference::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -15102,7 +15215,7 @@ namespace DUNE
     int
     FollowRefState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -15261,7 +15374,7 @@ namespace DUNE
     int
     RelativeState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -15438,7 +15551,7 @@ namespace DUNE
     int
     FormationMonitor::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -15602,7 +15715,7 @@ namespace DUNE
     int
     Dislodge::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -15711,7 +15824,7 @@ namespace DUNE
     int
     Formation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -15891,7 +16004,9 @@ namespace DUNE
     int
     Launch::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -15989,7 +16104,9 @@ namespace DUNE
     int
     Drop::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -16087,7 +16204,9 @@ namespace DUNE
     int
     ScheduledGoto::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -16201,7 +16320,15 @@ namespace DUNE
     int
     RowsCoverage::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (cross_angle < -1.047197551197 || cross_angle > 1.047197551197) return false;
+      if (width < 0) return false;
+      if (length < 0) return false;
+      if (angaperture < -3.141592653589793 || angaperture > 3.141592653589793) return false;
+      if (overlap > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -16337,7 +16464,9 @@ namespace DUNE
     int
     Sample::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -16424,7 +16553,7 @@ namespace DUNE
     int
     ImageTracking::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -16486,7 +16615,10 @@ namespace DUNE
     int
     Takeoff::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (takeoff_pitch < 0 || takeoff_pitch > 1.57079632679490) return false;
+      return true;
     }
 
     uint8_t*
@@ -16590,7 +16722,11 @@ namespace DUNE
     int
     Land::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (glide_slope > 10) return false;
+      return true;
     }
 
     uint8_t*
@@ -16704,7 +16840,7 @@ namespace DUNE
     int
     VehicleState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -16807,7 +16943,7 @@ namespace DUNE
     int
     VehicleCommand::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -16930,7 +17066,7 @@ namespace DUNE
     int
     MonitorEntityState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17004,7 +17140,7 @@ namespace DUNE
     int
     EntityMonitoringState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17110,7 +17246,15 @@ namespace DUNE
     int
     OperationalLimits::validate(void) const
     {
-      return false;
+      if (max_depth < 0) return false;
+      if (min_altitude < 0) return false;
+      if (max_altitude < 0) return false;
+      if (min_speed < 0) return false;
+      if (max_speed < 0) return false;
+      if (max_vrate < 0) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -17201,7 +17345,7 @@ namespace DUNE
     int
     GetOperationalLimits::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17249,7 +17393,7 @@ namespace DUNE
     int
     Calibration::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17309,7 +17453,7 @@ namespace DUNE
     int
     ControlLoops::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17373,7 +17517,7 @@ namespace DUNE
     int
     VehicleMedium::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17431,7 +17575,7 @@ namespace DUNE
     int
     Collision::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17513,7 +17657,7 @@ namespace DUNE
     int
     FormState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17591,7 +17735,7 @@ namespace DUNE
     int
     AutopilotMode::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17665,7 +17809,7 @@ namespace DUNE
     int
     FormationState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17755,7 +17899,7 @@ namespace DUNE
     int
     ReportControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17814,7 +17958,7 @@ namespace DUNE
     int
     Abort::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17868,7 +18012,7 @@ namespace DUNE
     int
     PlanVariable::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -17945,7 +18089,7 @@ namespace DUNE
     int
     PlanManeuver::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18085,7 +18229,7 @@ namespace DUNE
     int
     PlanTransition::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18204,7 +18348,7 @@ namespace DUNE
     int
     PlanSpecification::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18365,7 +18509,7 @@ namespace DUNE
     int
     EmergencyControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18474,7 +18618,8 @@ namespace DUNE
     int
     EmergencyControlState::validate(void) const
     {
-      return false;
+      if (comm_level > 100) return false;
+      return true;
     }
 
     uint8_t*
@@ -18549,7 +18694,7 @@ namespace DUNE
     int
     PlanDB::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18680,7 +18825,7 @@ namespace DUNE
     int
     PlanDBInformation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18769,7 +18914,7 @@ namespace DUNE
     int
     PlanDBState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -18892,7 +19037,7 @@ namespace DUNE
     int
     PlanControl::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19031,7 +19176,7 @@ namespace DUNE
     int
     PlanControlState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19121,7 +19266,7 @@ namespace DUNE
     int
     PlanGeneration::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19227,7 +19372,15 @@ namespace DUNE
     int
     LeaderState::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (p < -3.141592653589793 || p > 3.141592653589793) return false;
+      if (q < -3.141592653589793 || q > 3.141592653589793) return false;
+      if (r < -3.141592653589793 || r > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -19371,7 +19524,7 @@ namespace DUNE
     int
     PlanStatistics::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19467,7 +19620,7 @@ namespace DUNE
     int
     ReportedState::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19567,7 +19720,7 @@ namespace DUNE
     int
     RemoteSensorInfo::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19651,7 +19804,7 @@ namespace DUNE
     int
     MapPoint::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19726,7 +19879,7 @@ namespace DUNE
     int
     MapFeature::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19835,7 +19988,7 @@ namespace DUNE
     int
     Map::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -19930,7 +20083,7 @@ namespace DUNE
     int
     CcuEvent::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20042,7 +20195,7 @@ namespace DUNE
     int
     VehicleLinks::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20136,7 +20289,7 @@ namespace DUNE
     int
     TrexObservation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20204,7 +20357,7 @@ namespace DUNE
     int
     TrexCommand::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20274,7 +20427,7 @@ namespace DUNE
     int
     TrexAttribute::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20347,7 +20500,7 @@ namespace DUNE
     int
     TrexToken::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20446,7 +20599,7 @@ namespace DUNE
     int
     TrexOperation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20558,7 +20711,7 @@ namespace DUNE
     int
     TrexPlan::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20650,7 +20803,7 @@ namespace DUNE
     int
     Event::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20712,7 +20865,7 @@ namespace DUNE
     int
     CompressedImage::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20778,7 +20931,7 @@ namespace DUNE
     int
     ImageTxSettings::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -20854,7 +21007,9 @@ namespace DUNE
     int
     RemoteState::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -20938,7 +21093,9 @@ namespace DUNE
     int
     Target::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -21020,7 +21177,7 @@ namespace DUNE
     int
     EntityParameter::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21083,7 +21240,7 @@ namespace DUNE
     int
     EntityParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21177,7 +21334,7 @@ namespace DUNE
     int
     QueryEntityParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21244,7 +21401,7 @@ namespace DUNE
     int
     SetEntityParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21334,7 +21491,7 @@ namespace DUNE
     int
     SaveEntityParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21390,7 +21547,7 @@ namespace DUNE
     int
     CreateSession::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21446,7 +21603,7 @@ namespace DUNE
     int
     CloseSession::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21504,7 +21661,7 @@ namespace DUNE
     int
     SessionSubscription::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21564,7 +21721,7 @@ namespace DUNE
     int
     SessionKeepAlive::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21622,7 +21779,7 @@ namespace DUNE
     int
     SessionStatus::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21682,7 +21839,7 @@ namespace DUNE
     int
     PushEntityParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21738,7 +21895,7 @@ namespace DUNE
     int
     PopEntityParameters::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21796,7 +21953,7 @@ namespace DUNE
     int
     IoEvent::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21862,7 +22019,7 @@ namespace DUNE
     int
     UamTxFrame::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -21936,7 +22093,7 @@ namespace DUNE
     int
     UamRxFrame::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22008,7 +22165,7 @@ namespace DUNE
     int
     UamTxStatus::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22088,7 +22245,7 @@ namespace DUNE
     int
     UamRxRange::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22174,7 +22331,7 @@ namespace DUNE
     int
     FormCtrlParam::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22254,7 +22411,7 @@ namespace DUNE
     int
     FormationEval::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22338,7 +22495,7 @@ namespace DUNE
     int
     FormationControlParams::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22449,7 +22606,7 @@ namespace DUNE
     int
     FormationEvaluation::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22584,7 +22741,7 @@ namespace DUNE
     int
     MessagePart::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22654,7 +22811,7 @@ namespace DUNE
     int
     NeptusBlob::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22705,7 +22862,7 @@ namespace DUNE
     int
     Aborted::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22757,7 +22914,7 @@ namespace DUNE
     int
     UsblAngles::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22827,7 +22984,7 @@ namespace DUNE
     int
     UsblPosition::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -22903,7 +23060,9 @@ namespace DUNE
     int
     UsblFix::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -22977,7 +23136,7 @@ namespace DUNE
     int
     ParametersXml::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -23028,7 +23187,7 @@ namespace DUNE
     int
     GetParametersXml::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -23080,7 +23239,7 @@ namespace DUNE
     int
     SetImageCoords::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -23148,7 +23307,7 @@ namespace DUNE
     int
     GetImageCoords::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -23222,7 +23381,7 @@ namespace DUNE
     int
     GetWorldCoordinates::validate(void) const
     {
-      return false;
+      return true;
     }
 
     uint8_t*
@@ -23314,7 +23473,11 @@ namespace DUNE
     int
     UsblAnglesExtended::validate(void) const
     {
-      return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (accuracy < 0 || accuracy > 3.141592653589793) return false;
+      return true;
     }
 
     uint8_t*
@@ -23422,7 +23585,11 @@ namespace DUNE
     int
     UsblPositionExtended::validate(void) const
     {
-      return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (accuracy < 0) return false;
+      return true;
     }
 
     uint8_t*
@@ -23528,7 +23695,10 @@ namespace DUNE
     int
     UsblFixExtended::validate(void) const
     {
-      return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (accuracy < 0) return false;
+      return true;
     }
 
     uint8_t*
@@ -23579,6 +23749,323 @@ namespace DUNE
       IMC::toJSON(os__, "z_units", z_units, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
       IMC::toJSON(os__, "accuracy", accuracy, nindent__);
+    }
+
+    UsblModem::UsblModem(void)
+    {
+      m_header.mgid = 901;
+      clear();
+    }
+
+    void
+    UsblModem::clear(void)
+    {
+      name.clear();
+      lat = 0;
+      lon = 0;
+      z = 0;
+      z_units = 0;
+    }
+
+    bool
+    UsblModem::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblModem& other__ = static_cast<const UsblModem&>(msg__);
+      if (name != other__.name) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z != other__.z) return false;
+      if (z_units != other__.z_units) return false;
+      return true;
+    }
+
+    int
+    UsblModem::validate(void) const
+    {
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    UsblModem::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblModem::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblModem::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblModem::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+    }
+
+    UsblConfig::UsblConfig(void)
+    {
+      m_header.mgid = 902;
+      clear();
+      modems.setParent(this);
+    }
+
+    void
+    UsblConfig::clear(void)
+    {
+      op = 0;
+      modems.clear();
+    }
+
+    bool
+    UsblConfig::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UsblConfig& other__ = static_cast<const UsblConfig&>(msg__);
+      if (op != other__.op) return false;
+      if (modems != other__.modems) return false;
+      return true;
+    }
+
+    int
+    UsblConfig::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    UsblConfig::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += modems.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UsblConfig::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += modems.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UsblConfig::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += modems.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UsblConfig::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      modems.toJSON(os__, "modems", nindent__);
+    }
+
+    void
+    UsblConfig::setTimeStampNested(double value__)
+    {
+      modems.setTimeStamp(value__);
+    }
+
+    void
+    UsblConfig::setSourceNested(uint16_t value__)
+    {
+      modems.setSource(value__);
+    }
+
+    void
+    UsblConfig::setSourceEntityNested(uint8_t value__)
+    {
+      modems.setSourceEntity(value__);
+    }
+
+    void
+    UsblConfig::setDestinationNested(uint16_t value__)
+    {
+      modems.setDestination(value__);
+    }
+
+    void
+    UsblConfig::setDestinationEntityNested(uint8_t value__)
+    {
+      modems.setDestinationEntity(value__);
+    }
+
+    DissolvedOrganicMatter::DissolvedOrganicMatter(void)
+    {
+      m_header.mgid = 903;
+      clear();
+    }
+
+    void
+    DissolvedOrganicMatter::clear(void)
+    {
+      value = 0;
+      type = 0;
+    }
+
+    bool
+    DissolvedOrganicMatter::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DissolvedOrganicMatter& other__ = static_cast<const DissolvedOrganicMatter&>(msg__);
+      if (value != other__.value) return false;
+      if (type != other__.type) return false;
+      return true;
+    }
+
+    int
+    DissolvedOrganicMatter::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    DissolvedOrganicMatter::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DissolvedOrganicMatter::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DissolvedOrganicMatter::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    DissolvedOrganicMatter::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    DissolvedOrganicMatter::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    DissolvedOrganicMatter::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+    }
+
+    OpticalBackscatter::OpticalBackscatter(void)
+    {
+      m_header.mgid = 904;
+      clear();
+    }
+
+    void
+    OpticalBackscatter::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    OpticalBackscatter::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::OpticalBackscatter& other__ = static_cast<const OpticalBackscatter&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    OpticalBackscatter::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    OpticalBackscatter::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    OpticalBackscatter::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    OpticalBackscatter::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    OpticalBackscatter::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    OpticalBackscatter::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    OpticalBackscatter::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
     }
   }
 }

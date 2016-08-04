@@ -196,10 +196,6 @@ namespace DUNE
       if (!enableLogControl())
         return;
 
-      if ((msg->getDestination() != getSystemId())
-          || (msg->getDestinationEntity() != getEntityId()))
-        return;
-
       switch (msg->op)
       {
         case IMC::LoggingControl::COP_CURRENT_NAME:

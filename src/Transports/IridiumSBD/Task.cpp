@@ -360,10 +360,7 @@ namespace Transports
           return;
 
         if (!isActive())
-        {
           m_mbox_check_timer.reset();
-          return;
-        }
 
         if (m_tx_request != NULL)
         {
@@ -375,7 +372,7 @@ namespace Transports
         {
           if (m_driver->hasRingAlert())
             m_driver->checkMailBoxAlert();
-          else if ((m_driver->getQueuedMT()) > 0 || m_mbox_check_timer.overflow())
+          else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
             m_driver->checkMailBox();
         }
         else
