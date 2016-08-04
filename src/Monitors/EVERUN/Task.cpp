@@ -153,25 +153,32 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
-        if (m_args.initial_state)
+        if (paramChanged(m_args.initial_state))
         {
-          war("received command to enable everun service");
-          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
-          m_conn = new Connection(m_args.ip_host.c_str(), m_args.server_port);
-          tryConnectToServer();
-        }
-        else if (!m_args.initial_state)
-        {
-          if (m_is_reset_first_stop)
+          if (m_args.initial_state)
           {
-            war("received command to disable everun service");
-            setEntityState(IMC::EntityState::ESTA_BOOT, "Everun board is OFF in config task");
+            war("received command to enable everun service");
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+            m_conn = new Connection(m_args.ip_host.c_str(), m_args.server_port);
+            tryConnectToServer();
+            std::sprintf(m_buffer_time, "%d", (int)time(NULL));
             sendComandHttp(SEND_STOP, "");
-            Delay::wait(2);
+            Delay::wait(1);
+            sendComandHttp(SEND_START, m_buffer_time);
           }
-          else
+          else if (!m_args.initial_state)
           {
-            m_is_reset_first_stop = true;
+            if (m_is_reset_first_stop)
+            {
+              war("received command to disable everun service");
+              setEntityState(IMC::EntityState::ESTA_BOOT, "Everun board is OFF in config task");
+              sendComandHttp(SEND_STOP, "");
+              Delay::wait(2);
+            }
+            else
+            {
+              m_is_reset_first_stop = true;
+            }
           }
         }
       }
@@ -260,6 +267,10 @@ namespace Monitors
         if (m_args.initial_state)
         {
           tryConnectToServer();
+          std::sprintf(m_buffer_time, "%d", (int)time(NULL));
+          sendComandHttp(SEND_STOP, "");
+          Delay::wait(1);
+          sendComandHttp(SEND_START, m_buffer_time);
         }
 
         while (!stopping())
