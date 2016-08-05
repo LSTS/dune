@@ -297,7 +297,6 @@ namespace DUNE
         }
       }
 
-      // Check for possible collisions.
       if (m_sdata->isSurface(m_estate))
         return;
 
@@ -561,7 +560,7 @@ namespace DUNE
     BottomTracker::onAvoiding(void)
     {
       // If ranges cannot be used, then we're clueless
-      if (m_sdata->isSurface(m_estate) && m_estate.depth > m_args->depth_limit)
+      if (m_sdata->isSurface(m_estate))
       {
         err(DTR("unable to avoid obstacle"));
         return;
@@ -571,8 +570,8 @@ namespace DUNE
       // check if buoyancy has pulled the vehicle up to a safe depth/altitude
       if (!m_sdata->isTooSteep() && !m_sdata->isRangeLow(m_estate.theta))
       {
-        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_estate.alt >= m_z_ref.value) &&
-            m_estate.alt >= m_args->min_alt + c_alt_hyst)
+        if ((m_z_ref.z_units == IMC::Z_ALTITUDE) &&
+            m_estate.alt >= std::max(m_z_ref.value, m_args->min_alt + c_alt_hyst))
         {
           debug("avoiding: above altitude reference and slope is safe -> tracking");
 
@@ -592,7 +591,7 @@ namespace DUNE
           m_mstate = SM_TRACKING;
           return;
         }
-        else if (m_z_ref.z_units == IMC::Z_DEPTH)
+        else if (m_z_ref.z_units == IMC::Z_DEPTH && m_estate.alt > m_args->min_alt + c_alt_hyst)
         {
           debug("avoiding: units are depth, carry on -> depth");
 
