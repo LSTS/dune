@@ -238,17 +238,7 @@ namespace Maneuver
         // Clear compass_calibration data
         m_ccal.clear();
 
-        double zref;
-
-        if (m_zunits == IMC::Z_DEPTH)
-        {
-          zref = maneuver->z;
-        }
-        else if (m_zunits == IMC::Z_ALTITUDE)
-        {
-          zref = -maneuver->z;
-        }
-        else
+        if (m_zunits != IMC::Z_DEPTH && m_zunits != IMC::Z_ALTITUDE)
         {
           signalInvalidZ();
           return;
@@ -257,7 +247,8 @@ namespace Maneuver
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
 
-        m_yoyo = new YoYoMotion(this, maneuver->pitch, zref,
+        m_yoyo = new YoYoMotion(this, maneuver->pitch, maneuver->z,
+                                (IMC::ZUnits)maneuver->z_units,
                                 maneuver->amplitude, m_args.variation);
       }
 
@@ -319,7 +310,7 @@ namespace Maneuver
           if (m_amplitude <= c_min_amplitude)
             inbounds = true;
           else if (m_path.end_z_units == IMC::Z_ALTITUDE)
-            inbounds = m_yoyo->isBetweenBounds(-m_estate.alt);
+            inbounds = m_yoyo->isBetweenBounds(m_estate.alt);
           else if (m_path.end_z_units == IMC::Z_DEPTH)
             inbounds = m_yoyo->isBetweenBounds(m_estate.depth);
 
@@ -407,22 +398,14 @@ namespace Maneuver
       {
         double state_z;
 
-        if (m_zunits == IMC::Z_DEPTH)
-        {
-          state_z = m_estate.depth;
-        }
-        else if ((m_estate.alt >= 0) && (m_zunits == IMC::Z_ALTITUDE))
-        {
-          state_z = - m_estate.alt;
-        }
-        else
+        if (m_estate.alt < 0 && m_zunits == IMC::Z_ALTITUDE)
         {
           m_ccal.clear();
           signalNoAltitude();
           return;
         }
 
-        double v = m_yoyo->update(startup, state_z, m_estate.theta);
+        double v = m_yoyo->update(startup, m_estate.depth, m_estate.alt, m_estate.theta);
 
         if ((v == m_pitch.value) && m_dispatched)
           return;
