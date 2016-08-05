@@ -396,8 +396,6 @@ namespace Maneuver
       void
       yoyoMotion(bool startup)
       {
-        double state_z;
-
         if (m_estate.alt < 0 && m_zunits == IMC::Z_ALTITUDE)
         {
           m_ccal.clear();
