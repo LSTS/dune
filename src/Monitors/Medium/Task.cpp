@@ -111,8 +111,8 @@ namespace Monitors
 
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
-        .defaultValue("30.0")
-        .minimumValue("20.0")
+        .defaultValue("20.0")
+        .minimumValue("10.0")
         .maximumValue("60.0")
         .description("Time to wait at beginning before assessing vehicle medium");
 
@@ -312,6 +312,9 @@ namespace Monitors
         if (isUAV())
           return;
 
+        if (!waterMediumCheck())
+          return;
+
         checkWater();
 
         if ((m_depth > m_args.depth_lm) && !isGpsAvailable())
@@ -375,6 +378,8 @@ namespace Monitors
         // No way to detect medium properly.
         if (isActive() && m_wet_devs.overflow())
         {
+          m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
+          dispatch(m_vm);
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
           return false;
         }
@@ -428,11 +433,15 @@ namespace Monitors
       {
         // Wait to stabilize at beginning.
         if (!m_init.overflow())
+        {
+          if (isActive())
+          {
+            IMC::VehicleMedium m;
+            m.medium = IMC::VehicleMedium::VM_UNKNOWN;
+            dispatch(m);
+          }
           return;
-
-        // Check presence of water.
-        if (!waterMediumCheck())
-          return;
+        }
 
         updateStateMachine();
       }
