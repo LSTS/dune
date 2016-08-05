@@ -846,7 +846,7 @@ namespace Transports
           onUsblModem();
           onUsblNode();
 
-          if (m_args.report_enable && isActive())
+          if (m_args.report_enable)
           {
             if (m_reporter != NULL && m_reporter->trigger())
               sendReport();
