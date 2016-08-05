@@ -163,6 +163,10 @@ namespace DUNE
       bool
       checkSafety(void);
 
+      //! Check vehicle's safety even if no z reference is defined
+      void
+      safetyWithoutZRef(void);
+
       //! Update bottom tracking state machine.
       void
       updateStateMachine(void);
