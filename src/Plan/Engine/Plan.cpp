@@ -36,11 +36,12 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               bool fpredict, Tasks::Task* task,
+               bool fpredict, float max_depth, Tasks::Task* task,
                uint16_t min_cal_time, Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_compute_progress(compute_progress),
+      m_max_depth(max_depth),
       m_predict_fuel(fpredict),
       m_progress(0.0),
       m_est_cal_time(0),
@@ -403,6 +404,9 @@ namespace Plan
         if (supported_maneuvers->find(m->getId()) == supported_maneuvers->end())
           throw ParseError((*mitr)->maneuver_id + DTR(": maneuver is not supported"));
 
+        if (!isDepthSafe(m))
+          throw ParseError((*mitr)->maneuver_id + DTR(": maneuver depth beyond limits"));
+
         if ((*mitr)->maneuver_id == m_spec->start_man_id)
           start_maneuver_ok = true;
 
@@ -628,6 +632,96 @@ namespace Plan
       m_progress = prog > m_progress ? prog : m_progress;
 
       return m_progress;
+    }
+
+    bool
+    Plan::isDepthSafe(const IMC::Message* maneuver)
+    {
+      switch (maneuver->getId())
+      {
+        case DUNE_IMC_GOTO:
+        {
+          const IMC::Goto* m = static_cast<const IMC::Goto*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_POPUP:
+        {
+          const IMC::PopUp* m = static_cast<const IMC::PopUp*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_LAUNCH:
+        {
+          const IMC::Launch* m = static_cast<const IMC::Launch*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_LOITER:
+        {
+          const IMC::Loiter* m = static_cast<const IMC::Loiter*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_ROWS:
+        {
+          const IMC::Rows* m = static_cast<const IMC::Rows*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_ROWSCOVERAGE:
+        {
+          const IMC::RowsCoverage* m = static_cast<const IMC::RowsCoverage*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_FOLLOWPATH:
+        {
+          const IMC::FollowPath* m = static_cast<const IMC::FollowPath*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_YOYO:
+        {
+          const IMC::YoYo* m = static_cast<const IMC::YoYo*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_STATIONKEEPING:
+        {
+          const IMC::StationKeeping* m = static_cast<const IMC::StationKeeping*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_COMPASSCALIBRATION:
+        {
+          const IMC::CompassCalibration* m = static_cast<const IMC::CompassCalibration*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_ELEVATOR:
+        {
+          const IMC::Elevator* m = static_cast<const IMC::Elevator*>(maneuver);
+          if (m->start_z_units == IMC::Z_DEPTH)
+          {
+            if (m->start_z > m_max_depth + c_depth_margin)
+              return false;
+          }
+          if (m->end_z_units == IMC::Z_DEPTH)
+          {
+            if (m->end_z > m_max_depth + c_depth_margin)
+              return false;
+          }
+        }
+        case DUNE_IMC_SCHEDULEDGOTO:
+        {
+          const IMC::ScheduledGoto* m = static_cast<const IMC::ScheduledGoto*>(maneuver);
+          if (m->z_units == IMC::Z_DEPTH)
+          {
+            if (m->z > m_max_depth + c_depth_margin)
+              return false;
+          }
+          if (m->travel_z_units == IMC::Z_DEPTH)
+          {
+            if (m->travel_z > m_max_depth + c_depth_margin)
+              return false;
+          }
+        }
+        default:
+          ;
+      }
+
+      return true;
     }
 
     void

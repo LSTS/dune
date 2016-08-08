@@ -50,6 +50,9 @@ namespace Plan
     // Export DLL Symbol.
     class DUNE_DLL_SYM Plan;
 
+    //! Depth margin.
+    static const float c_depth_margin = 1.0f;
+
     //! Plan Specification parser
     class Plan
     {
@@ -66,11 +69,12 @@ namespace Plan
       //! @param[in] spec pointer to PlanSpecification message
       //! @param[in] compute_progress true if progress should be computed
       //! @param[in] fpredict true if fuel prediction should be computed
+      //! @param[in] max_depth maximum admissible depth
       //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
       Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           bool fpredict, Tasks::Task* task,
+           bool fpredict, float max_depth, Tasks::Task* task,
            uint16_t min_cal_time, Parsers::Config* cfg);
 
       //! Destructor
@@ -193,6 +197,12 @@ namespace Plan
       getETA(void) const;
 
     private:
+      //! Check if depth is within limits.
+      //! @param[in] maneuver plan maneuver.
+      //! @return true if depth is safe, false otherwise.
+      bool
+      isDepthSafe(const IMC::Message* maneuver);
+
       //! Get duration of the execution phase of the plan
       //! (total of maneuver accumulated duration)
       //! @return duration of the execution phase of the plan
@@ -277,6 +287,19 @@ namespace Plan
         return !(m_properties & IMC::PlanStatistics::PRP_NONLINEAR);
       }
 
+      //! Check if depth is safe
+      inline bool
+      checkDepth(IMC::ZUnits zunits, float z)
+      {
+        if (zunits == IMC::Z_DEPTH)
+        {
+          if (z > m_max_depth + c_depth_margin)
+            return false;
+        }
+
+        return true;
+      }
+
       //! Graph nodes (a maneuver and its outgoing transitions)
       struct Node
       {
@@ -299,6 +322,8 @@ namespace Plan
       std::string m_last_id;
       //! Whether or not to compute plan's progress
       bool m_compute_progress;
+      //! Maximum allowed depth.
+      float m_max_depth;
       //! Whether or not to compute fuel prediction
       bool m_predict_fuel;
       //! Current progress if any

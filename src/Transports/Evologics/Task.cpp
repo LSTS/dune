@@ -440,6 +440,8 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "FAILEDIM"))
           handleMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "BUSY"))
+          handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))

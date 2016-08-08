@@ -85,6 +85,8 @@ namespace Plan
       std::string recovery_plan;
       //! Entity label of the plan generator.
       std::string label_gen;
+      //! Absolute maximum depth.
+      float max_depth;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -185,6 +187,7 @@ namespace Plan
         .description("Entity label of the Plan Generator");
 
         m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
+        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.max_depth);
 
         bind<IMC::PlanControl>(this);
         bind<IMC::PlanDB>(this);
@@ -246,7 +249,7 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict, m_args.max_depth,
                           this, m_args.calibration_time, &m_ctx.config);
       }
 

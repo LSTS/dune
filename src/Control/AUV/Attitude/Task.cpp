@@ -50,6 +50,8 @@ namespace Control
       static const float c_min_depth_ref = 1.5f;
       //! Depth hysteresis boundary to apply extra pitch.
       static const float c_depth_hyst = 0.5f;
+      //! Heading rate limit to apply extra pitch.
+      static const float c_max_hrate = 10.0f;
 
       //! Controllable loops.
       static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_DEPTH | IMC::CL_PITCH;
@@ -569,7 +571,8 @@ namespace Control
               if (m_extra_pitch)
               {
                 // remove extra pitch.
-                if (std::fabs(z_error) < m_args.zref_extra - c_depth_hyst)
+                if (std::fabs(z_error) < m_args.zref_extra - c_depth_hyst ||
+                    std::fabs(m_hrate_ref.value) > Angles::radians(c_max_hrate))
                 {
                   m_extra_pitch = false;
                   m_pid[LP_DEPTH].setOutputLimits(-m_args.max_pitch, m_args.max_pitch);
@@ -578,7 +581,8 @@ namespace Control
               else
               {
                 // add extra pitch.
-                if ((std::fabs(z_error) > m_args.zref_extra) && (m_args.extra_pitch > 0.0))
+                if ((std::fabs(z_error) > m_args.zref_extra) && (m_args.extra_pitch > 0.0)
+                    && std::fabs(m_hrate_ref.value) < Angles::radians(c_max_hrate))
                 {
                   m_extra_pitch = true;
                   float pitch = m_args.max_pitch + m_args.extra_pitch;

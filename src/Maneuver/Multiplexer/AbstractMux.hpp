@@ -62,6 +62,13 @@ namespace Maneuver
         (void)pcs;
       }
 
+      //! On Brake message
+      virtual void
+      onBrake(const IMC::Brake* msg)
+      {
+        (void)msg;
+      }
+
       //! On EstimatedState message
       virtual void
       onEstimatedState(const IMC::EstimatedState* msg)
