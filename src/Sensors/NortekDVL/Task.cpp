@@ -480,7 +480,7 @@ namespace Sensors
       onOpenLog(const DUNE::FileSystem::Path& path)
       {
         if (isParserOn())
-          m_parser->openLog(path / m_args.cp_filename);
+          m_parser->openLog(m_ctx.dir_log / path / m_args.cp_filename);
       }
 
       //! Close log file.
@@ -495,13 +495,12 @@ namespace Sensors
       void
       setup(void)
       {
-        unsigned pings = m_args.cp_npings;
         if (!m_args.cp_enable)
-          pings = 0;
+          m_args.cp_npings = 0;
 
-        m_driver = new Driver(this, m_handle, m_args.rate, m_triggered,
-                              m_args.debug, pings, m_args.cp_ncells,
-                              m_args.cp_csize, m_args.cp_blankdist);
+        m_driver = new Driver(this, m_handle, m_args.rate, m_triggered, m_args.debug,
+                              m_args.cp_npings, m_args.cp_ncells, m_args.cp_csize,
+                              m_args.cp_blankdist);
 
         m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
       }
