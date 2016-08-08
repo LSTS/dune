@@ -118,50 +118,73 @@ namespace Transports
       {
         param("Enable Reports", m_args.report_enable)
         .defaultValue("false")
-        .description("Enable system state reporting");
+        .description("Enable system state acoustic reporting. When enabled, systems"
+                     " shall acknowledge reception of requests to broadcast acoustic"
+                     " messages containing the overall state of the system."
+                     " When disabled, those requests shall be ignored.");
 
         param("USBL Node -- Enabled", m_node_args.enabled)
         .defaultValue("false")
-        .description("USBL target request activation");
+        .description("Enable system's USBL mode. When active, this system will"
+                     " start using USBL by actively broadcasting an acoustic"
+                     " message containing a request to get USBL feedback. The"
+                     " request contains the period for transmissions, if quick"
+                     " (two-way travel) or ranging (three-way travel) mode is"
+                     " desired, and, if in ranging mode (not \"quick\"), to use"
+                     " absolute or relative positioning. If a USBL modem is in"
+                     " reach, they will start exchanging acoustic transmissions"
+                     " to provide USBL positioning to the system."
+                     " Any system can be configured to request USBL information"
+                     " including modems with built-in USBL capabilities.");
 
         param("USBL Node -- Period", m_node_args.period)
         .defaultValue("60.0")
         .minimumValue("2.0")
         .units(Units::Second)
-        .description("USBL target necessary period");
+        .description("USBL's period. This value determines the period of USBL"
+                     " positioning data. If \"Quick\" mode is selected, modem"
+                     " shall ping the USBL modem with this period to get bearing"
+                     " and elevation (two-way travel transmission). If \"Quick\""
+                     " mode is disabled, ranging information is included for a"
+                     " proper fix. In this case, the USBL modem pings the node,"
+                     " hears the reply, computes the position and transmits back"
+                     " to the node (three-way travel transmission).");
 
         param("USBL Node -- Absolute Fix", m_node_args.fix)
         .defaultValue("false")
-        .description("USBL can either send an absolute fix, or"
-                     " relative positioning.");
+        .description("If this argument is enabled, USBL sends an absolute fix using"
+                     " WGS-84 lat/lon coordinates. If disabled, then the positioning"
+                     " is relative to the origin of a system where the center of the"
+                     " reference frame is the USBL modem");
 
         param("USBL Node -- Quick, No Range", m_node_args.no_range)
         .defaultValue("false")
-        .description("In this mode, the USBL node does not require"
-                     " ranging information. With this mode enabled,"
-                     " there's only a two-way travel between the node"
-                     " and the USBL modem. The node actively requests"
-                     " data. This parameter overrides absolute fix");
+        .description("In this mode, the USBL node does not request ranging information."
+                     " Thus, with this mode enabled, there's only a two-way travel"
+                     " transmission between the node aand the USBL modem. The node will"
+                     " actively ping the modem to get bearing/elevation information"
+                     " With thismode enabled \"Absolute Fix\" argument is ignored.");
 
         param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
         .defaultValue("10.0")
         .minimumValue("2.0")
         .maximumValue("20.0")
         .units(Units::Second)
-        .description("Maximum amount of time that the modem will wait"
-                     " for target system's reply.");
+        .description("This argument only concerns systems with USBL modems installed."
+                     " This value establishes the maximum amount of time that the modem"
+                     " waits for the target system's reply.");
 
+        bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::PlanControlState>(this);
-        bind<IMC::AcousticOperation>(this);
+        bind<IMC::ReportControl>(this);
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
         bind<IMC::UsblPositionExtended>(this);
         bind<IMC::UsblAnglesExtended>(this);
         bind<IMC::UsblConfig>(this);
-        bind<IMC::ReportControl>(this);
       }
 
       ~Task(void)
