@@ -63,6 +63,8 @@ namespace Sensors
       std::string output_format;
       //! Default speed.
       float speed;
+      //! Trigger slaves.
+      std::vector<std::string> trigger_slaves;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -145,6 +147,10 @@ namespace Sensors
         .defaultValue("")
         .description("Name of sidescan's power channel");
 
+        param("Output Trigger - Slave Entity Labels", m_args.trigger_slaves)
+        .defaultValue("")
+        .description("Output trigger slaves");
+
         setPostPowerOnDelay(2.0);
         setPowerOffDelay(1.0);
 
@@ -181,6 +187,26 @@ namespace Sensors
       {
         if (isConnected())
           m_driver->onState(msg);
+      }
+
+      //! Send pulse detection control mode.
+      //! @param[in] op pulse detection control operation.
+      void
+      controlPulseDetection(IMC::PulseDetectionControl::OperationEnum op)
+      {
+        for (size_t i = 0; i < m_args.trigger_slaves.size(); ++i)
+        {
+          try
+          {
+            unsigned eid = resolveEntity(m_args.trigger_slaves[i]);
+            IMC::PulseDetectionControl pdc;
+            pdc.setDestinationEntity(eid);
+            pdc.op = op;
+            dispatch(pdc);
+          }
+          catch (...)
+          { }
+        }
       }
 
       //! This derived task has direct log control.
@@ -239,6 +265,7 @@ namespace Sensors
       void
       onDisconnect(void)
       {
+        controlPulseDetection(IMC::PulseDetectionControl::POP_OFF);
         Memory::clear(m_driver);
       }
 
@@ -247,7 +274,10 @@ namespace Sensors
       onInitializeDevice(void)
       {
         if (isConnected())
+        {
+          controlPulseDetection(IMC::PulseDetectionControl::POP_ON);
           setup();
+        }
       }
 
       //! Setup device.
