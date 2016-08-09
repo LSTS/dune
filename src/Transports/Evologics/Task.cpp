@@ -452,10 +452,14 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
+
+        // Burst messages.
         else if (String::startsWith(msg->value, "DELIVERED"))
           handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
           handleMessageFailed(msg->value);
+
+        // USBL.
         else if (String::startsWith(msg->value, "USBLLONG"))
           handleUsblPosition(msg->value);
         else if (String::startsWith(msg->value, "USBLANGLES"))
@@ -531,24 +535,40 @@ namespace Transports
           return;
         }
 
+        try
+        {
+          transmitData((const uint8_t*)&msg->data[0], msg->data.size(), ticket);
+        }
+        catch (std::runtime_error& e)
+        {
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_FAILED, e.what());
+        }
+
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
-        if (!ticket.pbm)
+        m_kalive_counter.reset();
+      }
+
+      void
+      transmitData(const uint8_t* data, unsigned data_size, Ticket& ticket)
+      {
+        if (ticket.pbm)
         {
-          if (msg->data.size() <= 64)
-            m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
-          else
-          {
-            war(DTR("Sending burst message (size=%lu) to %d."), (unsigned long)msg->data.size(), ticket.addr);
-            m_driver->sendBurst((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
-          }
+          m_driver->sendPBM(data, data_size, ticket.addr);
+        }
+        else if (data_size <= c_im_max_size)
+        {
+          m_driver->sendIM(data, data_size, ticket.addr, ticket.ack);
         }
         else
-          m_driver->sendPBM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
-
-        m_kalive_counter.reset();
+        {
+          // Burst messages have an implicit ack.
+          ticket.ack = true;
+          debug("sending %u bytes of burst data to address %d", data_size, ticket.addr);
+          m_driver->sendBurst(data, data_size, ticket.addr);
+        }
       }
 
       void

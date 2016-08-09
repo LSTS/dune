@@ -202,12 +202,12 @@ namespace DUNE
           if (m_log_name_pending)
           {
             m_log_name_pending = false;
-            openLog(m_ctx.dir_log / msg->name);
+            openLog(msg->name);
           }
           break;
 
         case IMC::LoggingControl::COP_STARTED:
-          openLog(m_ctx.dir_log / msg->name);
+          openLog(msg->name);
           break;
 
         case IMC::LoggingControl::COP_STOPPED:
