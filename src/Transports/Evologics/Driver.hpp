@@ -46,6 +46,8 @@ namespace Transports
 
     //! Default AT command timeout.
     static const double c_timeout = 5.0;
+    //! Instant message maximum size.
+    static const size_t c_im_max_size = 64;
 
     //! Asynchronous messages.
     static const char* c_async_msgs[] =
