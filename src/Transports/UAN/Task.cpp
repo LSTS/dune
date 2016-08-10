@@ -560,7 +560,8 @@ namespace Transports
       announceUSBL(void)
       {
         IMC::AnnounceService announce;
-        announce.service = std::string("imc+any://acoustic/operation/usbl");
+        announce.service = std::string("imc+any://acoustic/usbl/")
+        + URL::encode(getEntityLabel());
         dispatch(announce);
       }
 
