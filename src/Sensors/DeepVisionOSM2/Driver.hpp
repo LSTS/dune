@@ -108,9 +108,10 @@ namespace Sensors
       //! @param[in] range sidescan range.
       //! @param[in] speed system speed.
       //! @param[in] imc true to save data in IMC, false otherwise.
+      //! @param[in] delay trigger delay.
       void
       setup(bool high_frequency, unsigned periods, unsigned samples,
-            unsigned range, float speed, bool imc)
+            unsigned range, float speed, bool imc, uint8_t delay)
       {
         reset();
 
@@ -122,6 +123,8 @@ namespace Sensors
         float freq = high_frequency ? c_high_start : c_low_start;
 
         setSampling(samples, getDecimation(range, speed));
+        setDelay(delay);
+
         m_parser->setup(getResolution(range, speed), getLineRate(range),
                         range, freq, imc);
         run(m_baud);
@@ -246,6 +249,14 @@ namespace Sensors
         setRegister(c_reg_samples, samples);
       }
 
+      //! Setup device's trigger delay.
+      //! @param[in] delay trigger delay.
+      void
+      setDelay(uint8_t delay)
+      {
+        setRegister(c_reg_delay, delay);
+      }
+
       //! Set single ping mode.
       void
       setSinglePing(void)
@@ -340,6 +351,8 @@ namespace Sensors
       static const uint16_t c_reg_pulser_1 = 0x11;
       //! Register pulser address 2.
       static const uint16_t c_reg_pulser_2 = 0x12;
+      //! Register to set trigger delay.
+      static const uint8_t c_reg_delay = 0x14;
       //! Register for single ping request.
       static const uint16_t c_reg_single = 0x20;
       //! Register for mode, decimation and active channels.
