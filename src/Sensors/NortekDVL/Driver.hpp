@@ -46,7 +46,7 @@ namespace Sensors
     //! No input trigger.
     static const std::string c_cmd_trg_no = "INTSR";
     //! Configured input trigger.
-    static const std::string c_cmd_trg_yes = "RS485RISE";
+    static const std::string c_cmd_trg_yes = "RS485FALL";
 
     //! Available power levels.
     enum PowerLevel
