@@ -65,6 +65,8 @@ namespace Sensors
       float speed;
       //! Trigger slaves.
       std::vector<std::string> trigger_slaves;
+      //! Trigger delay.
+      uint8_t trigger_delay;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -151,6 +153,14 @@ namespace Sensors
         .defaultValue("")
         .description("Output trigger slaves");
 
+        param(DTR_RT("Trigger Delay"), m_args.trigger_delay)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_IDLE)
+        .defaultValue("80")
+        .units(Units::Millisecond)
+        .description("After output trigger is set, device waits this delay time"
+                     " before pinging again to allow other systems to transmit");
+
         setPostPowerOnDelay(2.0);
         setPowerOffDelay(1.0);
 
@@ -174,7 +184,8 @@ namespace Sensors
 
         if (paramChanged(m_args.frequency) || paramChanged(m_args.range) ||
             paramChanged(m_args.samples) || paramChanged(m_args.periods) ||
-            paramChanged(m_args.speed) || paramChanged(m_args.output_format))
+            paramChanged(m_args.speed) || paramChanged(m_args.output_format) ||
+            paramChanged(m_args.trigger_delay))
         {
           Memory::clear(m_driver);
           onConnect();
@@ -290,7 +301,7 @@ namespace Sensors
           bool imc = m_args.output_format == "IMC";
 
           m_driver->setup(high_freq, m_args.periods, m_args.samples,
-                          m_args.range, m_args.speed, imc);
+                          m_args.range, m_args.speed, imc, m_args.trigger_delay);
 
           m_iwdog.reset();
         }
