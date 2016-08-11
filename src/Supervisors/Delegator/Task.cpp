@@ -240,6 +240,9 @@ namespace Supervisors
         if (!isFromSurrogate(msg))
           return;
 
+        // send activation state also.
+        relayFrom(msg);
+
         if (isActivating() && (msg->state == IMC::EntityActivationState::EAS_ACTIVE))
           activate();
         else if (isDeactivating() && (msg->state == IMC::EntityActivationState::EAS_INACTIVE))
