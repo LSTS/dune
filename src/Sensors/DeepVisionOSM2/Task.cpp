@@ -63,8 +63,6 @@ namespace Sensors
       std::string output_format;
       //! Default speed.
       float speed;
-      //! Trigger slaves.
-      std::vector<std::string> trigger_slaves;
       //! Trigger delay.
       uint8_t trigger_delay;
     };
@@ -149,14 +147,10 @@ namespace Sensors
         .defaultValue("")
         .description("Name of sidescan's power channel");
 
-        param("Output Trigger - Slave Entity Labels", m_args.trigger_slaves)
-        .defaultValue("")
-        .description("Output trigger slaves");
-
         param(DTR_RT("Trigger Delay"), m_args.trigger_delay)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_IDLE)
-        .defaultValue("80")
+        .defaultValue("0")
         .units(Units::Millisecond)
         .description("After output trigger is set, device waits this delay time"
                      " before pinging again to allow other systems to transmit");
@@ -205,19 +199,9 @@ namespace Sensors
       void
       controlPulseDetection(IMC::PulseDetectionControl::OperationEnum op)
       {
-        for (size_t i = 0; i < m_args.trigger_slaves.size(); ++i)
-        {
-          try
-          {
-            unsigned eid = resolveEntity(m_args.trigger_slaves[i]);
-            IMC::PulseDetectionControl pdc;
-            pdc.setDestinationEntity(eid);
-            pdc.op = op;
-            dispatch(pdc);
-          }
-          catch (...)
-          { }
-        }
+        IMC::PulseDetectionControl pdc;
+        pdc.op = op;
+        dispatch(pdc);
       }
 
       //! This derived task has direct log control.
