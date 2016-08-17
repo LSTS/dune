@@ -196,7 +196,7 @@ namespace DUNE
     BottomTracker::checkSafety(void)
     {
       // Do not attempt to interfere if the echo can be the surface
-      if (m_sdata->isSurface(m_estate))
+      if (m_sdata->isSurface(m_estate) || m_estate.depth < c_depth_hyst)
         return false;
 
       // Check if forward range is too low
@@ -297,7 +297,7 @@ namespace DUNE
         }
       }
 
-      if (m_sdata->isSurface(m_estate))
+      if (m_sdata->isSurface(m_estate) || m_estate.depth < c_depth_hyst)
         return;
 
       // Check if forward range is too low
@@ -519,7 +519,7 @@ namespace DUNE
         return;
       }
 
-      if (m_sdata->isSurface(m_estate))
+      if (m_sdata->isSurface(m_estate) || m_estate.depth < c_depth_hyst)
       {
         debug("unsafe: cannot use range -> tracking");
 
