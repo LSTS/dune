@@ -41,6 +41,8 @@ namespace DUNE
   {
     //! Value for y coordinate close to zero
     static const float c_y_margin = 1e-03;
+    //! Minimum safety threshold.
+    static const float c_min = 1e-03;
 
     RowsStages::RowsStages(const IMC::Rows* maneuver, Tasks::Task* task)
     {
@@ -87,6 +89,12 @@ namespace DUNE
     void
     RowsStages::initialize()
     {
+      if (m_width < c_min || m_length < c_min || m_hstep < c_min)
+      {
+        throw std::runtime_error(DTR("invalid maneuver parameters"));
+        return;
+      }
+
       m_hstep_updated = m_hstep;
 
       double curve_sign = curveRight() ? 1 : -1;
