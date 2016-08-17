@@ -50,16 +50,26 @@ namespace DUNE
     class Connection
     {
     public:
-      //! Identifier to use for temporary, memory-only based databases.
-      static const char* c_memory_db;
+      //! Connection flags.
+      enum ConnectionFlags
+      {
+        //! Open read-only connection.
+        CF_RDONLY = 1 << 0,
+        //! Create database if it does not exist.
+        CF_CREATE = 1 << 1
+      };
 
-      //! Constructor.
+      //! Constructs a memory-only database.
+      //! @param flags connection flags (@see ConnectionFlags)
+      Connection(int flags);
+
+      //! Constructs a file-based database.
       //! @param path database file
-      //! @param create create database if it does not exist
-      Connection(const char* path, bool create = false);
+      //! @param flags connection flags (@see ConnectionFlags)
+      Connection(const char* path, int flags);
 
       //! Destructor.
-      ~Connection();
+      ~Connection(void);
 
       //! Execute an SQL statement directly
       //! and optionally obtain the number of affected rows
@@ -100,6 +110,9 @@ namespace DUNE
       Statement* m_tbegin_stmt;
       Statement* m_tcommit_stmt;
       Statement* m_trollback_stmt;
+
+      void
+      open(const char* path, int flags);
     };
   }
 }
