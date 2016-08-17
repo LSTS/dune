@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
+// IMC XML MD5: ac6fc6f4b1f5c445991672dbda04723d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -22674,6 +22674,97 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Tachograph.
+    class Tachograph: public Message
+    {
+    public:
+      //! Last Service Timestamp.
+      fp64_t timestamp_last_service;
+      //! Time - Next Service.
+      fp32_t time_next_service;
+      //! Time Motor - Next Service.
+      fp32_t time_motor_next_service;
+      //! Time Idle - Ground.
+      fp32_t time_idle_ground;
+      //! Time Idle - Air.
+      fp32_t time_idle_air;
+      //! Time Idle - Water.
+      fp32_t time_idle_water;
+      //! Time Idle - Underwater.
+      fp32_t time_idle_underwater;
+      //! Time Idle - Unknown.
+      fp32_t time_idle_unknown;
+      //! Time Motor - Ground.
+      fp32_t time_motor_ground;
+      //! Time Motor - Air.
+      fp32_t time_motor_air;
+      //! Time Motor - Water.
+      fp32_t time_motor_water;
+      //! Time Motor - Underwater.
+      fp32_t time_motor_underwater;
+      //! Time Motor - Unknown.
+      fp32_t time_motor_unknown;
+      //! Recorded RPMs - Minimum.
+      int16_t rpm_min;
+      //! Recorded RPMs - Maximum.
+      int16_t rpm_max;
+      //! Recorded Depth - Maximum.
+      fp32_t depth_max;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 905;
+      }
+
+      Tachograph(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Tachograph(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Tachograph::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Tachograph";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 64;
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
