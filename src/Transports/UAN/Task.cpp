@@ -163,9 +163,9 @@ namespace Transports
         .defaultValue("false")
         .description("In this mode, the USBL node does not request ranging information."
                      " Thus, with this mode enabled, there's only a two-way travel"
-                     " transmission between the node aand the USBL modem. The node will"
+                     " transmission between the node and the USBL modem. The node will"
                      " actively ping the modem to get bearing/elevation information"
-                     " With thismode enabled \"Absolute Fix\" argument is ignored");
+                     " With this mode enabled \"Absolute Fix\" argument is ignored");
 
         param("USBL Modem -- Announce Service", m_args.usbl_announce)
         .defaultValue("false")
