@@ -135,8 +135,7 @@ namespace Transports
         .defaultValue("false")
         .description("Enable low gain mode (testing purposes)");
 
-        param(DTR_RT("Source Level"), m_args.source_level)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        param("Source Level", m_args.source_level)
         .defaultValue("3")
         .minimumValue("0")
         .maximumValue("3")
