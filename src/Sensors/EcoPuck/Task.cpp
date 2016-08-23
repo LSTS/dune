@@ -66,6 +66,18 @@ namespace Sensors
       std::string uart_dev;
       //! Input timeout.
       double timeout;
+      //! CDOM dark counts.
+      unsigned dom_dc;
+      //! CDOM scale factor.
+      double dom_sf;
+      //! Chlorophyll dark counts.
+      unsigned chl_dc;
+      //! Chlorophyll scale factor.
+      double chl_sf;
+      //! Scattering meter dark counts.
+      unsigned obc_dc;
+      //! Scattering meter scale factor.
+      double obc_sf;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -101,6 +113,33 @@ namespace Sensors
         .minimumValue("2.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
+
+        param("CDOM -- Dark Counts", m_args.dom_dc)
+        .defaultValue("41")
+        .description("Signal output of the meter in clean water with black tape over detector");
+
+        param("CDOM -- Scale Factor", m_args.dom_sf)
+        .defaultValue("0.0896")
+        .description("Scale factor is used to derive instrument output concentration"
+                     " from the raw signal output of the fluorometer");
+
+        param("Chlorophyll -- Dark Counts", m_args.chl_dc)
+        .defaultValue("44")
+        .description("Signal output of the meter in clean water with black tape over detector");
+
+        param("Chlorophyll -- Scale Factor", m_args.chl_sf)
+        .defaultValue("0.0073")
+        .description("Scale factor is used to derive instrument output concentration"
+                     " from the raw signal output of the fluorometer");
+
+        param("Scattering -- Dark Counts", m_args.obc_dc)
+        .defaultValue("44")
+        .description("Signal output of the meter in clean water with black tape over detector");
+
+        param("Scattering -- Scale Factor", m_args.obc_sf)
+        .defaultValue("1.824e-6")
+        .description("Scale factor is used to derive instrument output concentration"
+                     " from the raw signal output of the fluorometer");
 
         m_dom.type = IMC::DissolvedOrganicMatter::DT_COLORED;
       }
@@ -163,21 +202,25 @@ namespace Sensors
 
         if (rv == 3)
         {
-          debug("Chlorophyll: %u; cDOM: %u; Backscatter: %u", chl, dom, obc);
+          trace("raw counts: chlor: %u | cdom: %u | scatter: %u", chl, dom, obc);
 
           double tstamp = Clock::getSinceEpoch();
           m_obc.setTimeStamp(tstamp);
           m_chl.setTimeStamp(tstamp);
           m_dom.setTimeStamp(tstamp);
-          m_obc.value = (float)obc;
-          m_chl.value = (float)chl;
-          m_dom.value = (float)dom;
+          m_obc.value = m_args.obc_sf * (double)(obc - m_args.obc_dc);
+          m_chl.value = m_args.chl_sf * (double)(chl - m_args.chl_dc);
+          m_dom.value = m_args.dom_sf * (double)(dom - m_args.dom_dc);
+
           dispatch(m_obc, DF_KEEP_TIME);
           dispatch(m_dom, DF_KEEP_TIME);
           dispatch(m_chl, DF_KEEP_TIME);
 
-          m_wdog.reset();
+          debug("output: chlor: %lf | cdom: %lf | scatter: %lf",
+                m_chl.value, m_dom.value, m_obc.value);
+
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          m_wdog.reset();
         }
         else
         {
