@@ -82,19 +82,13 @@ namespace DUNE
       if (m_sdata != NULL)
         m_sdata->reset();
 
-      m_mstate = SM_IDLE;
-
-      m_got_data = false;
-
       m_z_ref.value = 0.0;
       m_z_ref.z_units = IMC::Z_NONE;
-
+      m_mstate = SM_IDLE;
       m_forced = FC_NONE;
-
+      m_got_data = false;
       m_dspeed = 0.0;
-
       m_last_run = Time::Clock::get();
-
       m_cparcel.clear();
     }
 
@@ -193,10 +187,14 @@ namespace DUNE
     }
 
     bool
-    BottomTracker::checkSafety(void)
+    BottomTracker::checkObstacles(void)
     {
+      // Too many interferences at surface.
+      if (!isUnderwater())
+        return false;
+
       // Do not attempt to interfere if the echo can be the surface
-      if (m_sdata->isSurface(m_estate) || m_estate.depth < c_depth_hyst)
+      if (m_sdata->isSurface(m_estate))
         return false;
 
       // Check if forward range is too low
@@ -274,8 +272,8 @@ namespace DUNE
         m_mstate = SM_TRACKING;
       else if (m_z_ref.z_units == IMC::Z_DEPTH)
         m_mstate = SM_DEPTH;
-      else
-        safetyWithoutZRef();
+
+      safetyWithoutZRef();
     }
 
     void
@@ -284,20 +282,16 @@ namespace DUNE
       // Render slope top as invalid here
       m_sdata->renderSlopeInvalid();
 
-      // Do not attempt to interfere if we can't use altitude
-      if (isAltitudeValid())
+      // Altitude below admissible value.
+      if (isAltitudeValid() && m_estate.alt < m_args->adm_alt)
       {
-        // if altitude is not admissible for depth control
-        if (m_estate.alt < m_args->adm_alt)
-        {
-          debug("no z ref: below admissible altitude -> avoiding");
-          brake(true);
-          m_mstate = SM_AVOIDING;
-          return;
-        }
+        debug("no z ref: below admissible altitude -> avoiding");
+        brake(true);
+        m_mstate = SM_AVOIDING;
+        return;
       }
 
-      if (m_sdata->isSurface(m_estate) || m_estate.depth < c_depth_hyst)
+      if (m_sdata->isSurface(m_estate) || !isUnderwater())
         return;
 
       // Check if forward range is too low
@@ -331,12 +325,13 @@ namespace DUNE
       // Render slope top as invalid here
       m_sdata->renderSlopeInvalid();
 
-      float z_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
+      // it's ok if altitude is invalid, z_ref will be worst-case scenario then.
+      float z_ref = getReverseZ();
 
       // if units are now altitude
       if (m_forced == FC_ALTITUDE)
       {
-        if  (m_z_ref.z_units == IMC::Z_ALTITUDE)
+        if (m_z_ref.z_units == IMC::Z_ALTITUDE)
         {
           debug("tracking: units are altitude now -> tracking");
 
@@ -362,31 +357,23 @@ namespace DUNE
         return;
       }
 
-      // Do not attempt to interfere if we cant use altitude
-      if (isAltitudeValid())
+      // Altitude below minimum.
+      if (isAltitudeValid() && m_estate.alt < m_args->min_alt)
       {
-        // check if altitude value is becoming dangerous
-        if (m_estate.alt < m_args->min_alt)
-        {
-          debug(String::str("tracking: altitude is too low: %.2f -> avoiding",
-                            m_estate.alt));
+        debug(String::str("tracking: altitude is too low: %.2f -> avoiding",
+                          m_estate.alt));
 
-          brake(true);
-          m_mstate = SM_AVOIDING;
-          return;
-        }
+        brake(true);
+        m_mstate = SM_AVOIDING;
+        return;
       }
 
-      // check safety
-      if (!checkSafety())
-        return;
+      checkObstacles();
 
-      // if reaching a limit in altitude
-      if (z_ref > m_args->depth_limit + c_depth_hyst &&
-          m_estate.depth > m_args->depth_limit)
+      // if reaching a limit depth when following in altitude
+      if (isReachingLimit(z_ref))
       {
         info(DTR("depth is reaching unacceptable values, forcing depth control"));
-
         m_forced = FC_DEPTH;
         dispatchLimitDepth();
         m_mstate = SM_LIMITDEPTH;
@@ -413,7 +400,7 @@ namespace DUNE
       if (isAltitudeValid())
       {
         // if reaching a limit in altitude
-        float alt_ref = m_estate.depth + m_estate.alt - m_z_ref.value;
+        float alt_ref = getReverseZ();
 
         // if altitude is not admissible for depth control
         if (alt_ref < m_args->adm_alt && m_estate.alt < m_args->adm_alt)
@@ -427,25 +414,12 @@ namespace DUNE
         }
       }
 
-      // check safety
-      if (!checkSafety())
-        return;
+      checkObstacles();
     }
 
     void
     BottomTracker::onLimitDepth(void)
     {
-      // if reference is for altitude now
-      if ((m_z_ref.z_units == IMC::Z_ALTITUDE) && (m_forced != FC_DEPTH))
-      {
-        debug("limit depth: units are altitude now -> tracking");
-
-        m_forced = FC_NONE;
-        dispatchSameZ();
-        m_mstate = SM_TRACKING;
-        return;
-      }
-
       if ((m_z_ref.z_units == IMC::Z_DEPTH) && (m_z_ref.value < m_args->depth_limit))
       {
         debug("limit depth: units are depth now -> idle");
@@ -456,26 +430,27 @@ namespace DUNE
         return;
       }
 
+      // avoid possible obstacle.
       if (m_sdata->isRangeLow(m_estate.theta))
       {
         debug(String::str("limit depth: frange is too low: %.2f -> avoiding",
                           m_sdata->getFRange()));
 
-        m_forced = FC_NONE;
         brake(true);
+        m_forced = FC_NONE;
         m_mstate = SM_AVOIDING;
         return;
       }
 
-      // check if depth control is being forced and if we can switch back
-      if ((m_forced == FC_DEPTH) &&
-          (m_estate.depth + m_estate.alt - m_z_ref.value < m_args->depth_limit))
+      // can we switch back ?
+      if (isAltitudeValid() && getReverseZ() < m_args->depth_limit &&
+          m_estate.depth < m_args->depth_limit + c_depth_hyst)
       {
         debug("limit depth: depth is no longer near the limit -> tracking");
 
         m_forced = FC_NONE;
-        dispatchSameZ();
         m_mstate = SM_TRACKING;
+        dispatchSameZ();
         return;
       }
     }
@@ -519,7 +494,7 @@ namespace DUNE
         return;
       }
 
-      if (m_sdata->isSurface(m_estate) || m_estate.depth < c_depth_hyst)
+      if (m_sdata->isSurface(m_estate) || !isUnderwater())
       {
         debug("unsafe: cannot use range -> tracking");
 
@@ -560,7 +535,7 @@ namespace DUNE
     BottomTracker::onAvoiding(void)
     {
       // If ranges cannot be used, then we're clueless
-      if (m_sdata->isSurface(m_estate))
+      if (m_sdata->isSurface(m_estate) && !isUnderwater())
       {
         err(DTR("unable to avoid obstacle"));
         return;
@@ -591,7 +566,7 @@ namespace DUNE
           m_mstate = SM_TRACKING;
           return;
         }
-        else if (m_z_ref.z_units == IMC::Z_DEPTH && m_estate.alt > m_args->min_alt + c_alt_hyst)
+        else if (m_z_ref.z_units == IMC::Z_DEPTH)
         {
           debug("avoiding: units are depth, carry on -> depth");
 
@@ -638,7 +613,7 @@ namespace DUNE
       if (m_z_ref.z_units == IMC::Z_ALTITUDE)
         new_ddepth.value = std::max((float)0.0, depth_at_slope - m_z_ref.value);
       else
-        new_ddepth.value = std::max((float)0.0, depth_at_slope - m_args->alt_tol);
+        new_ddepth.value = std::max((float)0.0, depth_at_slope - m_args->adm_alt);
 
       m_args->entity->dispatch(new_ddepth);
 
@@ -651,9 +626,7 @@ namespace DUNE
       IMC::DesiredZ limit_depth;
       limit_depth.value = m_args->depth_limit;
       limit_depth.z_units = IMC::Z_DEPTH;
-
       m_args->entity->dispatch(limit_depth);
-
       debug(String::str("dispatching limit depth: %.2f", limit_depth.value));
     }
 
@@ -661,22 +634,8 @@ namespace DUNE
     BottomTracker::dispatchSameZ(void) const
     {
       IMC::DesiredZ same_z = m_z_ref;
-
       m_args->entity->dispatch(same_z);
-
       debug(String::str("dispatching same z ref: %.2f", same_z.value));
-    }
-
-    void
-    BottomTracker::dispatchAltitude(void) const
-    {
-      IMC::DesiredZ zed;
-      zed.value = m_args->alt_tol;
-      zed.z_units = IMC::Z_ALTITUDE;
-
-      m_args->entity->dispatch(zed);
-
-      debug(String::str("dispatching altitude ref: %.2f", zed.value));
     }
 
     void
@@ -685,17 +644,54 @@ namespace DUNE
       IMC::DesiredZ zed;
       zed.value = m_args->adm_alt;
       zed.z_units = IMC::Z_ALTITUDE;
-
       m_args->entity->dispatch(zed);
+      debug(String::str("dispatching altitude ref: %.2f", zed.value));
     }
 
     bool
-    BottomTracker::isAltitudeValid(void)
+    BottomTracker::isAltitudeValid(void) const
     {
-      if (m_estate.alt > 0.0 && m_estate.depth > m_args->depth_tol)
+      if (m_estate.alt > 0.0 && isUnderwater())
         return true;
 
       return false;
+    }
+
+    bool
+    BottomTracker::isUnderwater(void) const
+    {
+      if (m_estate.depth > c_depth_hyst)
+        return true;
+
+      return false;
+    }
+
+    bool
+    BottomTracker::isReachingLimit(double depth_ref) const
+    {
+      // already beyond limit.
+      if (m_estate.depth > m_args->depth_limit + c_depth_hyst)
+        return true;
+
+      // below limit.
+      if (m_estate.depth < m_args->depth_limit)
+        return false;
+
+      // above limit and without altitude measurements.
+      if (!isAltitudeValid())
+        return false;
+
+      // above limit and z reference to reduce safety.
+      if (depth_ref < m_args->depth_limit + c_depth_hyst)
+        return false;
+
+      return true;
+    }
+
+    double
+    BottomTracker::getReverseZ(void) const
+    {
+      return m_estate.depth + m_estate.alt - m_z_ref.value;
     }
 
     void
