@@ -22,7 +22,6 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: José Pinto                                                       *
 // Author: José Braga                                                       *
 //***************************************************************************
 
