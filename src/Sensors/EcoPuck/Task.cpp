@@ -202,7 +202,7 @@ namespace Sensors
 
         if (rv == 3)
         {
-          trace("raw counts: chlor: %u | cdom: %u | scatter: %u", chl, dom, obc);
+          trace("counts: chlor: %u | cdom: %u | scatter: %u", chl, dom, obc);
 
           double tstamp = Clock::getSinceEpoch();
           m_obc.setTimeStamp(tstamp);
@@ -216,7 +216,7 @@ namespace Sensors
           dispatch(m_dom, DF_KEEP_TIME);
           dispatch(m_chl, DF_KEEP_TIME);
 
-          debug("output: chlor: %lf | cdom: %lf | scatter: %lf",
+          debug("output: chlor: %0.2f | cdom: %0.2f | scatter: %0.2f",
                 m_chl.value, m_dom.value, m_obc.value);
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
