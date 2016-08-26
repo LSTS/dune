@@ -433,15 +433,7 @@ namespace Monitors
       {
         // Wait to stabilize at beginning.
         if (!m_init.overflow())
-        {
-          if (isActive())
-          {
-            IMC::VehicleMedium m;
-            m.medium = IMC::VehicleMedium::VM_UNKNOWN;
-            dispatch(m);
-          }
           return;
-        }
 
         updateStateMachine();
       }
