@@ -39,7 +39,9 @@ namespace Sensors
     using DUNE_NAMESPACES;
 
     //! Data input timeout.
-    static const double c_data_timeout = 5.0;
+    static const double c_data_timeout = 8.0;
+    //! Data port offset.
+    static const unsigned c_data_port = 2;
 
     //! Task arguments.
     struct Arguments
@@ -210,34 +212,18 @@ namespace Sensors
           addPowerChannelName(m_args.power_channel);
         }
 
-        restart();
-      }
-
-      //! Check if we need to restart.
-      void
-      restart(void)
-      {
-        bool ret = false;
-
         if (isActive())
         {
           if (paramChanged(m_args.rate) || paramChanged(m_args.cp_enable))
           {
-            ret = true;
+            onInitializeDevice();
           }
           else if (m_args.cp_enable)
           {
             if (paramChanged(m_args.cp_ncells) || paramChanged(m_args.cp_csize) ||
                 paramChanged(m_args.cp_npings) || paramChanged(m_args.cp_blankdist))
-              ret = true;
+              onInitializeDevice();
           }
-        }
-
-        // let's restart.
-        if (ret)
-        {
-          requestDeactivation();
-          requestActivation();
         }
       }
 
@@ -314,7 +300,10 @@ namespace Sensors
           m_triggered = false;
 
         if (isConnected())
+        {
           m_driver->setInputTrigger(m_triggered);
+          m_wdog.reset();
+        }
       }
 
       void
@@ -324,7 +313,10 @@ namespace Sensors
           return;
 
         if (isConnected())
+        {
           m_driver->setSalinity(msg->value);
+          m_wdog.reset();
+        }
       }
 
       //! Check if our IO device is a TCP socket.
@@ -351,7 +343,7 @@ namespace Sensors
         data_sock->setNoDelay(true);
         data_sock->setSendTimeout(1.0);
         data_sock->setReceiveTimeout(1.0);
-        data_sock->connect(addr, port + 2);
+        data_sock->connect(addr, port + c_data_port);
         m_data_h = data_sock;
         m_serial = false;
 
@@ -426,11 +418,9 @@ namespace Sensors
           m_wdog.reset();
           return true;
         }
-        else if (m_wdog.overflow())
-        {
-          requestDeactivation();
-          requestActivation();
-        }
+
+        if (m_wdog.overflow())
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
 
         return false;
       }
@@ -452,14 +442,15 @@ namespace Sensors
       {
         if (isConnected())
         {
-          if (m_driver->setup())
-          {
-            m_wdog.setTop(c_data_timeout);
-            return;
-          }
+          unsigned pings = m_args.cp_enable ? m_args.cp_npings : 0;
 
-          requestDeactivation();
-          requestActivation();
+          m_driver->reset(m_args.rate, pings, m_args.cp_ncells,
+                          m_args.cp_csize, m_args.cp_blankdist);
+
+          if (!m_driver->setup())
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+
+          m_wdog.setTop(c_data_timeout);
         }
       }
 
@@ -492,12 +483,10 @@ namespace Sensors
       void
       setup(void)
       {
-        if (!m_args.cp_enable)
-          m_args.cp_npings = 0;
+        unsigned pings = m_args.cp_enable ? m_args.cp_npings : 0;
 
         m_driver = new Driver(this, m_handle, m_args.rate, m_triggered, m_args.debug,
-                              m_args.cp_npings, m_args.cp_ncells, m_args.cp_csize,
-                              m_args.cp_blankdist);
+                              pings, m_args.cp_ncells, m_args.cp_csize, m_args.cp_blankdist);
 
         m_parser = new Parser(this, m_data_h, m_args.pos, m_args.ang, m_entities, m_entity);
       }
