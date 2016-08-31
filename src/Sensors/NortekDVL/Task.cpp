@@ -238,12 +238,6 @@ namespace Sensors
       }
 
       void
-      onResourceRelease(void)
-      {
-        onDisconnect();
-      }
-
-      void
       consume(const IMC::VehicleMedium* msg)
       {
         m_hand.update(msg);
