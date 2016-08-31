@@ -96,9 +96,20 @@ namespace DUNE
         {
           double t_dist;
           if (m_zunits == IMC::Z_DEPTH)
+          {
+            // special case for yoyo at surface.
+            if (m_z_ref + m_amplitude < c_dist_to_ref)
+            {
+              m_old_pitch = trimPitch(m_dir * m_pitch_ref, pitch);
+              return m_old_pitch;
+            }
+
             t_dist = m_dir * (state_z - m_target_z);
+          }
           else
+          {
             t_dist = m_dir * (m_target_z - state_z);
+          }
 
           if (t_dist >= std::min(m_amplitude, c_dist_to_ref)
               && withinLimits(depth, alt))
@@ -120,9 +131,16 @@ namespace DUNE
           double dmax = std::fabs(state_z - max_z);
 
           if (m_zunits == IMC::Z_DEPTH)
-            m_dir = dmin < dmax ? DIR_DOWN : DIR_UP;
+          {
+            if (max_z > c_dist_to_ref)
+              m_dir = dmin < dmax ? DIR_DOWN : DIR_UP;
+            else
+              m_dir = DIR_UP;
+          }
           else
+          {
             m_dir = dmin < dmax ? DIR_UP : DIR_DOWN;
+          }
 
           m_source_z = state_z;
         }
@@ -134,7 +152,7 @@ namespace DUNE
           if (m_dir == DIR_UP)
             m_target_z = std::max(0.0f, m_z_ref - m_amplitude);
           else
-            m_target_z = std::max(m_max_depth - c_depth_margin, m_z_ref + m_amplitude);
+            m_target_z = std::min(m_max_depth - c_depth_margin, m_z_ref + m_amplitude);
         }
         else
         {
