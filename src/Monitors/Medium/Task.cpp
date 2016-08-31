@@ -112,7 +112,7 @@ namespace Monitors
         param("Initialization Time", m_args.init_time)
         .units(Units::Second)
         .defaultValue("20.0")
-        .minimumValue("10.0")
+        .minimumValue("5.0")
         .maximumValue("60.0")
         .description("Time to wait at beginning before assessing vehicle medium");
 
