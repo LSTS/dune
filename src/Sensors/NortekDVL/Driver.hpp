@@ -160,6 +160,9 @@ namespace Sensors
         if (!sendCommand("SETUSER,POFF=0.0"))
           return false;
 
+        if (!sendCommand("SAVE,USER"))
+          return false;
+
         if (m_debug)
         {
           if (!sendCommand("SETBTHW,NDFEN=199"))
