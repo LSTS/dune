@@ -165,7 +165,7 @@ namespace Transports
         param("GSM - Mode", m_args.gsm_mode)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("AT\\^SYSCFG=2,2,3fffffff,0,1")
+        .defaultValue("AT\\^SYSCFG=2,2,3fffffff,1,1")
         .description("GSM/GPRS mode.");
 
         param("USB Mode Switch", m_args.usb_mode_switch)
