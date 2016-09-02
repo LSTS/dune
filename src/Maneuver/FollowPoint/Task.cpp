@@ -134,7 +134,7 @@ namespace Maneuver
         m_target = new IMC::FollowPoint(*msg);
         m_wdog.reset();
 
-        debug("now following %s", resolveSystemId(m_target->target));
+        debug("now following %s", m_target->target.c_str());
       }
 
       void
@@ -143,7 +143,7 @@ namespace Maneuver
         if (m_target == NULL)
           return;
 
-        if (msg->id != resolveSystemId(m_target->target))
+        if (msg->id != m_target->target)
           return;
 
         Memory::clear(m_status);
