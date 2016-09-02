@@ -48,8 +48,8 @@ namespace Maneuver
       float timeout;
       //! Distance to target to just meet it.
       float radius;
-      //! Speed to meet target;
-      float speed;
+      //! Time interval between path updates.
+      float period;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -64,6 +64,8 @@ namespace Maneuver
       double m_speed;
       //! Maneuver watchdog
       Counter<float> m_wdog;
+      //! Path update period.
+      Counter<float> m_path_timer;
       //! Internal state.
       StateMachine m_sm;
       //! Task Arguments
@@ -87,6 +89,11 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Distance to meet target");
 
+        param("Path Update Period", m_args.period)
+        .defaultValue("1.0")
+        .units(Units::Second)
+        .description("Period between path updates");
+
         bindToManeuver<Task, IMC::FollowPoint>();
         bind<IMC::EstimatedState>(this, true);
         bind<IMC::RemoteSensorInfo>(this);
@@ -105,6 +112,9 @@ namespace Maneuver
       {
         if (paramChanged(m_args.timeout))
           m_wdog.setTop(m_args.timeout);
+
+        if (paramChanged(m_args.period))
+          m_path_timer.setTop(m_args.period);
       }
 
       void
@@ -145,6 +155,8 @@ namespace Maneuver
 
         if (msg->id != m_target->target)
           return;
+
+        debug("updated info for %s", msg->id.c_str());
 
         Memory::clear(m_status);
         m_status = new IMC::RemoteSensorInfo(*msg);
@@ -203,6 +215,9 @@ namespace Maneuver
           inf("approach target");
         }
 
+        if (!m_path_timer.overflow())
+          return;
+
         setControl(IMC::CL_PATH);
 
         // go to point.
@@ -215,6 +230,7 @@ namespace Maneuver
         path.end_z = m_target->z;
         path.end_z_units = m_target->z_units;
         dispatch(path);
+        m_path_timer.reset();
       }
 
       //! On target.
