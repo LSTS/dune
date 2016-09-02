@@ -102,7 +102,6 @@ namespace Sensors
         m_ctd_counter.setTop(m_args.ctd_period);
         m_tel_counter.setTop(m_args.telemetry_period);
         m_sss_counter.setTop(m_args.sss_period);
-        m_ctd_entity = m_ctx.entities.resolve(m_args.ctd_label);
 
         bool active = false;
         if (m_args.ctd_period > 0)
@@ -118,6 +117,12 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         else
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        m_ctd_entity = m_ctx.entities.resolve(m_args.ctd_label);
       }
 
       //! On resource initialization
