@@ -53,7 +53,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  [D]: DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate, DesiredPitch,\n");
       fprintf(stdout, "       DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
       fprintf(stdout, "  [E]: EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
-      fprintf(stdout, "  [F]: FuelLevel\n");
+      fprintf(stdout, "  [F]: FollowPoint, FuelLevel\n");
       fprintf(stdout, "  [G]: GpsFix, GpsFixRtk\n");
       fprintf(stdout, "  [H]: Heartbeat\n");
       fprintf(stdout, "  [I]: IridiumMsgTx\n");
@@ -64,8 +64,8 @@ main(int argc, char** argv)
       fprintf(stdout, "  [P]: PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl,\n");
       fprintf(stdout, "       PowerChannelState, PushEntityParameters\n");
       fprintf(stdout, "  [Q]: QueryEntityInfo, QueryEntityParameters\n");
-      fprintf(stdout, "  [R]: RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl,\n");
-      fprintf(stdout, "       RestartSystem\n");
+      fprintf(stdout, "  [R]: RegisterManeuver, RemoteActions, RemoteActionsRequest, RemoteSensorInfo,\n");
+      fprintf(stdout, "       ReplayControl, ReportControl, RestartSystem\n");
       fprintf(stdout, "  [S]: SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition,\n");
       fprintf(stdout, "       SetThrusterActuation, Sms, SoundSpeed\n");
       fprintf(stdout, "  [T]: Target, TeleoperationDone, Temperature, TextMessage, TrexCommand\n");
@@ -311,6 +311,17 @@ main(int argc, char** argv)
     tmsg->lat = 0.0;
     tmsg->lon = 0.0;
     tmsg->depth = 0.0;
+  }
+
+  if (strcmp(argv[3], "FollowPoint") == 0)
+  {
+    IMC::FollowPoint* tmsg = new IMC::FollowPoint;
+    msg = tmsg;
+    tmsg->target = atoi(argv[4]);
+    tmsg->max_speed = atof(argv[5]);
+    tmsg->speed_units = IMC::SUNITS_METERS_PS;
+    tmsg->z = 0.0;
+    tmsg->z_units = IMC::Z_DEPTH;
   }
 
   if (strcmp(argv[3], "FuelLevel") == 0)
@@ -618,6 +629,17 @@ main(int argc, char** argv)
     IMC::RemoteActionsRequest* tmsg = new IMC::RemoteActionsRequest;
     msg = tmsg;
     tmsg->op = IMC::RemoteActionsRequest::OP_QUERY;
+  }
+
+  if (strcmp(argv[3], "RemoteSensorInfo") == 0)
+  {
+    IMC::RemoteSensorInfo* tmsg = new IMC::RemoteSensorInfo;
+    msg = tmsg;
+    tmsg->id = argv[4];
+    tmsg->lat = atof(argv[5]);
+    tmsg->lon = atof(argv[6]);
+    tmsg->heading = atof(argv[7]);
+    tmsg->data = String::str("speed=%0.1f", atof(argv[8]));
   }
 
   if (strcmp(argv[3], "ReplayControl") == 0)
