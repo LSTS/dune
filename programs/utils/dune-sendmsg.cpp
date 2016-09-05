@@ -315,13 +315,19 @@ main(int argc, char** argv)
 
   if (strcmp(argv[3], "FollowPoint") == 0)
   {
-    IMC::FollowPoint* tmsg = new IMC::FollowPoint;
+    IMC::PlanControl* tmsg = new IMC::PlanControl;
     msg = tmsg;
-    tmsg->target = atoi(argv[4]);
-    tmsg->max_speed = atof(argv[5]);
-    tmsg->speed_units = IMC::SUNITS_METERS_PS;
-    tmsg->z = 0.0;
-    tmsg->z_units = IMC::Z_DEPTH;
+    tmsg->plan_id = "followPoint_man";
+    tmsg->op = IMC::PlanControl::PC_START;
+    tmsg->type = IMC::PlanControl::PC_REQUEST;
+    tmsg->flags = 0;
+    IMC::FollowPoint fp;
+    fp.target = argv[4];
+    fp.max_speed = atof(argv[5]);
+    fp.speed_units = IMC::SUNITS_METERS_PS;
+    fp.z = 0.0;
+    fp.z_units = IMC::Z_DEPTH;
+    tmsg->arg.set(fp);
   }
 
   if (strcmp(argv[3], "FuelLevel") == 0)
