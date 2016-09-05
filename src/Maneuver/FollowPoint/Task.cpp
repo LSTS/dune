@@ -34,6 +34,9 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    //! Distance hysteresis to exit target range.
+    static const float c_hyst = 3.0f;
+
     enum StateMachine
     {
       SM_IDLE,
@@ -208,6 +211,15 @@ namespace Maneuver
         Coordinates::toWGS84(*m_estate, lat, lon);
         double r = WGS84::distance(lat, lon, 0.0, m_status->lat, m_status->lon, 0.0);
 
+        // inside range.
+        if (m_sm == SM_NEAR)
+        {
+          if (r > m_args.radius + c_hyst)
+            return true;
+
+          return false;
+        }
+
         if (r > m_args.radius)
           return true;
 
@@ -252,7 +264,7 @@ namespace Maneuver
           inf("follow attitude");
         }
 
-        setControl(IMC::CL_SPEED | IMC::CL_YAW);
+        setControl(IMC::CL_SPEED | IMC::CL_YAW | IMC::CL_DEPTH);
 
         IMC::DesiredSpeed desired_speed;
         desired_speed.value = m_speed;
@@ -262,6 +274,11 @@ namespace Maneuver
         IMC::DesiredHeading desired_yaw;
         desired_yaw.value = m_status->heading;
         dispatch(desired_yaw);
+
+        IMC::DesiredZ desired_z;
+        desired_z.value = m_target->z;
+        desired_z.z_units = m_target->z_units;
+        dispatch(desired_z);
       }
     };
   }
