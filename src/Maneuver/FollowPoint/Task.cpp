@@ -160,8 +160,17 @@ namespace Maneuver
 
         Memory::clear(m_status);
         m_status = new IMC::RemoteSensorInfo(*msg);
+
+        // get speed.
         TupleList tlist(msg->data, "=", ";", true);
         m_speed = tlist.get("speed", 1.0);
+
+        // check if maneuver has ended.
+        if (tlist.get("finished") == "true")
+        {
+          signalCompletion();
+          return;
+        }
 
         update();
       }
