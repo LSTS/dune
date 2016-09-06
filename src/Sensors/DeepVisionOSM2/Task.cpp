@@ -199,9 +199,12 @@ namespace Sensors
       void
       controlPulseDetection(IMC::PulseDetectionControl::OperationEnum op)
       {
-        IMC::PulseDetectionControl pdc;
-        pdc.op = op;
-        dispatch(pdc);
+        if (m_args.trigger_delay > 0)
+        {
+          IMC::PulseDetectionControl pdc;
+          pdc.op = op;
+          dispatch(pdc);
+        }
       }
 
       //! This derived task has direct log control.

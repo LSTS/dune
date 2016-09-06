@@ -99,6 +99,22 @@ namespace Sensors
         sendCommand("POWERDOWN");
       }
 
+      //! Reset parameters.
+      //! @param[in] rate sampling rate.
+      //! @param[in] npings collect current profile every n-th ping.
+      //! @param[in] ncells number of cells for the current profiler.
+      //! @param[in] csize cell size of the current profiler.
+      //! @param[in] blank blanking distance of the current profiler.
+      void
+      reset(float rate, unsigned npings, unsigned ncells, float csize, float blank)
+      {
+        m_sampling_rate = rate;
+        m_cp_npings = npings;
+        m_cp_ncells = ncells;
+        m_cp_csize = csize;
+        m_cp_blankdist = blank;
+      }
+
       //! Login into device.
       //! @return true if login succeeded, false otherwise
       bool
@@ -142,6 +158,9 @@ namespace Sensors
 
         // Use absolute pressure.
         if (!sendCommand("SETUSER,POFF=0.0"))
+          return false;
+
+        if (!sendCommand("SAVE,USER"))
           return false;
 
         if (m_debug)

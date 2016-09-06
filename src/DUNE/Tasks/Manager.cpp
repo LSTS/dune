@@ -218,6 +218,7 @@ namespace DUNE
         if (value < 0 || value > 100)
           continue;
 
+        m_task_cpu_usage.setSourceEntity(task->getEntityId());
         m_task_cpu_usage.value = value;
         task->dispatch(m_task_cpu_usage);
 

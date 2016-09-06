@@ -272,8 +272,8 @@ namespace DUNE
         m_mstate = SM_TRACKING;
       else if (m_z_ref.z_units == IMC::Z_DEPTH)
         m_mstate = SM_DEPTH;
-
-      safetyWithoutZRef();
+      else
+        safetyWithoutZRef();
     }
 
     void
@@ -576,7 +576,7 @@ namespace DUNE
           m_mstate = SM_DEPTH;
           return;
         }
-        else
+        else if (m_z_ref.z_units == IMC::Z_NONE)
         {
           debug("avoiding: no units defined, carry on -> idle");
 

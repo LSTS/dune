@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ac6fc6f4b1f5c445991672dbda04723d                            *
+// IMC XML MD5: efc51e0c6215e7c476d850d0af78ae0f                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -15583,6 +15583,203 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Autonomous Section.
+    class AutonomousSection: public Maneuver
+    {
+    public:
+      //! Enforced Limits.
+      enum EnforcedLimitsBits
+      {
+        //! Maximum Depth Limit.
+        ENFORCE_DEPTH = 0x01,
+        //! Minimum Altitude Limit.
+        ENFORCE_ALTITUDE = 0x02,
+        //! Time Limit.
+        ENFORCE_TIMEOUT = 0x04,
+        //! Polygonal Area Limits.
+        ENFORCE_AREA2D = 0x08
+      };
+
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Enforced Limits.
+      uint8_t limits;
+      //! Maximum depth.
+      fp64_t max_depth;
+      //! Minimum altitude.
+      fp64_t min_alt;
+      //! Time Limit.
+      fp64_t time_limit;
+      //! Area Limits.
+      MessageList<PolygonVertex> area_limits;
+      //! Controller.
+      std::string controller;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 493;
+      }
+
+      AutonomousSection(void);
+
+      Message*
+      clone(void) const
+      {
+        return new AutonomousSection(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AutonomousSection::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AutonomousSection";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 46;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return area_limits.getSerializationSize() + IMC::getSerializationSize(controller) + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Follow Point Maneuver.
+    class FollowPoint: public Maneuver
+    {
+    public:
+      //! Source To Follow.
+      std::string target;
+      //! Maximum Speed.
+      fp32_t max_speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 494;
+      }
+
+      FollowPoint(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FollowPoint(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FollowPoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowPoint";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 26;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(target) + IMC::getSerializationSize(custom);
       }
 
       void

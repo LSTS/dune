@@ -234,9 +234,9 @@ namespace DUNE
       bind<IMC::Acceleration>(this);
       bind<IMC::AngularVelocity>(this);
       bind<IMC::DataSanity>(this);
-      bind<IMC::Distance>(this);
       bind<IMC::Depth>(this);
       bind<IMC::DepthOffset>(this);
+      bind<IMC::Distance>(this);
       bind<IMC::EulerAngles>(this);
       bind<IMC::EulerAnglesDelta>(this);
       bind<IMC::GpsFix>(this);
@@ -244,6 +244,7 @@ namespace DUNE
       bind<IMC::LblConfig>(this);
       bind<IMC::LblRange>(this);
       bind<IMC::Rpm>(this);
+      bind<IMC::UsblFixExtended>(this);
       bind<IMC::WaterVelocity>(this);
     }
 
@@ -751,6 +752,21 @@ namespace DUNE
     }
 
     void
+    BasicNavigation::consume(const IMC::UsblFixExtended* msg)
+    {
+      if (msg->target != getSystemName())
+        return;
+
+      double x = 0.0;
+      double y = 0.0;
+      Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
+                                       msg->lat, msg->lon, 0.0,
+                                       &x, &y);
+
+      runKalmanUSBL(x, y);
+    }
+
+    void
     BasicNavigation::consume(const IMC::WaterVelocity* msg)
     {
       m_wvel = *msg;
@@ -958,6 +974,14 @@ namespace DUNE
         m_kal.setOutput(u, m_wvel.x);
         m_kal.setOutput(v, m_wvel.y);
       }
+    }
+
+    void
+    BasicNavigation::runKalmanUSBL(double x, double y)
+    {
+      // do nothing.
+      (void)x;
+      (void)y;
     }
 
     void
