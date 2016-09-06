@@ -308,9 +308,6 @@ namespace Sensors
         if (!m_args.input_trigger)
           return;
 
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
-
         if (msg->op == IMC::PulseDetectionControl::POP_ON)
           m_triggered = true;
         else if (msg->op == IMC::PulseDetectionControl::POP_OFF)

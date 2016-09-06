@@ -69,7 +69,7 @@ main(int argc, char** argv)
 {
   Test test("DUNE::Database");
 
-  Connection db(Connection::c_memory_db);
+  Connection db(Connection::CF_CREATE);
 
   bool passed = false;
 

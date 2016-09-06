@@ -114,7 +114,7 @@ namespace Monitors
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_USER);
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
 
         param("Position Fault Detection", m_args.pos_fault_detect)
         .defaultValue("false")

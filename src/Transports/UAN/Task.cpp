@@ -68,6 +68,8 @@ namespace Transports
       bool report_enable;
       //! USBL Modem maximum waiting time.
       float usbl_max_wait;
+      //! USBL Modem Announce service.
+      bool usbl_announce;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -121,7 +123,7 @@ namespace Transports
         .description("Enable system state acoustic reporting. When enabled, systems"
                      " shall acknowledge reception of requests to broadcast acoustic"
                      " messages containing the overall state of the system."
-                     " When disabled, those requests shall be ignored.");
+                     " When disabled, those requests shall be ignored");
 
         param("USBL Node -- Enabled", m_node_args.enabled)
         .defaultValue("false")
@@ -135,7 +137,7 @@ namespace Transports
                      " reach, they will start exchanging acoustic transmissions"
                      " to provide USBL positioning to the system."
                      " Any system can be configured to request USBL information"
-                     " including modems with built-in USBL capabilities.");
+                     " including modems with built-in USBL capabilities");
 
         param("USBL Node -- Period", m_node_args.period)
         .defaultValue("60.0")
@@ -148,7 +150,7 @@ namespace Transports
                      " mode is disabled, ranging information is included for a"
                      " proper fix. In this case, the USBL modem pings the node,"
                      " hears the reply, computes the position and transmits back"
-                     " to the node (three-way travel transmission).");
+                     " to the node (three-way travel transmission)");
 
         param("USBL Node -- Absolute Fix", m_node_args.fix)
         .defaultValue("false")
@@ -161,9 +163,15 @@ namespace Transports
         .defaultValue("false")
         .description("In this mode, the USBL node does not request ranging information."
                      " Thus, with this mode enabled, there's only a two-way travel"
-                     " transmission between the node aand the USBL modem. The node will"
+                     " transmission between the node and the USBL modem. The node will"
                      " actively ping the modem to get bearing/elevation information"
-                     " With thismode enabled \"Absolute Fix\" argument is ignored.");
+                     " With this mode enabled \"Absolute Fix\" argument is ignored");
+
+        param("USBL Modem -- Announce Service", m_args.usbl_announce)
+        .defaultValue("false")
+        .description("This argument only concerns systems with USBL modems installed."
+                     " This parameter statically adds a USBL announce, even if service"
+                     " has not been detected yet (eg. modem not connected)");
 
         param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
         .defaultValue("10.0")
@@ -172,7 +180,7 @@ namespace Transports
         .units(Units::Second)
         .description("This argument only concerns systems with USBL modems installed."
                      " This value establishes the maximum amount of time that the modem"
-                     " waits for the target system's reply.");
+                     " waits for the target system's reply");
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
@@ -209,6 +217,9 @@ namespace Transports
         announce.service = std::string("imc+any://acoustic/operation/")
         + URL::encode(getEntityLabel());
         dispatch(announce);
+
+        if (m_args.usbl_announce)
+          announceUSBL();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -504,6 +515,7 @@ namespace Transports
       {
         if (m_usbl_modem == NULL)
         {
+          announceUSBL();
           m_usbl_modem = new UsblTools::Modem();
           return;
         }
@@ -535,6 +547,7 @@ namespace Transports
       {
         if (m_usbl_modem == NULL)
         {
+          announceUSBL();
           m_usbl_modem = new UsblTools::Modem();
           return;
         }
@@ -563,6 +576,17 @@ namespace Transports
           m_reporter->consume(msg);
       }
 
+      //! Announce USBL service.
+      void
+      announceUSBL(void)
+      {
+        IMC::AnnounceService announce;
+        announce.service = std::string("imc+any://acoustic/usbl/")
+        + URL::encode(getEntityLabel());
+        dispatch(announce);
+      }
+
+      //! Clear last operation.
       void
       clearLastOp(void)
       {

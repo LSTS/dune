@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
+// IMC XML MD5: ac6fc6f4b1f5c445991672dbda04723d                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -24066,6 +24066,152 @@ namespace DUNE
     OpticalBackscatter::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    Tachograph::Tachograph(void)
+    {
+      m_header.mgid = 905;
+      clear();
+    }
+
+    void
+    Tachograph::clear(void)
+    {
+      timestamp_last_service = 0;
+      time_next_service = 0;
+      time_motor_next_service = 0;
+      time_idle_ground = 0;
+      time_idle_air = 0;
+      time_idle_water = 0;
+      time_idle_underwater = 0;
+      time_idle_unknown = 0;
+      time_motor_ground = 0;
+      time_motor_air = 0;
+      time_motor_water = 0;
+      time_motor_underwater = 0;
+      time_motor_unknown = 0;
+      rpm_min = 0;
+      rpm_max = 0;
+      depth_max = 0;
+    }
+
+    bool
+    Tachograph::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Tachograph& other__ = static_cast<const Tachograph&>(msg__);
+      if (timestamp_last_service != other__.timestamp_last_service) return false;
+      if (time_next_service != other__.time_next_service) return false;
+      if (time_motor_next_service != other__.time_motor_next_service) return false;
+      if (time_idle_ground != other__.time_idle_ground) return false;
+      if (time_idle_air != other__.time_idle_air) return false;
+      if (time_idle_water != other__.time_idle_water) return false;
+      if (time_idle_underwater != other__.time_idle_underwater) return false;
+      if (time_idle_unknown != other__.time_idle_unknown) return false;
+      if (time_motor_ground != other__.time_motor_ground) return false;
+      if (time_motor_air != other__.time_motor_air) return false;
+      if (time_motor_water != other__.time_motor_water) return false;
+      if (time_motor_underwater != other__.time_motor_underwater) return false;
+      if (time_motor_unknown != other__.time_motor_unknown) return false;
+      if (rpm_min != other__.rpm_min) return false;
+      if (rpm_max != other__.rpm_max) return false;
+      if (depth_max != other__.depth_max) return false;
+      return true;
+    }
+
+    int
+    Tachograph::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    Tachograph::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(timestamp_last_service, ptr__);
+      ptr__ += IMC::serialize(time_next_service, ptr__);
+      ptr__ += IMC::serialize(time_motor_next_service, ptr__);
+      ptr__ += IMC::serialize(time_idle_ground, ptr__);
+      ptr__ += IMC::serialize(time_idle_air, ptr__);
+      ptr__ += IMC::serialize(time_idle_water, ptr__);
+      ptr__ += IMC::serialize(time_idle_underwater, ptr__);
+      ptr__ += IMC::serialize(time_idle_unknown, ptr__);
+      ptr__ += IMC::serialize(time_motor_ground, ptr__);
+      ptr__ += IMC::serialize(time_motor_air, ptr__);
+      ptr__ += IMC::serialize(time_motor_water, ptr__);
+      ptr__ += IMC::serialize(time_motor_underwater, ptr__);
+      ptr__ += IMC::serialize(time_motor_unknown, ptr__);
+      ptr__ += IMC::serialize(rpm_min, ptr__);
+      ptr__ += IMC::serialize(rpm_max, ptr__);
+      ptr__ += IMC::serialize(depth_max, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Tachograph::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(timestamp_last_service, bfr__, size__);
+      bfr__ += IMC::deserialize(time_next_service, bfr__, size__);
+      bfr__ += IMC::deserialize(time_motor_next_service, bfr__, size__);
+      bfr__ += IMC::deserialize(time_idle_ground, bfr__, size__);
+      bfr__ += IMC::deserialize(time_idle_air, bfr__, size__);
+      bfr__ += IMC::deserialize(time_idle_water, bfr__, size__);
+      bfr__ += IMC::deserialize(time_idle_underwater, bfr__, size__);
+      bfr__ += IMC::deserialize(time_idle_unknown, bfr__, size__);
+      bfr__ += IMC::deserialize(time_motor_ground, bfr__, size__);
+      bfr__ += IMC::deserialize(time_motor_air, bfr__, size__);
+      bfr__ += IMC::deserialize(time_motor_water, bfr__, size__);
+      bfr__ += IMC::deserialize(time_motor_underwater, bfr__, size__);
+      bfr__ += IMC::deserialize(time_motor_unknown, bfr__, size__);
+      bfr__ += IMC::deserialize(rpm_min, bfr__, size__);
+      bfr__ += IMC::deserialize(rpm_max, bfr__, size__);
+      bfr__ += IMC::deserialize(depth_max, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Tachograph::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(timestamp_last_service, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_next_service, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_motor_next_service, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_idle_ground, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_idle_air, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_idle_water, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_idle_underwater, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_idle_unknown, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_motor_ground, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_motor_air, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_motor_water, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_motor_underwater, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_motor_unknown, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rpm_min, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rpm_max, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(depth_max, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Tachograph::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "timestamp_last_service", timestamp_last_service, nindent__);
+      IMC::toJSON(os__, "time_next_service", time_next_service, nindent__);
+      IMC::toJSON(os__, "time_motor_next_service", time_motor_next_service, nindent__);
+      IMC::toJSON(os__, "time_idle_ground", time_idle_ground, nindent__);
+      IMC::toJSON(os__, "time_idle_air", time_idle_air, nindent__);
+      IMC::toJSON(os__, "time_idle_water", time_idle_water, nindent__);
+      IMC::toJSON(os__, "time_idle_underwater", time_idle_underwater, nindent__);
+      IMC::toJSON(os__, "time_idle_unknown", time_idle_unknown, nindent__);
+      IMC::toJSON(os__, "time_motor_ground", time_motor_ground, nindent__);
+      IMC::toJSON(os__, "time_motor_air", time_motor_air, nindent__);
+      IMC::toJSON(os__, "time_motor_water", time_motor_water, nindent__);
+      IMC::toJSON(os__, "time_motor_underwater", time_motor_underwater, nindent__);
+      IMC::toJSON(os__, "time_motor_unknown", time_motor_unknown, nindent__);
+      IMC::toJSON(os__, "rpm_min", rpm_min, nindent__);
+      IMC::toJSON(os__, "rpm_max", rpm_max, nindent__);
+      IMC::toJSON(os__, "depth_max", depth_max, nindent__);
     }
   }
 }

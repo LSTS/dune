@@ -46,7 +46,7 @@ namespace Sensors
     //! No input trigger.
     static const std::string c_cmd_trg_no = "INTSR";
     //! Configured input trigger.
-    static const std::string c_cmd_trg_yes = "RS485RISE";
+    static const std::string c_cmd_trg_yes = "TTLRISE";
 
     //! Available power levels.
     enum PowerLevel
@@ -379,7 +379,7 @@ namespace Sensors
       {
         std::string bfr(cmd + "\r\n");
         m_handle->write(bfr.c_str(), bfr.size());
-        m_task->spew("sent: '%s'", sanitize(bfr).c_str());
+        m_task->trace("sent: '%s'", sanitize(bfr).c_str());
       }
 
       //! Read input until a given sequence is received. Note that

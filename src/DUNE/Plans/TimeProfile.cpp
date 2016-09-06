@@ -250,13 +250,21 @@ namespace DUNE
       if (speed == 0.0)
         return false;
 
-      Maneuvers::RowsStages rstages = Maneuvers::RowsStages(maneuver, NULL);
+      Maneuvers::RowsStages* rstages = NULL;
+      try
+      {
+        rstages = new Maneuvers::RowsStages(maneuver, NULL);
+      }
+      catch (std::runtime_error& e)
+      {
+        return false;
+      }
 
       Position pos;
       pos.z = maneuver->z;
       pos.z_units = maneuver->z_units;
 
-      return parseWorkerRowsStages(&rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
+      return parseWorkerRowsStages(rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
     }
 
     bool
@@ -274,15 +282,24 @@ namespace DUNE
       else
         hstep = 2 * maneuver->range * std::sin(maneuver->angaperture / 2);
 
-      Maneuvers::RowsStages rstages = Maneuvers::RowsStages(maneuver->lat, maneuver->lon, maneuver->bearing,
-          maneuver->cross_angle, maneuver->width, maneuver->length, hstep, maneuver->coff, 100,
-          maneuver->flags, NULL);
+      Maneuvers::RowsStages* rstages = NULL;
+      try
+      {
+        rstages = new Maneuvers::RowsStages(maneuver->lat, maneuver->lon, maneuver->bearing,
+                                            maneuver->cross_angle, maneuver->width,
+                                            maneuver->length, hstep, maneuver->coff, 100,
+                                            maneuver->flags, NULL);
+      }
+      catch (std::runtime_error& e)
+      {
+        return false;
+      }
 
       Position pos;
       pos.z = maneuver->z;
       pos.z_units = maneuver->z_units;
 
-      return parseWorkerRowsStages(&rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
+      return parseWorkerRowsStages(rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
     }
 
     bool

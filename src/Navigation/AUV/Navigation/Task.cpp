@@ -334,6 +334,9 @@ namespace Navigation
         void
         consume(const IMC::EntityActivationState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 

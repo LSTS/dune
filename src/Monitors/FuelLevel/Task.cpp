@@ -295,6 +295,10 @@ namespace Monitors
       void
       consume(const IMC::EntityActivationState* msg)
       {
+        // not local message.
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_fuel_filter->onEntityActivationState(msg);
       }
 
