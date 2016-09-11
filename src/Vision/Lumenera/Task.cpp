@@ -343,23 +343,9 @@ namespace Vision
         trace("releasing");
         requestDeactivation();
 
-        if (m_pwr_gpio != NULL)
-        {
-          delete m_pwr_gpio;
-          m_pwr_gpio = NULL;
-        }
-
-        if (m_led_gpio != NULL)
-        {
-          delete m_led_gpio;
-          m_led_gpio = NULL;
-        }
-
-        if (m_slave_entities != NULL)
-        {
-          delete m_slave_entities;
-          m_slave_entities = NULL;
-        }
+        Memory::clear(m_pwr_gpio);
+        Memory::clear(m_led_gpio);
+        Memory::clear(m_slave_entities);
       }
 
       void
