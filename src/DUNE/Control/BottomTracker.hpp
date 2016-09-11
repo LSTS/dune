@@ -252,10 +252,10 @@ namespace DUNE
       void
       debug(const std::string& msg) const;
 
-      //! Throw an error if really necessary
+      //! Function for warning messages.
       //! @param[in] msg string message to output
       void
-      err(const std::string& msg) const;
+      war(const std::string& msg) const;
 
       //! Pointer to arguments.
       const Arguments* m_args;
@@ -281,6 +281,8 @@ namespace DUNE
       float m_last_run;
       //! True if slope was estimated.
       bool m_slope;
+      //! True if unable to avoid obstacle.
+      bool m_unable;
       //! Control parcel message for debug
       DUNE::IMC::ControlParcel m_cparcel;
     };

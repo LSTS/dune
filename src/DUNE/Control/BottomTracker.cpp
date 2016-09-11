@@ -63,7 +63,8 @@ namespace DUNE
     BottomTracker::BottomTracker(const Arguments* args):
       m_args(args),
       m_active(false),
-      m_slope(false)
+      m_slope(false),
+      m_unable(false)
     {
       m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
                               m_args->safe_pitch, m_args->slope_hyst);
@@ -537,8 +538,20 @@ namespace DUNE
       // If ranges cannot be used, then we're clueless
       if (m_sdata->isSurface(m_estate) && !isUnderwater())
       {
-        err(DTR("unable to avoid obstacle"));
+        if (!m_unable)
+        {
+          war(DTR("unable to avoid obstacle"));
+          m_unable = true;
+        }
+
         return;
+      }
+
+      // Previously unable to avoid obstacle.
+      if (m_unable)
+      {
+        m_unable = false;
+        war(DTR("avoid obstacle"));
       }
 
       // check if slope is safe right now and
@@ -709,11 +722,10 @@ namespace DUNE
     }
 
     void
-    BottomTracker::err(const std::string& msg) const
+    BottomTracker::war(const std::string& msg) const
     {
-      throw std::runtime_error(String::str("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
-                                           DTR(c_str_states[m_mstate].c_str()),
-                                           msg.c_str()));
+      m_args->task->war("[%s.%s] >> %s", DTR(c_bt_name.c_str()),
+                        DTR(c_str_states[m_mstate].c_str()), msg.c_str());
     }
   }
 }
