@@ -51,11 +51,11 @@ namespace Monitors
 
     struct Task: public DUNE::Tasks::Periodic
     {
-      //! CPU Temperature.
+      //! IMC msg -> CPU Temperature.
       IMC::Temperature m_temp;
       //! Task arguments.
       Arguments m_args;
-      //! Temperature
+      //! Temperature value
       float m_temperature;
 
       Task(const std::string& name, Tasks::Context& ctx):
