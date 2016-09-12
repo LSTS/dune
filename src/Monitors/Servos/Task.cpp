@@ -47,6 +47,8 @@ namespace Monitors
     static const unsigned c_servo_count = 4;
     //! Error timeout
     static const float c_error_timeout = 5.0;
+    //! Servo in failure
+    static const char* c_fail_servo = "major fault in servo#";
 
     enum FaultBits
     {
@@ -86,6 +88,10 @@ namespace Monitors
       double fault_cooldown;
       //! Servo current entity labels.
       std::string elabel_ampg[c_servo_count];
+      //! Failure error timeout.
+      double error_time;
+      //! Failure error counter.
+      unsigned error_count;
     };
 
     struct Task: public Tasks::Task
@@ -108,9 +114,14 @@ namespace Monitors
       uint8_t m_on_fault[c_servo_count];
       //! Timer for error timeout
       Time::Counter<float> m_timer;
+      //! Queue for error reports.
+      std::queue<double> m_queue[c_servo_count];
+      //! Servo in failure.
+      int8_t m_fail_servo;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_fail_servo(-1)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -180,6 +191,16 @@ namespace Monitors
         .defaultValue("60.0")
         .minimumValue("0.0")
         .description("Period of time after which the fault vectors will be reset to zero");
+
+        param("Failure Error Timeout", m_args.error_time)
+        .units(Units::Second)
+        .defaultValue("2.0")
+        .minimumValue("0.0")
+        .description("Period of time to count number of errors to issue a failure");
+
+        param("Failure Error Count", m_args.error_count)
+        .defaultValue("5")
+        .description("Number of errors to happen in a period of time to issue a failure");
 
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
@@ -333,10 +354,26 @@ namespace Monitors
           uint8_t was_on_fault = m_on_fault[i];
           std::string desc;
 
+          float now = Time::Clock::get();
+          while (!m_queue[i].empty())
+          {
+            double t = m_queue[i].front();
+            if (now - t > m_args.error_time)
+              m_queue[i].pop();
+          }
+
           if (m_pos_monitor[i]->updateAndTest(msg->value, m_set_servo[i], &desc))
           {
             m_error_str = String::str(DTR("potential fault in servo#%d, %s"),
                                       i, desc.c_str());
+
+
+            m_queue[i].push(now);
+            if (m_queue[i].size() > m_args.error_count)
+            {
+              err("%s%d", DTR(c_fail_servo), i);
+              m_fail_servo = i;
+            }
 
             m_on_fault[i] |= FT_POSITION;
           }
@@ -386,6 +423,10 @@ namespace Monitors
       void
       updateState(unsigned id)
       {
+        // failure in at least one of the servos.
+        if (m_fail_servo != -1)
+          return;
+
         if (m_on_fault[id] == FT_NONE)
         {
           unsigned i = 0;
@@ -409,6 +450,13 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (m_fail_servo != -1)
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR,
+                           String::str("%s%d", DTR(c_fail_servo), m_fail_servo));
+            return;
+          }
 
           if (getEntityState() == IMC::EntityState::ESTA_ERROR)
             if (m_timer.overflow() && m_args.pos_fault_detect)
