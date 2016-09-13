@@ -194,13 +194,14 @@ namespace Monitors
 
         param("Failure Error Timeout", m_args.error_time)
         .units(Units::Second)
-        .defaultValue("2.0")
-        .minimumValue("0.0")
-        .description("Period of time to count number of errors to issue a failure");
+        .defaultValue("120.0")
+        .minimumValue("30.0")
+        .description("Period of time to count number of errors that issue a failure");
 
         param("Failure Error Count", m_args.error_count)
         .defaultValue("5")
-        .description("Number of errors to happen in a period of time to issue a failure");
+        .minimumValue("3")
+        .description("Maximum number of errors allowed in a period of time that issue a failure");
 
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
@@ -453,7 +454,7 @@ namespace Monitors
 
           if (m_fail_servo != -1)
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR,
+            setEntityState(IMC::EntityState::ESTA_FAILURE)
                            String::str("%s%d", DTR(c_fail_servo), m_fail_servo));
             return;
           }
