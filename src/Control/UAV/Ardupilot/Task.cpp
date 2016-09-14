@@ -146,6 +146,8 @@ namespace Control
         std::string form_fl_ent;
         //! Convert MSL to WGS84 height
         bool convert_msl;
+        //! Enter loiter mode when in idle
+        bool loiter_idle;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -388,6 +390,10 @@ namespace Control
           param("Convert MSL to WGS84 height", m_args.convert_msl)
           .defaultValue("false")
           .description("Convert altitude extracted from the Ardupilot to WGS84 height");
+
+          param("Loiter in Idle", m_args.loiter_idle)
+          .defaultValue("true")
+          .description("Loiter when in idle.");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -1236,7 +1242,8 @@ namespace Control
           (void)idle;
           m_dpath.clear();
 
-          loiterHere();
+          if(m_args.loiter_idle)
+            loiterHere();
         }
 
         void
@@ -2006,7 +2013,7 @@ namespace Control
                     receive(&m_dpath);
                   }
                 }
-                if (m_service)
+                if (m_service && m_args.loiter_idle)
                   loiterHere();
                 break;
               case PL_MODE_LOITER:
