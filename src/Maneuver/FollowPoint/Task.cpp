@@ -34,8 +34,10 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    //! Distance hysteresis to exit target range.
-    static const float c_hyst = 3.0f;
+    //! Distance multiplier target range.
+    static const float c_hyst = 2.0f;
+    //! Heading difference to add some little extra speed.
+    static const float c_yaw_diff = 10.0f;
 
     enum StateMachine
     {
@@ -63,6 +65,8 @@ namespace Maneuver
       IMC::FollowPoint* m_target;
       //! Vehicle's Target Status.
       IMC::RemoteSensorInfo* m_status;
+      //! Desired Path message.
+      IMC::DesiredPath m_path;
       //! Target speed.
       double m_speed;
       //! Maneuver watchdog
@@ -96,6 +100,8 @@ namespace Maneuver
         .defaultValue("1.0")
         .units(Units::Second)
         .description("Period between path updates");
+
+        m_path.flags = IMC::DesiredPath::FL_DIRECT;
 
         bindToManeuver<Task, IMC::FollowPoint>();
         bind<IMC::EstimatedState>(this, true);
@@ -148,6 +154,8 @@ namespace Maneuver
         m_wdog.reset();
 
         debug("now following %s", m_target->target.c_str());
+
+        setControl(IMC::CL_PATH);
       }
 
       void
@@ -158,6 +166,8 @@ namespace Maneuver
 
         if (msg->id != m_target->target)
           return;
+
+        setControl(IMC::CL_PATH);
 
         debug("updated info for %s", msg->id.c_str());
 
@@ -194,10 +204,7 @@ namespace Maneuver
         if (m_estate == NULL || m_target == NULL || m_status == NULL)
           return;
 
-        if (isTooFar())
-          goToTarget();
-        else
-          onTarget();
+        update(isTooFar());
 
         m_wdog.reset();
       }
@@ -214,7 +221,7 @@ namespace Maneuver
         // inside range.
         if (m_sm == SM_NEAR)
         {
-          if (r > m_args.radius + c_hyst)
+          if (r > m_args.radius * c_hyst)
             return true;
 
           return false;
@@ -226,59 +233,68 @@ namespace Maneuver
         return false;
       }
 
-      //! Go to target.
+      //! Update path following conditions.
       void
-      goToTarget(void)
+      update(bool away)
       {
-        if (m_sm != SM_AWAY)
-        {
-          m_sm = SM_AWAY;
-          inf("approach target");
-        }
-
         if (!m_path_timer.overflow())
           return;
 
-        setControl(IMC::CL_PATH);
-
-        // go to point.
-        IMC::DesiredPath path;
-        path.flags = IMC::DesiredPath::FL_DIRECT;
-        path.speed = m_target->max_speed;
-        path.speed_units = m_target->speed_units;
-        path.end_lat = m_status->lat;
-        path.end_lon = m_status->lon;
-        path.end_z = m_target->z;
-        path.end_z_units = m_target->z_units;
-        dispatch(path);
-        m_path_timer.reset();
-      }
-
-      //! On target.
-      void
-      onTarget(void)
-      {
-        if (m_sm != SM_NEAR)
+        if (away)
         {
-          m_sm = SM_NEAR;
-          inf("follow attitude");
+          if (m_sm != SM_AWAY)
+          {
+            m_sm = SM_AWAY;
+            inf("approach target");
+          }
+
+          m_path.speed = m_target->max_speed;
+          m_path.speed_units = m_target->speed_units;
+          m_path.end_lat = m_status->lat;
+          m_path.end_lon = m_status->lon;
+        }
+        else
+        {
+          if (m_sm != SM_NEAR)
+          {
+            m_sm = SM_NEAR;
+            inf("follow attitude");
+          }
+
+          float extra = 0.0;
+          double lat, lon, bearing, range;
+          Coordinates::toWGS84(*m_estate, lat, lon);
+          WGS84::getNEBearingAndRange(lat, lon, m_status->lat, m_status->lon,
+                                      &bearing, &range);
+
+           // compute bearing offset between desired heading and bearing to target.
+          double boffs = Angles::minSignedAngle(m_status->heading, bearing);
+
+          // only add extra speed if properly pointed towards target (in pursuit).
+          if (std::fabs(boffs) < Angles::radians(c_yaw_diff))
+          extra = range / m_args.radius / 2.0;
+
+          m_path.speed = std::min(m_speed + extra, (double)m_target->max_speed);
+          m_path.speed_units = IMC::SUNITS_METERS_PS;
+
+          // add point *beyond* target with desired heading.
+          double n = m_args.radius * std::cos(m_status->heading);
+          double e = m_args.radius * std::sin(m_status->heading);
+
+          double latf = m_status->lat;
+          double lonf = m_status->lon;
+          double hae = 0.0;
+          WGS84::displace(n, e, 0.0, &latf, &lonf, &hae);
+
+          m_path.end_lat = latf;
+          m_path.end_lon = lonf;
         }
 
-        setControl(IMC::CL_SPEED | IMC::CL_YAW | IMC::CL_DEPTH);
+        m_path.end_z = m_target->z;
+        m_path.end_z_units = m_target->z_units;
 
-        IMC::DesiredSpeed desired_speed;
-        desired_speed.value = m_speed;
-        desired_speed.speed_units = IMC::SUNITS_METERS_PS;
-        dispatch(desired_speed);
-
-        IMC::DesiredHeading desired_yaw;
-        desired_yaw.value = m_status->heading;
-        dispatch(desired_yaw);
-
-        IMC::DesiredZ desired_z;
-        desired_z.value = m_target->z;
-        desired_z.z_units = m_target->z_units;
-        dispatch(desired_z);
+        dispatch(m_path);
+        m_path_timer.reset();
       }
     };
   }
