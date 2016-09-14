@@ -169,8 +169,6 @@ namespace Maneuver
 
         setControl(IMC::CL_PATH);
 
-        debug("updated info for %s", msg->id.c_str());
-
         Memory::clear(m_status);
         m_status = new IMC::RemoteSensorInfo(*msg);
 
@@ -278,8 +276,10 @@ namespace Maneuver
           m_path.speed_units = IMC::SUNITS_METERS_PS;
 
           // add point *beyond* target with desired heading.
-          double n = m_args.radius * std::cos(m_status->heading);
-          double e = m_args.radius * std::sin(m_status->heading);
+          double n = m_args.radius * c_hyst * std::cos(m_status->heading);
+          double e = m_args.radius * c_hyst * std::sin(m_status->heading);
+
+          debug("follow heading: %0.1f", Angles::degrees(m_status->heading));
 
           double latf = m_status->lat;
           double lonf = m_status->lon;
