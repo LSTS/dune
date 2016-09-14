@@ -265,12 +265,12 @@ namespace Maneuver
           WGS84::getNEBearingAndRange(lat, lon, m_status->lat, m_status->lon,
                                       &bearing, &range);
 
-           // compute bearing offset between desired heading and bearing to target.
+          // compute bearing offset between desired heading and bearing to target.
           double boffs = Angles::minSignedAngle(m_status->heading, bearing);
 
           // only add extra speed if properly pointed towards target (in pursuit).
           if (std::fabs(boffs) < Angles::radians(c_yaw_diff))
-          extra = range / m_args.radius / 2.0;
+            extra = range / m_args.radius / 2.0;
 
           m_path.speed = std::min(m_speed + extra, (double)m_target->max_speed);
           m_path.speed_units = IMC::SUNITS_METERS_PS;
