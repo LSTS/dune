@@ -47,8 +47,6 @@ namespace Monitors
     static const unsigned c_servo_count = 4;
     //! Error timeout
     static const float c_error_timeout = 5.0;
-    //! Servo in failure
-    static const char* c_fail_servo = "major fault in servo#";
 
     enum FaultBits
     {
@@ -116,12 +114,12 @@ namespace Monitors
       Time::Counter<float> m_timer;
       //! Queue for error reports.
       std::queue<double> m_queue[c_servo_count];
-      //! Servo in failure.
-      int8_t m_fail_servo;
+      //! Major failure in one of the servos.
+      bool m_servo_fail;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_fail_servo(-1)
+        m_servo_fail(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -355,26 +353,16 @@ namespace Monitors
           uint8_t was_on_fault = m_on_fault[i];
           std::string desc;
 
-          float now = Time::Clock::get();
-          while (!m_queue[i].empty())
+          if (!m_queue[i].empty())
           {
-            double t = m_queue[i].front();
-            if (now - t > m_args.error_time)
+            if (Time::Clock::get() - m_queue[i].front() > m_args.error_time)
               m_queue[i].pop();
           }
 
           if (m_pos_monitor[i]->updateAndTest(msg->value, m_set_servo[i], &desc))
           {
-            m_error_str = String::str(DTR("potential fault in servo#%d, %s"),
+            m_error_str = String::str(DTR("potential fault in servo #%d: %s"),
                                       i, desc.c_str());
-
-
-            m_queue[i].push(now);
-            if (m_queue[i].size() > m_args.error_count)
-            {
-              err("%s%d", DTR(c_fail_servo), i);
-              m_fail_servo = i;
-            }
 
             m_on_fault[i] |= FT_POSITION;
           }
@@ -404,7 +392,7 @@ namespace Monitors
         // Reset counters after that to avoid spamming the output
         if (curr > 0)
         {
-          m_error_str = String::str(DTR("potential fault in servo#%d, "
+          m_error_str = String::str(DTR("potential fault in servo #%d, "
                                         "current consumption above %0.1f A"),
                                     i, curr);
 
@@ -424,10 +412,6 @@ namespace Monitors
       void
       updateState(unsigned id)
       {
-        // failure in at least one of the servos.
-        if (m_fail_servo != -1)
-          return;
-
         if (m_on_fault[id] == FT_NONE)
         {
           unsigned i = 0;
@@ -435,13 +419,28 @@ namespace Monitors
             if (m_on_fault[i] != FT_NONE)
               break;
 
-          if (i == c_servo_count)
+          if (i == c_servo_count && !m_servo_fail)
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         else
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
-          war("%s", m_error_str.c_str());
+          m_queue[id].push(Time::Clock::get());
+          if (m_queue[id].size() > m_args.error_count)
+          {
+            m_servo_fail = true;
+            err(DTR("servo #%d may require supervision"), id);
+            setEntityState(IMC::EntityState::ESTA_ERROR,
+                           String::str(DTR("servo #%d may require supervision"), id));
+
+            // clear queue.
+            while (!m_queue[id].empty())
+              m_queue[id].pop();
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
+            war("%s", m_error_str.c_str());
+          }
         }
       }
 
@@ -452,16 +451,14 @@ namespace Monitors
         {
           waitForMessages(1.0);
 
-          if (m_fail_servo != -1)
-          {
-            setEntityState(IMC::EntityState::ESTA_FAILURE)
-                           String::str("%s%d", DTR(c_fail_servo), m_fail_servo));
-            return;
-          }
-
           if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+          {
             if (m_timer.overflow() && m_args.pos_fault_detect)
+            {
+              m_servo_fail = false;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+          }
         }
       }
     };
