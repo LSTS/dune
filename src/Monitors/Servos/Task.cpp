@@ -86,6 +86,10 @@ namespace Monitors
       double fault_cooldown;
       //! Servo current entity labels.
       std::string elabel_ampg[c_servo_count];
+      //! Failure error timeout.
+      double error_time;
+      //! Failure error counter.
+      unsigned error_count;
     };
 
     struct Task: public Tasks::Task
@@ -108,9 +112,14 @@ namespace Monitors
       uint8_t m_on_fault[c_servo_count];
       //! Timer for error timeout
       Time::Counter<float> m_timer;
+      //! Queue for error reports.
+      std::queue<double> m_queue[c_servo_count];
+      //! Major failure in one of the servos.
+      bool m_servo_fail;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_servo_fail(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -180,6 +189,17 @@ namespace Monitors
         .defaultValue("60.0")
         .minimumValue("0.0")
         .description("Period of time after which the fault vectors will be reset to zero");
+
+        param("Failure Error Timeout", m_args.error_time)
+        .units(Units::Second)
+        .defaultValue("120.0")
+        .minimumValue("30.0")
+        .description("Period of time to count number of errors that issue a failure");
+
+        param("Failure Error Count", m_args.error_count)
+        .defaultValue("5")
+        .minimumValue("3")
+        .description("Maximum number of errors allowed in a period of time that issue a failure");
 
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
@@ -333,9 +353,15 @@ namespace Monitors
           uint8_t was_on_fault = m_on_fault[i];
           std::string desc;
 
+          if (!m_queue[i].empty())
+          {
+            if (Time::Clock::get() - m_queue[i].front() > m_args.error_time)
+              m_queue[i].pop();
+          }
+
           if (m_pos_monitor[i]->updateAndTest(msg->value, m_set_servo[i], &desc))
           {
-            m_error_str = String::str(DTR("potential fault in servo#%d, %s"),
+            m_error_str = String::str(DTR("potential fault in servo #%d: %s"),
                                       i, desc.c_str());
 
             m_on_fault[i] |= FT_POSITION;
@@ -366,7 +392,7 @@ namespace Monitors
         // Reset counters after that to avoid spamming the output
         if (curr > 0)
         {
-          m_error_str = String::str(DTR("potential fault in servo#%d, "
+          m_error_str = String::str(DTR("potential fault in servo #%d, "
                                         "current consumption above %0.1f A"),
                                     i, curr);
 
@@ -393,13 +419,28 @@ namespace Monitors
             if (m_on_fault[i] != FT_NONE)
               break;
 
-          if (i == c_servo_count)
+          if (i == c_servo_count && !m_servo_fail)
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         else
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
-          war("%s", m_error_str.c_str());
+          m_queue[id].push(Time::Clock::get());
+          if (m_queue[id].size() > m_args.error_count)
+          {
+            m_servo_fail = true;
+            err(DTR("servo #%d may require supervision"), id);
+            setEntityState(IMC::EntityState::ESTA_ERROR,
+                           String::str(DTR("servo #%d may require supervision"), id));
+
+            // clear queue.
+            while (!m_queue[id].empty())
+              m_queue[id].pop();
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
+            war("%s", m_error_str.c_str());
+          }
         }
       }
 
@@ -411,8 +452,13 @@ namespace Monitors
           waitForMessages(1.0);
 
           if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+          {
             if (m_timer.overflow() && m_args.pos_fault_detect)
+            {
+              m_servo_fail = false;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+          }
         }
       }
     };
