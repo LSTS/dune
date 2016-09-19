@@ -216,7 +216,7 @@ namespace Monitors
         {
           war("Sending: start");
           char data_to_send[c_max_buffer_text_to_send];
-          std::string log_name_dune = file_name.substr(file_name.find("/") + 1, file_name.size());
+          std::string log_name_dune = file_name.substr(file_name.find("/") + 1, 20);
           sprintf(data_to_send, "/start?time=%d&rate=%d&filename=%s&input=%s&unix_time=%s", m_args.sampling_time, m_args.rate, log_name_dune.c_str(), m_args.input_data.c_str(), m_buffer_time);
           m_conn->request( "GET", data_to_send, 0, 0, 0);
           while( m_conn->outstanding() && !stopping())
