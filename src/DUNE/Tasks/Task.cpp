@@ -469,7 +469,6 @@ namespace DUNE
         try
         {
           m_params.set((*itr)->name, (*itr)->value);
-          m_ctx.config.set(m_name, (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
         {
