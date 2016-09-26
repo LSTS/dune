@@ -39,7 +39,7 @@ if [ -z "$GSM_APN" ]; then
 fi
 
 if [ -z "$GSM_MODE" ]; then
-    GSM_MODE='AT\^SYSCFG=2,2,3fffffff,0,1'
+    GSM_MODE='AT\^SYSCFG=2,2,3fffffff,1,1'
 fi
 
 if [ -z "$GSM_PIN" ]; then
