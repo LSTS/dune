@@ -213,6 +213,8 @@ namespace Transports
           return true;
         if (String::startsWith(str, "^HCSQ"))
           return true;
+        if (String::startsWith(str, "^RSSI"))
+          return true;
 
         return false;
       }
