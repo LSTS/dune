@@ -281,13 +281,11 @@ namespace Maneuver
 
           debug("follow heading: %0.1f", Angles::degrees(m_status->heading));
 
-          double latf = m_status->lat;
-          double lonf = m_status->lon;
           double hae = 0.0;
-          WGS84::displace(n, e, 0.0, &latf, &lonf, &hae);
+          WGS84::displace(n, e, 0.0, &lat, &lon, &hae);
 
-          m_path.end_lat = latf;
-          m_path.end_lon = lonf;
+          m_path.end_lat = lat;
+          m_path.end_lon = lon;
         }
 
         m_path.end_z = m_target->z;
