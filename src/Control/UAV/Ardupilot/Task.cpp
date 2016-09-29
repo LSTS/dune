@@ -148,6 +148,8 @@ namespace Control
         bool convert_msl;
         //! Enter loiter mode when in idle
         bool loiter_idle;
+        //! Dispatch ExternalNavData rather than EstimatedState
+        bool use_external_nav;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -394,6 +396,10 @@ namespace Control
           param("Loiter in Idle", m_args.loiter_idle)
           .defaultValue("true")
           .description("Loiter when in idle.");
+
+          param("Use External Nav Data", m_args.use_external_nav)
+          .defaultValue("false")
+          .description("Dispatch ExternalNavData instead of EstimatedState");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -1644,7 +1650,16 @@ namespace Control
           m_estate.q = att.pitchspeed;
           m_estate.r = att.yawspeed;
 
-          dispatch(m_estate);
+          if (m_args.use_external_nav)
+          {
+            IMC::ExternalNavData extdata;
+            extdata.state.set(m_estate);
+            dispatch(extdata);
+          }
+          else
+          {
+            dispatch(m_estate);
+          }
         }
 
         void
