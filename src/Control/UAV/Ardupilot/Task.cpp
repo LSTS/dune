@@ -619,7 +619,7 @@ namespace Control
           {
             m_cloops &= ~cloops->mask;
 
-            if ((cloops->mask & IMC::CL_ROLL) && !m_ground)
+            if ((cloops->mask & IMC::CL_ROLL) && !m_ground && m_vehicle_type == VEHICLE_FIXEDWING)
             {
               mavlink_message_t msg;
               uint8_t buf[512];
@@ -653,16 +653,23 @@ namespace Control
         void
         activateFBW(void)
         {
-          uint8_t buf[512];
-          mavlink_message_t msg;
+          if (m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            uint8_t buf[512];
+            mavlink_message_t msg;
 
-          mavlink_msg_set_mode_pack(255, 0, &msg,
-                                    m_sysid,
-                                    1,
-                                    6); //! FBWB is mode 6
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      6); //! FBWB is mode 6
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          else
+          {
+            debug("Tried to set FBW on a non-supported vehicle!");
+          }
         }
 
         void
@@ -1630,6 +1637,7 @@ namespace Control
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
               m_error_missing = true;
+              m_has_setup_rate = false;
               m_esta_ext = false;
             }
           }
@@ -1960,6 +1968,11 @@ namespace Control
                 mode.mode = "MANUAL";
                 m_external = true;
                 break;
+              case CP_MODE_STABILIZE:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "STABILIZE";
+                m_external = true;
+                break;
               case CP_MODE_AUTO:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "AUTO";
@@ -1971,6 +1984,12 @@ namespace Control
                 mode.mode = "LOITER";
                 trace("LOITER");
                 m_external = false;
+                break;
+              case CP_MODE_LAND:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "LAND";
+                trace("LAND");
+                m_external = true;
                 break;
               case CP_MODE_DUNE:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
@@ -2103,8 +2122,12 @@ namespace Control
 
           dispatch(d_roll);
           dispatch(d_pitch);
-          dispatch(d_head);
-          dispatch(d_z);
+
+          if (m_args.ardu_tracker)
+          {
+            dispatch(d_head);
+            dispatch(d_z);
+          }
 
           if (!m_args.ardu_tracker)
             return;
