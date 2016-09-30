@@ -91,6 +91,8 @@ namespace Supervisors
         Time::Counter<float> m_dtimer;
         //! Finish depth of the running plan
         float m_finish_depth;
+        //! Valid GPS signal
+        bool m_gps;
         //! Task arguments.
         Arguments m_args;
 
@@ -99,7 +101,8 @@ namespace Supervisors
           m_vmon(NULL),
           m_astate(ST_IDLE),
           m_dtimer(c_stab_time),
-          m_finish_depth(-1.0)
+          m_finish_depth(-1.0),
+          m_gps(false)
         {
           m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.dislodge_rpm);
 
@@ -121,6 +124,7 @@ namespace Supervisors
 
           m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.plan_id);
 
+          bind<IMC::GpsFix>(this);
           bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
@@ -145,6 +149,15 @@ namespace Supervisors
         {
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+
+        void
+        consume(const IMC::GpsFix* msg)
+        {
+          if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
+            m_gps = true;
+          else
+            m_gps = false;
         }
 
         void
@@ -271,6 +284,9 @@ namespace Supervisors
         {
           if ((m_vstate != IMC::VehicleState::VS_SERVICE) &&
               (m_vstate != IMC::VehicleState::VS_ERROR))
+            return false;
+
+          if (m_gps)
             return false;
 
           if (m_medium != IMC::VehicleMedium::VM_UNDERWATER)
