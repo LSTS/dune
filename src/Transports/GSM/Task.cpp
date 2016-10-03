@@ -80,8 +80,6 @@ namespace Transports
       double sms_tout;
       //! Device response timeout.
       float reply_tout;
-      //! Enable USB Mode switch (USB pen).
-      bool usb_mode_switch;
     };
 
     struct Task: public DUNE::Tasks::Task
