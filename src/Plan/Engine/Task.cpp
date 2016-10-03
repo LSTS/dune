@@ -85,6 +85,8 @@ namespace Plan
       std::string recovery_plan;
       //! Entity label of the plan generator.
       std::string label_gen;
+      //! Absolute maximum depth.
+      float max_depth;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -105,10 +107,6 @@ namespace Plan
       IMC::PlanSpecification m_spec;
       //! List of supported maneuvers.
       std::set<uint16_t> m_supported_maneuvers;
-      //! Database related (for plan DB direct queries to avoid
-      //! unnecessary interface with bus / PlanDB task directly)
-      Database::Connection* m_db;
-      Database::Statement* m_get_plan_stmt;
       //! Misc.
       IMC::LoggingControl m_lc;
       IMC::EstimatedState m_state;
@@ -126,14 +124,14 @@ namespace Plan
       bool m_imu_enabled;
       //! Queue of PlanControl messages
       std::queue<IMC::PlanControl> m_requests;
+      //! Plan database file.
+      Path m_db_file;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
-        m_db(NULL),
-        m_get_plan_stmt(NULL),
         m_imu_enabled(false)
       {
         param("Compute Progress", m_args.progress)
@@ -185,23 +183,19 @@ namespace Plan
         .description("Entity label of the Plan Generator");
 
         m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
+        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.max_depth);
+
+        m_db_file = m_ctx.dir_db / "Plan.db";
 
         bind<IMC::PlanControl>(this);
-        bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::ManeuverControlState>(this);
-        bind<IMC::PowerOperation>(this);
         bind<IMC::RegisterManeuver>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::FuelLevel>(this);
-      }
-
-      ~Task()
-      {
-        closeDB();
       }
 
       void
@@ -246,13 +240,15 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict, m_args.max_depth,
                           this, m_args.calibration_time, &m_ctx.config);
       }
 
       void
       onResourceInitialization(void)
       {
+        debug("database file: '%s'", m_db_file.c_str());
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_report_timer.setTop(m_args.speriod);
       }
 
@@ -275,26 +271,6 @@ namespace Plan
       }
 
       void
-      consume(const IMC::PowerOperation* po)
-      {
-        if (po->getDestination() != getSystemId())
-          return;
-
-        switch (po->op)
-        {
-          case IMC::PowerOperation::POP_PWR_DOWN_IP:
-            closeDB();
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_POWER_DOWN);
-            break;
-          case IMC::PowerOperation::POP_PWR_DOWN_ABORTED:
-            openDB();
-            break;
-          default:
-            break;
-        }
-      }
-
-      void
       consume(const IMC::RegisterManeuver* msg)
       {
         m_supported_maneuvers.insert(msg->mid);
@@ -307,17 +283,12 @@ namespace Plan
       }
 
       void
-      consume(const IMC::PlanDB* pdb)
-      {
-        if (pdb->op != IMC::PlanDB::DBOP_BOOT || pdb->type != IMC::PlanDB::DBT_SUCCESS)
-          return;
-
-        openDB();
-      }
-
-      void
       consume(const IMC::EntityActivationState* msg)
       {
+        // not local message.
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (m_plan != NULL)
         {
           std::string id;
@@ -372,40 +343,6 @@ namespace Plan
           return;
 
         m_plan->onFuelLevel(msg);
-      }
-
-      void
-      openDB(void)
-      {
-        if (m_db != NULL)
-          return;
-
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
-        Path db_file = m_ctx.dir_db / "Plan.db";
-
-        debug("database file: '%s'", db_file.c_str());
-
-        m_db = new Database::Connection(db_file.c_str(), true);
-        m_get_plan_stmt = new Database::Statement(c_get_plan_stmt, *m_db);
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
-      void
-      closeDB(void)
-      {
-        if (m_db == NULL)
-        {
-          return;
-        }
-
-        Memory::clear(m_get_plan_stmt);
-
-        delete m_db;
-        m_db = NULL;
-
-        debug("database connection closed");
       }
 
       void
@@ -502,6 +439,7 @@ namespace Plan
           case IMC::PlanControlState::PCS_INITIALIZING:
             if (!pendingReply())
             {
+              m_plan->updateCalibration(vs);
               IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }
@@ -811,22 +749,20 @@ namespace Plan
 
         try
         {
-          *m_get_plan_stmt << plan_id;
+          Database::Connection db(m_db_file.c_str(), Database::Connection::CF_RDONLY);
 
-          if (!m_get_plan_stmt->execute())
+          Database::Statement get_plan_stmt(c_get_plan_stmt, db);
+          get_plan_stmt << plan_id;
+          if (!get_plan_stmt.execute())
           {
             onFailure(DTR("undefined plan"));
-            m_get_plan_stmt->reset();
             return false;
           }
 
           Database::Blob data;
-
-          *m_get_plan_stmt >> data;
-
+          get_plan_stmt >> data;
           ps.deserializeFields((const uint8_t*)&data[0], data.size());
 
-          m_get_plan_stmt->reset();
         }
         catch (std::runtime_error& e)
         {

@@ -33,6 +33,17 @@
 
 namespace Supervisors
 {
+  //! This task mimicks the entity state and entity activation state of a
+  //! surrogate remote system entity. Moreover, it relays the entity parameters
+  //! from the surrogate system, while relaying to it entity parameters queries
+  //! and setters.
+  //!
+  //! This task allows the following parameters to be defined
+  //!  - <em>system_name</em>: surrogate system name.
+  //!  - <em>entity_name</em>: surrogate system entity name.
+  //!  - <em>task_name</em>: surrogate system task name to write xml parameters.
+  //!
+  //! @author Ricardo Martins
   namespace Delegator
   {
     using DUNE_NAMESPACES;
@@ -153,6 +164,24 @@ namespace Supervisors
       }
 
       void
+      onPopEntityParameters(const IMC::PopEntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        relayTo(msg);
+      }
+
+      void
+      onPushEntityParameters(const IMC::PushEntityParameters* msg)
+      {
+        if (msg->name != getEntityLabel())
+          return;
+
+        relayTo(msg);
+      }
+
+      void
       sendActiveParameter(const std::string& value)
       {
         IMC::EntityParameter p;
@@ -210,6 +239,9 @@ namespace Supervisors
       {
         if (!isFromSurrogate(msg))
           return;
+
+        // send activation state also.
+        relayFrom(msg);
 
         if (isActivating() && (msg->state == IMC::EntityActivationState::EAS_ACTIVE))
           activate();

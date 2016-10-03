@@ -24,6 +24,7 @@
 //***************************************************************************
 // Author: Eduardo Marques (original stage implementation)                  *
 // Author: Pedro Calado                                                     *
+// Author: Paulo Dias (possibility to change hstep on new point call)       *
 //***************************************************************************
 
 #ifndef DUNE_MANEUVERS_ROWS_STAGES_HPP_INCLUDED_
@@ -51,6 +52,22 @@ namespace DUNE
     {
     public:
       //! Default constructor.
+      //! @param[in] lat Latitude as in IMC::Rows
+      //! @param[in] lon Longitude as in IMC::Rows
+      //! @param[in] bearing Bearing in radians as in IMC::Rows
+      //! @param[in] cross_angle Cross angle in radians as in IMC::Rows
+      //! @param[in] width Width as in IMC::Rows
+      //! @param[in] length Length as in IMC::Rows
+      //! @param[in] hstep Horizontal step as in IMC::Rows
+      //! @param[in] coff Curve offset as in IMC::Rows
+      //! @param[in] alternation Alternation as in IMC::Rows
+      //! @param[in] flags Flags as in IMC::Rows
+      //! @param[in] task pointer to task object (debug and inf)
+      RowsStages(const fp64_t lat, const fp64_t lon, const fp64_t bearing,
+          const fp64_t cross_angle, const fp32_t width, const fp32_t length,
+          const fp32_t hstep, const uint8_t coff, const uint8_t alternation,
+          const uint8_t flags, Tasks::Task* task);
+
       //! @param[in] maneuver pointer to rows maneuver
       //! @param[in] task pointer to task object (debug and inf)
       RowsStages(const IMC::Rows* maneuver, Tasks::Task* task);
@@ -58,9 +75,10 @@ namespace DUNE
       //! Get next point
       //! @param[out] lat latitude of current point
       //! @param[out] lon longitude of current point
+      //! @param[in] new_hstep signals a new hstep to be used for this call
       //! @return true if reached the end of the maneuver
       bool
-      getNextPoint(double* lat, double* lon);
+      getNextPoint(double* lat, double* lon, double new_hstep = 0);
 
       //! Get first point
       //! @param[out] lat latitude of current point
@@ -124,21 +142,21 @@ namespace DUNE
       bool
       squareCurve(void) const
       {
-        return (m_man.flags & IMC::Rows::FLG_SQUARE_CURVE) != 0;
+        return (m_flags & IMC::Rows::FLG_SQUARE_CURVE) != 0;
       };
 
       inline
       bool
       curveRight(void) const
       {
-        return (m_man.flags & IMC::Rows::FLG_CURVE_RIGHT) != 0;
+        return (m_flags & IMC::Rows::FLG_CURVE_RIGHT) != 0;
       };
 
       inline
       bool
       curveLeft(void) const
       {
-        return (m_man.flags & IMC::Rows::FLG_CURVE_RIGHT) == 0;
+        return (m_flags & IMC::Rows::FLG_CURVE_RIGHT) == 0;
       };
 
       //! Get current point
@@ -155,8 +173,30 @@ namespace DUNE
       float
       computeDistance(double* lat, double* lon);
 
-      //! Rows maneuver
-      IMC::Rows m_man;
+      //! Initializes the variables
+      void
+      initialize();
+
+      //! Latitude.
+      fp64_t m_lat;
+      //! Longitude.
+      fp64_t m_lon;
+      //! Bearing.
+      fp64_t m_bearing;
+      //! Cross Angle.
+      fp64_t m_cross_angle;
+      //! Width.
+      fp32_t m_width;
+      //! Length.
+      fp32_t m_length;
+      //! Horizontal Step.
+      fp32_t m_hstep;
+      //! Curve Offset.
+      uint8_t m_coff;
+      //! Alternation Parameter.
+      uint8_t m_alternation;
+      //! Flags.
+      uint8_t m_flags;
       //! Pointer to task
       Tasks::Task* m_task;
       //! Vector of stages
@@ -167,10 +207,10 @@ namespace DUNE
       unsigned m_curr;
       //! Current point index
       unsigned m_index;
-      //! Number of curves in the rows maneuver
-      int m_curves;
-      //! Vector of acumulated distances
+      //! Vector of accumulated distances
       std::vector<float> m_all_distances;
+      //! Horizontal Step updated.
+      fp32_t m_hstep_updated;
     };
   }
 }

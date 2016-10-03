@@ -52,6 +52,8 @@ namespace Maneuver
       double u_ctrack;
       //! Minimum altitude.
       float min_alt;
+      //! Maximum depth.
+      float max_depth;
     };
 
     //! Yoyo maneuver
@@ -95,17 +97,7 @@ namespace Maneuver
 
         m_dispatched = false;
 
-        double zref;
-
-        if (maneuver->z_units == IMC::Z_ALTITUDE)
-        {
-          zref = - maneuver->z;
-        }
-        else if (maneuver->z_units == IMC::Z_DEPTH)
-        {
-          zref = maneuver->z;
-        }
-        else
+        if (maneuver->z_units != IMC::Z_ALTITUDE && maneuver->z_units != IMC::Z_DEPTH)
         {
           m_task->signalInvalidZ();
           return;
@@ -125,8 +117,10 @@ namespace Maneuver
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
 
-        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, zref, maneuver->amplitude,
-                                m_args->variation, m_args->min_alt);
+        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, maneuver->z,
+                                (IMC::ZUnits)maneuver->z_units,
+                                maneuver->amplitude, m_args->variation,
+                                m_args->min_alt, m_args->max_depth);
       }
 
       //! On PathControlState message
@@ -165,27 +159,32 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
-        if (m_zunits == IMC::Z_DEPTH)
-        {
-          update(msg->depth, msg->theta);
-        }
-        else if ((msg->alt >= 0) && (m_zunits == IMC::Z_ALTITUDE))
-        {
-          update(-msg->alt, msg->theta);
-        }
-        else
+        if (msg->alt < 0 && m_zunits != IMC::Z_ALTITUDE)
         {
           m_task->signalNoAltitude();
           return;
         }
+
+        update(msg->depth, msg->alt, msg->theta);
+      }
+
+      void
+      onBrake(const IMC::Brake* msg)
+      {
+        if (m_yoyo == NULL)
+          return;
+
+        if (msg->op == IMC::Brake::OP_START)
+          m_yoyo->startedBraking();
       }
 
       //! update the maneuver with a depth or altitude value
       //! a negative value will be interpreted as an altitude
-      //! @param[in] state_z current z position
+      //! @param[in] depth current depth position
+      //! @param[in] alt current altitude position
       //! @param[in] theta current pitch angle
       void
-      update(double state_z, double theta)
+      update(double depth, double alt, double theta)
       {
         // Pitch value for control
         double v;
@@ -198,17 +197,17 @@ namespace Maneuver
         else if (m_course_recovered)
         {
           // yo-yo again after course is recovered
-          v = m_yoyo->update(true, state_z, theta);
+          v = m_yoyo->update(true, depth, alt, theta);
           m_course_recovered = false;
         }
         else
         {
-          v = m_yoyo->update(false, state_z, theta);
+          v = m_yoyo->update(false, depth, alt, theta);
         }
 
         // dont bother sending message if the value remains the same
         // which will happen frequently
-        if ((m_pitch.value == v) && (m_dispatched))
+        if (m_pitch.value == v && m_dispatched)
           return;
 
         // Dispatch pitch message

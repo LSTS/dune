@@ -30,6 +30,7 @@
 
 // ISO C++ 98 headers.
 #include <cmath>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/Coordinates/BodyFixedFrame.hpp>
@@ -59,8 +60,10 @@ namespace DUNE
 
     //! Weighted Moving Average filter value.
     static const float c_wma_filter = 0.1f;
-    //! Maximum artificial angular velocity value.
-    static const float c_max_av = 0.5f;
+    //! Maximum acceleration reading.
+    static const double c_max_accel = 30.0f;
+    //! Maximum angular velocity reading (5 times mathematical constant PI).
+    static const double c_max_agvel = 15.708f;
 
     //! Navigation task states.
     enum SMStates
@@ -177,6 +180,9 @@ namespace DUNE
 
       void
       consume(const IMC::Rpm* msg);
+
+      void
+      consume(const IMC::UsblFixExtended* msg);
 
       void
       consume(const IMC::WaterVelocity* msg);
@@ -442,6 +448,12 @@ namespace DUNE
       virtual void
       runKalmanDVL(void);
 
+      //! Routine to assign EKF filter output variables when a UsblFixExtended message is received.
+      //! @param[in] x vehicle north displacement (m).
+      //! @param[in] y vehicle east displacement (m).
+      virtual void
+      runKalmanUSBL(double x, double y);
+
       //! Get EKF output matrix speed indexes.
       //! @param[out] u forward speed state index.
       //! @param[out] v transversal speed state index.
@@ -559,8 +571,6 @@ namespace DUNE
       bool m_aligned;
       //! Angular velocity message entity id.
       unsigned m_agvel_eid;
-      //! Accelaration message entity id.
-      unsigned m_accel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
       //! LBL threshold.

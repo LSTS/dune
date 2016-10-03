@@ -140,6 +140,7 @@ namespace Monitors
       onEntityResolution(void)
       {
         // Mark default settings, so we can get back to them.
+        m_args.defmon.push_back("Daemon");
         setupDefaults(m_args.defmon);
 
         if (m_ctx.profiles.isSelected("Hardware"))
@@ -185,6 +186,9 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
           err(DTR("EntityState message without source entity"));

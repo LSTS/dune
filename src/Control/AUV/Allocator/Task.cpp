@@ -52,6 +52,8 @@ namespace Control
         float brake_margin;
         //! Pitch up when braking
         bool pitch_brake;
+        //! Maximum rotation rate of the servos
+        double max_fin_rate;
         //! ServoPosition label
         std::string spos_label;
       };
@@ -60,6 +62,8 @@ namespace Control
       {
         //! Fin commands.
         IMC::SetServoPosition m_fins[c_fins];
+        //! Fin last commands.
+        IMC::SetServoPosition m_last[c_fins];
         //! Allocated torques feedback message.
         IMC::AllocatedControlTorques m_allocated;
         //! Braking
@@ -70,6 +74,8 @@ namespace Control
         float m_servo_pos[c_fins];
         //! Control loops last reference
         uint32_t m_scope_ref;
+        //! Time Delta
+        Time::Delta m_delta;
         //! Task arguments.
         Arguments m_args;
 
@@ -108,6 +114,11 @@ namespace Control
           .maximumValue("1.0")
           .description("Percentage of fin margin to use for braking");
 
+          param("Maximum Rotation Rate", m_args.max_fin_rate)
+          .defaultValue("333.3")
+          .units(Units::DegreePerSecond)
+          .description("Maximum rotation rate allowed by the servo");
+
           param("Entity Label - Servo Position", m_args.spos_label)
           .defaultValue("")
           .description("Label of the servo position message to compute produced torque");
@@ -127,6 +138,9 @@ namespace Control
         {
           if (paramChanged(m_args.max_fin_rot))
             m_args.max_fin_rot = Angles::radians(m_args.max_fin_rot);
+
+          if (paramChanged(m_args.max_fin_rate))
+            m_args.max_fin_rate = Angles::radians(m_args.max_fin_rate);
         }
 
         void
@@ -157,6 +171,7 @@ namespace Control
           for (int i = 0; i < c_fins; i++)
           {
             m_fins[i].id = i;
+            m_last[i].id = i;
             m_servo_pos[i] = 0.0;
           }
         }
@@ -436,8 +451,20 @@ namespace Control
         inline void
         dispatchAllFins(void)
         {
+          double delta = m_delta.getDelta();
+
           for (int i = 0; i < c_fins; i++)
+          {
+            if (delta > 0)
+            {
+              double max = m_args.max_fin_rate * delta;
+              double c = Math::trimValue(m_fins[i].value - m_last[i].value, -max, max);
+              m_fins[i].value = m_last[i].value + c;
+            }
+
             dispatch(m_fins[i]);
+            m_last[i].value = m_fins[i].value;
+          }
         }
 
         void

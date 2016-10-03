@@ -41,5 +41,6 @@ namespace DUNE
 #include <DUNE/Navigation/KalmanFilter.hpp>
 #include <DUNE/Navigation/Ranging.hpp>
 #include <DUNE/Navigation/StreamEstimator.hpp>
+#include <DUNE/Navigation/UsblTools.hpp>
 
 #endif

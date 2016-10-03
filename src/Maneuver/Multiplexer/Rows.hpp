@@ -64,7 +64,15 @@ namespace Maneuver
       {
         Memory::clear(m_parser);
 
-        m_parser = new Maneuvers::RowsStages(maneuver, m_task);
+        try
+        {
+          m_parser = new Maneuvers::RowsStages(maneuver, m_task);
+        }
+        catch (std::runtime_error& e)
+        {
+          m_task->signalError(e.what());
+          return;
+        }
 
         // Get it started
         m_task->setControl(IMC::CL_PATH);

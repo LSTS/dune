@@ -30,6 +30,7 @@
 #include <DUNE/Time/Delay.hpp>
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/IO/Poll.hpp>
+#include <DUNE/Status/Messages.hpp>
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 #include <DUNE/Hardware/Exceptions.hpp>
@@ -338,7 +339,17 @@ namespace DUNE
         if (!IO::Poll::poll(*m_handle, 1.0))
           continue;
 
-        size_t rv = m_handle->read(bfr, sizeof(bfr));
+        size_t rv = 0;
+        try
+        {
+          rv = m_handle->read(bfr, sizeof(bfr));
+        }
+        catch (...)
+        {
+          m_task->war("%s", Status::getString(Status::CODE_IO_ERROR));
+          break;
+        }
+
         if (rv == 0)
         {
           IMC::IoEvent iov;

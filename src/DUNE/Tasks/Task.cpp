@@ -344,7 +344,7 @@ namespace DUNE
 
       try
       {
-        Thread::setPriority(Concurrency::Scheduler::POLICY_RR, m_args.priority);
+        setPriority(m_args.priority);
       }
       catch (...)
       { }

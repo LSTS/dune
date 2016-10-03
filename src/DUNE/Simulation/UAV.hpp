@@ -35,6 +35,9 @@
 #include <vector>
 
 // DUNE headers.
+#include <DUNE/Math/Angles.hpp>
+#include <DUNE/Math/Constants.hpp>
+#include <DUNE/Math/General.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/Tasks/Task.hpp>
 
@@ -426,8 +429,6 @@ namespace DUNE
 
       //! Wind state vector
       DUNE::Math::Matrix m_wind;
-      //! Gravity acceleration
-      double m_g;
 
       //! Time step control
       //! - If negative, the time step limitation is disabled

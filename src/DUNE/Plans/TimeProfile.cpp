@@ -250,31 +250,82 @@ namespace DUNE
       if (speed == 0.0)
         return false;
 
-      Maneuvers::RowsStages rstages = Maneuvers::RowsStages(maneuver, NULL);
+      Maneuvers::RowsStages* rstages = NULL;
+      try
+      {
+        rstages = new Maneuvers::RowsStages(maneuver, NULL);
+      }
+      catch (std::runtime_error& e)
+      {
+        return false;
+      }
 
       Position pos;
       pos.z = maneuver->z;
       pos.z_units = maneuver->z_units;
 
-      rstages.getFirstPoint(&pos.lat, &pos.lon);
+      return parseWorkerRowsStages(rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
+    }
 
-      float distance = distance3D(pos, last_pos);
+    bool
+    TimeProfile::parse(const IMC::RowsCoverage* maneuver, Position& last_pos)
+    {
+      float speed = convertSpeed(maneuver);
+
+      if (speed == 0.0)
+        return false;
+
+      // FIXME Avoid duplicated code
+      double hstep;
+      if (maneuver->angaperture <= 0)
+        hstep = 2 * maneuver->range;
+      else
+        hstep = 2 * maneuver->range * std::sin(maneuver->angaperture / 2);
+
+      Maneuvers::RowsStages* rstages = NULL;
+      try
+      {
+        rstages = new Maneuvers::RowsStages(maneuver->lat, maneuver->lon, maneuver->bearing,
+                                            maneuver->cross_angle, maneuver->width,
+                                            maneuver->length, hstep, maneuver->coff, 100,
+                                            maneuver->flags, NULL);
+      }
+      catch (std::runtime_error& e)
+      {
+        return false;
+      }
+
+      Position pos;
+      pos.z = maneuver->z;
+      pos.z_units = maneuver->z_units;
+
+      return parseWorkerRowsStages(rstages, pos, last_pos, speed, maneuver->speed, maneuver->speed_units);
+    }
+
+    bool
+    TimeProfile::parseWorkerRowsStages(Maneuvers::RowsStages* rstages,
+        Position& pos, Position& last_pos, float speed, float man_speed,
+        uint8_t man_speed_units)
+    {
+      rstages->getFirstPoint(&pos.lat, &pos.lon);
+
+      float distance = TimeProfile::distance3D(pos, last_pos);
       m_accum_dur->addDuration(distance / speed);
 
       last_pos = pos;
 
-      distance += rstages.getDistance(&last_pos.lat, &last_pos.lon);
+      distance += rstages->getDistance(&last_pos.lat, &last_pos.lon);
 
-      std::vector<float>::const_iterator itr = rstages.getDistancesBegin();
+      std::vector<float>::const_iterator itr = rstages->getDistancesBegin();
 
-      for (; itr != rstages.getDistancesEnd(); ++itr)
+      for (; itr != rstages->getDistancesEnd(); ++itr)
       {
         // compensate with path controller's eta factor
         float travelled = compensate(*itr, speed);
         float duration = travelled / speed;
 
         // Update speed profile
-        m_speed_vec->push_back(SpeedProfile(maneuver, duration));
+        m_speed_vec->push_back(SpeedProfile(man_speed, man_speed_units, duration));
 
         m_accum_dur->addDuration(duration);
       }
@@ -475,6 +526,10 @@ namespace DUNE
 
           case DUNE_IMC_COMPASSCALIBRATION:
             parsed = parse(static_cast<IMC::CompassCalibration*>(msg), pos);
+            break;
+
+          case DUNE_IMC_ROWSCOVERAGE:
+            parsed = parse(static_cast<IMC::RowsCoverage*>(msg), pos);
             break;
 
           default:

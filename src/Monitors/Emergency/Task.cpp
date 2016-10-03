@@ -50,6 +50,8 @@ namespace Monitors
       unsigned sms_lost_coms_ttl;
       //! Default SMS recipient.
       std::string recipient;
+      //! Transmission interface.
+      std::string interface;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -64,6 +66,8 @@ namespace Monitors
       bool m_in_mission;
       //! Executing plan's progress.
       float m_progress;
+      //! Iridium request identifier.
+      unsigned m_req;
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
       //! Medium handler.
@@ -76,6 +80,7 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_in_mission(false),
+        m_req(0),
         m_reporter(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
@@ -92,6 +97,11 @@ namespace Monitors
         .defaultValue("300.0")
         .minimumValue("60.0")
         .description(DTR("Lost Communications Timeout"));
+
+        param("Transmission Interface", m_args.interface)
+        .values("GSM, Iridium, Both")
+        .defaultValue("Both")
+        .description("Desired transmission interface");
 
         param("Expiration Time - Abort SMS", m_args.sms_abort_ttl)
         .units(Units::Second)
@@ -216,41 +226,6 @@ namespace Monitors
       }
 
       void
-      sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
-      {
-        IMC::Sms sms;
-        if (recipient.size() == 0)
-          sms.number = m_args.recipient;
-        else
-          sms.number = recipient;
-
-        sms.timeout = timeout;
-
-        if (!m_emsg.empty())
-        {
-          sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
-        }
-        else
-        {
-          std::string msg;
-          Time::BrokenDown bdt;
-          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d c:%d",
-                               getSystemName(),
-                               bdt.hour, bdt.minutes, bdt.seconds,
-                               (int)m_fuel, (int)m_fuel_conf);
-
-          msg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
-
-          sms.contents = String::str("(%s) %s", prefix, msg.c_str());
-        }
-
-        inf(DTR("sending SMS (t:%u) to %s: %s"),
-            timeout, sms.number.c_str(), sms.contents.c_str());
-
-        dispatch(sms);
-      }
-
-      void
       consume(const IMC::Abort* msg)
       {
         if (msg->getDestination() != getSystemId())
@@ -294,8 +269,61 @@ namespace Monitors
           m_lost_coms_timer.reset();
       }
 
+      //! Send SMS request.
+      //! @param[in] prefix message prefix.
+      //! @param[in] timeout time to live.
+      //! @param[in] recipient destination recipient.
       void
-      task(void)
+      sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
+      {
+        IMC::Sms sms;
+        if (recipient.size() == 0)
+          sms.number = m_args.recipient;
+        else
+          sms.number = recipient;
+
+        sms.timeout = timeout;
+
+        if (!m_emsg.empty())
+        {
+          sms.contents = String::str("(%s) %s", prefix, m_emsg.c_str());
+        }
+        else
+        {
+          std::string msg;
+          Time::BrokenDown bdt;
+          msg = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d c:%d",
+                               getSystemName(),
+                               bdt.hour, bdt.minutes, bdt.seconds,
+                               (int)m_fuel, (int)m_fuel_conf);
+
+          msg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
+
+          sms.contents = String::str("(%s) %s", prefix, msg.c_str());
+        }
+
+        inf(DTR("sending SMS (t:%u) to %s: %s"),
+            timeout, sms.number.c_str(), sms.contents.c_str());
+
+        bool ird = m_args.interface == "Iridium" || m_args.interface == "Both";
+        bool gsm = m_args.interface == "GSM" || m_args.interface == "Both";
+
+        if (ird)
+        {
+          DUNE::IMC::IridiumMsgTx m;
+          m.req_id = m_req++;
+          m.ttl = 60;
+          m.data.assign(sms.contents.begin(), sms.contents.end());
+          dispatch(m);
+        }
+
+        if (gsm)
+          dispatch(sms);
+      }
+
+      //! Send all scheduled reports.
+      void
+      sendScheduled(void)
       {
         std::string number;
         if (m_reporter != NULL && m_reporter->trigger(&number))
@@ -310,17 +338,28 @@ namespace Monitors
             spew("sent report to %s", number.c_str());
           }
         }
+      }
 
-        if (!isActive())
-          return;
-
+      //! Send distress messages if active and not underwater, or,
+      //! if not executing mission and waiting at water surface.
+      void
+      sendDistress(void)
+      {
         if (m_lost_coms_timer.overflow())
         {
           m_lost_coms_timer.reset();
 
-          if (!m_hand.isUnderwater())
+          if ((isActive() && !m_hand.isUnderwater()) ||
+              (m_hand.isWaterSurface() && !m_in_mission))
             sendSMS("T", m_args.sms_lost_coms_ttl);
         }
+      }
+
+      void
+      task(void)
+      {
+        sendScheduled();
+        sendDistress();
       }
     };
   }

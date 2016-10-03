@@ -138,7 +138,7 @@ namespace Plan
 
         inf(DTR("database file: '%s'"), db_file.c_str());
 
-        m_db = new Database::Connection(db_file.c_str(), true);
+        m_db = new Database::Connection(db_file.c_str(), Database::Connection::CF_CREATE);
 
         // Create Plan table and initialize associated statements
         m_db->execute(c_plan_table_stmt);

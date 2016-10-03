@@ -46,7 +46,8 @@ namespace Transports
       CODE_PLAN    = 0x02,
       CODE_REPORT  = 0x03,
       CODE_RESTART = 0x04,
-      CODE_RAW     = 0x05
+      CODE_RAW     = 0x05,
+      CODE_USBL    = 0x06
     };
 
     struct Report
@@ -65,6 +66,10 @@ namespace Transports
     {
       //! Enable reports.
       bool report_enable;
+      //! USBL Modem maximum waiting time.
+      float usbl_max_wait;
+      //! USBL Modem Announce service.
+      bool usbl_announce;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -77,8 +82,6 @@ namespace Transports
       float m_fuel_level;
       //! Last fuel level confidence.
       float m_fuel_conf;
-      //! Saved plan control.
-      IMC::PlanControl* m_pc;
       //! Sequence number.
       uint16_t m_seq;
       //! Last acoustic operation.
@@ -91,6 +94,12 @@ namespace Transports
       bool m_send_next;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
+      //! USBL Node arguments.
+      UsblTools::Node::Arguments m_node_args;
+      //! USBL Node.
+      UsblTools::Node* m_usbl_node;
+      //! USBL Modem.
+      UsblTools::Modem* m_usbl_modem;
       //! Task arguments.
       Arguments m_args;
 
@@ -102,24 +111,88 @@ namespace Transports
         m_progress(0),
         m_fuel_level(0),
         m_fuel_conf(0),
-        m_pc(NULL),
         m_seq(0),
         m_last_acop(NULL),
         m_send_next(false),
-        m_reporter(NULL)
+        m_reporter(NULL),
+        m_usbl_node(NULL),
+        m_usbl_modem(NULL)
       {
         param("Enable Reports", m_args.report_enable)
         .defaultValue("false")
-        .description("Enable system state reporting");
+        .description("Enable system state acoustic reporting. When enabled, systems"
+                     " shall acknowledge reception of requests to broadcast acoustic"
+                     " messages containing the overall state of the system."
+                     " When disabled, those requests shall be ignored");
 
+        param("USBL Node -- Enabled", m_node_args.enabled)
+        .defaultValue("false")
+        .description("Enable system's USBL mode. When active, this system will"
+                     " start using USBL by actively broadcasting an acoustic"
+                     " message containing a request to get USBL feedback. The"
+                     " request contains the period for transmissions, if quick"
+                     " (two-way travel) or ranging (three-way travel) mode is"
+                     " desired, and, if in ranging mode (not \"quick\"), to use"
+                     " absolute or relative positioning. If a USBL modem is in"
+                     " reach, they will start exchanging acoustic transmissions"
+                     " to provide USBL positioning to the system."
+                     " Any system can be configured to request USBL information"
+                     " including modems with built-in USBL capabilities");
+
+        param("USBL Node -- Period", m_node_args.period)
+        .defaultValue("60.0")
+        .minimumValue("2.0")
+        .units(Units::Second)
+        .description("USBL's period. This value determines the period of USBL"
+                     " positioning data. If \"Quick\" mode is selected, modem"
+                     " shall ping the USBL modem with this period to get bearing"
+                     " and elevation (two-way travel transmission). If \"Quick\""
+                     " mode is disabled, ranging information is included for a"
+                     " proper fix. In this case, the USBL modem pings the node,"
+                     " hears the reply, computes the position and transmits back"
+                     " to the node (three-way travel transmission)");
+
+        param("USBL Node -- Absolute Fix", m_node_args.fix)
+        .defaultValue("false")
+        .description("If this argument is enabled, USBL sends an absolute fix using"
+                     " WGS-84 lat/lon coordinates. If disabled, then the positioning"
+                     " is relative to the origin of a system where the center of the"
+                     " reference frame is the USBL modem");
+
+        param("USBL Node -- Quick, No Range", m_node_args.no_range)
+        .defaultValue("false")
+        .description("In this mode, the USBL node does not request ranging information."
+                     " Thus, with this mode enabled, there's only a two-way travel"
+                     " transmission between the node and the USBL modem. The node will"
+                     " actively ping the modem to get bearing/elevation information"
+                     " With this mode enabled \"Absolute Fix\" argument is ignored");
+
+        param("USBL Modem -- Announce Service", m_args.usbl_announce)
+        .defaultValue("false")
+        .description("This argument only concerns systems with USBL modems installed."
+                     " This parameter statically adds a USBL announce, even if service"
+                     " has not been detected yet (eg. modem not connected)");
+
+        param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
+        .defaultValue("10.0")
+        .minimumValue("2.0")
+        .maximumValue("20.0")
+        .units(Units::Second)
+        .description("This argument only concerns systems with USBL modems installed."
+                     " This value establishes the maximum amount of time that the modem"
+                     " waits for the target system's reply");
+
+        bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::PlanControlState>(this);
-        bind<IMC::AcousticOperation>(this);
+        bind<IMC::ReportControl>(this);
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
-        bind<IMC::ReportControl>(this);
+        bind<IMC::UsblPositionExtended>(this);
+        bind<IMC::UsblAnglesExtended>(this);
+        bind<IMC::UsblConfig>(this);
       }
 
       ~Task(void)
@@ -132,6 +205,8 @@ namespace Transports
       {
         m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
                                                        2.0, false);
+
+        m_usbl_node = new UsblTools::Node(this, &m_node_args);
       }
 
       //! Initialize resources.
@@ -143,6 +218,9 @@ namespace Transports
         + URL::encode(getEntityLabel());
         dispatch(announce);
 
+        if (m_args.usbl_announce)
+          announceUSBL();
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -151,6 +229,9 @@ namespace Transports
       onResourceRelease(void)
       {
         clearLastOp();
+        Memory::clear(m_reporter);
+        Memory::clear(m_usbl_node);
+        Memory::clear(m_usbl_modem);
       }
 
       void
@@ -279,6 +360,25 @@ namespace Transports
           case CODE_RAW:
             recvMessage(imc_addr_src, imc_addr_dst, msg);
             break;
+
+          case CODE_USBL:
+            if (UsblTools::toNode(msg->data[2]))
+            {
+              if (m_usbl_node != NULL)
+                m_usbl_node->parse(imc_addr_src, msg);
+            }
+            else
+            {
+              // handle request to USBL modem.
+              if (m_usbl_modem != NULL)
+              {
+                std::vector<uint8_t> data;
+                data.push_back(CODE_USBL);
+                if (m_usbl_modem->parse(msg, data))
+                  sendFrame(msg->sys_src, data, false);
+              }
+            }
+            break;
         }
       }
 
@@ -390,12 +490,82 @@ namespace Transports
       }
 
       void
+      consume(const IMC::UsblPositionExtended* msg)
+      {
+        if (m_usbl_modem == NULL)
+        {
+          announceUSBL();
+          m_usbl_modem = new UsblTools::Modem();
+          return;
+        }
+
+        // check if we are waiting for this system.
+        if (!m_usbl_modem->waitingForSystem(msg->target))
+          return;
+
+        std::vector<uint8_t> data;
+        data.push_back(CODE_USBL);
+
+        // The target wants an absolute fix?
+        if (m_usbl_modem->wantsFix(msg->target))
+        {
+          // transform data.
+          IMC::UsblFixExtended fix = UsblTools::toFix(*msg, m_estate);
+          if (m_usbl_modem->encode(&fix, data))
+            sendFrame(msg->target, data, false);
+        }
+        else
+        {
+          if (m_usbl_modem->encode(msg, data))
+            sendFrame(msg->target, data, false);
+        }
+      }
+
+      void
+      consume(const IMC::UsblAnglesExtended* msg)
+      {
+        if (m_usbl_modem == NULL)
+        {
+          announceUSBL();
+          m_usbl_modem = new UsblTools::Modem();
+          return;
+        }
+
+        // check if we are waiting for this system.
+        if (!m_usbl_modem->waitingForSystem(msg->target))
+          return;
+
+        std::vector<uint8_t> data;
+        data.push_back(CODE_USBL);
+        if (m_usbl_modem->encode(msg, data))
+          sendFrame(msg->target, data, false);
+      }
+
+      void
+      consume(const IMC::UsblConfig* msg)
+      {
+        if (m_usbl_node != NULL)
+          m_usbl_node->consume(msg);
+      }
+
+      void
       consume(const IMC::ReportControl* msg)
       {
         if (m_reporter != NULL)
           m_reporter->consume(msg);
       }
 
+      //! Announce USBL service.
+      void
+      announceUSBL(void)
+      {
+        IMC::AnnounceService announce;
+        announce.service = std::string("imc+any://acoustic/usbl/")
+        + URL::encode(getEntityLabel());
+        dispatch(announce);
+      }
+
+      //! Clear last operation.
       void
       clearLastOp(void)
       {
@@ -663,6 +833,32 @@ namespace Transports
         dispatch(fuel);
       }
 
+      //! Main loop of USBL modem.
+      void
+      onUsblModem(void)
+      {
+        if (m_usbl_modem != NULL)
+        {
+          // Trigger target.
+          std::string sys;
+          if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
+            sendRange(sys);
+        }
+      }
+
+      //! Main loop of USBL node.
+      void
+      onUsblNode(void)
+      {
+        if (m_usbl_node != NULL)
+        {
+          std::vector<uint8_t> data;
+          data.push_back(CODE_USBL);
+          if (m_usbl_node->run(data))
+            sendFrame("broadcast", data, false);
+        }
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -670,6 +866,9 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          onUsblModem();
+          onUsblNode();
 
           if (m_args.report_enable)
           {

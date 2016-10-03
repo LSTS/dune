@@ -58,7 +58,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge","ScheduledGoto",};
+                                          "Dislodge","ScheduledGoto"};
 
     enum ManeuverType
     {
@@ -264,9 +264,12 @@ namespace Maneuver
 
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
+        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.yoyo.max_depth);
+
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;
 
+        bind<IMC::Brake>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
@@ -391,6 +394,12 @@ namespace Maneuver
         }
 
         m_maneuvers[m_type]->start(maneuver);
+      }
+
+      void
+      consume(const IMC::Brake* msg)
+      {
+        m_maneuvers[m_type]->onBrake(msg);
       }
 
       void
