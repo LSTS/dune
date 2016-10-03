@@ -54,8 +54,8 @@ if [ -z "$FWL_INT_ITF" ]; then
     FWL_INT_ITF='eth0'
 fi
 
-if [ -z "$GSM_USBMODESWITCH" ]; then
-    GSM_USBMODESWITCH='AT'
+if [ -z "$PRESENTATION_MODE" ]; then
+    PRESENTATION_MODE='AT'
 fi
 
 
@@ -75,7 +75,7 @@ TIMEOUT 3 \
 'OK' '$GSM_PIN' \
 'OK-AT-OK' 'ATI' \
 'OK' 'ATZ' \
-'OK' '$GSM_USBMODESWITCH' \
+'OK' '$PRESENTATION_MODE' \
 'OK' '$GSM_MODE' \
 'OK-AT-OK' 'AT+CGDCONT=1,\"IP\",\"$GSM_APN\"' \
 'OK' 'ATDT*99***1#' \
