@@ -193,7 +193,7 @@ namespace Sensors
         .description("Number of seconds without data before restarting task");
 
         param("Entity Label - GPS", m_args.label_gps)
-        .defaultValue("GPS Sensor")
+        .defaultValue("GPS")
         .description("Entity label of 'GpsFix' messages");
 
         m_calibrated = false;
