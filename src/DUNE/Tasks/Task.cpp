@@ -110,7 +110,7 @@ namespace DUNE
     }
 
     Entities::BasicEntity*
-    Task::getEntity(const std::string& label)
+    Task::getLocalEntity(const std::string& label)
     {
       std::vector<Entities::BasicEntity*>::iterator it = std::find(m_entities.begin(), m_entities.end(), label);
       if (it == m_entities.end())
