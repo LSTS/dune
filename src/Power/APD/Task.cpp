@@ -325,14 +325,14 @@ namespace Power
         if (!m_ctl->sendFrame(frame))
           return false;
 
-        if (frame.getPayloadSize() != 17)
+        if (frame.getPayloadSize() != 16)
           return false;
 
         // Converts measurements read (12-bit ADC) and dispatches them to IMC bus.
         for (unsigned i = 0; i < c_adcs_count; ++i)
         {
           uint16_t value = 0;
-          frame.get(value, i*2+2);
+          frame.get(value, i*2);
           if (m_adcs[i] != NULL)
           {
             float tmp = m_args.adc_factors[i][0] * (value / 4096.0) + m_args.adc_factors[i][1];
