@@ -48,6 +48,8 @@ namespace Vision
       float focal_l;
       //! Distance to surface
       int altitude;
+      //! PhotoTrigger PCC name
+      std::string pcc_name;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -108,6 +110,10 @@ namespace Vision
         .defaultValue("100")
         .description("Distance to surface (sea or ground)");
 
+        param("PhotoTrigger PCC", m_args.pcc_name)
+        .defaultValue("5V C.1 (Photo Trigger)")
+        .description("PhotoTrigger PowerChannelControl name.");
+
         bind<EstimatedState>(this);
       }
 
@@ -149,7 +155,7 @@ namespace Vision
         IMC::PowerChannelControl pcc;
         IMC::LogBookEntry log_entry;
 
-        pcc.name = "5V C.1 (Photo Trigger)";
+        pcc.name = m_args.pcc_name;
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(pcc);
         log_entry.type = IMC::LogBookEntry::LBET_INFO;
