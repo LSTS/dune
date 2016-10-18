@@ -25,6 +25,9 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <limits>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -89,6 +92,8 @@ namespace Supervisors
         AssistState m_astate;
         //! Timer for triggering the dislodge
         Time::Counter<float> m_dtimer;
+        //! Lost communications timer.
+        Time::Counter<float> m_ltimer;
         //! Finish depth of the running plan
         float m_finish_depth;
         //! Valid GPS signal
@@ -101,6 +106,7 @@ namespace Supervisors
           m_vmon(NULL),
           m_astate(ST_IDLE),
           m_dtimer(c_stab_time),
+          m_ltimer(c_stab_time),
           m_finish_depth(-1.0),
           m_gps(false)
         {
@@ -125,11 +131,19 @@ namespace Supervisors
           m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.plan_id);
 
           bind<IMC::GpsFix>(this);
+          bind<IMC::Heartbeat>(this);
           bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
           bind<IMC::PlanGeneration>(this);
           bind<IMC::PlanControl>(this);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.trigger_time))
+            m_ltimer.setTop(m_args.trigger_time);
         }
 
         void
@@ -154,10 +168,32 @@ namespace Supervisors
         void
         consume(const IMC::GpsFix* msg)
         {
+          // ignore old messages.
+          if (std::fabs(msg->getTimeStamp() - Clock::getSinceEpoch()) > 5.0)
+            return;
+
           if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
+          {
             m_gps = true;
+            m_finish_depth = std::numeric_limits<float>::max();
+          }
           else
+          {
             m_gps = false;
+          }
+        }
+
+        void
+        consume(const IMC::Heartbeat* msg)
+        {
+          if (msg->getSource() == getSystemId())
+            return;
+
+          if ((msg->getSource() & 0x4000) == 0)
+            return;
+
+          m_ltimer.reset();
+          m_finish_depth = std::numeric_limits<float>::max();
         }
 
         void
@@ -177,10 +213,6 @@ namespace Supervisors
         {
           m_vz = msg->vz;
           m_depth = msg->depth;
-
-          // reset finish depth if the vehicle comes to the surface
-          if (m_depth < m_args.depth_threshold)
-            m_finish_depth = -1.0;
         }
 
         void
@@ -287,6 +319,9 @@ namespace Supervisors
             return false;
 
           if (m_gps)
+            return false;
+
+          if (!m_ltimer.overflow())
             return false;
 
           if (m_medium != IMC::VehicleMedium::VM_UNDERWATER)
