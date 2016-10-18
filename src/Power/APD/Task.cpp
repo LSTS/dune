@@ -55,6 +55,8 @@ namespace Power
     static const unsigned c_pwrs_count = 4;
     //! Number of ADC channels.
     static const unsigned c_adcs_count = 7;
+    //! ADC nominal fixed offset (atxmega32a4u).
+    const float c_adc_vdelta = 0.05;
 
     //! Packet identifiers.
     enum PacketIds
@@ -333,9 +335,10 @@ namespace Power
         {
           uint16_t value = 0;
           frame.get(value, i*2);
+
           if (m_adcs[i] != NULL)
           {
-            float tmp = m_args.adc_factors[i][0] * (value / 4096.0) + m_args.adc_factors[i][1];
+            float tmp = m_args.adc_factors[i][0] * ((value / 4096.0) - c_adc_vdelta) + m_args.adc_factors[i][1];
             m_adcs[i]->setValueFP(tmp);
             dispatch(m_adcs[i]);
           }
