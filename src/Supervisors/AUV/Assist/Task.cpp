@@ -25,9 +25,6 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <limits>
-
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -173,14 +170,9 @@ namespace Supervisors
             return;
 
           if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
-          {
             m_gps = true;
-            m_finish_depth = std::numeric_limits<float>::max();
-          }
           else
-          {
             m_gps = false;
-          }
         }
 
         void
@@ -193,7 +185,6 @@ namespace Supervisors
             return;
 
           m_ltimer.reset();
-          m_finish_depth = std::numeric_limits<float>::max();
         }
 
         void
@@ -213,6 +204,10 @@ namespace Supervisors
         {
           m_vz = msg->vz;
           m_depth = msg->depth;
+
+          // reset finish depth if the vehicle comes to the surface
+          if (m_depth < m_args.depth_threshold)
+            m_finish_depth = -1.0;
         }
 
         void
