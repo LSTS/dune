@@ -205,8 +205,8 @@ namespace Transports
         }
       }
 
-       void
-       consume(const IMC::EntityInfo* msg)
+      void
+      consume(const IMC::EntityInfo* msg)
       {
         // Only log messages we requested
         if (msg->getDestinationEntity() == getEntityId())
@@ -266,6 +266,9 @@ namespace Transports
       void
       logMessage(const IMC::Message* msg)
       {
+        if (m_log == NULL)
+          return;
+
         IMC::Packet::serialize(msg, m_buffer);
         m_log->write(m_buffer.getBufferSigned(), m_buffer.getSize());
       }
