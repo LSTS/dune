@@ -325,7 +325,7 @@ namespace Power
         frame.setId(PKT_ID_STATE);
 
         if (!m_ctl->sendFrame(frame))
-          return false;
+          throw std::runtime_error(DTR("Failed to send frame to APD. Check connection!"));
 
         if (frame.getPayloadSize() != 16)
           return false;
