@@ -328,7 +328,7 @@ namespace Transports {
                     //! Debug messages
                     DEBUGTRE_PRINTTEXDEC("I = ", i);
                     m_task->trace("Data -> %c", data[i]);
-                    DEBUGTRE_PRINTTEXDEC("Data -> ", data[i]);
+                    DEBUGSPE_PRINTTEXDEC("Data -> ", data[i]);
 
                     if ((data[i] == HUMSNS_END_TRAMA_BYTE) || (data[i] == HUMSNS_ESCAPE_BYTE)) {    //! If data has any of these characters
                         //! Write an escape character
@@ -341,7 +341,7 @@ namespace Transports {
 
                 //! Debug messages
                 DEBUG_PRINTLN("Final char");
-                DEBUGTRE_PRINTTEXDEC("Data -> ", *final_char);
+                DEBUGSPE_PRINTTEXDEC("Data -> ", *final_char);
 
                 //! Write final character
                 m_uart->write(final_char, sizeof(*final_char));
