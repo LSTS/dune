@@ -163,7 +163,7 @@ int UBXParser::decodeMessage(std::vector<double>& data)
 
     // Count the checksum
 
-    for (uint8_t i=2;i<(length-2);i++){
+    for (int i=2;i<(length-2);i++){
         CK_A += *(message+pos+i);
         CK_B += CK_A;
     }
@@ -196,14 +196,19 @@ int UBXParser::decodeMessage(std::vector<double>& data)
                 // Second, we extract the needed data from the message buffer and save it to the vector.
 
                 //iTOW
-                data.push_back ((*(message+pos+9) << 24) | (*(message+pos+8) << 16) | (*(message+pos+7) << 8) | (*(message+pos+6)));
+                data.push_back ((unsigned)((*(message+pos+9) << 24) | (*(message+pos+8) << 16) | (*(message+pos+7) << 8) | (*(message+pos+6))));
                 //Longitude
                 data.push_back ((*(message+pos+13) << 24) | (*(message+pos+12) << 16) | (*(message+pos+11) << 8) | (*(message+pos+10)));
                 //Latitude
                 data.push_back ((*(message+pos+17) << 24) | (*(message+pos+16) << 16) | (*(message+pos+15) << 8) | (*(message+pos+14)));
-                //Height
+                //Height above Ellipsoid
                 data.push_back ((*(message+pos+21) << 24) | (*(message+pos+20) << 16) | (*(message+pos+19) << 8) | (*(message+pos+18)));
-
+		//Height above mean sea level
+		data.push_back ((*(message+pos+25) << 24) | (*(message+pos+24) << 16) | (*(message+pos+23) << 8) | (*(message+pos+22)));
+		//Horizontal Accuracy Estateimate
+                data.push_back ((unsigned)((*(message+pos+29) << 24) | (*(message+pos+28) << 16) | (*(message+pos+27) << 8) | (*(message+pos+26))));
+		//Vertical Accuracy Estateimate
+		data.push_back ((unsigned)((*(message+pos+33) << 24) | (*(message+pos+32) << 16) | (*(message+pos+31) << 8) | (*(message+pos+30))));
                 break;
 
         case 259:
@@ -251,7 +256,7 @@ int UBXParser::checkMessage()
 
     // Count the checksum
 
-    for (uint8_t i=2;i<(length-2);i++){
+    for (int i=2;i<(length-2);i++){
         CK_A += *(message+pos+i);
         CK_B += CK_A;
     }
@@ -277,10 +282,8 @@ Ublox::Ublox(std::string name, UBXScanner* scan, UBXParser* pars) : spi_device_n
 int Ublox::enableNAV_POSLLH()
 {
     unsigned char gps_nav_posllh[] = {0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0x01, 0x02, 0x01, 0x0E, 0x47};
-//    int gps_nav_posllh_length = (sizeof(gps_nav_posllh)/sizeof(*gps_nav_posllh));
-//    unsigned char from_gps_data_nav[gps_nav_posllh_length];
-    int gps_nav_posllh_length = 11;
-    unsigned char from_gps_data_nav[11];
+    int gps_nav_posllh_length = (sizeof(gps_nav_posllh)/sizeof(*gps_nav_posllh));
+    unsigned char from_gps_data_nav[gps_nav_posllh_length];
 
     return SPIdev::transfer(spi_device_name.c_str(), gps_nav_posllh, from_gps_data_nav, gps_nav_posllh_length, 200000);
 }
@@ -288,10 +291,8 @@ int Ublox::enableNAV_POSLLH()
 int Ublox::enableNAV_STATUS()
 {
     unsigned char gps_nav_status[] = {0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0x01, 0x03, 0x01, 0x0F, 0x49};
-//    int gps_nav_status_length = (sizeof(gps_nav_status)/sizeof(*gps_nav_status));
-//    unsigned char from_gps_data_nav[gps_nav_status_length];
-    int gps_nav_status_length = 11;
-    unsigned char from_gps_data_nav[11];
+    int gps_nav_status_length = (sizeof(gps_nav_status)/sizeof(*gps_nav_status));
+    unsigned char from_gps_data_nav[gps_nav_status_length];
 
     return SPIdev::transfer(spi_device_name.c_str(), gps_nav_status, from_gps_data_nav, gps_nav_status_length, 200000);
 }

@@ -5,6 +5,8 @@ Adapted for Raspberry Pi by Mikhail Avkhimenia (mikhail.avkhimenia@emlid.com)
 
 #include "MPU9250.h"
 
+#define G_SI 9.80665
+#define PI  3.14159
 //-----------------------------------------------------------------------------------------------
 
 MPU9250::MPU9250()
@@ -86,13 +88,13 @@ BITS_DLPF_CFG_2100HZ_NOLPF
 returns 1 if an error occurred
 -----------------------------------------------------------------------------------------------*/
 
-#define MPU_InitRegNum 17
+#define MPU_InitRegNum 16
 
 bool MPU9250::initialize(int sample_rate_div, int low_pass_filter)
 {
     uint8_t i = 0;
     uint8_t MPU_Init_Data[MPU_InitRegNum][2] = {
-        {0x80, MPUREG_PWR_MGMT_1},     // Reset Device
+        //{0x80, MPUREG_PWR_MGMT_1},     // Reset Device - Disabled because it seems to corrupt initialisation of AK8963
         {0x01, MPUREG_PWR_MGMT_1},     // Clock Source
         {0x00, MPUREG_PWR_MGMT_2},     // Enable Acc & Gyro
         {low_pass_filter, MPUREG_CONFIG},         // Use DLPF set Gyroscope bandwidth 184Hz, temperature bandwidth 188Hz
@@ -123,7 +125,7 @@ bool MPU9250::initialize(int sample_rate_div, int low_pass_filter)
 
     for(i=0; i<MPU_InitRegNum; i++) {
         WriteReg(MPU_Init_Data[i][1], MPU_Init_Data[i][0]);
-        usleep(10000);  //I2C must slow down the write speed, otherwise it won't work
+        usleep(100000);  //I2C must slow down the write speed, otherwise it won't work
     }
 
     set_acc_scale(BITS_FS_16G);
@@ -260,9 +262,9 @@ void MPU9250::read_acc()
     int i;
     ReadRegs(MPUREG_ACCEL_XOUT_H,response,6);
     for(i=0; i<3; i++) {
-        bit_data=((int16_t)response[i*2]<<8)|response[i*2+1];
-        data=(float)bit_data;
-        accelerometer_data[i]=data/acc_divider;
+        bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
+        data = (float)bit_data;
+        accelerometer_data[i] = G_SI * data / acc_divider;
     }
 
 }
@@ -283,9 +285,9 @@ void MPU9250::read_gyro()
     int i;
     ReadRegs(MPUREG_GYRO_XOUT_H,response,6);
     for(i=0; i<3; i++) {
-        bit_data=((int16_t)response[i*2]<<8)|response[i*2+1];
-        data=(float)bit_data;
-        gyroscope_data[i]=data/gyro_divider;
+        bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
+        data = (float)bit_data;
+        gyroscope_data[i] = (PI / 180) * data / gyro_divider;
     }
 
 }
@@ -415,25 +417,25 @@ void MPU9250::read_all(){
     ReadRegs(MPUREG_ACCEL_XOUT_H,response,21);
     //Get accelerometer value
     for(i=0; i<3; i++) {
-        bit_data=((int16_t)response[i*2]<<8)|response[i*2+1];
-        data=(float)bit_data;
-        accelerometer_data[i]=data/acc_divider;
+        bit_data = ((int16_t)response[i*2] << 8)|response[i*2+1];
+        data = (float)bit_data;
+        accelerometer_data[i] = G_SI * data / acc_divider;
     }
     //Get temperature
-    bit_data=((int16_t)response[i*2]<<8)|response[i*2+1];
-    data=(float)bit_data;
-    temperature=((data-21)/333.87)+21;
+    bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
+    data = (float)bit_data;
+    temperature = ((data - 21) / 333.87) + 21;
     //Get gyroscope value
     for(i=4; i<7; i++) {
-        bit_data=((int16_t)response[i*2]<<8)|response[i*2+1];
-        data=(float)bit_data;
-        gyroscope_data[i-4]=data/gyro_divider;
+        bit_data = ((int16_t)response[i*2] << 8) | response[i*2+1];
+        data = (float)bit_data;
+        gyroscope_data[i-4] = (PI / 180) * data / gyro_divider;
     }
     //Get Magnetometer value
     for(i=7; i<10; i++) {
-        bit_data=((int16_t)response[i*2+1]<<8)|response[i*2];
-        data=(float)bit_data;
-        magnetometer_data[i-7]=data*magnetometer_ASA[i-7];
+        bit_data = ((int16_t)response[i*2+1] << 8) | response[i*2];
+        data = (float)bit_data;
+        magnetometer_data[i-7] = data * magnetometer_ASA[i-7];
     }
 }
 
