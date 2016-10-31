@@ -159,7 +159,7 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
-        if (msg->alt < 0 && m_zunits != IMC::Z_ALTITUDE)
+        if (msg->alt < 0 && m_zunits == IMC::Z_ALTITUDE)
         {
           m_task->signalNoAltitude();
           return;
