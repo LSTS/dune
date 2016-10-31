@@ -48,6 +48,8 @@ namespace DUNE
     static const unsigned c_axis = 3;
     //! Number of DVL beams.
     static const unsigned c_dvl_beams = 4;
+    //! Minimum number of valid beams required.
+    static const unsigned c_min_valid = 3;
 
     //! %BeamFilter is responsible to gather beam
     //! distance values from a DVL unit and compute
@@ -140,14 +142,14 @@ namespace DUNE
 
         for (unsigned i = 0; i < m_list.size(); i++)
         {
-          if (m_list[i].value > 0)
+          if (m_list[i].value > 0 && m_list[i].validity == IMC::Distance::DV_VALID)
           {
             valid++;
             dist += m_list[i].value;
           }
         }
 
-        if (!valid)
+        if (valid < c_min_valid)
           return -1;
 
         dist /= valid;
