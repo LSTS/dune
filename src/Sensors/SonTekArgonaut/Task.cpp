@@ -317,9 +317,15 @@ namespace Sensors
         for (unsigned i = 0; i < c_beam_count; ++i)
         {
           if (m_dist[i].value < c_min_distance)
+          {
+            m_filter->setValidity(i, IMC::Distance::DV_INVALID);
             m_dist[i].validity = IMC::Distance::DV_INVALID;
+          }
           else
+          {
+            m_filter->setValidity(i, IMC::Distance::DV_VALID);
             m_dist[i].validity = IMC::Distance::DV_VALID;
+          }
 
           m_filter->update(i, m_dist[i].value);
           m_dist[i].setTimeStamp(tstamp);
