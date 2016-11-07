@@ -92,7 +92,7 @@ namespace Control
           if ((msg->validity & GpsFix::GFV_VALID_POS) == 0)
             return;
 
-          debug("Processing gpxfix");
+          spew("Processing gpxfix");
 
 
         }
