@@ -82,9 +82,17 @@ namespace Control
         }
 
         void
+          consume(const IMC::EstimatedStreamVelocity* msg)
+          {
+            V_x = msg->x;
+            V_y = msg->y;
+          }
+
+        void
         onDesiredSpeed(const IMC::DesiredSpeed* msg)
         {
           Ud = msg->value;
+          Ud = std::sqrt(std::pow(Ud -V_x,2) + std::pow(V_y,2));
         }
 
         void
@@ -97,12 +105,7 @@ namespace Control
           spew("Processing gpxfix");
         }
 
-        void
-        consume(const IMC::EstimatedStreamVelocity* msg)
-        {
-          V_x = msg->x;
-          V_y = msg->y;
-        }
+
 
         inline double
         computeK( double ts_y, double factor, double timestep)
@@ -121,7 +124,7 @@ namespace Control
 
 //          Euler integration
 //          ey_int += (ey + std::sin(state.psi - ts.track_bearing))*time_step;
-          ey_int += ey*time_step;
+          ey_int += ey*time_step ;
 
 //          double k1, k2 ,k3, k4;
 //
