@@ -114,31 +114,32 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref; double k = 0.35; double d = 1.0; double ey = ts.track_pos.y + d*std::sin(state.psi - ts.track_bearing);
-          double k_int = 0.002;
+          double a = 100;
+          double ref; double k = .2; double d = 1.0; double ey = ts.track_pos.y + d*std::sin(state.psi - ts.track_bearing);
+          double k_int = 1/a;
           double time_step = m_last_step.getDelta();
 
-          // Euler integration
+//          Euler integration
 //          ey_int += (ey + std::sin(state.psi - ts.track_bearing))*time_step;
-//          ey_int += ey*time_step;
+          ey_int += ey*time_step;
 
-          double k1, k2 ,k3, k4;
-
-          // Inside corridor, m_integrator ON
-          // RK4 integration
-          k1 = computeK(ey, 0.0,time_step);
-          k2 = computeK(ey, k1/2,time_step);
-          k3 = computeK(ey, k2/2,time_step);
-          k4 = computeK(ey, k3,time_step);
-
-          ey_int += time_step * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+//          double k1, k2 ,k3, k4;
+//
+//          // Inside corridor, m_integrator ON
+//          // RK4 integration
+//          k1 = computeK(ey, 0.0,time_step);
+//          k2 = computeK(ey, k1/2,time_step);
+//          k3 = computeK(ey, k2/2,time_step);
+//          k4 = computeK(ey, k3,time_step);
+//
+//          ey_int += time_step * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
 
 
 //          ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k*std::cos(state.psi- ts.track_bearing)*std::sin(state.psi- ts.track_bearing) - k_int*ey_int*std::cos(state.psi - ts.track_bearing)/d;
           ref = ts.track_bearing - (k*ey*std::cos(state.psi - ts.track_bearing)/d) - k_int*ey_int*std::cos(state.psi- ts.track_bearing)/d;
           m_heading.value =  Angles::normalizeRadian(ref);
- //         debug("Actual psi = %f, bearing = %f, extra term = %f,  ey = %f, ey_int = %f",Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), k*std::cos(state.psi)*std::sin(state.psi), ey, ey_int );
-          debug("bearing = %f", ts.track_bearing);
+          debug("Actual psi = %f, bearing = %f,  ey = %f, ey_int = %f" ,Angles::degrees(state.psi), Angles::degrees(ts.track_bearing), ey, ey_int );
+//          debug("bearing = %f", ts.track_bearing);
           dispatch(m_heading);
 
         }
