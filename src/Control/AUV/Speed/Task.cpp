@@ -351,10 +351,10 @@ namespace Control
             return;
           //msg = change(msg);
 
-          double k = 0.1; double d = 1;
+          double k = 0.01; double d = 1;
           m_desired_speed = msg->value;
           m_speed_units = msg->speed_units;
-          m_desired_speed = m_desired_speed - k*(ey + d*std::sin(psi- bearing))*std::sin(psi- bearing);
+          m_desired_speed = m_desired_speed - 0*k*(ey + d*std::sin(psi))*std::sin(psi);
 
           //delete msg;
         }
