@@ -108,6 +108,8 @@ namespace Transports
       DataSeatrac m_data_beacon;
       //! Time of last serial port input.
       double m_last_input;
+      //! Timer to manage the fragmentation of OWAY messages. 
+      Time::Counter<double> m_oway_timer;
       //! Map of seatrac modems by name.
       MapName m_modem_names;
       //! Map of seatrac modems by address.
@@ -588,6 +590,7 @@ namespace Transports
       {
         if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
         {
+          m_oway_timer.reset();
           sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
         }
         else
@@ -605,26 +608,23 @@ namespace Transports
       void
       handleDatSendResponse(void)
       {
-        switch (m_data_beacon.cid_dat_send_msg.status)
+        if (m_data_beacon.cid_dat_send_msg.status == CST_OK) 
         {
-          case CST_OK:
-            if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
-                m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
+          if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
+              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
+          {
+            // if msg has more than 1 packet, send next part
+            if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
             {
-              // if msg has more than 1 packet, send next part
-              if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
-                sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+              m_oway_timer.setTop(m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate);
+              sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             }
-            break;
-
-          case CST_XCVR_BUSY:
-            //Poll the modem until it's free
-            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
-            break;
-
-          default:
+          }
+        }
+        else 
+        {
+          if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
             handleCommunicationError();
-            break;
         }
       }
 
@@ -711,6 +711,7 @@ namespace Transports
             err(DTR("size mismatch"));
             break;
           default:
+            m_oway_timer.setTop(m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             break;
         }
@@ -793,6 +794,7 @@ namespace Transports
         {
           consumeMessages();
           readSentence();
+          checkTxOWAY();
 
           if (m_state_entity != STA_ERR_STP)
           {
@@ -818,6 +820,32 @@ namespace Transports
         }
 
         m_stop_comms = false;
+      }
+      
+      //! Checks if an OWAY message is waiting to be sent.
+      void
+      checkTxOWAY(void) {
+        
+        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus()) 
+        {
+          if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
+              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
+          {
+            if (m_oway_timer.overflow())
+            {
+              if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+              {
+                m_oway_timer.setTop(m_oway_timer.getTop() / 2); 
+                sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+              }
+              else 
+              {
+                war(DTR("OWAY transmission failed."));
+                clearTicket(IMC::UamTxStatus::UTS_FAILED);
+              }
+            }
+          }
+        }
       }
 
       //! Main loop.
