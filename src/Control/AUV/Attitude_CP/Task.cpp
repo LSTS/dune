@@ -40,7 +40,7 @@ namespace Control
 {
   namespace AUV
   {
-    namespace Attitude
+    namespace Attitude_CP
     {
       using DUNE_NAMESPACES;
       using std::sin;
