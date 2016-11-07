@@ -407,7 +407,7 @@ namespace Control
             return;
 
           m_desired_speed = std::sqrt(std::pow(ux -Vx,2) + std::pow(Vy,2));
-          debug("desired surge velocity = %f, Vx=%f, Vy = %f, Ud = %f" ,m_desired_speed,Vx,Vy);
+ //         debug("desired surge velocity = %f, Vx=%f, Vy = %f" ,m_desired_speed,Vx,Vy);
 
 
           switch (m_speed_units)
