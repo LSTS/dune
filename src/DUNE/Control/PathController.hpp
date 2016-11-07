@@ -135,6 +135,13 @@ namespace DUNE
       onPathDeactivation(void)
       { }
 
+      virtual void
+      onDesiredSpeed(const IMC::DesiredSpeed* msg)
+      {
+        (void)msg;
+      }
+
+
       //! All data regarding the vehicle's state while tracking the path
       struct TrackingState
       {

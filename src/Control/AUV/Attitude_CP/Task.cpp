@@ -40,7 +40,7 @@ namespace Control
 {
   namespace AUV
   {
-    namespace Attitude
+    namespace Attitude_CP
     {
       using DUNE_NAMESPACES;
       using std::sin;
@@ -49,11 +49,6 @@ namespace Control
 
       //! Depth reference when altitude is ignored.
       static const float c_min_depth_ref = 1.5f;
-      //! Depth hysteresis boundary to apply extra pitch.
-      static const float c_depth_hyst = 0.5f;
-      //! Heading rate limit to apply extra pitch.
-      static const float c_max_hrate = 10.0f;
-
       //! Controllable loops.
       static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_DEPTH | IMC::CL_PITCH;
       //! Required loops.
@@ -109,10 +104,6 @@ namespace Control
         float max_pitch_act;
         //! Maximum pitch reference for depth controller.
         float max_pitch;
-        //! Extra pitch reference beyond maximum.
-        float extra_pitch;
-        //! Vertical error to apply extra pitch.
-        float zref_extra;
         //! Use a fixed depth offset.
         bool use_depth_offset;
         //! Depth offset value if set.
@@ -157,15 +148,12 @@ namespace Control
         CoarseAltitude* m_ca;
         //! Parcel for coarse altitude.
         IMC::ControlParcel m_ca_parcel;
-        //! Applying extra reference.
-        bool m_extra_pitch;
         //! Task Arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
-          m_ca(NULL),
-          m_extra_pitch(false)
+          m_ca(NULL)
         {
           // Load controller gains and integral limits.
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -197,24 +185,8 @@ namespace Control
 
           param("Maximum Pitch Reference", m_args.max_pitch)
           .defaultValue("10.0")
-          .minimumValue("5.0")
-          .maximumValue("35.0")
           .units(Units::Degree)
           .description("Maximum pitch reference used by depth controller");
-
-          param("Extra Pitch Reference", m_args.extra_pitch)
-          .defaultValue("5.0")
-          .minimumValue("0.0")
-          .maximumValue("15.0")
-          .units(Units::Degree)
-          .description("Extra pitch beyond \"Maximum Pitch Reference\"");
-
-          param("Extra Pitch -- Vertical Error", m_args.zref_extra)
-          .defaultValue("10.0")
-          .minimumValue("0.0")
-          .units(Units::Meter)
-          .description("\"Extra Pitch\" is added to \"Maximum Pitch Reference\" if"
-                       " error to vertical reference is greater than this");
 
           param("Use Fixed Depth Offset", m_args.use_depth_offset)
           .defaultValue("false")
@@ -533,16 +505,14 @@ namespace Control
             switch (getVerticalMode())
             {
               case VERTICAL_MODE_DEPTH:
+                if ((getVerticalRef() < m_args.depth_threshold) && m_args.force_pitch)
+                  surface = true;
+
                 z_error = getVerticalRef() - msg->depth;
 
-                if (getVerticalRef() < m_args.depth_threshold)
-                {
-                  if (m_args.force_pitch && std::fabs(z_error) < m_args.depth_threshold)
-                    surface = true;
+                if ((getVerticalRef() < m_args.depth_threshold) && (m_args.depth_offset > 0))
+                  use_offset = false;
 
-                  if (m_args.depth_offset > 0)
-                    use_offset = false;
-                }
                 break;
               case VERTICAL_MODE_ALTITUDE:
                 if (msg->alt < m_args.min_dvl_alt && msg->depth < m_args.min_dvl_depth)
@@ -580,34 +550,9 @@ namespace Control
 
             if (!surface)
             {
-              // extra pitch.
-              if (m_extra_pitch)
-              {
-                // remove extra pitch.
-                if (std::fabs(z_error) < m_args.zref_extra - c_depth_hyst ||
-                    std::fabs(m_hrate_ref.value) > Angles::radians(c_max_hrate))
-                {
-                  m_extra_pitch = false;
-                  m_pid[LP_DEPTH].setOutputLimits(-m_args.max_pitch, m_args.max_pitch);
-                }
-              }
-              else
-              {
-                // add extra pitch.
-                if ((std::fabs(z_error) > m_args.zref_extra) && (m_args.extra_pitch > 0.0)
-                    && std::fabs(m_hrate_ref.value) < Angles::radians(c_max_hrate))
-                {
-                  m_extra_pitch = true;
-                  float pitch = m_args.max_pitch + m_args.extra_pitch;
-                  m_pid[LP_DEPTH].setOutputLimits(-pitch, pitch);
-                }
-              }
-
-              double val = -(-sin(msg->theta) * msg->u + cos(msg->theta) *
-                             (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w));
-
               // Positive depth implies negative pitch
-              cmd = -m_pid[LP_DEPTH].step(timestep, z_error, val);
+              cmd = -m_pid[LP_DEPTH].step(timestep, z_error,
+                                          -(-sin(msg->theta) * msg->u + cos(msg->theta) * (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w)));
             }
             else
             {

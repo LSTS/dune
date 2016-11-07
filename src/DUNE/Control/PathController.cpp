@@ -539,6 +539,8 @@ namespace DUNE
     {
       if (isTrackingBottom())
         m_btrack->onDesiredSpeed(dspeed);
+
+      onDesiredSpeed(dspeed);
     }
 
     void

@@ -196,9 +196,18 @@ namespace DUNE
       }
     }
 
+
+
     void
     VehicleFormation::consume(const IMC::EstimatedState* msg)
     {
+
+      if (!m_ctx.resolver.isLocal(msg->getSource()))
+      {
+        onRemoteState(msg);
+        return;
+      }
+
       if (m_approach)
         return;
 

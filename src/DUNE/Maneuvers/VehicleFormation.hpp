@@ -91,7 +91,7 @@ namespace DUNE
 
       //! Inherited from Maneuver class.
       //! @param pcs path control state message
-      void
+      virtual void
       onPathControlState(const IMC::PathControlState* pcs);
 
       //! Abstract method called upon path completion.
@@ -115,6 +115,12 @@ namespace DUNE
       virtual void
       onReset(void)
       { }
+
+      void virtual
+      onRemoteState(const IMC::EstimatedState* msg)
+      {
+        (void) msg;
+      }
 
       //! Trajectory point.
       struct TPoint

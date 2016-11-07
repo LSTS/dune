@@ -37,6 +37,7 @@
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Memory.hpp>
 #include <DUNE/Time/Counter.hpp>
+#include <DUNE/Math/Angles.hpp>
 
 namespace DUNE
 {
@@ -70,13 +71,30 @@ namespace DUNE
         m_static_timer_gps.setTop(c_sampler);
       }
 
+      bool
+      consume(const IMC::EstimatedState state, const IMC::WaterVelocity wvel,  IMC::EstimatedStreamVelocity& stream)
+      {
+        if (wvel.validity >= (IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y))
+        {
+          // If the vehicle is moving
+          if(!m_static)
+          {
+            stream.x = state.u - wvel.x;
+            stream.y = state.v - wvel.y;
+            DUNE::Math::Angles::rotate(state.psi, false, stream.x, stream.y);
+  //          printf("Estimated current from water velocity (%f,%f)\n", stream.x, stream.y);
+            return true;
+          }
+        }
+        return false;
+      }
       //! Received GpsFix estimate.
       //! @param[in] msg new GpsFix.
       //! @param[out] stream Estimated stream velocity.
       bool
       consume(const IMC::EstimatedState state, const IMC::GpsFix* gps, IMC::EstimatedStreamVelocity& stream)
       {
-        bool estimated = false;
+        bool estimated  = false;
 
         // Dynamic estimation (using navigation jumps when popping up)
         double lat, lon;

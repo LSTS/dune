@@ -776,6 +776,10 @@ namespace DUNE
       if (msg->validity != m_wvel_val_bits)
         return;
 
+      IMC::EstimatedStreamVelocity stream;
+      if (m_stream_filter.consume(m_estate, *msg, stream))
+        dispatch(stream);
+
       m_dvl_rej.setTimeStamp(msg->getTimeStamp());
       m_dvl_rej.type = IMC::DvlRejection::TYPE_WV;
 
