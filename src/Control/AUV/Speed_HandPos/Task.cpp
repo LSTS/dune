@@ -39,7 +39,7 @@ namespace Control
 {
   namespace AUV
   {
-    namespace Speed
+    namespace Speed_HandPos
     {
       //! Tolerance for very low meters per second speed
       static const float c_mps_tol = 0.1;
@@ -351,10 +351,10 @@ namespace Control
             return;
           //msg = change(msg);
 
-          double k = 0.01; double d = 1;
+          double k = 0.1; double d = 1;
           m_desired_speed = msg->value;
           m_speed_units = msg->speed_units;
-          m_desired_speed = m_desired_speed - 0*k*(ey + d*std::sin(psi))*std::sin(psi);
+          m_desired_speed = m_desired_speed - k*(ey + d*std::sin(psi- bearing))*std::sin(psi- bearing);
 
           //delete msg;
         }

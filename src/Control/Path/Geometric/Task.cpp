@@ -34,6 +34,13 @@ namespace Control
   {
     namespace Geometric
     {
+      struct Arguments
+      {
+        double V_x;
+        double V_y;
+        bool enable;
+      };
+
       using DUNE_NAMESPACES;
 
       struct Task: public DUNE::Control::PathController
@@ -42,7 +49,7 @@ namespace Control
         IMC::DesiredHeading m_heading;
         Time::Counter<float> m_realpos;
         double m_yaw, m_u, m_v, m_svelx, m_svely;
-        double V_x, V_y;
+        Arguments V;
         double Ud;
 
         //! Constructor.
@@ -55,7 +62,16 @@ namespace Control
           // for dev purposes only
           bind<IMC::EstimatedStreamVelocity>(this);
           m_realpos.setTop(60);
-          V_x = V_y = 0;
+
+          param("OceanCurrent -- Off-Line Estimation North", V.V_x)
+          .description("Ocean current estimated off-line, North direction");
+
+          param("OceanCurrent -- Off-Line Estimation East", V.V_y)
+          .description("Ocean current estimated off-line, East direction");
+
+          param("OceanCurrent -- Enable", V.enable)
+          .description("Enable off-line estimates");
+
         }
 
         void
@@ -100,18 +116,22 @@ namespace Control
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          V_x = msg->x;
-          V_y = msg->y;
+          if (!V.enable){
+            V.V_x = msg->x;
+            V.V_y = msg->y;
+          }
         }
 
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref; double k = 0.1; double ey = ts.track_pos.y;
-          double Vrx = V_x; double Vry = V_y;
+          double ref; double k = 0.08; double ey = ts.track_pos.y;
+          double Vrx = V.V_x; double Vry = V.V_y; double Udt;
 
+          Udt = std::sqrt(std::pow(Ud - Vrx,2) + std::pow(k*ey + Vry,2));
           DUNE::Math::Angles::rotate(ts.track_bearing, true, Vrx , Vry);
-          ref = ts.track_bearing - std::atan((k*ey + Vry)/Ud);
+          ref = ts.track_bearing - std::atan((k*ey + Vry)/Udt);
+          debug("ey=%f",ey);
           m_heading.value = Angles::normalizeRadian(ref);
           dispatch(m_heading);
 
