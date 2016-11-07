@@ -108,10 +108,11 @@ namespace Control
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           double ref; double k = 0.1; double ey = ts.track_pos.y;
-          double Vrx = V_x; double Vry = V_y;
+          double Vrx = V_x; double Vry = V_y; double Udt;
 
+          Udt = std::sqrt(std::pow(Ud - V_x,2) + std::pow(V_y,2));
           DUNE::Math::Angles::rotate(ts.track_bearing, true, Vrx , Vry);
-          ref = ts.track_bearing - std::atan((k*ey + Vry)/Ud);
+          ref = ts.track_bearing - std::atan((k*ey + Vry)/Udt);
           m_heading.value = Angles::normalizeRadian(ref);
           dispatch(m_heading);
 
