@@ -49,7 +49,7 @@ namespace Control
         IMC::DesiredHeading m_heading;
         Time::Counter<float> m_realpos;
         double m_yaw, m_u, m_v, m_svelx, m_svely;
-        Arguments V;
+        Arguments m_args;
         double Ud;
 
         //! Constructor.
@@ -63,13 +63,13 @@ namespace Control
           bind<IMC::EstimatedStreamVelocity>(this);
           m_realpos.setTop(60);
 
-          param("OceanCurrent -- Off-Line Estimation North", V.V_x)
+          param("OceanCurrent -- Off-Line Estimation North", m_args.V_x)
           .description("Ocean current estimated off-line, North direction");
 
-          param("OceanCurrent -- Off-Line Estimation East", V.V_y)
+          param("OceanCurrent -- Off-Line Estimation East", m_args.V_y)
           .description("Ocean current estimated off-line, East direction");
 
-          param("OceanCurrent -- Enable", V.enable)
+          param("OceanCurrent -- Enable", m_args.enable)
           .description("Enable off-line estimates");
 
         }
@@ -116,9 +116,9 @@ namespace Control
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          if (!V.enable){
-            V.V_x = msg->x;
-            V.V_y = msg->y;
+          if (!m_args.enable){
+            m_args.V_x = msg->x;
+            m_args.V_y = msg->y;
           }
         }
 
@@ -126,7 +126,7 @@ namespace Control
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           double ref; double k = 0.08; double ey = ts.track_pos.y;
-          double Vrx = V.V_x; double Vry = V.V_y; double Udt;
+          double Vrx = m_args.V_x; double Vry = m_args.V_y; double Udt;
 
           Udt = std::sqrt(std::pow(Ud - Vrx,2) + std::pow(k*ey + Vry,2));
           DUNE::Math::Angles::rotate(ts.track_bearing, true, Vrx , Vry);
