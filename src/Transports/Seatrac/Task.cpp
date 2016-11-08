@@ -42,6 +42,7 @@
 #include "DataTypes.hpp"
 #include "DebugMsg.hpp"
 
+
 namespace Transports
 {
   //! Blueprint Subsea's Seatrac acoustic modem driver.
@@ -73,10 +74,16 @@ namespace Transports
       bool only_underwater;
       //! Addresses Number - modem
       std::string addr_section;
+      //! Enable ARHS mode
+      bool arhs_mode;
+      //! Enamle pressure sensor
+      bool pressure_sensor_mode;
       //! Enable usbl mode
       bool usbl_mode;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
+      // Rotation matrix values.
+      std::vector<double> rotation_mx;
     };
 
     //! Map of system's names.
@@ -90,6 +97,8 @@ namespace Transports
       IO::Handle* m_handle;
       //! Task arguments.
       Arguments m_args;
+      //! Config Status.
+      bool m_config_status;
       //! Current state.
       EntityStates m_state_entity;
       //! Entity states.
@@ -108,7 +117,9 @@ namespace Transports
       DataSeatrac m_data_beacon;
       //! Time of last serial port input.
       double m_last_input;
-      //! Timer to manage the fragmentation of OWAY messages. 
+      //! Read timestamp.
+      double m_tstamp;
+      //! Timer to manage the fragmentation of OWAY messages.
       Time::Counter<double> m_oway_timer;
       //! Map of seatrac modems by name.
       MapName m_modem_names;
@@ -118,6 +129,22 @@ namespace Transports
       Ticket* m_ticket;
       // Save modem commands.
       IMC::DevDataText m_dev_data;
+      //! Euler angles message.
+      IMC::EulerAngles m_euler;
+      //! Acceleration message.
+      IMC::Acceleration m_accel;
+      //! Angular velocity message.
+      IMC::AngularVelocity m_agvel;
+      //! Magnetometer Vector message.
+      IMC::MagneticField m_magfield;
+      //! Current sound speed.
+      IMC::SoundSpeed m_sspeed;
+      // Depth.
+      IMC::Depth m_depth;
+      // Pressure.
+      IMC::Pressure m_pressure;
+      // Measured temperature.
+      IMC::Temperature m_temperature;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -125,8 +152,10 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
+        m_config_status(false),
         m_stop_comms(false),
-        m_usbl_receiver(false)
+        m_usbl_receiver(false),
+        m_tstamp(0)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -148,6 +177,14 @@ namespace Transports
         .defaultValue("Seatrac Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("AHRS Mode", m_args.arhs_mode)
+        .defaultValue("false")
+        .description("Enable the AHRS information to used in navigation");
+
+        param("Pressure Sensor Mode", m_args.pressure_sensor_mode)
+        .defaultValue("false")
+        .description("Enable the pressure sensor, depth, sound velocity and temperature information ");
+
         param("USBL Mode", m_args.usbl_mode)
         .defaultValue("false")
         .description("Enable the USBL mode. USBL receivers can obtain position information.");
@@ -157,6 +194,10 @@ namespace Transports
         .description("Request Enhanced USBL information. USBL receivers request enhanced "
                      "information in transmissions. This parameter is useful only when "
                      "the beacon has an USBL receiver.");
+        param("AHRS Rotation Matrix", m_args.rotation_mx)
+        .defaultValue("")
+        .size(9)
+        .description("AHRS rotation matrix which is dependent of the mounting position");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -209,16 +250,35 @@ namespace Transports
       void
       processNewData(void)
       {
-        if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
-          handleBinaryMessage();
+        if(m_config_status==true)
+        {
+          if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
+            handleBinaryMessage();
 
-        if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
-          handleDatSendResponse();
+          if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
+            handleDatSendResponse();
 
-        if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
-          handleCommunicationError();
+          if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
+            handleCommunicationError();
+          if(m_data_beacon.newDataAvailable(CID_STATUS))
+          {
+            //if(m_args.arhs_mode==true)//todo repair this (only  commented por test )
+            {
+              handleAhrsData();
+            }
+            //todo if(m_args.pressure_sensor_mode==true)
+            {
+              handlePressureSensor();
+            }
+
+            //todo send environment_supply
+            //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
+            //todo if(m_args.sond_velocity==true)
+          }
+        }
       }
 
+      //! Release
       //! Read sentence.
       void
       readSentence(void)
@@ -232,6 +292,7 @@ namespace Transports
         if (Poll::poll(*m_handle, 0.001))
         {
           rv = m_handle->readString(bfr, c_bfr_size);
+          m_tstamp = Clock::getSinceEpoch();
           m_last_input = Clock::get();
           for (size_t i = 0; i < rv; ++i)
           {
@@ -349,12 +410,17 @@ namespace Transports
           if (m_usbl_receiver)
             xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
 
+          StatusMode_E status_mode= STATUS_MODE_1HZ;
+          if (m_args.arhs_mode==true)
+          {
+            status_mode= STATUS_MODE_10HZ;
+          }
           if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
-                && (m_data_beacon.cid_settings_msg.status_flags == STATUS_MODE_1HZ)
+                && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
                 && (m_data_beacon.cid_settings_msg.status_output == output_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)))
           {
-            m_data_beacon.cid_settings_msg.status_flags = STATUS_MODE_1HZ;
+            m_data_beacon.cid_settings_msg.status_flags = status_mode;
             m_data_beacon.cid_settings_msg.status_output = output_flags;
             m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
@@ -371,11 +437,13 @@ namespace Transports
 
             debug("ready");
             setAndSendState(STA_IDLE);
+            m_config_status=true;
           }
           else
           {
             debug("ready");
             setAndSendState(STA_IDLE);
+            m_config_status=true;
           }
         }
         else
@@ -435,7 +503,11 @@ namespace Transports
       bool
       hasConnection(void)
       {
-        return m_data_beacon.new_message[CID_STATUS];
+        if (Clock::get() >= (m_last_input + c_input_tout))
+        {
+          return false;
+        }
+        return true;
       }
 
       //! Processing incoming data.
@@ -600,6 +672,67 @@ namespace Transports
         }
       }
 
+      //! Handle AHRS data send by local beacon.
+      //! The method tries to dispach all the necessary information for navigation
+      void
+      handleAhrsData(void)
+      {
+        if(m_data_beacon.cid_status_msg.outputflags_list[5])
+        {
+          //Time Stamp
+          m_euler.setTimeStamp(m_tstamp);
+          m_accel.setTimeStamp(m_tstamp);
+          m_agvel.setTimeStamp(m_tstamp);
+          m_magfield.setTimeStamp(m_tstamp);
+
+          // Acceleration.
+          m_accel.x  = ( (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_acc_x / (fp32_t) m_data_beacon.cid_settings_msg.ahrs_cal.acc_max_x) * Math::c_gravity;
+          m_accel.y  = ( (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_acc_y / (fp32_t) m_data_beacon.cid_settings_msg.ahrs_cal.acc_max_y) * Math::c_gravity;
+          m_accel.z  = ( (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_acc_z / (fp32_t) m_data_beacon.cid_settings_msg.ahrs_cal.acc_max_z) * Math::c_gravity;
+          // Magnetic Field.
+          m_magfield.x = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_x;
+          m_magfield.y = (fp32_t)m_data_beacon.cid_status_msg.ahrs_comp_mag_y;
+          m_magfield.z = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_z;
+
+          m_euler.theta= Angles::radians( ((fp32_t) m_data_beacon.cid_status_msg.attitude_roll)/10);
+          m_euler.psi =  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_pitch)/10);
+          m_euler.psi_magnetic = m_euler.psi;
+          m_euler.phi=  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_yaw)/10);
+          // Angular Velocity.
+          m_agvel.x = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_x);
+          m_agvel.y = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_y);
+          m_agvel.z = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_z);
+          //Euler angles.
+          m_euler.time = ((fp32_t) m_data_beacon.cid_status_msg.timestamp)/1000;
+          m_accel.time = m_euler.time;
+          m_agvel.time = m_euler.time;
+          m_magfield.time = m_euler.time;
+          // Dispatch messages.
+          dispatch(m_euler, DF_KEEP_TIME);
+          dispatch(m_accel, DF_KEEP_TIME);
+          dispatch(m_agvel, DF_KEEP_TIME);
+          dispatch(m_magfield, DF_KEEP_TIME);
+        }
+      }
+
+
+      //! Handle Pressure , Depth, Temperature and Sound Speed data and dispactch .
+      //! The method tries to dispach data prom sensors:Pressure , Depth, Temperature and Sound Speed data
+      void
+      handlePressureSensor (void)
+      {
+        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentDepth))/10; //int32_t // m_channel_readout * m_args.depth_conv;
+        m_pressure.value =  (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure))/1000)* Math::c_pascal_per_bar;
+        m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature))/10;  //int16_t//m_channel_readout;
+        //m_sspeed.setTimeStamp(m_temp.getTimeStamp());
+        //m_sspeed.value = (m_salinity.value < 0.0) ? -1.0 : UNESCO1983::computeSoundSpeed(m_salinity.value, pressure, m_temp.value);
+        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentVos))/10;  //uint16_t
+        dispatch(m_depth);
+        dispatch(m_pressure);
+        dispatch(m_temperature);
+        dispatch(m_sspeed);
+      }
+
       //! Handle the response to a CID_Data_Send command.
       //! If the acknowledged message is an OWAY and it is compound
       //! by more than one packet, the method sends the following packet.
@@ -608,7 +741,7 @@ namespace Transports
       void
       handleDatSendResponse(void)
       {
-        if (m_data_beacon.cid_dat_send_msg.status == CST_OK) 
+        if (m_data_beacon.cid_dat_send_msg.status == CST_OK)
         {
           if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
@@ -621,7 +754,7 @@ namespace Transports
             }
           }
         }
-        else 
+        else
         {
           if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
             handleCommunicationError();
@@ -821,12 +954,12 @@ namespace Transports
 
         m_stop_comms = false;
       }
-      
+
       //! Checks if an OWAY message is waiting to be sent.
       void
       checkTxOWAY(void) {
-        
-        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus()) 
+
+        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
@@ -835,10 +968,10 @@ namespace Transports
             {
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
               {
-                m_oway_timer.setTop(m_oway_timer.getTop() / 2); 
+                m_oway_timer.setTop(m_oway_timer.getTop() / 2);
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
               }
-              else 
+              else
               {
                 war(DTR("OWAY transmission failed."));
                 clearTicket(IMC::UamTxStatus::UTS_FAILED);
