@@ -215,7 +215,6 @@ namespace DUNE
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
       m_dead_reckoning = false;
-      m_sum_euler_inc = false;
       m_alt_sanity = true;
       m_aligned = false;
       m_edelta_ts = 0.1;
@@ -301,8 +300,6 @@ namespace DUNE
         m_ahrs_eid = std::numeric_limits<unsigned>::max();
       }
 
-      m_agvel_eid = m_ahrs_eid;
-
       try
       {
         m_dvl_eid = resolveEntity(m_elabel_dvl);
@@ -358,7 +355,7 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::AngularVelocity* msg)
     {
-      if (msg->getSourceEntity() != m_agvel_eid)
+      if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
       if (std::fabs(msg->x) > c_max_agvel ||
