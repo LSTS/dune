@@ -248,7 +248,7 @@ namespace DUNE
         double roll = getEuler(AXIS_X);
         double p, q, r;
 
-        if (m_sum_euler_inc)
+        if (m_dead_reckoning)
         {
           if (!m_edelta_readings)
             return 0.0;
@@ -565,12 +565,8 @@ namespace DUNE
       double m_last_z;
       //! Dead reckoning mode.
       bool m_dead_reckoning;
-      //! Sum euler increments to get heading.
-      bool m_sum_euler_inc;
       //! Vehicle is aligned.
       bool m_aligned;
-      //! Angular velocity message entity id.
-      unsigned m_agvel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
       //! LBL threshold.
