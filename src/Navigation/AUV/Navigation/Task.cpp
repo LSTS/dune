@@ -154,8 +154,6 @@ namespace Navigation
         float rpm_max;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
-        //! Increment Euler Angles Delta (true) or integrate yaw rate (false).
-        bool euler_delta;
         //! Abort if navigation exceeds maximum uncertainty.
         bool abort;
       };
@@ -230,10 +228,6 @@ namespace Navigation
           .minimumValue("4e-4")
           .maximumValue("8e-4")
           .description("Kalman Filter revolutions to speed maximum allowed variation");
-
-          param("Update Heading with Euler Increments", m_args.euler_delta)
-          .defaultValue("false")
-          .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
 
           param("Abort if Uncertainty Exceeded", m_args.abort)
           .defaultValue("true")
@@ -357,11 +351,6 @@ namespace Navigation
             if (m_dead_reckoning)
               return;
 
-            if (!m_args.euler_delta)
-              m_agvel_eid = m_imu_eid;
-
-            m_sum_euler_inc = m_args.euler_delta;
-
             // Dead reckoning mode.
             m_dead_reckoning = true;
             debug("start navigation alignment");
@@ -386,9 +375,7 @@ namespace Navigation
 
             // Stop integrate heading rates and use AHRS data.
             m_dead_reckoning = false;
-            m_sum_euler_inc = false;
             m_aligned = false;
-            m_agvel_eid = getAhrsId();
             debug("navigation not aligned");
 
             m_kal.setState(STATE_PSI_BIAS, 0.0);
