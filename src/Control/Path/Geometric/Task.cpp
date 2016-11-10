@@ -36,8 +36,8 @@ namespace Control
     {
       struct Arguments
       {
-        double V_x;
-        double V_y;
+        double x;
+        double y;
         bool enable;
       };
 
@@ -49,8 +49,10 @@ namespace Control
         IMC::DesiredHeading m_heading;
         Time::Counter<float> m_realpos;
         double m_yaw, m_u, m_v, m_svelx, m_svely;
-        Arguments V;
+        Arguments m_args;
+        bool des_vel_curr;
         double Ud;
+        Delta m_last_step;
 
         //! Constructor.
         //! @param[in] name task name.
@@ -58,19 +60,23 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
         {
+
           bind<IMC::GpsFix>(this);
           // for dev purposes only
           bind<IMC::EstimatedStreamVelocity>(this);
           m_realpos.setTop(60);
 
-          param("OceanCurrent -- Off-Line Estimation North", V.V_x)
+          param("OceanCurrent -- Off-Line Estimation North", m_args.x)
           .description("Ocean current estimated off-line, North direction");
 
-          param("OceanCurrent -- Off-Line Estimation East", V.V_y)
+          param("OceanCurrent -- Off-Line Estimation East", m_args.y)
           .description("Ocean current estimated off-line, East direction");
 
-          param("OceanCurrent -- Enable", V.enable)
+          param("OceanCurrent -- Enable", m_args.enable)
           .description("Enable off-line estimates");
+
+          param("ForwardVelocity -- No current dependency", des_vel_curr)
+          .description("Dependency of the desired speed on the ocean current, that is on the estimated stream velocity");
 
         }
 
@@ -113,26 +119,56 @@ namespace Control
 
         }
 
+
         void
         consume(const IMC::EstimatedStreamVelocity* msg)
         {
-          if (!V.enable){
-            V.V_x = msg->x;
-            V.V_y = msg->y;
+          if (!m_args.enable){
+            m_args.x = msg->x;
+            m_args.y = msg->y;
           }
         }
+
 
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           double ref; double k = 0.08; double ey = ts.track_pos.y;
-          double Vrx = V.V_x; double Vry = V.V_y; double Udt;
+          double Vrx = m_args.x; double Vry = m_args.y;
+          double Udt;
+//          double time_step = m_last_step.getDelta();
 
-          Udt = std::sqrt(std::pow(Ud - Vrx,2) + std::pow(k*ey + Vry,2));
+          // Estimator
+/*          Estimator which can be used in case we have reliable water velocities, that is, reliable values of the relative
+            velocity of the vehicle with respect to the water. This estimator does not need the ground velocity or its estimation
+            It just needs the absolute position (e.g. ground position given by GPSFix or by the navigation task if underwater) */
+
+//          double kxh = 2; double kyh = 2;
+//          double kVhx = .5; double kVhy = .5;
+//          dxh  = WVx*std::cos(state.psi) - WVy*std::sin(state.psi) + Vhx + kxh*( state.x - xh);
+//          dyh  = WVx*std::sin(state.psi) + WVy*std::cos(state.psi) + Vhy + kyh*( state.y - yh);
+//          dVhx = -kVhx*(xh - state.x);
+//          dVhy = -kVhy*(yh - state.y);
+//          xh   += dxh*time_step;
+//          yh   += dyh*time_step;
+//          Vhx  += dVhx*time_step;
+//          Vhy  += dVhy*time_step;
+
+          // reference
+          if (des_vel_curr)
+          {
+          Udt = Ud;
+          }
+          else
+          {
+            Udt = std::sqrt(std::pow(Ud - Vrx,2) + std::pow(k*ey + Vry,2));
+          };
+
+//          Udt = Ud;
           DUNE::Math::Angles::rotate(ts.track_bearing, true, Vrx , Vry);
           ref = ts.track_bearing - std::atan((k*ey + Vry)/Udt);
-          debug("ey=%f",ey);
           m_heading.value = Angles::normalizeRadian(ref);
+          debug("crossTrack = %f, bearing = %f , ref= %f, Udt = %f",ey,ts.track_bearing,ref,Udt);
           dispatch(m_heading);
 
         }
