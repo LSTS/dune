@@ -246,6 +246,7 @@ namespace Maneuver
             m_fref_state.state = IMC::FollowRefState::FR_WAIT;
 
             signalCompletion("maneuver terminated by reference source");
+            return;
           }
 
           guide(&m_pcs, &m_cur_ref, &m_estate);
