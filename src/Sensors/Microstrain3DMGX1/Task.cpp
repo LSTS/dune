@@ -45,7 +45,14 @@ namespace Sensors
     static const uint16_t c_tick_rollover = 65535;
     // Euler angles conversion factor.
     static const fp64_t c_euler_factor = (360.0 / 65536.0);
+    //! Number of axis.
+    static const uint8_t c_number_axis = 3;
+//! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+        //! Time to wait for soft-reset.
+    static const float c_reset_tout = 5.0;
 
+    //todo adicionar matriz de rotação
     enum CommandByte
     {
       // Null command.
@@ -61,7 +68,9 @@ namespace Sensors
       // Rate Vectors.
       MSG_RAW_IVECS = 0x03,
       // Gyro-Stabilized Euler Angles.
-      MSG_GS_EULER = 0x0E
+      MSG_GS_EULER = 0x0E,
+      //Write EEPROM Value
+      MSG_W_EEPROM= 0x29
     };
 
     // States of the internal FSM.
@@ -81,6 +90,12 @@ namespace Sensors
       double data_tout;
       // True to sample raw inertial vectors, false for compensated.
       bool raw_ivecs;
+      // Rotation matrix values.
+      std::vector<double> rotation_mx;
+      //! Hard iron calibration.
+      std::vector<float> hard_iron;
+      //! Calibration threshold.
+      double calib_threshold;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -93,8 +108,14 @@ namespace Sensors
       IMC::AngularVelocity m_agvel;
       // Acceleration
       IMC::Acceleration m_accel;
+      //! Magnetometer Vector message.
+      IMC::MagneticField m_magfield;
       // Current FSM state.
       FSMStates m_state;
+      //! Rotation Matrix to correct mounting position.
+      Math::Matrix m_rotation;
+      //! Rotated calibration parameters.
+      float m_hard_iron[3];
       // Count of bytes left to form a complete message.
       int m_togo;
       // Count of parsed bytes from current message.
@@ -105,6 +126,8 @@ namespace Sensors
       fp64_t m_accel_scale;
       // Angular rate scale constant.
       fp64_t m_gyro_scale;
+      // MAg gain scale
+      fp64_t m_mag_scale;
       // Value of the last read EEPROM address.
       int16_t m_eeprom;
       // Device's timer.
@@ -139,8 +162,47 @@ namespace Sensors
         param("Raw Inertial Vectors", m_args.raw_ivecs)
         .defaultValue("false")
         .description("Set to true to enable sampling of raw data");
+
+        param("IMU Rotation Matrix", m_args.rotation_mx)
+        .defaultValue("")
+        .size(9)
+        .description("IMU rotation matrix which is dependent of the mounting position");
+
+         param(c_hard_iron_param, m_args.hard_iron)
+        .units(Units::Gauss)
+        .size(c_number_axis)
+        .description("Hard-Iron calibration parameters");
+
+        param("Calibration Threshold", m_args.calib_threshold)
+        .defaultValue("0.1")
+        .units(Units::Gauss)
+        .minimumValue("0.0")
+        .description("Minimum magnetic field calibration values to reset hard iron parameters");
+
+        bind<IMC::MagneticField>(this);
       }
 
+      //! Update parameters.
+      void
+      onUpdateParameters(void)
+      {
+        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
+
+        // Rotate calibration parameters.
+        Math::Matrix data(3, 1);
+
+        for (unsigned i = 0; i < 3; i++)
+          data(i) = m_args.hard_iron[i];
+        data = transpose(m_rotation) * data;
+        for (unsigned i = 0; i < 3; i++)
+          m_hard_iron[i] = data(i);
+
+        if (m_uart != NULL)
+        {
+          if (paramChanged(m_args.hard_iron))
+            runCalibration();
+        }
+      }
       void
       onResourceAcquisition(void)
       {
@@ -151,6 +213,34 @@ namespace Sensors
       onResourceInitialization(void)
       {
         m_wdog.setTop(m_args.data_tout);
+      }
+
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        // Reject if it is small adjustment.
+        if ((std::abs(msg->x) < m_args.calib_threshold) &&
+            (std::abs(msg->y) < m_args.calib_threshold))
+          return;
+
+        double hi_x = m_args.hard_iron[0] + msg->x;
+        double hi_y = m_args.hard_iron[1] + msg->y;
+
+        IMC::EntityParameter hip;
+        hip.name = c_hard_iron_param;
+        hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
+
+        IMC::SetEntityParameters np;
+        np.name = getEntityLabel();
+        np.params.push_back(hip);
+        dispatch(np, DF_LOOP_BACK);
+
+        IMC::SaveEntityParameters sp;
+        sp.name = getEntityLabel();
+        dispatch(sp);
       }
 
       void
@@ -174,6 +264,8 @@ namespace Sensors
             return 7;
           case MSG_GS_EULER:
             return 11;
+          case MSG_W_EEPROM :
+            return 7;
         }
 
         return -1;
@@ -185,7 +277,6 @@ namespace Sensors
         clear();
 
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
         // Stop continuous mode.
         setContinuousMode();
         Delay::wait(1.0);
@@ -220,6 +311,17 @@ namespace Sensors
         }
         m_accel_scale = (32768000.0 / m_eeprom);
 
+        // Read MagGainScale.
+        queryEEPROM(232);
+        if (!getMessage(MSG_EEPROM))
+        {
+          setEntityState(IMC::EntityState::ESTA_FAILURE,
+                         DTR("failed to read EEPROM#230"));
+          return false;
+        }
+        m_mag_scale = (32768000.0 / m_eeprom);
+
+        runCalibration();
         // Set continuous mode for gyro-stabilized euler angles.
         setContinuousMode(MSG_GS_EULER);
 
@@ -275,6 +377,66 @@ namespace Sensors
         return m_timer;
       }
 
+            //! Correct data according with mounting position.
+      void
+      rotateAcceleration(void)
+      {
+        Math::Matrix data(3, 1);
+
+        // Acceleration.
+        data(0) = m_accel.x;
+        data(1) = m_accel.y;
+        data(2) = m_accel.z;
+        data = m_rotation * data;
+        m_accel.x = data(0);
+        m_accel.y = data(1);
+        m_accel.z = data(2);
+      }
+
+      void
+      rotateAngularVelocity(void)
+      {
+        Math::Matrix data(3, 1);
+
+        // Angular Velocity.
+        data(0) = m_agvel.x;
+        data(1) = m_agvel.y;
+        data(2) = m_agvel.z;
+        data = m_rotation * data;
+        m_agvel.x = data(0);
+        m_agvel.y = data(1);
+        m_agvel.z = data(2);
+      }
+
+      void
+      rotateMagneticField(void)
+      {
+        Math::Matrix data(3, 1);
+        // Magnetic Field.
+        data(0) = m_magfield.x;
+        data(1) = m_magfield.y;
+        data(2) = m_magfield.z;
+        data = m_rotation * data;
+        m_magfield.x = data(0);
+        m_magfield.y = data(1);
+        m_magfield.z = data(2);
+      }
+
+      void
+      rotateEuler(void)
+      {
+        Math::Matrix data(3, 1);
+
+        // Acceleration.
+        data(0) = m_euler.phi;
+        data(1) = m_euler.theta;
+        data(2) = m_euler.psi;
+        data = m_rotation * data;
+        m_euler.phi = data(0);
+        m_euler.theta = data(1);
+        m_euler.psi = data(2);
+       }
+
       CommandByte
       parse(uint8_t byte)
       {
@@ -324,7 +486,6 @@ namespace Sensors
 
         // Interpret parsed data.
         int16_t angle = 0;
-
         switch (m_data[0])
         {
           case MSG_CONTMODE:
@@ -342,6 +503,7 @@ namespace Sensors
             m_euler.theta = Angles::radians((fp64_t)angle * c_euler_factor);
             ByteCopy::fromBE(angle, m_data + 5);
             m_euler.psi = Angles::radians((fp64_t)angle * c_euler_factor);
+            rotateEuler();
             m_euler.psi_magnetic = m_euler.psi;
             m_euler.setTimeStamp(tstamp);
             dispatch(m_euler, DF_KEEP_TIME);
@@ -358,8 +520,10 @@ namespace Sensors
             ByteCopy::fromBE(angle, m_data + 11);
             m_accel.z = (fp64_t)angle / m_accel_scale;
             m_accel.setTimeStamp(tstamp);
+            rotateAcceleration();
 
             // Angular velocity.
+            m_agvel.time = updateTimerCount(m_data + 19);
             ByteCopy::fromBE(angle, m_data + 13);
             m_agvel.x = (fp64_t)angle / m_gyro_scale;
             ByteCopy::fromBE(angle, m_data + 15);
@@ -367,9 +531,23 @@ namespace Sensors
             ByteCopy::fromBE(angle, m_data + 17);
             m_agvel.z = (fp64_t)angle / m_gyro_scale;
             m_agvel.setTimeStamp(tstamp);
+            rotateAngularVelocity();
 
+            // Extract magnetic field.
+            m_magfield.time =  updateTimerCount(m_data + 19);
+            ByteCopy::fromBE(angle, m_data + 1);
+            m_magfield.x = (fp64_t)angle / m_mag_scale;
+            ByteCopy::fromBE(angle, m_data + 3);
+            m_magfield.y = (fp64_t)angle / m_mag_scale;
+            ByteCopy::fromBE(angle, m_data + 5);
+            m_magfield.z = (fp64_t)angle / m_mag_scale;
+            m_magfield.setTimeStamp(tstamp);
+            rotateMagneticField();
+
+            dispatch(m_magfield, DF_KEEP_TIME);
             dispatch(m_accel, DF_KEEP_TIME);
             dispatch(m_agvel, DF_KEEP_TIME);
+
             return MSG_IVECS;
 
           case MSG_RAW_IVECS:
@@ -382,7 +560,7 @@ namespace Sensors
             ByteCopy::fromBE(angle, m_data + 11);
             m_accel.z = (fp64_t)angle / m_accel_scale;
             m_accel.setTimeStamp(tstamp);
-
+            rotateAcceleration();
             // Angular velocity.
             ByteCopy::fromBE(angle, m_data + 13);
             m_agvel.x = (fp64_t)angle / m_gyro_scale;
@@ -391,10 +569,14 @@ namespace Sensors
             ByteCopy::fromBE(angle, m_data + 17);
             m_agvel.z = (fp64_t)angle / m_gyro_scale;
             m_agvel.setTimeStamp(tstamp);
-
+            rotateAngularVelocity();
             dispatch(m_accel, DF_KEEP_TIME);
             dispatch(m_agvel, DF_KEEP_TIME);
             return MSG_RAW_IVECS;
+
+          case MSG_W_EEPROM:
+              ByteCopy::fromBE(m_eeprom, m_data + 1);
+            return MSG_W_EEPROM;
         }
 
         return MSG_NULL;
@@ -424,6 +606,120 @@ namespace Sensors
         };
 
         m_uart->write(cmd, 3);
+      }
+
+      void
+      writeEEPROM(uint16_t address , uint16_t w_data)
+      {
+        uint8_t cmd[7] =
+        {
+          (uint8_t)MSG_W_EEPROM,
+          (uint8_t)0x71,
+          (uint8_t)(address >> 8),
+          (uint8_t)address,
+          (uint8_t)(w_data >> 8),
+          (uint8_t)w_data,
+          (uint8_t)0xAA
+        };
+
+        m_uart->write(cmd, 7);
+      }
+
+      //! Routine to run calibration proceedings.
+      void
+      runCalibration(void)
+      {
+        if (m_uart == NULL)
+          return;
+
+        // See if vehicle has same hard iron calibration parameters.
+        if (!isCalibrated())
+        {
+
+          // Set hard iron calibration parameters and reset device.
+          if (!setHardIron())
+          {
+            throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
+          }
+          else
+          {
+            // Set continuous mode for gyro-stabilized euler angles.
+            setContinuousMode(MSG_GS_EULER);
+          }
+        }
+      }
+
+      //! Check if sensor has the same hard iron calibration parameters.
+      //! @return true if the parameters are the same, false otherwise.
+      bool
+      isCalibrated(void)
+      {
+        // Sensor magnetic calibration.
+        int16_t senCal[c_number_axis] = {0};
+        // Magnetic calibration in configuration.
+        int16_t cfgCal[c_number_axis] = {0};
+        // Stop continuous mode and read answer.
+        setContinuousMode();
+        if (!getMessage(MSG_CONTMODE))
+        {
+          setEntityState(IMC::EntityState::ESTA_FAILURE,
+                         DTR("failed to stop device"));
+          return false;
+        }
+        for (unsigned i=0; i<c_number_axis ; i++ )
+        {
+          queryEEPROM(172+i*2);
+          if (!getMessage(MSG_EEPROM))
+          {
+            war(DTR("failed to read magnetic calibration parameters from device"));
+            return false;
+          }
+          senCal[i]=  m_eeprom;
+          debug("Calibration parameters:%d=%d\n\r",i,m_eeprom);
+        }
+        // Set continuous mode for gyro-stabilized euler angles.
+        setContinuousMode(MSG_GS_EULER);
+
+        for (unsigned i = 0; i <= 2; i++)
+        {
+          cfgCal[i] = (int16_t) (m_hard_iron[i] * m_mag_scale) ;
+          if (senCal[i] != cfgCal[i])
+          {
+            war(DTR("different calibration parameters"));
+            return false;
+          }
+        }
+        return true;
+      }
+
+      //! Set new hard iron calibration parameters.
+      //! @return true if successful, false otherwise.
+      bool
+      setHardIron(void)
+      {
+        inf(DTR("new hard-iron calibration parameters: %f, %f, %f"), m_args.hard_iron[0], m_args.hard_iron[1],m_args.hard_iron[2]);
+
+        // Stop continuous mode and read answer.
+        setContinuousMode();
+        if (!getMessage(MSG_CONTMODE))
+        {
+          setEntityState(IMC::EntityState::ESTA_FAILURE,
+                         DTR("failed to stop device"));
+          return false;
+        }
+
+        for (unsigned i = 0; i < c_number_axis; i++)
+        {
+          writeEEPROM( 172+i*2 , (uint16_t) (m_args.hard_iron[i] * m_mag_scale));
+          if (!getMessage(MSG_W_EEPROM))
+          {
+            war(DTR("failed to read magnetic calibration change report"));
+             return false;
+          }
+          debug("Write Calibration parameters:%d=%d\n\r",i,m_eeprom);
+        }
+
+        return true;
       }
 
       void
