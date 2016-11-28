@@ -52,6 +52,11 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+    //! Number of axis.
+    static const uint8_t c_number_axis = 3;
+
     //! Entity states.
     enum EntityStates
     {
@@ -80,10 +85,14 @@ namespace Transports
       bool pressure_sensor_mode;
       //! Enable usbl mode
       bool usbl_mode;
+      //! Hard iron calibration.
+      std::vector<float> hard_iron;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
       // Rotation matrix values.
       std::vector<double> rotation_mx;
+      //! Calibration threshold.
+      double calib_threshold;
     };
 
     //! Map of system's names.
@@ -99,6 +108,8 @@ namespace Transports
       Arguments m_args;
       //! Config Status.
       bool m_config_status;
+      //! c_preamble detected
+      bool m_pre_detected;
       //! Current state.
       EntityStates m_state_entity;
       //! Entity states.
@@ -121,6 +132,8 @@ namespace Transports
       double m_tstamp;
       //! Timer to manage the fragmentation of OWAY messages.
       Time::Counter<double> m_oway_timer;
+      //! hard iron calibration parameters.
+      float m_hard_iron[3];
       //! Map of seatrac modems by name.
       MapName m_modem_names;
       //! Map of seatrac modems by address.
@@ -145,6 +158,8 @@ namespace Transports
       IMC::Pressure m_pressure;
       // Measured temperature.
       IMC::Temperature m_temperature;
+      //! Rotation Matrix to correct mounting position.
+      Math::Matrix m_rotation;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -153,6 +168,7 @@ namespace Transports
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
         m_config_status(false),
+        m_pre_detected(false),
         m_stop_comms(false),
         m_usbl_receiver(false),
         m_tstamp(0)
@@ -198,6 +214,17 @@ namespace Transports
         .defaultValue("")
         .size(9)
         .description("AHRS rotation matrix which is dependent of the mounting position");
+
+        param(c_hard_iron_param, m_args.hard_iron)
+        .units(Units::Gauss)
+        .size(c_number_axis)
+        .description("Hard-Iron calibration parameters");
+
+        param("Calibration Threshold", m_args.calib_threshold)
+        .defaultValue("0.1")
+        .units(Units::Gauss)
+        .minimumValue("0.0")
+        .description("Minimum magnetic field calibration values to reset hard iron parameters");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -301,23 +328,32 @@ namespace Transports
             {
               m_dev_data.value.assign(sanitize(m_data));
               dispatch(m_dev_data);
-              if (processSentence())
+              if(m_pre_detected==true)
               {
-                msg_raw = m_datahex.data();
-                std::memcpy(&typemes, msg_raw, 1);
-                dataParser(typemes, msg_raw + 1, m_data_beacon);
-                processNewData();
-                printDebugFunction(typemes, m_data_beacon, this);
-                typemes = 0;
+                if (processSentence())
+                {
+                  msg_raw = m_datahex.data();
+                  std::memcpy(&typemes, msg_raw, 1);
+                  dataParser(typemes, msg_raw + 1, m_data_beacon);
+                  processNewData();
+                  printDebugFunction(typemes, m_data_beacon, this);
+                  typemes = 0;
+                }
               }
+              m_pre_detected = false;
               m_data.clear();
             }
             else
             {
               if (bfr[i] == c_preamble)
+              {
                 m_data.clear();
+                m_pre_detected = true;
+              }
               else if (bfr[i] != '\r')
+              {
                 m_data.push_back(bfr[i]);
+              }
             }
           }
         }
@@ -411,19 +447,29 @@ namespace Transports
             xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
 
           StatusMode_E status_mode= STATUS_MODE_1HZ;
+          bool chage_IMU=true;
           if (m_args.arhs_mode==true)
           {
             status_mode= STATUS_MODE_10HZ;
+            chage_IMU = isCalibrated();
           }
           if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
                 && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
                 && (m_data_beacon.cid_settings_msg.status_output == output_flags)
-                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)))
+                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
+                && chage_IMU == true))
           {
             m_data_beacon.cid_settings_msg.status_flags = status_mode;
             m_data_beacon.cid_settings_msg.status_output = output_flags;
             m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
+            if(chage_IMU==false)
+            {
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
+
+            }
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
@@ -453,7 +499,121 @@ namespace Transports
           throw std::runtime_error(m_states[m_state_entity].description);
         }
       }
+      //! Update parameters.
+      void
+      onUpdateParameters(void)
+      {
+        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
+        // Rotate calibration parameters.
+        Math::Matrix data(3, 1);
+
+        for (unsigned i = 0; i < 3; i++)
+          data(i) = m_args.hard_iron[i];
+        data = transpose(m_rotation) * data;
+        for (unsigned i = 0; i < 3; i++)
+          m_hard_iron[i] = data(i);
+
+        if (m_handle != NULL)
+        {
+
+          if (paramChanged(m_args.hard_iron))
+            runCalibration();
+        }
+      }
+      //! Routine to run calibration proceedings.
+      void
+      runCalibration(void)
+      {
+        if (m_handle == NULL)
+          return;
+
+        // See if vehicle has same hard iron calibration parameters.
+        if (!isCalibrated())
+        {
+
+          // Set hard iron calibration parameters and reset device.
+          if (!setHardIron())
+          {
+            throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
+          }
+        }
+      }
+
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        // Reject if it is small adjustment.
+        if ((std::abs(msg->x) < m_args.calib_threshold) &&
+            (std::abs(msg->y) < m_args.calib_threshold))
+          return;
+
+        double hi_x = m_args.hard_iron[0] + msg->x;
+        double hi_y = m_args.hard_iron[1] + msg->y;
+
+        IMC::EntityParameter hip;
+        hip.name = c_hard_iron_param;
+        hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
+
+        IMC::SetEntityParameters np;
+        np.name = getEntityLabel();
+        np.params.push_back(hip);
+        dispatch(np, DF_LOOP_BACK);
+
+        IMC::SaveEntityParameters sp;
+        sp.name = getEntityLabel();
+        dispatch(sp);
+      }
+
+      //! Check if sensor has the same hard iron calibration parameters.
+      //! @return true if the parameters are the same, false otherwise.
+      bool
+      isCalibrated(void)
+      {
+
+        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x*100)) != ( (int32_t) (m_args.hard_iron[0]*100)))
+        {
+          war(DTR("different calibration parameters"));
+            return false;
+        }
+        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y*100)) != ( (int32_t) (m_args.hard_iron[1]*100)))
+                 {
+          war(DTR("different calibration parameters"));
+            return false;
+        }
+        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z*100)) != ( (int32_t) (m_args.hard_iron[2]*100)))
+       {
+          war(DTR("different calibration parameters"));
+            return false;
+        }
+        debug("Is calibrated");
+        return true;
+      }
+
+      //! Set new hard iron calibration parameters.
+      //! @return true if successful, false otherwise.
+      bool
+      setHardIron(void)
+      {
+
+        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
+        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
+        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
+        sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
+        sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
+        sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon), 2);
+        if(m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x != m_args.hard_iron[0])
+          return false;
+        if(m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y != m_args.hard_iron[1])
+          return false;
+        if(m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z != m_args.hard_iron[2])
+          return false;
+
+        return true;
+      }
       //! Release resources.
       void
       onResourceRelease(void)
@@ -671,6 +831,39 @@ namespace Transports
           clearTicket(IMC::UamTxStatus::UTS_FAILED);
         }
       }
+      //! Correct data according with mounting position.
+      void
+      rotateData(void) //todo rodar os dados antes de enviar
+      {
+        Math::Matrix data(3, 1);
+
+        // Acceleration.
+        data(0) = m_accel.x;
+        data(1) = m_accel.y;
+        data(2) = m_accel.z;
+        data = m_rotation * data;
+        m_accel.x = data(0);
+        m_accel.y = data(1);
+        m_accel.z = data(2);
+
+        // Angular Velocity.
+        data(0) = m_agvel.x;
+        data(1) = m_agvel.y;
+        data(2) = m_agvel.z;
+        data = m_rotation * data;
+        m_agvel.x = data(0);
+        m_agvel.y = data(1);
+        m_agvel.z = data(2);
+
+        // Magnetic Field.
+        data(0) = m_magfield.x;
+        data(1) = m_magfield.y;
+        data(2) = m_magfield.z;
+        data = m_rotation * data;
+        m_magfield.x = data(0);
+        m_magfield.y = data(1);
+        m_magfield.z = data(2);
+      }
 
       //! Handle AHRS data send by local beacon.
       //! The method tries to dispach all the necessary information for navigation
@@ -707,6 +900,7 @@ namespace Transports
           m_accel.time = m_euler.time;
           m_agvel.time = m_euler.time;
           m_magfield.time = m_euler.time;
+          rotateData();
           // Dispatch messages.
           dispatch(m_euler, DF_KEEP_TIME);
           dispatch(m_accel, DF_KEEP_TIME);
