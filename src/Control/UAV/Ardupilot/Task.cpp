@@ -113,6 +113,8 @@ namespace Control
       //! %Task arguments.
       struct Arguments
       {
+        //! Use TCP or UDP
+        bool tcp_or_udp;
         //! Communications timeout
         uint8_t comm_timeout;
         //! Use Ardupilot's waypoint tracker
@@ -121,6 +123,12 @@ namespace Control
         uint16_t TCP_port;
         //! TCP Address
         Address TCP_addr;
+        //! UDP Port
+        uint16_t UDP_listen_port;
+        //! UDP Port
+        uint16_t UDP_port;
+        //! UDP Address
+        Address UDP_addr;
         //! Telemetry Rate
         uint8_t trate;
         //! Default Altitude
@@ -185,6 +193,8 @@ namespace Control
         IMC::ControlLoops m_controllps;
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
+        //! UDP socket
+        Network::UDPSocket* m_UDP_sock;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -232,6 +242,7 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
+          m_UDP_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
@@ -258,6 +269,10 @@ namespace Control
           m_service(false),
           m_last_wp(0)
         {
+          param("Use TCP (or UDP)", m_args.tcp_or_udp)
+          .defaultValue("true")
+          .description("Ardupilot communications timeout");
+
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
           .maximumValue("60")
@@ -276,6 +291,18 @@ namespace Control
           .description("Port for connection to Ardupilot");
 
           param("TCP - Address", m_args.TCP_addr)
+          .defaultValue("127.0.0.1")
+          .description("Address for connection to Ardupilot");
+
+          param("UDP - Listen Port", m_args.UDP_listen_port)
+          .defaultValue("14550")
+          .description("Port for connection from Ardupilot");
+
+          param("UDP - Port", m_args.UDP_port)
+          .defaultValue("14549")
+          .description("Port for connection to Ardupilot");
+
+          param("UDP - Address", m_args.UDP_addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to Ardupilot");
 
@@ -446,6 +473,7 @@ namespace Control
         onResourceRelease(void)
         {
           Memory::clear(m_TCP_sock);
+          Memory::clear(m_UDP_sock);
         }
 
         void
@@ -468,15 +496,27 @@ namespace Control
         {
           try
           {
-            m_TCP_sock = new TCPSocket;
-            m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
-            m_TCP_sock->setNoDelay(true);
+            if (m_args.tcp_or_udp)
+            {
+              m_TCP_sock = new TCPSocket;
+              m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              m_TCP_sock->setNoDelay(true);
+            }
+            else
+            {
+              m_UDP_sock = new UDPSocket;
+              m_UDP_sock->connect(m_args.TCP_addr, m_args.UDP_listen_port);
+
+              inf(DTR("Ardupilot UDP connected"));
+            }
+
             setupRate(m_args.trate);
             inf(DTR("Ardupilot interface initialized"));
           }
           catch (...)
           {
             Memory::clear(m_TCP_sock);
+            Memory::clear(m_UDP_sock);
             war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
@@ -1387,7 +1427,7 @@ namespace Control
           while (!stopping())
           {
             // Handle data
-            if (m_TCP_sock)
+            if (m_TCP_sock || m_UDP_sock)
             {
               handleArdupilotData();
             }
@@ -1425,6 +1465,9 @@ namespace Control
           if (m_TCP_sock != NULL)
             return Poll::poll(*m_TCP_sock, timeout);
 
+          if (m_UDP_sock != NULL)
+            return Poll::poll(*m_UDP_sock, timeout);
+
           return false;
         }
 
@@ -1436,26 +1479,45 @@ namespace Control
             trace("Sending something");
             return m_TCP_sock->write((char*)bfr, size);
           }
+          else if (m_UDP_sock)
+          {
+            trace("Sending something");
+            return m_UDP_sock->write(bfr, size, m_args.UDP_addr, m_args.UDP_port);
+          }
           return 0;
         }
 
         int
         receiveData(uint8_t* buf, size_t blen)
         {
-          if (m_TCP_sock)
+          if (m_TCP_sock || m_UDP_sock)
           {
             try
             {
-              return m_TCP_sock->read(buf, blen);
+              if (m_TCP_sock)
+                return m_TCP_sock->read(buf, blen);
+              if (m_UDP_sock)
+                return m_UDP_sock->read(buf, blen);
             }
             catch (std::runtime_error& e)
             {
               err("%s", e.what());
               war(DTR("Connection lost, retrying..."));
               Memory::clear(m_TCP_sock);
+              Memory::clear(m_UDP_sock);
 
-              m_TCP_sock = new Network::TCPSocket;
-              m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              if (m_args.tcp_or_udp)
+              {
+                m_TCP_sock = new TCPSocket;
+                m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+                m_TCP_sock->setNoDelay(true);
+              }
+              else
+              {
+                m_UDP_sock = new UDPSocket;
+                m_UDP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              }
+
               return 0;
             }
           }
@@ -1475,6 +1537,7 @@ namespace Control
             counter++;
 
             int n = receiveData(m_buf, sizeof(m_buf));
+            inf("Received bytes %d", n);
             if (n < 0)
             {
               debug("Receive error");
