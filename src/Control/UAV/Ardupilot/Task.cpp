@@ -123,6 +123,8 @@ namespace Control
         uint16_t TCP_port;
         //! TCP Address
         Address TCP_addr;
+        //! IPv4 Address
+        Address ip;
         //! Telemetry Rate
         uint8_t trate;
         //! Default Altitude
@@ -280,6 +282,10 @@ namespace Control
           param("TCP - Address", m_args.TCP_addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to Ardupilot");
+
+          param("IPv4 - Address", m_args.ip)
+          .defaultValue("")
+          .description("Address for neptus connection to Ardupilot");
 
           param("Telemetry Rate", m_args.trate)
           .defaultValue("10")
@@ -454,6 +460,14 @@ namespace Control
         onResourceAcquisition(void)
         {
           openConnection();
+
+          std::stringstream os;
+          os << "mavlink+tcp://" << m_args.ip << ":" << m_args.TCP_port << "/";
+
+          IMC::AnnounceService announce;
+          announce.service = os.str();
+          announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+          dispatch(announce);
         }
 
         void
