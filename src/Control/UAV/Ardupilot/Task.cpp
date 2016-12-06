@@ -115,6 +115,8 @@ namespace Control
       {
         //! Use TCP or UDP
         bool tcp_or_udp;
+        //! Only receive mode
+        bool receive_only;
         //! Communications timeout
         uint8_t comm_timeout;
         //! Use Ardupilot's waypoint tracker
@@ -271,7 +273,11 @@ namespace Control
         {
           param("Use TCP (or UDP)", m_args.tcp_or_udp)
           .defaultValue("true")
-          .description("Ardupilot communications timeout");
+          .description("Use TCP or UDP for comms");
+
+          param("Receive Only", m_args.receive_only)
+          .defaultValue("false")
+          .description("To only receive mode");
 
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -494,6 +500,9 @@ namespace Control
         void
         openConnection(void)
         {
+          if (m_args.receive_only)
+            inf("Receive only mode");
+
           try
           {
             if (m_args.tcp_or_udp)
@@ -505,7 +514,7 @@ namespace Control
             else
             {
               m_UDP_sock = new UDPSocket;
-              m_UDP_sock->connect(m_args.TCP_addr, m_args.UDP_listen_port);
+              m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
 
               inf(DTR("Ardupilot UDP connected"));
             }
@@ -1474,6 +1483,8 @@ namespace Control
         int
         sendData(uint8_t* bfr, int size)
         {
+          if (m_args.receive_only)
+            return 0;
           if (m_TCP_sock)
           {
             trace("Sending something");
@@ -1497,7 +1508,7 @@ namespace Control
               if (m_TCP_sock)
                 return m_TCP_sock->read(buf, blen);
               if (m_UDP_sock)
-                return m_UDP_sock->read(buf, blen);
+                return m_UDP_sock->read(buf, blen, &m_args.UDP_addr, &m_args.UDP_listen_port);
             }
             catch (std::runtime_error& e)
             {
@@ -1515,7 +1526,7 @@ namespace Control
               else
               {
                 m_UDP_sock = new UDPSocket;
-                m_UDP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+                m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
               }
 
               return 0;
