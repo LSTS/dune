@@ -281,8 +281,6 @@ namespace DUNE
       float m_last_run;
       //! True if slope was estimated.
       bool m_slope;
-      //! True if unable to avoid obstacle.
-      bool m_unable;
       //! Control parcel message for debug
       DUNE::IMC::ControlParcel m_cparcel;
     };

@@ -63,8 +63,7 @@ namespace DUNE
     BottomTracker::BottomTracker(const Arguments* args):
       m_args(args),
       m_active(false),
-      m_slope(false),
-      m_unable(false)
+      m_slope(false)
     {
       m_sdata = new SlopeData(m_args->fsamples, m_args->min_range,
                               m_args->safe_pitch, m_args->slope_hyst);
@@ -535,25 +534,6 @@ namespace DUNE
     void
     BottomTracker::onAvoiding(void)
     {
-      // If ranges cannot be used, then we're clueless
-      if (m_sdata->isSurface(m_estate) && !isUnderwater())
-      {
-        if (!m_unable)
-        {
-          war(DTR("unable to avoid obstacle"));
-          m_unable = true;
-        }
-
-        return;
-      }
-
-      // Previously unable to avoid obstacle.
-      if (m_unable)
-      {
-        m_unable = false;
-        war(DTR("avoid obstacle"));
-      }
-
       // check if slope is safe right now and
       // check if buoyancy has pulled the vehicle up to a safe depth/altitude
       if (!m_sdata->isTooSteep() && !m_sdata->isRangeLow(m_estate.theta))
