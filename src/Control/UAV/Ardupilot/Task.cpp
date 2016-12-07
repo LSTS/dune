@@ -1922,8 +1922,16 @@ namespace Control
         handleStatusTextPacket(const mavlink_message_t* msg)
         {
           mavlink_statustext_t stat_tex;
+          IMC::ApmStatus apm_status;
+
           mavlink_msg_statustext_decode(msg, &stat_tex);
-          inf("AP Status: %.*s", 50, stat_tex.text);
+          apm_status.severity = stat_tex.severity;
+          apm_status.text = stat_tex.text;
+
+          debug("AP Status Severity: %d", stat_tex.severity);
+          debug("AP Status: %.*s", 50, stat_tex.text);
+          inf("APM Status: [%d] %s", apm_status.severity, apm_status.text.c_str());
+          dispatch(apm_status);
         }
 
         void
