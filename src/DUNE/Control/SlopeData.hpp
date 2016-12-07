@@ -37,6 +37,7 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Coordinates/General.hpp>
 #include <DUNE/Coordinates/WGS84.hpp>
+#include <DUNE/Time/Delta.hpp>
 
 using namespace DUNE::Coordinates;
 using namespace DUNE::Math;
@@ -51,6 +52,8 @@ static const float c_max_range = 15.0f;
 static const float c_decay_factor = 0.6f;
 //! Tolerance for assuming the echoes come from the surface
 static const float c_surface_tol = 5.0f;
+//! Timeout to mark data as invalid.
+static const float c_timeout = 5.0f;
 
 namespace DUNE
 {
@@ -146,7 +149,7 @@ namespace DUNE
       //! Get forward range
       //! @return forward range
       inline float
-      getFRange(void) const
+      getFRange(void)
       {
         if (!isRangeValid())
           return c_max_range;
@@ -177,7 +180,7 @@ namespace DUNE
       //! @param[in] pitch current pitch angle
       //! @return true if forward range is low
       inline bool
-      isRangeLow(float pitch = 0.0) const
+      isRangeLow(float pitch = 0.0)
       {
         if (!isRangeValid())
           return false;
@@ -228,7 +231,7 @@ namespace DUNE
       //! @param[in] state EstimatedState info
       //! @return true if the reading is probably the surface
       bool
-      isSurface(const IMC::EstimatedState& state) const
+      isSurface(const IMC::EstimatedState& state)
       {
         if (!isRangeValid())
           return false;
@@ -245,7 +248,7 @@ namespace DUNE
       //! Test if slope is increasing
       //! @return true if slope is increasing
       inline bool
-      isSlopeIncreasing(void) const
+      isSlopeIncreasing(void)
       {
         if (!isRangeValid())
           return false;
@@ -264,9 +267,17 @@ namespace DUNE
       //! Test if forward range is valid
       //! @return true if range is valid and can be used
       inline bool
-      isRangeValid(void) const
+      isRangeValid(void)
       {
-        return (m_frange != NULL);
+        if (m_frange != NULL)
+        {
+          if (m_delta.check() < c_timeout)
+            return true;
+          else
+            reset();
+        }
+
+        return false;
       }
 
       //! Update tracking data.
@@ -279,6 +290,7 @@ namespace DUNE
         if (m_frange == NULL)
           m_frange = new MovingAverage<float>(m_fsamples);
 
+        m_delta.reset();
         double frange = m_frange->update(value);
         m_last_slope = m_curr_slope;
 
@@ -415,6 +427,8 @@ namespace DUNE
       unsigned m_sonar_entity;
       //! Echo sounder beam width.
       float m_beam_width;
+      //! Time without updates.
+      Time::Delta m_delta;
     };
   }
 }
