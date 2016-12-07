@@ -1548,7 +1548,6 @@ namespace Control
             counter++;
 
             int n = receiveData(m_buf, sizeof(m_buf));
-            inf("Received bytes %d", n);
             if (n < 0)
             {
               debug("Receive error");
