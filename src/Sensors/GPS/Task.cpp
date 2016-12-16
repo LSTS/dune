@@ -49,18 +49,18 @@ namespace Sensors
     static const float c_wait_reply_tout = 4.0;
     //! Minimum number of fields of PUBX,00 sentence.
     static const unsigned c_pubx00_fields = 21;
-    //! Minimum number of fields of GPGGA sentence.
-    static const unsigned c_gpgga_fields = 15;
-    //! Minimum number of fields of GPVTG sentence.
-    static const unsigned c_gpvtg_fields = 9;
-    //! Minimum number of fields of GPZDA sentence.
-    static const unsigned c_gpzda_fields = 7;
-    //! Minimum number of fields of GPHDT sentence.
-    static const unsigned c_gphdt_fields = 3;
-    //! Minimum number of fields of GPHDM sentence.
-    static const unsigned c_gphdm_fields = 3;
-    //! Minimum number of fields of GPROT sentence.
-    static const unsigned c_gprot_fields = 3;
+    //! Minimum number of fields of GGA sentence.
+    static const unsigned c_gga_fields = 15;
+    //! Minimum number of fields of VTG sentence.
+    static const unsigned c_vtg_fields = 9;
+    //! Minimum number of fields of ZDA sentence.
+    static const unsigned c_zda_fields = 7;
+    //! Minimum number of fields of HDT sentence.
+    static const unsigned c_hdt_fields = 3;
+    //! Minimum number of fields of HDM sentence.
+    static const unsigned c_hdm_fields = 3;
+    //! Minimum number of fields of ROT sentence.
+    static const unsigned c_rot_fields = 3;
     //! Minimum number of fields of PSATHPR sentence.
     static const unsigned c_psathpr_fields = 7;
     //! Power on delay.
@@ -447,17 +447,17 @@ namespace Sensors
           m_agvel.setTimeStamp(m_fix.getTimeStamp());
         }
 
-        if (parts[0] == "GPZDA")
+        if (hasNMEAMessageCode(parts[0], "ZDA"))
         {
-          interpretGPZDA(parts);
+          interpretZDA(parts);
         }
-        else if (parts[0] == "GPGGA")
+        else if (hasNMEAMessageCode(parts[0], "GGA"))
         {
-          interpretGPGGA(parts);
+          interpretGGA(parts);
         }
-        else if (parts[0] == "GPVTG")
+        else if (hasNMEAMessageCode(parts[0], "VTG"))
         {
-          interpretGPVTG(parts);
+          interpretVTG(parts);
         }
         else if (parts[0] == "PSAT")
         {
@@ -469,17 +469,17 @@ namespace Sensors
           if (parts[1] == "00")
             interpretPUBX00(parts);
         }
-        else if (parts[0] == "GPHDM")
+        else if (hasNMEAMessageCode(parts[0], "HDM"))
         {
-          interpretGPHDM(parts);
+          interpretHDM(parts);
         }
-        else if (parts[0] == "GPHDT")
+        else if (hasNMEAMessageCode(parts[0], "HDT"))
         {
-          interpretGPHDT(parts);
+          interpretHDT(parts);
         }
-        else if (parts[0] == "GPROT")
+        else if (hasNMEAMessageCode(parts[0], "ROT"))
         {
-          interpretGPROT(parts);
+          interpretROT(parts);
         }
 
         if (parts[0] == m_args.stn_order.back())
@@ -506,14 +506,20 @@ namespace Sensors
         }
       }
 
-      //! Interpret GPZDA sentence (UTC date and time).
+      bool
+      hasNMEAMessageCode(const std::string& str, const std::string& code)
+      {
+        return String::startsWith(str, "G") && String::endsWith(str, code);
+      }
+
+      //! Interpret ZDA sentence (UTC date and time).
       //! @param[in] parts vector of strings from sentence.
       void
-      interpretGPZDA(const std::vector<std::string>& parts)
+      interpretZDA(const std::vector<std::string>& parts)
       {
-        if (parts.size() < c_gpzda_fields)
+        if (parts.size() < c_zda_fields)
         {
-          war(DTR("invalid GPZDA sentence"));
+          war(DTR("invalid ZDA sentence"));
           return;
         }
 
@@ -530,14 +536,14 @@ namespace Sensors
         }
       }
 
-      //! Interpret GPGGA sentence (GPS fix data).
+      //! Interpret GGA sentence (GPS fix data).
       //! @param[in] parts vector of strings from sentence.
       void
-      interpretGPGGA(const std::vector<std::string>& parts)
+      interpretGGA(const std::vector<std::string>& parts)
       {
-        if (parts.size() < c_gpgga_fields)
+        if (parts.size() < c_gga_fields)
         {
-          war(DTR("invalid GPGGA sentence"));
+          war(DTR("invalid GGA sentence"));
           return;
         }
 
@@ -628,14 +634,14 @@ namespace Sensors
           m_fix.validity |= IMC::GpsFix::GFV_VALID_VDOP;
       }
 
-      //! Interpret GPVTG sentence (course over ground).
+      //! Interpret VTG sentence (course over ground).
       //! @param[in] parts vector of strings from sentence.
       void
-      interpretGPVTG(const std::vector<std::string>& parts)
+      interpretVTG(const std::vector<std::string>& parts)
       {
-        if (parts.size() < c_gpvtg_fields)
+        if (parts.size() < c_vtg_fields)
         {
-          war(DTR("invalid GPVTG sentence"));
+          war(DTR("invalid VTG sentence"));
           return;
         }
 
@@ -652,14 +658,14 @@ namespace Sensors
         }
       }
 
-      //! Interpret GPVTG sentence (true heading).
+      //! Interpret VTG sentence (true heading).
       //! @param[in] parts vector of strings from sentence.
       void
-      interpretGPHDT(const std::vector<std::string>& parts)
+      interpretHDT(const std::vector<std::string>& parts)
       {
-        if (parts.size() < c_gphdt_fields)
+        if (parts.size() < c_hdt_fields)
         {
-          war(DTR("invalid GPHDT sentence"));
+          war(DTR("invalid HDT sentence"));
           return;
         }
 
@@ -667,15 +673,15 @@ namespace Sensors
           m_euler.psi = Angles::normalizeRadian(Angles::radians(m_euler.psi));
       }
 
-      //! Interpret GPHDM sentence (Magnetic heading of
+      //! Interpret HDM sentence (Magnetic heading of
       //! the vessel derived from the true heading calculated).
       //! @param[in] parts vector of strings from sentence.
       void
-      interpretGPHDM(const std::vector<std::string>& parts)
+      interpretHDM(const std::vector<std::string>& parts)
       {
-        if (parts.size() < c_gphdm_fields)
+        if (parts.size() < c_hdm_fields)
         {
-          war(DTR("invalid GPHDM sentence"));
+          war(DTR("invalid HDM sentence"));
           return;
         }
 
@@ -686,14 +692,14 @@ namespace Sensors
         }
       }
 
-      //! Interpret GPROT sentence (rate of turn).
+      //! Interpret ROT sentence (rate of turn).
       //! @param[in] parts vector of strings from sentence.
       void
-      interpretGPROT(const std::vector<std::string>& parts)
+      interpretROT(const std::vector<std::string>& parts)
       {
-        if (parts.size() < c_gprot_fields)
+        if (parts.size() < c_rot_fields)
         {
-          war(DTR("invalid GPROT sentence"));
+          war(DTR("invalid ROT sentence"));
           return;
         }
 
