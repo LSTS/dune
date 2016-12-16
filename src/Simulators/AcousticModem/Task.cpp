@@ -30,23 +30,34 @@
 
 namespace Simulators
 {
+  //! This task simulates a (simplified) acoustic modem. It implements
+  //! acoustic transmission via a secondary UDP client/server (alternative
+  //! to Transports::UDP).
+  //!
+  //! Transmission requests coming in the form of DUNE::IMC::UamTxFrame are
+  //! translated into DUNE::IMC::AcousticMessage structures and are then sent
+  //! via UDP to a (parametrized) remote UDP address. The same UDP socked is
+  //! used to receive DUNE::IMC::AcousticMessage from the remote peer which
+  //! are translated to DUNE::IMC::UamRxFrame
+  //!
+  //! @author José Braga
   namespace AcousticModem
   {
     using DUNE_NAMESPACES;
 
     struct Arguments
     {
-      // Local port.
+      //! Local UDP port to listen to datagrams containing IMC::DUNE::AcousticMessage
       uint16_t local_port;
-      // IPv4 Address.
+      //! IPv4 Address of the remote DUNE system also running this task
       Address addr;
-      // UDP Port.
+      //! Remote port of the remote DUNE system also running this task
       uint16_t port;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Buffer capacity.
+      //! Buffer capacity.
       static const unsigned c_bfr_size = 255;
       // Task arguments.
       Arguments m_args;
@@ -97,7 +108,7 @@ namespace Simulators
         }
       }
 
-      //! Acquire resources.
+      //! Acquire resources by binding to the local UDP port.
       void
       onResourceAcquisition(void)
       {
@@ -106,13 +117,15 @@ namespace Simulators
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      //! Release resources.
+      //! Release resources. Clears UDP socket.
       void
       onResourceRelease(void)
       {
         Memory::clear(m_sock);
       }
 
+      //! Translates transmission request to a DUNE::IMC::AcousticMessage and
+      //! forwards the message to the remote peer.
       void
       consume(const IMC::UamTxFrame* msg)
       {
@@ -139,7 +152,9 @@ namespace Simulators
         { }
       }
 
-      // Read incoming data.
+      //! Read incoming datagrams. If incoming data is a DUNE::IMC::AcousticMessage,
+      //! and contains a DUNE::IMC::UamTxFrame (inline) it gets translated to a
+      //! @publish DUNE::IMC::UamRxFrame and gets posted to the local bus.
       void
       readData(void)
       {
