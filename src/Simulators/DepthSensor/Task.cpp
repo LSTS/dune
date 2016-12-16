@@ -33,10 +33,10 @@ using DUNE_NAMESPACES;
 namespace Simulators
 {
   //! Depth sensor simulator for DUNE.
-  //! %DepthSensor is responsible to gather data from the
-  //! vehicle simulator by consuming SimulatedState IMC
-  //! message and then add a configurable gaussian noise
-  //! component before sending Depth information to the bus.
+  //! Simulators::DepthSensor is responsible to gather data from the
+  //! vehicle simulator by consuming DUNE::IMC::SimulatedState
+  //! messages and then add a configurable gaussian noise
+  //! component before sending DUNE::IMC::Depth information to the bus.
   //!
   //! @author Ricardo Martins
   namespace DepthSensor
@@ -55,7 +55,7 @@ namespace Simulators
     //! %DepthSensor simulator task.
     struct Task: public Tasks::Periodic
     {
-      //! Simulated state.
+      //! Last received simulated state.
       IMC::SimulatedState m_sstate;
       //! Current depth.
       IMC::Depth m_depth;
@@ -83,7 +83,7 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
       }
 
-      //! Acquire resources.
+      //! Acquire resources. Initializes random number generator.
       void
       onResourceAcquisition(void)
       {
@@ -97,6 +97,8 @@ namespace Simulators
         Memory::clear(m_prng);
       }
 
+      //! Requests activation if not already active and updates #m_sstate with
+      //! the value of #msg.
       void
       consume(const IMC::SimulatedState* msg)
       {
@@ -109,6 +111,9 @@ namespace Simulators
         m_sstate = *msg;
       }
 
+      //! Dispatches a @publish DUNE::IMC::Depth message with the depth
+      //! stored in #m_sstate plus some gaussian noise (according to parametrized
+      //! standard deviation). If task is not active, returns immediately.
       void
       task(void)
       {
