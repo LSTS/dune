@@ -32,20 +32,35 @@ namespace DUNE
 {
   namespace Plans
   {
+    static const std::string c_waypoint_str = "waypoint";
+
     bool
     Progress::getPoint(const IMC::ManeuverControlState* mcs, unsigned& number)
     {
-      std::vector<std::string> lst;
-      Utils::String::split(mcs->info, "=", lst);
+      std::vector<std::vector<std::string> > lstElems;
+      Utils::String::splitMulti(mcs->info, ";", "=", lstElems);
 
-      if (!lst.size())
-        return false;
-      else if (lst.back() == "")
+      if (!lstElems.size())
         return false;
 
-      number = std::atoi(lst.back().c_str());
+      std::vector<std::vector<std::string> >::iterator itr = lstElems.begin();
+      for (; itr != lstElems.end(); ++itr)
+      {
+        if (!itr->size() || itr->size() < 2 || itr->front() == "" || itr->back() == "")
+          continue;
 
-      return true;
+        std::string name = itr->front().c_str();
+        name = Utils::String::trim(name);
+        Utils::String::toLowerCase(name);
+
+        if (c_waypoint_str == name)
+        {
+          number = std::atoi(itr->back().c_str());
+          return true;
+        }
+      }
+
+      return false;
     }
 
     float
@@ -82,6 +97,15 @@ namespace DUNE
     }
 
     float
+    Progress::compute(const IMC::RowsCoverage* maneuver, const IMC::ManeuverControlState* mcs,
+                      const std::vector<float>& durations, float total_duration)
+    {
+      (void)maneuver;
+
+      return compute(mcs, durations, total_duration);
+    }
+
+    float
     Progress::compute(const IMC::Message* man, const IMC::ManeuverControlState* mcs,
                       const std::vector<float>& durations, float total_duration)
     {
@@ -110,6 +134,10 @@ namespace DUNE
           break;
         case DUNE_IMC_ROWS:
           time_left = compute(static_cast<const IMC::Rows*>(man), mcs,
+                              durations, total_duration);
+          break;
+        case DUNE_IMC_ROWSCOVERAGE:
+          time_left = compute(static_cast<const IMC::RowsCoverage*>(man), mcs,
                               durations, total_duration);
           break;
         default:

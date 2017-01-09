@@ -32,7 +32,6 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "Parser.hpp"
 #include "CommandLink.hpp"
 
 namespace Sensors
@@ -105,8 +104,6 @@ namespace Sensors
 
     struct Task: public Tasks::Task
     {
-      //! Parser.
-      Parser m_parser;
       //! Watchdog timer.
       Counter<double> m_wdog;
       //! Current state machine state.

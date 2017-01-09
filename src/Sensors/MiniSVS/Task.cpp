@@ -81,6 +81,13 @@ namespace Sensors
       }
 
       void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.input_timeout))
+          m_wdog.setTop(m_args.input_timeout);
+      }
+
+      void
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);

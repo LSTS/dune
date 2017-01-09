@@ -36,7 +36,7 @@ namespace DUNE
   namespace Maneuvers
   {
     //! Tolerance when elevating towards a new depth
-    static const float c_elevator_tolerance = 1.0f;
+    static const float c_elevator_tolerance = 0.3f;
 
     //! Default constructor.
     Elevate::Elevate(const IMC::Elevator* maneuver, Maneuvers::Maneuver* task,

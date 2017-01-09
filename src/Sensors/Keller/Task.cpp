@@ -342,8 +342,6 @@ namespace Sensors
           if (result == RES_DONE)
           {
             m_wdog.reset();
-            m_sample_count++;
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_crc_err_count = 0;
             return true;
           }
@@ -363,7 +361,6 @@ namespace Sensors
         }
 
         // No data received.
-        m_timeout_count++;
         return false;
       }
 
@@ -544,6 +541,7 @@ namespace Sensors
                                        m_faults_count,
                                        (unsigned)frequency);
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
         m_state_timer.reset();
         m_sample_count = 0;
       }
@@ -556,6 +554,7 @@ namespace Sensors
         {
           if (read())
           {
+            m_sample_count++;
             m_pressure.value = m_channel_readout * c_pascal_per_bar;
             dispatch(m_pressure);
             m_depth.value = m_channel_readout * m_args.depth_conv;

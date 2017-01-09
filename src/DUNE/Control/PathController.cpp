@@ -162,11 +162,6 @@ namespace DUNE
       .units(Units::Degree)
       .description("Slope hysteresis when recovering from avoidance");
 
-      param("Bottom Track -- Minimum Altitude", m_btd.args.min_alt)
-      .defaultValue("1.0")
-      .units(Units::Meter)
-      .description("Minimum admissible altitude for bottom tracking");
-
       param("Bottom Track -- Minimum Range", m_btd.args.min_range)
       .defaultValue("4.0")
       .units(Units::Meter)
@@ -202,6 +197,8 @@ namespace DUNE
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
+
+      m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_btd.args.min_alt);
 
       m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
 
@@ -1023,6 +1020,7 @@ namespace DUNE
       m_pcs.vy = m_ts.track_vel.y;
       m_pcs.vz = m_ts.track_vel.z;
       m_pcs.course_error = m_ts.course_error;
+      m_pcs.lradius = m_ts.loiter.radius;
 
       if (m_ts.nearby)
         m_pcs.flags |= IMC::PathControlState::FL_NEAR;
@@ -1030,15 +1028,9 @@ namespace DUNE
         m_pcs.flags &= ~IMC::PathControlState::FL_NEAR;
 
       if (m_ts.loitering)
-      {
         m_pcs.flags |= IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = m_ts.loiter.radius;
-      }
       else
-      {
         m_pcs.flags &= ~IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = 0;
-      }
       m_pcs.eta = (uint16_t) Math::round(m_ts.eta);
       dispatch(m_pcs);
     }

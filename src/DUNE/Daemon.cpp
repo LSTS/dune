@@ -29,6 +29,8 @@
 #include <map>
 #include <sstream>
 #include <cstddef>
+#include <limits>
+#include <queue>
 
 // DUNE headers.
 #include <DUNE/Daemon.hpp>
@@ -37,6 +39,8 @@
 #include <DUNE/Tasks/Factory.hpp>
 #include <DUNE/Tasks/Manager.hpp>
 #include <DUNE/FileSystem/Path.hpp>
+#include <DUNE/Time/Delay.hpp>
+#include <DUNE/Utils/String.hpp>
 
 namespace DUNE
 {
@@ -124,6 +128,11 @@ namespace DUNE
       inf(DTR("execution profiles: %s"), profiles.c_str());
     }
 
+    // CPU usage.
+    m_ctx.config.get("General", "CPU Usage - Maximum", "65", m_cpu_max_usage);
+    m_ctx.config.get("General", "CPU Usage - Moving Average Samples", "10", m_cpu_avg_samples);
+    m_cpu_avg = new Math::MovingAverage<double>(m_cpu_avg_samples);
+
     m_tman = new DUNE::Tasks::Manager(m_ctx);
 
     bind<IMC::RestartSystem>(this);
@@ -136,12 +145,23 @@ namespace DUNE
   {
     m_ctx.mbus.pause();
     delete m_tman;
+    delete m_cpu_avg;
     inf(DTR("clean shutdown"));
   }
 
   void
   Daemon::onResourceInitialization(void)
   {
+    try
+    {
+      setPriority(Concurrency::Scheduler::maximumPriority());
+      inf(DTR("daemon running with maximum priority: %d"), Concurrency::Scheduler::maximumPriority());
+    }
+    catch (...)
+    {
+      inf(DTR("daemon not running with maximum priority"));
+    }
+
     m_ctx.mbus.resume();
     m_tman->start();
     m_periodic_counter.setTop(1.0);
@@ -232,8 +252,11 @@ namespace DUNE
   }
 
   void
-  Daemon::dispatchPeriodic(void)
+  Daemon::measureCpuUsage(void)
   {
+    // Measure CPU usage per task.
+    m_tman->measureCpuUsage();
+
     // Dispatch global CPU usage.
     IMC::CpuUsage cpu_usage;
     int value = m_sys_resources.getProcessorUsage();
@@ -241,20 +264,25 @@ namespace DUNE
     {
       cpu_usage.value = value;
       dispatch(cpu_usage);
-    }
 
-    // Dispatch per thread CPU usage.
-    std::map<std::string, Task*>::iterator itr = m_tman->begin();
-    for ( ; itr != m_tman->end(); ++itr)
-    {
-      value = itr->second->getProcessorUsage();
-      if (value >= 0 && value <= 100)
+      double cpu_avg = m_cpu_avg->update(value);
+
+      if (cpu_avg >= m_cpu_max_usage)
       {
-        cpu_usage.setSourceEntity(itr->second->getEntityId());
-        cpu_usage.value = value;
-        dispatch(cpu_usage);
+        setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_CPU_TOO_HIGH);
+        m_tman->adjustPriorities();
+      }
+      else
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
     }
+  }
+
+  void
+  Daemon::dispatchPeriodic(void)
+  {
+    measureCpuUsage();
 
     // Dispatch available storage.
     if (m_fs_capacity > 0)

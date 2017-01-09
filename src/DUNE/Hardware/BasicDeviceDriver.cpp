@@ -56,8 +56,7 @@ namespace DUNE
     void
     BasicDeviceDriver::onResourceRelease(void)
     {
-      if (enableLogControl())
-        closeLog();
+      requestDeactivation();
     }
 
     void
@@ -195,10 +194,6 @@ namespace DUNE
     BasicDeviceDriver::consume(const IMC::LoggingControl* msg)
     {
       if (!enableLogControl())
-        return;
-
-      if ((msg->getDestination() != getSystemId())
-          || (msg->getDestinationEntity() != getEntityId()))
         return;
 
       switch (msg->op)

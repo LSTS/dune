@@ -83,7 +83,8 @@ namespace Transports
       //! @param[in] task parent task.
       //! @param[in] handle I/O handle.
       Driver(Tasks::Task* task, IO::Handle* handle):
-        HayesModem(task, handle)
+        HayesModem(task, handle),
+        m_declination(0)
       { }
 
       //! Destructor.
@@ -97,6 +98,20 @@ namespace Transports
         sendAT("Z1");
         sendAT("Z3");
         sendAT("Z4");
+      }
+
+      //! Set control over modem.
+      void
+      setControl(void)
+      {
+        if (getFirmwareVersion() == "1.6")
+          return;
+
+        if (getFirmwareVersion() == "1.7")
+          return;
+
+        sendAT("@CTRL");
+        expectOK();
       }
 
       //! Set modem address.
@@ -347,9 +362,41 @@ namespace Transports
       }
 
       void
-      getRSSI(void)
+      parseUsblPosition(const std::string& str, RecvUsblPos& msg)
       {
+        int rv = 0;
+        rv = std::sscanf(str.c_str(),
+                         "USBLLONG,%lf,%lf,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%u,%f,%u,%f",
+                         &msg.ctime, &msg.mtime, &msg.addr, &msg.x, &msg.y, &msg.z,
+                         &msg.e, &msg.n, &msg.u, &msg.roll, &msg.pitch, &msg.yaw,
+                         &msg.propagation_time, &msg.rssi, &msg.integrity, &msg.accuracy);
 
+        if (rv != 16)
+          throw std::runtime_error("invalid format for USBLLONG");
+
+        double n0 = msg.n;
+        double e0 = msg.e;
+
+        msg.n = n0 * std::cos(m_declination) - e0 * std::sin(m_declination);
+        msg.e = n0 * std::sin(m_declination) + e0 * std::cos(m_declination);
+        msg.yaw += m_declination;
+      }
+
+      void
+      parseUsblAngles(const std::string& str, RecvUsblAng& msg)
+      {
+        int rv = 0;
+        rv = std::sscanf(str.c_str(),
+                         "USBLANGLES,%lf,%lf,%u,%f,%f,%f,%f,%f,%f,%f,%f,%u,%f",
+                         &msg.ctime, &msg.mtime, &msg.addr, &msg.lbearing,
+                         &msg.lelevation, &msg.bearing, &msg.elevation,
+                         &msg.roll, &msg.pitch, &msg.yaw, &msg.rssi,
+                         &msg.integrity, &msg.accuracy);
+
+        if (rv != 13)
+          throw std::runtime_error("invalid format for USBLANGLES");
+
+        msg.yaw += m_declination;
       }
 
       void
@@ -359,12 +406,10 @@ namespace Transports
         long unsigned int data_size = 0;
         int rv = 0;
 
-        unsigned int bitrate, propagation_time;
-
         rv = std::sscanf(str.c_str(),
                          "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
-                         &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
-                         &msg.integrity, &propagation_time, &msg.velocity, &offset);
+                         &data_size, &msg.src, &msg.dst, &msg.bitrate, &msg.rssi,
+                         &msg.integrity, &msg.propagation_time, &msg.velocity, &offset);
 
         if (rv != 8)
           throw std::runtime_error("invalid format for RECV");
@@ -385,7 +430,7 @@ namespace Transports
           if (!piggyback)
           {
             rv = std::sscanf(str.c_str(),
-                             "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%f,%n",
+                             "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%u,%f,%n",
                              &data_size, &msg.src, &msg.dst, flag, &msg.bitrate,
                              &msg.rssi, &msg.integrity, &msg.propagation_time,
                              &msg.velocity, &offset);
@@ -396,7 +441,7 @@ namespace Transports
           else
           {
             rv = std::sscanf(str.c_str(),
-                             "RECVPBM,%lu,%u,%u,%u,%f,%u,%f,%f,%n",
+                             "RECVPBM,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
                              &data_size, &msg.src, &msg.dst, &msg.bitrate,
                              &msg.rssi, &msg.integrity, &msg.propagation_time,
                              &msg.velocity, &offset);
@@ -440,6 +485,13 @@ namespace Transports
         msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
 
+      //! Set device's magnetic declination offset.
+      void
+      setDeclination(double value)
+      {
+        m_declination = value;
+      }
+
     private:
       //! Firmware version.
       std::string m_version;
@@ -447,6 +499,8 @@ namespace Transports
       std::string m_phy_ptl_version;
       //! Data-link layer protocol version.
       std::string m_mac_ptl_version;
+      //! Declination offset.
+      double m_declination;
 
       void
       sendInitialization(void)

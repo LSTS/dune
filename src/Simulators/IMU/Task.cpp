@@ -211,6 +211,11 @@ namespace Simulators
         m_accel.y = (msg->v - m_vel[1]) / tstep;
         m_accel.z = (msg->w - m_vel[2]) / tstep;
 
+        double macc = DUNE::Navigation::c_max_accel;
+        m_accel.x = DUNE::Math::trimValue(m_accel.x, -macc, macc);
+        m_accel.y = DUNE::Math::trimValue(m_accel.y, -macc, macc);
+        m_accel.z = DUNE::Math::trimValue(m_accel.z, -macc, macc);
+
         // Store velocity for next iteration.
         m_vel[0] = msg->u;
         m_vel[1] = msg->v;
