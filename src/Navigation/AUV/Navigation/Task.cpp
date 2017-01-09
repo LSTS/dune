@@ -166,8 +166,6 @@ namespace Navigation
         bool m_usbl_reading;
         //! Moving average for vehicle forward speed.
         MovingAverage<double>* m_avg_speed;
-        //! Medium handler.
-        Monitors::MediumHandler m_medium;
         //! Task arguments.
         Arguments m_args;
 
@@ -248,7 +246,6 @@ namespace Navigation
 
           // Register callbacks
           bind<IMC::EntityActivationState>(this);
-          bind<IMC::VehicleMedium>(this);
         }
 
         void
@@ -344,8 +341,7 @@ namespace Navigation
             return;
 
           if ((msg->state == IMC::EntityActivationState::EAS_ACTIVE ||
-               msg->state == IMC::EntityActivationState::EAS_ACT_DONE)
-              && !m_medium.outWater())
+               msg->state == IMC::EntityActivationState::EAS_ACT_DONE))
           {
             // IMU already activated.
             if (m_dead_reckoning)
@@ -391,12 +387,6 @@ namespace Navigation
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
-        }
-
-        void
-        consume(const IMC::VehicleMedium* msg)
-        {
-          m_medium.update(msg);
         }
 
         bool
