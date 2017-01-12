@@ -48,6 +48,14 @@ namespace DUNE
   // Export DLL Symbol.
   class DUNE_DLL_SYM Daemon;
 
+  //! DUNE::Daemon, on dune startup, is responsible for
+  //! retrieving IMC addresses and user-defined profiles,
+  //! and loading saved configuration parameters.
+  //! After this steps DUNE::Daemon starts DUNE::Tasks::Manager
+  //! which will then start all other dune's tasks.
+  //! Finally, DUNE::Daemon is reponsible for dispatching the
+  //! system's heartbeat, cpu usage, query entity state and
+  //! query power channel state, until DUNE is closed.
   class Daemon: public Tasks::Task
   {
   public:
