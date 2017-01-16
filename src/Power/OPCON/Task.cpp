@@ -33,31 +33,36 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#define TIMEOUT 2
-
 namespace Power
 {
   namespace OPCON
   {
     using DUNE_NAMESPACES;
-   //! Entity states.
-    enum gsm3gstate
+    //! Entity states.
+    enum Gsm3gState
     {
+      //! Waiting for activation.
       STA_IDLE,
+      //! Wait for power to be turned on.
       STA_WAIT_PWR,
+      //! Wait Activation sequence is complete.
       STA_WAIT_ACT,
+      //! connected to the Internet
       STA_ACTIVE,
+      //! Start deactivation
       STA_DACT,
+      //! Waiting for deactivation
       STA_WAIT_DACT
     };
+
     //! Task arguments.
     struct Arguments
     {
-      //!  Wifi level output status pins
+      //! Wifi level output status pins
       std::vector<std::string>  wifi_led_pin;
       //! output pin - power status of raspberry
       std::string rasp_HB_pin;
-      //!  Input signal pin to order powerdown raspberry
+      //! Input signal pin to order powerdown raspberry
       std::string rasp_off_signal;
       //! Power 3g output status pin
       std::string led_3G_pin;
@@ -65,12 +70,13 @@ namespace Power
       std::string gsm_3g_on_off_pin;
       //! output pin signal: to enable or disble 3g
       std::string gsm_3g_switch_pin;
-      //!
+      //! Entity label of Mobile Internet
       std::string label_internet;
-       //! update period
+      //! update period
       float period;
+      //! wifi_led_pin threshold
+      std::vector<int> wifi_rssi_threshold;
     };
-
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -80,27 +86,33 @@ namespace Power
       bool m_halt;
       //! True if power down is in progress.
       bool m_pwr_down;
-      //!RSSI value
+      //! RSSI value
       fp32_t m_value_RSSI;
-      //!3g last state
+      //! 3g last state
       bool m_3g_last;
-      //!temporary output
+      //! temporary output
       bool m_value;
       //! 3g timeout
       double m_deadline;
       //! mobile internet entity id.
       unsigned m_mobile_internet_eid;
-      //
-      gsm3gstate  m_gsm3gstate;
-      // mobile internet sattus
+      //! Moblile Internet state
+      Gsm3gState  m_gsm3gstate;
+      //! mobile internet status
       std::string m_mobile_internet_satus;
-      //defined GPIOs
+      //! led 3g state
       bool led_3g_temp_state;
+      //! GPIO leds Wifi
       std::vector<Hardware::GPIO*> m_wifi_led_pin;
+      //! GPIO Heartbeat Raspery to opcon
       Hardware::GPIO* m_rasp_HB_pin;
+      //! GPIO signal to start power off
       Hardware::GPIO* m_rasp_off_signal;
+      //! GIOPO for 3g led status output
       Hardware::GPIO* m_led_3G_pin;
+      //! GPIO pin to power 3g modem
       Hardware::GPIO* m_gsm_3g_on_off_pin;
+      //! GPIO for internet switch
       Hardware::GPIO* m_gsm_3g_switch_pin;
       //! Counter for determining when update states
       Time::Counter<int> m_period;
@@ -115,59 +127,51 @@ namespace Power
          m_value_RSSI(0),
          m_3g_last(false),
          m_value(false),
-         m_deadline(TIMEOUT),
+         m_deadline(2),
          m_gsm3gstate(STA_IDLE)
       {
-
+        // Define configuration parameters.
         param("Pin rasp_HB_pin", m_args.rasp_HB_pin)
         .defaultValue("23")
-        .description("Output pin - power status of raspberry");
+        .description(DTR("Output pin - power status of raspberry"));
 
         param("Pin Powerdown  ", m_args.rasp_off_signal)
         .defaultValue("24")
-        .description("Input signal pin to order powerdown of raspberry");
+        .description(DTR("Input signal pin to order powerdown of raspberry"));
 
         param("Pin led 3G", m_args.led_3G_pin)
         .defaultValue("5")
-        .description("Power 3g output status pin");
+        .description(DTR("Power 3g output status pin"));
 
         param("Pin gsm_3g_on_off_pin", m_args.gsm_3g_on_off_pin)
         .defaultValue("25")
-        .description("Output pin signal: to enable or disble 3g");
+        .description(DTR("Output pin signal: to enable or disble 3g"));
 
         param("Pin gsm_3g_switch_pin", m_args.gsm_3g_switch_pin)
         .defaultValue("11")
-        .description("Imput pin signal: to enable or disble 3g");
+        .description(DTR("Imput pin signal: to enable or disble 3g"));
 
         param("Pin wifi_led_pins", m_args.wifi_led_pin)
         .defaultValue("6 , 13 , 19 , 26")
-        .description("Wifi level output status pins");
+        .description(DTR("Wifi level output status pins"));
 
         param("Entity Label - Mobile Internet", m_args.label_internet)
         .defaultValue("Mobile Internet")
-        .description("Entity label of 'EntityState' Mobile Internet");
+        .description(DTR("Entity label of 'EntityState' Mobile Internet"));
 
          param("Update Period", m_args.period)
         .defaultValue("1")
         .minimumValue("0.1")
         .units(Units::Second)
-        .description("Time, in seconds, between RSSI polling.");
+        .description(DTR("Time, in seconds, between RSSI polling."));
+
+        param("LED wifi rssi threshold", m_args.wifi_rssi_threshold)
+        .defaultValue("10 , 25 , 49 , 74")
+        .description(DTR("LED wifi rssi threshold"));
 
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::RSSI>(this);
         bind<IMC::EntityState>(this);
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
       }
 
       //! Resolve entity names.
@@ -182,12 +186,6 @@ namespace Power
         {
           m_mobile_internet_eid = UINT_MAX;
         }
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
       }
 
       //! Initialize resources.
@@ -246,18 +244,11 @@ namespace Power
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      //! Release resources.
       void
-      onResourceRelease(void)
-      {
-
-      }
-
-      void
-      checkPowerOff( bool value )
+      checkPowerOff(bool value)
       {
         // Check power off.
-        if( value == true)
+        if (value)
         {
           m_pwr_down = true;
           IMC::PowerOperation pop;
@@ -291,7 +282,7 @@ namespace Power
       }
 
       void
-      check3G( bool value )
+      check3G(bool value)
       {
         if (m_3g_last!=value)
         {
@@ -302,21 +293,23 @@ namespace Power
       void
       set3G(bool value)
       {
-        if(value == false)
+        if (value)
         {
            m_gsm_3g_on_off_pin->setValue(true);//on
-           m_gsm3gstate=STA_WAIT_PWR;
+           m_gsm3gstate = STA_WAIT_PWR;
            m_deadline = Clock::get() + 20;
            debug("3g pin on");
         }
         else
         {
-          m_gsm3gstate=STA_DACT;
+          m_gsm3gstate = STA_DACT;
           debug("3g start deactivation");
         }
-        m_3g_last=value;
+        m_3g_last = value;
       }
-      void gsm3gActivate()
+
+      void
+      gsm3gActivate()
       {
 
         switch (m_gsm3gstate)
@@ -324,29 +317,29 @@ namespace Power
           case STA_IDLE :
            break;
 
-           //wait for dmsg
+          //wait for dmsg
           case STA_WAIT_PWR:
-           if(Clock::get() >= m_deadline)
+           if (Clock::get() >= m_deadline)
            {
              sendActiveParameter("true");
              m_gsm3gstate=STA_WAIT_ACT;
            }
            else
            {
-            led_3g_temp_state = (!led_3g_temp_state);
-            m_led_3G_pin->setValue(led_3g_temp_state);
+             led_3g_temp_state = (!led_3g_temp_state);
+             m_led_3G_pin->setValue(led_3g_temp_state);
            }
            break;
 
-           //activate 3g
+          //activate 3g
           case STA_WAIT_ACT :
-           if( String::startsWith( m_mobile_internet_satus, "connected to the Internet" ))
+           if (String::startsWith( m_mobile_internet_satus, "connected to the Internet" ))
            {
-            m_led_3G_pin->setValue(true);
-            led_3g_temp_state= true;
-            m_gsm3gstate=STA_ACTIVE;
-            debug("3g connected");
-            break;
+             m_led_3G_pin->setValue(true);
+             led_3g_temp_state= true;
+             m_gsm3gstate=STA_ACTIVE;
+             debug("3g connected");
+             break;
            }
            debug("STA_WAIT_ACT");
            led_3g_temp_state = (!led_3g_temp_state);
@@ -361,10 +354,10 @@ namespace Power
             m_led_3G_pin->setValue(true);
             m_deadline=Clock::get()+2;
             m_gsm3gstate=STA_WAIT_DACT;
-
            break;
+
           case STA_WAIT_DACT :
-            if( Clock::get() >= m_deadline && m_mobile_internet_satus == getString(CODE_IDLE))
+            if (Clock::get() >= m_deadline && m_mobile_internet_satus == getString(CODE_IDLE))
             {
               m_gsm_3g_on_off_pin->setValue(false);//off
               m_led_3G_pin->setValue(false);
@@ -372,7 +365,7 @@ namespace Power
               m_gsm3gstate=STA_IDLE;
               debug("3g off");
             }
-            else if(Clock::get() >= m_deadline)
+            else if (Clock::get() >= m_deadline)
             {
               war("Mobile Internet do not enter in Idle state");
               m_gsm_3g_on_off_pin->setValue(false);//off
@@ -380,7 +373,6 @@ namespace Power
               led_3g_temp_state = false;
               m_gsm3gstate=STA_IDLE;
             }
-
            break;
 
           default: break;
@@ -388,42 +380,40 @@ namespace Power
         }
         debug("3G State: %s", m_mobile_internet_satus.c_str());
      }
-      void
-      updateRSSIvalue()
-      {
-        if(m_value_RSSI > 10)
-          m_wifi_led_pin[3]->setValue(true);
-        else
-          m_wifi_led_pin[3]->setValue(false);
+    void
+    updateRSSIvalue()
+    {
+      if (m_value_RSSI > m_args.wifi_rssi_threshold[0])
+        m_wifi_led_pin[3]->setValue(true);
+      else
+        m_wifi_led_pin[3]->setValue(false);
 
-        if(m_value_RSSI > 25)
-          m_wifi_led_pin[2]->setValue(true);
-        else
-          m_wifi_led_pin[2]->setValue(false);
+      if (m_value_RSSI > m_args.wifi_rssi_threshold[1])
+        m_wifi_led_pin[2]->setValue(true);
+      else
+        m_wifi_led_pin[2]->setValue(false);
 
-        if(m_value_RSSI > 49)
-          m_wifi_led_pin[1]->setValue(true);
-        else
-          m_wifi_led_pin[1]->setValue(false);
+      if (m_value_RSSI > m_args.wifi_rssi_threshold[2])
+        m_wifi_led_pin[1]->setValue(true);
+      else
+        m_wifi_led_pin[1]->setValue(false);
 
-        if(m_value_RSSI > 74)
-          m_wifi_led_pin[0]->setValue(true);
-        else
-          m_wifi_led_pin[0]->setValue(false);
+      if (m_value_RSSI > m_args.wifi_rssi_threshold[3])
+        m_wifi_led_pin[0]->setValue(true);
+      else
+        m_wifi_led_pin[0]->setValue(false);
 
       }
 
       void
       consume(const IMC::RSSI* msg)
       {
-
         m_value_RSSI=msg->value;
       }
 
       void
       consume(const IMC::PowerChannelControl* msg)
       {
-
         if (m_halt)
           return;
 
@@ -442,13 +432,16 @@ namespace Power
       {
         if (msg->getSource() != getSystemId())
           return;
-       if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
+
+        if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
         {
           err(DTR("EntityState message without source entity"));
           return;
         }
+
         if (msg->getSourceEntity() != m_mobile_internet_eid)
           return;
+
         m_mobile_internet_satus=msg->description;
       }
 
@@ -457,9 +450,8 @@ namespace Power
       void
       onMain(void)
       {
-
         //Do nothing (allow the operator to see the LEDs)
-        Delay::wait(TIMEOUT);
+        Delay::wait(2.0);
         m_period.setTop(m_args.period);
         set3G(m_gsm_3g_switch_pin->getValue());
         while (!stopping())
@@ -468,7 +460,6 @@ namespace Power
 
           if (!m_halt)
           {
-
             if (m_period.overflow())
             {
               m_value= m_rasp_off_signal->getValue();
