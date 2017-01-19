@@ -709,6 +709,8 @@ namespace Transports
 
           if (data_rec_flag == 0)
             debug("colecting data");
+          if(data_rec_flag == -2)
+            debug("no data size");
         }
       }
 

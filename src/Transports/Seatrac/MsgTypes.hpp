@@ -212,6 +212,9 @@ namespace Transports
       {
         std::memcpy(&index, packet_data + 0, 1);
         std::memcpy(&n_sub_messages, packet_data + 1, 1);
+        if (packet_len == 0)
+          return -2;
+
         if (data_rec_flag == 0 && index != n_sub_messages && index != 1)
         {
           return -1;
