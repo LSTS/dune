@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,25 +8,27 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ac6fc6f4b1f5c445991672dbda04723d                            *
+// IMC XML MD5: f217a46387d63e1ab4153c4676d40e7a                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -16799,6 +16801,256 @@ namespace DUNE
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 
+    AutonomousSection::AutonomousSection(void)
+    {
+      m_header.mgid = 493;
+      clear();
+      area_limits.setParent(this);
+    }
+
+    void
+    AutonomousSection::clear(void)
+    {
+      lat = 0;
+      lon = 0;
+      speed = 0;
+      speed_units = 0;
+      limits = 0;
+      max_depth = 0;
+      min_alt = 0;
+      time_limit = 0;
+      area_limits.clear();
+      controller.clear();
+      custom.clear();
+    }
+
+    bool
+    AutonomousSection::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AutonomousSection& other__ = static_cast<const AutonomousSection&>(msg__);
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (speed != other__.speed) return false;
+      if (speed_units != other__.speed_units) return false;
+      if (limits != other__.limits) return false;
+      if (max_depth != other__.max_depth) return false;
+      if (min_alt != other__.min_alt) return false;
+      if (time_limit != other__.time_limit) return false;
+      if (area_limits != other__.area_limits) return false;
+      if (controller != other__.controller) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    AutonomousSection::validate(void) const
+    {
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    AutonomousSection::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(speed_units, ptr__);
+      ptr__ += IMC::serialize(limits, ptr__);
+      ptr__ += IMC::serialize(max_depth, ptr__);
+      ptr__ += IMC::serialize(min_alt, ptr__);
+      ptr__ += IMC::serialize(time_limit, ptr__);
+      ptr__ += area_limits.serialize(ptr__);
+      ptr__ += IMC::serialize(controller, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AutonomousSection::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(limits, bfr__, size__);
+      bfr__ += IMC::deserialize(max_depth, bfr__, size__);
+      bfr__ += IMC::deserialize(min_alt, bfr__, size__);
+      bfr__ += IMC::deserialize(time_limit, bfr__, size__);
+      bfr__ += area_limits.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(controller, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AutonomousSection::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(limits, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(max_depth, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(min_alt, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_limit, bfr__, size__);
+      bfr__ += area_limits.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(controller, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AutonomousSection::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "limits", limits, nindent__);
+      IMC::toJSON(os__, "max_depth", max_depth, nindent__);
+      IMC::toJSON(os__, "min_alt", min_alt, nindent__);
+      IMC::toJSON(os__, "time_limit", time_limit, nindent__);
+      area_limits.toJSON(os__, "area_limits", nindent__);
+      IMC::toJSON(os__, "controller", controller, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    void
+    AutonomousSection::setTimeStampNested(double value__)
+    {
+      area_limits.setTimeStamp(value__);
+    }
+
+    void
+    AutonomousSection::setSourceNested(uint16_t value__)
+    {
+      area_limits.setSource(value__);
+    }
+
+    void
+    AutonomousSection::setSourceEntityNested(uint8_t value__)
+    {
+      area_limits.setSourceEntity(value__);
+    }
+
+    void
+    AutonomousSection::setDestinationNested(uint16_t value__)
+    {
+      area_limits.setDestination(value__);
+    }
+
+    void
+    AutonomousSection::setDestinationEntityNested(uint8_t value__)
+    {
+      area_limits.setDestinationEntity(value__);
+    }
+
+    FollowPoint::FollowPoint(void)
+    {
+      m_header.mgid = 494;
+      clear();
+    }
+
+    void
+    FollowPoint::clear(void)
+    {
+      target.clear();
+      max_speed = 0;
+      speed_units = 0;
+      lat = 0;
+      lon = 0;
+      z = 0;
+      z_units = 0;
+      custom.clear();
+    }
+
+    bool
+    FollowPoint::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FollowPoint& other__ = static_cast<const FollowPoint&>(msg__);
+      if (target != other__.target) return false;
+      if (max_speed != other__.max_speed) return false;
+      if (speed_units != other__.speed_units) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z != other__.z) return false;
+      if (z_units != other__.z_units) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    FollowPoint::validate(void) const
+    {
+      if (max_speed < 0) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    FollowPoint::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(max_speed, ptr__);
+      ptr__ += IMC::serialize(speed_units, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FollowPoint::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(max_speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FollowPoint::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(max_speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FollowPoint::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "max_speed", max_speed, nindent__);
+      IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
     VehicleState::VehicleState(void)
     {
       m_header.mgid = 500;
@@ -24212,6 +24464,68 @@ namespace DUNE
       IMC::toJSON(os__, "rpm_min", rpm_min, nindent__);
       IMC::toJSON(os__, "rpm_max", rpm_max, nindent__);
       IMC::toJSON(os__, "depth_max", depth_max, nindent__);
+    }
+
+    ApmStatus::ApmStatus(void)
+    {
+      m_header.mgid = 906;
+      clear();
+    }
+
+    void
+    ApmStatus::clear(void)
+    {
+      severity = 0;
+      text.clear();
+    }
+
+    bool
+    ApmStatus::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ApmStatus& other__ = static_cast<const ApmStatus&>(msg__);
+      if (severity != other__.severity) return false;
+      if (text != other__.text) return false;
+      return true;
+    }
+
+    int
+    ApmStatus::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    ApmStatus::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(severity, ptr__);
+      ptr__ += IMC::serialize(text, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ApmStatus::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(severity, bfr__, size__);
+      bfr__ += IMC::deserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ApmStatus::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(severity, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(text, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ApmStatus::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "severity", severity, nindent__);
+      IMC::toJSON(os__, "text", text, nindent__);
     }
   }
 }
