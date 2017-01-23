@@ -106,7 +106,7 @@ namespace DUNE
       convertDecimalToDMS(double value, int& degrees, int& minutes, double& seconds)
       {
         degrees = (int)value;
-        double minutes_fp = (value - degrees) * 60.0;
+        double minutes_fp = std::fabs((value - degrees) * 60.0);
         minutes = std::abs((int)(minutes_fp));
         seconds = std::fabs((minutes_fp - minutes) * 60.0);
       }
