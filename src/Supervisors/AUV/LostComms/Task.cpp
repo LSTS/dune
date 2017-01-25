@@ -149,10 +149,7 @@ namespace Supervisors
             return;
 
           // CCU's mask.
-          if (((msg->getSource() & 0xF000) != 0x4000) && ((msg->getSource() & 0xF000) != 0x5000))
-            return;
-
-          if (m_lcs == STATE_STARTED)
+          if (IMC::AddressResolver::isCCU(msg->getSource()) && m_lcs == STATE_STARTED)
             m_lost_coms_timer.reset();
         }
 
