@@ -133,11 +133,9 @@ namespace Supervisors
           if (msg->getSource() == getSystemId())
             return;
 
-          // Use only console Heartbeats.
-          if ((msg->getSource() & 0x4000) == 0)
-            return;
-
-          resetTimers();
+          // CCU's mask.
+          if (((msg->getSource() & 0xF000) == 0x4000) || ((msg->getSource() & 0xF000) == 0x5000))
+            resetTimers();
         }
 
         void
