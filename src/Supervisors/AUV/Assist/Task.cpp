@@ -194,10 +194,9 @@ namespace Supervisors
           if (msg->getSource() == getSystemId())
             return;
 
-          if ((msg->getSource() & 0x4000) == 0)
-            return;
-
-          m_ltimer.reset();
+          // CCU's mask.
+          if (((msg->getSource() & 0xF000) == 0x4000) || ((msg->getSource() & 0xF000) == 0x5000))
+            m_ltimer.reset();
         }
 
         void
