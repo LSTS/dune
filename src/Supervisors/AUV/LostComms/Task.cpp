@@ -148,7 +148,8 @@ namespace Supervisors
           if (msg->getSource() == getSystemId())
             return;
 
-          if ((msg->getSource() & 0x4000) == 0)
+          // CCU's mask.
+          if (((msg->getSource() & 0xF000) != 0x4000) && ((msg->getSource() & 0xF000) != 0x5000))
             return;
 
           if (m_lcs == STATE_STARTED)
