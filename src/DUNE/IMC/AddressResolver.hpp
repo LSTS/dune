@@ -105,6 +105,12 @@ namespace DUNE
         return id != invalid();
       }
 
+      static bool
+      isCCU(unsigned id)
+      {
+        return ((id & 0xf000) == 0x4000) || ((id & 0xf000) == 0x5000);
+      }
+
     private:
       //! Id to name map.
       typedef std::map<unsigned, std::string> IdToName;
