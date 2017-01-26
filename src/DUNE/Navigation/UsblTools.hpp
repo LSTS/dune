@@ -86,6 +86,48 @@ namespace DUNE
         fp32_t z;
         uint8_t z_units;
         fp32_t accuracy;
+
+        //! Decode an incoming data frame into a fix message.
+        //! @param[out] frame fix structure.
+        //! @param[in] data incoming frame.
+        static void
+        decode(Fix& frame, const std::vector<char>& data)
+        {
+          uint8_t* ptr = (uint8_t*)&data[c_code + 1];
+
+          uint16_t length = (uint16_t)Fix::size();
+          ptr += IMC::deserialize(frame.lat, ptr, length);
+          ptr += IMC::deserialize(frame.lon, ptr, length);
+          ptr += IMC::deserialize(frame.z, ptr, length);
+          ptr += IMC::deserialize(frame.z_units, ptr, length);
+          ptr += IMC::deserialize(frame.accuracy, ptr, length);
+        }
+
+        //! Encode a fix message into a data frame.
+        //! @param[in] frame fix structure.
+        //! @param[out] data data frame.
+        static void
+        encode(Fix& frame, std::vector<uint8_t>& data)
+        {
+          data.resize(Fix::size() + 2);
+          data[c_code - 1] = CODE_FIX;
+
+          uint8_t* ptr = (uint8_t*)&data[c_code];
+
+          ptr += IMC::serialize(frame.lat, ptr);
+          ptr += IMC::serialize(frame.lon, ptr);
+          ptr += IMC::serialize(frame.z, ptr);
+          ptr += IMC::serialize(frame.z_units, ptr);
+          ptr += IMC::serialize(frame.accuracy, ptr);
+        }
+
+        //! Get size of frame.
+        //! @return size of fix structure.
+        static size_t
+        size(void)
+        {
+          return 2 * (sizeof(fp64_t) + sizeof(fp32_t)) + 1;
+        }
       };
 
       //! Position data structure.
@@ -265,7 +307,7 @@ namespace DUNE
             case CODE_FIX:
             {
               UsblTools::Fix fs;
-              std::memcpy(&fs, &msg->data[c_code + 1], sizeof(UsblTools::Fix));
+              Fix::decode(fs, msg->data);
 
               IMC::UsblFixExtended fix;
               fix.setSource(imc_src);
@@ -663,8 +705,6 @@ namespace DUNE
           if (m_system != msg->target)
             return false;
 
-          data.resize(sizeof(UsblTools::Fix) + 2);
-
           UsblTools::Fix fix;
           fix.lat = msg->lat;
           fix.lon = msg->lon;
@@ -672,8 +712,7 @@ namespace DUNE
           fix.z_units = msg->z_units;
           fix.accuracy = msg->accuracy;
 
-          data[c_code - 1] = CODE_FIX;
-          std::memcpy(&data[c_code], &fix, sizeof(UsblTools::Fix));
+          Fix::encode(fix, data);
           targetReplied(m_system);
           m_system.clear();
 
