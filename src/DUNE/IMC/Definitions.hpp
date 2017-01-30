@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,25 +8,27 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
+// IMC XML MD5: f217a46387d63e1ab4153c4676d40e7a                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -15589,6 +15591,203 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Autonomous Section.
+    class AutonomousSection: public Maneuver
+    {
+    public:
+      //! Enforced Limits.
+      enum EnforcedLimitsBits
+      {
+        //! Maximum Depth Limit.
+        ENFORCE_DEPTH = 0x01,
+        //! Minimum Altitude Limit.
+        ENFORCE_ALTITUDE = 0x02,
+        //! Time Limit.
+        ENFORCE_TIMEOUT = 0x04,
+        //! Polygonal Area Limits.
+        ENFORCE_AREA2D = 0x08
+      };
+
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Enforced Limits.
+      uint8_t limits;
+      //! Maximum depth.
+      fp64_t max_depth;
+      //! Minimum altitude.
+      fp64_t min_alt;
+      //! Time Limit.
+      fp64_t time_limit;
+      //! Area Limits.
+      MessageList<PolygonVertex> area_limits;
+      //! Controller.
+      std::string controller;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 493;
+      }
+
+      AutonomousSection(void);
+
+      Message*
+      clone(void) const
+      {
+        return new AutonomousSection(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AutonomousSection::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AutonomousSection";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 46;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return area_limits.getSerializationSize() + IMC::getSerializationSize(controller) + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Follow Point Maneuver.
+    class FollowPoint: public Maneuver
+    {
+    public:
+      //! Source To Follow.
+      std::string target;
+      //! Maximum Speed.
+      fp32_t max_speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 494;
+      }
+
+      FollowPoint(void);
+
+      Message*
+      clone(void) const
+      {
+        return new FollowPoint(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FollowPoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowPoint";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 26;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(target) + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Vehicle State.
     class VehicleState: public Message
     {
@@ -22674,6 +22873,187 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Tachograph.
+    class Tachograph: public Message
+    {
+    public:
+      //! Last Service Timestamp.
+      fp64_t timestamp_last_service;
+      //! Time - Next Service.
+      fp32_t time_next_service;
+      //! Time Motor - Next Service.
+      fp32_t time_motor_next_service;
+      //! Time Idle - Ground.
+      fp32_t time_idle_ground;
+      //! Time Idle - Air.
+      fp32_t time_idle_air;
+      //! Time Idle - Water.
+      fp32_t time_idle_water;
+      //! Time Idle - Underwater.
+      fp32_t time_idle_underwater;
+      //! Time Idle - Unknown.
+      fp32_t time_idle_unknown;
+      //! Time Motor - Ground.
+      fp32_t time_motor_ground;
+      //! Time Motor - Air.
+      fp32_t time_motor_air;
+      //! Time Motor - Water.
+      fp32_t time_motor_water;
+      //! Time Motor - Underwater.
+      fp32_t time_motor_underwater;
+      //! Time Motor - Unknown.
+      fp32_t time_motor_unknown;
+      //! Recorded RPMs - Minimum.
+      int16_t rpm_min;
+      //! Recorded RPMs - Maximum.
+      int16_t rpm_max;
+      //! Recorded Depth - Maximum.
+      fp32_t depth_max;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 905;
+      }
+
+      Tachograph(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Tachograph(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Tachograph::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Tachograph";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 64;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! APM Status.
+    class ApmStatus: public Message
+    {
+    public:
+      //! Severity.
+      enum SeverityEnum
+      {
+        //! Emergency.
+        APM_EMERGENCY = 0,
+        //! Alert.
+        APM_ALERT = 1,
+        //! Critical.
+        APM_CRITICAL = 2,
+        //! Error.
+        APM_ERROR = 3,
+        //! Warning.
+        APM_WARNING = 4,
+        //! Notice.
+        APM_NOTICE = 5,
+        //! Info.
+        APM_INFO = 6,
+        //! Debug.
+        APM_DEBUG = 7
+      };
+
+      //! Severity.
+      uint8_t severity;
+      //! Text.
+      std::string text;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 906;
+      }
+
+      ApmStatus(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ApmStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ApmStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ApmStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(text);
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

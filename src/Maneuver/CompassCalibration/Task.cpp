@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -238,17 +240,7 @@ namespace Maneuver
         // Clear compass_calibration data
         m_ccal.clear();
 
-        double zref;
-
-        if (m_zunits == IMC::Z_DEPTH)
-        {
-          zref = maneuver->z;
-        }
-        else if (m_zunits == IMC::Z_ALTITUDE)
-        {
-          zref = -maneuver->z;
-        }
-        else
+        if (m_zunits != IMC::Z_DEPTH && m_zunits != IMC::Z_ALTITUDE)
         {
           signalInvalidZ();
           return;
@@ -257,7 +249,8 @@ namespace Maneuver
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
 
-        m_yoyo = new YoYoMotion(this, maneuver->pitch, zref,
+        m_yoyo = new YoYoMotion(this, maneuver->pitch, maneuver->z,
+                                (IMC::ZUnits)maneuver->z_units,
                                 maneuver->amplitude, m_args.variation);
       }
 
@@ -319,7 +312,7 @@ namespace Maneuver
           if (m_amplitude <= c_min_amplitude)
             inbounds = true;
           else if (m_path.end_z_units == IMC::Z_ALTITUDE)
-            inbounds = m_yoyo->isBetweenBounds(-m_estate.alt);
+            inbounds = m_yoyo->isBetweenBounds(m_estate.alt);
           else if (m_path.end_z_units == IMC::Z_DEPTH)
             inbounds = m_yoyo->isBetweenBounds(m_estate.depth);
 
@@ -405,24 +398,14 @@ namespace Maneuver
       void
       yoyoMotion(bool startup)
       {
-        double state_z;
-
-        if (m_zunits == IMC::Z_DEPTH)
-        {
-          state_z = m_estate.depth;
-        }
-        else if ((m_estate.alt >= 0) && (m_zunits == IMC::Z_ALTITUDE))
-        {
-          state_z = - m_estate.alt;
-        }
-        else
+        if (m_estate.alt < 0 && m_zunits == IMC::Z_ALTITUDE)
         {
           m_ccal.clear();
           signalNoAltitude();
           return;
         }
 
-        double v = m_yoyo->update(startup, state_z, m_estate.theta);
+        double v = m_yoyo->update(startup, m_estate.depth, m_estate.alt, m_estate.theta);
 
         if ((v == m_pitch.value) && m_dispatched)
           return;

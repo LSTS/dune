@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Joel Cardoso                                                     *
@@ -146,6 +148,10 @@ namespace Control
         std::string form_fl_ent;
         //! Convert MSL to WGS84 height
         bool convert_msl;
+        //! Enter loiter mode when in idle
+        bool loiter_idle;
+        //! Dispatch ExternalNavData rather than EstimatedState
+        bool use_external_nav;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -389,6 +395,14 @@ namespace Control
           .defaultValue("false")
           .description("Convert altitude extracted from the Ardupilot to WGS84 height");
 
+          param("Loiter in Idle", m_args.loiter_idle)
+          .defaultValue("true")
+          .description("Loiter when in idle.");
+
+          param("Use External Nav Data", m_args.use_external_nav)
+          .defaultValue("false")
+          .description("Dispatch ExternalNavData instead of EstimatedState");
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -607,7 +621,7 @@ namespace Control
           {
             m_cloops &= ~cloops->mask;
 
-            if ((cloops->mask & IMC::CL_ROLL) && !m_ground)
+            if ((cloops->mask & IMC::CL_ROLL) && !m_ground && m_vehicle_type == VEHICLE_FIXEDWING)
             {
               mavlink_message_t msg;
               uint8_t buf[512];
@@ -641,16 +655,23 @@ namespace Control
         void
         activateFBW(void)
         {
-          uint8_t buf[512];
-          mavlink_message_t msg;
+          if (m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            uint8_t buf[512];
+            mavlink_message_t msg;
 
-          mavlink_msg_set_mode_pack(255, 0, &msg,
-                                    m_sysid,
-                                    1,
-                                    6); //! FBWB is mode 6
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      6); //! FBWB is mode 6
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          else
+          {
+            debug("Tried to set FBW on a non-supported vehicle!");
+          }
         }
 
         void
@@ -1236,7 +1257,8 @@ namespace Control
           (void)idle;
           m_dpath.clear();
 
-          loiterHere();
+          if(m_args.loiter_idle)
+            loiterHere();
         }
 
         void
@@ -1617,6 +1639,7 @@ namespace Control
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
               m_error_missing = true;
+              m_has_setup_rate = false;
               m_esta_ext = false;
             }
           }
@@ -1637,7 +1660,16 @@ namespace Control
           m_estate.q = att.pitchspeed;
           m_estate.r = att.yawspeed;
 
-          dispatch(m_estate);
+          if (m_args.use_external_nav)
+          {
+            IMC::ExternalNavData extdata;
+            extdata.state.set(m_estate);
+            dispatch(extdata);
+          }
+          else
+          {
+            dispatch(m_estate);
+          }
         }
 
         void
@@ -1938,6 +1970,11 @@ namespace Control
                 mode.mode = "MANUAL";
                 m_external = true;
                 break;
+              case CP_MODE_STABILIZE:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "STABILIZE";
+                m_external = true;
+                break;
               case CP_MODE_AUTO:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "AUTO";
@@ -1949,6 +1986,12 @@ namespace Control
                 mode.mode = "LOITER";
                 trace("LOITER");
                 m_external = false;
+                break;
+              case CP_MODE_LAND:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "LAND";
+                trace("LAND");
+                m_external = true;
                 break;
               case CP_MODE_DUNE:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
@@ -2006,7 +2049,7 @@ namespace Control
                     receive(&m_dpath);
                   }
                 }
-                if (m_service)
+                if (m_service && m_args.loiter_idle)
                   loiterHere();
                 break;
               case PL_MODE_LOITER:
@@ -2081,8 +2124,12 @@ namespace Control
 
           dispatch(d_roll);
           dispatch(d_pitch);
-          dispatch(d_head);
-          dispatch(d_z);
+
+          if (m_args.ardu_tracker)
+          {
+            dispatch(d_head);
+            dispatch(d_z);
+          }
 
           if (!m_args.ardu_tracker)
             return;

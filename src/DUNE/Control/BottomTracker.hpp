@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -60,10 +62,6 @@ namespace DUNE
         float min_alt;
         //! Minimum admissible forward range for bottom tracking.
         float min_range;
-        //! Altitude tolerance when in depth control.
-        float alt_tol;
-        //! Depth below which altitude is ignored.
-        float depth_tol;
         //! Depth limit for tracking bottom.
         float depth_limit;
         //! Slope angle hysteresis value for safeness detection.
@@ -161,7 +159,11 @@ namespace DUNE
       //! Take appropriate measures
       //! @return true if safe, false if not safe or unable to tell
       bool
-      checkSafety(void);
+      checkObstacles(void);
+
+      //! Check vehicle's safety even if no z reference is defined
+      void
+      safetyWithoutZRef(void);
 
       //! Update bottom tracking state machine.
       void
@@ -216,6 +218,11 @@ namespace DUNE
       void
       dispatchAdmAltitude(void) const;
 
+      //! Get the opposite Z reference.
+      //! @return altitude/depth reference when controlling in depth/altitude.
+      double
+      getReverseZ(void) const;
+
       //! Check if forward range measurement could be the surface.
       //! @return true if it can be the surface.
       bool
@@ -224,7 +231,18 @@ namespace DUNE
       //! Check if altitude values should be ignored or not.
       //! @return true if they should be ignored.
       bool
-      isAltitudeValid(void);
+      isAltitudeValid(void) const;
+
+      //! Check if vehicle depth is above minimum.
+      //! @return true if depth is above minimum.
+      bool
+      isUnderwater(void) const;
+
+      //! Check if vehicle is reaching maximum limit.
+      //! @param[in] depth_ref current depth reference.
+      //! @return true if vehicle is reaching limit, false otherwise.
+      bool
+      isReachingLimit(double depth_ref) const;
 
       //! Function for info messages.
       //! @param[in] msg string message to output.
@@ -236,10 +254,10 @@ namespace DUNE
       void
       debug(const std::string& msg) const;
 
-      //! Throw an error if really necessary
+      //! Function for warning messages.
       //! @param[in] msg string message to output
       void
-      err(const std::string& msg) const;
+      war(const std::string& msg) const;
 
       //! Pointer to arguments.
       const Arguments* m_args;

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -68,6 +70,8 @@ namespace Transports
       bool report_enable;
       //! USBL Modem maximum waiting time.
       float usbl_max_wait;
+      //! USBL Modem Announce service.
+      bool usbl_announce;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -118,50 +122,79 @@ namespace Transports
       {
         param("Enable Reports", m_args.report_enable)
         .defaultValue("false")
-        .description("Enable system state reporting");
+        .description("Enable system state acoustic reporting. When enabled, systems"
+                     " shall acknowledge reception of requests to broadcast acoustic"
+                     " messages containing the overall state of the system."
+                     " When disabled, those requests shall be ignored");
 
         param("USBL Node -- Enabled", m_node_args.enabled)
         .defaultValue("false")
-        .description("USBL target request activation");
+        .description("Enable system's USBL mode. When active, this system will"
+                     " start using USBL by actively broadcasting an acoustic"
+                     " message containing a request to get USBL feedback. The"
+                     " request contains the period for transmissions, if quick"
+                     " (two-way travel) or ranging (three-way travel) mode is"
+                     " desired, and, if in ranging mode (not \"quick\"), to use"
+                     " absolute or relative positioning. If a USBL modem is in"
+                     " reach, they will start exchanging acoustic transmissions"
+                     " to provide USBL positioning to the system."
+                     " Any system can be configured to request USBL information"
+                     " including modems with built-in USBL capabilities");
 
         param("USBL Node -- Period", m_node_args.period)
         .defaultValue("60.0")
         .minimumValue("2.0")
         .units(Units::Second)
-        .description("USBL target necessary period");
+        .description("USBL's period. This value determines the period of USBL"
+                     " positioning data. If \"Quick\" mode is selected, modem"
+                     " shall ping the USBL modem with this period to get bearing"
+                     " and elevation (two-way travel transmission). If \"Quick\""
+                     " mode is disabled, ranging information is included for a"
+                     " proper fix. In this case, the USBL modem pings the node,"
+                     " hears the reply, computes the position and transmits back"
+                     " to the node (three-way travel transmission)");
 
         param("USBL Node -- Absolute Fix", m_node_args.fix)
         .defaultValue("false")
-        .description("USBL can either send an absolute fix, or"
-                     " relative positioning.");
+        .description("If this argument is enabled, USBL sends an absolute fix using"
+                     " WGS-84 lat/lon coordinates. If disabled, then the positioning"
+                     " is relative to the origin of a system where the center of the"
+                     " reference frame is the USBL modem");
 
         param("USBL Node -- Quick, No Range", m_node_args.no_range)
         .defaultValue("false")
-        .description("In this mode, the USBL node does not require"
-                     " ranging information. With this mode enabled,"
-                     " there's only a two-way travel between the node"
-                     " and the USBL modem. The node actively requests"
-                     " data. This parameter overrides absolute fix");
+        .description("In this mode, the USBL node does not request ranging information."
+                     " Thus, with this mode enabled, there's only a two-way travel"
+                     " transmission between the node and the USBL modem. The node will"
+                     " actively ping the modem to get bearing/elevation information"
+                     " With this mode enabled \"Absolute Fix\" argument is ignored");
+
+        param("USBL Modem -- Announce Service", m_args.usbl_announce)
+        .defaultValue("false")
+        .description("This argument only concerns systems with USBL modems installed."
+                     " This parameter statically adds a USBL announce, even if service"
+                     " has not been detected yet (eg. modem not connected)");
 
         param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
         .defaultValue("10.0")
         .minimumValue("2.0")
         .maximumValue("20.0")
         .units(Units::Second)
-        .description("Maximum amount of time that the modem will wait"
-                     " for target system's reply.");
+        .description("This argument only concerns systems with USBL modems installed."
+                     " This value establishes the maximum amount of time that the modem"
+                     " waits for the target system's reply");
 
+        bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::PlanControlState>(this);
-        bind<IMC::AcousticOperation>(this);
+        bind<IMC::ReportControl>(this);
         bind<IMC::UamRxFrame>(this);
         bind<IMC::UamTxStatus>(this);
         bind<IMC::UamRxRange>(this);
         bind<IMC::UsblPositionExtended>(this);
         bind<IMC::UsblAnglesExtended>(this);
         bind<IMC::UsblConfig>(this);
-        bind<IMC::ReportControl>(this);
       }
 
       ~Task(void)
@@ -186,6 +219,9 @@ namespace Transports
         announce.service = std::string("imc+any://acoustic/operation/")
         + URL::encode(getEntityLabel());
         dispatch(announce);
+
+        if (m_args.usbl_announce)
+          announceUSBL();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -460,6 +496,7 @@ namespace Transports
       {
         if (m_usbl_modem == NULL)
         {
+          announceUSBL();
           m_usbl_modem = new UsblTools::Modem();
           return;
         }
@@ -491,6 +528,7 @@ namespace Transports
       {
         if (m_usbl_modem == NULL)
         {
+          announceUSBL();
           m_usbl_modem = new UsblTools::Modem();
           return;
         }
@@ -519,6 +557,17 @@ namespace Transports
           m_reporter->consume(msg);
       }
 
+      //! Announce USBL service.
+      void
+      announceUSBL(void)
+      {
+        IMC::AnnounceService announce;
+        announce.service = std::string("imc+any://acoustic/usbl/")
+        + URL::encode(getEntityLabel());
+        dispatch(announce);
+      }
+
+      //! Clear last operation.
       void
       clearLastOp(void)
       {
@@ -823,7 +872,7 @@ namespace Transports
           onUsblModem();
           onUsblNode();
 
-          if (m_args.report_enable && isActive())
+          if (m_args.report_enable)
           {
             if (m_reporter != NULL && m_reporter->trigger())
               sendReport();

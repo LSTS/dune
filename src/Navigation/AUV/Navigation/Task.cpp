@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Aníbal Matos (original LBL filter circa 1999)                    *
@@ -142,6 +144,8 @@ namespace Navigation
         float lbl_noise;
         //! GPS measurement noise covariance values.
         std::vector<double> gps_noise;
+        //! USBL measurement noise covariance value.
+        double usbl_noise;
         //! IMU entity label.
         std::string elabel_imu;
         //! Number of samples to average forward speed.
@@ -152,8 +156,6 @@ namespace Navigation
         float rpm_max;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
-        //! Increment Euler Angles Delta (true) or integrate yaw rate (false).
-        bool euler_delta;
         //! Abort if navigation exceeds maximum uncertainty.
         bool abort;
       };
@@ -162,10 +164,10 @@ namespace Navigation
       {
         //! Periodic GPS fix reading check.
         bool m_gps_reading;
+        //! USBL fix reading check.
+        bool m_usbl_reading;
         //! Moving average for vehicle forward speed.
         MovingAverage<double>* m_avg_speed;
-        //! Medium handler.
-        Monitors::MediumHandler m_medium;
         //! Task arguments.
         Arguments m_args;
 
@@ -187,17 +189,22 @@ namespace Navigation
           param("Process Noise Covariance", m_process_noise)
           .defaultValue("")
           .size(6)
-          .description("Kalman Filter Process Noise Covariance values");
+          .description("Kalman Filter process noise covariance values");
 
           param("GPS Noise Covariance", m_args.gps_noise)
           .defaultValue("")
           .size(4)
-          .description("Kalman Filter Gps Noise Covariance values");
+          .description("Kalman Filter GPS noise covariance values");
+
+          param("USBL Noise Covariance", m_args.usbl_noise)
+          .defaultValue("100.0")
+          .minimumValue("0.0")
+          .description("Kalman Filter USBL noise covariance value");
 
           param("Measure Noise Covariance", m_measure_noise)
           .defaultValue("")
           .size(5)
-          .description("Kalman Filter Measurement Noise Covariance values");
+          .description("Kalman Filter measurement noise covariance values");
 
           param("State Covariance Initial State", m_state_cov)
           .defaultValue("")
@@ -222,10 +229,6 @@ namespace Navigation
           .maximumValue("8e-4")
           .description("Kalman Filter revolutions to speed maximum allowed variation");
 
-          param("Update Heading with Euler Increments", m_args.euler_delta)
-          .defaultValue("false")
-          .description("Use 'EulerAnglesDelta' or 'AngularVelocity' to update heading");
-
           param("Abort if Uncertainty Exceeded", m_args.abort)
           .defaultValue("true")
           .description("Abort if position uncertainty is exceeded");
@@ -245,7 +248,6 @@ namespace Navigation
 
           // Register callbacks
           bind<IMC::EntityActivationState>(this);
-          bind<IMC::VehicleMedium>(this);
         }
 
         void
@@ -334,21 +336,18 @@ namespace Navigation
         void
         consume(const IMC::EntityActivationState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
           if ((msg->state == IMC::EntityActivationState::EAS_ACTIVE ||
-               msg->state == IMC::EntityActivationState::EAS_ACT_DONE)
-              && !m_medium.outWater())
+               msg->state == IMC::EntityActivationState::EAS_ACT_DONE))
           {
             // IMU already activated.
             if (m_dead_reckoning)
               return;
-
-            if (!m_args.euler_delta)
-              m_agvel_eid = m_imu_eid;
-
-            m_sum_euler_inc = m_args.euler_delta;
 
             // Dead reckoning mode.
             m_dead_reckoning = true;
@@ -374,9 +373,7 @@ namespace Navigation
 
             // Stop integrate heading rates and use AHRS data.
             m_dead_reckoning = false;
-            m_sum_euler_inc = false;
             m_aligned = false;
-            m_agvel_eid = getAhrsId();
             debug("navigation not aligned");
 
             m_kal.setState(STATE_PSI_BIAS, 0.0);
@@ -392,12 +389,6 @@ namespace Navigation
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
-        }
-
-        void
-        consume(const IMC::VehicleMedium* msg)
-        {
-          m_medium.update(msg);
         }
 
         bool
@@ -428,6 +419,7 @@ namespace Navigation
         {
           BasicNavigation::reset();
           m_gps_reading = false;
+          m_usbl_reading = false;
         }
 
         double
@@ -474,6 +466,23 @@ namespace Navigation
           m_gps_reading = true;
 
           // Define Measurements matrix - GPS
+          m_kal.setOutput(OUT_GPS_X, x);
+          m_kal.setOutput(OUT_GPS_Y, y);
+        }
+
+        void
+        runKalmanUSBL(double x, double y)
+        {
+          // if there's gps, ignore usbl.
+          if (!m_time_without_gps.overflow())
+            return;
+
+          m_usbl_reading = true;
+
+          // set kalman.
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_args.usbl_noise);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.usbl_noise);
+
           m_kal.setOutput(OUT_GPS_X, x);
           m_kal.setOutput(OUT_GPS_Y, y);
         }
@@ -543,10 +552,12 @@ namespace Navigation
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
 
           // GPS innovation matrix.
-          if (m_gps_reading)
+          if (m_gps_reading || m_usbl_reading)
           {
             // Reset GPS counter.
-            m_time_without_gps.reset();
+            if (m_gps_reading)
+              m_time_without_gps.reset();
+
             m_kal.setInnovation(OUT_GPS_X, m_kal.getOutput(OUT_GPS_X) - m_kal.getState(STATE_X));
             m_kal.setInnovation(OUT_GPS_Y, m_kal.getOutput(OUT_GPS_Y) - m_kal.getState(STATE_Y));
           }
@@ -624,6 +635,7 @@ namespace Navigation
           // Reset variables.
           updateBuffers(c_wma_filter);
           m_gps_reading = false;
+          m_usbl_reading = false;
           m_valid_gv = false;
           m_valid_wv = false;
           resetKalman();

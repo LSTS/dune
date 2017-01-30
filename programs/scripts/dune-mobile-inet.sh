@@ -1,6 +1,6 @@
 #! /bin/sh
 ############################################################################
-# Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -9,37 +9,39 @@
 # Licencees holding valid commercial DUNE licences may use this file in    #
 # accordance with the commercial licence agreement provided with the       #
 # Software or, alternatively, in accordance with the terms contained in a  #
-# written agreement between you and Universidade do Porto. For licensing   #
-# terms, conditions, and further information contact lsts@fe.up.pt.        #
+# written agreement between you and Faculdade de Engenharia da             #
+# Universidade do Porto. For licensing terms, conditions, and further      #
+# information contact lsts@fe.up.pt.                                       #
 #                                                                          #
-# European Union Public Licence - EUPL v.1.1 Usage                         #
-# Alternatively, this file may be used under the terms of the EUPL,        #
-# Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       #
+# Modified European Union Public Licence - EUPL v.1.1 Usage                #
+# Alternatively, this file may be used under the terms of the Modified     #
+# EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md #
 # included in the packaging of this file. You may not use this work        #
 # except in compliance with the Licence. Unless required by applicable     #
 # law or agreed to in writing, software distributed under the Licence is   #
 # distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
 # ANY KIND, either express or implied. See the Licence for the specific    #
 # language governing permissions and limitations at                        #
+# https://github.com/LSTS/dune/blob/master/LICENCE.md and                  #
 # http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
 
 if [ -z "$GSM_USER" ]; then
-    GSM_USER='vodafone'
+    GSM_USER='internet'
 fi
 
 if [ -z "$GSM_PASS" ]; then
-    GSM_PASS='vodafone'
+    GSM_PASS=''
 fi
 
 if [ -z "$GSM_APN" ]; then
-    GSM_APN='internet.vodafone.pt'
+    GSM_APN='internet'
 fi
 
 if [ -z "$GSM_MODE" ]; then
-    GSM_MODE='AT\^SYSCFG=2,2,3fffffff,0,1'
+    GSM_MODE='AT\^SYSCFG=2,2,3fffffff,1,1'
 fi
 
 if [ -z "$GSM_PIN" ]; then
@@ -53,6 +55,11 @@ fi
 if [ -z "$FWL_INT_ITF" ]; then
     FWL_INT_ITF='eth0'
 fi
+
+if [ -z "$PRESENTATION_MODE" ]; then
+    PRESENTATION_MODE='AT'
+fi
+
 
 CHAT_SCRIPT=$(cat <<EOF
 ABORT 'BUSY' \
@@ -70,7 +77,7 @@ TIMEOUT 3 \
 'OK' '$GSM_PIN' \
 'OK-AT-OK' 'ATI' \
 'OK' 'ATZ' \
-'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0' \
+'OK' '$PRESENTATION_MODE' \
 'OK' '$GSM_MODE' \
 'OK-AT-OK' 'AT+CGDCONT=1,\"IP\",\"$GSM_APN\"' \
 'OK' 'ATDT*99***1#' \
@@ -170,6 +177,7 @@ ppp_stop()
 
 nat_start()
 {
+
     log info "nat: enabling IP forwarding"
     echo '1' > /proc/sys/net/ipv4/ip_forward
     echo '1' > /proc/sys/net/ipv4/ip_dynaddr
