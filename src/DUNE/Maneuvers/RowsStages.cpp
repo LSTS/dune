@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques (original stage implementation)                  *
@@ -41,6 +43,8 @@ namespace DUNE
   {
     //! Value for y coordinate close to zero
     static const float c_y_margin = 1e-03;
+    //! Minimum safety threshold.
+    static const float c_min = 1e-03;
 
     RowsStages::RowsStages(const IMC::Rows* maneuver, Tasks::Task* task)
     {
@@ -87,6 +91,12 @@ namespace DUNE
     void
     RowsStages::initialize()
     {
+      if (m_width < c_min || m_length < c_min || m_hstep < c_min)
+      {
+        throw std::runtime_error(DTR("invalid maneuver parameters"));
+        return;
+      }
+
       m_hstep_updated = m_hstep;
 
       double curve_sign = curveRight() ? 1 : -1;

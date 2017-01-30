@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -135,8 +137,7 @@ namespace Transports
         .defaultValue("false")
         .description("Enable low gain mode (testing purposes)");
 
-        param(DTR_RT("Source Level"), m_args.source_level)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        param("Source Level", m_args.source_level)
         .defaultValue("3")
         .minimumValue("0")
         .maximumValue("3")
@@ -434,6 +435,8 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "FAILEDIM"))
           handleMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "BUSY"))
+          handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))
@@ -444,10 +447,14 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
+
+        // Burst messages.
         else if (String::startsWith(msg->value, "DELIVERED"))
           handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
           handleMessageFailed(msg->value);
+
+        // USBL.
         else if (String::startsWith(msg->value, "USBLLONG"))
           handleUsblPosition(msg->value);
         else if (String::startsWith(msg->value, "USBLANGLES"))
@@ -523,24 +530,40 @@ namespace Transports
           return;
         }
 
+        try
+        {
+          transmitData((const uint8_t*)&msg->data[0], msg->data.size(), ticket);
+        }
+        catch (std::runtime_error& e)
+        {
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_FAILED, e.what());
+        }
+
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
-        if (!ticket.pbm)
+        m_kalive_counter.reset();
+      }
+
+      void
+      transmitData(const uint8_t* data, unsigned data_size, Ticket& ticket)
+      {
+        if (ticket.pbm)
         {
-          if (msg->data.size() <= 64)
-            m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
-          else
-          {
-            war(DTR("Sending burst message (size=%lu) to %d."), (unsigned long)msg->data.size(), ticket.addr);
-            m_driver->sendBurst((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
-          }
+          m_driver->sendPBM(data, data_size, ticket.addr);
+        }
+        else if (data_size <= c_im_max_size)
+        {
+          m_driver->sendIM(data, data_size, ticket.addr, ticket.ack);
         }
         else
-          m_driver->sendPBM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
-
-        m_kalive_counter.reset();
+        {
+          // Burst messages have an implicit ack.
+          ticket.ack = true;
+          debug("sending %u bytes of burst data to address %d", data_size, ticket.addr);
+          m_driver->sendBurst(data, data_size, ticket.addr);
+        }
       }
 
       void

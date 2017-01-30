@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
@@ -40,22 +42,37 @@ namespace DUNE
 {
   namespace Database
   {
-    const char*
-    Connection::c_memory_db = ":memory:";
-
-    Connection::Connection(const char* path, bool create):
-      m_handle(0)
+    Connection::Connection(int flags)
     {
+      open(":memory:", flags);
+    }
+
+    Connection::Connection(const char* path, int flags)
+    {
+      open(path, flags);
+    }
+
+    void
+    Connection::open(const char* path, int flags)
+    {
+      m_handle = NULL;
+
       sqlite3_enable_shared_cache(1);
 
-      int flags = create ? SQLITE_OPEN_CREATE : 0;
-      flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_SHAREDCACHE;
+      int sl_flags = SQLITE_OPEN_SHAREDCACHE;
+      if (flags & CF_RDONLY)
+        sl_flags |= SQLITE_OPEN_READONLY;
+      else
+        sl_flags |= SQLITE_OPEN_READWRITE;
 
-      if (sqlite3_open_v2(path, &m_handle, flags, 0) != SQLITE_OK)
+      if (flags & CF_CREATE)
+        sl_flags |= SQLITE_OPEN_CREATE;
+
+      if (sqlite3_open_v2(path, &m_handle, sl_flags, 0) != SQLITE_OK)
       {
         Error e(lastError());
         sqlite3_close(m_handle);
-        m_handle = 0;
+        m_handle = NULL;
         throw e;
       }
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Renato Caldas                                                    *
@@ -27,6 +29,7 @@
 
 // ISO C++ 98 headers.
 #include <cstddef>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -88,6 +91,8 @@ namespace Sensors
       //! Number of seconds without data before reporting a failure and
       //! restarting.
       double timeout_failure;
+      //! GPS entity label.
+      std::string label_gps;
     };
 
     // Number of seconds to wait before setting an entity error.
@@ -142,6 +147,8 @@ namespace Sensors
       size_t m_faults_count;
       //! Timeout count.
       size_t m_timeout_count;
+      //! GPS source entity.
+      unsigned m_gps_eid;
       // Task arguments.
       Arguments m_args;
 
@@ -187,9 +194,14 @@ namespace Sensors
         .units(Units::Second)
         .description("Number of seconds without data before restarting task");
 
+        param("Entity Label - GPS", m_args.label_gps)
+        .defaultValue("GPS")
+        .description("Entity label of 'GpsFix' messages");
+
         m_calibrated = false;
 
         // Register consumers.
+        bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
       }
 
@@ -252,6 +264,19 @@ namespace Sensors
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_gps_eid = resolveEntity(m_args.label_gps);
+        }
+        catch (...)
+        {
+          m_gps_eid = std::numeric_limits<unsigned>::max();
+        }
+      }
+
+      void
       onResourceRelease(void)
       {
         Memory::clear(m_handle);
@@ -265,9 +290,27 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (msg->getSourceEntity() != m_gps_eid)
+          return;
+
+        if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
+          calibrate();
+      }
+
+      void
       consume(const IMC::VehicleMedium* msg)
       {
-        if ((msg->medium != IMC::VehicleMedium::VM_UNDERWATER) && !m_calibrated)
+        if (msg->medium != IMC::VehicleMedium::VM_UNDERWATER)
+          calibrate();
+      }
+
+      //! Calibrate device.
+      void
+      calibrate(void)
+      {
+        if (!m_calibrated)
         {
           zero();
           m_calibrated = true;

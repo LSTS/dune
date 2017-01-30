@@ -1,14 +1,27 @@
 DUNE: Unified Navigation Environment
 ====================================
 
-DUNE © Universidade do Porto - Faculdade de Engenharia 2007-2016.
+DUNE © Universidade do Porto - Faculdade de Engenharia 2007-2017.
 
-European Union Public Licence V. 1.1
-------------------------------------
+Commercial Licence Usage
+------------------------
+
+Licencees holding valid commercial DUNE licences may use this program
+in accordance with the commercial licence agreement provided with the
+Software or, alternatively, in accordance with the terms contained in a
+written agreement between you and Faculdade de Engenharia da
+Universidade do Porto. For licensing terms, conditions, and further
+information contact lsts@fe.up.pt.
+
+For non-commercial purposes the bellow modified version of the
+EUPL v1.1 is to be used.
+
+*Modified* European Union Public Licence V. 1.1
+-----------------------------------------------
 
 EUPL © the European Community 2007
 
-This European Union Public Licence (the "EUPL") applies to the Work or
+This *Modified* European Union Public Licence (the "EUPL") applies to the Work or
 Software (as defined below) which is provided under the terms of this
 Licence. Any use of the Work, other than as authorised under this
 Licence is prohibited (to the extent such use is covered by a right of
@@ -18,10 +31,10 @@ The Original Work is provided under the terms of this Licence when the
 Licensor (as defined below) has placed the following notice
 immediately following the copyright notice for the Original Work:
 
-Licensed under the EUPL V.1.1
+Licensed under the EUPL V.1.1 **with modifications (on clause 2 and 5, and Appendix)**
 
 or has expressed by any other mean his willingness to license under
-the EUPL.
+the **modified** EUPL.
 
 ### 1. Definitions
 
@@ -68,9 +81,14 @@ any other natural or legal person.
 
 The Licensor hereby grants You a world-wide, royalty-free,
 non-exclusive, sub-licensable licence to do the following, for the
-duration of copyright vested in the Original Work:
+duration of copyright vested in the Original Work, **this only **
+**applies for non-commercial purposes (which needs an**
+**additional license agreement in the written form**
+**celebrated between you and Faculdade de Engenharia**
+**da Universidade do Porto, as stated above)**:
 
-* use the Work in any circumstance and for all usage,
+* use the Work in any circumstance and for all usage **(with **
+**the exception for commercial purposes)**,
 
 * reproduce the Work,
 
@@ -303,11 +321,9 @@ or registered office inside a European Union country.
 
 "Compatible Licences" according to article 5 EUPL are:
 
-- GNU General Public License (GNU GPL) v. 2
-- Open Software License (OSL) v. 2.1, v. 3.0
-- Common Public License v. 1.0
-- Eclipse Public License v. 1.0
-- Cecill v. 2.0
+- **Any agreed in the written agreement celebrated**
+**between you and Faculdade de Engenharia**
+**da Universidade do Porto **
 
 bzip2
 =====
