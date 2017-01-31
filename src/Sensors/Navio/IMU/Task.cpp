@@ -47,8 +47,10 @@ namespace Sensors
       //! %Task arguments.
       struct Arguments
       {
-        double data_tout;
-        int data_rate;
+        //! Accelerometer scale
+        int acc_scale;
+        //! Gyroscope scale
+        int gyr_scale;
       };
 
       struct Task: public DUNE::Tasks::Periodic
@@ -72,17 +74,17 @@ namespace Sensors
           DUNE::Tasks::Periodic(name, ctx),
           m_tstamp(0)
         {
-          param("Data Timeout", m_args.data_tout)
-          .defaultValue("0.5")
-          .minimumValue("0.2")
-          .units(Units::Second)
-          .description("Number of seconds without data before reporting an error");
+          param("Acc Scale", m_args.acc_scale)
+          .defaultValue("4")
+          .values("2, 4, 8, 16")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .description("Accelerometer Scale");
 
-          param("Data Rate", m_args.data_rate)
-          .defaultValue("40")
-          .minimumValue("-50")
-          .maximumValue("40")
-          .description("Sensor data rate");
+          param("Gyro Scale", m_args.gyr_scale)
+          .defaultValue("2000")
+          .values("250, 500, 1000, 2000")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .description("Gyroscope Scale");
 
           // Register listeners.
           bind<IMC::DevCalibrationControl>(this);
