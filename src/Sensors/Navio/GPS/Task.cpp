@@ -136,13 +136,13 @@ namespace Sensors
 
               dispatch(m_fix);
             }
-
-            if (m_gps.decodeSingleMessage(Ublox::NAV_STATUS, pos_data))
+            else if (m_gps.decodeSingleMessage(Ublox::NAV_STATUS, pos_data))
             {
               debug("gps Fix status: ");
               switch((int)pos_data[0])
               {
                 case 0x00:
+                  // No fix
                   break;
                 case 0x01:
                   m_fix.type = IMC::GpsFix::GFT_DEAD_RECKONING;
@@ -167,6 +167,7 @@ namespace Sensors
                   break;
               }
             }
+            else
 
             waitForMessages(0.02);
           }
