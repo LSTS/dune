@@ -139,7 +139,7 @@ namespace DUNE
         fp32_t n;
         fp32_t e;
         fp32_t d;
-        fp32_t accuracy;
+        uint8_t accuracy;
 
         //! Decode an incoming data frame into a position message.
         //! @param[out] frame position structure.
@@ -184,7 +184,7 @@ namespace DUNE
         static size_t
         size(void)
         {
-          return 7 * sizeof(fp32_t);
+          return (6 * sizeof(fp32_t) + sizeof(uint8_t));
         }
       };
 
@@ -427,7 +427,7 @@ namespace DUNE
               pos.n = ps.n;
               pos.e = ps.e;
               pos.d = ps.d;
-              pos.accuracy = ps.accuracy;
+              pos.accuracy = (fp32_t) ps.accuracy;
 
               if (!getFix(msg->sys_src, pos))
                 m_task->dispatch(pos);
@@ -827,7 +827,10 @@ namespace DUNE
           pos.n = msg->n;
           pos.e = msg->e;
           pos.d = msg->d;
-          pos.accuracy = msg->accuracy;
+         if (msg->accuracy > 255)
+            pos.accuracy = 255;
+          else
+          pos.accuracy = (uint8_t) msg->accuracy;
 
           Position::encode(pos, data);
           targetReplied(m_system);
