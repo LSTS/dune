@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: f217a46387d63e1ab4153c4676d40e7a                            *
+// IMC XML MD5: 97e9b1e32d2db432781ca63dd92965e5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -37,9 +37,9 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.11"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2017-01-16 809c7e2  (HEAD, origin/master, origin/HEAD, master)"
+#define DUNE_IMC_CONST_GIT_INFO "2017-02-03 e7d8d65  (HEAD, origin/master, origin/HEAD, master)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "f217a46387d63e1ab4153c4676d40e7a"
+#define DUNE_IMC_CONST_MD5 "97e9b1e32d2db432781ca63dd92965e5"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.
