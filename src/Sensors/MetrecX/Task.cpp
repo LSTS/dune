@@ -57,7 +57,7 @@ namespace Sensors
     static const float c_temp_tout = 5.0f;
 
     //! Commands
-    static const char* c_cmd_ops[] = { "DENSITY", "SALINITY", "SV" };
+    static const char* c_cmd_ops[] = { "SALINITY", "DENSITY", "SV" };
     static const char* c_cmd_icset = "SET SCAN ";
     static const char* c_cmd_icnos = "SET SCAN NO";
     static const char* c_cmd_sampl = "SET S 1s";
@@ -83,8 +83,8 @@ namespace Sensors
     //! Internal Channel Options indexes.
     enum InternalIndex
     {
-      ICM_DENSITY = 0,
-      ICM_SALINITY = 1,
+      ICM_SALINITY = 0,
+      ICM_DENSITY = 1,
       ICM_SSPEED = 2
     };
 
