@@ -98,8 +98,6 @@ namespace Sensors
     static const unsigned c_channels = c_di_count + c_an_count;
     //! Number of total readings.
     static const unsigned c_total = c_channels + c_in_count;
-    //! Const to transform dbar to Bar.
-    static const unsigned c_dbar_to_bar = 10;
     //! Redox mV offset
     static const unsigned c_redox_offset = 2500;
     //! PH: Nernst value in Volts at 20ºC.
@@ -660,8 +658,7 @@ namespace Sensors
         IMC::Depth depth;
         depth.setSourceEntity(id);
         depth.setTimeStamp(tstamp);
-        double val = value / c_dbar_to_bar;
-        depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
+        depth.value = UNESCO1983::computeDepth(value, m_lat, m_args.geop_anomaly);
         dispatch(depth, DF_KEEP_TIME);
       }
 
