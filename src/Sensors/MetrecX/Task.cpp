@@ -69,7 +69,7 @@ namespace Sensors
     static const std::string c_di_options[] = { "Conductivity", "SoundSpeed",
                                                 "Temperature", "Pressure" };
     //! Internal channel options.
-    static const std::string c_in_options[] = { "WaterDensity", "Salinity", "SoundSpeed" };
+    static const std::string c_in_options[] = { "Salinity", "WaterDensity", "SoundSpeed" };
 
     //! Digital Sensor Options indexes.
     enum DigitalIndex
