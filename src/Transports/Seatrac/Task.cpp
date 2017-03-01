@@ -798,7 +798,7 @@ namespace Transports
         if (aco_fix.outputflags_list[2])
         {
           IMC::UsblPositionExtended usblPosition;
-          usblPosition.target = sys_src;
+          usblPosition.target = safeLookup(aco_fix.dest_id);
           usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
           usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
           usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
@@ -816,7 +816,7 @@ namespace Transports
           if (aco_fix.outputflags_list[1] && m_usbl_receiver)
           {
             IMC::UsblAnglesExtended usblAnglesMsg;
-            usblAnglesMsg.target = sys_src;
+            usblAnglesMsg.target =  safeLookup(aco_fix.dest_id);
             usblAnglesMsg.lbearing = Angles::radians(aco_fix.usbl_azimuth / 10.0);
             usblAnglesMsg.lelevation = Angles::radians(aco_fix.usbl_elevation / 10.0);
             usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
@@ -1105,6 +1105,18 @@ namespace Transports
         return itr->second;
       }
 
+      std::string
+      safeLookup(unsigned addr)
+      {
+        try
+        {
+          return lookupSystemName(addr);
+        }
+        catch (...)
+        { }
+
+        return "unknown";
+      }
       //! Lookup system name.
       //! @param[in] addr system address.
       //! @return system name.
