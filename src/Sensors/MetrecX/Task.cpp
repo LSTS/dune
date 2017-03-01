@@ -658,7 +658,8 @@ namespace Sensors
         IMC::Depth depth;
         depth.setSourceEntity(id);
         depth.setTimeStamp(tstamp);
-        depth.value = UNESCO1983::computeDepth(value, m_lat, m_args.geop_anomaly);
+        double val = value / Math::c_pascal_per_bar;
+        depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
         dispatch(depth, DF_KEEP_TIME);
       }
 
