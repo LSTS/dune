@@ -36,6 +36,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Probes.hpp"
+
 namespace Sensors
 {
   //! Device driver for the AML OEM Metrec•X.
@@ -160,6 +163,8 @@ namespace Sensors
       unsigned m_temp_eid;
       //! Temperature for pH calculation
       float m_temp;
+      //! Probes.
+      Probes m_probes;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -590,8 +595,16 @@ namespace Sensors
       //! @param[in] raw dispatch raw voltage.
       void
       dispatchValue(IMC::Message* msg, double value, double factor,
-                    double tstamp, bool raw = false, unsigned analog = 0)
+                    double tstamp, bool raw = false, unsigned index = 0)
       {
+        // Convert value to standard MRA units.
+        std::string name = raw ? m_args.msgs[index + c_di_count] : m_args.msgs[index];
+        float cfactor = m_probes.conversion((char*)name.c_str());
+        if(!cfactor)
+          war(DTR("unknown probe (%s)"), (char*)name.c_str());
+        else
+          value = value * cfactor;
+
         // send raw voltages.
         if (raw)
         {
@@ -599,7 +612,7 @@ namespace Sensors
 
           unsigned eid = msg->getSourceEntity();
           if (eid == getEntityId())
-            volt.setSourceEntity(resolveEntity(String::str("%s - Analog %u", getEntityLabel(), analog + 1)));
+            volt.setSourceEntity(resolveEntity(String::str("%s - Analog %u", getEntityLabel(), index + 1)));
           else
             volt.setSourceEntity(eid);
 
@@ -776,7 +789,7 @@ namespace Sensors
                 if (i >= c_di_count)
                   dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, true, i - c_di_count);
                 else
-                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, false);
+                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, false, i);
               }
               else
               {
