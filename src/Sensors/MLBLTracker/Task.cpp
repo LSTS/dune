@@ -36,6 +36,9 @@
 //
 
 // ISO C++ 98 headers.
+#include <string>
+#include <iostream>
+#include <sstream>
 #include <vector>
 #include <memory>
 
@@ -68,6 +71,12 @@ namespace Sensors
     static const uint8_t c_code_plan = 0x2;
     // Binary message size.
     static const uint8_t c_binary_size = 32;
+
+    enum BeaconType
+    {
+      BT_TRANSPONDER,
+      BT_MODEM
+    };
 
     enum Operation
     {
@@ -122,6 +131,114 @@ namespace Sensors
       std::string addr_section;
       //! Navigation turn around time.
       unsigned turn_around_time;
+      //! Transponder Ping Wait Time.
+      double ping_wait_nb;
+    };
+
+    //! Narrow-Band Beacon
+    struct Beacon
+    {
+      // Beacon name.
+      std::string name;
+      // Beacon Type.
+      BeaconType type;
+      // Beacon id.
+      unsigned id;
+      // Beacon query frequency.
+      unsigned query_frequency;
+      // Beacon reply frequency.
+      unsigned reply_frequency;
+      // Last range.
+      unsigned range;
+      // Last range timestamp.
+      double range_time;
+      // Latitude.
+      double lat;
+      // Longitude.
+      double lon;
+      // Depth
+      float depth;
+
+      Beacon(void):
+        id(0),
+        query_frequency(0),
+        reply_frequency(0),
+        range(0),
+        range_time(0),
+        lat(0),
+        lon(0),
+        depth(0)
+      { }
+    };
+
+    //! Complete LBL.
+    struct LBL
+    {
+      // Beacons.
+      std::vector<Beacon> beacons;
+
+      LBL(void):
+        index(0)
+      { }
+
+      unsigned
+      next(void)
+      {
+        unsigned it = index;
+        if (++index >= beacons.size())
+          index = 0;
+
+        return it;
+      }
+
+      bool
+      empty(void) const
+      {
+        return beacons.empty();
+      }
+
+      void
+      clear(void)
+      {
+        beacons.clear();
+      }
+
+      unsigned
+      size(void)
+      {
+        return beacons.size();
+      }
+
+      bool
+      isModem(unsigned ix) const
+      {
+        if (beacons[ix].type == BT_MODEM)
+          return true;
+
+        return false;
+      }
+
+      void
+      push_back(Beacon beacon)
+      {
+        beacons.push_back(beacon);
+      }
+
+      Beacon
+      operator()(unsigned i) const
+      {
+        return beacons[i];
+      }
+
+      Beacon&
+      operator()(unsigned i)
+      {
+        return beacons[i];
+      }
+
+    private:
+      // Iterator index.
+      unsigned index;
     };
 
     // Type definition for mapping addresses.
@@ -163,8 +280,25 @@ namespace Sensors
       Counter<double> m_last_stn;
       // Ignore GPIO;
       bool m_ignore_gpio;
+      //! Ping all beacons
+      bool ping_all_beacon;
+      //! Ping all period
+      int ping_all_period;
       //! Current line.
       std::string m_line;
+      //! LBL setup.
+      LBL m_lbl;
+      //! Current LBL configuration.
+      IMC::LblConfig m_lbl_config;
+      //! Ping All beacons flag
+      bool ping_all;
+      //! Timer counter to set periodic ping
+      Time::Counter<float> m_timer;
+      //! Current sound speed (m/s).
+      double m_sound_speed;
+      //! Variable to locate right beacon id
+      char * beacon_id;
+
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -212,7 +346,7 @@ namespace Sensors
 
         param("Timeout - Narrow Band Ping", m_args.tout_nbping)
         .units(Units::Second)
-        .defaultValue("5.0")
+        .defaultValue("3.0")
         .minimumValue("0");
 
         param("Timeout - Abort", m_args.tout_abort)
@@ -232,6 +366,21 @@ namespace Sensors
         .defaultValue("Micromodem Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("Ping All Beacons", ping_all_beacon)
+        .defaultValue("false")
+        .description("Ping all beacons instead of just one");
+
+        param("Transponder Ping Wait Time", m_args.ping_wait_nb)
+        .units(Units::Second)
+        .defaultValue("0.5")
+        .minimumValue("0");
+
+        param("Ping all transponders period", ping_all_period)
+        .units(Units::Second)
+        .defaultValue("3")
+        .minimumValue("0");
+
+
         // Process narrow band transponders.
         std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
         for (unsigned i = 0; i < txponders.size(); ++i)
@@ -245,6 +394,8 @@ namespace Sensors
 
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
+        bind<IMC::LblConfig>(this);
+
       }
 
       ~Task(void)
@@ -280,6 +431,8 @@ namespace Sensors
         // Input timeout.
         if (paramChanged(m_args.tout_input))
           m_last_stn.setTop(m_args.tout_input);
+
+        m_sound_speed = m_args.sspeed;
       }
 
       void
@@ -360,6 +513,9 @@ namespace Sensors
         announce.service = std::string("imc+any://acoustic/operation/")
         + URL::encode(getEntityLabel());
         dispatch(announce);
+
+        ping_all = false;
+        m_timer.setTop(ping_all_period);        
       }
 
       void
@@ -430,6 +586,55 @@ namespace Sensors
             transmitMessage(msg->system, msg->msg);
             break;
         }
+      }
+
+      void
+      consume(const IMC::LblConfig* msg)
+      {
+        inf("TODO LÁ DENTRO!");
+        if (msg->op == IMC::LblConfig::OP_SET_CFG)
+        {
+          m_lbl_config = *msg;
+
+          m_lbl.clear();
+          IMC::MessageList<IMC::LblBeacon>::const_iterator itr = msg->beacons.begin();
+          for (unsigned i = 0; itr != msg->beacons.end(); ++itr, ++i)
+          {
+            if (*itr == NULL)
+              continue;
+
+            Beacon beacon;
+            beacon.id = i;
+            beacon.name = (*itr)->beacon;
+            beacon.lat = (*itr)->lat;
+            beacon.lon = (*itr)->lon;
+            beacon.depth = (*itr)->depth;
+
+            NarrowBandMap::iterator nb_itr = m_nbmap.find((*itr)->beacon);
+            if (nb_itr != m_nbmap.end())
+            {
+              beacon.query_frequency = nb_itr->second.query_freq;
+              beacon.reply_frequency = nb_itr->second.reply_freq;
+              beacon.type = BT_TRANSPONDER;
+            }
+            else
+            {
+              beacon.type = BT_MODEM;
+            }
+
+            m_lbl.push_back(beacon);
+          }
+        }
+
+        if (msg->op == IMC::LblConfig::OP_GET_CFG)
+        {
+          IMC::LblConfig cfg(m_lbl_config);
+          cfg.op = IMC::LblConfig::OP_CUR_CFG;
+          cfg.setSource(getSystemId());
+          dispatchReply(*msg, cfg);
+        }
+
+        ping_all = true;
       }
 
       //! Transmit message to modem.
@@ -542,8 +747,8 @@ namespace Sensors
           NarrowBandMap::iterator itr = m_nbmap.find(sys);
           if (itr != m_nbmap.end())
           {
-            pingNarrowBand(sys);
-            return;
+              pingNarrowBand(sys);
+              return;
           }
         }
 
@@ -557,6 +762,7 @@ namespace Sensors
       void
       pingMicroModem(const std::string& sys)
       {
+        inf("pingMicroModem");
         MicroModemMap::iterator itr = m_ummap.find(sys);
 
         if (itr == m_ummap.end())
@@ -573,6 +779,8 @@ namespace Sensors
       void
       pingNarrowBand(const std::string& sys)
       {
+        inf("pingNarrowBand");
+
         NarrowBandMap::iterator itr = m_nbmap.find(sys);
 
         if (itr == m_nbmap.end())
@@ -587,6 +795,138 @@ namespace Sensors
         sendCommand(cmd);
         m_op = OP_PING_NB;
         m_op_deadline = Clock::get() + m_args.tout_nbping;
+
+
+      }
+
+      //! Ping all beacon narrow band frequency.
+      //! @param[in] sys transducer to be pinged.
+      void
+      pingAllNarrowBand(void)
+      {
+        inf("pingAllNarrowBand");
+        std::vector<unsigned> freqs;
+        unsigned iterator = 0;
+        unsigned query = 0;
+
+        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
+        {
+          while (iterator < m_lbl.size())
+          {
+            if (m_lbl(iterator).type == BT_TRANSPONDER)
+            {
+              freqs.push_back(m_lbl(iterator).reply_frequency);
+              query = m_lbl(iterator).query_frequency;
+              iterator++;
+              break;
+            }
+
+            iterator++;
+          }
+
+          if (iterator >= m_lbl.size())
+            break;
+        }
+
+        if (!freqs.size())
+          return;
+
+        while (freqs.size() < 4)
+          freqs.push_back(0);
+
+        unsigned ping_time = static_cast<unsigned>(m_args.tout_nbping * 1000);
+        std::string cmd = String::str("$CCPNT,%u,%u,%u,%u,%u,%u,%u,%u,1\r\n",
+                                      query, m_args.tx_length, m_args.rx_length, ping_time,
+                                      freqs[0], freqs[1], freqs[2], freqs[3]);
+
+        sendCommand(cmd);
+        //inf("Siga para a frente");
+        //process(m_args.tout_nbping + m_args.ping_wait_nb);
+      }
+
+      void
+      handleTransponderTravelTimes(NMEAReader* const stn)
+      {
+        inf("handleTransponderTravelTimes");
+        //! Range.
+        IMC::LblRange lrange;
+        lrange.setTimeStamp();
+
+        //beacon_id = strtok(m_line.c_str(),",");
+        //inf(beacon_id);
+
+        /////////////////////////////
+        
+        ////////////////////////////
+
+        unsigned iterator = 0;
+        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
+        {
+          try
+          {
+            //err("i: %d", i);
+            double travel = 0;
+            *stn >> travel;
+            
+            //err("travel: %f", travel);
+            //err("sspeed: %f", m_args.sspeed);
+            //err("sspeed: %f", m_sound_speed);
+            // Compute range and dispatch message.
+            double range = travel * m_sound_speed;
+            //err("range: %f", range);
+            if (range > 0.0)
+            {
+              while (iterator < m_lbl.size())
+              {
+                //err("mlbl_size: %d", m_lbl.size());
+                if (m_lbl(iterator).type == BT_TRANSPONDER)
+                {
+                  err("iterator: %d",iterator);
+
+                  std::vector<std::string> seglist;
+                  String::split(m_line, ",", seglist);
+
+                  for(unsigned int j = 1; j < seglist.size()-1; j++)
+                    {
+                      war("%s - %d", seglist[j].c_str(), j-1);
+                      if(!NULL)
+                      {
+                        err("Entrou!");  
+                        lrange.id = k;
+                        
+                      }
+                    }
+                   
+                  //err("iterator: %d",iterator);
+                  //inf("dentro iterator");
+                  //lrange.id = m_lbl(iterator).id;
+                  err("mlbl id: %d", m_lbl(iterator).id);
+                  err("lrange: %d", lrange.id);
+                  lrange.range = range;
+                  dispatch(lrange, DF_KEEP_TIME);
+
+                  // Update beacon statistics.
+                  m_lbl(iterator).range = (unsigned)lrange.range;
+                  m_lbl(iterator).range_time = Clock::get();
+                  iterator++;
+                  break;
+                }
+                iterator++;
+              }
+
+              if (iterator >= m_lbl.size())
+                break;
+            }
+            else
+            {
+              war(DTR("discarded invalid range %0.2f"), range);
+            }
+          }
+          catch (...)
+          { }
+        }
+
+        //addResult(RS_PNG_TIME);
       }
 
       //! Handle received range from modem.
@@ -594,6 +934,7 @@ namespace Sensors
       void
       handleRangeModem(NMEAReader* const stn)
       {
+        inf("handleRangeModem");
         unsigned src = 0;
         unsigned dst = 0;
         *stn >> src >> dst;
@@ -624,6 +965,7 @@ namespace Sensors
       void
       handleRangeTransponder(NMEAReader* const stn)
       {
+        inf("handleRangeTransponder");
         double ttime = 0;
 
         try
@@ -651,6 +993,7 @@ namespace Sensors
       void
       handleMiniPacketReception(NMEAReader* const stn)
       {
+        inf("handleMiniPacketReception");
         unsigned src = 0;
         unsigned dst = 0;
         std::string val;
@@ -692,7 +1035,8 @@ namespace Sensors
       //! @param[in] stn sentence to be handled.
       void
       handleRangeInProgress(NMEAReader* const stn)
-      {
+      { 
+        inf("handleRangeInProgress");
         (void)stn;
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_IP;
         m_acop_out.system = m_acop.system;
@@ -704,6 +1048,7 @@ namespace Sensors
       void
       handleMiniPacketEcho(NMEAReader* const stn)
       {
+        inf("handleMiniPacketEcho");
         unsigned src = 0;
         unsigned dst = 0;
         std::string val;
@@ -725,6 +1070,7 @@ namespace Sensors
       void
       handleBinaryReception(NMEAReader* const stn)
       {
+        inf("handleBinaryReception");
         unsigned src, dst, ack, fnr;
         std::string hex;
 
@@ -829,6 +1175,7 @@ namespace Sensors
           // Detected line termination.
           if (bfr[i] == '\n')
           {
+            war(m_line.c_str());
             process(m_line);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_line.clear();
@@ -845,24 +1192,29 @@ namespace Sensors
       void
       process(const std::string msg)
       {
+        std::cout << msg;
         m_dev_data.value.assign(sanitize(msg));
         dispatch(m_dev_data);
 
         NMEAReader* const stn = new NMEAReader(msg);
         try
-        {
+        { 
           if (std::strcmp(stn->code(), "CAMPR") == 0)
             handleRangeModem(stn);
           else if (std::strcmp(stn->code(), "CAMUA") == 0)
             handleMiniPacketReception(stn);
-          else if (std::strcmp(stn->code(), "CAMPC") == 0)
+          else if (std::strcmp(stn->code(), "CAMPC") == 0 && !ping_all_beacon)
             handleRangeInProgress(stn);
-          else if (std::strcmp(stn->code(), "SNPNT") == 0)
+          else if (std::strcmp(stn->code(), "SNPNT") == 0 && !ping_all_beacon)
             handleRangeInProgress(stn);
           else if (std::strcmp(stn->code(), "CAMUC") == 0)
             handleMiniPacketEcho(stn);
           else if (std::strcmp(stn->code(), "SNTTA") == 0)
-            handleRangeTransponder(stn);
+            if (!ping_all_beacon)
+              handleRangeTransponder(stn);
+            else
+              handleTransponderTravelTimes(stn);
+           
           else if (std::strcmp(stn->code(), "CARXD") == 0)
             handleBinaryReception(stn);
         }
@@ -918,6 +1270,7 @@ namespace Sensors
       {
         while (!stopping())
         {
+          
           consumeMessages();
 
           if (Poll::poll(*m_handle, 0.1))
@@ -925,6 +1278,13 @@ namespace Sensors
             readSentence();
             m_last_stn.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
+
+          if(ping_all_beacon && ping_all && m_timer.overflow())
+          {
+            m_timer.reset();
+            pingAllNarrowBand();
+            inf("dentro do ping");
           }
 
           if (m_last_stn.overflow())
