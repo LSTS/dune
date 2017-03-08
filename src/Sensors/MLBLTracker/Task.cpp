@@ -591,7 +591,6 @@ namespace Sensors
       void
       consume(const IMC::LblConfig* msg)
       {
-        inf("TODO LÁ DENTRO!");
         if (msg->op == IMC::LblConfig::OP_SET_CFG)
         {
           m_lbl_config = *msg;
@@ -762,7 +761,6 @@ namespace Sensors
       void
       pingMicroModem(const std::string& sys)
       {
-        inf("pingMicroModem");
         MicroModemMap::iterator itr = m_ummap.find(sys);
 
         if (itr == m_ummap.end())
@@ -779,8 +777,6 @@ namespace Sensors
       void
       pingNarrowBand(const std::string& sys)
       {
-        inf("pingNarrowBand");
-
         NarrowBandMap::iterator itr = m_nbmap.find(sys);
 
         if (itr == m_nbmap.end())
@@ -795,8 +791,6 @@ namespace Sensors
         sendCommand(cmd);
         m_op = OP_PING_NB;
         m_op_deadline = Clock::get() + m_args.tout_nbping;
-
-
       }
 
       //! Ping all beacon narrow band frequency.
@@ -804,7 +798,6 @@ namespace Sensors
       void
       pingAllNarrowBand(void)
       {
-        inf("pingAllNarrowBand");
         std::vector<unsigned> freqs;
         unsigned iterator = 0;
         unsigned query = 0;
@@ -840,70 +833,61 @@ namespace Sensors
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
         sendCommand(cmd);
-        //inf("Siga para a frente");
-        //process(m_args.tout_nbping + m_args.ping_wait_nb);
       }
 
       void
       handleTransponderTravelTimes(NMEAReader* const stn)
       {
-        inf("handleTransponderTravelTimes");
         //! Range.
         IMC::LblRange lrange;
         lrange.setTimeStamp();
-
-        //beacon_id = strtok(m_line.c_str(),",");
-        //inf(beacon_id);
-
-        /////////////////////////////
-        
-        ////////////////////////////
+        inf(m_line.c_str());
 
         unsigned iterator = 0;
         for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
         {
           try
           {
-            //err("i: %d", i);
             double travel = 0;
             *stn >> travel;
-            
-            //err("travel: %f", travel);
-            //err("sspeed: %f", m_args.sspeed);
-            //err("sspeed: %f", m_sound_speed);
+
             // Compute range and dispatch message.
             double range = travel * m_sound_speed;
-            //err("range: %f", range);
+
             if (range > 0.0)
             {
+              std::vector<std::string> seglist;
+              std::vector< int > arr;
+
+              String::split(m_line, ",", seglist);
+
+              for(unsigned int j = 1; j < seglist.size()-1; j++)
+              {
+                  double teste = atof(seglist[j].c_str());
+                  if (travel == teste)
+                  {
+                    if (std::find(arr.begin(),arr.end(),j)!=arr.end())
+                    {
+                      lrange.id = j+1;
+                      arr.push_back(lrange.id);
+                    }
+                    else
+                    {
+                      lrange.id = j;
+                      arr.push_back(lrange.id);
+                    }
+                  }
+                }
+
               while (iterator < m_lbl.size())
               {
-                //err("mlbl_size: %d", m_lbl.size());
                 if (m_lbl(iterator).type == BT_TRANSPONDER)
                 {
-                  err("iterator: %d",iterator);
-
-                  std::vector<std::string> seglist;
-                  String::split(m_line, ",", seglist);
-
-                  for(unsigned int j = 1; j < seglist.size()-1; j++)
-                    {
-                      war("%s - %d", seglist[j].c_str(), j-1);
-                      if(!NULL)
-                      {
-                        err("Entrou!");  
-                        lrange.id = k;
-                        
-                      }
-                    }
-                   
-                  //err("iterator: %d",iterator);
-                  //inf("dentro iterator");
-                  //lrange.id = m_lbl(iterator).id;
-                  err("mlbl id: %d", m_lbl(iterator).id);
-                  err("lrange: %d", lrange.id);
+                  war("beacon id: %d", lrange.id);
                   lrange.range = range;
                   dispatch(lrange, DF_KEEP_TIME);
+
+                  arr.clear();
 
                   // Update beacon statistics.
                   m_lbl(iterator).range = (unsigned)lrange.range;
@@ -925,8 +909,6 @@ namespace Sensors
           catch (...)
           { }
         }
-
-        //addResult(RS_PNG_TIME);
       }
 
       //! Handle received range from modem.
@@ -934,7 +916,6 @@ namespace Sensors
       void
       handleRangeModem(NMEAReader* const stn)
       {
-        inf("handleRangeModem");
         unsigned src = 0;
         unsigned dst = 0;
         *stn >> src >> dst;
@@ -965,7 +946,6 @@ namespace Sensors
       void
       handleRangeTransponder(NMEAReader* const stn)
       {
-        inf("handleRangeTransponder");
         double ttime = 0;
 
         try
@@ -993,7 +973,6 @@ namespace Sensors
       void
       handleMiniPacketReception(NMEAReader* const stn)
       {
-        inf("handleMiniPacketReception");
         unsigned src = 0;
         unsigned dst = 0;
         std::string val;
@@ -1036,7 +1015,6 @@ namespace Sensors
       void
       handleRangeInProgress(NMEAReader* const stn)
       { 
-        inf("handleRangeInProgress");
         (void)stn;
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_IP;
         m_acop_out.system = m_acop.system;
@@ -1048,7 +1026,6 @@ namespace Sensors
       void
       handleMiniPacketEcho(NMEAReader* const stn)
       {
-        inf("handleMiniPacketEcho");
         unsigned src = 0;
         unsigned dst = 0;
         std::string val;
@@ -1070,7 +1047,6 @@ namespace Sensors
       void
       handleBinaryReception(NMEAReader* const stn)
       {
-        inf("handleBinaryReception");
         unsigned src, dst, ack, fnr;
         std::string hex;
 
@@ -1175,7 +1151,6 @@ namespace Sensors
           // Detected line termination.
           if (bfr[i] == '\n')
           {
-            war(m_line.c_str());
             process(m_line);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_line.clear();
@@ -1284,7 +1259,6 @@ namespace Sensors
           {
             m_timer.reset();
             pingAllNarrowBand();
-            inf("dentro do ping");
           }
 
           if (m_last_stn.overflow())
