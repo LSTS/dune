@@ -698,7 +698,7 @@ namespace Transports
           m->setDestination(imc_dst);
           m->setTimeStamp(msg->getTimeStamp());
           m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
-          dispatch(m, DF_KEEP_TIME);
+          dispatch(m, DF_KEEP_TIME | DF_LOOP_BACK);
           debug("Acoustic message successfully parsed as '%s'.", m->getName());
         }
         catch (std::exception& ex) {
