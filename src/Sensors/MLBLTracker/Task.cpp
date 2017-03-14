@@ -299,7 +299,6 @@ namespace Sensors
       //! Variable to locate right beacon id
       char * beacon_id;
 
-
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
@@ -319,12 +318,12 @@ namespace Sensors
 
         param("Length of Transmit Pings", m_args.tx_length)
         .units(Units::Millisecond)
-        .defaultValue("5")
+        .defaultValue("4")
         .minimumValue("0");
 
         param("Length of Receive Pings", m_args.rx_length)
         .units(Units::Millisecond)
-        .defaultValue("5")
+        .defaultValue("4")
         .minimumValue("0");
 
         param("Sound Speed on Water", m_args.sspeed)
@@ -346,7 +345,7 @@ namespace Sensors
 
         param("Timeout - Narrow Band Ping", m_args.tout_nbping)
         .units(Units::Second)
-        .defaultValue("3.0")
+        .defaultValue("4.0")
         .minimumValue("0");
 
         param("Timeout - Abort", m_args.tout_abort)
@@ -456,11 +455,11 @@ namespace Sensors
         {
           if (!openSocket())
           {
-             SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-             port->setCanonicalInput(true);
-             port->flush();
-             m_handle = port;
-           }
+            SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+            port->setCanonicalInput(true);
+            port->flush();
+            m_handle = port;
+          }
         }
         catch (std::runtime_error& e)
         {
@@ -511,11 +510,11 @@ namespace Sensors
       {
         IMC::AnnounceService announce;
         announce.service = std::string("imc+any://acoustic/operation/")
-        + URL::encode(getEntityLabel());
+                           + URL::encode(getEntityLabel());
         dispatch(announce);
 
         ping_all = false;
-        m_timer.setTop(ping_all_period);        
+        m_timer.setTop(ping_all_period);
       }
 
       void
@@ -546,7 +545,7 @@ namespace Sensors
       void
       sendCommand(const std::string& cmd)
       {
-        inf("%s", sanitize(cmd).c_str());
+        // inf("%s", sanitize(cmd).c_str());
         m_handle->writeString(cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
@@ -617,9 +616,7 @@ namespace Sensors
               beacon.type = BT_TRANSPONDER;
             }
             else
-            {
               beacon.type = BT_MODEM;
-            }
 
             m_lbl.push_back(beacon);
           }
@@ -634,6 +631,7 @@ namespace Sensors
         }
 
         ping_all = true;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Transmit message to modem.
@@ -746,8 +744,8 @@ namespace Sensors
           NarrowBandMap::iterator itr = m_nbmap.find(sys);
           if (itr != m_nbmap.end())
           {
-              pingNarrowBand(sys);
-              return;
+            pingNarrowBand(sys);
+            return;
           }
         }
 
@@ -832,6 +830,7 @@ namespace Sensors
                                       query, m_args.tx_length, m_args.rx_length, ping_time,
                                       freqs[0], freqs[1], freqs[2], freqs[3]);
 
+        war("CMD: %s", cmd.c_str());
         sendCommand(cmd);
       }
 
@@ -841,10 +840,9 @@ namespace Sensors
         //! Range.
         IMC::LblRange lrange;
         lrange.setTimeStamp();
-        inf(m_line.c_str());
 
         unsigned iterator = 0;
-        for (unsigned i = 0; i < Navigation::c_max_transponders; ++i)
+        for (unsigned i = 1; i < Navigation::c_max_transponders; ++i)
         {
           try
           {
@@ -861,38 +859,42 @@ namespace Sensors
 
               String::split(m_line, ",", seglist);
 
-              for(unsigned int j = 1; j < seglist.size()-1; j++)
+              for (unsigned int j = 1; j < seglist.size()-1; j++)
               {
-                  double teste = atof(seglist[j].c_str());
-                  if (travel == teste)
+                double teste = atof(seglist[j].c_str());
+                if (travel == teste)
+                {
+                  if (std::find(arr.begin(),arr.end(),j)!=arr.end())
                   {
-                    if (std::find(arr.begin(),arr.end(),j)!=arr.end())
-                    {
-                      lrange.id = j+1;
-                      arr.push_back(lrange.id);
-                    }
-                    else
-                    {
-                      lrange.id = j;
-                      arr.push_back(lrange.id);
-                    }
+                    lrange.id = j+1;
+                    arr.push_back(lrange.id);
+                    lrange.range = range;
+                    dispatch(lrange, DF_KEEP_TIME);
+
+                  }
+                  else
+                  {
+                    lrange.id = j;
+                    arr.push_back(lrange.id);
+                    lrange.range = range;
+                    dispatch(lrange, DF_KEEP_TIME);
                   }
                 }
+              }
 
               while (iterator < m_lbl.size())
               {
                 if (m_lbl(iterator).type == BT_TRANSPONDER)
                 {
-                  war("beacon id: %d", lrange.id);
-                  lrange.range = range;
-                  dispatch(lrange, DF_KEEP_TIME);
+                  war("beacon id: %d\n", lrange.id);
+                  //lrange.range = 0;
 
                   arr.clear();
 
-                  // Update beacon statistics.
+                  /*// Update beacon statistics.
                   m_lbl(iterator).range = (unsigned)lrange.range;
                   m_lbl(iterator).range_time = Clock::get();
-                  iterator++;
+                  iterator++;*/
                   break;
                 }
                 iterator++;
@@ -902,9 +904,7 @@ namespace Sensors
                 break;
             }
             else
-            {
               war(DTR("discarded invalid range %0.2f"), range);
-            }
           }
           catch (...)
           { }
@@ -1014,9 +1014,10 @@ namespace Sensors
       //! @param[in] stn sentence to be handled.
       void
       handleRangeInProgress(NMEAReader* const stn)
-      { 
+      {
         (void)stn;
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_IP;
+        inf("Range in progress: %s", m_acop.system.c_str());
         m_acop_out.system = m_acop.system;
         dispatch(m_acop_out);
       }
@@ -1130,13 +1131,9 @@ namespace Sensors
           trace("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
         }
         else if (code == c_code_plan)
-        {
           debug("ignore start plan");
-        }
         else
-        {
           debug("wrong code id");
-        }
       }
 
       //! Read sentence.
@@ -1151,14 +1148,13 @@ namespace Sensors
           // Detected line termination.
           if (bfr[i] == '\n')
           {
+            err("Process: %s\n", m_line.c_str());
             process(m_line);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            //setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_line.clear();
           }
           else
-          {
             m_line.push_back(bfr[i]);
-          }
         }
       }
 
@@ -1173,14 +1169,14 @@ namespace Sensors
 
         NMEAReader* const stn = new NMEAReader(msg);
         try
-        { 
+        {
           if (std::strcmp(stn->code(), "CAMPR") == 0)
             handleRangeModem(stn);
           else if (std::strcmp(stn->code(), "CAMUA") == 0)
             handleMiniPacketReception(stn);
-          else if (std::strcmp(stn->code(), "CAMPC") == 0 && !ping_all_beacon)
+          else if (std::strcmp(stn->code(), "CAMPC") == 0  && !ping_all_beacon)
             handleRangeInProgress(stn);
-          else if (std::strcmp(stn->code(), "SNPNT") == 0 && !ping_all_beacon)
+          else if (std::strcmp(stn->code(), "SNPNT") == 0  && !ping_all_beacon)
             handleRangeInProgress(stn);
           else if (std::strcmp(stn->code(), "CAMUC") == 0)
             handleMiniPacketEcho(stn);
@@ -1189,7 +1185,7 @@ namespace Sensors
               handleRangeTransponder(stn);
             else
               handleTransponderTravelTimes(stn);
-           
+
           else if (std::strcmp(stn->code(), "CARXD") == 0)
             handleBinaryReception(stn);
         }
@@ -1245,7 +1241,7 @@ namespace Sensors
       {
         while (!stopping())
         {
-          
+
           consumeMessages();
 
           if (Poll::poll(*m_handle, 0.1))
@@ -1255,7 +1251,7 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
 
-          if(ping_all_beacon && ping_all && m_timer.overflow())
+          if (ping_all_beacon && ping_all && m_timer.overflow())
           {
             m_timer.reset();
             pingAllNarrowBand();
