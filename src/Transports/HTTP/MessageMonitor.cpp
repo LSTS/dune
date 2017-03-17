@@ -176,7 +176,8 @@ namespace Transports
       std::ostringstream os;
       std::map<unsigned, IMC::LogBookEntry*>::iterator itr = m_logbook.begin();
 
-      os << "var logbook = {\n";
+      os << "var logbook = {\n"
+         <<"'dune_logbook': [\n";
       itr->second->toJSON(os);
       ++itr;
 
@@ -185,7 +186,9 @@ namespace Transports
         os << ",\n";
         itr->second->toJSON(os);
       }
-      os << "\n};";
+
+      os << "\n]"
+         << "\n};";
 
       // gzip compress
       GzipCompressor cmp;
