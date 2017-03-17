@@ -41,7 +41,8 @@ namespace Transports
 
     MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid):
       m_uid(uid),
-      m_last_msgs_json(0)
+      m_last_msgs_json(0),
+      m_last_logbook_json(0)
     {
       // Initialize meta information.
       std::ostringstream os;
@@ -153,6 +154,35 @@ namespace Transports
         delete m_msgs[key];
 
       m_msgs[key] = tmsg;
+    }
+
+    ByteBuffer*
+    MessageMonitor::logbookJSON(void)
+    {
+      ScopedMutex l(m_mutex);
+
+      uint64_t now = Clock::getMsec();
+
+      if ((now - m_last_logbook_json) < 2000)
+        return &m_logbook_json;
+      else
+        m_last_logbook_json = now;
+
+      //TODO update m_logbook_json
+
+      return &m_logbook_json;
+    }
+
+    void
+    MessageMonitor::addLogEntry(const IMC::LogBookEntry* msg)
+    {
+      ScopedMutex l(m_mutex);
+
+      // FIXME is 100 a good number?
+      if (m_logbook.size() > 100)
+        m_logbook.erase(m_logbook.begin());
+
+      m_logbook.push_back(new IMC::LogBookEntry(*msg));
     }
 
     void

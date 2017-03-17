@@ -54,6 +54,12 @@ namespace Transports
       DUNE::Utils::ByteBuffer*
       messagesJSON(void);
 
+      DUNE::Utils::ByteBuffer*
+      logbookJSON(void);
+
+      void
+      addLogEntry(const DUNE::IMC::LogBookEntry* msg);
+
       void
       updateMessage(const DUNE::IMC::Message* msg);
 
@@ -90,6 +96,12 @@ namespace Transports
       uint64_t m_last_msgs_json;
       //! Power channels.
       PowerChannelMap m_power_channels;
+      // Logbook messages.
+      std::vector<DUNE::IMC::LogBookEntry*> m_logbook;
+      // Logbook messages' JSON.
+      DUNE::Utils::ByteBuffer m_logbook_json;
+      // Last logbook generation timestamp.
+      uint64_t m_last_logbook_json;
 
       void
       updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);
