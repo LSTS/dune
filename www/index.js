@@ -49,7 +49,7 @@ function requestLogBookEntries() {
     options.timeout = 10000;
     options.timeoutHandler = timeoutHandler;
     options.errorHandler = errorHandler;
-    HTTP.get('dune/logs/list.js', handleLogBookEntries, options);
+    HTTP.get('dune/state/logbook.js', handleLogBookEntries, options);
 }
 
 function handleLogBookEntries(text)
