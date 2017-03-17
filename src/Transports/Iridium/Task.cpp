@@ -217,7 +217,15 @@ namespace Transports
         DUNE::IMC::IridiumMessage * m = DUNE::IMC::IridiumMessage::deserialize(msg);
         if (m == NULL)
         {
-          war(DTR("error while parsing Iridium message"));
+          war(DTR("Parsing unrecognized iridium message as text"));
+          std::string text(msg->data.begin(), msg->data.end());
+          IMC::TextMessage tm;
+          tm.text = text;
+          tm.origin = "Iridium (text)";
+          std::stringstream ss;
+          tm.toText(ss);
+          spew("sending this message to bus: %s", ss.str().c_str());
+          dispatch(tm);
           return;
         }
 
