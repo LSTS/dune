@@ -14,11 +14,35 @@ Logbook.prototype.update = function() {
 	    continue;
 
 	logbookStr = "<p>" +
-	    "[" + msg.timestamp + "] - " + msg.type +
+	    "[" + msg.timestamp + "] - " + typeAsString(msg.type) +
 	    " " + "[" + msg.context + "] >> " +
 	    msg.text +
 	    "<\p>";
     }
 
     this.m_base.innerHTML = logbookStr;
+}
+
+// Returns the string format of a LogBookEntry's type
+function typeAsString(typeInt) {
+    var typeStr = "";
+    switch (typeInt) {
+    case '0':
+	typeStr = "INFO";
+	break;
+    case '1':
+	typeStr = "WARNING";
+	break;
+    case '2':
+	typeStr = "ERROR";
+	break;
+    case '3':
+	typeStr = "CRITICAL";
+	break;
+    case '4':
+	typeStr = "DEBUG";
+	break;
+    }
+
+    return typeStr;
 }
