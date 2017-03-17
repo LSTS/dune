@@ -69,6 +69,12 @@ namespace Transports
         for (PowerChannelMap::iterator itr = m_power_channels.begin(); itr != m_power_channels.end(); ++itr)
           delete itr->second;
       }
+
+      {
+        std::map<unsigned, IMC::LogBookEntry*>::iterator itr = m_logbook.begin();
+        for(; itr != m_logbook.end(); ++itr)
+          delete itr->second;
+      }
     }
 
     void
