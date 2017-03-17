@@ -14,7 +14,8 @@ Logbook.prototype.update = function() {
 	    continue;
 
 	logbookStr = "<p>" +
-	    "[" + msg.timestamp + "] - " + typeAsString(msg.type) +
+	    "[" + dateToString(msg.timestamp) + "] - "
+	    + typeAsString(msg.type) +
 	    " " + "[" + msg.context + "] >> " +
 	    msg.text +
 	    "<\p>";
