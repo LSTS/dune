@@ -42,7 +42,8 @@ namespace Transports
     MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid):
       m_uid(uid),
       m_last_msgs_json(0),
-      m_last_logbook_json(0)
+      m_last_logbook_json(0),
+      m_log_entry(100)
     {
       // Initialize meta information.
       std::ostringstream os;
@@ -168,7 +169,28 @@ namespace Transports
       else
         m_last_logbook_json = now;
 
-      //TODO update m_logbook_json
+      // Update m_logbook_json
+      if (m_logbook.empty())
+        return &m_logbook_json;
+
+      std::ostringstream os;
+      std::map<unsigned, IMC::LogBookEntry*>::iterator itr = m_logbook.begin();
+
+      os << "var logbook = {\n";
+      itr->second->toJSON(os);
+      ++itr;
+
+      for (; itr != m_logbook.end(); ++itr)
+      {
+        os << ",\n";
+        itr->second->toJSON(os);
+      }
+      os << "\n};";
+
+      // gzip compress
+      GzipCompressor cmp;
+      std::string str = os.str();
+      cmp.compress(m_logbook_json, (char*)str.c_str(), (unsigned long)str.size());
 
       return &m_logbook_json;
     }
@@ -179,10 +201,10 @@ namespace Transports
       ScopedMutex l(m_mutex);
 
       // FIXME is 100 a good number?
-      if (m_logbook.size() > 100)
+      if (m_logbook.size() > m_log_entry)
         m_logbook.erase(m_logbook.begin());
 
-      m_logbook.push_back(new IMC::LogBookEntry(*msg));
+      m_logbook[m_log_entry] = new IMC::LogBookEntry(*msg);
     }
 
     void

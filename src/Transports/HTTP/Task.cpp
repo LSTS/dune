@@ -351,7 +351,7 @@ namespace Transports
         (void)uri;
 
         RequestHandler::HeaderFieldsMap hdr;
-        hdr["Content-Type"] = "text/html";
+        hdr["Content-Type"] = "text/javascript";
         hdr["Content-Encoding"] = "gzip";
 
         ByteBuffer* bfr = m_msg_mon.logbookJSON();
