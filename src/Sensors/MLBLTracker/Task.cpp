@@ -786,12 +786,42 @@ namespace Sensors
           es.lon = lon;
           es.depth = (float)depth;
           es.psi = (float)yaw / 100.0;
-          es.alt = (float)alt / 10.0;
+
+          if (alt >= -10)
+            es.alt = (float)alt / 10.0;
           dispatch(es);
+
+          if (alt < -10) {
+            IMC::Salinity sal;
+            sal.value = - (alt / 10);
+            dispatch(sal);
+          }
 
           IMC::PlanControlState pcs;
           pcs.setSource(m_mimap[src]);
-          pcs.plan_progress = (float)progress;
+
+          int state = progress / 10;
+
+          switch (state)
+          {
+            case (-1):
+              pcs.state = PlanControlState::PCS_BLOCKED;
+              pcs.last_outcome = progress % 10;
+              break;
+            case (-2):
+              pcs.state = PlanControlState::PCS_READY;
+              pcs.last_outcome = progress % 10;
+              break;
+            case (-3):
+              pcs.state = PlanControlState::PCS_INITIALIZING;
+              pcs.last_outcome = progress % 10;
+              break;
+            default:
+              pcs.state = PlanControlState::PCS_EXECUTING;
+              pcs.plan_progress = (float)progress;
+              break;
+          }
+
           dispatch(pcs);
 
           // Inform if progress is valid.
