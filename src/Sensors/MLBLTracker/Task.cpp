@@ -66,6 +66,8 @@ namespace Sensors
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
     static const uint8_t c_code_plan = 0x2;
+    // Reverse range code.
+    static const uint8_t c_code_reverse_range = 0x3;
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
@@ -165,6 +167,8 @@ namespace Sensors
       bool m_ignore_gpio;
       //! Current line.
       std::string m_line;
+      // System position
+      IMC::EstimatedState *m_estate;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -172,7 +176,8 @@ namespace Sensors
         m_op_deadline(-1.0),
         m_pc(NULL),
         m_op(OP_NONE),
-        m_gpio_txd(NULL)
+        m_gpio_txd(NULL),
+        m_estate(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -245,6 +250,7 @@ namespace Sensors
 
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       ~Task(void)
@@ -397,6 +403,12 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::EstimatedState* msg)
+      {
+        Memory::replace(m_estate, new IMC::EstimatedState(*msg));
+      }
+
+      void
       consume(const IMC::AcousticOperation* msg)
       {
         if (m_op != OP_NONE)
@@ -428,6 +440,9 @@ namespace Sensors
             break;
           case IMC::AcousticOperation::AOP_MSG:
             transmitMessage(msg->system, msg->msg);
+            break;
+          case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+            reverseRange(msg->system);
             break;
         }
       }
@@ -493,6 +508,38 @@ namespace Sensors
           return;
 
         sendCommand(command);
+      }
+
+      void
+      reverseRange(const std::string& sys)
+      {
+        MicroModemMap::iterator itr = m_ummap.find(sys);
+        if (itr == m_ummap.end() || m_estate == NULL)
+        {
+          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+          m_acop_out.system = sys;
+          dispatch(m_acop_out);
+          return;
+        }
+
+        double lat = m_estate->lat, lon = m_estate->lon, depth = m_estate->depth;
+        WGS84::displace(m_estate->x, m_estate->y, &lat, &lon);
+        float slat = (float)lat, slon = (float) lon;
+        std::vector<char> pmsg(c_binary_size, 0);
+        int8_t sdep = (int8_t) depth;
+
+        // Make packet.
+        pmsg[0] = (char)c_code_reverse_range;
+        std::memcpy(&pmsg[1], &slat, 4);
+        std::memcpy(&pmsg[5], &slon, 4);
+        std::memcpy(&pmsg[9], &sdep, 1);
+
+        std::string hex = String::toHex(pmsg);
+        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n", m_address, itr->second, hex.c_str());
+        sendCommand(cmd);
+
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+        sendCommand(cyc);
       }
 
       //! Abort system.
