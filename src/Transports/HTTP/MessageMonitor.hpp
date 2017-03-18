@@ -97,7 +97,7 @@ namespace Transports
       //! Power channels.
       PowerChannelMap m_power_channels;
       // Logbook messages.
-      std::map<unsigned, DUNE::IMC::LogBookEntry*> m_logbook;
+      std::vector<DUNE::IMC::LogBookEntry*> m_logbook;
       // Logbook messages' JSON.
       DUNE::Utils::ByteBuffer m_logbook_json;
       // Last logbook generation timestamp.

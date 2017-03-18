@@ -71,9 +71,8 @@ namespace Transports
       }
 
       {
-        std::map<unsigned, IMC::LogBookEntry*>::iterator itr = m_logbook.begin();
-        for(; itr != m_logbook.end(); ++itr)
-          delete itr->second;
+        for(unsigned int itr = 0; itr < m_logbook.size(); ++itr)
+          delete m_logbook[itr];
       }
     }
 
@@ -180,17 +179,17 @@ namespace Transports
         return &m_logbook_json;
 
       std::ostringstream os;
-      std::map<unsigned, IMC::LogBookEntry*>::iterator itr = m_logbook.begin();
+      unsigned int itr = 0;
 
       os << "var logbook = {\n"
          <<"'dune_logbook': [\n";
-      itr->second->toJSON(os);
+      m_logbook[itr]->toJSON(os);
       ++itr;
 
-      for (; itr != m_logbook.end(); ++itr)
+      for (; itr != m_logbook.size(); ++itr)
       {
         os << ",\n";
-        itr->second->toJSON(os);
+        m_logbook[itr]->toJSON(os);
       }
 
       os << "\n]"
@@ -210,10 +209,10 @@ namespace Transports
       ScopedMutex l(m_mutex);
 
       // FIXME is 100 a good number?
-      if (m_logbook.size() > m_log_entry)
+      if (m_logbook.size() >= m_log_entry)
         m_logbook.erase(m_logbook.begin());
 
-      m_logbook[m_log_entry] = new IMC::LogBookEntry(*msg);
+      m_logbook.push_back(new IMC::LogBookEntry(*msg));
     }
 
     void
