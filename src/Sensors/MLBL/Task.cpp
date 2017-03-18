@@ -321,7 +321,7 @@ namespace Sensors
       //! Stop reports on the ground.
       bool m_stop_comms;
       //! Last progress.
-      float m_progress;
+      int8_t m_progress;
       //! Last fuel level.
       float m_fuel_level;
       //! Last fuel level confidence.
@@ -330,13 +330,16 @@ namespace Sensors
       Time::Counter<float> m_pinger;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
+      //! Last received salinity message.
+      IMC::Salinity *m_salinity;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_result(RS_NONE),
         m_sound_speed_eid(-1),
-        m_reporter(NULL)
+        m_reporter(NULL),
+        m_salinity(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -469,6 +472,7 @@ namespace Sensors
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::ReportControl>(this);
+        bind<IMC::Salinity>(this);
       }
 
       void
@@ -1037,6 +1041,10 @@ namespace Sensors
         uint8_t conf = (uint8_t)m_fuel_conf;
         int8_t prog = (int8_t)m_progress;
 
+        // in case the vehicle doesn't have altitude
+        if (i_alt == -10 && m_salinity != NULL)
+          i_alt = -(m_salinity->value * 10);
+
         for (uint8_t i = 0; i < std::min(2, (int)m_lbl.size()); i++)
         {
           if (m_args.good_range_age > (Clock::get() - m_lbl(i).range_time))
@@ -1180,7 +1188,21 @@ namespace Sensors
       void
       consume(const IMC::PlanControlState* msg)
       {
-        m_progress = msg->plan_progress;
+        switch(msg->state)
+        {
+          case PlanControlState::PCS_EXECUTING:
+            m_progress = (int8_t) msg->plan_progress;
+            break;
+          case PlanControlState::PCS_BLOCKED:
+            m_progress = -10 - msg->last_outcome;
+            break;
+          case PlanControlState::PCS_READY:
+            m_progress = -20 - msg->last_outcome;
+            break;
+          case PlanControlState::PCS_INITIALIZING:
+            m_progress = -30 - msg->last_outcome;
+            break;
+        }
       }
 
       void
@@ -1195,6 +1217,12 @@ namespace Sensors
       {
         if (m_reporter != NULL)
           m_reporter->consume(msg);
+      }
+
+      void
+      consume(const IMC::Salinity* msg)
+      {
+          Memory::replace(m_salinity, new IMC::Salinity(*msg));
       }
 
       void
