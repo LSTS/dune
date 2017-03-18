@@ -65,6 +65,9 @@ namespace Sensors
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
     static const uint8_t c_code_plan = 0x2;
+    // Reverse range code.
+    static const uint8_t c_code_reverse_range = 0x3;
+
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
@@ -948,6 +951,35 @@ namespace Sensors
         else if (code == c_code_report)
         {
           debug("ignore acoustic report");
+        }
+        else if (code == c_code_reverse_range)
+        {
+          MicroModemAddressMap::iterator itr = m_amap.find(src);
+          if (itr == m_amap.end())
+          {
+            war("received reverse range from unknown source.");
+            return;
+          }
+          std::string sys = itr->second;
+          inf("received reverse range from %s.", sys.c_str());
+
+          float lat, lon;
+          int8_t depth;
+          std::memcpy(&lat, msg_raw + 1, 4);
+          std::memcpy(&lon, msg_raw + 5, 4);
+          std::memcpy(&depth, msg_raw + 9, 1);
+
+          LblBeacon beacon;
+          beacon.lat = lat;
+          beacon.lon = lon;
+          beacon.depth = depth;
+          beacon.beacon = sys;
+
+          LblConfig cfg;
+          cfg.beacons.push_back(beacon);
+          dispatch(cfg);  // log new beacon configuration
+          consume(&cfg);  // make sure it is consumed before pinging
+          pingMicroModem(0);
         }
         else
         {
