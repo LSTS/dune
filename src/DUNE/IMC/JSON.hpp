@@ -102,7 +102,9 @@ namespace DUNE
     toJSON(std::ostream& os, const char* label, const std::string& value, unsigned nindent, char prefix)
     {
       const char* indent = indentJSON(nindent);
-      os << prefix << '\n' << indent << '"' << label << "\": \"" << value << '"';
+      std::string val = DUNE::Utils::String::replace(value, '"', "\\\"");
+      val = Utils::String::escape(val);
+      os << prefix << '\n' << indent << '"' << label << "\": \"" << val << '"';
     }
 
     //! Convert a character vector type to a JSON string.
