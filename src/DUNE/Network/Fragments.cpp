@@ -52,12 +52,12 @@ namespace DUNE
       uint8_t* buffer = buff.getBuffer();
 
       int part = 0, pos = 0;
-      m_num_frags = (int)std::ceil((float)size / (float)mtu);
+      m_num_frags = (int)std::ceil((float)size / (float)frag_size);
 
       while (pos < size)
       {
         int remaining = size - pos;
-        int cur_size = std::min(remaining, mtu);
+        int cur_size = std::min(remaining, frag_size);
         IMC::MessagePart* mpart = new IMC::MessagePart();
         mpart->frag_number = part++;
         mpart->num_frags = m_num_frags;
