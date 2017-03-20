@@ -108,7 +108,7 @@ namespace Autonomy
       void
       consume(const IMC::TextMessage* msg)
       {
-        spew("processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
+        inf("processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
         std::istringstream iss(msg->text);
         std::string cmd, args = "";
         getline(iss, cmd, ' ');
