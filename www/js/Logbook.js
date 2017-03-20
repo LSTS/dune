@@ -13,7 +13,7 @@ Logbook.prototype.update = function() {
 	if(msg.abbrev != "LogBookEntry")
 	    continue;
 
-	logbookStr = "<p>" +
+	logbookStr += "<p style=\"text-align: left\";>" +
 	    "[" + dateToString(msg.timestamp) + "] - "
 	    + typeAsString(msg.type) +
 	    " " + "[" + msg.context + "] >> " +
