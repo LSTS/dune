@@ -102,6 +102,8 @@ namespace Transports
 
         m_cfg_dir = ctx.dir_cfg.str();
         m_agent = getSystemName();
+
+        bind<IMC::LogBookEntry>(this);
       }
 
       void
@@ -169,6 +171,12 @@ namespace Transports
           m_msg_mon.updateMessage(msg);
       }
 
+      void
+      consume(const IMC::LogBookEntry* msg)
+      {
+        m_msg_mon.addLogEntry(msg);
+      }
+
       static bool
       isSpecialURI(const char* uri)
       {
@@ -204,6 +212,8 @@ namespace Transports
             showMessages(sock, headers, uri);
           else if (matchURL(uri, "/dune/power/channel/", true))
             handlePowerChannel(sock, headers, uri);
+          else if (matchURL(uri, "/dune/state/logbook.js", true))
+            showLogBook(sock, headers, uri);
           else
             sendResponse404(sock);
         }
@@ -331,6 +341,20 @@ namespace Transports
         hdr["Content-Encoding"] = "gzip";
 
         ByteBuffer* bfr = m_msg_mon.messagesJSON();
+        sendData(sock, bfr->getBufferSigned(), bfr->getSize(), &hdr);
+      }
+
+      void
+      showLogBook(TCPSocket* sock, TupleList& headers, const char* uri)
+      {
+        (void)headers;
+        (void)uri;
+
+        RequestHandler::HeaderFieldsMap hdr;
+        hdr["Content-Type"] = "text/javascript";
+        hdr["Content-Encoding"] = "gzip";
+
+        ByteBuffer* bfr = m_msg_mon.logbookJSON();
         sendData(sock, bfr->getBufferSigned(), bfr->getSize(), &hdr);
       }
 

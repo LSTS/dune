@@ -178,6 +178,37 @@ hr
   border-collapse: collapse;
 }
 
+p.INFO
+{
+    text-align: left;
+    color: #538b01;
+}
+
+p.WARNING
+{
+    text-align: left;
+    color: #E5C100;
+}
+
+p.ERROR
+{
+    text-align: left;
+    color: #B22222;
+}
+
+p.CRITICAL
+{
+    text-align: left;
+    font-weight: bold;
+    color: #B22222;
+}
+
+p.DEBUG
+{
+    text-align: left;
+    font-weight: bold;
+}
+
 #MainOverviewLeft, #MainOverviewRight
 {
   margin-left: auto;

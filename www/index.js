@@ -33,6 +33,8 @@ var g_uid = null;
 var g_log_uid = null;
 var g_data = null;
 var g_dune_logs = null;
+var g_dune_logbook = null;
+var g_logbook_timer = null;
 
 window.onload = function()
 {
@@ -40,6 +42,25 @@ window.onload = function()
     g_sections.create();
     requestData();
     requestLogs();
+    requestLogBookEntries();
+};
+
+function requestLogBookEntries() {
+    var options = Array();
+    options.timeout = 10000;
+    options.timeoutHandler = timeoutHandler;
+    options.errorHandler = errorHandler;
+    HTTP.get('dune/state/logbook.js', handleLogBookEntries, options);
+}
+
+function handleLogBookEntries(text)
+{
+    if (g_logbook_timer == null)
+	g_logbook_timer = setInterval(requestLogBookEntries, 4000);
+
+    eval(text);
+    g_dune_logbook = logbook;
+    g_sections.update();
 };
 
 function requestLogs()

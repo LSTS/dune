@@ -42,6 +42,7 @@ Sections.prototype.create = function()
     this.add(new Sensors('x-container'));
     this.add(new Logs('x-container'));
     this.add(new Power('x-container'));
+    this.add(new Logbook('x-container'));
 
     this.show(this.m_section);
 };

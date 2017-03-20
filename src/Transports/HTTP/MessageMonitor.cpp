@@ -41,7 +41,9 @@ namespace Transports
 
     MessageMonitor::MessageMonitor(const std::string& system, uint64_t uid):
       m_uid(uid),
-      m_last_msgs_json(0)
+      m_last_msgs_json(0),
+      m_last_logbook_json(0),
+      m_log_entry(100)
     {
       // Initialize meta information.
       std::ostringstream os;
@@ -66,6 +68,11 @@ namespace Transports
       {
         for (PowerChannelMap::iterator itr = m_power_channels.begin(); itr != m_power_channels.end(); ++itr)
           delete itr->second;
+      }
+
+      {
+        for(unsigned int itr = 0; itr < m_logbook.size(); ++itr)
+          delete m_logbook[itr];
       }
     }
 
@@ -153,6 +160,58 @@ namespace Transports
         delete m_msgs[key];
 
       m_msgs[key] = tmsg;
+    }
+
+    ByteBuffer*
+    MessageMonitor::logbookJSON(void)
+    {
+      ScopedMutex l(m_mutex);
+
+      uint64_t now = Clock::getMsec();
+
+      if ((now - m_last_logbook_json) < 2000)
+        return &m_logbook_json;
+      else
+        m_last_logbook_json = now;
+
+      // Update m_logbook_json
+      if (m_logbook.empty())
+        return &m_logbook_json;
+
+      std::ostringstream os;
+      unsigned int itr = 0;
+
+      os << "var logbook = {\n"
+         <<"'dune_logbook': [\n";
+      m_logbook[itr]->toJSON(os);
+      ++itr;
+
+      for (; itr != m_logbook.size(); ++itr)
+      {
+        os << ",\n";
+        m_logbook[itr]->toJSON(os);
+      }
+
+      os << "\n]"
+         << "\n};";
+
+      // gzip compress
+      GzipCompressor cmp;
+      std::string str = os.str();
+      cmp.compress(m_logbook_json, (char*)str.c_str(), (unsigned long)str.size());
+
+      return &m_logbook_json;
+    }
+
+    void
+    MessageMonitor::addLogEntry(const IMC::LogBookEntry* msg)
+    {
+      ScopedMutex l(m_mutex);
+
+      if (m_logbook.size() >= m_log_entry)
+        m_logbook.erase(m_logbook.begin());
+
+      m_logbook.push_back(new IMC::LogBookEntry(*msg));
     }
 
     void
