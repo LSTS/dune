@@ -208,7 +208,6 @@ namespace Transports
     {
       ScopedMutex l(m_mutex);
 
-      // FIXME is 100 a good number?
       if (m_logbook.size() >= m_log_entry)
         m_logbook.erase(m_logbook.begin());
 
