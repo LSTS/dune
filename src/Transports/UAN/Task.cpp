@@ -626,6 +626,14 @@ namespace Transports
       recvAbort(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         (void)msg;
+
+        // ignore aborts addressed to other systems
+        if (imc_dst != getSystemId())
+        {
+          inf(DTR("ignoring abort message addressed to other system"));
+          return;
+        }
+
         war(DTR("got abort request"));
 
         IMC::Abort abort;
