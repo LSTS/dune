@@ -1065,12 +1065,12 @@ namespace Sensors
 
         float f_lat = lat;
         float f_lon = lon;
-        uint8_t u_depth = (uint8_t)m_estate.depth;
-        int16_t i_yaw = (int16_t)(m_estate.psi * 100.0);
-        int16_t i_alt = (int16_t)(m_estate.alt * 10.0);
+        uint8_t u_depth = (uint8_t)Math::round(m_estate.depth);
+        int16_t i_yaw = (int16_t)Math::round(m_estate.psi * 100.0);
+        int16_t i_alt = (int16_t)Math::round(m_estate.alt * 10.0);
         uint16_t ranges[2] = {0};
-        uint8_t fuel = (uint8_t)m_fuel_level;
-        uint8_t conf = (uint8_t)m_fuel_conf;
+        uint8_t fuel = (uint8_t)Math::round(m_fuel_level);
+        uint8_t conf = (uint8_t)Math::round(m_fuel_conf);
         int8_t prog = (int8_t)m_progress;
 
         // in case the vehicle doesn't have altitude
