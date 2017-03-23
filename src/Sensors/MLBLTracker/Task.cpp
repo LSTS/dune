@@ -840,7 +840,8 @@ namespace Sensors
 
           if (alt < -10) {
             IMC::Salinity sal;
-            sal.value = - (alt / 10);
+            sal.value = - ((float)alt / 10.0);
+            sal.setSource(m_mimap[src]);
             dispatch(sal);
           }
 
