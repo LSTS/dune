@@ -65,6 +65,9 @@ namespace Sensors
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
     static const uint8_t c_code_plan = 0x2;
+    // Reverse range code.
+    static const uint8_t c_code_reverse_range = 0x3;
+
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
@@ -321,7 +324,7 @@ namespace Sensors
       //! Stop reports on the ground.
       bool m_stop_comms;
       //! Last progress.
-      float m_progress;
+      int8_t m_progress;
       //! Last fuel level.
       float m_fuel_level;
       //! Last fuel level confidence.
@@ -330,13 +333,16 @@ namespace Sensors
       Time::Counter<float> m_pinger;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
+      //! Last received salinity message.
+      IMC::Salinity *m_salinity;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_result(RS_NONE),
         m_sound_speed_eid(-1),
-        m_reporter(NULL)
+        m_reporter(NULL),
+        m_salinity(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -469,6 +475,7 @@ namespace Sensors
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::ReportControl>(this);
+        bind<IMC::Salinity>(this);
       }
 
       void
@@ -945,6 +952,35 @@ namespace Sensors
         {
           debug("ignore acoustic report");
         }
+        else if (code == c_code_reverse_range)
+        {
+          MicroModemAddressMap::iterator itr = m_amap.find(src);
+          if (itr == m_amap.end())
+          {
+            war("received reverse range from unknown source.");
+            return;
+          }
+          std::string sys = itr->second;
+          inf("received reverse range from %s.", sys.c_str());
+
+          float lat, lon;
+          int8_t depth;
+          std::memcpy(&lat, msg_raw + 1, 4);
+          std::memcpy(&lon, msg_raw + 5, 4);
+          std::memcpy(&depth, msg_raw + 9, 1);
+
+          LblBeacon beacon;
+          beacon.lat = lat;
+          beacon.lon = lon;
+          beacon.depth = depth;
+          beacon.beacon = sys;
+
+          LblConfig cfg;
+          cfg.beacons.push_back(beacon);
+          dispatch(cfg);  // log new beacon configuration
+          consume(&cfg);  // make sure it is consumed before pinging
+          pingMicroModem(0);
+        }
         else
         {
           debug("wrong code id");
@@ -1029,13 +1065,17 @@ namespace Sensors
 
         float f_lat = lat;
         float f_lon = lon;
-        uint8_t u_depth = (uint8_t)m_estate.depth;
-        int16_t i_yaw = (int16_t)(m_estate.psi * 100.0);
-        int16_t i_alt = (int16_t)(m_estate.alt * 10.0);
+        uint8_t u_depth = (uint8_t)Math::round(m_estate.depth);
+        int16_t i_yaw = (int16_t)Math::round(m_estate.psi * 100.0);
+        int16_t i_alt = (int16_t)Math::round(m_estate.alt * 10.0);
         uint16_t ranges[2] = {0};
-        uint8_t fuel = (uint8_t)m_fuel_level;
-        uint8_t conf = (uint8_t)m_fuel_conf;
+        uint8_t fuel = (uint8_t)Math::round(m_fuel_level);
+        uint8_t conf = (uint8_t)Math::round(m_fuel_conf);
         int8_t prog = (int8_t)m_progress;
+
+        // in case the vehicle doesn't have altitude
+        if (i_alt == -10 && m_salinity != NULL)
+          i_alt = -(m_salinity->value * 10);
 
         for (uint8_t i = 0; i < std::min(2, (int)m_lbl.size()); i++)
         {
@@ -1180,7 +1220,21 @@ namespace Sensors
       void
       consume(const IMC::PlanControlState* msg)
       {
-        m_progress = msg->plan_progress;
+        switch(msg->state)
+        {
+          case PlanControlState::PCS_EXECUTING:
+            m_progress = (int8_t) msg->plan_progress;
+            break;
+          case PlanControlState::PCS_BLOCKED:
+            m_progress = -10 - msg->last_outcome;
+            break;
+          case PlanControlState::PCS_READY:
+            m_progress = -20 - msg->last_outcome;
+            break;
+          case PlanControlState::PCS_INITIALIZING:
+            m_progress = -30 - msg->last_outcome;
+            break;
+        }
       }
 
       void
@@ -1195,6 +1249,12 @@ namespace Sensors
       {
         if (m_reporter != NULL)
           m_reporter->consume(msg);
+      }
+
+      void
+      consume(const IMC::Salinity* msg)
+      {
+          Memory::replace(m_salinity, new IMC::Salinity(*msg));
       }
 
       void
