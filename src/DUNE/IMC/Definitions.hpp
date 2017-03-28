@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 97e9b1e32d2db432781ca63dd92965e5                            *
+// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -4475,7 +4475,9 @@ namespace DUNE
         //! Message Send -- Failure.
         AOP_MSG_FAILURE = 15,
         //! Send Short Message.
-        AOP_MSG_SHORT = 16
+        AOP_MSG_SHORT = 16,
+        //! Initiate Reverse Range.
+        AOP_REVERSE_RANGE = 17
       };
 
       //! Operation.
