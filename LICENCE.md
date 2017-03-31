@@ -13,7 +13,7 @@ written agreement between you and Faculdade de Engenharia da
 Universidade do Porto. For licensing terms, conditions, and further
 information contact lsts@fe.up.pt.
 
-For non-commercial purposes the bellow modified version of the
+For non-commercial purposes the below modified version of the
 EUPL v1.1 is to be used.
 
 *Modified* European Union Public Licence V. 1.1
@@ -81,13 +81,13 @@ any other natural or legal person.
 
 The Licensor hereby grants You a world-wide, royalty-free,
 non-exclusive, sub-licensable licence to do the following, for the
-duration of copyright vested in the Original Work, **this only **
+duration of copyright vested in the Original Work, **this only**
 **applies for non-commercial purposes (which needs an**
 **additional license agreement in the written form**
 **celebrated between you and Faculdade de Engenharia**
 **da Universidade do Porto, as stated above)**:
 
-* use the Work in any circumstance and for all usage **(with **
+* use the Work in any circumstance and for all usage **(with**
 **the exception for commercial purposes)**,
 
 * reproduce the Work,
@@ -323,7 +323,7 @@ or registered office inside a European Union country.
 
 - **Any agreed in the written agreement celebrated**
 **between you and Faculdade de Engenharia**
-**da Universidade do Porto **
+**da Universidade do Porto**
 
 bzip2
 =====
