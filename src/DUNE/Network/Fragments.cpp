@@ -40,7 +40,7 @@ namespace DUNE
     {
       m_uid = s_uid++;
       m_num_frags = 0;
-      int frag_size = mtu - sizeof(IMC::Header) - 5;
+      int frag_size = mtu - DUNE_IMC_CONST_HEADER_SIZE - 5 - DUNE_IMC_CONST_FOOTER_SIZE;
       if (frag_size <= 0)
       {
         DUNE_ERR("Fragments", "MTU is too small");
