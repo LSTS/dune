@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
@@ -162,25 +164,10 @@ namespace DUNE
       .units(Units::Degree)
       .description("Slope hysteresis when recovering from avoidance");
 
-      param("Bottom Track -- Minimum Altitude", m_btd.args.min_alt)
-      .defaultValue("1.0")
-      .units(Units::Meter)
-      .description("Minimum admissible altitude for bottom tracking");
-
       param("Bottom Track -- Minimum Range", m_btd.args.min_range)
       .defaultValue("4.0")
       .units(Units::Meter)
       .description("Minimum admissible forward range for bottom tracking");
-
-      param("Bottom Track -- Altitude Tolerance", m_btd.args.alt_tol)
-      .defaultValue("2.0")
-      .units(Units::Meter)
-      .description("Altitude tolerance below which altitude is ignored");
-
-      param("Bottom Track -- Depth Tolerance", m_btd.args.depth_tol)
-      .defaultValue("1.0")
-      .units(Units::Meter)
-      .description("Depth tolerance below which altitude is ignored");
 
       param("Bottom Track -- Check Trend", m_btd.args.check_trend)
       .defaultValue("true")
@@ -202,6 +189,8 @@ namespace DUNE
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
+
+      m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_btd.args.min_alt);
 
       m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
 
@@ -1023,6 +1012,7 @@ namespace DUNE
       m_pcs.vy = m_ts.track_vel.y;
       m_pcs.vz = m_ts.track_vel.z;
       m_pcs.course_error = m_ts.course_error;
+      m_pcs.lradius = m_ts.loiter.radius;
 
       if (m_ts.nearby)
         m_pcs.flags |= IMC::PathControlState::FL_NEAR;
@@ -1030,15 +1020,9 @@ namespace DUNE
         m_pcs.flags &= ~IMC::PathControlState::FL_NEAR;
 
       if (m_ts.loitering)
-      {
         m_pcs.flags |= IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = m_ts.loiter.radius;
-      }
       else
-      {
         m_pcs.flags &= ~IMC::PathControlState::FL_LOITERING;
-        m_pcs.lradius = 0;
-      }
       m_pcs.eta = (uint16_t) Math::round(m_ts.eta);
       dispatch(m_pcs);
     }

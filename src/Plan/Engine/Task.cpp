@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
@@ -38,6 +40,13 @@ namespace Plan
   namespace Engine
   {
     using DUNE_NAMESPACES;
+
+    enum OutputType
+    {
+      TYPE_NONE,
+      TYPE_INF,
+      TYPE_WAR
+    };
 
     //! Timeout for the vehicle command reply.
     const double c_vc_reply_timeout = 2.5;
@@ -74,6 +83,12 @@ namespace Plan
       float sk_rpm;
       //! Entity label of the IMU
       std::string label_imu;
+      //! Recovery plan
+      std::string recovery_plan;
+      //! Entity label of the plan generator.
+      std::string label_gen;
+      //! Absolute maximum depth.
+      float max_depth;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -94,10 +109,6 @@ namespace Plan
       IMC::PlanSpecification m_spec;
       //! List of supported maneuvers.
       std::set<uint16_t> m_supported_maneuvers;
-      //! Database related (for plan DB direct queries to avoid
-      //! unnecessary interface with bus / PlanDB task directly)
-      Database::Connection* m_db;
-      Database::Statement* m_get_plan_stmt;
       //! Misc.
       IMC::LoggingControl m_lc;
       IMC::EstimatedState m_state;
@@ -109,18 +120,20 @@ namespace Plan
       std::map<std::string, IMC::EntityInfo> m_cinfo;
       //! Source entity of the IMU
       unsigned m_eid_imu;
+      //! Source entity of the plan generator
+      unsigned m_eid_gen;
       //! IMU is enabled or not
       bool m_imu_enabled;
       //! Queue of PlanControl messages
       std::queue<IMC::PlanControl> m_requests;
+      //! Plan database file.
+      Path m_db_file;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
-        m_db(NULL),
-        m_get_plan_stmt(NULL),
         m_imu_enabled(false)
       {
         param("Compute Progress", m_args.progress)
@@ -167,22 +180,24 @@ namespace Plan
         .defaultValue("IMU")
         .description("Entity label of the IMU for fuel prediction");
 
+        param("Plan Generator Entity Label", m_args.label_gen)
+        .defaultValue("Plan Generator")
+        .description("Entity label of the Plan Generator");
+
+        m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
+        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.max_depth);
+
+        m_db_file = m_ctx.dir_db / "Plan.db";
+
         bind<IMC::PlanControl>(this);
-        bind<IMC::PlanDB>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::ManeuverControlState>(this);
-        bind<IMC::PowerOperation>(this);
         bind<IMC::RegisterManeuver>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::FuelLevel>(this);
-      }
-
-      ~Task()
-      {
-        closeDB();
       }
 
       void
@@ -194,7 +209,16 @@ namespace Plan
         }
         catch (...)
         {
-          m_eid_imu = 0;
+          m_eid_imu = UINT_MAX;
+        }
+
+        try
+        {
+          m_eid_gen = resolveEntity(m_args.label_gen);
+        }
+        catch (...)
+        {
+          m_eid_gen = UINT_MAX;
         }
       }
 
@@ -218,13 +242,15 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict,
+        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict, m_args.max_depth,
                           this, m_args.calibration_time, &m_ctx.config);
       }
 
       void
       onResourceInitialization(void)
       {
+        debug("database file: '%s'", m_db_file.c_str());
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_report_timer.setTop(m_args.speriod);
       }
 
@@ -247,26 +273,6 @@ namespace Plan
       }
 
       void
-      consume(const IMC::PowerOperation* po)
-      {
-        if (po->getDestination() != getSystemId())
-          return;
-
-        switch (po->op)
-        {
-          case IMC::PowerOperation::POP_PWR_DOWN_IP:
-            closeDB();
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_POWER_DOWN);
-            break;
-          case IMC::PowerOperation::POP_PWR_DOWN_ABORTED:
-            openDB();
-            break;
-          default:
-            break;
-        }
-      }
-
-      void
       consume(const IMC::RegisterManeuver* msg)
       {
         m_supported_maneuvers.insert(msg->mid);
@@ -279,17 +285,12 @@ namespace Plan
       }
 
       void
-      consume(const IMC::PlanDB* pdb)
-      {
-        if (pdb->op != IMC::PlanDB::DBOP_BOOT || pdb->type != IMC::PlanDB::DBT_SUCCESS)
-          return;
-
-        openDB();
-      }
-
-      void
       consume(const IMC::EntityActivationState* msg)
       {
+        // not local message.
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (m_plan != NULL)
         {
           std::string id;
@@ -319,7 +320,7 @@ namespace Plan
                 m_reply.plan_id = m_spec.plan_id;
               }
 
-              changeMode(IMC::PlanControlState::PCS_READY, error, false);
+              changeMode(IMC::PlanControlState::PCS_READY, error, TYPE_NONE);
             }
             else
             {
@@ -344,40 +345,6 @@ namespace Plan
           return;
 
         m_plan->onFuelLevel(msg);
-      }
-
-      void
-      openDB(void)
-      {
-        if (m_db != NULL)
-          return;
-
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-
-        Path db_file = m_ctx.dir_db / "Plan.db";
-
-        debug("database file: '%s'", db_file.c_str());
-
-        m_db = new Database::Connection(db_file.c_str(), true);
-        m_get_plan_stmt = new Database::Statement(c_get_plan_stmt, *m_db);
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
-      void
-      closeDB(void)
-      {
-        if (m_db == NULL)
-        {
-          return;
-        }
-
-        Memory::clear(m_get_plan_stmt);
-
-        delete m_db;
-        m_db = NULL;
-
-        debug("database connection closed");
       }
 
       void
@@ -407,7 +374,7 @@ namespace Plan
         if (initMode() || execMode())
         {
           if (error)
-            changeMode(IMC::PlanControlState::PCS_READY, vc->info, false);
+            changeMode(IMC::PlanControlState::PCS_READY, vc->info, TYPE_NONE);
           return;
         }
       }
@@ -469,11 +436,12 @@ namespace Plan
         switch (m_pcs.state)
         {
           case IMC::PlanControlState::PCS_BLOCKED:
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"));
+            changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"), TYPE_INF);
             break;
           case IMC::PlanControlState::PCS_INITIALIZING:
             if (!pendingReply())
             {
+              m_plan->updateCalibration(vs);
               IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }
@@ -507,7 +475,7 @@ namespace Plan
             onSuccess(comp, false);
             m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
             m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_READY, comp);
+            changeMode(IMC::PlanControlState::PCS_READY, comp, TYPE_INF);
           }
           else
           {
@@ -544,7 +512,7 @@ namespace Plan
             m_reply.plan_id = m_spec.plan_id;
           }
 
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, false);
+          changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, TYPE_NONE);
         }
       }
 
@@ -559,7 +527,7 @@ namespace Plan
         if (!blockedMode())
         {
           changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                     DTR("vehicle in CALIBRATION mode"), false);
+                     DTR("vehicle in CALIBRATION mode"), TYPE_NONE);
         }
       }
 
@@ -572,13 +540,21 @@ namespace Plan
           return;
 
         changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                   DTR("vehicle in EXTERNAL mode"), false);
+                   DTR("vehicle in EXTERNAL mode"), TYPE_NONE);
       }
 
       void
       consume(const IMC::PlanControl* pc)
       {
         if (pc->type != IMC::PlanControl::PC_REQUEST)
+          return;
+
+        // Emergency plan needs to be requested by
+        // local plan generator.
+        if ((pc->plan_id == m_args.recovery_plan) &&
+            (pc->op == IMC::PlanControl::PC_START) &&
+            ((pc->getSource() != getSystemId()) ||
+             (pc->getSourceEntity() != m_eid_gen)))
           return;
 
         if (pendingReply())
@@ -713,7 +689,7 @@ namespace Plan
             m_reply.plan_id = m_spec.plan_id;
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             onSuccess();
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"));
+            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"), TYPE_INF);
           }
           else
           {
@@ -775,22 +751,20 @@ namespace Plan
 
         try
         {
-          *m_get_plan_stmt << plan_id;
+          Database::Connection db(m_db_file.c_str(), Database::Connection::CF_RDONLY);
 
-          if (!m_get_plan_stmt->execute())
+          Database::Statement get_plan_stmt(c_get_plan_stmt, db);
+          get_plan_stmt << plan_id;
+          if (!get_plan_stmt.execute())
           {
             onFailure(DTR("undefined plan"));
-            m_get_plan_stmt->reset();
             return false;
           }
 
           Database::Blob data;
-
-          *m_get_plan_stmt >> data;
-
+          get_plan_stmt >> data;
           ps.deserializeFields((const uint8_t*)&data[0], data.size());
 
-          m_get_plan_stmt->reset();
         }
         catch (std::runtime_error& e)
         {
@@ -868,7 +842,7 @@ namespace Plan
         bool stopped = stopPlan(true);
 
         changeMode(IMC::PlanControlState::PCS_INITIALIZING,
-                   DTR("plan initializing: ") + plan_id);
+                   DTR("plan initializing: ") + plan_id, TYPE_INF);
 
         if (!loadPlan(plan_id, spec, true))
           return stopped;
@@ -957,7 +931,7 @@ namespace Plan
 
         changeMode(IMC::PlanControlState::PCS_EXECUTING,
                    pman->maneuver_id + DTR(": executing maneuver"),
-                   pman->maneuver_id, pman->data.get());
+                   pman->maneuver_id, pman->data.get(), TYPE_INF);
 
         m_plan->maneuverStarted(pman->maneuver_id);
       }
@@ -1020,12 +994,14 @@ namespace Plan
       //! @param[in] print true if the messages should be printed to output
       void
       changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
-                 const std::string& nid, const IMC::Message* maneuver, bool print = true)
+                 const std::string& nid, const IMC::Message* maneuver, OutputType print = TYPE_WAR)
       {
         double now = Clock::getSinceEpoch();
 
-        if (print)
+        if (print == TYPE_WAR)
           war("%s", event_desc.c_str());
+        else if (print == TYPE_INF)
+          inf("%s", event_desc.c_str());
 
         m_last_event = event_desc;
 
@@ -1067,7 +1043,7 @@ namespace Plan
       //! @param[in] print true if the messages should be printed to output
       void
       changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
-                 bool print = true)
+                 OutputType print = TYPE_WAR)
       {
         changeMode(s, event_desc, "", NULL, print);
       }

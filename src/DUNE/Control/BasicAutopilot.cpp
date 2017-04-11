@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -66,8 +68,13 @@ namespace DUNE
       .units(Units::Meter)
       .description("Timeout for ignoring invalid altitude");
 
-      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
+      param("Altitude Reference Margin", m_alt_margin)
+      .defaultValue("0.2f")
+      .units(Units::Meter)
+      .description("Altitude reference marging to add above minimum altitude.");
 
+      m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
+      m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_min_alt);
       // Initialize entity state.
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
@@ -171,6 +178,10 @@ namespace DUNE
         {
           m_vertical_ref = limit;
           war(DTR("limiting depth to %.1f"), limit);
+          IMC::DesiredZ dz;
+          dz.z_units = msg->z_units;
+          dz.value = limit;
+          dispatch(dz);
         }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
@@ -178,6 +189,18 @@ namespace DUNE
         m_vertical_mode = VERTICAL_MODE_ALTITUDE;
         // Avoid possible rough transition when changing from depth to altitude
         m_bottom_follow_depth = m_estate.depth;
+
+        float limit = m_min_alt + m_alt_margin;
+
+        if (m_vertical_ref < limit)
+        {
+          m_vertical_ref = limit;
+          war(DTR("limiting altitude to %.1f"), limit);
+          IMC::DesiredZ dz;
+          dz.z_units = msg->z_units;
+          dz.value = limit;
+          dispatch(dz);
+        }
 
         // reset altitude timer
         m_timer_alt.setTop(m_alt_timeout);

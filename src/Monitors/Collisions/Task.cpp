@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
@@ -36,6 +38,9 @@ namespace Monitors
   namespace Collisions
   {
     using DUNE_NAMESPACES;
+
+    //! Time to wait once not in ground medium.
+    static const float c_time_ground = 10.0f;
 
     //! Task arguments.
     struct Arguments
@@ -83,10 +88,10 @@ namespace Monitors
       Time::Counter<double> m_twindow;
       //! Collision message report period.
       Time::Counter<double> m_treport;
+      //! Time to wait to check collisions once out of ground.
+      Time::Counter<double> m_tground;
       //! Collision detected.
       IMC::Collision m_collision;
-      //! Vehicle Medium.
-      IMC::VehicleMedium m_vm;
       //! Device entity id.
       unsigned m_device_eid;
       //! Depth value
@@ -153,8 +158,8 @@ namespace Monitors
         .description("Entity label of the device");
 
         param("Minimum Depth", m_args.min_depth)
-        .defaultValue("1.0")
-        .minimumValue("0.5")
+        .defaultValue("0.5")
+        .minimumValue("0.3")
         .maximumValue("10.0")
         .description("Depth value below which collisions will be ignored");
 
@@ -188,6 +193,8 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
+        m_tground.setTop(c_time_ground);
+
         m_avg_x_innov = new MovingAverage<double>(m_args.avg_samples_innov);
         m_avg_z_innov = new MovingAverage<double>(m_args.avg_samples_innov);
         m_avg_x_abs = new MovingAverage<double>(m_args.avg_samples_abs);
@@ -266,10 +273,6 @@ namespace Monitors
           collided();
         }
 
-        // Ignore attitude if vehicle is on the ground.
-        if (m_vm.medium == IMC::VehicleMedium::VM_GROUND)
-          return;
-
         // Check absolute acceleration values in the x-axis.
         if ((mean_x_abs > m_args.max_x) || (mean_x_abs < - m_args.max_x))
         {
@@ -317,14 +320,20 @@ namespace Monitors
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        m_vm = *msg;
+        // Ignore collisions when transitioning from ground to water
+        // as the vehicle may have been intentionally launched.
+        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
+          m_tground.reset();
       }
 
       //! Check if the collision should be ignored
-      //! @return true if collision should be ignored
+      //! @return true if collision should be ignored, false otherwise.
       bool
-      ignoreCollision(void)
+      ignore(void)
       {
+        if (!m_tground.overflow())
+          return true;
+
         if (m_depth < m_args.min_depth)
           return true;
 
@@ -345,7 +354,7 @@ namespace Monitors
         m_twindow.reset();
 
         // If certain conditions are met, do not trigger an error
-        if (ignoreCollision())
+        if (ignore())
           return;
 
         // Dispatch collision.

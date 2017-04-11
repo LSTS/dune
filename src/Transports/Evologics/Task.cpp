@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -77,6 +79,8 @@ namespace Transports
       unsigned src_level_water;
       //! Source Level - Underwater.
       unsigned src_level_underwater;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     // Type definition for mapping addresses.
@@ -100,6 +104,8 @@ namespace Transports
       double m_sound_speed;
       //! Sound speed entity id.
       int m_sound_speed_eid;
+      //! Declination flag;
+      bool m_declination;
       //! Current transmission ticket.
       Ticket* m_ticket;
       //! Keep-alive counter.
@@ -116,6 +122,7 @@ namespace Transports
         m_driver(NULL),
         m_sound_speed(0),
         m_sound_speed_eid(-1),
+        m_declination(false),
         m_ticket(NULL)
       {
         param("IPv4 Address", m_args.address)
@@ -130,8 +137,7 @@ namespace Transports
         .defaultValue("false")
         .description("Enable low gain mode (testing purposes)");
 
-        param(DTR_RT("Source Level"), m_args.source_level)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        param("Source Level", m_args.source_level)
         .defaultValue("3")
         .minimumValue("0")
         .maximumValue("3")
@@ -201,25 +207,16 @@ namespace Transports
         .defaultValue("1")
         .description("Source level when medium is underwater");
 
-        // Process modem addresses.
-        std::string system = getSystemName();
-        std::vector<std::string> addrs = ctx.config.options("Evologics Addresses");
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned addr = 0;
-          ctx.config.get("Evologics Addresses", addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-
-          if (addrs[i] == system)
-            m_address = addr;
-        }
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Evologics Addresses")
+        .description("Name of the configuration section with modem addresses");
 
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
-        bind<IMC::UamTxFrame>(this);
         bind<IMC::DevDataText>(this);
+        bind<IMC::GpsFix>(this);
         bind<IMC::SoundSpeed>(this);
+        bind<IMC::UamTxFrame>(this);
         bind<IMC::VehicleMedium>(this);
       }
 
@@ -291,6 +288,21 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        // Process modem addresses.
+        std::string system = getSystemName();
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned addr = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
+          m_modem_names[addrs[i]] = addr;
+          m_modem_addrs[addr] = addrs[i];
+
+          if (addrs[i] == system)
+            m_address = addr;
+        }
+
+        m_driver->setControl();
         m_driver->setAddress(m_address);
         m_driver->setSourceLevel(m_args.source_level);
         m_driver->setLowGain(m_args.low_gain);
@@ -335,6 +347,30 @@ namespace Transports
         { }
 
         return "unknown";
+      }
+
+      void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (m_declination)
+          return;
+
+        if (m_driver == NULL)
+          return;
+
+        if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+
+        if (!(msg->validity & IMC::GpsFix::GFV_VALID_POS))
+          return;
+
+        if (!(msg->validity & IMC::GpsFix::GFV_VALID_HACC))
+          return;
+
+        // Check current declination value.
+        Coordinates::WMM wmm(m_ctx.dir_cfg);
+        m_driver->setDeclination(wmm.declination(msg->lat, msg->lon, msg->height));
+        m_declination = true;
       }
 
       void
@@ -399,6 +435,8 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "FAILEDIM"))
           handleMessageFailed(msg->value);
+        else if (String::startsWith(msg->value, "BUSY"))
+          handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))
@@ -409,10 +447,18 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
+
+        // Burst messages.
         else if (String::startsWith(msg->value, "DELIVERED"))
           handleMessageDelivered(msg->value);
         else if (String::startsWith(msg->value, "FAILED"))
           handleMessageFailed(msg->value);
+
+        // USBL.
+        else if (String::startsWith(msg->value, "USBLLONG"))
+          handleUsblPosition(msg->value);
+        else if (String::startsWith(msg->value, "USBLANGLES"))
+          handleUsblAngles(msg->value);
       }
 
       void
@@ -484,24 +530,40 @@ namespace Transports
           return;
         }
 
+        try
+        {
+          transmitData((const uint8_t*)&msg->data[0], msg->data.size(), ticket);
+        }
+        catch (std::runtime_error& e)
+        {
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_FAILED, e.what());
+        }
+
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
-        if (!ticket.pbm)
+        m_kalive_counter.reset();
+      }
+
+      void
+      transmitData(const uint8_t* data, unsigned data_size, Ticket& ticket)
+      {
+        if (ticket.pbm)
         {
-          if (msg->data.size() <= 64)
-            m_driver->sendIM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr, ticket.ack);
-          else
-          {
-            war(DTR("Sending burst message (size=%lu) to %d."), (unsigned long)msg->data.size(), ticket.addr);
-            m_driver->sendBurst((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
-          }
+          m_driver->sendPBM(data, data_size, ticket.addr);
+        }
+        else if (data_size <= c_im_max_size)
+        {
+          m_driver->sendIM(data, data_size, ticket.addr, ticket.ack);
         }
         else
-          m_driver->sendPBM((uint8_t*)&msg->data[0], msg->data.size(), ticket.addr);
-
-        m_kalive_counter.reset();
+        {
+          // Burst messages have an implicit ack.
+          ticket.ack = true;
+          debug("sending %u bytes of burst data to address %d", data_size, ticket.addr);
+          m_driver->sendBurst(data, data_size, ticket.addr);
+        }
       }
 
       void
@@ -612,6 +674,32 @@ namespace Transports
         dispatch(msg);
 
         m_driver->getMultipathStructure();
+      }
+
+      void
+      handleUsblPosition(const std::string& str)
+      {
+        RecvUsblPos reply;
+        m_driver->parseUsblPosition(str, reply);
+
+        IMC::UsblPositionExtended up;
+        up.target = safeLookup(reply.addr);
+        reply.fill(up);
+
+        dispatch(up);
+      }
+
+      void
+      handleUsblAngles(const std::string& str)
+      {
+        RecvUsblAng reply;
+        m_driver->parseUsblAngles(str, reply);
+
+        IMC::UsblAnglesExtended ua;
+        ua.target = safeLookup(reply.addr);
+        reply.fill(ua);
+
+        dispatch(ua);
       }
 
       void

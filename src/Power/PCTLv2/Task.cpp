@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -131,6 +133,8 @@ namespace Power
       std::vector<uint8_t> chn_eme_state;
       //! Minimum operating voltage.
       double vol_min;
+      //! Wake-up voltage.
+      double vol_wup;
       //! LED names.
       std::vector<std::string> leds;
     };
@@ -187,6 +191,11 @@ namespace Power
         .minimumValue("9")
         .maximumValue("25")
         .description("Once this value is hit the system will enter emergency mode");
+
+        param("Wakeup Operating Voltage", m_args.vol_wup)
+        .units(Units::Volt)
+        .defaultValue("24")
+        .description("Minimum voltage required to leave emergency mode, should be greater than the minimum operating voltage");
 
         param("Watchdog Timeout", m_args.wdog_tout)
         .units(Units::Second)
@@ -364,8 +373,6 @@ namespace Power
       {
         m_proto.requestVersion();
 
-        updateEEPROM();
-
         std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
         for ( ; itr != m_channels.end(); ++itr)
           setPowerChannelState(itr->second->id, itr->second->state.state);
@@ -373,9 +380,10 @@ namespace Power
 
       //! Update EEPROM data.
       void
-      updateEEPROM(void)
+      updateEEPROM(bool version_pre24)
       {
         uint16_t vol_min = (uint16_t)Math::round(m_args.vol_min * 1000);
+        uint16_t vol_wup = (uint16_t)Math::round(m_args.vol_wup * 1000);
         uint16_t vol_cnv = (uint16_t)Math::round(m_args.adc_factors[0][0] * 100.0);
         uint8_t cmd[] =
         {
@@ -388,12 +396,27 @@ namespace Power
           (uint8_t)(vol_min >> 8),
           (uint8_t)(vol_min),
           (uint8_t)(vol_cnv >> 8),
-          (uint8_t)(vol_cnv)
+          (uint8_t)(vol_cnv),
+          (uint8_t)(vol_wup >> 8),
+          (uint8_t)(vol_wup),
         };
 
-        m_proto.sendCommand(CMD_EEPROM, cmd, sizeof(cmd));
+        // Firmware version prior to 2.4.0 did not have a parameter for nominal voltage.
+        if (version_pre24)
+        {
+          debug("sending pre v2.4 EEPROM data");
+          cmd[1] -= 2;
+          m_proto.sendCommand(CMD_EEPROM, cmd, sizeof(cmd) - 2);
+        }
+        else
+        {
+          m_proto.sendCommand(CMD_EEPROM, cmd, sizeof(cmd));
+        }
+
         if (!waitForCommand(CMD_EEPROM, 100))
           err(DTR("failed to update EEPROM"));
+        else
+          debug("updated EEPROM");
       }
 
       //! Process data from ADCs
@@ -502,7 +525,13 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
+        bool version_pre24 = false;
+
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
+        if (major <= 2 && minor <= 3)
+          version_pre24 = true;
+
+        updateEEPROM(version_pre24);
       }
 
       //! Wait for command.

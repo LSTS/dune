@@ -8,21 +8,24 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_MSG_TYPES_HPP_INCLUDED_
@@ -97,12 +100,12 @@ namespace Transports
       void
       outputFlagsComp(void)
       {
-        outputflags_list[0] = (0x01 & output_flags);
-        outputflags_list[1] = (0x02 & output_flags);
-        outputflags_list[2] = (0x04 & output_flags);
-        outputflags_list[3] = (0x08 & output_flags);
-        outputflags_list[4] = (0x10 & output_flags);
-        outputflags_list[5] = (0x20 & output_flags);
+        outputflags_list[0] = (ENVIRONMENT_FLAG & output_flags);
+        outputflags_list[1] = (ATTITUDE_FLAG & output_flags);
+        outputflags_list[2] = (MAG_CAL_FLAG & output_flags);
+        outputflags_list[3] = (ACC_CAL_FLAG & output_flags);
+        outputflags_list[4] = (AHRS_RAW_DATA_FLAG & output_flags);
+        outputflags_list[5] = (AHRS_COMP_DATA_FLAG & output_flags);
       }
 
     };
@@ -124,6 +127,15 @@ namespace Transports
     struct CidPingRequestMsg
     {
       Acofix_t aco_fix;
+    };
+
+    struct CidSysInfo
+    {
+      uint32_t seconds;
+      uint8_t section;
+      Hardware_t hardware;
+      Firmware_t boot_firmware;
+      Firmware_t main_firmware;
     };
 
     struct CidNavBeaconPosSendMsg
@@ -457,6 +469,24 @@ namespace Transports
         query_flags_list[2]=(0x04 & query_flags);
         query_flags_list[3]=(0x08 & query_flags);
       }
+    };
+
+    struct CidXcvrUsblMsg
+    {
+      float xcor_sig_peak;
+      float xcor_threshold;
+      uint16_t xcor_cross_point;
+      float xcor_cross_mag;
+      uint16_t xcor_detect;
+      uint16_t xcor_length;
+      std::vector<float> xcor_data;
+      uint8_t channels;
+      std::vector<int16_t> channel_rssi;
+      uint8_t baselines;
+      std::vector<float> phase_angle;
+      int16_t signal_azimuth;
+      int16_t signal_elevation;
+      float signal_fit_error;
     };
   }
 }

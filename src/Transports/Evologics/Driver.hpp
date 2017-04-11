@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -46,6 +48,8 @@ namespace Transports
 
     //! Default AT command timeout.
     static const double c_timeout = 5.0;
+    //! Instant message maximum size.
+    static const size_t c_im_max_size = 64;
 
     //! Asynchronous messages.
     static const char* c_async_msgs[] =
@@ -83,7 +87,8 @@ namespace Transports
       //! @param[in] task parent task.
       //! @param[in] handle I/O handle.
       Driver(Tasks::Task* task, IO::Handle* handle):
-        HayesModem(task, handle)
+        HayesModem(task, handle),
+        m_declination(0)
       { }
 
       //! Destructor.
@@ -97,6 +102,20 @@ namespace Transports
         sendAT("Z1");
         sendAT("Z3");
         sendAT("Z4");
+      }
+
+      //! Set control over modem.
+      void
+      setControl(void)
+      {
+        if (getFirmwareVersion() == "1.6")
+          return;
+
+        if (getFirmwareVersion() == "1.7")
+          return;
+
+        sendAT("@CTRL");
+        expectOK();
       }
 
       //! Set modem address.
@@ -347,9 +366,41 @@ namespace Transports
       }
 
       void
-      getRSSI(void)
+      parseUsblPosition(const std::string& str, RecvUsblPos& msg)
       {
+        int rv = 0;
+        rv = std::sscanf(str.c_str(),
+                         "USBLLONG,%lf,%lf,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%u,%f,%u,%f",
+                         &msg.ctime, &msg.mtime, &msg.addr, &msg.x, &msg.y, &msg.z,
+                         &msg.e, &msg.n, &msg.u, &msg.roll, &msg.pitch, &msg.yaw,
+                         &msg.propagation_time, &msg.rssi, &msg.integrity, &msg.accuracy);
 
+        if (rv != 16)
+          throw std::runtime_error("invalid format for USBLLONG");
+
+        double n0 = msg.n;
+        double e0 = msg.e;
+
+        msg.n = n0 * std::cos(m_declination) - e0 * std::sin(m_declination);
+        msg.e = n0 * std::sin(m_declination) + e0 * std::cos(m_declination);
+        msg.yaw += m_declination;
+      }
+
+      void
+      parseUsblAngles(const std::string& str, RecvUsblAng& msg)
+      {
+        int rv = 0;
+        rv = std::sscanf(str.c_str(),
+                         "USBLANGLES,%lf,%lf,%u,%f,%f,%f,%f,%f,%f,%f,%f,%u,%f",
+                         &msg.ctime, &msg.mtime, &msg.addr, &msg.lbearing,
+                         &msg.lelevation, &msg.bearing, &msg.elevation,
+                         &msg.roll, &msg.pitch, &msg.yaw, &msg.rssi,
+                         &msg.integrity, &msg.accuracy);
+
+        if (rv != 13)
+          throw std::runtime_error("invalid format for USBLANGLES");
+
+        msg.yaw += m_declination;
       }
 
       void
@@ -359,12 +410,10 @@ namespace Transports
         long unsigned int data_size = 0;
         int rv = 0;
 
-        unsigned int bitrate, propagation_time;
-
         rv = std::sscanf(str.c_str(),
                          "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
-                         &data_size, &msg.src, &msg.dst, &bitrate, &msg.rssi,
-                         &msg.integrity, &propagation_time, &msg.velocity, &offset);
+                         &data_size, &msg.src, &msg.dst, &msg.bitrate, &msg.rssi,
+                         &msg.integrity, &msg.propagation_time, &msg.velocity, &offset);
 
         if (rv != 8)
           throw std::runtime_error("invalid format for RECV");
@@ -385,7 +434,7 @@ namespace Transports
           if (!piggyback)
           {
             rv = std::sscanf(str.c_str(),
-                             "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%f,%f,%n",
+                             "RECVIM,%lu,%u,%u,%[^,],%u,%f,%u,%u,%f,%n",
                              &data_size, &msg.src, &msg.dst, flag, &msg.bitrate,
                              &msg.rssi, &msg.integrity, &msg.propagation_time,
                              &msg.velocity, &offset);
@@ -396,7 +445,7 @@ namespace Transports
           else
           {
             rv = std::sscanf(str.c_str(),
-                             "RECVPBM,%lu,%u,%u,%u,%f,%u,%f,%f,%n",
+                             "RECVPBM,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
                              &data_size, &msg.src, &msg.dst, &msg.bitrate,
                              &msg.rssi, &msg.integrity, &msg.propagation_time,
                              &msg.velocity, &offset);
@@ -440,6 +489,13 @@ namespace Transports
         msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
 
+      //! Set device's magnetic declination offset.
+      void
+      setDeclination(double value)
+      {
+        m_declination = value;
+      }
+
     private:
       //! Firmware version.
       std::string m_version;
@@ -447,6 +503,8 @@ namespace Transports
       std::string m_phy_ptl_version;
       //! Data-link layer protocol version.
       std::string m_mac_ptl_version;
+      //! Declination offset.
+      double m_declination;
 
       void
       sendInitialization(void)

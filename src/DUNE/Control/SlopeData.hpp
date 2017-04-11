@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -37,6 +39,7 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Coordinates/General.hpp>
 #include <DUNE/Coordinates/WGS84.hpp>
+#include <DUNE/Time/Delta.hpp>
 
 using namespace DUNE::Coordinates;
 using namespace DUNE::Math;
@@ -51,6 +54,8 @@ static const float c_max_range = 15.0f;
 static const float c_decay_factor = 0.6f;
 //! Tolerance for assuming the echoes come from the surface
 static const float c_surface_tol = 5.0f;
+//! Timeout to mark data as invalid.
+static const float c_timeout = 5.0f;
 
 namespace DUNE
 {
@@ -98,7 +103,8 @@ namespace DUNE
       //! @param[in] msg sonar distance message
       //! @param[in] state estimatedstate message
       //! @param[in] cparcel control parcel message
-      void
+      //! @return true if slope was estimated, false otherwise.
+      bool
       onDistance(const IMC::Distance* msg, const IMC::EstimatedState& state, IMC::ControlParcel& cparcel)
       {
         if (!m_sonar_conf && msg->location.size())
@@ -114,14 +120,20 @@ namespace DUNE
             m_sonar_entity = msg->getSourceEntity();
 
             if (msg->validity == IMC::Distance::DV_VALID)
+            {
               update(msg->value, state, cparcel);
+              return true;
+            }
           }
         }
         else if ((m_sonar_entity == msg->getSourceEntity()) &&
                  (msg->validity == IMC::Distance::DV_VALID))
         {
           update(msg->value, state, cparcel);
+          return true;
         }
+
+        return false;
       }
 
       //! Update slope top
@@ -139,7 +151,7 @@ namespace DUNE
       //! Get forward range
       //! @return forward range
       inline float
-      getFRange(void) const
+      getFRange(void)
       {
         if (!isRangeValid())
           return c_max_range;
@@ -167,12 +179,22 @@ namespace DUNE
       }
 
       //! Test if forward range is too low
+      //! @param[in] pitch current pitch angle
       //! @return true if forward range is low
       inline bool
-      isRangeLow(void) const
+      isRangeLow(float pitch = 0.0)
       {
         if (!isRangeValid())
           return false;
+
+        // reduce limit if detection comes from bottom when pitching down.
+        if (pitch < 0.0)
+        {
+          pitch = std::fabs(pitch);
+
+          if (pitch > (m_beam_width / 2.0) && pitch < m_safe_pitch)
+            return m_frange->mean() < (m_min_range * (1 - std::sin(pitch)));
+        }
 
         return m_frange->mean() < m_min_range;
       }
@@ -211,7 +233,7 @@ namespace DUNE
       //! @param[in] state EstimatedState info
       //! @return true if the reading is probably the surface
       bool
-      isSurface(const IMC::EstimatedState& state) const
+      isSurface(const IMC::EstimatedState& state)
       {
         if (!isRangeValid())
           return false;
@@ -228,7 +250,7 @@ namespace DUNE
       //! Test if slope is increasing
       //! @return true if slope is increasing
       inline bool
-      isSlopeIncreasing(void) const
+      isSlopeIncreasing(void)
       {
         if (!isRangeValid())
           return false;
@@ -247,9 +269,17 @@ namespace DUNE
       //! Test if forward range is valid
       //! @return true if range is valid and can be used
       inline bool
-      isRangeValid(void) const
+      isRangeValid(void)
       {
-        return (m_frange != NULL);
+        if (m_frange != NULL)
+        {
+          if (m_delta.check() < c_timeout)
+            return true;
+          else
+            reset();
+        }
+
+        return false;
       }
 
       //! Update tracking data.
@@ -262,6 +292,7 @@ namespace DUNE
         if (m_frange == NULL)
           m_frange = new MovingAverage<float>(m_fsamples);
 
+        m_delta.reset();
         double frange = m_frange->update(value);
         m_last_slope = m_curr_slope;
 
@@ -398,6 +429,8 @@ namespace DUNE
       unsigned m_sonar_entity;
       //! Echo sounder beam width.
       float m_beam_width;
+      //! Time without updates.
+      Time::Delta m_delta;
     };
   }
 }

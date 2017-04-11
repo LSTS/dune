@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -50,6 +52,10 @@ namespace Maneuver
       double u_course;
       //! Max cross. track error.
       double u_ctrack;
+      //! Minimum altitude.
+      float min_alt;
+      //! Maximum depth.
+      float max_depth;
     };
 
     //! Yoyo maneuver
@@ -93,17 +99,7 @@ namespace Maneuver
 
         m_dispatched = false;
 
-        double zref;
-
-        if (maneuver->z_units == IMC::Z_ALTITUDE)
-        {
-          zref = - maneuver->z;
-        }
-        else if (maneuver->z_units == IMC::Z_DEPTH)
-        {
-          zref = maneuver->z;
-        }
-        else
+        if (maneuver->z_units != IMC::Z_ALTITUDE && maneuver->z_units != IMC::Z_DEPTH)
         {
           m_task->signalInvalidZ();
           return;
@@ -123,8 +119,10 @@ namespace Maneuver
         // initialize yoyo motion controller
         Memory::clear(m_yoyo);
 
-        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, zref,
-                                maneuver->amplitude, m_args->variation);
+        m_yoyo = new YoYoMotion(m_task, maneuver->pitch, maneuver->z,
+                                (IMC::ZUnits)maneuver->z_units,
+                                maneuver->amplitude, m_args->variation,
+                                m_args->min_alt, m_args->max_depth);
       }
 
       //! On PathControlState message
@@ -163,27 +161,32 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
-        if (m_zunits == IMC::Z_DEPTH)
-        {
-          update(msg->depth, msg->theta);
-        }
-        else if ((msg->alt >= 0) && (m_zunits == IMC::Z_ALTITUDE))
-        {
-          update(-msg->alt, msg->theta);
-        }
-        else
+        if (msg->alt < 0 && m_zunits == IMC::Z_ALTITUDE)
         {
           m_task->signalNoAltitude();
           return;
         }
+
+        update(msg->depth, msg->alt, msg->theta);
+      }
+
+      void
+      onBrake(const IMC::Brake* msg)
+      {
+        if (m_yoyo == NULL)
+          return;
+
+        if (msg->op == IMC::Brake::OP_START)
+          m_yoyo->startedBraking();
       }
 
       //! update the maneuver with a depth or altitude value
       //! a negative value will be interpreted as an altitude
-      //! @param[in] state_z current z position
+      //! @param[in] depth current depth position
+      //! @param[in] alt current altitude position
       //! @param[in] theta current pitch angle
       void
-      update(double state_z, double theta)
+      update(double depth, double alt, double theta)
       {
         // Pitch value for control
         double v;
@@ -196,17 +199,17 @@ namespace Maneuver
         else if (m_course_recovered)
         {
           // yo-yo again after course is recovered
-          v = m_yoyo->update(true, state_z, theta);
+          v = m_yoyo->update(true, depth, alt, theta);
           m_course_recovered = false;
         }
         else
         {
-          v = m_yoyo->update(false, state_z, theta);
+          v = m_yoyo->update(false, depth, alt, theta);
         }
 
         // dont bother sending message if the value remains the same
         // which will happen frequently
-        if ((m_pitch.value == v) && (m_dispatched))
+        if (m_pitch.value == v && m_dispatched)
           return;
 
         // Dispatch pitch message

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -46,23 +48,31 @@ main(int argc, char** argv)
 
     if (argc == 2 && (!strcmp(argv[1], "-l") || !strcmp(argv[1], "--list")))
     {
-      fprintf(stdout, "List:\n");
-      fprintf(stdout, "  Abort, AcousticMessage, AcousticOperation, AcousticSystemsQuery\n");
-      fprintf(stdout, "  Brake, ButtonEvent\n");
-      fprintf(stdout, "  CacheControl, Calibration, ClockControl, ControlLoops\n");
-      fprintf(stdout, "  DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate, DesiredPitch\n");
-      fprintf(stdout, "  DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
-      fprintf(stdout, "  EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
-      fprintf(stdout, "  FuelLevel\n");
-      fprintf(stdout, "  GpsFix, GpsFixRtk, Heartbeat, IridiumMsgTx, LblConfig, LblRange\n");
-      fprintf(stdout, "  LeakSimulation, LogBookControl, LogBookEntry, LoggingControl\n");
-      fprintf(stdout, "  MagneticField, MonitorEntityState, OperationalLimits\n");
-      fprintf(stdout, "  PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl\n");
-      fprintf(stdout, "  PushEntityParameters, QueryEntityInfo, QueryEntityParameters\n");
-      fprintf(stdout, "  RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl, RestartSystem\n");
-      fprintf(stdout, "  SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition\n");
-      fprintf(stdout, "  SetThrusterActuation, Sms, SoundSpeed, Target, TeleoperationDone, Temperature\n");
-      fprintf(stdout, "  TextMessage, TrexCommand, VehicleCommand, VehicleMedium\n");
+      fprintf(stdout, "Available Messages:\n");
+      fprintf(stdout, "  [A]: Abort, AcousticMessage, AcousticOperation, AcousticSystemsQuery\n");
+      fprintf(stdout, "  [B]: Brake, ButtonEvent\n");
+      fprintf(stdout, "  [C]: CacheControl, Calibration, ClockControl, ControlLoops\n");
+      fprintf(stdout, "  [D]: DataSanity, DesiredControl, DesiredHeading, DesiredHeadingRate, DesiredPitch,\n");
+      fprintf(stdout, "       DesiredSpeed, DesiredRoll, DesiredZ, DevCalibrationControl, DevDataText\n");
+      fprintf(stdout, "  [E]: EmergencyControl, EntityList, EntityState, EntityActivationState, EstimatedState\n");
+      fprintf(stdout, "  [F]: FuelLevel\n");
+      fprintf(stdout, "  [G]: GpsFix, GpsFixRtk\n");
+      fprintf(stdout, "  [H]: Heartbeat\n");
+      fprintf(stdout, "  [I]: IridiumMsgTx\n");
+      fprintf(stdout, "  [L]: LblConfig, LblRange, LeaderState, LeakSimulation, LogBookControl, LogBookEntry,\n");
+      fprintf(stdout, "       LoggingControl\n");
+      fprintf(stdout, "  [M]: MagneticField, MonitorEntityState\n");
+      fprintf(stdout, "  [O]: OperationalLimits\n");
+      fprintf(stdout, "  [P]: PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl,\n");
+      fprintf(stdout, "       PowerChannelState, PushEntityParameters\n");
+      fprintf(stdout, "  [Q]: QueryEntityInfo, QueryEntityParameters\n");
+      fprintf(stdout, "  [R]: RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl,\n");
+      fprintf(stdout, "       RestartSystem\n");
+      fprintf(stdout, "  [S]: SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition,\n");
+      fprintf(stdout, "       SetThrusterActuation, Sms, SoundSpeed\n");
+      fprintf(stdout, "  [T]: Target, TeleoperationDone, Temperature, TextMessage, TrexCommand\n");
+      fprintf(stdout, "  [U]: UASimulation\n");
+      fprintf(stdout, "  [V]: VehicleCommand, VehicleMedium\n");
       return 1;
     }
 
@@ -268,13 +278,6 @@ main(int argc, char** argv)
     tmsg->op = IMC::EntityList::OP_QUERY;
   }
 
-  if (strcmp(argv[3], "Temperature") == 0)
-  {
-    IMC::Temperature* tmsg = new IMC::Temperature;
-    msg = tmsg;
-    tmsg->value = atof(argv[4]);
-  }
-
   if (strcmp(argv[3], "EntityState") == 0)
   {
     IMC::EntityState* tmsg = new IMC::EntityState;
@@ -446,6 +449,15 @@ main(int argc, char** argv)
     tmsg->range = atoi(argv[5]);
   }
 
+  if (strcmp(argv[3], "LeaderState") == 0)
+  {
+    IMC::LeaderState* tmsg = new IMC::LeaderState;
+    msg = tmsg;
+    tmsg->lat = Angles::radians(atof(argv[4]));
+    tmsg->lon = Angles::radians(atof(argv[5]));
+    tmsg->height = atof(argv[6]);
+  }
+
   if (strcmp(argv[3], "LeakSimulation") == 0)
   {
     IMC::LeakSimulation* tmsg = new IMC::LeakSimulation;
@@ -560,6 +572,14 @@ main(int argc, char** argv)
     tmsg->op = atoi(argv[5]);
   }
 
+  if (strcmp(argv[3], "PowerChannelState") == 0)
+  {
+    IMC::PowerChannelState* tmsg = new IMC::PowerChannelState;
+    msg = tmsg;
+    tmsg->name = argv[4];
+    tmsg->state = atoi(argv[5]);
+  }
+
   if (strcmp(argv[3], "PushEntityParameters") == 0)
   {
     IMC::PushEntityParameters* tmsg = new IMC::PushEntityParameters;
@@ -625,15 +645,6 @@ main(int argc, char** argv)
   {
     IMC::RestartSystem* tmsg = new IMC::RestartSystem;
     msg = tmsg;
-  }
-
-  if (strcmp(argv[3], "LeaderState") == 0)
-  {
-    IMC::LeaderState* tmsg = new IMC::LeaderState;
-    msg = tmsg;
-    tmsg->lat = Angles::radians(atof(argv[4]));
-    tmsg->lon = Angles::radians(atof(argv[5]));
-    tmsg->height = atof(argv[6]);
   }
 
   if (strcmp(argv[3], "SaveEntityParameters") == 0)
@@ -737,6 +748,13 @@ main(int argc, char** argv)
     }
   }
 
+  if (strcmp(argv[3], "Temperature") == 0)
+  {
+    IMC::Temperature* tmsg = new IMC::Temperature;
+    msg = tmsg;
+    tmsg->value = atof(argv[4]);
+  }
+
   if (strcmp(argv[3], "TeleoperationDone") == 0)
   {
     msg = new IMC::TeleoperationDone;
@@ -776,6 +794,21 @@ main(int argc, char** argv)
     tmsg->type = IMC::UASimulation::UAS_DATA;
     tmsg->data.assign(atoi(argv[7]), '0');
     msg = tmsg;
+  }
+
+  if (strcmp(argv[3], "UsblConfig") == 0)
+  {
+    IMC::UsblConfig* tmsg = new IMC::UsblConfig;
+    msg = tmsg;
+    tmsg->op = IMC::UsblConfig::OP_SET_CFG;
+
+    IMC::UsblModem modem;
+    modem.name = argv[4];
+    modem.lat = atof(argv[5]);
+    modem.lon = atof(argv[6]);
+    modem.z = atof(argv[7]);
+    modem.z_units = static_cast<IMC::ZUnits>(1);
+    tmsg->modems.push_back(modem);
   }
 
   if (strcmp(argv[3], "VehicleCommand") == 0)

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -90,14 +92,17 @@ namespace Sensors
       std::string uart_dev;
       //! UART baud rate.
       unsigned uart_baud;
-      //! Input timeout.
-      double data_tout;
       //! Calibration threshold.
       double calib_threshold;
       //! Hard iron calibration.
       std::vector<float> hard_iron;
       // Rotation matrix values.
       std::vector<double> rotation_mx;
+      //! Number of seconds without data before reporting an error.
+      double timeout_error;
+      //! Number of seconds without data before
+      //! reporting a failure and restarting.
+      double timeout_failure;
     };
 
     //! %Microstrain3DMGX3 software driver.
@@ -133,13 +138,25 @@ namespace Sensors
       double m_tstamp;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! Entity state timer.
+      Counter<double> m_state_timer;
+      //! Sample count.
+      size_t m_sample_count;
+      //! Faults count.
+      size_t m_faults_count;
+      //! Timeout count.
+      size_t m_timeout_count;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Periodic(name, ctx),
         m_uart(NULL),
-        m_tstamp(0)
+        m_tstamp(0),
+        m_state_timer(1.0),
+        m_sample_count(0),
+        m_faults_count(0),
+        m_timeout_count(0)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -148,12 +165,6 @@ namespace Sensors
         param("Serial Port - Baud Rate", m_args.uart_baud)
         .defaultValue("115200")
         .description("Serial port baud rate");
-
-        param("Data Timeout", m_args.data_tout)
-        .defaultValue("2.0")
-        .minimumValue("1.0")
-        .units(Units::Second)
-        .description("Number of seconds without data before reporting an error");
 
         param("Calibration Threshold", m_args.calib_threshold)
         .defaultValue("0.1")
@@ -170,6 +181,18 @@ namespace Sensors
         .defaultValue("")
         .size(9)
         .description("IMU rotation matrix which is dependent of the mounting position");
+
+        param("Timeout - Error", m_args.timeout_error)
+        .defaultValue("3.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before reporting an error");
+
+        param("Timeout - Failure", m_args.timeout_failure)
+        .defaultValue("6.0")
+        .minimumValue("1.0")
+        .units(Units::Second)
+        .description("Number of seconds without data before restarting task");
 
         m_timer.setTop(c_reset_tout);
 
@@ -195,11 +218,14 @@ namespace Sensors
         for (unsigned i = 0; i < 3; i++)
           m_hard_iron[i] = data(i);
 
-        if (m_uart == NULL)
-          return;
+        if (paramChanged(m_args.timeout_error))
+          m_wdog.setTop(m_args.timeout_error);
 
-        if (paramChanged(m_args.hard_iron))
-          runCalibration();
+        if (m_uart != NULL)
+        {
+          if (paramChanged(m_args.hard_iron))
+            runCalibration();
+        }
       }
 
       //! Release resources.
@@ -246,8 +272,6 @@ namespace Sensors
 
         // Prepare to read data frame.
         m_uart->setMinimumRead(CMD_DATA_SIZE);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_wdog.setTop(2.0);
       }
 
       void
@@ -325,26 +349,38 @@ namespace Sensors
         if (!cmd_size)
           return true;
 
-        if (!Poll::poll(*m_uart, m_args.data_tout))
+        if (!Poll::poll(*m_uart, 1.0))
+        {
+          m_timeout_count++;
           return false;
+        }
 
         // Read response.
         size_t rv = m_uart->read(m_bfr, c_bfr_size);
         m_tstamp = Clock::getSinceEpoch();
 
         if (rv == 0)
+        {
+          m_faults_count++;
           return false;
-
-        if (rv != (size_t)cmd_size)
-          return false;
+        }
 
         // Check if we have a response to our query.
         if (m_bfr[0] != cmd)
           return false;
 
+        if (rv != (size_t)cmd_size)
+        {
+          m_faults_count++;
+          return false;
+        }
+
         // Validate checksum.
         if (!validateChecksum(m_bfr, cmd_size))
+        {
+          m_faults_count++;
           return false;
+        }
 
         return true;
       }
@@ -549,6 +585,38 @@ namespace Sensors
         m_magfield.z = data(2);
       }
 
+      void
+      reportEntityState(void)
+      {
+        if (m_wdog.overflow())
+        {
+          std::string text = String::str(DTR("%0.1f seconds without valid data"),
+                                         m_wdog.getElapsed());
+
+          if (m_wdog.getElapsed() >= m_args.timeout_failure)
+            throw RestartNeeded(text, 0);
+          else
+            setEntityState(IMC::EntityState::ESTA_ERROR, text);
+
+          return;
+        }
+
+        if (!m_state_timer.overflow())
+          return;
+
+        double time_elapsed = m_state_timer.getElapsed();
+        double frequency = Math::round(m_sample_count / time_elapsed);
+
+        std::string text = String::str(DTR("active | timeouts: %u | faults: %u | frequency: %u"),
+                                       m_timeout_count,
+                                       m_faults_count,
+                                       (unsigned)frequency);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
+        m_state_timer.reset();
+        m_sample_count = 0;
+      }
+
       //! Main task.
       void
       task(void)
@@ -628,15 +696,11 @@ namespace Sensors
           dispatch(m_magfield, DF_KEEP_TIME);
 
           // Clear entity state.
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          m_sample_count++;
           m_wdog.reset();
         }
 
-        if (m_wdog.overflow() && m_timer.overflow())
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded(DTR(Status::getString(Status::CODE_COM_ERROR)), 5);
-        }
+        reportEntityState();
       }
     };
   }

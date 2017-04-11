@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -86,6 +88,10 @@ namespace Monitors
       double fault_cooldown;
       //! Servo current entity labels.
       std::string elabel_ampg[c_servo_count];
+      //! Failure error timeout.
+      double error_time;
+      //! Failure error counter.
+      unsigned error_count;
     };
 
     struct Task: public Tasks::Task
@@ -108,22 +114,27 @@ namespace Monitors
       uint8_t m_on_fault[c_servo_count];
       //! Timer for error timeout
       Time::Counter<float> m_timer;
+      //! Queue for error reports.
+      std::queue<double> m_queue[c_servo_count];
+      //! Major failure in one of the servos.
+      bool m_servo_fail;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_servo_fail(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_USER);
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
 
         param("Position Fault Detection", m_args.pos_fault_detect)
         .defaultValue("false")
         .description("Enable position fault detection");
 
         param("Position Error Threshold", m_args.pos_error_threshold)
-        .defaultValue("0.2")
+        .defaultValue("12.0")
         .minimumValue("0.0")
-        .units(Units::Radian)
+        .units(Units::Degree)
         .description("Threshold for position error in fault detection");
 
         param("Position Rate Factor", m_args.rate_factor)
@@ -181,6 +192,17 @@ namespace Monitors
         .minimumValue("0.0")
         .description("Period of time after which the fault vectors will be reset to zero");
 
+        param("Failure Error Timeout", m_args.error_time)
+        .units(Units::Second)
+        .defaultValue("120.0")
+        .minimumValue("30.0")
+        .description("Period of time to count number of errors that issue a failure");
+
+        param("Failure Error Count", m_args.error_count)
+        .defaultValue("5")
+        .minimumValue("3")
+        .description("Maximum number of errors allowed in a period of time that issue a failure");
+
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
           std::string option = String::str("Entity Label - Current %d", i);
@@ -206,6 +228,9 @@ namespace Monitors
       {
         if (paramChanged(m_args.max_rotation_rate))
           m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
+
+        if (paramChanged(m_args.pos_error_threshold))
+          m_args.pos_error_threshold = Angles::radians(m_args.pos_error_threshold);
 
         if (!m_args.pos_fault_detect && !m_args.curr_fault_detect)
           requestDeactivation();
@@ -330,9 +355,15 @@ namespace Monitors
           uint8_t was_on_fault = m_on_fault[i];
           std::string desc;
 
+          if (!m_queue[i].empty())
+          {
+            if (Time::Clock::get() - m_queue[i].front() > m_args.error_time)
+              m_queue[i].pop();
+          }
+
           if (m_pos_monitor[i]->updateAndTest(msg->value, m_set_servo[i], &desc))
           {
-            m_error_str = String::str(DTR("potential fault in servo#%d, %s"),
+            m_error_str = String::str(DTR("potential fault in servo #%d: %s"),
                                       i, desc.c_str());
 
             m_on_fault[i] |= FT_POSITION;
@@ -363,7 +394,7 @@ namespace Monitors
         // Reset counters after that to avoid spamming the output
         if (curr > 0)
         {
-          m_error_str = String::str(DTR("potential fault in servo#%d, "
+          m_error_str = String::str(DTR("potential fault in servo #%d, "
                                         "current consumption above %0.1f A"),
                                     i, curr);
 
@@ -390,13 +421,28 @@ namespace Monitors
             if (m_on_fault[i] != FT_NONE)
               break;
 
-          if (i == c_servo_count)
+          if (i == c_servo_count && !m_servo_fail)
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         else
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
-          war("%s", m_error_str.c_str());
+          m_queue[id].push(Time::Clock::get());
+          if (m_queue[id].size() > m_args.error_count)
+          {
+            m_servo_fail = true;
+            err(DTR("servo #%d may require supervision"), id);
+            setEntityState(IMC::EntityState::ESTA_ERROR,
+                           String::str(DTR("servo #%d may require supervision"), id));
+
+            // clear queue.
+            while (!m_queue[id].empty())
+              m_queue[id].pop();
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, m_error_str.c_str());
+            war("%s", m_error_str.c_str());
+          }
         }
       }
 
@@ -408,8 +454,13 @@ namespace Monitors
           waitForMessages(1.0);
 
           if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+          {
             if (m_timer.overflow() && m_args.pos_fault_detect)
+            {
+              m_servo_fail = false;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            }
+          }
         }
       }
     };

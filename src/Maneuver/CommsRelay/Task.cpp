@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Jose Pinto                                                       *
@@ -34,12 +36,25 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
+    enum CRMODE {
+      GOING,
+      LOITER,
+      STOP
+    };
+
+    struct Arguments
+    {
+      float loitering_radius;
+      float depth;
+      float altitude;
+    };
+
     struct Task: public DUNE::Maneuvers::Maneuver
     {
       IMC::CommsRelay m_maneuver;
       IMC::DesiredPath m_path;
 
-      bool m_moving;
+      CRMODE m_mode;
       double m_lat_a;
       double m_lat_b;
 
@@ -54,115 +69,101 @@ namespace Maneuver
 
       double m_start_time;
 
+      uint32_t m_control;
+      bool m_near;
+
+      Arguments m_args;
+
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx),
-        m_moving(false)
+        DUNE::Maneuvers::Maneuver(name, ctx)
       {
         bindToManeuver<Task, IMC::CommsRelay>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::Announce>(this);
+
+        param("Loitering Radius", m_args.loitering_radius)
+        .defaultValue("75")
+        .units(Units::Meter)
+        .description("Radius of loitering circle after arriving at destination");
+
+        param("Depth", m_args.depth)
+        .defaultValue("-1")
+        .units(Units::Meter)
+        .description("Default depth. If value is below 0, altitude will be used instead.");
+
+        param("Altitude", m_args.altitude)
+        .defaultValue("100")
+        .units(Units::Meter)
+        .description("Altitude to use if depth less than 0.");
+
+        // initialize everything...
+        m_mode = STOP;
+        m_near = false;
+        m_lat_a = m_cur_lat = m_lat_b = m_lat_center = 0;
+        m_lon_a = m_cur_lon = m_lon_b = m_lon_center =  0;
+        m_start_time = m_control = 0;
       }
 
       void
       onManeuverDeactivation(void)
       {
-        m_moving = false;
+        // stop moving
+        setControl(0);
+        m_mode = STOP;
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        // depending on z reference, activate altitude or depth control
+        if (m_args.depth >= 0)
+          m_control = IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_PATH;
+        else
+          m_control = IMC::CL_ALTITUDE | IMC::CL_SPEED | IMC::CL_PATH;
       }
 
       void
       consume(const IMC::CommsRelay* maneuver)
       {
-        enableMovement(false);
-
         m_maneuver = *maneuver;
 
         // parameters initialization
         m_lat_a = m_lat_b = m_lat_center = m_maneuver.lat;
         m_lon_a = m_lon_b = m_lon_center = m_maneuver.lon;
-
-        m_path.speed = m_maneuver.speed;
-        m_path.speed_units = m_maneuver.speed_units;
-
-        m_path.end_lat = m_lat_center;
-        m_path.end_lon = m_lon_center;
-        m_path.end_z = 0;
-        m_path.end_z_units = IMC::Z_DEPTH;
-
         m_start_time = Clock::get();
 
         // start moving towards initial point
-        enableMovement(true);
+        m_mode = GOING;
+        updateDesiredPath();
+        setControl(m_control);
         dispatch(m_path);
-
-        m_moving = true;
       }
 
       void
       consume(const IMC::EstimatedState* msg)
       {
-        if (msg->getSource() != getSystemId())
-          return;
+        // compute coordinates of received state
+        double lat, lon;
+        Coordinates::toWGS84(*msg, lat, lon);
 
-        // set vehicle's position from estimated state
-        m_cur_lat = msg->lat;
-        m_cur_lon = msg->lon;
-        Coordinates::toWGS84(*msg, m_cur_lat, m_cur_lon);
-
-        // if moving towards the goal don't do a thing
-        if (!m_moving)
+        // if external system, update its position
+        if (!m_ctx.resolver.isLocal(msg->getSource()))
+          updatePosition(msg->getSource(), lat, lon);
+        else
         {
-          double dist;
-          dist = WGS84::distance(m_cur_lat, m_cur_lon, 0,
-                                 m_lat_center, m_lon_center, 0);
-
-          // if stopped but too far from center position, start moving again
-          if (dist > m_maneuver.move_threshold)
-          {
-            enableMovement(true);
-            dispatch(m_path);
-          }
+          // otherwise update own position
+          m_cur_lat = lat;
+          m_cur_lon = lon;
         }
       }
 
       void
       consume(const IMC::Announce* msg)
       {
-        bool centerChanged = false;
-
-        if (msg->getSource() == m_maneuver.sys_a)
-        {
-          debug("%s updated its position", msg->sys_name.c_str());
-          m_lat_a = msg->lat;
-          m_lon_a = msg->lon;
-          centerChanged = true;
-        }
-
-        if (msg->getSource() == m_maneuver.sys_b)
-        {
-          debug("%s updated its position", msg->sys_name.c_str());
-          m_lat_b = msg->lat;
-          m_lon_b = msg->lon;
-          centerChanged = true;
-        }
-
-        if (centerChanged)
-        {
-          m_lat_center = (m_lat_a + m_lat_b) / 2;
-          m_lon_center = (m_lon_a + m_lon_b) / 2;
-
-          m_path.end_lat = m_lat_center;
-          m_path.end_lon = m_lon_center;
-
-          debug("new center: %0.5f / %0.5f",
-                Angles::degrees(m_lat_center), Angles::degrees(m_lon_center));
-
-          // if we are moving, set new target position (new center)
-          if (m_moving)
-            dispatch(m_path);
-        }
+        // update external system position
+        updatePosition(msg->getSource(), msg->lat, msg->lon);
       }
 
-      // Function to check if the vehicle is getting near to the next waypoint
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
@@ -178,31 +179,117 @@ namespace Maneuver
           signalProgress((uint16_t)(Math::round(delta)));
         }
 
-        // if we have arrived at the target, we stop moving
-        if (pcs->flags & IMC::PathControlState::FL_NEAR)
+        // check if it is near the target (centroid)
+        m_near = pcs->flags & IMC::PathControlState::FL_NEAR;
+
+        // state machine step
+        step();
+      }
+
+      void
+      step(void)
+      {
+        bool loiter = m_args.loitering_radius > 0;
+        double dist = WGS84::distance(m_cur_lat, m_cur_lon, 0, m_lat_center, m_lon_center, 0);
+
+        debug("Near: %d, Loiter: %d, Distance: %.5f, Mode: %d", m_near, loiter, dist, m_mode);
+
+        switch(m_mode)
         {
-          debug("arrived at the center");
-          enableMovement(false);
+          case (GOING):
+            // if on loiter mode and close to the loiter circle, start loitering
+            if (loiter && dist < (m_args.loitering_radius + m_maneuver.move_threshold - 10))
+            {
+              updateDesiredPath();
+              dispatch(m_path);
+              m_mode = LOITER;
+            }
+            if (!loiter && m_near)
+            {
+              // close to the target and hovering, start hovering
+              setControl(0);
+              m_mode = STOP;
+            }
+            break;
+          default:
+            // if loitering or hovering, check if it should start going to a new position
+            if (dist > m_args.loitering_radius + m_maneuver.move_threshold)
+              {
+                updateDesiredPath();
+                setControl(m_control);
+                dispatch(m_path);
+                m_mode = GOING;
+              }
+              break;
         }
       }
 
-      // Function for enabling and disabling the control loops
-      void
-      enableMovement(bool enable)
+      //! Update position of a system given its coordinates
+      bool
+      updatePosition(uint16_t system, double lat, double lon)
       {
-        const uint32_t mask = IMC::CL_PATH;
+        debug("updatePosition");
+        bool centerChanged = false;
 
-        if (enable)
+        if (system == m_maneuver.sys_a)
         {
-          // set control loops in order to move
-          setControl(mask);
-          m_moving = true;
+          debug("%s updated its position", m_ctx.resolver.resolve(system));
+          m_lat_a = lat;
+          m_lon_a = lon;
+          centerChanged = true;
+        }
+
+        if (system == m_maneuver.sys_b)
+        {
+          debug("%s updated its position", m_ctx.resolver.resolve(system));
+          m_lat_b = lat;
+          m_lon_b =  lon;
+          centerChanged = true;
+        }
+
+        if (centerChanged)
+        {
+          debug("center has changed");
+          m_lat_center = (m_lat_a + m_lat_b) / 2;
+          m_lon_center = (m_lon_a + m_lon_b) / 2;
+
+          // let the target point change while going there
+          if (m_mode == GOING )
+          {
+            updateDesiredPath();
+            dispatch(m_path);
+          }
+          else
+            // otherwise check if it should start moving again...
+            step();
+        }
+
+        return centerChanged;
+      }
+
+      //! Method used to update (but not send) the desired path
+      void updateDesiredPath()
+      {
+        double dist = WGS84::distance(m_cur_lat, m_cur_lon, 0, m_lat_center, m_lon_center, 0);
+        if (dist <= m_args.loitering_radius + m_maneuver.move_threshold)
+          m_path.lradius = m_args.loitering_radius;
+        else
+          m_path.lradius = 0;
+
+        m_path.speed = m_maneuver.speed;
+        m_path.speed_units = m_maneuver.speed_units;
+        m_path.end_lat = m_lat_center;
+        m_path.end_lon = m_lon_center;
+
+        if (m_args.depth >= 0)
+        {
+          m_path.end_z = m_args.depth;
+          m_path.end_z_units = IMC::Z_DEPTH;
         }
         else
         {
-          // stop moving by setting control loops to zero
-          m_moving = false;
-          setControl(0);
+          m_path.end_z = m_args.altitude;
+          m_path.end_z_units = IMC::Z_ALTITUDE;
         }
       }
     };

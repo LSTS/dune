@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
@@ -30,6 +32,7 @@
 
 // ISO C++ 98 headers.
 #include <cmath>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/Coordinates/BodyFixedFrame.hpp>
@@ -59,8 +62,10 @@ namespace DUNE
 
     //! Weighted Moving Average filter value.
     static const float c_wma_filter = 0.1f;
-    //! Maximum artificial angular velocity value.
-    static const float c_max_av = 0.5f;
+    //! Maximum acceleration reading.
+    static const double c_max_accel = 30.0f;
+    //! Maximum angular velocity reading (5 times mathematical constant PI).
+    static const double c_max_agvel = 15.708f;
 
     //! Navigation task states.
     enum SMStates
@@ -179,6 +184,9 @@ namespace DUNE
       consume(const IMC::Rpm* msg);
 
       void
+      consume(const IMC::UsblFixExtended* msg);
+
+      void
       consume(const IMC::WaterVelocity* msg);
 
     protected:
@@ -242,7 +250,7 @@ namespace DUNE
         double roll = getEuler(AXIS_X);
         double p, q, r;
 
-        if (m_sum_euler_inc)
+        if (m_dead_reckoning)
         {
           if (!m_edelta_readings)
             return 0.0;
@@ -442,6 +450,12 @@ namespace DUNE
       virtual void
       runKalmanDVL(void);
 
+      //! Routine to assign EKF filter output variables when a UsblFixExtended message is received.
+      //! @param[in] x vehicle north displacement (m).
+      //! @param[in] y vehicle east displacement (m).
+      virtual void
+      runKalmanUSBL(double x, double y);
+
       //! Get EKF output matrix speed indexes.
       //! @param[out] u forward speed state index.
       //! @param[out] v transversal speed state index.
@@ -553,14 +567,8 @@ namespace DUNE
       double m_last_z;
       //! Dead reckoning mode.
       bool m_dead_reckoning;
-      //! Sum euler increments to get heading.
-      bool m_sum_euler_inc;
       //! Vehicle is aligned.
       bool m_aligned;
-      //! Angular velocity message entity id.
-      unsigned m_agvel_eid;
-      //! Accelaration message entity id.
-      unsigned m_accel_eid;
       //! IMU entity id.
       unsigned m_imu_eid;
       //! LBL threshold.

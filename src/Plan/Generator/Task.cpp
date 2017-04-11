@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Pinto                                                       *
@@ -62,6 +64,8 @@ namespace Plan
       float max_rpms;
       //! Plans to be generated at boot (example: dislodge:rpm=1200.0)
       std::vector<std::string> generate_at_boot;
+      //! Recovery plan
+      std::string recovery_plan;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -106,6 +110,7 @@ namespace Plan
         .defaultValue("");
 
         m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpms);
+        m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
 
         bind<IMC::Announce>(this);
         bind<IMC::PlanGeneration>(this);
@@ -797,7 +802,7 @@ namespace Plan
         }
 
         // This template generates a plan that attempts to dislodge the vehicle (dislodge)
-        if (plan_id == "dislodge")
+        if (plan_id == m_args.recovery_plan)
         {
           IMC::MessageList<IMC::Maneuver> maneuvers;
 

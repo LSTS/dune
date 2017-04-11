@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -47,6 +49,7 @@
 #include "PopUp.hpp"
 #include "Dislodge.hpp"
 #include "MuxedManeuver.hpp"
+#include "ScheduledGoto.hpp"
 
 namespace Maneuver
 {
@@ -57,7 +60,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge"};
+                                          "Dislodge","ScheduledGoto"};
 
     enum ManeuverType
     {
@@ -83,6 +86,8 @@ namespace Maneuver
       TYPE_POPUP,
       //! Type Dislodge
       TYPE_DISLODGE,
+      //! Type ScheduledGoto
+      TYPE_SCHEDULEDGOTO,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -105,6 +110,9 @@ namespace Maneuver
       PopUpArgs popup;
       //! Dislodge Arguments
       DislodgeArgs dislodge;
+      //!
+      ScheduledArgs scheduled;
+
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -163,6 +171,12 @@ namespace Maneuver
         .defaultValue("15")
         .units(Units::Degree)
         .description("Maximum course error admissible");
+
+        param("YoYo -- Minimum Altitude Reference", m_args.yoyo.min_alt)
+        .defaultValue("5.0")
+        .minimumValue("1.0")
+        .units(Units::Meter)
+        .description("Minimum admissible altitude reference");
 
         param("Elevator -- Radius Tolerance", m_args.elevator.radius_tolerance)
         .defaultValue("2.0")
@@ -235,11 +249,29 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Safe depth change to consider the maneuver was successful");
 
+        param("Dislodge -- Safe Depth Gap", m_args.dislodge.safe_gap)
+        .defaultValue("3.0")
+        .units(Units::Meter)
+        .description("Safe depth change to consider the maneuver was successful");
+
+        param("ScheduledGoto -- Minimum Speed", m_args.scheduled.min_speed)
+        .defaultValue("0.7")
+        .units(Units::MeterPerSecond)
+        .description("Move only at speeds higher than the minimum speed");
+
+        param("ScheduledGoto -- Maximum Speed", m_args.scheduled.max_speed)
+        .defaultValue("1.6")
+        .units(Units::MeterPerSecond)
+        .description("Maximum commanded speed");
+
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
+
+        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.yoyo.max_depth);
 
         for (unsigned i = 0; i < TYPE_TOTAL; ++i)
           m_maneuvers[i] = NULL;
 
+        bind<IMC::Brake>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
@@ -313,6 +345,7 @@ namespace Maneuver
         m_maneuvers[TYPE_ELEVATOR] = create<Elevator>(&m_args.elevator);
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
+        m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
       }
 
       void
@@ -363,6 +396,12 @@ namespace Maneuver
         }
 
         m_maneuvers[m_type]->start(maneuver);
+      }
+
+      void
+      consume(const IMC::Brake* msg)
+      {
+        m_maneuvers[m_type]->onBrake(msg);
       }
 
       void

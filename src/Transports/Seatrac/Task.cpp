@@ -8,12 +8,13 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
@@ -22,7 +23,8 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.hhtml.                                    *
 //***************************************************************************
-// Author: Joao teixeira                                                    *
+// Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -30,6 +32,7 @@
 #include <map>
 #include <string>
 #include <cstring>
+#include <iterator>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -69,8 +72,12 @@ namespace Transports
       unsigned uart_baud;
       //! Transmit only underwater.
       bool only_underwater;
-      //Addresses Number - modem
+      //! Addresses Number - modem
       std::string addr_section;
+      //! Enable usbl mode
+      bool usbl_mode;
+      //! Enhanced usbl information will be requested.
+      bool enhanced_usbl;
     };
 
     //! Map of system's names.
@@ -90,6 +97,8 @@ namespace Transports
       IMC::EntityState m_states[STA_MAX];
       //! Stop reports on the ground.
       bool m_stop_comms;
+      //! True if the beacon has an USBL receiver.
+      bool m_usbl_receiver;
       //! Modem address.
       unsigned m_addr;
       //! Data buffer.
@@ -100,6 +109,8 @@ namespace Transports
       DataSeatrac m_data_beacon;
       //! Time of last serial port input.
       double m_last_input;
+      //! Timer to manage the fragmentation of OWAY messages. 
+      Time::Counter<double> m_oway_timer;
       //! Map of seatrac modems by name.
       MapName m_modem_names;
       //! Map of seatrac modems by address.
@@ -112,10 +123,11 @@ namespace Transports
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
+      Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
-        m_stop_comms(false)
+        m_stop_comms(false),
+        m_usbl_receiver(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -137,6 +149,16 @@ namespace Transports
         .defaultValue("Seatrac Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("USBL Mode", m_args.usbl_mode)
+        .defaultValue("false")
+        .description("Enable the USBL mode. USBL receivers can obtain position information.");
+
+        param("Enhanced USBL", m_args.enhanced_usbl)
+        .defaultValue("false")
+        .description("Request Enhanced USBL information. USBL receivers request enhanced "
+                     "information in transmissions. This parameter is useful only when "
+                     "the beacon has an USBL receiver.");
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -145,11 +167,9 @@ namespace Transports
         m_states[STA_ACTIVE].state = IMC::EntityState::ESTA_NORMAL;
         m_states[STA_ACTIVE].description = DTR("active");
         m_states[STA_ERR_COM].state = IMC::EntityState::ESTA_ERROR;
-        m_states[STA_ERR_COM].description =
-        DTR("serial port communication error, modem not responding");
+        m_states[STA_ERR_COM].description = DTR("serial port communication error, modem not responding");
         m_states[STA_ERR_STP].state = IMC::EntityState::ESTA_ERROR;
-        m_states[STA_ERR_STP].description =
-        DTR("failed to configure modem, possible serial port communication error");
+        m_states[STA_ERR_STP].description = DTR("failed to configure modem, possible serial port communication error");
 
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxFrame>(this);
@@ -161,7 +181,7 @@ namespace Transports
       setAndSendState(EntityStates state)
       {
         m_state_entity = state;
-        setEntityState((IMC::EntityState::StateEnum)m_states[m_state_entity].state,
+        setEntityState((IMC::EntityState::StateEnum) m_states[m_state_entity].state,
                        m_states[m_state_entity].description);
       }
 
@@ -172,16 +192,17 @@ namespace Transports
       {
         bool msg_validity = false;
         uint16_t crc, crc2;
-        std::string msg = String::fromHex(m_data.substr((m_data.size() - 4), 4));
-        std::memcpy(&crc2, msg.data(), 2);
-        m_datahex = String::fromHex(m_data.erase((m_data.size() - 4), 4));
-        crc = CRC16::compute((uint8_t*) m_datahex.data(), m_datahex.size(), 0);
-
-        if (crc == crc2)
-          msg_validity = true;
-        else
-          war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
-
+        if(m_data.size() >= MIN_MESSAGE_LENGTH)
+        {
+          std::string msg = String::fromHex(m_data.substr((m_data.size() - 4), 4));
+          std::memcpy(&crc2, msg.data(), 2);
+          m_datahex = String::fromHex(m_data.erase((m_data.size() - 4), 4));
+          crc = CRC16::compute((uint8_t*) m_datahex.data(), m_datahex.size(),0);
+          if (crc == crc2)
+            msg_validity = true;
+          else
+            war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+        }
         return msg_validity;
       }
 
@@ -193,23 +214,10 @@ namespace Transports
           handleBinaryMessage();
 
         if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
-        {
-          if(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY)
-            m_data_beacon.cid_dat_send_msg.lock_flag = 0;
-        }
+          handleDatSendResponse();
 
         if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
-        {
-          if(m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
-          {
-            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
-          }
-          else
-          {
-            war(DTR("part of message failed"));
-            clearTicket(IMC::UamTxStatus::UTS_FAILED);
-          }
-        }
+          handleCommunicationError();
       }
 
       //! Read sentence.
@@ -236,7 +244,7 @@ namespace Transports
               if (processSentence())
               {
                 msg_raw = m_datahex.data();
-                std::memcpy(&typemes, msg_raw,1);
+                std::memcpy(&typemes, msg_raw, 1);
                 dataParser(typemes, msg_raw + 1, m_data_beacon);
                 processNewData();
                 printDebugFunction(typemes, m_data_beacon, this);
@@ -247,13 +255,9 @@ namespace Transports
             else
             {
               if (bfr[i] == c_preamble)
-              {
                 m_data.clear();
-              }
               else if (bfr[i] != '\r')
-              {
                 m_data.push_back(bfr[i]);
-              }
             }
           }
         }
@@ -264,7 +268,7 @@ namespace Transports
       bool
       openSocket(void)
       {
-        char socket_addr[128] = {0};
+        char socket_addr[128] = { 0 };
         unsigned port = 0;
 
         if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", socket_addr, &port) != 2)
@@ -317,8 +321,7 @@ namespace Transports
         m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
         if (m_addr < 1 || m_addr > 15)
         {
-          throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"),
-                                               agent.c_str()));
+          throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
         }
 
         m_last_input = Clock::get();
@@ -333,12 +336,28 @@ namespace Transports
           }
           while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
 
-          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr) &&
-                (m_data_beacon.cid_settings_msg.status_flags == 0x1) &&
-                (m_data_beacon.cid_settings_msg.status_output == 63)))
+          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
+
+          if( m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
+            m_usbl_receiver = true;
+
+          uint8_t output_flags = (ENVIRONMENT_FLAG | ATTITUDE_FLAG
+                                  | MAG_CAL_FLAG | ACC_CAL_FLAG
+                                  | AHRS_RAW_DATA_FLAG | AHRS_COMP_DATA_FLAG);
+
+          uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
+
+          if (m_usbl_receiver)
+            xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
+
+          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
+                && (m_data_beacon.cid_settings_msg.status_flags == STATUS_MODE_1HZ)
+                && (m_data_beacon.cid_settings_msg.status_output == output_flags)
+                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)))
           {
-            m_data_beacon.cid_settings_msg.status_flags = 0x1;
-            m_data_beacon.cid_settings_msg.status_output = 63;
+            m_data_beacon.cid_settings_msg.status_flags = STATUS_MODE_1HZ;
+            m_data_beacon.cid_settings_msg.status_output = output_flags;
+            m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
@@ -394,6 +413,8 @@ namespace Transports
       {
         if (m_stop_comms)
         {
+          war(DTR("Sending stopped: Communication out of water forbidden."));
+          clearTicket(IMC::UamTxStatus::UTS_FAILED);
           m_data_beacon.cid_dat_send_msg.lock_flag = 0;
           return;
         }
@@ -424,10 +445,7 @@ namespace Transports
       {
         if (m_data_beacon.cid_dat_receive_msg.ack_flag != 0)
         {
-          // ACK message that the message was successfully delivered
-          m_data_beacon.cid_dat_receive_msg.ack_flag = 0;
-
-          // if msg have more than 1 packet, send next part
+          // if msg has more than 1 packet, send next part
           if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
@@ -435,22 +453,10 @@ namespace Transports
           else
           {
             // Last packet sent.
-            // Range can be computed when the target beacon replies with ACK.
-            double range_dist = (double)m_data_beacon.cid_dat_receive_msg.aco_fix.range_dist;
-            range_dist /= 10;
+            // Acoustic information can be computed when the target beacon replies with ACK.
+            handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
 
-            if (range_dist > 0)
-            {
-              IMC::UamRxRange range;
-              range.sys = lookupSystemName(m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id);
-              if (m_ticket != NULL)
-                range.seq = m_ticket->seq;
-
-              range.value = range_dist;
-              dispatch(range);
-            }
-
-            // Data comunicaton Done
+            // Data communication done
             clearTicket(IMC::UamTxStatus::UTS_DONE);
           }
           return;
@@ -480,7 +486,7 @@ namespace Transports
       handleRxMessage(const std::string& str)
       {
         IMC::UamRxFrame msg;
-        msg.data.assign((uint8_t*)&str[0], (uint8_t*)&str[str.size()]);
+        msg.data.assign((uint8_t*) &str[0], (uint8_t*) &str[str.size()]);
 
         // Lookup source system name.
         try
@@ -504,11 +510,123 @@ namespace Transports
 
         // Fill flags.
         if (m_addr != m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id)
-        {
           msg.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
-        }
+
         msg.flags |= IMC::UamRxFrame::URF_DELAYED;
         dispatch(msg);
+        handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
+      }
+
+      //! Handle acoustic information from received data.
+      //! param[in] aco_fix Acoustic information field of the received message.
+      void
+      handleAcousticInformation(const Acofix_t& aco_fix)
+      {
+        std::string sys_src = "unknown";
+        // Lookup source system name.
+        try
+        {
+          sys_src = lookupSystemName(aco_fix.src_id);
+        }
+        catch (...)
+        { }
+
+        // Compute range from received data;
+        if (aco_fix.outputflags_list[0])
+        {
+          double range_dist = (double) aco_fix.range_dist;
+          range_dist /= 10;
+
+          if (range_dist > 0)
+          {
+            IMC::UamRxRange range;
+            range.sys = sys_src;
+            if (m_ticket != NULL)
+              range.seq = m_ticket->seq;
+
+            range.value = range_dist;
+            dispatch(range);
+          }
+        }
+
+        // Compute USBL position from received data;
+        if (aco_fix.outputflags_list[2])
+        {
+          IMC::UsblPositionExtended usblPosition;
+          usblPosition.target = sys_src;
+          usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
+          usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
+          usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
+          usblPosition.e = aco_fix.position_easting / 10.0;
+          usblPosition.n = aco_fix.position_northing / 10.0;
+          usblPosition.d = aco_fix.position_depth / 10.0;
+
+          dispatch(usblPosition);
+        }
+        else // Mimics Evologic: Only if position is not computed, compute angles.
+        {
+          // Compute USBL angles from received data only if the beacon has an USBL receiver.
+          // Seatrac X110/X010 set this flag but it hasn't an USBL able to calculate
+          // all angles appropriately.
+          if (aco_fix.outputflags_list[1] && m_usbl_receiver)
+          {
+            IMC::UsblAnglesExtended usblAnglesMsg;
+            usblAnglesMsg.target = sys_src;
+            usblAnglesMsg.lbearing = Angles::radians(aco_fix.usbl_azimuth / 10.0);
+            usblAnglesMsg.lelevation = Angles::radians(aco_fix.usbl_elevation / 10.0);
+            usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
+            usblAnglesMsg.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
+            usblAnglesMsg.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
+
+            dispatch(usblAnglesMsg);
+          }
+        }
+      }
+
+      //! Handle errors of communication with both local and remote beacon.
+      //! The method tries to send the packet again until it reaches the maximum
+      //! number of retries. @see MAX_MESSAGE_ERRORS.
+      void
+      handleCommunicationError(void)
+      {
+        if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+        {
+          m_oway_timer.reset();
+          sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+        }
+        else
+        {
+          war(DTR("Communication failed"));
+          clearTicket(IMC::UamTxStatus::UTS_FAILED);
+        }
+      }
+
+      //! Handle the response to a CID_Data_Send command.
+      //! If the acknowledged message is an OWAY and it is compound
+      //! by more than one packet, the method sends the following packet.
+      //! If the sending fails, it tries to send the packet again.
+      //! If the modem is busy, it tries to send the packet to poll the status.
+      void
+      handleDatSendResponse(void)
+      {
+        if (m_data_beacon.cid_dat_send_msg.status == CST_OK) 
+        {
+          if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
+              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
+          {
+            // if msg has more than 1 packet, send next part
+            if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
+            {
+              m_oway_timer.setTop(m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate);
+              sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+            }
+          }
+        }
+        else 
+        {
+          if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
+            handleCommunicationError();
+        }
       }
 
       void
@@ -517,6 +635,7 @@ namespace Transports
         std::string hex = String::toHex(msg->data);
         std::vector<char> data_t;
         std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
+
         if (msg->getDestination() != getSystemId())
           return;
 
@@ -555,14 +674,33 @@ namespace Transports
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
-        if (ticket.addr != 0)
-          m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQ;
+        // Fill the message type.
+        if ((ticket.addr != 0) && (ticket.ack == true))
+        {
+          if (m_args.usbl_mode)
+          {
+            if (m_args.enhanced_usbl)
+              m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQX;
+            else
+              m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQU;
+          }
+          else
+          {
+            m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQ;
+          }
+        }
         else
-          m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAY;
+        {
+          if (m_args.usbl_mode)
+            m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAYU;
+          else
+            m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAY;
+        }
 
-        int error_code = m_data_beacon.cid_dat_send_msg.packetDataBuild(data_t, ticket.addr);
+        int code;
+        code = m_data_beacon.cid_dat_send_msg.packetDataBuild(data_t, ticket.addr);
 
-        switch (error_code)
+        switch (code)
         {
           case 1:
             inf(DTR("device is busy"));
@@ -574,7 +712,9 @@ namespace Transports
             err(DTR("size mismatch"));
             break;
           default:
+            m_oway_timer.setTop(m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+            break;
         }
       }
 
@@ -599,7 +739,8 @@ namespace Transports
       //! @param[in] reason reason value.
       //! @param[in] error error message.
       void
-      clearTicket(IMC::UamTxStatus::ValueEnum reason, const std::string& error = "")
+      clearTicket(IMC::UamTxStatus::ValueEnum reason,
+                  const std::string& error = "")
       {
         if (m_ticket != NULL)
         {
@@ -626,9 +767,8 @@ namespace Transports
       {
         MapName::iterator itr = m_modem_names.find(name);
         if (itr == m_modem_names.end())
-        {
           throw std::runtime_error("unknown system name");
-        }
+
         return itr->second;
       }
 
@@ -640,9 +780,8 @@ namespace Transports
       {
         MapAddr::iterator itr = m_modem_addrs.find(addr);
         if (itr == m_modem_addrs.end())
-        {
           throw std::runtime_error("unknown system address");
-        }
+
         return itr->second;
       }
 
@@ -656,6 +795,7 @@ namespace Transports
         {
           consumeMessages();
           readSentence();
+          checkTxOWAY();
 
           if (m_state_entity != STA_ERR_STP)
           {
@@ -664,7 +804,8 @@ namespace Transports
             else
               setAndSendState(STA_IDLE);
           }
-        } while (Clock::get() <= deadline);
+        }
+        while (Clock::get() <= deadline);
       }
 
       void
@@ -676,14 +817,36 @@ namespace Transports
             m_stop_comms = false;
           else
             m_stop_comms = true;
-
           return;
         }
 
-        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-          m_stop_comms = true;
-        else
-          m_stop_comms = false;
+        m_stop_comms = false;
+      }
+      
+      //! Checks if an OWAY message is waiting to be sent.
+      void
+      checkTxOWAY(void) {
+        
+        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus()) 
+        {
+          if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
+              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
+          {
+            if (m_oway_timer.overflow())
+            {
+              if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+              {
+                m_oway_timer.setTop(m_oway_timer.getTop() / 2); 
+                sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+              }
+              else 
+              {
+                war(DTR("OWAY transmission failed."));
+                clearTicket(IMC::UamTxStatus::UTS_FAILED);
+              }
+            }
+          }
+        }
       }
 
       //! Main loop.

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -64,6 +66,8 @@ namespace Sensors
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
     static const uint8_t c_code_plan = 0x2;
+    // Reverse range code.
+    static const uint8_t c_code_reverse_range = 0x3;
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
@@ -163,6 +167,8 @@ namespace Sensors
       bool m_ignore_gpio;
       //! Current line.
       std::string m_line;
+      // System position
+      IMC::EstimatedState *m_estate;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -170,7 +176,8 @@ namespace Sensors
         m_op_deadline(-1.0),
         m_pc(NULL),
         m_op(OP_NONE),
-        m_gpio_txd(NULL)
+        m_gpio_txd(NULL),
+        m_estate(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -243,6 +250,7 @@ namespace Sensors
 
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       ~Task(void)
@@ -299,13 +307,13 @@ namespace Sensors
 
         try
         {
-          if (openSocket())
-            return;
-
-          SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          port->setCanonicalInput(true);
-          port->flush();
-          m_handle = port;
+          if (!openSocket())
+          {
+             SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+             port->setCanonicalInput(true);
+             port->flush();
+             m_handle = port;
+           }
         }
         catch (std::runtime_error& e)
         {
@@ -324,6 +332,8 @@ namespace Sensors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
+      //! Check if we have a TCP socket as device input argument.
+      //! @return true if it is a TCP socket, false otherwise.
       bool
       openSocket(void)
       {
@@ -378,11 +388,11 @@ namespace Sensors
           return true;
 
         err("%s", DTR("transducer not connected"));
-        m_acop_out.op = IMC::AcousticOperation::AOP_NO_TXD;
-        dispatch(m_acop_out);
         return false;
       }
 
+      //! Send and log command.
+      //! @param[in] cmd command to be sent.
       void
       sendCommand(const std::string& cmd)
       {
@@ -390,6 +400,12 @@ namespace Sensors
         m_handle->writeString(cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        Memory::replace(m_estate, new IMC::EstimatedState(*msg));
       }
 
       void
@@ -404,6 +420,16 @@ namespace Sensors
 
         m_acop = *msg;
 
+        // check if we have a transducer connected.
+        if (!hasTransducer())
+        {
+          m_acop_out.op = IMC::AcousticOperation::AOP_NO_TXD;
+          m_acop_out.system = msg->system;
+          dispatch(m_acop_out);
+          return;
+        }
+
+        // check desired operation.
         switch (msg->op)
         {
           case IMC::AcousticOperation::AOP_ABORT:
@@ -415,18 +441,26 @@ namespace Sensors
           case IMC::AcousticOperation::AOP_MSG:
             transmitMessage(msg->system, msg->msg);
             break;
+          case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+            reverseRange(msg->system);
+            break;
         }
       }
 
+      //! Transmit message to modem.
+      //! @param[in] sys destination system.
+      //! @param[in] imsg message to be sent.
       void
       transmitMessage(const std::string& sys, const InlineMessage<IMC::Message>& imsg)
       {
-        if (!hasTransducer())
-          return;
-
         MicroModemMap::iterator itr = m_ummap.find(sys);
         if (itr == m_ummap.end())
+        {
+          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+          m_acop_out.system = sys;
+          dispatch(m_acop_out);
           return;
+        }
 
         const IMC::Message* msg = NULL;
         std::string command;
@@ -477,14 +511,46 @@ namespace Sensors
       }
 
       void
+      reverseRange(const std::string& sys)
+      {
+        MicroModemMap::iterator itr = m_ummap.find(sys);
+        if (itr == m_ummap.end() || m_estate == NULL)
+        {
+          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+          m_acop_out.system = sys;
+          dispatch(m_acop_out);
+          return;
+        }
+
+        double lat = m_estate->lat, lon = m_estate->lon, depth = m_estate->depth;
+        WGS84::displace(m_estate->x, m_estate->y, &lat, &lon);
+        float slat = (float)lat, slon = (float) lon;
+        std::vector<char> pmsg(c_binary_size, 0);
+        int8_t sdep = (int8_t) depth;
+
+        // Make packet.
+        pmsg[0] = (char)c_code_reverse_range;
+        std::memcpy(&pmsg[1], &slat, 4);
+        std::memcpy(&pmsg[5], &slon, 4);
+        std::memcpy(&pmsg[9], &sdep, 1);
+
+        std::string hex = String::toHex(pmsg);
+        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n", m_address, itr->second, hex.c_str());
+        sendCommand(cmd);
+
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+        sendCommand(cyc);
+      }
+
+      //! Abort system.
+      //! @param[in] sys system to be aborted.
+      void
       abort(const std::string& sys)
       {
-        if (!hasTransducer())
-          return;
-
         NarrowBandMap::iterator nitr = m_nbmap.find(sys);
         if (nitr != m_nbmap.end())
         {
+          m_acop_out.system = sys;
           m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
           dispatch(m_acop_out);
           return;
@@ -493,6 +559,7 @@ namespace Sensors
         MicroModemMap::iterator itr = m_ummap.find(sys);
         if (itr == m_ummap.end())
         {
+          m_acop_out.system = sys;
           m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
           dispatch(m_acop_out);
           return;
@@ -504,15 +571,13 @@ namespace Sensors
         m_op_deadline = Clock::get() + m_args.tout_abort;
       }
 
+      //! Range system.
+      //! @param[in] sys system to be ranged.
       void
       ping(const std::string& sys)
       {
-        if (!hasTransducer())
-          return;
-
         {
           MicroModemMap::iterator itr = m_ummap.find(sys);
-
           if (itr != m_ummap.end())
           {
             pingMicroModem(sys);
@@ -522,7 +587,6 @@ namespace Sensors
 
         {
           NarrowBandMap::iterator itr = m_nbmap.find(sys);
-
           if (itr != m_nbmap.end())
           {
             pingNarrowBand(sys);
@@ -535,6 +599,8 @@ namespace Sensors
         dispatch(m_acop_out);
       }
 
+      //! Ping a modem address.
+      //! @param[in] sys system to be pinged.
       void
       pingMicroModem(const std::string& sys)
       {
@@ -549,6 +615,8 @@ namespace Sensors
         m_op_deadline = Clock::get() + m_args.tout_mmping;
       }
 
+      //! Ping a narrow band frequency.
+      //! @param[in] sys transducer to be pinged.
       void
       pingNarrowBand(const std::string& sys)
       {
@@ -568,13 +636,14 @@ namespace Sensors
         m_op_deadline = Clock::get() + m_args.tout_nbping;
       }
 
+      //! Handle received range from modem.
+      //! @param[in] stn sentence to be handled.
       void
-      handleCAMPR(std::auto_ptr<NMEAReader>& stn)
+      handleRangeModem(NMEAReader* const stn)
       {
         unsigned src = 0;
-        *stn >> src;
         unsigned dst = 0;
-        *stn >> dst;
+        *stn >> src >> dst;
 
         if (dst != m_address)
           return;
@@ -597,8 +666,10 @@ namespace Sensors
         resetOp();
       }
 
+      //! Handle received range from transponder.
+      //! @param[in] stn sentence to be handled.
       void
-      handleSNTTA(std::auto_ptr<NMEAReader>& stn)
+      handleRangeTransponder(NMEAReader* const stn)
       {
         double ttime = 0;
 
@@ -622,17 +693,15 @@ namespace Sensors
         resetOp();
       }
 
+      //! Handle a mini-packet reception.
+      //! @param[in] stn sentence to be handled.
       void
-      handleCAMUA(std::auto_ptr<NMEAReader>& stn)
+      handleMiniPacketReception(NMEAReader* const stn)
       {
         unsigned src = 0;
-        *stn >> src;
         unsigned dst = 0;
-        *stn >> dst;
-
-        // Get value.
         std::string val;
-        *stn >> val;
+        *stn >> src >> dst >> val;
 
         unsigned value = 0;
         std::sscanf(val.c_str(), "%04X", &value);
@@ -666,8 +735,10 @@ namespace Sensors
         }
       }
 
+      //! A requested range is in progress.
+      //! @param[in] stn sentence to be handled.
       void
-      handleCAMPCSNPNT(std::auto_ptr<NMEAReader>& stn)
+      handleRangeInProgress(NMEAReader* const stn)
       {
         (void)stn;
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_IP;
@@ -675,8 +746,10 @@ namespace Sensors
         dispatch(m_acop_out);
       }
 
+      //! Requested mini-packet transmission is in progress.
+      //! @param[in] stn sentence to be handled.
       void
-      handleCAMUC(std::auto_ptr<NMEAReader>& stn)
+      handleMiniPacketEcho(NMEAReader* const stn)
       {
         unsigned src = 0;
         unsigned dst = 0;
@@ -694,13 +767,12 @@ namespace Sensors
         }
       }
 
+      //! Handle reception of binary message.
+      //! @param[in] stn sentence to be handled.
       void
-      handleCARXD(std::auto_ptr<NMEAReader>& stn)
+      handleBinaryReception(NMEAReader* const stn)
       {
-        unsigned src;
-        unsigned dst;
-        unsigned ack;
-        unsigned fnr;
+        unsigned src, dst, ack, fnr;
         std::string hex;
 
         try
@@ -722,16 +794,13 @@ namespace Sensors
 
         if (code == c_code_report)
         {
-          float lat;
-          float lon;
-          uint8_t depth;
-          int16_t yaw;
-          int16_t alt;
-          uint16_t ranges[2];
+          float lat, lon;
 
           int8_t progress;
-          uint8_t fuel_level;
-          uint8_t fuel_conf;
+          uint8_t depth, fuel_level, fuel_conf;
+
+          int16_t yaw, alt;
+          uint16_t ranges[2];
 
           std::memcpy(&lat, msg_raw + 1, 4);
           std::memcpy(&lon, msg_raw + 5, 4);
@@ -764,12 +833,43 @@ namespace Sensors
           es.lon = lon;
           es.depth = (float)depth;
           es.psi = (float)yaw / 100.0;
-          es.alt = (float)alt / 10.0;
+
+          if (alt >= -10)
+            es.alt = (float)alt / 10.0;
           dispatch(es);
+
+          if (alt < -10) {
+            IMC::Salinity sal;
+            sal.value = - ((float)alt / 10.0);
+            sal.setSource(m_mimap[src]);
+            dispatch(sal);
+          }
 
           IMC::PlanControlState pcs;
           pcs.setSource(m_mimap[src]);
-          pcs.plan_progress = (float)progress;
+
+          int state = progress / 10;
+
+          switch (state)
+          {
+            case (-1):
+              pcs.state = PlanControlState::PCS_BLOCKED;
+              pcs.last_outcome = progress % 10;
+              break;
+            case (-2):
+              pcs.state = PlanControlState::PCS_READY;
+              pcs.last_outcome = progress % 10;
+              break;
+            case (-3):
+              pcs.state = PlanControlState::PCS_INITIALIZING;
+              pcs.last_outcome = progress % 10;
+              break;
+            default:
+              pcs.state = PlanControlState::PCS_EXECUTING;
+              pcs.plan_progress = (float)progress;
+              break;
+          }
+
           dispatch(pcs);
 
           // Inform if progress is valid.
@@ -826,30 +926,33 @@ namespace Sensors
         m_dev_data.value.assign(sanitize(msg));
         dispatch(m_dev_data);
 
+        NMEAReader* const stn = new NMEAReader(msg);
         try
         {
-          std::auto_ptr<NMEAReader> stn = std::auto_ptr<NMEAReader>(new NMEAReader(msg));
           if (std::strcmp(stn->code(), "CAMPR") == 0)
-            handleCAMPR(stn);
+            handleRangeModem(stn);
           else if (std::strcmp(stn->code(), "CAMUA") == 0)
-            handleCAMUA(stn);
+            handleMiniPacketReception(stn);
           else if (std::strcmp(stn->code(), "CAMPC") == 0)
-            handleCAMPCSNPNT(stn);
+            handleRangeInProgress(stn);
           else if (std::strcmp(stn->code(), "SNPNT") == 0)
-            handleCAMPCSNPNT(stn);
+            handleRangeInProgress(stn);
           else if (std::strcmp(stn->code(), "CAMUC") == 0)
-            handleCAMUC(stn);
+            handleMiniPacketEcho(stn);
           else if (std::strcmp(stn->code(), "SNTTA") == 0)
-            handleSNTTA(stn);
+            handleRangeTransponder(stn);
           else if (std::strcmp(stn->code(), "CARXD") == 0)
-            handleCARXD(stn);
+            handleBinaryReception(stn);
         }
         catch (std::exception& e)
         {
           err("%s", e.what());
         }
+
+        delete stn;
       }
 
+      //! Check operation timeouts.
       void
       checkTimeouts(void)
       {

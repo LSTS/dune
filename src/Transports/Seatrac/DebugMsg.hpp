@@ -8,21 +8,24 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_DEBUG_MSG_HPP_INCLUDED_
@@ -51,7 +54,6 @@ namespace Transports
     void
     printAcoFixData(std::string msg_name, Acofix_t* aco_fix, Tasks::Task* task = NULL)
     {
-      int i;
       task->debug("data_Beacon.%s.aco_fix.dest_id        %d ",
                   msg_name.c_str(), aco_fix->dest_id);
       task->debug("data_Beacon.%s.aco_fix.src_id         %d ",
@@ -90,7 +92,7 @@ namespace Transports
         task->debug("data_Beacon.%s.aco_fix.usbl_channels %d",
                     msg_name.c_str(), aco_fix->usbl_channels);
 
-        for (i = 0; i < aco_fix->usbl_channels; i++)
+        for (int i = 0; i < aco_fix->usbl_channels; i++)
           task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d",
                       msg_name.c_str(), aco_fix->usbl_rssi[i]);
 
@@ -122,8 +124,6 @@ namespace Transports
     printDebugFunction(unsigned message_type, DataSeatrac& data_Beacon,
                        Tasks::Task* task = NULL)
     {
-
-      int i;
 
       switch(message_type)
       {
@@ -272,15 +272,15 @@ namespace Transports
           break;
 
         case CID_PING_SEND:
-          task->debug("MESSAGE  CID_PING_SEND AK");
+          task->debug("MESSAGE  CID_PING_SEND ACK");
           task->debug("data_Beacon.cid_ping_send_msg.status %d",
                       (int)data_Beacon.cid_ping_send_msg.status);
           task->debug("data_Beacon.cid_ping_send_msg.beacon_id %d",
                       (int)data_Beacon.cid_ping_send_msg.beacon_id);
           break;
 
-        case CID_DAT_SEND: // Report of CID_DAT_SEND opeeration
-          task->debug("MESSAGE  CID_DAT_SEND AK ");
+        case CID_DAT_SEND: // Report of CID_DAT_SEND operation
+          task->debug("MESSAGE  CID_DAT_SEND ACK ");
           task->debug("data_Beacon.cid_dat_send_msg.status %d",
                       (int)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
@@ -295,7 +295,7 @@ namespace Transports
                       (int)data_Beacon.cid_dat_receive_msg.ack_flag);
           task->debug("data_Beacon.cid_dat_receive_msg.packet_len %d",
                       (int)data_Beacon.cid_dat_receive_msg.packet_len);
-          for (i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
+          for (int i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
             task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%d] %d ", i,
                         (unsigned)data_Beacon.cid_dat_receive_msg.packet_data[i]);
           break;
@@ -501,6 +501,93 @@ namespace Transports
                       data_Beacon.cid_nav_ref_pos_update_msg.position_latitude);
           task->debug("data_Beacon.cid_nav_ref_pos_update_msg.position_longitude %d",
                       data_Beacon.cid_nav_ref_pos_update_msg.position_longitude);
+          break;
+
+        case CID_SYS_INFO:
+          task->debug("CID_SYS_INFO");
+          task->debug("data_Beacon.cid_sys_info.seconds %d",
+                      data_Beacon.cid_sys_info.seconds);
+          task->debug("data_Beacon.cid_sys_info.section %d",
+                      data_Beacon.cid_sys_info.section);
+          task->debug("data_Beacon.cid_sys_info.hardware.part_number %d",
+                      data_Beacon.cid_sys_info.hardware.part_number);
+          task->debug("data_Beacon.cid_sys_info.hardware.part_rev %d",
+                      data_Beacon.cid_sys_info.hardware.part_rev);
+          task->debug("data_Beacon.cid_sys_info.hardware,serial_number %d",
+                      data_Beacon.cid_sys_info.hardware.serial_number);
+          task->debug("data_Beacon.cid_sys_info.hardware.flags_sys %d",
+                      data_Beacon.cid_sys_info.hardware.flags_sys);
+          task->debug("data_Beacon.cid_sys_info.hardware.flags_user %d",
+                      data_Beacon.cid_sys_info.hardware.flags_user);
+          task->debug("data_Beacon.cid_sys_info.boot_firmware.valid %d",
+                      data_Beacon.cid_sys_info.boot_firmware.valid);
+          task->debug("data_Beacon.cid_sys_info.boot_firmware.part_number %d",
+                      data_Beacon.cid_sys_info.boot_firmware.part_number);
+          task->debug("data_Beacon.cid_sys_info.boot_firmware.version_maj %d",
+                      data_Beacon.cid_sys_info.boot_firmware.version_maj);
+          task->debug("data_Beacon.cid_sys_info.boot_firmware.version_min %d",
+                      data_Beacon.cid_sys_info.boot_firmware.version_min);
+          task->debug("data_Beacon.cid_sys_info.boot_firmware.version_build %d",
+                      data_Beacon.cid_sys_info.boot_firmware.version_build);
+          task->debug("data_Beacon.cid_sys_info.boot_firmware.checksum %d",
+                      data_Beacon.cid_sys_info.boot_firmware.checksum);
+          task->debug("data_Beacon.cid_sys_info.main_firmware.valid %d",
+                      data_Beacon.cid_sys_info.main_firmware.valid);
+          task->debug("data_Beacon.cid_sys_info.main_firmware.part_number %d",
+                      data_Beacon.cid_sys_info.main_firmware.part_number);
+          task->debug("data_Beacon.cid_sys_info.main_firmware.version_maj %d",
+                      data_Beacon.cid_sys_info.main_firmware.version_maj);
+          task->debug("data_Beacon.cid_sys_info.main_firmware.version_min %d",
+                      data_Beacon.cid_sys_info.main_firmware.version_min);
+          task->debug("data_Beacon.cid_sys_info.main_firmware.version_build %d",
+                      data_Beacon.cid_sys_info.main_firmware.version_build);
+          task->debug("data_Beacon.cid_sys_info.main_firmware.checksum %d",
+                      data_Beacon.cid_sys_info.main_firmware.checksum);
+          break;
+
+        case CID_XCVR_USBL:
+          task->debug("CID_XCVR_USBL");
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_sig_peak %f",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_sig_peak);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_threshold %f",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_threshold);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_cross_point %d",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_cross_point);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_cross_mag %f",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_cross_mag);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_detect %d",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_detect);
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_length %d",
+                      data_Beacon.cid_xcvr_usbl_msg.xcor_length);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.xcor_length; i++)
+          {
+            task->debug("data_Beacon.cid_xcvr_usbl_msg.xcor_data[%d] %f", i,
+                        data_Beacon.cid_xcvr_usbl_msg.xcor_data[i]);
+          }
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.channels %d",
+                      data_Beacon.cid_xcvr_usbl_msg.channels);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.channels; i++)
+          {
+            task->debug("data_Beacon.cid_xcvr_usbl_msg.channel_rssi[%d] %d", i,
+                        data_Beacon.cid_xcvr_usbl_msg.channel_rssi[i]);
+          }
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.baselines %d",
+                      data_Beacon.cid_xcvr_usbl_msg.baselines);
+          for(uint16_t i = 0; i < data_Beacon.cid_xcvr_usbl_msg.baselines; i++)
+          {
+            task->debug("data_Beacon.cid_xcvr_usbl_msg.phase_angle[%d] %f", i,
+                        data_Beacon.cid_xcvr_usbl_msg.phase_angle[i]);
+          }
+
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.signal_azimuth %d",
+                      data_Beacon.cid_xcvr_usbl_msg.signal_azimuth);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.signal_elevation %d",
+                      data_Beacon.cid_xcvr_usbl_msg.signal_elevation);
+          task->debug("data_Beacon.cid_xcvr_usbl_msg.signal_fit_error %f",
+                      data_Beacon.cid_xcvr_usbl_msg.signal_fit_error);
           break;
 
         default:

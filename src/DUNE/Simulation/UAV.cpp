@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Bencatel                                                 *
@@ -37,11 +39,7 @@
 #include <algorithm>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
 #include <DUNE/Simulation/UAV.hpp>
-#include <DUNE/Math/Matrix.hpp>
-#include <DUNE/Math/Angles.hpp>
-#include <DUNE/Math/General.hpp>
 
 namespace DUNE
 {
@@ -112,7 +110,7 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& vel):
       m_task(task),
       // Simulation type
       m_sim_type("3DOF")
@@ -123,7 +121,7 @@ namespace DUNE
       setVelocity(vel);
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& vel,
                                  const double& alt_time_cst):
       m_task(task),
       // Simulation type
@@ -140,7 +138,7 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst):
       m_task(task),
@@ -161,7 +159,7 @@ namespace DUNE
       m_speed_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst,
                                  const double& alt_time_cst):
@@ -186,7 +184,7 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst,
                                  const double& airspeed_cmd, const double& bank_cmd):
@@ -214,8 +212,8 @@ namespace DUNE
       commandAirspeed(airspeed_cmd);
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos,
-                                 const DUNE::Math::Matrix& vel):
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& pos,
+                                 const Math::Matrix& vel):
       m_task(task),
       // Simulation type
       m_sim_type("3DOF")
@@ -229,8 +227,8 @@ namespace DUNE
       setVelocity(vel);
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos,
-                                 const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& pos,
+                                 const Math::Matrix& vel,
                                  const double& alt_time_cst):
       m_task(task),
       // Simulation type
@@ -250,8 +248,8 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos,
-                                 const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& pos,
+                                 const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst):
       m_task(task),
@@ -275,8 +273,8 @@ namespace DUNE
       m_speed_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos,
-                                 const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& pos,
+                                 const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst,
                                  const double& alt_time_cst):
@@ -304,8 +302,8 @@ namespace DUNE
       m_alt_time_cst_f = true;
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos,
-                                 const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& pos,
+                                 const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst,
                                  const double& airspeed_cmd, const double& bank_cmd):
@@ -336,8 +334,8 @@ namespace DUNE
       commandAirspeed(airspeed_cmd);
     }
 
-    UAVSimulation::UAVSimulation(Tasks::Task& task, const DUNE::Math::Matrix& pos,
-                                 const DUNE::Math::Matrix& vel,
+    UAVSimulation::UAVSimulation(Tasks::Task& task, const Math::Matrix& pos,
+                                 const Math::Matrix& vel,
                                  const double& bank_time_cst,
                                  const double& speed_time_cst,
                                  const double& alt_time_cst,
@@ -384,8 +382,6 @@ namespace DUNE
       // Environment parameters
       // Wind state vector
       m_wind = model.m_wind;
-      // - Gravity acceleration
-      m_g = model.m_g;
 
       // Time step control
       m_timestep_lim = 1.0;
@@ -463,8 +459,7 @@ namespace DUNE
       // Environment parameters
       // Wind state vector
       m_wind = Math::Matrix(3, 1, 0.0);
-      // - Gravity acceleration
-      m_g = 9.8066;
+
       // Time step control
       m_timestep_lim = 1.0;
 
@@ -679,8 +674,8 @@ namespace DUNE
       double d_initial_yaw = m_position(5);
       // Vertical position and Euler angles state update
       m_position.set(2, 5, 0, 0, m_position.get(2, 5, 0, 0) + m_velocity.get(2, 5, 0, 0) * timestep);
-      m_position(3) = DUNE::Math::Angles::normalizeRadian(m_position(3));
-      m_position(5) = DUNE::Math::Angles::normalizeRadian(m_position(5));
+      m_position(3) = Math::Angles::normalizeRadian(m_position(3));
+      m_position(5) = Math::Angles::normalizeRadian(m_position(5));
       // Optimization variables
       m_cos_yaw = std::cos(m_position(5));
       m_sin_yaw = std::sin(m_position(5));
@@ -755,7 +750,7 @@ namespace DUNE
       m_position(3) = m_bank_cmd;
 
       // Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3)) / m_airspeed;
+      m_velocity(5) = Math::c_gravity * std::tan(m_position(3)) / m_airspeed;
 
       updateVelocity();
     }
@@ -797,19 +792,19 @@ namespace DUNE
       if (m_vert_slope_lim_f)
       {
         double d_vert_rate_lim = m_vert_slope_lim * m_airspeed;
-        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), - d_vert_rate_lim, d_vert_rate_lim);
+        m_velocity(2) = Math::trimValue(m_velocity(2), - d_vert_rate_lim, d_vert_rate_lim);
       }
       else
         // The vertical speed should not exceed the airspeed, even if there is no specified vertical slope limit
-        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), - m_airspeed, m_airspeed);
+        m_velocity(2) = Math::trimValue(m_velocity(2), - m_airspeed, m_airspeed);
 
       // - Computing flight path angle
       m_sin_pitch = - m_velocity(2) / m_airspeed;
       m_cos_pitch = std::sqrt(1 - m_sin_pitch * m_sin_pitch);
-      m_position(4) = Angles::normalizeRadian(std::asin(m_sin_pitch) * 2) / 2;
+      m_position(4) = Math::Angles::normalizeRadian(std::asin(m_sin_pitch) * 2) / 2;
 
       // Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3)) / m_airspeed;
+      m_velocity(5) = Math::c_gravity * std::tan(m_position(3)) / m_airspeed;
 
       updateVelocity();
     }
@@ -838,18 +833,18 @@ namespace DUNE
       integratePosition(timestep);
 
       // Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3)) / m_airspeed;
+      m_velocity(5) = Math::c_gravity * std::tan(m_position(3)) / m_airspeed;
 
       // Command effect
       // - Horizontal acceleration command
       double d_lon_accel = (m_airspeed_cmd - m_airspeed) / m_speed_time_cst;
       if (m_lon_accel_lim_f)
-        d_lon_accel = DUNE::Math::trimValue(d_lon_accel, - m_lon_accel_lim, m_lon_accel_lim);
+        d_lon_accel = Math::trimValue(d_lon_accel, - m_lon_accel_lim, m_lon_accel_lim);
       m_airspeed += d_lon_accel * timestep;
       // - Roll rate command
       m_velocity(3) = (m_bank_cmd - m_position(3)) / m_bank_time_cst;
       if (m_bank_rate_lim_f)
-        m_velocity(3) = DUNE::Math::trimValue(m_velocity(3), - m_bank_rate_lim, m_bank_rate_lim);
+        m_velocity(3) = Math::trimValue(m_velocity(3), - m_bank_rate_lim, m_bank_rate_lim);
 
       // Wind effects
       m_velocity(2) = m_wind(2);
@@ -888,18 +883,18 @@ namespace DUNE
       integratePosition(timestep);
 
       // Turn rate
-      m_velocity(5) = m_g * std::tan(m_position(3)) / m_airspeed;
+      m_velocity(5) = Math::c_gravity * std::tan(m_position(3)) / m_airspeed;
 
       // Command effect
       // - Horizontal acceleration command
       double d_lon_accel = (m_airspeed_cmd - m_airspeed) / m_speed_time_cst;
       if (m_lon_accel_lim_f)
-        d_lon_accel = DUNE::Math::trimValue(d_lon_accel, - m_lon_accel_lim, m_lon_accel_lim);
+        d_lon_accel = Math::trimValue(d_lon_accel, - m_lon_accel_lim, m_lon_accel_lim);
       m_airspeed += d_lon_accel * timestep;
       // - Roll rate command
       m_velocity(3) = (m_bank_cmd - m_position(3)) / m_bank_time_cst;
       if (m_bank_rate_lim_f)
-        m_velocity(3) = DUNE::Math::trimValue(m_velocity(3), - m_bank_rate_lim, m_bank_rate_lim);
+        m_velocity(3) = Math::trimValue(m_velocity(3), - m_bank_rate_lim, m_bank_rate_lim);
       // - Vertical rate command
       if (m_altitude_cmd_ini)
         m_velocity(2) = ( - m_altitude_cmd - m_position(2)) / m_alt_time_cst;
@@ -908,23 +903,23 @@ namespace DUNE
       if (m_vert_slope_lim_f)
       {
         double d_vert_rate_lim = m_vert_slope_lim * m_airspeed;
-        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), - d_vert_rate_lim, d_vert_rate_lim);
+        m_velocity(2) = Math::trimValue(m_velocity(2), - d_vert_rate_lim, d_vert_rate_lim);
       }
       else
         // The vertical speed should not exceed the airspeed, even if there is no specified vertical slope limit
-        m_velocity(2) = DUNE::Math::trimValue(m_velocity(2), - m_airspeed, m_airspeed);
+        m_velocity(2) = Math::trimValue(m_velocity(2), - m_airspeed, m_airspeed);
 
 
       // - Computing flight path angle
       m_sin_pitch = - m_velocity(2) / m_airspeed;
       m_cos_pitch = std::sqrt(1 - m_sin_pitch * m_sin_pitch);
-      m_position(4) = Angles::normalizeRadian(std::asin(m_sin_pitch) * 2) / 2;
+      m_position(4) = Math::Angles::normalizeRadian(std::asin(m_sin_pitch) * 2) / 2;
 
       updateVelocity();
     }
 
     void
-    UAVSimulation::setPosition(const DUNE::Math::Matrix& pos)
+    UAVSimulation::setPosition(const Math::Matrix& pos)
     {
       int i_pos_size = pos.rows();
       if (i_pos_size < 2 && i_pos_size > 6)
@@ -946,7 +941,7 @@ namespace DUNE
     }
 
     void
-    UAVSimulation::setVelocity(const DUNE::Math::Matrix& vel)
+    UAVSimulation::setVelocity(const Math::Matrix& vel)
     {
       int i_vel_size = vel.rows();
       if (i_vel_size < 2 && i_vel_size > 6)
@@ -1025,14 +1020,14 @@ namespace DUNE
         m_vert_slope_lim_f = false;
     }
 
-    DUNE::Math::Matrix
+    Math::Matrix
     UAVSimulation::getPosition(void)
     {
       // Vehicle position
       return m_position;
     }
 
-    DUNE::Math::Matrix
+    Math::Matrix
     UAVSimulation::getVelocity(void)
     {
       // Vehicle velocity vector, relative to the ground, in the ground reference frame

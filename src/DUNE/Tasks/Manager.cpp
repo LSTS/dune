@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -44,6 +46,22 @@ namespace DUNE
 {
   namespace Tasks
   {
+    static const int c_high_task_cpu_usage = 10;
+
+    struct TaskCpuUsage
+    {
+      //! Task name.
+      std::string name;
+      //! Percentage of CPU usage.
+      int usage;
+
+      bool
+      operator<(const TaskCpuUsage& other) const
+      {
+        return usage < other.usage;
+      }
+    };
+
     Manager::Manager(Context& ctx):
       m_ctx(ctx)
     {
@@ -188,6 +206,62 @@ namespace DUNE
       std::map<std::string, Task*>::const_iterator itr = m_tasks.begin();
       for ( ; itr != m_tasks.end(); ++itr)
         itr->second->writeParamsXML(os);
+    }
+
+    void
+    Manager::measureCpuUsage(void)
+    {
+      std::map<std::string, Task*>::const_iterator itr = m_tasks.begin();
+
+      for ( ; itr != m_tasks.end(); ++itr)
+      {
+        Task* task = itr->second;
+        int value = task->getProcessorUsage();
+        if (value < 0 || value > 100)
+          continue;
+
+        m_task_cpu_usage.setSourceEntity(task->getEntityId());
+        m_task_cpu_usage.value = value;
+        task->dispatch(m_task_cpu_usage);
+
+        if (value >= c_high_task_cpu_usage)
+        {
+          TaskCpuUsage entry;
+          entry.usage = value;
+          entry.task = task;
+          m_cpu_usage_hogs.push(entry);
+        }
+      }
+    }
+
+    void
+    Manager::adjustPriorities(void)
+    {
+      while (!m_cpu_usage_hogs.empty())
+      {
+        TaskCpuUsage entry = m_cpu_usage_hogs.top();
+        m_cpu_usage_hogs.pop();
+        lowerHogPriority(entry.task, entry.usage);
+      }
+    }
+
+    void
+    Manager::lowerHogPriority(Task* task, int cpu_usage)
+    {
+      try
+      {
+        unsigned current_priority = task->getPriority();
+        unsigned minimum_priority = Concurrency::Scheduler::minimumPriority();
+        if (current_priority != minimum_priority)
+        {
+          task->setPriority(minimum_priority);
+          task->war(DTR("using %d%% of CPU, lowering the priority"), cpu_usage);
+        }
+      }
+      catch (...)
+      {
+        task->war(DTR("using %d%% of CPU, failed to lower the priority"), cpu_usage);
+      }
     }
   }
 }

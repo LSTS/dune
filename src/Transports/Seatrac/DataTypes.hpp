@@ -8,21 +8,24 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: João Teixeira                                                    *
+// Author: Raúl Sáez                                                        *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
@@ -32,6 +35,8 @@
 #define MAX_MESSAGE_ERRORS 5
 #define MAX_PACKET_LEN 31
 #define MAX_MESSAGE_PERIOD 30
+//! Defines the minimum message length without preamble nor postamble
+#define MIN_MESSAGE_LENGTH 6
 
 namespace Transports
 {
@@ -41,6 +46,8 @@ namespace Transports
 
     //! Input Timeout (s).
     static const double c_input_tout =  5;
+    //! The bitrate of acoustic communication (bits/second).
+    static const double c_acoustic_bitrate =  100;
     //! Message preamble
     static const char c_preamble = '$';
     //! Maximum buffer size.
@@ -120,6 +127,58 @@ namespace Transports
       CID_DEX_SEND = 0x75,
       CID_DEX_SOCKETS = 0x76,
       CID_DEX_RECEIVE = 0x77
+    };
+
+    // Beacon Type
+    enum BeaconType_E
+    {
+      BT_X110 = 0x34B,
+      BT_X150 = 0x31B
+    };
+
+
+    // Status Output Mode
+    enum StatusMode_E
+    {
+      STATUS_MODE_MANUAL = 0x0,
+      STATUS_MODE_1HZ = 0x1,
+      STATUS_MODE_2HZ5 = 0x2,
+      STATUS_MODE_5HZ = 0x3,
+      STATUS_MODE_10HZ = 0x4,
+      STATUS_MODE_25HZ = 0x5
+    };
+
+    // Status output flags
+    enum StatusOutputFlags_E
+    {
+      ENVIRONMENT_FLAG = 0x1,
+      ATTITUDE_FLAG = 0x2,
+      MAG_CAL_FLAG = 0x4,
+      ACC_CAL_FLAG = 0x8,
+      AHRS_RAW_DATA_FLAG = 0x10,
+      AHRS_COMP_DATA_FLAG = 0x20
+    };
+
+    // Control environment flags
+    enum ControlEnvFlags_E
+    {
+      AUTO_VOS_FLAG = 0x1,
+      AUTO_PRESSURE_OFS_FLAG = 0x2
+    };
+
+    // Control AHRS flags
+    enum ControlAhrsFlags_E
+    {
+      AUTO_CAL_MAG_FLAG = 0x1
+    };
+
+    // Control XCVR flags
+    enum ControlXcvrFlags_E {
+      USBL_USE_AHRS_FLAG = 0x1,
+      XCVR_POSFLT_ENABLE_FLAG = 0x2,
+      XCVR_USBL_MSGS_FLAG = 0x20,
+      XCVR_FIX_MSGS_FLAG = 0x40,
+      XCVR_DIAG_MSGS_FLAG = 0x80
     };
 
     // Msg status
@@ -233,6 +292,25 @@ namespace Transports
       int16_t gyro_offset_z;
     };
 
+    struct Hardware_t
+    {
+      uint16_t part_number;
+      uint8_t part_rev;
+      uint32_t serial_number;
+      uint16_t flags_sys;
+      uint16_t flags_user;
+    };
+
+    struct Firmware_t
+    {
+      uint8_t valid;
+      uint16_t part_number;
+      uint8_t version_maj;
+      uint8_t version_min;
+      uint16_t version_build;
+      uint32_t checksum;
+    };
+
     struct Acofix_t
     {
       uint8_t dest_id;
@@ -251,7 +329,7 @@ namespace Transports
       uint16_t range_dist;
       // USBL Fields.
       uint8_t usbl_channels;
-      int16_t usbl_rssi[4];
+      std::vector<int16_t> usbl_rssi;
       int16_t usbl_azimuth;
       int16_t usbl_elevation;
       int16_t usbl_fit_error;

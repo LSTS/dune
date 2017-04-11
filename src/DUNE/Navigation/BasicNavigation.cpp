@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: José Braga                                                       *
@@ -215,7 +217,6 @@ namespace DUNE
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
       m_dead_reckoning = false;
-      m_sum_euler_inc = false;
       m_alt_sanity = true;
       m_aligned = false;
       m_edelta_ts = 0.1;
@@ -234,9 +235,9 @@ namespace DUNE
       bind<IMC::Acceleration>(this);
       bind<IMC::AngularVelocity>(this);
       bind<IMC::DataSanity>(this);
-      bind<IMC::Distance>(this);
       bind<IMC::Depth>(this);
       bind<IMC::DepthOffset>(this);
+      bind<IMC::Distance>(this);
       bind<IMC::EulerAngles>(this);
       bind<IMC::EulerAnglesDelta>(this);
       bind<IMC::GpsFix>(this);
@@ -244,6 +245,7 @@ namespace DUNE
       bind<IMC::LblConfig>(this);
       bind<IMC::LblRange>(this);
       bind<IMC::Rpm>(this);
+      bind<IMC::UsblFixExtended>(this);
       bind<IMC::WaterVelocity>(this);
     }
 
@@ -288,7 +290,7 @@ namespace DUNE
       }
       catch (...)
       {
-        m_depth_eid = 0;
+        m_depth_eid = std::numeric_limits<unsigned>::max();
       }
 
       try
@@ -297,11 +299,8 @@ namespace DUNE
       }
       catch (...)
       {
-        m_ahrs_eid = 0;
+        m_ahrs_eid = std::numeric_limits<unsigned>::max();
       }
-
-      m_agvel_eid = m_ahrs_eid;
-      m_accel_eid = m_ahrs_eid;
 
       try
       {
@@ -309,7 +308,7 @@ namespace DUNE
       }
       catch (...)
       {
-        m_dvl_eid = 0;
+        m_dvl_eid = std::numeric_limits<unsigned>::max();
       }
 
       try
@@ -321,7 +320,7 @@ namespace DUNE
       }
       catch (...)
       {
-        m_alt_eid = 0;
+        m_alt_eid = std::numeric_limits<unsigned>::max();
       }
     }
 
@@ -336,8 +335,18 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::Acceleration* msg)
     {
-      if (msg->getSourceEntity() != m_accel_eid)
+      if (msg->getSourceEntity() != m_ahrs_eid)
         return;
+
+      if (std::fabs(msg->x) > c_max_accel ||
+          std::fabs(msg->y) > c_max_accel ||
+          std::fabs(msg->z) > c_max_accel)
+      {
+        war(DTR("received acceleration beyond range: %f, %f, %f"),
+            msg->x, msg->y, msg->z);
+
+        return;
+      }
 
       m_accel_bfr[AXIS_X] += msg->x;
       m_accel_bfr[AXIS_Y] += msg->y;
@@ -348,8 +357,18 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::AngularVelocity* msg)
     {
-      if (msg->getSourceEntity() != m_agvel_eid)
+      if (msg->getSourceEntity() != m_ahrs_eid)
         return;
+
+      if (std::fabs(msg->x) > c_max_agvel ||
+          std::fabs(msg->y) > c_max_agvel ||
+          std::fabs(msg->z) > c_max_agvel)
+      {
+        war(DTR("received angular velocity beyond range: %f, %f, %f"),
+            msg->x, msg->y, msg->z);
+
+        return;
+      }
 
       m_agvel_bfr[AXIS_X] += msg->x;
       m_agvel_bfr[AXIS_Y] += msg->y;
@@ -431,6 +450,15 @@ namespace DUNE
       if (msg->getSourceEntity() != m_ahrs_eid)
         return;
 
+      if (std::fabs(msg->phi) > Math::c_pi ||
+          std::fabs(msg->theta) > Math::c_pi ||
+          std::fabs(msg->psi) > Math::c_pi)
+      {
+        war(DTR("received euler angles beyond range: %f, %f, %f"),
+            msg->phi, msg->theta, msg->psi);
+        return;
+      }
+
       m_euler_bfr[AXIS_X] += msg->phi;
       m_euler_bfr[AXIS_Y] += msg->theta;
 
@@ -449,6 +477,15 @@ namespace DUNE
     {
       if (msg->getSourceEntity() != m_imu_eid)
         return;
+
+      if (std::fabs(msg->x) > Math::c_pi / 10.0 ||
+          std::fabs(msg->y) > Math::c_pi / 10.0 ||
+          std::fabs(msg->z) > Math::c_pi / 10.0)
+      {
+        war(DTR("received euler angles delta beyond range: %f, %f, %f"),
+            msg->x, msg->y, msg->z);
+        return;
+      }
 
       m_edelta_bfr[AXIS_X] += msg->x;
       m_edelta_bfr[AXIS_Y] += msg->y;
@@ -714,6 +751,21 @@ namespace DUNE
     }
 
     void
+    BasicNavigation::consume(const IMC::UsblFixExtended* msg)
+    {
+      if (msg->target != getSystemName())
+        return;
+
+      double x = 0.0;
+      double y = 0.0;
+      Coordinates::WGS84::displacement(m_origin->lat, m_origin->lon, 0.0,
+                                       msg->lat, msg->lon, 0.0,
+                                       &x, &y);
+
+      runKalmanUSBL(x, y);
+    }
+
+    void
     BasicNavigation::consume(const IMC::WaterVelocity* msg)
     {
       m_wvel = *msg;
@@ -921,6 +973,14 @@ namespace DUNE
         m_kal.setOutput(u, m_wvel.x);
         m_kal.setOutput(v, m_wvel.y);
       }
+    }
+
+    void
+    BasicNavigation::runKalmanUSBL(double x, double y)
+    {
+      // do nothing.
+      (void)x;
+      (void)y;
     }
 
     void

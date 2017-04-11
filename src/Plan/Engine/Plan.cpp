@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
@@ -36,11 +38,12 @@ namespace Plan
   namespace Engine
   {
     Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               bool fpredict, Tasks::Task* task,
+               bool fpredict, float max_depth, Tasks::Task* task,
                uint16_t min_cal_time, Parsers::Config* cfg):
       m_spec(spec),
       m_curr_node(NULL),
       m_compute_progress(compute_progress),
+      m_max_depth(max_depth),
       m_predict_fuel(fpredict),
       m_progress(0.0),
       m_est_cal_time(0),
@@ -403,6 +406,9 @@ namespace Plan
         if (supported_maneuvers->find(m->getId()) == supported_maneuvers->end())
           throw ParseError((*mitr)->maneuver_id + DTR(": maneuver is not supported"));
 
+        if (!isDepthSafe(m))
+          throw ParseError((*mitr)->maneuver_id + DTR(": maneuver depth beyond limits"));
+
         if ((*mitr)->maneuver_id == m_spec->start_man_id)
           start_maneuver_ok = true;
 
@@ -628,6 +634,96 @@ namespace Plan
       m_progress = prog > m_progress ? prog : m_progress;
 
       return m_progress;
+    }
+
+    bool
+    Plan::isDepthSafe(const IMC::Message* maneuver)
+    {
+      switch (maneuver->getId())
+      {
+        case DUNE_IMC_GOTO:
+        {
+          const IMC::Goto* m = static_cast<const IMC::Goto*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_POPUP:
+        {
+          const IMC::PopUp* m = static_cast<const IMC::PopUp*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_LAUNCH:
+        {
+          const IMC::Launch* m = static_cast<const IMC::Launch*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_LOITER:
+        {
+          const IMC::Loiter* m = static_cast<const IMC::Loiter*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_ROWS:
+        {
+          const IMC::Rows* m = static_cast<const IMC::Rows*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_ROWSCOVERAGE:
+        {
+          const IMC::RowsCoverage* m = static_cast<const IMC::RowsCoverage*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_FOLLOWPATH:
+        {
+          const IMC::FollowPath* m = static_cast<const IMC::FollowPath*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_YOYO:
+        {
+          const IMC::YoYo* m = static_cast<const IMC::YoYo*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_STATIONKEEPING:
+        {
+          const IMC::StationKeeping* m = static_cast<const IMC::StationKeeping*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_COMPASSCALIBRATION:
+        {
+          const IMC::CompassCalibration* m = static_cast<const IMC::CompassCalibration*>(maneuver);
+          return checkDepth((IMC::ZUnits)m->z_units, m->z);
+        }
+        case DUNE_IMC_ELEVATOR:
+        {
+          const IMC::Elevator* m = static_cast<const IMC::Elevator*>(maneuver);
+          if (m->start_z_units == IMC::Z_DEPTH)
+          {
+            if (m->start_z > m_max_depth + c_depth_margin)
+              return false;
+          }
+          if (m->end_z_units == IMC::Z_DEPTH)
+          {
+            if (m->end_z > m_max_depth + c_depth_margin)
+              return false;
+          }
+        }
+        case DUNE_IMC_SCHEDULEDGOTO:
+        {
+          const IMC::ScheduledGoto* m = static_cast<const IMC::ScheduledGoto*>(maneuver);
+          if (m->z_units == IMC::Z_DEPTH)
+          {
+            if (m->z > m_max_depth + c_depth_margin)
+              return false;
+          }
+          if (m->travel_z_units == IMC::Z_DEPTH)
+          {
+            if (m->travel_z > m_max_depth + c_depth_margin)
+              return false;
+          }
+        }
+        default:
+          ;
+      }
+
+      return true;
     }
 
     void
