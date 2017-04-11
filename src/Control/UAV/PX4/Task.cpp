@@ -22,7 +22,8 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Trent Lukaczyk                                                    *
+// Author: Trent Lukaczyk                                                   *
+// Author: Maria Costa                                                      *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -54,6 +55,14 @@ namespace Control
         uint16_t TCP_port;
         //! TCP Address
         Address TCP_addr;
+        //! Use UDP Port
+        uint16_t UDP_listen_port;
+        //! UDP Port
+        uint16_t UDP_port;
+        //! Use TCP or UDP
+        bool tcp_or_udp;
+        //! UDP Address
+        Address UDP_addr;
         //! Telemetry Rate
         //uint8_t trate;  NEED TO CHECK IF PX4 CAN DO THIS
       };
@@ -73,16 +82,20 @@ namespace Control
 
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
+        //! UDP socket
+        Network::UDPSocket* m_UDP_sock;
         //! System ID
         uint8_t m_sysid;
         //! Parser Variables
         mavlink_message_t m_msg;
 
         // Mavlink Timeouts
-        bool m_error_missing, m_esta_ext;
+        bool m_error_missing;
 
         //! GPS Fix message
         IMC::GpsFix m_fix;
+        //! Estimated state message.
+        IMC::EstimatedState m_estate;
 
         //! Constructor.
         //! @param[in] name task name.
@@ -90,9 +103,9 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
+          m_UDP_sock(NULL),
           m_sysid(1),
-          m_error_missing(false),
-          m_esta_ext(false)
+          m_error_missing(false)
         {
 
           param("Communications Timeout", m_args.comm_timeout)
@@ -109,6 +122,22 @@ namespace Control
           param("TCP - Address", m_args.TCP_addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to Ardupilot");
+
+          param("UDP - Listen Port", m_args.UDP_listen_port)
+          .defaultValue("14557")
+          .description("Port for connection from Ardupilot");
+
+          param("UDP - Port", m_args.UDP_port)
+          .defaultValue("14556")
+          .description("Port for connection to Ardupilot");
+
+          param("UDP - Address", m_args.UDP_addr)
+          .defaultValue("127.0.0.1")
+          .description("Address for connection to Ardupilot");
+
+          param("Use TCP (or UDP)", m_args.tcp_or_udp)
+          .defaultValue("true")
+          .description("Ardupilot communications timeout");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -127,24 +156,11 @@ namespace Control
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
-
         }
 
         //! Update internal state with new parameter values.
         void
         onUpdateParameters(void)
-        {
-        }
-
-        //! Reserve entity identifiers.
-        void
-        onEntityReservation(void)
-        {
-        }
-
-        //! Resolve entity names.
-        void
-        onEntityResolution(void)
         {
         }
 
@@ -160,30 +176,129 @@ namespace Control
         {
           try
           {
-            m_TCP_sock = new TCPSocket;
-            m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
-            m_TCP_sock->setNoDelay(true);
+            if (m_args.tcp_or_udp)
+            {
+              m_TCP_sock = new TCPSocket;
+              m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              m_TCP_sock->setNoDelay(true);
+              //setupRate(10);  // 10Hz
+            }
+            else
+            {
+              m_UDP_sock = new UDPSocket;
+              m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+
+              inf(DTR("Ardupilot UDP connected"));
+            }
             inf(DTR("Ardupilot interface initialized"));
           }
           catch (...)
           {
             Memory::clear(m_TCP_sock);
+            Memory::clear(m_UDP_sock);
             war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
         }
 
-        //! Initialize resources.
         void
-        onResourceInitialization(void)
+        setupRate(uint8_t rate)
         {
-        }
+          uint8_t buf[512];
+                  mavlink_message_t msg;
+
+                  //! ATTITUDE and SIMSTATE messages
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_EXTRA1,
+                                                       rate,
+                                                       1);
+
+                  uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("ATTITUDE Stream setup to %d Hertz", rate);
+
+                  //! VFR_HUD message
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_EXTRA2,
+                                                       rate,
+                                                       1);
+
+                  n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("VFR Stream setup to %d Hertz", rate);
+
+                  //! GLOBAL_POSITION_INT message
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_POSITION,
+                                                       rate,
+                                                       1);
+
+                  n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("POSITION Stream setup to %d Hertz", rate);
+
+                  //! SYS_STATUS, POWER_STATUS, MEMINFO, MISSION_CURRENT,
+                  //! GPS_RAW_INT, NAV_CONTROLLER_OUTPUT and FENCE_STATUS messages
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_EXTENDED_STATUS,
+                                                       (int)(rate/5),
+                                                       1);
+
+                  n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("STATUS Stream setup to %d Hertz", (int)(rate/5));
+
+                  //! AHRS, HWSTATUS, WIND, RANGEFINDER and SYSTEM_TIME messages
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_EXTRA3,
+                                                       1,
+                                                       1);
+
+                  n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("AHRS-HWSTATUS-WIND Stream setup to 1 Hertz");
+
+                  //! RAW_IMU, SCALED_PRESSURE and SENSOR_OFFSETS messages
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_RAW_SENSORS,
+                                                       50,
+                                                       1);
+
+                  n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("SENSORS Stream setup to 1 Hertz");
+
+                  //! RC_CHANNELS_RAW and SERVO_OUTPUT_RAW messages
+                  mavlink_msg_request_data_stream_pack(255, 0, &msg,
+                                                       m_sysid,
+                                                       0,
+                                                       MAV_DATA_STREAM_RC_CHANNELS,
+                                                       1,
+                                                       0);
+
+                  n = mavlink_msg_to_send_buffer(buf, &msg);
+                  sendData(buf, n);
+                  spew("RC Stream disabled");
+                }
 
         //! Release resources.
         void
         onResourceRelease(void)
         {
-          Memory::clear(m_TCP_sock);
+           Memory::clear(m_TCP_sock);
+           Memory::clear(m_UDP_sock);
         }
 
         //! Main loop.
@@ -193,7 +308,7 @@ namespace Control
           while (!stopping())
           {
             // Handle Autopilot data
-            if (m_TCP_sock)
+            if (m_TCP_sock || m_UDP_sock)
             {
               handleArdupilotData();
             }
@@ -204,25 +319,10 @@ namespace Control
             }
 
             if (!m_error_missing)
-            {
-//              if (m_external)
-//              {
-//                if (!m_esta_ext)
-//                {
-//                  setEntityState(IMC::EntityState::ESTA_NORMAL, "External Control");
-//                  m_esta_ext = true;
-//                }
-//              }
-//              else// if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
-              {
-                setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-                m_esta_ext = false;
-              }
-            }
-
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
             // Handle IMC messages from bus
-            //consumeMessages();
+            consumeMessages();
           }
         }
 
@@ -290,7 +390,6 @@ namespace Control
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
               m_error_missing = true;
-              m_esta_ext = false;
             }
           }
           else
@@ -343,6 +442,9 @@ namespace Control
           if (m_TCP_sock != NULL)
             return Poll::poll(*m_TCP_sock, timeout);
 
+          if (m_UDP_sock != NULL)
+            return Poll::poll(*m_UDP_sock, timeout);
+
           return false;
         }
 
@@ -354,26 +456,43 @@ namespace Control
             trace("Sending something");
             return m_TCP_sock->write((char*)bfr, size);
           }
+          else if (m_UDP_sock)
+          {
+            trace("Sending something");
+            return m_UDP_sock->write(bfr, size, m_args.UDP_addr, m_args.UDP_port);
+          }
           return 0;
         }
 
         int
         receiveData(uint8_t* buf, size_t blen)
         {
-          if (m_TCP_sock)
+          if (m_TCP_sock || m_UDP_sock)
           {
             try
             {
-              return m_TCP_sock->read(buf, blen);
+              if (m_TCP_sock)
+                return m_TCP_sock->read(buf, blen);
+              if (m_UDP_sock)
+                return m_UDP_sock->read(buf, blen, &m_args.UDP_addr, &m_args.UDP_listen_port);
             }
             catch (std::runtime_error& e)
             {
               err("%s", e.what());
               war(DTR("Connection lost, retrying..."));
               Memory::clear(m_TCP_sock);
+              Memory::clear(m_UDP_sock);
 
-              m_TCP_sock = new Network::TCPSocket;
-              m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              if (m_args.tcp_or_udp)
+              {
+                m_TCP_sock = new Network::TCPSocket;
+                m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              }
+              else
+              {
+                m_UDP_sock = new UDPSocket;
+                m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+              } 
               return 0;
             }
           }
@@ -388,17 +507,16 @@ namespace Control
           spew("ATTITUDE");
 
           mavlink_attitude_t att;
-          IMC::EstimatedState estate;
 
           mavlink_msg_attitude_decode(msg, &att);
-          estate.phi = att.roll;
-          estate.theta = att.pitch;
-          estate.psi = att.yaw;
-          estate.p = att.rollspeed;
-          estate.q = att.pitchspeed;
-          estate.r = att.yawspeed;
+          m_estate.phi = att.roll;
+          m_estate.theta = att.pitch;
+          m_estate.psi = att.yaw;
+          m_estate.p = att.rollspeed;
+          m_estate.q = att.pitchspeed;
+          m_estate.r = att.yawspeed;
 
-          dispatch(estate);
+          dispatch(m_estate);
         }
 
         void
@@ -438,13 +556,31 @@ namespace Control
         {
           spew("POSITION");
 
-//          mavlink_global_position_int_t gp;
-//          mavlink_msg_global_position_int_decode(msg, &gp);
-//
-//          double lat = Angles::radians((double)gp.lat * 1e-07);
-//          double lon = Angles::radians((double)gp.lon * 1e-07);
-//          double hgt = (double) gp.relative_alt * 1.0e-3;
+          mavlink_global_position_int_t gp;
+          mavlink_msg_global_position_int_decode(msg, &gp);
 
+          m_estate.lat = Angles::radians((double)gp.lat * 1e-07);
+          m_estate.lon = Angles::radians((double)gp.lon * 1e-07);
+          m_estate.height = (double) gp.alt * 1e-3; // MSL
+
+          m_estate.x = 0;
+          m_estate.y = 0;
+          m_estate.z = 0;
+
+          m_estate.vx = 1e-02 * gp.vx;
+          m_estate.vy = 1e-02 * gp.vy;
+          m_estate.vz = -1e-02 * gp.vz;
+
+          // Note: the following will yield body-fixed *ground* velocity
+          // Maybe this can be fixed w/IAS readings (anyway not too important)
+          BodyFixedFrame::toBodyFrame(m_estate.phi, m_estate.theta, m_estate.psi,
+                                      m_estate.vx, m_estate.vy, m_estate.vz,
+                                      &m_estate.u, &m_estate.v, &m_estate.w);
+
+          m_estate.alt = (double) gp.relative_alt * 1e-3;   //AGL (relative to home altitude)
+          m_estate.depth = -1;
+
+          dispatch(m_estate);
         }
 
         void
@@ -527,7 +663,7 @@ namespace Control
 
           mavlink_statustext_t stat_tex;
           mavlink_msg_statustext_decode(msg, &stat_tex);
-          inf("AP Status: %.*s", 50, stat_tex.text);
+          inf("PX4 Status: %.*s", 50, stat_tex.text);
         }
 
         void
@@ -544,7 +680,7 @@ namespace Control
             return;
 
           if (hbt.system_status == MAV_STATE_CRITICAL)
-            war("APM failsafe active");
+            war("PX4 failsafe active");
 
           switch(hbt.base_mode)
           {
