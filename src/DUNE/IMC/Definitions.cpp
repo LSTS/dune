@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: da7d6a5b11db2e9741435aa292a5a5d1                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -17049,6 +17049,88 @@ namespace DUNE
       IMC::toJSON(os__, "z", z, nindent__);
       IMC::toJSON(os__, "z_units", z_units, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    Docking::Docking(void)
+    {
+      m_header.mgid = 495;
+      clear();
+    }
+
+    void
+    Docking::clear(void)
+    {
+      target.clear();
+      speed = 0;
+      speed_units = 0;
+      lat = 0;
+      lon = 0;
+    }
+
+    bool
+    Docking::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Docking& other__ = static_cast<const Docking&>(msg__);
+      if (target != other__.target) return false;
+      if (speed != other__.speed) return false;
+      if (speed_units != other__.speed_units) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      return true;
+    }
+
+    int
+    Docking::validate(void) const
+    {
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    Docking::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(speed_units, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Docking::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Docking::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Docking::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
     }
 
     VehicleState::VehicleState(void)

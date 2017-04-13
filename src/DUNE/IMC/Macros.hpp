@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: da7d6a5b11db2e9741435aa292a5a5d1                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -434,6 +434,8 @@
 #define DUNE_IMC_AUTONOMOUSSECTION 493
 //! FollowPoint identification number.
 #define DUNE_IMC_FOLLOWPOINT 494
+//! Docking identification number.
+#define DUNE_IMC_DOCKING 495
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.

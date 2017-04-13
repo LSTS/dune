@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: da7d6a5b11db2e9741435aa292a5a5d1                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -15784,6 +15784,81 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(target) + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Docking Maneuver.
+    class Docking: public Maneuver
+    {
+    public:
+      //! Source To Follow.
+      std::string target;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 495;
+      }
+
+      Docking(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Docking(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Docking::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Docking";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 21;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(target);
       }
 
       void
