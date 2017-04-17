@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: da7d6a5b11db2e9741435aa292a5a5d1                            *
+// IMC XML MD5: c2a8b29e93b472d03b1c27abe7fc2e0c                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -17061,6 +17061,7 @@ namespace DUNE
     Docking::clear(void)
     {
       target.clear();
+      station.clear();
       speed = 0;
       speed_units = 0;
       lat = 0;
@@ -17072,6 +17073,7 @@ namespace DUNE
     {
       const IMC::Docking& other__ = static_cast<const Docking&>(msg__);
       if (target != other__.target) return false;
+      if (station != other__.station) return false;
       if (speed != other__.speed) return false;
       if (speed_units != other__.speed_units) return false;
       if (lat != other__.lat) return false;
@@ -17092,6 +17094,7 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(target, ptr__);
+      ptr__ += IMC::serialize(station, ptr__);
       ptr__ += IMC::serialize(speed, ptr__);
       ptr__ += IMC::serialize(speed_units, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
@@ -17104,6 +17107,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(target, bfr__, size__);
+      bfr__ += IMC::deserialize(station, bfr__, size__);
       bfr__ += IMC::deserialize(speed, bfr__, size__);
       bfr__ += IMC::deserialize(speed_units, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
@@ -17116,6 +17120,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(station, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
       bfr__ += IMC::deserialize(speed_units, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
@@ -17127,6 +17132,7 @@ namespace DUNE
     Docking::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "target", target, nindent__);
+      IMC::toJSON(os__, "station", station, nindent__);
       IMC::toJSON(os__, "speed", speed, nindent__);
       IMC::toJSON(os__, "speed_units", speed_units, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);

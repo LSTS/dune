@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: da7d6a5b11db2e9741435aa292a5a5d1                            *
+// IMC XML MD5: c2a8b29e93b472d03b1c27abe7fc2e0c                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -15794,8 +15794,10 @@ namespace DUNE
     class Docking: public Maneuver
     {
     public:
-      //! Source To Follow.
+      //! Docking Target.
       std::string target;
+      //! Docking Station.
+      std::string station;
       //! Speed.
       fp32_t speed;
       //! Speed Units.
@@ -15858,7 +15860,7 @@ namespace DUNE
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(target);
+        return IMC::getSerializationSize(target) + IMC::getSerializationSize(station);
       }
 
       void
