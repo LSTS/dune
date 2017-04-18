@@ -38,24 +38,34 @@ namespace DUNE
     {
       m_uid = s_uid++;
       m_num_frags = 0;
-      int frag_size = mtu - sizeof(IMC::Header) - 5;
+      //int frag_size = mtu - sizeof(IMC::Header) - 5;
+      int frag_size = mtu - DUNE_IMC_CONST_HEADER_SIZE - 5 - DUNE_IMC_CONST_FOOTER_SIZE;
       if (frag_size <= 0)
       {
         DUNE_ERR("Fragments", "MTU is too small");
         return;
       }
 
+      /*printf("\nWRN: FRG sOURCE eNTITY = %u\n\n", msg->getSourceEntity());
+      printf("\nWRN: FRG time stamp = %f\n\n", msg->getTimeStamp());*/
+
       Utils::ByteBuffer buff;
       int size = IMC::Packet::serialize(msg, buff);
       uint8_t* buffer = buff.getBuffer();
 
+      /*printf("\n");
+      for (int i = 0; i < size; i++) {
+        printf("%x ", buffer[i]);
+      }
+      printf("\n\n");*/
+
       int part = 0, pos = 0;
-      m_num_frags = (int)std::ceil((float)size / (float)mtu);
+      m_num_frags = (int)std::ceil((float)size / (float)frag_size);
 
       while (pos < size)
       {
         int remaining = size - pos;
-        int cur_size = std::min(remaining, mtu);
+        int cur_size = std::min(remaining, frag_size);
         IMC::MessagePart* mpart = new IMC::MessagePart();
         mpart->frag_number = part++;
         mpart->num_frags = m_num_frags;
