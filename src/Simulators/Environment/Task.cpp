@@ -234,13 +234,15 @@ namespace Simulators
         .description("Tide level to be added to the computed depth at a each position");
 
         param("Bottom Distance Standard Deviation", m_args.bd_std_dev)
-        .units(Units::Meter)
         .defaultValue("0.1")
+        .units(Units::Meter)
         .description("Standard deviation for the bottom distance");
 
-        param("OOB Depth", m_args.oob_depth)
+        param("Out Of Bounds Depth", m_args.oob_depth)
+        .defaultValue("100.0")
+        .minimumValue("5.0")
         .units(Units::Meter)
-        .defaultValue("5.0");
+        .description("Depth when out of bounds of loaded bathymetry map");
 
         param("Interpolation Radius", m_args.interp_radius)
         .units(Units::Meter)

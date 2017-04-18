@@ -41,6 +41,8 @@ namespace DUNE
   {
     //! Acceptable distance to reference to consider target reached.
     static const float c_dist_to_ref = 0.2f;
+    //! Safety depth margin.
+    static const float c_depth_margin = 3.0f;
 
     class YoYoMotion
     {
@@ -48,34 +50,69 @@ namespace DUNE
       //! Constructor
       //! @param[in] task pointer to calling task
       //! @param[in] pitch pitch angle to use in motion
-      //! @param[in] z_ref amplitude z reference for yoyo motion (negative if altitude)
+      //! @param[in] z_ref z reference for yoyo motion
+      //! @param[in] z_units z reference units for yoyo motion
       //! @param[in] amplitude z reference amplitude for yoyo motion
       //! @param[in] variation maximum variation for the pitch angle
       //! @param[in] min_alt minimum altitude reference admissible
       YoYoMotion(DUNE::Tasks::Task* task, float pitch, float z_ref,
-                 float amplitude, float variation, float min_alt = 5.0f):
+                 IMC::ZUnits zunits, float amplitude, float variation,
+                 float min_alt = 5.0f, float max_depth = 50.0f):
         m_task(task),
         m_pitch_ref(pitch),
         m_z_ref(z_ref),
+        m_zunits(zunits),
         m_amplitude(amplitude),
         m_variation(variation),
         m_min_alt(min_alt),
-        m_dir(0)
+        m_max_depth(max_depth),
+        m_dir(DIR_NONE),
+        m_invert(false)
       { }
 
       //! Update yoyo motion
       //! @param[in] startup whether or not the yoyo motion is starting now
-      //! @param[in] state_z current z position (negative if altitude)
+      //! @param[in] depth current depth position
+      //! @param[in] altitude current altitude position
       //! @param[in] pitch current pitch angle
       //! @return new pitch command
       float
-      update(bool startup, float state_z, float pitch)
+      update(bool startup, float depth, float alt, float pitch)
       {
-        if (!startup)
-        {
-          double t_dist = m_dir * (state_z - m_target_z);
+        float state_z;
+        if (m_zunits == IMC::Z_DEPTH)
+          state_z = depth;
+        else
+          state_z = alt;
 
-          if (t_dist >= std::min(m_amplitude, c_dist_to_ref))
+        if (m_invert)
+        {
+          m_dir = -m_dir;
+          m_source_z = m_target_z;
+          m_invert = false;
+          m_task->debug("ascending due to brake");
+        }
+        else if (!startup)
+        {
+          double t_dist;
+          if (m_zunits == IMC::Z_DEPTH)
+          {
+            // special case for yoyo at surface.
+            if (m_z_ref + m_amplitude < c_dist_to_ref)
+            {
+              m_old_pitch = trimPitch(m_dir * m_pitch_ref, pitch);
+              return m_old_pitch;
+            }
+
+            t_dist = m_dir * (state_z - m_target_z);
+          }
+          else
+          {
+            t_dist = m_dir * (m_target_z - state_z);
+          }
+
+          if (t_dist >= std::min(m_amplitude, c_dist_to_ref)
+              && withinLimits(depth, alt))
           {
             m_old_pitch = trimPitch(m_dir * m_pitch_ref, pitch);
             return m_old_pitch;
@@ -84,7 +121,7 @@ namespace DUNE
           m_dir = -m_dir;
           m_source_z = m_target_z;
         }
-        else if (!m_dir)
+        else if (m_dir == DIR_NONE)
         {
           // Start *or* resume (after being off-track)
           // yoyo mode by figuring out whether to go up or down
@@ -93,14 +130,38 @@ namespace DUNE
           double dmin = std::fabs(state_z - min_z);
           double dmax = std::fabs(state_z - max_z);
 
-          m_dir = dmin < dmax ? -1 : 1;
+          if (m_zunits == IMC::Z_DEPTH)
+          {
+            if (max_z > c_dist_to_ref)
+              m_dir = dmin < dmax ? DIR_DOWN : DIR_UP;
+            else
+              m_dir = DIR_UP;
+          }
+          else
+          {
+            m_dir = dmin < dmax ? DIR_UP : DIR_DOWN;
+          }
+
           m_source_z = state_z;
         }
 
-        if (m_z_ref >= 0)
-          m_target_z = std::max(0.0f, m_z_ref - m_dir * m_amplitude);
+        // update target
+        if (m_zunits == IMC::Z_DEPTH)
+        {
+          // keep vehicle within surface and maximum absolute depth
+          if (m_dir == DIR_UP)
+            m_target_z = std::max(0.0f, m_z_ref - m_amplitude);
+          else
+            m_target_z = std::min(m_max_depth - c_depth_margin, m_z_ref + m_amplitude);
+        }
         else
-          m_target_z = std::min(m_min_alt, m_z_ref - m_dir * m_amplitude);
+        {
+          // keep the vehicle above minimum altitude
+          if (m_dir == DIR_UP)
+            m_target_z = m_z_ref + m_amplitude;
+          else
+            m_target_z = std::max(m_min_alt, m_z_ref - m_amplitude);
+        }
 
         std::stringstream ss;
         ss << (m_dir < 0 ? "descending " : "ascending ")
@@ -134,7 +195,26 @@ namespace DUNE
         return ((state_z < m_z_ref + m_amplitude) && (state_z > m_z_ref - m_amplitude));
       }
 
+      //! System is now braking.
+      void
+      startedBraking(void)
+      {
+        if (m_invert)
+          return;
+
+        if (m_dir == DIR_DOWN)
+          m_invert = true;
+      }
+
     private:
+      //! Current direction
+      enum Direction
+      {
+        DIR_DOWN = -1,
+        DIR_NONE = 0,
+        DIR_UP = 1
+      };
+
       //! Trim pitch value between configured bounds
       //! @param[in] desired_pitch pitch angle at which to stabilize
       //! @param[in] current_pitch current pitch angle
@@ -150,12 +230,36 @@ namespace DUNE
           return desired_pitch;
       }
 
+      //! Check if vehicle is within limits.
+      //! @param[in] depth current depth position
+      //! @param[in] altitude current altitude position
+      //! @return true if vehicle is within limits, false otherwise.
+      bool
+      withinLimits(float depth, float alt)
+      {
+        if (m_dir == DIR_UP && depth < c_dist_to_ref)
+          return false;
+
+        if (m_dir == DIR_DOWN)
+        {
+          if (alt > 0 && alt <= m_min_alt)
+            return false;
+
+          if (depth > m_max_depth - c_depth_margin)
+            return false;
+        }
+
+        return true;
+      }
+
       //! Pointer to task to call debug()
       DUNE::Tasks::Task* m_task;
       //! Pitch angle to use
       float m_pitch_ref;
       //! Z middle reference
       float m_z_ref;
+      //! Z reference units.
+      IMC::ZUnits m_zunits;
       //! Amplitude for yoyo motion
       float m_amplitude;
       //! Target z reference
@@ -166,10 +270,12 @@ namespace DUNE
       float m_variation;
       //! Minimum allowed altitude reference.
       float m_min_alt;
+      //! Maximum allowed depth reference.
+      float m_max_depth;
       //! Direction
       int m_dir;
-      //! Flag will be true if reference is altitude
-      bool m_is_altitude;
+      //! Invert direction
+      bool m_invert;
       //! Last pitch angle sent
       float m_old_pitch;
     };

@@ -142,6 +142,8 @@ namespace Navigation
         float lbl_noise;
         //! GPS measurement noise covariance values.
         std::vector<double> gps_noise;
+        //! USBL measurement noise covariance value.
+        double usbl_noise;
         //! IMU entity label.
         std::string elabel_imu;
         //! Number of samples to average forward speed.
@@ -162,6 +164,8 @@ namespace Navigation
       {
         //! Periodic GPS fix reading check.
         bool m_gps_reading;
+        //! USBL fix reading check.
+        bool m_usbl_reading;
         //! Moving average for vehicle forward speed.
         MovingAverage<double>* m_avg_speed;
         //! Medium handler.
@@ -187,17 +191,22 @@ namespace Navigation
           param("Process Noise Covariance", m_process_noise)
           .defaultValue("")
           .size(6)
-          .description("Kalman Filter Process Noise Covariance values");
+          .description("Kalman Filter process noise covariance values");
 
           param("GPS Noise Covariance", m_args.gps_noise)
           .defaultValue("")
           .size(4)
-          .description("Kalman Filter Gps Noise Covariance values");
+          .description("Kalman Filter GPS noise covariance values");
+
+          param("USBL Noise Covariance", m_args.usbl_noise)
+          .defaultValue("100.0")
+          .minimumValue("0.0")
+          .description("Kalman Filter USBL noise covariance value");
 
           param("Measure Noise Covariance", m_measure_noise)
           .defaultValue("")
           .size(5)
-          .description("Kalman Filter Measurement Noise Covariance values");
+          .description("Kalman Filter measurement noise covariance values");
 
           param("State Covariance Initial State", m_state_cov)
           .defaultValue("")
@@ -334,6 +343,9 @@ namespace Navigation
         void
         consume(const IMC::EntityActivationState* msg)
         {
+          if (msg->getSource() != getSystemId())
+            return;
+
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
@@ -428,6 +440,7 @@ namespace Navigation
         {
           BasicNavigation::reset();
           m_gps_reading = false;
+          m_usbl_reading = false;
         }
 
         double
@@ -474,6 +487,23 @@ namespace Navigation
           m_gps_reading = true;
 
           // Define Measurements matrix - GPS
+          m_kal.setOutput(OUT_GPS_X, x);
+          m_kal.setOutput(OUT_GPS_Y, y);
+        }
+
+        void
+        runKalmanUSBL(double x, double y)
+        {
+          // if there's gps, ignore usbl.
+          if (!m_time_without_gps.overflow())
+            return;
+
+          m_usbl_reading = true;
+
+          // set kalman.
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_args.usbl_noise);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.usbl_noise);
+
           m_kal.setOutput(OUT_GPS_X, x);
           m_kal.setOutput(OUT_GPS_Y, y);
         }
@@ -543,10 +573,12 @@ namespace Navigation
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
 
           // GPS innovation matrix.
-          if (m_gps_reading)
+          if (m_gps_reading || m_usbl_reading)
           {
             // Reset GPS counter.
-            m_time_without_gps.reset();
+            if (m_gps_reading)
+              m_time_without_gps.reset();
+
             m_kal.setInnovation(OUT_GPS_X, m_kal.getOutput(OUT_GPS_X) - m_kal.getState(STATE_X));
             m_kal.setInnovation(OUT_GPS_Y, m_kal.getOutput(OUT_GPS_Y) - m_kal.getState(STATE_Y));
           }
@@ -624,6 +656,7 @@ namespace Navigation
           // Reset variables.
           updateBuffers(c_wma_filter);
           m_gps_reading = false;
+          m_usbl_reading = false;
           m_valid_gv = false;
           m_valid_wv = false;
           resetKalman();

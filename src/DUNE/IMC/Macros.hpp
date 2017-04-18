@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
+// IMC XML MD5: ac6fc6f4b1f5c445991672dbda04723d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -600,5 +600,7 @@
 #define DUNE_IMC_DISSOLVEDORGANICMATTER 903
 //! OpticalBackscatter identification number.
 #define DUNE_IMC_OPTICALBACKSCATTER 904
+//! Tachograph identification number.
+#define DUNE_IMC_TACHOGRAPH 905
 
 #endif

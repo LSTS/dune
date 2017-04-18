@@ -113,6 +113,9 @@ namespace DUNE
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         reset();
         onAutopilotActivation();
+
+        // Clear timestep timer
+        m_last_estate.clear();
       }
 
     private:

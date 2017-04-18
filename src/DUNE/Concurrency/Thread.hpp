@@ -85,6 +85,9 @@ namespace DUNE
       void
       setPriorityImpl(Scheduler::Policy policy, unsigned priority);
 
+      unsigned
+      getPriorityImpl(void);
+
     private:
       //! Thread state.
       Runnable::State m_state;

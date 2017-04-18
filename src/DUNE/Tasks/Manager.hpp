@@ -96,16 +96,49 @@ namespace DUNE
         return m_tasks.end();
       }
 
+      Task*
+      getTaskByName(const std::string& name)
+      {
+        return m_tasks[name];
+      }
+
+      void
+      measureCpuUsage(void);
+
+      void
+      adjustPriorities(void);
+
     private:
+      struct TaskCpuUsage
+      {
+        //! Task object.
+        Task* task;
+        //! Percentage of CPU usage.
+        int usage;
+
+        bool
+        operator<(const TaskCpuUsage& other) const
+        {
+          return usage < other.usage;
+        }
+      };
+
       //! Task list.
       std::vector<std::string> m_list;
       //! Running tasks.
       std::map<std::string, Task*> m_tasks;
       //! Task context.
       Context& m_ctx;
+      //! Task CPU usage queue.
+      std::priority_queue<TaskCpuUsage> m_cpu_usage_hogs;
+      //! Buffer message to dispatch CPU usage of tasks.
+      IMC::CpuUsage m_task_cpu_usage;
 
       void
       createTask(const std::string& section);
+
+      void
+      lowerHogPriority(Task* task, int cpu_usage);
     };
   }
 }

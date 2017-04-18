@@ -50,6 +50,8 @@ namespace Monitors
       unsigned sms_lost_coms_ttl;
       //! Default SMS recipient.
       std::string recipient;
+      //! Transmission interface.
+      std::string interface;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -64,6 +66,8 @@ namespace Monitors
       bool m_in_mission;
       //! Executing plan's progress.
       float m_progress;
+      //! Iridium request identifier.
+      unsigned m_req;
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
       //! Medium handler.
@@ -76,6 +80,7 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_in_mission(false),
+        m_req(0),
         m_reporter(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
@@ -92,6 +97,11 @@ namespace Monitors
         .defaultValue("300.0")
         .minimumValue("60.0")
         .description(DTR("Lost Communications Timeout"));
+
+        param("Transmission Interface", m_args.interface)
+        .values("GSM, Iridium, Both")
+        .defaultValue("Both")
+        .description("Desired transmission interface");
 
         param("Expiration Time - Abort SMS", m_args.sms_abort_ttl)
         .units(Units::Second)
@@ -295,7 +305,20 @@ namespace Monitors
         inf(DTR("sending SMS (t:%u) to %s: %s"),
             timeout, sms.number.c_str(), sms.contents.c_str());
 
-        dispatch(sms);
+        bool ird = m_args.interface == "Iridium" || m_args.interface == "Both";
+        bool gsm = m_args.interface == "GSM" || m_args.interface == "Both";
+
+        if (ird)
+        {
+          DUNE::IMC::IridiumMsgTx m;
+          m.req_id = m_req++;
+          m.ttl = 60;
+          m.data.assign(sms.contents.begin(), sms.contents.end());
+          dispatch(m);
+        }
+
+        if (gsm)
+          dispatch(sms);
       }
 
       //! Send all scheduled reports.

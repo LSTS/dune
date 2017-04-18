@@ -167,16 +167,6 @@ namespace DUNE
       .units(Units::Meter)
       .description("Minimum admissible forward range for bottom tracking");
 
-      param("Bottom Track -- Altitude Tolerance", m_btd.args.alt_tol)
-      .defaultValue("2.0")
-      .units(Units::Meter)
-      .description("Altitude tolerance below which altitude is ignored");
-
-      param("Bottom Track -- Depth Tolerance", m_btd.args.depth_tol)
-      .defaultValue("1.0")
-      .units(Units::Meter)
-      .description("Depth tolerance below which altitude is ignored");
-
       param("Bottom Track -- Check Trend", m_btd.args.check_trend)
       .defaultValue("true")
       .description("Check slope angle trend in unsafe state");

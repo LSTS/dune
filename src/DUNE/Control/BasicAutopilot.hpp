@@ -289,6 +289,8 @@ namespace DUNE
       float m_min_alt;
       //! Timeout for ignoring invalid altitude
       float m_alt_timeout;
+      //! Margin for altitude reference.
+      float m_alt_margin;
     };
   }
 }

@@ -814,14 +814,10 @@ namespace Transports
             m_stop_comms = false;
           else
             m_stop_comms = true;
-
           return;
         }
 
-        if (msg->medium == IMC::VehicleMedium::VM_GROUND)
-          m_stop_comms = true;
-        else
-          m_stop_comms = false;
+        m_stop_comms = false;
       }
 
       //! Main loop.

@@ -46,8 +46,6 @@ namespace DUNE
     static const char* c_no_alt = DTR_RT("no valid altitude measurements");
     //! Depth margin when checking for maximum admissible depth
     static const float c_depth_margin = 1.0;
-    //! Altitude margin when checking for minimum admissible altitude.
-    static const float c_alt_margin = 0.2;
 
     BasicAutopilot::BasicAutopilot(const std::string& name, Tasks::Context& ctx,
                                    const uint32_t controllable_loops, const uint32_t required_loops):
@@ -67,6 +65,11 @@ namespace DUNE
       .defaultValue("60.0f")
       .units(Units::Meter)
       .description("Timeout for ignoring invalid altitude");
+
+      param("Altitude Reference Margin", m_alt_margin)
+      .defaultValue("0.2f")
+      .units(Units::Meter)
+      .description("Altitude reference marging to add above minimum altitude.");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_max_depth);
       m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_min_alt);
@@ -173,6 +176,10 @@ namespace DUNE
         {
           m_vertical_ref = limit;
           war(DTR("limiting depth to %.1f"), limit);
+          IMC::DesiredZ dz;
+          dz.z_units = msg->z_units;
+          dz.value = limit;
+          dispatch(dz);
         }
       }
       else if (msg->z_units == IMC::Z_ALTITUDE)
@@ -181,12 +188,16 @@ namespace DUNE
         // Avoid possible rough transition when changing from depth to altitude
         m_bottom_follow_depth = m_estate.depth;
 
-        float limit = m_min_alt + c_alt_margin;
+        float limit = m_min_alt + m_alt_margin;
 
         if (m_vertical_ref < limit)
         {
           m_vertical_ref = limit;
           war(DTR("limiting altitude to %.1f"), limit);
+          IMC::DesiredZ dz;
+          dz.z_units = msg->z_units;
+          dz.value = limit;
+          dispatch(dz);
         }
 
         // reset altitude timer

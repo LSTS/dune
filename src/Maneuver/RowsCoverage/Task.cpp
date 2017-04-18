@@ -136,9 +136,18 @@ namespace Maneuver
         m_alt_avrg = new Math::MovingAverage<float>(m_args.altitude_average_size);
 
         Memory::clear(m_stages_parser);
-        m_stages_parser = new Maneuvers::RowsStages(maneuver->lat, maneuver->lon,
-            maneuver->bearing, maneuver->cross_angle, maneuver->width, maneuver->length,
-            hstep, maneuver->coff, 100, maneuver->flags, this);
+        try
+        {
+          m_stages_parser = new Maneuvers::RowsStages(maneuver->lat, maneuver->lon, maneuver->bearing,
+                                                      maneuver->cross_angle, maneuver->width,
+                                                      maneuver->length, hstep, maneuver->coff, 100,
+                                                      maneuver->flags, this);
+        }
+        catch (std::runtime_error& e)
+        {
+          signalError(e.what());
+          return;
+        }
 
         setControl(IMC::CL_PATH);
         m_path.speed = maneuver->speed;

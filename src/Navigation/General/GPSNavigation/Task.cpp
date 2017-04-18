@@ -218,6 +218,15 @@ namespace Navigation
           m_estate.vy = std::sin(msg->cog) * msg->sog;
           m_estate.u = msg->sog;
 
+          if (msg->getSourceEntity() == m_imu_eid)
+          {
+            m_estate.phi = 0.0;
+            m_estate.theta = 0.0;
+          }
+
+          if (msg->getSourceEntity() == m_yaw_eid)
+            m_estate.psi = msg->cog;
+
           dispatch(m_estate);
         }
 

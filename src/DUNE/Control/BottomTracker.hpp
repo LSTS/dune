@@ -60,10 +60,6 @@ namespace DUNE
         float min_alt;
         //! Minimum admissible forward range for bottom tracking.
         float min_range;
-        //! Altitude tolerance when in depth control.
-        float alt_tol;
-        //! Depth below which altitude is ignored.
-        float depth_tol;
         //! Depth limit for tracking bottom.
         float depth_limit;
         //! Slope angle hysteresis value for safeness detection.
@@ -161,7 +157,11 @@ namespace DUNE
       //! Take appropriate measures
       //! @return true if safe, false if not safe or unable to tell
       bool
-      checkSafety(void);
+      checkObstacles(void);
+
+      //! Check vehicle's safety even if no z reference is defined
+      void
+      safetyWithoutZRef(void);
 
       //! Update bottom tracking state machine.
       void
@@ -216,6 +216,11 @@ namespace DUNE
       void
       dispatchAdmAltitude(void) const;
 
+      //! Get the opposite Z reference.
+      //! @return altitude/depth reference when controlling in depth/altitude.
+      double
+      getReverseZ(void) const;
+
       //! Check if forward range measurement could be the surface.
       //! @return true if it can be the surface.
       bool
@@ -224,7 +229,18 @@ namespace DUNE
       //! Check if altitude values should be ignored or not.
       //! @return true if they should be ignored.
       bool
-      isAltitudeValid(void);
+      isAltitudeValid(void) const;
+
+      //! Check if vehicle depth is above minimum.
+      //! @return true if depth is above minimum.
+      bool
+      isUnderwater(void) const;
+
+      //! Check if vehicle is reaching maximum limit.
+      //! @param[in] depth_ref current depth reference.
+      //! @return true if vehicle is reaching limit, false otherwise.
+      bool
+      isReachingLimit(double depth_ref) const;
 
       //! Function for info messages.
       //! @param[in] msg string message to output.
@@ -236,10 +252,10 @@ namespace DUNE
       void
       debug(const std::string& msg) const;
 
-      //! Throw an error if really necessary
+      //! Function for warning messages.
       //! @param[in] msg string message to output
       void
-      err(const std::string& msg) const;
+      war(const std::string& msg) const;
 
       //! Pointer to arguments.
       const Arguments* m_args;
@@ -265,6 +281,8 @@ namespace DUNE
       float m_last_run;
       //! True if slope was estimated.
       bool m_slope;
+      //! True if unable to avoid obstacle.
+      bool m_unable;
       //! Control parcel message for debug
       DUNE::IMC::ControlParcel m_cparcel;
     };

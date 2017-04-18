@@ -26,7 +26,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4606c32356d598296311edecb407d6c1                            *
+// IMC XML MD5: ac6fc6f4b1f5c445991672dbda04723d                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -313,4 +313,5 @@ MESSAGE(901, UsblModem)
 MESSAGE(902, UsblConfig)
 MESSAGE(903, DissolvedOrganicMatter)
 MESSAGE(904, OpticalBackscatter)
+MESSAGE(905, Tachograph)
 #undef MESSAGE

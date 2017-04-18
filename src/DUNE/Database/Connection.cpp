@@ -40,22 +40,37 @@ namespace DUNE
 {
   namespace Database
   {
-    const char*
-    Connection::c_memory_db = ":memory:";
-
-    Connection::Connection(const char* path, bool create):
-      m_handle(0)
+    Connection::Connection(int flags)
     {
+      open(":memory:", flags);
+    }
+
+    Connection::Connection(const char* path, int flags)
+    {
+      open(path, flags);
+    }
+
+    void
+    Connection::open(const char* path, int flags)
+    {
+      m_handle = NULL;
+
       sqlite3_enable_shared_cache(1);
 
-      int flags = create ? SQLITE_OPEN_CREATE : 0;
-      flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_SHAREDCACHE;
+      int sl_flags = SQLITE_OPEN_SHAREDCACHE;
+      if (flags & CF_RDONLY)
+        sl_flags |= SQLITE_OPEN_READONLY;
+      else
+        sl_flags |= SQLITE_OPEN_READWRITE;
 
-      if (sqlite3_open_v2(path, &m_handle, flags, 0) != SQLITE_OK)
+      if (flags & CF_CREATE)
+        sl_flags |= SQLITE_OPEN_CREATE;
+
+      if (sqlite3_open_v2(path, &m_handle, sl_flags, 0) != SQLITE_OK)
       {
         Error e(lastError());
         sqlite3_close(m_handle);
-        m_handle = 0;
+        m_handle = NULL;
         throw e;
       }
 

@@ -27,19 +27,19 @@
 ############################################################################
 
 if [ -z "$GSM_USER" ]; then
-    GSM_USER='vodafone'
+    GSM_USER='internet'
 fi
 
 if [ -z "$GSM_PASS" ]; then
-    GSM_PASS='vodafone'
+    GSM_PASS=''
 fi
 
 if [ -z "$GSM_APN" ]; then
-    GSM_APN='internet.vodafone.pt'
+    GSM_APN='internet'
 fi
 
 if [ -z "$GSM_MODE" ]; then
-    GSM_MODE='AT\^SYSCFG=2,2,3fffffff,0,1'
+    GSM_MODE='AT\^SYSCFG=2,2,3fffffff,1,1'
 fi
 
 if [ -z "$GSM_PIN" ]; then
@@ -53,6 +53,11 @@ fi
 if [ -z "$FWL_INT_ITF" ]; then
     FWL_INT_ITF='eth0'
 fi
+
+if [ -z "$PRESENTATION_MODE" ]; then
+    PRESENTATION_MODE='AT'
+fi
+
 
 CHAT_SCRIPT=$(cat <<EOF
 ABORT 'BUSY' \
@@ -70,7 +75,7 @@ TIMEOUT 3 \
 'OK' '$GSM_PIN' \
 'OK-AT-OK' 'ATI' \
 'OK' 'ATZ' \
-'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0' \
+'OK' '$PRESENTATION_MODE' \
 'OK' '$GSM_MODE' \
 'OK-AT-OK' 'AT+CGDCONT=1,\"IP\",\"$GSM_APN\"' \
 'OK' 'ATDT*99***1#' \
@@ -170,6 +175,7 @@ ppp_stop()
 
 nat_start()
 {
+
     log info "nat: enabling IP forwarding"
     echo '1' > /proc/sys/net/ipv4/ip_forward
     echo '1' > /proc/sys/net/ipv4/ip_dynaddr

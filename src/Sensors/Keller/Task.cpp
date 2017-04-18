@@ -27,6 +27,7 @@
 
 // ISO C++ 98 headers.
 #include <cstddef>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -88,6 +89,8 @@ namespace Sensors
       //! Number of seconds without data before reporting a failure and
       //! restarting.
       double timeout_failure;
+      //! GPS entity label.
+      std::string label_gps;
     };
 
     // Number of seconds to wait before setting an entity error.
@@ -142,6 +145,8 @@ namespace Sensors
       size_t m_faults_count;
       //! Timeout count.
       size_t m_timeout_count;
+      //! GPS source entity.
+      unsigned m_gps_eid;
       // Task arguments.
       Arguments m_args;
 
@@ -187,9 +192,14 @@ namespace Sensors
         .units(Units::Second)
         .description("Number of seconds without data before restarting task");
 
+        param("Entity Label - GPS", m_args.label_gps)
+        .defaultValue("GPS")
+        .description("Entity label of 'GpsFix' messages");
+
         m_calibrated = false;
 
         // Register consumers.
+        bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
       }
 
@@ -252,6 +262,19 @@ namespace Sensors
       }
 
       void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_gps_eid = resolveEntity(m_args.label_gps);
+        }
+        catch (...)
+        {
+          m_gps_eid = std::numeric_limits<unsigned>::max();
+        }
+      }
+
+      void
       onResourceRelease(void)
       {
         Memory::clear(m_handle);
@@ -265,9 +288,27 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (msg->getSourceEntity() != m_gps_eid)
+          return;
+
+        if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
+          calibrate();
+      }
+
+      void
       consume(const IMC::VehicleMedium* msg)
       {
-        if ((msg->medium != IMC::VehicleMedium::VM_UNDERWATER) && !m_calibrated)
+        if (msg->medium != IMC::VehicleMedium::VM_UNDERWATER)
+          calibrate();
+      }
+
+      //! Calibrate device.
+      void
+      calibrate(void)
+      {
+        if (!m_calibrated)
         {
           zero();
           m_calibrated = true;

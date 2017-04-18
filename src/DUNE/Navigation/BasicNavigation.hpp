@@ -182,6 +182,9 @@ namespace DUNE
       consume(const IMC::Rpm* msg);
 
       void
+      consume(const IMC::UsblFixExtended* msg);
+
+      void
       consume(const IMC::WaterVelocity* msg);
 
     protected:
@@ -444,6 +447,12 @@ namespace DUNE
       //! Routine to assign EKF filter output variables when a DVL velocity message is received.
       virtual void
       runKalmanDVL(void);
+
+      //! Routine to assign EKF filter output variables when a UsblFixExtended message is received.
+      //! @param[in] x vehicle north displacement (m).
+      //! @param[in] y vehicle east displacement (m).
+      virtual void
+      runKalmanUSBL(double x, double y);
 
       //! Get EKF output matrix speed indexes.
       //! @param[out] u forward speed state index.
