@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,19 +8,21 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://www.lsts.pt/dune/licence.                                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Tiago Rodrigues                                                  *
 // Author: José Braga                                                       *
@@ -33,6 +35,9 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "Probes.hpp"
 
 namespace Sensors
 {
@@ -55,7 +60,7 @@ namespace Sensors
     static const float c_temp_tout = 5.0f;
 
     //! Commands
-    static const char* c_cmd_ops[] = { "DENSITY", "SALINITY", "SV" };
+    static const char* c_cmd_ops[] = { "SALINITY", "DENSITY", "SV" };
     static const char* c_cmd_icset = "SET SCAN ";
     static const char* c_cmd_icnos = "SET SCAN NO";
     static const char* c_cmd_sampl = "SET S 1s";
@@ -67,7 +72,7 @@ namespace Sensors
     static const std::string c_di_options[] = { "Conductivity", "SoundSpeed",
                                                 "Temperature", "Pressure" };
     //! Internal channel options.
-    static const std::string c_in_options[] = { "WaterDensity", "Salinity", "SoundSpeed" };
+    static const std::string c_in_options[] = { "Salinity", "WaterDensity", "SoundSpeed" };
 
     //! Digital Sensor Options indexes.
     enum DigitalIndex
@@ -81,8 +86,8 @@ namespace Sensors
     //! Internal Channel Options indexes.
     enum InternalIndex
     {
-      ICM_DENSITY = 0,
-      ICM_SALINITY = 1,
+      ICM_SALINITY = 0,
+      ICM_DENSITY = 1,
       ICM_SSPEED = 2
     };
 
@@ -96,8 +101,6 @@ namespace Sensors
     static const unsigned c_channels = c_di_count + c_an_count;
     //! Number of total readings.
     static const unsigned c_total = c_channels + c_in_count;
-    //! Const to transform dbar to Bar.
-    static const unsigned c_dbar_to_bar = 10;
     //! Redox mV offset
     static const unsigned c_redox_offset = 2500;
     //! PH: Nernst value in Volts at 20ºC.
@@ -160,6 +163,8 @@ namespace Sensors
       unsigned m_temp_eid;
       //! Temperature for pH calculation
       float m_temp;
+      //! Probes.
+      Probes m_probes;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -590,8 +595,16 @@ namespace Sensors
       //! @param[in] raw dispatch raw voltage.
       void
       dispatchValue(IMC::Message* msg, double value, double factor,
-                    double tstamp, bool raw = false, unsigned analog = 0)
+                    double tstamp, bool raw = false, unsigned index = 0)
       {
+        // Convert value to standard MRA units.
+        std::string name = raw ? m_args.msgs[index + c_di_count] : m_args.msgs[index];
+        float cfactor = m_probes.conversion((char*)name.c_str());
+        if(!cfactor)
+          war(DTR("unknown probe (%s)"), (char*)name.c_str());
+        else
+          value = value * cfactor;
+
         // send raw voltages.
         if (raw)
         {
@@ -599,7 +612,7 @@ namespace Sensors
 
           unsigned eid = msg->getSourceEntity();
           if (eid == getEntityId())
-            volt.setSourceEntity(resolveEntity(String::str("%s - Analog %u", getEntityLabel(), analog + 1)));
+            volt.setSourceEntity(resolveEntity(String::str("%s - Analog %u", getEntityLabel(), index + 1)));
           else
             volt.setSourceEntity(eid);
 
@@ -658,7 +671,7 @@ namespace Sensors
         IMC::Depth depth;
         depth.setSourceEntity(id);
         depth.setTimeStamp(tstamp);
-        double val = value / c_dbar_to_bar;
+        double val = value / Math::c_pascal_per_bar;
         depth.value = UNESCO1983::computeDepth(val, m_lat, m_args.geop_anomaly);
         dispatch(depth, DF_KEEP_TIME);
       }
@@ -776,7 +789,7 @@ namespace Sensors
                 if (i >= c_di_count)
                   dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, true, i - c_di_count);
                 else
-                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, false);
+                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, false, i);
               }
               else
               {

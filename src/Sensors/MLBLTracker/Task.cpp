@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,18 +8,20 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Universidade do Porto. For licensing   *
-// terms, conditions, and further information contact lsts@fe.up.pt.        *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
 //                                                                          *
-// European Union Public Licence - EUPL v.1.1 Usage                         *
-// Alternatively, this file may be used under the terms of the EUPL,        *
-// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -64,6 +66,8 @@ namespace Sensors
     static const uint8_t c_code_report = 0x1;
     // Start plan code.
     static const uint8_t c_code_plan = 0x2;
+    // Reverse range code.
+    static const uint8_t c_code_reverse_range = 0x3;
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
@@ -163,6 +167,8 @@ namespace Sensors
       bool m_ignore_gpio;
       //! Current line.
       std::string m_line;
+      // System position
+      IMC::EstimatedState *m_estate;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -170,7 +176,8 @@ namespace Sensors
         m_op_deadline(-1.0),
         m_pc(NULL),
         m_op(OP_NONE),
-        m_gpio_txd(NULL)
+        m_gpio_txd(NULL),
+        m_estate(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -243,6 +250,7 @@ namespace Sensors
 
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       ~Task(void)
@@ -395,6 +403,12 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::EstimatedState* msg)
+      {
+        Memory::replace(m_estate, new IMC::EstimatedState(*msg));
+      }
+
+      void
       consume(const IMC::AcousticOperation* msg)
       {
         if (m_op != OP_NONE)
@@ -426,6 +440,9 @@ namespace Sensors
             break;
           case IMC::AcousticOperation::AOP_MSG:
             transmitMessage(msg->system, msg->msg);
+            break;
+          case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+            reverseRange(msg->system);
             break;
         }
       }
@@ -491,6 +508,38 @@ namespace Sensors
           return;
 
         sendCommand(command);
+      }
+
+      void
+      reverseRange(const std::string& sys)
+      {
+        MicroModemMap::iterator itr = m_ummap.find(sys);
+        if (itr == m_ummap.end() || m_estate == NULL)
+        {
+          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
+          m_acop_out.system = sys;
+          dispatch(m_acop_out);
+          return;
+        }
+
+        double lat = m_estate->lat, lon = m_estate->lon, depth = m_estate->depth;
+        WGS84::displace(m_estate->x, m_estate->y, &lat, &lon);
+        float slat = (float)lat, slon = (float) lon;
+        std::vector<char> pmsg(c_binary_size, 0);
+        int8_t sdep = (int8_t) depth;
+
+        // Make packet.
+        pmsg[0] = (char)c_code_reverse_range;
+        std::memcpy(&pmsg[1], &slat, 4);
+        std::memcpy(&pmsg[5], &slon, 4);
+        std::memcpy(&pmsg[9], &sdep, 1);
+
+        std::string hex = String::toHex(pmsg);
+        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n", m_address, itr->second, hex.c_str());
+        sendCommand(cmd);
+
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+        sendCommand(cyc);
       }
 
       //! Abort system.
@@ -784,12 +833,43 @@ namespace Sensors
           es.lon = lon;
           es.depth = (float)depth;
           es.psi = (float)yaw / 100.0;
-          es.alt = (float)alt / 10.0;
+
+          if (alt >= -10)
+            es.alt = (float)alt / 10.0;
           dispatch(es);
+
+          if (alt < -10) {
+            IMC::Salinity sal;
+            sal.value = - ((float)alt / 10.0);
+            sal.setSource(m_mimap[src]);
+            dispatch(sal);
+          }
 
           IMC::PlanControlState pcs;
           pcs.setSource(m_mimap[src]);
-          pcs.plan_progress = (float)progress;
+
+          int state = progress / 10;
+
+          switch (state)
+          {
+            case (-1):
+              pcs.state = PlanControlState::PCS_BLOCKED;
+              pcs.last_outcome = progress % 10;
+              break;
+            case (-2):
+              pcs.state = PlanControlState::PCS_READY;
+              pcs.last_outcome = progress % 10;
+              break;
+            case (-3):
+              pcs.state = PlanControlState::PCS_INITIALIZING;
+              pcs.last_outcome = progress % 10;
+              break;
+            default:
+              pcs.state = PlanControlState::PCS_EXECUTING;
+              pcs.plan_progress = (float)progress;
+              break;
+          }
+
           dispatch(pcs);
 
           // Inform if progress is valid.
