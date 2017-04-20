@@ -89,6 +89,7 @@ namespace Monitors
       {
         char buffer[64];
         std::string result = "";
+        std::sprintf(buffer, "cat %s", m_args.temp_path.c_str());
         FILE* pipe = popen(m_args.temp_path.c_str(), "r");
         if (!pipe)
         {
@@ -98,6 +99,7 @@ namespace Monitors
         }
         else
         {
+          std::memset(&buffer, '\0', sizeof(buffer));
           try
           {
             while (!feof(pipe))
@@ -112,9 +114,9 @@ namespace Monitors
             throw;
           }
           pclose(pipe);
-          std::sscanf(buffer, "temp=%f'C", &m_temperature);
+          std::sscanf(buffer, "%f", &m_temperature);
         }
-        return m_temperature;
+        return (m_temperature/1000);
       }
 
       void
@@ -124,11 +126,15 @@ namespace Monitors
         {
           m_temp.value = getTemperatureCPU();
           if (m_temp.value > 0)
+          {
+            m_temp.setDestination(getSystemId());
+            dispatch(m_temp);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
           else
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-
-          dispatch(m_temp);
+          }
         }
         catch (...)
         {
