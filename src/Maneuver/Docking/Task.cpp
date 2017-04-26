@@ -74,6 +74,8 @@ namespace Maneuver
       IMC::PathControlState m_control_state;
       //! Maneuver
       IMC::Docking m_maneuver;
+      //! Maneuver
+      IMC::DockingState m_dstate;
       //!
       IMC::Announce m_announce;
       //!
@@ -105,12 +107,14 @@ namespace Maneuver
         .units(Units::Second)
         .defaultValue("2")
         .description("Periodicity of location announcement");
+        
         //!
         bindToManeuver<Task, IMC::Docking>();
-        bind<IMC::Announce>(this);
+        bind<IMC::DockingState>(this);
+       // bind<IMC::Announce>(this);
         // bind<IMC::PathControlState>(this);
-        bind<IMC::Heartbeat>(this);
-        bind<IMC::EstimatedState>(this);
+        //bind<IMC::Heartbeat>(this);
+        //bind<IMC::EstimatedState>(this);
       }
 
       //! Destructor
@@ -138,18 +142,42 @@ namespace Maneuver
       void
       consume(const IMC::Docking* maneuver)
       {
-        enableMovement(false);
-
         m_maneuver = *maneuver;
 
-        if (strcmp(m_maneuver.target.c_str(), getSystemName()) == 0)
-          m_mode = TARGET;
-        else if (strcmp(m_maneuver.station.c_str(), getSystemName()) == 0 )
-          m_mode = STATION;
-        else
-          m_mode =  ERROR;
+        if (strcmp(m_maneuver.target.c_str(),getSystemName()) == 0)
+        {
+          signalError(DTR("Target name must be different from actual system!"));
+          return;
+        }
 
+        enableMovement(false);
+      
+        if (m_maneuver.vehiclefunction == 0)
+        {
+          m_mode = STATION;
+          war("\n\nSOU A STATION!!!\n");
+         
+        }
+        else if (m_maneuver.vehiclefunction == 1)
+        {
+          m_mode = TARGET;
+          war("\n\nSOU A TARGET!!!\n");
+        }
+
+        inf("vehicle target %s", m_maneuver.target.c_str());
+        inf("vehicle function %d", m_maneuver.vehiclefunction);
+        inf("vehicle max_speed %f", m_maneuver.max_speed);
+        inf("maneuver lat %f", m_maneuver.lat);
+        inf("maneuver lon %f", m_maneuver.lon);
+        inf("vehicle speed_units %d", m_maneuver.speed_units);
       }
+
+      void
+      consume(const IMC::DockingState* msg)
+      {
+        m_dstate = *msg;
+      }
+
       void
       onResourceInitialization(void)
       {
@@ -158,10 +186,10 @@ namespace Maneuver
       onResourceAcquisition(void)
       {
         // Initialize entity state.
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      //    setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      void
+      /*void
       onDockingManeuver(void)
       {
         switch (m_mode)
@@ -244,13 +272,13 @@ namespace Maneuver
         }
         else
         {
-          /*  war("1em progresso");
+            war("1em progresso");
             //setControl(IMC::CL_PATH);
             // path.end_lat = m_announce.lat;
             // path.end_lon = m_announce.lon;
             war("station lat: %f",path.end_lat);
             war("station lat: %f",path.end_lon);
-            //dispatch(path);*/
+            //dispatch(path);
           enableMovement(true);
           //signalProgress(m_control_state.eta);
         }
@@ -300,7 +328,7 @@ namespace Maneuver
         // path.end_lon = m_announce.lon;
         //updatePath();
       }
-
+*/
       //! Function for enabling and disabling the control loops
       void
       enableMovement(bool enable)
