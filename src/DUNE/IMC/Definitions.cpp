@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c2a8b29e93b472d03b1c27abe7fc2e0c                            *
+// IMC XML MD5: 8e17e6762972a0be4bc1d1016c942223                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -17061,11 +17061,11 @@ namespace DUNE
     Docking::clear(void)
     {
       target.clear();
-      station.clear();
-      speed = 0;
+      max_speed = 0;
       speed_units = 0;
       lat = 0;
       lon = 0;
+      vehiclefunction = 0;
     }
 
     bool
@@ -17073,19 +17073,21 @@ namespace DUNE
     {
       const IMC::Docking& other__ = static_cast<const Docking&>(msg__);
       if (target != other__.target) return false;
-      if (station != other__.station) return false;
-      if (speed != other__.speed) return false;
+      if (max_speed != other__.max_speed) return false;
       if (speed_units != other__.speed_units) return false;
       if (lat != other__.lat) return false;
       if (lon != other__.lon) return false;
+      if (vehiclefunction != other__.vehiclefunction) return false;
       return true;
     }
 
     int
     Docking::validate(void) const
     {
+      if (max_speed < 0) return false;
       if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
       if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (vehiclefunction > 4) return false;
       return true;
     }
 
@@ -17094,11 +17096,11 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(target, ptr__);
-      ptr__ += IMC::serialize(station, ptr__);
-      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(max_speed, ptr__);
       ptr__ += IMC::serialize(speed_units, ptr__);
       ptr__ += IMC::serialize(lat, ptr__);
       ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(vehiclefunction, ptr__);
       return ptr__;
     }
 
@@ -17107,11 +17109,11 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(target, bfr__, size__);
-      bfr__ += IMC::deserialize(station, bfr__, size__);
-      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(max_speed, bfr__, size__);
       bfr__ += IMC::deserialize(speed_units, bfr__, size__);
       bfr__ += IMC::deserialize(lat, bfr__, size__);
       bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(vehiclefunction, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -17120,11 +17122,11 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(target, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(station, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(max_speed, bfr__, size__);
       bfr__ += IMC::deserialize(speed_units, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(vehiclefunction, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -17132,11 +17134,11 @@ namespace DUNE
     Docking::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "target", target, nindent__);
-      IMC::toJSON(os__, "station", station, nindent__);
-      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "max_speed", max_speed, nindent__);
       IMC::toJSON(os__, "speed_units", speed_units, nindent__);
       IMC::toJSON(os__, "lat", lat, nindent__);
       IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "vehiclefunction", vehiclefunction, nindent__);
     }
 
     VehicleState::VehicleState(void)
@@ -21178,6 +21180,80 @@ namespace DUNE
     {
       IMC::toJSON(os__, "topic", topic, nindent__);
       IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    DockingState::DockingState(void)
+    {
+      m_header.mgid = 565;
+      clear();
+    }
+
+    void
+    DockingState::clear(void)
+    {
+      sys_name.clear();
+      state = 0;
+      availability = 0;
+      vehiclefunction = 0;
+    }
+
+    bool
+    DockingState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DockingState& other__ = static_cast<const DockingState&>(msg__);
+      if (sys_name != other__.sys_name) return false;
+      if (state != other__.state) return false;
+      if (availability != other__.availability) return false;
+      if (vehiclefunction != other__.vehiclefunction) return false;
+      return true;
+    }
+
+    int
+    DockingState::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    DockingState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(sys_name, ptr__);
+      ptr__ += IMC::serialize(state, ptr__);
+      ptr__ += IMC::serialize(availability, ptr__);
+      ptr__ += IMC::serialize(vehiclefunction, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DockingState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sys_name, bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(availability, bfr__, size__);
+      bfr__ += IMC::deserialize(vehiclefunction, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DockingState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(sys_name, bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      bfr__ += IMC::deserialize(availability, bfr__, size__);
+      bfr__ += IMC::deserialize(vehiclefunction, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    DockingState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "sys_name", sys_name, nindent__);
+      IMC::toJSON(os__, "state", state, nindent__);
+      IMC::toJSON(os__, "availability", availability, nindent__);
+      IMC::toJSON(os__, "vehiclefunction", vehiclefunction, nindent__);
     }
 
     CompressedImage::CompressedImage(void)

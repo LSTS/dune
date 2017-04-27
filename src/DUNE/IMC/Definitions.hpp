@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c2a8b29e93b472d03b1c27abe7fc2e0c                            *
+// IMC XML MD5: 8e17e6762972a0be4bc1d1016c942223                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -15794,18 +15794,27 @@ namespace DUNE
     class Docking: public Maneuver
     {
     public:
-      //! Docking Target.
+      //! Vehicle Function.
+      enum VehicleFunctionEnum
+      {
+        //! Station.
+        DOCK_STATION = 0,
+        //! Target.
+        DOCK_TARGET = 1
+      };
+
+      //! Vehicle Target.
       std::string target;
-      //! Docking Station.
-      std::string station;
-      //! Speed.
-      fp32_t speed;
+      //! Maximum Speed.
+      fp32_t max_speed;
       //! Speed Units.
       uint8_t speed_units;
       //! Latitude WGS-84.
       fp64_t lat;
       //! Longitude WGS-84.
       fp64_t lon;
+      //! Vehicle Function.
+      uint8_t vehiclefunction;
 
       static uint16_t
       getIdStatic(void)
@@ -15854,13 +15863,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 21;
+        return 22;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(target) + IMC::getSerializationSize(station);
+        return IMC::getSerializationSize(target);
       }
 
       void
@@ -19777,6 +19786,112 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(topic) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Docking State.
+    class DockingState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Default.
+        DS_S_DEFAULT = 0,
+        //! Docked -- Sucess.
+        DS_S_SUCCESS = 1,
+        //! Docked -- Failure.
+        DS_S_FAILURE = 2
+      };
+
+      //! Availability.
+      enum AvailabilityEnum
+      {
+        //! Default.
+        DS_A_DEFAULT = 0,
+        //! Ready to dock.
+        DS_A_READY = 1,
+        //! Abort docking.
+        DS_A_ABORT = 2
+      };
+
+      //! Vehicle Function.
+      enum VehicleFunctionEnum
+      {
+        //! Default.
+        DS_VF_DEFAULT = 0,
+        //! Station.
+        DS_VF_STATION = 1,
+        //! Target.
+        DS_VF_TARGET = 2
+      };
+
+      //! System Name.
+      std::string sys_name;
+      //! State.
+      uint8_t state;
+      //! Availability.
+      uint8_t availability;
+      //! Vehicle Function.
+      uint8_t vehiclefunction;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 565;
+      }
+
+      DockingState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new DockingState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DockingState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DockingState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(sys_name);
       }
 
       void

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c2a8b29e93b472d03b1c27abe7fc2e0c                            *
+// IMC XML MD5: 8e17e6762972a0be4bc1d1016c942223                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -522,6 +522,8 @@
 #define DUNE_IMC_TREXPLAN 658
 //! Event identification number.
 #define DUNE_IMC_EVENT 660
+//! DockingState identification number.
+#define DUNE_IMC_DOCKINGSTATE 565
 //! CompressedImage identification number.
 #define DUNE_IMC_COMPRESSEDIMAGE 702
 //! ImageTxSettings identification number.
