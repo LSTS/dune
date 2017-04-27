@@ -50,10 +50,25 @@ namespace Maneuver
 
     struct Arguments
     {
-      // System id
-      const char* announce_id;
       double lat;
       double lon;
+
+      // Ports.
+      std::vector<unsigned> ports;
+    };
+
+    enum STATE
+    {
+      STATE_DEFAULT,
+      SUCESS,
+      FAILURE
+    };
+
+    enum AV
+    {
+      AV_DEFAULT,
+      READY,
+      ABORT
     };
 
     enum DMODE
@@ -64,37 +79,44 @@ namespace Maneuver
       ERROR
     };
 
-    const char* docking_id;
-
     struct Task: public DUNE::Maneuvers::Maneuver
     {
-      //!
-      double periodicity;
+
       //!
       IMC::PathControlState m_control_state;
       //! Maneuver
       IMC::Docking m_maneuver;
       //! Maneuver
       IMC::DockingState m_dstate;
-      //!
-      IMC::Announce m_announce;
+
       //!
       IMC::EstimatedState m_estate;
       //!
-      IMC::DesiredPath path;
+      IMC::DesiredPath m_path;
+
+      IMC::DevDataBinary m_usbl_p;
 
       //! Task arguments
       Arguments m_args;
       //!
       DMODE m_mode;
+      //!
+      AV availability;
+
+      STATE state;
+
+
+      //! Timer counter to update speed
+      Time::Counter<float> m_timer;
+
+
+
       // Socket.
       UDPSocket m_sock;
       // List of destinations.
       std::vector<Destination> m_dsts;
-      //! Timer counter to update speed
-      Time::Counter<float> m_timer;
-
-      bool flag;
+      // External advertising buffer.
+      uint8_t m_bfr_ext[4096];
 
       //! Constructor.
       //! @param[in] name task name.
@@ -103,26 +125,24 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx)
       {
         //!Define configuration parameters.
-        param("Announcement Periodicity", periodicity)
-        .units(Units::Second)
-        .defaultValue("2")
-        .description("Periodicity of location announcement");
-        
+        param("Ports", m_args.ports)
+        .defaultValue("30100, 30101, 30102, 30103, 30104")
+        .description("List of destination ports");
         //!
         bindToManeuver<Task, IMC::Docking>();
         bind<IMC::DockingState>(this);
-       // bind<IMC::Announce>(this);
-        // bind<IMC::PathControlState>(this);
-        //bind<IMC::Heartbeat>(this);
-        //bind<IMC::EstimatedState>(this);
+        // bind<IMC::Announce>(this);
+        bind<IMC::DevDataBinary>(this);
+        //bind<IMC::UsblAnglesExtended>(this);
+        bind<IMC::PathControlState>(this);
+        bind<IMC::Heartbeat>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       //! Destructor
       virtual
       ~Task(void)
       {
-        // if (m_estate)
-        //  delete m_estate;
       }
 
       void
@@ -134,9 +154,44 @@ namespace Maneuver
       void
       onManeuverActivation(void)
       {
-        //Memory::clear(path);
-       // path.clear();
-       // err("INICIEI A MANOBRA!!!!");
+        m_dstate.clear();
+      }
+
+
+      /*  inf("vehicle target %s", m_maneuver.target.c_str());
+        inf("vehicle function %d", m_maneuver.vehiclefunction);
+        inf("vehicle max_speed %f", m_maneuver.max_speed);
+        inf("maneuver lat %f", m_maneuver.lat);
+        inf("maneuver lon %f", m_maneuver.lon);
+        inf("vehicle speed_units %d", m_maneuver.speed_units);*/
+
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_estate = *msg;
+      }
+
+      void
+      consume(const IMC::Heartbeat* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        onDockingManeuver();
+      }
+
+      //! @param[in] pcs pointer to PathControlState message
+      void
+      consume(const IMC::PathControlState* pcs)
+      {
+        if (pcs->getSource() != getSystemId())
+          return;
+
+        m_control_state = *pcs;
       }
 
       void
@@ -149,34 +204,80 @@ namespace Maneuver
           signalError(DTR("Target name must be different from actual system!"));
           return;
         }
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         enableMovement(false);
-      
+
         if (m_maneuver.vehiclefunction == 0)
         {
           m_mode = STATION;
-          war("\n\nSOU A STATION!!!\n");
-         
+          war("\n\nSOU A STATION\n");
         }
         else if (m_maneuver.vehiclefunction == 1)
         {
           m_mode = TARGET;
-          war("\n\nSOU A TARGET!!!\n");
+          war("\n\nSOU O TARGET\n");
         }
-
-        inf("vehicle target %s", m_maneuver.target.c_str());
-        inf("vehicle function %d", m_maneuver.vehiclefunction);
-        inf("vehicle max_speed %f", m_maneuver.max_speed);
-        inf("maneuver lat %f", m_maneuver.lat);
-        inf("maneuver lon %f", m_maneuver.lon);
-        inf("vehicle speed_units %d", m_maneuver.speed_units);
       }
 
       void
       consume(const IMC::DockingState* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_dstate = *msg;
+
+        if (m_mode == STATION)
+        {
+          war("System name %s:",m_dstate.sys_name.c_str());
+          war("State %d:",m_dstate.state);
+          war("Availability %d:",m_dstate.availability);
+          war("Vehicle function %d:",m_dstate.vehiclefunction);
+        }
+        else if (m_mode == TARGET)
+          war("nada");
       }
+
+      void
+      consume(const IMC::DevDataBinary* msg)
+      {
+        m_usbl_p = *msg;
+      }
+
+      void
+      onDockingManeuver(void)
+      {
+        if (m_mode == STATION)
+        {
+          if ( strcmp(m_maneuver.target.c_str(),m_dstate.sys_name.c_str()) == 0 && m_dstate.availability == READY)
+            war("Target ready for docking.");
+          else
+            war("Waiting for target to be ready for docking.");
+        }
+        else if (m_mode == TARGET)
+        {
+          if (m_control_state.flags & IMC::PathControlState::FL_NEAR)
+          {
+            enableMovement(false);
+            signalCompletion();
+            war("On docking point");
+            availability = READY;
+            onDockingPoint();
+          }
+          else
+          {
+            war("Going to docking point");
+            enableMovement(true);
+            gotopoint(m_maneuver.lat,m_maneuver.lon);
+          }
+        }
+      }
+
+
+
+
 
       void
       onResourceInitialization(void)
@@ -185,162 +286,73 @@ namespace Maneuver
       void
       onResourceAcquisition(void)
       {
-        // Initialize entity state.
-      //    setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      /*void
-      onDockingManeuver(void)
+      void
+      gotopoint(double lat, double lon)
       {
-        switch (m_mode)
+        m_path.end_lat = lat;
+        m_path.end_lon = lon;
+        m_path.speed_units = IMC::SUNITS_METERS_PS;
+        m_path.speed = 2.0;
+        m_path.end_z_units = IMC::Z_DEPTH;
+        m_path.end_z = 0;
+        dispatch(m_path);
+        // enableMovement(true);
+      }
+      void
+      onDockingPoint(void)
+      {
+        if (m_mode == STATION)
+          war("onDockingPoint");
+        else if (m_mode == TARGET)
+          sendMsg();
+      }
+
+      void
+      sendMsg(void)
+      {
+        m_dsts.clear();
+        m_dstate.clear();
+        m_dstate.sys_name = getSystemName();
+        m_dstate.availability = availability;
+        m_dstate.vehiclefunction = m_mode;
+        m_dstate.setTimeStamp();
+        m_sock.enableBroadcast(true);
+
+        for (unsigned j = 0; j < m_args.ports.size(); ++j)
         {
-          case (STATION):
-            war("SOU A STATION!!!");
-            receivePath();
-            break;
-          case (TARGET):
-            war("SOU O TARGET!!!");
-            sendPath();
-            break;
-          case (STOP):
-            break;
-          case (ERROR):
-            break;
+          Destination dst;
+          dst.port = m_args.ports[j];
+          dst.addr = "255.255.255.255";
+          dst.local = false;
+          m_dsts.push_back(dst);
+        }
+
+        uint16_t bfr_len_ext = IMC::Packet::serialize(&m_dstate, m_bfr_ext, sizeof(m_bfr_ext));
+
+        for (unsigned i = 0; i < m_dsts.size(); ++i)
+        {
+          try
+          {
+            war("dentro write");
+            m_sock.write(m_bfr_ext, bfr_len_ext, m_dsts[i].addr, m_dsts[i].port);
+          }
+          catch (...)
+          { }
         }
       }
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-        m_estate = *msg;
-      }
-
-      void
-      updatePath(void)
-      {
-        war("UPDATE PATH");
-        setControl(IMC::CL_PATH);
-        path.speed_units = IMC::SUNITS_METERS_PS;
-        path.speed = 2.0;
-        path.end_z_units = IMC::Z_DEPTH;
-        path.end_z = 0;
-        switch (m_mode)
-        {
-          case (STATION):
-            war("STATION");
-            if (strcmp(m_announce.sys_name.c_str() , m_maneuver.target.c_str()) == 0)
-            {
-              war("\n\nVehicle found\n");
-              path.end_lat = m_announce.lat;
-              path.end_lon = m_announce.lon;
-              war("station lat: %f",path.end_lat);
-              war("station lon: %f",path.end_lon);
-              war("actual lat: %f",m_estate.lat);
-              war("actual lon: %f",m_estate.lon);
-            }
-            else
-              war("\n\nVehicle %s nowhere found\n", m_maneuver.target.c_str());
-            break;
-          case (TARGET):
-            war("TARGET");
-            path.end_lat = m_maneuver.lat;
-            path.end_lon = m_maneuver.lon;
-            war("Target lat: %f",path.end_lat);
-            war("Target lon: %f",path.end_lon);
-            war("actual lat: %f",m_estate.lat);
-            war("actual lon: %f",m_estate.lon);
-            break;
-        }
-        dispatch(path);
-      }
-
-
-
-      void
-      receivePath(void)
-      {
-        // m_args.announce_id = m_announce.sys_name.c_str();
-        // docking_id = m_maneuver.target.c_str();
-        // war("docking target: %s", m_maneuver.target.c_str());
-        // war("docking station: %s", m_maneuver.station.c_str());
-        if (m_control_state.flags & IMC::PathControlState::FL_NEAR)
-        {
-          enableMovement(false);
-          signalCompletion();
-          war("Finito");
-        }
-        else
-        {
-            war("1em progresso");
-            //setControl(IMC::CL_PATH);
-            // path.end_lat = m_announce.lat;
-            // path.end_lon = m_announce.lon;
-            war("station lat: %f",path.end_lat);
-            war("station lat: %f",path.end_lon);
-            //dispatch(path);
-          enableMovement(true);
-          //signalProgress(m_control_state.eta);
-        }
-      }
-
-      void
-      consume(const IMC::Heartbeat* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-        //err("Heartbeat");
-        updatePath();
-        onDockingManeuver();
-      }
-
-      void
-      sendPath(void)
-      {
-        // war(IMC::PathControlState::FL_NEAR);
-        war("dentro!!!!!!!!!1");
-        if (m_control_state.flags & IMC::PathControlState::FL_NEAR)
-        {
-          enableMovement(false);
-          signalCompletion();
-          war("Finito");
-        }
-        else
-        {
-          war("2em progresso");
-          enableMovement(true);
-          // signalProgress(m_control_state.eta);
-        }
-      }
-
-      //! On PathControlState message
-      //! @param[in] pcs pointer to PathControlState message
-      void
-      onPathControlState(const IMC::PathControlState* pcs)
-      {
-        m_control_state = *pcs;
-      }
-      void
-      consume(const IMC::Announce* msg)
-      {
-        m_announce = *msg;
-        //  path.end_lat = m_announce.lat;
-        // path.end_lon = m_announce.lon;
-        //updatePath();
-      }
-*/
       //! Function for enabling and disabling the control loops
       void
       enableMovement(bool enable)
       {
         const uint32_t mask = IMC::CL_PATH;
+
         if (enable)
           setControl(mask);
         else
           setControl(0);
       }
-
-
     };
   }
 }
