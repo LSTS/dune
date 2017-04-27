@@ -72,15 +72,12 @@ namespace Transports
         param("Ports", m_args.ports)
         .defaultValue("30100, 30101, 30102, 30103, 30104")
         .description("List of destination ports");
-
         param("Multicast Address", m_args.addr_mcast)
         .defaultValue("224.0.75.69")
         .description("Multicast address");
-
         param("Print Incoming Messages", m_args.trace_in)
         .defaultValue("false")
         .description("Print incoming messages (Debug)");
-
         // Initialize DUNE's UID URL.
         std::ostringstream os;
         os << "dune://0.0.0.0/uid/" << m_ctx.uid;
@@ -94,8 +91,8 @@ namespace Transports
         m_sock.setMulticastTTL(1);
         m_sock.setMulticastLoop(false);
         m_sock.enableBroadcast(true);
-
         std::vector<Interface> itfs = Interface::get();
+
         for (unsigned i = 0; i < itfs.size(); ++i)
           m_sock.joinMulticastGroup(m_args.addr_mcast, itfs[i].address());
 
@@ -132,13 +129,15 @@ namespace Transports
 
         if (msg->getId() != DUNE_IMC_ANNOUNCE)
         {
-          war(DTR("discarding spurious message '%s'"), msg->getName());
+          dispatch(msg, DF_KEEP_TIME);
+          //war(DTR("discarding spurious message '%s'"), msg->getName());
           delete msg;
           return;
         }
 
         // Check if we already got this message.
         std::map<Address, double>::iterator itr = m_tstamps.find(addr);
+
         if (itr != m_tstamps.end())
         {
           if (itr->second == msg->getTimeStamp())
@@ -147,14 +146,10 @@ namespace Transports
             return;
           }
           else
-          {
             itr->second = msg->getTimeStamp();
-          }
         }
         else
-        {
           m_tstamps[addr] = msg->getTimeStamp();
-        }
 
         // Parse service list.
         IMC::Announce* announce = static_cast<IMC::Announce*>(msg);
@@ -175,6 +170,7 @@ namespace Transports
         // Check if the message was sent from our computer.
         bool m_local = false;
         std::vector<Interface> itfs = Interface::get();
+
         for (unsigned i = 0; i < itfs.size(); ++i)
         {
           if (itfs[i].address() == addr)
@@ -189,7 +185,6 @@ namespace Transports
         {
           inf(DTR("new node within range '%s' / %u / %s"), announce->sys_name.c_str(),
               msg->getSource(), addr.c_str());
-
           m_ctx.resolver.insert(announce->sys_name, msg->getSource());
         }
 
