@@ -46,6 +46,16 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! VTOL States
+      enum VTOL_State
+      {
+        MAV_VTOL_STATE_UNDEFINED,         // MAV is not configured as VTOL
+        MAV_VTOL_STATE_TRANSITION_TO_FW,  // VTOL is in transition from multicopter to fixed-wing
+        MAV_VTOL_STATE_TRANSITION_TO_MC,  // VTOL is in transition from fixed-wing to multicopter
+        MAV_VTOL_STATE_MC,                // VTOL is in multicopter state
+        MAV_VTOL_STATE_FW                 // VTOL is in fixed-wing state
+      };
+
       //! %Task arguments.
       struct Arguments
       {
@@ -84,12 +94,15 @@ namespace Control
         Network::TCPSocket* m_TCP_sock;
         //! UDP socket
         Network::UDPSocket* m_UDP_sock;
+
         //! System ID
         uint8_t m_sysid;
         //! Parser Variables
         mavlink_message_t m_msg;
+        //! VTOL State
+        VTOL_State m_vtol_state;
 
-        // Mavlink Timeouts
+        //! Mavlink Timeouts
         bool m_error_missing;
 
         //! GPS Fix message
@@ -105,6 +118,7 @@ namespace Control
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
           m_sysid(1),
+          m_vtol_state(MAV_VTOL_STATE_UNDEFINED),
           m_error_missing(false)
         {
 
@@ -153,6 +167,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_VFR_HUD]               = &Task::handleHUDPacket;
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME]           = &Task::handleSystemTimePacket;
           m_mlh[MAVLINK_MSG_ID_RAW_IMU]               = &Task::handleImuRaw;
+          m_mlh[MAVLINK_MSG_ID_EXTENDED_SYS_STATE]    = &Task::handleExtendedStatePacket;
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -788,6 +803,17 @@ namespace Control
           dispatch(m_fix);
         }
 
+        void
+        handleExtendedStatePacket(const mavlink_message_t* msg)
+        {
+          spew("EXTENDED_SYSTEM_STATE");
+
+          mavlink_extended_sys_state_t extended_state;
+          mavlink_msg_extended_sys_state_decode(msg, &extended_state);
+
+          // Update vtol state
+          m_vtol_state = (VTOL_State)extended_state.vtol_state;
+        }
 
       };
     }
