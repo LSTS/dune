@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 8e17e6762972a0be4bc1d1016c942223                            *
+// IMC XML MD5: d08b157cacb896cb7dad642ae4a077e5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -19814,8 +19814,10 @@ namespace DUNE
         DS_A_DEFAULT = 0,
         //! Ready to dock.
         DS_A_READY = 1,
+        //! Perfoming Docking.
+        DS_A_PERFOMING = 2,
         //! Abort docking.
-        DS_A_ABORT = 2
+        DS_A_ABORT = 3
       };
 
       //! Vehicle Function.
