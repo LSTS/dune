@@ -196,8 +196,12 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_RAW_IMU]               = &Task::handleImuRaw;
           m_mlh[MAVLINK_MSG_ID_EXTENDED_SYS_STATE]    = &Task::handleExtendedStatePacket;
 
+          // Setup processing of IMC messages
+          bind<AutopilotMode>(this);
+
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
+          m_estate.clear();
         }
 
         //! Update internal state with new parameter values.
@@ -341,6 +345,34 @@ namespace Control
         {
            Memory::clear(m_TCP_sock);
            Memory::clear(m_UDP_sock);
+        }
+
+        void
+        consume(const IMC::AutopilotMode* msg)
+        {
+          // Arm/Disarm
+          if (msg->mode.compare("ARM") == 0)
+            sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 1);
+
+          if (msg->mode.compare("DISARM") == 0)
+            sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 0);
+
+          (void)msg;
+        }
+
+        void
+        sendCommandPacket(uint16_t cmd, float arg1=0, float arg2=0, float arg3=0, float arg4=0, float arg5=0, float arg6=0, float arg7=0)
+        {
+          uint8_t buf[512];
+
+          mavlink_message_t msg;
+
+          trace("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+          mavlink_msg_command_long_pack(255, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
         }
 
         //! Main loop.
@@ -809,6 +841,8 @@ namespace Control
           }
 
           dispatch(mode);
+
+          //TODO Use hbt.base_mode (MAV_MODE_FLAG_SAFETY_ARMED) to send ARMED state upstream - will need to create an IMC message.
         }
 
         void
@@ -896,8 +930,9 @@ namespace Control
 
           // Update vtol state
           m_vtol_state = (VTOL_State)extended_state.vtol_state;
-        }
 
+          //TODO Add VTOL_State to IMC so we can send it upstream.
+        }
       };
     }
   }
