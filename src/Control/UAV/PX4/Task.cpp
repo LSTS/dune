@@ -46,6 +46,33 @@ namespace Control
     {
       using DUNE_NAMESPACES;
 
+      //! List of PX4 Modes
+      //! From px4_custom_mode.h in PX4/Firmware git repository.
+      enum PX4_Modes
+      {
+        PX4_CUSTOM_MAIN_MODE_MANUAL=1,
+        PX4_CUSTOM_MAIN_MODE_ALTCTL,
+        PX4_CUSTOM_MAIN_MODE_POSCTL,
+        PX4_CUSTOM_MAIN_MODE_AUTO,
+        PX4_CUSTOM_MAIN_MODE_ACRO,
+        PX4_CUSTOM_MAIN_MODE_OFFBOARD,
+        PX4_CUSTOM_MAIN_MODE_STABILIZED,
+        PX4_CUSTOM_MAIN_MODE_RATTITUDE
+      };
+
+      //! List of PX4 Auto Sub-Modes
+      enum PX4_subModes
+      {
+        PX4_CUSTOM_SUB_MODE_AUTO_READY = 1,
+        PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF,
+        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,
+        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,
+        PX4_CUSTOM_SUB_MODE_AUTO_RTL,
+        PX4_CUSTOM_SUB_MODE_AUTO_LAND,
+        PX4_CUSTOM_SUB_MODE_AUTO_RTGS,
+        PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET
+      };
+
       //! VTOL States
       enum VTOL_State
       {
@@ -686,9 +713,9 @@ namespace Control
         {
           spew("HEARTBEAT");
 
+          IMC::AutopilotMode mode;
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
-          IMC::AutopilotMode mode;
 
           // since GCS heartbeat are actually also sent, ignore if type is a GCS (6)
           if (static_cast<MAV_TYPE>(hbt.type) == MAV_TYPE_GCS)
@@ -697,31 +724,87 @@ namespace Control
           if (hbt.system_status == MAV_STATE_CRITICAL)
             war("PX4 failsafe active");
 
-          switch(hbt.base_mode)
+          uint8_t px4_mode = hbt.custom_mode >> 16;
+          uint8_t px4_submode =  hbt.custom_mode >> 24;
+
+          switch(px4_mode)
           {
-            default:
+            // Manual Modes
+            case PX4_CUSTOM_MAIN_MODE_MANUAL:
               mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
               mode.mode = "MANUAL";
-              break;
-            case MAV_MODE_FLAG_AUTO_ENABLED:
-              mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-              mode.mode = "AUTO";
-              trace("AUTO");
-              break;
-            case MAV_MODE_FLAG_GUIDED_ENABLED:
-              mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-              mode.mode = "GUIDED";
-              trace("GUIDED");
-              break;
-            case MAV_MODE_FLAG_STABILIZE_ENABLED:
+              trace("MANUAL");
+            break;
+            case PX4_CUSTOM_MAIN_MODE_STABILIZED:
               mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
               mode.mode = "STABILIZE";
               trace("STABILIZE");
               break;
-            case MAV_MODE_FLAG_MANUAL_INPUT_ENABLED:
+            case PX4_CUSTOM_MAIN_MODE_ACRO:
               mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
-              mode.mode = "MANUAL";
-              trace("MANUAL");
+              mode.mode = "ACRO";
+              trace("ACRO");
+              break;
+            case PX4_CUSTOM_MAIN_MODE_RATTITUDE:
+              mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+              mode.mode = "RATTITUDE";
+              trace("RATTITUDE");
+              break;
+
+            // Assisted Modes
+            case PX4_CUSTOM_MAIN_MODE_ALTCTL:
+              mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
+              mode.mode = "ALTCTL";
+              trace("ALTCTL");
+              break;
+            case PX4_CUSTOM_MAIN_MODE_POSCTL:
+              mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
+              mode.mode = "POSCTL";
+              trace("POSCTL");
+              break;
+
+            // Auto Modes
+            case PX4_CUSTOM_MAIN_MODE_AUTO:
+              mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+              // Check submode
+              switch(px4_submode)
+              {
+                case PX4_CUSTOM_SUB_MODE_AUTO_LOITER:
+                  mode.mode = "LOITER";
+                  trace("LOITER");
+                  break;
+                case PX4_CUSTOM_SUB_MODE_AUTO_RTL:
+                  mode.mode = "RTL";
+                  trace("RTL");
+                  break;
+                case PX4_CUSTOM_SUB_MODE_AUTO_MISSION:
+                  mode.mode = "MISSION";
+                  trace("MISSION");
+                  break;
+                case PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF:
+                  mode.mode = "TAKEOFF";
+                  trace("TAKEOFF");
+                  break;
+                case PX4_CUSTOM_SUB_MODE_AUTO_LAND:
+                  mode.mode = "LAND";
+                  trace("LAND");
+                  break;
+                default:
+                  mode.mode = "AUTO";
+                  trace("AUTO");
+                  break;
+              }
+              break;
+            case PX4_CUSTOM_MAIN_MODE_OFFBOARD:
+              mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+              mode.mode = "OFFBOARD";
+              trace("OFFBOARD");
+              break;
+
+            // Default
+            default:
+              mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+              mode.mode = "UNKNOWN";
               break;
           }
 
