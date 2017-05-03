@@ -36,8 +36,6 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    static const float update_timer = 5.0f;
-
     struct Destination
     {
       // Destination address.
@@ -50,11 +48,10 @@ namespace Maneuver
 
     struct Arguments
     {
-      double lat;
-      double lon;
-
       // Ports.
       std::vector<unsigned> ports;
+
+      float docking_timeout;
     };
 
     enum STATE
@@ -68,6 +65,7 @@ namespace Maneuver
     {
       AV_DEFAULT,
       READY,
+      PERFORMING,
       ABORT
     };
 
@@ -78,6 +76,22 @@ namespace Maneuver
       STOP,
       ERROR
     };
+
+    enum DMANEUVER
+    {
+      INIT,
+      MANEUVERING,
+      DM_STOP
+    };
+
+    enum DSTATE
+    {
+      DS_INIT,
+      DS_STOP
+    };
+
+
+
 
     struct Task: public DUNE::Maneuvers::Maneuver
     {
@@ -96,6 +110,8 @@ namespace Maneuver
 
       IMC::DevDataBinary m_usbl_p;
 
+      IMC::Announce m_announce;
+
       //! Task arguments
       Arguments m_args;
       //!
@@ -105,18 +121,21 @@ namespace Maneuver
 
       STATE state;
 
+      DMANEUVER dmaneuver;
+
+      DSTATE dstate;
 
       //! Timer counter to update speed
       Time::Counter<float> m_timer;
-
-
 
       // Socket.
       UDPSocket m_sock;
       // List of destinations.
       std::vector<Destination> m_dsts;
       // External advertising buffer.
-      uint8_t m_bfr_ext[4096];
+      uint8_t m_bfr_ds[4096];
+
+      bool flag_timeout;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -125,15 +144,18 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx)
       {
         //!Define configuration parameters.
+        //!List of ports to send DockingState msg
+        param("Docking Timeout", m_args.docking_timeout)
+        .defaultValue("300.0")
+        .description("Docking Timeout");
+        //!List of ports to send DockingState msg
         param("Ports", m_args.ports)
         .defaultValue("30100, 30101, 30102, 30103, 30104")
         .description("List of destination ports");
         //!
         bindToManeuver<Task, IMC::Docking>();
         bind<IMC::DockingState>(this);
-        // bind<IMC::Announce>(this);
-        bind<IMC::DevDataBinary>(this);
-        //bind<IMC::UsblAnglesExtended>(this);
+        bind<IMC::Announce>(this);
         bind<IMC::PathControlState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::EstimatedState>(this);
@@ -155,16 +177,27 @@ namespace Maneuver
       onManeuverActivation(void)
       {
         m_dstate.clear();
+        availability = AV_DEFAULT;
+        state = STATE_DEFAULT;
+        m_mode = STOP;
+        flag_timeout = false;
+        dmaneuver = INIT;
+        dstate = DS_INIT;
       }
 
+      void
+      onUpdateParameters(void)
+      {
+      }
 
-      /*  inf("vehicle target %s", m_maneuver.target.c_str());
-        inf("vehicle function %d", m_maneuver.vehiclefunction);
-        inf("vehicle max_speed %f", m_maneuver.max_speed);
-        inf("maneuver lat %f", m_maneuver.lat);
-        inf("maneuver lon %f", m_maneuver.lon);
-        inf("vehicle speed_units %d", m_maneuver.speed_units);*/
-
+      void
+      onResourceInitialization(void)
+      {
+      }
+      void
+      onResourceAcquisition(void)
+      {
+      }
 
       void
       consume(const IMC::EstimatedState* msg)
@@ -212,82 +245,152 @@ namespace Maneuver
         if (m_maneuver.vehiclefunction == 0)
         {
           m_mode = STATION;
-          war("\n\nSOU A STATION\n");
+          war("\n\nSTATION\n");
+          sendMsg(getSystemName(),state,availability,m_mode);
         }
         else if (m_maneuver.vehiclefunction == 1)
         {
           m_mode = TARGET;
-          war("\n\nSOU O TARGET\n");
+          war("\n\nTARGET\n");
+          sendMsg(getSystemName(),state,availability,m_mode);
         }
       }
 
       void
       consume(const IMC::DockingState* msg)
       {
-        if (msg->getSource() != getSystemId())
+        if (strcmp(msg->sys_name.c_str(),getSystemName()) == 0)
           return;
 
         m_dstate = *msg;
 
-        if (m_mode == STATION)
+        if (m_mode == m_dstate.vehiclefunction)
         {
-          war("System name %s:",m_dstate.sys_name.c_str());
-          war("State %d:",m_dstate.state);
-          war("Availability %d:",m_dstate.availability);
-          war("Vehicle function %d:",m_dstate.vehiclefunction);
+          signalError(DTR("Another system has the same function has ours!"));
+          sendMsg(getSystemName(),state,availability,m_mode);
+          enableMovement(false);
         }
-        else if (m_mode == TARGET)
-          war("nada");
       }
 
+
+
       void
-      consume(const IMC::DevDataBinary* msg)
+      consume(const IMC::Announce* msg)
       {
-        m_usbl_p = *msg;
+        if (msg->getSource() == getSystemId())
+          return;
+
+        m_announce = *msg;
+        war("ANNOUNCE!: %s", msg->sys_name.c_str());
       }
 
       void
       onDockingManeuver(void)
       {
-        if (m_mode == STATION)
+        switch (m_mode)
         {
-          if ( strcmp(m_maneuver.target.c_str(),m_dstate.sys_name.c_str()) == 0 && m_dstate.availability == READY)
-            war("Target ready for docking.");
-          else
-            war("Waiting for target to be ready for docking.");
-        }
-        else if (m_mode == TARGET)
-        {
-          if (m_control_state.flags & IMC::PathControlState::FL_NEAR)
-          {
-            enableMovement(false);
-            signalCompletion();
-            war("On docking point");
-            availability = READY;
-            onDockingPoint();
-          }
-          else
-          {
-            war("Going to docking point");
-            enableMovement(true);
-            gotopoint(m_maneuver.lat,m_maneuver.lon);
-          }
+          case STATION:
+            switch (dmaneuver)
+            {
+              case INIT:
+                if ( strcmp(m_maneuver.target.c_str(),m_dstate.sys_name.c_str()) == 0
+                     && m_dstate.availability == READY)
+                {
+                  war("Target ready for docking.");
+                  availability = READY;
+
+                  if (availability == READY)
+                  {
+                    war("Target and Station are ready for docking.");
+
+                    if (strcmp(m_announce.sys_name.c_str(),m_dstate.sys_name.c_str()) == 0)
+                    {
+                      war("Going to docking point.");
+                      enableMovement(true);
+                      gotopoint(m_announce.lat,m_announce.lon);
+                      dmaneuver = MANEUVERING;
+                    }
+                  }
+                }
+                else
+                {
+                  war("Waiting for target to be ready for docking.");
+                  dockingTimeout();
+                }
+
+                break;
+
+              case MANEUVERING:
+                if (m_control_state.flags & IMC::PathControlState::FL_NEAR)
+                  dmaneuver = DM_STOP;
+
+                break;
+
+              case DM_STOP:
+                enableMovement(false);
+                war("Docking Completed");
+                //availability = READY;
+                onDockingPoint();
+                // dockingTimeout();
+                break;
+            }
+
+            break;
+
+          case TARGET:
+            switch (dmaneuver)
+            {
+              case INIT:
+                war("Going to docking point");
+                enableMovement(true);
+                gotopoint(m_maneuver.lat,m_maneuver.lon);
+                dmaneuver = MANEUVERING;
+                break;
+
+              case MANEUVERING:
+                if (m_control_state.flags & IMC::PathControlState::FL_NEAR)
+                  dmaneuver = DM_STOP;
+
+                break;
+
+              case DM_STOP:
+                enableMovement(false);
+                war("On docking point");
+                availability = READY;
+                onDockingPoint();
+                dockingTimeout();
+                break;
+            }
+
+            break;
+
+          case ERROR:
+            break;
+
+          case STOP:
+            break;
         }
       }
-
-
-
-
 
       void
-      onResourceInitialization(void)
+      dockingTimeout(void)
       {
-      }
-      void
-      onResourceAcquisition(void)
-      {
-      }
+        if (flag_timeout == false)
+        {
+          flag_timeout = true;
+          m_timer.setTop(m_args.docking_timeout);
+        }
 
+        if (!m_timer.overflow())
+          war("Waiting for target to be ready for docking.");
+        else
+        {
+          m_timer.reset();
+          war("Done Timeout!");
+          signalError(DTR("Docking maneuver timeout."));
+          return;
+        }
+      }
       void
       gotopoint(double lat, double lon)
       {
@@ -298,7 +401,6 @@ namespace Maneuver
         m_path.end_z_units = IMC::Z_DEPTH;
         m_path.end_z = 0;
         dispatch(m_path);
-        // enableMovement(true);
       }
       void
       onDockingPoint(void)
@@ -306,17 +408,17 @@ namespace Maneuver
         if (m_mode == STATION)
           war("onDockingPoint");
         else if (m_mode == TARGET)
-          sendMsg();
+          sendMsg(getSystemName(), state , availability , m_mode);
       }
-
       void
-      sendMsg(void)
+      sendMsg(const char* sysname, int sstate, int s_availability, int vfunction)
       {
         m_dsts.clear();
         m_dstate.clear();
-        m_dstate.sys_name = getSystemName();
-        m_dstate.availability = availability;
-        m_dstate.vehiclefunction = m_mode;
+        m_dstate.sys_name = sysname;
+        m_dstate.state = sstate;
+        m_dstate.availability = s_availability;
+        m_dstate.vehiclefunction = vfunction;
         m_dstate.setTimeStamp();
         m_sock.enableBroadcast(true);
 
@@ -329,14 +431,14 @@ namespace Maneuver
           m_dsts.push_back(dst);
         }
 
-        uint16_t bfr_len_ext = IMC::Packet::serialize(&m_dstate, m_bfr_ext, sizeof(m_bfr_ext));
+        uint16_t bfr_len_ds = IMC::Packet::serialize(&m_dstate, m_bfr_ds, sizeof(m_bfr_ds));
 
         for (unsigned i = 0; i < m_dsts.size(); ++i)
         {
           try
           {
-            war("dentro write");
-            m_sock.write(m_bfr_ext, bfr_len_ext, m_dsts[i].addr, m_dsts[i].port);
+            war("SendMSG");
+            m_sock.write(m_bfr_ds, bfr_len_ds, m_dsts[i].addr, m_dsts[i].port);
           }
           catch (...)
           { }
