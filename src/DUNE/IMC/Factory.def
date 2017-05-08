@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d08b157cacb896cb7dad642ae4a077e5                            *
+// IMC XML MD5: 88e6b34d1e617fc91a264459c6e3429d                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -87,6 +87,7 @@ MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)
 MESSAGE(206, AcousticMessage)
+MESSAGE(207, DockingUSBLMessage)
 MESSAGE(211, AcousticOperation)
 MESSAGE(212, AcousticSystemsQuery)
 MESSAGE(213, AcousticSystems)

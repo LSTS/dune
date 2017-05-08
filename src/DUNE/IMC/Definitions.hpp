@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d08b157cacb896cb7dad642ae4a077e5                            *
+// IMC XML MD5: 88e6b34d1e617fc91a264459c6e3429d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -4401,6 +4401,89 @@ namespace DUNE
       getName(void) const
       {
         return "AcousticMessage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return message.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Docking USBL Message.
+    class DockingUSBLMessage: public Message
+    {
+    public:
+      //! Message to send.
+      InlineMessage<Message> message;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 207;
+      }
+
+      DockingUSBLMessage(void);
+
+      Message*
+      clone(void) const
+      {
+        return new DockingUSBLMessage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DockingUSBLMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DockingUSBLMessage";
       }
 
       unsigned

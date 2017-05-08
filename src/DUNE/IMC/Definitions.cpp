@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d08b157cacb896cb7dad642ae4a077e5                            *
+// IMC XML MD5: 88e6b34d1e617fc91a264459c6e3429d                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -4409,6 +4409,108 @@ namespace DUNE
 
     void
     AcousticMessage::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!message.isNull())
+      {
+        message.get()->setDestinationEntity(value__);
+      }
+    }
+
+    DockingUSBLMessage::DockingUSBLMessage(void)
+    {
+      m_header.mgid = 207;
+      clear();
+      message.setParent(this);
+    }
+
+    void
+    DockingUSBLMessage::clear(void)
+    {
+      message.clear();
+    }
+
+    bool
+    DockingUSBLMessage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DockingUSBLMessage& other__ = static_cast<const DockingUSBLMessage&>(msg__);
+      if (message != other__.message) return false;
+      return true;
+    }
+
+    int
+    DockingUSBLMessage::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    DockingUSBLMessage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += message.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DockingUSBLMessage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += message.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DockingUSBLMessage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += message.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    DockingUSBLMessage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      message.toJSON(os__, "message", nindent__);
+    }
+
+    void
+    DockingUSBLMessage::setTimeStampNested(double value__)
+    {
+      if (!message.isNull())
+      {
+        message.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    DockingUSBLMessage::setSourceNested(uint16_t value__)
+    {
+      if (!message.isNull())
+      {
+        message.get()->setSource(value__);
+      }
+    }
+
+    void
+    DockingUSBLMessage::setSourceEntityNested(uint8_t value__)
+    {
+      if (!message.isNull())
+      {
+        message.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    DockingUSBLMessage::setDestinationNested(uint16_t value__)
+    {
+      if (!message.isNull())
+      {
+        message.get()->setDestination(value__);
+      }
+    }
+
+    void
+    DockingUSBLMessage::setDestinationEntityNested(uint8_t value__)
     {
       if (!message.isNull())
       {
