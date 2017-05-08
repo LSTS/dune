@@ -112,6 +112,8 @@ namespace Maneuver
 
       IMC::Announce m_announce;
 
+      IMC::SimulatedState m_sstate;
+
       //! Task arguments
       Arguments m_args;
       //!
@@ -134,6 +136,8 @@ namespace Maneuver
       std::vector<Destination> m_dsts;
       // External advertising buffer.
       uint8_t m_bfr_ds[4096];
+      // External advertising buffer 2.
+      uint8_t m_bfr_ss[4096];
 
       bool flag_timeout;
 
@@ -159,6 +163,7 @@ namespace Maneuver
         bind<IMC::PathControlState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::EstimatedState>(this);
+        // bind<IMC::SimulatedState>(this);
       }
 
       //! Destructor
@@ -199,9 +204,17 @@ namespace Maneuver
       {
       }
 
+     /* //! Release resources. Clears UDP socket.
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_sock);
+      }*/
+
       void
       consume(const IMC::EstimatedState* msg)
       {
+        //war("ESTATE: %s", resolveSystemId(msg->getSource()));
         if (msg->getSource() != getSystemId())
           return;
 
@@ -262,6 +275,9 @@ namespace Maneuver
         if (strcmp(msg->sys_name.c_str(),getSystemName()) == 0)
           return;
 
+        if (msg->getSource() != getSystemId())
+          return;
+
         m_dstate = *msg;
 
         if (m_mode == m_dstate.vehiclefunction)
@@ -281,8 +297,18 @@ namespace Maneuver
           return;
 
         m_announce = *msg;
-        war("ANNOUNCE!: %s", msg->sys_name.c_str());
+       // war("ANNOUNCE!: %s", msg->sys_name.c_str());
       }
+
+      /*void
+      consume(const IMC::SimulatedState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_sstate = *msg;
+       // sendSS(msg);
+      }*/
 
       void
       onDockingManeuver(void)
@@ -437,13 +463,47 @@ namespace Maneuver
         {
           try
           {
-            war("SendMSG");
+           // war("SendMSG");
             m_sock.write(m_bfr_ds, bfr_len_ds, m_dsts[i].addr, m_dsts[i].port);
           }
           catch (...)
           { }
         }
       }
+
+
+      void
+      sendSS(const IMC::SimulatedState *msg)
+      {
+        m_dsts.clear();
+        m_sstate.clear();
+        m_sstate = *msg;
+        m_sstate.setTimeStamp();
+        m_sock.enableBroadcast(true);
+
+        for (unsigned j = 0; j < m_args.ports.size(); ++j)
+        {
+          Destination dst;
+          dst.port = m_args.ports[j];
+          dst.addr = "255.255.255.255";
+          dst.local = false;
+          m_dsts.push_back(dst);
+        }
+
+        uint16_t bfr_len_ss = IMC::Packet::serialize(&m_sstate, m_bfr_ss, sizeof(m_bfr_ss));
+
+        for (unsigned i = 0; i < m_dsts.size(); ++i)
+        {
+          try
+          {
+            m_sock.write(m_bfr_ss, bfr_len_ss, m_dsts[i].addr, m_dsts[i].port);
+          }
+          catch (...)
+          { }
+        }
+      }
+
+
       //! Function for enabling and disabling the control loops
       void
       enableMovement(bool enable)
