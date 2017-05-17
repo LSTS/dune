@@ -40,6 +40,14 @@
 // Import namespaces.
 using DUNE_NAMESPACES;
 
+#define ERRO1 "Wrong CSUM"
+#define ERRO2 "Wrong Mode (E, D, S and O)"
+#define ERRO3 "Wrong Sample Rate"
+#define ERRO4 "Wrong maximum value"
+#define ERRO5 "Wrong minimum value"
+#define ERRO6 "Wrong value for auto-switch"
+#define ERRO7 "Unrecognized command"
+
 namespace Sensors
 {
   namespace SADC
@@ -131,7 +139,61 @@ namespace Sensors
 
           return true;
         }
+
         return false;
+      }
+
+      std::string
+      translate_feadback(void)
+      {
+        //! Feadback message
+        char feadback_msg[16];
+        if (m_bfr[1] != ',')
+        {
+          std::sscanf(m_bfr, "%s ,*", feadback_msg);
+          std::memset(&m_bfr, '\0', sizeof(m_bfr));
+
+          if(std::strcmp(feadback_msg, "ERRO,1") == 0)
+            return ERRO1;
+          else if(std::strcmp(feadback_msg, "ERRO,2") == 0)
+            return ERRO2;
+          else if(std::strcmp(feadback_msg, "ERRO,3") == 0)
+            return ERRO3;
+          else if(std::strcmp(feadback_msg, "ERRO,4") == 0)
+            return ERRO4;
+          else if(std::strcmp(feadback_msg, "ERRO,5") == 0)
+            return ERRO5;
+          else if(std::strcmp(feadback_msg, "ERRO,6") == 0)
+            return ERRO6;
+          else if(std::strcmp(feadback_msg, "ERRO,7") == 0)
+            return ERRO7;
+          else if(std::strcmp(feadback_msg, "OK") == 0)
+            return feadback_msg;
+        }
+
+        return "";
+      }
+
+      //! Enable Output data of SADC
+      char*
+      enable_output(void)
+      {
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#0,E,*");
+        std::sprintf(m_send_bfr, "#0,E,*%c\r\n", Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+
+        return m_send_bfr;
+      }
+
+      //! Disable Output data of SADC
+      char*
+      disable_output(void)
+      {
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#0,D,*");
+        std::sprintf(m_send_bfr, "#0,D,*%c\r\n", Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+
+        return m_send_bfr;
       }
 
       //! Disable Channel ADC
@@ -160,60 +222,44 @@ namespace Sensors
       char*
       set_sample_ps(int value)
       {
-        if(value >= 1 && value <= 10)
-        {
-          std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
-          std::sprintf(m_send_bfr, "#1,F,%d,*", value);
-          std::sprintf(m_send_bfr, "#1,F,%d,*%c\r\n", value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#1,F,%d,*", value);
+        std::sprintf(m_send_bfr, "#1,F,%d,*%c\r\n", value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
 
-          return m_send_bfr;
-        }
-        return 0;
+        return m_send_bfr;
       }
 
       //! Set number of sample before switch auto-gain
       char*
       set_number_sample_sw(int value)
       {
-        if(value >= 1 && value <= 100)
-        {
-          std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
-          std::sprintf(m_send_bfr, "#1,C,%d,*", value);
-          std::sprintf(m_send_bfr, "#1,C,%d,*%c\r\n", value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#1,C,%d,*", value);
+        std::sprintf(m_send_bfr, "#1,C,%d,*%c\r\n", value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
 
-          return m_send_bfr;
-        }
-        return 0;
+        return m_send_bfr;
       }
 
       //! Set minimum voltage to switch auto-gain
       char*
       set_min_change_gain(int channel, float value)
       {
-        if(value >= 0 && value <= 5)
-        {
-          std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
-          std::sprintf(m_send_bfr, "#%d,-,%f,*", channel, value);
-          std::sprintf(m_send_bfr, "#%d,-,%f,*%c\r\n", channel, value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#%d,-,%f,*", channel, value);
+        std::sprintf(m_send_bfr, "#%d,-,%f,*%c\r\n", channel, value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
 
-          return m_send_bfr;
-        }
-        return 0;
+        return m_send_bfr;
       }
 
       //! Set maximum voltage to switch auto-gain
       char*
       set_max_change_gain(int channel, float value)
       {
-        if(value >= 0 && value <= 5)
-        {
-          std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
-          std::sprintf(m_send_bfr, "#%d,+,%f,*", channel, value);
-          std::sprintf(m_send_bfr, "#%d,+,%f,*%c\r\n", channel, value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#%d,+,%f,*", channel, value);
+        std::sprintf(m_send_bfr, "#%d,+,%f,*%c\r\n", channel, value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
 
-          return m_send_bfr;
-        }
-        return 0;
+        return m_send_bfr;
       }
 
       //! SADC state.

@@ -45,7 +45,6 @@ namespace Sensors
 
     static const unsigned int c_max_adc = 4;
     static const unsigned int c_max_buffer = 32;
-    static const unsigned int c_number_attempts_uart = 3;
 
     struct Arguments
     {
@@ -53,6 +52,8 @@ namespace Sensors
       std::string uart_dev;
       //! Serial port baud rate.
       unsigned uart_baud;
+      //! Serial Port timeOut for reading
+      float timeout_uart;
       //! Motor state
       bool adc_state[c_max_adc];
       //! Minimum Value for auto-switch gain
@@ -81,6 +82,8 @@ namespace Sensors
       DriverSADC* m_driver;
       //! Scratch buffer.
       uint8_t m_buffer[c_max_buffer];
+      //! Flag to check correct configuration of SADC
+      bool m_is_correct_conf;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -101,6 +104,13 @@ namespace Sensors
         .defaultValue("57600")
         .description("Serial port baud rate");
 
+        param("Serial Port - TimeOut", m_args.timeout_uart)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("2.0")
+        .minimumValue("1.0")
+        .maximumValue("5.0")
+        .description("Serial Port timeOut for reading.");
+
         for(unsigned i = 1; i < c_max_adc + 1; ++i)
         {
           std::string option = String::str("ADC %u - Is Active", i);
@@ -113,7 +123,7 @@ namespace Sensors
           param(option, m_args.min_value[i-1])
           .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
           .minimumValue("0")
-          .maximumValue("5")
+          .maximumValue("5.0")
           .defaultValue("0.3")
           .description("Minimum Value (in Volt) for auto-switch gain");
 
@@ -130,8 +140,8 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("1")
         .minimumValue("1")
-        .maximumValue("10")
-        .description("Sample Rate (1 a 10 Hz)");
+        .maximumValue("5")
+        .description("Sample Rate (1 a 5 Hz)");
 
         param("Samples to Switch Gain", m_args.number_sample_switch)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -139,6 +149,7 @@ namespace Sensors
         .minimumValue("1")
         .maximumValue("100")
         .description("Sample Rate Before Switch (1 a 100)");
+
       }
 
       //! Acquire resources.
@@ -151,7 +162,7 @@ namespace Sensors
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          throw RestartNeeded(e.what(), 30);
         }
       }
 
@@ -159,10 +170,13 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+        m_is_correct_conf = true;
         m_driver = new DriverSADC();
         m_poll.add(*m_uart);
         config_SADC();
         Delay::waitMsec(1000);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       //! Release resources.
@@ -171,6 +185,8 @@ namespace Sensors
       {
         if (m_uart != NULL)
         {
+          m_uart->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
+
           m_poll.remove(*m_uart);
           delete m_uart;
           m_uart = NULL;
@@ -183,22 +199,50 @@ namespace Sensors
       void
       config_SADC(void)
       {
+        m_uart->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
+        process_feedback();
+
         for(uint8_t t = 1; t <= c_max_adc; t++)
         {
           if(m_args.adc_state[t-1] == true)
           {
-            m_uart->write(m_driver->enable_channel(t), strlen(m_driver->enable_channel(t)));
             m_uart->write(m_driver->set_min_change_gain(t, m_args.min_value[t-1]), strlen(m_driver->set_min_change_gain(t, m_args.min_value[t-1])));
+            process_feedback();
             m_uart->write(m_driver->set_max_change_gain(t, m_args.max_value[t-1]), strlen(m_driver->set_max_change_gain(t, m_args.max_value[t-1])));
+            process_feedback();
+            m_uart->write(m_driver->enable_channel(t), strlen(m_driver->enable_channel(t)));
+            process_feedback();
           }
           else
           {
             m_uart->write(m_driver->disable_channel(t), strlen(m_driver->disable_channel(t)));
+            process_feedback();
           }
         }
 
         m_uart->write(m_driver->set_sample_ps(m_args.sample_rate), strlen(m_driver->set_sample_ps(m_args.sample_rate)));
+        process_feedback();
         m_uart->write(m_driver->set_number_sample_sw(m_args.number_sample_switch), strlen(m_driver->set_number_sample_sw(m_args.number_sample_switch)));
+        process_feedback();
+
+        if(m_is_correct_conf)
+        {
+          inf(DTR("Requesting SADC readings"));
+          m_uart->write(m_driver->enable_output(), strlen(m_driver->enable_output()));
+          process_feedback();
+        }
+        else
+        {
+          err(DTR("Board SADC not operational"));
+        }
+      }
+
+      //! Check feadback of commands
+      void
+      process_feedback(void)
+      {
+        if(!processInput(m_args.timeout_uart, false))
+          m_is_correct_conf = false;
       }
 
       //! Read data send by SADC board.
@@ -218,12 +262,14 @@ namespace Sensors
           catch (std::exception& e)
           {
             err(DTR("read error: %s"), e.what());
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             return false;
           }
 
           if (rv <= 0)
           {
-            throw RestartNeeded(DTR("unknown read error"), 5);
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR("unknown read error"), 30);
           }
           else
           {
@@ -240,53 +286,88 @@ namespace Sensors
         return false;
       }
 
-      void
-      checkDataSADC(void)
+      bool
+      processInput(double timeout, bool isData)
       {
-        bool checkEnd = false;
-        uint8_t jump_read_uart = 0;
+        bool result = false;
+        double deadline = Clock::get() + timeout;
 
-        while (!checkEnd && !stopping() && jump_read_uart <= c_number_attempts_uart)
+        while (Clock::get() <= deadline)
         {
           if (m_poll.poll(0.2))
           {
             if (checkSerialPort())
-              checkEnd = m_driver->translate();
-          }
-          else
-          {
-            jump_read_uart++;
+            {
+              if(isData)
+              {
+                if(m_driver->translate())
+                {
+                  debug("Channel %d -> %ld  Gain: %d", m_driver->m_sadc.channel, m_driver->m_sadc.value, m_driver->m_sadc.gain);
+                  m_sadc.setTimeStamp(m_tstamp);
+                  m_sadc.setDestination(getSystemId());
+                  m_sadc.channel = m_driver->m_sadc.channel;
+                  m_sadc.value = m_driver->m_sadc.value;
+                  switch(m_driver->m_sadc.gain)
+                  {
+                    case 1:
+                      m_sadc.gain = IMC::SadcReadings::GAIN_X1;
+                      break;
+
+                    case 10:
+                      m_sadc.gain = IMC::SadcReadings::GAIN_X10;
+                      break;
+
+                    case 100:
+                      m_sadc.gain = IMC::SadcReadings::GAIN_X100;
+                      break;
+
+                    default:
+                      break;
+                  }
+                  dispatch(m_sadc, DF_KEEP_TIME);
+                  result = true;
+                  break;
+                }
+              }
+              else
+              {
+                std::string test_2 = m_driver->translate_feadback();
+                if(test_2.compare("OK") == 0)
+                {
+                  debug("%s",test_2.c_str());
+                  result = true;
+                  break;
+                }
+                else
+                {
+                  debug("%s",test_2.c_str());
+                  result = false;
+                  break;
+                }
+              }
+            }
           }
         }
 
-        if (jump_read_uart <= c_number_attempts_uart && !stopping())
+        return result;
+      }
+
+      bool
+      checkDataSADC(void)
+      {
+        bool checkEnd = false;
+
+        checkEnd = processInput(m_args.timeout_uart, true);
+
+        if(!checkEnd)
         {
-          debug("Channel %d -> %ld  Gain: %d", m_driver->m_sadc.channel, m_driver->m_sadc.value, m_driver->m_sadc.gain);
-          m_sadc.setTimeStamp(m_tstamp);
-          m_sadc.setDestination(getSystemId());
-          m_sadc.channel = m_driver->m_sadc.channel;
-          m_sadc.value = m_driver->m_sadc.value;
-          switch(m_driver->m_sadc.gain)
-          {
-            case 1:
-              m_sadc.gain = IMC::SadcReadings::GAIN_X1;
-              break;
-
-            case 10:
-              m_sadc.gain = IMC::SadcReadings::GAIN_X10;
-              break;
-
-            case 100:
-              m_sadc.gain = IMC::SadcReadings::GAIN_X100;
-              break;
-
-            default:
-              break;
-          }
-          dispatch(m_sadc, DF_KEEP_TIME);
+          err(DTR("no read error received"));
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
         }
 
         m_uart->flush();
+
+        return checkEnd;
       }
 
       //! Main loop.
@@ -295,8 +376,18 @@ namespace Sensors
       {
         while (!stopping())
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          checkDataSADC();
+          if(m_is_correct_conf)
+          {
+            consumeMessages();
+
+            if(checkDataSADC())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
+          else
+          {
+            waitForMessages(1.0);
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+          }
         }
       }
     };
