@@ -331,16 +331,16 @@ namespace Sensors
               }
               else
               {
-                std::string test_2 = m_driver->translate_feadback();
-                if(test_2.compare("OK") == 0)
+                std::string feedback_text = m_driver->translate_feadback();
+                if(feedback_text.compare("OK") == 0)
                 {
-                  debug("%s",test_2.c_str());
+                  debug("%s",feedback_text.c_str());
                   result = true;
                   break;
                 }
                 else
                 {
-                  debug("%s",test_2.c_str());
+                  debug("%s",feedback_text.c_str());
                   result = false;
                   break;
                 }
