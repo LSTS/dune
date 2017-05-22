@@ -962,7 +962,7 @@ namespace Control
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "WP_LOITER_RAD", //! Parameter name
-                                       path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius), //! Parameter value
+                                       path->lradius ? (path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius)) : 10, //! Parameter value
                                        MAV_PARAM_TYPE_INT16); //! Parameter type
 
             n = mavlink_msg_to_send_buffer(buf, &msg);
@@ -998,11 +998,11 @@ namespace Control
           mavlink_msg_mission_item_pack(255, 0, &msg,
                                         m_sysid, //! target_system System ID
                                         0, //! target_component Component ID
-                                        1, //! seq Sequence
+                                        0, //! seq Sequence
                                         MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                        (path->lradius ? MAV_CMD_NAV_LOITER_UNLIM : MAV_CMD_NAV_WAYPOINT), //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
                                         2, //! current false:0, true:1, guided mode:2
-                                        0, //! autocontinue to next wp
+                                        1, //! autocontinue to next wp
                                         0, //! Not used
                                         0, //! Not used
                                         path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0, //! If <0, then CCW loiter
