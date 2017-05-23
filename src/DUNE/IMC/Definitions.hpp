@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: d292e724592557940354dddbfc5a9d32                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -23056,6 +23056,88 @@ namespace DUNE
       {
         return IMC::getSerializationSize(text);
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SADC Readings.
+    class SadcReadings: public Message
+    {
+    public:
+      //! Gain.
+      enum GainEnum
+      {
+        //! x1.
+        GAIN_X1 = 0,
+        //! x10.
+        GAIN_X10 = 1,
+        //! x100.
+        GAIN_X100 = 2
+      };
+
+      //! Channel.
+      int8_t channel;
+      //! Value.
+      int32_t value;
+      //! Gain.
+      uint8_t gain;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 907;
+      }
+
+      SadcReadings(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SadcReadings(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SadcReadings::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SadcReadings";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

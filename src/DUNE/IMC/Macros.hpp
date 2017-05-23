@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: d292e724592557940354dddbfc5a9d32                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -610,5 +610,7 @@
 #define DUNE_IMC_TACHOGRAPH 905
 //! ApmStatus identification number.
 #define DUNE_IMC_APMSTATUS 906
+//! SadcReadings identification number.
+#define DUNE_IMC_SADCREADINGS 907
 
 #endif

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: d292e724592557940354dddbfc5a9d32                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -24526,6 +24526,87 @@ namespace DUNE
     {
       IMC::toJSON(os__, "severity", severity, nindent__);
       IMC::toJSON(os__, "text", text, nindent__);
+    }
+
+    SadcReadings::SadcReadings(void)
+    {
+      m_header.mgid = 907;
+      clear();
+    }
+
+    void
+    SadcReadings::clear(void)
+    {
+      channel = 0;
+      value = 0;
+      gain = 0;
+    }
+
+    bool
+    SadcReadings::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SadcReadings& other__ = static_cast<const SadcReadings&>(msg__);
+      if (channel != other__.channel) return false;
+      if (value != other__.value) return false;
+      if (gain != other__.gain) return false;
+      return true;
+    }
+
+    int
+    SadcReadings::validate(void) const
+    {
+      if (channel < 1 || channel > 4) return false;
+      return true;
+    }
+
+    uint8_t*
+    SadcReadings::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(channel, ptr__);
+      ptr__ += IMC::serialize(value, ptr__);
+      ptr__ += IMC::serialize(gain, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SadcReadings::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(channel, bfr__, size__);
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      bfr__ += IMC::deserialize(gain, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SadcReadings::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(channel, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      bfr__ += IMC::deserialize(gain, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    SadcReadings::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    SadcReadings::setValueFP(fp64_t val)
+    {
+      value = static_cast<int32_t>(val);
+    }
+
+    void
+    SadcReadings::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "channel", channel, nindent__);
+      IMC::toJSON(os__, "value", value, nindent__);
+      IMC::toJSON(os__, "gain", gain, nindent__);
     }
   }
 }
