@@ -340,7 +340,7 @@ namespace Sensors
                 }
                 else
                 {
-                  debug("%s",feedback_text.c_str());
+                  err("%s",feedback_text.c_str());
                   result = false;
                   break;
                 }
