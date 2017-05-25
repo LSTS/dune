@@ -47,6 +47,7 @@ using DUNE_NAMESPACES;
 #define ERRO5 "Wrong minimum value"
 #define ERRO6 "Wrong value for auto-switch"
 #define ERRO7 "Unrecognized command"
+#define ERRO8 "Wrong value of fixed gain"
 
 namespace Sensors
 {
@@ -167,6 +168,8 @@ namespace Sensors
             return ERRO6;
           else if(std::strcmp(feadback_msg, "ERRO,7") == 0)
             return ERRO7;
+          else if(std::strcmp(feadback_msg, "ERRO,8") == 0)
+            return ERRO8;
           else if(std::strcmp(feadback_msg, "OK") == 0)
             return feadback_msg;
         }
@@ -218,6 +221,17 @@ namespace Sensors
         return m_send_bfr;
       }
 
+      //! Enable auto-gain in Channel ADC
+      char*
+      enable_auto_gain(int channel)
+      {
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#%d,A,*", channel);
+        std::sprintf(m_send_bfr, "#%d,A,*%c\r\n", channel, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+
+        return m_send_bfr;
+      }
+
       //! Set number of sample/second
       char*
       set_sample_ps(int value)
@@ -258,6 +272,17 @@ namespace Sensors
         std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
         std::sprintf(m_send_bfr, "#%d,+,%f,*", channel, value);
         std::sprintf(m_send_bfr, "#%d,+,%f,*%c\r\n", channel, value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
+
+        return m_send_bfr;
+      }
+
+      //! Disable auto-gain in channel, define static gain
+      char*
+      fix_gain(int channel, int value)
+      {
+        std::memset(&m_send_bfr, '\0', sizeof(m_send_bfr));
+        std::sprintf(m_send_bfr, "#%d,G,%d,*", channel, value);
+        std::sprintf(m_send_bfr, "#%d,G,%d,*%c\r\n", channel, value, Algorithms::XORChecksum::compute((uint8_t*)m_send_bfr, strlen(m_send_bfr) - 1));
 
         return m_send_bfr;
       }

@@ -54,12 +54,16 @@ namespace Sensors
       unsigned uart_baud;
       //! Serial Port timeOut for reading
       float timeout_uart;
-      //! Motor state
+      //! Adc state
       bool adc_state[c_max_adc];
       //! Minimum Value for auto-switch gain
       float min_value[c_max_adc];
       //! Maximum Value for auto-switch gain
       float max_value[c_max_adc];
+      //! Adc fixed gain
+      bool adc_fixed_gain[c_max_adc];
+      //! Adc fixed gain value
+      int adc_fixed_gain_value[c_max_adc];
       //! Sample Rate of acquisition data
       int sample_rate;
       //! Number of sample before switch auto-gain
@@ -134,6 +138,18 @@ namespace Sensors
           .maximumValue("5")
           .defaultValue("4.7")
           .description("Maximum Value (in Volt) for auto-switch gain");
+
+          option = String::str("ADC %u - Fixed Gain", i);
+          param(option, m_args.adc_fixed_gain[i-1])
+          .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+          .defaultValue("false")
+          .description("Fix Gain in Channel");
+
+          option = String::str("ADC %u - Fixed Gain Value", i);
+          param(option, m_args.adc_fixed_gain_value[i-1])
+          .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+          .defaultValue("1")
+          .description("Fix Gain Value in Channel (x1, x10, x100)");
         }
 
         param("Sample Rate", m_args.sample_rate)
@@ -212,6 +228,16 @@ namespace Sensors
             process_feedback();
             m_uart->write(m_driver->enable_channel(t), strlen(m_driver->enable_channel(t)));
             process_feedback();
+            if(m_args.adc_fixed_gain[t-1])
+            {
+              m_uart->write(m_driver->fix_gain(t, m_args.adc_fixed_gain_value[t-1]), strlen(m_driver->fix_gain(t, m_args.adc_fixed_gain_value[t-1])));
+              process_feedback();
+            }
+            else
+            {
+              m_uart->write(m_driver->enable_auto_gain(t), strlen(m_driver->enable_auto_gain(t)));
+              process_feedback();
+            }
           }
           else
           {
