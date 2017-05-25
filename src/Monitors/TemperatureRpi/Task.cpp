@@ -90,7 +90,7 @@ namespace Monitors
         char buffer[64];
         std::string result = "";
         std::sprintf(buffer, "cat %s", m_args.temp_path.c_str());
-        FILE* pipe = popen(m_args.temp_path.c_str(), "r");
+        FILE* pipe = popen(buffer, "r");
         if (!pipe)
         {
           err("popen() failed!");
