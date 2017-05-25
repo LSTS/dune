@@ -45,7 +45,6 @@ namespace Sensors
 
     static const unsigned int c_max_adc = 4;
     static const unsigned int c_max_buffer = 32;
-    static const float c_conversion_adc_factor = 6.14;
     static const float c_adc_resolution = 32768.0f;
 
     struct Arguments
@@ -72,6 +71,8 @@ namespace Sensors
       int number_sample_switch;
       // ADC entity labels.
       std::string adc_elabels[c_max_adc];
+      //! Maximum Value of input in adc channel
+      float adc_max_value;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -176,6 +177,11 @@ namespace Sensors
         .minimumValue("1")
         .maximumValue("100")
         .description("Sample Rate Before Switch (1 a 100)");
+
+        param("ADC Maximun Value", m_args.adc_max_value)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("6.14")
+        .description("Maximum value of input voltage in adc channel.");
 
       }
 
@@ -376,17 +382,17 @@ namespace Sensors
                   {
                     case 1:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X1;
-                      m_voltage_value = (c_conversion_adc_factor * m_sadc.value)/c_adc_resolution;
+                      m_voltage_value = (m_args.adc_max_value * m_sadc.value)/c_adc_resolution;
                       break;
 
                     case 10:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X10;
-                      m_voltage_value = ((c_conversion_adc_factor * m_sadc.value)/c_adc_resolution)/10.0;
+                      m_voltage_value = ((m_args.adc_max_value * m_sadc.value)/c_adc_resolution)/10.0;
                       break;
 
                     case 100:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X100;
-                      m_voltage_value = ((c_conversion_adc_factor * m_sadc.value)/c_adc_resolution)/100.0;
+                      m_voltage_value = ((m_args.adc_max_value * m_sadc.value)/c_adc_resolution)/100.0;
                       break;
 
                     default:
