@@ -45,6 +45,8 @@ namespace Sensors
 
     static const unsigned int c_max_adc = 4;
     static const unsigned int c_max_buffer = 32;
+    static const float c_conversion_adc_factor = 6.14;
+    static const float c_adc_resolution = 32768.0f;
 
     struct Arguments
     {
@@ -68,12 +70,16 @@ namespace Sensors
       int sample_rate;
       //! Number of sample before switch auto-gain
       int number_sample_switch;
+      // ADC entity labels.
+      std::string adc_elabels[c_max_adc];
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Rpm message
       IMC::SadcReadings m_sadc;
+      //! Voltage message
+      IMC::Voltage m_volt[c_max_adc];
       //! Task arguments.
       Arguments m_args;
       //! Serial port device.
@@ -88,6 +94,8 @@ namespace Sensors
       uint8_t m_buffer[c_max_buffer];
       //! Flag to check correct configuration of SADC
       bool m_is_correct_conf;
+      //! Value of adc in voltage
+      float m_voltage_value;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -150,6 +158,9 @@ namespace Sensors
           .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
           .defaultValue("1")
           .description("Fix Gain Value in Channel (x1, x10, x100)");
+
+          option = String::str("ADC %u - Entity Label", i);
+          param(option, m_args.adc_elabels[i-1]);
         }
 
         param("Sample Rate", m_args.sample_rate)
@@ -166,6 +177,34 @@ namespace Sensors
         .maximumValue("100")
         .description("Sample Rate Before Switch (1 a 100)");
 
+      }
+
+      //! Reserve entity identifiers.
+      void
+      onEntityReservation(void)
+      {
+        unsigned eid = 0;
+
+        for (unsigned i = 0; i < c_max_adc; ++i)
+        {
+          if (!m_args.adc_state[i])
+            continue;
+
+          if (m_args.adc_elabels[i].empty())
+            continue;
+
+          try
+          {
+            eid = resolveEntity(m_args.adc_elabels[i]);
+          }
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            (void)e;
+            eid = reserveEntity(m_args.adc_elabels[i]);
+          }
+
+          m_volt[i].setSourceEntity(eid);
+        }
       }
 
       //! Acquire resources.
@@ -337,20 +376,27 @@ namespace Sensors
                   {
                     case 1:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X1;
+                      m_voltage_value = (c_conversion_adc_factor * m_sadc.value)/c_adc_resolution;
                       break;
 
                     case 10:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X10;
+                      m_voltage_value = ((c_conversion_adc_factor * m_sadc.value)/c_adc_resolution)/10.0;
                       break;
 
                     case 100:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X100;
+                      m_voltage_value = ((c_conversion_adc_factor * m_sadc.value)/c_adc_resolution)/100.0;
                       break;
 
                     default:
                       break;
                   }
                   dispatch(m_sadc, DF_KEEP_TIME);
+                  m_volt[m_driver->m_sadc.channel - 1].setTimeStamp(m_tstamp);
+                  m_volt[m_driver->m_sadc.channel - 1].setDestination(getSystemId());
+                  m_volt[m_driver->m_sadc.channel - 1].value = m_voltage_value;
+                  dispatch(m_volt[m_driver->m_sadc.channel - 1], DF_KEEP_TIME);
                   result = true;
                   break;
                 }
@@ -387,8 +433,16 @@ namespace Sensors
 
         if(!checkEnd)
         {
-          err(DTR("no read error received"));
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          if(m_args.adc_state[0] || m_args.adc_state[1] || m_args.adc_state[2] || m_args.adc_state[3])
+          {
+            err(DTR("no read error received"));
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          }
+          else
+          {
+            err(DTR("none adc channel active, mistake config?"));
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          }
         }
 
         m_uart->flush();
