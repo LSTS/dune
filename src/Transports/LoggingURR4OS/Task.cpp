@@ -46,7 +46,7 @@ namespace Transports
     //! Comment char
     const std::string c_comment = "% ";
     //! Not valid value
-    const std::string c_not_valid = "-1";
+    const std::string c_not_valid = "Not valid value (-1)";
 
     struct MetaData
     {
@@ -101,7 +101,7 @@ namespace Transports
         .defaultValue("Rhodamine");
 
         param("Sensor Name", m_args.md.sname)
-        .defaultValue("Cyclops7");
+        .defaultValue("CyclopsC7");
 
         param("Sensor Type", m_args.md.type)
         .defaultValue("Rhodamine");
@@ -110,7 +110,7 @@ namespace Transports
         .defaultValue("true");
 
         param("Temperature Label", m_args.temp_label)
-        .defaultValue("CTD");
+        .defaultValue("Depth Sensor");
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EstimatedState>(this);
@@ -168,8 +168,8 @@ namespace Transports
         file << c_comment << c_not_valid << std::endl;
 
         file << c_comment
-             << "Time (seconds), Latitude (degrees), Longitude (degrees),"
-             << "Depth (meters), " << m->type << " (ppb),"
+             << "Time (seconds), Latitude (degrees), Longitude (degrees), "
+             << "Depth (meters), " << m->type << " (ppb), "
              << m->type << " (raw), Temperature (Celsius)" << std::endl;
       }
 
@@ -184,14 +184,6 @@ namespace Transports
 
         std::string t_str = "";
         std::stringstream ss;
-        if (temp != NULL)
-        {
-          if (timestamp - temp->getTimeStamp() < c_msg_delay)
-          {
-            ss << std::setprecision(3) << "," << temp->value;
-            t_str = ss.str();
-          }
-        }
 
         file << std::fixed << std::setprecision(2)
              << timestamp << ","
@@ -206,14 +198,28 @@ namespace Transports
         else
           file << "-1";
 
-        if (timestamp - raw->getTimeStamp() < c_msg_delay)
+        if(raw != NULL)
         {
-          ss << "," << std::setprecision(3) << raw->value;
-          t_str = ss.str();
+          if (timestamp - raw->getTimeStamp() < c_msg_delay)
+          {
+            ss << "," << std::setprecision(3) << raw->value;
+            t_str = ss.str();
+          }
+          else
+            ss << ",-1";
         }
         else
         {
           ss << ",-1";
+        }
+
+        if (temp != NULL)
+        {
+          if (timestamp - temp->getTimeStamp() < c_msg_delay)
+          {
+            ss << std::setprecision(3) << "," << temp->value;
+            t_str = ss.str();
+          }
         }
 
         file << t_str;
