@@ -58,7 +58,7 @@ namespace Transports
       float lon;
       uint8_t depth;
       int16_t yaw;
-      int16_t alt;
+      int16_t rhodamine;
       int8_t progress;
       uint8_t fuel_level;
       uint8_t fuel_conf;
@@ -78,6 +78,8 @@ namespace Transports
     {
       //! Estimated state.
       IMC::EstimatedState m_estate;
+      //! Rhodamine.
+      float m_rhodamine;
       //! Last progress.
       float m_progress;
       //! Last fuel level.
@@ -195,6 +197,7 @@ namespace Transports
         bind<IMC::UsblPositionExtended>(this);
         bind<IMC::UsblAnglesExtended>(this);
         bind<IMC::UsblConfig>(this);
+        bind<IMC::RhodamineDye>(this);
       }
 
       ~Task(void)
@@ -243,6 +246,15 @@ namespace Transports
           return;
 
         m_estate = *msg;
+      }
+
+      void
+      consume(const IMC::RhodamineDye* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_rhodamine = msg->value;
       }
 
       void
@@ -802,7 +814,7 @@ namespace Transports
         dat.lon = lon;
         dat.depth = (uint8_t)m_estate.depth;
         dat.yaw = (int16_t)(m_estate.psi * 100.0);
-        dat.alt = (int16_t)(m_estate.alt * 10.0);
+        dat.rhodamine = (int16_t)(m_rhodamine * 10.0);
         dat.fuel_level = (uint8_t)m_fuel_level;
         dat.fuel_conf = (uint8_t)m_fuel_conf;
         dat.progress = (int8_t)m_progress;
@@ -828,8 +840,11 @@ namespace Transports
         es.lon = dat.lon;
         es.depth = (float)dat.depth;
         es.psi = (float)dat.yaw / 100.0;
-        es.alt = (float)dat.alt / 10.0;
         dispatch(es);
+
+        IMC::RhodamineDye rdye;
+        rdye.value = (float)dat.rhodamine / 10.0;
+        dispatch(rdye);
 
         IMC::PlanControlState pcs;
         pcs.setSource(imc_src);
