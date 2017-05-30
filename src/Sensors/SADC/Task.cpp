@@ -46,6 +46,7 @@ namespace Sensors
     static const unsigned int c_max_adc = 4;
     static const unsigned int c_max_buffer = 32;
     static const float c_adc_resolution = 32768.0f;
+    static const float c_timeout_connection_sadc = 5.0f;
 
     struct Arguments
     {
@@ -72,7 +73,7 @@ namespace Sensors
       // ADC entity labels.
       std::string adc_elabels[c_max_adc];
       //! Maximum Value of input in adc channel
-      float adc_max_value;
+      float adc_conversion_factor;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -178,10 +179,10 @@ namespace Sensors
         .maximumValue("100")
         .description("Sample Rate Before Switch (1 a 100)");
 
-        param("ADC Maximun Value", m_args.adc_max_value)
+        param("ADC Conversion Factor", m_args.adc_conversion_factor)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("6.14")
-        .description("Maximum value of input voltage in adc channel.");
+        .description("ADC conversion factor.");
 
       }
 
@@ -235,9 +236,16 @@ namespace Sensors
         m_is_correct_conf = true;
         m_driver = new DriverSADC();
         m_poll.add(*m_uart);
-        config_SADC();
-        Delay::waitMsec(1000);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        if(check_connection_sadc(c_timeout_connection_sadc))
+        {
+          config_SADC();
+          Delay::waitMsec(1000);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+        else
+        {
+          throw RestartNeeded("Cannot connect to board", 5);
+        }
       }
 
       //! Release resources.
@@ -306,6 +314,22 @@ namespace Sensors
         {
           err(DTR("Board SADC not operational"));
         }
+      }
+
+      //! Check connection to sadc board
+      bool
+      check_connection_sadc(float c_timeout)
+      {
+        bool is_connect = false;
+        for(int i = 0; i < (int)(c_timeout/0.2); i++)
+        {
+          m_uart->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
+          is_connect = processInput(0.2, false);
+          if(is_connect)
+            break;
+        }
+
+        return is_connect;
       }
 
       //! Check feadback of commands
@@ -382,17 +406,17 @@ namespace Sensors
                   {
                     case 1:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X1;
-                      m_voltage_value = (m_args.adc_max_value * m_sadc.value)/c_adc_resolution;
+                      m_voltage_value = (m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution;
                       break;
 
                     case 10:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X10;
-                      m_voltage_value = ((m_args.adc_max_value * m_sadc.value)/c_adc_resolution)/10.0;
+                      m_voltage_value = ((m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution)/10.0;
                       break;
 
                     case 100:
                       m_sadc.gain = IMC::SadcReadings::GAIN_X100;
-                      m_voltage_value = ((m_args.adc_max_value * m_sadc.value)/c_adc_resolution)/100.0;
+                      m_voltage_value = ((m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution)/100.0;
                       break;
 
                     default:
