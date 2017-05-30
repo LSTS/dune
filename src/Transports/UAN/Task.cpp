@@ -840,6 +840,7 @@ namespace Transports
         es.lon = dat.lon;
         es.depth = (float)dat.depth;
         es.psi = (float)dat.yaw / 100.0;
+        es.alt = -1.0;
         dispatch(es);
 
         IMC::RhodamineDye rdye;
