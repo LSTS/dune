@@ -1928,8 +1928,6 @@ namespace Control
           apm_status.severity = stat_tex.severity;
           apm_status.text = stat_tex.text;
 
-          debug("AP Status Severity: %d", stat_tex.severity);
-          debug("AP Status: %.*s", 50, stat_tex.text);
           inf("APM Status: [%d] %s", apm_status.severity, apm_status.text.c_str());
           dispatch(apm_status);
         }
