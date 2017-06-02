@@ -144,6 +144,20 @@ macro(dune_probe_cxx)
     endif(DUNE_CXX_GNU)
   endif(NOT DUNE_CXX_NAME)
 
+  if(DUNE_CXX_NAME)
+      # Check if the compiler has support to switch beetween different bitness environments
+      check_cxx_compiler_flag(-m32 has_bitness_env_support)
+      if(has_bitness_env_support)
+        if(CROSS_ENV)
+          string(REGEX MATCH "(32|64)(-b|b)" match_env "${CROSS_ENV}")
+          if(match_env)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${CMAKE_MATCH_1}")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m${CMAKE_MATCH_1}")
+          endif(match_env)
+        endif(CROSS_ENV)
+      endif(has_bitness_env_support)
+  endif(DUNE_CXX_NAME)
+  
   # Microsoft compiler
   if(NOT DUNE_CXX_NAME)
     check_symbol_exists(_MSC_VER stdio.h DUNE_CXX_MICROSOFT)
