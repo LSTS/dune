@@ -402,26 +402,8 @@ namespace Sensors
                   m_sadc.setDestination(getSystemId());
                   m_sadc.channel = m_driver->m_sadc.channel;
                   m_sadc.value = m_driver->m_sadc.value;
-                  switch(m_driver->m_sadc.gain)
-                  {
-                    case 1:
-                      m_sadc.gain = IMC::SadcReadings::GAIN_X1;
-                      m_voltage_value = (m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution;
-                      break;
+		  m_voltage_value = (m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution;
 
-                    case 10:
-                      m_sadc.gain = IMC::SadcReadings::GAIN_X10;
-                      m_voltage_value = ((m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution)/10.0;
-                      break;
-
-                    case 100:
-                      m_sadc.gain = IMC::SadcReadings::GAIN_X100;
-                      m_voltage_value = ((m_args.adc_conversion_factor * m_sadc.value)/c_adc_resolution)/100.0;
-                      break;
-
-                    default:
-                      break;
-                  }
                   dispatch(m_sadc, DF_KEEP_TIME);
                   m_volt[m_driver->m_sadc.channel - 1].setTimeStamp(m_tstamp);
                   m_volt[m_driver->m_sadc.channel - 1].setDestination(getSystemId());
