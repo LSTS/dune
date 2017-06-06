@@ -844,6 +844,7 @@ namespace Transports
         dispatch(es);
 
         IMC::RhodamineDye rdye;
+        rdye.setSource(imc_src);
         rdye.value = (float)dat.rhodamine / 10.0;
         dispatch(rdye);
 
