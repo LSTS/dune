@@ -78,24 +78,13 @@ namespace Maneuver
         m_maneuver = *maneuver;
         timer.setTop(m_args->max_time);
         m_done = false;
-//        //ensure syringes to be used are closed
-//
-//        if (m_maneuver.syringe0 == IMC::BOOL_TRUE)
-//          setSyringeState(m_args->syringe0Id, m_args->closeValue);
-//
-//        if (m_maneuver.syringe1 == IMC::BOOL_TRUE)
-//          setSyringeState(m_args->syringe1Id, m_args->closeValue);
-//
-//        if (m_maneuver.syringe2 == IMC::BOOL_TRUE)
-//          setSyringeState(m_args->syringe2Id, m_args->closeValue);
-
       }
 
       void
       onThrottle(const IMC::Throttle* throttle)
       {
+        m_task->debug("Trottle: %f\tDone?: %d\n", throttle->value, m_done);
 
-       // std::cout << "throttle: " << throttle->value << "Dune?: " << m_done   << std::endl;
         if (throttle->value < 1 && (m_medium.medium == IMC::VehicleMedium::VM_GROUND) && !m_done)
         {
           if (m_maneuver.syringe0 == IMC::BOOL_TRUE)
@@ -117,11 +106,8 @@ namespace Maneuver
           else
             m_task->signalError(DTR("sample failed"));
         }
-//        else
-//        {
-//        	m_task->inf("Sampling for %f/%f seconds...", timer.getElapsed(), timer.getTop());
-//        }
-
+        else
+          m_task->debug("Sampling for %f/%f seconds...", timer.getElapsed(), timer.getTop());
       }
 
       void
