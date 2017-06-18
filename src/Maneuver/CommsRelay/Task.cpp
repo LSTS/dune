@@ -45,8 +45,8 @@ namespace Maneuver
     struct Arguments
     {
       float loitering_radius;
-      float depth;
-      float altitude;
+      float z;
+      std::string z_mode;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -86,15 +86,14 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Radius of loitering circle after arriving at destination");
 
-        param("Depth", m_args.depth)
-        .defaultValue("-1")
+        param("Z Value", m_args.z)
+        .defaultValue("")
         .units(Units::Meter)
-        .description("Default depth. If value is below 0, altitude will be used instead.");
+        .description("Z value to maintain while executing this maneuver.");
 
-        param("Altitude", m_args.altitude)
-        .defaultValue("100")
-        .units(Units::Meter)
-        .description("Altitude to use if depth less than 0.");
+        param("Z Mode", m_args.z_mode)
+        .defaultValue("")
+        .description("Z Mode to use. One of Depth, Altitude or Height.");
 
         // initialize everything...
         m_mode = STOP;
@@ -115,11 +114,12 @@ namespace Maneuver
       void
       onUpdateParameters(void)
       {
-        // depending on z reference, activate altitude or depth control
-        if (m_args.depth >= 0)
+        if (m_args.z_mode == "Depth")
           m_control = IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_PATH;
-        else
+        else if (m_args.z_mode == "Altitude")
           m_control = IMC::CL_ALTITUDE | IMC::CL_SPEED | IMC::CL_PATH;
+        else 
+          m_control = IMC::CL_SPEED | IMC::CL_PATH;
       }
 
       void
@@ -280,17 +280,14 @@ namespace Maneuver
         m_path.speed_units = m_maneuver.speed_units;
         m_path.end_lat = m_lat_center;
         m_path.end_lon = m_lon_center;
-
-        if (m_args.depth >= 0)
-        {
-          m_path.end_z = m_args.depth;
+        m_path.end_z = m_args.z;
+        
+        if (m_args.z_mode == "Depth")
           m_path.end_z_units = IMC::Z_DEPTH;
-        }
-        else
-        {
-          m_path.end_z = m_args.altitude;
+        else if (m_args.z_mode == "Altitude")
           m_path.end_z_units = IMC::Z_ALTITUDE;
-        }
+        else if (m_args.z_mode == "Height")
+          m_path.end_z_units = IMC::Z_HEIGHT;
       }
     };
   }
