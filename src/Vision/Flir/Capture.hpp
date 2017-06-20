@@ -180,7 +180,7 @@ namespace Vision
                 m_task->war("stop camera ok");
               else
                 m_task->war("stop camera not ok");
-              Delay::wait(2);
+
               if(startCapture())
                 m_task->war("start camera ok");
               else
