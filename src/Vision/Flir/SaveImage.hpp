@@ -47,42 +47,38 @@
  {
    namespace Flir
    {
+     //! Mutex lock/unlock
+     static Concurrency::Mutex m_mutex;
+
      class SaveImage : public Concurrency::Thread
      {
      public:
 
        struct exifData
        {
-         //!
          int lat_deg;
-         //!
          int lat_min;
-         //!
          double lat_sec;
-         //!
          int lon_deg;
-         //!
          int lon_min;
-         //!
          double lon_sec;
-         //!
          std::string date_time_original;
-         //!
          std::string date_time_digitized;
-         //!
          std::string lens_model;
-         //!
          std::string copyright;
-         //!
          std::string artist;
-         //!
          std::string notes;
        };
 
-       SaveImage(DUNE::Tasks::Task* task) :
+       //! Name of thread
+       std::string m_name_thread;
+
+       SaveImage(DUNE::Tasks::Task* task, std::string name) :
          m_task(task)
        {
-           isToSave= false;
+         m_name_thread = name;
+         isToSave = false;
+         m_is_free = true;
        }
 
        //! Destructor.
@@ -153,6 +149,10 @@
        bool
        save_image(cv::Mat frame, std::string path)
        {
+         if(!m_is_free)
+           return false;
+
+         m_is_free = false;
          frame.copyTo(m_frame_capture);
          m_path_file_name = path;
          isToSave = true;
@@ -168,15 +168,16 @@
            {
              if(!m_frame_capture.empty())
              {
-               cv::imwrite(m_path_file_name, m_frame_capture);
+               save_image();
                writeExifData(m_path_file_name);
              }
              else
              {
-               m_task->war("error saving image");
+               m_task->inf("%s: error saving image", m_name_thread.c_str());
              }
 
              isToSave = false;
+             m_is_free = true;
            }
            else
            {
@@ -203,6 +204,26 @@
        char m_text_exif[32];
        //! Path to save the image
        std::string m_path_file_name;
+       //! flag to control state of thread
+       bool m_is_free;
+
+       bool
+       save_image(void)
+       {
+         try
+         {
+           m_mutex.lock();
+           cv::imwrite(m_path_file_name, m_frame_capture);
+           m_mutex.unlock();
+           return true;
+         }
+         catch (std::runtime_error& ex)
+         {
+           m_mutex.unlock();
+           m_task->war("%s, Exception saving image: %s\n", m_name_thread.c_str(), ex.what());
+           return false;
+         }
+       }
      };
    }
  }

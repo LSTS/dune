@@ -48,6 +48,8 @@ namespace Vision
 
     static const int c_number_max_fps = 5;
     static const int c_number_fps_framegrabber = 25;
+    static const int c_number_max_thread = 25;
+    static const float c_time_to_update_cnt_info = 5.0;
 
     //! %Task arguments.
     struct Arguments
@@ -75,7 +77,9 @@ namespace Vision
       //! thread to capture image
       CreateCapture *m_capture;
       //! thread to save image
-      SaveImage *m_save_image;
+      SaveImage *m_save_image[c_number_max_thread];
+      //! Timer to control the refresh of captured frames
+      Time::Counter<float> m_update_cnt_frames;
       //! Latitude deg
       int m_lat_deg;
       //! Latitude min
@@ -110,6 +114,17 @@ namespace Vision
       std::string m_log_name;
       //! Timer to control fps
       Time::Counter<float> m_cnt_fps;
+      //! Id thread
+      int m_thread_cnt;
+      //! Number of frames captured/saved
+      long unsigned int m_frame_cnt;
+      //! Number of frames lost
+      long unsigned int m_frame_lost_cnt;
+      //! Flag to control capture of image
+      bool m_is_to_capture;
+      //! Flag to control check of resources
+      bool m_is_start_resources;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -121,7 +136,7 @@ namespace Vision
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Camera Url", m_args.camera_url)
-        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .defaultValue("http://10.0.20.113/mjpg/video.mjpg")
         .description("Camera Url.");
@@ -137,7 +152,7 @@ namespace Vision
         .description("Saved Images Dir.");
 
         param("Number Frames/s", m_args.number_fs)
-        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .defaultValue("4")
         .minimumValue("1")
@@ -166,22 +181,12 @@ namespace Vision
       {
       }
 
-      //! Reserve entity identifiers.
+      //! Initialize resources.
       void
-      onEntityReservation(void)
+      onResourceInitialization(void)
       {
-      }
+        m_is_start_resources = false;
 
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
         if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
           m_cnt_fps.setTop((1.0/m_args.number_fs));
         else
@@ -202,29 +207,57 @@ namespace Vision
 
         m_cnt_photos_by_folder = 0;
         m_folder_number = 0;
+        m_thread_cnt = 0;
+        m_frame_cnt = 0;
+        m_frame_lost_cnt = 0;
+        m_is_to_capture = false;
 
-        //TODO
+        m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
+
         m_capture = new CreateCapture(this, m_args.camera_url, c_number_fps_framegrabber);
         if(!m_capture->initSetupCamera())
+        {
           throw RestartNeeded("Cannot connect to camera", 10);
+        }
+        else
+        {
+          m_is_start_resources = true;
+          char text[8];
+          for(int i = 0; i < c_number_max_thread; i++)
+          {
+            sprintf(text, "thr%d", i);
+            m_save_image[i] = new SaveImage(this, text);
+            m_save_image[i]->start();
+          }
 
-        m_save_image = new SaveImage(this);
-        m_capture->start();
-        m_save_image->start();
+          m_capture->start();
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        if(m_is_start_resources)
+        {
+          for(int i = 0; i < c_number_max_thread; i++)
+          {
+            if (m_save_image[i] != NULL)
+            {
+              m_save_image[i]->stopAndJoin();
+              delete m_save_image[i];
+              m_save_image[i] = NULL;
+            }
+          }
+          if (m_capture != NULL)
+          {
+            m_capture->stopAndJoin();
+            delete m_capture;
+            m_capture = NULL;
+          }
+        }
       }
 
       void
@@ -256,7 +289,59 @@ namespace Vision
 
         Angles::convertDecimalToDMS(Angles::degrees(msg->lat), m_lat_deg, m_lat_min, m_lat_sec);
         Angles::convertDecimalToDMS(Angles::degrees(msg->lon), m_lon_deg, m_lon_min, m_lon_sec);
-        m_note_comment = "Depth: "+m_save_image->to_string(msg->depth)+" m # Altitude: "+m_save_image->to_string(msg->alt)+" m";
+        m_note_comment = "Depth: "+m_save_image[m_thread_cnt]->to_string(msg->depth)+" m # Altitude: "+m_save_image[m_thread_cnt]->to_string(msg->alt)+" m";
+      }
+
+      void
+      onRequestActivation(void)
+      {
+        inf("received activation request");
+        activate();
+      }
+
+      void
+      onRequestDeactivation(void)
+      {
+        inf("received deactivation request");
+        deactivate();
+      }
+
+      void
+      onActivation(void)
+      {
+        inf("on Activation");
+        m_frame_cnt = 0;
+        m_frame_lost_cnt = 0;
+        m_cnt_photos_by_folder = 0;
+        m_folder_number = 0;
+        try
+        {
+          if(!m_capture->startCapture())
+          {
+            onRequestDeactivation();
+            throw RestartNeeded("Cannot connect to camera", 10);
+          }
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+          m_thread_cnt = 0;
+          m_cnt_fps.reset();
+        }
+        catch(...)
+        {
+          onRequestDeactivation();
+          throw RestartNeeded("Erro config camera", 10);
+        }
+        m_is_to_capture = true;
+        inf("Starting Capture.");
+      }
+
+      void
+      onDeactivation(void)
+      {
+        inf("on Deactivation");
+        m_is_to_capture = false;
+        m_capture->stopCapture();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -272,24 +357,72 @@ namespace Vision
         m_path_image.append(".jpg");
         m_capture->trigger_camera(m_path_image);
 
-        m_save_image->m_exif_data.lat_deg = m_lat_deg;
-        m_save_image->m_exif_data.lat_min = m_lat_min;
-        m_save_image->m_exif_data.lat_sec = m_lat_sec;
-        m_save_image->m_exif_data.lon_deg = m_lon_deg;
-        m_save_image->m_exif_data.lon_min = m_lon_min;
-        m_save_image->m_exif_data.lon_sec = m_lon_sec;
-        m_save_image->m_exif_data.date_time_original = Time::Format::getTimeDate().c_str();
-        m_save_image->m_exif_data.date_time_digitized = m_back_epoch.c_str();
-        m_save_image->m_exif_data.lens_model = m_args.lens_model.c_str();
-        m_save_image->m_exif_data.copyright = m_args.copyright.c_str();
-        m_save_image->m_exif_data.artist = getSystemName();
-        m_save_image->m_exif_data.notes = m_note_comment.c_str();
+        m_save_image[m_thread_cnt]->m_exif_data.lat_deg = m_lat_deg;
+        m_save_image[m_thread_cnt]->m_exif_data.lat_min = m_lat_min;
+        m_save_image[m_thread_cnt]->m_exif_data.lat_sec = m_lat_sec;
+        m_save_image[m_thread_cnt]->m_exif_data.lon_deg = m_lon_deg;
+        m_save_image[m_thread_cnt]->m_exif_data.lon_min = m_lon_min;
+        m_save_image[m_thread_cnt]->m_exif_data.lon_sec = m_lon_sec;
+        m_save_image[m_thread_cnt]->m_exif_data.date_time_original = Time::Format::getTimeDate().c_str();
+        m_save_image[m_thread_cnt]->m_exif_data.date_time_digitized = m_back_epoch.c_str();
+        m_save_image[m_thread_cnt]->m_exif_data.lens_model = m_args.lens_model.c_str();
+        m_save_image[m_thread_cnt]->m_exif_data.copyright = m_args.copyright.c_str();
+        m_save_image[m_thread_cnt]->m_exif_data.artist = getSystemName();
+        m_save_image[m_thread_cnt]->m_exif_data.notes = m_note_comment.c_str();
 
-        while(!m_capture->is_capture_image() && !stopping());
-
-        m_save_image->save_image(m_capture->get_image_captured(), m_path_image);
-
+        while(!m_capture->is_capture_image() && !stopping() && m_is_to_capture );
+        debug("THR: %d", m_thread_cnt);
         debug("Path: %s", m_path_image.c_str());
+
+        m_thread_cnt = send_image_thread(m_thread_cnt);
+
+        if(m_thread_cnt >= c_number_max_thread)
+          m_thread_cnt = 0;
+      }
+
+      int
+      send_image_thread(int cnt_thread)
+      {
+        int pointer_cnt_thread = cnt_thread;
+        bool jump_over = false;
+        bool result_thread;
+        while(!jump_over && !stopping())
+        {
+          try
+          {
+            result_thread = m_save_image[pointer_cnt_thread]->save_image(m_capture->get_image_captured(), m_path_image);
+          }
+          catch(...)
+          {
+            war("erro thread");
+          }
+
+          if(result_thread)
+          {
+            pointer_cnt_thread++;
+            jump_over = true;
+            m_frame_cnt++;
+            return pointer_cnt_thread;
+          }
+          else
+          {
+            debug("thread %d is working, jump to other", pointer_cnt_thread);
+            pointer_cnt_thread++;
+            if(pointer_cnt_thread >= c_number_max_thread)
+              pointer_cnt_thread = 0;
+
+            if(cnt_thread == pointer_cnt_thread)
+            {
+              pointer_cnt_thread++;
+              inf("Erro saving image, all thread working");
+              m_frame_lost_cnt++;
+              jump_over = true;
+              return pointer_cnt_thread;
+            }
+          }
+        }
+
+        return pointer_cnt_thread;
       }
 
       //! Main loop.
@@ -299,12 +432,26 @@ namespace Vision
         m_cnt_fps.reset();
         while (!stopping())
         {
-          //waitForMessages(1.0);
-          consumeMessages();
-          if(m_cnt_fps.overflow())
+          if(m_cnt_fps.overflow() && m_is_to_capture)
           {
             m_cnt_fps.reset();
+            consumeMessages();
             capture_image();
+          }
+          else if(m_update_cnt_frames.overflow() && m_is_to_capture)
+          {
+            m_update_cnt_frames.reset();
+            setEntityState(IMC::EntityState::ESTA_NORMAL, " # Fps: "+m_save_image[0]->to_string(m_args.number_fs)+" # "+m_save_image[0]->to_string(m_frame_cnt)+" - "+m_save_image[0]->to_string(m_frame_lost_cnt));
+          }
+          else if(!m_is_to_capture)
+          {
+            waitForMessages(1.0);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+            m_cnt_fps.reset();
+          }
+          else
+          {
+            Delay::waitMsec(1);
           }
         }
       }

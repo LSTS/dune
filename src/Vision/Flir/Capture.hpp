@@ -47,10 +47,13 @@ namespace Vision
 
       CreateCapture(DUNE::Tasks::Task* task, std::string urlCamera, float number_fps) :
         m_task(task),
-        isToCapture(0)
+        isToCapture(0),
+        m_is_captured(0)
       {
         m_number_fps = 1/number_fps;
         m_camera_url = urlCamera;
+        m_stop_capture = true;
+        m_number_not_ok_frames = 0;
       }
 
       //! Destructor.
@@ -58,6 +61,8 @@ namespace Vision
       {
         m_cap_dev.release();
         m_error_image.release();
+        m_frame_capture.release();
+        m_frame_required.release();
       }
 
       bool
@@ -68,6 +73,8 @@ namespace Vision
         m_is_captured = false;
         m_fps.setTop(m_number_fps);
         m_cap_dev.open(m_camera_url);
+        m_stop_capture = true;
+
         if(m_cap_dev.isOpened())
           result = true;
         else
@@ -79,6 +86,7 @@ namespace Vision
       void
       trigger_camera(std::string fileName)
       {
+        m_stop_capture = false;
         isToCapture = true;
         m_is_captured = false;
         m_path_file_name = fileName;
@@ -102,31 +110,86 @@ namespace Vision
         return m_error_image;
       }
 
+      bool
+      stopCapture(void)
+      {
+        m_stop_capture = true;
+
+        if(m_cap_dev.isOpened())
+          m_cap_dev.release();
+
+        if(!m_cap_dev.isOpened())
+          return true;
+        else
+          return false;
+      }
+
+      bool
+      startCapture(void)
+      {
+        if(!m_cap_dev.isOpened())
+          m_cap_dev.open(m_camera_url);
+
+        m_stop_capture = true;
+        if(m_cap_dev.isOpened())
+          return true;
+        else
+          return false;
+      }
+
       void
       run(void)
       {
         m_fps.reset();
-        m_task->debug("FPS: %f", m_number_fps);
+        m_task->debug("FPS: %d (%0.3f s/f)", (int)(1/m_number_fps), m_number_fps);
         while(!isStopping())
         {
           if(m_fps.overflow())
           {
-            m_cap_dev >> m_frame_capture;
-            if(m_frame_capture.empty())
+            m_fps.reset();
+            if(!m_stop_capture && m_cap_dev.isOpened())
             {
-              m_task->war("erro capturing frame");
-            }
-            else
-            {
-              if(isToCapture)
+              try
               {
-                m_task->debug("capture");
-                m_frame_required = m_frame_capture;
-                isToCapture = false;
-                m_is_captured = true;
+                m_cap_dev >> m_frame_capture;
+              }
+              catch(...)
+              {}
+
+              if(m_frame_capture.empty())
+              {
+                m_task->inf("erro capturing frame");
+                m_number_not_ok_frames++;
+              }
+              else
+              {
+                m_number_not_ok_frames = 0;
+                if(isToCapture)
+                {
+                  m_frame_required = m_frame_capture;
+                  isToCapture = false;
+                  m_is_captured = true;
+                }
               }
             }
-            m_fps.reset();
+            if(m_number_not_ok_frames > 10)
+            {
+              m_number_not_ok_frames = 0;
+              m_task->war("restarting capture");
+              if(stopCapture())
+                m_task->war("stop camera ok");
+              else
+                m_task->war("stop camera not ok");
+              Delay::wait(2);
+              if(startCapture())
+                m_task->war("start camera ok");
+              else
+                m_task->war("start camera not ok");
+            }
+          }
+          else
+          {
+            Delay::waitMsec(20);
           }
         }
       }
@@ -154,6 +217,10 @@ namespace Vision
       bool m_is_captured;
       //! Black image to return in error
       cv::Mat m_error_image;
+      //! Flag to control capture
+      bool m_stop_capture;
+      //! Counter to check error in capture
+      int m_number_not_ok_frames;
 
     };
   }
