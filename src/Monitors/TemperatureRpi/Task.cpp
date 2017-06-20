@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -41,6 +41,8 @@ namespace Monitors
   {
     using DUNE_NAMESPACES;
 
+    static const float c_timeout_reading = 3.0;
+
     struct Arguments
     {
       //! Path to sysfs temperature.
@@ -57,9 +59,16 @@ namespace Monitors
       Arguments m_args;
       //! Temperature value
       float m_temperature;
+      //! buffer for path of temperature value
+      char m_buffer[64];
+      //! string for result output
+      std::string result;
+      //! Timer to control reading of temperature
+      Time::Counter<float> m_timeout_reading;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Periodic(name, ctx)
+        Periodic(name, ctx),
+        m_temperature(0)
       {
         param("Path Temperature", m_args.temp_path)
         .defaultValue("/opt/vc/bin/vcgencmd measure_temp")
@@ -81,16 +90,16 @@ namespace Monitors
       onResourceInitialization(void)
       {
         m_temperature = 0;
+        m_timeout_reading.setTop(c_timeout_reading);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       float
       getTemperatureCPU(void)
       {
-        char buffer[64];
-        std::string result = "";
-        std::sprintf(buffer, "cat %s", m_args.temp_path.c_str());
-        FILE* pipe = popen(buffer, "r");
+        std::memset(&m_buffer, '\0', sizeof(m_buffer));
+        std::sprintf(m_buffer, "cat %s", m_args.temp_path.c_str());
+        FILE* pipe = popen(m_buffer, "r");
         if (!pipe)
         {
           err("popen() failed!");
@@ -99,24 +108,43 @@ namespace Monitors
         }
         else
         {
-          std::memset(&buffer, '\0', sizeof(buffer));
+          std::memset(&m_buffer, '\0', sizeof(m_buffer));
+          m_timeout_reading.reset();
           try
           {
-            while (!feof(pipe))
+            while (!std::feof(pipe) && !m_timeout_reading.overflow())
             {
-              if (fgets(buffer, sizeof(buffer), pipe) != NULL)
-                result += buffer;
+              if (std::fgets(m_buffer, sizeof(m_buffer), pipe) != NULL)
+                result += m_buffer;
+            }
+
+            if(m_timeout_reading.overflow())
+            {
+              pclose(pipe);
+              war("timeout - erro reading temperature");
+              return 0;
             }
           }
           catch (...)
           {
             pclose(pipe);
-            throw;
+            return 0;
           }
           pclose(pipe);
-          std::sscanf(buffer, "%f", &m_temperature);
+          try
+          {
+            std::sscanf(m_buffer, "%f", &m_temperature);
+          }
+          catch (...)
+          {
+            return 0;
+          }
         }
-        return (m_temperature/1000);
+
+        if(m_temperature != 0)
+          return (m_temperature/1000);
+        else
+          return 0;
       }
 
       void
@@ -125,20 +153,22 @@ namespace Monitors
         try
         {
           m_temp.value = getTemperatureCPU();
-          if (m_temp.value > 0)
-          {
-            m_temp.setDestination(getSystemId());
-            dispatch(m_temp);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          }
-          else
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-          }
         }
         catch (...)
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+        }
+
+        if (m_temp.value > 0)
+        {
+          m_temp.setDestination(getSystemId());
+          dispatch(m_temp);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+        else
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+          war("Wrong value of temperature read");
         }
       }
     };
