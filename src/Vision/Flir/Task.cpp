@@ -48,7 +48,6 @@ namespace Vision
 
     static const int c_number_max_fps = 5;
     static const float c_timeout_capture = 4;
-    static const int c_number_fps_framegrabber = 25;
     static const int c_number_max_thread = 25;
     static const float c_time_to_update_cnt_info = 5.0;
 
@@ -57,6 +56,8 @@ namespace Vision
     {
       //! Camera Ip
       std::string camera_url;
+      //! Number of fps of framegrabber
+      int number_fps_framegrabber;
       //! Copyright Image
       std::string copyright;
       //! Lens Model
@@ -144,6 +145,13 @@ namespace Vision
         .defaultValue("http://10.0.20.113/mjpg/video.mjpg")
         .description("Camera Url.");
 
+        param("FrameGrabber Fps", m_args.number_fps_framegrabber)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("25")
+        .minimumValue("1")
+        .maximumValue("25")
+        .description("Number frames/s of FrameGrabber.");
+
         param("Copyright", m_args.copyright)
         .description("Copyright of Image.");
 
@@ -182,6 +190,15 @@ namespace Vision
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.number_fs))
+        {
+          if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
+            m_cnt_fps.setTop((1.0/m_args.number_fs));
+          else
+            m_cnt_fps.setTop(0.25);
+
+          inf("new value of fps: %d", m_args.number_fs);
+        }
       }
 
       //! Initialize resources.
@@ -218,7 +235,7 @@ namespace Vision
         m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
         m_timeout_cap.setTop(c_timeout_capture);
 
-        m_capture = new CreateCapture(this, m_args.camera_url, c_number_fps_framegrabber);
+        m_capture = new CreateCapture(this, m_args.camera_url, m_args.number_fps_framegrabber);
         if(!m_capture->initSetupCamera())
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
@@ -238,7 +255,6 @@ namespace Vision
           m_capture->start();
           inf("Camera Ready");
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          onActivation();
         }
       }
 
@@ -378,6 +394,10 @@ namespace Vision
         m_save_image[m_thread_cnt]->m_exif_data.notes = m_note_comment.c_str();
 
         while(!m_capture->is_capture_image() && !stopping() && m_is_to_capture && !m_timeout_cap.overflow());
+        {
+          Delay::waitMsec(10);
+        }
+
         if(m_timeout_cap.overflow())
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
