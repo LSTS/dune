@@ -116,7 +116,16 @@ namespace Vision
         m_stop_capture = true;
 
         if(m_cap_dev.isOpened())
-          m_cap_dev.release();
+        {
+          try
+          {
+            m_cap_dev.release();
+          }
+          catch(...)
+          {
+            m_task->err("error stoping");
+          }
+        }
 
         if(!m_cap_dev.isOpened())
           return true;
@@ -128,7 +137,16 @@ namespace Vision
       startCapture(void)
       {
         if(!m_cap_dev.isOpened())
-          m_cap_dev.open(m_camera_url);
+        {
+          try
+          {
+            m_cap_dev.open(m_camera_url);
+          }
+          catch(...)
+          {
+            m_task->err("error starting");
+          }
+        }
 
         m_stop_capture = true;
         if(m_cap_dev.isOpened())
@@ -175,16 +193,16 @@ namespace Vision
             if(m_number_not_ok_frames > 10)
             {
               m_number_not_ok_frames = 0;
-              m_task->war("restarting capture");
+              m_task->war("capture: restarting");
               if(stopCapture())
-                m_task->war("stop camera ok");
+                m_task->war("capture: stoping camera ok");
               else
-                m_task->war("stop camera not ok");
+                m_task->war("capture: erro stoping camera");
 
               if(startCapture())
-                m_task->war("start camera ok");
+                m_task->war("capture: starting camera ok");
               else
-                m_task->war("start camera not ok");
+                m_task->war("capture: erro starting camera");
             }
           }
           else

@@ -47,6 +47,7 @@ namespace Vision
     using DUNE_NAMESPACES;
 
     static const int c_number_max_fps = 5;
+    static const float c_timeout_capture = 4;
     static const int c_number_fps_framegrabber = 25;
     static const int c_number_max_thread = 25;
     static const float c_time_to_update_cnt_info = 5.0;
@@ -114,6 +115,8 @@ namespace Vision
       std::string m_log_name;
       //! Timer to control fps
       Time::Counter<float> m_cnt_fps;
+      //! Timer to control timeout capture
+      Time::Counter<float> m_timeout_cap;
       //! Id thread
       int m_thread_cnt;
       //! Number of frames captured/saved
@@ -213,10 +216,12 @@ namespace Vision
         m_is_to_capture = false;
 
         m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
+        m_timeout_cap.setTop(c_timeout_capture);
 
         m_capture = new CreateCapture(this, m_args.camera_url, c_number_fps_framegrabber);
         if(!m_capture->initSetupCamera())
         {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded("Cannot connect to camera", 10);
         }
         else
@@ -233,6 +238,7 @@ namespace Vision
           m_capture->start();
           inf("Camera Ready");
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          onActivation();
         }
       }
 
@@ -347,6 +353,7 @@ namespace Vision
       void
       capture_image(void)
       {
+        m_timeout_cap.reset();
         std::memset(&m_text_exif_timestamp, '\0', sizeof(m_text_exif_timestamp));
         std::sprintf(m_text_exif_timestamp, "%0.4f", Clock::getSinceEpoch());
         m_back_epoch = m_text_exif_timestamp;
@@ -370,14 +377,23 @@ namespace Vision
         m_save_image[m_thread_cnt]->m_exif_data.artist = getSystemName();
         m_save_image[m_thread_cnt]->m_exif_data.notes = m_note_comment.c_str();
 
-        while(!m_capture->is_capture_image() && !stopping() && m_is_to_capture );
-        debug("THR: %d", m_thread_cnt);
-        debug("Path: %s", m_path_image.c_str());
+        while(!m_capture->is_capture_image() && !stopping() && m_is_to_capture && !m_timeout_cap.overflow());
+        if(m_timeout_cap.overflow())
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          err("Error: connecton to camera");
+          m_frame_lost_cnt = m_frame_lost_cnt + (c_timeout_capture * m_args.number_fs);
+        }
+        else
+        {
+          debug("THR: %d", m_thread_cnt);
+          debug("Path: %s", m_path_image.c_str());
 
-        m_thread_cnt = send_image_thread(m_thread_cnt);
+          m_thread_cnt = send_image_thread(m_thread_cnt);
 
-        if(m_thread_cnt >= c_number_max_thread)
-          m_thread_cnt = 0;
+          if(m_thread_cnt >= c_number_max_thread)
+            m_thread_cnt = 0;
+        }
       }
 
       int
@@ -390,7 +406,9 @@ namespace Vision
         {
           try
           {
+            debug("sending to thread");
             result_thread = m_save_image[pointer_cnt_thread]->save_image(m_capture->get_image_captured(), m_path_image);
+            debug("sending to thread done");
           }
           catch(...)
           {
