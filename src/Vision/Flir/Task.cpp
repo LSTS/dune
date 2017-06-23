@@ -50,6 +50,7 @@ namespace Vision
     static const float c_timeout_capture = 4;
     static const int c_number_max_thread = 25;
     static const float c_time_to_update_cnt_info = 5.0;
+    static const float c_time_to_release_cached_ram = 6000.0;
 
     //! %Task arguments.
     struct Arguments
@@ -118,6 +119,8 @@ namespace Vision
       Time::Counter<float> m_cnt_fps;
       //! Timer to control timeout capture
       Time::Counter<float> m_timeout_cap;
+      //! Timer to control the cached ram
+      Time::Counter<float> m_clean_cached_ram;
       //! Id thread
       int m_thread_cnt;
       //! Number of frames captured/saved
@@ -234,6 +237,7 @@ namespace Vision
 
         m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
         m_timeout_cap.setTop(c_timeout_capture);
+        m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
 
         m_capture = new CreateCapture(this, m_args.camera_url, m_args.number_fps_framegrabber);
         if(!m_capture->initSetupCamera())
@@ -332,6 +336,7 @@ namespace Vision
       onActivation(void)
       {
         inf("on Activation");
+        releaseRamCached();
         m_frame_cnt = 0;
         m_frame_lost_cnt = 0;
         m_cnt_photos_by_folder = 0;
@@ -463,6 +468,15 @@ namespace Vision
         return pointer_cnt_thread;
       }
 
+      int
+      releaseRamCached(void)
+      {
+        debug("Releasing cache ram.");
+        int result = std::system("sync");
+        result = std::system("echo 1 > /proc/sys/vm/drop_caches");
+        return result;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -486,6 +500,11 @@ namespace Vision
             waitForMessages(1.0);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
             m_cnt_fps.reset();
+          }
+          else if(m_clean_cached_ram.overflow())
+          {
+            m_clean_cached_ram.reset();
+            releaseRamCached();
           }
           else
           {
