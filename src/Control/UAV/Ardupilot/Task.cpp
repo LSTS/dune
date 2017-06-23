@@ -154,6 +154,8 @@ namespace Control
         bool loiter_idle;
         //! Dispatch ExternalNavData rather than EstimatedState
         bool use_external_nav;
+        //! Temperature of ESC failure (degrees)
+        float esc_temp;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -408,6 +410,10 @@ namespace Control
           param("Use External Nav Data", m_args.use_external_nav)
           .defaultValue("false")
           .description("Dispatch ExternalNavData instead of EstimatedState");
+
+          param("Temperature of ESC failure (degrees)", m_args.esc_temp)
+          .defaultValue("70.0")
+          .description("Temperature of ESC failure (degrees).");
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -1821,6 +1827,14 @@ namespace Control
 
           m_pressure.value = sc_press.press_abs;
           m_temp.value = 0.01 * sc_press.temperature;
+
+          if(m_temp.value >= (m_args.esc_temp - 5))
+          {
+            if(m_temp.value >= m_args.esc_temp)
+              err("Autopilot temperature reached %fºC! ESC will shutdown!!!", m_temp.value);
+            else
+              war("Autopilot temperature at %fºC! ESC shuts down around %fºC.", m_temp.value, m_args.esc_temp);
+          }
 
           dispatch(m_pressure);
           dispatch(m_temp);
