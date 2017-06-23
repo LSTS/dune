@@ -75,6 +75,10 @@ namespace DUNE
       .size(2)
       .description("Constants used in current LBL rejection scheme");
 
+      param("Disable GPS for debug", m_gps_disable)
+      .defaultValue("false")
+      .description("Disable GPS for debug");
+
       param("GPS timeout", m_without_gps_timeout)
       .units(Units::Second)
       .defaultValue("3.0")
@@ -498,6 +502,9 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::GpsFix* msg)
     {
+
+      if (m_gps_disable== true)
+        return;
       if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
         return;
 

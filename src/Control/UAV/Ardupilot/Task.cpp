@@ -284,7 +284,7 @@ namespace Control
           .description("Address for connection to Ardupilot");
 
           param("IPv4 - Address", m_args.ip)
-          .defaultValue("")
+          .defaultValue("0.0.0.0")
           .description("Address for neptus connection to Ardupilot");
 
           param("Telemetry Rate", m_args.trate)
