@@ -401,7 +401,7 @@ namespace Vision
         if(m_timeout_cap.overflow())
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          err("Error: connecton to camera");
+          err("Error: connection to camera");
           m_frame_lost_cnt = m_frame_lost_cnt + (c_timeout_capture * m_args.number_fs);
         }
         else
