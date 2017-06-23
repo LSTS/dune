@@ -479,7 +479,7 @@ namespace Vision
           else if(m_update_cnt_frames.overflow() && m_is_to_capture)
           {
             m_update_cnt_frames.reset();
-            setEntityState(IMC::EntityState::ESTA_NORMAL, " # Fps: "+m_save_image[0]->to_string(m_args.number_fs)+" # "+m_save_image[0]->to_string(m_frame_cnt)+" - "+m_save_image[0]->to_string(m_frame_lost_cnt));
+            setEntityState(IMC::EntityState::ESTA_NORMAL, "active (Fps: "+m_save_image[0]->to_string(m_args.number_fs)+" # "+m_save_image[0]->to_string(m_frame_cnt)+" - "+m_save_image[0]->to_string(m_frame_lost_cnt)+")");
           }
           else if(!m_is_to_capture)
           {
