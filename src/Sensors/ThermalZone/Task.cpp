@@ -91,12 +91,16 @@ namespace Sensors
       {
         try
         {
+          m_temp.setDestination(getSystemId());
           m_temp.value = readValue(m_args.path.c_str());
           dispatch(m_temp);
+
+          if (getEntityState() == IMC::EntityState::ESTA_ERROR)
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         catch (...)
         {
-          // Ignored.
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
         }
       }
     };
