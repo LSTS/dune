@@ -91,12 +91,10 @@ namespace Maneuver
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        // Maneuver is complete only when vehicle reports vehicle medium as ground
+        // Maneuver doesn't complete until vehicle reports vehicle medium as ground
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
         {
-          if (m_ground)
-            m_task->signalCompletion();
-          else if (!m_status)
+          if (!m_status)
           {
             sendTouchdown(m_land.lat, m_land.lon, m_land.z);
             m_status = true;
@@ -112,6 +110,13 @@ namespace Maneuver
       onVehicleMedium(const IMC::VehicleMedium* msg)
       {
         m_ground = (msg->medium == IMC::VehicleMedium::VM_GROUND);
+
+        // Maneuver is complete only vehicle medium is GROUND
+        if(m_ground && m_status)
+        {
+          m_task->signalCompletion();
+          m_status = false;
+        }
       }
 
       //! Send touchdown DesiredPath
