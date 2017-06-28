@@ -2072,12 +2072,6 @@ namespace Control
                 trace("LOITER");
                 m_external = false;
                 break;
-              case CP_MODE_LAND:
-                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
-                mode.mode = "LAND";
-                trace("LAND");
-                m_external = true;
-                break;
               case CP_MODE_DUNE:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "DUNE";
@@ -2093,6 +2087,7 @@ namespace Control
               case CP_MODE_LAND:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "LAND";
+                trace("LAND");
                 m_external = false;
                 break;
             }
