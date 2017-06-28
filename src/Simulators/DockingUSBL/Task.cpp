@@ -107,6 +107,9 @@ namespace
       struct Task: public Tasks::Periodic
       {
 
+        //! Maneuver
+        IMC::DockingState m_dstate;
+
         IMC::EntityState m_ent;
         //! Current position.
         //IMC::EstimatedState m_sstate;
@@ -193,6 +196,7 @@ namespace
           bind<IMC::GpsFix>(this);
           bind<IMC::EstimatedState>(this);
           bind<IMC::Docking>(this);
+          bind<IMC::DockingState>(this);
           bind<IMC::DockingUSBLMessage>(this);
         }
 
@@ -260,12 +264,12 @@ namespace
           if (m_maneuver.vehiclefunction == 0)
           {
             m_mode = STATION;
-            war("\n\nSTATION\n");
+            // war("\n\nSTATION\n");
           }
           else if (m_maneuver.vehiclefunction == 1)
           {
             m_mode = TARGET;
-            war("\n\nTARGET\n");
+            // war("\n\nTARGET\n");
           }
         }
 
@@ -276,7 +280,10 @@ namespace
           {
             case STATION:
               if (msg->getSource() == getSystemId())
+              {
+                //  war("SystemIDAcou: %s",resolveSystemId(msg->getSource()));
                 m_estate_s = *msg;
+              }
 
               //  else if (msg->getSource() == resolveSystemName(m_maneuver.target.c_str()))
               //   m_estate_t = *msg;
@@ -285,6 +292,7 @@ namespace
             case TARGET:
               if (msg->getSource() == getSystemId())
               {
+                //  war("SystemIDAcou: %s",resolveSystemId(msg->getSource()));
                 m_estate_t = *msg;
 
                 switch (m_tmr)
@@ -299,10 +307,10 @@ namespace
                   case SENDING:
 
                     //   war("MSG ENVIAr!");
-                    if (m_timer.overflow())
+                    if (m_timer.overflow() && m_dstate.availability == 1)
                     {
                       war("MSG ENVIADA!");
-                      sendSS(msg);
+                      sendSS(&m_estate_t);
                       m_tmr = SENT;
                     }
 
@@ -329,8 +337,7 @@ namespace
         {
           if (msg->getSource() != getSystemId())
           {
-            war("SystemIDAcou: %s",resolveSystemId(msg->getSource()));
-
+            // war("SystemIDAcou: %s",resolveSystemId(msg->getSource()));
             switch (m_mode)
             {
               case STATION:
@@ -342,8 +349,39 @@ namespace
                   if (m->getId() == DUNE_IMC_ESTIMATEDSTATE)
                   {
                     const IMC::EstimatedState* estimated = static_cast<const IMC::EstimatedState*>(m);
-                    war("UPA|!");
-                    war("SystemID: %s",resolveSystemId(estimated->getSource()));
+                    //war("UPA|!");
+                    // war("SystemID: %s",resolveSystemId(estimated->getSource()));
+                    // compute the bearing with the announced data using previous data
+                    double bearing = 0;
+                    double range = 0;
+                    double lat_s = m_estate_s.lat;
+                    double lon_s = m_estate_s.lon;
+                    double lat_t = estimated->lat;
+                    double lon_t = estimated->lon;
+                    WGS84::displace(m_estate_s.x,m_estate_s.y,&lat_s,&lon_s);
+                    WGS84::displace(estimated->x,estimated->y,&lat_t,&lon_t);
+                    //double d;
+                    //double n, e;
+                    //WGS84::displacement(lat_s, lon_s, m_estate_s.height, lat_t, lon_t, estimated->height, &n, &e);
+                    WGS84::getNEBearingAndRange(lat_s, lon_s, lat_t, lon_t, &bearing, &range);
+                    //double real_bearing = Angles::normalizeRadian(bearing);
+                    //war("Bearing: %f", real_bearing);
+                    war("Range: %f", range);
+                    war("Bearing: %.2f deg", Angles::degrees(bearing));
+                    /* war("N XPL: %f", estimated->x);
+                     war("E XPL: %f", estimated->y);
+                     war("N CVL: %f", m_estate_s.x);
+                     war("E CVL: %f", m_estate_s.y);
+                     war("N DCVL: %f", n);
+                     war("E DCVL: %f", e);*/
+                    IMC::UamRxRange drange;
+                    drange.sys = resolveSystemId(getSystemId());
+                    drange.value = range;
+                    dispatch(drange);
+                    IMC::UsblAnglesExtended angles;
+                    angles.target = resolveSystemId(getSystemId());
+                    angles.bearing = bearing;
+                    dispatch(angles);
                   }
                 }
 
@@ -361,6 +399,27 @@ namespace
           }
           else
             return;  //war("SystemID: %s",resolveSystemId(m_estate_t.getSource()));
+        }
+
+        void
+        consume(const IMC::DockingState* msg)
+        {
+          /*if (strcmp(msg->sys_name.c_str(),getSystemName()) == 0)
+            return;*/
+          if (msg->getSource() != getSystemId())
+          {
+            //war("DENTRO!");
+            return;
+          }
+
+          // war("FORA!");
+          m_dstate = *msg;
+          /*if (m_mode == m_dstate.vehiclefunction)
+          {
+            signalError(DTR("Another system has the same function has ours!"));
+            sendMsg(getSystemName(),state,availability,m_mode);
+            enableMovement(false);
+          }*/
         }
 
         /*else
