@@ -91,7 +91,6 @@ namespace Sensors
       {
         try
         {
-          m_temp.setDestination(getSystemId());
           m_temp.value = readValue(m_args.path.c_str());
           dispatch(m_temp);
 
