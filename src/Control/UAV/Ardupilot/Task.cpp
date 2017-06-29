@@ -570,7 +570,7 @@ namespace Control
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_RAW_SENSORS,
-                                               rate,
+                                               rate/2,
                                                1);
 
           n = mavlink_msg_to_send_buffer(buf, &msg);
