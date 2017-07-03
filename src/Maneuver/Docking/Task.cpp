@@ -211,14 +211,20 @@ namespace Maneuver
       double lat_f ;
       double lon_f ;
 
-      //double skee_lat = m_estate.lat;
-      //double skee_lon = m_estate.lon;
 
       double docking_range;
 
       double heading_corr;
 
       double dist_next_point;
+
+      double prev_dist;
+
+      bool flag;
+
+      uint8_t m_retries;
+
+      uint8_t m_attempts;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -267,10 +273,6 @@ namespace Maneuver
       {
       }
 
-      void
-      onManeuverDeactivation(void)
-      {
-      }
 
 
       void
@@ -285,28 +287,14 @@ namespace Maneuver
         dstate = DS_INIT;
         skeestate = INITIAL;
         point_count = INITIAL_ST;
+        flag = true;
+        //  prev_dist = 0.0;
+        m_retries = 10;
+        m_attempts = 0;
       }
 
-      void
-      onUpdateParameters(void)
-      {
-      }
 
-      void
-      onResourceInitialization(void)
-      {
-      }
-      void
-      onResourceAcquisition(void)
-      {
-      }
 
-      /* //! Release resources. Clears UDP socket.
-       void
-       onResourceRelease(void)
-       {
-         Memory::clear(m_sock);
-       }*/
 
 
       void
@@ -384,6 +372,9 @@ namespace Maneuver
           sendMsg(getSystemName(),state,availability,m_mode);
           enableMovement(false);
         }
+
+        if (msg->state == 2)
+          signalCompletion();
       }
 
 
@@ -392,12 +383,6 @@ namespace Maneuver
       consume(const IMC::Announce* msg)
       {
         m_announce = *msg;
-
-        /*if (msg->sys_name.c_str() != m_maneuver.target.c_str())
-        {
-          dockingTimeout();
-        }*/
-
       }
 
 
@@ -421,19 +406,6 @@ namespace Maneuver
                   //war("UPA|!");
                   war("SystemID: %s",resolveSystemId(estimated->getSource()));
                   m_target_estate = *estimated;
-                  /*void
-                  consume(const IMC::SimulatedState* msg)
-                  {
-                    m_target_estate
-                    if (msg->getSource() != getSystemId())
-                      return;
-
-                    m_sstate = *msg;
-                   // sendSS(msg);
-
-                  }*/
-                  //war("heading lauv: %f", estimated->psi);
-                  //war("heading caravela: %f", m_estate.psi);
                 }
               }
 
@@ -479,23 +451,12 @@ namespace Maneuver
             {
               case INIT:
                 //war("INIT");
-                // if ( strcmp(m_maneuver.target.c_str(),m_dstate.sys_name.c_str()) == 0)
                 // {
                 //war("Target ready for docking.");
                 availability = READY;
 
                 if ((availability == READY )&& (m_dstate.availability == READY ) && ( strcmp(m_maneuver.target.c_str(),m_dstate.sys_name.c_str()) == 0))
                 {
-                  // m_estate.psi =  m_estate.psi + Math::c_two_pi * std::floor((m_estate.psi - Math::c_pi) / Math::c_two_pi);
-                  war("heading LAUV: %f",  m_target_estate.psi);
-                  war("heading Caravela: %f",  m_estate.psi);
-                  war("Availability: %d",  m_dstate.availability);
-                  // heading_diff = Angles::normalizeRadian(heading_diff);
-                  //heading_diff = Angles::normalizeRadian(heading_diff);
-                  // double x_dif = m_estate.x - m_target_estate.x;
-                  // double y_dif = m_estate.y - m_target_estate.y;
-                  //// war("x diff: %f", x_dif);
-                  // war("y diff: %f", y_dif);
                   double heading_diff =  m_estate.psi - m_target_estate.psi;
                   double p_lat_t = 0;
                   double p_lat_s = 0;
@@ -505,9 +466,6 @@ namespace Maneuver
                   double lon_s = m_estate.lon;
                   WGS84::displace(m_target_estate.x,m_target_estate.y,&lat_t,&lon_t);
                   WGS84::displace(m_estate.x,m_estate.y,&lat_s,&lon_s);
-                  war("lat_s: %f", lat_s);
-                  war("lat_t: %f", lat_t);
-                  war("heading: %f", heading_diff);
 
                   if (lat_t != p_lat_t && lat_t != 0)
                   {
@@ -535,8 +493,6 @@ namespace Maneuver
 
                   double lat_diff = lat_s - lat_t;
                   double lon_diff = lon_s - lon_t;
-                  war("lat diff: %f", lat_diff);
-                  war("lon diff: %f", lon_diff);
 
                   if (lat_s != 0 && lat_t != 0)
                   {
@@ -545,8 +501,6 @@ namespace Maneuver
                       case INITIAL_ST:
                         if (-(Math::c_half_pi) < m_target_estate.psi && m_target_estate.psi < Math::c_half_pi)
                         {
-                          war("UPA22222222222222222222");
-
                           if (lat_s > lat_t)
                           {
                             war("FRENTE");
@@ -604,9 +558,6 @@ namespace Maneuver
                           heading_corr = - (DUNE::Math::c_half_pi);
                           // m_args.dock_radius;
                           war("1");
-                          //m_args.dock_radius = 40;
-                          //calculateDockingHeadingPoint();
-                          //war("heading > 0: %f", heading_diff);
                         }
 
                         if (relative_pos == FRT_LFT)
@@ -617,11 +568,6 @@ namespace Maneuver
                           heading_corr = - (DUNE::Math::c_half_pi);
                           m_args.dock_radius = -m_args.dock_radius;
                           war("5");
-                          //On the left of the target vehicle
-                          // heading_corr = - (DUNE::Math::c_half_pi);
-                          //m_args.dock_radius = -40;
-                          // calculateDockingHeadingPoint();
-                          //war("heading < 0: %f", heading_diff);
                         }
 
                         if ( relative_pos == BCK )
@@ -629,33 +575,16 @@ namespace Maneuver
                           //On the back of the vehicle
                           heading_corr = - (DUNE::Math::c_pi);
                           point_count = SEC_POINT;
-                          // m_args.dock_radius;
-                          // if (m_control_state.flags && IMC::PathControlState::FL_NEAR)
-                          //  point_count = THIRD_POINT;
                         }
 
                         break;
 
                       case THIRD_POINT:
-                        //if (m_control_state.flags && IMC::PathControlState::FL_NEAR)
-                        //{
-                        //if ( heading_diff > DUNE::Math::c_pi )
-                        //{
                         war("THIRD_POINT");
-                        //heading_corr = - (DUNE::Math::c_pi);
-                        //m_args.dock_radius = 40;
+                        war("HOMING PHASE");
                         calculateDockingHeadingPoint();
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
                         war("Dist_point: %f",dist_next_point);
-                        /* }
-                         else if (heading_diff < DUNE::Math::c_pi )
-                         {
-                           err("6");
-                           heading_corr = - (DUNE::Math::c_pi);
-                           m_args.dock_radius = 40;
-                           calculateDockingHeadingPoint();
-                         }*/
-                        //   }
                         war("14");
 
                         if ((m_control_state.flags && IMC::PathControlState::FL_NEAR  && dist_next_point <= 5.0) || dist_next_point <= 10.0)
@@ -668,24 +597,7 @@ namespace Maneuver
 
                       case SEC_POINT:
                         war("SEC_POINT");
-                        /*if (m_control_state.flags && IMC::PathControlState::FL_NEAR)
-                        {
-                          if ( heading_diff > DUNE::Math::c_pi )
-                          {
-                            err("4");
-                            heading_corr = - (DUNE::Math::c_pi);
-                            m_args.dock_radius = 40;
-                            calculateDockingHeadingPoint();
-                            break;
-                          }
-                          else if (heading_diff < DUNE::Math::c_pi )
-                          {
-                            err("7");
-                            heading_corr = - (DUNE::Math::c_pi);
-                            m_args.dock_radius = 40;
-                            calculateDockingHeadingPoint();
-                          }
-                        */
+                        war("HOMING PHASE");
                         calculateDockingHeadingPoint();
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
 
@@ -701,25 +613,65 @@ namespace Maneuver
 
                       case FRST_POINT:
                         war("FRST_POINT");
+                        war("HOMING PHASE");
                         calculateDockingHeadingPoint();
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
 
-                        if ((m_control_state.flags && IMC::PathControlState::FL_NEAR  && dist_next_point <= 5.0) || dist_next_point <= 5.0)
+                        if ((m_control_state.flags && IMC::PathControlState::FL_NEAR  && dist_next_point <= 5.0) || dist_next_point <= 2.5)
+                        {
                           point_count = FINAL_POINT;
+                          war("Dist_Next_Point: %f", dist_next_point);
+                        }
 
                         break;
 
                       case FINAL_POINT:
                         war("FINAL_POINT");
+                        war("DOCKING PHASE");
                         getWGS84fromRangeAndBearing(m_rxrange.value , m_angles.bearing, &m_estate);
                         gotopoint(lat_f,lon_f,m_args.speed);
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
 
-                        if (m_control_state.flags && IMC::PathControlState::FL_NEAR && dist_next_point <= 5.0)
+                        if (flag == true)
+                        {
+                          prev_dist = dist_next_point;
+                          flag = false;
+                          war("Flag!!");
+                        }
+
+                        if (dist_next_point <= prev_dist)
+                        {
+                          prev_dist = dist_next_point;
+                          war("Distance updated");
+                        }
+                        else
+                        {
+                          m_attempts++;
+
+                          if (m_attempts <= m_retries)
+                          {
+                            dmaneuver = INIT;
+                            point_count = INITIAL_ST;
+                            war("The distance is higher now! Retry attempt number:%d:",m_attempts);
+                          }
+                          else
+                          {
+                            war("Retry maneuver failed! Number of attempts: %d.", m_attempts);
+                            signalError(DTR("Stopping maneuver"));
+                            signalCompletion();
+                          }
+                        }
+
+                        war("Dist_Next_Point: %f", dist_next_point);
+                        war("Prev_Point: %f", prev_dist);
+
+                        if (m_control_state.flags && IMC::PathControlState::FL_NEAR && dist_next_point <= 1.0)
                         {
                           signalCompletion();
-                          return;
+                          m_dstate.state = 2;
                           war("DOOOOOOOOOOOOCCCCCCCCCCKKKKKKKKKKKKKKIIIIIIIIIIINNNNNNNNNNNNNNGGGGGGGGGGG");
+                          onDockingPoint();
+                          return;
                         }
 
                         break;
@@ -728,20 +680,13 @@ namespace Maneuver
                 }
                 else
                 {
-                  enableMovement(false);
+                  //enableMovement(false);
                   point_count = INITIAL_ST;
                   war("Waiting for target to be ready for docking.");
+                  startStationKeeping();
                   dockingTimeout();
                 }
 
-                //   war("Target and Station are ready for docking.");
-                //  if (strcmp(m_announce.sys_name.c_str(),m_dstate.sys_name.c_str()) == 0)
-                // {
-                // war("Going to docking point.");
-                // calculateDockingHeadingPoint();
-                //  dmaneuver = MANEUVERING;
-                // }
-                //}
                 break;
 
               case MANEUVERING:
@@ -803,28 +748,10 @@ namespace Maneuver
         }
       }
 
-      /*//! Function to compute new point to send to vehicle considering offsets
-      void
-      computeNEDOffsets(double lat, double lon, double psi)
-      {
-        double offx, offy;
-        m_path.end_lat = lat;
-        m_path.end_lon = lon;
-        m_path.end_z_units = m_maneuver.z_units;
-        // compute the offsets in the NED frame
-        offx = std::cos(psi) * m_maneuver.x
-               + std::cos(Angles::normalizeRadian(psi - DUNE::Math::c_half_pi)) * m_maneuver.y;
-        offy = std::sin(psi) * m_maneuver.x
-               + std::sin(Angles::normalizeRadian(psi - DUNE::Math::c_half_pi)) * m_maneuver.y;
-        WGS84::displace(offx, offy, &lat_f, &lon_f);
-      }
-      */
+
       void
       getWGS84fromRangeAndBearing(double range, double bearing, const IMC::EstimatedState *msg)
       {
-        //range = m_rxrange.value;
-        //range = range;
-        //bearing = m_angles.bearing;
         double x = msg->x;
         double y = msg->y;
         double lat_f_t = msg->lat;
@@ -832,64 +759,22 @@ namespace Maneuver
         war("lat %f", lat_f_t);
         war("lon %f", lon_f_t);
         double x_f = std::cos(bearing)*range + x; //+
-        //  std::cos(Angles::normalizeRadian(bearing - DUNE::Math::c_half_pi)) * range;
         double y_f = std::sin(bearing)*range + y;// +
-        //  std::sin(Angles::normalizeRadian(bearing - DUNE::Math::c_half_pi)) * range;
         WGS84::displace(x_f,y_f,&lat_f_t,&lon_f_t);
         lat_f = lat_f_t;
         lon_f = lon_f_t;
         war("Lat_F: %f",lat_f);
         war("Lon_F: %f",lon_f);
-        //double z = msg->z;
-        //double actual_hae;
-        //Angles::rotate(bearing, false, x, y);
-        /*if ( x < 0.1 && y < 0.1)
-        {
-          war("1");
-          actual_lat = msg->lat;
-          actual_lon = msg->lon;
-        }
-        else
-        {
-          war("2");
-          //WGS84::displace(x,y,&actual_lat,&actual_lon);
-          //WGS84::fromECEF(x,y,z,&actual_lat,&actual_lon,&actual_hae);
-          //actual_lon = -actual_lon;
-        }*/
-        //double r = 6371*1000;
-        //double dist_ratio = range/r;
-        //actual_lat = m_estate.lat;
-        //actual_lon = m_estate.lon;
-        // war("dist_ratio %f", dist_ratio);
-        /*
-                lat_f = std::asin(std::sin(actual_lat)*std::cos(dist_ratio)+
-                                  std::cos(actual_lat)*std::sin(dist_ratio)*std::cos(bearing));
-                lon_f = actual_lon + std::atan2(std::sin(bearing)*std::sin(dist_ratio)*std::cos(actual_lat),
-                                                std::cos(dist_ratio) - std::sin(actual_lat)*std::sin(lat_f));*/
-        //war("Bearing: %f",bearing);
-        // war("N CVL: %f", x_f);
-        // war("E CVL: %f", y_f);
       }
       void
       calculateDockingHeadingPoint(void)
       {
         getWGS84fromRangeAndBearing(m_rxrange.value , m_angles.bearing, &m_estate);
-        //getWGS84fromRangeAndBearing( 20.0 , (m_target_estate.psi), &m_target_estate);
-        //lat_f = m_target_estate.lat;
-        //lon_f = m_target_estate.lon;
-        /*double x_f = std::cos(m_target_estate.psi) * m_target_estate.x +
-        std::cos(Angles::normalizeRadian(m_target_estate.psi - DUNE::Math::c_half_pi)) * m_target_estate.y;
-        double y_f = std::sin(Angles::normalizeRadian(m_target_estate.psi - DUNE::Math::c_half_pi)) * m_target_estate.x +
-        std::sin(m_target_estate.psi) * m_target_estate.y;*/
-        //double x_f = cos(Angles::normalizeRadian(m_target_estate.psi - DUNE::Math::c_half_pi/180)) * -20;
-        //double y_f = sin(Angles::normalizeRadian(m_target_estate.psi - DUNE::Math::c_half_pi/180)) * -20;
         war("PSI ca: %f ", m_estate.psi);
         war("PSI la: %f ", m_target_estate.psi);
         war("Calculo psi: %f",m_estate.psi - m_target_estate.psi);
         double x_f = cos(Angles::normalizeRadian(m_target_estate.psi - (heading_corr))) * m_args.dock_radius;
         double y_f = sin(Angles::normalizeRadian(m_target_estate.psi - (heading_corr))) * m_args.dock_radius;
-        //double x_f = cos(m_target_estate.psi) * 40;
-        //double y_f = sin(m_target_estate.psi) * 40;
         WGS84::displace(x_f,y_f,&lat_f,&lon_f);
         enableMovement(true);
         gotopoint(lat_f,lon_f,m_args.speed);
@@ -910,6 +795,7 @@ namespace Maneuver
           m_timer.reset();
           war("Done Timeout!");
           signalError(DTR("Docking maneuver timeout."));
+          signalCompletion();
           return;
         }
       }
@@ -928,151 +814,129 @@ namespace Maneuver
       onDockingPoint(void)
       {
         if (m_mode == STATION)
-          war("onDockingPoint");
-        else if (m_mode == TARGET)
         {
-          //startStationKeeping();
+          war("onDockingPoint");
           sendMsg(getSystemName(), state , availability , m_mode);
           startStationKeeping();
-          //enableMovement(false);
-          //m_skeep->update(&m_estate);
-          /*  if (docking_range > 10.0)
-            {
-              war("antes switch");
-              war("range: %f", docking_range);
-              IMC::StationKeeping skee;
-              skee.lat = m_maneuver.lat;
-              skee.lon = m_maneuver.lon;
-              skee.radius = m_args.skee_radius;
-              skee.z = 0.0;
-              skee.z_units = IMC::Z_DEPTH;
-              skee.speed = 2.0;
-              skee.speed_units = IMC::SUNITS_METERS_PS;
-              dispatch(skee);
-            }*/
-          /*switch (skeestate)
-          {
-            case INITIAL:
-              if (docking_range < m_args.skee_radius)
-              {
-                war("ON");
-                enableMovement(false);
-                skeestate = INITIAL;
-              }
-              else
-              {
-                war("OFF");
-                //enableMovement(true);
-                //gotopoint(m_maneuver.lat,m_maneuver.lon);
-                skeestate = OFF_STATION;
-              }
-
-              break;
-
-            case ON_STATION:
-              war("ONON");
-              // enableMovement(true);
-              //gotopoint(m_maneuver.lat,m_maneuver.lon);
-              break;
-
-            case OFF_STATION:
-              //enableMovement(true);
-              //gotopoint(m_maneuver.lat,m_maneuver.lon);
-              //IMC::StationKeeping skee;
-              m_task->inf(DTR("relocated station keeping"));
-
-              if (docking_range < 1.0)
-                skeestate = INITIAL;
-
-              break;
-              default:
-                break;
-          }*/
-          /*if (docking_range > m_args.skee_radius)
-          {
-            war("Realocating vehicle");
-            // while (range < (0.5))
-            // {
-            // }
-            //Coordinates::toWGS84(m_estate, m_sk_lat, m_sk_lon);
-             WGS84::displace(m_estate.x,m_estate.y,&skee_lat,&skee_lon);
-             skee.lat = skee_lat;
-             skee.lon = skee_lon;
-             skee.radius = m_args.skee_radius;
-             skee.z = 0.0;
-             skee.z_units = IMC::Z_DEPTH;
-             skee.speed = 2.0;
-             skee.speed_units = IMC::SUNITS_METERS_PS;
-             dispatch(skee);
-             m_task->inf(DTR("relocated station keeping"));*/
-          //}
+        }
+        else if (m_mode == TARGET)
+        {
+          sendMsg(getSystemName(), state , availability , m_mode);
+          startStationKeeping();
         }
       }
       void
       startStationKeeping(void)
       {
-        double  distance = dist(&m_estate,&m_maneuver);
-        war("distance: %f",distance);
-
-        switch (skeestate)
+        if (m_mode == STATION)
         {
-          case INITIAL:
-            war("1");
-            enableMovement(false);
-            availability = ABORT;
+          IMC::EstimatedState prev_state = m_estate;
+          double  distance = dist(&m_estate,&prev_state);
+          war("distance: %f",distance);
 
-            if (distance >= m_args.skee_radius)
-              skeestate = OFF_STATION;
-            else if (distance < m_args.skee_radius)
-              skeestate = ON_STATION;
+          switch (skeestate)
+          {
+            case INITIAL:
+              war("1");
+              enableMovement(false);
+              availability = ABORT;
 
-            break;
+              if (distance >= m_args.skee_radius)
+                skeestate = OFF_STATION;
+              else if (distance < m_args.skee_radius)
+                skeestate = ON_STATION;
 
-          case OFF_STATION:
-            war("2");
-            availability = ABORT;
-            enableMovement(true);
-            m_path.speed =  1;
-            gotopoint(m_maneuver.lat,m_maneuver.lon,m_args.speed/2);
+              break;
 
-            if (m_control_state.flags && IMC::PathControlState::FL_NEAR && distance < m_args.skee_radius)
-              skeestate = GOING_STATION;
+            case OFF_STATION:
+              war("2");
+              availability = ABORT;
+              enableMovement(true);
+              m_path.speed =  1;
+              gotopoint(m_maneuver.lat,m_maneuver.lon,m_args.speed/2);
 
-            break;
+              if (m_control_state.flags && IMC::PathControlState::FL_NEAR && distance < m_args.skee_radius)
+                skeestate = GOING_STATION;
 
-          case ON_STATION:
-            war("3");
-            availability = READY;
-            enableMovement(false);
+              break;
 
-            if (distance >= m_args.skee_radius)
-              skeestate = INITIAL;
+            case ON_STATION:
+              war("3");
+              availability = READY;
+              enableMovement(false);
 
-            break;
+              if (distance >= m_args.skee_radius)
+                skeestate = INITIAL;
 
-          case GOING_STATION:
-            war("4");
-            availability = ABORT;
-            enableMovement(true);
-            m_path.speed = 1;
-            gotopoint(m_maneuver.lat,m_maneuver.lon,m_args.speed/4);
+              break;
 
-            if (m_control_state.flags && IMC::PathControlState::FL_NEAR )
-              skeestate = INITIAL;
+            case GOING_STATION:
+              war("4");
+              availability = ABORT;
+              enableMovement(true);
+              m_path.speed = 1;
+              gotopoint(m_maneuver.lat,m_maneuver.lon,m_args.speed/4);
 
-            break;
+              if (m_control_state.flags && IMC::PathControlState::FL_NEAR )
+                skeestate = INITIAL;
+
+              break;
+          }
         }
+        else if (m_mode == TARGET)
+        {
+          double  distance = dist(&m_estate,&m_maneuver);
+          war("distance: %f",distance);
 
-        /*// Memory::clear(m_skeep);
-        war("LÁ DENTRO!!!");
-        // Deploy a station keeping right where the vehicle "thinks it is"
-        war("lat: %f",m_sk_lat);
-        war("lon: %f",m_sk_lon);
-         m_skeep = new Maneuvers::StationKeep(m_task, m_sk_lat, m_sk_lon,
-                                              m_args.skee_radius, 0.0, IMC::Z_DEPTH,
-                                              2.0,
-                                              IMC::SUNITS_METERS_PS);*/
-        // m_skeep->isInside();*/
+          switch (skeestate)
+          {
+            case INITIAL:
+              war("1");
+              enableMovement(false);
+              availability = ABORT;
+
+              if (distance >= m_args.skee_radius)
+                skeestate = OFF_STATION;
+              else if (distance < m_args.skee_radius)
+                skeestate = ON_STATION;
+
+              break;
+
+            case OFF_STATION:
+              war("2");
+              availability = ABORT;
+              enableMovement(true);
+              m_path.speed =  1;
+              gotopoint(m_maneuver.lat,m_maneuver.lon,m_args.speed/2);
+
+              if (m_control_state.flags && IMC::PathControlState::FL_NEAR && distance < m_args.skee_radius)
+                skeestate = GOING_STATION;
+
+              break;
+
+            case ON_STATION:
+              war("3");
+              availability = READY;
+              enableMovement(false);
+
+              if (distance >= m_args.skee_radius)
+                skeestate = INITIAL;
+
+              break;
+
+            case GOING_STATION:
+              war("4");
+              availability = ABORT;
+              enableMovement(true);
+              m_path.speed = 1;
+              gotopoint(m_maneuver.lat,m_maneuver.lon,m_args.speed/4);
+
+              if (m_control_state.flags && IMC::PathControlState::FL_NEAR )
+                skeestate = INITIAL;
+
+              break;
+          }
+        }
       }
       //! Check if the station keeping maneuver's center is too far
       //! @param[in] state pointer to EstimatedState message
@@ -1086,36 +950,24 @@ namespace Maneuver
         double actual_lon_skee = msg->lon;
         WGS84::displace(msg->x,msg->y,&actual_lat_skee,&actual_lon_skee);
         double dist = Coordinates::WGS84::distance(skee_docking_lat,skee_docking_lon,0,actual_lat_skee,actual_lon_skee,0);
-        /*IMC::EstimatedState m_skee_state;
-        IMC::Docking m_skee_docking;
-        m_skee_state = *msg;
-        m_skee_docking = *docking;
-        double lat_skee = m_skee_docking.lat;
-        double lon_skee = m_skee_docking.lon;
-        double x_skee = m_skee_state.x;
-        double y_skee = m_skee_state.y;
-        double lat_curr = m_skee_state.lat;
-        double lon_curr = m_skee_state.lon;
-        WGS84::displace(x_skee,y_skee,&lat_curr,&lon_curr);
-        float dist = Coordinates::WGS84::distance(lat_skee, lon_skee, 0.0,
-                                                  lat_curr, lon_curr, 0.0);
-        // war("dist: %f",dist);
-        /*IMC::EstimatedState m_skee_state = *msg;
-        war("FORA MAS A IR LÁ PARA DENTRO!");
-        double lat = m_skee_state.lat;
-        double lon = m_skee_state.lon;
-        Coordinates::toWGS84(m_skee_state, lat, lon);
-        war("lat2: %f",lat);
-        war("lon2: %f",lon);
-
-        //Coordinates::toWGS84(m_estate, m_sk_lat, m_sk_lon);
-        WGS84::displace(m_estate.x,m_estate.y,&skee_lat,&skee_lon);
-        Coordinates::toWGS84(m_estate, skee_lat, skee_lon);
-        float dist = Coordinates::WGS84::distance(lat, lon, 0.0,
-                                                  skee_lat, skee_lon, 0.0);
-        war("dist: %f",dist);*/
         return (dist);
       }
+
+      //! Check if the station keeping maneuver's center is too far
+      //! @param[in] state pointer to EstimatedState message
+      //! @return true if the center is indeed too far
+      double
+      dist(const IMC::EstimatedState* msg, const IMC::EstimatedState* docking)
+      {
+        double skee_docking_lat = docking->lat;
+        double skee_docking_lon = docking->lon;
+        double actual_lat_skee = msg->lat;
+        double actual_lon_skee = msg->lon;
+        WGS84::displace(msg->x,msg->y,&actual_lat_skee,&actual_lon_skee);
+        double dist = Coordinates::WGS84::distance(skee_docking_lat,skee_docking_lon,0,actual_lat_skee,actual_lon_skee,0);
+        return (dist);
+      }
+
       void
       sendMsg(const char* sysname, int sstate, int s_availability, int vfunction)
       {
@@ -1150,37 +1002,7 @@ namespace Maneuver
           { }
         }
       }
-      /*void
-      sendSS(const IMC::SimulatedState *msg)
-      {
-        m_dsts.clear();
-        m_sstate.clear();
-        m_sstate = *msg;
-        m_sstate.setTimeStamp();
-        m_sock.enableBroadcast(true);
 
-        for (unsigned j = 0; j < m_args.ports.size(); ++j)
-        {
-          Destination dst;
-          dst.port = m_args.ports[j];
-          dst.addr = "255.255.255.255";
-          dst.local = false;
-          m_dsts.push_back(dst);
-        }
-
-        uint16_t bfr_len_ss = IMC::Packet::serialize(&m_sstate, m_bfr_ss, sizeof(m_bfr_ss));
-
-        for (unsigned i = 0; i < m_dsts.size(); ++i)
-        {
-          try
-          {
-            m_sock.write(m_bfr_ss, bfr_len_ss, m_dsts[i].addr, m_dsts[i].port);
-          }
-          catch (...)
-          { }
-        }
-      }*/
-      //! Function for enabling and disabling the control loops
       void
       enableMovement(bool enable)
       {
