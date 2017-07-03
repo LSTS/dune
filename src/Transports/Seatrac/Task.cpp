@@ -43,6 +43,7 @@
 #include "DataTypes.hpp"
 #include "DebugMsg.hpp"
 
+
 namespace Transports
 {
   //! Blueprint Subsea's Seatrac acoustic modem driver.
@@ -51,6 +52,11 @@ namespace Transports
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
+
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+    //! Number of axis.
+    static const uint8_t c_number_axis = 3;
 
     //! Entity states.
     enum EntityStates
@@ -74,10 +80,22 @@ namespace Transports
       bool only_underwater;
       //! Addresses Number - modem
       std::string addr_section;
+      //! Enable ARHS mode
+      bool arhs_mode;
+      //! Enamle pressure sensor
+      bool pressure_sensor_mode;
       //! Enable usbl mode
       bool usbl_mode;
+      //! Hard iron calibration.
+      std::vector<float> hard_iron;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
+      // Rotation matrix values.
+      std::vector<double> rotation_mx;
+      //! Calibration threshold.
+      double calib_threshold;
+      //! max range
+      uint16_t max_range;
     };
 
     //! Map of system's names.
@@ -91,6 +109,10 @@ namespace Transports
       IO::Handle* m_handle;
       //! Task arguments.
       Arguments m_args;
+      //! Config Status.
+      bool m_config_status;
+      //! c_preamble detected
+      bool m_pre_detected;
       //! Current state.
       EntityStates m_state_entity;
       //! Entity states.
@@ -109,8 +131,12 @@ namespace Transports
       DataSeatrac m_data_beacon;
       //! Time of last serial port input.
       double m_last_input;
-      //! Timer to manage the fragmentation of OWAY messages. 
+      //! Read timestamp.
+      double m_tstamp;
+      //! Timer to manage the fragmentation of OWAY messages.
       Time::Counter<double> m_oway_timer;
+      //! hard iron calibration parameters.
+      float m_hard_iron[3];
       //! Map of seatrac modems by name.
       MapName m_modem_names;
       //! Map of seatrac modems by address.
@@ -119,6 +145,24 @@ namespace Transports
       Ticket* m_ticket;
       // Save modem commands.
       IMC::DevDataText m_dev_data;
+      //! Euler angles message.
+      IMC::EulerAngles m_euler;
+      //! Acceleration message.
+      IMC::Acceleration m_accel;
+      //! Angular velocity message.
+      IMC::AngularVelocity m_agvel;
+      //! Magnetometer Vector message.
+      IMC::MagneticField m_magfield;
+      //! Current sound speed.
+      IMC::SoundSpeed m_sspeed;
+      // Depth.
+      IMC::Depth m_depth;
+      // Pressure.
+      IMC::Pressure m_pressure;
+      // Measured temperature.
+      IMC::Temperature m_temperature;
+      //! Rotation Matrix to correct mounting position.
+      Math::Matrix m_rotation;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -126,8 +170,11 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
+        m_config_status(false),
+        m_pre_detected(false),
         m_stop_comms(false),
-        m_usbl_receiver(false)
+        m_usbl_receiver(false),
+        m_tstamp(0)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -149,6 +196,14 @@ namespace Transports
         .defaultValue("Seatrac Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("AHRS Mode", m_args.arhs_mode)
+        .defaultValue("false")
+        .description("Enable the AHRS information to used in navigation");
+
+        param("Pressure Sensor Mode", m_args.pressure_sensor_mode)
+        .defaultValue("false")
+        .description("Enable the pressure sensor, depth, sound velocity and temperature information ");
+
         param("USBL Mode", m_args.usbl_mode)
         .defaultValue("false")
         .description("Enable the USBL mode. USBL receivers can obtain position information.");
@@ -158,6 +213,29 @@ namespace Transports
         .description("Request Enhanced USBL information. USBL receivers request enhanced "
                      "information in transmissions. This parameter is useful only when "
                      "the beacon has an USBL receiver.");
+
+        param("AHRS Rotation Matrix", m_args.rotation_mx)
+        .defaultValue("")
+        .size(9)
+        .description("AHRS rotation matrix which is dependent of the mounting position");
+
+        param(c_hard_iron_param, m_args.hard_iron)
+        .units(Units::Gauss)
+        .size(c_number_axis)
+        .description("Hard-Iron calibration parameters");
+
+        param("Calibration Threshold", m_args.calib_threshold)
+        .defaultValue("0.1")
+        .units(Units::Gauss)
+        .minimumValue("0.0")
+        .description("Minimum magnetic field calibration values to reset hard iron parameters");
+
+
+        param("Max Range", m_args.max_range)
+        .defaultValue("1000")
+        .minimumValue("250")
+        .description("Maximum value of distance at which Ranges are considered");
+
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -210,16 +288,34 @@ namespace Transports
       void
       processNewData(void)
       {
-        if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
-          handleBinaryMessage();
+        if(m_config_status==true)
+        {
+          if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
+            handleBinaryMessage();
 
-        if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
-          handleDatSendResponse();
+          if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
+            handleDatSendResponse();
 
-        if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
-          handleCommunicationError();
+          if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
+            handleCommunicationError();
+          if(m_data_beacon.newDataAvailable(CID_STATUS))
+          {
+            if(m_args.arhs_mode==true)
+            {
+              handleAhrsData();
+            }
+            if(m_args.pressure_sensor_mode==true)
+            {
+              handlePressureSensor();
+            }
+
+            //todo send environment_supply
+            //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
+          }
+        }
       }
 
+      //! Release
       //! Read sentence.
       void
       readSentence(void)
@@ -233,6 +329,7 @@ namespace Transports
         if (Poll::poll(*m_handle, 0.001))
         {
           rv = m_handle->readString(bfr, c_bfr_size);
+          m_tstamp = Clock::getSinceEpoch();
           m_last_input = Clock::get();
           for (size_t i = 0; i < rv; ++i)
           {
@@ -241,23 +338,32 @@ namespace Transports
             {
               m_dev_data.value.assign(sanitize(m_data));
               dispatch(m_dev_data);
-              if (processSentence())
+              if(m_pre_detected==true)
               {
-                msg_raw = m_datahex.data();
-                std::memcpy(&typemes, msg_raw, 1);
-                dataParser(typemes, msg_raw + 1, m_data_beacon);
-                processNewData();
-                printDebugFunction(typemes, m_data_beacon, this);
-                typemes = 0;
+                if (processSentence())
+                {
+                  msg_raw = m_datahex.data();
+                  std::memcpy(&typemes, msg_raw, 1);
+                  dataParser(typemes, msg_raw + 1, m_data_beacon);
+                  processNewData();
+                  printDebugFunction(typemes, m_data_beacon, this);
+                  typemes = 0;
+                }
               }
+              m_pre_detected = false;
               m_data.clear();
             }
             else
             {
               if (bfr[i] == c_preamble)
+              {
                 m_data.clear();
+                m_pre_detected = true;
+              }
               else if (bfr[i] != '\r')
+              {
                 m_data.push_back(bfr[i]);
+              }
             }
           }
         }
@@ -350,15 +456,32 @@ namespace Transports
           if (m_usbl_receiver)
             xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
 
-          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
-                && (m_data_beacon.cid_settings_msg.status_flags == STATUS_MODE_1HZ)
-                && (m_data_beacon.cid_settings_msg.status_output == output_flags)
-                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)))
+          StatusMode_E status_mode= STATUS_MODE_1HZ;
+          bool chage_IMU=true;
+          if (m_args.arhs_mode==true)
           {
-            m_data_beacon.cid_settings_msg.status_flags = STATUS_MODE_1HZ;
+            status_mode= STATUS_MODE_10HZ;
+            chage_IMU = isCalibrated();
+          }
+          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
+                && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
+                && (m_data_beacon.cid_settings_msg.status_output == output_flags)
+                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
+                && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == m_args.max_range)
+                && chage_IMU == true))
+          {
+            m_data_beacon.cid_settings_msg.status_flags = status_mode;
             m_data_beacon.cid_settings_msg.status_output = output_flags;
             m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
+            m_data_beacon.cid_settings_msg.xcvr_range_tmo = m_args.max_range;
+            if(chage_IMU==false)
+            {
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
+
+            }
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
@@ -372,11 +495,13 @@ namespace Transports
 
             debug("ready");
             setAndSendState(STA_IDLE);
+            m_config_status=true;
           }
           else
           {
             debug("ready");
             setAndSendState(STA_IDLE);
+            m_config_status=true;
           }
         }
         else
@@ -386,7 +511,121 @@ namespace Transports
           throw std::runtime_error(m_states[m_state_entity].description);
         }
       }
+      //! Update parameters.
+      void
+      onUpdateParameters(void)
+      {
+        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
+        // Rotate calibration parameters.
+        Math::Matrix data(3, 1);
+
+        for (unsigned i = 0; i < 3; i++)
+          data(i) = m_args.hard_iron[i];
+        data = transpose(m_rotation) * data;
+        for (unsigned i = 0; i < 3; i++)
+          m_hard_iron[i] = data(i);
+
+        if (m_handle != NULL)
+        {
+
+          if (paramChanged(m_args.hard_iron))
+            runCalibration();
+        }
+      }
+      //! Routine to run calibration proceedings.
+      void
+      runCalibration(void)
+      {
+        if (m_handle == NULL)
+          return;
+
+        // See if vehicle has same hard iron calibration parameters.
+        if (!isCalibrated())
+        {
+
+          // Set hard iron calibration parameters and reset device.
+          if (!setHardIron())
+          {
+            throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
+          }
+        }
+      }
+
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        // Reject if it is small adjustment.
+        if ((std::abs(msg->x) < m_args.calib_threshold) &&
+            (std::abs(msg->y) < m_args.calib_threshold))
+          return;
+
+        double hi_x = m_args.hard_iron[0] + msg->x;
+        double hi_y = m_args.hard_iron[1] + msg->y;
+
+        IMC::EntityParameter hip;
+        hip.name = c_hard_iron_param;
+        hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
+
+        IMC::SetEntityParameters np;
+        np.name = getEntityLabel();
+        np.params.push_back(hip);
+        dispatch(np, DF_LOOP_BACK);
+
+        IMC::SaveEntityParameters sp;
+        sp.name = getEntityLabel();
+        dispatch(sp);
+      }
+
+      //! Check if sensor has the same hard iron calibration parameters.
+      //! @return true if the parameters are the same, false otherwise.
+      bool
+      isCalibrated(void)
+      {
+
+        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x*100)) != ( (int32_t) (m_args.hard_iron[0]*100)))
+        {
+          war(DTR("different calibration parameters"));
+            return false;
+        }
+        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y*100)) != ( (int32_t) (m_args.hard_iron[1]*100)))
+                 {
+          war(DTR("different calibration parameters"));
+            return false;
+        }
+        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z*100)) != ( (int32_t) (m_args.hard_iron[2]*100)))
+       {
+          war(DTR("different calibration parameters"));
+            return false;
+        }
+        debug("Is calibrated");
+        return true;
+      }
+
+      //! Set new hard iron calibration parameters.
+      //! @return true if successful, false otherwise.
+      bool
+      setHardIron(void)
+      {
+
+        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
+        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
+        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
+        sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
+        sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
+        sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon), 2);
+        if(m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x != m_args.hard_iron[0])
+          return false;
+        if(m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y != m_args.hard_iron[1])
+          return false;
+        if(m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z != m_args.hard_iron[2])
+          return false;
+
+        return true;
+      }
       //! Release resources.
       void
       onResourceRelease(void)
@@ -436,7 +675,11 @@ namespace Transports
       bool
       hasConnection(void)
       {
-        return m_data_beacon.new_message[CID_STATUS];
+        if (Clock::get() >= (m_last_input + c_input_tout))
+        {
+          return false;
+        }
+        return true;
       }
 
       //! Processing incoming data.
@@ -477,6 +720,8 @@ namespace Transports
 
           if (data_rec_flag == 0)
             debug("colecting data");
+          if(data_rec_flag == -2)
+            debug("no data size");
         }
       }
 
@@ -553,7 +798,7 @@ namespace Transports
         if (aco_fix.outputflags_list[2])
         {
           IMC::UsblPositionExtended usblPosition;
-          usblPosition.target = sys_src;
+          usblPosition.target = safeLookup(aco_fix.dest_id);
           usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
           usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
           usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
@@ -571,7 +816,7 @@ namespace Transports
           if (aco_fix.outputflags_list[1] && m_usbl_receiver)
           {
             IMC::UsblAnglesExtended usblAnglesMsg;
-            usblAnglesMsg.target = sys_src;
+            usblAnglesMsg.target =  safeLookup(aco_fix.dest_id);
             usblAnglesMsg.lbearing = Angles::radians(aco_fix.usbl_azimuth / 10.0);
             usblAnglesMsg.lelevation = Angles::radians(aco_fix.usbl_elevation / 10.0);
             usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
@@ -589,16 +834,117 @@ namespace Transports
       void
       handleCommunicationError(void)
       {
-        if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+
+        if( !(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
+              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
         {
-          m_oway_timer.reset();
-          sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+          if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+          {
+            sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
+          }
+          else
+          {
+            war(DTR("Communication failed"));
+            clearTicket(IMC::UamTxStatus::UTS_DONE);
+          }
         }
         else
         {
-          war(DTR("Communication failed"));
-          clearTicket(IMC::UamTxStatus::UTS_FAILED);
+          war(DTR("Next msg or part send to son"));
         }
+      }
+      //! Correct data according with mounting position.
+      void
+      rotateData(void)
+      {
+        Math::Matrix data(3, 1);
+
+        // Acceleration.
+        data(0) = m_accel.x;
+        data(1) = m_accel.y;
+        data(2) = m_accel.z;
+        data = m_rotation * data;
+        m_accel.x = data(0);
+        m_accel.y = data(1);
+        m_accel.z = data(2);
+
+        // Angular Velocity.
+        data(0) = m_agvel.x;
+        data(1) = m_agvel.y;
+        data(2) = m_agvel.z;
+        data = m_rotation * data;
+        m_agvel.x = data(0);
+        m_agvel.y = data(1);
+        m_agvel.z = data(2);
+
+        // Magnetic Field.
+        data(0) = m_magfield.x;
+        data(1) = m_magfield.y;
+        data(2) = m_magfield.z;
+        data = m_rotation * data;
+        m_magfield.x = data(0);
+        m_magfield.y = data(1);
+        m_magfield.z = data(2);
+      }
+
+      //! Handle AHRS data send by local beacon.
+      //! The method tries to dispach all the necessary information for navigation
+      void
+      handleAhrsData(void)
+      {
+        if(m_data_beacon.cid_status_msg.outputflags_list[5])
+        {
+          //Time Stamp
+          m_euler.setTimeStamp(m_tstamp);
+          m_accel.setTimeStamp(m_tstamp);
+          m_agvel.setTimeStamp(m_tstamp);
+          m_magfield.setTimeStamp(m_tstamp);
+
+          // Acceleration.
+          m_accel.x  = ( (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_acc_x / (fp32_t) m_data_beacon.cid_settings_msg.ahrs_cal.acc_max_x) * Math::c_gravity;
+          m_accel.y  = ( (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_acc_y / (fp32_t) m_data_beacon.cid_settings_msg.ahrs_cal.acc_max_y) * Math::c_gravity;
+          m_accel.z  = ( (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_acc_z / (fp32_t) m_data_beacon.cid_settings_msg.ahrs_cal.acc_max_z) * Math::c_gravity;
+          // Magnetic Field.
+          m_magfield.x = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_x;
+          m_magfield.y = (fp32_t)m_data_beacon.cid_status_msg.ahrs_comp_mag_y;
+          m_magfield.z = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_z;
+
+          m_euler.theta= Angles::radians( ((fp32_t) m_data_beacon.cid_status_msg.attitude_roll)/10);
+          m_euler.psi =  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_pitch)/10);
+          m_euler.psi_magnetic = m_euler.psi;
+          m_euler.phi=  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_yaw)/10);
+          // Angular Velocity.
+          m_agvel.x = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_x);
+          m_agvel.y = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_y);
+          m_agvel.z = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_z);
+          //Euler angles.
+          m_euler.time = ((fp32_t) m_data_beacon.cid_status_msg.timestamp)/1000;
+          m_accel.time = m_euler.time;
+          m_agvel.time = m_euler.time;
+          m_magfield.time = m_euler.time;
+          rotateData();
+          // Dispatch messages.
+          dispatch(m_euler, DF_KEEP_TIME);
+          dispatch(m_accel, DF_KEEP_TIME);
+          dispatch(m_agvel, DF_KEEP_TIME);
+          dispatch(m_magfield, DF_KEEP_TIME);
+        }
+      }
+
+
+      //! Handle Pressure , Depth, Temperature and Sound Speed data and dispactch .
+      //! The method tries to dispach data prom sensors:Pressure , Depth, Temperature and Sound Speed data
+      void
+      handlePressureSensor (void)
+      {
+        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentDepth))/10; //int32_t // m_channel_readout * m_args.depth_conv;
+        m_pressure.value =  (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure))/1000)* Math::c_pascal_per_bar;
+        m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature))/10;  //int16_t//m_channel_readout;
+        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentVos))/10;  //uint16_t
+        dispatch(m_depth);
+        dispatch(m_pressure);
+        dispatch(m_temperature);
+        dispatch(m_sspeed);
       }
 
       //! Handle the response to a CID_Data_Send command.
@@ -609,20 +955,7 @@ namespace Transports
       void
       handleDatSendResponse(void)
       {
-        if (m_data_beacon.cid_dat_send_msg.status == CST_OK) 
-        {
-          if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
-              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
-          {
-            // if msg has more than 1 packet, send next part
-            if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
-            {
-              m_oway_timer.setTop(m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate);
-              sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
-            }
-          }
-        }
-        else 
+        if (m_data_beacon.cid_dat_send_msg.status != CST_OK)
         {
           if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
             handleCommunicationError();
@@ -712,7 +1045,7 @@ namespace Transports
             err(DTR("size mismatch"));
             break;
           default:
-            m_oway_timer.setTop(m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate);
+            resetOneWayTimer();
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             break;
         }
@@ -772,6 +1105,18 @@ namespace Transports
         return itr->second;
       }
 
+      std::string
+      safeLookup(unsigned addr)
+      {
+        try
+        {
+          return lookupSystemName(addr);
+        }
+        catch (...)
+        { }
+
+        return "unknown";
+      }
       //! Lookup system name.
       //! @param[in] addr system address.
       //! @return system name.
@@ -822,26 +1167,32 @@ namespace Transports
 
         m_stop_comms = false;
       }
-      
+
+      void
+      resetOneWayTimer()
+      {
+        m_oway_timer.setTop( (m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate + (m_args.max_range / MIN_SOUND_SPEED))*2 );
+      }
+
       //! Checks if an OWAY message is waiting to be sent.
       void
       checkTxOWAY(void) {
-        
-        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus()) 
+
+        if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU)
           {
             if (m_oway_timer.overflow())
             {
-              if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+              if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
               {
-                m_oway_timer.setTop(m_oway_timer.getTop() / 2); 
+                 resetOneWayTimer();
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
               }
-              else 
+              else
               {
-                war(DTR("OWAY transmission failed."));
+                debug(DTR("Msg transmission complete"));
                 clearTicket(IMC::UamTxStatus::UTS_FAILED);
               }
             }

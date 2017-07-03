@@ -35,6 +35,7 @@
 #define MAX_MESSAGE_ERRORS 5
 #define MAX_PACKET_LEN 31
 #define MAX_MESSAGE_PERIOD 30
+#define MIN_SOUND_SPEED 1400
 //! Defines the minimum message length without preamble nor postamble
 #define MIN_MESSAGE_LENGTH 6
 

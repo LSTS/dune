@@ -86,6 +86,48 @@ namespace DUNE
         fp32_t z;
         uint8_t z_units;
         fp32_t accuracy;
+
+        //! Decode an incoming data frame into a fix message.
+        //! @param[out] frame fix structure.
+        //! @param[in] data incoming frame.
+        static void
+        decode(Fix& frame, const std::vector<char>& data)
+        {
+          uint8_t* ptr = (uint8_t*)&data[c_code + 1];
+
+          uint16_t length = (uint16_t)Fix::size();
+          ptr += IMC::deserialize(frame.lat, ptr, length);
+          ptr += IMC::deserialize(frame.lon, ptr, length);
+          ptr += IMC::deserialize(frame.z, ptr, length);
+          ptr += IMC::deserialize(frame.z_units, ptr, length);
+          ptr += IMC::deserialize(frame.accuracy, ptr, length);
+        }
+
+        //! Encode a fix message into a data frame.
+        //! @param[in] frame fix structure.
+        //! @param[out] data data frame.
+        static void
+        encode(Fix& frame, std::vector<uint8_t>& data)
+        {
+          data.resize(Fix::size() + 2);
+          data[c_code - 1] = CODE_FIX;
+
+          uint8_t* ptr = (uint8_t*)&data[c_code];
+
+          ptr += IMC::serialize(frame.lat, ptr);
+          ptr += IMC::serialize(frame.lon, ptr);
+          ptr += IMC::serialize(frame.z, ptr);
+          ptr += IMC::serialize(frame.z_units, ptr);
+          ptr += IMC::serialize(frame.accuracy, ptr);
+        }
+
+        //! Get size of frame.
+        //! @return size of fix structure.
+        static size_t
+        size(void)
+        {
+          return 2 * (sizeof(fp64_t) + sizeof(fp32_t)) + sizeof(uint8_t);
+        }
       };
 
       //! Position data structure.
@@ -97,7 +139,53 @@ namespace DUNE
         fp32_t n;
         fp32_t e;
         fp32_t d;
-        fp32_t accuracy;
+        uint8_t accuracy;
+
+        //! Decode an incoming data frame into a position message.
+        //! @param[out] frame position structure.
+        //! @param[in] data incoming frame.
+        static void
+        decode(Position& frame, const std::vector<char>& data)
+        {
+          uint8_t* ptr = (uint8_t*)&data[c_code + 1];
+
+          uint16_t length = (uint16_t)Position::size();
+          ptr += IMC::deserialize(frame.x, ptr, length);
+          ptr += IMC::deserialize(frame.y, ptr, length);
+          ptr += IMC::deserialize(frame.z, ptr, length);
+          ptr += IMC::deserialize(frame.n, ptr, length);
+          ptr += IMC::deserialize(frame.e, ptr, length);
+          ptr += IMC::deserialize(frame.d, ptr, length);
+          ptr += IMC::deserialize(frame.accuracy, ptr, length);
+        }
+
+        //! Encode a position message into a data frame.
+        //! @param[in] frame position structure.
+        //! @param[out] data data frame.
+        static void
+        encode(Position& frame, std::vector<uint8_t>& data)
+        {
+          data.resize(Position::size() + 2);
+          data[c_code - 1] = CODE_POS;
+
+          uint8_t* ptr = (uint8_t*)&data[c_code];
+
+          ptr += IMC::serialize(frame.x, ptr);
+          ptr += IMC::serialize(frame.y, ptr);
+          ptr += IMC::serialize(frame.z, ptr);
+          ptr += IMC::serialize(frame.n, ptr);
+          ptr += IMC::serialize(frame.e, ptr);
+          ptr += IMC::serialize(frame.d, ptr);
+          ptr += IMC::serialize(frame.accuracy, ptr);
+        }
+
+        //! Get size of frame.
+        //! @return size of position structure.
+        static size_t
+        size(void)
+        {
+          return (6 * sizeof(fp32_t) + sizeof(uint8_t));
+        }
       };
 
       //! Angles data structure.
@@ -108,6 +196,48 @@ namespace DUNE
         fp32_t bearing;
         fp32_t elevation;
         fp32_t accuracy;
+
+        //! Decode an incoming data frame into an angles message.
+        //! @param[out] frame angles structure.
+        //! @param[in] data incoming frame.
+        static void
+        decode(Angles& frame, const std::vector<char>& data)
+        {
+          uint8_t* ptr = (uint8_t*)&data[c_code + 1];
+
+          uint16_t length = (uint16_t)Angles::size();
+          ptr += IMC::deserialize(frame.lbearing, ptr, length);
+          ptr += IMC::deserialize(frame.lelevation, ptr, length);
+          ptr += IMC::deserialize(frame.bearing, ptr, length);
+          ptr += IMC::deserialize(frame.elevation, ptr, length);
+          ptr += IMC::deserialize(frame.accuracy, ptr, length);
+        }
+
+        //! Encode an angles message into a data frame.
+        //! @param[in] frame angles structure.
+        //! @param[out] data data frame.
+        static void
+        encode(Angles& frame, std::vector<uint8_t>& data)
+        {
+          data.resize(Angles::size() + 2);
+          data[c_code - 1] = CODE_ANG;
+
+          uint8_t* ptr = (uint8_t*)&data[c_code];
+
+          ptr += IMC::serialize(frame.lbearing, ptr);
+          ptr += IMC::serialize(frame.lelevation, ptr);
+          ptr += IMC::serialize(frame.bearing, ptr);
+          ptr += IMC::serialize(frame.elevation, ptr);
+          ptr += IMC::serialize(frame.accuracy, ptr);
+        }
+
+        //! Get size of frame.
+        //! @return size of angles structure.
+        static size_t
+        size(void)
+        {
+          return 5 * sizeof(fp32_t);
+        }
       };
 
       //! This method checks if code is intended for nodes or USBL modem.
@@ -265,7 +395,7 @@ namespace DUNE
             case CODE_FIX:
             {
               UsblTools::Fix fs;
-              std::memcpy(&fs, &msg->data[c_code + 1], sizeof(UsblTools::Fix));
+              Fix::decode(fs, msg->data);
 
               IMC::UsblFixExtended fix;
               fix.setSource(imc_src);
@@ -286,7 +416,7 @@ namespace DUNE
             case CODE_POS:
             {
               UsblTools::Position ps;
-              std::memcpy(&ps, &msg->data[c_code + 1], sizeof(UsblTools::Position));
+              Position::decode(ps, msg->data);
 
               IMC::UsblPositionExtended pos;
               pos.setSource(imc_src);
@@ -297,7 +427,7 @@ namespace DUNE
               pos.n = ps.n;
               pos.e = ps.e;
               pos.d = ps.d;
-              pos.accuracy = ps.accuracy;
+              pos.accuracy = (fp32_t) ps.accuracy;
 
               if (!getFix(msg->sys_src, pos))
                 m_task->dispatch(pos);
@@ -311,7 +441,7 @@ namespace DUNE
             case CODE_ANG:
             {
               UsblTools::Angles as;
-              std::memcpy(&as, &msg->data[c_code + 1], sizeof(UsblTools::Angles));
+              Angles::decode(as, msg->data);
 
               IMC::UsblAnglesExtended ang;
               ang.setSource(imc_src);
@@ -663,8 +793,6 @@ namespace DUNE
           if (m_system != msg->target)
             return false;
 
-          data.resize(sizeof(UsblTools::Fix) + 2);
-
           UsblTools::Fix fix;
           fix.lat = msg->lat;
           fix.lon = msg->lon;
@@ -672,8 +800,7 @@ namespace DUNE
           fix.z_units = msg->z_units;
           fix.accuracy = msg->accuracy;
 
-          data[c_code - 1] = CODE_FIX;
-          std::memcpy(&data[c_code], &fix, sizeof(UsblTools::Fix));
+          Fix::encode(fix, data);
           targetReplied(m_system);
           m_system.clear();
 
@@ -693,8 +820,6 @@ namespace DUNE
           if (m_system != msg->target)
             return false;
 
-          data.resize(sizeof(UsblTools::Position) + 2);
-
           UsblTools::Position pos;
           pos.x = msg->x;
           pos.y = msg->y;
@@ -702,10 +827,12 @@ namespace DUNE
           pos.n = msg->n;
           pos.e = msg->e;
           pos.d = msg->d;
-          pos.accuracy = msg->accuracy;
+         if (msg->accuracy > 255)
+            pos.accuracy = 255;
+          else
+          pos.accuracy = (uint8_t) msg->accuracy;
 
-          data[c_code - 1] = CODE_POS;
-          std::memcpy(&data[c_code], &pos, sizeof(UsblTools::Position));
+          Position::encode(pos, data);
           targetReplied(m_system);
           m_system.clear();
 
@@ -726,8 +853,6 @@ namespace DUNE
           if (m_system != msg->target)
             return false;
 
-          data.resize(sizeof(UsblTools::Angles) + 2);
-
           UsblTools::Angles ang;
           ang.lbearing = msg->lbearing;
           ang.lelevation = msg->lelevation;
@@ -735,8 +860,7 @@ namespace DUNE
           ang.elevation = msg->elevation;
           ang.accuracy = msg->accuracy;
 
-          data[c_code - 1] = CODE_ANG;
-          std::memcpy(&data[c_code], &ang, sizeof(UsblTools::Angles));
+          Angles::encode(ang, data);
           m_system.clear();
 
           return true;
