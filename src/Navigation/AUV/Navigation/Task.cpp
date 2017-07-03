@@ -156,6 +156,10 @@ namespace Navigation
         float rpm_max;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
+        //! Heading alignment sensor diff threshold
+        double alignment_diff;
+        //! Diff threshold - buffer of values for threshold validation
+        double heading_buffer_value;
         //! Abort if navigation exceeds maximum uncertainty.
         bool abort;
       };
@@ -170,6 +174,8 @@ namespace Navigation
         MovingAverage<double>* m_avg_speed;
         //! Task arguments.
         Arguments m_args;
+        //! Heading alignment buffer
+        int m_heading_buffer;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Navigation::BasicNavigation(name, ctx),
@@ -239,12 +245,25 @@ namespace Navigation
           .maximumValue("1e-4")
           .description("Heading bias uncertainty alignment threshold");
 
+          param("Heading alignment sensor diff", m_args.alignment_diff)
+          .defaultValue("15")
+          .minimumValue("1")
+          .maximumValue("180")
+          .description("Heading alignment sensor diff threshold");
+
+          param("Heading buffer value ", m_args.heading_buffer_value)
+          .defaultValue("200")
+          .minimumValue("1")
+          .description("Heading buffer value - how many repetitions to aligned");
+
+
           param("Entity Label - IMU", m_args.elabel_imu)
           .description("Entity label of the IMU");
 
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
           resetKalman();
+          m_heading_buffer=0;
 
           // Register callbacks
           bind<IMC::EntityActivationState>(this);
@@ -619,12 +638,32 @@ namespace Navigation
           m_kal.setState(STATE_K, k_lim);
 
           // Check alignment threshold index.
+          double diff_psi = std::abs(Angles::normalizeRadian(Angles::normalizeRadian(m_kal.getState(STATE_PSI))
+                                                             - Angles::normalizeRadian(getEuler(AXIS_Z)) ) );
+
+
           if (m_dead_reckoning)
           {
-            if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index)
-              m_aligned = true;
+            if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index &&
+                diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
+            {
+                m_aligned = true;
+                m_heading_buffer=0;
+            }
             else
-              m_aligned = false;
+            {
+              if (m_aligned)
+              {
+                m_heading_buffer++;
+                if(m_heading_buffer > m_args.heading_buffer_value)
+                {
+                  sendDeActiveIMU();
+                  war(DTR("navigation not aligned - Automatic IMU poweroff"));
+                  m_aligned  = false;
+                  m_heading_buffer=0;
+                }
+              }
+            }
           }
 
           checkUncertainty(m_args.abort);
@@ -640,6 +679,19 @@ namespace Navigation
           m_valid_wv = false;
           resetKalman();
         }
+
+        void
+        sendDeActiveIMU(void)
+        {
+          IMC::EntityParameter p;
+          p.name = "Active";
+          p.value = "false";
+          IMC::SetEntityParameters msg;
+          msg.name = m_args.elabel_imu ;
+          msg.params.push_back(p);
+          dispatch(msg);
+        }
+
 
         // Reinitialize Extended Kalman Filter transition matrix function.
         void
