@@ -117,7 +117,7 @@
          m_exifData["Exif.Photo.UserComment"] = m_exif_data.notes.c_str();
 
          std::memset(&m_text_exif, '\0', sizeof(m_text_exif));
-         std::sprintf(m_text_exif, "%d/1 %d/1 %d/1000", std::abs(m_exif_data.lat_deg), m_exif_data.lat_min, (int)m_exif_data.lat_sec);
+         std::sprintf(m_text_exif, "%d/1 %d/1 %d/1000000", std::abs(m_exif_data.lat_deg), m_exif_data.lat_min, (int)(m_exif_data.lat_sec * 1E6));
          m_exifData["Exif.GPSInfo.GPSLatitude"] = m_text_exif;
          if(m_exif_data.lat_deg >= 0)
            m_exifData["Exif.GPSInfo.GPSLatitudeRef"] = "N";
@@ -125,7 +125,7 @@
            m_exifData["Exif.GPSInfo.GPSLatitudeRef"] = "S";
 
          std::memset(&m_text_exif, '\0', sizeof(m_text_exif));
-         std::sprintf(m_text_exif, "%d/1 %d/1 %d/1000", std::abs(m_exif_data.lon_deg), m_exif_data.lon_min, (int)m_exif_data.lon_sec);
+         std::sprintf(m_text_exif, "%d/1 %d/1 %d/1000000", std::abs(m_exif_data.lon_deg), m_exif_data.lon_min, (int)(m_exif_data.lon_sec * 1E6));
          m_exifData["Exif.GPSInfo.GPSLongitude"] = m_text_exif;
          if(m_exif_data.lon_deg >= 0)
            m_exifData["Exif.GPSInfo.GPSLongitudeRef"] = "E";
