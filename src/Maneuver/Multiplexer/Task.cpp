@@ -52,6 +52,7 @@
 #include "ScheduledGoto.hpp"
 #include "Drop.hpp"
 #include "Sample.hpp"
+#include "Handover.hpp"
 
 namespace Maneuver
 {
@@ -62,7 +63,7 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge","ScheduledGoto","Drop","Sample"};
+                                          "Dislodge","ScheduledGoto","Drop","Sample","Handover"};
 
     enum ManeuverType
     {
@@ -94,6 +95,8 @@ namespace Maneuver
       TYPE_DROP,
       //! Type Sample
       TYPE_SAMPLE,
+      //! Type Handover
+      TYPE_HANDOVER,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -122,6 +125,8 @@ namespace Maneuver
       DropArgs drop;
       //! Sample Arguments
       SampleArgs sample;
+      //! Handover Arguments
+      HandoverArgs handover;
 
     };
 
@@ -306,6 +311,18 @@ namespace Maneuver
         .defaultValue("30")
         .description("Default time tolerance to execute maneuver");
 
+        param("Handover -- GSM Reports", m_args.handover.gsm_reports)
+        .defaultValue("true")
+        .description("Enable GSM reports during handover.");
+
+        param("Handover -- RC.A PCC name", m_args.handover.rca_pcc)
+        .defaultValue("5V C.2 (Rx-A)")
+        .description("RC Channel A PowerChannelControl name.");
+
+        param("Handover -- RC.B PCC name", m_args.handover.rcb_pcc)
+        .defaultValue("5V C.3 (Rx-B)")
+        .description("RC Channel B PowerChannelControl name.");
+
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
         m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.yoyo.max_depth);
@@ -318,6 +335,8 @@ namespace Maneuver
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Throttle>(this);
+        bind<IMC::Heartbeat>(this);
+        bind<IMC::ApmStatus>(this);
       }
 
       void
@@ -391,6 +410,7 @@ namespace Maneuver
         m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
         m_maneuvers[TYPE_DROP] = create<Drop>(&m_args.drop);
         m_maneuvers[TYPE_SAMPLE] = create<Sample>(&m_args.sample);
+        m_maneuvers[TYPE_HANDOVER] = create<Handover>(&m_args.handover);
       }
 
       void
@@ -474,6 +494,18 @@ namespace Maneuver
       consume(const IMC::Throttle* msg)
       {
         m_maneuvers[m_type]->onThrottle(msg);
+      }
+
+      void
+      consume(const IMC::Heartbeat* msg)
+      {
+        m_maneuvers[m_type]->onHeartbeat(msg);
+      }
+
+      void
+      consume(const IMC::ApmStatus* msg)
+      {
+        m_maneuvers[m_type]->onApmStatus(msg);
       }
 
       void

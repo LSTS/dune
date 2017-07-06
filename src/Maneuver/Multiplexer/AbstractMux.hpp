@@ -97,6 +97,20 @@ namespace Maneuver
         (void)msg;
       }
 
+      //! On Heartbeat message
+      virtual void
+      onHeartbeat(const IMC::Heartbeat* msg)
+      {
+        (void)msg;
+      }
+
+      //! On ApmStatus message
+      virtual void
+      onApmStatus(const IMC::ApmStatus* msg)
+      {
+        (void)msg;
+      }
+
       //! On GpsFix message
       virtual void
       onGpsFix(const IMC::GpsFix* msg)
