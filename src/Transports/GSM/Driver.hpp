@@ -57,9 +57,10 @@ namespace Transports
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
       //! @param[in] pin PIN number.
-      Driver(Tasks::Task* task, SerialPort* uart, const std::string& pin = ""):
+      Driver(Tasks::Task* task, SerialPort* uart, const std::string& pin = "", bool gsm_to_bus = ""):
         HayesModem(task, uart),
-        m_pin(pin)
+        m_pin(pin),
+        m_gsm(gsm_to_bus)
       {
         setLineTrim(true);
       }
@@ -148,6 +149,8 @@ namespace Transports
     private:
       //! PIN number if needed.
       std::string m_pin;
+      //! GSM report to bus.
+      bool m_gsm;
 
       void
       queryRSSI(void)
@@ -278,7 +281,82 @@ namespace Transports
         location = parts[1];
         origin = std::string(parts[2], 1, parts[2].size() - 2);
         text = readLine();
+        if(m_gsm)
+          parseSMS(text);
         return true;
+      }
+
+      void
+      parseSMS(std::string text)
+      {
+        getTask()->debug("Processing text message.");
+        std::istringstream iss(text);
+        std::string cmd, args = "";
+        getline(iss, cmd, ' ');
+        if (iss.str().size() > cmd.size())
+          args = std::string(iss.str(), cmd.size() + 1, iss.str().size() - cmd.size() + 1);
+
+        String::toLowerCase(cmd);
+        String::toLowerCase(args);
+
+        if (cmd == "(t)" || cmd == "(r)")
+        {
+          std::string aux, pos, lat, lon, height_str, lat_min_str, lon_min_str, name;
+          int lat_deg, lon_deg;
+          double lat_min, lon_min, height, dlat, dlon;
+
+          getline(iss, aux, '/');
+          pos = std::string(iss.str(), cmd.size() + aux.size() + 4, iss.str().size() - cmd.size() - aux.size() + 4);
+          getline(iss, pos, '/');
+          if(!strcmp(pos.c_str(), " Unknown Location "))
+            return;
+
+          std::istringstream iss_aux(aux);
+          getline(iss_aux, name, '(');
+          getline(iss_aux, name, ')');
+
+          std::istringstream iss_pos(pos);
+          getline(iss_pos, lat, ',');
+          getline(iss_pos, lon, ',');
+          height_str = std::string(iss_pos.str(), lat.size() + lon.size() + 2, iss_pos.str().size() - lat.size() + lon.size() + 2);
+
+          lat = std::string(iss_pos.str(), 1, lat.size()-1);
+          lon = std::string(iss_pos.str(), lat.size() + 3, lon.size()-1);
+          std::istringstream iss_lat(lat);
+          getline(iss_lat, lat, ' ');
+          lat_min_str = std::string(iss_lat.str(), lat.size() + 1, iss_lat.str().size() - lat.size() + 1);
+          std::istringstream iss_lon(lon);
+          getline(iss_lon, lon, ' ');
+          lon_min_str = std::string(iss_lon.str(), lon.size() + 1, iss_lon.str().size() - lon.size() + 1);
+
+          try
+            {
+            lat_deg = atoi(lat.c_str());
+            lat_min = atof(lat_min_str.c_str());
+            lon_deg = atoi(lon.c_str());
+            lon_min = atof(lon_min_str.c_str());
+            height = atof(height_str.c_str());
+            getTask()->debug("\nlat_deg = %d\nlat_min = %f\nlon_deg = %d\nlon_min = %f\nheight = %f", lat_deg, lat_min, lon_deg, lon_min, height);
+          }
+          catch (...)
+          { }
+
+          // Convert Degree Minutes to Decimal
+          dlat = Angles::convertDMSToDecimal(lat_deg, lat_min);
+          dlon = Angles::convertDMSToDecimal(lon_deg, lon_min);
+
+          // Convert coordinates to radians
+          dlat = Angles::radians(dlat);
+          dlon = Angles::radians(dlon);
+
+          // Dispatch position to bus
+          IMC::EstimatedState es;
+          es.setSource(getTask()->resolveSystemName(name));
+          es.lat = dlat;
+          es.lon = dlon;
+          es.height = (float)height;
+          getTask()->dispatch(es);
+        }
       }
     };
   }

@@ -82,6 +82,8 @@ namespace Transports
       double sms_tout;
       //! Device response timeout.
       float reply_tout;
+      //! GSM report to bus.
+      bool gsm_to_bus;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -135,6 +137,10 @@ namespace Transports
         .defaultValue("60")
         .units(Units::Second)
         .description("Maximum amount of time to wait for SMS send completion");
+
+        param("Show GSM reports", m_args.gsm_to_bus)
+        .defaultValue("false")
+        .description("Dispatch GSM report position to bus, so it appears in neptus.");
 
         bind<IMC::Sms>(this);
         bind<IMC::IoEvent>(this);
