@@ -119,11 +119,11 @@ namespace Maneuver
             IMC::PowerChannelControl pcc_rcb;
 
             pcc_rca.name = m_args->rca_pcc;
-            m_rca ? pcc_rca.op = IMC::PowerChannelControl::PCC_OP_TURN_ON : pcc_rca.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+            m_rca ? pcc_rca.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF : pcc_rca.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
             m_task->dispatch(pcc_rca);
 
             pcc_rcb.name = m_args->rcb_pcc;
-            m_rcb ? pcc_rcb.op = IMC::PowerChannelControl::PCC_OP_TURN_ON : pcc_rcb.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+            m_rcb ? pcc_rcb.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF : pcc_rcb.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
             m_task->dispatch(pcc_rcb);
 
             m_rca = !m_rca;
