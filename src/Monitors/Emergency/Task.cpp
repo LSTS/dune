@@ -72,6 +72,8 @@ namespace Monitors
       unsigned m_req;
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
+      //! Current height.
+      float m_height;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
       //! Reporter API.
@@ -125,6 +127,7 @@ namespace Monitors
         bind<IMC::ReportControl>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::TextMessage>(this);
+        bind<IMC::EstimatedState>(this);
       }
 
       void
@@ -168,6 +171,12 @@ namespace Monitors
       }
 
       void
+      consume(const IMC::EstimatedState* msg)
+      {
+        m_height = msg->height;
+      }
+
+      void
       consume(const IMC::GpsFix* msg)
       {
         if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
@@ -182,10 +191,10 @@ namespace Monitors
 
           Time::BrokenDown bdt;
 
-          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%d c:%d",
+          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f, %f / f:%d c:%d",
                                getSystemName(),
                                bdt.hour, bdt.minutes, bdt.seconds,
-                               lat_deg, lat_min, lon_deg, lon_min,
+                               lat_deg, lat_min, lon_deg, lon_min, m_height,
                                (int)m_fuel, (int)m_fuel_conf);
 
           m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
