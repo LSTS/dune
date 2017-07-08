@@ -156,6 +156,8 @@ namespace Control
         bool use_external_nav;
         //! Temperature of ESC failure (degrees)
         float esc_temp;
+        //! Switch RC receivers (for ground tests)
+        bool toggle_rc;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -234,6 +236,10 @@ namespace Control
         std::queue<mavlink_message_t> m_mission_items;
         //! Desired gimbal angles
         float m_gb_pan, m_gb_tilt, m_gb_retract;
+        //! Rx-A PCC state
+        bool m_rca;
+        //! Rx-B PCC state
+        bool m_rcb;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -262,7 +268,9 @@ namespace Control
           m_dspeed(20),
           m_vehicle_type(VEHICLE_UNKNOWN),
           m_service(false),
-          m_last_wp(0)
+          m_last_wp(0),
+          m_rca(true),
+          m_rcb(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -415,6 +423,10 @@ namespace Control
           .defaultValue("70.0")
           .description("Temperature of ESC failure (degrees).");
 
+          param("Toggle RC receivers", m_args.toggle_rc)
+          .defaultValue("false")
+          .description("Toggle RC receivers (Rx-A and Rx-B).");
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -483,6 +495,33 @@ namespace Control
           //! are simetrical to maximum values, no need to input them manually
           m_args.rc1.val_min = -m_args.rc1.val_max;
           m_args.rc2.val_min = -m_args.rc2.val_max;
+
+          if(paramChanged(m_args.toggle_rc) && m_args.toggle_rc)
+          {
+            // Switch RC receivers.
+            IMC::PowerChannelControl pcc_rca;
+            IMC::PowerChannelControl pcc_rcb;
+
+            pcc_rca.name = m_ctx.config.get("Power.LUEMB", "Power Channel 1 - Name");
+            m_rca ? pcc_rca.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF : pcc_rca.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+            dispatch(pcc_rca);
+
+            pcc_rcb.name = m_ctx.config.get("Power.LUEMB", "Power Channel 2 - Name");
+            m_rcb ? pcc_rcb.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF : pcc_rcb.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+            dispatch(pcc_rcb);
+
+            m_rca = !m_rca;
+            m_rcb = !m_rcb;
+
+            // Change toggle parameter back to false >> TODO: NOT WORKING!
+            IMC::EntityParameter p;
+            p.name = "Toggle RC receivers";
+            p.value = "false";
+            IMC::SetEntityParameters msg;
+            msg.name = getEntityId();
+            msg.params.push_back(p);
+            dispatch(msg);
+          }
         }
 
         void
