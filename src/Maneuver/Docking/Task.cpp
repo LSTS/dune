@@ -555,7 +555,7 @@ namespace Maneuver
                           //On the front/right of the target vehicle
                           //Positive radius and -pi/2 for heading correction
                           point_count = THIRD_POINT;
-                          heading_corr = - (DUNE::Math::c_half_pi);
+                          heading_corr = -(DUNE::Math::c_half_pi);
                           // m_args.dock_radius;
                           war("1");
                         }
@@ -565,7 +565,7 @@ namespace Maneuver
                           //On the front/left of the target vehicle
                           //Negative radius and -pi/2 for heading correction
                           point_count = THIRD_POINT;
-                          heading_corr = - (DUNE::Math::c_half_pi);
+                          heading_corr = -(DUNE::Math::c_half_pi);
                           m_args.dock_radius = -m_args.dock_radius;
                           war("5");
                         }
@@ -573,7 +573,7 @@ namespace Maneuver
                         if ( relative_pos == BCK )
                         {
                           //On the back of the vehicle
-                          heading_corr = - (DUNE::Math::c_pi);
+                          heading_corr = -(DUNE::Math::c_pi);
                           point_count = SEC_POINT;
                         }
 
@@ -582,6 +582,8 @@ namespace Maneuver
                       case THIRD_POINT:
                         war("THIRD_POINT");
                         war("HOMING PHASE");
+                        war("relative_pos: %d" , relative_pos);
+                        war("Heading_corr: %f" , heading_corr);
                         calculateDockingHeadingPoint();
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
                         war("Dist_point: %f",dist_next_point);
@@ -589,7 +591,11 @@ namespace Maneuver
 
                         if ((m_control_state.flags && IMC::PathControlState::FL_NEAR  && dist_next_point <= 5.0) || dist_next_point <= 10.0)
                         {
-                          heading_corr = - (DUNE::Math::c_pi);
+                          if (relative_pos == FRT_RGHT)
+                            heading_corr = -(DUNE::Math::c_pi);
+                          else if (relative_pos == FRT_LFT)
+                            heading_corr = 0;
+
                           point_count = SEC_POINT;
                         }
 
@@ -598,13 +604,20 @@ namespace Maneuver
                       case SEC_POINT:
                         war("SEC_POINT");
                         war("HOMING PHASE");
+                        war("relative_pos: %d" , relative_pos);
+                        war("Heading_corr: %f" , heading_corr);
                         calculateDockingHeadingPoint();
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
 
                         if ((m_control_state.flags && IMC::PathControlState::FL_NEAR  && dist_next_point <= 5.0) || dist_next_point <= 5.0)
                         {
                           war("9");
-                          heading_corr = - (DUNE::Math::c_pi);
+
+                          if (relative_pos == FRT_RGHT)
+                            heading_corr = -(DUNE::Math::c_pi);
+                          else if (relative_pos == FRT_LFT)
+                            heading_corr = 0;
+
                           m_args.dock_radius = m_args.dock_radius/2;
                           point_count = FRST_POINT;
                         }
@@ -614,6 +627,8 @@ namespace Maneuver
                       case FRST_POINT:
                         war("FRST_POINT");
                         war("HOMING PHASE");
+                        war("relative_pos: %d" , relative_pos);
+                        war("Heading_corr: %f" , heading_corr);
                         calculateDockingHeadingPoint();
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
 
@@ -628,6 +643,8 @@ namespace Maneuver
                       case FINAL_POINT:
                         war("FINAL_POINT");
                         war("DOCKING PHASE");
+                        war("relative_pos: %d" , relative_pos);
+                        war("Heading_corr: %f" , heading_corr);
                         getWGS84fromRangeAndBearing(m_rxrange.value , m_angles.bearing, &m_estate);
                         gotopoint(lat_f,lon_f,m_args.speed);
                         dist_next_point = Coordinates::WGS84::distance(lat_s,lon_s,0,lat_f,lon_f,0);
@@ -652,6 +669,9 @@ namespace Maneuver
                           {
                             dmaneuver = INIT;
                             point_count = INITIAL_ST;
+                            m_args.dock_radius = 50;
+                            flag = true;
+
                             war("The distance is higher now! Retry attempt number:%d:",m_attempts);
                           }
                           else
