@@ -186,11 +186,11 @@ namespace Monitors
 
           Time::BrokenDown bdt;
 
-          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%d c:%d / s:%c",
+          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%d c:%d / s: %c",
                                getSystemName(),
                                bdt.hour, bdt.minutes, bdt.seconds,
                                lat_deg, lat_min, lon_deg, lon_min,
-                               (int)m_fuel, (int)m_fuel_conf), vehicleStateChar(m_vstate);
+                               (int)m_fuel, (int)m_fuel_conf, vehicleStateChar(m_vstate));
 
           m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
         }
@@ -331,7 +331,7 @@ namespace Monitors
                                (int)m_fuel, (int)m_fuel_conf);
 
           msg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
-          msg += String::str("/ s:%c", vehicleStateChar(m_vstate));
+          msg += String::str("/ s: %c", vehicleStateChar(m_vstate));
 
           sms.contents = String::str("(%s) %s", prefix, msg.c_str());
         }
