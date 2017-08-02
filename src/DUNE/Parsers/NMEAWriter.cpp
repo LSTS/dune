@@ -100,6 +100,7 @@ namespace DUNE
       << std::hex
       << (unsigned)csum << "\r\n";
 
+      m_stream.seekp(5, m_stream.end);
       return m_stream.str();
     }
   }
