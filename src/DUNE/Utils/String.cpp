@@ -88,6 +88,20 @@ namespace DUNE
         *r = 0;
     }
 
+    void
+    String::resize(char* str, int size)
+    {
+      int i;
+
+      if (size < 0)
+        size = std::strlen(str) + size;
+      if (size < 0 || (int)std::strlen(str) <= size)
+        return;
+
+      for (i = std::strlen(str) - 1; i >= size; i--)
+        *(str + i) = 0;
+    }
+
     std::string
     String::rtrim(const std::string& s)
     {
