@@ -108,7 +108,7 @@ class Message:
         public.append(f)
 
         # clone()
-        f = Function('clone', 'Message*', const = True, inline = True)
+        f = Function('clone', '%(abbrev)s*' % node.attrib, const = True, inline = True)
         f.body('return new %(abbrev)s(*this);' % node.attrib)
         public.append(f)
 
