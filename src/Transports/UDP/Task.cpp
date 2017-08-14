@@ -223,14 +223,14 @@ namespace Transports
           debug("limited communications simulation is not active");
           m_comm_limitations = false;
         }
-
-        // Register normal messages.
-        bind(this, m_args.messages);
       }
 
       void
       onResourceAcquisition(void)
       {
+        // Register normal messages.
+        bind(this, m_args.messages);
+
         // Find a free port.
         unsigned port_limit = m_args.port + c_port_retries;
         while (m_args.port != port_limit)
