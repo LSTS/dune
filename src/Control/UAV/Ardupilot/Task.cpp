@@ -632,10 +632,7 @@ namespace Control
             }
 
             if (!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
-            {
-              onUpdateParameters();
               activateFBW();
-            }
           }
           else
           {
