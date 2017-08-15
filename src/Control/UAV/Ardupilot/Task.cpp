@@ -777,14 +777,14 @@ namespace Control
           {
             // Copters must first be set to guided as of AC 3.2
             uint8_t buf[512];
-            mavlink_message_t* msg = new mavlink_message_t;
+            mavlink_message_t msg;
 
-            mavlink_msg_set_mode_pack(255, 0, msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       CP_MODE_GUIDED);
 
-            uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
             debug("Guided MODE on ardupilot is set");
           }
