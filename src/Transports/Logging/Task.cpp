@@ -127,6 +127,8 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        bind(this, m_args.messages);
+
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -143,8 +145,6 @@ namespace Transports
         m_compression = Compression::Factory::method(m_args.lsf_compression);
         if (m_args.lsf_volumes.empty())
           m_args.lsf_volumes.push_back("");
-
-        bind(this, m_args.messages);
       }
 
       void
