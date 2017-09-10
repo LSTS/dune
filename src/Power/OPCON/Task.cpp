@@ -28,7 +28,10 @@
 // ISO C++ 98 headers.
 #include <cstring>
 #include <queue>
+
+#if defined(DUNE_SYS_HAS_UNISTD_H)
 #include <unistd.h>
+#endif
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
