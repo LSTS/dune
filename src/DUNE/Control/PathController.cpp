@@ -187,6 +187,11 @@ namespace DUNE
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
 
+      param("Maximum Track Length", m_max_track_length)
+      .defaultValue("25000")
+	  .units(Units::Meter)
+	  .description("Maximum adimissible track length");
+
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -360,6 +365,13 @@ namespace DUNE
 
       Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
                                       &m_ts.track_bearing, &m_ts.track_length);
+
+      if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
+      {
+    	  signalError(DTR("track length is too long"));
+    	  return;
+      }
+
 
       // Re-initializing tracking state values
       m_ts.start_time = now;

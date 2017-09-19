@@ -458,6 +458,8 @@ namespace DUNE
       BottomTracker* m_btrack;
       //! Control loops last reference
       uint32_t m_scope_ref;
+      //! Maximum admitted track length
+      double m_max_track_length;
     };
   }
 }
