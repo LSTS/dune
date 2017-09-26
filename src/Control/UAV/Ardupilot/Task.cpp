@@ -119,6 +119,35 @@ namespace Control
         bool reverse;
       };
 
+      enum CLTrig
+      {
+        T_TIMEOUT = 0,
+        T_ACTIVATE_PITCH = 1,   // Activate Pitch
+        T_DEACTIVATE_PITCH = 2, // Deactivate Pitch
+        T_ACTIVATE_ROLL = 3,   // Activate Roll
+        T_DEACTIVATE_ROLL = 4  // Deactivate Roll
+      };
+
+      std::string CLTrigString[5] = {"T_TIMEOUT", "T_ACTIVATE_PITCH", "T_DEACTIVATE_PITCH", "T_ACTIVATE_ROLL", "T_DEACTIVATE_ROLL"};
+
+      enum CLState
+      {
+        ST_INIT = 0,
+        ST_FBWB = 1,
+        ST_GUIDED = 2
+      };
+
+      std::string CLStateString[3] = {"INIT", "FBWB", "GUIDED"};
+      
+      //! CL state machine
+      struct StateMachine_CL
+      {
+        StateMachine_CL(CLState initState = ST_INIT): time_of_FBWB_request(0.0), currState(initState) {};
+
+        double time_of_FBWB_request;
+        CLState currState;
+      };
+
       //! %Task arguments.
       struct Arguments
       {
@@ -163,6 +192,8 @@ namespace Control
         bool use_external_nav;
         //! Temperature of ESC failure (degrees)
         float esc_temp;
+        // How many milliseconds should we wait for other ControlLoops before going into FBWB?
+        double CLtimeout;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -241,6 +272,8 @@ namespace Control
         std::queue<mavlink_message_t> m_mission_items;
         //! Desired gimbal angles
         float m_gb_pan, m_gb_tilt, m_gb_retract;
+        //! State of the ControlLoops state mechanism
+        StateMachine_CL m_stateMachineCL;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -424,6 +457,10 @@ namespace Control
           .defaultValue("70.0")
           .description("Temperature of ESC failure (degrees).");
 
+          param("Control Loops timeout", m_args.CLtimeout)
+          .defaultValue("50.0")
+          .units(Units::Millisecond)
+          .description("How many milliseconds should we wait for other ControlLoops before going into FBWB?");
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -635,42 +672,33 @@ namespace Control
 
           if (cloops->enable)
           {
-            trace("CLoops enabled");
+            trace("CLoops enabled, %#010x, m_cloops is %#010x",cloops->mask, m_cloops);
 
             if (!m_args.ardu_tracker)
             {
               inf("Ardupilot tracker is NOT enabled");
               m_cloops |= cloops->mask;
-              if (cloops->mask & IMC::CL_ROLL)
-              {
-                onUpdateParameters();
-                if((m_mode!=PL_MODE_FBWB) && !(m_cloops & IMC::CL_PITCH) )
-                { // current mode is not GUIDED and neither current or next control loop contains pitch
-                  activateFBWB();
-                }
-              }
               if(cloops->mask & IMC::CL_PITCH)
-              {//Pitch has just been activated
-                deactivateFBWB();
-                activateGuided();
-              }
+                StateMachineCLTrigger(T_ACTIVATE_PITCH);
+              if (cloops->mask & IMC::CL_ROLL)
+                StateMachineCLTrigger(T_ACTIVATE_ROLL);
+            }
+            else
+            {
+              trace("CLoops enable lost, since ardu_tracker is active");//should not happen
             }
           }
           else
           {
-            trace("CLoops disabled");
             m_cloops &= ~cloops->mask;
+            trace("CLoops disabled, %#010x, m_cloops is %#010x",cloops->mask, m_cloops);
 
             if(!m_ground && m_vehicle_type == VEHICLE_FIXEDWING)
             {
-              if ((cloops->mask & IMC::CL_ROLL))
-              {
-                deactivateFBWB();
-              }
-              else if ( (m_cloops & IMC::CL_ROLL) && (cloops->mask & IMC::CL_PITCH) )
-              {// ROLL is still active, but deactivating pitch. Going from GUIDED to FBWB
-                activateFBWB();
-              }
+              if(cloops->mask & IMC::CL_PITCH)
+                StateMachineCLTrigger(T_DEACTIVATE_PITCH);
+              if(cloops->mask & IMC::CL_ROLL)
+                StateMachineCLTrigger(T_DEACTIVATE_ROLL);
             }
           }
 
@@ -682,6 +710,90 @@ namespace Control
           info(prev, m_cloops, IMC::CL_YAW, "heading control");
           info(prev, m_cloops, IMC::CL_PATH, "path control");
           info(prev, m_cloops, IMC::CL_PITCH, "pitch control");
+        }
+
+        void
+        StateMachineCLTrigger(CLTrig trigger)
+        {
+          CLState was = m_stateMachineCL.currState;
+          m_stateMachineCL.time_of_FBWB_request = 0.0;
+
+          switch (trigger) {
+            case T_TIMEOUT:
+              activateFBWB();
+              m_stateMachineCL.currState = ST_FBWB;
+              break;
+            case T_ACTIVATE_PITCH:
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    activateGuided();
+                    m_stateMachineCL.currState = ST_GUIDED;
+                  break;
+                case ST_FBWB:
+                    deactivateFBWB();
+                    activateGuided();
+                    m_stateMachineCL.currState = ST_GUIDED;
+                  break;
+                case ST_GUIDED:
+                    debug("Got activate CL PITCH while in GUIDED");
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+              break;
+            case T_ACTIVATE_ROLL:
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    m_stateMachineCL.time_of_FBWB_request = Clock::getMsec();
+                    // wait for timeout to (potentially) change state
+                  break;
+                case ST_FBWB:
+                    debug("Got activate CL ROLL while in FBWB");
+                  break;
+                case ST_GUIDED:
+                    debug("Got activate CL ROLL while in GUIDED");
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+              break;
+            case T_DEACTIVATE_PITCH: // deactivation of Pitch
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    debug("Got deactivate CL PITCH while in INIT");
+                  break;
+                case ST_FBWB:
+                    debug("Got deactivate CL PITCH while in FBWB");
+                  break;
+                case ST_GUIDED:
+                    m_stateMachineCL.time_of_FBWB_request = Clock::getMsec();
+                    // wait for timeout to (potentially) change state
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+            case T_DEACTIVATE_ROLL: // deactivation of Roll
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    debug("Got deactivate CL ROLL while in INIT");
+                  break;
+                case ST_FBWB:
+                    deactivateFBWB();
+                    m_stateMachineCL.currState = ST_INIT;
+                  break;
+                case ST_GUIDED:
+                    m_stateMachineCL.currState = ST_INIT;
+                    //TODO: Pitch should also be inactive
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+              break;
+            default:
+              m_stateMachineCL.currState = ST_INIT;
+              
+          }
+          inf("ControlLoops FSM: Switched from %s to %s, due to %s", CLStateString[was].c_str(), CLStateString[m_stateMachineCL.currState].c_str(), CLTrigString[trigger].c_str());
         }
 
         //! Messages for FBWB control (using DUNE's controllers)
@@ -786,9 +898,8 @@ namespace Control
 
           m_droll = Angles::degrees(d_roll->value);
 
-          //! Convert references to PWM and send all
-
-          if (m_mode == PL_MODE_GUIDED)
+          // Pitch control loop is active -> should be in GUIDED mode
+          if (m_stateMachineCL.currState == ST_GUIDED)
           {
             debug("V1: %f, V2: %f, V3: %f", d_roll->value, Angles::radians(m_dpitch), m_dthrottle);
 
@@ -818,10 +929,10 @@ namespace Control
               uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
           }
-          else if ( (m_mode == PL_MODE_FBWB) && !(m_cloops & IMC::CL_PITCH) )
+          else if (m_stateMachineCL.currState == ST_FBWB)
           { 
-            //FBWB. Pitch might be active, if we are transitioning from FBWB to GUIDED. 
-            // Sending RC override then will result in lock of pitch to LIM_PITCH_MIN/MAX
+            // Sending RC override when in GUIDED will result in lock of pitch to LIM_PITCH_MIN/MAX
+            //! Convert references to PWM and send all
             int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
                                    m_args.rc1.val_min, m_args.rc1.val_max,
                                    m_droll, m_args.rc1.reverse);
@@ -1568,6 +1679,11 @@ namespace Control
                 m_esta_ext = false;
               }
             }
+            
+            // signal the state machine if the timer has timed out
+            if(m_stateMachineCL.time_of_FBWB_request && Clock::getMsec() > m_stateMachineCL.time_of_FBWB_request + m_args.CLtimeout)
+              StateMachineCLTrigger(T_TIMEOUT);
+
 
             // Handle IMC messages from bus
             consumeMessages();
