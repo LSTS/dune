@@ -56,20 +56,23 @@ namespace Transports
       IMC::EstimatedState* m_estate;
       IMC::VehicleState* m_vstate;
       Time::Counter<float> m_report_timer;
+      int m_plan_chksum;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_pstate(NULL),
         m_fuel(NULL),
         m_estate(NULL),
-        m_vstate(NULL)
+        m_vstate(NULL),
+        m_plan_chksum(0)
       {
         bind<IMC::PlanControlState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::PlanSpecification>(this);
 
-        m_report_timer.setTop(10);
+        m_report_timer.setTop(1);
       }
 
       void
@@ -105,6 +108,14 @@ namespace Transports
       }
 
       void
+	  consume(const IMC::PlanSpecification* msg) {
+    	  if (msg->getSource() != getSystemId())
+    		  return;
+    	  const char * name = msg->plan_id.c_str();
+    	  m_plan_chksum = CRC16::compute((uint8_t *)name, strlen(name));
+      }
+
+      void
       onResourceRelease(void)
       {
         Memory::clear(m_fuel);
@@ -134,24 +145,24 @@ namespace Transports
         report->longitude = (fp32_t) lon;
 
         if (estate->depth != -1)
-          report->depth = (int) (estate->depth / 10.0f);
+          report->depth = Math::roundToInteger(estate->depth * 10.0f);
         else
           report->depth = 0xFFFF;
 
         if (estate->alt != -1)
-          report->altitude = (int) (estate->alt / 10.0f);
+          report->altitude = Math::roundToInteger(estate->alt * 10.0f);
         else
           report->altitude = 0xFFFF;
 
-        report->speed = (int) (estate->u / 100.0f);
+        report->speed = Math::roundToInteger(estate->u * 100.0f);
 
         double ang = Angles::normalizeRadian(estate->psi);
         if (ang < 0)
           ang += Math::c_two_pi;
-        report->heading = (int) ((ang/c_two_pi) * 65535);
+        report->heading = Math::roundToInteger((ang/c_two_pi) * 65535);
 
         if (m_fuel != NULL)
-          report->fuel = (int) m_fuel->value;
+          report->fuel = Math::roundToInteger(m_fuel->value);
 
         switch (vstate->op_mode)
         {
@@ -163,16 +174,18 @@ namespace Transports
             break;
           case VehicleState::VS_CALIBRATION:
             report->exec_state = -3;
+            report->plan_checksum = m_plan_chksum;
             break;
           default:
             if (m_pstate != NULL)
-              report->exec_state = (int) m_pstate->plan_progress;
+            {
+              report->exec_state = Math::roundToInteger(m_pstate->plan_progress);
+              report->plan_checksum = m_plan_chksum;
+            }
             else
               report->exec_state = -2;
             break;
         }
-
-        //TODO: fill in plan checksum
 
         Memory::clear(vstate);
         Memory::clear(estate);
@@ -188,17 +201,11 @@ namespace Transports
 
           if (m_report_timer.overflow())
           {
-
             IMC::StateReport* msg = produceReport();
-            if (msg)
-              msg->toText(std::cout);
-
+            dispatch(msg);
             Memory::clear(msg);
-
             m_report_timer.reset();
           }
-
-
         }
       }
     };
