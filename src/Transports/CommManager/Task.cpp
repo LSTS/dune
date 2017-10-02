@@ -43,7 +43,8 @@ namespace Transports
 
     struct Arguments
     {
-
+      //! Period, in seconds, between state report transmissions over iridium
+      int iridium_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -55,8 +56,12 @@ namespace Transports
       IMC::FuelLevel* m_fuel;
       IMC::EstimatedState* m_estate;
       IMC::VehicleState* m_vstate;
-      Time::Counter<float> m_report_timer;
+      IMC::VehicleMedium* m_vmedium;
+      Time::Counter<float> m_iridium_timer;
+      Time::Counter<float> m_clean_timer;
       int m_plan_chksum;
+      int m_reqid;
+      std::map<int, IMC::TransmissionRequest*> m_transmission_requests;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -64,19 +69,35 @@ namespace Transports
         m_fuel(NULL),
         m_estate(NULL),
         m_vstate(NULL),
-        m_plan_chksum(0)
+        m_vmedium(NULL),
+        m_plan_chksum(0),
+        m_reqid(1)
       {
+        param("Iridium Reports Period", m_args.iridium_period)
+        .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
+        .defaultValue("300");
+
         bind<IMC::PlanControlState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::VehicleMedium>(this);
         bind<IMC::PlanSpecification>(this);
+        bind<IMC::TransmissionRequest>(this);
+        bind<IMC::IridiumTxStatus>(this);
 
-        m_report_timer.setTop(1);
+        m_clean_timer.setTop(3);
       }
 
       void
-      consume(const IMC::PlanControlState* msg) {
+      onUpdateParameters(void)
+      {
+        m_iridium_timer.setTop(m_args.iridium_period);
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
         if (msg->getSource() != getSystemId())
           return;
 
@@ -84,7 +105,8 @@ namespace Transports
       }
 
       void
-      consume(const IMC::FuelLevel* msg) {
+      consume(const IMC::FuelLevel* msg)
+      {
         if (msg->getSource() != getSystemId())
           return;
 
@@ -92,7 +114,8 @@ namespace Transports
       }
 
       void
-      consume(const IMC::EstimatedState* msg) {
+      consume(const IMC::EstimatedState* msg)
+      {
         if (msg->getSource() != getSystemId())
           return;
 
@@ -100,7 +123,8 @@ namespace Transports
       }
 
       void
-      consume(const IMC::VehicleState* msg) {
+      consume(const IMC::VehicleState* msg)
+      {
         if (msg->getSource() != getSystemId())
           return;
 
@@ -108,11 +132,171 @@ namespace Transports
       }
 
       void
-	  consume(const IMC::PlanSpecification* msg) {
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        Memory::replace(m_vmedium, new IMC::VehicleMedium(*msg));
+      }
+
+      void
+      consume(const IMC::PlanSpecification* msg)
+      {
     	  if (msg->getSource() != getSystemId())
     		  return;
     	  const char * name = msg->plan_id.c_str();
     	  m_plan_chksum = CRC16::compute((uint8_t *)name, strlen(name));
+      }
+
+      void
+      sendViaSatellite(const IMC::TransmissionRequest* msg)
+      {
+        inf("Request to send data over satellite (%d)", msg->req_id);
+
+        IridiumMsgTx tx;
+        tx.destination = msg->destination;
+        tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
+        tx.req_id = m_reqid++;
+
+        if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
+          tx.data.assign(msg->raw_data.begin(), msg->raw_data.end());
+        else if (msg->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
+        {
+          IMC::ImcIridiumMessage m;
+          const IMC::Message * inlinemsg = msg->msg_data.get();
+          m.destination = 0xFFFF;
+          m.source = getSystemId();
+          m.msg = inlinemsg->clone();
+          uint8_t buffer[65535];
+          int len = m.serialize(buffer);
+          tx.data.assign(buffer, buffer + len);
+          Memory::clear(m.msg);
+        }
+        else // text mode
+        {
+          IMC::IridiumCommand m;
+          m.destination = 0xFFFF;
+          m.source = getSystemId();
+          m.command = msg->txt_data;
+          uint8_t buffer[65535];
+          int len = m.serialize(buffer);
+          tx.data.assign(buffer, buffer + len);
+        }
+        m_transmission_requests[tx.req_id] = msg->clone();
+        dispatch(tx);
+      }
+
+      void
+      sendViaSms(const IMC::TransmissionRequest* msg)
+      {
+        inf("Request to send data over SMS (%d)", msg->req_id);
+
+        Sms sms;
+        if (msg->destination == "broadcast")
+          sms.number = m_ctx.config.get("Emergency Monitor", "SMS Recipient Number");
+        else
+          sms.number = msg->destination;
+
+        sms.contents = msg->txt_data;
+        sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
+        dispatch(sms);
+
+        answer(msg, "Requested transmission of SMS.",
+               IMC::TransmissionStatus::TSTAT_MAYBE_DELIVERED);
+      }
+
+      void
+      clearTimeouts()
+      {
+        std::map<int, IMC::TransmissionRequest*>::iterator it;
+        double time = Time::Clock::getSinceEpoch();
+        for (it = m_transmission_requests.begin(); it != m_transmission_requests.end(); it++)
+        {
+          if (it->second->deadline <= time)
+          {
+            answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            Memory::clear(it->second);
+            m_transmission_requests.erase(it);
+          }
+        }
+      }
+
+      void
+      consume(const IMC::IridiumTxStatus* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
+        {
+          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+
+          if (req->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
+            return;
+
+          switch (msg->status) {
+            case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
+              answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+              break;
+            case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
+              answer(req, "Message is being transmitted.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+              break;
+            case (IMC::IridiumTxStatus::TXSTATUS_OK):
+              answer(req, "Message has been sent via Iridium.", IMC::TransmissionStatus::TSTAT_SENT);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+            case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
+              answer(req, "Error while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+            case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
+              answer(req, "Timeout while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+          }
+        }
+      }
+
+      void answer(const IMC::TransmissionRequest* req, std::string info, int status)
+      {
+        IMC::TransmissionStatus msg;
+        msg.info = info;
+        msg.req_id = req->req_id;
+        msg.status = status;
+        msg.setDestination(req->getSource());
+        msg.setDestinationEntity(req->getSourceEntity());
+        dispatch(msg);
+
+        inf("Status of transmission %d changed: %s", req->req_id, info.c_str());
+      }
+
+      void
+      consume(const IMC::TransmissionRequest* msg)
+      {
+        if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
+          return;
+
+        switch(msg->comm_mean)
+        {
+          case (IMC::TransmissionRequest::CMEAN_SATELLITE):
+            sendViaSatellite(msg);
+          break;
+          case (IMC::TransmissionRequest::CMEAN_GSM):
+            if (msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
+              answer(msg, "Can only send text over SMS.",
+                     IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+            else
+              sendViaSms(msg);
+            break;
+          default:
+            answer(msg, "Communication mean not implemented.",
+                   IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+            break;
+        }
       }
 
       void
@@ -124,8 +308,8 @@ namespace Transports
         Memory::clear(m_estate);
       }
 
-      IMC::StateReport* produceReport() {
-
+      IMC::StateReport* produceReport()
+      {
         if (m_vstate == NULL || m_estate == NULL)
           return NULL;
 
@@ -195,16 +379,34 @@ namespace Transports
       void
       onMain(void)
       {
+        int req_id = 1;
         while (!stopping())
         {
-          consumeMessages();
+          waitForMessages(1.0);
 
-          if (m_report_timer.overflow())
+          if (m_clean_timer.overflow())
           {
-            IMC::StateReport* msg = produceReport();
-            dispatch(msg);
-            Memory::clear(msg);
-            m_report_timer.reset();
+            clearTimeouts();
+            m_clean_timer.reset();
+          }
+
+          if (m_args.iridium_period > 0 && m_iridium_timer.overflow())
+          {
+            if (m_vmedium != NULL && m_vmedium->medium == IMC::VehicleMedium::VM_WATER)
+            {
+              inf("Requesting report transmission over Iridium.");
+              IMC::StateReport* msg = produceReport();
+              IMC::TransmissionRequest request;
+              request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+              request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+              request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
+              request.destination = "broadcast";
+              request.msg_data.set(msg);
+              request.req_id = req_id++;
+              dispatch(request, DF_LOOP_BACK);
+              Memory::clear(msg);
+              m_iridium_timer.reset();
+            }
           }
         }
       }
