@@ -47,6 +47,11 @@ namespace Transports
       int iridium_period;
     };
 
+    //! Config section from where to fetch emergency sms number
+    const std::string c_sms_section = "Monitors.Emergency";
+    //! Config field from where to fetch emergency sms number
+    const std::string c_sms_field = "SMS Recipient Number";
+
     struct Task: public DUNE::Tasks::Task
     {
       // Task arguments.
@@ -190,11 +195,12 @@ namespace Transports
       void
       sendViaSms(const IMC::TransmissionRequest* msg)
       {
-        inf("Request to send data over SMS (%d)", msg->req_id);
+        inf("Request to send data over SMS to %s (%d)", msg->destination.c_str(), msg->req_id);
 
         Sms sms;
-        if (msg->destination == "broadcast")
-          sms.number = m_ctx.config.get("Emergency Monitor", "SMS Recipient Number");
+
+        if (msg->destination == "broadcast" || msg->destination == "")
+          m_ctx.config.get(c_sms_section, c_sms_field, "", sms.number);
         else
           sms.number = msg->destination;
 
@@ -394,8 +400,10 @@ namespace Transports
           {
             if (m_vmedium != NULL && m_vmedium->medium == IMC::VehicleMedium::VM_WATER)
             {
-              inf("Requesting report transmission over Iridium.");
               IMC::StateReport* msg = produceReport();
+              dispatch(msg);
+
+              inf("Requesting report transmission over Iridium.");
               IMC::TransmissionRequest request;
               request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
               request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
@@ -404,6 +412,7 @@ namespace Transports
               request.msg_data.set(msg);
               request.req_id = req_id++;
               dispatch(request, DF_LOOP_BACK);
+
               Memory::clear(msg);
               m_iridium_timer.reset();
             }
