@@ -71,11 +71,12 @@ if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
 
   if(files_cmp)
     file(RENAME "${DUNE_VERSION_OUT}.tmp" "${DUNE_VERSION_OUT}")
+  else()
+    file(REMOVE "${DUNE_VERSION_OUT}.tmp")
   endif()
 else()
   set(DUNE_CORE_SOURCES ${DUNE_CORE_SOURCES}
     ${DUNE_GENERATED}/src/DUNE/Version.cpp)
-  file(WRITE "${DUNE_GENERATED}/src/DUNE/Version.cpp" "")
 
   add_custom_target(dune-version
     COMMAND ${CMAKE_COMMAND}
