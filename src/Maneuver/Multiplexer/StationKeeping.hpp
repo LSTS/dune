@@ -114,25 +114,17 @@ namespace Maneuver
         if (m_skeep == NULL)
           return;
 
-        if (m_skeep->isInside())
+        if (m_duration > 0 && m_end_time > 0)
         {
-          if (m_duration > 0 && m_end_time > 0)
-          {
-            double time_left = m_end_time - Clock::get();
+          double time_left = m_end_time - Clock::get();
 
-            if (time_left <= 0)
-              m_task->signalCompletion();
-            else
-              m_task->signalProgress((uint16_t)Math::round(time_left));
-          }
-        }
-        else
-        {
-          if (m_duration > 0)
-            m_task->signalProgress(m_pcs.eta + m_duration);
+          if (time_left <= 0)
+            m_task->signalCompletion();
           else
-            m_task->signalProgress();
+            m_task->signalProgress((uint16_t)Math::round(time_left));
         }
+        else if (m_duration > 0 && m_end_time < 0)
+            m_task->signalProgress(m_pcs.eta + m_duration);
       }
 
     private:
