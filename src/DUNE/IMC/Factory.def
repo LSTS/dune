@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d292e724592557940354dddbfc5a9d32                            *
+// IMC XML MD5: 4d8734a1111656aac56f803acdc90c22                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -116,6 +116,7 @@ MESSAGE(271, WindSpeed)
 MESSAGE(272, RelativeHumidity)
 MESSAGE(273, DevDataText)
 MESSAGE(274, DevDataBinary)
+MESSAGE(275, Force)
 MESSAGE(276, SonarData)
 MESSAGE(277, Pulse)
 MESSAGE(278, PulseDetectionControl)
@@ -245,6 +246,9 @@ MESSAGE(510, FormState)
 MESSAGE(511, AutopilotMode)
 MESSAGE(512, FormationState)
 MESSAGE(513, ReportControl)
+MESSAGE(514, StateReport)
+MESSAGE(515, TransmissionRequest)
+MESSAGE(516, TransmissionStatus)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)
 MESSAGE(552, PlanManeuver)

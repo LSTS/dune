@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d292e724592557940354dddbfc5a9d32                            *
+// IMC XML MD5: 4d8734a1111656aac56f803acdc90c22                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -94,7 +94,7 @@ namespace DUNE
 
       EntityState(void);
 
-      Message*
+      EntityState*
       clone(void) const
       {
         return new EntityState(*this);
@@ -159,7 +159,7 @@ namespace DUNE
 
       QueryEntityState(void);
 
-      Message*
+      QueryEntityState*
       clone(void) const
       {
         return new QueryEntityState(*this);
@@ -222,7 +222,7 @@ namespace DUNE
 
       EntityInfo(void);
 
-      Message*
+      EntityInfo*
       clone(void) const
       {
         return new EntityInfo(*this);
@@ -295,7 +295,7 @@ namespace DUNE
 
       QueryEntityInfo(void);
 
-      Message*
+      QueryEntityInfo*
       clone(void) const
       {
         return new QueryEntityInfo(*this);
@@ -373,7 +373,7 @@ namespace DUNE
 
       EntityList(void);
 
-      Message*
+      EntityList*
       clone(void) const
       {
         return new EntityList(*this);
@@ -440,7 +440,7 @@ namespace DUNE
 
       CpuUsage(void);
 
-      Message*
+      CpuUsage*
       clone(void) const
       {
         return new CpuUsage(*this);
@@ -509,7 +509,7 @@ namespace DUNE
 
       TransportBindings(void);
 
-      Message*
+      TransportBindings*
       clone(void) const
       {
         return new TransportBindings(*this);
@@ -574,7 +574,7 @@ namespace DUNE
 
       RestartSystem(void);
 
-      Message*
+      RestartSystem*
       clone(void) const
       {
         return new RestartSystem(*this);
@@ -642,7 +642,7 @@ namespace DUNE
 
       DevCalibrationControl(void);
 
-      Message*
+      DevCalibrationControl*
       clone(void) const
       {
         return new DevCalibrationControl(*this);
@@ -724,7 +724,7 @@ namespace DUNE
 
       DevCalibrationState(void);
 
-      Message*
+      DevCalibrationState*
       clone(void) const
       {
         return new DevCalibrationState(*this);
@@ -814,7 +814,7 @@ namespace DUNE
 
       EntityActivationState(void);
 
-      Message*
+      EntityActivationState*
       clone(void) const
       {
         return new EntityActivationState(*this);
@@ -879,7 +879,7 @@ namespace DUNE
 
       QueryEntityActivationState(void);
 
-      Message*
+      QueryEntityActivationState*
       clone(void) const
       {
         return new QueryEntityActivationState(*this);
@@ -979,7 +979,7 @@ namespace DUNE
 
       VehicleOperationalLimits(void);
 
-      Message*
+      VehicleOperationalLimits*
       clone(void) const
       {
         return new VehicleOperationalLimits(*this);
@@ -1040,7 +1040,7 @@ namespace DUNE
 
       MsgList(void);
 
-      Message*
+      MsgList*
       clone(void) const
       {
         return new MsgList(*this);
@@ -1157,7 +1157,7 @@ namespace DUNE
 
       SimulatedState(void);
 
-      Message*
+      SimulatedState*
       clone(void) const
       {
         return new SimulatedState(*this);
@@ -1229,7 +1229,7 @@ namespace DUNE
 
       LeakSimulation(void);
 
-      Message*
+      LeakSimulation*
       clone(void) const
       {
         return new LeakSimulation(*this);
@@ -1311,7 +1311,7 @@ namespace DUNE
 
       UASimulation(void);
 
-      Message*
+      UASimulation*
       clone(void) const
       {
         return new UASimulation(*this);
@@ -1393,7 +1393,7 @@ namespace DUNE
 
       DynamicsSimParam(void);
 
-      Message*
+      DynamicsSimParam*
       clone(void) const
       {
         return new DynamicsSimParam(*this);
@@ -1456,7 +1456,7 @@ namespace DUNE
 
       StorageUsage(void);
 
-      Message*
+      StorageUsage*
       clone(void) const
       {
         return new StorageUsage(*this);
@@ -1542,7 +1542,7 @@ namespace DUNE
 
       CacheControl(void);
 
-      Message*
+      CacheControl*
       clone(void) const
       {
         return new CacheControl(*this);
@@ -1644,7 +1644,7 @@ namespace DUNE
 
       LoggingControl(void);
 
-      Message*
+      LoggingControl*
       clone(void) const
       {
         return new LoggingControl(*this);
@@ -1732,7 +1732,7 @@ namespace DUNE
 
       LogBookEntry(void);
 
-      Message*
+      LogBookEntry*
       clone(void) const
       {
         return new LogBookEntry(*this);
@@ -1816,7 +1816,7 @@ namespace DUNE
 
       LogBookControl(void);
 
-      Message*
+      LogBookControl*
       clone(void) const
       {
         return new LogBookControl(*this);
@@ -1914,7 +1914,7 @@ namespace DUNE
 
       ReplayControl(void);
 
-      Message*
+      ReplayControl*
       clone(void) const
       {
         return new ReplayControl(*this);
@@ -2002,7 +2002,7 @@ namespace DUNE
 
       ClockControl(void);
 
-      Message*
+      ClockControl*
       clone(void) const
       {
         return new ClockControl(*this);
@@ -2067,7 +2067,7 @@ namespace DUNE
 
       HistoricCTD(void);
 
-      Message*
+      HistoricCTD*
       clone(void) const
       {
         return new HistoricCTD(*this);
@@ -2136,7 +2136,7 @@ namespace DUNE
 
       HistoricTelemetry(void);
 
-      Message*
+      HistoricTelemetry*
       clone(void) const
       {
         return new HistoricTelemetry(*this);
@@ -2220,7 +2220,7 @@ namespace DUNE
 
       HistoricSonarData(void);
 
-      Message*
+      HistoricSonarData*
       clone(void) const
       {
         return new HistoricSonarData(*this);
@@ -2298,7 +2298,7 @@ namespace DUNE
 
       HistoricEvent(void);
 
-      Message*
+      HistoricEvent*
       clone(void) const
       {
         return new HistoricEvent(*this);
@@ -2363,7 +2363,7 @@ namespace DUNE
 
       Heartbeat(void);
 
-      Message*
+      Heartbeat*
       clone(void) const
       {
         return new Heartbeat(*this);
@@ -2430,7 +2430,7 @@ namespace DUNE
 
       Announce(void);
 
-      Message*
+      Announce*
       clone(void) const
       {
         return new Announce(*this);
@@ -2508,7 +2508,7 @@ namespace DUNE
 
       AnnounceService(void);
 
-      Message*
+      AnnounceService*
       clone(void) const
       {
         return new AnnounceService(*this);
@@ -2575,7 +2575,7 @@ namespace DUNE
 
       RSSI(void);
 
-      Message*
+      RSSI*
       clone(void) const
       {
         return new RSSI(*this);
@@ -2642,7 +2642,7 @@ namespace DUNE
 
       VSWR(void);
 
-      Message*
+      VSWR*
       clone(void) const
       {
         return new VSWR(*this);
@@ -2709,7 +2709,7 @@ namespace DUNE
 
       LinkLevel(void);
 
-      Message*
+      LinkLevel*
       clone(void) const
       {
         return new LinkLevel(*this);
@@ -2780,7 +2780,7 @@ namespace DUNE
 
       Sms(void);
 
-      Message*
+      Sms*
       clone(void) const
       {
         return new Sms(*this);
@@ -2853,7 +2853,7 @@ namespace DUNE
 
       SmsTx(void);
 
-      Message*
+      SmsTx*
       clone(void) const
       {
         return new SmsTx(*this);
@@ -2922,7 +2922,7 @@ namespace DUNE
 
       SmsRx(void);
 
-      Message*
+      SmsRx*
       clone(void) const
       {
         return new SmsRx(*this);
@@ -3012,7 +3012,7 @@ namespace DUNE
 
       SmsState(void);
 
-      Message*
+      SmsState*
       clone(void) const
       {
         return new SmsState(*this);
@@ -3081,7 +3081,7 @@ namespace DUNE
 
       TextMessage(void);
 
-      Message*
+      TextMessage*
       clone(void) const
       {
         return new TextMessage(*this);
@@ -3156,7 +3156,7 @@ namespace DUNE
 
       IridiumMsgRx(void);
 
-      Message*
+      IridiumMsgRx*
       clone(void) const
       {
         return new IridiumMsgRx(*this);
@@ -3229,7 +3229,7 @@ namespace DUNE
 
       IridiumMsgTx(void);
 
-      Message*
+      IridiumMsgTx*
       clone(void) const
       {
         return new IridiumMsgTx(*this);
@@ -3315,7 +3315,7 @@ namespace DUNE
 
       IridiumTxStatus(void);
 
-      Message*
+      IridiumTxStatus*
       clone(void) const
       {
         return new IridiumTxStatus(*this);
@@ -3384,7 +3384,7 @@ namespace DUNE
 
       GroupMembershipState(void);
 
-      Message*
+      GroupMembershipState*
       clone(void) const
       {
         return new GroupMembershipState(*this);
@@ -3472,7 +3472,7 @@ namespace DUNE
 
       SystemGroup(void);
 
-      Message*
+      SystemGroup*
       clone(void) const
       {
         return new SystemGroup(*this);
@@ -3541,7 +3541,7 @@ namespace DUNE
 
       LinkLatency(void);
 
-      Message*
+      LinkLatency*
       clone(void) const
       {
         return new LinkLatency(*this);
@@ -3610,7 +3610,7 @@ namespace DUNE
 
       ExtendedRSSI(void);
 
-      Message*
+      ExtendedRSSI*
       clone(void) const
       {
         return new ExtendedRSSI(*this);
@@ -3683,7 +3683,7 @@ namespace DUNE
 
       HistoricData(void);
 
-      Message*
+      HistoricData*
       clone(void) const
       {
         return new HistoricData(*this);
@@ -3772,7 +3772,7 @@ namespace DUNE
 
       CompressedHistory(void);
 
-      Message*
+      CompressedHistory*
       clone(void) const
       {
         return new CompressedHistory(*this);
@@ -3851,7 +3851,7 @@ namespace DUNE
 
       HistoricSample(void);
 
-      Message*
+      HistoricSample*
       clone(void) const
       {
         return new HistoricSample(*this);
@@ -3951,7 +3951,7 @@ namespace DUNE
 
       HistoricDataQuery(void);
 
-      Message*
+      HistoricDataQuery*
       clone(void) const
       {
         return new HistoricDataQuery(*this);
@@ -4040,7 +4040,7 @@ namespace DUNE
 
       RemoteCommand(void);
 
-      Message*
+      RemoteCommand*
       clone(void) const
       {
         return new RemoteCommand(*this);
@@ -4125,7 +4125,7 @@ namespace DUNE
 
       LblRange(void);
 
-      Message*
+      LblRange*
       clone(void) const
       {
         return new LblRange(*this);
@@ -4204,7 +4204,7 @@ namespace DUNE
 
       LblBeacon(void);
 
-      Message*
+      LblBeacon*
       clone(void) const
       {
         return new LblBeacon(*this);
@@ -4284,7 +4284,7 @@ namespace DUNE
 
       LblConfig(void);
 
-      Message*
+      LblConfig*
       clone(void) const
       {
         return new LblConfig(*this);
@@ -4367,7 +4367,7 @@ namespace DUNE
 
       AcousticMessage(void);
 
-      Message*
+      AcousticMessage*
       clone(void) const
       {
         return new AcousticMessage(*this);
@@ -4497,7 +4497,7 @@ namespace DUNE
 
       AcousticOperation(void);
 
-      Message*
+      AcousticOperation*
       clone(void) const
       {
         return new AcousticOperation(*this);
@@ -4578,7 +4578,7 @@ namespace DUNE
 
       AcousticSystemsQuery(void);
 
-      Message*
+      AcousticSystemsQuery*
       clone(void) const
       {
         return new AcousticSystemsQuery(*this);
@@ -4633,7 +4633,7 @@ namespace DUNE
 
       AcousticSystems(void);
 
-      Message*
+      AcousticSystems*
       clone(void) const
       {
         return new AcousticSystems(*this);
@@ -4704,7 +4704,7 @@ namespace DUNE
 
       AcousticLink(void);
 
-      Message*
+      AcousticLink*
       clone(void) const
       {
         return new AcousticLink(*this);
@@ -4771,7 +4771,7 @@ namespace DUNE
 
       Rpm(void);
 
-      Message*
+      Rpm*
       clone(void) const
       {
         return new Rpm(*this);
@@ -4838,7 +4838,7 @@ namespace DUNE
 
       Voltage(void);
 
-      Message*
+      Voltage*
       clone(void) const
       {
         return new Voltage(*this);
@@ -4905,7 +4905,7 @@ namespace DUNE
 
       Current(void);
 
-      Message*
+      Current*
       clone(void) const
       {
         return new Current(*this);
@@ -5040,7 +5040,7 @@ namespace DUNE
 
       GpsFix(void);
 
-      Message*
+      GpsFix*
       clone(void) const
       {
         return new GpsFix(*this);
@@ -5109,7 +5109,7 @@ namespace DUNE
 
       EulerAngles(void);
 
-      Message*
+      EulerAngles*
       clone(void) const
       {
         return new EulerAngles(*this);
@@ -5178,7 +5178,7 @@ namespace DUNE
 
       EulerAnglesDelta(void);
 
-      Message*
+      EulerAnglesDelta*
       clone(void) const
       {
         return new EulerAnglesDelta(*this);
@@ -5245,7 +5245,7 @@ namespace DUNE
 
       AngularVelocity(void);
 
-      Message*
+      AngularVelocity*
       clone(void) const
       {
         return new AngularVelocity(*this);
@@ -5312,7 +5312,7 @@ namespace DUNE
 
       Acceleration(void);
 
-      Message*
+      Acceleration*
       clone(void) const
       {
         return new Acceleration(*this);
@@ -5379,7 +5379,7 @@ namespace DUNE
 
       MagneticField(void);
 
-      Message*
+      MagneticField*
       clone(void) const
       {
         return new MagneticField(*this);
@@ -5457,7 +5457,7 @@ namespace DUNE
 
       GroundVelocity(void);
 
-      Message*
+      GroundVelocity*
       clone(void) const
       {
         return new GroundVelocity(*this);
@@ -5535,7 +5535,7 @@ namespace DUNE
 
       WaterVelocity(void);
 
-      Message*
+      WaterVelocity*
       clone(void) const
       {
         return new WaterVelocity(*this);
@@ -5602,7 +5602,7 @@ namespace DUNE
 
       VelocityDelta(void);
 
-      Message*
+      VelocityDelta*
       clone(void) const
       {
         return new VelocityDelta(*this);
@@ -5673,7 +5673,7 @@ namespace DUNE
 
       DeviceState(void);
 
-      Message*
+      DeviceState*
       clone(void) const
       {
         return new DeviceState(*this);
@@ -5736,7 +5736,7 @@ namespace DUNE
 
       BeamConfig(void);
 
-      Message*
+      BeamConfig*
       clone(void) const
       {
         return new BeamConfig(*this);
@@ -5812,7 +5812,7 @@ namespace DUNE
 
       Distance(void);
 
-      Message*
+      Distance*
       clone(void) const
       {
         return new Distance(*this);
@@ -5901,7 +5901,7 @@ namespace DUNE
 
       Temperature(void);
 
-      Message*
+      Temperature*
       clone(void) const
       {
         return new Temperature(*this);
@@ -5968,7 +5968,7 @@ namespace DUNE
 
       Pressure(void);
 
-      Message*
+      Pressure*
       clone(void) const
       {
         return new Pressure(*this);
@@ -6035,7 +6035,7 @@ namespace DUNE
 
       Depth(void);
 
-      Message*
+      Depth*
       clone(void) const
       {
         return new Depth(*this);
@@ -6102,7 +6102,7 @@ namespace DUNE
 
       DepthOffset(void);
 
-      Message*
+      DepthOffset*
       clone(void) const
       {
         return new DepthOffset(*this);
@@ -6169,7 +6169,7 @@ namespace DUNE
 
       SoundSpeed(void);
 
-      Message*
+      SoundSpeed*
       clone(void) const
       {
         return new SoundSpeed(*this);
@@ -6236,7 +6236,7 @@ namespace DUNE
 
       WaterDensity(void);
 
-      Message*
+      WaterDensity*
       clone(void) const
       {
         return new WaterDensity(*this);
@@ -6303,7 +6303,7 @@ namespace DUNE
 
       Conductivity(void);
 
-      Message*
+      Conductivity*
       clone(void) const
       {
         return new Conductivity(*this);
@@ -6370,7 +6370,7 @@ namespace DUNE
 
       Salinity(void);
 
-      Message*
+      Salinity*
       clone(void) const
       {
         return new Salinity(*this);
@@ -6441,7 +6441,7 @@ namespace DUNE
 
       WindSpeed(void);
 
-      Message*
+      WindSpeed*
       clone(void) const
       {
         return new WindSpeed(*this);
@@ -6502,7 +6502,7 @@ namespace DUNE
 
       RelativeHumidity(void);
 
-      Message*
+      RelativeHumidity*
       clone(void) const
       {
         return new RelativeHumidity(*this);
@@ -6569,7 +6569,7 @@ namespace DUNE
 
       DevDataText(void);
 
-      Message*
+      DevDataText*
       clone(void) const
       {
         return new DevDataText(*this);
@@ -6636,7 +6636,7 @@ namespace DUNE
 
       DevDataBinary(void);
 
-      Message*
+      DevDataBinary*
       clone(void) const
       {
         return new DevDataBinary(*this);
@@ -6688,6 +6688,73 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Force.
+    class Force: public Message
+    {
+    public:
+      //! Measured Force.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 275;
+      }
+
+      Force(void);
+
+      Force*
+      clone(void) const
+      {
+        return new Force(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Force::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Force";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Sonar Data.
     class SonarData: public Message
     {
@@ -6728,7 +6795,7 @@ namespace DUNE
 
       SonarData(void);
 
-      Message*
+      SonarData*
       clone(void) const
       {
         return new SonarData(*this);
@@ -6809,7 +6876,7 @@ namespace DUNE
 
       Pulse(void);
 
-      Message*
+      Pulse*
       clone(void) const
       {
         return new Pulse(*this);
@@ -6873,7 +6940,7 @@ namespace DUNE
 
       PulseDetectionControl(void);
 
-      Message*
+      PulseDetectionControl*
       clone(void) const
       {
         return new PulseDetectionControl(*this);
@@ -6938,7 +7005,7 @@ namespace DUNE
 
       FuelLevel(void);
 
-      Message*
+      FuelLevel*
       clone(void) const
       {
         return new FuelLevel(*this);
@@ -7039,7 +7106,7 @@ namespace DUNE
 
       GpsNavData(void);
 
-      Message*
+      GpsNavData*
       clone(void) const
       {
         return new GpsNavData(*this);
@@ -7102,7 +7169,7 @@ namespace DUNE
 
       ServoPosition(void);
 
-      Message*
+      ServoPosition*
       clone(void) const
       {
         return new ServoPosition(*this);
@@ -7184,7 +7251,7 @@ namespace DUNE
 
       DataSanity(void);
 
-      Message*
+      DataSanity*
       clone(void) const
       {
         return new DataSanity(*this);
@@ -7245,7 +7312,7 @@ namespace DUNE
 
       RhodamineDye(void);
 
-      Message*
+      RhodamineDye*
       clone(void) const
       {
         return new RhodamineDye(*this);
@@ -7312,7 +7379,7 @@ namespace DUNE
 
       CrudeOil(void);
 
-      Message*
+      CrudeOil*
       clone(void) const
       {
         return new CrudeOil(*this);
@@ -7379,7 +7446,7 @@ namespace DUNE
 
       FineOil(void);
 
-      Message*
+      FineOil*
       clone(void) const
       {
         return new FineOil(*this);
@@ -7446,7 +7513,7 @@ namespace DUNE
 
       Turbidity(void);
 
-      Message*
+      Turbidity*
       clone(void) const
       {
         return new Turbidity(*this);
@@ -7513,7 +7580,7 @@ namespace DUNE
 
       Chlorophyll(void);
 
-      Message*
+      Chlorophyll*
       clone(void) const
       {
         return new Chlorophyll(*this);
@@ -7580,7 +7647,7 @@ namespace DUNE
 
       Fluorescein(void);
 
-      Message*
+      Fluorescein*
       clone(void) const
       {
         return new Fluorescein(*this);
@@ -7647,7 +7714,7 @@ namespace DUNE
 
       Phycocyanin(void);
 
-      Message*
+      Phycocyanin*
       clone(void) const
       {
         return new Phycocyanin(*this);
@@ -7714,7 +7781,7 @@ namespace DUNE
 
       Phycoerythrin(void);
 
-      Message*
+      Phycoerythrin*
       clone(void) const
       {
         return new Phycoerythrin(*this);
@@ -7835,7 +7902,7 @@ namespace DUNE
 
       GpsFixRtk(void);
 
-      Message*
+      GpsFixRtk*
       clone(void) const
       {
         return new GpsFixRtk(*this);
@@ -7934,7 +8001,7 @@ namespace DUNE
 
       EstimatedState(void);
 
-      Message*
+      EstimatedState*
       clone(void) const
       {
         return new EstimatedState(*this);
@@ -8008,7 +8075,7 @@ namespace DUNE
 
       ExternalNavData(void);
 
-      Message*
+      ExternalNavData*
       clone(void) const
       {
         return new ExternalNavData(*this);
@@ -8091,7 +8158,7 @@ namespace DUNE
 
       DissolvedOxygen(void);
 
-      Message*
+      DissolvedOxygen*
       clone(void) const
       {
         return new DissolvedOxygen(*this);
@@ -8158,7 +8225,7 @@ namespace DUNE
 
       AirSaturation(void);
 
-      Message*
+      AirSaturation*
       clone(void) const
       {
         return new AirSaturation(*this);
@@ -8225,7 +8292,7 @@ namespace DUNE
 
       Throttle(void);
 
-      Message*
+      Throttle*
       clone(void) const
       {
         return new Throttle(*this);
@@ -8292,7 +8359,7 @@ namespace DUNE
 
       PH(void);
 
-      Message*
+      PH*
       clone(void) const
       {
         return new PH(*this);
@@ -8359,7 +8426,7 @@ namespace DUNE
 
       Redox(void);
 
-      Message*
+      Redox*
       clone(void) const
       {
         return new Redox(*this);
@@ -8443,7 +8510,7 @@ namespace DUNE
 
       CameraZoom(void);
 
-      Message*
+      CameraZoom*
       clone(void) const
       {
         return new CameraZoom(*this);
@@ -8512,7 +8579,7 @@ namespace DUNE
 
       SetThrusterActuation(void);
 
-      Message*
+      SetThrusterActuation*
       clone(void) const
       {
         return new SetThrusterActuation(*this);
@@ -8587,7 +8654,7 @@ namespace DUNE
 
       SetServoPosition(void);
 
-      Message*
+      SetServoPosition*
       clone(void) const
       {
         return new SetServoPosition(*this);
@@ -8662,7 +8729,7 @@ namespace DUNE
 
       SetControlSurfaceDeflection(void);
 
-      Message*
+      SetControlSurfaceDeflection*
       clone(void) const
       {
         return new SetControlSurfaceDeflection(*this);
@@ -8740,7 +8807,7 @@ namespace DUNE
 
       RemoteActionsRequest(void);
 
-      Message*
+      RemoteActionsRequest*
       clone(void) const
       {
         return new RemoteActionsRequest(*this);
@@ -8807,7 +8874,7 @@ namespace DUNE
 
       RemoteActions(void);
 
-      Message*
+      RemoteActions*
       clone(void) const
       {
         return new RemoteActions(*this);
@@ -8876,7 +8943,7 @@ namespace DUNE
 
       ButtonEvent(void);
 
-      Message*
+      ButtonEvent*
       clone(void) const
       {
         return new ButtonEvent(*this);
@@ -8960,7 +9027,7 @@ namespace DUNE
 
       LcdControl(void);
 
-      Message*
+      LcdControl*
       clone(void) const
       {
         return new LcdControl(*this);
@@ -9050,7 +9117,7 @@ namespace DUNE
 
       PowerOperation(void);
 
-      Message*
+      PowerOperation*
       clone(void) const
       {
         return new PowerOperation(*this);
@@ -9134,7 +9201,7 @@ namespace DUNE
 
       PowerChannelControl(void);
 
-      Message*
+      PowerChannelControl*
       clone(void) const
       {
         return new PowerChannelControl(*this);
@@ -9199,7 +9266,7 @@ namespace DUNE
 
       QueryPowerChannelState(void);
 
-      Message*
+      QueryPowerChannelState*
       clone(void) const
       {
         return new QueryPowerChannelState(*this);
@@ -9265,7 +9332,7 @@ namespace DUNE
 
       PowerChannelState(void);
 
-      Message*
+      PowerChannelState*
       clone(void) const
       {
         return new PowerChannelState(*this);
@@ -9334,7 +9401,7 @@ namespace DUNE
 
       LedBrightness(void);
 
-      Message*
+      LedBrightness*
       clone(void) const
       {
         return new LedBrightness(*this);
@@ -9407,7 +9474,7 @@ namespace DUNE
 
       QueryLedBrightness(void);
 
-      Message*
+      QueryLedBrightness*
       clone(void) const
       {
         return new QueryLedBrightness(*this);
@@ -9476,7 +9543,7 @@ namespace DUNE
 
       SetLedBrightness(void);
 
-      Message*
+      SetLedBrightness*
       clone(void) const
       {
         return new SetLedBrightness(*this);
@@ -9553,7 +9620,7 @@ namespace DUNE
 
       SetPWM(void);
 
-      Message*
+      SetPWM*
       clone(void) const
       {
         return new SetPWM(*this);
@@ -9624,7 +9691,7 @@ namespace DUNE
 
       PWM(void);
 
-      Message*
+      PWM*
       clone(void) const
       {
         return new PWM(*this);
@@ -9695,7 +9762,7 @@ namespace DUNE
 
       EstimatedStreamVelocity(void);
 
-      Message*
+      EstimatedStreamVelocity*
       clone(void) const
       {
         return new EstimatedStreamVelocity(*this);
@@ -9756,7 +9823,7 @@ namespace DUNE
 
       IndicatedSpeed(void);
 
-      Message*
+      IndicatedSpeed*
       clone(void) const
       {
         return new IndicatedSpeed(*this);
@@ -9823,7 +9890,7 @@ namespace DUNE
 
       TrueSpeed(void);
 
-      Message*
+      TrueSpeed*
       clone(void) const
       {
         return new TrueSpeed(*this);
@@ -9916,7 +9983,7 @@ namespace DUNE
 
       NavigationUncertainty(void);
 
-      Message*
+      NavigationUncertainty*
       clone(void) const
       {
         return new NavigationUncertainty(*this);
@@ -9993,7 +10060,7 @@ namespace DUNE
 
       NavigationData(void);
 
-      Message*
+      NavigationData*
       clone(void) const
       {
         return new NavigationData(*this);
@@ -10071,7 +10138,7 @@ namespace DUNE
 
       GpsFixRejection(void);
 
-      Message*
+      GpsFixRejection*
       clone(void) const
       {
         return new GpsFixRejection(*this);
@@ -10151,7 +10218,7 @@ namespace DUNE
 
       LblRangeAcceptance(void);
 
-      Message*
+      LblRangeAcceptance*
       clone(void) const
       {
         return new LblRangeAcceptance(*this);
@@ -10246,7 +10313,7 @@ namespace DUNE
 
       DvlRejection(void);
 
-      Message*
+      DvlRejection*
       clone(void) const
       {
         return new DvlRejection(*this);
@@ -10323,7 +10390,7 @@ namespace DUNE
 
       LblEstimate(void);
 
-      Message*
+      LblEstimate*
       clone(void) const
       {
         return new LblEstimate(*this);
@@ -10417,7 +10484,7 @@ namespace DUNE
 
       AlignmentState(void);
 
-      Message*
+      AlignmentState*
       clone(void) const
       {
         return new AlignmentState(*this);
@@ -10482,7 +10549,7 @@ namespace DUNE
 
       GroupStreamVelocity(void);
 
-      Message*
+      GroupStreamVelocity*
       clone(void) const
       {
         return new GroupStreamVelocity(*this);
@@ -10547,7 +10614,7 @@ namespace DUNE
 
       Airflow(void);
 
-      Message*
+      Airflow*
       clone(void) const
       {
         return new Airflow(*this);
@@ -10608,7 +10675,7 @@ namespace DUNE
 
       DesiredHeading(void);
 
-      Message*
+      DesiredHeading*
       clone(void) const
       {
         return new DesiredHeading(*this);
@@ -10677,7 +10744,7 @@ namespace DUNE
 
       DesiredZ(void);
 
-      Message*
+      DesiredZ*
       clone(void) const
       {
         return new DesiredZ(*this);
@@ -10746,7 +10813,7 @@ namespace DUNE
 
       DesiredSpeed(void);
 
-      Message*
+      DesiredSpeed*
       clone(void) const
       {
         return new DesiredSpeed(*this);
@@ -10813,7 +10880,7 @@ namespace DUNE
 
       DesiredRoll(void);
 
-      Message*
+      DesiredRoll*
       clone(void) const
       {
         return new DesiredRoll(*this);
@@ -10880,7 +10947,7 @@ namespace DUNE
 
       DesiredPitch(void);
 
-      Message*
+      DesiredPitch*
       clone(void) const
       {
         return new DesiredPitch(*this);
@@ -10947,7 +11014,7 @@ namespace DUNE
 
       DesiredVerticalRate(void);
 
-      Message*
+      DesiredVerticalRate*
       clone(void) const
       {
         return new DesiredVerticalRate(*this);
@@ -11059,7 +11126,7 @@ namespace DUNE
 
       DesiredPath(void);
 
-      Message*
+      DesiredPath*
       clone(void) const
       {
         return new DesiredPath(*this);
@@ -11149,7 +11216,7 @@ namespace DUNE
 
       DesiredControl(void);
 
-      Message*
+      DesiredControl*
       clone(void) const
       {
         return new DesiredControl(*this);
@@ -11210,7 +11277,7 @@ namespace DUNE
 
       DesiredHeadingRate(void);
 
-      Message*
+      DesiredHeadingRate*
       clone(void) const
       {
         return new DesiredHeadingRate(*this);
@@ -11306,7 +11373,7 @@ namespace DUNE
 
       DesiredVelocity(void);
 
-      Message*
+      DesiredVelocity*
       clone(void) const
       {
         return new DesiredVelocity(*this);
@@ -11418,7 +11485,7 @@ namespace DUNE
 
       PathControlState(void);
 
-      Message*
+      PathControlState*
       clone(void) const
       {
         return new PathControlState(*this);
@@ -11483,7 +11550,7 @@ namespace DUNE
 
       AllocatedControlTorques(void);
 
-      Message*
+      AllocatedControlTorques*
       clone(void) const
       {
         return new AllocatedControlTorques(*this);
@@ -11550,7 +11617,7 @@ namespace DUNE
 
       ControlParcel(void);
 
-      Message*
+      ControlParcel*
       clone(void) const
       {
         return new ControlParcel(*this);
@@ -11620,7 +11687,7 @@ namespace DUNE
 
       Brake(void);
 
-      Message*
+      Brake*
       clone(void) const
       {
         return new Brake(*this);
@@ -11722,7 +11789,7 @@ namespace DUNE
 
       DesiredLinearState(void);
 
-      Message*
+      DesiredLinearState*
       clone(void) const
       {
         return new DesiredLinearState(*this);
@@ -11783,7 +11850,7 @@ namespace DUNE
 
       DesiredThrottle(void);
 
-      Message*
+      DesiredThrottle*
       clone(void) const
       {
         return new DesiredThrottle(*this);
@@ -11870,7 +11937,7 @@ namespace DUNE
 
       Goto(void);
 
-      Message*
+      Goto*
       clone(void) const
       {
         return new Goto(*this);
@@ -11968,7 +12035,7 @@ namespace DUNE
 
       PopUp(void);
 
-      Message*
+      PopUp*
       clone(void) const
       {
         return new PopUp(*this);
@@ -12035,7 +12102,7 @@ namespace DUNE
 
       Teleoperation(void);
 
-      Message*
+      Teleoperation*
       clone(void) const
       {
         return new Teleoperation(*this);
@@ -12156,7 +12223,7 @@ namespace DUNE
 
       Loiter(void);
 
-      Message*
+      Loiter*
       clone(void) const
       {
         return new Loiter(*this);
@@ -12225,7 +12292,7 @@ namespace DUNE
 
       IdleManeuver(void);
 
-      Message*
+      IdleManeuver*
       clone(void) const
       {
         return new IdleManeuver(*this);
@@ -12296,7 +12363,7 @@ namespace DUNE
 
       LowLevelControl(void);
 
-      Message*
+      LowLevelControl*
       clone(void) const
       {
         return new LowLevelControl(*this);
@@ -12418,7 +12485,7 @@ namespace DUNE
 
       Rows(void);
 
-      Message*
+      Rows*
       clone(void) const
       {
         return new Rows(*this);
@@ -12489,7 +12556,7 @@ namespace DUNE
 
       PathPoint(void);
 
-      Message*
+      PathPoint*
       clone(void) const
       {
         return new PathPoint(*this);
@@ -12566,7 +12633,7 @@ namespace DUNE
 
       FollowPath(void);
 
-      Message*
+      FollowPath*
       clone(void) const
       {
         return new FollowPath(*this);
@@ -12667,7 +12734,7 @@ namespace DUNE
 
       YoYo(void);
 
-      Message*
+      YoYo*
       clone(void) const
       {
         return new YoYo(*this);
@@ -12732,7 +12799,7 @@ namespace DUNE
 
       TeleoperationDone(void);
 
-      Message*
+      TeleoperationDone*
       clone(void) const
       {
         return new TeleoperationDone(*this);
@@ -12803,7 +12870,7 @@ namespace DUNE
 
       StationKeeping(void);
 
-      Message*
+      StationKeeping*
       clone(void) const
       {
         return new StationKeeping(*this);
@@ -12899,7 +12966,7 @@ namespace DUNE
 
       Elevator(void);
 
-      Message*
+      Elevator*
       clone(void) const
       {
         return new Elevator(*this);
@@ -12972,7 +13039,7 @@ namespace DUNE
 
       TrajectoryPoint(void);
 
-      Message*
+      TrajectoryPoint*
       clone(void) const
       {
         return new TrajectoryPoint(*this);
@@ -13049,7 +13116,7 @@ namespace DUNE
 
       FollowTrajectory(void);
 
-      Message*
+      FollowTrajectory*
       clone(void) const
       {
         return new FollowTrajectory(*this);
@@ -13136,7 +13203,7 @@ namespace DUNE
 
       CustomManeuver(void);
 
-      Message*
+      CustomManeuver*
       clone(void) const
       {
         return new CustomManeuver(*this);
@@ -13209,7 +13276,7 @@ namespace DUNE
 
       VehicleFormationParticipant(void);
 
-      Message*
+      VehicleFormationParticipant*
       clone(void) const
       {
         return new VehicleFormationParticipant(*this);
@@ -13288,7 +13355,7 @@ namespace DUNE
 
       VehicleFormation(void);
 
-      Message*
+      VehicleFormation*
       clone(void) const
       {
         return new VehicleFormation(*this);
@@ -13369,7 +13436,7 @@ namespace DUNE
 
       StopManeuver(void);
 
-      Message*
+      StopManeuver*
       clone(void) const
       {
         return new StopManeuver(*this);
@@ -13424,7 +13491,7 @@ namespace DUNE
 
       RegisterManeuver(void);
 
-      Message*
+      RegisterManeuver*
       clone(void) const
       {
         return new RegisterManeuver(*this);
@@ -13502,7 +13569,7 @@ namespace DUNE
 
       ManeuverControlState(void);
 
-      Message*
+      ManeuverControlState*
       clone(void) const
       {
         return new ManeuverControlState(*this);
@@ -13583,7 +13650,7 @@ namespace DUNE
 
       FollowSystem(void);
 
-      Message*
+      FollowSystem*
       clone(void) const
       {
         return new FollowSystem(*this);
@@ -13658,7 +13725,7 @@ namespace DUNE
 
       CommsRelay(void);
 
-      Message*
+      CommsRelay*
       clone(void) const
       {
         return new CommsRelay(*this);
@@ -13721,7 +13788,7 @@ namespace DUNE
 
       PolygonVertex(void);
 
-      Message*
+      PolygonVertex*
       clone(void) const
       {
         return new PolygonVertex(*this);
@@ -13796,7 +13863,7 @@ namespace DUNE
 
       CoverArea(void);
 
-      Message*
+      CoverArea*
       clone(void) const
       {
         return new CoverArea(*this);
@@ -13916,7 +13983,7 @@ namespace DUNE
 
       CompassCalibration(void);
 
-      Message*
+      CompassCalibration*
       clone(void) const
       {
         return new CompassCalibration(*this);
@@ -14000,7 +14067,7 @@ namespace DUNE
 
       FormationParameters(void);
 
-      Message*
+      FormationParameters*
       clone(void) const
       {
         return new FormationParameters(*this);
@@ -14109,7 +14176,7 @@ namespace DUNE
 
       FormationPlanExecution(void);
 
-      Message*
+      FormationPlanExecution*
       clone(void) const
       {
         return new FormationPlanExecution(*this);
@@ -14184,7 +14251,7 @@ namespace DUNE
 
       FollowReference(void);
 
-      Message*
+      FollowReference*
       clone(void) const
       {
         return new FollowReference(*this);
@@ -14274,7 +14341,7 @@ namespace DUNE
 
       Reference(void);
 
-      Message*
+      Reference*
       clone(void) const
       {
         return new Reference(*this);
@@ -14393,7 +14460,7 @@ namespace DUNE
 
       FollowRefState(void);
 
-      Message*
+      FollowRefState*
       clone(void) const
       {
         return new FollowRefState(*this);
@@ -14518,7 +14585,7 @@ namespace DUNE
 
       RelativeState(void);
 
-      Message*
+      RelativeState*
       clone(void) const
       {
         return new RelativeState(*this);
@@ -14621,7 +14688,7 @@ namespace DUNE
 
       FormationMonitor(void);
 
-      Message*
+      FormationMonitor*
       clone(void) const
       {
         return new FormationMonitor(*this);
@@ -14721,7 +14788,7 @@ namespace DUNE
 
       Dislodge(void);
 
-      Message*
+      Dislodge*
       clone(void) const
       {
         return new Dislodge(*this);
@@ -14863,7 +14930,7 @@ namespace DUNE
 
       Formation(void);
 
-      Message*
+      Formation*
       clone(void) const
       {
         return new Formation(*this);
@@ -14960,7 +15027,7 @@ namespace DUNE
 
       Launch(void);
 
-      Message*
+      Launch*
       clone(void) const
       {
         return new Launch(*this);
@@ -15041,7 +15108,7 @@ namespace DUNE
 
       Drop(void);
 
-      Message*
+      Drop*
       clone(void) const
       {
         return new Drop(*this);
@@ -15133,7 +15200,7 @@ namespace DUNE
 
       ScheduledGoto(void);
 
-      Message*
+      ScheduledGoto*
       clone(void) const
       {
         return new ScheduledGoto(*this);
@@ -15233,7 +15300,7 @@ namespace DUNE
 
       RowsCoverage(void);
 
-      Message*
+      RowsCoverage*
       clone(void) const
       {
         return new RowsCoverage(*this);
@@ -15320,7 +15387,7 @@ namespace DUNE
 
       Sample(void);
 
-      Message*
+      Sample*
       clone(void) const
       {
         return new Sample(*this);
@@ -15385,7 +15452,7 @@ namespace DUNE
 
       ImageTracking(void);
 
-      Message*
+      ImageTracking*
       clone(void) const
       {
         return new ImageTracking(*this);
@@ -15454,7 +15521,7 @@ namespace DUNE
 
       Takeoff(void);
 
-      Message*
+      Takeoff*
       clone(void) const
       {
         return new Takeoff(*this);
@@ -15541,7 +15608,7 @@ namespace DUNE
 
       Land(void);
 
-      Message*
+      Land*
       clone(void) const
       {
         return new Land(*this);
@@ -15641,7 +15708,7 @@ namespace DUNE
 
       AutonomousSection(void);
 
-      Message*
+      AutonomousSection*
       clone(void) const
       {
         return new AutonomousSection(*this);
@@ -15738,7 +15805,7 @@ namespace DUNE
 
       FollowPoint(void);
 
-      Message*
+      FollowPoint*
       clone(void) const
       {
         return new FollowPoint(*this);
@@ -15847,7 +15914,7 @@ namespace DUNE
 
       VehicleState(void);
 
-      Message*
+      VehicleState*
       clone(void) const
       {
         return new VehicleState(*this);
@@ -15950,7 +16017,7 @@ namespace DUNE
 
       VehicleCommand(void);
 
-      Message*
+      VehicleCommand*
       clone(void) const
       {
         return new VehicleCommand(*this);
@@ -16050,7 +16117,7 @@ namespace DUNE
 
       MonitorEntityState(void);
 
-      Message*
+      MonitorEntityState*
       clone(void) const
       {
         return new MonitorEntityState(*this);
@@ -16131,7 +16198,7 @@ namespace DUNE
 
       EntityMonitoringState(void);
 
-      Message*
+      EntityMonitoringState*
       clone(void) const
       {
         return new EntityMonitoringState(*this);
@@ -16220,7 +16287,7 @@ namespace DUNE
 
       OperationalLimits(void);
 
-      Message*
+      OperationalLimits*
       clone(void) const
       {
         return new OperationalLimits(*this);
@@ -16279,7 +16346,7 @@ namespace DUNE
 
       GetOperationalLimits(void);
 
-      Message*
+      GetOperationalLimits*
       clone(void) const
       {
         return new GetOperationalLimits(*this);
@@ -16334,7 +16401,7 @@ namespace DUNE
 
       Calibration(void);
 
-      Message*
+      Calibration*
       clone(void) const
       {
         return new Calibration(*this);
@@ -16408,7 +16475,7 @@ namespace DUNE
 
       ControlLoops(void);
 
-      Message*
+      ControlLoops*
       clone(void) const
       {
         return new ControlLoops(*this);
@@ -16484,7 +16551,7 @@ namespace DUNE
 
       VehicleMedium(void);
 
-      Message*
+      VehicleMedium*
       clone(void) const
       {
         return new VehicleMedium(*this);
@@ -16560,7 +16627,7 @@ namespace DUNE
 
       Collision(void);
 
-      Message*
+      Collision*
       clone(void) const
       {
         return new Collision(*this);
@@ -16666,7 +16733,7 @@ namespace DUNE
 
       FormState(void);
 
-      Message*
+      FormState*
       clone(void) const
       {
         return new FormState(*this);
@@ -16740,7 +16807,7 @@ namespace DUNE
 
       AutopilotMode(void);
 
-      Message*
+      AutopilotMode*
       clone(void) const
       {
         return new AutopilotMode(*this);
@@ -16868,7 +16935,7 @@ namespace DUNE
 
       FormationState(void);
 
-      Message*
+      FormationState*
       clone(void) const
       {
         return new FormationState(*this);
@@ -16965,7 +17032,7 @@ namespace DUNE
 
       ReportControl(void);
 
-      Message*
+      ReportControl*
       clone(void) const
       {
         return new ReportControl(*this);
@@ -17017,6 +17084,296 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! State Report.
+    class StateReport: public Message
+    {
+    public:
+      //! Time Stamp.
+      uint32_t stime;
+      //! Latitude.
+      fp32_t latitude;
+      //! Longitude.
+      fp32_t longitude;
+      //! Altitude.
+      uint16_t altitude;
+      //! Depth.
+      uint16_t depth;
+      //! Heading.
+      uint16_t heading;
+      //! Speed.
+      int16_t speed;
+      //! Fuel.
+      int8_t fuel;
+      //! Execution State.
+      int8_t exec_state;
+      //! Plan Checksum.
+      uint16_t plan_checksum;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 514;
+      }
+
+      StateReport(void);
+
+      StateReport*
+      clone(void) const
+      {
+        return new StateReport(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return StateReport::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "StateReport";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 24;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Transmission Request.
+    class TransmissionRequest: public Message
+    {
+    public:
+      //! Communication Mean.
+      enum CommunicationMeanEnum
+      {
+        //! WiFi.
+        CMEAN_WIFI = 0,
+        //! Acoustic.
+        CMEAN_ACOUSTIC = 1,
+        //! Satellite.
+        CMEAN_SATELLITE = 2,
+        //! GSM.
+        CMEAN_GSM = 3
+      };
+
+      //! Data Mode.
+      enum DataModeEnum
+      {
+        //! Inline Message.
+        DMODE_INLINEMSG = 0,
+        //! Text.
+        DMODE_TEXT = 1,
+        //! Raw Data.
+        DMODE_RAW = 2
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Communication Mean.
+      uint8_t comm_mean;
+      //! Destination System.
+      std::string destination;
+      //! Deadline.
+      fp64_t deadline;
+      //! Data Mode.
+      uint8_t data_mode;
+      //! Message Data.
+      InlineMessage<Message> msg_data;
+      //! Text Data.
+      std::string txt_data;
+      //! Raw Data.
+      std::vector<char> raw_data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 515;
+      }
+
+      TransmissionRequest(void);
+
+      TransmissionRequest*
+      clone(void) const
+      {
+        return new TransmissionRequest(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TransmissionRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TransmissionRequest";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 12;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + msg_data.getSerializationSize() + IMC::getSerializationSize(txt_data) + IMC::getSerializationSize(raw_data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Transmission Status.
+    class TransmissionStatus: public Message
+    {
+    public:
+      //! Status.
+      enum StatusEnum
+      {
+        //! In progress.
+        TSTAT_IN_PROGRESS = 0,
+        //! Sent.
+        TSTAT_SENT = 1,
+        //! Delivered.
+        TSTAT_DELIVERED = 51,
+        //! Delivery is unknown.
+        TSTAT_MAYBE_DELIVERED = 52,
+        //! Input Error.
+        TSTAT_INPUT_FAILURE = 101,
+        //! Temporary Error.
+        TSTAT_TEMPORARY_FAILURE = 102,
+        //! Permanent Failure.
+        TSTAT_PERMANENT_FAILURE = 103
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Status.
+      uint8_t status;
+      //! Information.
+      std::string info;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 516;
+      }
+
+      TransmissionStatus(void);
+
+      TransmissionStatus*
+      clone(void) const
+      {
+        return new TransmissionStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TransmissionStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TransmissionStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(info);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Abort.
     class Abort: public Message
     {
@@ -17030,7 +17387,7 @@ namespace DUNE
 
       Abort(void);
 
-      Message*
+      Abort*
       clone(void) const
       {
         return new Abort(*this);
@@ -17115,7 +17472,7 @@ namespace DUNE
 
       PlanVariable(void);
 
-      Message*
+      PlanVariable*
       clone(void) const
       {
         return new PlanVariable(*this);
@@ -17188,7 +17545,7 @@ namespace DUNE
 
       PlanManeuver(void);
 
-      Message*
+      PlanManeuver*
       clone(void) const
       {
         return new PlanManeuver(*this);
@@ -17277,7 +17634,7 @@ namespace DUNE
 
       PlanTransition(void);
 
-      Message*
+      PlanTransition*
       clone(void) const
       {
         return new PlanTransition(*this);
@@ -17376,7 +17733,7 @@ namespace DUNE
 
       PlanSpecification(void);
 
-      Message*
+      PlanSpecification*
       clone(void) const
       {
         return new PlanSpecification(*this);
@@ -17478,7 +17835,7 @@ namespace DUNE
 
       EmergencyControl(void);
 
-      Message*
+      EmergencyControl*
       clone(void) const
       {
         return new EmergencyControl(*this);
@@ -17582,7 +17939,7 @@ namespace DUNE
 
       EmergencyControlState(void);
 
-      Message*
+      EmergencyControlState*
       clone(void) const
       {
         return new EmergencyControlState(*this);
@@ -17693,7 +18050,7 @@ namespace DUNE
 
       PlanDB(void);
 
-      Message*
+      PlanDB*
       clone(void) const
       {
         return new PlanDB(*this);
@@ -17786,7 +18143,7 @@ namespace DUNE
 
       PlanDBInformation(void);
 
-      Message*
+      PlanDBInformation*
       clone(void) const
       {
         return new PlanDBInformation(*this);
@@ -17865,7 +18222,7 @@ namespace DUNE
 
       PlanDBState(void);
 
-      Message*
+      PlanDBState*
       clone(void) const
       {
         return new PlanDBState(*this);
@@ -17995,7 +18352,7 @@ namespace DUNE
 
       PlanControl(void);
 
-      Message*
+      PlanControl*
       clone(void) const
       {
         return new PlanControl(*this);
@@ -18116,7 +18473,7 @@ namespace DUNE
 
       PlanControlState(void);
 
-      Message*
+      PlanControlState*
       clone(void) const
       {
         return new PlanControlState(*this);
@@ -18209,7 +18566,7 @@ namespace DUNE
 
       PlanGeneration(void);
 
-      Message*
+      PlanGeneration*
       clone(void) const
       {
         return new PlanGeneration(*this);
@@ -18325,7 +18682,7 @@ namespace DUNE
 
       LeaderState(void);
 
-      Message*
+      LeaderState*
       clone(void) const
       {
         return new LeaderState(*this);
@@ -18430,7 +18787,7 @@ namespace DUNE
 
       PlanStatistics(void);
 
-      Message*
+      PlanStatistics*
       clone(void) const
       {
         return new PlanStatistics(*this);
@@ -18528,7 +18885,7 @@ namespace DUNE
 
       ReportedState(void);
 
-      Message*
+      ReportedState*
       clone(void) const
       {
         return new ReportedState(*this);
@@ -18607,7 +18964,7 @@ namespace DUNE
 
       RemoteSensorInfo(void);
 
-      Message*
+      RemoteSensorInfo*
       clone(void) const
       {
         return new RemoteSensorInfo(*this);
@@ -18678,7 +19035,7 @@ namespace DUNE
 
       MapPoint(void);
 
-      Message*
+      MapPoint*
       clone(void) const
       {
         return new MapPoint(*this);
@@ -18768,7 +19125,7 @@ namespace DUNE
 
       MapFeature(void);
 
-      Message*
+      MapFeature*
       clone(void) const
       {
         return new MapFeature(*this);
@@ -18853,7 +19210,7 @@ namespace DUNE
 
       Map(void);
 
-      Message*
+      Map*
       clone(void) const
       {
         return new Map(*this);
@@ -18963,7 +19320,7 @@ namespace DUNE
 
       CcuEvent(void);
 
-      Message*
+      CcuEvent*
       clone(void) const
       {
         return new CcuEvent(*this);
@@ -19048,7 +19405,7 @@ namespace DUNE
 
       VehicleLinks(void);
 
-      Message*
+      VehicleLinks*
       clone(void) const
       {
         return new VehicleLinks(*this);
@@ -19135,7 +19492,7 @@ namespace DUNE
 
       TrexObservation(void);
 
-      Message*
+      TrexObservation*
       clone(void) const
       {
         return new TrexObservation(*this);
@@ -19223,7 +19580,7 @@ namespace DUNE
 
       TrexCommand(void);
 
-      Message*
+      TrexCommand*
       clone(void) const
       {
         return new TrexCommand(*this);
@@ -19311,7 +19668,7 @@ namespace DUNE
 
       TrexAttribute(void);
 
-      Message*
+      TrexAttribute*
       clone(void) const
       {
         return new TrexAttribute(*this);
@@ -19382,7 +19739,7 @@ namespace DUNE
 
       TrexToken(void);
 
-      Message*
+      TrexToken*
       clone(void) const
       {
         return new TrexToken(*this);
@@ -19484,7 +19841,7 @@ namespace DUNE
 
       TrexOperation(void);
 
-      Message*
+      TrexOperation*
       clone(void) const
       {
         return new TrexOperation(*this);
@@ -19569,7 +19926,7 @@ namespace DUNE
 
       TrexPlan(void);
 
-      Message*
+      TrexPlan*
       clone(void) const
       {
         return new TrexPlan(*this);
@@ -19654,7 +20011,7 @@ namespace DUNE
 
       Event(void);
 
-      Message*
+      Event*
       clone(void) const
       {
         return new Event(*this);
@@ -19723,7 +20080,7 @@ namespace DUNE
 
       CompressedImage(void);
 
-      Message*
+      CompressedImage*
       clone(void) const
       {
         return new CompressedImage(*this);
@@ -19796,7 +20153,7 @@ namespace DUNE
 
       ImageTxSettings(void);
 
-      Message*
+      ImageTxSettings*
       clone(void) const
       {
         return new ImageTxSettings(*this);
@@ -19865,7 +20222,7 @@ namespace DUNE
 
       RemoteState(void);
 
-      Message*
+      RemoteState*
       clone(void) const
       {
         return new RemoteState(*this);
@@ -19938,7 +20295,7 @@ namespace DUNE
 
       Target(void);
 
-      Message*
+      Target*
       clone(void) const
       {
         return new Target(*this);
@@ -20007,7 +20364,7 @@ namespace DUNE
 
       EntityParameter(void);
 
-      Message*
+      EntityParameter*
       clone(void) const
       {
         return new EntityParameter(*this);
@@ -20076,7 +20433,7 @@ namespace DUNE
 
       EntityParameters(void);
 
-      Message*
+      EntityParameters*
       clone(void) const
       {
         return new EntityParameters(*this);
@@ -20163,7 +20520,7 @@ namespace DUNE
 
       QueryEntityParameters(void);
 
-      Message*
+      QueryEntityParameters*
       clone(void) const
       {
         return new QueryEntityParameters(*this);
@@ -20232,7 +20589,7 @@ namespace DUNE
 
       SetEntityParameters(void);
 
-      Message*
+      SetEntityParameters*
       clone(void) const
       {
         return new SetEntityParameters(*this);
@@ -20315,7 +20672,7 @@ namespace DUNE
 
       SaveEntityParameters(void);
 
-      Message*
+      SaveEntityParameters*
       clone(void) const
       {
         return new SaveEntityParameters(*this);
@@ -20382,7 +20739,7 @@ namespace DUNE
 
       CreateSession(void);
 
-      Message*
+      CreateSession*
       clone(void) const
       {
         return new CreateSession(*this);
@@ -20443,7 +20800,7 @@ namespace DUNE
 
       CloseSession(void);
 
-      Message*
+      CloseSession*
       clone(void) const
       {
         return new CloseSession(*this);
@@ -20506,7 +20863,7 @@ namespace DUNE
 
       SessionSubscription(void);
 
-      Message*
+      SessionSubscription*
       clone(void) const
       {
         return new SessionSubscription(*this);
@@ -20573,7 +20930,7 @@ namespace DUNE
 
       SessionKeepAlive(void);
 
-      Message*
+      SessionKeepAlive*
       clone(void) const
       {
         return new SessionKeepAlive(*this);
@@ -20645,7 +21002,7 @@ namespace DUNE
 
       SessionStatus(void);
 
-      Message*
+      SessionStatus*
       clone(void) const
       {
         return new SessionStatus(*this);
@@ -20706,7 +21063,7 @@ namespace DUNE
 
       PushEntityParameters(void);
 
-      Message*
+      PushEntityParameters*
       clone(void) const
       {
         return new PushEntityParameters(*this);
@@ -20773,7 +21130,7 @@ namespace DUNE
 
       PopEntityParameters(void);
 
-      Message*
+      PopEntityParameters*
       clone(void) const
       {
         return new PopEntityParameters(*this);
@@ -20851,7 +21208,7 @@ namespace DUNE
 
       IoEvent(void);
 
-      Message*
+      IoEvent*
       clone(void) const
       {
         return new IoEvent(*this);
@@ -20933,7 +21290,7 @@ namespace DUNE
 
       UamTxFrame(void);
 
-      Message*
+      UamTxFrame*
       clone(void) const
       {
         return new UamTxFrame(*this);
@@ -21015,7 +21372,7 @@ namespace DUNE
 
       UamRxFrame(void);
 
-      Message*
+      UamRxFrame*
       clone(void) const
       {
         return new UamRxFrame(*this);
@@ -21103,7 +21460,7 @@ namespace DUNE
 
       UamTxStatus(void);
 
-      Message*
+      UamTxStatus*
       clone(void) const
       {
         return new UamTxStatus(*this);
@@ -21180,7 +21537,7 @@ namespace DUNE
 
       UamRxRange(void);
 
-      Message*
+      UamRxRange*
       clone(void) const
       {
         return new UamRxRange(*this);
@@ -21274,7 +21631,7 @@ namespace DUNE
 
       FormCtrlParam(void);
 
-      Message*
+      FormCtrlParam*
       clone(void) const
       {
         return new FormCtrlParam(*this);
@@ -21339,7 +21696,7 @@ namespace DUNE
 
       FormationEval(void);
 
-      Message*
+      FormationEval*
       clone(void) const
       {
         return new FormationEval(*this);
@@ -21431,7 +21788,7 @@ namespace DUNE
 
       FormationControlParams(void);
 
-      Message*
+      FormationControlParams*
       clone(void) const
       {
         return new FormationControlParams(*this);
@@ -21530,7 +21887,7 @@ namespace DUNE
 
       FormationEvaluation(void);
 
-      Message*
+      FormationEvaluation*
       clone(void) const
       {
         return new FormationEvaluation(*this);
@@ -21619,7 +21976,7 @@ namespace DUNE
 
       MessagePart(void);
 
-      Message*
+      MessagePart*
       clone(void) const
       {
         return new MessagePart(*this);
@@ -21688,7 +22045,7 @@ namespace DUNE
 
       NeptusBlob(void);
 
-      Message*
+      NeptusBlob*
       clone(void) const
       {
         return new NeptusBlob(*this);
@@ -21753,7 +22110,7 @@ namespace DUNE
 
       Aborted(void);
 
-      Message*
+      Aborted*
       clone(void) const
       {
         return new Aborted(*this);
@@ -21812,7 +22169,7 @@ namespace DUNE
 
       UsblAngles(void);
 
-      Message*
+      UsblAngles*
       clone(void) const
       {
         return new UsblAngles(*this);
@@ -21879,7 +22236,7 @@ namespace DUNE
 
       UsblPosition(void);
 
-      Message*
+      UsblPosition*
       clone(void) const
       {
         return new UsblPosition(*this);
@@ -21948,7 +22305,7 @@ namespace DUNE
 
       UsblFix(void);
 
-      Message*
+      UsblFix*
       clone(void) const
       {
         return new UsblFix(*this);
@@ -22011,7 +22368,7 @@ namespace DUNE
 
       ParametersXml(void);
 
-      Message*
+      ParametersXml*
       clone(void) const
       {
         return new ParametersXml(*this);
@@ -22076,7 +22433,7 @@ namespace DUNE
 
       GetParametersXml(void);
 
-      Message*
+      GetParametersXml*
       clone(void) const
       {
         return new GetParametersXml(*this);
@@ -22135,7 +22492,7 @@ namespace DUNE
 
       SetImageCoords(void);
 
-      Message*
+      SetImageCoords*
       clone(void) const
       {
         return new SetImageCoords(*this);
@@ -22200,7 +22557,7 @@ namespace DUNE
 
       GetImageCoords(void);
 
-      Message*
+      GetImageCoords*
       clone(void) const
       {
         return new GetImageCoords(*this);
@@ -22271,7 +22628,7 @@ namespace DUNE
 
       GetWorldCoordinates(void);
 
-      Message*
+      GetWorldCoordinates*
       clone(void) const
       {
         return new GetWorldCoordinates(*this);
@@ -22348,7 +22705,7 @@ namespace DUNE
 
       UsblAnglesExtended(void);
 
-      Message*
+      UsblAnglesExtended*
       clone(void) const
       {
         return new UsblAnglesExtended(*this);
@@ -22435,7 +22792,7 @@ namespace DUNE
 
       UsblPositionExtended(void);
 
-      Message*
+      UsblPositionExtended*
       clone(void) const
       {
         return new UsblPositionExtended(*this);
@@ -22512,7 +22869,7 @@ namespace DUNE
 
       UsblFixExtended(void);
 
-      Message*
+      UsblFixExtended*
       clone(void) const
       {
         return new UsblFixExtended(*this);
@@ -22587,7 +22944,7 @@ namespace DUNE
 
       UsblModem(void);
 
-      Message*
+      UsblModem*
       clone(void) const
       {
         return new UsblModem(*this);
@@ -22667,7 +23024,7 @@ namespace DUNE
 
       UsblConfig(void);
 
-      Message*
+      UsblConfig*
       clone(void) const
       {
         return new UsblConfig(*this);
@@ -22761,7 +23118,7 @@ namespace DUNE
 
       DissolvedOrganicMatter(void);
 
-      Message*
+      DissolvedOrganicMatter*
       clone(void) const
       {
         return new DissolvedOrganicMatter(*this);
@@ -22828,7 +23185,7 @@ namespace DUNE
 
       OpticalBackscatter(void);
 
-      Message*
+      OpticalBackscatter*
       clone(void) const
       {
         return new OpticalBackscatter(*this);
@@ -22925,7 +23282,7 @@ namespace DUNE
 
       Tachograph(void);
 
-      Message*
+      Tachograph*
       clone(void) const
       {
         return new Tachograph(*this);
@@ -23009,7 +23366,7 @@ namespace DUNE
 
       ApmStatus(void);
 
-      Message*
+      ApmStatus*
       clone(void) const
       {
         return new ApmStatus(*this);
@@ -23091,7 +23448,7 @@ namespace DUNE
 
       SadcReadings(void);
 
-      Message*
+      SadcReadings*
       clone(void) const
       {
         return new SadcReadings(*this);

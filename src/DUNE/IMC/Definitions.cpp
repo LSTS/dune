@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d292e724592557940354dddbfc5a9d32                            *
+// IMC XML MD5: 4d8734a1111656aac56f803acdc90c22                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -6726,6 +6726,74 @@ namespace DUNE
 
     void
     DevDataBinary::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    Force::Force(void)
+    {
+      m_header.mgid = 275;
+      clear();
+    }
+
+    void
+    Force::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    Force::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Force& other__ = static_cast<const Force&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    Force::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    Force::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Force::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Force::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Force::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Force::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Force::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
     }
@@ -18194,6 +18262,328 @@ namespace DUNE
       IMC::toJSON(os__, "comm_interface", comm_interface, nindent__);
       IMC::toJSON(os__, "period", period, nindent__);
       IMC::toJSON(os__, "sys_dst", sys_dst, nindent__);
+    }
+
+    StateReport::StateReport(void)
+    {
+      m_header.mgid = 514;
+      clear();
+    }
+
+    void
+    StateReport::clear(void)
+    {
+      stime = 0;
+      latitude = 0;
+      longitude = 0;
+      altitude = 0;
+      depth = 0;
+      heading = 0;
+      speed = 0;
+      fuel = 0;
+      exec_state = 0;
+      plan_checksum = 0;
+    }
+
+    bool
+    StateReport::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::StateReport& other__ = static_cast<const StateReport&>(msg__);
+      if (stime != other__.stime) return false;
+      if (latitude != other__.latitude) return false;
+      if (longitude != other__.longitude) return false;
+      if (altitude != other__.altitude) return false;
+      if (depth != other__.depth) return false;
+      if (heading != other__.heading) return false;
+      if (speed != other__.speed) return false;
+      if (fuel != other__.fuel) return false;
+      if (exec_state != other__.exec_state) return false;
+      if (plan_checksum != other__.plan_checksum) return false;
+      return true;
+    }
+
+    int
+    StateReport::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    StateReport::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(stime, ptr__);
+      ptr__ += IMC::serialize(latitude, ptr__);
+      ptr__ += IMC::serialize(longitude, ptr__);
+      ptr__ += IMC::serialize(altitude, ptr__);
+      ptr__ += IMC::serialize(depth, ptr__);
+      ptr__ += IMC::serialize(heading, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(fuel, ptr__);
+      ptr__ += IMC::serialize(exec_state, ptr__);
+      ptr__ += IMC::serialize(plan_checksum, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    StateReport::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(stime, bfr__, size__);
+      bfr__ += IMC::deserialize(latitude, bfr__, size__);
+      bfr__ += IMC::deserialize(longitude, bfr__, size__);
+      bfr__ += IMC::deserialize(altitude, bfr__, size__);
+      bfr__ += IMC::deserialize(depth, bfr__, size__);
+      bfr__ += IMC::deserialize(heading, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(fuel, bfr__, size__);
+      bfr__ += IMC::deserialize(exec_state, bfr__, size__);
+      bfr__ += IMC::deserialize(plan_checksum, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    StateReport::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(stime, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(latitude, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(longitude, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(altitude, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(depth, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(heading, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(fuel, bfr__, size__);
+      bfr__ += IMC::deserialize(exec_state, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(plan_checksum, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    StateReport::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "stime", stime, nindent__);
+      IMC::toJSON(os__, "latitude", latitude, nindent__);
+      IMC::toJSON(os__, "longitude", longitude, nindent__);
+      IMC::toJSON(os__, "altitude", altitude, nindent__);
+      IMC::toJSON(os__, "depth", depth, nindent__);
+      IMC::toJSON(os__, "heading", heading, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "fuel", fuel, nindent__);
+      IMC::toJSON(os__, "exec_state", exec_state, nindent__);
+      IMC::toJSON(os__, "plan_checksum", plan_checksum, nindent__);
+    }
+
+    TransmissionRequest::TransmissionRequest(void)
+    {
+      m_header.mgid = 515;
+      clear();
+      msg_data.setParent(this);
+    }
+
+    void
+    TransmissionRequest::clear(void)
+    {
+      req_id = 0;
+      comm_mean = 0;
+      destination.clear();
+      deadline = 0;
+      data_mode = 0;
+      msg_data.clear();
+      txt_data.clear();
+      raw_data.clear();
+    }
+
+    bool
+    TransmissionRequest::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TransmissionRequest& other__ = static_cast<const TransmissionRequest&>(msg__);
+      if (req_id != other__.req_id) return false;
+      if (comm_mean != other__.comm_mean) return false;
+      if (destination != other__.destination) return false;
+      if (deadline != other__.deadline) return false;
+      if (data_mode != other__.data_mode) return false;
+      if (msg_data != other__.msg_data) return false;
+      if (txt_data != other__.txt_data) return false;
+      if (raw_data != other__.raw_data) return false;
+      return true;
+    }
+
+    int
+    TransmissionRequest::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    TransmissionRequest::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(comm_mean, ptr__);
+      ptr__ += IMC::serialize(destination, ptr__);
+      ptr__ += IMC::serialize(deadline, ptr__);
+      ptr__ += IMC::serialize(data_mode, ptr__);
+      ptr__ += msg_data.serialize(ptr__);
+      ptr__ += IMC::serialize(txt_data, ptr__);
+      ptr__ += IMC::serialize(raw_data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TransmissionRequest::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(comm_mean, bfr__, size__);
+      bfr__ += IMC::deserialize(destination, bfr__, size__);
+      bfr__ += IMC::deserialize(deadline, bfr__, size__);
+      bfr__ += IMC::deserialize(data_mode, bfr__, size__);
+      bfr__ += msg_data.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(txt_data, bfr__, size__);
+      bfr__ += IMC::deserialize(raw_data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TransmissionRequest::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(comm_mean, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(deadline, bfr__, size__);
+      bfr__ += IMC::deserialize(data_mode, bfr__, size__);
+      bfr__ += msg_data.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(txt_data, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(raw_data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TransmissionRequest::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "comm_mean", comm_mean, nindent__);
+      IMC::toJSON(os__, "destination", destination, nindent__);
+      IMC::toJSON(os__, "deadline", deadline, nindent__);
+      IMC::toJSON(os__, "data_mode", data_mode, nindent__);
+      msg_data.toJSON(os__, "msg_data", nindent__);
+      IMC::toJSON(os__, "txt_data", txt_data, nindent__);
+      IMC::toJSON(os__, "raw_data", raw_data, nindent__);
+    }
+
+    void
+    TransmissionRequest::setTimeStampNested(double value__)
+    {
+      if (!msg_data.isNull())
+      {
+        msg_data.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    TransmissionRequest::setSourceNested(uint16_t value__)
+    {
+      if (!msg_data.isNull())
+      {
+        msg_data.get()->setSource(value__);
+      }
+    }
+
+    void
+    TransmissionRequest::setSourceEntityNested(uint8_t value__)
+    {
+      if (!msg_data.isNull())
+      {
+        msg_data.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    TransmissionRequest::setDestinationNested(uint16_t value__)
+    {
+      if (!msg_data.isNull())
+      {
+        msg_data.get()->setDestination(value__);
+      }
+    }
+
+    void
+    TransmissionRequest::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!msg_data.isNull())
+      {
+        msg_data.get()->setDestinationEntity(value__);
+      }
+    }
+
+    TransmissionStatus::TransmissionStatus(void)
+    {
+      m_header.mgid = 516;
+      clear();
+    }
+
+    void
+    TransmissionStatus::clear(void)
+    {
+      req_id = 0;
+      status = 0;
+      info.clear();
+    }
+
+    bool
+    TransmissionStatus::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TransmissionStatus& other__ = static_cast<const TransmissionStatus&>(msg__);
+      if (req_id != other__.req_id) return false;
+      if (status != other__.status) return false;
+      if (info != other__.info) return false;
+      return true;
+    }
+
+    int
+    TransmissionStatus::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    TransmissionStatus::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(status, ptr__);
+      ptr__ += IMC::serialize(info, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TransmissionStatus::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::deserialize(info, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TransmissionStatus::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(info, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TransmissionStatus::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "status", status, nindent__);
+      IMC::toJSON(os__, "info", info, nindent__);
     }
 
     Abort::Abort(void)
