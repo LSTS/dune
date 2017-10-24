@@ -39,7 +39,7 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    static const float c_delay_startup = 4.0f;
+    static const float c_delay_startup = 6.0f;
     static const float c_timeout_uart = 1.0f;
     static const float c_mS_to_cm = 0.1f;
     static const float c_bar_to_hPa = 1000.0f;
