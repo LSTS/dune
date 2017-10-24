@@ -63,6 +63,10 @@ namespace Power
       std::string fcap_elabel;
       //! State to dispatch Feul level
       bool dispatch_fuel_level;
+      //! Level of battery below which a warning will be thrown.
+      float war_lvl;
+      //! Level of battery below which an error will be thrown.
+      float err_lvl;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -146,6 +150,20 @@ namespace Power
         param("Dispatch Fuel Level", m_args.dispatch_fuel_level)
         .defaultValue("true")
         .description("Dispatch Fuel Level.");
+
+        param("Warning Level", m_args.war_lvl)
+        .defaultValue("35.0")
+        .minimumValue("20.0")
+        .maximumValue("100.0")
+        .units(Units::Percentage)
+        .description("Level of battery below which a warning will be thrown");
+
+        param("Error Level", m_args.err_lvl)
+        .defaultValue("20.0")
+        .minimumValue("1.0")
+        .maximumValue("20.0")
+        .units(Units::Percentage)
+        .description("Level of battery below which an error will be thrown");
 
       }
 
@@ -243,10 +261,6 @@ namespace Power
       dispatchData(void)
       {
         m_driver->resetStateNewData();
-        std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
-        std::sprintf(m_bufer_entity, "H: %d %%, Volt: %.3f V, RCap: %.3f Ah", m_driver->m_batManData.health,
-            m_driver->m_batManData.voltage, m_driver->m_batManData.r_cap);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
 
         m_volt[0].setTimeStamp(m_tstamp);
         m_volt[0].value = m_driver->m_batManData.voltage;
@@ -286,6 +300,25 @@ namespace Power
           m_fuel.confidence = 100;
           dispatch(m_fuel, DF_KEEP_TIME);
         }
+
+        if (m_fuel.value < m_args.err_lvl)
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
+        }
+        else if (m_fuel.value < m_args.war_lvl)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_LOW);
+        }
+        else
+        {
+          std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
+          std::sprintf(m_bufer_entity, "H: %d %%, Volt: %.3f V, RCap: %.3f Ah",
+                       m_driver->m_batManData.health,
+                       m_driver->m_batManData.voltage,
+                       m_driver->m_batManData.r_cap);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+        }
+
       }
 
       //! Main loop.
