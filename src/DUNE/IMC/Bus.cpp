@@ -85,9 +85,9 @@ namespace DUNE
       bind->setTimeStamp();
       bind->consumer = task->getName();
       bind->message_id = id;
-      m_bind_msgs.push_back(bind);
 
       Concurrency::ScopedRWLock l(m_lock, true);
+      m_bind_msgs.push_back(bind);
       TransportList::iterator itr = std::find(m_recipients[id].begin(), m_recipients[id].end(), task);
       if (itr == m_recipients[id].end())
         m_recipients[id].push_back(task);
