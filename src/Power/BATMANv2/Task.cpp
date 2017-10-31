@@ -235,13 +235,20 @@ namespace Power
           inf("Firmware Version: %s", m_driver->getFirmwareVersion().c_str());
 
         if(!m_driver->initBatMan(m_args.number_cell, m_args.scale_factor))
-          throw RestartNeeded(DTR("failed to init BatMan"), 5, true);
+        {
+          m_driver->sendCommandNoRsp("@RESET,*");
+          Delay::wait(1.0);
+          throw RestartNeeded(DTR("failed to init BatMan"), 10, true);
+        }
 
         if(!m_driver->startAcquisition())
-          throw RestartNeeded(DTR("failed to start acquisition"), 5, true);
+        {
+          m_driver->sendCommandNoRsp("@RESET,*");
+          Delay::wait(1.0);
+          throw RestartNeeded(DTR("failed to start acquisition"), 10, true);
+        }
 
         debug("Init and Start OK");
-
         m_wdog.setTop(m_args.input_timeout);
       }
 
@@ -324,7 +331,7 @@ namespace Power
       //! Main loop.
       void
       onMain(void)
-      {
+      {    
         while (!stopping())
         {
           waitForMessages(0.01);
@@ -332,7 +339,9 @@ namespace Power
           if (m_wdog.overflow())
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+            m_driver->sendCommandNoRsp("@RESET,*");
+            Delay::wait(1.0);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
           }
 
           if (!Poll::poll(*m_uart, m_args.input_timeout))
@@ -347,7 +356,6 @@ namespace Power
         }
         debug("Sending stop to BatMan");
         m_driver->stopAcquisition();
-
       }
     };
   }

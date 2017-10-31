@@ -174,6 +174,15 @@ namespace Power
             return false;
           }
 
+          void
+          sendCommandNoRsp(const char* cmd)
+          {
+            char cmdText[32];
+            std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
+            m_task->spew("Command (no rsp): %s", cmdText);
+            m_uart->writeString(cmdText);
+          }
+
           bool
           haveNewData(void)
           {
