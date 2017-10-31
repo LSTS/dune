@@ -39,7 +39,7 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    static const float c_delay_startup = 6.0f;
+    static const float c_delay_startup = 10.0f;
     static const float c_timeout_uart = 1.0f;
     static const float c_mS_to_cm = 0.1f;
     static const float c_bar_to_hPa = 1000.0f;
@@ -256,7 +256,7 @@ namespace Sensors
         getInfoOfCTD();
 
         if(!m_driver->initCTD(m_args.input_samples_number))
-          throw RestartNeeded(DTR("failed to init CTD"), 5, true);
+          throw RestartNeeded(DTR("failed to init CTD"), 10, true);
 
         m_wdog.setTop(m_args.input_timeout);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -310,7 +310,7 @@ namespace Sensors
         }
         else
         {
-          throw RestartNeeded(DTR("com error"), 5, true);
+          throw RestartNeeded(DTR("com error - get info"), 10, true);
         }
       }
 
@@ -378,48 +378,48 @@ namespace Sensors
       {
         if (m_sdstate.haveConductivity)
         {
-          debug("Conductivity: %f S/m", m_conductivity);
+          spew("Conductivity: %f S/m", m_conductivity);
           m_cond.setTimeStamp(m_tstamp);
           m_cond.value = m_conductivity;
           dispatch(m_cond, DF_KEEP_TIME);
         }
         if (m_sdstate.havePressure)
         {
-          debug("Pressure: %f Bar", m_pressure);
+          spew("Pressure: %f Bar", m_pressure);
           m_pres.setTimeStamp(m_tstamp);
           m_pres.value = m_pressure * c_bar_to_hPa;
           dispatch(m_pres, DF_KEEP_TIME);
         }
         if (m_sdstate.haveSoundSpeed)
         {
-          debug("SoundSpeed: %f m/s", m_soundSpeed);
+          spew("SoundSpeed: %f m/s", m_soundSpeed);
           m_sspe.setTimeStamp(m_tstamp);
           m_sspe.value = m_soundSpeed;
           dispatch(m_sspe, DF_KEEP_TIME);
         }
         if (m_sdstate.haveTemperature)
         {
-          debug("Temperature: %f C", m_temperature);
+          spew("Temperature: %f C", m_temperature);
           m_temp.setTimeStamp(m_tstamp);
           m_temp.value = m_temperature;
           dispatch(m_temp, DF_KEEP_TIME);
         }
         if (m_sdstate.haveSalinity)
         {
-          debug("Salinity: %f", m_salinity);
+          spew("Salinity: %f", m_salinity);
           m_sali.setTimeStamp(m_tstamp);
           m_sali.value = m_salinity;
           dispatch(m_sali, DF_KEEP_TIME);
         }
         if (m_sdstate.haveTurbidity)
         {
-          debug("Turbidity: %f", m_turbidity);
+          spew("Turbidity: %f", m_turbidity);
           m_turb.setTimeStamp(m_tstamp);
           m_turb.value = m_turbidity;
           dispatch(m_turb, DF_KEEP_TIME);
         }
 
-        debug(" ");
+        spew(" ");
         resetStateDataSensor();
       }
 
@@ -434,7 +434,7 @@ namespace Sensors
           if (m_wdog.overflow())
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
           }
 
           if (!Poll::poll(*m_uart, c_timeout_uart))

@@ -120,6 +120,10 @@ namespace Sensors
       {
         char usart_rec[2];
         bool result = false;
+        sendCommand("\r", "\r\n");
+        Delay::wait(2.0);
+        m_uart->flush();
+        Delay::wait(2.0);
 
         while(!m_task->isStopping())
         {
@@ -222,13 +226,13 @@ namespace Sensors
       sendCommand(const char* cmd, const char* reply)
       {
         char bfrUart[128];
-        m_task->spew("Command: %s", cmd);
+        m_task->debug("Command: %s", cmd);
         m_uart->writeString(cmd);
 
         if (Poll::poll(*m_uart, m_timeout_uart))
         {
           m_uart->readString(bfrUart, sizeof(bfrUart));
-          m_task->spew("Reply: %s", bfr);
+          m_task->debug("Reply: %s", bfr);
           if (std::strcmp(bfrUart, reply) == 0)
             return true;
         }
@@ -247,7 +251,7 @@ namespace Sensors
           return false;
         }
 
-        m_task->debug("%s", bfr);
+        m_task->spew("%s", bfr);
 
         switch(numberSensors)
         {
