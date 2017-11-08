@@ -527,6 +527,8 @@ namespace DUNE
       int16_t m_rpm;
       //! Kalman Filter process noise covariance matrix parameters.
       std::vector<double> m_process_noise;
+      //! Kalman Filter observation noise covariance matrix parameters for imu with ahrs.
+      std::vector<double> m_observation_noise_imu;
       //! Kalman Filter measurement noise covariance matrix parameters.
       std::vector<double> m_measure_noise;
       //! Kalman Filter state covariance matrix parameters.
@@ -561,12 +563,18 @@ namespace DUNE
       Time::Counter<double> m_time_without_depth;
       //! Time without euler angles readings.
       Time::Counter<double> m_time_without_euler;
+      //! temp hrate
+      double m_z_anglle;
       //! Valid GPS speed over ground.
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
       double m_last_z;
       //! Dead reckoning mode.
       bool m_dead_reckoning;
+      //! Dead reckoning mode sync.
+      bool m_dead_reckoning_sync;
+      //! Dead reckoning  delta sync
+      bool m_dead_reckoning_delta;
       //! Vehicle is aligned.
       bool m_aligned;
       //! IMU entity id.

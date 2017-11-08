@@ -221,6 +221,8 @@ namespace DUNE
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
       m_dead_reckoning = false;
+      m_dead_reckoning_sync =false;
+      m_dead_reckoning_delta =false;
       m_alt_sanity = true;
       m_aligned = false;
       m_edelta_ts = 0.1;
@@ -482,6 +484,9 @@ namespace DUNE
       if (msg->getSourceEntity() != m_imu_eid)
         return;
 
+      if(!m_dead_reckoning_sync)
+        return;
+      m_dead_reckoning_delta = true;
       if (std::fabs(msg->x) > Math::c_pi / 10.0 ||
           std::fabs(msg->y) > Math::c_pi / 10.0 ||
           std::fabs(msg->z) > Math::c_pi / 10.0)
@@ -627,7 +632,7 @@ namespace DUNE
     {
       m_gvel = *msg;
       // Correct for the distance between center of gravity and dvl.
-      m_gvel.y = msg->y - m_dist_dvl_cg * getAngularVelocity(AXIS_Z);
+      m_gvel.y = msg->y - m_dist_dvl_cg * m_z_anglle;
 
       if (msg->validity != m_gvel_val_bits)
         return;
@@ -1011,7 +1016,7 @@ namespace DUNE
 
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
-      m_navdata.cyaw = m_heading;
+      m_navdata.cyaw = Math::Angles::normalizeRadian(m_heading);
     }
 
     bool
