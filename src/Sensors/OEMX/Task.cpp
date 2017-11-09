@@ -277,14 +277,15 @@ namespace Sensors
       unsigned
       getEid(std::string label)
       {
+        std::string entity_label(getEntityLabel());
         try
         {
-          return resolveEntity(label);
+          return resolveEntity(entity_label + " " + label);
         }
         catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
           (void)e;
-          return reserveEntity(label);
+          return reserveEntity(entity_label + " " + label);
         }
       }
 
