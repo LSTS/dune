@@ -49,8 +49,6 @@ namespace Sensors
                                                "Temperature", "Pressure",
                                                "Turbidity" };
 
-    static const std::string c_calc_options[] = { "Salinity", "SoundSpeed" };
-
     struct Arguments
     {
       //! Serial port device.
@@ -181,17 +179,17 @@ namespace Sensors
         {
           if (m_args.primary_mount[i].compare(c_s_options[0]) == 0)
           {
-            m_cond.setSourceEntity(getEid(c_s_options[0]));
+            m_cond.setSourceEntity(getEid(getEntityLabel()));
             m_sdstate.haveConductivity = true;
           }
           else if (m_args.primary_mount[i].compare(c_s_options[1]) == 0)
           {
-            m_sspe.setSourceEntity(getEid(c_s_options[1]));
+            m_sspe.setSourceEntity(getEid(getEntityLabel()));
             m_sdstate.haveSoundSpeed = true;
           }
           else if (m_args.primary_mount[i].compare(c_s_options[2]) == 0)
           {
-            m_temp.setSourceEntity(getEid(c_s_options[2]));
+            m_temp.setSourceEntity(getEid(getEntityLabel()));
             m_sdstate.haveTemperature = true;
           }
         }
@@ -200,29 +198,29 @@ namespace Sensors
         {
           if (m_args.secondary_mount[i].compare(c_s_options[3]) == 0)
           {
-            m_pres.setSourceEntity(getEid(c_s_options[3]));
+            m_pres.setSourceEntity(getEid(getEntityLabel()));
             m_sdstate.havePressure = true;
           }
           else if (m_args.secondary_mount[i].compare(c_s_options[4]) == 0)
           {
-            m_turb.setSourceEntity(getEid(c_s_options[4]));
+            m_turb.setSourceEntity(getEid(getEntityLabel()));
             m_sdstate.haveTurbidity = true;
           }
           else if (m_args.secondary_mount[i].compare(c_s_options[2]) == 0)
           {
-            m_temp.setSourceEntity(getEid(c_s_options[2]));
+            m_temp.setSourceEntity(getEid(getEntityLabel()));
             m_sdstate.haveTemperature = true;
           }
         }
 
         if(m_sdstate.haveConductivity && m_sdstate.havePressure && m_sdstate.haveTemperature)
         {
-          m_sali.setSourceEntity(getEid(c_calc_options[0]));
+          m_sali.setSourceEntity(getEid(getEntityLabel()));
           m_sdstate.haveSalinity = true;
         }
 
         if(m_sdstate.haveSalinity && m_sdstate.havePressure && m_sdstate.haveTemperature && !m_sdstate.haveSoundSpeed)
-          m_sspe.setSourceEntity(getEid(c_calc_options[1]));
+          m_sspe.setSourceEntity(getEid(getEntityLabel()));
 
       }
 
@@ -277,15 +275,14 @@ namespace Sensors
       unsigned
       getEid(std::string label)
       {
-        std::string entity_label(getEntityLabel());
         try
         {
-          return resolveEntity(entity_label + " " + label);
+          return resolveEntity(label);
         }
         catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
           (void)e;
-          return reserveEntity(entity_label + " " + label);
+          return reserveEntity(label);
         }
       }
 
