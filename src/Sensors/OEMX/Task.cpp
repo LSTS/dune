@@ -41,7 +41,7 @@ namespace Sensors
 
     static const float c_delay_startup = 10.0f;
     static const float c_timeout_uart = 1.0f;
-    static const float c_mS_to_cm = 0.1f;
+    static const float c_mS_per_cm_to_S_per_m = 0.1f;
     static const float c_bar_to_hPa = 1000.0f;
     static const float c_dbar_to_bar = 0.1f;
     //! Sensor options.
@@ -321,7 +321,7 @@ namespace Sensors
         {
           if (m_args.primary_mount[i].compare(c_s_options[0]) == 0)
           {
-            m_conductivity = m_driver->m_ctdData.dataReceived[i] * c_mS_to_cm;
+            m_conductivity = m_driver->m_ctdData.dataReceived[i] * c_mS_per_cm_to_S_per_m;
             m_sdstate.haveConductivity = true;
             cntIndex++;
           }
