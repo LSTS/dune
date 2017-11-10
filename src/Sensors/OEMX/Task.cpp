@@ -169,66 +169,36 @@ namespace Sensors
         .description("List of sensors in secondary mount");
       }
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-        resetStateDataSensor();
-
-        for (unsigned i = 0; i < m_args.primary_mount.size(); i++)
-        {
-          if (m_args.primary_mount[i].compare(c_s_options[0]) == 0)
-          {
-            m_cond.setSourceEntity(getEid(getEntityLabel()));
-            m_sdstate.haveConductivity = true;
-          }
-          else if (m_args.primary_mount[i].compare(c_s_options[1]) == 0)
-          {
-            m_sspe.setSourceEntity(getEid(getEntityLabel()));
-            m_sdstate.haveSoundSpeed = true;
-          }
-          else if (m_args.primary_mount[i].compare(c_s_options[2]) == 0)
-          {
-            m_temp.setSourceEntity(getEid(getEntityLabel()));
-            m_sdstate.haveTemperature = true;
-          }
-        }
-
-        for (unsigned i = 0; i < m_args.secondary_mount.size(); i++)
-        {
-          if (m_args.secondary_mount[i].compare(c_s_options[3]) == 0)
-          {
-            m_pres.setSourceEntity(getEid(getEntityLabel()));
-            m_sdstate.havePressure = true;
-          }
-          else if (m_args.secondary_mount[i].compare(c_s_options[4]) == 0)
-          {
-            m_turb.setSourceEntity(getEid(getEntityLabel()));
-            m_sdstate.haveTurbidity = true;
-          }
-          else if (m_args.secondary_mount[i].compare(c_s_options[2]) == 0)
-          {
-            m_temp.setSourceEntity(getEid(getEntityLabel()));
-            m_sdstate.haveTemperature = true;
-          }
-        }
-
-        if(m_sdstate.haveConductivity && m_sdstate.havePressure && m_sdstate.haveTemperature)
-        {
-          m_sali.setSourceEntity(getEid(getEntityLabel()));
-          m_sdstate.haveSalinity = true;
-        }
-
-        if(m_sdstate.haveSalinity && m_sdstate.havePressure && m_sdstate.haveTemperature && !m_sdstate.haveSoundSpeed)
-          m_sspe.setSourceEntity(getEid(getEntityLabel()));
-
-      }
-
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        resetStateDataSensor();
+
+        for (unsigned i = 0; i < m_args.primary_mount.size(); i++)
+        {
+          if (m_args.primary_mount[i].compare(c_s_options[0]) == 0)
+            m_sdstate.haveConductivity = true;
+          else if (m_args.primary_mount[i].compare(c_s_options[1]) == 0)
+            m_sdstate.haveSoundSpeed = true;
+          else if (m_args.primary_mount[i].compare(c_s_options[2]) == 0)
+            m_sdstate.haveTemperature = true;
+        }
+
+        for (unsigned i = 0; i < m_args.secondary_mount.size(); i++)
+        {
+          if (m_args.secondary_mount[i].compare(c_s_options[3]) == 0)
+            m_sdstate.havePressure = true;
+          else if (m_args.secondary_mount[i].compare(c_s_options[4]) == 0)
+            m_sdstate.haveTurbidity = true;
+          else if (m_args.secondary_mount[i].compare(c_s_options[2]) == 0)
+            m_sdstate.haveTemperature = true;
+        }
+
+        if (m_sdstate.haveConductivity && m_sdstate.havePressure
+            && m_sdstate.haveTemperature)
+          m_sdstate.haveSalinity = true;
 
         try
         {
@@ -269,20 +239,6 @@ namespace Sensors
           m_poll.remove(*m_uart);
           Memory::clear(m_driver);
           Memory::clear(m_uart);
-        }
-      }
-
-      unsigned
-      getEid(std::string label)
-      {
-        try
-        {
-          return resolveEntity(label);
-        }
-        catch (Entities::EntityDataBase::NonexistentLabel& e)
-        {
-          (void)e;
-          return reserveEntity(label);
         }
       }
 
