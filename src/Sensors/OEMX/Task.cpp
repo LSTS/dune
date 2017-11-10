@@ -42,7 +42,7 @@ namespace Sensors
     static const float c_delay_startup = 10.0f;
     static const float c_timeout_uart = 1.0f;
     static const float c_mS_per_cm_to_S_per_m = 0.1f;
-    static const float c_bar_to_hPa = 1000.0f;
+    static const float c_bar_to_Pa = 100000.0f;
     static const float c_dbar_to_bar = 0.1f;
     //! Sensor options.
     static const std::string c_s_options[] = { "Conductivity", "SoundSpeed",
@@ -385,7 +385,7 @@ namespace Sensors
         {
           spew("Pressure: %f Bar", m_pressure);
           m_pres.setTimeStamp(m_tstamp);
-          m_pres.value = m_pressure * c_bar_to_hPa;
+          m_pres.value = m_pressure * c_bar_to_Pa;
           dispatch(m_pres, DF_KEEP_TIME);
         }
         if (m_sdstate.haveSoundSpeed)
