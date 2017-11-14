@@ -387,7 +387,7 @@ namespace Sensors
           if (m_sdstate.havePressure)
           {
             m_offset_pressure = m_pressure;
-            inf(DTR("CTD - Pressure calibrated"));
+            inf(DTR("CTD - Pressure calibrated (%f)"), m_offset_pressure);
           }
         }
 
