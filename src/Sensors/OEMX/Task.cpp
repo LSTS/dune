@@ -123,6 +123,10 @@ namespace Sensors
       std::size_t m_numberSensors;
       //! Timestamp.
       double m_tstamp;
+      //! Flag to control calibration of CTD
+      bool m_first_value;
+      //! Offset of pressure from CTD
+      float m_offset_pressure;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -208,6 +212,7 @@ namespace Sensors
           m_poll.add(*m_uart);
           m_driver = new DriverOEMX(this, m_uart, m_poll);
           m_numberSensors = m_args.primary_mount.size() + m_args.secondary_mount.size();
+          m_first_value = true;
         }
         catch (std::runtime_error& e)
         {
@@ -268,7 +273,8 @@ namespace Sensors
         }
       }
 
-      void formateDataCTD(void)
+      void
+      formateDataCTD(void)
       {
         std::size_t cntIndex = 0;
         for (std::size_t i = 0; i < m_args.primary_mount.size(); i++)
@@ -314,7 +320,7 @@ namespace Sensors
 
         if(m_sdstate.haveConductivity && m_sdstate.havePressure && m_sdstate.haveTemperature)
         {
-          m_salinity = UNESCO1983::computeSalinity(m_conductivity, m_pressure, m_temperature);
+          m_salinity = UNESCO1983::computeSalinity(m_conductivity, (m_pressure - m_offset_pressure), m_temperature);
           if(m_salinity < 0)
             m_salinity = 0;
           m_sdstate.haveSalinity = true;
@@ -322,7 +328,7 @@ namespace Sensors
 
         if(m_sdstate.haveSalinity && m_sdstate.havePressure && m_sdstate.haveTemperature && !m_sdstate.haveSoundSpeed)
         {
-          m_soundSpeed = UNESCO1983::computeSoundSpeed(m_salinity, m_pressure, m_temperature);
+          m_soundSpeed = UNESCO1983::computeSoundSpeed(m_salinity, (m_pressure - m_offset_pressure), m_temperature);
           m_sdstate.haveSoundSpeed = true;
         }
       }
@@ -330,47 +336,59 @@ namespace Sensors
       void
       dispatchData(void)
       {
-        if (m_sdstate.haveConductivity)
+        if (!m_first_value)
         {
-          spew("Conductivity: %f S/m", m_conductivity);
-          m_cond.setTimeStamp(m_tstamp);
-          m_cond.value = m_conductivity;
-          dispatch(m_cond, DF_KEEP_TIME);
+          if (m_sdstate.haveConductivity)
+          {
+            spew("Conductivity: %f S/m", m_conductivity);
+            m_cond.setTimeStamp(m_tstamp);
+            m_cond.value = m_conductivity;
+            dispatch(m_cond, DF_KEEP_TIME);
+          }
+          if (m_sdstate.havePressure)
+          {
+            spew("Pressure: %f Bar", (m_pressure - m_offset_pressure));
+            m_pres.setTimeStamp(m_tstamp);
+            m_pres.value = (m_pressure - m_offset_pressure) * c_bar_to_Pa;
+            dispatch(m_pres, DF_KEEP_TIME);
+          }
+          if (m_sdstate.haveSoundSpeed)
+          {
+            spew("SoundSpeed: %f m/s", m_soundSpeed);
+            m_sspe.setTimeStamp(m_tstamp);
+            m_sspe.value = m_soundSpeed;
+            dispatch(m_sspe, DF_KEEP_TIME);
+          }
+          if (m_sdstate.haveTemperature)
+          {
+            spew("Temperature: %f C", m_temperature);
+            m_temp.setTimeStamp(m_tstamp);
+            m_temp.value = m_temperature;
+            dispatch(m_temp, DF_KEEP_TIME);
+          }
+          if (m_sdstate.haveSalinity)
+          {
+            spew("Salinity: %f", m_salinity);
+            m_sali.setTimeStamp(m_tstamp);
+            m_sali.value = m_salinity;
+            dispatch(m_sali, DF_KEEP_TIME);
+          }
+          if (m_sdstate.haveTurbidity)
+          {
+            spew("Turbidity: %f", m_turbidity);
+            m_turb.setTimeStamp(m_tstamp);
+            m_turb.value = m_turbidity;
+            dispatch(m_turb, DF_KEEP_TIME);
+          }
         }
-        if (m_sdstate.havePressure)
+        else
         {
-          spew("Pressure: %f Bar", m_pressure);
-          m_pres.setTimeStamp(m_tstamp);
-          m_pres.value = m_pressure * c_bar_to_Pa;
-          dispatch(m_pres, DF_KEEP_TIME);
-        }
-        if (m_sdstate.haveSoundSpeed)
-        {
-          spew("SoundSpeed: %f m/s", m_soundSpeed);
-          m_sspe.setTimeStamp(m_tstamp);
-          m_sspe.value = m_soundSpeed;
-          dispatch(m_sspe, DF_KEEP_TIME);
-        }
-        if (m_sdstate.haveTemperature)
-        {
-          spew("Temperature: %f C", m_temperature);
-          m_temp.setTimeStamp(m_tstamp);
-          m_temp.value = m_temperature;
-          dispatch(m_temp, DF_KEEP_TIME);
-        }
-        if (m_sdstate.haveSalinity)
-        {
-          spew("Salinity: %f", m_salinity);
-          m_sali.setTimeStamp(m_tstamp);
-          m_sali.value = m_salinity;
-          dispatch(m_sali, DF_KEEP_TIME);
-        }
-        if (m_sdstate.haveTurbidity)
-        {
-          spew("Turbidity: %f", m_turbidity);
-          m_turb.setTimeStamp(m_tstamp);
-          m_turb.value = m_turbidity;
-          dispatch(m_turb, DF_KEEP_TIME);
+          m_first_value = false;
+          if (m_sdstate.havePressure)
+          {
+            m_offset_pressure = m_pressure;
+            inf(DTR("CTD - Pressure calibrated"));
+          }
         }
 
         spew(" ");

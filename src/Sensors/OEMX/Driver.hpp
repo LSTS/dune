@@ -253,44 +253,14 @@ namespace Sensors
 
         m_task->spew("%s", bfr);
 
-        switch(numberSensors)
-        {
-          case 1:
-            std::sscanf(bfr, " %f\r\n", &m_ctdData.dataReceived[0]);
-            break;
+        int total_sensors_read = std::sscanf(bfr, " %f %f %f %f %f %f\r\n", &m_ctdData.dataReceived[0], &m_ctdData.dataReceived[1],
+            &m_ctdData.dataReceived[2], &m_ctdData.dataReceived[3],
+            &m_ctdData.dataReceived[4], &m_ctdData.dataReceived[5]);
 
-          case 2:
-            std::sscanf(bfr, " %f %f\r\n", &m_ctdData.dataReceived[0], &m_ctdData.dataReceived[1]);
-            break;
-
-          case 3:
-            std::sscanf(bfr, " %f %f %f\r\n", &m_ctdData.dataReceived[0], &m_ctdData.dataReceived[1],
-                            &m_ctdData.dataReceived[2]);
-            break;
-
-          case 4:
-            std::sscanf(bfr, " %f %f %f %f\r\n", &m_ctdData.dataReceived[0], &m_ctdData.dataReceived[1],
-                            &m_ctdData.dataReceived[2], &m_ctdData.dataReceived[3]);
-            break;
-
-          case 5:
-            std::sscanf(bfr, " %f %f %f %f %f\r\n", &m_ctdData.dataReceived[0], &m_ctdData.dataReceived[1],
-                            &m_ctdData.dataReceived[2], &m_ctdData.dataReceived[3],
-                            &m_ctdData.dataReceived[4]);
-            break;
-
-          case 6:
-            std::sscanf(bfr, " %f %f %f %f %f %f\r\n", &m_ctdData.dataReceived[0], &m_ctdData.dataReceived[1],
-                            &m_ctdData.dataReceived[2], &m_ctdData.dataReceived[3],
-                            &m_ctdData.dataReceived[4], &m_ctdData.dataReceived[5]);
-            break;
-
-          default:
-            return false;
-            break;
-        }
-
-        return true;
+        if(numberSensors == total_sensors_read)
+          return true;
+        else
+          return false;
       }
 
       CTDData m_ctdData;
