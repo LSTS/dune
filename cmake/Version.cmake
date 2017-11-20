@@ -75,7 +75,10 @@ if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
 else()
   set(DUNE_CORE_SOURCES ${DUNE_CORE_SOURCES}
     ${DUNE_GENERATED}/src/DUNE/Version.cpp)
-  file(WRITE "${DUNE_GENERATED}/src/DUNE/Version.cpp" "")
+    
+  if(NOT EXISTS "${DUNE_GENERATED}/src/DUNE/Version.cpp")
+    file(WRITE "${DUNE_GENERATED}/src/DUNE/Version.cpp" "")
+  endif()
 
   add_custom_target(dune-version
     COMMAND ${CMAKE_COMMAND}
