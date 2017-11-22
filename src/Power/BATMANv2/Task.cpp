@@ -115,7 +115,7 @@ namespace Power
 
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("4.0")
-        .minimumValue("1.0")
+        .minimumValue("2.0")
         .maximumValue("15.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
@@ -319,10 +319,28 @@ namespace Power
         else
         {
           std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
-          std::sprintf(m_bufer_entity, "H: %d %%, Volt: %.3f V, RCap: %.3f Ah",
-                       m_driver->m_batManData.health,
-                       m_driver->m_batManData.voltage,
-                       m_driver->m_batManData.r_cap);
+
+          if (m_driver->m_batManData.time_full > 0)
+            std::sprintf(m_bufer_entity,
+                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETF: %.0f min",
+                         m_driver->m_batManData.health,
+                         m_driver->m_batManData.voltage,
+                         m_driver->m_batManData.r_cap,
+                         m_driver->m_batManData.time_full);
+          else if (m_driver->m_batManData.time_empty > 0)
+            std::sprintf(m_bufer_entity,
+                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETD: %.0f min",
+                         m_driver->m_batManData.health,
+                         m_driver->m_batManData.voltage,
+                         m_driver->m_batManData.r_cap,
+                         m_driver->m_batManData.time_empty);
+          else
+            std::sprintf(m_bufer_entity,
+                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah",
+                         m_driver->m_batManData.health,
+                         m_driver->m_batManData.voltage,
+                         m_driver->m_batManData.r_cap);
+
           setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
         }
 
