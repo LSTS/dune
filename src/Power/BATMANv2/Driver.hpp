@@ -70,7 +70,11 @@ namespace Power
             //! Cell Voltage
             float cell_volt[16];
             //! State of new data received
-            bool state_new_data[8];
+            bool state_new_data[9];
+            //! Time, in min to full empty battery
+            float time_empty;
+            //! Time, in min, to full charge of battery
+            float time_full;
           };
 
           //! Serial port
@@ -86,7 +90,7 @@ namespace Power
           {
             m_uart = uart;
             m_poll = poll;
-            m_timeout_uart = 2.0f;
+            m_timeout_uart = 1.0f;
             m_numberCell = numberCell;
             resetStateNewData();
           }
@@ -257,6 +261,22 @@ namespace Power
               }
               m_batManData.state_new_data[7] = true;
               m_task->debug(" ");
+            }
+            else if (std::strcmp(parameter, "$BATS") == 0)
+            {
+              parameter = std::strtok(NULL, ",");
+              std::sscanf(parameter, "%f", &m_batManData.time_empty);
+              if (m_batManData.time_empty == 65535)
+                m_batManData.time_empty = -1;
+
+              m_task->debug("Average Time to Empty: %.0f min", m_batManData.time_empty);
+              parameter = std::strtok(NULL, ",");
+              std::sscanf(parameter, "%f", &m_batManData.time_full);
+              if (m_batManData.time_full == 65535)
+                m_batManData.time_full = -1;
+
+              m_task->debug("Average Time to Full: %.0f min", m_batManData.time_full);
+              m_batManData.state_new_data[8] = true;
             }
 
             bool result = true;
