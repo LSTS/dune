@@ -103,7 +103,7 @@ namespace Transports
       //! Dynamic DNS update periodicity
       double dyn_dns_period;
       //! Dynamic DNS update url
-      double dyn_dns_url;
+      std::string dyn_dns_url;
     };
 
     struct Task: public Tasks::Task
@@ -197,6 +197,8 @@ namespace Transports
 
         param("Enable Dynamic DNS", m_args.dyn_dns)
         .defaultValue("false")
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Enable or disable Dynamic DNS");
 
         param("DynDNS Update Periodicity", m_args.dyn_dns_period)
@@ -382,6 +384,9 @@ namespace Transports
       void
       updateDynDNS()
       {
+
+        inf("Updating dynamic dns.");
+
         if (!m_args.dyn_dns)
           return;
 
@@ -527,7 +532,7 @@ namespace Transports
           waitForMessages(1.0);
           updateStateMachine();
 
-          if(isConnected(&m_address) && m_dyndns_watchdog.overflow())
+          if( m_dyndns_watchdog.overflow() && isConnected())
           {
             updateDynDNS();
           }
