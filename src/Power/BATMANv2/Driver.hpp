@@ -90,7 +90,7 @@ namespace Power
           {
             m_uart = uart;
             m_poll = poll;
-            m_timeout_uart = 2.0f;
+            m_timeout_uart = 1.0f;
             m_numberCell = numberCell;
             resetStateNewData();
           }

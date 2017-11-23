@@ -67,6 +67,8 @@ namespace Power
       float war_lvl;
       //! Level of battery below which an error will be thrown.
       float err_lvl;
+      //! Number of attempts before error
+      int number_attempts;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -95,6 +97,10 @@ namespace Power
       char m_bufer_entity[128];
       //! Read timestamp.
       double m_tstamp;
+      //! Count for attempts
+      int m_count_attempts;
+      //! Flag to control reset of board
+      bool m_is_first_reset;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -114,9 +120,9 @@ namespace Power
         .description("Serial port baud rate");
 
         param("Input Timeout", m_args.input_timeout)
-        .defaultValue("4.0")
+        .defaultValue("3.0")
         .minimumValue("2.0")
-        .maximumValue("15.0")
+        .maximumValue("4.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
 
@@ -129,6 +135,12 @@ namespace Power
         param("Scale Factor A/Ah", m_args.scale_factor)
         .defaultValue("1")
         .description("Scale Factor A/Ah.");
+
+        param("Number of attempts before error", m_args.number_attempts)
+        .defaultValue("5")
+        .minimumValue("1")
+        .maximumValue("10")
+        .description("Number of attempts before error.");
 
         // Extract cell entity label
         for (uint8_t i = 1; i < c_max_values_voltage; ++i)
@@ -214,6 +226,7 @@ namespace Power
           m_uart->flush();
           m_poll.add(*m_uart);
           m_driver = new DriverBatMan(this, m_uart, m_poll, m_args.number_cell);
+          m_count_attempts = 0;
         }
         catch (std::runtime_error& e)
         {
@@ -228,28 +241,8 @@ namespace Power
         m_driver->stopAcquisition();
         m_uart->flush();
         Delay::wait(c_delay_startup);
-
-        if(!m_driver->getVersionFirmware())
-          war(DTR("failed to get firmware version"));
-        else
-          inf("Firmware Version: %s", m_driver->getFirmwareVersion().c_str());
-
-        if(!m_driver->initBatMan(m_args.number_cell, m_args.scale_factor))
-        {
-          m_driver->sendCommandNoRsp("@RESET,*");
-          Delay::wait(1.0);
-          throw RestartNeeded(DTR("failed to init BatMan"), 10, true);
-        }
-
-        if(!m_driver->startAcquisition())
-        {
-          m_driver->sendCommandNoRsp("@RESET,*");
-          Delay::wait(1.0);
-          throw RestartNeeded(DTR("failed to start acquisition"), 10, true);
-        }
-
-        debug("Init and Start OK");
-        m_wdog.setTop(m_args.input_timeout);
+        initBoard(false);
+        m_is_first_reset = true;
       }
 
       //! Release resources.
@@ -262,6 +255,56 @@ namespace Power
           Memory::clear(m_driver);
           Memory::clear(m_uart);
         }
+      }
+
+      void
+      initBoard(bool noRestart)
+      {
+        if (!m_driver->getVersionFirmware())
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
+          war(DTR("failed to get firmware version"));
+        }
+        else
+        {
+          inf("Firmware Version: %s", m_driver->getFirmwareVersion().c_str());
+        }
+
+        if (!m_driver->initBatMan(m_args.number_cell, m_args.scale_factor))
+        {
+          if (!noRestart)
+          {
+            m_driver->sendCommandNoRsp("@RESET,*");
+            Delay::wait(1.0);
+            throw RestartNeeded(DTR("failed to init BatMan"), 10, true);
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
+            war(DTR("failed to init BatMan"));
+            return;
+          }
+        }
+
+        if (!m_driver->startAcquisition())
+        {
+          if (!noRestart)
+          {
+            m_driver->sendCommandNoRsp("@RESET,*");
+            Delay::wait(1.0);
+            throw RestartNeeded(DTR("failed to start acquisition"), 10, true);
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
+            war(DTR("failed to start acquisition"));
+            return;
+          }
+        }
+
+        debug("Init and Start OK");
+        m_wdog.setTop(m_args.input_timeout);
+        m_wdog.reset();
       }
 
       void
@@ -343,7 +386,6 @@ namespace Power
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
         }
-
       }
 
       //! Main loop.
@@ -356,10 +398,22 @@ namespace Power
 
           if (m_wdog.overflow())
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            m_driver->sendCommandNoRsp("@RESET,*");
-            Delay::wait(1.0);
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
+            if (m_count_attempts >= m_args.number_attempts)
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
+            }
+
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
+            war(DTR("trying connecting to board"));
+            m_count_attempts++;
+            if (m_is_first_reset)
+            {
+              m_driver->sendCommandNoRsp("@RESET,*");
+              m_is_first_reset = false;
+            }
+            m_uart->flush();
+            initBoard(true);
           }
 
           if (!Poll::poll(*m_uart, m_args.input_timeout))
@@ -369,6 +423,8 @@ namespace Power
           {
             m_tstamp = Clock::getSinceEpoch();
             dispatchData();
+            m_count_attempts = 0;
+            m_is_first_reset = true;
             m_wdog.reset();
           }
         }
