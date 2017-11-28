@@ -90,6 +90,7 @@ namespace Transports
         bind<IMC::PlanSpecification>(this);
         bind<IMC::TransmissionRequest>(this);
         bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::SmsStatus>(this);
 
         m_clean_timer.setTop(3);
       }
@@ -197,19 +198,19 @@ namespace Transports
       {
         inf("Request to send data over SMS to %s (%d)", msg->destination.c_str(), msg->req_id);
 
-        Sms sms;
+        SmsRequest sms;
+        sms.req_id = m_reqid++;
+        sms.sms_text = msg->txt_data;
+        sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
+        if(sms.timeout < 0)
+               sms.timeout = 0;
 
         if (msg->destination == "broadcast" || msg->destination == "")
-          m_ctx.config.get(c_sms_section, c_sms_field, "", sms.number);
+             m_ctx.config.get(c_sms_section, c_sms_field, "", sms.destination);
         else
-          sms.number = msg->destination;
-
-        sms.contents = msg->txt_data;
-        sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
+             sms.destination  = msg->destination;
+        m_transmission_requests[sms.req_id] = msg->clone();
         dispatch(sms);
-
-        answer(msg, "Requested transmission of SMS.",
-               IMC::TransmissionStatus::TSTAT_MAYBE_DELIVERED);
       }
 
       void
@@ -266,6 +267,41 @@ namespace Transports
           }
         }
       }
+
+      void
+	  consume(const IMC::SmsStatus* msg)
+		{
+    	  if (msg->getSource() != getSystemId())
+			return;
+    	  if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
+			  {
+			  IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+			  switch(msg->status) {
+					  case (IMC::SmsStatus::SMSSTAT_QUEUED):
+							answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+						 break;
+					  case (IMC::SmsStatus::SMSSTAT_SENT):
+							answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
+						  Memory::clear(req);
+						  m_transmission_requests.erase(msg->req_id);
+						 break;
+					   case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
+						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+						  Memory::clear(req);
+						  m_transmission_requests.erase(msg->req_id);
+						  break;
+					   case (IMC::SmsStatus::SMSSTAT_TEMPORARY_FAILURE):
+						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+						   break;
+					   case (IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE):
+						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+						  Memory::clear(req);
+						  m_transmission_requests.erase(msg->req_id);
+						   break;
+
+				   }
+    	          }
+		}
 
       void answer(const IMC::TransmissionRequest* req, std::string info, int status)
       {
