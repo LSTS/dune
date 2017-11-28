@@ -184,6 +184,8 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
+          war(DTR("ERROR Initializing the GSM modem"));
+          war(DTR("Err description1: %s"),e.what());
           throw RestartNeeded(e.what(), 5, false);
         }
       }
@@ -221,34 +223,15 @@ namespace Transports
       }
 
       void
-      sendSmsStatus(const SmsRequest* sms_req,unsigned code,const std::string& info = "")
+      sendSmsStatus(const SmsRequest* sms_req,IMC::SmsStatus::StatusEnum status,const std::string& info = "")
       {
         IMC::SmsStatus sms_status;
         sms_status.setDestination(sms_req->src_adr);
         sms_status.setDestinationEntity(sms_req->src_eid);
-        sms_status.req_id  = sms_req->req_id;
-        sms_status.info = info;
+        sms_status.req_id = sms_req->req_id;
+        sms_status.info   = info;
+        sms_status.status = status;
 
-        switch(code) {
-         case 0:
-            sms_status.status = IMC::SmsStatus::SMSSTAT_QUEUED;
-            break;
-         case 1:
-            sms_status.status = IMC::SmsStatus::SMSSTAT_SENT;
-            break;
-          case 101:
-             sms_status.status = IMC::SmsStatus::SMSSTAT_INPUT_FAILURE;
-             break;
-          case 102:
-              sms_status.status = IMC::SmsStatus::SMSSTAT_TEMPORARY_FAILURE;
-              break;
-          case 103:
-              sms_status.status = IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE;
-              break;
-         default :
-              err("%s",DTR("Unrecognized SMS status code"));
-              return;
-      }
         dispatch(sms_status);
       }
 
@@ -279,14 +262,14 @@ namespace Transports
 
         if (msg->timeout == 0)
         {
-          sendSmsStatus(&sms_req,101,"SMS timeout cannot be zero");
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"SMS timeout cannot be zero");
           war("%s", DTR("SMS timeout cannot be zero"));
           return;
         }
-        sms_req.deadline = Clock::get() + msg->timeout;
+        sms_req.deadline = Clock::getSinceEpoch() + msg->timeout;
         m_queue.push(sms_req);
         inf(DTR("SMS request %d sent to queue"),sms_req.req_id);
-        sendSmsStatus(&sms_req,0,DTR("SMS sent to queue"));
+        sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_QUEUED,DTR("SMS sent to queue"));
       }
 
       void
@@ -304,9 +287,9 @@ namespace Transports
         m_queue.pop();
 
         // Message is too old, discard it.
-        if (Clock::get() >= sms_req.deadline)
+        if (Time::Clock::getSinceEpoch() >= sms_req.deadline)
         {
-          sendSmsStatus(&sms_req,103,DTR("SMS timeout"));
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE,DTR("SMS timeout"));
           war(DTR("discarded expired SMS to recipient %s"), sms_req.destination.c_str());
           return;
         }
@@ -316,12 +299,12 @@ namespace Transports
           m_driver->getRSSI();
           m_driver->sendSMS(sms_req.destination, sms_req.sms_text, m_args.sms_tout);
           //SMS successfully sent, otherwise driver throws error
-          sendSmsStatus(&sms_req,1);
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_SENT);
         }
         catch (...)
         {
           m_queue.push(sms_req);
-          sendSmsStatus(&sms_req,102,
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_TEMPORARY_FAILURE,
                         DTR("Retrying SMS sending"));
           war(DTR("Retrying SMS sending to recipient %s"),sms_req.destination.c_str());
         }
