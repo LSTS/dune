@@ -373,20 +373,37 @@ namespace Power
         {
           std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
           if (m_driver->m_batManData.time_full > 0)
+          {
             std::sprintf(m_bufer_entity, "fuel reserve - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_bufer_entity)));
+          }
           else if((m_driver->m_batManData.time_empty > 0))
+          {
             std::sprintf(m_bufer_entity, "fuel reserve - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
+            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_bufer_entity)));
+          }
           else
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
+          }
         }
         else if (m_fuel.value < m_args.war_lvl)
         {
+          std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
           if (m_driver->m_batManData.time_full > 0)
+          {
             std::sprintf(m_bufer_entity, "fuel running low - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+          }
           else if ((m_driver->m_batManData.time_empty > 0))
+          {
             std::sprintf(m_bufer_entity, "fuel running low - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+          }
           else
+          {
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_LOW);
+          }
         }
         else
         {
