@@ -101,6 +101,7 @@ namespace Maneuver
         m_vz = msg->vz;
         m_depth = msg->depth;
         m_altitude = msg->alt;
+        m_height = msg->height - msg->z;
         m_pitch = msg->theta;
         m_u_speed = msg->u;
         m_elevate->update(msg);
@@ -119,7 +120,7 @@ namespace Maneuver
           return;
         }
 
-        float vertical_error = m_elevate->getVerticalError(m_depth, m_altitude);
+        float vertical_error = m_elevate->getVerticalError(m_depth, m_altitude, m_height);
 
         if (pcs->flags & IMC::PathControlState::FL_LOITERING)
         {
@@ -131,8 +132,13 @@ namespace Maneuver
         }
         else
         {
-          float diagonal_length = vertical_error / std::sin(Plans::c_rated_pitch);
+          float diagonal_length;
           float loiter;
+
+          if (pcs->end_z_units == Z_HEIGHT)
+            diagonal_length = vertical_error / std::sin(Plans::c_uav_pitch);
+          else
+            diagonal_length = vertical_error / std::sin(Plans::c_rated_pitch);
 
           if (m_u_speed)
             loiter = diagonal_length / m_u_speed;
@@ -156,8 +162,6 @@ namespace Maneuver
       }
 
     private:
-      //! Desired path message
-      IMC::DesiredPath m_path;
       //! Elevator Maneuver message
       IMC::Elevator m_maneuver;
       //! Current speed in z
@@ -166,6 +170,8 @@ namespace Maneuver
       float m_depth;
       //! Current altitude
       float m_altitude;
+      //! Current height
+      float m_height;
       //! Current pitch
       float m_pitch;
       //! Current forward speed

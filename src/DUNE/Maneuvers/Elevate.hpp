@@ -81,12 +81,15 @@ namespace DUNE
       //! Compute vertical error
       //! @param[in] depth current vehicle's depth
       //! @param[in] altitude current vehicle's altitude
+      //! @param[in] height current vehicle's height
       //! @return difference between current z value being used and the reference
       float
-      getVerticalError(float depth, float altitude)
+      getVerticalError(float depth, float altitude, float height)
       {
         if (m_elevator.end_z_units == IMC::Z_ALTITUDE)
           return std::fabs(altitude - m_elevator.end_z);
+        if (m_elevator.end_z_units == IMC::Z_HEIGHT)
+          return std::fabs(height - m_elevator.end_z);
         else
           return std::fabs(depth - m_elevator.end_z);
       }
@@ -97,7 +100,7 @@ namespace DUNE
       float
       getVerticalError(const IMC::EstimatedState* msg)
       {
-        return getVerticalError(msg->depth, msg->alt);
+        return getVerticalError(msg->depth, msg->alt, msg->height - msg->z);
       }
 
     private:

@@ -49,6 +49,8 @@ namespace DUNE
     static const float c_fix_time = 7.0f;
     //! Typical pitch value for elevator maneuver
     static const float c_rated_pitch = 0.2617993877991494f;
+    //! Typical climb pitch value for UAVs
+    static const float c_uav_pitch = 0.1745329252f;
 
     // Export DLL Symbol.
     class DUNE_DLL_SYM TimeProfile;
