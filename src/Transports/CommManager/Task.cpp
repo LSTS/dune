@@ -314,6 +314,12 @@ namespace Transports
         Memory::clear(m_estate);
       }
 
+      void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
       IMC::StateReport* produceReport()
       {
         if (m_vstate == NULL || m_estate == NULL)
