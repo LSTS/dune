@@ -31,6 +31,8 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <regex.h>
+
 
 // DUNE headers.
 #include <DUNE/Algorithms/Base64.hpp>
@@ -43,6 +45,8 @@ namespace DUNE
     static const std::string c_b64_en = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "abcdefghijklmnopqrstuvwxyz"
                                         "0123456789+/";
+    //! Base64 regular expression
+    static const char* c_b64_regex = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$";
 
     //! Base64 decoding table.
     static const unsigned char c_b64_de[] =
@@ -60,6 +64,24 @@ namespace DUNE
       66,66,66,66,66,66
     };
 
+    //! Verify if string is a valid Base64
+    bool
+	Base64::validBase64(const  char* str)
+    {
+    	regex_t  base64R;
+    	if(regcomp(&base64R,c_b64_regex,REG_EXTENDED|REG_NOSUB) != 0 )
+    	{
+    		regfree(&base64R);
+    		return false;
+    	}
+    	if(regexec(&base64R,str,0,NULL,0) == REG_NOMATCH)
+    	{
+    		regfree(&base64R);
+    		return false;
+    	}
+    	regfree(&base64R);
+    	return true;
+    }
     //! Encode a sequence of bytes in Base64.
     std::string
     Base64::encode(const unsigned char* bytes, size_t len)
