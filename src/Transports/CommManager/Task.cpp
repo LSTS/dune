@@ -200,7 +200,6 @@ namespace Transports
 
         SmsRequest sms;
         sms.req_id = m_reqid++;
-        sms.sms_text = msg->txt_data;
         sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
         if(sms.timeout < 0)
                sms.timeout = 0;
@@ -210,6 +209,20 @@ namespace Transports
         else
              sms.destination  = msg->destination;
         m_transmission_requests[sms.req_id] = msg->clone();
+        if(msg->data_mode == IMC::TransmissionRequest::DMODE_TEXT)
+        	sms.sms_text = msg->txt_data;
+        else if(msg->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
+        {
+        	Utils::ByteBuffer bfr;
+			IMC::Packet::serialize(msg->msg_data.get(), bfr);
+			std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),bfr.getSize());
+			sms.sms_text.assign(encoded);
+        }
+		if(sms.sms_text.length() > 160){ //160 characters -> 120 bytes for the inline message
+			answer(msg, "Can only send 160 characters over SMS.",
+			                     IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+			return;
+		}
         dispatch(sms);
       }
 
@@ -328,8 +341,8 @@ namespace Transports
             sendViaSatellite(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-            if (msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
-              answer(msg, "Can only send text over SMS.",
+            if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
+              answer(msg, "Can not send raw data over SMS.",
                      IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
             else
               sendViaSms(msg);
