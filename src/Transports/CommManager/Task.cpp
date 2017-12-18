@@ -303,14 +303,11 @@ namespace Transports
 						  Memory::clear(req);
 						  m_transmission_requests.erase(msg->req_id);
 						  break;
-					   case (IMC::SmsStatus::SMSSTAT_TEMPORARY_FAILURE):
-						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-						   break;
-					   case (IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE):
+					   case (IMC::SmsStatus::SMSSTAT_ERROR):
 						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
 						  Memory::clear(req);
 						  m_transmission_requests.erase(msg->req_id);
-						   break;
+						  break;
 
 				   }
     	          }
