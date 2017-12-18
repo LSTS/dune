@@ -65,6 +65,10 @@ namespace Vision
       double m_lat;
       double m_lon;
       float m_hei;
+      //! Current attitude
+      float m_roll;
+      float m_pitch;
+      float m_yaw;
       //! Last picture position
       double m_prev_lat;
       double m_prev_lon;
@@ -80,6 +84,9 @@ namespace Vision
         m_lat(0),
         m_lon(0),
         m_hei(0),
+        m_roll(0),
+        m_pitch(0),
+        m_yaw(0),
         m_prev_lat(0),
         m_prev_lon(0),
         m_prev_hei(0),
@@ -134,6 +141,10 @@ namespace Vision
         if (e_state->getSource() != getSystemId())
           return;
 
+        m_roll = e_state->phi;
+        m_pitch = e_state->theta;
+        m_yaw = e_state->psi;
+
         Coordinates::toWGS84(*e_state, m_lat, m_lon, m_hei);
 
         if(!m_args.dist_trigger)
@@ -163,7 +174,7 @@ namespace Vision
         log_entry.type = IMC::LogBookEntry::LBET_INFO;
         log_entry.context = "Photo Trigger";
         std::ostringstream ss;
-        ss << m_lat << ", " << m_lon << ", " << m_hei;
+        ss << m_lat << ", " << m_lon << ", " << m_hei << ", " << m_roll << ", " << m_pitch << ", " << m_yaw;
         log_entry.text = ss.str();
         Delay::wait(0.2);
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
