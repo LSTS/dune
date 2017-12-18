@@ -293,7 +293,7 @@ namespace Transports
         // Message is too old, discard it.
         if (Time::Clock::getSinceEpoch() >= sms_req.deadline)
         {
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE,DTR("SMS timeout"));
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,DTR("SMS timeout"));
           war(DTR("discarded expired SMS to recipient %s"), sms_req.destination.c_str());
           return;
         }
@@ -308,7 +308,7 @@ namespace Transports
         catch (...)
         {
           m_queue.push(sms_req);
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE,
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,
                         DTR("Error sending message over GSM modem"));
           war(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
         }
