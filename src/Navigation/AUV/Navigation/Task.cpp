@@ -251,7 +251,7 @@ namespace Navigation
           .maximumValue("180")
           .description("Heading alignment sensor diff threshold");
 
-          param("Heading buffer value ", m_args.heading_buffer_value)
+          param("Heading buffer value", m_args.heading_buffer_value)
           .defaultValue("200")
           .minimumValue("1")
           .description("Heading buffer value - how many repetitions to aligned");
