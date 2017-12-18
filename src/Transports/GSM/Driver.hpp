@@ -218,7 +218,12 @@ namespace Transports
           return true;
         if (String::startsWith(str, "^RSSI"))
           return true;
-
+        if(String::startsWith(str, "+CRING")) //incoming call
+        	return true;
+        if(String::startsWith(str, "^CEND:")) //end of call
+                	return true;
+        if(String::startsWith(str, "NO CARRIER")) //missed call
+        	return true;
         return false;
       }
 
