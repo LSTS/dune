@@ -184,6 +184,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
+          war(DTR("ERROR Initializing the GSM modem"));
           throw RestartNeeded(e.what(), 5, false);
         }
       }
@@ -261,12 +262,17 @@ namespace Transports
         if (msg->timeout == 0)
         {
           sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"SMS timeout cannot be zero");
-          war("%s", DTR("SMS timeout cannot be zero"));
+          inf("%s", DTR("SMS timeout cannot be zero"));
           return;
         }
-        sms_req.deadline = Clock::get() + msg->timeout;
+        if(sms_req.sms_text.length() > 160) //160 characters encoded in 8-bit alphabet per SMS message
+        {
+        	sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"Can only send 160 characters over SMS.");
+        	inf("%s", DTR("Can only send 160 characters over SMS"));
+		    return;
+        }
+        sms_req.deadline = Clock::getSinceEpoch() + msg->timeout;
         m_queue.push(sms_req);
-        inf(DTR("SMS request %d sent to queue"),sms_req.req_id);
         sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_QUEUED,DTR("SMS sent to queue"));
       }
 
@@ -285,9 +291,9 @@ namespace Transports
         m_queue.pop();
 
         // Message is too old, discard it.
-        if (Clock::get() >= sms_req.deadline)
+        if (Time::Clock::getSinceEpoch() >= sms_req.deadline)
         {
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_PERMANENT_FAILURE,DTR("SMS timeout"));
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,DTR("SMS timeout"));
           war(DTR("discarded expired SMS to recipient %s"), sms_req.destination.c_str());
           return;
         }
@@ -302,9 +308,9 @@ namespace Transports
         catch (...)
         {
           m_queue.push(sms_req);
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_TEMPORARY_FAILURE,
-                        DTR("Retrying SMS sending"));
-          war(DTR("Retrying SMS sending to recipient %s"),sms_req.destination.c_str());
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,
+                        DTR("Error sending message over GSM modem"));
+          war(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
         }
       }
 
