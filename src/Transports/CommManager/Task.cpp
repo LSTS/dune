@@ -453,19 +453,21 @@ namespace Transports
             if (m_vmedium != NULL && m_vmedium->medium == IMC::VehicleMedium::VM_WATER)
             {
               IMC::StateReport* msg = produceReport();
-              dispatch(msg);
+              if(msg != NULL)
+              {
+                dispatch(msg);
+                inf("Requesting report transmission over Iridium.");
+                IMC::TransmissionRequest request;
+                request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+                request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+                request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
+                request.destination = "broadcast";
+                request.msg_data.set(msg);
+                request.req_id = req_id++;
+                dispatch(request, DF_LOOP_BACK);
 
-              inf("Requesting report transmission over Iridium.");
-              IMC::TransmissionRequest request;
-              request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-              request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-              request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
-              request.destination = "broadcast";
-              request.msg_data.set(msg);
-              request.req_id = req_id++;
-              dispatch(request, DF_LOOP_BACK);
-
-              Memory::clear(msg);
+                Memory::clear(msg);
+              }
               m_iridium_timer.reset();
             }
           }
