@@ -79,8 +79,8 @@ namespace Transports
         m_reqid(1)
       {
         param("Iridium Reports Period", m_args.iridium_period)
-        .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
-        .defaultValue("300");
+            .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
+            .defaultValue("300");
 
         bind<IMC::PlanControlState>(this);
         bind<IMC::FuelLevel>(this);
@@ -149,10 +149,10 @@ namespace Transports
       void
       consume(const IMC::PlanSpecification* msg)
       {
-    	  if (msg->getSource() != getSystemId())
-    		  return;
-    	  const char * name = msg->plan_id.c_str();
-    	  m_plan_chksum = CRC16::compute((uint8_t *)name, strlen(name));
+        if (msg->getSource() != getSystemId())
+          return;
+        const char * name = msg->plan_id.c_str();
+        m_plan_chksum = CRC16::compute((uint8_t *)name, strlen(name));
       }
 
       void
@@ -202,27 +202,27 @@ namespace Transports
         sms.req_id = m_reqid++;
         sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
         if(sms.timeout < 0)
-               sms.timeout = 0;
+          sms.timeout = 0;
 
         if (msg->destination == "broadcast" || msg->destination == "")
-             m_ctx.config.get(c_sms_section, c_sms_field, "", sms.destination);
+          m_ctx.config.get(c_sms_section, c_sms_field, "", sms.destination);
         else
-             sms.destination  = msg->destination;
+          sms.destination  = msg->destination;
         m_transmission_requests[sms.req_id] = msg->clone();
         if(msg->data_mode == IMC::TransmissionRequest::DMODE_TEXT)
-        	sms.sms_text = msg->txt_data;
+          sms.sms_text = msg->txt_data;
         else if(msg->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
         {
-        	Utils::ByteBuffer bfr;
-			IMC::Packet::serialize(msg->msg_data.get(), bfr);
-			std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),bfr.getSize());
-			sms.sms_text.assign(encoded);
+          Utils::ByteBuffer bfr;
+          IMC::Packet::serialize(msg->msg_data.get(), bfr);
+          std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),bfr.getSize());
+          sms.sms_text.assign(encoded);
         }
-		if(sms.sms_text.length() > 160){ //160 characters -> 120 bytes for the inline message
-			answer(msg, "Can only send 160 characters over SMS.",
-			                     IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-			return;
-		}
+        if(sms.sms_text.length() > 160){ //160 characters -> 120 bytes for the inline message
+          answer(msg, "Can only send 160 characters over SMS.",
+                 IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+          return;
+        }
         dispatch(sms);
       }
 
@@ -231,14 +231,17 @@ namespace Transports
       {
         std::map<int, IMC::TransmissionRequest*>::iterator it;
         double time = Time::Clock::getSinceEpoch();
-        for (it = m_transmission_requests.begin(); it != m_transmission_requests.end(); it++)
+        it = m_transmission_requests.begin();
+        while (it != m_transmission_requests.end())
         {
           if (it->second->deadline <= time)
           {
             answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             Memory::clear(it->second);
-            m_transmission_requests.erase(it);
+            m_transmission_requests.erase(it++);
           }
+          else
+            ++it;
         }
       }
 
@@ -257,61 +260,61 @@ namespace Transports
 
           switch (msg->status) {
             case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
-              answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-              break;
+                  answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+            break;
             case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
-              answer(req, "Message is being transmitted.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-              break;
+                  answer(req, "Message is being transmitted.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+            break;
             case (IMC::IridiumTxStatus::TXSTATUS_OK):
-              answer(req, "Message has been sent via Iridium.", IMC::TransmissionStatus::TSTAT_SENT);
-              Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
-              break;
+                  answer(req, "Message has been sent via Iridium.", IMC::TransmissionStatus::TSTAT_SENT);
+            Memory::clear(req);
+            m_transmission_requests.erase(msg->req_id);
+            break;
             case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
-              answer(req, "Error while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
-              break;
+                  answer(req, "Error while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            Memory::clear(req);
+            m_transmission_requests.erase(msg->req_id);
+            break;
             case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
-              answer(req, "Timeout while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
-              break;
+                  answer(req, "Timeout while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            Memory::clear(req);
+            m_transmission_requests.erase(msg->req_id);
+            break;
           }
         }
       }
 
       void
-	  consume(const IMC::SmsStatus* msg)
-		{
-    	  if (msg->getSource() != getSystemId())
-			return;
-    	  if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
-			  {
-			  IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
-			  switch(msg->status) {
-					  case (IMC::SmsStatus::SMSSTAT_QUEUED):
-							answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-						 break;
-					  case (IMC::SmsStatus::SMSSTAT_SENT):
-							answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
-						  Memory::clear(req);
-						  m_transmission_requests.erase(msg->req_id);
-						 break;
-					   case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
-						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-						  Memory::clear(req);
-						  m_transmission_requests.erase(msg->req_id);
-						  break;
-					   case (IMC::SmsStatus::SMSSTAT_ERROR):
-						  answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-						  Memory::clear(req);
-						  m_transmission_requests.erase(msg->req_id);
-						  break;
+      consume(const IMC::SmsStatus* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+        if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
+        {
+          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+          switch(msg->status) {
+            case (IMC::SmsStatus::SMSSTAT_QUEUED):
+							    answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+            break;
+            case (IMC::SmsStatus::SMSSTAT_SENT):
+							    answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
+            Memory::clear(req);
+            m_transmission_requests.erase(msg->req_id);
+            break;
+            case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
+						      answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+            Memory::clear(req);
+            m_transmission_requests.erase(msg->req_id);
+            break;
+            case (IMC::SmsStatus::SMSSTAT_ERROR):
+						      answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            Memory::clear(req);
+            m_transmission_requests.erase(msg->req_id);
+            break;
 
-				   }
-    	          }
-		}
+          }
+        }
+      }
 
       void answer(const IMC::TransmissionRequest* req, std::string info, int status)
       {
@@ -335,15 +338,15 @@ namespace Transports
         switch(msg->comm_mean)
         {
           case (IMC::TransmissionRequest::CMEAN_SATELLITE):
-            sendViaSatellite(msg);
+                sendViaSatellite(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-            if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
-              answer(msg, "Can not send raw data over SMS.",
-                     IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-            else
-              sendViaSms(msg);
-            break;
+                if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
+                  answer(msg, "Can not send raw data over SMS.",
+                         IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+                else
+                  sendViaSms(msg);
+          break;
           default:
             answer(msg, "Communication mean not implemented.",
                    IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
@@ -447,19 +450,21 @@ namespace Transports
             if (m_vmedium != NULL && m_vmedium->medium == IMC::VehicleMedium::VM_WATER)
             {
               IMC::StateReport* msg = produceReport();
-              dispatch(msg);
+              if(msg != NULL)
+              {
+                dispatch(msg);
+                inf("Requesting report transmission over Iridium.");
+                IMC::TransmissionRequest request;
+                request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+                request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+                request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
+                request.destination = "broadcast";
+                request.msg_data.set(msg);
+                request.req_id = req_id++;
+                dispatch(request, DF_LOOP_BACK);
 
-              inf("Requesting report transmission over Iridium.");
-              IMC::TransmissionRequest request;
-              request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-              request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-              request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
-              request.destination = "broadcast";
-              request.msg_data.set(msg);
-              request.req_id = req_id++;
-              dispatch(request, DF_LOOP_BACK);
-
-              Memory::clear(msg);
+                Memory::clear(msg);
+              }
               m_iridium_timer.reset();
             }
           }
