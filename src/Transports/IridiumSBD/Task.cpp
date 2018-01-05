@@ -384,7 +384,6 @@ namespace Transports
 				  TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF,
 						0, data);
 				  sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
-		          m_mbox_check_timer.reset();
           		}
         }
         else
