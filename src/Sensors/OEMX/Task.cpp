@@ -129,8 +129,6 @@ namespace Sensors
       bool m_first_value;
       //! Offset of pressure from CTD
       float m_offset_pressure;
-      //! Offset of depth from CTD
-      float m_offset_depth;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -357,8 +355,8 @@ namespace Sensors
             dispatch(m_pres, DF_KEEP_TIME);
 
             m_depth.setTimeStamp(m_tstamp);
-            m_depth.value = (m_pres.value - Math::c_sea_level_pressure) / (Math::c_gravity * c_seawater_density) - m_offset_depth;
-            spew("Depth: %f m", m_depth.value - m_offset_depth);
+            m_depth.value = (m_pres.value / (Math::c_gravity * c_seawater_density));
+            spew("Depth: %f m", m_depth.value);
             dispatch(m_depth, DF_KEEP_TIME);
           }
           if (m_sdstate.haveSoundSpeed)
@@ -396,7 +394,6 @@ namespace Sensors
           if (m_sdstate.havePressure)
           {
             m_offset_pressure = m_pressure;
-            m_offset_depth = ((m_pressure * c_bar_to_Pa) - Math::c_sea_level_pressure) / (Math::c_gravity * c_seawater_density);
             inf(DTR("CTD - Pressure calibrated (%f)"), m_offset_pressure);
           }
         }
