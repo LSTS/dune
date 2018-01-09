@@ -131,6 +131,13 @@ namespace Monitors
       }
 
       void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.heartbeat_tout))
+          m_lost_coms_timer.setTop(m_args.heartbeat_tout);
+      }
+
+      void
       onResourceRelease(void)
       {
         Memory::clear(m_reporter);
