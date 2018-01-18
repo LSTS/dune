@@ -412,7 +412,10 @@ namespace Maneuver
             return;
           }
 
-          dispatchDesiredPath(desired_path);
+          if (!ref->speed.isNull() && ref->speed.get()->value == 0)
+            enableMovement(false);
+          else
+            dispatchDesiredPath(desired_path);
         }
 
         //! Function for enabling and disabling the control loops
@@ -570,9 +573,6 @@ namespace Maneuver
           bool changedLoc = (diff & LOC_CHANGED) != 0;
           bool changedSpeed = (diff & SPEED_CHANGED) != 0;
           bool changedRadius = (diff & RADIUS_CHANGED) != 0;
-
-          //std::cerr << "difference: " << changedZ << " " << changedSpeed << " "
-          //    << changedLoc << " " << changedRadius << "\n";
 
           if (changedZ || !m_path_sent)
           {
