@@ -597,7 +597,7 @@ namespace Maneuver
             inf(DTR("Loiter radius reference changed to %f"), desired_path.lradius);
           }
 
-          bool send_desired_path = changedRadius || changedLoc || !m_path_sent;
+          bool send_desired_path = changedSpeed || changedRadius || changedLoc || !m_path_sent;
 
           // dispatch new desired path
           switch (m_fref_state.state)
@@ -635,8 +635,12 @@ namespace Maneuver
               }
               break;
             default:
-              inf(DTR("hovering next to (%f, %f)."), Angles::degrees(desired_path.end_lat),
-                  Angles::degrees(desired_path.end_lon));
+              if (send_desired_path)
+              {
+                dispatch(desired_path);
+                inf(DTR("hovering next to (%f, %f)."), Angles::degrees(desired_path.end_lat),
+                    Angles::degrees(desired_path.end_lon));
+              }
               enableMovement(false);
               break;
           }
