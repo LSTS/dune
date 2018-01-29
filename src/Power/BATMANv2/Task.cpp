@@ -67,6 +67,8 @@ namespace Power
       float war_lvl;
       //! Level of battery below which an error will be thrown.
       float err_lvl;
+      //! Level of battery (VOltage) below which an error will be thrown.
+      float err_volt_lvl;
       //! Number of attempts before error
       int number_attempts;
     };
@@ -176,6 +178,13 @@ namespace Power
         .maximumValue("20.0")
         .units(Units::Percentage)
         .description("Level of battery below which an error will be thrown");
+
+        param("Error Voltage Value", m_args.err_volt_lvl)
+        .defaultValue("22.0")
+        .minimumValue("18.0")
+        .maximumValue("30.0")
+        .units(Units::Volt)
+        .description("Level of battery, in voltage, below which an error will be thrown");
 
       }
 
@@ -369,7 +378,7 @@ namespace Power
           dispatch(m_fuel, DF_KEEP_TIME);
         }
 
-        if (m_fuel.value < m_args.err_lvl)
+        if (m_fuel.value < m_args.err_lvl && m_driver->m_batManData.voltage < m_args.err_volt_lvl)
         {
           std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
           if (m_driver->m_batManData.time_full > 0)
@@ -385,6 +394,24 @@ namespace Power
           else
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
+          }
+        }
+        else if (m_fuel.value < m_args.err_lvl)
+        {
+          std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
+          if (m_driver->m_batManData.time_full > 0)
+          {
+            std::sprintf(m_bufer_entity, "fuel warming - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+          }
+          else if((m_driver->m_batManData.time_empty > 0))
+          {
+            std::sprintf(m_bufer_entity, "fuel warming - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_RESERVE);
           }
         }
         else if (m_fuel.value < m_args.war_lvl)
