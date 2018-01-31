@@ -40,6 +40,7 @@
 
 // DUNE headers.
 #include <DUNE/Time/Constants.hpp>
+#include <DUNE/Time/Clock.hpp>
 
 namespace DUNE
 {
@@ -121,7 +122,7 @@ namespace DUNE
 	if (now < m_deadline)
         {
 	  uint64_t delay = m_deadline - now;
-          timespec delay_tspec = {(time_t)(delay / 1000000000), (long)(delay % 1000000000)};	
+          timespec delay_tspec = {(time_t)(delay / 1000000000), (long)(delay % 1000000000)};
           nanosleep(&delay_tspec, NULL);
 	}
 
