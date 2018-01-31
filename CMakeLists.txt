@@ -34,6 +34,20 @@ if(COMMAND CMAKE_POLICY)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND CMAKE_POLICY)
 
+# Set a default build type if none was specified.
+if(COVERAGE)
+  set(_default_build_type "Debug")
+else()
+  set(_default_build_type "Release")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${_default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${_default_build_type}" CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
+    STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 include(cmake/Toolchain.cmake)
 
 ##########################################################################
@@ -78,8 +92,6 @@ message(STATUS "***          Optional Features         ***")
 message(STATUS "******************************************")
 dune_option(PICCOLO "Include Piccolo library")
 dune_option(SHARED "Build shared library and shared plugins")
-dune_option(DEBUG "Compile with debug information enabled")
-dune_option(PROFILE "Compile with profiling and debug information enabled")
 dune_option(TLSF "Include the TLSF O(1) memory allocator")
 dune_option(QT5 "Include Qt5 based GUI")
 dune_option(DC1394 "Enable support for libdc1394")
@@ -94,24 +106,14 @@ dune_option(UEYE "Enable support for IDS uEye cameras")
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
 
-#############################################################################
-# DUNE's default build type
-#############################################################################
-if(DEBUG)
-  set(CMAKE_BUILD_TYPE "Debug")
-  add_definitions(-DDEBUG)
-else(DEBUG)
-  set(CMAKE_BUILD_TYPE "Release")
-endif(DEBUG)
-
-if(PROFILE)
-  set(CMAKE_BUILD_TYPE "Debug")
-endif(PROFILE)
-
 # Set a build name with more details than the default.
 set(BUILDNAME "${DUNE_SYSTEM_NAME_VAR}")
 
 include(cmake/IMC.cmake)
+
+# Coverage.
+option(COVERAGE "Run code coverage analysis" FALSE)
+include(cmake/Coverage.cmake)
 
 ##########################################################################
 # Piccolo                                                                #
@@ -124,7 +126,7 @@ if(DUNE_PROGRAM_PYTHON)
     ${PROJECT_SOURCE_DIR}/private/programs/generators/piccolo_messages.py
     ${PICCOLO_MESSAGES_XML} ${PROJECT_SOURCE_DIR}/private/src/Piccolo
     DEPENDS ${xml})
-endif(DUNE_PROGRAM_PYTHON)
+endif()
 
 ##########################################################################
 # Status Codes                                                           #
@@ -156,7 +158,7 @@ endif(TLSF)
 file(GLOB_RECURSE DUNE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/src/DUNE/*.cpp")
 file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
   "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
-file(GLOB_RECURSE DUNE_CORE_DEFS    "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
+file(GLOB_RECURSE DUNE_CORE_DEFS "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
 string(REPLACE ";" " " DUNE_CORE_HEADERS_STRING "${DUNE_CORE_HEADERS}")
 
 file(GLOB_RECURSE USER_CORE_SOURCES "${PROJECT_SOURCE_DIR}/user/src/USER/*.cpp")
@@ -393,27 +395,42 @@ include(programs/gsmux/Program.cmake)
 ##########################################################################
 option(TESTS "Compile test programs" FALSE)
 
-if(TESTS)
+if(TESTS OR COVERAGE)
+  message(STATUS "Unit tests enabled")
   enable_testing()
 
+  set(_test_folder "${PROJECT_SOURCE_DIR}/tests/")
+
   macro(dune_test source)
-    get_filename_component(executable ${source} NAME_WE)
-    add_executable(${executable} ${source})
-    set_target_properties(${executable} PROPERTIES COMPILE_FLAGS
-      "${DUNE_CXX_FLAGS}")
-    target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS}
-      ${DUNE_VENDOR_LIBS})
-    ADD_TEST(${executable} ${executable})
+    get_filename_component(_test_name ${source} REALPATH)
+    string(REPLACE "${_test_folder}" "" _test_name "${_test_name}")
+
+    # Test if test is for a Task.
+    set(_skip FALSE)
+    string(SUBSTRING "${_test_name}" 0 5 _module)
+    if(NOT "${_module}" STREQUAL "DUNE/")
+      get_filename_component(_task_folder "${_test_name}" DIRECTORY)
+      string(REPLACE "/" "." _task_lib "${_task_folder}")
+      if(NOT TARGET "${_task_lib}")
+        set(_skip TRUE)
+      endif()
+    endif()
+
+    if(NOT _skip)
+      string(REPLACE "/" "_" _test_name "${_test_name}")
+      set(_test_name "test_${_test_name}")
+
+      get_filename_component(executable ${_test_name} NAME_WE)
+      add_executable(${executable} ${source})
+      set_target_properties(${executable} PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+      target_link_libraries(${executable} dune-core ${DUNE_SYS_LIBS} ${DUNE_VENDOR_LIBS} ${_task_lib})
+      target_include_directories(${executable} PUBLIC "${_test_folder}")
+      add_test(${executable} ${executable})
+    endif()
   endmacro(dune_test source)
 
-  file(GLOB_RECURSE DUNE_TESTS_SOURCES
-    "${PROJECT_SOURCE_DIR}/programs/tests/*.cpp")
+  file(GLOB_RECURSE DUNE_TESTS_SOURCES "${_test_folder}/*.cpp")
   foreach(test ${DUNE_TESTS_SOURCES})
     dune_test(${test})
   endforeach(test ${DUNE_TESTS_SOURCES})
-endif(TESTS)
-
-##########################################################################
-#                                CDash                                   #
-##########################################################################
-include(Dart)
+endif()
