@@ -38,8 +38,6 @@ namespace DUNE
 }
 
 #include <DUNE/Concurrency/Exceptions.hpp>
-#include <DUNE/Concurrency/AtomicInteger.hpp>
-#include <DUNE/Concurrency/AtomicCounter.hpp>
 #include <DUNE/Concurrency/Mutex.hpp>
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 #include <DUNE/Concurrency/RWLock.hpp>
