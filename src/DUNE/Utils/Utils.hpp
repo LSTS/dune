@@ -32,9 +32,14 @@
 
 // ISO C++ 98 headers.
 #include <map>
+#include <set>
 
 //! Construct a std::map statically from an array of std::pairs.
 #define DUNE_DECLARE_STATIC_MAP(name, ta, tb, ps)                       \
   static std::map<ta, tb> name(ps, ps + sizeof(ps) / sizeof(ps[0]))
+
+//! Construct a std::set statically from an array.
+#define DUNE_DECLARE_STATIC_SET(name, t, ps)                    \
+  static std::set<t> name(ps, ps + sizeof(ps) / sizeof(ps[0]))
 
 #endif
