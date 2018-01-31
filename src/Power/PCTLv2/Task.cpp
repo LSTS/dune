@@ -39,6 +39,7 @@
 
 // Local headers.
 #include "PowerChannels.hpp"
+#include "LeakStateMachine.hpp"
 
 namespace Power
 {
@@ -78,7 +79,7 @@ namespace Power
       //! System is standing by.
       PWR_MODE_STAND_BY,
       //! Power on sequence: CPU.
-      PWR_MODE_ON_CPU,
+      PWR_MODE_ON_CPU_START,
       //! Power on sequence: Radio.
       PWR_MODE_ON_RADIO,
       //! Power on sequence: Ethernet Switch.
@@ -94,7 +95,13 @@ namespace Power
       //! System is in emergency mode.
       PWR_MODE_EMERGENCY,
       //! System is turning OFF.
-      PWR_MODE_OFF_IP
+      PWR_MODE_OFF_IP,
+      //! Turn on CPU.
+      PWR_MODE_ON_CPU_UP,
+      //! Turn off CPU.
+      PWR_MODE_ON_CPU_DOWN,
+      //! Turn on CPU again to workaround IEI PM-LX2 boot glitch.
+      PWR_MODE_ON_CPU_DONE
     };
 
     // We don't count channel saved states here.
@@ -147,6 +154,8 @@ namespace Power
       IMC::Message* m_adcs[c_adcs_count];
       //! Leak detection.
       IMC::EntityState m_leaks[c_leak_count];
+      //! Leak sensor state machines.
+      LeakStateMachine m_leaks_sm[c_leak_count];
       //! Power channels.
       PowerChannels m_channels;
       //! Power operation.
@@ -601,7 +610,8 @@ namespace Power
           return;
         }
 
-        if (leak)
+        bool leak_detected = m_leaks_sm[idx].update(Clock::get(), leak);
+        if (leak_detected)
         {
           if (es.state == IMC::EntityState::ESTA_NORMAL)
           {
