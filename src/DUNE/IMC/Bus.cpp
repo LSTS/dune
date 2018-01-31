@@ -143,6 +143,7 @@ namespace DUNE
     const std::vector<TransportBindings*>
     Bus::getBindings(void)
     {
+      Concurrency::ScopedRWLock l(m_lock);
       return m_bind_msgs;
     }
   }
