@@ -42,13 +42,14 @@ namespace DUNE
 {
   namespace Utils
   {
+
     class ByteBuffer
     {
-    friend std::ostream&
-    operator<<(std::ostream& os, ByteBuffer& buffer);
+      friend std::ostream&
+      operator<<(std::ostream& os, const ByteBuffer& buffer);
 
     public:
-      ByteBuffer(uint32_t capacity = 128):
+      ByteBuffer(size_t capacity = 128):
         m_buffer(NULL),
         m_capacity(Math::computeNextPowerOfTwo(capacity)),
         m_size(0)
@@ -59,11 +60,15 @@ namespace DUNE
       inline
       ~ByteBuffer(void)
       {
-        std::free(m_buffer);
+        if (m_buffer != NULL)
+        {
+          std::free(m_buffer);
+          m_buffer = NULL;
+        }
       }
 
       inline void
-      grow(uint32_t size)
+      grow(size_t size)
       {
         if (size > m_capacity)
         {
@@ -73,7 +78,7 @@ namespace DUNE
       }
 
       void
-      write(const uint8_t* data, uint32_t size)
+      write(const uint8_t* data, size_t size)
       {
         grow(size);
         std::memcpy(m_buffer, data, size);
@@ -81,14 +86,13 @@ namespace DUNE
       }
 
       void
-      resetBuffer(void)
+      clear(void)
       {
-        std::memset(m_buffer, 0, m_capacity);
-        m_size = 0;
+        setSize(0);
       }
 
       void
-      append(const uint8_t* data, uint32_t size)
+      append(const uint8_t* data, size_t size)
       {
         grow(m_size + size);
         std::memcpy(m_buffer + m_size, data, size);
@@ -96,13 +100,13 @@ namespace DUNE
       }
 
       void
-      appendSigned(const char* data, uint32_t size)
+      appendSigned(const char* data, size_t size)
       {
         append((uint8_t*)data, size);
       }
 
       void
-      setSize(uint32_t size)
+      setSize(size_t size)
       {
         grow(size);
         m_size = size;
@@ -117,23 +121,23 @@ namespace DUNE
       inline char*
       getBufferSigned(void)
       {
-        return (char*)m_buffer;
+        return (char*)getBuffer();
       }
 
-      inline uint32_t
-      getCapacity(void)
+      inline size_t
+      getCapacity(void) const
       {
         return m_capacity;
       }
 
-      inline uint32_t
-      getSize(void)
+      inline size_t
+      getSize(void) const
       {
         return m_size;
       }
 
-      inline uint32_t
-      getRemaining(void)
+      inline size_t
+      getRemaining(void) const
       {
         return m_capacity - m_size;
       }
@@ -142,15 +146,20 @@ namespace DUNE
       //! Internal buffer.
       uint8_t* m_buffer;
       //! Internal buffer's capacity.
-      uint32_t m_capacity;
+      size_t m_capacity;
       //! Internal buffer's used space.
-      uint32_t m_size;
+      size_t m_size;
+
+      ByteBuffer(const ByteBuffer& other);
+
+      ByteBuffer&
+      operator=(const ByteBuffer& other);
     };
 
     inline std::ostream&
-    operator<<(std::ostream& os, ByteBuffer& buffer)
+    operator<<(std::ostream& os, const ByteBuffer& buffer)
     {
-      os.write((char*)buffer.m_buffer, buffer.m_size);
+      os.write((const char*)buffer.m_buffer, buffer.getSize());
       return os;
     }
   }
