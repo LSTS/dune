@@ -89,7 +89,7 @@ namespace DUNE
         m_deadline = ((uint64_t)now.tv_sec * 1000000000U) + (uint64_t)now.tv_nsec;
 
 #elif defined(DUNE_SYS_HAS_NANOSLEEP)
-	m_deadline = Clock::getNsec();
+        m_deadline = Clock::getNsec();
 
 #else
 #  error PeriodicDelay::reset() is not yet implemented in this system
