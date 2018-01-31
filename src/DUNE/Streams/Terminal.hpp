@@ -151,20 +151,6 @@ namespace DUNE
   }
 }
 
-#ifdef DEBUG
-//! Prints a debug message to standard error with the given
-//! parameters. If the macro DEBUG is not set nothing is performed.
-#  define DUNE_DBG(module, code)                                        \
-  ::DUNE::Streams::dune_term.lock()                                     \
-  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("DBG") \
-  << " [" << module << "] >> " << code << "\n"                          \
-  << ::DUNE::Streams::dune_term_flush
-#else
-//! Prints a debug message to standard error with the given
-//! parameters. If the macro DEBUG is not set nothing is performed.
-#  define DUNE_DBG(module, code)
-#endif
-
 //! Prints an error message to standard error with the given
 //! parameters.
 #define DUNE_ERR(module, code)                                          \
@@ -193,7 +179,7 @@ namespace DUNE
 
 //! Prints a development message to standard error with the given
 //! parameters.
-#define DUNE_DEV(module, code)                                          \
+#define DUNE_DBG(module, code)                                          \
   ::DUNE::Streams::dune_term.lock()                                     \
   << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("DBG") \
   << " [" << module << "] >> " << code << "\n"                          \

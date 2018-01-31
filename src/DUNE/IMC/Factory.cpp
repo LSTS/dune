@@ -35,7 +35,6 @@
 #include <map>
 
 // DUNE headers.
-#include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Utils/Utils.hpp>
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/IMC/Exceptions.hpp>
@@ -86,7 +85,6 @@ namespace DUNE
       if (creators_by_id[id])
         return creators_by_id[id]();
 
-      DUNE_DBG("IMC Message Factory", "unknown message " << id);
       return 0;
     }
 
@@ -128,8 +126,8 @@ namespace DUNE
       {
         v.push_back(itr->first);
       }
-
     }
+
     void
     Factory::getIds(std::vector<uint32_t>& v)
     {
