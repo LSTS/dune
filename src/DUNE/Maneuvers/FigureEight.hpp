@@ -34,6 +34,8 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers/Maneuver.hpp>
 #include <DUNE/Maneuvers/AbstractLoiter.hpp>
+#include <DUNE/Math/Angles.hpp>
+#include <DUNE/Math/Constants.hpp>
 
 namespace DUNE
 {
