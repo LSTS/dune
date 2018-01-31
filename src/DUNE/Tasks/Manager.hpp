@@ -34,9 +34,11 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <queue>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
