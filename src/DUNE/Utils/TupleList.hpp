@@ -33,12 +33,10 @@
 // ISO C++ 98 headers.
 #include <map>
 #include <string>
-#include <vector>
-#include <ostream>
 
 // DUNE headers.
+#include <DUNE/Casts.hpp>
 #include <DUNE/Utils/String.hpp>
-#include <DUNE/Streams/Terminal.hpp>
 
 namespace DUNE
 {
@@ -50,12 +48,12 @@ namespace DUNE
     class TupleList
     {
     public:
-      TupleList(std::string str, std::string sep = "=", std::string tuple_sep = ";", bool ignore_case = false):
+      TupleList(const std::string& str, const std::string& sep = "=", const std::string& tuple_sep = ";", bool ignore_case = false):
         m_sep(sep),
         m_tuple_sep(tuple_sep),
         m_ignore_case(ignore_case)
       {
-        *this << str;
+        parse(str);
       }
 
       void
@@ -64,49 +62,42 @@ namespace DUNE
         m_data.clear();
       }
 
+      //! Retrieve the number of distinct entries in the list.
+      //!
+      //! @return number of entries.
+      size_t
+      getSize(void) const
+      {
+        return m_data.size();
+      }
+
+      void
+      parse(const std::string& str);
+
       std::string
       get(std::string label)
       {
         if (m_ignore_case)
           String::toLowerCase(label);
 
-        return m_data[label];
+        std::map<std::string, std::string>::iterator itr = m_data.find(label);
+        if (itr == m_data.end())
+          return std::string();
+
+        return itr->second;
       }
 
       template <typename Type>
       Type
       get(std::string label, Type dflt)
       {
-        if (m_ignore_case)
-          String::toLowerCase(label);
-
+        std::string value = get(label);
         Type t;
-        std::stringstream sin(m_data[label]);
+        if (castLexical(value, t))
+          return t;
 
-        sin >> t;
-
-        if (sin.fail())
-        {
-          t = dflt;
-        }
-
-        return t;
+        return dflt;
       }
-
-      TupleList&
-      operator<<(const std::string str);
-
-      friend std::ostream&
-      operator<<(std::ostream& os, const TupleList&);
-
-      friend std::string&
-      operator<<(std::string& os, const TupleList&);
-
-      std::map<std::string, std::string>
-      getMap();
-
-      std::map<std::string, std::string>
-      getMapReversed();
 
     private:
       std::string m_sep;
