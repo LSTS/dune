@@ -42,8 +42,6 @@ namespace DUNE
 #include <DUNE/Utils/CircularBuffer.hpp>
 #include <DUNE/Utils/Exceptions.hpp>
 #include <DUNE/Utils/OptionParser.hpp>
-#include <DUNE/Utils/RawFifo.hpp>
-#include <DUNE/Utils/StateMachine.hpp>
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Utils/TupleList.hpp>
 #include <DUNE/Utils/Utils.hpp>
