@@ -7,24 +7,24 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
-#define DUNE_ALGORITHMS_BASE64_HPP_INCLUDED_
+#ifndef DUNE_ALGORITHMS_RADIX64_NMEA_HPP_INCLUDED_
+#define DUNE_ALGORITHMS_RADIX64_NMEA_HPP_INCLUDED_
 
 // DUNE headers.
-#include "Radix64.hpp"
+#include <DUNE/Algorithms/Radix64.hpp>
 
 namespace DUNE
 {
   namespace Algorithms
   {
-    class AlphabetBase64
+    class AlphabetNMEA
     {
     public:
       static const char* c_enc;
       static const uint8_t c_dec[256];
     };
 
-    typedef Radix64<AlphabetBase64, '='> Base64;
+    typedef Radix64<AlphabetNMEA> Radix64NMEA;
   }
 }
 

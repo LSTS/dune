@@ -37,6 +37,8 @@ namespace DUNE
   { }
 }
 
+#include <DUNE/Algorithms/Radix64.hpp>
+#include <DUNE/Algorithms/Radix64NMEA.hpp>
 #include <DUNE/Algorithms/Base64.hpp>
 #include <DUNE/Algorithms/CRC8.hpp>
 #include <DUNE/Algorithms/CRC16.hpp>
