@@ -71,6 +71,15 @@ namespace DUNE
       void
       setDirection(const std::string& direction);
 
+      //! Get GPIO direction.
+      //!
+      //! @return direction.
+      Direction
+      getDirection(void) const
+      {
+        return m_direction;
+      }
+
       //! Set GPIO value.
       //! @param[in] value pin value (false = off, true = on).
       void
@@ -80,6 +89,12 @@ namespace DUNE
       //! @return pin value (false = off, true = on).
       bool
       getValue(void);
+
+      //! Invert set and get values.
+      //! @param[in] value true to invert values, false otherwise.
+      void
+      setActiveLow(bool value);
+
 
     private:
       //! GPIO number.
@@ -92,6 +107,8 @@ namespace DUNE
       std::string m_file_dir;
       //! Path to GPIO value file.
       std::string m_file_val;
+      //! Path to the active low file.
+      std::string m_file_alow;
 
       static void
       writeToFile(const std::string& file, int value);
