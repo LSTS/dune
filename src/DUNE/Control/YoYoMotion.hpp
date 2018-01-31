@@ -1,30 +1,10 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2017 OceanScan - Marine Systems & Technology, Lda.             *
 //***************************************************************************
-// This file is part of DUNE: Unified Navigation Environment.               *
-//                                                                          *
-// Commercial Licence Usage                                                 *
-// Licencees holding valid commercial DUNE licences may use this file in    *
-// accordance with the commercial licence agreement provided with the       *
-// Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
-//                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
-// included in the packaging of this file. You may not use this work        *
-// except in compliance with the Licence. Unless required by applicable     *
-// law or agreed to in writing, software distributed under the Licence is   *
-// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
-// ANY KIND, either express or implied. See the Licence for the specific    *
-// language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
-// http://ec.europa.eu/idabc/eupl.html.                                     *
+// This file is subject to the terms and conditions defined in file         *
+// 'LICENCE.md', which is part of this source code package.                 *
 //***************************************************************************
-// Author: Pedro Calado                                                     *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 #ifndef DUNE_CONTROL_YO_YO_MOTION_HPP_INCLUDED_
@@ -44,19 +24,21 @@ namespace DUNE
     //! Acceptable distance to reference to consider target reached.
     static const float c_dist_to_ref = 0.2f;
     //! Safety depth margin.
-    static const float c_depth_margin = 3.0f;
+    static const float c_yoyo_depth_margin = 3.0f;
 
     class YoYoMotion
     {
     public:
-      //! Constructor
+      //! Constructor.
+      //!
       //! @param[in] task pointer to calling task
       //! @param[in] pitch pitch angle to use in motion
       //! @param[in] z_ref z reference for yoyo motion
-      //! @param[in] z_units z reference units for yoyo motion
+      //! @param[in] zunits z reference units for yoyo motion
       //! @param[in] amplitude z reference amplitude for yoyo motion
       //! @param[in] variation maximum variation for the pitch angle
       //! @param[in] min_alt minimum altitude reference admissible
+      //! @param[in] max_depth maximum depth reference admissible
       YoYoMotion(DUNE::Tasks::Task* task, float pitch, float z_ref,
                  IMC::ZUnits zunits, float amplitude, float variation,
                  float min_alt = 5.0f, float max_depth = 50.0f):
@@ -75,7 +57,7 @@ namespace DUNE
       //! Update yoyo motion
       //! @param[in] startup whether or not the yoyo motion is starting now
       //! @param[in] depth current depth position
-      //! @param[in] altitude current altitude position
+      //! @param[in] alt current altitude position
       //! @param[in] pitch current pitch angle
       //! @return new pitch command
       float
@@ -154,7 +136,7 @@ namespace DUNE
           if (m_dir == DIR_UP)
             m_target_z = std::max(0.0f, m_z_ref - m_amplitude);
           else
-            m_target_z = std::min(m_max_depth - c_depth_margin, m_z_ref + m_amplitude);
+            m_target_z = std::min(m_max_depth - c_yoyo_depth_margin, m_z_ref + m_amplitude);
         }
         else
         {
@@ -247,7 +229,7 @@ namespace DUNE
           if (alt > 0 && alt <= m_min_alt)
             return false;
 
-          if (depth > m_max_depth - c_depth_margin)
+          if (depth > m_max_depth - c_yoyo_depth_margin)
             return false;
         }
 
