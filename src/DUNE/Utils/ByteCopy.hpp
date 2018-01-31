@@ -56,7 +56,7 @@ namespace DUNE
       //! order. If the host is big endian no conversion is performed.
       //! @param n integer to convert.
       //! @return 16-bit unsigned integer in big endian byte order.
-      inline static uint16_t
+      static inline uint16_t
       toBE(uint16_t n)
       {
 #if defined(DUNE_SYS_HAS_HTONS)
@@ -74,7 +74,7 @@ namespace DUNE
       //! order. If the host is big endian no conversion is performed.
       //! @param n integer to convert.
       //! @return 16-bit unsigned integer in big endian byte order.
-      inline static int16_t
+      static inline int16_t
       toBE(int16_t n)
       {
         return toBE(static_cast<uint16_t>(n));
@@ -84,7 +84,7 @@ namespace DUNE
       //! order. If the host is big endian no conversion is performed.
       //! @param n integer to convert.
       //! @return 32-bit unsigned integer in big endian byte order.
-      inline static uint32_t
+      static inline uint32_t
       toBE(uint32_t n)
       {
 #if defined(DUNE_SYS_HAS_HTONL)
@@ -103,7 +103,7 @@ namespace DUNE
       //! order. If the host is big endian no conversion is performed.
       //! @param n integer to convert.
       //! @return 32-bit signed integer in big endian byte order.
-      inline static int32_t
+      static inline int32_t
       toBE(int32_t n)
       {
         return toBE(static_cast<uint32_t>(n));
@@ -114,7 +114,7 @@ namespace DUNE
       //! conversion is performed.
       //! @param n integer to convert.
       //! @return 32-bit unsigned integer in host byte order.
-      inline static uint32_t
+      static inline uint32_t
       fromBE(uint32_t n)
       {
 #if defined(DUNE_SYS_HAS_NTOHL)
@@ -134,7 +134,7 @@ namespace DUNE
       //! is performed.
       //! @param n integer to convert.
       //! @return 32-bit signed integer in host byte order.
-      inline static int32_t
+      static inline int32_t
       fromBE(int32_t n)
       {
         return fromBE(static_cast<uint32_t>(n));
@@ -145,7 +145,7 @@ namespace DUNE
       //! conversion is performed.
       //! @param n integer to convert.
       //! @return 16-bit unsigned integer in host byte order.
-      inline static uint16_t
+      static inline uint16_t
       fromBE(uint16_t n)
       {
 #if defined(DUNE_SYS_HAS_NTOHS)
@@ -164,7 +164,7 @@ namespace DUNE
       //! conversion is performed.
       //! @param n integer to convert.
       //! @return 16-bit signed integer in host byte order.
-      inline static int16_t
+      static inline int16_t
       fromBE(int16_t n)
       {
         return fromBE(static_cast<uint16_t>(n));
@@ -174,7 +174,7 @@ namespace DUNE
       //! order to host byte order.
       //! @param n array to convert.
       //! @return 16 bit unsigned integer in host byte order.
-      inline static uint16_t
+      static inline uint16_t
       fromBE(uint8_t* n)
       {
 #if defined(DUNE_SYS_HAS_NTOHS)
@@ -360,25 +360,13 @@ namespace DUNE
       }
 
       static inline uint16_t
-      copy(int64_t& dest, const uint8_t* src)
-      {
-        return copy8b(reinterpret_cast<uint8_t*>(&dest), src);
-      }
-
-      static inline uint16_t
-      copy(uint64_t& dest, const uint8_t* src)
-      {
-        return copy8b(reinterpret_cast<uint8_t*>(&dest), src);
-      }
-
-      static inline uint16_t
-      copy(fp32_t& dest, const uint8_t* src)
+      copy(float& dest, const uint8_t* src)
       {
         return copy4b(reinterpret_cast<uint8_t*>(&dest), src);
       }
 
       static inline uint16_t
-      copy(fp64_t& dest, const uint8_t* src)
+      copy(double& dest, const uint8_t* src)
       {
         return copy8b(reinterpret_cast<uint8_t*>(&dest), src);
       }
@@ -420,25 +408,13 @@ namespace DUNE
       }
 
       static inline uint16_t
-      rcopy(int64_t& dest, const uint8_t* src)
-      {
-        return rcopy8b(reinterpret_cast<uint8_t*>(&dest), src);
-      }
-
-      static inline uint16_t
-      rcopy(uint64_t& dest, const uint8_t* src)
-      {
-        return rcopy8b(reinterpret_cast<uint8_t*>(&dest), src);
-      }
-
-      static inline uint16_t
-      rcopy(fp32_t& dest, const uint8_t* src)
+      rcopy(float& dest, const uint8_t* src)
       {
         return rcopy4b(reinterpret_cast<uint8_t*>(&dest), src);
       }
 
       static inline uint16_t
-      rcopy(fp64_t& dest, const uint8_t* src)
+      rcopy(double& dest, const uint8_t* src)
       {
         return rcopy8b(reinterpret_cast<uint8_t*>(&dest), src);
       }
@@ -489,6 +465,26 @@ namespace DUNE
       toLE(const int32_t value, uint8_t* dst)
       {
         return toLE(static_cast<uint32_t>(value), dst);
+      }
+
+      static inline unsigned
+      toLE(const float value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return rcopy4b(dst, (uint8_t*)&value);
+#else
+        return copy4b(dst, (uint8_t*)&value);
+#endif
+      }
+
+      static inline unsigned
+      toLE(const double value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return rcopy8b(dst, (uint8_t*)&value);
+#else
+        return copy8b(dst, (uint8_t*)&value);
+#endif
       }
 
       static inline unsigned
@@ -711,7 +707,7 @@ namespace DUNE
     //! @param src source single precision floating point variable.
     //! @return number of copied bytes.
     inline uint16_t
-    reverseCopy(char* dest, const fp32_t& src)
+    reverseCopy(char* dest, const float& src)
     {
       reverseCopy4b(dest, (char*)&src);
       return 4;
@@ -730,7 +726,7 @@ namespace DUNE
     //! @param src source double precision floating point variable.
     //! @return number of copied bytes.
     inline uint16_t
-    reverseCopy(char* dest, const fp64_t& src)
+    reverseCopy(char* dest, const double& src)
     {
       reverseCopy8b(dest, (char*)&src);
       return 8;
@@ -788,6 +784,27 @@ namespace DUNE
     {
       std::memcpy(dest, src, size);
       return size;
+    }
+
+    //! Convert signed number stored in B bits of an unsigned variable to
+    //! a signed number, performing sign extension.
+    //!
+    //! @tparam T return type.
+    //! @tparam B number of relevant bits.
+    //!
+    //! @param[in] x signed number stored in unsigned variable.
+    //!
+    //! @return signed number.
+    template <typename T, unsigned B>
+    inline T
+    signExtend(const T x)
+    {
+      struct
+      {
+        T x:B;
+      } s;
+
+      return s.x = x;
     }
   }
 }
