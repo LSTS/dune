@@ -303,7 +303,7 @@ namespace DUNE
       //! Dispatch message to the message bus.
       //! @param[in] msg message pointer.
       //! @param[in] flags bitfield with flags (see DispatchFlags).
-      void
+      virtual void
       dispatch(IMC::Message* msg, unsigned int flags = 0);
 
       //! Dispatch message to the message bus.
@@ -368,7 +368,7 @@ namespace DUNE
 
       //! Write task parameters in XML format.
       //! @param[in] os output stream.
-      void
+      virtual void
       writeParamsXML(std::ostream& os) const;
 
       //! Retrieve the main entity label of the task.
@@ -446,13 +446,6 @@ namespace DUNE
         entity->setBindings(m_recipient);
         return entity;
       }
-
-      //! Retrieve pointer to a previously stored entity object
-      //! object.
-      //! @param[in] label entity name/label.
-      //! @return pointer to entity object.
-      Entities::BasicEntity*
-      getLocalEntity(const std::string& label);
 
       //! Test if task is stopping.
       //! @return true if task is stopping, false otherwise.

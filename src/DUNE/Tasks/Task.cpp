@@ -111,16 +111,6 @@ namespace DUNE
       return e->getId();
     }
 
-    Entities::BasicEntity*
-    Task::getLocalEntity(const std::string& label)
-    {
-      std::vector<Entities::BasicEntity*>::iterator it = std::find(m_entities.begin(), m_entities.end(), label);
-      if (it == m_entities.end())
-          return NULL;
-      else
-        return (*it);
-    }
-
     void
     Task::reserveEntities(void)
     {
