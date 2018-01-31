@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,34 +8,36 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
 //                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 // Test program for DUNE::Database package.                                 *
 //***************************************************************************
+
 // ISO C++ headers
 #include <iostream>
 #include <sstream>
-#include "Test.hpp"
 
 // DUNE headers
 #include <DUNE/Database.hpp>
 #include <DUNE/Math.hpp>
+
+// Catch headers.
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
 
 using namespace DUNE::Database;
 using namespace DUNE;
@@ -56,7 +58,7 @@ valuesAreOk(int id, double value, const std::string& name, std::pair<bool, Blob>
   if (!data.first && (id % 2) == 0)
     return true;
 
-  if ((int)data.second.size() != id)
+  if ((int) data.second.size() != id)
     return false;
 
   int j = 0;
@@ -66,57 +68,23 @@ valuesAreOk(int id, double value, const std::string& name, std::pair<bool, Blob>
   return true;
 }
 
-int
-main(int argc, char** argv)
+TEST_CASE("multi")
 {
-  Test test("DUNE::Database");
-
   Connection db(Connection::CF_CREATE);
 
-  bool passed = false;
-
   // Begin transaction test.
-  try
-  {
-    db.beginTransaction();
-    passed = true;
-  }
-  catch (std::runtime_error& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-  test.boolean("Connection::beginTransaction()", passed);
+  REQUIRE_NOTHROW(db.beginTransaction());
 
   // Table drop test.
-  passed = false;
-  try
-  {
-    db.execute("DROP TABLE IF EXISTS TEST");
-    passed = true;
-  }
-  catch (std::runtime_error& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-  test.boolean("Connection::execute() -- DROP TABLE", passed);
+  REQUIRE_NOTHROW(db.execute("DROP TABLE IF EXISTS TEST"));
 
   // Table creation test.
-  passed = false;
-  try
-  {
-    db.execute("CREATE TABLE TEST ( ID INTEGER PRIMARY KEY NOT NULL, VALUE REAL NOT NULL, NAME VARCHAR2 NOT NULL, DATA BLOB)");
-    passed = true;
-  }
-  catch (std::runtime_error& e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-  test.boolean("Connection::execute() -- CREATE TABLE", passed);
+  REQUIRE_NOTHROW(db.execute("CREATE TABLE TEST ( ID INTEGER PRIMARY KEY NOT NULL, VALUE REAL NOT NULL, NAME VARCHAR2 NOT NULL, DATA BLOB)"));
 
   const int N = 10;
 
   // Insertion statement test.
-  passed = false;
+  bool passed = false;
   try
   {
     Statement insertion("INSERT INTO TEST VALUES(?,?,?,?)", db);
@@ -124,7 +92,7 @@ main(int argc, char** argv)
     for (int i = 0; i < N; i++)
     {
       int id = i;
-      double value = 0.1 * (double)i;
+      double value = 0.1 * (double) i;
       std::stringstream name;
       Blob blob(i);
 
@@ -151,7 +119,7 @@ main(int argc, char** argv)
     std::cerr << e.what() << std::endl;
   }
 
-  test.boolean("Statement -- INSERT", passed);
+  REQUIRE(passed);
 
   // COMMIT test
   passed = false;
@@ -165,7 +133,7 @@ main(int argc, char** argv)
     std::cerr << e.what() << std::endl;
   }
 
-  test.boolean("Connection::commit()", passed);
+  REQUIRE(passed);
 
   // SELECT test (1)
   passed = false;
@@ -196,7 +164,7 @@ main(int argc, char** argv)
   {
     std::cerr << e.what() << std::endl;
   }
-  test.boolean("Statement -- SELECT (1)", passed);
+  REQUIRE(passed);
 
   // SELECT test (2)
   passed = false;
@@ -231,7 +199,7 @@ main(int argc, char** argv)
   {
     std::cerr << e.what() << std::endl;
   }
-  test.boolean("Statement -- SELECT (2)", passed);
+  REQUIRE(passed);
 
   // ROLLBACK test
   passed = false;
@@ -261,7 +229,7 @@ main(int argc, char** argv)
   {
     std::cerr << e.what() << std::endl;
   }
-  test.boolean("Statement -- ROLLBACK", passed);
+  REQUIRE(passed);
 
   // DELETE test
   passed = false;
@@ -285,7 +253,5 @@ main(int argc, char** argv)
     std::cerr << e.what() << std::endl;
   }
 
-  test.boolean("Connection -- Row count", passed);
-
-  return 0;
+  REQUIRE(passed);
 }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,20 +8,18 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
 //                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
@@ -29,25 +27,28 @@
 // Utility program to test body fixed frame conversion functions.           *
 //***************************************************************************
 
+// ISO C++ 98 headers.
 #include <iostream>
 #include <sstream>
 #include <string>
+
+// DUNE headers.
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Coordinates/BodyFixedFrame.hpp>
-#include "Test.hpp"
+
+// Catch headers.
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
 
 using namespace DUNE::Math;
 using namespace DUNE::Coordinates;
 
-int
-main(void)
+TEST_CASE("stress")
 {
-  Test test("DUNE::Utils::BodyFixedFrame");
-
   double phi, theta, psi,
-         u, v, w,
-         u_in, v_in, w_in,
-         u_in2, v_in2, w_in2, d;
+    u, v, w,
+    u_in, v_in, w_in,
+    u_in2, v_in2, w_in2, d;
 
   bool success = true;
   double astep = c_pi * 0.25;
@@ -62,13 +63,6 @@ main(void)
               BodyFixedFrame::toInertialFrame(phi, theta, psi, u, v, w, &u_in2, &v_in2, &w_in2);
               d = u_in - u_in2 + v_in - v_in2 + w_in - w_in2;
 
-              if (d > 1e-04)
-                success = false;
-
-              //std::cout << std::fixed << "ERR "<<Angles::degrees(phi) << ' ' << Angles::degrees(theta) << ' ' << Angles::degrees(psi) << " | "
-              //     << u_in << ' ' << v_in << ' ' << w_in << " | "
-              //     << u << ' ' << v << ' ' << w << " | " << d << '\n';
+              REQUIRE (d <= 1e-04);
             }
-  test.boolean("BFF", success);
-  return 0;
 }
