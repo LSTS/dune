@@ -62,13 +62,38 @@ namespace DUNE
     class Config
     {
     public:
+      typedef std::map<std::string, std::string> Section;
+      typedef std::map<std::string, Section> Table;
+
       //! Default constructor.
-      Config(void)
+      Config()
       { }
 
       //! Create the parser and parse a configuration file.
       //! @param fname name of the configuration file to parse.
       Config(const char* fname);
+
+      /**
+       * Assign configuration table.
+       * @param t configuration table.
+       */
+      void
+      table(const Table& t)
+      {
+        Concurrency::ScopedRWLock lock(m_lock, true);
+        m_data = t;
+      }
+
+      /**
+       * Get a copy of the current configuration table.
+       * @return configuration table.
+       */
+      Table
+      table()
+      {
+        Concurrency::ScopedRWLock lock(m_lock);
+        return m_data;
+      }
 
       //! Parse a configuration file.
       //! @param fname name of the configuration file to parse.
@@ -82,6 +107,7 @@ namespace DUNE
       void
       set(const std::string& section, const std::string& option, const std::string& value)
       {
+        Concurrency::ScopedRWLock lock(m_lock, true);
         m_data[section][option] = value;
       }
 
@@ -92,6 +118,7 @@ namespace DUNE
       std::string
       get(const std::string& section, const std::string& option)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
         return m_data[section][option];
       }
 
@@ -101,6 +128,7 @@ namespace DUNE
       void
       setSection(const std::string& section, const std::map<std::string, std::string>& map)
       {
+        Concurrency::ScopedRWLock lock(m_lock, true);
         m_data[section] = map;
       }
 
@@ -110,6 +138,7 @@ namespace DUNE
       std::map<std::string, std::string>
       getSection(const std::string& section)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
         return m_data[section];
       }
 
@@ -122,6 +151,8 @@ namespace DUNE
       void
       get(const std::string& sec, const std::string& opt, const std::string& def, Type& var)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
+
         if (m_data[sec].find(opt) != m_data[sec].end())
         {
           if (castLexical(m_data[sec][opt], var))
@@ -153,6 +184,8 @@ namespace DUNE
       bool
       getList(const std::string& section, const std::string& option, T* dest, unsigned int size)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
+
         std::vector<T> v;
         get(section, option, "", v);
 
@@ -163,23 +196,10 @@ namespace DUNE
         return true;
       }
 
-      //! Writes the current configuration to a file.
-      //! @param file output file option.
-      void
-      writeToFile(const char* file);
-
-      //! Retrieve the file option of the parsed configuration file.
-      //! @return parsed file option.
-      std::vector<std::string>
-      files(void)
-      {
-        return m_files;
-      }
-
       //! Retrieve all the available sections.
       //! @return list of all sections.
       std::vector<std::string>
-      sections(void);
+      sections();
 
       //! Retrieve all the options under the given section.
       //! @param section section of interest.
@@ -187,19 +207,25 @@ namespace DUNE
       std::vector<std::string>
       options(const std::string& section);
 
-      //! Write the current configuration to a stream.
+      //! Write current values to an output stream.
       //! @param[in] os output stream.
-      //! @param[in] cfg Config instance.
-      friend DUNE_DLL_SYM std::ostream&
-      operator<<(std::ostream& os, const Config& cfg);
+      void
+      writeToStream(std::ostream& os);
+
+      //! Write current values to a file.
+      //! @param[in] file_name output file name.
+      void
+      writeToFile(const std::string& file_name)
+      {
+        std::ofstream ofs(file_name.c_str());
+        writeToStream(ofs);
+      }
 
     private:
-      typedef std::map<std::string, std::string> Section;
-      typedef std::map<std::string, Section> Sections;
       //! Representation of the configuration file as a map.
-      Sections m_data;
-      //! List of parsed files.
-      std::vector<std::string> m_files;
+      Table m_data;
+      //! Concurrency lock.
+      Concurrency::RWLock m_lock;
 
       // Non - copyable.
       Config(const Config&);
