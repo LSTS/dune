@@ -45,17 +45,30 @@ namespace DUNE
     };
 
     ZlibDecompressor::ZlibDecompressor(bool gzip):
-      Decompressor()
+      m_private(NULL)
     {
-      m_private = new PrivateData;
       m_wbits = gzip ? (MAX_WBITS + 32) : MAX_WBITS;
-      clear();
     }
 
     ZlibDecompressor::~ZlibDecompressor(void)
     {
-      inflateEnd(&m_private->stream);
-      delete m_private;
+      if (m_private != NULL)
+      {
+        inflateEnd(&m_private->stream);
+        delete m_private;
+      }
+    }
+
+    int
+    ZlibDecompressor::zlibInflateInit(void)
+    {
+      return inflateInit2(&m_private->stream, m_wbits);
+    }
+
+    void
+    ZlibDecompressor::initialize(void)
+    {
+      m_private = new PrivateData;
     }
 
     void
@@ -73,7 +86,7 @@ namespace DUNE
       stream->total_out = 0;
       stream->opaque = 0;
 
-      int err = inflateInit2(stream, m_wbits);
+      int err = zlibInflateInit();
       if (err != Z_OK)
         throw Error("decompressor initialization failed");
     }
@@ -81,6 +94,12 @@ namespace DUNE
     unsigned long
     ZlibDecompressor::decompressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len, unsigned long& unprocessed_len)
     {
+      if (m_private == NULL)
+      {
+        initialize();
+        clear();
+      }
+
       z_stream* stream = &m_private->stream;
 
       if (m_clear)

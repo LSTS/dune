@@ -41,13 +41,13 @@
 #include <DUNE/Compression/Compressor.hpp>
 #include <DUNE/Compression/Decompressor.hpp>
 
-static const unsigned c_put_bfr_size = 128 * 1024;
-static const unsigned c_get_bfr_size = 256 * 1024;
-
 namespace DUNE
 {
   namespace Compression
   {
+    static const unsigned c_put_bfr_size = 128 * 1024;
+    static const unsigned c_get_bfr_size = 256 * 1024;
+
     StreamBuffer::StreamBuffer(std::ostream* stream, Methods method):
       m_method(method),
       m_ostream(stream),
@@ -95,13 +95,18 @@ namespace DUNE
       return 0;
     }
 
-    StreamBuffer::int_type
+    std::streambuf::int_type
     StreamBuffer::overflow(int_type c)
     {
+      if (m_ostream == NULL)
+        return EOF;
+
+      char v = c;
+      xsputn(&v, sizeof(v));
       return c;
     }
 
-    StreamBuffer::int_type
+    std::streambuf::int_type
     StreamBuffer::underflow(void)
     {
       return EOF;
@@ -136,7 +141,7 @@ namespace DUNE
               break;
           }
 
-          m_istream->read(m_bfr.getBufferSigned(), m_bfr.getSize());
+          m_istream->read(m_bfr.getBufferSigned(),  chunk_rem);
           m_get_bfr_idx = 0;
           m_get_bfr_rem = m_istream->gcount();
         }

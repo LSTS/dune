@@ -47,23 +47,5 @@ namespace DUNE
       m_processed = src_len - m_unprocessed;
       m_processed_total += m_processed;
     }
-
-    Utils::ByteBuffer
-    Decompressor::decompress(char* src, unsigned long src_len)
-    {
-      Utils::ByteBuffer dst;
-      unsigned dst_len = 128 * 1024;
-      dst.setSize(dst_len);
-      decompress(dst.getBufferSigned(), dst.getSize(), src, src_len);
-      dst.setSize(decompressed());
-      return dst;
-    }
-
-    void
-    Decompressor::decompress(Utils::ByteBuffer& dst, Utils::ByteBuffer& src)
-    {
-      decompress(dst.getBufferSigned(), dst.getSize(), src.getBufferSigned(), src.getSize());
-      dst.setSize(decompressed());
-    }
   }
 }

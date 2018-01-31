@@ -42,7 +42,7 @@ namespace DUNE
     ZlibCompressor::compressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len)
     {
       unsigned long compressed_length = dst_len;
-      int rv = ::compress2((Bytef*)dst, &compressed_length, (const Bytef*)src, src_len, level());
+      int rv = zlibCompress2(dst, &compressed_length, src, src_len);
 
       if (rv == Z_OK)
         return compressed_length;
@@ -53,13 +53,19 @@ namespace DUNE
       if (rv == Z_BUF_ERROR)
         throw BufferTooShort(dst_len);
 
-      return 0;
+      throw Error(Utils::String::str("failed to compress block with error code %d", rv));
     }
 
     unsigned long
     ZlibCompressor::compressBound(unsigned long length) const
     {
       return ::compressBound(length);
+    }
+
+    int
+    ZlibCompressor::zlibCompress2(char* dst, unsigned long* dst_len, char* src, unsigned long src_len)
+    {
+      return ::compress2((Bytef*)dst, dst_len, (const Bytef*)src, src_len, level());
     }
   }
 }

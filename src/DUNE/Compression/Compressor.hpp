@@ -53,20 +53,13 @@ namespace DUNE
       { }
 
       virtual
-      ~Compressor(void)
-      { }
+      ~Compressor(void);
 
       void
       compress(char* dst, unsigned long dst_len, char* src, unsigned long src_len);
 
-      Utils::ByteBuffer
-      compress(char* src, unsigned long src_len);
-
       void
       compress(Utils::ByteBuffer& dst, char* src, unsigned long src_len);
-
-      Utils::ByteBuffer
-      compress(Utils::ByteBuffer& src);
 
       void
       compress(Utils::ByteBuffer& dst, Utils::ByteBuffer& src);

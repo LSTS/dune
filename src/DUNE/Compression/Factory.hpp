@@ -66,6 +66,9 @@ namespace DUNE
       static Methods
       detect(const char* fname);
 
+      static Methods
+      detect(const uint8_t* data, size_t data_size);
+
       static Compressor*
       compressor(Methods method);
 

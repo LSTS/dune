@@ -48,12 +48,19 @@ namespace DUNE
         Compressor(a_level)
       { }
 
+      virtual
+      ~ZlibCompressor(void)
+      { }
+
     protected:
       virtual unsigned long
       compressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len);
 
       virtual unsigned long
       compressBound(unsigned long length) const;
+
+      virtual int
+      zlibCompress2(char* dst, unsigned long* dst_len, char* src, unsigned long src_len);
     };
   }
 }

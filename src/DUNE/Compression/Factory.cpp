@@ -106,16 +106,23 @@ namespace DUNE
     {
       std::ifstream ifs(fname, std::ios::binary);
       uint8_t bfr[2] = {0};
+      ifs.read((char*)bfr, sizeof(bfr));
+      return detect(bfr, sizeof(bfr));
+    }
 
-      ifs.read((char*)bfr, 2);
+    Methods
+    Factory::detect(const uint8_t* data, size_t data_size)
+    {
+      if (data_size < 2)
+        return METHOD_UNKNOWN;
 
-      if (std::memcmp("\x1f\x8b", bfr, 2) == 0)
+      if (std::memcmp("\x1f\x8b", data, 2) == 0)
         return METHOD_GZIP;
 
-      if (std::memcmp("\x78\x9c", bfr, 2) == 0)
+      if (std::memcmp("\x78\x9c", data, 2) == 0 || std::memcmp("\x78\xda", data, 2) == 0)
         return METHOD_ZLIB;
 
-      if (std::memcmp("BZ", bfr, 2) == 0)
+      if (std::memcmp("BZ", data, 2) == 0)
         return METHOD_BZIP2;
 
       return METHOD_UNKNOWN;

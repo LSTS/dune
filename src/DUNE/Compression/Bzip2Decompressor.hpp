@@ -52,12 +52,15 @@ namespace DUNE
       virtual unsigned long
       decompressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len, unsigned long& unprocessed_len);
 
+      virtual int
+      decompressInit(int verbosity, int small);
+
     private:
       // Forward declaration of private data.
       struct PrivateData;
       //! Private data, used to store bzip2 specific structures.
       PrivateData* m_private;
-      //! True if the compressor's state must be cleared.
+      //! True if the decompressor's state must be cleared.
       bool m_clear;
 
       void

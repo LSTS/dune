@@ -35,6 +35,9 @@ namespace DUNE
 {
   namespace Compression
   {
+    Compressor::~Compressor(void)
+    { }
+
     void
     Compressor::compress(char* dst, unsigned long dst_len, char* src, unsigned long src_len)
     {
@@ -46,14 +49,6 @@ namespace DUNE
       m_compressed_total += rv;
       m_processed = src_len;
       m_processed_total += src_len;
-    }
-
-    Utils::ByteBuffer
-    Compressor::compress(char* src, unsigned long src_len)
-    {
-      Utils::ByteBuffer dst;
-      compress(dst, src, src_len);
-      return dst;
     }
 
     void
@@ -79,12 +74,6 @@ namespace DUNE
       }
 
       dst.setSize(m_compressed);
-    }
-
-    Utils::ByteBuffer
-    Compressor::compress(Utils::ByteBuffer& src)
-    {
-      return compress(src.getBufferSigned(), src.getSize());
     }
 
     void

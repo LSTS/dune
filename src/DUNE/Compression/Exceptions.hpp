@@ -49,14 +49,6 @@ namespace DUNE
       { }
     };
 
-    class UnknownMethod: public Error
-    {
-    public:
-      UnknownMethod(const std::string& msg):
-        Error(std::string("unknown compression method: ") + msg)
-      { }
-    };
-
     class OutOfMemory: public Error
     {
     public:
@@ -68,29 +60,8 @@ namespace DUNE
     class BufferTooShort: public Error
     {
     public:
-      BufferTooShort(void):
-        Error(Utils::String::str("buffer is too short"))
-      { }
-
       BufferTooShort(unsigned long length):
         Error(Utils::String::str("buffer is too short (length %lu)", length))
-      { }
-    };
-
-    class CorruptedData: public Error
-    {
-    public:
-      CorruptedData(void):
-        Error("corrupted data")
-      { }
-    };
-
-    //! End of data.
-    class UnexpectedEOD: public Error
-    {
-    public:
-      UnexpectedEOD(void):
-        Error("unexpected end-of-data")
       { }
     };
   }

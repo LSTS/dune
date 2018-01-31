@@ -59,12 +59,6 @@ namespace DUNE
       void
       decompress(char* dst, unsigned long dst_len, char* src, unsigned long src_len);
 
-      Utils::ByteBuffer
-      decompress(char* src, unsigned long src_len);
-
-      void
-      decompress(Utils::ByteBuffer& dst, Utils::ByteBuffer& src);
-
       unsigned long
       decompressed(void)
       {

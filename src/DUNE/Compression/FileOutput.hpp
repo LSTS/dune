@@ -46,12 +46,11 @@ namespace DUNE
     {
     public:
       FileOutput(const char* filename, Methods method):
-        std::ostream(0),
-        m_method(method),
-        m_stream(filename, std::ios::binary | std::ios::out),
-        m_buffer(0)
+        std::ostream(NULL),
+        m_stream(filename, std::ios::binary | std::ios::out)
       {
-        attach(m_stream);
+        m_buffer = new StreamBuffer(&m_stream, method);
+        rdbuf(m_buffer);
       }
 
       ~FileOutput(void)
@@ -59,18 +58,7 @@ namespace DUNE
         delete m_buffer;
       }
 
-      void
-      attach(std::ostream& stream)
-      {
-        if (m_buffer)
-          delete m_buffer;
-
-        m_buffer = new StreamBuffer(&stream, m_method);
-        rdbuf(m_buffer);
-      }
-
     protected:
-      Methods m_method;
       std::ofstream m_stream;
       StreamBuffer* m_buffer;
     };

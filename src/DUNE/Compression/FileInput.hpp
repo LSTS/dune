@@ -46,12 +46,11 @@ namespace DUNE
     {
     public:
       FileInput(const char* filename, Methods method):
-        std::istream(0),
-        m_method(method),
-        m_stream(filename, std::ios::binary | std::ios::in),
-        m_buffer(0)
+        std::istream(NULL),
+        m_stream(filename, std::ios::binary | std::ios::in)
       {
-        attach(m_stream);
+        m_buffer = new StreamBuffer(&m_stream, method);
+        rdbuf(m_buffer);
       }
 
       ~FileInput(void)
@@ -59,18 +58,7 @@ namespace DUNE
         delete m_buffer;
       }
 
-      void
-      attach(std::istream& stream)
-      {
-        if (m_buffer)
-          delete m_buffer;
-
-        m_buffer = new StreamBuffer(&stream, m_method);
-        rdbuf(m_buffer);
-      }
-
     protected:
-      Methods m_method;
       std::ifstream m_stream;
       StreamBuffer* m_buffer;
     };

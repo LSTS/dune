@@ -27,6 +27,9 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <cstring>
+
 // DUNE headers.
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Compression/Exceptions.hpp>
@@ -45,23 +48,29 @@ namespace DUNE
     };
 
     Bzip2Decompressor::Bzip2Decompressor(void):
-      Decompressor()
+      m_private(NULL),
+      m_clear(true)
     {
-      m_private = new PrivateData;
-      clear();
     }
 
     Bzip2Decompressor::~Bzip2Decompressor(void)
     {
-      BZ2_bzDecompressEnd(&m_private->stream);
-      delete m_private;
+      if (m_private != NULL)
+      {
+        BZ2_bzDecompressEnd(&m_private->stream);
+        delete m_private;
+      }
+    }
+
+    int
+    Bzip2Decompressor::decompressInit(int verbosity, int small)
+    {
+      return BZ2_bzDecompressInit(&m_private->stream, verbosity, small);
     }
 
     void
     Bzip2Decompressor::clear(void)
     {
-      m_clear = false;
-
       bz_stream* stream = &m_private->stream;
       stream->next_in = 0;
       stream->avail_in = 0;
@@ -70,18 +79,25 @@ namespace DUNE
       stream->bzalloc = 0;
       stream->bzfree = 0;
 
-      int err = BZ2_bzDecompressInit(stream, 0, 0);
+      int err = decompressInit(0, 0);
       if (err != BZ_OK)
-        throw Error("decompressor initialization failed");
+        throw Error(Utils::String::str("decompressor initialization failed with error code %d", err));
     }
 
     unsigned long
     Bzip2Decompressor::decompressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len, unsigned long& unprocessed_len)
     {
-      bz_stream* stream = &m_private->stream;
+      if (m_private == NULL)
+      {
+        m_private = new PrivateData;
+        std::memset(&m_private->stream, 0, sizeof(m_private->stream));
+        clear();
+      }
 
+      bz_stream* stream = &m_private->stream;
       if (m_clear)
       {
+        m_clear = false;
         BZ2_bzDecompressEnd(stream);
         clear();
       }

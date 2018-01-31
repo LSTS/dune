@@ -48,9 +48,18 @@ namespace DUNE
         Compressor(a_level)
       { }
 
+      virtual
+      ~Bzip2Compressor(void)
+      { }
+
     protected:
       virtual unsigned long
       compressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len);
+
+      virtual int
+      compressBufferToBuffer(char* dst, unsigned int* dst_len,
+                             char* src, unsigned int src_len,
+                             int block_size_100k, int verbosity, int work_factor) const;
     };
   }
 }

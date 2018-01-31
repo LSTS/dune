@@ -45,12 +45,14 @@ namespace DUNE
     public:
       ZlibDecompressor(bool gzip = false);
 
-      virtual
       ~ZlibDecompressor(void);
 
     protected:
       virtual unsigned long
       decompressBlock(char* dst, unsigned long dst_len, char* src, unsigned long src_len, unsigned long& unprocessed_len);
+
+      virtual int
+      zlibInflateInit(void);
 
     private:
       // Forward declaration of private data.
@@ -61,6 +63,9 @@ namespace DUNE
       bool m_clear;
       //! Window bits.
       int m_wbits;
+
+      void
+      initialize(void);
 
       void
       clear(void);

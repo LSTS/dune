@@ -28,6 +28,7 @@
 //***************************************************************************
 
 // DUNE headers.
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Compression/Exceptions.hpp>
 #include <DUNE/Compression/Bzip2Compressor.hpp>
 
@@ -47,7 +48,7 @@ namespace DUNE
         plevel = 1;
 
       unsigned compressed_length = dst_len;
-      int rv = BZ2_bzBuffToBuffCompress(dst, &compressed_length, src, src_len, plevel, 0, 0);
+      int rv = compressBufferToBuffer(dst, &compressed_length, src, src_len, plevel, 0, 0);
 
       if (rv == BZ_OK)
         return compressed_length;
@@ -58,7 +59,15 @@ namespace DUNE
       if (rv == BZ_OUTBUFF_FULL)
         throw BufferTooShort(dst_len);
 
-      return 0;
+      throw Error(Utils::String::str("failed to compress block with error code %d", rv));
+    }
+
+    int
+    Bzip2Compressor::compressBufferToBuffer(char* dst, unsigned int* dst_len,
+                                            char* src, unsigned int src_len,
+                                            int block_size_100k, int verbosity, int work_factor) const
+    {
+      return BZ2_bzBuffToBuffCompress(dst, dst_len, src, src_len, block_size_100k, verbosity, work_factor);
     }
   }
 }
