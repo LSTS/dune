@@ -51,8 +51,6 @@ namespace DUNE
 #include <DUNE/Concurrency/Scheduler.hpp>
 #include <DUNE/Concurrency/Constants.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>
-#include <DUNE/Concurrency/Process.hpp>
 #include <DUNE/Concurrency/SharedMemory.hpp>
-#include <DUNE/Concurrency/Semaphore.hpp>
 
 #endif
