@@ -109,7 +109,6 @@ namespace DUNE
 
           if (baud > 0)
           {
-            DUNE_DBG("LUCL Protocol", "baud rate is " << baud);
             if (m_uart)
               delete m_uart;
             m_uart = new SerialPort(m_uart_dev, baud);
@@ -117,7 +116,6 @@ namespace DUNE
           }
           else
           {
-            DUNE_DBG("LUCL Protocol", "failed to detect baud rate, using default");
             if (m_uart)
               delete m_uart;
             m_uart = new SerialPort(m_uart_dev, c_baud_def);
@@ -417,7 +415,6 @@ namespace DUNE
       {
         uint8_t byte = 0x00;
 
-        DUNE_DBG("LUCL Protocol", "trying " << baudrate << " baud rate");
         SerialPort port(device, baudrate);
 
         // Try to cleanup device's state machine parser.
