@@ -9,7 +9,7 @@ before_install:
   - cmake --version
 
 script:
-  - mkdir build && cd build && cmake -DTESTS=1 .. && cmake --build . --target Experimental
+  - mkdir build && cd build && cmake -DTESTS=1 .. && cmake --build . && cmake --build . --target test
 
 env:
   global:
