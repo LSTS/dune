@@ -118,13 +118,13 @@ namespace DUNE
 
         // POSIX nanosleep().
 #elif defined(DUNE_SYS_HAS_NANOSLEEP)
-	uint64_t now = Clock::getNsec();
-	if (now < m_deadline)
+        uint64_t now = Clock::getNsec();
+        if (now < m_deadline)
         {
-	  uint64_t delay = m_deadline - now;
+          uint64_t delay = m_deadline - now;
           timespec delay_tspec = {(time_t)(delay / 1000000000), (long)(delay % 1000000000)};
           nanosleep(&delay_tspec, NULL);
-	}
+        }
 
 #else
 #  error PeriodicDelay::wait() is not yet implemented in this system
