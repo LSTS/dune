@@ -80,6 +80,15 @@ namespace DUNE
     }
 
     void
+    String::rightTrimInPlace(char* str)
+    {
+      char* r = str + std::strlen(str) - 1; // Rightmost character
+
+      for (; isspace(*r); --r)
+        *r = 0;
+    }
+
+    void
     String::rtrim(char* str)
     {
       char* r = str + std::strlen(str) - 1; // Rightmost character
