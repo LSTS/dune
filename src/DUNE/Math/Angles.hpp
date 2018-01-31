@@ -84,7 +84,8 @@ namespace DUNE
       inline static fp64_t
       convertDMSToDecimal(int degrees, int minutes, int seconds)
       {
-        return degrees + (minutes / 60.0) + (seconds / 3600.0);
+        double result = std::abs(degrees) + (std::abs(minutes) / 60.0) + (std::abs(seconds) / 3600.0);
+        return (degrees < 0) ? -result : result;
       }
 
       //! Convert Degrees, Minutes to Decimal Format.
@@ -94,7 +95,8 @@ namespace DUNE
       inline static fp64_t
       convertDMSToDecimal(int degrees, double minutes)
       {
-        return degrees + (minutes / 60.0);
+        double result = std::abs(degrees) + (std::fabs(minutes) / 60.0);
+        return (degrees < 0) ? -result : result;
       }
 
       //! Convert decimal degrees to Degrees, Minutes, Seconds.
