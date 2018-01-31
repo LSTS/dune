@@ -46,8 +46,6 @@ namespace DUNE
 #include <DUNE/Concurrency/ScopedCondition.hpp>
 #include <DUNE/Concurrency/Thread.hpp>
 #include <DUNE/Concurrency/Barrier.hpp>
-#include <DUNE/Concurrency/RawTLS.hpp>
-#include <DUNE/Concurrency/TLS.hpp>
 #include <DUNE/Concurrency/Scheduler.hpp>
 #include <DUNE/Concurrency/Constants.hpp>
 #include <DUNE/Concurrency/TSQueue.hpp>

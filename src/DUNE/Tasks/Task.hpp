@@ -47,7 +47,6 @@
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/IMC/Factory.hpp>
 #include <DUNE/Status/Codes.hpp>
-#include <DUNE/Concurrency/TLS.hpp>
 #include <DUNE/Parsers/BasicStringReader.hpp>
 #include <DUNE/Parsers/BasicStringWriter.hpp>
 #include <DUNE/Tasks/AbstractTask.hpp>
