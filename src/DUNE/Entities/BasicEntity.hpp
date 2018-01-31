@@ -121,7 +121,7 @@ namespace DUNE
       //! @param[in] label string to be compared against.
       //! @return true if the label and the string match, false otherwise.
       bool
-      operator==(const std::string label) const
+      operator==(const std::string& label) const
       {
         return getLabel() == label;
       }
