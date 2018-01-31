@@ -32,43 +32,82 @@
 
 // ISO C++ 98 headers.
 #include <string>
-#include <ctime>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
-
-// Microsoft Windows headers.
-#if defined(DUNE_SYS_HAS_WINDOWS_H)
-#  include <windows.h>
-#endif
 
 namespace DUNE
 {
   namespace Time
   {
+    //! Time/date formatting routines.
     class Format
     {
     public:
+      //! Represent the current time as a string with format "YYYY/MM/DD
+      //! HH:mm:SS".
+      //!
+      //! @return string representing current date and time.
       static std::string
       getTimeDate(void);
 
+      //! Represent the number of seconds since the Unix Epoch as a string
+      //! with format "YYYY/MM/DD HH:mm:SS".
+      //!
+      //! @param[in] tstamp number of seconds since the Unix Epoch.
+      //! @param[in] utc true to use UTC timezone, false to use local timezone.
+      //!
+      //! @return string representing date and time.
       static std::string
       getTimeDate(double tstamp, bool utc = true);
 
+      //! Represent the current date as a string with format "YYYYMMDD".
+      //!
+      //! @return string representing date.
       static std::string
       getDateSafe(void);
 
+      //! Represent the number of seconds since the Unix Epoch as a string
+      //! with format "YYYYMMDD".
+      //!
+      //! @param[in] tstamp number of seconds since the Unix Epoch.
+      //! @param[in] utc true to use UTC timezone, false to use local timezone.
+      //!
+      //! @return string representing date and time.
       static std::string
       getDateSafe(double tstamp, bool utc = true);
 
+      //! Represent the current time as a string with format "HHmmSS".
+      //!
+      //! @return string representing current time.
       static std::string
       getTimeSafe(void);
 
+      //! Represent the number of seconds since the Unix Epoch as a string
+      //! of format "YYYYMMDD".
+      //!
+      //! @param[in] tstamp number of seconds since the Unix Epoch.
+      //! @param[in] utc true to use UTC timezone, false to use local timezone.
+      //!
+      //! @return string representing time.
       static std::string
       getTimeSafe(double tstamp, bool utc = true);
 
+      //! Convert the current time as a RFC1123 compliant string.
+      //!
+      //! @return RFC1123 compliant string.
       static std::string
-      getRFC1123(bool utc = true);
+      getRFC1123(void);
+
+      //! Convert the number of seconds since the Unix Epoch as a RFC1123
+      //! compliant string.
+      //!
+      //! @param[in] tstamp number of seconds since the Unix Epoch.
+      //! @param[in] utc true to use UTC timezone, false to use local timezone.
+      //!
+      //! @return RFC1123 compliant string.
+      static std::string
+      getRFC1123(double tstamp, bool utc = true);
     };
   }
 }

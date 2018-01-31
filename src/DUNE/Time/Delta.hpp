@@ -41,26 +41,37 @@ namespace DUNE
     class Delta
     {
     public:
-      Delta(void):
-        m_last(-1.0)
+      //! Default constructor. The time reference will be set to an
+      //! invalid time.
+      Delta(void)
+      {
+        clear();
+      }
+
+      //! Destructor.
+      virtual
+      ~Delta(void)
       { }
 
-      //! Clear delta time clock.
+      //! Clear reference time.
       inline void
       clear(void)
       {
         m_last = -1.0;
       }
 
-      //! Reset time now.
+      //! Set reference time to current time.
       inline void
       reset(void)
       {
-        m_last = Time::Clock::get();
+        m_last = getCurrentTime();
       }
 
-      //! Get current delta and reset clock.
-      //! @return delta time.
+      //! Get time difference between the current time and the reference
+      //! time. After computing the time difference the reference time is
+      //! set to the current time.
+      //!
+      //! @return time difference in second.
       inline double
       getDelta(void)
       {
@@ -70,15 +81,19 @@ namespace DUNE
           return -1.0;
         }
 
-        double now = Time::Clock::get();
+        double now = getCurrentTime();
         double delta = now - m_last;
         m_last = now;
 
         return delta;
       }
 
-      //! Check time since last reset.
-      //! @return delta time.
+      //! Get the time difference between the current time and the
+      //! reference time. If the reference time was never set it will be
+      //! set to the current time. If the reference time is valid then it
+      //! will not be changed.
+      //!
+      //! @return time difference in second.
       inline double
       check(void)
       {
@@ -88,19 +103,21 @@ namespace DUNE
           return -1.0;
         }
 
-        return Time::Clock::get() - m_last;
+        return getCurrentTime() - m_last;
       }
 
-      //! Check if delta is invalid.
-      //! @return true if delta is invalid, false otherwise.
-      inline static bool
-      isInvalid(double delta)
+    protected:
+      //! Retrieve the current time in second.
+      //!
+      //! @return current time in second.
+      virtual double
+      getCurrentTime(void) const
       {
-        return (delta < 0.0);
+        return Clock::get();
       }
 
     private:
-      //! Amount of time reference (in seconds).
+      //! Reference time in second.
       double m_last;
     };
   }

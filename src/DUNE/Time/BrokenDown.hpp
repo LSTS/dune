@@ -76,6 +76,11 @@ namespace DUNE
         convert(value, utc);
       }
 
+      //! Destructor.
+      virtual
+      ~BrokenDown(void)
+      { }
+
       //! Convert time to broken down time.
       //! @param[in] value time.
       //! @param[in] utc true if time is UTC, false is time is localtime.
@@ -99,8 +104,15 @@ namespace DUNE
       void
       convert(bool utc = true)
       {
-        std::time_t now = std::time(NULL);
+        std::time_t now = getCurrentTime();
         convert(now, utc);
+      }
+
+    protected:
+      virtual time_t
+      getCurrentTime(void) const
+      {
+        return std::time(NULL);
       }
     };
   }

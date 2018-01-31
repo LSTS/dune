@@ -129,9 +129,15 @@ namespace DUNE
     }
 
     std::string
-    Format::getRFC1123(bool utc)
+    Format::getRFC1123(void)
     {
-      std::time_t t = std::time(0);
+      return getRFC1123(std::time(0));
+    }
+
+    std::string
+    Format::getRFC1123(double tstamp, bool utc)
+    {
+      std::time_t t = (std::time_t)tstamp;
 
 #if defined(DUNE_SYS_HAS_GMTIME_R) && defined(DUNE_SYS_HAS_LOCALTIME_R)
       std::tm tm_bfr = {0};
