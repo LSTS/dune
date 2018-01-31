@@ -34,26 +34,24 @@
 // DUNE headers.
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Tasks/Factory.hpp>
-#include <DUNE/Utils/Utils.hpp>
-#include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/FileSystem/Directory.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
-    static Factory::Table c_table;
+    static std::map<std::string, Creator> c_table;
 
     DUNE::Tasks::Task*
     Factory::produce(const std::string& name, const std::string& label, Context& ctx)
     {
       if (!exists(name))
-        return 0;
+        return NULL;
 
       task_creator_t creator = c_table[name].getCreatorPointer();
 
       if (creator == NULL)
-        return 0;
+        return NULL;
 
       return creator(label, ctx);
     }
@@ -86,7 +84,7 @@ namespace DUNE
       try
       {
         Directory dir(folder);
-        const char* fname = 0;
+        const char* fname = NULL;
 
         while ((fname = dir.readEntry(Directory::RD_FULL_NAME)))
         {
@@ -104,16 +102,10 @@ namespace DUNE
       { }
     }
 
-    int
-    Factory::getRegisteredCount(void)
+    unsigned int
+    Factory::getRegisteredCount()
     {
-      return c_table.size();
-    }
-
-    Factory::Table&
-    Factory::getTable(void)
-    {
-      return c_table;
+      return static_cast<unsigned int>(c_table.size());
     }
   }
 }

@@ -31,7 +31,7 @@
 #define DUNE_TASKS_FACTORY_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <map>
+#include <cstddef>
 #include <string>
 
 // DUNE headers.
@@ -50,9 +50,6 @@ namespace DUNE
 
     struct Factory
     {
-      //! Low-level task table.
-      typedef std::map<std::string, Creator> Table;
-
       static DUNE::Tasks::Task*
       produce(const std::string& name, const std::string& label, Context& ctx);
 
@@ -68,11 +65,8 @@ namespace DUNE
       static void
       registerDynamicTasks(const char* folder);
 
-      static int
-      getRegisteredCount(void);
-
-      static Table&
-      getTable(void);
+      static unsigned int
+      getRegisteredCount();
     };
   }
 }
