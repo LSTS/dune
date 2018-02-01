@@ -73,7 +73,8 @@ namespace DUNE
       }
 
       //! Received GpsFix estimate.
-      //! @param[in] msg new GpsFix.
+      //! @param[in] state estimate state message.
+      //! @param[in] gps new GpsFix.
       //! @param[out] stream Estimated stream velocity.
       bool
       consume(const IMC::EstimatedState state, const IMC::GpsFix* gps, IMC::EstimatedStreamVelocity& stream)
