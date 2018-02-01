@@ -60,6 +60,7 @@ namespace DUNE
       //! @param[in] rpm values for the rpms
       //! @param[in] mps values for the meters per second
       //! @param[in] time_factor time of arrival factor
+      //! @param[in] max_speed maximum speed in meter per second.
       SpeedModel(const std::vector<float>& act,
                  const std::vector<float>& rpm,
                  const std::vector<float>& mps,
