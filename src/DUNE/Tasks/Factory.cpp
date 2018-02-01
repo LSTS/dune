@@ -40,6 +40,7 @@ namespace DUNE
 {
   namespace Tasks
   {
+    //! Low-level task table.
     static std::map<std::string, Creator> c_table;
 
     DUNE::Tasks::Task*
