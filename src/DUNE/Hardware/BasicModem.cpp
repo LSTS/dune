@@ -114,8 +114,6 @@ namespace DUNE
       m_line_trim = enable;
     }
 
-    //! Test if ISU is busy performing an SBD session.
-    //! @return true if ISU is busy, false otherwise.
     bool
     BasicModem::isBusy(void)
     {
@@ -132,8 +130,6 @@ namespace DUNE
         m_tx_rate_timer.reset();
     }
 
-    //! Test if ISU is cooling down.
-    //! @return true if ISU is cooling down, false otherwise.
     bool
     BasicModem::isCooling(void)
     {
@@ -243,7 +239,7 @@ namespace DUNE
         char c = m_chars.front();
         m_chars.pop();
 
-          m_line.push_back(c);
+        m_line.push_back(c);
 
         //!@fixme: concurrency hazard.
         if (c == m_line_term_in[m_line_term_idx])
