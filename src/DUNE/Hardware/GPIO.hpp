@@ -1,6 +1,7 @@
 //***************************************************************************
 // Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2017 OceanScan - Marine Systems & Technology, Lda.             *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -94,7 +95,6 @@ namespace DUNE
       //! @param[in] value true to invert values, false otherwise.
       void
       setActiveLow(bool value);
-
 
     private:
       //! GPIO number.
