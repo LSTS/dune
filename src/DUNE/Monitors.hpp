@@ -39,7 +39,6 @@ namespace DUNE
 
 #include <DUNE/Monitors/DelayedTrigger.hpp>
 #include <DUNE/Monitors/MediumHandler.hpp>
-#include <DUNE/Monitors/MotorCurrentMonitor.hpp>
 #include <DUNE/Monitors/ServoCurrentMonitor.hpp>
 #include <DUNE/Monitors/ServoPositionMonitor.hpp>
 #include <DUNE/Monitors/VerticalMonitor.hpp>
