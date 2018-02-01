@@ -1,30 +1,10 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+// Copyright 2017 OceanScan - Marine Systems & Technology, Lda.             *
 //***************************************************************************
-// This file is part of DUNE: Unified Navigation Environment.               *
-//                                                                          *
-// Commercial Licence Usage                                                 *
-// Licencees holding valid commercial DUNE licences may use this file in    *
-// accordance with the commercial licence agreement provided with the       *
-// Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
-//                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
-// included in the packaging of this file. You may not use this work        *
-// except in compliance with the Licence. Unless required by applicable     *
-// law or agreed to in writing, software distributed under the Licence is   *
-// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
-// ANY KIND, either express or implied. See the Licence for the specific    *
-// language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
-// http://ec.europa.eu/idabc/eupl.html.                                     *
+// This file is subject to the terms and conditions defined in file         *
+// 'LICENCE.md', which is part of this source code package.                 *
 //***************************************************************************
-// Author: Pedro Calado                                                     *
+// Author: José Braga                                                       *
 //***************************************************************************
 
 #ifndef DUNE_MONITORS_SERVO_POSITION_MONITOR_HPP_INCLUDED_
@@ -32,11 +12,18 @@
 
 // DUNE headers.
 #include <DUNE/Math/Angles.hpp>
+#include <DUNE/Time/Counter.hpp>
+#include <DUNE/Time/Delta.hpp>
 #include <DUNE/Utils/String.hpp>
-#include <DUNE/Monitors/DelayedTrigger.hpp>
 
-//! Minimum difference in degrees to account for accumulated change
-static const float c_min_diff = (float)DUNE::Math::Angles::radians(3.0);
+//! Maximum timestep for evaluation.
+static const float c_max_delta = 1.0f;
+//! Maximum timestep for delay evaluation.
+static const float c_delay = 1.0f;
+//! Allowed actuation difference.
+static const float c_error = (float)DUNE::Math::Angles::radians(2.0);
+//! Minimum position for range checks.
+static const float c_min_position = (float)DUNE::Math::Angles::radians(10.0);
 
 namespace DUNE
 {
@@ -47,28 +34,15 @@ namespace DUNE
     {
     public:
       //! Constructor
-      //! @param[in] error_threshold value above which a position fault detection will trigger
-      //! @param[in] rate_factor factor to compare between accumulated difference in position and command sent to servo
-      //! @param[in] detection_delay delay in seconds before a detection is triggered
-      //! @param[in] average_samples number of samples to use in the delayed trigger
-      //! @param[in] max_rotation maximum rotation rate of the servo in radians per second
-      ServoPositionMonitor(const T error_threshold, const T rate_factor,
-                           const double detection_delay, const unsigned average_samples,
-                           const T max_rotation):
-        c_error_threshold(error_threshold),
-        c_rate_factor(rate_factor),
-        c_rate_interval(detection_delay),
-        c_max_rotation(max_rotation),
-        m_valid_last(false)
-      {
-        m_pos_trigger = new DelayedTrigger<T>(error_threshold, detection_delay, average_samples);
-      }
+      ServoPositionMonitor(void):
+        m_timer_zero(c_delay),
+        m_timer_range(c_delay),
+        m_tracking(false)
+      { }
 
       //! Destructor
       ~ServoPositionMonitor(void)
-      {
-        Memory::clear(m_pos_trigger);
-      }
+      { }
 
       //! Update function with position and command values
       //! Describe fault detected
@@ -79,48 +53,27 @@ namespace DUNE
       bool
       updateAndTest(const T position, const T command, std::string* description)
       {
-        float now = Time::Clock::get();
+        double tstep = m_delta.getDelta();
 
-        if (m_valid_last)
+        if (tstep < 0)
+          return false;
+
+        // too much time has passed for a proper evaluation.
+        if (tstep > c_max_delta)
         {
-          T max_rot = c_max_rotation * (now - m_rotation_timer);
-          m_rotation_timer = now;
-
-          m_accum_pos += std::fabs(position - m_last_position);
-          m_accum_com += Math::trimValue(std::fabs(command - m_last_command),
-                                         0.0, max_rot);
-
-          if (now - m_rate_time > c_rate_interval)
-          {
-            if (m_accum_pos < c_rate_factor * m_accum_com &&
-                std::fabs(position - command) > c_min_diff)
-            {
-              *description = Utils::String::str("position change is %.2fº, "
-                                                "command change is %.2fº",
-                                                Math::Angles::degrees(m_accum_pos),
-                                                Math::Angles::degrees(m_accum_com));
-              return true;
-            }
-
-            m_valid_last = false;
-          }
-        }
-        else
-        {
-          m_accum_pos = 0.0;
-          m_accum_com = 0.0;
-          m_last_position = position;
-          m_last_command = command;
-          m_rate_time = now;
-          m_rotation_timer = now;
-
-          m_valid_last = true;
+          reset();
+          return false;
         }
 
-        if (m_pos_trigger->updateAndTest(std::fabs(position - command)))
+        if (zeroFeedback(position, command))
         {
-          *description = Utils::String::str("position error above %.2fº",
-                                            Math::Angles::degrees(c_error_threshold));
+          *description = DTR("unable to center servo");
+          return true;
+        }
+
+        if (rangeFeedback(position, command))
+        {
+          *description = DTR("unable to reach position");
           return true;
         }
 
@@ -129,30 +82,88 @@ namespace DUNE
       }
 
     private:
-      //! DelayedTrigger object for position fault detection
-      DelayedTrigger<T>* m_pos_trigger;
-      //! Error threshold
-      const T c_error_threshold;
-      //! Rate factor
-      const T c_rate_factor;
-      //! Rate time interval for accumulating difference
-      const double c_rate_interval;
-      //! Maximum rotation rate
-      const T c_max_rotation;
-      //! Rate time reference
-      double m_rate_time;
-      //! Rotation rate counter
-      double m_rotation_timer;
-      //! "last" variables have significant values
-      bool m_valid_last;
-      //! Last position read
-      T m_last_position;
-      //! Last command sent
-      T m_last_command;
-      //! Accumulated position
-      T m_accum_pos;
-      //! Accumulated command
-      T m_accum_com;
+      //! Check if servo fails to reply when zeroed.
+      //! @param[in] position position measurement to be used in the detection
+      //! @param[in] command set position command to be used in the detection
+      //! @return true if servo fails to reply, false otherwise.
+      bool
+      zeroFeedback(const T position, const T command)
+      {
+        // command is not near zero.
+        if (std::fabs(command) > c_error / 2)
+          m_timer_zero.reset();
+
+        // position is near zero.
+        if (std::fabs(position - command) <= c_error)
+          m_timer_zero.reset();
+
+        if (m_timer_zero.overflow())
+          return true;
+
+        return false;
+      }
+
+      //! Check if servo fails to reply to position.
+      //! @param[in] position position measurement to be used in the detection
+      //! @param[in] command set position command to be used in the detection
+      //! @return true if servo fails to reply, false otherwise.
+      bool
+      rangeFeedback(const T position, const T command)
+      {
+        // command is below range.
+        if (std::fabs(command) < c_min_position)
+        {
+          resetRange();
+          return false;
+        }
+
+        // setup values.
+        if (!m_tracking)
+        {
+          m_tracking = true;
+          m_command = command;
+        }
+
+        // command is no longer near reference.
+        if (std::fabs(command - m_command) > c_error / 2)
+          resetRange();
+
+        // position is near reference.
+        if (std::fabs(position - m_command) < c_error)
+          resetRange();
+
+        // unable to follow position.
+        if (m_timer_range.overflow())
+          return true;
+
+        return false;
+      }
+
+      void
+      reset(void)
+      {
+        m_timer_zero.reset();
+        resetRange();
+      }
+
+      void
+      resetRange(void)
+      {
+        m_command = 0.0;
+        m_tracking = false;
+        m_timer_range.reset();
+      }
+
+      //! Update timestep.
+      Time::Delta m_delta;
+      //! Zero Response Counter.
+      Time::Counter<float> m_timer_zero;
+      //! Range Response Counter.
+      Time::Counter<float> m_timer_range;
+      //! Range command reference.
+      T m_command;
+      //! Now tracking range.
+      bool m_tracking;
     };
   }
 }

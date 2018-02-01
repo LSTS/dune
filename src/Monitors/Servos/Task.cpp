@@ -64,16 +64,6 @@ namespace Monitors
     {
       //! Monitor position faults
       bool pos_fault_detect;
-      //! Threshold for fault detection in the position error (command vs position)
-      float pos_error_threshold;
-      //! Factor in detection for comparing accumulated difference (command vs position)
-      float rate_factor;
-      //! Delay for the detection triggering using DelayedTrigger class
-      double pos_error_delay;
-      //! Number of samples for the moving average in the DelayedTrigger object
-      unsigned pos_error_samples;
-      //! Maximum rotation rate of the servos
-      double max_rotation_rate;
       //! Monitor electric current faults
       bool curr_fault_detect;
       //! Current lower threshold to consider abnormal behavior
@@ -130,33 +120,6 @@ namespace Monitors
         param("Position Fault Detection", m_args.pos_fault_detect)
         .defaultValue("false")
         .description("Enable position fault detection");
-
-        param("Position Error Threshold", m_args.pos_error_threshold)
-        .defaultValue("12.0")
-        .minimumValue("0.0")
-        .units(Units::Degree)
-        .description("Threshold for position error in fault detection");
-
-        param("Position Rate Factor", m_args.rate_factor)
-        .defaultValue("0.05")
-        .description("Factor in fault detection for comparison between accumulated "
-                     "differences");
-
-        param("Position Error Delay", m_args.pos_error_delay)
-        .defaultValue("5.0")
-        .units(Units::Second)
-        .description("Delay for the detection triggering using DelayedTrigger class");
-
-        param("Position Error Samples", m_args.pos_error_samples)
-        .defaultValue("5")
-        .minimumValue("1")
-        .description("Number of samples for the moving average in the "
-                     "DelayedTrigger object");
-
-        param("Maximum Rotation Rate", m_args.max_rotation_rate)
-        .defaultValue("333.3")
-        .units(Units::DegreePerSecond)
-        .description("Maximum rotation rate allowed by the servo");
 
         param("Current Fault Detection", m_args.curr_fault_detect)
         .defaultValue("false")
@@ -226,12 +189,6 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.max_rotation_rate))
-          m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
-
-        if (paramChanged(m_args.pos_error_threshold))
-          m_args.pos_error_threshold = Angles::radians(m_args.pos_error_threshold);
-
         if (!m_args.pos_fault_detect && !m_args.curr_fault_detect)
           requestDeactivation();
       }
@@ -344,11 +301,7 @@ namespace Monitors
 
         if (m_pos_monitor[i] == NULL)
         {
-          m_pos_monitor[i] = new ServoPositionMonitor<float>(m_args.pos_error_threshold,
-                                                             m_args.rate_factor,
-                                                             m_args.pos_error_delay,
-                                                             m_args.pos_error_samples,
-                                                             m_args.max_rotation_rate);
+          m_pos_monitor[i] = new ServoPositionMonitor<float>();
         }
         else
         {
