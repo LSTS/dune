@@ -313,7 +313,7 @@ namespace DUNE
         *z = (((1.0 - c_wgs84_e2) * rn) + hae) * sin_lat;
       }
 
-      //! Convert ECEF (x,y,z) to WGS-84 (lat, lon, hae).
+      //! Convert ECEF (x,y,z) to WGS-84 (lat, lon, hae) using non-iterative solution.
       //!
       //! @param[in] x ECEF x coordinate (m).
       //! @param[in] y ECEF y coordinate (m).
