@@ -43,7 +43,6 @@ namespace DUNE
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Math/Random.hpp>
-#include <DUNE/Math/Optimization.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Math/MultiMovingAverage.hpp>
 
