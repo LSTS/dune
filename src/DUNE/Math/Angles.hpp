@@ -125,11 +125,11 @@ namespace DUNE
       }
 
       //! XY Coordinate conversion considering a rotation angle.
-      //! (Eduardo Marques)
-      //! @param angle angle
-      //! @param clockwise clockwise rotation or not
-      //! @param x original x value on entry, rotated x value on exit.
-      //! @param y original y value on entry, rotated y value on exit.
+      //! @param[in] angle angle in radian.
+      //! @param[in] clockwise true for a clockwise rotation, false for counterclockwise.
+      //! @param[in,out] x original x value on entry, rotated x value on exit.
+      //! @param[in,out] y original y value on entry, rotated y value on exit.
+      //! @author Eduardo Marques
       inline static void
       rotate(double angle, bool clockwise, double& x, double& y)
       {
