@@ -215,8 +215,10 @@ namespace DUNE
     {
       if (m_entity->getLabel().empty())
         m_entity->setLabel(m_args.elabel);
+
       if (m_args.elabel != m_entity->getLabel())
         m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
+
       m_entity->setActTimes(m_args.act_time, m_args.deact_time);
       m_entity->reportInfo();
 
