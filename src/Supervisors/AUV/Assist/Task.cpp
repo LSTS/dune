@@ -219,7 +219,10 @@ namespace Supervisors
 
           // reset finish depth if the vehicle comes to the surface
           if (m_depth < m_args.depth_threshold)
+          {
+            m_dislodge_rpm = c_rpm_start;
             m_finish_depth = -1.0;
+          }
         }
 
         void
@@ -365,7 +368,6 @@ namespace Supervisors
           switch (state)
           {
             case ST_IDLE:
-              m_dislodge_rpm = c_rpm_start;
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
               break;
             case ST_CHECK_STUCK:
