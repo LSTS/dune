@@ -161,6 +161,8 @@ namespace Transports
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
+
+          m_driver->getBalance();
         }
         catch (std::runtime_error& e)
         {
