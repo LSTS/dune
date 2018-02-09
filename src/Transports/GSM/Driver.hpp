@@ -158,7 +158,19 @@ namespace Transports
                     return;
                 }
                 std::string msg = readLine();
-                getTask()->inf("%s", msg.c_str());
+                Utils::String::toLowerCase(msg);
+
+                size_t startPos = msg.find("saldo:");
+
+                if(startPos == std::string::npos) {
+                    getTask()->war("Can't read balance");
+                    return;
+                }
+
+                std::string firstPart = msg.substr(startPos);
+                std::string balance = firstPart.substr(0, firstPart.find("eur") + 3);
+
+                getTask()->inf("%s", balance.c_str());
             }
 
         private:
