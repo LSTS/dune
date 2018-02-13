@@ -455,7 +455,7 @@ namespace Navigation
         }
 
         void
-        updateKalmanParametersGps(double hacc)
+        updateKalmanGpsParameters(double hacc)
         {
           if (hacc > GPS_BAD)
           {
