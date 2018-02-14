@@ -63,6 +63,10 @@
 #  include <windows.h>
 #endif
 
+#if defined(DUNE_SYS_HAS_SYS_REBOOT_H)
+#  include <sys/reboot.h>
+#endif
+
 void
 registerStaticTasks(void);
 
@@ -142,11 +146,25 @@ setDaemonSignalHandlers(void)
 }
 
 int
+callReboot()
+{
+#if defined(DUNE_OS_POSIX)
+  sync();
+  return reboot(RB_AUTOBOOT);
+#elif defined(DUNE_OS_WINDOWS)
+  DUNE_WRN("Daemon", "Reboot not supported");
+#endif
+
+  return -1;
+}
+
+int
 runDaemon(DUNE::Daemon& daemon)
 {
   setDaemonSignalHandlers();
 
   bool call_abort = false;
+  bool call_reboot = false;
 
   try
   {
@@ -164,6 +182,7 @@ runDaemon(DUNE::Daemon& daemon)
     }
 
     DUNE_WRN("Daemon", DTR("stopping tasks"));
+    call_reboot = daemon.callReboot();
     daemon.stopAndJoin();
   }
   catch (std::exception& e)
@@ -175,6 +194,15 @@ runDaemon(DUNE::Daemon& daemon)
   {
     DUNE_ERR("Daemon", DTR("unhandled exception"));
     return 1;
+  }
+
+  if(call_reboot)
+  {
+    DUNE_WRN("Daemon", "Rebooting");
+
+    int rt = callReboot();
+    if (rt != -1)
+      return rt;
   }
 
   if (call_abort)

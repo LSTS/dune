@@ -49,7 +49,8 @@ namespace DUNE
   Daemon::Daemon(DUNE::Tasks::Context& ctx, const std::string& profiles):
     DUNE::Tasks::Task("Daemon", ctx),
     m_tman(NULL),
-    m_fs_capacity(0)
+    m_fs_capacity(0),
+    call_reboot(false)
   {
     // Retrieve known IMC addresses.
     std::vector<std::string> addrs = m_ctx.config.options("IMC Addresses");
@@ -149,6 +150,12 @@ namespace DUNE
     delete m_tman;
     delete m_cpu_avg;
     inf(DTR("clean shutdown"));
+  }
+
+  bool
+  Daemon::callReboot(void)
+  {
+    return call_reboot;
   }
 
   void
