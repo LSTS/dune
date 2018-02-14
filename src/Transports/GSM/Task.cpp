@@ -82,6 +82,8 @@ namespace Transports
       double sms_tout;
       //! Device response timeout.
       float reply_tout;
+        //! Code to request balance
+        unsigned ussd_code;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -136,6 +138,10 @@ namespace Transports
         .units(Units::Second)
         .description("Maximum amount of time to wait for SMS send completion");
 
+          param("USSD code", m_args.ussd_code)
+                  .defaultValue("123")
+                  .description("USSD code");
+
         bind<IMC::Sms>(this);
         bind<IMC::IoEvent>(this);
       }
@@ -162,7 +168,7 @@ namespace Transports
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
 
-          m_driver->getBalance();
+          m_driver->getBalance(m_args.ussd_code);
         }
         catch (std::runtime_error& e)
         {

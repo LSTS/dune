@@ -146,15 +146,17 @@ namespace Transports
             }
 
             void
-            getBalance()
+            getBalance(unsigned ussd_code)
             {
-                sendAT(String::str("+CUSD=1,\"*#123#\""));
+                char code[50];
+                sprintf(code,"+CUSD=1,\"*#%d#\"",ussd_code);
+                sendAT(code);
 
                 try{
                     expectOK();
                 }
                 catch(...) {
-                    getTask()->war("Can't read balance");
+                    getTask()->war("Can't read balance. Please check the USSD code or connection");
                     return;
                 }
                 std::string msg = readLine();
