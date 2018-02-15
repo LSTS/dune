@@ -565,7 +565,7 @@ namespace Maneuver
         {
 
           int diff = pathDifferences(&m_last_desired_path, &desired_path);
-          desired_path.flags &= 0xFF ^ DesiredPath::FL_NO_Z;
+          desired_path.flags &= ~DesiredPath::FL_NO_Z;
 
           m_last_desired_path = desired_path;
 
@@ -597,7 +597,7 @@ namespace Maneuver
             inf(DTR("Loiter radius reference changed to %f"), desired_path.lradius);
           }
 
-          bool send_desired_path = changedSpeed || changedRadius || changedLoc || !m_path_sent;
+          bool send_desired_path = true;//changedSpeed || changedRadius || changedLoc || !m_path_sent;
 
           // dispatch new desired path
           switch (m_fref_state.state)
