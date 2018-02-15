@@ -103,6 +103,8 @@ namespace Supervisors
         bool m_first_fix;
         //! RPM value for dislodging the vehicle
         float m_dislodge_rpm;
+        //! Motor is spinning.
+        bool m_motor;
         //! Task arguments.
         Arguments m_args;
 
@@ -142,6 +144,7 @@ namespace Supervisors
           bind<IMC::EstimatedState>(this);
           bind<IMC::PlanGeneration>(this);
           bind<IMC::PlanControl>(this);
+          bind<IMC::Rpm>(this);
         }
 
         void
@@ -262,6 +265,13 @@ namespace Supervisors
           }
         }
 
+        void
+		consume(const IMC::Rpm* msg)
+        {
+            //! Motor State
+            m_motor = (msg->value == 0) ? false : true;
+        }
+
         //! Check if the received PlanControl message reports to
         //! a successful Dislodge plan request
         //! @param[in] msg pointer to PlanControl message
@@ -324,8 +334,7 @@ namespace Supervisors
         bool
         mainConditions(void)
         {
-          if ((m_vstate != IMC::VehicleState::VS_SERVICE) &&
-              (m_vstate != IMC::VehicleState::VS_ERROR))
+          if (m_motor)
             return false;
 
           if (!m_first_fix)
