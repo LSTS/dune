@@ -151,11 +151,10 @@ callReboot()
 #if defined(DUNE_OS_POSIX)
   sync();
   return reboot(RB_AUTOBOOT);
-#elif defined(DUNE_OS_WINDOWS)
+#else
   DUNE_WRN("Daemon", "Reboot not supported");
-#endif
-
   return -1;
+#endif
 }
 
 int
