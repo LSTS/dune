@@ -85,8 +85,6 @@ namespace Supervisors
         float m_depth;
         //! Current Medium
         uint8_t m_medium;
-        //! Current vehicle state
-        uint8_t m_vstate;
         //! Rate of ascent
         VerticalMonitor* m_vmon;
         //! Task's state
@@ -103,7 +101,7 @@ namespace Supervisors
         bool m_first_fix;
         //! RPM value for dislodging the vehicle
         float m_dislodge_rpm;
-        //! Motor is spinning.
+        //! Current motor status.
         bool m_motor;
         //! Task arguments.
         Arguments m_args;
@@ -139,7 +137,6 @@ namespace Supervisors
 
           bind<IMC::GpsFix>(this);
           bind<IMC::Heartbeat>(this);
-          bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
           bind<IMC::PlanGeneration>(this);
@@ -200,12 +197,6 @@ namespace Supervisors
           // CCU's mask.
           if (IMC::AddressResolver::isCCU(msg->getSource()))
             m_ltimer.reset();
-        }
-
-        void
-        consume(const IMC::VehicleState* msg)
-        {
-          m_vstate = msg->op_mode;
         }
 
         void
