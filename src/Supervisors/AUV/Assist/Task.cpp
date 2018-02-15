@@ -266,7 +266,7 @@ namespace Supervisors
         }
 
         void
-		consume(const IMC::Rpm* msg)
+        consume(const IMC::Rpm* msg)
         {
             //! Motor State
             m_motor = (msg->value == 0) ? false : true;
