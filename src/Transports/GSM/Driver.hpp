@@ -145,8 +145,8 @@ namespace Transports
                 expectOK();
             }
 
-            void
-            getBalance(unsigned ussd_code)
+            bool
+            getBalance(unsigned ussd_code, std::string &balance)
             {
                 char code[50];
                 sprintf(code,"+CUSD=1,\"*#%d#\"",ussd_code);
@@ -157,7 +157,7 @@ namespace Transports
                 }
                 catch(...) {
                     getTask()->war("Can't read balance. Please check the USSD code or connection");
-                    return;
+                    return false;
                 }
                 std::string msg = readLine();
                 Utils::String::toLowerCase(msg);
@@ -166,13 +166,17 @@ namespace Transports
 
                 if(startPos == std::string::npos) {
                     getTask()->war("Can't read balance");
-                    return;
+                    return false;
                 }
 
                 std::string firstPart = msg.substr(startPos);
-                std::string balance = firstPart.substr(0, firstPart.find("eur") + 3);
+                balance = firstPart.substr(6, firstPart.find("eur")-6);
 
-                getTask()->inf("%s", balance.c_str());
+                std::stringstream ss;
+                ss << " ( " << String::str(balance) << "Eur )";
+                balance = ss.str();
+
+                return true;
             }
 
         private:

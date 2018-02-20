@@ -100,6 +100,8 @@ namespace Transports
       Counter<double> m_rsms_timer;
       //! Task arguments.
       Arguments m_args;
+        //! Balance of card
+        std::string m_balance;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -144,6 +146,8 @@ namespace Transports
 
         bind<IMC::Sms>(this);
         bind<IMC::IoEvent>(this);
+
+          m_balance = "";
       }
 
       void
@@ -156,19 +160,21 @@ namespace Transports
           m_rssi_timer.setTop(m_args.rssi_per);
       }
 
+
       void
       onResourceAcquisition(void)
       {
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_driver = new Driver(this, m_uart, m_args.pin);
-          m_driver->initialize();
-          debug("manufacturer: %s", m_driver->getManufacturer().c_str());
-          debug("model: %s", m_driver->getModel().c_str());
-          debug("IMEI: %s", m_driver->getIMEI().c_str());
+            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+            m_driver = new Driver(this, m_uart, m_args.pin);
+            m_driver->initialize();
+            debug("manufacturer: %s", m_driver->getManufacturer().c_str());
+            debug("model: %s", m_driver->getModel().c_str());
+            debug("IMEI: %s", m_driver->getIMEI().c_str());
 
-          m_driver->getBalance(m_args.ussd_code);
+            if(m_driver->getBalance(m_args.ussd_code, m_balance))
+                setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_ACTIVE).c_str());
         }
         catch (std::runtime_error& e)
         {
@@ -179,7 +185,7 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_IDLE).c_str());
       }
 
       void
@@ -229,11 +235,11 @@ namespace Transports
       {
         if (m_queue.empty())
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+            setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_IDLE).c_str());
           return;
         }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_ACTIVE).c_str());
 
         SMS sms = m_queue.top();
         m_queue.pop();
@@ -289,6 +295,15 @@ namespace Transports
           pollStatus();
           processQueue();
         }
+      }
+
+      std::string
+      getMessage(Status::Code code){
+
+          std::stringstream ss;
+          ss << getString(code) << m_balance;
+
+          return ss.str();
       }
     };
   }
