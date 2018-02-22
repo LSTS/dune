@@ -26,6 +26,7 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 // Author: Eduardo Marques (original maneuver implementation)               *
+// Author: Maria Costa ("Keep Safe" behaviour)                                 *
 //***************************************************************************
 
 #ifndef MANEUVER_MULTIPLEXER_STATION_KEEPING_HPP_INCLUDED_
@@ -62,9 +63,7 @@ namespace Maneuver
         m_skeep(NULL),
         m_elevate(NULL),
         m_end_time(-1.0),
-        m_popup(false),
-        m_loiter(false),
-        m_surface(false)
+        m_ks(KS_UNKNOWN)
       { }
 
       ~StationKeeping(void)
@@ -81,11 +80,20 @@ namespace Maneuver
         m_maneuver = *maneuver;
         m_duration = maneuver->duration;
 
-        Memory::clear(m_skeep);
-        m_skeep = new Maneuvers::StationKeep(maneuver, m_task, m_args->min_radius);
+        Memory::replace(m_skeep, new Maneuvers::StationKeep(maneuver, m_task, m_args->min_radius));
 
         if (m_duration > 0)
           m_end_time = -1.0;
+
+        if(keepSafe())
+        {
+          m_ks = KS_STATION;
+          m_end_time = -1.0;
+        }
+        else
+          m_ks = KS_UNKNOWN;
+
+        m_timer.reset();
       }
 
       //! On EstimatedState message
@@ -99,14 +107,26 @@ namespace Maneuver
         if (m_skeep->isInside() && (m_end_time < 0))
         {
           m_end_time = Clock::get() + m_duration;
-          if(keepSafe() && !m_loiter)
+          m_pos = *msg;
+          if (keepSafe() && m_ks != KS_LOITER)
             startLoiter();
         }
 
-        if (!m_popup)
-          m_skeep->update(msg);
-        else
-          m_elevate->update(msg);
+        switch(m_ks)
+        {
+          case KS_STATION:
+            m_skeep->update(msg);
+            break;
+          case KS_POPUP:
+            m_elevate->update(msg);
+            break;
+          case KS_LOITER:
+            m_skeep->update(&m_pos);
+            break;
+          case KS_UNKNOWN:
+            m_skeep->update(msg);
+            break;
+        }
       }
 
       //! On PathControlState message
@@ -119,16 +139,15 @@ namespace Maneuver
         if (m_skeep == NULL)
           return;
 
-        if(!m_popup)
+        if (m_ks != KS_POPUP)
           m_skeep->updatePathControl(pcs);
         else
         {
           m_elevate->updatePathControl(pcs);
           if (m_elevate->isDone())
           {
-            m_popup = false;
-            m_surface = true;
-            m_timer_surface.setTop(m_maneuver.popup_duration);
+            m_ks = KS_STATION;
+            m_timer.setTop(m_maneuver.popup_duration);
             m_task->setControl(IMC::CL_NONE);
           }
         }
@@ -154,14 +173,13 @@ namespace Maneuver
             m_task->signalProgress(m_pcs.eta + m_duration);
 
         // Check if KEEP_SAFE option enabled
-        if(keepSafe() && m_skeep->isInside())
+        if(keepSafe() && m_skeep->isInside() && m_timer.overflow())
         {
-          if (m_timer_surface.overflow() && !m_loiter)
+          if (m_ks != KS_LOITER)
             startLoiter();
-          if (m_timer_loiter.overflow() && !m_popup)
+          else if (m_ks != KS_POPUP)
             doPopUp();
         }
-
       }
 
       //! Must adopt safe behavior (loiter underwater and popup periodically to report position)
@@ -179,11 +197,11 @@ namespace Maneuver
         m_task->debug("\n\tStart LOITER!");
         m_task->setControl(IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_PATH);
 
-        m_timer_surface.reset();
-        m_timer_loiter.setTop(m_maneuver.popup_period);
+        m_timer.reset();
+        m_timer.setTop(m_maneuver.popup_period);
 
         IMC::DesiredPath dpath;
-        dpath.lradius = m_maneuver.radius;
+        dpath.lradius = m_maneuver.radius-0;	//TEST
         dpath.speed = m_maneuver.speed;
         dpath.speed_units = m_maneuver.speed_units;
         dpath.end_z = m_maneuver.z;
@@ -192,8 +210,7 @@ namespace Maneuver
         dpath.end_lon = m_maneuver.lon;
         m_task->dispatch(dpath);
 
-        m_surface = false;
-        m_loiter = true;
+        m_ks = KS_LOITER;
       }
 
       //! Surfaces to report position
@@ -203,8 +220,8 @@ namespace Maneuver
         m_task->debug("\n\tStart ELEVATOR!");
         m_task->setControl(IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_PATH);
 
-        m_timer_loiter.reset();
-        m_timer_surface.setTop(m_maneuver.popup_duration);
+        m_timer.reset();
+        m_timer.setTop(m_maneuver.popup_duration);
 
         IMC::Elevator elev;
         elev.flags = IMC::Elevator::FLG_CURR_POS;
@@ -218,18 +235,29 @@ namespace Maneuver
         elev.lat = m_maneuver.lat;
         elev.lon = m_maneuver.lon;
 
-        Memory::clear(m_elevate);
-        m_elevate = new Maneuvers::Elevate(&elev, m_task, c_min_elev_radius);
-
-        m_loiter = false;
-        m_popup = true;
+        Memory::replace(m_elevate, new Maneuvers::Elevate(&elev, m_task, c_min_elev_radius));
+        m_ks = KS_POPUP;
       }
 
     private:
+      enum KeepSafeState
+      {
+        //! Unknown state
+        KS_UNKNOWN,
+        //! Station Keeping
+        KS_STATION,
+        //! Loitering
+        KS_LOITER,
+        //! Poping up to surface
+        KS_POPUP
+      };
+
       //! Station Keeping behavior
       Maneuvers::StationKeep* m_skeep;
       //! PathControlState message
       IMC::PathControlState m_pcs;
+      //! EstimatedState message of position inside SK radius
+      IMC::EstimatedState m_pos;
       //! StationKeeping maneuver message
       IMC::StationKeeping m_maneuver;
       //! Elevate maneuver message (for KEEP_SAFE behavior)
@@ -238,16 +266,9 @@ namespace Maneuver
       float m_duration;
       //! End time for the maneuver
       double m_end_time;
-      //! Flag to sign if the vehicle is surfacing (for KEEP_SAFE behavior)
-      bool m_popup;
-      //! Flag to sign if the vehicle is loitering (for KEEP_SAFE behavior)
-      bool m_loiter;
-      //! Flag to sign if the vehicle is at surface (for KEEP_SAFE behavior)
-      bool m_surface;
-      //! Loiter timer (for KEEP_SAFE behavior)
-      Time::Counter<float> m_timer_loiter;
-      //! Loiter timer (for KEEP_SAFE behavior)
-      Time::Counter<float> m_timer_surface;
+      KeepSafeState m_ks;
+      //! Timer (for KEEP_SAFE behavior)
+      Time::Counter<float> m_timer;
     };
   }
 }
