@@ -26,7 +26,7 @@
 //***************************************************************************
 // Author: Pedro Calado                                                     *
 // Author: Eduardo Marques (original maneuver implementation)               *
-// Author: Maria Costa ("Keep Safe" behaviour)                                 *
+// Author: Maria Costa ("Keep Safe" behaviour)                              *
 //***************************************************************************
 
 #ifndef MANEUVER_MULTIPLEXER_STATION_KEEPING_HPP_INCLUDED_
@@ -201,7 +201,7 @@ namespace Maneuver
         m_timer.setTop(m_maneuver.popup_period);
 
         IMC::DesiredPath dpath;
-        dpath.lradius = m_maneuver.radius-0;	//TEST
+        dpath.lradius = m_maneuver.radius;
         dpath.speed = m_maneuver.speed;
         dpath.speed_units = m_maneuver.speed_units;
         dpath.end_z = m_maneuver.z;
