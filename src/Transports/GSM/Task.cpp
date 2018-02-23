@@ -310,7 +310,7 @@ namespace Transports
           m_queue.push(sms_req);
           sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,
                         DTR("Error sending message over GSM modem"));
-          war(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
+          inf(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
         }
       }
 
