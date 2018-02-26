@@ -371,7 +371,7 @@ namespace Monitors
         }
 
         // Change state and send state to the bus.
-        setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("Collision detected: %s"), m_report));
+        setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("Collision detected: %s"), m_report.c_str()));
       }
 
       void
