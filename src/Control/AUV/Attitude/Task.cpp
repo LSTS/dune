@@ -138,6 +138,11 @@ namespace Control
         float depth_threshold;
         //! Roll speed compensation.
         RollCompensation rc;
+        //! 
+        bool depth_sensor_pitch_correction;
+        //! 
+        float distance_Depth_sensor;
+
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -310,6 +315,18 @@ namespace Control
           .minimumValue("0.0")
           .maximumValue("2.0")
           .description("Roll's minimum proportional gain in speed compensation");
+
+
+          param("Depth sensor correction due to pitch", m_args.depth_sensor_pitch_correction)
+          .defaultValue("false")
+          .description("Depth sensor correction due to pitch");
+
+          param("Depth sensor localization in x axis", m_args.distance_Depth_sensor)
+          .defaultValue("1.0")
+          .minimumValue("0.0")
+          .maximumValue("2.0")
+          .description("Depth sensor localization in x axis in meters ");
+
 
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
         }
@@ -523,7 +540,8 @@ namespace Control
             {
               case VERTICAL_MODE_DEPTH:
                 z_error = getVerticalRef() - msg->depth;
-
+                if (m_args.depth_sensor_pitch_correction)
+                  z_error = z_error - sin(msg->theta) * m_args.distance_Depth_sensor; 
                 if (getVerticalRef() < m_args.depth_threshold)
                 {
                   if (m_args.force_pitch && std::fabs(z_error) < m_args.depth_threshold)
