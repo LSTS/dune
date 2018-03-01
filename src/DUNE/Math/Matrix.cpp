@@ -117,7 +117,7 @@ namespace DUNE
       }
     }
 
-    Matrix::Matrix(double* data, size_t r, size_t c)
+    Matrix::Matrix(const double* data, size_t r, size_t c)
     {
       if (!r || !c)
         throw Error("Invalid dimension!");
