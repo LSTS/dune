@@ -120,9 +120,9 @@ namespace Monitors
         .description("Number of moving average samples to smooth accelerations");
 
         param("Absolute Moving Average Samples", m_args.avg_samples_abs)
-        .defaultValue("3")
+        .defaultValue("5")
         .minimumValue("2")
-        .maximumValue("5")
+        .maximumValue("100")
         .description("Number of moving average samples to smooth accelerations");
 
         param("Maximum Deviation Factor", m_args.k_std)
