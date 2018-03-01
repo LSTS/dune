@@ -97,15 +97,19 @@ namespace DUNE
       void
       minimumValue(const std::string& value)
       {
-        castLexical(value, m_min);
-        m_min_set = false;
+        if(!castLexical(value, m_min))
+          throw std::runtime_error(DTR("minimum value is not of the correct type"));
+
+        m_min_set = true;
       }
 
       void
       maximumValue(const std::string& value)
       {
-        castLexical(value, m_max);
-        m_max_set = false;
+        if(!castLexical(value, m_max))
+          throw std::runtime_error(DTR("maximum value is not of the correct type"));
+
+        m_max_set = true;
       }
 
       void
