@@ -414,27 +414,29 @@ namespace Transports
           return;
         if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
         {
-          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
-          switch(msg->status) {
-            case (IMC::SmsStatus::SMSSTAT_QUEUED):
-							    answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-            break;
-            case (IMC::SmsStatus::SMSSTAT_SENT):
-							    answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
-            Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
-            break;
-            case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
-						      answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-            Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
-            break;
-            case (IMC::SmsStatus::SMSSTAT_ERROR):
-						      answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
-            break;
-
+			IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+			switch (msg->status) {
+				case (IMC::SmsStatus::SMSSTAT_QUEUED):
+					answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+					break;
+				case (IMC::SmsStatus::SMSSTAT_SENT):
+					answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+					break;
+				case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
+					answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+					break;
+				case (IMC::SmsStatus::SMSSTAT_ERROR):
+					answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+					break;
+				default:
+					inf("ERROR: SmsStatus->status not implemented");
+					break;
           }
         }
       }
