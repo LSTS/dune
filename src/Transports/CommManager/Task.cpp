@@ -428,28 +428,33 @@ namespace Transports
       }
 
       void
-      consume(const IMC::TransmissionRequest* msg)
+	  consume(const IMC::TransmissionRequest* msg) {
+			if (msg->getSource() != getSystemId()
+					&& msg->getDestination() != getSystemId())
+				return;
+
+			switch (msg->comm_mean) {
+			case (IMC::TransmissionRequest::CMEAN_SATELLITE):
+				sendViaSatellite(msg);
+				break;
+			case (IMC::TransmissionRequest::CMEAN_GSM):
+				sendViaSms(msg);
+				break;
+			case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
+				sendViaAcoustic(msg);
+				break;
+
+			default:
+				answer(msg, "Communication mean not implemented.",
+						IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+				break;
+			}
+		}
+
       {
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
 
-        switch(msg->comm_mean)
-        {
-          case (IMC::TransmissionRequest::CMEAN_SATELLITE):
-                sendViaSatellite(msg);
-          break;
-          case (IMC::TransmissionRequest::CMEAN_GSM):
-                if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
-                  answer(msg, "Can not send raw data over SMS.",
-                         IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-                else
-                  sendViaSms(msg);
-          break;
-          default:
-            answer(msg, "Communication mean not implemented.",
-                   IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-            break;
-        }
       }
 
       void
