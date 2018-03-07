@@ -709,7 +709,14 @@ namespace DUNE
           err(DTR("invalid parameter '%s'"), pitr->first.c_str());
       }
 
-      updateParameters(false);
+      try
+      {
+        updateParameters(false);
+      }
+      catch (RestartNeeded& e)
+      {
+        err(DTR("unable to load parameters: %s"), e.getError());
+      }
     }
   }
 }
