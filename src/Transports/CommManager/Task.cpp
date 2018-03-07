@@ -415,6 +415,8 @@ namespace Transports
       }
 
       void answer(const IMC::TransmissionRequest* req, std::string info, int status)
+      void
+	  consume(const IMC::AcousticStatus* msg)
       {
         IMC::TransmissionStatus msg;
         msg.info = info;
@@ -426,6 +428,179 @@ namespace Transports
 
         inf("Status of transmission %d changed: %s", req->req_id, info.c_str());
       }
+		if (msg->getSource() != getSystemId()) {
+			return;
+		}
+
+		if (m_transmission_requests.find(msg->req_id)
+				!= m_transmission_requests.end()) {
+
+			IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+
+			if (req->comm_mean != IMC::TransmissionRequest::CMEAN_ACOUSTIC)
+				return;
+
+			switch (msg->status) {
+				case (IMC::AcousticStatus::STATUS_QUEUED):
+					//answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+
+					break;
+				case (IMC::AcousticStatus::STATUS_IN_PROGRESS):
+					answer(req, "Message is being transmitted.",
+							IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+
+					break;
+				case (IMC::AcousticStatus::STATUS_SENT):
+					answer(req, "Message has been sent via Acoustic.",
+							IMC::TransmissionStatus::TSTAT_SENT);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+
+					break;
+				case (IMC::AcousticStatus::STATUS_ERROR):
+					answer(req, msg->info,
+							IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+
+					break;
+				case (IMC::AcousticStatus::STATUS_BUSY):
+					answer(req, "Acoustic modem is busy.",
+							IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+
+					break;
+				case (IMC::AcousticStatus::STATUS_INPUT_FAILURE):
+					answer(req, msg->info,
+							IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+					Memory::clear(req);
+					m_transmission_requests.erase(msg->req_id);
+
+					break;
+				default:
+					inf("ERROR: AcousticStatus->status not implemented");
+
+					break;
+			}
+			return;
+		}
+
+		//old API
+		if (m_acoustic_requests.find(msg->req_id)
+						!= m_acoustic_requests.end()) {
+			IMC::AcousticOperation* req = m_acoustic_requests[msg->req_id];
+
+
+			switch (msg->status) {
+
+				case (IMC::AcousticStatus::STATUS_QUEUED):
+					switch (req->op) {
+						case IMC::AcousticOperation::AOP_MSG:
+							answer(req,
+							IMC::AcousticOperation::AOP_MSG_QUEUED);
+							break;
+						default:
+							break;
+
+					}
+					break;
+				case (IMC::AcousticStatus::STATUS_IN_PROGRESS):
+					switch (req->op) {
+						case IMC::AcousticOperation::AOP_MSG:
+							answer(req,
+							IMC::AcousticOperation::AOP_MSG_IP);
+							break;
+						case IMC::AcousticOperation::AOP_RANGE:
+						case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+							answer(req,
+							IMC::AcousticOperation::AOP_RANGE_IP);
+							break;
+						case IMC::AcousticOperation::AOP_ABORT:
+							answer(req,
+							IMC::AcousticOperation::AOP_ABORT_IP);
+							break;
+						default:
+							break;
+
+					}
+					break;
+				case (IMC::AcousticStatus::STATUS_SENT):
+					switch (req->op) {
+						case IMC::AcousticOperation::AOP_MSG:
+							answer(req,
+							IMC::AcousticOperation::AOP_MSG_DONE);
+							break;
+						case IMC::AcousticOperation::AOP_RANGE:
+						case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+							//FIXME
+							answer(req,
+							IMC::AcousticOperation::AOP_RANGE_RECVED);
+							break;
+						case IMC::AcousticOperation::AOP_ABORT:
+							answer(req,
+							IMC::AcousticOperation::AOP_ABORT_ACKED);
+							break;
+						default:
+							break;
+
+					}
+					break;
+				case (IMC::AcousticStatus::STATUS_ERROR):
+					switch (req->op) {
+						case IMC::AcousticOperation::AOP_MSG:
+							answer(req,
+							IMC::AcousticOperation::AOP_MSG_FAILURE);
+							break;
+						case IMC::AcousticOperation::AOP_RANGE:
+						case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+							answer(req,
+							IMC::AcousticOperation::AOP_RANGE_TIMEOUT);
+							break;
+						case IMC::AcousticOperation::AOP_ABORT:
+							answer(req,
+							IMC::AcousticOperation::AOP_ABORT_TIMEOUT);
+							break;
+						default:
+							break;
+
+					}
+
+					break;
+				case (IMC::AcousticStatus::STATUS_BUSY):
+					switch (req->op) {
+						case IMC::AcousticOperation::AOP_MSG:
+						case IMC::AcousticOperation::AOP_RANGE:
+						case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+						case IMC::AcousticOperation::AOP_ABORT:
+							answer(req,
+							IMC::AcousticOperation::AOP_BUSY);
+							break;
+						default:
+							break;
+					}
+
+					break;
+				case (IMC::AcousticStatus::STATUS_INPUT_FAILURE):
+					switch (req->op) {
+						case IMC::AcousticOperation::AOP_MSG:
+						case IMC::AcousticOperation::AOP_RANGE:
+						case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+						case IMC::AcousticOperation::AOP_ABORT:
+							answer(req,
+							IMC::AcousticOperation::AOP_UNSUPPORTED);
+							break;
+						default:
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+
+		}
+
+	}
 
       void
 	  consume(const IMC::TransmissionRequest* msg) {
