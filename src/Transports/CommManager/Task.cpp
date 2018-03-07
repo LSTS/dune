@@ -618,6 +618,91 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
+      //Conversion from Sms to SmsRequest Message
+      void
+	  consume(const IMC::Sms* msg)
+	  {
+		if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
+					return;
+
+		uint16_t newId = createInternalId();
+
+		SmsRequest sms_req;
+
+		sms_req.req_id      = newId;
+		sms_req.destination = msg->number;
+		sms_req.sms_text    = msg->contents;
+		sms_req.timeout     = msg->timeout;
+		sms_req.setSource(msg->getSource());
+		sms_req.setSourceEntity(msg->getSourceEntity());
+
+		dispatch(sms_req);
+
+	  }
+
+      //Conversion from AcousticOperation to AcousticRequest Message
+      void
+	  consume(const IMC::AcousticOperation* msg){
+
+    	  if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
+			return;
+
+    	  uint16_t newId = createInternalId();
+
+		  AcousticRequest tx;
+		  //set message id
+		  tx.req_id = newId;
+
+		  //set destination
+		  if (msg->system == "")
+			  tx.destination ="broadcast";
+		  else
+			  tx.destination  = msg->system.c_str();
+
+		  //FIXME not sure
+		  tx.setDestination(msg->getDestination());
+		  tx.setDestinationEntity(msg->getDestinationEntity());
+		  tx.setSource(msg->getSource());
+		  tx.setSourceEntity(msg->getSourceEntity());
+
+		  tx.range=msg->range;
+
+		  //set message type
+		  switch(msg->op){
+			case IMC::AcousticOperation::AOP_MSG:
+			{
+				tx.type=IMC::AcousticRequest::TYPE_MSG;
+				 //set message content
+				const IMC::Message * inlinemsg = msg->msg.get();
+				tx.msg.set(inlinemsg->clone());
+				break;
+			}
+
+			case IMC::AcousticOperation::AOP_ABORT:
+			{
+				tx.type=IMC::AcousticRequest::TYPE_ABORT;
+				break;
+			}
+			case IMC::AcousticOperation::AOP_RANGE:
+			{
+				tx.type=IMC::AcousticRequest::TYPE_RANGE;
+				break;
+			}
+			case IMC::AcousticOperation::AOP_REVERSE_RANGE:
+			{
+				tx.type=IMC::AcousticRequest::TYPE_REVERSE_RANGE;
+				break;
+			}
+			default:{
+				//answer(msg, "Communication mode not implemented for communication mean Acoustic", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+				return;
+				break;
+			}
+			}
+
+		  //add to transmission_queue
+		  m_acoustic_requests[newId] = msg->clone();
+		  dispatch(tx);
 
       }
 
