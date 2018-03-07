@@ -86,14 +86,14 @@ namespace Transports
       float m_fuel_conf;
       //! Sequence number.
       uint16_t m_seq;
-      //! Last acoustic operation.
-      IMC::AcousticOperation* m_last_acop;
-      //! Vector of pending message requests
-      std::vector<const IMC::AcousticOperation*> m_msg_requests;
+      //! Vector of messages to send
+      std::vector<const IMC::AcousticRequest*> m_msg_queue;
       //! Timer for sending preceding message
       Counter<double> m_msg_send_timer;
-      //! When set should wait and send next message
-      bool m_send_next;
+      //! When "false" processQueue must wait
+      bool m_can_send;
+      	  //!OLD
+      	  AcousticOperation* m_last_acop;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
       //! USBL Node arguments.
@@ -114,8 +114,8 @@ namespace Transports
         m_fuel_level(0),
         m_fuel_conf(0),
         m_seq(0),
-        m_last_acop(NULL),
-        m_send_next(false),
+        m_can_send(true),
+		m_last_acop(NULL),
         m_reporter(NULL),
         m_usbl_node(NULL),
         m_usbl_modem(NULL)
@@ -184,7 +184,7 @@ namespace Transports
                      " This value establishes the maximum amount of time that the modem"
                      " waits for the target system's reply");
 
-        bind<IMC::AcousticOperation>(this);
+        bind<IMC::AcousticRequest>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::PlanControlState>(this);
@@ -230,7 +230,6 @@ namespace Transports
       void
       onResourceRelease(void)
       {
-        clearLastOp();
         Memory::clear(m_reporter);
         Memory::clear(m_usbl_node);
         Memory::clear(m_usbl_modem);
@@ -259,41 +258,24 @@ namespace Transports
       }
 
       void
-      consume(const IMC::AcousticOperation* msg)
+	  consume(const IMC::AcousticRequest* msg)
       {
-        if (msg->getDestination() != getSystemId())
-          return;
 
-        switch (msg->op)
-        {
-          case IMC::AcousticOperation::AOP_ABORT:
-            sendAbort(msg->system);
-            break;
+    	  if (msg->getDestination() != getSystemId())
+			return;
 
-          case IMC::AcousticOperation::AOP_RANGE:
-            sendRange(msg->system);
-            break;
+    	  switch(msg->type){
+			  case (IMC::AcousticRequest::TYPE_MSG):
+			  case (IMC::AcousticRequest::TYPE_ABORT):
+			  case (IMC::AcousticRequest::TYPE_RANGE):
+				addToQueue((const IMC::AcousticRequest*)msg->clone());
+				processQueue();
+				break;
 
-          case IMC::AcousticOperation::AOP_MSG:
-            m_msg_requests.push_back((const IMC::AcousticOperation*)msg->clone());
-            // are there more messages being sent?
-            if (m_msg_requests.size() > 1)
-            {
-              IMC::AcousticOperation aop(*msg);
-              aop.op = IMC::AcousticOperation::AOP_MSG_QUEUED;
-              dispatch(aop);
-              return;
-            }
-            else
-            {
-              sendMessage(msg->system, msg->msg);
-            }
-            break;
-
-          default:
-            return;
-        }
-        replaceLastOp(msg);
+			  default:
+				  inf("Status of transmission %d changed: AcousticRequest->Type not implemented.", msg->req_id);
+				  break;
+    	  }
       }
 
       void
@@ -385,95 +367,71 @@ namespace Transports
       }
 
       void
-      consume(const IMC::UamTxStatus* msg)
+	  consume(const IMC::UamTxStatus* msg)
       {
-        if (msg->getDestination() != getSystemId())
-          return;
+		if (msg->getDestination() != getSystemId())
+			return;
 
-        if (msg->getDestinationEntity() != getEntityId())
-          return;
+		if (msg->getDestinationEntity() != getEntityId())
+			return;
 
-        if (m_last_acop == NULL)
-          return;
+		//get index of msg in queue
+		unsigned indexOfMsg=0;
+		for(; indexOfMsg<m_msg_queue.size();indexOfMsg++){
+			if(msg->seq==m_msg_queue.at(indexOfMsg)->req_id){
+				break;
+			}
+		}
+		if(indexOfMsg==m_msg_queue.size()){
+			//FIXME
+			inf("ERROR: No message on the queue with id:%d",msg->seq);
+			return;
+		}
 
-        IMC::AcousticOperation aop(*m_last_acop);
+		switch (msg->value) {
+			case IMC::UamTxStatus::UTS_BUSY:
+				sendAcousticStatus(m_msg_queue.at(indexOfMsg),IMC::AcousticStatus::STATUS_BUSY,msg->error);
+				m_msg_send_timer.setTop(2);
+				m_can_send = true;
+				break;
 
-        switch(msg->value)
-        {
-          case IMC::UamTxStatus::UTS_BUSY:
-            aop.op = IMC::AcousticOperation::AOP_BUSY;
-            break;
+			case IMC::UamTxStatus::UTS_INV_ADDR:
+				sendAcousticStatus(m_msg_queue.at(indexOfMsg),IMC::AcousticStatus::STATUS_UNSUPPORTED,msg->error);
+				removeFromQueue(indexOfMsg);
 
-          case IMC::UamTxStatus::UTS_INV_ADDR:
-            aop.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-            if (m_last_acop->op == IMC::AcousticOperation::AOP_MSG)
-            {
-              delete m_msg_requests.front();
-              m_msg_requests.erase(m_msg_requests.begin());
-            }
-            break;
+				break;
 
-          case IMC::UamTxStatus::UTS_DONE:
-            switch(m_last_acop->op)
-            {
-              case IMC::AcousticOperation::AOP_ABORT:
-                aop.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
-                break;
-              case IMC::AcousticOperation::AOP_RANGE:
-                // do nothing.
-                return;
-                break;
-              case IMC::AcousticOperation::AOP_MSG:
-                delete m_msg_requests.front();
-                m_msg_requests.erase(m_msg_requests.begin());
-                aop.op = IMC::AcousticOperation::AOP_MSG_DONE;
-                break;
-            }
-            break;
+			case IMC::UamTxStatus::UTS_DONE:
+				sendAcousticStatus(m_msg_queue.at(indexOfMsg),IMC::AcousticStatus::STATUS_SENT,msg->error);
+				removeFromQueue(indexOfMsg);
+				break;
 
-          case IMC::UamTxStatus::UTS_IP:
-            switch(m_last_acop->op)
-            {
-              case IMC::AcousticOperation::AOP_ABORT:
-                aop.op = IMC::AcousticOperation::AOP_ABORT_IP;
-                break;
-              case IMC::AcousticOperation::AOP_RANGE:
-                aop.op = IMC::AcousticOperation::AOP_RANGE_IP;
-                break;
-              case IMC::AcousticOperation::AOP_MSG:
-                aop.op = IMC::AcousticOperation::AOP_MSG_IP;
-                break;
-            }
-            break;
+			case IMC::UamTxStatus::UTS_IP:
+				sendAcousticStatus(m_msg_queue.at(indexOfMsg),IMC::AcousticStatus::STATUS_IN_PROGRESS,msg->error);
 
-          case IMC::UamTxStatus::UTS_FAILED:
-            switch(m_last_acop->op)
-            {
-              case IMC::AcousticOperation::AOP_ABORT:
-                aop.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
-                break;
-              case IMC::AcousticOperation::AOP_RANGE:
-                aop.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
-                break;
-              case IMC::AcousticOperation::AOP_MSG:
-                delete m_msg_requests.front();
-                m_msg_requests.erase(m_msg_requests.begin());
-                aop.op = IMC::AcousticOperation::AOP_MSG_FAILURE;
-                break;
-            }
-            break;
-        }
+				break;
 
-        dispatch(aop);
+			case IMC::UamTxStatus::UTS_FAILED:
+				sendAcousticStatus(m_msg_queue.at(indexOfMsg),IMC::AcousticStatus::STATUS_ERROR,msg->error);
+				removeFromQueue(indexOfMsg);
 
-        // If idle send pending messages.
-        if (msg->value != IMC::UamTxStatus::UTS_IP && !m_msg_requests.empty())
-        {
-          // wait (for clearing buffers) and send next message
-          m_msg_send_timer.setTop(2);
-          m_msg_send_timer.reset();
-          m_send_next = true;
-        }
+				break;
+		}
+
+      }
+
+      void
+	  sendAcousticStatus(const AcousticRequest* acReq,IMC::AcousticStatus::StatusEnum status,const std::string& info = "") {
+		IMC::AcousticStatus acStat;
+
+		acStat.req_id = acReq->req_id;
+		acStat.type = acReq->type;
+		acStat.status = status;
+		acStat.info = info;
+		acStat.setDestination(acReq->getDestination());
+		acStat.setDestinationEntity(acReq->getDestinationEntity());
+
+		dispatch(acStat);
       }
 
       void
@@ -557,6 +515,31 @@ namespace Transports
           m_reporter->consume(msg);
       }
 
+      //OLD
+      //! Add message to the end of queue
+      /*
+      void
+	  addToQueue(const IMC::AcousticOperation* msg){
+    	  m_msg_requests.push_back((const IMC::AcousticOperation*)msg->clone());
+      }*/
+
+      //! Add message to the end of queue
+		void
+	  addToQueue(const IMC::AcousticRequest* msg){
+		  m_msg_queue.push_back((const IMC::AcousticRequest*)msg->clone());
+		}
+
+      //! Remove message from the start of queue. Resets timer. And unlocks the queue
+      void
+	  removeFromQueue(int index){
+
+    	  delete m_msg_queue.at(index);
+    	  m_msg_queue.erase(m_msg_queue.begin()+index);
+    	  m_msg_send_timer.setTop(2);
+    	  m_can_send=true;
+
+      }
+
       //! Announce USBL service.
       void
       announceUSBL(void)
@@ -568,11 +551,13 @@ namespace Transports
       }
 
       //! Clear last operation.
+      /*
       void
       clearLastOp(void)
       {
         Memory::clear(m_last_acop);
-      }
+      }*/
+
 
       void
       sendFrame(const std::string& sys, Codes code, bool ack)
@@ -593,6 +578,9 @@ namespace Transports
         frame.seq = m_seq++;
         frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
 
+        //FIXME not sure
+        frame.setSource(getSystemId());
+
         frame.data.push_back(c_sync);
         crc.putByte(c_sync);
         for (size_t i = 0; i < data.size(); ++i)
@@ -606,6 +594,44 @@ namespace Transports
       }
 
       void
+		sendFrame(const std::string& sys, const uint16_t id, const std::vector<uint8_t>& data, bool ack)
+		{
+		  Algorithms::CRC8 crc(c_poly);
+
+		  IMC::UamTxFrame frame;
+		  frame.setDestination(getSystemId());
+		  frame.sys_dst = sys;
+		  frame.seq = id;
+		  frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
+
+		  frame.data.push_back(c_sync);
+		  crc.putByte(c_sync);
+		  for (size_t i = 0; i < data.size(); ++i)
+		  {
+			frame.data.push_back(data[i]);
+			crc.putByte(data[i]);
+		  }
+		  frame.data.push_back(crc.get());
+
+		  dispatch(frame);
+
+		  /*
+		  //toDEBUG
+		  IMC::UamTxStatus status;
+		  status.setDestination(getSystemId());
+		  status.setDestinationEntity(getEntityId());
+		  status.seq = frame.seq;
+		  status.value = IMC::UamTxStatus::UTS_DONE;
+		  status.error = "teste";
+		  dispatch(status,DF_LOOP_BACK);
+
+		  */
+
+		}
+
+      //OLD
+      /*
+      void
       replaceLastOp(const IMC::AcousticOperation* msg)
       {
         clearLastOp();
@@ -614,13 +640,21 @@ namespace Transports
         m_last_acop->setDestinationEntity(m_last_acop->getSourceEntity());
         m_last_acop->setSource(getSystemId());
         m_last_acop->setSourceEntity(getEntityId());
-      }
+      }*/
 
       void
       sendAbort(const std::string& sys)
       {
         sendFrame(sys, CODE_ABORT, true);
       }
+
+      void
+		sendAbort(const std::string& sys, const uint16_t id)
+		{
+    	  std::vector<uint8_t> data;
+    	  data.push_back(CODE_ABORT);
+		  sendFrame(sys, id, data, true);
+		}
 
       void
       recvAbort(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
@@ -650,12 +684,50 @@ namespace Transports
       }
 
       void
+		sendRange(const std::string& sys, const uint16_t id)
+		{
+		  spew("sending range to %s", sys.c_str());
+		  std::vector<uint8_t> data;
+		  data.push_back(CODE_RANGE);
+		  sendFrame(sys, id, data, true);
+		}
+
+      void
       recvRange(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         (void)imc_src;
         (void)imc_dst;
         (void)msg;
       }
+
+      void
+		sendMessage(const std::string& sys, const uint16_t id, const InlineMessage<IMC::Message>& imsg)
+		{
+		  const IMC::Message* msg = NULL;
+
+		  try
+		  {
+			msg = imsg.get();
+		  }
+		  catch (...)
+		  {
+			return;
+		  }
+
+		  // Check if special command can be used...
+		  if (msg->getId() == IMC::PlanControl::getIdStatic())
+		  {
+			const IMC::PlanControl * pc = static_cast<const IMC::PlanControl*>(msg);
+			if (pc->arg.isNull())
+			{
+			  sendPlanControl(sys, id, static_cast<const IMC::PlanControl*>(msg));
+			  return;
+			}
+		  }
+
+		  // For all other cases, send the raw message across
+		  sendRawMessage(sys, id, msg);
+		}
 
       void
       sendMessage(const std::string& sys, const InlineMessage<IMC::Message>& imsg)
@@ -715,6 +787,27 @@ namespace Transports
       }
 
       void
+	  sendRawMessage(const std::string& sys, const uint16_t id, const IMC::Message * msg)
+            {
+              std::vector<uint8_t> data;
+              data.push_back(CODE_RAW);
+
+              // leave 1 byte for CODE_RAW and another for CRC8
+              uint8_t buf[1022];
+
+              // start with message id
+              uint16_t id2 = msg->getId();
+              std::memcpy(&buf[0], &id2, sizeof(uint16_t));
+
+              // followed by all message fields
+              uint8_t* end = msg->serializeFields(&buf[2]);
+
+              int length = end - buf;
+              data.insert(data.end(), buf, buf + length);
+              sendFrame(sys, id, data, true);
+            }
+
+      void
       sendRawMessage(const std::string& sys, const IMC::Message * msg)
       {
         std::vector<uint8_t> data;
@@ -734,6 +827,22 @@ namespace Transports
         data.insert(data.end(), buf, buf + length);
         sendFrame(sys, data, true);
       }
+
+      void
+		sendPlanControl(const std::string& sys, const uint16_t id, const IMC::PlanControl* msg)
+		{
+		  if (msg->type != IMC::PlanControl::PC_REQUEST)
+			return;
+
+		  if (msg->op != IMC::PlanControl::PC_START)
+			return;
+
+		  std::vector<uint8_t> data;
+		  data.push_back(CODE_PLAN);
+		  for (size_t i = 0; i < msg->plan_id.size(); ++i)
+			data.push_back((uint8_t)msg->plan_id[i]);
+		  sendFrame(sys, id, data, true);
+		}
 
       void
       sendPlanControl(const std::string& sys, const IMC::PlanControl* msg)
@@ -847,27 +956,61 @@ namespace Transports
       void
       onUsblModem(void)
       {
-        if (m_usbl_modem != NULL)
-        {
           // Trigger target.
           std::string sys;
           if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
             sendRange(sys);
-        }
       }
 
       //! Main loop of USBL node.
       void
       onUsblNode(void)
       {
-        if (m_usbl_node != NULL)
-        {
           std::vector<uint8_t> data;
           data.push_back(CODE_USBL);
           if (m_usbl_node->run(data))
             sendFrame("broadcast", data, false);
-        }
       }
+
+      /*
+		void
+		processQueue(void) {
+			if (m_can_send && !m_msg_requests.empty()) {
+				m_can_send = false;
+				const IMC::AcousticOperation * req = m_msg_requests.at(0);
+				replaceLastOp(req);
+				sendMessage(req->system, req->msg);
+			}
+		}*/
+
+		void
+		processQueue(void) {
+		if (m_can_send && !m_msg_queue.empty()) {
+			m_can_send = false;
+			const IMC::AcousticRequest * req = m_msg_queue.at(0);
+
+			//toDEBUG
+			//req->toJSON(std::cout);
+
+			switch (req->type) {
+			case (IMC::AcousticRequest::TYPE_ABORT):
+				sendAbort(req->destination,req->req_id);
+				break;
+
+			case (IMC::AcousticRequest::TYPE_RANGE):
+				sendRange(req->destination,req->req_id);
+				break;
+
+			case (IMC::AcousticRequest::TYPE_MSG):
+				sendMessage(req->destination, req->req_id, req->msg);
+				break;
+			default:
+				break;
+			}
+
+		}
+	}
+
 
       //! Main loop.
       void
@@ -877,22 +1020,16 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          onUsblModem();
-          onUsblNode();
-
-          if (m_args.report_enable)
-          {
-            if (m_reporter != NULL && m_reporter->trigger())
-              sendReport();
+          if (m_usbl_modem != NULL) onUsblModem();
+          if (m_usbl_node != NULL) onUsblNode();
+          if (m_args.report_enable) {
+				if (m_reporter != NULL && m_reporter->trigger())
+					sendReport();
+			}
+          if(m_msg_send_timer.overflow()){
+        	  processQueue();
           }
 
-          if (m_send_next && m_msg_send_timer.overflow())
-          {
-            m_send_next = false;
-            const IMC::AcousticOperation * req = m_msg_requests.at(0);
-            replaceLastOp(req);
-            sendMessage(req->system, req->msg);
-          }
         }
       }
     };
