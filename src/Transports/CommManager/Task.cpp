@@ -278,22 +278,69 @@ namespace Transports
       }
 
       void
-      clearTimeouts()
+	  sendViaAcoustic(const IMC::TransmissionRequest* msg)
       {
-        std::map<int, IMC::TransmissionRequest*>::iterator it;
-        double time = Time::Clock::getSinceEpoch();
-        it = m_transmission_requests.begin();
-        while (it != m_transmission_requests.end())
-        {
-          if (it->second->deadline <= time)
-          {
-            answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(it->second);
-            m_transmission_requests.erase(it++);
-          }
-          else
-            ++it;
-        }
+    	  inf("Request to send data over Acoustic to %s (%d)", msg->destination.c_str(), msg->req_id);
+
+    	  uint16_t newId = createInternalId();
+
+    	  AcousticRequest tx;
+      	  tx.req_id = newId;
+
+    	  tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
+    	  if(tx.timeout < 0)
+    		  tx.timeout = 0;
+
+    	  if (msg->destination == "")
+    		  tx.destination ="broadcast";
+    	  else
+    		  tx.destination  = msg->destination.c_str();
+
+    	  //FIXME not sure
+    	  tx.setDestination(msg->getDestination());
+
+    	  tx.range=msg->range;
+
+    	  switch(msg->data_mode){
+				case IMC::TransmissionRequest::DMODE_INLINEMSG:
+				{
+					tx.type=IMC::AcousticRequest::TYPE_MSG;
+
+					const IMC::Message * inlinemsg = msg->msg_data.get();
+					tx.msg.set(inlinemsg->clone());
+
+					break;
+				}
+
+				case IMC::TransmissionRequest::DMODE_ABORT:
+				{
+					tx.type=IMC::AcousticRequest::TYPE_ABORT;
+
+					break;
+				}
+				case IMC::TransmissionRequest::DMODE_RANGE:
+				{
+					tx.type=IMC::AcousticRequest::TYPE_RANGE;
+
+					break;
+				}
+				case IMC::TransmissionRequest::DMODE_REVERSE_RANGE:
+				{
+					tx.type=IMC::AcousticRequest::TYPE_REVERSE_RANGE;
+
+					break;
+				}
+				default:{
+					answer(msg, "Communication mode not implemented for communication mean Acoustic", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+					return;
+
+					break;
+				}
+    	  }
+
+    	  m_transmission_requests[newId] = msg->clone();
+    	  dispatch(tx);
+
       }
 
       void
