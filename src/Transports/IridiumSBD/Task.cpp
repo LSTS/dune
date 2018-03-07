@@ -210,9 +210,15 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgTx* msg)
       {
-        // FIXME: check if req_id already exists.
-        // FIXME: check MTU.
-        debug("queueing message");
+
+	  if (msg->getSource() != getSystemId()
+			&& msg->getDestination() != getSystemId())
+		return;
+
+	  //don't catch IridiumMsgTx created by other than CommManager
+	  if(msg->getSourceEntity() != resolveEntity("Communications Manager"))
+			  return;
+
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
         TxRequest* request = new TxRequest(src_adr, src_eid, msg->req_id,
