@@ -65,8 +65,10 @@ namespace Transports
       Time::Counter<float> m_iridium_timer;
       Time::Counter<float> m_clean_timer;
       int m_plan_chksum;
-      int m_reqid;
-      std::map<int, IMC::TransmissionRequest*> m_transmission_requests;
+      uint16_t m_reqid;
+      std::map<uint16_t, IMC::TransmissionRequest*> m_transmission_requests;
+      std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
+
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -76,21 +78,26 @@ namespace Transports
         m_vstate(NULL),
         m_vmedium(NULL),
         m_plan_chksum(0),
-        m_reqid(1)
+        m_reqid(0)
       {
         param("Iridium Reports Period", m_args.iridium_period)
             .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
             .defaultValue("300");
 
-        bind<IMC::PlanControlState>(this);
-        bind<IMC::FuelLevel>(this);
+        bind<IMC::AcousticOperation>(this);
+        bind<IMC::AcousticStatus>(this);
         bind<IMC::EstimatedState>(this);
+        bind<IMC::FuelLevel>(this);
+        bind<IMC::IridiumMsgTx>(this);
+        bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::PlanControlState>(this);
+        bind<IMC::PlanSpecification>(this);
+        bind<IMC::Sms>(this);
+        bind<IMC::SmsStatus>(this);
+        bind<IMC::TransmissionRequest>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
-        bind<IMC::PlanSpecification>(this);
-        bind<IMC::TransmissionRequest>(this);
-        bind<IMC::IridiumTxStatus>(this);
-        bind<IMC::SmsStatus>(this);
+
 
         m_clean_timer.setTop(3);
       }
@@ -156,6 +163,24 @@ namespace Transports
       }
 
       void
+		clearTimeouts()
+		{
+		  std::map<uint16_t, IMC::TransmissionRequest*>::iterator it;
+		  double time = Time::Clock::getSinceEpoch();
+		  it = m_transmission_requests.begin();
+		  while (it != m_transmission_requests.end())
+		  {
+			if (it->second->deadline <= time)
+			{
+			  answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+			  Memory::clear(it->second);
+			  m_transmission_requests.erase(it++);
+			}
+			else
+			  ++it;
+		  }
+		}
+
       uint16_t
 	  createInternalId(){
     	  if(m_reqid==0xFFFF){
