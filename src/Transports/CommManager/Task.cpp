@@ -166,40 +166,61 @@ namespace Transports
     	  }
     	  return m_reqid;
       }
+      void
       sendViaSatellite(const IMC::TransmissionRequest* msg)
       {
         inf("Request to send data over satellite (%d)", msg->req_id);
 
+        uint16_t newId = createInternalId();
+
         IridiumMsgTx tx;
         tx.destination = msg->destination;
         tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
-        tx.req_id = m_reqid++;
+        tx.req_id = newId;
+        tx.setDestination(msg->getDestination());
+        tx.setDestinationEntity(msg->getDestinationEntity());
 
-        if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
-          tx.data.assign(msg->raw_data.begin(), msg->raw_data.end());
-        else if (msg->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
-        {
-          IMC::ImcIridiumMessage m;
-          const IMC::Message * inlinemsg = msg->msg_data.get();
-          m.destination = 0xFFFF;
-          m.source = getSystemId();
-          m.msg = inlinemsg->clone();
-          uint8_t buffer[65535];
-          int len = m.serialize(buffer);
-          tx.data.assign(buffer, buffer + len);
-          Memory::clear(m.msg);
+        switch(msg->data_mode){
+			case IMC::TransmissionRequest::DMODE_RAW:
+			{
+				tx.data.assign(msg->raw_data.begin(), msg->raw_data.end());
+
+				break;
+			}
+			case IMC::TransmissionRequest::DMODE_INLINEMSG:
+			{
+				IMC::ImcIridiumMessage m;
+				const IMC::Message * inlinemsg = msg->msg_data.get();
+				m.destination = 0xFFFF;
+				m.source = getSystemId();
+				m.msg = inlinemsg->clone();
+				uint8_t buffer[65535];
+				int len = m.serialize(buffer);
+				tx.data.assign(buffer, buffer + len);
+				Memory::clear(m.msg);
+
+				break;
+			}
+			case IMC::TransmissionRequest::DMODE_TEXT:
+			{
+				IMC::IridiumCommand m;
+				m.destination = 0xFFFF;
+				m.source = getSystemId();
+				m.command = msg->txt_data;
+				uint8_t buffer[65535];
+				int len = m.serialize(buffer);
+				tx.data.assign(buffer, buffer + len);
+
+				break;
+			}
+			default:
+				answer(msg, "Communication mode not implemented for communication mean Satellite", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+				return;
+
+				break;
         }
-        else // text mode
-        {
-          IMC::IridiumCommand m;
-          m.destination = 0xFFFF;
-          m.source = getSystemId();
-          m.command = msg->txt_data;
-          uint8_t buffer[65535];
-          int len = m.serialize(buffer);
-          tx.data.assign(buffer, buffer + len);
-        }
-        m_transmission_requests[tx.req_id] = msg->clone();
+
+        m_transmission_requests[newId] = msg->clone();
         dispatch(tx);
       }
 
