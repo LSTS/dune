@@ -155,7 +155,6 @@ namespace Transports
         .description("Maximum amount of time to wait for SMS send completion");
 
 
-        bind<IMC::Sms>(this);
         bind<IMC::SmsRequest>(this);
         bind<IMC::IoEvent>(this);
       }
@@ -234,20 +233,6 @@ namespace Transports
         dispatch(sms_status);
       }
 
-    void
-    consume(const IMC::Sms* msg)
-    {
-      //Conversion to SmsRequest Message
-      IMC::SmsRequest sms_req;
-      //FIXME verify if req_id already exists
-      sms_req.req_id      = m_req_id++;
-      sms_req.destination = msg->number;
-      sms_req.sms_text    = msg->contents;
-      sms_req.timeout = msg->timeout;
-      sms_req.setSource(msg->getSource());
-      sms_req.setSourceEntity(msg->getSourceEntity());
-      dispatch(sms_req,DF_LOOP_BACK);
-    }
 
       void
       consume(const IMC::SmsRequest* msg)
