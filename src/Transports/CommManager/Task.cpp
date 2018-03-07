@@ -615,9 +615,34 @@ namespace Transports
 			}
 		}
 
+
+      void
+	  consume(const IMC::IridiumMsgTx* msg)
       {
-        if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
-          return;
+    	if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
+    	  return;
+
+    	  //don't catch IridiumMsgTx created by this Task
+    	  if(msg->getSourceEntity() == getEntityId())
+    		  return;
+
+    	  IMC::TransmissionRequest request;
+
+    	  request.comm_mean			=IMC::TransmissionRequest::CMEAN_SATELLITE;
+    	  request.data_mode			=IMC::TransmissionRequest::DMODE_RAW;
+    	  request.destination		=msg->destination;
+    	  request.deadline			=msg->ttl;
+    	  request.raw_data			=msg->data;
+    	  request.req_id			=msg->req_id;
+
+    	  request.setSource(msg->getSource());
+    	  request.setSourceEntity(msg->getSourceEntity());
+    	  request.setDestination(msg->getDestination());
+    	  request.setDestinationEntity(msg->getDestinationEntity());
+
+		  dispatch(request,DF_LOOP_BACK);
+      }
+
       //Conversion from Sms to SmsRequest Message
       void
 	  consume(const IMC::Sms* msg)
