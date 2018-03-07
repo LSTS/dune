@@ -195,7 +195,7 @@ namespace Maneuver
       startLoiter(void)
       {
         m_task->debug("\n\tStart LOITER!");
-        m_task->setControl(IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_PATH);
+        m_task->setControl(IMC::CL_PATH);
 
         m_timer.reset();
         m_timer.setTop(m_maneuver.popup_period);
@@ -215,10 +215,10 @@ namespace Maneuver
 
       //! Surfaces to report position
       void
-      doPopUp(void) // TESTAR!
+      doPopUp(void)
       {
         m_task->debug("\n\tStart ELEVATOR!");
-        m_task->setControl(IMC::CL_DEPTH | IMC::CL_SPEED | IMC::CL_PATH);
+        m_task->setControl(IMC::CL_PATH);
 
         m_timer.reset();
         m_timer.setTop(m_maneuver.popup_duration);
