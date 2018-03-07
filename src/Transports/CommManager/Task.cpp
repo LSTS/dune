@@ -208,8 +208,11 @@ namespace Transports
       {
         inf("Request to send data over SMS to %s (%d)", msg->destination.c_str(), msg->req_id);
 
+        uint16_t newId = createInternalId();
+
         SmsRequest sms;
-        sms.req_id = m_reqid++;
+        sms.req_id = newId;
+
         sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
         if(sms.timeout < 0)
           sms.timeout = 0;
@@ -218,21 +221,38 @@ namespace Transports
           m_ctx.config.get(c_sms_section, c_sms_field, "", sms.destination);
         else
           sms.destination  = msg->destination;
-        m_transmission_requests[sms.req_id] = msg->clone();
-        if(msg->data_mode == IMC::TransmissionRequest::DMODE_TEXT)
-          sms.sms_text = msg->txt_data;
-        else if(msg->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
-        {
-          Utils::ByteBuffer bfr;
-          IMC::Packet::serialize(msg->msg_data.get(), bfr);
-          std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),bfr.getSize());
-          sms.sms_text.assign(encoded);
+
+        switch(msg->data_mode){
+        	case IMC::TransmissionRequest::DMODE_TEXT:
+        	{
+        		sms.sms_text = msg->txt_data;
+
+        		break;
+        	}
+        	case IMC::TransmissionRequest::DMODE_INLINEMSG:
+        	{
+        		Utils::ByteBuffer bfr;
+				IMC::Packet::serialize(msg->msg_data.get(), bfr);
+				std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),bfr.getSize());
+				sms.sms_text.assign(encoded);
+
+        		break;
+        	}
+        	default:
+        	{
+				answer(msg, "Communication mode not implemented for communication mean GSM", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+        		return;
+
+        		break;
+        	}
         }
+
         if(sms.sms_text.length() > 160){ //160 characters -> 120 bytes for the inline message
           answer(msg, "Can only send 160 characters over SMS.",
                  IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
           return;
         }
+        m_transmission_requests[newId] = msg->clone();
         dispatch(sms);
       }
 
