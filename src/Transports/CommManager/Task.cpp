@@ -156,6 +156,16 @@ namespace Transports
       }
 
       void
+      uint16_t
+	  createInternalId(){
+    	  if(m_reqid==0xFFFF){
+    		  m_reqid=0;
+    	  }
+    	  else{
+    		  m_reqid++;
+    	  }
+    	  return m_reqid;
+      }
       sendViaSatellite(const IMC::TransmissionRequest* msg)
       {
         inf("Request to send data over satellite (%d)", msg->req_id);
