@@ -414,20 +414,9 @@ namespace Transports
         }
       }
 
-      void answer(const IMC::TransmissionRequest* req, std::string info, int status)
       void
 	  consume(const IMC::AcousticStatus* msg)
       {
-        IMC::TransmissionStatus msg;
-        msg.info = info;
-        msg.req_id = req->req_id;
-        msg.status = status;
-        msg.setDestination(req->getSource());
-        msg.setDestinationEntity(req->getSourceEntity());
-        dispatch(msg);
-
-        inf("Status of transmission %d changed: %s", req->req_id, info.c_str());
-      }
 		if (msg->getSource() != getSystemId()) {
 			return;
 		}
@@ -631,6 +620,29 @@ namespace Transports
           return;
 
       }
+
+      void
+	  answer(const IMC::AcousticOperation* req, int status)
+		{
+		  IMC::AcousticOperation msg(*req);
+		  msg.op = status;
+		  dispatch(msg);
+
+		}
+
+	   void
+	  answer(const IMC::TransmissionRequest* req, std::string info, int status)
+	   {
+		 IMC::TransmissionStatus msg;
+		 msg.info = info;
+		 msg.req_id = req->req_id;
+		 msg.status = status;
+		 msg.setDestination(req->getSource());
+		 msg.setDestinationEntity(req->getSourceEntity());
+		 dispatch(msg);
+
+		 inf("Status of transmission message(%d) changed to: %s", req->req_id, info.c_str());
+	   }
 
       void
       onResourceRelease(void)
