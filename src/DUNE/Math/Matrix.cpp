@@ -1203,7 +1203,11 @@ namespace DUNE
         double cy = std::cos(ea[2] / 2);
         double sy = std::sin(ea[2] / 2);
 
-        double q[4] = {cr* cp * cy + sr * sp * sy, sr * cp * cy - cr * sp * sy, cr * sp * cy + sr * cp * sy, cr * cp * sy - sr * sp * cy};
+        double q[4] = {cr * cp * cy + sr * sp * sy,
+                       sr * cp * cy - cr * sp * sy,
+                       cr * sp * cy + sr * cp * sy,
+                       cr * cp * sy - sr * sp * cy};
+
         return Matrix(q, 4, 1);
       }
 
@@ -1254,9 +1258,9 @@ namespace DUNE
 
         double ea[3] =
         {
-          std::atan2(2 * (q[2] * q[3] - q[0] * q[1]), 1 - 2 * (q[1] * q[1] + q[2] * q[2])),
-          std::asin(2 * (q[1] * q[3] - q[0] * q[2])),
-          std::atan2(2 * (q[1] * q[2] - q[0] * q[3]), 1 - 2 * (q[2] * q[2] + q[3] * q[3]))
+          std::atan2(2 * (q[0] * q[1] + q[2] * q[3]), 1 - 2 * (q[1] * q[1] + q[2] * q[2])),
+          std::asin(2 * (q[0] * q[2] - q[3] * q[1])),
+          std::atan2(2 * (q[0] * q[3] + q[1] * q[2]), 1 - 2 * (q[2] * q[2] + q[3] * q[3]))
         };
 
         return Matrix(ea, 3, 1);
