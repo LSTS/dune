@@ -1,3 +1,4 @@
+#include <DUNE/Math/Constants.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/Math/Quaternion.hpp>
 #include <DUNE/Math/EulerAnglesZyx.hpp>
@@ -11,9 +12,13 @@
 #include <cstdio>
 #include <iostream>
 
-typedef DUNE::Math::Matrix Matrix;
-typedef DUNE::Math::Quaternion Quaternion;
-typedef DUNE::Math::EulerAnglesZyx EulerAnglesZyx;
+
+
+using DUNE::Math::c_pi;
+using DUNE::Math::c_half_pi;
+using DUNE::Math::Matrix;
+using DUNE::Math::Quaternion;
+using DUNE::Math::EulerAnglesZyx;
 
 
 
@@ -233,19 +238,57 @@ int main()
 
   {
     // Test conversion from quaternion to euler angles to quaternion.
-    Quaternion q1(1, 2, 3, 4);
-    q1.normalize();
-    EulerAnglesZyx eul(q1);
-    Quaternion q2(eul);
-    test.boolean("quat -> eul -> quat", almostEqual(q1, q2));
+    bool all_good = true;
+    const double step = 0.3;  // With step = 0.3, the below code runs roughly 2000 iterations.
+
+    for (double w = -1; w <= 1; w += step)
+    {
+      for (double x = -1; x <= 1; x += step)
+      {
+        for (double y = -1; y <= 1; y += step)
+        {
+          for (double z = -1; z <= 1; z += step)
+          {
+            Quaternion q1(w, x, y, z);
+            q1.normalize();
+            EulerAnglesZyx eul(q1);
+
+            // Euler angle conversion invalid for pitch near +/- pi/2.
+            if (almostEqual(std::fabs(eul.pitch), c_half_pi, 1e-6))
+              continue;
+
+            Quaternion q2(eul);
+
+            const bool equivalent_quaternions = almostEqual(q1, q2) || almostEqual(q1, -q2);
+            if (!equivalent_quaternions)
+              all_good = false;
+          }
+        }
+      }
+    }
+    test.boolean("quat -> eul -> quat", all_good);
   }
 
   {
     // Test conversion from euler angles to quaternion to euler angles.
-    EulerAnglesZyx eul(-3.0, 1.5, 3.0);
-    Quaternion quat_from_eul(eul);
-    EulerAnglesZyx eul_via_quat_from_eul(quat_from_eul);
-    test.boolean("eul -> quat -> eul", almostEqual(eul, eul_via_quat_from_eul));
+    bool all_good = true;
+    const double step = c_pi/8;
+
+    for (double yaw = -c_pi + step; yaw < c_pi; yaw += step)
+    {
+      for (double pitch = -c_half_pi + step; pitch < c_half_pi; pitch += step)
+      {
+        for (double roll = -c_pi + step; roll < c_pi; roll += step)
+        {
+          EulerAnglesZyx eul1(roll, pitch, yaw);
+          Quaternion quat(eul1);
+          EulerAnglesZyx eul2(quat);
+          if (!almostEqual(eul1, eul2))
+            all_good = false;
+        }
+      }
+    }
+    test.boolean("eul -> quat -> eul", all_good);
   }
 
   {
