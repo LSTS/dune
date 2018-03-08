@@ -46,11 +46,17 @@ namespace DUNE
     Quaternion::Quaternion(const EulerAnglesZyx& euler)
     : m_matrix(4, 1)
     {
-      Matrix euler_matrix(3, 1);
-      euler_matrix(0) = euler.roll;
-      euler_matrix(1) = euler.pitch;
-      euler_matrix(2) = euler.yaw;
-      m_matrix = euler_matrix.toQuaternion();
+      const double cr = std::cos(euler.roll / 2);
+      const double sr = std::sin(euler.roll / 2);
+      const double cp = std::cos(euler.pitch / 2);
+      const double sp = std::sin(euler.pitch / 2);
+      const double cy = std::cos(euler.yaw / 2);
+      const double sy = std::sin(euler.yaw / 2);
+
+      m_matrix(INDEX_W) = cr*cp*cy + sr*sp*sy;
+      m_matrix(INDEX_X) = sr*cp*cy - cr*sp*sy;
+      m_matrix(INDEX_Y) = cr*sp*cy + sr*cp*sy;
+      m_matrix(INDEX_Z) = cr*cp*sy - sr*sp*cy;
     }
 
     void Quaternion::identity()
