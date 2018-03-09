@@ -8,6 +8,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <sstream>
 
 
 
@@ -116,6 +117,14 @@ int main()
     quat_arbitrary.identity();
     const bool is_identity = quat_arbitrary == quat_identity;
     test.boolean("identity()", not_identity && is_identity);
+  }
+
+  {
+    // Test operator<<.
+    const Quaternion q;
+    std::stringstream ss;
+    ss << q;
+    test.boolean("operator<<", ss.str() == "1 \n0 \n0 \n0 \n");
   }
 
   {
