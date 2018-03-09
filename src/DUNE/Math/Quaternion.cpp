@@ -13,27 +13,6 @@ namespace DUNE
       this->identity();
     }
 
-    Quaternion::Quaternion(const std::vector<double>& vector)
-    : m_matrix(4, 1)
-    {
-      if (vector.size() != 4)
-        throw std::invalid_argument("vector must have length 4");
-
-      m_matrix(INDEX_W) = vector[INDEX_W];
-      m_matrix(INDEX_X) = vector[INDEX_X];
-      m_matrix(INDEX_Y) = vector[INDEX_Y];
-      m_matrix(INDEX_Z) = vector[INDEX_Z];
-    }
-
-    Quaternion::Quaternion(const Matrix& matrix)
-    : m_matrix(4, 1)
-    {
-      if (matrix.rows() != 4 || matrix.columns() != 1)
-        throw std::invalid_argument("matrix must have size 4x1");
-
-      m_matrix = matrix;
-    }
-
     Quaternion::Quaternion(double w, double x, double y, double z)
     : m_matrix(4, 1)
     {
@@ -41,6 +20,51 @@ namespace DUNE
       m_matrix(INDEX_X) = x;
       m_matrix(INDEX_Y) = y;
       m_matrix(INDEX_Z) = z;
+    }
+
+    Quaternion::Quaternion(const std::vector<double>& q)
+    : m_matrix(4, 1)
+    {
+      if (q.size() != 4)
+        throw std::invalid_argument("vector must have length 4");
+
+      m_matrix(INDEX_W) = q[0];
+      m_matrix(INDEX_X) = q[1];
+      m_matrix(INDEX_Y) = q[2];
+      m_matrix(INDEX_Z) = q[3];
+    }
+
+    Quaternion::Quaternion(const double w, const std::vector<double>& v)
+    : m_matrix(4, 1)
+    {
+      if (v.size() != 3)
+        throw std::invalid_argument("vector must have length 3");
+
+      m_matrix(INDEX_W) = w;
+      m_matrix(INDEX_X) = v[0];
+      m_matrix(INDEX_Y) = v[1];
+      m_matrix(INDEX_Z) = v[2];
+    }
+
+    Quaternion::Quaternion(const Matrix& q)
+    : m_matrix(4, 1)
+    {
+      if (!q.isColumnVector() || q.size() != 4)
+        throw std::invalid_argument("matrix must have size 4x1");
+
+      m_matrix = q;
+    }
+
+    Quaternion::Quaternion(double w, const Matrix& v)
+    : m_matrix(4, 1)
+    {
+      if (!v.isColumnVector() || v.size() != 3)
+        throw std::invalid_argument("matrix must have size 3x1");
+
+      m_matrix(INDEX_W) = w;
+      m_matrix(INDEX_X) = v(0);
+      m_matrix(INDEX_Y) = v(1);
+      m_matrix(INDEX_Z) = v(2);
     }
 
     Quaternion::Quaternion(const EulerAnglesZyx& euler)
