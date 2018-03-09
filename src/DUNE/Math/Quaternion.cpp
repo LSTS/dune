@@ -72,11 +72,6 @@ namespace DUNE
       return m_matrix;
     }
 
-    Matrix Quaternion::conjugate() const
-    {
-      return transpose(m_matrix);
-    }
-
     double Quaternion::w() const { return m_matrix(INDEX_W); }
     double Quaternion::x() const { return m_matrix(INDEX_X); }
     double Quaternion::y() const { return m_matrix(INDEX_Y); }
@@ -176,6 +171,21 @@ namespace DUNE
     {
       os << quat.matrix();
       return os;
+    }
+
+    Matrix transpose(const Quaternion& quat)
+    {
+      return transpose(quat.matrix());
+    }
+
+    Quaternion conjugate(const Quaternion& quat)
+    {
+      return Quaternion(quat.w(), -quat.x(), -quat.y(), -quat.z());
+    }
+
+    Quaternion inverse(const Quaternion& quat)
+    {
+      return conjugate(quat);
     }
 
     Quaternion operator+(Quaternion lhs, const Matrix& rhs)

@@ -28,7 +28,6 @@ namespace DUNE
       double z() const;
       void identity();
       Matrix matrix() const;
-      Matrix conjugate() const;
       double norm() const;
       void normalize();
       Matrix rotationMatrix() const;
@@ -47,6 +46,9 @@ namespace DUNE
       enum Index {INDEX_W, INDEX_X, INDEX_Y, INDEX_Z};
     };
 
+    Matrix transpose(const Quaternion& quat);
+    Quaternion conjugate(const Quaternion& quat);
+    Quaternion inverse(const Quaternion& quat);
     Quaternion operator+(Quaternion lhs, const Matrix& rhs);
     Quaternion operator+(Matrix lhs, const Quaternion& rhs);
     Quaternion operator*(Quaternion lhs, const Quaternion& rhs);
