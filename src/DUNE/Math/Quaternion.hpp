@@ -56,12 +56,12 @@ namespace DUNE
       Quaternion& operator*=(const Quaternion& rhs);
       bool operator==(const Quaternion& rhs);
       bool operator!=(const Quaternion& rhs);
-      friend std::ostream& operator<<(std::ostream& os, const Quaternion& q);
     private:
       Matrix m_matrix;
       enum Index {INDEX_W, INDEX_X, INDEX_Y, INDEX_Z};
     };
 
+    std::ostream& operator<<(std::ostream& os, const Quaternion& q);
     Matrix transpose(const Quaternion& quat);
     Quaternion conjugate(const Quaternion& quat);
     Quaternion inverse(const Quaternion& quat);

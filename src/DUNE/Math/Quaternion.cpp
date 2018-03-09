@@ -189,8 +189,6 @@ namespace DUNE
       return !(*this == rhs);
     }
 
-
-
     std::ostream& operator<<(std::ostream& os, const Quaternion& quat)
     {
       os << quat.matrix();
