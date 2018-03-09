@@ -46,6 +46,7 @@ namespace DUNE
       Matrix matrix() const;
       double norm() const;
       void normalize();
+      Quaternion normalized() const;
       Matrix rotationMatrix() const;
       Matrix angVelTransform() const;
       Quaternion& operator=(Matrix rhs);

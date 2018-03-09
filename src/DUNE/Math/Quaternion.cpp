@@ -111,6 +111,13 @@ namespace DUNE
       m_matrix /= this->norm();
     }
 
+    Quaternion Quaternion::normalized() const
+    {
+      Quaternion q = *this;
+      q.normalize();
+      return q;
+    }
+
     Matrix Quaternion::rotationMatrix() const
     {
       return (m_matrix / this->norm()).toDCM();
