@@ -165,6 +165,16 @@ int main()
   }
 
   {
+    // Test normalized().
+    const Quaternion q1(1, 1, 1, 1);
+    Quaternion q2 = q1;
+    Quaternion q2_normalized = q2.normalized();
+    bool is_normalized = almostEqual(q2_normalized.norm(), 1.0);
+    bool is_unchanged = q2 == q1;
+    test.boolean("normalized()", is_normalized && is_unchanged);
+  }
+
+  {
     // Test rotationMatrix().
     Quaternion quat(1, 2, -3, -4);
     const double data[] = {
