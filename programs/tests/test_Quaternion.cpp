@@ -9,9 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <cstdio>
-#include <iostream>
-
 
 
 using DUNE::Math::c_pi;
@@ -122,11 +119,26 @@ int main()
   }
 
   {
+    // Test transpose().
+    Quaternion quat(-1, 2, -3, 4);
+    Matrix quat_transpose = transpose(quat);
+    test.boolean("transpose()", transpose(quat.matrix()) == quat_transpose);
+  }
+
+  {
     // Test conjugate().
     Quaternion quat(-1, 2, -3, 4);
-    Matrix m1(transpose(quat.matrix()));
-    Matrix m2(quat.conjugate());
-    test.boolean("conjugate()", m1 == m2);
+    Quaternion result = conjugate(quat);
+    Quaternion expected = Quaternion(-1, -2, 3, -4);
+    test.boolean("conjugate()", result == expected);
+  }
+
+  {
+    // Test inverse().
+    Quaternion quat(1, -2, 3, -4);
+    Quaternion result = inverse(quat);
+    Quaternion expected = Quaternion(1, 2, -3, 4);
+    test.boolean("inverse()", result == expected);
   }
 
   {
