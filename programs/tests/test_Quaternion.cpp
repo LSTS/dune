@@ -36,7 +36,7 @@ int main()
     const Quaternion quat;
     const double data[] = {1, 0, 0, 0};
     const Matrix matrix(data, 4, 1);
-    test.boolean("Quaternion()", quat == matrix);
+    test.boolean("Quaternion()", quat.matrix() == matrix);
   }
 
   {
@@ -45,7 +45,7 @@ int main()
     const std::vector<double> vector(data, data + sizeof(data) / sizeof(double));
     const Quaternion quat(vector);
     const Matrix matrix(data, 4, 1);
-    test.boolean("Quaternion(std::vector)", quat == matrix);
+    test.boolean("Quaternion(std::vector)", quat.matrix() == matrix);
   }
 
   {
@@ -70,7 +70,7 @@ int main()
     const double data[] = {1, 2, 3, 4};
     const Matrix matrix(data, 4, 1);
     const Quaternion quat(matrix);
-    test.boolean("Quaternion(Matrix)", quat == matrix);
+    test.boolean("Quaternion(Matrix)", quat.matrix() == matrix);
   }
 
   {
@@ -94,7 +94,7 @@ int main()
     const std::vector<double> vector(data, data + sizeof(data) / sizeof(double));
     const Quaternion quat(vector);
     const Matrix matrix(data, 4, 1);
-    test.boolean("Quaternion(w, x, y, z)", quat == matrix);
+    test.boolean("Quaternion(w, x, y, z)", quat.matrix() == matrix);
     test.boolean("w()", quat.w() == data[0]);
     test.boolean("x()", quat.x() == data[1]);
     test.boolean("y()", quat.y() == data[2]);
