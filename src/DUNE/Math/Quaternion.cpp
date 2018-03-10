@@ -83,19 +83,6 @@ namespace DUNE
       m_matrix(INDEX_Z) = cr*cp*sy - sr*sp*cy;
     }
 
-    void Quaternion::identity()
-    {
-      m_matrix(INDEX_W) = 1.0;
-      m_matrix(INDEX_X) = 0.0;
-      m_matrix(INDEX_Y) = 0.0;
-      m_matrix(INDEX_Z) = 0.0;
-    }
-
-    Matrix Quaternion::matrix() const
-    {
-      return m_matrix;
-    }
-
     double Quaternion::w() const { return m_matrix(INDEX_W); }
     double Quaternion::x() const { return m_matrix(INDEX_X); }
     double Quaternion::y() const { return m_matrix(INDEX_Y); }
@@ -106,9 +93,9 @@ namespace DUNE
       return m_matrix.norm_2();
     }
 
-    void Quaternion::normalize()
+    Matrix Quaternion::matrix() const
     {
-      m_matrix /= this->norm();
+      return m_matrix;
     }
 
     Quaternion Quaternion::normalized() const
@@ -133,6 +120,19 @@ namespace DUNE
       };
 
       return 0.5 * Matrix(data, 4, 3);
+    }
+
+    void Quaternion::identity()
+    {
+      m_matrix(INDEX_W) = 1.0;
+      m_matrix(INDEX_X) = 0.0;
+      m_matrix(INDEX_Y) = 0.0;
+      m_matrix(INDEX_Z) = 0.0;
+    }
+
+    void Quaternion::normalize()
+    {
+      m_matrix /= this->norm();
     }
 
     Quaternion Quaternion::operator-() const
@@ -168,27 +168,6 @@ namespace DUNE
       return *this;
     }
 
-    bool operator==(const Quaternion& lhs, const Quaternion& rhs)
-    {
-      return lhs.matrix() == rhs.matrix();
-    }
-
-    bool operator!=(const Quaternion& lhs, const Quaternion& rhs)
-    {
-      return !(lhs == rhs);
-    }
-
-    std::ostream& operator<<(std::ostream& os, const Quaternion& quat)
-    {
-      os << quat.matrix();
-      return os;
-    }
-
-    Matrix transpose(const Quaternion& quat)
-    {
-      return transpose(quat.matrix());
-    }
-
     Quaternion conjugate(const Quaternion& quat)
     {
       return Quaternion(quat.w(), -quat.x(), -quat.y(), -quat.z());
@@ -197,6 +176,21 @@ namespace DUNE
     Quaternion inverse(const Quaternion& quat)
     {
       return conjugate(quat);
+    }
+
+    Matrix transpose(const Quaternion& quat)
+    {
+      return transpose(quat.matrix());
+    }
+
+    bool operator==(const Quaternion& lhs, const Quaternion& rhs)
+    {
+      return lhs.matrix() == rhs.matrix();
+    }
+
+    bool operator!=(const Quaternion& lhs, const Quaternion& rhs)
+    {
+      return !(lhs == rhs);
     }
 
     Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs)
@@ -243,6 +237,12 @@ namespace DUNE
         throw std::invalid_argument("matrix must have 4 columns");
 
       return lhs * rhs.matrix();
+    }
+
+    std::ostream& operator<<(std::ostream& os, const Quaternion& quat)
+    {
+      os << quat.matrix();
+      return os;
     }
   }
 }

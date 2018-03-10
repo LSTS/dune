@@ -42,13 +42,15 @@ namespace DUNE
       double x() const;
       double y() const;
       double z() const;
-      void identity();
-      Matrix matrix() const;
       double norm() const;
-      void normalize();
+      Matrix matrix() const;
       Quaternion normalized() const;
       Matrix rotationMatrix() const;
       Matrix angVelTransform() const;
+
+      void identity();
+      void normalize();
+
       Quaternion operator-() const;
       Quaternion& operator+=(const Quaternion& rhs);
       Quaternion& operator-=(const Quaternion& rhs);
@@ -58,18 +60,19 @@ namespace DUNE
       enum Index {INDEX_W, INDEX_X, INDEX_Y, INDEX_Z};
     };
 
-    std::ostream& operator<<(std::ostream& os, const Quaternion& quat);
-    Matrix transpose(const Quaternion& quat);
     Quaternion conjugate(const Quaternion& quat);
     Quaternion inverse(const Quaternion& quat);
+    Matrix transpose(const Quaternion& quat);
+
     bool operator==(const Quaternion& lhs, const Quaternion& rhs);
     bool operator!=(const Quaternion& lhs, const Quaternion& rhs);
     Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs);
-    Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs);
     Quaternion operator+(const Quaternion& lhs, const Matrix& rhs);
     Quaternion operator+(const Matrix& lhs, const Quaternion& rhs);
+    Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs);
     Matrix operator*(const Quaternion& lhs, const Matrix& rhs);
     Matrix operator*(const Matrix& lhs, const Quaternion& rhs);
+    std::ostream& operator<<(std::ostream& os, const Quaternion& quat);
   }
 }
 
