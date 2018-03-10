@@ -49,30 +49,27 @@ namespace DUNE
       Quaternion normalized() const;
       Matrix rotationMatrix() const;
       Matrix angVelTransform() const;
-      Quaternion& operator=(Matrix rhs);
       Quaternion operator-() const;
       Quaternion& operator+=(const Quaternion& rhs);
-      Quaternion& operator+=(const Matrix& rhs);
       Quaternion& operator-=(const Quaternion& rhs);
       Quaternion& operator*=(const Quaternion& rhs);
-      bool operator==(const Quaternion& rhs);
-      bool operator!=(const Quaternion& rhs);
     private:
       Matrix m_matrix;
       enum Index {INDEX_W, INDEX_X, INDEX_Y, INDEX_Z};
     };
 
-    std::ostream& operator<<(std::ostream& os, const Quaternion& q);
+    std::ostream& operator<<(std::ostream& os, const Quaternion& quat);
     Matrix transpose(const Quaternion& quat);
     Quaternion conjugate(const Quaternion& quat);
     Quaternion inverse(const Quaternion& quat);
-    Quaternion operator+(Quaternion lhs, const Matrix& rhs);
-    Quaternion operator+(Matrix lhs, const Quaternion& rhs);
-    Quaternion operator*(Quaternion lhs, const Quaternion& rhs);
-    Matrix operator*(Quaternion lhs, const Matrix& rhs);
-    Matrix operator*(Matrix lhs, const Quaternion& rhs);
-    bool operator==(const Quaternion& lhs, const Matrix& rhs);
-    bool operator==(const Matrix& lhs, const Quaternion& rhs);
+    bool operator==(const Quaternion& lhs, const Quaternion& rhs);
+    bool operator!=(const Quaternion& lhs, const Quaternion& rhs);
+    Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs);
+    Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs);
+    Quaternion operator+(const Quaternion& lhs, const Matrix& rhs);
+    Quaternion operator+(const Matrix& lhs, const Quaternion& rhs);
+    Matrix operator*(const Quaternion& lhs, const Matrix& rhs);
+    Matrix operator*(const Matrix& lhs, const Quaternion& rhs);
   }
 }
 

@@ -140,27 +140,9 @@ namespace DUNE
       return Quaternion(-this->matrix());
     }
 
-    Quaternion& Quaternion::operator=(Matrix rhs)
-    {
-      if (rhs.rows() != 4 || rhs.columns() != 1)
-        throw std::invalid_argument("matrix must have size 4x1");
-
-      m_matrix = rhs;
-      return *this;
-    }
-
     Quaternion& Quaternion::operator+=(const Quaternion& rhs)
     {
       m_matrix += rhs.matrix();
-      return *this;
-    }
-
-    Quaternion& Quaternion::operator+=(const Matrix& rhs)
-    {
-      if (rhs.rows() != 4 || rhs.columns() != 1)
-        throw std::invalid_argument("matrix must have size 4x1");
-
-      m_matrix += rhs;
       return *this;
     }
 
@@ -186,14 +168,14 @@ namespace DUNE
       return *this;
     }
 
-    bool Quaternion::operator==(const Quaternion& rhs)
+    bool operator==(const Quaternion& lhs, const Quaternion& rhs)
     {
-      return m_matrix == rhs.matrix();
+      return lhs.matrix() == rhs.matrix();
     }
 
-    bool Quaternion::operator!=(const Quaternion& rhs)
+    bool operator!=(const Quaternion& lhs, const Quaternion& rhs)
     {
-      return !(*this == rhs);
+      return !(lhs == rhs);
     }
 
     std::ostream& operator<<(std::ostream& os, const Quaternion& quat)
@@ -217,39 +199,50 @@ namespace DUNE
       return conjugate(quat);
     }
 
-    Quaternion operator+(Quaternion lhs, const Matrix& rhs)
+    Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs)
     {
+      Quaternion temp(lhs);
+      temp += rhs;
+      return temp;
+    }
+
+    Quaternion operator+(const Quaternion& lhs, const Matrix& rhs)
+    {
+      if (!rhs.isColumnVector() || rhs.size() != 4)
+        throw std::invalid_argument("matrix must have size 4x1");
+
       return Quaternion(lhs.matrix() + rhs);
     }
 
-    Quaternion operator+(Matrix lhs, const Quaternion& rhs)
+    Quaternion operator+(const Matrix& lhs, const Quaternion& rhs)
     {
+      if (lhs.isColumnVector() || lhs.size() != 4)
+        throw std::invalid_argument("matrix must have size 4x1");
+
       return Quaternion(lhs + rhs.matrix());
     }
 
-    Quaternion operator*(Quaternion lhs, const Quaternion& rhs)
+    Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs)
     {
-      return lhs *= rhs;
+      Quaternion temp(lhs);
+      temp *= rhs;
+      return temp;
     }
 
-    Matrix operator*(Quaternion lhs, const Matrix& rhs)
+    Matrix operator*(const Quaternion& lhs, const Matrix& rhs)
     {
+      if (rhs.rows() != 1)
+        throw std::invalid_argument("matrix must have 1 row");
+
       return lhs.matrix() * rhs;
     }
 
-    Matrix operator*(Matrix lhs, const Quaternion& rhs)
+    Matrix operator*(const Matrix& lhs, const Quaternion& rhs)
     {
+      if (lhs.columns() != 4)
+        throw std::invalid_argument("matrix must have 4 columns");
+
       return lhs * rhs.matrix();
-    }
-
-    bool operator==(const Quaternion& lhs, const Matrix& rhs)
-    {
-      return lhs.matrix() == rhs;
-    }
-
-    bool operator==(const Matrix& lhs, const Quaternion& rhs)
-    {
-      return rhs == lhs;
     }
   }
 }
