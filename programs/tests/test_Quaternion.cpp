@@ -103,15 +103,15 @@ int main()
 
   {
     // Test EulerAnglesZyx constructor.
-    EulerAnglesZyx euler(0.1, -0.1, -2.7);
-    Quaternion quat_from_euler(euler);
-    Quaternion quat_expected(0.2209, -0.0378, -0.0596, -0.9727);
+    const EulerAnglesZyx euler(0.1, -0.1, -2.7);
+    const Quaternion quat_from_euler(euler);
+    const Quaternion quat_expected(0.2209, -0.0378, -0.0596, -0.9727);
     test.boolean("Quaternion(EulerAnglesZyx)", almostEqual(quat_from_euler, quat_expected, 0.0001));
   }
 
   {
     // Test identity().
-    Quaternion quat_identity;
+    const Quaternion quat_identity;
     Quaternion quat_arbitrary(-1, 2, -3, 4);
     const bool not_identity = quat_arbitrary != quat_identity;
     quat_arbitrary.identity();
@@ -129,30 +129,30 @@ int main()
 
   {
     // Test transpose().
-    Quaternion quat(-1, 2, -3, 4);
-    Matrix quat_transpose = transpose(quat);
+    const Quaternion quat(-1, 2, -3, 4);
+    const Matrix quat_transpose = transpose(quat);
     test.boolean("transpose()", transpose(quat.matrix()) == quat_transpose);
   }
 
   {
     // Test conjugate().
-    Quaternion quat(-1, 2, -3, 4);
-    Quaternion result = conjugate(quat);
-    Quaternion expected = Quaternion(-1, -2, 3, -4);
+    const Quaternion quat(-1, 2, -3, 4);
+    const Quaternion result = conjugate(quat);
+    const Quaternion expected = Quaternion(-1, -2, 3, -4);
     test.boolean("conjugate()", result == expected);
   }
 
   {
     // Test inverse().
-    Quaternion quat(1, -2, 3, -4);
-    Quaternion result = inverse(quat);
-    Quaternion expected = Quaternion(1, 2, -3, 4);
+    const Quaternion quat(1, -2, 3, -4);
+    const Quaternion result = inverse(quat);
+    const Quaternion expected = Quaternion(1, 2, -3, 4);
     test.boolean("inverse()", result == expected);
   }
 
   {
     // Test norm().
-    Quaternion quat(-1, 2, -3, 4);
+    const Quaternion quat(-1, 2, -3, 4);
     const double norm = 5.47722557505166113457;
     test.boolean("norm()", almostEqual(quat.norm(), norm));
   }
@@ -166,51 +166,48 @@ int main()
 
   {
     // Test normalized().
-    const Quaternion q1(1, 1, 1, 1);
-    Quaternion q2 = q1;
-    Quaternion q2_normalized = q2.normalized();
-    bool is_normalized = almostEqual(q2_normalized.norm(), 1.0);
-    bool is_unchanged = q2 == q1;
-    test.boolean("normalized()", is_normalized && is_unchanged);
+    const Quaternion quat(1, 1, 1, 1);
+    const Quaternion quat_normalized = quat.normalized();
+    test.boolean("normalized()", almostEqual(quat_normalized.norm(), 1.0));
   }
 
   {
     // Test rotationMatrix().
-    Quaternion quat(1, 2, -3, -4);
+    const Quaternion quat(1, 2, -3, -4);
     const double data[] = {
       -.6667, -.1333, -.7333,
       -.6667, -.3333,  .6667,
       -.3333,  .9333,  .1333,
     };
-    Matrix R_from_quat = quat.rotationMatrix();
-    Matrix R_expected = Matrix(data, 3, 3);
+    const Matrix R_from_quat = quat.rotationMatrix();
+    const Matrix R_expected = Matrix(data, 3, 3);
     test.boolean("rotationMatrix()", almostEqual(R_from_quat, R_expected, 0.0001));
   }
 
   {
     // Test angVelTransform().
-    Quaternion quat(2, 4, 6, 8);
+    const Quaternion quat(2, 4, 6, 8);
     const double data[] = {
       -2, -3, -4,
        1, -4,  3,
        4,  1, -2,
       -3,  2,  1,
     };
-    Matrix T(data, 4, 3);
+    const Matrix T(data, 4, 3);
     test.boolean("angVelTransform()", quat.angVelTransform() == T);
   }
 
   {
     // Test operator*=.
-    Quaternion factor1(-1, 2, -3, 4);
-    Quaternion factor2(-5, 6, -7, 8);
-    Quaternion product(-60, -12, 30, -24);
+    const Quaternion factor1(-1, 2, -3, 4);
+    const Quaternion factor2(-5, 6, -7, 8);
+    const Quaternion product(-60, -12, 30, -24);
     test.boolean("operator*=", factor1 * factor2 == product);
   }
 
   {
     // Test operator==.
-    Quaternion q1(-1, 2, -3, 4);
+    const Quaternion q1(-1, 2, -3, 4);
     Quaternion q2(-5, 6, -7, 8);
     const bool are_inequal = !(q1 == q2);
     q2 = q1;
@@ -220,7 +217,7 @@ int main()
 
   {
     // Test operator!=.
-    Quaternion q1(-1, 2, -3, 4);
+    const Quaternion q1(-1, 2, -3, 4);
     Quaternion q2(-5, 6, -7, 8);
     const bool are_inequal = q1 != q2;
     q2 = q1;
@@ -230,40 +227,39 @@ int main()
 
   {
     // Test operator*(Quaternion, Matrix).
-    // data = {-1, 2, -3, 4};
-    Quaternion factor1(-1, 2, -3, 4);
-    double data1[] = {-5, 6, -7, 8};
-    Matrix factor2(data1, 1, 4);
-    double data2[] = {
+    const Quaternion factor1(-1, 2, -3, 4);
+    const double data1[] = {-5, 6, -7, 8};
+    const Matrix factor2(data1, 1, 4);
+    const double data2[] = {
         5,  -6,   7,  -8,
       -10,  12, -14,  16,
        15, -18,  21, -24,
       -20,  24, -28,  32,
     };
-    Matrix product(data2, 4, 4);
+    const Matrix product(data2, 4, 4);
     test.boolean("operator*(Quaternion, Matrix)", factor1 * factor2 == product);
   }
 
   {
     // Test operator*(Matrix, Quaternion).
-    double data1[] = {
+    const double data1[] = {
        1,  2,  3,  4,
        5,  6,  7,  8,
        9, 10, 11, 12,
       13, 14, 15, 16,
     };
-    Matrix factor1(data1, 4, 4);
-    Quaternion factor2(1, -2, 3, -4);
-    double data2[] = {-10, -18, -26, -34};
-    Matrix product(data2, 4, 1);
+    const Matrix factor1(data1, 4, 4);
+    const Quaternion factor2(1, -2, 3, -4);
+    const double data2[] = {-10, -18, -26, -34};
+    const Matrix product(data2, 4, 1);
     test.boolean("operator*(Matrix, Quaternion)", factor1 * factor2 == product);
   }
 
   {
     // Test EulerAnglesZyx(Quaternion).
-    Quaternion quat(0.8453, -0.1785, 0.2583, 0.4322);
-    EulerAnglesZyx eul_from_quat(quat);
-    EulerAnglesZyx eul_expected(-0.09748, 0.63234, 0.91338);
+    const Quaternion quat(0.8453, -0.1785, 0.2583, 0.4322);
+    const EulerAnglesZyx eul_from_quat(quat);
+    const EulerAnglesZyx eul_expected(-0.09748, 0.63234, 0.91338);
     test.boolean("EulerAnglesZyx(Quaternion)", almostEqual(eul_from_quat, eul_expected, 0.0001));
   }
 
@@ -280,15 +276,14 @@ int main()
         {
           for (double z = -1; z <= 1; z += step)
           {
-            Quaternion q1(w, x, y, z);
-            q1.normalize();
-            EulerAnglesZyx eul(q1);
+            const Quaternion q1 = Quaternion(w, x, y, z).normalized();
+            const EulerAnglesZyx eul(q1);
 
             // Euler angle conversion invalid for pitch near +/- pi/2.
             if (almostEqual(std::fabs(eul.pitch), c_half_pi, 1e-6))
               continue;
 
-            Quaternion q2(eul);
+            const Quaternion q2(eul);
 
             const bool equivalent_quaternions = almostEqual(q1, q2) || almostEqual(q1, -q2);
             if (!equivalent_quaternions)
@@ -311,9 +306,9 @@ int main()
       {
         for (double roll = -c_pi + step; roll < c_pi; roll += step)
         {
-          EulerAnglesZyx eul1(roll, pitch, yaw);
-          Quaternion quat(eul1);
-          EulerAnglesZyx eul2(quat);
+          const EulerAnglesZyx eul1(roll, pitch, yaw);
+          const Quaternion quat(eul1);
+          const EulerAnglesZyx eul2(quat);
           if (!almostEqual(eul1, eul2))
             all_good = false;
         }
@@ -324,10 +319,9 @@ int main()
 
   {
     // Test that a quaternion and its negation represent the same rotation.
-    Quaternion q1(1, 2, 3, 4);
-    q1.normalize();
-    EulerAnglesZyx eul1(q1);
-    EulerAnglesZyx eul2(-q1);
+    const Quaternion q1 = Quaternion(1, 2, 3, 4).normalized();
+    const EulerAnglesZyx eul1(q1);
+    const EulerAnglesZyx eul2(-q1);
     test.boolean("q == -q", almostEqual(eul1, eul2));
   }
 
