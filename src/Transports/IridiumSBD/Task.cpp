@@ -103,7 +103,7 @@ namespace Transports
         .units(Units::Second)
         .defaultValue("300")
         .description("Amount of time without alert rings or "
-                     "MT SBDs before doing a mailbox check");
+            "MT SBDs before doing a mailbox check");
 
         param("Maximum Transmission Rate", m_args.max_tx_rate)
         .units(Units::Second)
@@ -124,7 +124,7 @@ namespace Transports
           TxRequest* req = m_tx_requests.front();
           m_tx_requests.pop_front();
           sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_ERROR,
-                              DTR("task is shutting down"));
+              DTR("task is shutting down"));
           delete req;
         }
       }
@@ -230,8 +230,8 @@ namespace Transports
 
       void
       sendTxRequestStatus(const TxRequest* request,
-                          IMC::IridiumTxStatus::StatusCodeEnum code,
-                          const std::string& text = "")
+          IMC::IridiumTxStatus::StatusCodeEnum code,
+          const std::string& text = "")
       {
         IMC::IridiumTxStatus status;
         status.setDestination(request->getSource());
@@ -286,7 +286,7 @@ namespace Transports
         m_tx_request->invalidateMSN();
 
         sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
-                            String::str(DTR("failed with error %u"), err_code));
+            String::str(DTR("failed with error %u"), err_code));
 
         enqueueTxRequest(m_tx_request);
         m_tx_request = NULL;
@@ -383,14 +383,14 @@ namespace Transports
           else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
             m_driver->checkMailBox();
           else if(m_driver->getQueuedMT() == 0) //No messages to be received or sent
-          		{
-				  unsigned src_adr = getSystemId();
-				  unsigned src_eid = getEntityId();
-				  const std::vector<char> data(1);
-				  TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF,
-						0, data);
-				  sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
-          		}
+          {
+            unsigned src_adr = getSystemId();
+            unsigned src_eid = getEntityId();
+            const std::vector<char> data(1);
+            TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF,
+                                                 0, data);
+            sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
+          }
         }
         else
         {
