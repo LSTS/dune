@@ -121,59 +121,59 @@ namespace Transports
         m_usbl_modem(NULL)
       {
         param("Enable Reports", m_args.report_enable)
-        .defaultValue("false")
-        .description("Enable system state acoustic reporting. When enabled, systems"
-                     " shall acknowledge reception of requests to broadcast acoustic"
-                     " messages containing the overall state of the system."
-                     " When disabled, those requests shall be ignored");
+            .defaultValue("false")
+            .description("Enable system state acoustic reporting. When enabled, systems"
+                " shall acknowledge reception of requests to broadcast acoustic"
+                " messages containing the overall state of the system."
+                " When disabled, those requests shall be ignored");
 
         param("USBL Node -- Enabled", m_node_args.enabled)
         .defaultValue("false")
         .description("Enable system's USBL mode. When active, this system will"
-                     " start using USBL by actively broadcasting an acoustic"
-                     " message containing a request to get USBL feedback. The"
-                     " request contains the period for transmissions, if quick"
-                     " (two-way travel) or ranging (three-way travel) mode is"
-                     " desired, and, if in ranging mode (not \"quick\"), to use"
-                     " absolute or relative positioning. If a USBL modem is in"
-                     " reach, they will start exchanging acoustic transmissions"
-                     " to provide USBL positioning to the system."
-                     " Any system can be configured to request USBL information"
-                     " including modems with built-in USBL capabilities");
+            " start using USBL by actively broadcasting an acoustic"
+            " message containing a request to get USBL feedback. The"
+            " request contains the period for transmissions, if quick"
+            " (two-way travel) or ranging (three-way travel) mode is"
+            " desired, and, if in ranging mode (not \"quick\"), to use"
+            " absolute or relative positioning. If a USBL modem is in"
+            " reach, they will start exchanging acoustic transmissions"
+            " to provide USBL positioning to the system."
+            " Any system can be configured to request USBL information"
+            " including modems with built-in USBL capabilities");
 
         param("USBL Node -- Period", m_node_args.period)
         .defaultValue("60.0")
         .minimumValue("2.0")
         .units(Units::Second)
         .description("USBL's period. This value determines the period of USBL"
-                     " positioning data. If \"Quick\" mode is selected, modem"
-                     " shall ping the USBL modem with this period to get bearing"
-                     " and elevation (two-way travel transmission). If \"Quick\""
-                     " mode is disabled, ranging information is included for a"
-                     " proper fix. In this case, the USBL modem pings the node,"
-                     " hears the reply, computes the position and transmits back"
-                     " to the node (three-way travel transmission)");
+            " positioning data. If \"Quick\" mode is selected, modem"
+            " shall ping the USBL modem with this period to get bearing"
+            " and elevation (two-way travel transmission). If \"Quick\""
+            " mode is disabled, ranging information is included for a"
+            " proper fix. In this case, the USBL modem pings the node,"
+            " hears the reply, computes the position and transmits back"
+            " to the node (three-way travel transmission)");
 
         param("USBL Node -- Absolute Fix", m_node_args.fix)
         .defaultValue("false")
         .description("If this argument is enabled, USBL sends an absolute fix using"
-                     " WGS-84 lat/lon coordinates. If disabled, then the positioning"
-                     " is relative to the origin of a system where the center of the"
-                     " reference frame is the USBL modem");
+            " WGS-84 lat/lon coordinates. If disabled, then the positioning"
+            " is relative to the origin of a system where the center of the"
+            " reference frame is the USBL modem");
 
         param("USBL Node -- Quick, No Range", m_node_args.no_range)
         .defaultValue("false")
         .description("In this mode, the USBL node does not request ranging information."
-                     " Thus, with this mode enabled, there's only a two-way travel"
-                     " transmission between the node and the USBL modem. The node will"
-                     " actively ping the modem to get bearing/elevation information"
-                     " With this mode enabled \"Absolute Fix\" argument is ignored");
+            " Thus, with this mode enabled, there's only a two-way travel"
+            " transmission between the node and the USBL modem. The node will"
+            " actively ping the modem to get bearing/elevation information"
+            " With this mode enabled \"Absolute Fix\" argument is ignored");
 
         param("USBL Modem -- Announce Service", m_args.usbl_announce)
         .defaultValue("false")
         .description("This argument only concerns systems with USBL modems installed."
-                     " This parameter statically adds a USBL announce, even if service"
-                     " has not been detected yet (eg. modem not connected)");
+            " This parameter statically adds a USBL announce, even if service"
+            " has not been detected yet (eg. modem not connected)");
 
         param("USBL Modem -- Max Waiting Time", m_args.usbl_max_wait)
         .defaultValue("10.0")
@@ -181,8 +181,8 @@ namespace Transports
         .maximumValue("20.0")
         .units(Units::Second)
         .description("This argument only concerns systems with USBL modems installed."
-                     " This value establishes the maximum amount of time that the modem"
-                     " waits for the target system's reply");
+            " This value establishes the maximum amount of time that the modem"
+            " waits for the target system's reply");
 
         bind<IMC::AcousticRequest>(this);
         bind<IMC::EstimatedState>(this);
@@ -206,7 +206,7 @@ namespace Transports
       onResourceAcquisition(void)
       {
         m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
-                                                       2.0, false);
+            2.0, false);
 
         m_usbl_node = new UsblTools::Node(this, &m_node_args);
       }
@@ -258,24 +258,24 @@ namespace Transports
       }
 
       void
-	  consume(const IMC::AcousticRequest* msg)
+      consume(const IMC::AcousticRequest* msg)
       {
 
-    	  if (msg->getDestination() != getSystemId())
-			return;
+        if (msg->getDestination() != getSystemId())
+          return;
 
-    	  switch(msg->type){
-			  case (IMC::AcousticRequest::TYPE_MSG):
-			  case (IMC::AcousticRequest::TYPE_ABORT):
-			  case (IMC::AcousticRequest::TYPE_RANGE):
-				addToQueue((const IMC::AcousticRequest*)msg->clone());
-				processQueue();
-				break;
+        switch(msg->type){
+          case (IMC::AcousticRequest::TYPE_MSG):
+          case (IMC::AcousticRequest::TYPE_ABORT):
+          case (IMC::AcousticRequest::TYPE_RANGE):
+          addToQueue((const IMC::AcousticRequest*)msg->clone());
+          processQueue();
+          break;
 
-			  default:
-				  inf("Status of transmission %d changed: AcousticRequest->Type not implemented.", msg->req_id);
-				  break;
-    	  }
+          default:
+            inf("Status of transmission %d changed: AcousticRequest->Type not implemented.", msg->req_id);
+            break;
+        }
       }
 
       void
@@ -367,7 +367,7 @@ namespace Transports
       }
 
       void
-	  consume(const IMC::UamTxStatus* msg)
+      consume(const IMC::UamTxStatus* msg)
       {
 		if (msg->getDestination() != getSystemId())
 			return;
@@ -649,11 +649,6 @@ namespace Transports
       }
 
       void
-		sendAbort(const std::string& sys, const uint16_t id)
-		{
-    	  std::vector<uint8_t> data;
-    	  data.push_back(CODE_ABORT);
-		  sendFrame(sys, id, data, true);
 		}
 
       void
@@ -674,6 +669,10 @@ namespace Transports
         abort.setSource(imc_src);
         abort.setDestination(imc_dst);
         dispatch(abort);
+      sendAbort(const std::string& sys, const uint16_t id){
+        std::vector<uint8_t> data;
+        data.push_back(CODE_ABORT);
+        sendFrame(sys, id, data, true);
       }
 
       void
@@ -956,20 +955,20 @@ namespace Transports
       void
       onUsblModem(void)
       {
-          // Trigger target.
-          std::string sys;
-          if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
             sendRange(sys);
+        // Trigger target.
+        std::string sys;
+        if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
       }
 
       //! Main loop of USBL node.
       void
       onUsblNode(void)
       {
-          std::vector<uint8_t> data;
-          data.push_back(CODE_USBL);
-          if (m_usbl_node->run(data))
             sendFrame("broadcast", data, false);
+        std::vector<uint8_t> data;
+        data.push_back(CODE_USBL);
+        if (m_usbl_node->run(data))
       }
 
       /*
@@ -983,34 +982,34 @@ namespace Transports
 			}
 		}*/
 
-		void
-		processQueue(void) {
 		if (m_can_send && !m_msg_queue.empty()) {
-			m_can_send = false;
 			const IMC::AcousticRequest * req = m_msg_queue.at(0);
 
 			//toDEBUG
 			//req->toJSON(std::cout);
 
-			switch (req->type) {
-			case (IMC::AcousticRequest::TYPE_ABORT):
 				sendAbort(req->destination,req->req_id);
-				break;
-
-			case (IMC::AcousticRequest::TYPE_RANGE):
 				sendRange(req->destination,req->req_id);
-				break;
+      void
+      processQueue(void) {
+          m_can_send = false;
+          switch (req->type) {
+            case (IMC::AcousticRequest::TYPE_ABORT):
+            break;
 
-			case (IMC::AcousticRequest::TYPE_MSG):
 				sendMessage(req->destination, req->req_id, req->msg);
-				break;
-			default:
-				break;
-			}
+            case (IMC::AcousticRequest::TYPE_RANGE):
+            break;
 
-		}
-	}
+            case (IMC::AcousticRequest::TYPE_MSG):
+            break;
 
+            default:
+              break;
+          }
+
+        }
+      }
 
       //! Main loop.
       void
@@ -1023,11 +1022,11 @@ namespace Transports
           if (m_usbl_modem != NULL) onUsblModem();
           if (m_usbl_node != NULL) onUsblNode();
           if (m_args.report_enable) {
-				if (m_reporter != NULL && m_reporter->trigger())
-					sendReport();
-			}
+            if (m_reporter != NULL && m_reporter->trigger())
+              sendReport();
+          }
           if(m_msg_send_timer.overflow()){
-        	  processQueue();
+            processQueue();
           }
 
         }
