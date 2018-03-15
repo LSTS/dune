@@ -210,14 +210,9 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgTx* msg)
       {
-
-	  if (msg->getSource() != getSystemId()
-			&& msg->getDestination() != getSystemId())
-		return;
-
-	  //don't catch IridiumMsgTx created by other than CommManager
-	  if(msg->getSourceEntity() != resolveEntity("Communications Manager"))
-			  return;
+        if (msg->getSource() != getSystemId()
+            && msg->getDestination() != getSystemId())
+          return;
 
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
