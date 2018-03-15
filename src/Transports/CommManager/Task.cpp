@@ -88,7 +88,6 @@ namespace Transports
         bind<IMC::AcousticStatus>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
-        bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::PlanSpecification>(this);
@@ -192,6 +191,7 @@ namespace Transports
         }
         return m_reqid;
       }
+
       void
       sendViaSatellite(const IMC::TransmissionRequest* msg)
       {
@@ -375,6 +375,9 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
+        if(msg->getSourceEntity() != getEntityId())
+          return;
+
         if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
         {
           IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
@@ -404,6 +407,8 @@ namespace Transports
             Memory::clear(req);
             m_transmission_requests.erase(msg->req_id);
             break;
+            default:
+              break;
           }
         }
       }
@@ -646,26 +651,15 @@ namespace Transports
 
       //Conversion from Sms to SmsRequest Message
       void
-	  consume(const IMC::IridiumMsgTx* msg)
       consume(const IMC::Sms* msg)
       {
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
 
-    	  //don't catch IridiumMsgTx created by this Task
-    	  if(msg->getSourceEntity() == getEntityId())
-    		  return;
         uint16_t newId = createInternalId();
 
-    	  IMC::TransmissionRequest request;
         SmsRequest sms_req;
 
-    	  request.comm_mean			=IMC::TransmissionRequest::CMEAN_SATELLITE;
-    	  request.data_mode			=IMC::TransmissionRequest::DMODE_RAW;
-    	  request.destination		=msg->destination;
-    	  request.deadline			=msg->ttl;
-    	  request.raw_data			=msg->data;
-    	  request.req_id			=msg->req_id;
         sms_req.req_id      = newId;
         sms_req.destination = msg->number;
         sms_req.sms_text    = msg->contents;
@@ -673,13 +667,8 @@ namespace Transports
         sms_req.setSource(msg->getSource());
         sms_req.setSourceEntity(msg->getSourceEntity());
 
-    	  request.setSource(msg->getSource());
-    	  request.setSourceEntity(msg->getSourceEntity());
-    	  request.setDestination(msg->getDestination());
-    	  request.setDestinationEntity(msg->getDestinationEntity());
         dispatch(sms_req);
 
-		  dispatch(request,DF_LOOP_BACK);
       }
 
       //Conversion from AcousticOperation to AcousticRequest Message
