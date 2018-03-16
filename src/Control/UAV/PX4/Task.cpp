@@ -103,8 +103,6 @@ namespace Control
         Address UDP_addr;
         //! Time to wait for MC to FW transition
         float transition_time;
-        //! Telemetry Rate
-        //uint8_t trate;  NEED TO CHECK IF PX4 CAN DO THIS
       };
 
 
@@ -121,6 +119,12 @@ namespace Control
         bool m_changing_wp;
         //! Flag of mission mode
         bool m_mission;
+        //! Height offset between MSL and WGS84
+        float m_hae_offset;
+        //! Flag to signal if MSL-WGS84 offset has already been calculated.
+        bool m_offset;
+        //! Loiter maneuver duration
+        int m_duration;
 
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
@@ -162,6 +166,9 @@ namespace Control
           DUNE::Tasks::Task(name, ctx),
           m_changing_wp(false),
           m_mission(false),
+          m_hae_offset(0.0),
+          m_offset(false),
+          m_duration(0),
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
           m_sysid(1),
@@ -226,6 +233,8 @@ namespace Control
           bind<AutopilotMode>(this);
           bind<DesiredPath>(this);
           bind<ControlLoops>(this);
+          bind<PlanControl>(this);
+          bind<Loiter>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -257,10 +266,8 @@ namespace Control
             }
             inf(DTR("PX4 interface initialized"));
 
-            // Clear previous mission on PX4 (FUNCIONA)
-            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0);
-            uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
-            sendData(m_buf, n);
+            // Clear previous mission on PX4
+            clearMission();
           }
           catch (...)
           {
@@ -293,6 +300,15 @@ namespace Control
         }
 
         void
+        clearMission(void)
+        {
+          // Clear previous mission on PX4
+          mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0);
+          uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
+          sendData(m_buf, n);
+        }
+
+        void
         sendCommandPacket(uint16_t cmd, float arg1=0, float arg2=0, float arg3=0, float arg4=0, float arg5=0, float arg6=0, float arg7=0)
         {
           uint8_t buf[512];
@@ -313,21 +329,55 @@ namespace Control
           m_cloops = *cloops;
 
           // Set LOITER mode if in AUTO and no plan.
-          if(!cloops->enable && std::strcmp("AUTO", m_mode.mode.c_str()))
+          if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO)
           {
             sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
             m_mission = 0;
-            //TODO Not show PCS! When and where do I need to do this also? In navcontroller if I'm not in auto ?!
+            clearMission();
             m_pcs.clear();
             dispatch(m_pcs);
+            m_dpath.clear();
+            dispatch(m_dpath);
           }
         }
 
-        //! Message for OFFBOARD control (using PX4's controllers)
+        void
+        consume(const IMC::PlanControl* msg)
+        {
+          switch (msg->op)
+          {
+            case IMC::PlanControl::PC_STOP:
+              spew("PC_STOP");
+              m_mission = false;
+              break;
+            case IMC::PlanControl::PC_START:
+              spew("PC_START");
+              m_mission = false;
+              break;
+            default:
+              break;
+          }
+        }
+
+        void
+        consume(const IMC::Loiter* msg)
+        {
+          m_duration = msg->duration;
+        }
+
+        //! Message for AUTO(MISSION) control (using PX4's controllers)
         void
         consume(const IMC::DesiredPath* path)
         {
-          // Check if it's in plane modem
+          // Check if in AUTO mode
+          if(m_mode.autonomy != IMC::AutopilotMode::AL_AUTO)
+          {
+            m_dpath = *path;
+            inf(DTR("PX4 is in a Manual mode, saving desired path."));
+            return;
+          }
+
+          // Check if it's in plane mode
           if(m_args.transition_time > 0 &&  (m_vtol_state != MAV_VTOL_STATE_FW))
           {
             // Command transition to plane
@@ -346,41 +396,24 @@ namespace Control
           {
             m_mission = true;
 
-            // Set loiter radius
-            mavlink_msg_param_set_pack(255, 0, &msg,
-                                       m_sysid, //! target_system System ID
-                                       0, //! target_component Component ID
-                                       "NAV_LOITER_RAD", //! Parameter name
-                                       path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius), //! Parameter value
-                                       MAV_PARAM_TYPE_INT16); //! Parameter type
-            n = mavlink_msg_to_send_buffer(buf, &msg);
-            sendData(buf, n);
-
-            //TODO: Check if waypoint is a loiter
-            uint16_t command; float param_radius = 0;
+            // Check if waypoint is a loiter
+            uint16_t command; float param_radius = 0; bool altitude;
             if(!path->lradius){
               command = MAV_CMD_NAV_WAYPOINT; param_radius = 0;}
-            else{
-              command = MAV_CMD_NAV_LOITER_UNLIM; param_radius = path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0;}
-
-            /* TODO Fix commanded airspeed setting - not working!
-            // Setting Desired Airspeed
-            const char *param_id;
-            if(m_vtol_state == MAV_VTOL_STATE_FW)
-              param_id = "FW_AIRSPD_TRIM";
-            else if(m_vtol_state == MAV_VTOL_STATE_MC)
-              param_id = "VT_MC_ARSPD_TRIM";
             else
-              war("VTOL state neither FW or MC. Commanded airspeed not set!");
+            {
+              if (!m_duration)
+                command = MAV_CMD_NAV_LOITER_UNLIM;
+              else
+                command = MAV_CMD_NAV_LOITER_TIME;
+              param_radius = path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius);
+            }
 
-            mavlink_msg_param_set_pack(255, 0, &msg,
-                                       m_sysid,                   //! target_system System ID
-                                       0,                         //! target_component Component ID
-                                       param_id,                  //! Parameter name
-                                       (int)(path->speed * 100),  //! Parameter value
-                                       MAV_PARAM_TYPE_INT16);     //! Parameter type
-            n = mavlink_msg_to_send_buffer(buf, &msg);
-            sendData(buf, n);*/
+            // Check if plan is in Altitude or Height
+            altitude = (path->end_z_units == IMC::Z_ALTITUDE) ? true : false;
+
+            // Setting Desired Airspeed
+            sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, 0, path->speed, 0, 0, 0, 0, 0);
 
             // Send Mission Count
             mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 1);
@@ -392,17 +425,17 @@ namespace Control
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           0, //! seq Sequence
-                                          MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                          altitude ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
                                           command, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
                                           1, //! current false:0, true:1, guided mode:2
                                           1, //! autocontinue to next wp
-                                          0, //! Not used
+                                          m_duration, //! Used only in MAV_CMD_NAV_LOITER_TIME
                                           0, //! Not used
                                           param_radius, //! If <0, then CCW loiter
                                           0, //! Not used
                                           (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                          path->end_z);//! z PARAM7 / z position: global: altitude*/
+                                          altitude ? path->end_z : path->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
@@ -430,6 +463,7 @@ namespace Control
             // Update WP info
             m_changing_wp = true;
             m_last_wp = Clock::get();
+            m_duration = 0;
           }
           // Save DesiredPath
           m_dpath = *path;
@@ -502,7 +536,7 @@ namespace Control
                 // no handler
                 if (!h)
                 {
-                  //debug("UNDEF: %u", m_msg.msgid);
+                  spew("UNDEF: %u", m_msg.msgid);
                   continue;  // Ignore this packet
                 }
 
@@ -695,7 +729,17 @@ namespace Control
 
           m_estate.lat = Angles::radians((double)gp.lat * 1e-07);
           m_estate.lon = Angles::radians((double)gp.lon * 1e-07);
-          m_estate.height = (double) gp.alt * 1e-3; // MSL
+
+          // Calculate WGS84 height
+          if(!m_offset && m_fix.type == IMC::GpsFix::GFT_STANDALONE)
+          {
+            Coordinates::WMM wmm(m_ctx.dir_cfg);
+            m_hae_offset = wmm.height(m_estate.lat, m_estate.lon);
+            m_offset = true;
+          }
+          else
+            m_hae_offset = 0;
+          m_estate.height = (double) gp.alt * 1e-3 + m_hae_offset; // WGS84
 
           m_estate.x = 0;
           m_estate.y = 0;
@@ -798,6 +842,10 @@ namespace Control
           mavlink_statustext_t stat_tex;
           mavlink_msg_statustext_decode(msg, &stat_tex);
           inf("PX4 Status: %.*s", 50, stat_tex.text);
+
+          // Check if mission finished - if so, set LOITER mode
+          if(!std::strcmp(stat_tex.text, "mission finished, loitering"))
+            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
         }
 
         void
@@ -1020,11 +1068,6 @@ namespace Control
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
           //inf("WP Dist: %d", nav_out.wp_dist);  //NOT WORKING PROPERLY IN COPTER
 
-          if(!std::strcmp(m_mode.mode.c_str(), "AUTO"))
-            if((nav_out.wp_dist <= m_dpath.lradius + 10) && (nav_out.wp_dist >= m_dpath.lradius - 10)){
-              m_pcs.flags |= PathControlState::FL_LOITERING; inf("FL_LOITERING");}
-
-          //TEST
           float distance = 0;
           Matrix destination = Matrix(3, 1, 0.0);
           Matrix current_pos = Matrix(3, 1, 0.0);
@@ -1042,7 +1085,7 @@ namespace Control
           float since_last_wp = Clock::get() - m_last_wp;
           int threshold;
 
-          if(m_vtol_state == MAV_VTOL_STATE_FW)
+          if(m_vtol_state == MAV_VTOL_STATE_FW) // TODO: Hardcoded thresholds...
             threshold = 80;
           else
             threshold = 10;
@@ -1063,7 +1106,8 @@ namespace Control
           if (m_groundspeed.value)
             m_pcs.eta = nav_out.wp_dist / m_groundspeed.value;
 
-          dispatch(m_pcs);
+          if (std::strcmp(m_mode.mode.c_str(), "LOITER") && m_mode.autonomy == 2)
+            dispatch(m_pcs);
         }
       };
     }
