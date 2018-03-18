@@ -211,6 +211,7 @@ namespace Control
           .defaultValue("3.0")
           .description("Time to wait for transition to fixed-wing to complete (AUTO mode). If zero, it doesn't transition.");
 
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE]              = &Task::handleAttitudePacket;
@@ -232,9 +233,11 @@ namespace Control
           // Setup processing of IMC messages
           bind<AutopilotMode>(this);
           bind<DesiredPath>(this);
+          bind<DevCalibrationControl>(this);
           bind<ControlLoops>(this);
           bind<PlanControl>(this);
           bind<Loiter>(this);
+
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -321,6 +324,16 @@ namespace Control
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
+        }
+
+        void
+        consume(const IMC::DevCalibrationControl* msg)
+        {
+          // Set ground pressure (used for Planes)
+          if (msg->op == IMC::DevCalibrationControl::DCAL_START)
+            sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
+
+          (void)msg;
         }
 
         void
