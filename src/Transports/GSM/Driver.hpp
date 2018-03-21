@@ -173,7 +173,7 @@ namespace Transports
                 balance = firstPart.substr(6, firstPart.find("eur")-6);
 
                 std::stringstream ss;
-                ss << " ( " << String::str(balance) << "Eur )";
+                ss << " | " << String::str(balance) << "Eur ";
                 balance = ss.str();
 
                 return true;

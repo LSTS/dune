@@ -84,6 +84,8 @@ namespace Transports
       float reply_tout;
         //! Code to request balance
         unsigned ussd_code;
+        //! Request balance
+        bool request_balance;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -144,6 +146,10 @@ namespace Transports
                   .defaultValue("123")
                   .description("USSD code");
 
+          param("Enable Balance Request", m_args.request_balance)
+                  .defaultValue("true")
+                  .description("Enable Balance Request");
+
         bind<IMC::Sms>(this);
         bind<IMC::IoEvent>(this);
 
@@ -166,18 +172,19 @@ namespace Transports
       {
         try
         {
-            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
             m_driver = new Driver(this, m_uart, m_args.pin);
             m_driver->initialize();
             debug("manufacturer: %s", m_driver->getManufacturer().c_str());
             debug("model: %s", m_driver->getModel().c_str());
             debug("IMEI: %s", m_driver->getIMEI().c_str());
 
-            if(m_driver->getBalance(m_args.ussd_code, m_balance))
+            if(m_args.request_balance && m_driver->getBalance(m_args.ussd_code, m_balance))
                 setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_ACTIVE).c_str());
         }
         catch (std::runtime_error& e)
         {
+          inf("exception: %s" ,e.what());
           throw RestartNeeded(e.what(), 5, false);
         }
       }
