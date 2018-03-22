@@ -101,8 +101,10 @@ namespace Control
         bool tcp_or_udp;
         //! UDP Address
         Address UDP_addr;
-        //! Time to wait for MC to FW transition
-        float transition_time;
+        //! Transition to FW
+        bool transition_fw;
+        //! Transition to MC
+        bool transition_mc;
       };
 
 
@@ -207,9 +209,17 @@ namespace Control
           .defaultValue("true")
           .description("Ardupilot communications timeout");
 
-          param("Transition Time", m_args.transition_time)
-          .defaultValue("3.0")
-          .description("Time to wait for transition to fixed-wing to complete (AUTO mode). If zero, it doesn't transition.");
+          param("Transition to FW", m_args.transition_fw)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .defaultValue("false")
+          .description("Transition from multi-copter to fixed-wing.");
+
+          param("Transition to MC", m_args.transition_mc)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .defaultValue("false")
+         .description("Transition from fixed-wing to multi-copter.");
 
 
           // Setup packet handlers
@@ -342,15 +352,16 @@ namespace Control
           m_cloops = *cloops;
 
           // Set LOITER mode if in AUTO and no plan.
-          if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO)
+          if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO && !m_mission)
           {
-            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+            inf("Setting LOITER mode.");
             m_mission = 0;
             clearMission();
             m_pcs.clear();
             dispatch(m_pcs);
             m_dpath.clear();
             dispatch(m_dpath);
+            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
           }
         }
 
@@ -390,24 +401,28 @@ namespace Control
             return;
           }
 
-          // Check if it's in plane mode
-          if(m_args.transition_time > 0 &&  (m_vtol_state != MAV_VTOL_STATE_FW))
-          {
-            // Command transition to plane
-            sendCommandPacket(MAV_CMD_DO_VTOL_TRANSITION, MAV_VTOL_STATE_FW);
-
-            // Waits some time for transition to finish
-            inf("Transition to Fixed-Wing.");
-            Time::Delay::wait(m_args.transition_time);
-          }
-
           uint8_t buf[512];
           mavlink_message_t msg;
           uint16_t n;
 
           if(!m_mission)
           {
+            clearMission();
             m_mission = true;
+
+            // Check if transition was required
+            if(m_args.transition_fw && (m_vtol_state == MAV_VTOL_STATE_MC))
+            {
+              // Command transition to plane
+              sendCommandPacket(MAV_CMD_DO_VTOL_TRANSITION, MAV_VTOL_STATE_FW);
+              war("Transition to Fixed-Wing.");
+            }
+            if(m_args.transition_mc && (m_vtol_state == MAV_VTOL_STATE_FW))
+            {
+              // Command transition to copter
+              sendCommandPacket(MAV_CMD_DO_VTOL_TRANSITION, MAV_VTOL_STATE_MC);
+              war("Transition to Multi-Copter.");
+            }
 
             // Check if waypoint is a loiter
             uint16_t command; float param_radius = 0; bool altitude;
@@ -455,17 +470,17 @@ namespace Control
 
             // Set AUTO mode and MISSION submode
             sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_MISSION);
-
+            inf("Setting MISSION mode.");
 
             //! Dispatch PathControlState
             m_pcs.start_lat = m_estate.lat;
             m_pcs.start_lon = m_estate.lon;
-            m_pcs.start_z = m_estate.alt;
-            m_pcs.start_z_units = IMC::Z_ALTITUDE;
+            m_pcs.start_z = altitude ? m_estate.alt : m_estate.height;
+            m_pcs.start_z_units = altitude ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
             m_pcs.end_lat = path->end_lat;
             m_pcs.end_lon = path->end_lon;
             m_pcs.end_z = path->end_z_units;
-            m_pcs.end_z_units = IMC::Z_HEIGHT;
+            m_pcs.end_z_units = altitude ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
             m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
             m_pcs.flags &= path->flags;
             m_pcs.lradius = path->lradius;
@@ -857,8 +872,12 @@ namespace Control
           inf("PX4 Status: %.*s", 50, stat_tex.text);
 
           // Check if mission finished - if so, set LOITER mode
-          if(!std::strcmp(stat_tex.text, "mission finished, loitering"))
+          if(!std::strcmp(stat_tex.text, "mission finished, loitering") && m_mission)
+          {
             sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+            clearMission();
+            m_mission = false;
+          }
         }
 
         void
@@ -1066,9 +1085,13 @@ namespace Control
         handleMissionAckPacket(const mavlink_message_t* msg)
         {
           spew("MISSION_ACK");
+          mavlink_mission_ack_t ack;
+
+          mavlink_msg_mission_ack_decode(msg, &ack);
+          debug("Mission received, result is %d", ack.type);
+
           m_last_wp = 0;
           m_changing_wp = false;
-          (void)msg;
         }
 
         void
