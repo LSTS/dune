@@ -247,6 +247,7 @@ namespace Control
           bind<ControlLoops>(this);
           bind<PlanControl>(this);
           bind<Loiter>(this);
+          bind<Takeoff>(this);
 
 
           //! Misc. initialization
@@ -387,6 +388,73 @@ namespace Control
         consume(const IMC::Loiter* msg)
         {
           m_duration = msg->duration;
+        }
+
+        void
+        consume(const IMC::Takeoff* tkoff)
+        {
+          // Local Variables
+          uint8_t buf[512];
+          uint16_t n;
+          mavlink_message_t msg;
+
+          // Clear previous mission
+          clearMission();
+
+          // Check if in AUTO mode
+          if(m_mode.autonomy != IMC::AutopilotMode::AL_AUTO)
+          {
+            inf(DTR("PX4 is in a Manual mode, saving desired path."));
+            return;
+          }
+
+          m_mission = true;
+
+          // Setting Desired Airspeed
+          sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, 0, tkoff->speed, 0, 0, 0, 0, 0);
+
+          // Send Mission Count
+          mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 1);
+          n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+
+          // Send Mission Item
+          mavlink_msg_mission_item_pack(255, 0, &msg,
+                                        m_sysid, //! target_system System ID
+                                        0, //! target_component Component ID
+                                        0, //! seq Sequence
+                                        MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                        MAV_CMD_NAV_TAKEOFF, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                        1, //! current false:0, true:1, guided mode:2
+                                        1, //! autocontinue to next wp
+                                        0, //! Used only in MAV_CMD_NAV_LOITER_TIME
+                                        0, //! Not used
+                                        0, //! If <0, then CCW loiter
+                                        0, //! Not used
+                                        (float)Angles::degrees(tkoff->lat), //! x PARAM5 / local: x position, global: latitude
+                                        (float)Angles::degrees(tkoff->lon), //! y PARAM6 / y position: global: longitude
+                                        tkoff->z);//! z PARAM7 / z position: global: altitude
+
+          n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+
+          // Set AUTO mode and TAKEOFF submode
+          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_MISSION);
+          inf("Setting TAKEOFF mode.");
+
+          // Update PathControlState
+          m_pcs.start_lat = m_estate.lat;
+          m_pcs.start_lon = m_estate.lon;
+          m_pcs.start_z = m_estate.alt;
+          m_pcs.start_z_units = IMC::Z_ALTITUDE;
+
+          m_pcs.end_lat = m_estate.lat;
+          m_pcs.end_lon = m_estate.lon;
+          m_pcs.end_z = m_estate.alt;
+          m_pcs.end_z_units = IMC::Z_ALTITUDE;
+
+          m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
+          dispatch(m_pcs);
         }
 
         //! Message for AUTO(MISSION) control (using PX4's controllers)
