@@ -627,6 +627,7 @@ namespace Control
             }
             else
             {
+              cmd = m_pitch_ref.value;
               dispatch(m_pitch_ref); 
             }
 
