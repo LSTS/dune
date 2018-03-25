@@ -138,11 +138,8 @@ namespace Control
         float depth_threshold;
         //! Roll speed compensation.
         RollCompensation rc;
-        //! 
-        bool depth_sensor_pitch_correction;
-        //! 
-        float distance_Depth_sensor;
-
+        //!
+        int sampling_rate_relation;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -165,6 +162,8 @@ namespace Control
         bool m_extra_pitch;
         //! Task Arguments.
         Arguments m_args;
+
+        int m_sampling_rate_relation;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
@@ -316,17 +315,11 @@ namespace Control
           .maximumValue("2.0")
           .description("Roll's minimum proportional gain in speed compensation");
 
-
-          param("Depth sensor correction due to pitch", m_args.depth_sensor_pitch_correction)
-          .defaultValue("false")
-          .description("Depth sensor correction due to pitch");
-
-          param("Depth sensor localization in x axis", m_args.distance_Depth_sensor)
-          .defaultValue("1.0")
-          .minimumValue("0.0")
-          .maximumValue("2.0")
-          .description("Depth sensor localization in x axis in meters ");
-
+          param("Depth-to-pitch PID sampling rate relation", m_args.sampling_rate_relation)
+          .defaultValue("1")
+          .minimumValue("1")
+          .maximumValue("5")
+          .description("Depth-to-pitch sampling rate relation");
 
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
         }
@@ -336,6 +329,7 @@ namespace Control
         onResourceInitialization(void)
         {
           BasicAutopilot::onResourceInitialization();
+
         }
 
         //! Acquire resources.
@@ -422,6 +416,7 @@ namespace Control
           }
 
           initializePIDs();
+          m_sampling_rate_relation = m_args.sampling_rate_relation;
         }
 
         //! Initialize PID related variables.
@@ -540,8 +535,6 @@ namespace Control
             {
               case VERTICAL_MODE_DEPTH:
                 z_error = getVerticalRef() - msg->depth;
-                if (m_args.depth_sensor_pitch_correction)
-                  z_error = z_error - sin(msg->theta) * m_args.distance_Depth_sensor; 
                 if (getVerticalRef() < m_args.depth_threshold)
                 {
                   if (m_args.force_pitch && std::fabs(z_error) < m_args.depth_threshold)
@@ -585,8 +578,16 @@ namespace Control
             if (use_offset)
               z_error += m_args.depth_offset;
 
-            if (!surface)
-            {
+
+            // Depth-to-pitch PID sampling rate relation
+            m_sampling_rate_relation++;
+
+            if(m_sampling_rate_relation >= m_args.sampling_rate_relation)
+            { 
+              m_sampling_rate_relation = 0;
+
+              if (!surface)
+              {
               // extra pitch.
               if (m_extra_pitch)
               {
@@ -615,15 +616,20 @@ namespace Control
 
               // Positive depth implies negative pitch
               cmd = -m_pid[LP_DEPTH].step(timestep, z_error, val);
+              }
+              else
+              {
+                cmd = m_args.surface_pitch;
+              }
+              // Log the desired pitch
+              m_pitch_ref.value = cmd;
+              dispatch(m_pitch_ref);
             }
             else
             {
-              cmd = m_args.surface_pitch;
+              dispatch(m_pitch_ref); 
             }
 
-            // Log the desired pitch
-            m_pitch_ref.value = cmd;
-            dispatch(m_pitch_ref);
           }
 
           //Now, track pitch
