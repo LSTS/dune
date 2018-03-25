@@ -73,6 +73,14 @@ namespace Control
         double max_rpm;
         //! Max Meter Per Second value
         double max_ms;
+        //! K pitch 
+        double k_pitch;
+        //!  K roll
+        double k_roll;
+        //!  K yaw
+        double k_yaw;
+        //!  
+        bool roll_not_velocity_dependent;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -160,6 +168,27 @@ namespace Control
           .defaultValue("333.3")
           .units(Units::DegreePerSecond)
           .description("Maximum rotation rate allowed by the servo");
+
+          param("k roll", m_args.k_roll)
+          .defaultValue("1.0")
+          .minimumValue("0.0")
+          .description("k roll - Velocity dependent pitch fin effect ");
+
+          param("k pitch", m_args.k_pitch)
+          .defaultValue("1.0")
+          .minimumValue("0.0")
+          .description("k pitch - Velocity dependent pitch fin effect ");
+
+          param("k yaw", m_args.k_yaw)
+          .defaultValue("1.0")
+          .minimumValue("0.0")
+          .description("k yaw - Velocity dependent pitch fin effect ");
+
+          param("Roll not velocity dependent", m_args.roll_not_velocity_dependent)
+          .defaultValue("false")
+          .description("Roll not velocity dependent");
+
+
 
           param("Entity Label - Servo Position", m_args.spos_label)
           .defaultValue("")
@@ -373,7 +402,7 @@ namespace Control
           double rpm_m = m_args.rpm_minimum ; 
           double m_s = m_args.ms_minimum;
           double rpm = rpm_m/1000, m_s_m = m_s;
-
+          float angroll = 0 ;
           if(m_last_rpm!=NULL)
           {
             rpm_m = (double)m_last_rpm->value;
@@ -400,11 +429,11 @@ namespace Control
           {
             if(m_args.velocity_dependent_unit == "RPM")
             {  
-             ang = (n / (m_args.conv[2]* rpm *rpm)) * 0.5;
+             ang = m_args.k_yaw * (n / (m_args.conv[2]* rpm *rpm)) * 0.5;
             }
             else
             {
-              ang = (n / (m_args.conv[2]* m_s *m_s)) * 0.5;
+              ang = m_args.k_yaw * (n / (m_args.conv[2]* m_s *m_s)) * 0.5;
             }
           }
 
@@ -425,11 +454,11 @@ namespace Control
           {
              if(m_args.velocity_dependent_unit == "RPM")
             {
-               m_allocated.n = m_args.conv[2]* rpm *rpm * 2.0;
+               m_allocated.n = m_args.k_yaw * m_args.conv[2]* rpm *rpm * 2.0;
             }
             else
             {
-               m_allocated.n =m_args.conv[2]* m_s * m_s * 2.0;
+               m_allocated.n = m_args.k_yaw * m_args.conv[2]* m_s * m_s * 2.0;
             }
           }
           else
@@ -442,11 +471,11 @@ namespace Control
           {
             if(m_args.velocity_dependent_unit == "RPM")
             {
-                ang = (m / (m_args.conv[1]* rpm *rpm)) * 0.5;
+                ang = m_args.k_pitch * (m / (m_args.conv[1]* rpm *rpm)) * 0.5;
             }
             else
             {
-                ang = (m /(m_args.conv[1]* m_s *m_s)) * 0.5;
+                ang = m_args.k_pitch * (m /(m_args.conv[1]* m_s *m_s)) * 0.5;
             }
           }
           else
@@ -471,11 +500,11 @@ namespace Control
           {
              if(m_args.velocity_dependent_unit == "RPM")
             {
-               m_allocated.m = m_args.conv[1]* rpm *rpm * 2.0;
+               m_allocated.m = m_args.k_pitch * m_args.conv[1]* rpm *rpm * 2.0;
             }
             else
             {
-               m_allocated.m = m_args.conv[1]* m_s * m_s * 2.0;
+               m_allocated.m = m_args.k_pitch * m_args.conv[1]* m_s * m_s * 2.0;
             }
           }
           else
@@ -485,15 +514,17 @@ namespace Control
 
           // Allocate K
           // Attempt to distribute evenly by the four fins
-          if(m_args.velocity_dependent)
+          if(m_args.velocity_dependent &&  m_args.roll_not_velocity_dependent == false)
           {
             if(m_args.velocity_dependent_unit == "RPM")
             {
-             ang = (k / (m_args.conv[0] * rpm *rpm)) / c_fins;
+             ang = m_args.k_roll * (k / (m_args.conv[0] * rpm *rpm)) / c_fins;
+             angroll = ang;
             }
             else
             {
-               ang = (k / (m_args.conv[0] * m_s * m_s)) / c_fins;
+               ang = m_args.k_roll * (k / (m_args.conv[0] * m_s * m_s)) / c_fins;
+               angroll = ang;
             }
           }
           else
@@ -514,14 +545,44 @@ namespace Control
             roll_margin_hfins -= std::abs(ang);
             roll_margin_vfins -= std::abs(ang);
 
-          if(m_args.velocity_dependent)
+          if(m_args.velocity_dependent  &&  m_args.roll_not_velocity_dependent == false)
           {
+            ang = angroll - ang;
+              
             if(m_args.velocity_dependent_unit == "RPM")
             {
+              if (roll_margin_hfins > 0)
+              {
+                ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
+  
+                m_fins[1].value += ang;
+                m_fins[2].value -= ang;
+              }
+              else if (roll_margin_vfins > 0)
+              {
+                ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
+  
+                m_fins[0].value -= ang;
+                m_fins[3].value += ang;
+              }
               m_allocated.k = m_args.conv[0]* rpm * rpm * c_fins;
             }
             else
             {
+              if (roll_margin_hfins > 0)
+              {
+                ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
+  
+                m_fins[1].value += ang;
+                m_fins[2].value -= ang;
+              }
+              else if (roll_margin_vfins > 0)
+              {
+                ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
+  
+                m_fins[0].value -= ang;
+                m_fins[3].value += ang;
+              } 
               m_allocated.k = m_args.conv[0]* m_s * m_s * c_fins;
             }
           }
