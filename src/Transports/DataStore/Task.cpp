@@ -258,9 +258,9 @@ namespace Transports
           return;
 
         if (!m_ctx.resolver.isLocal(msg->getSource()))
-          debug("Received %u items from %s.", msg->data.size(), resolveSystemId(msg->getSource()));
+          debug("Received %lu items from %s.", msg->data.size(), resolveSystemId(msg->getSource()));
         else
-          debug("Adding %u items from %s (%d) to data store.", msg->data.size(),
+          debug("Adding %lu items from %s (%d) to data store.", msg->data.size(),
                 m_ctx.resolver.resolve(msg->getSource()), msg->getSource());
 
         // add all data to local store
@@ -337,7 +337,7 @@ namespace Transports
           m_store.addData(data);
         }
         else
-          inf("Routed %u samples to %s using Acoustic Modem", data->data.size(), m_args.acoustic_gateway.c_str());
+          inf("Routed %lu samples to %s using Acoustic Modem", data->data.size(), m_args.acoustic_gateway.c_str());
 
         Memory::clear(data);
       }
@@ -357,7 +357,7 @@ namespace Transports
           m_store.addData(data);
         }
         else
-          inf("Routed %u samples to %s using UDP", data->data.size(), m_args.wifi_gateway.c_str());
+          inf("Routed %lu samples to %s using UDP", data->data.size(), m_args.wifi_gateway.c_str());
 
         Memory::clear(data);
       }

@@ -191,7 +191,7 @@ namespace Transports
         uint8_t buffer[65535];
         int len = msg.serialize(buffer);
         Memory::clear(data);
-        m_parent->inf("Requesting upload of %u samples via Iridium.", data->data.size());
+        m_parent->inf("Requesting upload of %lu samples via Iridium.", data->data.size());
         DUNE::IMC::IridiumMsgTx m;
         m.data.assign(buffer, buffer + len);
         m.ttl = 120;
