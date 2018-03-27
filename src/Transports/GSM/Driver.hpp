@@ -145,6 +145,40 @@ namespace Transports
         expectOK();
       }
 
+      bool
+      getBalance(unsigned ussd_code, std::string &balance)
+      {
+        char code[50];
+        sprintf(code,"+CUSD=1,\"*#%d#\"",ussd_code);
+        sendAT(code);
+
+        try{
+          expectOK();
+        }
+        catch(...) {
+          getTask()->war("Can't read balance. Please check the USSD code or connection");
+          return false;
+        }
+        std::string msg = readLine();
+        Utils::String::toLowerCase(msg);
+
+        size_t startPos = msg.find("saldo:");
+
+        if(startPos == std::string::npos) {
+          getTask()->war("Can't read balance");
+          return false;
+        }
+
+        std::string firstPart = msg.substr(startPos);
+        balance = firstPart.substr(6, firstPart.find("eur")-6);
+
+        std::stringstream ss;
+        ss << " | " << String::str(balance) << "Eur ";
+        balance = ss.str();
+
+        return true;
+      }
+
     private:
       //! PIN number if needed.
       std::string m_pin;
@@ -250,8 +284,7 @@ namespace Transports
       }
 
       bool
-      readSMS(std::string& location, std::string& origin, std::string& text)
-      {
+      readSMS(std::string& location, std::string& origin, std::string& text) {
         std::string header = readLine();
         if (header == "OK")
           return false;
