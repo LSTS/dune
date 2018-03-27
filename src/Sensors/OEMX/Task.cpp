@@ -330,7 +330,11 @@ namespace Sensors
 
         if(m_sdstate.haveSalinity && m_sdstate.havePressure && m_sdstate.haveTemperature && !m_sdstate.haveSoundSpeed)
         {
-          m_soundSpeed = UNESCO1983::computeSoundSpeed(m_salinity, (m_pressure - m_offset_pressure), m_temperature);
+          if (m_salinity > 0)
+            m_soundSpeed = UNESCO1983::computeSoundSpeed(m_salinity, (m_pressure - m_offset_pressure), m_temperature);
+          else
+            m_soundSpeed = 0;
+
           m_sdstate.haveSoundSpeed = true;
         }
       }
