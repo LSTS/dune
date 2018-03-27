@@ -39,282 +39,282 @@
 
 namespace Transports
 {
-    namespace GSM
+  namespace GSM
+  {
+    using DUNE_NAMESPACES;
+
+    //! SMS terminator character.
+    static const char c_sms_term = 0x1a;
+    //! SMS input prompt.
+    static const char* c_sms_prompt = "\r\n> ";
+    //! Size of SMS input prompt.
+    static const unsigned c_sms_prompt_size = std::strlen(c_sms_prompt);
+
+    class Driver: public HayesModem
     {
-        using DUNE_NAMESPACES;
+    public:
+      //! Constructor.
+      //! @param[in] task parent task.
+      //! @param[in] uart serial port connected to the ISU.
+      //! @param[in] pin PIN number.
+      Driver(Tasks::Task* task, SerialPort* uart, const std::string& pin = ""):
+        HayesModem(task, uart),
+        m_pin(pin)
+      {
+        setLineTrim(true);
+      }
 
-        //! SMS terminator character.
-        static const char c_sms_term = 0x1a;
-        //! SMS input prompt.
-        static const char* c_sms_prompt = "\r\n> ";
-        //! Size of SMS input prompt.
-        static const unsigned c_sms_prompt_size = std::strlen(c_sms_prompt);
+      //! Destructor.
+      ~Driver(void)
+      { }
 
-        class Driver: public HayesModem
+      void
+      checkMessages(void)
+      {
+        IMC::TextMessage sms;
+        std::string location;
+        unsigned read_count = 0;
+
+        sendAT("+CMGL=\"ALL\"");
+
+        //! Read all messages.
+        while (readSMS(location, sms.origin, sms.text))
         {
-        public:
-            //! Constructor.
-            //! @param[in] task parent task.
-            //! @param[in] uart serial port connected to the ISU.
-            //! @param[in] pin PIN number.
-            Driver(Tasks::Task* task, SerialPort* uart, const std::string& pin = ""):
-                    HayesModem(task, uart),
-                    m_pin(pin)
-            {
-                setLineTrim(true);
-            }
+          if ((location == "\"REC UNREAD\"") || (location == "\"REC READ\""))
+          {
+            ++read_count;
+            getTask()->dispatch(sms);
+          }
+        }
 
-            //! Destructor.
-            ~Driver(void)
-            { }
+        // Remove read messages.
+        if (read_count > 0)
+        {
+          sendAT("+CMGD=0,3");
+          expectOK();
+        }
+      }
 
-            void
-            checkMessages(void)
-            {
-                IMC::TextMessage sms;
-                std::string location;
-                unsigned read_count = 0;
+      void
+      sendSMS(const std::string& number, const std::string& msg, double timeout)
+      {
+        uint8_t bfr[16];
 
-                sendAT("+CMGL=\"ALL\"");
+        Time::Counter<double> timer(timeout);
 
-                //! Read all messages.
-                while (readSMS(location, sms.origin, sms.text))
-                {
-                    if ((location == "\"REC UNREAD\"") || (location == "\"REC READ\""))
-                    {
-                        ++read_count;
-                        getTask()->dispatch(sms);
-                    }
-                }
+        try
+        {
+          setReadMode(HayesModem::READ_MODE_RAW);
+          sendAT(String::str("+CMGS=\"%s\"", number.c_str()));
+          readRaw(timer, bfr, 4);
+          setReadMode(HayesModem::READ_MODE_LINE);
 
-                // Remove read messages.
-                if (read_count > 0)
-                {
-                    sendAT("+CMGD=0,3");
-                    expectOK();
-                }
-            }
+          if (std::memcmp(bfr, c_sms_prompt, c_sms_prompt_size) != 0)
+            throw Hardware::UnexpectedReply();
 
-            void
-            sendSMS(const std::string& number, const std::string& msg, double timeout)
-            {
-                uint8_t bfr[16];
+          std::string data = msg;
+          data.push_back(c_sms_term);
+          sendRaw((uint8_t*)&data[0], data.size());
+        }
+        catch (...)
+        {
+          setReadMode(HayesModem::READ_MODE_LINE);
+          throw;
+        }
 
-                Time::Counter<double> timer(timeout);
+        std::string reply = readLine(timer);
+        if (reply == "ERROR")
+        {
+          throw std::runtime_error(DTR("unknown error"));
+        }
+        else if (String::startsWith(reply, "+CMGS:"))
+        {
+          setBusy(true);
+        }
+        else if (String::startsWith(reply, "+CMS ERROR:"))
+        {
+          int code = -1;
+          std::sscanf(reply.c_str(), "+CMS ERROR: %d", &code);
+          throw std::runtime_error(String::str(DTR("SMS transmission failed with error code %d"), code));
+        }
+        else
+        {
+          throw UnexpectedReply();
+        }
 
-                try
-                {
-                    setReadMode(HayesModem::READ_MODE_RAW);
-                    sendAT(String::str("+CMGS=\"%s\"", number.c_str()));
-                    readRaw(timer, bfr, 4);
-                    setReadMode(HayesModem::READ_MODE_LINE);
+        expectOK();
+      }
 
-                    if (std::memcmp(bfr, c_sms_prompt, c_sms_prompt_size) != 0)
-                        throw Hardware::UnexpectedReply();
+      bool
+      getBalance(unsigned ussd_code, std::string &balance)
+      {
+        char code[50];
+        sprintf(code,"+CUSD=1,\"*#%d#\"",ussd_code);
+        sendAT(code);
 
-                    std::string data = msg;
-                    data.push_back(c_sms_term);
-                    sendRaw((uint8_t*)&data[0], data.size());
-                }
-                catch (...)
-                {
-                    setReadMode(HayesModem::READ_MODE_LINE);
-                    throw;
-                }
+        try{
+          expectOK();
+        }
+        catch(...) {
+          getTask()->war("Can't read balance. Please check the USSD code or connection");
+          return false;
+        }
+        std::string msg = readLine();
+        Utils::String::toLowerCase(msg);
 
-                std::string reply = readLine(timer);
-                if (reply == "ERROR")
-                {
-                    throw std::runtime_error(DTR("unknown error"));
-                }
-                else if (String::startsWith(reply, "+CMGS:"))
-                {
-                    setBusy(true);
-                }
-                else if (String::startsWith(reply, "+CMS ERROR:"))
-                {
-                    int code = -1;
-                    std::sscanf(reply.c_str(), "+CMS ERROR: %d", &code);
-                    throw std::runtime_error(String::str(DTR("SMS transmission failed with error code %d"), code));
-                }
-                else
-                {
-                    throw UnexpectedReply();
-                }
+        size_t startPos = msg.find("saldo:");
 
-                expectOK();
-            }
+        if(startPos == std::string::npos) {
+          getTask()->war("Can't read balance");
+          return false;
+        }
 
-            bool
-            getBalance(unsigned ussd_code, std::string &balance)
-            {
-                char code[50];
-                sprintf(code,"+CUSD=1,\"*#%d#\"",ussd_code);
-                sendAT(code);
+        std::string firstPart = msg.substr(startPos);
+        balance = firstPart.substr(6, firstPart.find("eur")-6);
 
-                try{
-                    expectOK();
-                }
-                catch(...) {
-                    getTask()->war("Can't read balance. Please check the USSD code or connection");
-                    return false;
-                }
-                std::string msg = readLine();
-                Utils::String::toLowerCase(msg);
+        std::stringstream ss;
+        ss << " | " << String::str(balance) << "Eur ";
+        balance = ss.str();
 
-                size_t startPos = msg.find("saldo:");
+        return true;
+      }
 
-                if(startPos == std::string::npos) {
-                    getTask()->war("Can't read balance");
-                    return false;
-                }
+    private:
+      //! PIN number if needed.
+      std::string m_pin;
 
-                std::string firstPart = msg.substr(startPos);
-                balance = firstPart.substr(6, firstPart.find("eur")-6);
+      void
+      queryRSSI(void)
+      {
+        sendAT("+CSQ");
+        std::string line = readLine();
+        int rssi = -1;
+        int ber = 0;
+        if (std::sscanf(line.c_str(), "+CSQ: %d,%d", &rssi, &ber) == 2)
+        {
+          expectOK();
+          setRSSI(convertRSSI(rssi));
+        }
+      }
 
-                std::stringstream ss;
-                ss << " | " << String::str(balance) << "Eur ";
-                balance = ss.str();
+      void
+      sendReset(void)
+      {
+        sendAT("Z");
+      }
 
-                return true;
-            }
+      void
+      sendInitialization(void)
+      {
+        setEcho(false);
+        setErrorVerbosity(2);
+        setPin(m_pin);
+        setMessageFormat(1);
+      }
 
-        private:
-            //! PIN number if needed.
-            std::string m_pin;
+      float
+      convertRSSI(int rssi)
+      {
+        float cvt = -1.0f;
 
-            void
-            queryRSSI(void)
-            {
-                sendAT("+CSQ");
-                std::string line = readLine();
-                int rssi = -1;
-                int ber = 0;
-                if (std::sscanf(line.c_str(), "+CSQ: %d,%d", &rssi, &ber) == 2)
-                {
-                    expectOK();
-                    setRSSI(convertRSSI(rssi));
-                }
-            }
+        if (rssi >= 0 && rssi <= 9)
+          cvt = (rssi / 9.0) * 25.0f;
+        else if (rssi >= 10 && rssi <= 14)
+          cvt = 25.0f + (((rssi - 10) / 4.0f) * 25.0f);
+        else if (rssi >= 15 && rssi <= 19)
+          cvt = 50.0f + (((rssi - 15) / 4.0f) * 25.0f);
+        else
+        {
+          if (rssi >= 31)
+            rssi = 31;
 
-            void
-            sendReset(void)
-            {
-                sendAT("Z");
-            }
+          cvt = 75.0f + (((rssi - 20) / 11.0f) * 25.0f);
+        }
 
-            void
-            sendInitialization(void)
-            {
-                setEcho(false);
-                setErrorVerbosity(2);
-                setPin(m_pin);
-                setMessageFormat(1);
-            }
+        return cvt;
+      }
 
-            float
-            convertRSSI(int rssi)
-            {
-                float cvt = -1.0f;
+      bool
+      handleUnsolicited(const std::string& str)
+      {
+        if (String::startsWith(str, "^SYSSTART"))
+          return true;
+        if (String::startsWith(str, "^MODE"))
+          return true;
+        if (String::startsWith(str, "+CUSATEND"))
+          return true;
+        if (String::startsWith(str, "^ECCLIST"))
+          return true;
+        if (String::startsWith(str, "+CUSATP"))
+          return true;
+        if (String::startsWith(str, "^HCSQ"))
+          return true;
+        if (String::startsWith(str, "^RSSI"))
+          return true;
 
-                if (rssi >= 0 && rssi <= 9)
-                    cvt = (rssi / 9.0) * 25.0f;
-                else if (rssi >= 10 && rssi <= 14)
-                    cvt = 25.0f + (((rssi - 10) / 4.0f) * 25.0f);
-                else if (rssi >= 15 && rssi <= 19)
-                    cvt = 50.0f + (((rssi - 15) / 4.0f) * 25.0f);
-                else
-                {
-                    if (rssi >= 31)
-                        rssi = 31;
+        return false;
+      }
 
-                    cvt = 75.0f + (((rssi - 20) / 11.0f) * 25.0f);
-                }
+      void
+      setPin(const std::string& pin)
+      {
+        std::string bfr = readValue("+CPIN?");
+        if (bfr == "+CPIN: READY")
+          return;
 
-                return cvt;
-            }
+        if (bfr == "+CPIN: SIM PIN")
+        {
+          sendAT(String::str("+CPIN=%s", pin.c_str()));
+          expectOK();
+        }
+      }
 
-            bool
-            handleUnsolicited(const std::string& str)
-            {
-                if (String::startsWith(str, "^SYSSTART"))
-                    return true;
-                if (String::startsWith(str, "^MODE"))
-                    return true;
-                if (String::startsWith(str, "+CUSATEND"))
-                    return true;
-                if (String::startsWith(str, "^ECCLIST"))
-                    return true;
-                if (String::startsWith(str, "+CUSATP"))
-                    return true;
-                if (String::startsWith(str, "^HCSQ"))
-                    return true;
-                if (String::startsWith(str, "^RSSI"))
-                    return true;
+      void
+      setMessageFormat(unsigned value)
+      {
+        sendAT(String::str("+CMGF=%u", value));
+        expectOK();
+      }
 
-                return false;
-            }
+      void
+      setErrorVerbosity(unsigned value)
+      {
+        sendAT(String::str("+CMEE=%u", value));
+        expectOK();
+      }
 
-            void
-            setPin(const std::string& pin)
-            {
-                std::string bfr = readValue("+CPIN?");
-                if (bfr == "+CPIN: READY")
-                    return;
+      bool
+      readSMS(std::string& location, std::string& origin, std::string& text) {
+        std::string header = readLine();
+        if (header == "OK")
+          return false;
 
-                if (bfr == "+CPIN: SIM PIN")
-                {
-                    sendAT(String::str("+CPIN=%s", pin.c_str()));
-                    expectOK();
-                }
-            }
+        if (!String::startsWith(header, "+CMGL:"))
+          throw Hardware::UnexpectedReply();
 
-            void
-            setMessageFormat(unsigned value)
-            {
-                sendAT(String::str("+CMGF=%u", value));
-                expectOK();
-            }
+        std::vector<std::string> parts;
+        String::split(header, ",", parts);
+        if (parts.size() != 6)
+        {
+          if (parts.size() >= 2)
+          {
+            location = parts[1];
+            return true;
+          }
 
-            void
-            setErrorVerbosity(unsigned value)
-            {
-                sendAT(String::str("+CMEE=%u", value));
-                expectOK();
-            }
+          throw Hardware::UnexpectedReply();
+        }
 
-            bool
-            readSMS(std::string& location, std::string& origin, std::string& text) {
-                std::string header = readLine();
-                if (header == "OK")
-                    return false;
+        if ((parts[2] != "\"\"") && (parts[2].size() <= 2))
+          throw Hardware::UnexpectedReply();
 
-                if (!String::startsWith(header, "+CMGL:"))
-                    throw Hardware::UnexpectedReply();
-
-                std::vector<std::string> parts;
-                String::split(header, ",", parts);
-                if (parts.size() != 6)
-                {
-                    if (parts.size() >= 2)
-                    {
-                        location = parts[1];
-                        return true;
-                    }
-
-                    throw Hardware::UnexpectedReply();
-                }
-
-                if ((parts[2] != "\"\"") && (parts[2].size() <= 2))
-                    throw Hardware::UnexpectedReply();
-
-                location = parts[1];
-                origin = std::string(parts[2], 1, parts[2].size() - 2);
-                text = readLine();
-                return true;
-            }
-        };
-    }
+        location = parts[1];
+        origin = std::string(parts[2], 1, parts[2].size() - 2);
+        text = readLine();
+        return true;
+      }
+    };
+  }
 }
 
 #endif
