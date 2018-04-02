@@ -482,6 +482,13 @@ namespace Transports
               m_transmission_requests.erase(msg->req_id);
             break;
 
+            case (IMC::AcousticStatus::STATUS_RANGE_RECEIVED):
+              answer(req, msg->info,
+                IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+            break;
+
             case (IMC::AcousticStatus::STATUS_ERROR):
               answer(req, msg->info,
                 IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
@@ -551,16 +558,27 @@ namespace Transports
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_MSG:
                   answer(req, IMC::AcousticOperation::AOP_MSG_DONE);
-                  break;
-
-                case IMC::AcousticOperation::AOP_RANGE:
-                case IMC::AcousticOperation::AOP_REVERSE_RANGE:
-                  //FIXME
-                  answer(req, IMC::AcousticOperation::AOP_RANGE_RECVED);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
                   answer(req, IMC::AcousticOperation::AOP_ABORT_ACKED);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
+                  break;
+
+                default:
+                  break;
+              }
+            break;
+
+            case (IMC::AcousticStatus::STATUS_RANGE_RECEIVED):
+              switch (req->op) {
+                case IMC::AcousticOperation::AOP_RANGE:
+                  answer(req, IMC::AcousticOperation::AOP_RANGE_RECVED, msg->range);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 default:
@@ -572,15 +590,21 @@ namespace Transports
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_MSG:
                   answer(req, IMC::AcousticOperation::AOP_MSG_FAILURE);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
                   answer(req, IMC::AcousticOperation::AOP_RANGE_TIMEOUT);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
                   answer(req, IMC::AcousticOperation::AOP_ABORT_TIMEOUT);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 default:
@@ -610,6 +634,8 @@ namespace Transports
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
                 case IMC::AcousticOperation::AOP_ABORT:
                   answer(req, IMC::AcousticOperation::AOP_UNSUPPORTED);
+                  Memory::clear(req);
+                  m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 default:
@@ -737,10 +763,11 @@ namespace Transports
       }
 
       void
-      answer(const IMC::AcousticOperation* req, int status)
+      answer(const IMC::AcousticOperation* req, int status, fp32_t range = 0.0)
       {
         IMC::AcousticOperation msg(*req);
         msg.op = status;
+        msg.range = range;
         dispatch(msg);
 
       }
@@ -752,6 +779,7 @@ namespace Transports
         msg.info      = info;
         msg.req_id    = req->req_id;
         msg.status    = status;
+        msg.range     = req->range;
         msg.setDestination(req->getSource());
         msg.setDestinationEntity(req->getSourceEntity());
         dispatch(msg);
