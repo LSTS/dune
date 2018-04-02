@@ -45,6 +45,7 @@ namespace Transports
     {
       //! Period, in seconds, between state report transmissions over iridium
       int iridium_period;
+      bool enable_acoustic;
     };
 
     //! Config section from where to fetch emergency sms number
@@ -83,6 +84,11 @@ namespace Transports
         param("Iridium Reports Period", m_args.iridium_period)
                 .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
                 .defaultValue("300");
+
+        param("Enable Acoustic", m_args.enable_acoustic)
+                .description("Enable commManager to process and convert legacy message -> AcousticOperation")
+                .defaultValue("true");
+
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
@@ -517,6 +523,9 @@ namespace Transports
           return;
         }
 
+        if(!m_args.enable_acoustic){
+          return;
+        }
         //old API
         if (m_acoustic_requests.find(msg->req_id)
           != m_acoustic_requests.end()) {
@@ -701,6 +710,10 @@ namespace Transports
       void
       consume(const IMC::AcousticOperation* msg)
       {
+        if(!m_args.enable_acoustic){
+          return;
+        }
+
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
 
