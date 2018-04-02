@@ -442,7 +442,7 @@ namespace Transports
         std::ostringstream os;
         os<<msg->value;
 
-        sendAcousticStatus(request,IMC::AcousticStatus::STATUS_RECEIVED,os.str());
+        sendAcousticStatus(request,IMC::AcousticStatus::STATUS_RANGE_RECEIVED,"",msg->value);
         removeFromQueue(idOfMsg);
       }
 
@@ -513,13 +513,15 @@ namespace Transports
       }
 
       void
-      sendAcousticStatus(const AcousticRequest* acReq,IMC::AcousticStatus::StatusEnum status,const std::string& info = "") {
+      sendAcousticStatus(const AcousticRequest* acReq, IMC::AcousticStatus::StatusEnum status,
+          const std::string& info = "", const fp32_t range = 0.0) {
         IMC::AcousticStatus acStat;
 
-        acStat.req_id = acReq->req_id;
-        acStat.type = acReq->type;
-        acStat.status = status;
-        acStat.info = info;
+        acStat.req_id    = acReq->req_id;
+        acStat.type      = acReq->type;
+        acStat.status    = status;
+        acStat.range     = range;
+        acStat.info      = info;
         acStat.setDestination(acReq->getDestination());
         acStat.setDestinationEntity(acReq->getDestinationEntity());
 
