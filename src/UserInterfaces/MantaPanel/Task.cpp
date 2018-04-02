@@ -350,7 +350,7 @@ namespace UserInterfaces
       {
 
         if(msg->getDestination() != getSystemId()) return;
-        if(msg->getDestinationEntity() != getEntityId()()) return;
+        if(msg->getDestinationEntity() != getEntityId()) return;
 
         m_lcd.op = IMC::LcdControl::OP_WRITE1;
 
