@@ -102,6 +102,14 @@ int main()
   }
 
   {
+    // Test vec() getter.
+    const double data[] = {2, -3, 4};
+    const Quaternion quat(-1, data[0], data[1], data[2]);
+    const Matrix vec(data, 3, 1);
+    test.boolean("vec()", quat.vec() == vec);
+  }
+
+  {
     // Test EulerAnglesZyx constructor.
     const EulerAnglesZyx euler(0.1, -0.1, -2.7);
     const Quaternion quat_from_euler(euler);
