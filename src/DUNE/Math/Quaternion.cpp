@@ -87,15 +87,16 @@ namespace DUNE
     double Quaternion::x() const { return m_matrix(INDEX_X); }
     double Quaternion::y() const { return m_matrix(INDEX_Y); }
     double Quaternion::z() const { return m_matrix(INDEX_Z); }
-
-    double Quaternion::norm() const
-    {
-      return m_matrix.norm_2();
-    }
+    Matrix Quaternion::vec() const { return m_matrix.get(INDEX_X, INDEX_Z, 0, 0); }
 
     Matrix Quaternion::matrix() const
     {
       return m_matrix;
+    }
+
+    double Quaternion::norm() const
+    {
+      return m_matrix.norm_2();
     }
 
     Quaternion Quaternion::normalized() const
@@ -124,10 +125,8 @@ namespace DUNE
 
     void Quaternion::identity()
     {
+      m_matrix.fill(0.0);
       m_matrix(INDEX_W) = 1.0;
-      m_matrix(INDEX_X) = 0.0;
-      m_matrix(INDEX_Y) = 0.0;
-      m_matrix(INDEX_Z) = 0.0;
     }
 
     void Quaternion::normalize()

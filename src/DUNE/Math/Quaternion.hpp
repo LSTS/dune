@@ -13,7 +13,8 @@ namespace DUNE
   {
     struct EulerAnglesZyx;
 
-    // Quaternions on the form (w + ix + jy + kz).
+    // Quaternions on the form (w + ix + jy + kz)
+    // where w is the scalar part and v = (x, y, z) is the vector part.
     class Quaternion
     {
     public:
@@ -42,8 +43,10 @@ namespace DUNE
       double x() const;
       double y() const;
       double z() const;
-      double norm() const;
+      Matrix vec() const;
+
       Matrix matrix() const;
+      double norm() const;
       Quaternion normalized() const;
       Matrix rotationMatrix() const;
       Matrix angVelTransform() const;
