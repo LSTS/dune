@@ -2,6 +2,8 @@
 // Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
+// Copyright 2018 OceanScan - Marine Systems & Technology, Lda.             *
+//***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
 // Commercial Licence Usage                                                 *
@@ -35,6 +37,8 @@
 #include <vector>
 
 // DUNE headers.
+#include <DUNE/Tasks/Task.hpp>
+#include <DUNE/Math/Angles.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/IMC/Definitions.hpp>
 
@@ -64,7 +68,8 @@ namespace DUNE
       //! Filter spacing.
       enum Spacing
       {
-        STANDARD,
+        CLOCKWISE,
+        ANTICLOCKWISE,
         CROSSED
       };
 
@@ -271,7 +276,9 @@ namespace DUNE
         m_list[0].location.push_back(ds);
 
         // Beam 2.
-        if (m_type == STANDARD)
+        if (m_type == CLOCKWISE)
+          ds.psi += Math::Angles::radians(90.0);
+        else if (m_type == ANTICLOCKWISE)
           ds.psi -= Math::Angles::radians(90.0);
         else
           ds.psi += Math::Angles::radians(180.0);
@@ -280,13 +287,18 @@ namespace DUNE
         m_list[1].location.push_back(ds);
 
         // Beam 3.
-        ds.psi -= Math::Angles::radians(90.0);
+        if (m_type == CLOCKWISE)
+          ds.psi += Math::Angles::radians(90.0);
+        else
+          ds.psi -= Math::Angles::radians(90.0);
         ds.x = m_position[0] + std::cos(ds.psi) * m_offset;
         ds.y = m_position[1] + std::sin(ds.psi) * m_offset;
         m_list[2].location.push_back(ds);
 
         // Beam 4.
-        if (m_type == STANDARD)
+        if (m_type == CLOCKWISE)
+          ds.psi += Math::Angles::radians(90.0);
+        else if (m_type == ANTICLOCKWISE)
           ds.psi -= Math::Angles::radians(90.0);
         else
           ds.psi -= Math::Angles::radians(180.0);
