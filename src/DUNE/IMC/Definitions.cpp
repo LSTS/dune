@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ba628e85d287ddf4f0efda7ce5610501                            *
+// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -13539,9 +13539,6 @@ namespace DUNE
       duration = 0;
       speed = 0;
       speed_units = 0;
-      popup_period = 0;
-      popup_duration = 0;
-      flags = 0;
       custom.clear();
     }
 
@@ -13557,9 +13554,6 @@ namespace DUNE
       if (duration != other__.duration) return false;
       if (speed != other__.speed) return false;
       if (speed_units != other__.speed_units) return false;
-      if (popup_period != other__.popup_period) return false;
-      if (popup_duration != other__.popup_duration) return false;
-      if (flags != other__.flags) return false;
       if (custom != other__.custom) return false;
       return true;
     }
@@ -13584,9 +13578,6 @@ namespace DUNE
       ptr__ += IMC::serialize(duration, ptr__);
       ptr__ += IMC::serialize(speed, ptr__);
       ptr__ += IMC::serialize(speed_units, ptr__);
-      ptr__ += IMC::serialize(popup_period, ptr__);
-      ptr__ += IMC::serialize(popup_duration, ptr__);
-      ptr__ += IMC::serialize(flags, ptr__);
       ptr__ += IMC::serialize(custom, ptr__);
       return ptr__;
     }
@@ -13603,9 +13594,6 @@ namespace DUNE
       bfr__ += IMC::deserialize(duration, bfr__, size__);
       bfr__ += IMC::deserialize(speed, bfr__, size__);
       bfr__ += IMC::deserialize(speed_units, bfr__, size__);
-      bfr__ += IMC::deserialize(popup_period, bfr__, size__);
-      bfr__ += IMC::deserialize(popup_duration, bfr__, size__);
-      bfr__ += IMC::deserialize(flags, bfr__, size__);
       bfr__ += IMC::deserialize(custom, bfr__, size__);
       return bfr__ - start__;
     }
@@ -13622,9 +13610,6 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(duration, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
       bfr__ += IMC::deserialize(speed_units, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(popup_period, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(popup_duration, bfr__, size__);
-      bfr__ += IMC::deserialize(flags, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
       return bfr__ - start__;
     }
@@ -13640,9 +13625,6 @@ namespace DUNE
       IMC::toJSON(os__, "duration", duration, nindent__);
       IMC::toJSON(os__, "speed", speed, nindent__);
       IMC::toJSON(os__, "speed_units", speed_units, nindent__);
-      IMC::toJSON(os__, "popup_period", popup_period, nindent__);
-      IMC::toJSON(os__, "popup_duration", popup_duration, nindent__);
-      IMC::toJSON(os__, "flags", flags, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 
@@ -17395,6 +17377,130 @@ namespace DUNE
       IMC::toJSON(os__, "lon", lon, nindent__);
       IMC::toJSON(os__, "speed", speed, nindent__);
       IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    StationKeepingExtended::StationKeepingExtended(void)
+    {
+      m_header.mgid = 496;
+      clear();
+    }
+
+    void
+    StationKeepingExtended::clear(void)
+    {
+      lat = 0;
+      lon = 0;
+      z = 0;
+      z_units = 0;
+      radius = 0;
+      duration = 0;
+      speed = 0;
+      speed_units = 0;
+      popup_period = 0;
+      popup_duration = 0;
+      flags = 0;
+      custom.clear();
+    }
+
+    bool
+    StationKeepingExtended::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::StationKeepingExtended& other__ = static_cast<const StationKeepingExtended&>(msg__);
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z != other__.z) return false;
+      if (z_units != other__.z_units) return false;
+      if (radius != other__.radius) return false;
+      if (duration != other__.duration) return false;
+      if (speed != other__.speed) return false;
+      if (speed_units != other__.speed_units) return false;
+      if (popup_period != other__.popup_period) return false;
+      if (popup_duration != other__.popup_duration) return false;
+      if (flags != other__.flags) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    StationKeepingExtended::validate(void) const
+    {
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    StationKeepingExtended::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(radius, ptr__);
+      ptr__ += IMC::serialize(duration, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(speed_units, ptr__);
+      ptr__ += IMC::serialize(popup_period, ptr__);
+      ptr__ += IMC::serialize(popup_duration, ptr__);
+      ptr__ += IMC::serialize(flags, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    StationKeepingExtended::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(radius, bfr__, size__);
+      bfr__ += IMC::deserialize(duration, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(popup_period, bfr__, size__);
+      bfr__ += IMC::deserialize(popup_duration, bfr__, size__);
+      bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    StationKeepingExtended::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(radius, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(duration, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(popup_period, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(popup_duration, bfr__, size__);
+      bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    StationKeepingExtended::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "radius", radius, nindent__);
+      IMC::toJSON(os__, "duration", duration, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "popup_period", popup_period, nindent__);
+      IMC::toJSON(os__, "popup_duration", popup_duration, nindent__);
+      IMC::toJSON(os__, "flags", flags, nindent__);
       IMC::toJSON(os__, "custom", custom, nindent__);
     }
 

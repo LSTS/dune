@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ba628e85d287ddf4f0efda7ce5610501                            *
+// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -13024,13 +13024,6 @@ namespace DUNE
     class StationKeeping: public Maneuver
     {
     public:
-      //! Flags.
-      enum FlagsBits
-      {
-        //! Keep safe behaviour.
-        FLG_KEEP_SAFE = 0x01
-      };
-
       //! Latitude WGS-84.
       fp64_t lat;
       //! Longitude WGS-84.
@@ -13047,12 +13040,6 @@ namespace DUNE
       fp32_t speed;
       //! Speed Units.
       uint8_t speed_units;
-      //! PopUp Period.
-      uint16_t popup_period;
-      //! PopUp Duration.
-      uint16_t popup_duration;
-      //! Flags.
-      uint8_t flags;
       //! Custom settings for maneuver.
       std::string custom;
 
@@ -13103,7 +13090,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 37;
+        return 32;
       }
 
       unsigned
@@ -16120,6 +16107,102 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 23;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Station Keeping Extended.
+    class StationKeepingExtended: public Maneuver
+    {
+    public:
+      //! Flags.
+      enum FlagsBits
+      {
+        //! Keep safe behaviour.
+        FLG_KEEP_SAFE = 0x01
+      };
+
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z Reference.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+      //! Radius.
+      fp32_t radius;
+      //! Duration.
+      uint16_t duration;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! PopUp Period.
+      uint16_t popup_period;
+      //! PopUp Duration.
+      uint16_t popup_duration;
+      //! Flags.
+      uint8_t flags;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 496;
+      }
+
+      StationKeepingExtended(void);
+
+      StationKeepingExtended*
+      clone(void) const
+      {
+        return new StationKeepingExtended(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return StationKeepingExtended::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "StationKeepingExtended";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 37;
       }
 
       unsigned
