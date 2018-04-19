@@ -74,16 +74,17 @@ namespace Transports
         IMC::TextMessage sms;
         std::string location;
         unsigned read_count = 0;
-
+        bool text_mode = true;
         sendAT("+CMGL=\"ALL\"");
 
         //! Read all messages.
-        while (readSMS(location, sms.origin, sms.text))
+        while (readSMS(location, sms.origin, sms.text,text_mode))
         {
           if ((location == "\"REC UNREAD\"") || (location == "\"REC READ\""))
           {
             ++read_count;
-            getTask()->dispatch(sms);
+            if(text_mode)
+            	getTask()->dispatch(sms);
           }
         }
 
@@ -217,7 +218,12 @@ namespace Transports
           return true;
         if (String::startsWith(str, "^RSSI"))
           return true;
-
+        if(String::startsWith(str, "+CRING")) //incoming call
+        	return true;
+        if(String::startsWith(str, "^CEND:")) //end of call
+                	return true;
+        if(String::startsWith(str, "NO CARRIER")) //missed call
+        	return true;
         return false;
       }
 
@@ -250,7 +256,7 @@ namespace Transports
       }
 
       bool
-      readSMS(std::string& location, std::string& origin, std::string& text)
+      readSMS(std::string& location, std::string& origin, std::string& text, bool& text_mode)
       {
         std::string header = readLine();
         if (header == "OK")
@@ -277,7 +283,34 @@ namespace Transports
 
         location = parts[1];
         origin = std::string(parts[2], 1, parts[2].size() - 2);
-        text = readLine();
+        std::string incoming_data = readLine();
+
+        if(Algorithms::Base64::validBase64(incoming_data))
+        {
+        	text_mode = false;
+        	Utils::ByteBuffer bfr;
+			std::string decoded = Algorithms::Base64::decode(incoming_data);
+			std::copy(decoded.begin(),decoded.end(),bfr.getBuffer());
+			uint16_t length = decoded.size();
+			try
+			{
+				IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), length);
+				getTask()->inf(DTR("received IMC message of type %s via SMS"),msg_d->getName());
+				getTask()->dispatch(msg_d);
+			}
+			catch(...) //InvalidSync || InvalidMessageId || InvalidCrc
+			{
+				getTask()->war(DTR("Parsing unrecognized Base64 message as text"));
+				text.assign(incoming_data);
+				text_mode = true;
+				return true;
+			}
+        }
+        else
+        {
+        	text.assign(incoming_data);
+        	text_mode = true;
+        }
         return true;
       }
     };

@@ -162,6 +162,15 @@ namespace Navigation
         double heading_buffer_value;
         //! Abort if navigation exceeds maximum uncertainty.
         bool abort;
+        //! Activate RPM to m/s estimation
+        bool rpm_estimation;
+        //!  Activate RPM to m/s % limit on estimation
+        bool speed_relation_Limit;
+        //!  Value RPM to m/s limit on estimation
+        double speed_relation_limit_value;
+        //!  Distance of Depth sensor to the veicle pitch rotation axis 
+        float distance_depth_sensor;
+
       };
 
       struct Task: public DUNE::Navigation::BasicNavigation
@@ -176,6 +185,8 @@ namespace Navigation
         Arguments m_args;
         //! Heading alignment buffer
         int m_heading_buffer;
+        //! Pointer to speed model for speed conversions
+        const Plans::SpeedModel* m_speed_model;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Navigation::BasicNavigation(name, ctx),
@@ -256,9 +267,28 @@ namespace Navigation
           .minimumValue("1")
           .description("Heading buffer value - how many repetitions to aligned");
 
-
           param("Entity Label - IMU", m_args.elabel_imu)
           .description("Entity label of the IMU");
+
+          param("Depth sensor localization in x axis", m_args.distance_depth_sensor)
+          .defaultValue("0.0")
+          .minimumValue("0.0")
+          .maximumValue("2.0")
+          .description("Depth sensor localization in x axis in meters- used for depth correction due to pitch");
+
+          param("Rpm to speed estimation", m_args.rpm_estimation)
+          .defaultValue("true")
+          .description("");
+
+          param("Activate speed to rpm estimation limit", m_args.speed_relation_Limit)
+          .defaultValue("false")
+          .description("");
+
+          param("speed to rpm estimation percentage limit", m_args.speed_relation_limit_value)
+          .defaultValue("15")
+          .minimumValue("1")
+          .maximumValue("100")
+          .description("speed to rpm maximum diference between estimation and speed model");
 
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
@@ -312,6 +342,7 @@ namespace Navigation
         {
           BasicNavigation::onResourceInitialization();
           m_avg_speed = new MovingAverage<double>(m_args.navg_speed);
+          startSpeedModel(&m_ctx.config);
         }
 
         void
@@ -319,6 +350,7 @@ namespace Navigation
         {
           BasicNavigation::onResourceRelease();
           Memory::clear(m_avg_speed);
+          Memory::clear(m_speed_model);
         }
 
         void
@@ -595,7 +627,22 @@ namespace Navigation
           }
           else if (m_time_without_gps.overflow() && m_time_without_dvl.overflow())
           {
-            double u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
+            double u = 0.0;
+            double speed_m  = getRpmToMs(m_rpm);
+            if(m_args.rpm_estimation)
+            {
+              u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
+              if(m_args.speed_relation_Limit)
+              {
+                double speedR = (std::abs(u) - std::abs(speed_m))/ std::abs(speed_m) * 100;
+                if (speedR > m_args.speed_relation_limit_value)
+                  u = speed_m;
+              }
+            }
+            else
+            {
+              u = speed_m;
+            }
             m_kal.setInnovation(OUT_U, u - m_kal.getState(STATE_U));
             m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
           }
@@ -692,6 +739,28 @@ namespace Navigation
           dispatch(msg);
         }
 
+        void
+        startSpeedModel(Parsers::Config* config)
+        {
+          try
+          {
+            m_speed_model = new Plans::SpeedModel(config);
+            m_speed_model->validate();
+          }
+          catch (...)
+          {
+            Memory::clear(m_speed_model);
+            inf(DTR("Nav: speed model invalid"));
+          }
+        }
+
+        double
+        getRpmToMs(double rpm)
+        {
+          if(m_speed_model != NULL)
+          return m_speed_model->toMPS(rpm,IMC::SUNITS_RPM);
+        return m_args.rpm_ini*rpm;
+        }
 
         // Reinitialize Extended Kalman Filter transition matrix function.
         void
@@ -746,6 +815,8 @@ namespace Navigation
 
           m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
           m_estate.v = m_kal.getState(STATE_V);
+          m_estate.depth = getDepth() - m_estate.theta * m_args.distance_depth_sensor;
+          m_estate.z = m_last_z - m_estate.depth;
 
           // Log Navigation Uncertainty.
           m_uncertainty.psi = m_kal.getCovariance(STATE_PSI);

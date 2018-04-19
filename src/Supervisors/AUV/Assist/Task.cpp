@@ -85,8 +85,6 @@ namespace Supervisors
         float m_depth;
         //! Current Medium
         uint8_t m_medium;
-        //! Current vehicle state
-        uint8_t m_vstate;
         //! Rate of ascent
         VerticalMonitor* m_vmon;
         //! Task's state
@@ -103,6 +101,8 @@ namespace Supervisors
         bool m_first_fix;
         //! RPM value for dislodging the vehicle
         float m_dislodge_rpm;
+        //! Current motor status.
+        bool m_motor;
         //! Task arguments.
         Arguments m_args;
 
@@ -137,11 +137,11 @@ namespace Supervisors
 
           bind<IMC::GpsFix>(this);
           bind<IMC::Heartbeat>(this);
-          bind<IMC::VehicleState>(this);
           bind<IMC::VehicleMedium>(this);
           bind<IMC::EstimatedState>(this);
           bind<IMC::PlanGeneration>(this);
           bind<IMC::PlanControl>(this);
+          bind<IMC::Rpm>(this);
         }
 
         void
@@ -197,12 +197,6 @@ namespace Supervisors
           // CCU's mask.
           if (IMC::AddressResolver::isCCU(msg->getSource()))
             m_ltimer.reset();
-        }
-
-        void
-        consume(const IMC::VehicleState* msg)
-        {
-          m_vstate = msg->op_mode;
         }
 
         void
@@ -263,6 +257,13 @@ namespace Supervisors
                 (msg->plan_id == m_args.plan_id))
               setState(ST_START_DISLODGE);
           }
+        }
+
+        void
+        consume(const IMC::Rpm* msg)
+        {
+            //! Motor State
+            m_motor = (msg->value == 0) ? false : true;
         }
 
         //! Check if the received PlanControl message reports to
@@ -327,8 +328,7 @@ namespace Supervisors
         bool
         mainConditions(void)
         {
-          if ((m_vstate != IMC::VehicleState::VS_SERVICE) &&
-              (m_vstate != IMC::VehicleState::VS_ERROR))
+          if (m_motor)
             return false;
 
           if (!m_first_fix)

@@ -346,7 +346,7 @@ namespace DUNE
           std::fabs(msg->y) > c_max_accel ||
           std::fabs(msg->z) > c_max_accel)
       {
-        war(DTR("received acceleration beyond range: %f, %f, %f"),
+        err(DTR("received acceleration beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
 
         return;

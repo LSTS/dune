@@ -299,7 +299,7 @@ namespace DUNE
     {
       if (!isActive())
       {
-        err(DTR("not active"));
+        war(DTR("not active"));
         return;
       }
 

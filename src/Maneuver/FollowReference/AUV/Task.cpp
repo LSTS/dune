@@ -69,6 +69,8 @@ namespace Maneuver
         bool m_moving;
         //! Store last timestamp when reference was received
         double m_last_ref_time;
+        //! sent path ref
+        int m_path_ref;
         //! Task arguments.
         Arguments m_args;
 
@@ -123,6 +125,7 @@ namespace Maneuver
           m_moving = false;
           m_last_ref_time = 0;
           m_path_sent = false;
+          m_path_ref = 0;
 
           bindToManeuver<Task, IMC::FollowReference>();
           bind<IMC::Reference>(this);
@@ -412,7 +415,10 @@ namespace Maneuver
             return;
           }
 
-          dispatchDesiredPath(desired_path);
+          if (!ref->speed.isNull() && ref->speed.get()->value == 0)
+            enableMovement(false);
+          else
+            updateDesiredPath(desired_path);
         }
 
         //! Function for enabling and disabling the control loops
@@ -430,7 +436,7 @@ namespace Maneuver
             if (!was_moving)
             {
               m_path_sent = false;
-              dispatchDesiredPath(m_last_desired_path);
+              updateDesiredPath(m_last_desired_path);
             }
           }
           else
@@ -560,9 +566,17 @@ namespace Maneuver
         void
         dispatchDesiredPath(IMC::DesiredPath desired_path)
         {
+          desired_path.path_ref = ++m_path_ref;
+          dispatch(desired_path);
+          m_last_desired_path = desired_path;
+        }
+
+        void
+        updateDesiredPath(IMC::DesiredPath desired_path)
+        {
 
           int diff = pathDifferences(&m_last_desired_path, &desired_path);
-          desired_path.flags &= 0xFF ^ DesiredPath::FL_NO_Z;
+          desired_path.flags &= ~DesiredPath::FL_NO_Z;
 
           m_last_desired_path = desired_path;
 
@@ -570,9 +584,6 @@ namespace Maneuver
           bool changedLoc = (diff & LOC_CHANGED) != 0;
           bool changedSpeed = (diff & SPEED_CHANGED) != 0;
           bool changedRadius = (diff & RADIUS_CHANGED) != 0;
-
-          //std::cerr << "difference: " << changedZ << " " << changedSpeed << " "
-          //    << changedLoc << " " << changedRadius << "\n";
 
           if (changedZ || !m_path_sent)
           {
@@ -597,7 +608,7 @@ namespace Maneuver
             inf(DTR("Loiter radius reference changed to %f"), desired_path.lradius);
           }
 
-          bool send_desired_path = changedRadius || changedLoc || !m_path_sent;
+          bool send_desired_path = changedSpeed || changedRadius || changedLoc || !m_path_sent;
 
           // dispatch new desired path
           switch (m_fref_state.state)
@@ -607,7 +618,7 @@ namespace Maneuver
               enableMovement(true);
               if (send_desired_path)
               {
-                dispatch(desired_path);
+                dispatchDesiredPath(desired_path);
                 inf(DTR("loitering around (%f, %f, %f, %f)."),
                     Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
                     desired_path.end_z, desired_path.lradius);
@@ -618,7 +629,7 @@ namespace Maneuver
               enableMovement(true);
               if (send_desired_path)
               {
-                dispatch(desired_path);
+                dispatchDesiredPath(desired_path);
                 inf(DTR("loitering (elevator) towards (%f, %f, %f, %f)."),
                     Angles::degrees(desired_path.end_lat), Angles::degrees(desired_path.end_lon),
                     desired_path.end_z, desired_path.lradius);
@@ -629,14 +640,18 @@ namespace Maneuver
               enableMovement(true);
               if (send_desired_path)
               {
-                dispatch(desired_path);
+                dispatchDesiredPath(desired_path);
                 inf(DTR("going towards (%f, %f, %f)."), Angles::degrees(desired_path.end_lat),
                     Angles::degrees(desired_path.end_lon), desired_path.end_z);
               }
               break;
             default:
-              inf(DTR("hovering next to (%f, %f)."), Angles::degrees(desired_path.end_lat),
-                  Angles::degrees(desired_path.end_lon));
+              if (send_desired_path)
+              {
+                dispatchDesiredPath(desired_path);
+                inf(DTR("hovering next to (%f, %f)."), Angles::degrees(desired_path.end_lat),
+                    Angles::degrees(desired_path.end_lon));
+              }
               enableMovement(false);
               break;
           }
