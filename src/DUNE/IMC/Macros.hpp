@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4d8734a1111656aac56f803acdc90c22                            *
+// IMC XML MD5: ba628e85d287ddf4f0efda7ce5610501                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -92,6 +92,10 @@
 #define DUNE_IMC_HISTORICSONARDATA 109
 //! HistoricEvent identification number.
 #define DUNE_IMC_HISTORICEVENT 110
+//! VerticalProfile identification number.
+#define DUNE_IMC_VERTICALPROFILE 111
+//! ProfileSample identification number.
+#define DUNE_IMC_PROFILESAMPLE 112
 //! Heartbeat identification number.
 #define DUNE_IMC_HEARTBEAT 150
 //! Announce identification number.
@@ -436,6 +440,8 @@
 #define DUNE_IMC_AUTONOMOUSSECTION 493
 //! FollowPoint identification number.
 #define DUNE_IMC_FOLLOWPOINT 494
+//! Alignment identification number.
+#define DUNE_IMC_ALIGNMENT 495
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -470,6 +476,10 @@
 #define DUNE_IMC_TRANSMISSIONREQUEST 515
 //! TransmissionStatus identification number.
 #define DUNE_IMC_TRANSMISSIONSTATUS 516
+//! SmsRequest identification number.
+#define DUNE_IMC_SMSREQUEST 517
+//! SmsStatus identification number.
+#define DUNE_IMC_SMSSTATUS 518
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -578,6 +588,14 @@
 #define DUNE_IMC_FORMATIONCONTROLPARAMS 822
 //! FormationEvaluation identification number.
 #define DUNE_IMC_FORMATIONEVALUATION 823
+//! SoiWaypoint identification number.
+#define DUNE_IMC_SOIWAYPOINT 850
+//! SoiPlan identification number.
+#define DUNE_IMC_SOIPLAN 851
+//! SoiCommand identification number.
+#define DUNE_IMC_SOICOMMAND 852
+//! SoiState identification number.
+#define DUNE_IMC_SOISTATE 853
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.
