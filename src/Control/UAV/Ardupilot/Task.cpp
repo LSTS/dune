@@ -694,11 +694,11 @@ namespace Control
         void
         consume(const IMC::DesiredRoll* d_roll)
         {
-          //! If in Manual mode, Taking-off, Landing or on Ground do not send
+          //! If in Manual mode or on Ground do not send
           //! control references to ArduPilot
-          if (m_external || m_critical || m_ground)
+          if (m_external || m_ground)
           {
-            debug("external: %d, critical: %d, ground: %d", (int)m_external, (int)m_critical, (int)m_ground);
+        	debug("external: %d, ground: %d", (int)m_external, (int)m_ground);
             return;
           }
 
@@ -728,8 +728,8 @@ namespace Control
                                   m_args.rc3.val_min, m_args.rc3.val_max,
                                   m_dspeed, m_args.rc3.reverse);
 
-          debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
-          debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
+          trace("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
+          trace("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
 
           uint8_t buf[512];
 
@@ -1223,7 +1223,6 @@ namespace Control
         void
         loiterHere(void)
         {
-
           if ((getEntityState() != IMC::EntityState::ESTA_NORMAL) || m_external || m_ground)
             return;
 
@@ -1542,7 +1541,7 @@ namespace Control
                 switch ((int)m_msg.msgid)
                 {
                   default:
-                    debug("UNDEF: %u", m_msg.msgid);
+                    trace("UNDEF: %u", m_msg.msgid);
                     break;
                   case MAVLINK_MSG_ID_HEARTBEAT:
                     trace("HEARTBEAT");
