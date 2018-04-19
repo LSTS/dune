@@ -265,12 +265,12 @@ namespace Maneuver
         .description("Safe depth change to consider the maneuver was successful");
 
         param("ScheduledGoto -- Minimum Speed", m_args.scheduled.min_speed)
-        .defaultValue("0.7")
+        .defaultValue("15.0")
         .units(Units::MeterPerSecond)
         .description("Move only at speeds higher than the minimum speed");
 
         param("ScheduledGoto -- Maximum Speed", m_args.scheduled.max_speed)
-        .defaultValue("1.6")
+        .defaultValue("22.0")
         .units(Units::MeterPerSecond)
         .description("Maximum commanded speed");
 
