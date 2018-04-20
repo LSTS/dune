@@ -72,11 +72,11 @@ namespace Vision
       {
       }
 
-      // Test - Receive EstimatedState message from main CPU
+      // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
       consume(const IMC::EstimatedState* e_state)
       {
-    	if(e_state->getSource() == resolveSystemName(m_args.system_id))
+    	if(e_state->getSource() == resolveSystemName(m_args.system_id) && isActive())
           debug("EstimatedState!, Height = %f", e_state->height);
       }
 
