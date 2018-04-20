@@ -288,6 +288,7 @@ namespace Simulators
         bind<IMC::DesiredSpeed>(this);
         bind<IMC::DesiredZ>(this);
         bind<IMC::DesiredPitch>(this);
+        bind<IMC::WindSpeed>(this);
       }
 
       void
@@ -578,6 +579,15 @@ namespace Simulators
 
         // ========= Debug ===========
         commandPrintOut(msg, &(msg->value));
+      }
+
+      void
+      consume(const IMC::WindSpeed* msg)
+      {
+        m_model->m_wind(0) = msg->speed * std::sin(msg->direction);
+        m_model->m_wind(1) = msg->speed * std::cos(msg->direction);
+
+        inf("wind set to (%1.2f, %1.2f)", m_model->m_wind(0), m_model->m_wind(1));
       }
 
       /*
