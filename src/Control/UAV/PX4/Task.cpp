@@ -101,10 +101,16 @@ namespace Control
         bool tcp_or_udp;
         //! UDP Address
         Address UDP_addr;
+        //! IPv4 Address
+        Address ip;
         //! Transition to FW
         bool transition_fw;
         //! Transition to MC
         bool transition_mc;
+        //! WP Threshold for FW
+        float threshold_fw;
+        //! WP Threshold for MC
+        float threshold_mc;
       };
 
 
@@ -117,8 +123,6 @@ namespace Control
         typedef std::map<int, PktHandler> PktHandlerMap;
         //! PX4 packet handling
         PktHandlerMap m_mlh;
-        //! Flag of WP changing
-        bool m_changing_wp;
         //! Flag of mission mode
         bool m_mission;
         //! Height offset between MSL and WGS84
@@ -166,7 +170,6 @@ namespace Control
         //! @param[in] ctx context.
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          m_changing_wp(false),
           m_mission(false),
           m_hae_offset(0.0),
           m_offset(false),
@@ -209,6 +212,10 @@ namespace Control
           .defaultValue("true")
           .description("Ardupilot communications timeout");
 
+          param("IPv4 - Address", m_args.ip)
+          .defaultValue("10.0.20.160")
+          .description("Address for neptus connection to PX4.");
+
           param("Transition to FW", m_args.transition_fw)
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
@@ -220,6 +227,16 @@ namespace Control
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .defaultValue("false")
          .description("Transition from fixed-wing to multi-copter.");
+
+          param("WP Threshold for FW", m_args.threshold_fw)
+          .units(Units::Meter)
+          .defaultValue("100")
+          .description("Distance (in meters) from the waypoint at which it's considered reached, for fixed-wing mode.");
+
+          param("WP Threshold for MC", m_args.threshold_mc)
+          .units(Units::Meter)
+          .defaultValue("10")
+          .description("Distance (in meters) from the waypoint at which it's considered reached, for multi-copter mode.");
 
 
           // Setup packet handlers
@@ -238,6 +255,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_RAW_IMU]               = &Task::handleImuRaw;
           m_mlh[MAVLINK_MSG_ID_EXTENDED_SYS_STATE]    = &Task::handleExtendedStatePacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_ACK]           = &Task::handleMissionAckPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM_REACHED]  = &Task::handleMissionItemReachedPacket;
           m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
 
           // Setup processing of IMC messages
@@ -249,7 +267,6 @@ namespace Control
           bind<Loiter>(this);
           bind<Takeoff>(this);
 
-
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
           m_estate.clear();
@@ -260,6 +277,15 @@ namespace Control
         onResourceAcquisition(void)
         {
           openConnection();
+
+          // Announce IPv4 address to allow neptus to load/write PX4 parameters
+          std::stringstream os;
+          os << "mavlink+tcp://" << m_args.ip << ":" << m_args.TCP_port << "/";
+
+          IMC::AnnounceService announce;
+          announce.service = os.str();
+          announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+          dispatch(announce);
         }
 
         void
@@ -356,12 +382,9 @@ namespace Control
           if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO && !m_mission)
           {
             inf("Setting LOITER mode.");
-            m_mission = 0;
             clearMission();
             m_pcs.clear();
             dispatch(m_pcs);
-            m_dpath.clear();
-            dispatch(m_dpath);
             sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
           }
         }
@@ -408,8 +431,6 @@ namespace Control
             return;
           }
 
-          m_mission = true;
-
           // Setting Desired Airspeed
           sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, 0, tkoff->speed, 0, 0, 0, 0, 0);
 
@@ -439,7 +460,7 @@ namespace Control
           sendData(buf, n);
 
           // Set AUTO mode and TAKEOFF submode
-          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_MISSION);
+          sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF);
           inf("Setting TAKEOFF mode.");
 
           // Update PathControlState
@@ -475,7 +496,6 @@ namespace Control
 
           if(!m_mission)
           {
-            clearMission();
             m_mission = true;
 
             // Check if transition was required
@@ -537,8 +557,11 @@ namespace Control
             sendData(buf, n);
 
             // Set AUTO mode and MISSION submode
-            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_MISSION);
-            inf("Setting MISSION mode.");
+            if(std::strcmp(m_mode.mode.c_str(), "MISSION"))
+            {
+              sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_MISSION);
+              inf("Setting MISSION mode.");
+            }
 
             //! Dispatch PathControlState
             m_pcs.start_lat = m_estate.lat;
@@ -557,7 +580,6 @@ namespace Control
             dispatch(m_pcs);
 
             // Update WP info
-            m_changing_wp = true;
             m_last_wp = Clock::get();
             m_duration = 0;
           }
@@ -934,18 +956,15 @@ namespace Control
         handleStatusTextPacket(const mavlink_message_t* msg)
         {
           spew("TEXT");
-
           mavlink_statustext_t stat_tex;
-          mavlink_msg_statustext_decode(msg, &stat_tex);
-          inf("PX4 Status: %.*s", 50, stat_tex.text);
+          IMC::ApmStatus px4_status;
 
-          // Check if mission finished - if so, set LOITER mode
-          if(!std::strcmp(stat_tex.text, "mission finished, loitering") && m_mission)
-          {
-            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
-            clearMission();
-            m_mission = false;
-          }
+          mavlink_msg_statustext_decode(msg, &stat_tex);
+          px4_status.severity = stat_tex.severity;
+          px4_status.text = stat_tex.text;
+
+          inf("PX4 Status: %.*s", 50, stat_tex.text);
+          dispatch(px4_status);
         }
 
         void
@@ -1159,18 +1178,35 @@ namespace Control
           debug("Mission received, result is %d", ack.type);
 
           m_last_wp = 0;
-          m_changing_wp = false;
+        }
+
+        void
+        handleMissionItemReachedPacket(const mavlink_message_t* msg)
+        {
+          spew("MISSION_ITEM_REACHED");
+          mavlink_mission_item_reached_t reached;
+
+          mavlink_msg_mission_item_reached_decode(msg, &reached);
+          debug("Mission item %d reached.", reached.seq);
+
+          // Check if mission finished - if so, set LOITER mode
+          if(m_mission)
+          {
+            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+            clearMission();
+            m_mission = false;
+          }
         }
 
         void
         handleNavControllerPacket(const mavlink_message_t* msg)
         {
-          //TODO review and simplify!!!
+          //TODO review and simplify.
           spew("NAV_CONTROLLER");
 
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
-          //inf("WP Dist: %d", nav_out.wp_dist);  //NOT WORKING PROPERLY IN COPTER
+          spew("WP Dist: %d", nav_out.wp_dist);  //NOT WORKING PROPERLY IN COPTER
 
           float distance = 0;
           Matrix destination = Matrix(3, 1, 0.0);
@@ -1179,9 +1215,11 @@ namespace Control
           current_pos(1) = m_estate.y;
           current_pos(2) = m_estate.z;
 
-          WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.alt,
-                                          m_dpath.end_lat, m_dpath.end_lon, m_dpath.end_z,
-                                          &destination(0), &destination(1), &destination(2));
+          float alt = (m_dpath.end_z_units == IMC::Z_ALTITUDE) ? m_estate.alt : m_estate.height;
+
+          WGS84::displacement(m_estate.lat, m_estate.lon, alt,
+                              m_dpath.end_lat, m_dpath.end_lon, m_dpath.end_z,
+                              &destination(0), &destination(1), &destination(2));
 
           distance = (destination - current_pos).norm_2();
           nav_out.wp_dist = (uint16_t)distance;
@@ -1189,17 +1227,18 @@ namespace Control
           float since_last_wp = Clock::get() - m_last_wp;
           int threshold;
 
-          if(m_vtol_state == MAV_VTOL_STATE_FW) // TODO: Hardcoded thresholds...
-            threshold = 80;
+          //if(m_vtol_state == MAV_VTOL_STATE_FW && !m_args.transition_mc)
+          if(m_vtol_state == MAV_VTOL_STATE_FW)
+            threshold = m_args.threshold_fw;
           else
-            threshold = 10;
+            threshold = m_args.threshold_mc;
 
           if(nav_out.wp_dist < threshold)
           {
             if(m_dpath.lradius > 0)
               return;
 
-            debug("FL_NEAR!");
+            trace("FL_NEAR!");
             m_pcs.flags |= PathControlState::FL_NEAR;
             m_mission = 0;
           }
