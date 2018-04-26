@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -92,6 +92,10 @@
 #define DUNE_IMC_HISTORICSONARDATA 109
 //! HistoricEvent identification number.
 #define DUNE_IMC_HISTORICEVENT 110
+//! VerticalProfile identification number.
+#define DUNE_IMC_VERTICALPROFILE 111
+//! ProfileSample identification number.
+#define DUNE_IMC_PROFILESAMPLE 112
 //! Heartbeat identification number.
 #define DUNE_IMC_HEARTBEAT 150
 //! Announce identification number.
@@ -204,6 +208,8 @@
 #define DUNE_IMC_DEVDATATEXT 273
 //! DevDataBinary identification number.
 #define DUNE_IMC_DEVDATABINARY 274
+//! Force identification number.
+#define DUNE_IMC_FORCE 275
 //! SonarData identification number.
 #define DUNE_IMC_SONARDATA 276
 //! Pulse identification number.
@@ -434,6 +440,10 @@
 #define DUNE_IMC_AUTONOMOUSSECTION 493
 //! FollowPoint identification number.
 #define DUNE_IMC_FOLLOWPOINT 494
+//! Alignment identification number.
+#define DUNE_IMC_ALIGNMENT 495
+//! StationKeepingExtended identification number.
+#define DUNE_IMC_STATIONKEEPINGEXTENDED 496
 //! VehicleState identification number.
 #define DUNE_IMC_VEHICLESTATE 500
 //! VehicleCommand identification number.
@@ -462,6 +472,16 @@
 #define DUNE_IMC_FORMATIONSTATE 512
 //! ReportControl identification number.
 #define DUNE_IMC_REPORTCONTROL 513
+//! StateReport identification number.
+#define DUNE_IMC_STATEREPORT 514
+//! TransmissionRequest identification number.
+#define DUNE_IMC_TRANSMISSIONREQUEST 515
+//! TransmissionStatus identification number.
+#define DUNE_IMC_TRANSMISSIONSTATUS 516
+//! SmsRequest identification number.
+#define DUNE_IMC_SMSREQUEST 517
+//! SmsStatus identification number.
+#define DUNE_IMC_SMSSTATUS 518
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -570,6 +590,14 @@
 #define DUNE_IMC_FORMATIONCONTROLPARAMS 822
 //! FormationEvaluation identification number.
 #define DUNE_IMC_FORMATIONEVALUATION 823
+//! SoiWaypoint identification number.
+#define DUNE_IMC_SOIWAYPOINT 850
+//! SoiPlan identification number.
+#define DUNE_IMC_SOIPLAN 851
+//! SoiCommand identification number.
+#define DUNE_IMC_SOICOMMAND 852
+//! SoiState identification number.
+#define DUNE_IMC_SOISTATE 853
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
 //! NeptusBlob identification number.
@@ -610,5 +638,7 @@
 #define DUNE_IMC_TACHOGRAPH 905
 //! ApmStatus identification number.
 #define DUNE_IMC_APMSTATUS 906
+//! SadcReadings identification number.
+#define DUNE_IMC_SADCREADINGS 907
 
 #endif

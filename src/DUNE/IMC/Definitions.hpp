@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0a8e4d9f66cf472c35c9abd3c58fd140                            *
+// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -2350,6 +2350,179 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Profile Sample.
+    class ProfileSample: public Message
+    {
+    public:
+      //! Depth.
+      uint16_t depth;
+      //! Average.
+      fp32_t avg;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 112;
+      }
+
+      ProfileSample(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ProfileSample(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ProfileSample::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ProfileSample";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Vertical Profile.
+    class VerticalProfile: public Message
+    {
+    public:
+      //! Parameter.
+      enum ParameterEnum
+      {
+        //! Temperature.
+        PROF_TEMPERATURE = 0,
+        //! Salinity.
+        PROF_SALINITY = 1,
+        //! Conductivity.
+        PROF_CONDUCTIVITY = 2,
+        //! pH.
+        PROF_PH = 3,
+        //! Redox.
+        PROF_REDOX = 4,
+        //! Chlorophyll.
+        PROF_CHLOROPHYLL = 5,
+        //! Turbidity.
+        PROF_TURBIDITY = 6
+      };
+
+      //! Parameter.
+      uint8_t parameter;
+      //! Number of Samples.
+      uint8_t numsamples;
+      //! Samples.
+      MessageList<ProfileSample> samples;
+      //! Latitude.
+      fp64_t lat;
+      //! Longitude.
+      fp64_t lon;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 111;
+      }
+
+      VerticalProfile(void);
+
+      Message*
+      clone(void) const
+      {
+        return new VerticalProfile(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return VerticalProfile::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VerticalProfile";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 18;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return samples.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Heartbeat.
     class Heartbeat: public Message
     {
@@ -3297,7 +3470,9 @@ namespace DUNE
         //! Message is currently being transmitted.
         TXSTATUS_TRANSMIT = 4,
         //! Message's TTL has expired. Transmition cancelled..
-        TXSTATUS_EXPIRED = 5
+        TXSTATUS_EXPIRED = 5,
+        //! No more messages to be transmitted or received..
+        TXSTATUS_EMPTY = 6
       };
 
       //! Request Identifier.
@@ -6683,6 +6858,73 @@ namespace DUNE
       {
         return IMC::getSerializationSize(value);
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Force.
+    class Force: public Message
+    {
+    public:
+      //! Measured Force.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 275;
+      }
+
+      Force(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Force(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Force::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Force";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
@@ -10403,7 +10645,11 @@ namespace DUNE
         //! Aligned.
         AS_ALIGNED = 1,
         //! Not Supported.
-        AS_NOT_SUPPORTED = 2
+        AS_NOT_SUPPORTED = 2,
+        //! Aligning.
+        AS_ALIGNING = 3,
+        //! Wrong Medium.
+        AS_WRONG_MEDIUM = 4
       };
 
       //! State.
@@ -11606,7 +11852,9 @@ namespace DUNE
         //! Stop Braking.
         OP_STOP = 0,
         //! Start Braking.
-        OP_START = 1
+        OP_START = 1,
+        //! Revert Actuation.
+        OP_REVERT = 2
       };
 
       //! Operation.
@@ -14371,7 +14619,11 @@ namespace DUNE
         //! Near in the horizontal plane.
         PROX_XY_NEAR = 0x02,
         //! Near in the vertical plane.
-        PROX_Z_NEAR = 0x04
+        PROX_Z_NEAR = 0x04,
+        //! Unreachable in the horizontal plane.
+        PROX_XY_UNREACHABLE = 0x08,
+        //! Unreachable in the vertical plane.
+        PROX_Z_UNREACHABLE = 0x10
       };
 
       //! Controlling Source.
@@ -15790,6 +16042,179 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Alignment Maneuver.
+    class Alignment: public Maneuver
+    {
+    public:
+      //! Timeout.
+      uint16_t timeout;
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 495;
+      }
+
+      Alignment(void);
+
+      Message*
+      clone(void) const
+      {
+        return new Alignment(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Alignment::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Alignment";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 23;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Station Keeping Extended.
+    class StationKeepingExtended: public Maneuver
+    {
+    public:
+      //! Flags.
+      enum FlagsBits
+      {
+        //! Keep safe behaviour.
+        FLG_KEEP_SAFE = 0x01
+      };
+
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z Reference.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+      //! Radius.
+      fp32_t radius;
+      //! Duration.
+      uint16_t duration;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! PopUp Period.
+      uint16_t popup_period;
+      //! PopUp Duration.
+      uint16_t popup_duration;
+      //! Flags.
+      uint8_t flags;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 496;
+      }
+
+      StationKeepingExtended(void);
+
+      Message*
+      clone(void) const
+      {
+        return new StationKeepingExtended(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return StationKeepingExtended::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "StationKeepingExtended";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 37;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Vehicle State.
     class VehicleState: public Message
     {
@@ -17011,6 +17436,453 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(sys_dst);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! State Report.
+    class StateReport: public Message
+    {
+    public:
+      //! Time Stamp.
+      uint32_t stime;
+      //! Latitude.
+      fp32_t latitude;
+      //! Longitude.
+      fp32_t longitude;
+      //! Altitude.
+      uint16_t altitude;
+      //! Depth.
+      uint16_t depth;
+      //! Heading.
+      uint16_t heading;
+      //! Speed.
+      int16_t speed;
+      //! Fuel.
+      int8_t fuel;
+      //! Execution State.
+      int8_t exec_state;
+      //! Plan Checksum.
+      uint16_t plan_checksum;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 514;
+      }
+
+      StateReport(void);
+
+      Message*
+      clone(void) const
+      {
+        return new StateReport(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return StateReport::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "StateReport";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 24;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Transmission Request.
+    class TransmissionRequest: public Message
+    {
+    public:
+      //! Communication Mean.
+      enum CommunicationMeanEnum
+      {
+        //! WiFi.
+        CMEAN_WIFI = 0,
+        //! Acoustic.
+        CMEAN_ACOUSTIC = 1,
+        //! Satellite.
+        CMEAN_SATELLITE = 2,
+        //! GSM.
+        CMEAN_GSM = 3
+      };
+
+      //! Data Mode.
+      enum DataModeEnum
+      {
+        //! Inline Message.
+        DMODE_INLINEMSG = 0,
+        //! Text.
+        DMODE_TEXT = 1,
+        //! Raw Data.
+        DMODE_RAW = 2
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Communication Mean.
+      uint8_t comm_mean;
+      //! Destination System.
+      std::string destination;
+      //! Deadline.
+      fp64_t deadline;
+      //! Data Mode.
+      uint8_t data_mode;
+      //! Message Data.
+      InlineMessage<Message> msg_data;
+      //! Text Data.
+      std::string txt_data;
+      //! Raw Data.
+      std::vector<char> raw_data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 515;
+      }
+
+      TransmissionRequest(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TransmissionRequest(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TransmissionRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TransmissionRequest";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 12;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + msg_data.getSerializationSize() + IMC::getSerializationSize(txt_data) + IMC::getSerializationSize(raw_data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Transmission Status.
+    class TransmissionStatus: public Message
+    {
+    public:
+      //! Status.
+      enum StatusEnum
+      {
+        //! In progress.
+        TSTAT_IN_PROGRESS = 0,
+        //! Sent.
+        TSTAT_SENT = 1,
+        //! Delivered.
+        TSTAT_DELIVERED = 51,
+        //! Delivery is unknown.
+        TSTAT_MAYBE_DELIVERED = 52,
+        //! Input Error.
+        TSTAT_INPUT_FAILURE = 101,
+        //! Temporary Error.
+        TSTAT_TEMPORARY_FAILURE = 102,
+        //! Permanent Failure.
+        TSTAT_PERMANENT_FAILURE = 103
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Status.
+      uint8_t status;
+      //! Information.
+      std::string info;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 516;
+      }
+
+      TransmissionStatus(void);
+
+      Message*
+      clone(void) const
+      {
+        return new TransmissionStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TransmissionStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TransmissionStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(info);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SMS Transmission Request.
+    class SmsRequest: public Message
+    {
+    public:
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Destination.
+      std::string destination;
+      //! Timeout.
+      fp64_t timeout;
+      //! SMS Text.
+      std::string sms_text;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 517;
+      }
+
+      SmsRequest(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SmsRequest(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SmsRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsRequest";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 10;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(sms_text);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SMS Transmission Status.
+    class SmsStatus: public Message
+    {
+    public:
+      //! Status.
+      enum StatusEnum
+      {
+        //! Queued.
+        SMSSTAT_QUEUED = 0,
+        //! Sent.
+        SMSSTAT_SENT = 1,
+        //! Input Error.
+        SMSSTAT_INPUT_FAILURE = 101,
+        //! Error trying to send sms.
+        SMSSTAT_ERROR = 102
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Status.
+      uint8_t status;
+      //! Information.
+      std::string info;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 518;
+      }
+
+      SmsStatus(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SmsStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SmsStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SmsStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(info);
       }
 
       void
@@ -21085,7 +21957,11 @@ namespace DUNE
         //! Invalid address.
         UTS_INV_ADDR = 4,
         //! In Progress.
-        UTS_IP = 5
+        UTS_IP = 5,
+        //! Unsupported operation.
+        UTS_UNSUPPORTED = 6,
+        //! Invalid transmission size.
+        UTS_INV_SIZE = 7
       };
 
       //! Sequence Id.
@@ -21596,6 +22472,355 @@ namespace DUNE
 
       void
       setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! SOI Waypoint.
+    class SoiWaypoint: public Message
+    {
+    public:
+      //! Latitude.
+      fp32_t lat;
+      //! Longitude.
+      fp32_t lon;
+      //! Time Of Arrival.
+      uint32_t eta;
+      //! Duration.
+      uint16_t duration;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 850;
+      }
+
+      SoiWaypoint(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SoiWaypoint(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SoiWaypoint::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SoiWaypoint";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 14;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SOI Plan.
+    class SoiPlan: public Message
+    {
+    public:
+      //! Plan Identifier.
+      uint16_t plan_id;
+      //! Waypoints.
+      MessageList<SoiWaypoint> waypoints;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 851;
+      }
+
+      SoiPlan(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SoiPlan(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SoiPlan::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SoiPlan";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return waypoints.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! SOI Command.
+    class SoiCommand: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Request.
+        SOITYPE_REQUEST = 1,
+        //! Success.
+        SOITYPE_SUCCESS = 2,
+        //! Error.
+        SOITYPE_ERROR = 3
+      };
+
+      //! Command.
+      enum CommandEnum
+      {
+        //! Execute Plan.
+        SOICMD_EXEC = 1,
+        //! Stop Execution.
+        SOICMD_STOP = 2,
+        //! Set Parameters.
+        SOICMD_SET_PARAMS = 3,
+        //! Get Parameters.
+        SOICMD_GET_PARAMS = 4,
+        //! Get Plan.
+        SOICMD_GET_PLAN = 5,
+        //! Resume Execution.
+        SOICMD_RESUME = 6
+      };
+
+      //! Type.
+      uint8_t type;
+      //! Command.
+      uint8_t command;
+      //! Settings.
+      std::string settings;
+      //! Plan.
+      InlineMessage<SoiPlan> plan;
+      //! Extra Information.
+      std::string info;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 852;
+      }
+
+      SoiCommand(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SoiCommand(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SoiCommand::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SoiCommand";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(settings) + plan.getSerializationSize() + IMC::getSerializationSize(info);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! SOI State.
+    class SoiState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Executing.
+        SOISTATE_EXEC = 1,
+        //! Idle.
+        SOISTATE_IDLE = 2,
+        //! Inactive.
+        SOISTATE_INACTIVE = 3
+      };
+
+      //! State.
+      uint8_t state;
+      //! Plan Identifier.
+      uint16_t plan_id;
+      //! Waypoint Identifier.
+      uint8_t wpt_id;
+      //! Settings Checksum.
+      uint16_t settings_chk;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 853;
+      }
+
+      SoiState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SoiState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SoiState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SoiState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Message Fragment.
@@ -23056,6 +24281,88 @@ namespace DUNE
       {
         return IMC::getSerializationSize(text);
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! SADC Readings.
+    class SadcReadings: public Message
+    {
+    public:
+      //! Gain.
+      enum GainEnum
+      {
+        //! x1.
+        GAIN_X1 = 0,
+        //! x10.
+        GAIN_X10 = 1,
+        //! x100.
+        GAIN_X100 = 2
+      };
+
+      //! Channel.
+      int8_t channel;
+      //! Value.
+      int32_t value;
+      //! Gain.
+      uint8_t gain;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 907;
+      }
+
+      SadcReadings(void);
+
+      Message*
+      clone(void) const
+      {
+        return new SadcReadings(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SadcReadings::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SadcReadings";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
