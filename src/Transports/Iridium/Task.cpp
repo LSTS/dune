@@ -255,9 +255,9 @@ namespace Transports
             if (age < m_args.max_age_secs)
             {
               inf("received IMC message of type %s via Iridium from %d.", irMsg->msg->getName(), irMsg->source);
-              IMC::Message* m = irMsg->msg;
-              m->setSource(irMsg->source);
-              dispatch(m);
+              IMC::Message* m2 = irMsg->msg;
+              m2->setSource(irMsg->source);
+              dispatch(m2);
             }
             else
             {
