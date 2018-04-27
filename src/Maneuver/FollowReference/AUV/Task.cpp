@@ -345,6 +345,29 @@ namespace Maneuver
 
           updateRadius(ref, desired_path);
           int prev_mode = m_fref_state.state;
+          std::string mode;
+
+          switch (prev_mode)
+          {
+          case IMC::FollowRefState::FR_GOTO:
+        	mode = "GOTO";
+        	break;
+          case IMC::FollowRefState::FR_HOVER:
+        	mode = "Hover";
+            break;
+          case IMC::FollowRefState::FR_LOITER:
+            mode = "Loiter";
+        	break;
+          case IMC::FollowRefState::FR_ELEVATOR:
+            mode = "Elevator";
+            break;
+          default:
+            mode = "Elevator";
+            break;
+          }
+
+          debug("Mode: %s, Z_DIST: %f/%d, XY_DIST: %f/%d, TARGET_AT_SURF: %d, SAME_REF: %d",
+          				mode.c_str(), z_dist, at_z_target, xy_dist, at_xy_target, target_at_surface, still_same_reference);
 
           if (still_same_reference && prev_mode != IMC::FollowRefState::FR_WAIT)
           {
@@ -648,7 +671,8 @@ namespace Maneuver
             default:
               if (send_desired_path)
               {
-                dispatchDesiredPath(desired_path);
+            	dispatchDesiredPath(desired_path);
+            	enableMovement(true);
                 inf(DTR("hovering next to (%f, %f)."), Angles::degrees(desired_path.end_lat),
                     Angles::degrees(desired_path.end_lon));
               }
