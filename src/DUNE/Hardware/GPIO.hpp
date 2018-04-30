@@ -82,6 +82,12 @@ namespace DUNE
       getValue(void);
 
     private:
+      //! Disallow copy constructor.
+      GPIO(const GPIO&);
+
+      //! Disallow copy assignment.
+      GPIO& operator=(const GPIO&);
+
       //! GPIO number.
       unsigned int m_number;
       //! GPIO direction.
