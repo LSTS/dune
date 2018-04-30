@@ -81,6 +81,12 @@ namespace Simulators
         setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
+      std::string asHex(int byte) {
+        char b[3];
+        sprintf(b, "%02X", byte & 0xFF);
+        return std::string(b);
+      }
+
       //!
       void
       consume(const IMC::IridiumMsgTx* msg)
@@ -96,19 +102,21 @@ namespace Simulators
         ss << "Content-Type: application/hub\r\n";
         ss << "Content-Length: "<< msg->data.size()*2 << "\r\n\r\n";
 
-        ss << std::hex;
         std::vector<char>::const_iterator it = msg->data.begin();
         for(; it != msg->data.end(); it++)
-          ss << *it;
-        ss << "\r\n";
-        inf("POSTING: %s", ss.str().c_str());
+        {
+          ss << asHex(*it);
+        }
+        debug("POSTING: %s", ss.str().c_str());
+        inf("Sent message with %d bytes to %s:%d%s", (int) msg->data.size(),
+            m_args.server_address.c_str(), m_args.server_port, m_args.server_path.c_str());
         try {
           TCPSocket sock;
           Network::Address addr(m_args.server_address.c_str());
           sock.connect(addr, m_args.server_port);
           std::string data = ss.str();
           sock.write(data.c_str(), data.length());
-          sock.flushOutput();
+          sock.flush();
 
           status.status = IMC::IridiumTxStatus::TXSTATUS_OK;
           status.text = "Transmitted to Ripples (Simulation)";
