@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2018 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -61,6 +61,10 @@ namespace Sensors
       std::string adc_label;
       //! Number of channels of adc
       int number_adc;
+      //! Baseline of channels
+      float channel_baseline[c_max_adc];
+      //! Scale factor for positive detection
+      float baseline_scale;
       //! Number of channels to read/s
       int sample_rate;
     };
@@ -69,6 +73,8 @@ namespace Sensors
     {
       //! Voltage message
       IMC::Voltage m_volt[c_max_adc];
+      //! DMS Detection message
+      IMC::DmsDetection m_dms_detection[c_max_adc];
       //! Task arguments.
       Arguments m_args;
       //! Serial port device.
@@ -83,6 +89,8 @@ namespace Sensors
       uint8_t m_buffer[c_max_buffer];
       //! Flag to check correct configuration of DMS
       bool m_is_correct_conf;
+      //! Buffer for DMS readings
+      float m_dms_readings[c_max_adc];
 
       //! Constructor.
       //! @param[in] name task name.
@@ -121,6 +129,23 @@ namespace Sensors
         .minimumValue("1")
         .maximumValue("16")
         .description("Number of Channels of ADC.");
+
+        for(uint8_t i = 1; i <= c_max_adc; i++)
+        {
+          std::string option = String::str("DMS CH%u Baseline", i);
+          param(option, m_args.channel_baseline[i-1])
+          .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+          .minimumValue("0")
+          .maximumValue("4.99")
+          .description("Baseline of channel.");
+        }
+
+        param("Scale Factor Positive", m_args.baseline_scale)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("3")
+        .minimumValue("1")
+        .maximumValue("10")
+        .description("Scale Factor for Positive Detection.");
 
         param("Number Samples per s", m_args.sample_rate)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -174,6 +199,10 @@ namespace Sensors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+
+        for(uint8_t i = 0; i < c_max_adc; i++)
+          m_dms_readings[i] = -1.0;
+
         m_is_correct_conf = true;
         m_driver = new DriverDMS();
         m_poll.add(*m_uart);
@@ -311,6 +340,7 @@ namespace Sensors
                   m_volt[m_driver->m_dms.channel - 1].setDestination(getSystemId());
                   m_volt[m_driver->m_dms.channel - 1].value = (m_driver->m_dms.value * c_adc_scalor_factor) / c_adc_resolution;
                   dispatch(m_volt[m_driver->m_dms.channel - 1], DF_KEEP_TIME);
+                  processValueOfDMSChannel(m_driver->m_dms.channel, (m_driver->m_dms.value * c_adc_scalor_factor) / c_adc_resolution);
                   result = true;
                   break;
                 }
@@ -336,6 +366,38 @@ namespace Sensors
         }
 
         return result;
+      }
+
+      void
+      processValueOfDMSChannel(int channel, float value)
+      {
+        float real_value = value - m_args.channel_baseline[channel-1];
+        float valueAdc = real_value - (m_args.baseline_scale * m_args.channel_baseline[channel-1]);
+        m_dms_readings[channel-1] = valueAdc;
+        debug("DMS Sample - CH%d | R: %0.3f | V: %0.3f | S: %0.3f", channel, real_value, valueAdc, m_args.baseline_scale);
+
+        if(channel == 16)
+        {
+          m_dms_detection->setTimeStamp(m_tstamp);
+          m_dms_detection->setDestination(getSystemId());
+          m_dms_detection->ch01 = m_dms_readings[0];
+          m_dms_detection->ch02 = m_dms_readings[1];
+          m_dms_detection->ch03 = m_dms_readings[2];
+          m_dms_detection->ch04 = m_dms_readings[3];
+          m_dms_detection->ch05 = m_dms_readings[4];
+          m_dms_detection->ch06 = m_dms_readings[5];
+          m_dms_detection->ch07 = m_dms_readings[6];
+          m_dms_detection->ch08 = m_dms_readings[7];
+          m_dms_detection->ch09 = m_dms_readings[8];
+          m_dms_detection->ch10 = m_dms_readings[9];
+          m_dms_detection->ch11 = m_dms_readings[10];
+          m_dms_detection->ch12 = m_dms_readings[11];
+          m_dms_detection->ch13 = m_dms_readings[12];
+          m_dms_detection->ch14 = m_dms_readings[13];
+          m_dms_detection->ch15 = m_dms_readings[14];
+          m_dms_detection->ch16 = m_dms_readings[15];
+          dispatch(m_dms_detection, DF_KEEP_TIME);
+        }
       }
 
       bool
