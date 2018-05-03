@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
+// IMC XML MD5: a4c7cc723d498a36fc776187f8fa5ae7                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -334,4 +334,5 @@ MESSAGE(904, OpticalBackscatter)
 MESSAGE(905, Tachograph)
 MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
+MESSAGE(908, DmsDetection)
 #undef MESSAGE

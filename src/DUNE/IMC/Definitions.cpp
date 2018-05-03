@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
+// IMC XML MD5: a4c7cc723d498a36fc776187f8fa5ae7                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -25891,6 +25891,152 @@ namespace DUNE
       IMC::toJSON(os__, "channel", channel, nindent__);
       IMC::toJSON(os__, "value", value, nindent__);
       IMC::toJSON(os__, "gain", gain, nindent__);
+    }
+
+    DmsDetection::DmsDetection(void)
+    {
+      m_header.mgid = 908;
+      clear();
+    }
+
+    void
+    DmsDetection::clear(void)
+    {
+      ch01 = 0;
+      ch02 = 0;
+      ch03 = 0;
+      ch04 = 0;
+      ch05 = 0;
+      ch06 = 0;
+      ch07 = 0;
+      ch08 = 0;
+      ch09 = 0;
+      ch10 = 0;
+      ch11 = 0;
+      ch12 = 0;
+      ch13 = 0;
+      ch14 = 0;
+      ch15 = 0;
+      ch16 = 0;
+    }
+
+    bool
+    DmsDetection::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DmsDetection& other__ = static_cast<const DmsDetection&>(msg__);
+      if (ch01 != other__.ch01) return false;
+      if (ch02 != other__.ch02) return false;
+      if (ch03 != other__.ch03) return false;
+      if (ch04 != other__.ch04) return false;
+      if (ch05 != other__.ch05) return false;
+      if (ch06 != other__.ch06) return false;
+      if (ch07 != other__.ch07) return false;
+      if (ch08 != other__.ch08) return false;
+      if (ch09 != other__.ch09) return false;
+      if (ch10 != other__.ch10) return false;
+      if (ch11 != other__.ch11) return false;
+      if (ch12 != other__.ch12) return false;
+      if (ch13 != other__.ch13) return false;
+      if (ch14 != other__.ch14) return false;
+      if (ch15 != other__.ch15) return false;
+      if (ch16 != other__.ch16) return false;
+      return true;
+    }
+
+    int
+    DmsDetection::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    DmsDetection::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(ch01, ptr__);
+      ptr__ += IMC::serialize(ch02, ptr__);
+      ptr__ += IMC::serialize(ch03, ptr__);
+      ptr__ += IMC::serialize(ch04, ptr__);
+      ptr__ += IMC::serialize(ch05, ptr__);
+      ptr__ += IMC::serialize(ch06, ptr__);
+      ptr__ += IMC::serialize(ch07, ptr__);
+      ptr__ += IMC::serialize(ch08, ptr__);
+      ptr__ += IMC::serialize(ch09, ptr__);
+      ptr__ += IMC::serialize(ch10, ptr__);
+      ptr__ += IMC::serialize(ch11, ptr__);
+      ptr__ += IMC::serialize(ch12, ptr__);
+      ptr__ += IMC::serialize(ch13, ptr__);
+      ptr__ += IMC::serialize(ch14, ptr__);
+      ptr__ += IMC::serialize(ch15, ptr__);
+      ptr__ += IMC::serialize(ch16, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DmsDetection::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(ch01, bfr__, size__);
+      bfr__ += IMC::deserialize(ch02, bfr__, size__);
+      bfr__ += IMC::deserialize(ch03, bfr__, size__);
+      bfr__ += IMC::deserialize(ch04, bfr__, size__);
+      bfr__ += IMC::deserialize(ch05, bfr__, size__);
+      bfr__ += IMC::deserialize(ch06, bfr__, size__);
+      bfr__ += IMC::deserialize(ch07, bfr__, size__);
+      bfr__ += IMC::deserialize(ch08, bfr__, size__);
+      bfr__ += IMC::deserialize(ch09, bfr__, size__);
+      bfr__ += IMC::deserialize(ch10, bfr__, size__);
+      bfr__ += IMC::deserialize(ch11, bfr__, size__);
+      bfr__ += IMC::deserialize(ch12, bfr__, size__);
+      bfr__ += IMC::deserialize(ch13, bfr__, size__);
+      bfr__ += IMC::deserialize(ch14, bfr__, size__);
+      bfr__ += IMC::deserialize(ch15, bfr__, size__);
+      bfr__ += IMC::deserialize(ch16, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DmsDetection::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(ch01, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch02, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch03, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch04, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch05, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch06, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch07, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch08, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch09, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch10, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch11, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch12, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch13, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch14, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch15, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ch16, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    DmsDetection::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "ch01", ch01, nindent__);
+      IMC::toJSON(os__, "ch02", ch02, nindent__);
+      IMC::toJSON(os__, "ch03", ch03, nindent__);
+      IMC::toJSON(os__, "ch04", ch04, nindent__);
+      IMC::toJSON(os__, "ch05", ch05, nindent__);
+      IMC::toJSON(os__, "ch06", ch06, nindent__);
+      IMC::toJSON(os__, "ch07", ch07, nindent__);
+      IMC::toJSON(os__, "ch08", ch08, nindent__);
+      IMC::toJSON(os__, "ch09", ch09, nindent__);
+      IMC::toJSON(os__, "ch10", ch10, nindent__);
+      IMC::toJSON(os__, "ch11", ch11, nindent__);
+      IMC::toJSON(os__, "ch12", ch12, nindent__);
+      IMC::toJSON(os__, "ch13", ch13, nindent__);
+      IMC::toJSON(os__, "ch14", ch14, nindent__);
+      IMC::toJSON(os__, "ch15", ch15, nindent__);
+      IMC::toJSON(os__, "ch16", ch16, nindent__);
     }
   }
 }
