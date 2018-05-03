@@ -27,8 +27,8 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-#ifndef SENSORS_DRIVER_SADC_HPP_INCLUDED_
-#define SENSORS_DRIVER_SADC_HPP_INCLUDED_
+#ifndef SENSORS_DRIVER_DMS_HPP_INCLUDED_
+#define SENSORS_DRIVER_DMS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>
