@@ -695,6 +695,16 @@ namespace Power
           m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
           waitForCommand(CMD_PWR_CTL);
         }
+        else if (msg->op == IMC::PowerChannelControl::PCC_OP_RESTART)
+        {
+          uint8_t data[] = {id, 0};
+          m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
+          waitForCommand(CMD_PWR_CTL);
+
+          data[1] = 1;
+          m_proto.sendCommand(CMD_PWR_CTL, data, sizeof(data));
+          waitForCommand(CMD_PWR_CTL);
+        }
       }
 
       void
