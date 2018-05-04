@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: a4c7cc723d498a36fc776187f8fa5ae7                            *
+// IMC XML MD5: a6ed4536c13d4a21e8e09bc8ef4da807                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -565,6 +565,17 @@ namespace DUNE
     class RestartSystem: public Message
     {
     public:
+      //! Restart Type.
+      enum RestartTypeEnum
+      {
+        //! Dune.
+        RSTYPE_DUNE = 1,
+        //! System.
+        RSTYPE_SYSTEM = 2
+      };
+
+      //! Restart Type.
+      uint8_t type;
 
       static uint16_t
       getIdStatic(void)
@@ -582,6 +593,9 @@ namespace DUNE
 
       void
       clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
 
       int
       validate(void) const;
@@ -610,8 +624,11 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 1;
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Device Calibration Control.
@@ -9358,7 +9375,9 @@ namespace DUNE
         //! Reset Schedules.
         PCC_OP_SCHED_RESET = 5,
         //! Save Current State.
-        PCC_OP_SAVE = 6
+        PCC_OP_SAVE = 6,
+        //! Restart.
+        PCC_OP_RESTART = 7
       };
 
       //! Channel Name.
