@@ -34,6 +34,14 @@ namespace Transports {
     namespace FalkorData {
         using DUNE_NAMESPACES;
 
+        enum Code
+        {
+            GPGGA,
+            GPGLL,
+            GPHDT,
+            ERROR
+        };
+
         //! %Task arguments.
         struct Arguments {
             //! TCP Port
@@ -43,6 +51,7 @@ namespace Transports {
         };
 
         struct Task : public DUNE::Tasks::Task {
+            char m_buf[512];
             //! Task arguments.
             Arguments m_args;
             //! TCP socket
@@ -131,11 +140,152 @@ namespace Transports {
                 }
             }
 
+
+            std::string handleGPGGA(Parsers::NMEAReader& reader) {
+
+                std::string list = "";
+                std::string tmp;
+
+                list += "time=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", latitude=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", latitude direction=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", longitude=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", longitude direction=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", quality=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", number satellites=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", HDOP=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", altitude=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", altitude units=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", height=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", height units=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", last DGPS=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                list += ", station Id=";
+                reader.operator>>(tmp);
+                list += tmp;
+
+                war(DTR("LISTA RESULTADO: '%s'"), list.c_str());
+
+                return list;
+            }
+
+            Code resolveCode(const char *code) {
+                if( strcmp(code, "GPGGA") == 0)
+                    return GPGGA;
+                if( strcmp(code, "GPGLL") == 0)
+                    return GPGLL;
+                if( strcmp(code, "GPHDT") == 0)
+                    return GPHDT;
+                return ERROR;
+            }
+
+
             void
             handleFalkorData(void)
             {
-                 //todo logic
+                int n = receiveData(m_buf, sizeof(m_buf));
+                if (n < 0) {
+                    debug("Receive error");
+                    return;
+                }
+
+                war(DTR("Falkor data - RECEIVE DATA!!!!"));
+                war(DTR("DATA: '%s'"), m_buf);
+
+
+              /*
+               // Dados seabird
+               IMC::UnderwayData msg;
+               msg.type = "Seabird SBE-45";
+               msg.list = std::string(m_buf);
+               dispatch(msg);
+               */
+
+
+                Parsers::NMEAReader reader(m_buf);
+                IMC::UnderwayData msg;
+                msg.type = reader.code();
+
+                switch (resolveCode(reader.code()))
+                {
+                    case GPGGA:
+                       msg.list = handleGPGGA(reader);
+                        break;
+                    case GPGLL:
+                        //todo something
+                        break;
+                    case GPHDT:
+                        //todo something
+                        break;
+                    default:
+                        break;
+                }
+
+                dispatch(msg);
             }
+
+            int
+            receiveData(char* buf, size_t blen)
+            {
+                if (m_TCP_sock)
+                {
+                    try
+                    {
+                        return m_TCP_sock->read(buf, blen);
+                    }
+                    catch (std::runtime_error& e)
+                    {
+                        err("%s", e.what());
+                        war(DTR("Connection lost, retrying..."));
+                        Memory::clear(m_TCP_sock);
+
+                        m_TCP_sock = new Network::TCPSocket;
+                        m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+                        return 0;
+                    }
+                }
+                return 0;
+            }
+
+
         };
     }
 }
