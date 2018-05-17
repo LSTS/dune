@@ -131,6 +131,8 @@ namespace Control
         bool m_offset;
         //! Loiter maneuver duration
         int m_duration;
+        //! Vehicle State is "Maneuver"
+        bool m_maneuver;
 
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
@@ -174,6 +176,7 @@ namespace Control
           m_hae_offset(0.0),
           m_offset(false),
           m_duration(0),
+          m_maneuver(false),
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
           m_sysid(1),
@@ -267,6 +270,7 @@ namespace Control
           bind<Loiter>(this);
           bind<Takeoff>(this);
           bind<Land>(this);
+          bind<VehicleState>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -369,7 +373,7 @@ namespace Control
         {
           // Set ground pressure (used for Planes)
           if (msg->op == IMC::DevCalibrationControl::DCAL_START)
-            sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 1);
+            sendCommandPacket(MAV_CMD_PREFLIGHT_CALIBRATION, 0, 0, 0, 0, 0, 2, 0);
 
           (void)msg;
         }
@@ -380,7 +384,8 @@ namespace Control
           m_cloops = *cloops;
 
           // Set LOITER mode if in AUTO and no plan.
-          if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO && !m_mission)
+          if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO && !m_mission
+              && !m_maneuver && std::strcmp(m_mode.mode.c_str(), "LAND"))
           {
             inf("Setting LOITER mode.");
             clearMission();
@@ -412,6 +417,12 @@ namespace Control
         consume(const IMC::Loiter* msg)
         {
           m_duration = msg->duration;
+        }
+
+        void
+        consume(const IMC::VehicleState* msg)
+        {
+          m_maneuver = (msg->op_mode == IMC::VehicleState::VS_MANEUVER);
         }
 
         void
@@ -529,7 +540,7 @@ namespace Control
            n = mavlink_msg_to_send_buffer(buf, &msg);
            sendData(buf, n);
 
-           // Set AUTO mode and TAKEOFF submode
+           // Set AUTO mode and LAND submode
            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LAND);
            inf("Setting LAND mode.");
         }
@@ -911,8 +922,6 @@ namespace Control
             m_hae_offset = wmm.height(m_estate.lat, m_estate.lon);
             m_offset = true;
           }
-          else
-            m_hae_offset = 0;
           m_estate.height = (double) gp.alt * 1e-3 + m_hae_offset; // WGS84
 
           m_estate.x = 0;
@@ -1245,12 +1254,13 @@ namespace Control
           mavlink_msg_mission_item_reached_decode(msg, &reached);
           debug("Mission item %d reached.", reached.seq);
 
-          // Check if mission finished - if so, set LOITER mode
-          if(m_mission)
+          // Check if timed loiter finished
+          if(m_mission && m_dpath.lradius)
           {
             sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
             clearMission();
             m_mission = false;
+            debug("Timed loiter ended.");
           }
         }
 
@@ -1283,7 +1293,6 @@ namespace Control
           float since_last_wp = Clock::get() - m_last_wp;
           int threshold;
 
-          //if(m_vtol_state == MAV_VTOL_STATE_FW && !m_args.transition_mc)
           if(m_vtol_state == MAV_VTOL_STATE_FW)
             threshold = m_args.threshold_fw;
           else
