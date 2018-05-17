@@ -46,6 +46,28 @@
                 ERROR
             };
 
+            std::string GPGGA_NAMES[] = {"utc=", ",lat=", ",lat dir=",",lon=",
+            ",lon dir=", ",quality=", ",#sats=", ",hdop=", ",alt=", ",a-units=",
+            ",undulation=", ",u-units=", ",age=", ",stn ID="};
+
+            std::string GPGLL_NAMES[] = {"lat=", ",lat dir=", ",lon=",
+             ",lon dir=", ",utc=", ",data status=", ",mode ind="};
+
+            std::string GPHDT_NAMES[] = {"heading=", ",true="};
+
+            std::string GPRMC_NAMES[] = {"utc=",",pos status=",",lat=",",lat dir=",
+            ",lon=",",lon dir=",",speed kn=",",track true=",",date=",
+            ",mag var=",",var dir=", ",mode ind="};
+
+            std::string GPROT_NAMES[] = {"rate turn=",",validity="};
+
+            std::string GPVTG_NAMES[] = {"track true=",",T=", "track mag=", "M=",
+             ",ground speed=", ",speed-units=", ",ground speed=",",speed-units=", ",mode ind="};
+
+            std::string GPZDA_NAMES[] = {"utc=",",day=",",month=",",year=",",local zone h=",",local zone min="};
+
+            std::string ERROR_NAMES[] = {"ERROR"};
+
             //! %Task arguments.
             struct Arguments {
                 //! TCP Port
@@ -166,262 +188,54 @@
                     return ERROR;
                 }
 
-                std::string handleGPGGA(Parsers::NMEAReader& reader) {
+                std::vector<std::string>
+                getValues(NMEAReader &reader) {
 
-                    std::string list = "";
+                    std::vector<std::string> values;
                     std::string tmp;
 
-                    list += "time=";
-                    reader.operator>>(tmp);
-                    list += tmp;
+                    while(!reader.eos()){
+                        reader >> tmp;
+                        values.push_back(tmp);
+                    }
+                  return values;
+                }
 
-                    list += ",latitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
+                std::string
+                getMessage(const std::string* names, const std::vector<std::string> &values) {
+                    std::string list = "";
 
-                    list += ",latitude direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",longitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",longitude direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",quality=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",number satellites=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",HDOP=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",altitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",altitude units=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",height=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",height units=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",last DGPS=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",station Id=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPGGA: '%s'", list.c_str());
+                    for(size_t i = 0; i < values.size(); i++){
+                        list += names[i];
+                        list += values[i];
+                    }
 
                     return list;
                 }
 
-                std::string handleGPGLL(NMEAReader &reader) {
+                std::string*
+                getNames(NMEAReader &reader) {
 
-                    std::string list = "";
-                    std::string tmp;
+                    debug("reader.code(): %s", reader.code());
 
-                    list += "current latitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",latitude direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",current longitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",longitude direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",UTC of position=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",status=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPGLL: '%s'", list.c_str());
-
-                    return list;
-                }
-
-                std::string handleGPHDT(NMEAReader &reader) {
-                    std::string list = "";
-                    std::string tmp;
-
-                    list += "heading=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",true=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPHDT: '%s'", list.c_str());
-
-                    return list;
-                }
-
-                std::string handleGPRMC(NMEAReader &reader) {
-                    std::string list = "";
-                    std::string tmp;
-
-                    list += "time stamp=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",validity=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",current latitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",latitude direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",current longitude=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",latitude direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",speed in knots=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",true course=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",date stamp=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",variation=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",variation direction=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPRMC: '%s'", list.c_str());
-
-                    return list;
-                }
-
-                std::string handleGPROT(NMEAReader &reader) {
-                    std::string list = "";
-                    std::string tmp;
-
-                    list += "rate of turn=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",validity=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPROT: '%s'", list.c_str());
-
-                    return list;
-                }
-
-                std::string handleGPVTG(NMEAReader &reader) {
-                    std::string list = "";
-                    std::string tmp;
-
-                    list += "track made good=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",relative to true north=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    //discart 3 and 4 item - not used
-                    std::string notUsed;
-                    reader.operator>>(notUsed);
-                    reader.operator>>(notUsed);
-
-                    list += ",ground speed=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",ground speed units=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",ground speed=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",ground speed units=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPVTG: '%s'", list.c_str());
-
-                    return list;
-                }
-
-                std::string handleGPZDA(NMEAReader &reader) {
-                    std::string list = "";
-                    std::string tmp;
-
-                    list += "UTC=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",day=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",month=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",year=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",local zone hours=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    list += ",local zone minutes=";
-                    reader.operator>>(tmp);
-                    list += tmp;
-
-                    debug("GPZDA: '%s'", list.c_str());
-
-                    return list;
+                    switch (resolveCode(reader.code())) {
+                        case GPGGA:
+                            return GPGGA_NAMES;
+                        case GPGLL:
+                            return GPGLL_NAMES;
+                        case GPHDT:
+                            return GPHDT_NAMES;
+                        case GPRMC:
+                            return GPRMC_NAMES;
+                        case GPROT:
+                            return GPROT_NAMES;
+                        case GPVTG:
+                            return GPVTG_NAMES;
+                        case GPZDA:
+                            return GPZDA_NAMES;
+                        default:
+                            return ERROR_NAMES;
+                    }
                 }
 
                 void
@@ -445,36 +259,18 @@
                     std::string nmea_sentence(m_buf);
                     debug("nmea_sentence: %s",nmea_sentence.c_str());
 
+
                  try {
                     Parsers::NMEAReader reader(nmea_sentence);
                     IMC::UnderwayData msg;
                     msg.type = reader.code();
 
-                    switch (resolveCode(reader.code())) {
-                        case GPGGA:
-                            msg.list = handleGPGGA(reader);
-                            break;
-                        case GPGLL:
-                            msg.list = handleGPGLL(reader);
-                            break;
-                        case GPHDT:
-                            msg.list = handleGPHDT(reader);
-                            break;
-                        case GPRMC:
-                            msg.list = handleGPRMC(reader);
-                            break;
-                        case GPROT:
-                            msg.list = handleGPROT(reader);
-                            break;
-                        case GPVTG:
-                            msg.list = handleGPVTG(reader);
-                            break;
-                        case GPZDA:
-                            msg.list = handleGPZDA(reader);
-                            break;
-                        default:
-                        break;
-                    }
+                    std::vector<std::string> values = getValues(reader);
+                    std::string* names = getNames(reader);
+
+                    msg.list = getMessage(names, values);
+
+                    debug("MESSAGE SENDED: %s", (msg.list).c_str());
 
                     dispatch(msg);
 
