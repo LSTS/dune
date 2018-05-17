@@ -111,6 +111,10 @@ namespace Control
         float threshold_fw;
         //! WP Threshold for MC
         float threshold_mc;
+        //! Mavlink phototrigger
+        bool mavlink_phototrigger;
+        //! Debug GCS Heartbeat
+        bool heartbeat;
       };
 
 
@@ -241,6 +245,16 @@ namespace Control
           .defaultValue("10")
           .description("Distance (in meters) from the waypoint at which it's considered reached, for multi-copter mode.");
 
+          param("FLIR Duo R", m_args.mavlink_phototrigger)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .defaultValue("false")
+          .description("Mavlink phototrigger enable/disbale.");
+
+          param("GCS Heartbeat", m_args.heartbeat)
+          .defaultValue("false")
+          .description("Produce GCS heartbeat (for debugging purposes).");
+
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -327,8 +341,31 @@ namespace Control
         void
         onResourceRelease(void)
         {
-           Memory::clear(m_TCP_sock);
-           Memory::clear(m_UDP_sock);
+          Memory::clear(m_TCP_sock);
+          Memory::clear(m_UDP_sock);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if(paramChanged(m_args.mavlink_phototrigger))
+          {
+            if(m_args.mavlink_phototrigger)
+            {
+              // Issue command to start phototrigger
+              mavlink_msg_command_long_pack(255, 0, &m_msg, m_sysid, 100, MAV_CMD_IMAGE_START_CAPTURE, 0, 1, 0, 2, 0, 0, 0, 0);
+              inf("Sent IMAGE_START_CAPTURE command.");
+            }
+            else
+            {
+              // Issue command to stop phototrigger
+              mavlink_msg_command_long_pack(255, 0, &m_msg, m_sysid, 100, MAV_CMD_IMAGE_STOP_CAPTURE, 0, 0, 0, 0, 0, 0, 0, 0);
+              inf("Sent IMAGE_STOP_CAPTURE command.");
+            }
+
+            uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
+            sendData(m_buf, n);
+          }
         }
 
         void
@@ -1037,8 +1074,18 @@ namespace Control
         {
           spew("HEARTBEAT");
 
+          uint16_t n;
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
+
+          // Send GCS heartbeat (debug purposes)
+          if(m_args.heartbeat)
+          {
+            mavlink_msg_heartbeat_pack(255, 0, &m_msg, MAV_TYPE_GCS, 0, 0, 0, 0);
+            n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
+            sendData(m_buf, n);
+            spew("GCS Heartbeat");
+          }
 
           // since GCS heartbeat are actually also sent, ignore if type is a GCS (6)
           if (static_cast<MAV_TYPE>(hbt.type) == MAV_TYPE_GCS)
