@@ -30,6 +30,8 @@
     // DUNE headers.
     #include <DUNE/DUNE.hpp>
 
+    #include <DUNE/Parsers/Exceptions.hpp>
+
     namespace Transports {
         namespace FalkorData {
             using DUNE_NAMESPACES;
@@ -43,10 +45,12 @@
                 GPROT,
                 GPVTG,
                 GPZDA,
+                PRDID,
                 INGGK,
                 INGST,
                 PASHR,
                 WIMWV,
+                SBSPH,
                 ERROR
             };
 
@@ -65,7 +69,7 @@
 
             std::string GPROT_NAMES[] = {"rate turn=",",validity="};
 
-            std::string GPVTG_NAMES[] = {"track true=",",T=", ",track mag=", ",M=",
+            std::string GPVTG_NAMES[] = {"track true=",",track true indicator=", ",track mag=", ",magnetic track indicator=",
              ",ground speed=", ",speed-units=", ",ground speed=",",speed-units=", ",mode ind="};
 
             std::string GPZDA_NAMES[] = {"utc=",",day=",",month=",",year=",",local zone h=",",local zone min="};
@@ -79,6 +83,15 @@
             ",roll accurancy=", ",pitch accuracy=", ",heading accuracy=",",GPS quality flag=", ",INS status flag="};
 
             std::string WIMWV_NAMES[] = {"wind dir=",",dir ref=", ",wind speed=",",speed-units=",",sensor status="};
+
+            std::string PRDID_NAMES[] = {"pitch=",",roll=", ",sensor heading="};
+
+            std::string SBSPH_NAMES[] = {"c1=",",c2=", ",c3=",",c4=",",c5=", ",c6=", ",c7=", ",c8=",",c9=",
+                                         ",c10=", ",c11=", ",c12="};
+
+            std::string FKFLO_NAMES[] = {"c1="};
+
+            std::string FLUORO_NAMES[] ={"date=",",hour=", ",c1=",",c2=",",c3="};
 
             std::string ERROR_NAMES[] = {"ERROR"};
 
@@ -156,6 +169,7 @@
                         {
                             if (!Poll::poll(*m_TCP_sock, 1.0))
                                 continue;
+
                             handleFalkorData();
                         }
                         else
@@ -207,6 +221,10 @@
                         return PASHR;
                     if( strcmp(code, "WIMWV") == 0)
                         return WIMWV;
+                    if( strcmp(code, "PRDID") == 0)
+                        return PRDID;
+                    if( strcmp(code, "SBSPH") == 0)
+                        return SBSPH;
                     return ERROR;
                 }
 
@@ -223,6 +241,34 @@
                   return values;
                 }
 
+                std::vector<std::string>
+                getValues(std::string str, bool codes) {
+
+                    std::replace(str.begin(), str.end(), ',', ' ');
+                    std::replace(str.begin(), str.end(), '*', ' ');
+                    std::vector<std::string> values;
+                    std::stringstream ss(str);
+                    std::string temp;
+
+                    bool last = codes;
+
+                    while (ss >> temp) {
+
+                        if(codes){
+                            codes = false;
+                            continue;
+                        }
+
+                        values.push_back(temp);
+                    }
+
+                    if(last) {
+                        values.pop_back();
+                    }
+
+                    return values;
+                }
+
                 std::string
                 getMessage(const std::string* names, const std::vector<std::string> &values) {
                     std::string list = "";
@@ -237,8 +283,6 @@
 
                 std::string*
                 getNames(NMEAReader &reader) {
-
-                    debug("reader.code(): %s", reader.code());
 
                     switch (resolveCode(reader.code())) {
                         case GPGGA:
@@ -263,6 +307,10 @@
                             return PASHR_NAMES;
                         case WIMWV:
                             return WIMWV_NAMES;
+                        case PRDID:
+                            return PRDID_NAMES;
+                        case SBSPH:
+                            return SBSPH_NAMES;
                         default:
                             return ERROR_NAMES;
                     }
@@ -277,36 +325,52 @@
                         return;
                     }
 
-                  /*
-                   // Dados seabird
-                   IMC::UnderwayData msg;
-                   msg.type = "Seabird SBE-45";
-                   msg.list = std::string(m_buf);
-                   dispatch(msg);
-                   */
-
                     debug("RECEIVED: %s",m_buf);
-                    std::string nmea_sentence(m_buf);
-                    debug("nmea_sentence: %s",nmea_sentence.c_str());
 
+                    std::string nmea_sentence(m_buf);
+
+                    IMC::UnderwayData msg;
 
                  try {
                     Parsers::NMEAReader reader(nmea_sentence);
-                    IMC::UnderwayData msg;
                     msg.type = reader.code();
 
                     std::vector<std::string> values = getValues(reader);
                     std::string* names = getNames(reader);
 
                     msg.list = getMessage(names, values);
-
-                    debug("MESSAGE SENDED: %s", (msg.list).c_str());
-
-                    dispatch(msg);
-
-                } catch(Exception ChecksumMismatch) {
-                     war(DTR("Error in Check Sum"));
                  }
+                 catch(InvalidSentence e){
+                     std::string str = std::string(m_buf);
+
+                     if (str.find("#Q")!=std::string::npos){
+                         msg.type = "Gill MetPak Pro";
+                         msg.list = getMessage(SBSPH_NAMES, getValues(str,true));
+                     }
+                     else if(str.find("t1")!=std::string::npos) {
+                         msg.type = "Seabird SBE-45";
+                         msg.list = std::string(m_buf);
+                     }
+                     else if(str.find("/")!=std::string::npos) {
+                         msg.type = "Wet Labs Fluorometer";
+                         msg.list = getMessage(FLUORO_NAMES, getValues(str,false));
+                     }
+                     else {
+                         msg.type = "Valeport MiniSV";
+                         msg.list = "c1=" + std::string(m_buf);
+                     }
+
+                 }
+                 catch(Parsers::ChecksumMismatch e) {
+                     std::string str = std::string(m_buf);
+                     if (str.find("$FKFLO")!=std::string::npos){
+                         msg.type = "FKFLO";
+                         msg.list = getMessage(FKFLO_NAMES, getValues(str,true));
+                     }
+                 }
+
+                    debug("MESSAGE SENDED: %s - %s", msg.type.c_str(), msg.list.c_str());
+                    dispatch(msg);
                 }
 
                 int
