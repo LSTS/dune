@@ -29,6 +29,7 @@
 
     // DUNE headers.
     #include <DUNE/DUNE.hpp>
+    #include <regex.h>
 
     #include <DUNE/Parsers/Exceptions.hpp>
 
@@ -347,21 +348,26 @@
                          msg.type = "Gill MetPak Pro";
                          msg.list = getMessage(SBSPH_NAMES, getValues(str,true));
                      }
-                     else if(str.find("t1")!=std::string::npos) {
+                     else if(str.find("t1=")!=std::string::npos) {
                          msg.type = "Seabird SBE-45";
                          msg.list = std::string(m_buf);
                      }
-                     else if(str.find("/")!=std::string::npos) {
-                         msg.type = "Wet Labs Fluorometer";
-                         msg.list = getMessage(FLUORO_NAMES, getValues(str,false));
-                     }
                      else {
-                         msg.type = "Valeport MiniSV";
-                         msg.list = "c1=" + std::string(m_buf);
-                     }
+                         regex_t regex;
+                         int reti = regcomp(&regex, "[0-9][0-9]\\/[0-9][0-9]\\/[0-9][0-9][ \\d\\.\\s][0-9][0-9]:[0-9][0-9]:[0-9][0-9][ \\d\\.\\s]/$", REG_EXTENDED|REG_ICASE);
 
+                         if (reti == 0 && regexec(&regex, std::string(m_buf).c_str() , 0, NULL, 0)) {
+                             msg.type = "Wet Labs Fluorometer";
+                             msg.list = getMessage(FLUORO_NAMES, getValues(str,false));
+                         }
+                         else {
+                             msg.type = "Valeport MiniSV";
+                             msg.list = "c1=" + std::string(m_buf);
+                         }
+                     }
                  }
                  catch(Parsers::ChecksumMismatch e) {
+                     //todo verify if this message have invalid checksum always
                      std::string str = std::string(m_buf);
                      if (str.find("$FKFLO")!=std::string::npos){
                          msg.type = "FKFLO";
