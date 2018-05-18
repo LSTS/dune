@@ -45,6 +45,7 @@ namespace Transports
     {
       //! Period, in seconds, between state report transmissions over iridium
       int iridium_period;
+      //! Enable CommManager to process and convert legacy message -> AcousticOperation
       bool enable_acoustic;
     };
 
@@ -85,8 +86,8 @@ namespace Transports
                 .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
                 .defaultValue("300");
 
-        param("Enable Acoustic", m_args.enable_acoustic)
-                .description("Enable commManager to process and convert legacy message -> AcousticOperation")
+        param("Process AcousticOperation Messages", m_args.enable_acoustic)
+                .description("Enable CommManager to process and convert legacy message -> AcousticOperation")
                 .defaultValue("true");
 
 
@@ -203,12 +204,9 @@ namespace Transports
       {
         inf("Request to send data over satellite (%d)", msg->req_id);
 
-        uint16_t newId = createInternalId();
-
         IridiumMsgTx tx;
         tx.destination = msg->destination;
         tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
-        tx.req_id = newId;
         tx.setDestination(msg->getDestination());
         tx.setDestinationEntity(msg->getDestinationEntity());
 
@@ -252,6 +250,8 @@ namespace Transports
             break;
         }
 
+        uint16_t newId = createInternalId();
+        tx.req_id = newId;
         m_transmission_requests[newId] = msg->clone();
         dispatch(tx);
       }
@@ -261,10 +261,7 @@ namespace Transports
       {
         inf("Request to send data over SMS to %s (%d)", msg->destination.c_str(), msg->req_id);
 
-        uint16_t newId = createInternalId();
-
         SmsRequest sms;
-        sms.req_id = newId;
 
         sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
         if(sms.timeout < 0)
@@ -278,6 +275,10 @@ namespace Transports
         switch(msg->data_mode){
           case IMC::TransmissionRequest::DMODE_TEXT:
           {
+            if(msg->txt_data == "") {
+              answer(msg, "GSM message cannot be empty", IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+              return;
+            }
             sms.sms_text = msg->txt_data;
 
             break;
@@ -305,6 +306,8 @@ namespace Transports
                  IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
           return;
         }
+        uint16_t newId = createInternalId();
+        sms.req_id = newId;
         m_transmission_requests[newId] = msg->clone();
         dispatch(sms);
       }
@@ -317,7 +320,6 @@ namespace Transports
         uint16_t newId = createInternalId();
 
         AcousticRequest tx;
-        tx.req_id = newId;
 
         tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
         if(tx.timeout < 0)
@@ -337,9 +339,7 @@ namespace Transports
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
           {
             tx.type=IMC::AcousticRequest::TYPE_MSG;
-
-            const IMC::Message * inlinemsg = msg->msg_data.get();
-            tx.msg.set(inlinemsg->clone());
+            tx.msg.set(msg->msg_data.get()->clone());
 
             break;
           }
@@ -370,6 +370,8 @@ namespace Transports
           }
         }
 
+        uint16_t newId = createInternalId();
+        tx.req_id = newId;
         m_transmission_requests[newId] = msg->clone();
         dispatch(tx);
 
@@ -490,7 +492,8 @@ namespace Transports
 
             case (IMC::AcousticStatus::STATUS_RANGE_RECEIVED):
               answer(req, msg->info,
-                IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED);
+                IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED,
+                msg->range);
               Memory::clear(req);
               m_transmission_requests.erase(msg->req_id);
             break;
@@ -786,13 +789,13 @@ namespace Transports
       }
 
       void
-      answer(const IMC::TransmissionRequest* req, std::string info, int status)
+      answer(const IMC::TransmissionRequest* req, std::string info, int status, fp32_t range = 0.0)
       {
         IMC::TransmissionStatus msg;
         msg.info      = info;
         msg.req_id    = req->req_id;
         msg.status    = status;
-        msg.range     = req->range;
+        msg.range     = range;
         msg.setDestination(req->getSource());
         msg.setDestinationEntity(req->getSourceEntity());
         dispatch(msg);
