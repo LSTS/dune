@@ -43,6 +43,10 @@
                 GPROT,
                 GPVTG,
                 GPZDA,
+                INGGK,
+                INGST,
+                PASHR,
+                WIMWV,
                 ERROR
             };
 
@@ -61,10 +65,20 @@
 
             std::string GPROT_NAMES[] = {"rate turn=",",validity="};
 
-            std::string GPVTG_NAMES[] = {"track true=",",T=", "track mag=", "M=",
+            std::string GPVTG_NAMES[] = {"track true=",",T=", ",track mag=", ",M=",
              ",ground speed=", ",speed-units=", ",ground speed=",",speed-units=", ",mode ind="};
 
             std::string GPZDA_NAMES[] = {"utc=",",day=",",month=",",year=",",local zone h=",",local zone min="};
+
+            std::string INGGK_NAMES[] = {"c1=",",c2=", ",c3=",",c4=",",c5=", ",c6=", ",c7=", ",c8=",",c9=",
+            ",c10=", ",c11="};
+
+            std::string INGST_NAMES[] = {"c1=",",c2=", ",c3=",",c4=",",c5=", ",c6=", ",c7=", ",c8="};
+
+            std::string PASHR_NAMES[] = {"time=",",heading=", ",true heading=",",roll=",",pitch=", ",reserved=",
+            ",roll accurancy=", ",pitch accuracy=", ",heading accuracy=",",GPS quality flag=", ",INS status flag="};
+
+            std::string WIMWV_NAMES[] = {"wind dir=",",dir ref=", ",wind speed=",",speed-units=",",sensor status="};
 
             std::string ERROR_NAMES[] = {"ERROR"};
 
@@ -185,6 +199,14 @@
                         return GPVTG;
                     if( strcmp(code, "GPZDA") == 0)
                         return GPZDA;
+                    if( strcmp(code, "INGGK") == 0)
+                        return INGGK;
+                    if( strcmp(code, "INGST") == 0)
+                        return INGST;
+                    if( strcmp(code, "PASHR") == 0)
+                        return PASHR;
+                    if( strcmp(code, "WIMWV") == 0)
+                        return WIMWV;
                     return ERROR;
                 }
 
@@ -233,6 +255,14 @@
                             return GPVTG_NAMES;
                         case GPZDA:
                             return GPZDA_NAMES;
+                        case INGGK:
+                            return INGGK_NAMES;
+                        case INGST:
+                            return INGST_NAMES;
+                        case PASHR:
+                            return PASHR_NAMES;
+                        case WIMWV:
+                            return WIMWV_NAMES;
                         default:
                             return ERROR_NAMES;
                     }
@@ -275,7 +305,7 @@
                     dispatch(msg);
 
                 } catch(Exception ChecksumMismatch) {
-                     err(DTR("Error in Check Sum"));
+                     war(DTR("Error in Check Sum"));
                  }
                 }
 
