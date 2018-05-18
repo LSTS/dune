@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: a6ed4536c13d4a21e8e09bc8ef4da807                            *
+// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -17902,6 +17902,152 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(info);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! VTOL State.
+    class VtolState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Undefined.
+        VTOL_STATE_UNDEFINED = 0,
+        //! Transition to Fixed-Wing.
+        VTOL_STATE_TRANSITION_TO_FW = 1,
+        //! Transition to MultiCopter.
+        VTOL_STATE_TRANSITION_TO_MC = 2,
+        //! MutiCopter.
+        VTOL_STATE_MC = 3,
+        //! Fixed-Wing.
+        VTOL_STATE_FW = 4
+      };
+
+      //! State.
+      uint8_t state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 519;
+      }
+
+      VtolState(void);
+
+      VtolState*
+      clone(void) const
+      {
+        return new VtolState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return VtolState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VtolState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Arming State.
+    class ArmingState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Armed.
+        MOTORS_ARMED = 0,
+        //! Disarmed.
+        MOTORS_DISARMED = 1
+      };
+
+      //! State.
+      uint8_t state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 520;
+      }
+
+      ArmingState(void);
+
+      ArmingState*
+      clone(void) const
+      {
+        return new ArmingState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ArmingState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ArmingState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
       }
 
       void

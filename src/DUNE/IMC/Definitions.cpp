@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: a6ed4536c13d4a21e8e09bc8ef4da807                            *
+// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -19128,6 +19128,118 @@ namespace DUNE
       IMC::toJSON(os__, "req_id", req_id, nindent__);
       IMC::toJSON(os__, "status", status, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
+    }
+
+    VtolState::VtolState(void)
+    {
+      m_header.mgid = 519;
+      clear();
+    }
+
+    void
+    VtolState::clear(void)
+    {
+      state = 0;
+    }
+
+    bool
+    VtolState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::VtolState& other__ = static_cast<const VtolState&>(msg__);
+      if (state != other__.state) return false;
+      return true;
+    }
+
+    int
+    VtolState::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    VtolState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(state, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    VtolState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    VtolState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    VtolState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "state", state, nindent__);
+    }
+
+    ArmingState::ArmingState(void)
+    {
+      m_header.mgid = 520;
+      clear();
+    }
+
+    void
+    ArmingState::clear(void)
+    {
+      state = 0;
+    }
+
+    bool
+    ArmingState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ArmingState& other__ = static_cast<const ArmingState&>(msg__);
+      if (state != other__.state) return false;
+      return true;
+    }
+
+    int
+    ArmingState::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    ArmingState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(state, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ArmingState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ArmingState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ArmingState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "state", state, nindent__);
     }
 
     Abort::Abort(void)
