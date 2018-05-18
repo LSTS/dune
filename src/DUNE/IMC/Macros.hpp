@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
+// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -482,6 +482,10 @@
 #define DUNE_IMC_SMSREQUEST 517
 //! SmsStatus identification number.
 #define DUNE_IMC_SMSSTATUS 518
+//! VtolState identification number.
+#define DUNE_IMC_VTOLSTATE 519
+//! ArmingState identification number.
+#define DUNE_IMC_ARMINGSTATE 520
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -640,5 +644,7 @@
 #define DUNE_IMC_APMSTATUS 906
 //! SadcReadings identification number.
 #define DUNE_IMC_SADCREADINGS 907
+//! DmsDetection identification number.
+#define DUNE_IMC_DMSDETECTION 908
 
 #endif

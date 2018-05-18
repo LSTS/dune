@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
+// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -255,6 +255,8 @@ MESSAGE(515, TransmissionRequest)
 MESSAGE(516, TransmissionStatus)
 MESSAGE(517, SmsRequest)
 MESSAGE(518, SmsStatus)
+MESSAGE(519, VtolState)
+MESSAGE(520, ArmingState)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)
 MESSAGE(552, PlanManeuver)
@@ -334,4 +336,5 @@ MESSAGE(904, OpticalBackscatter)
 MESSAGE(905, Tachograph)
 MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
+MESSAGE(908, DmsDetection)
 #undef MESSAGE

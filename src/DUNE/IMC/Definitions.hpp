@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6ed42ce10f9e69cbd84b1fe2272a8a38                            *
+// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -565,6 +565,17 @@ namespace DUNE
     class RestartSystem: public Message
     {
     public:
+      //! Restart Type.
+      enum RestartTypeEnum
+      {
+        //! Dune.
+        RSTYPE_DUNE = 1,
+        //! System.
+        RSTYPE_SYSTEM = 2
+      };
+
+      //! Restart Type.
+      uint8_t type;
 
       static uint16_t
       getIdStatic(void)
@@ -582,6 +593,9 @@ namespace DUNE
 
       void
       clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
 
       int
       validate(void) const;
@@ -610,8 +624,11 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 1;
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Device Calibration Control.
@@ -9358,7 +9375,9 @@ namespace DUNE
         //! Reset Schedules.
         PCC_OP_SCHED_RESET = 5,
         //! Save Current State.
-        PCC_OP_SAVE = 6
+        PCC_OP_SAVE = 6,
+        //! Restart.
+        PCC_OP_RESTART = 7
       };
 
       //! Channel Name.
@@ -17889,6 +17908,152 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! VTOL State.
+    class VtolState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Undefined.
+        VTOL_STATE_UNDEFINED = 0,
+        //! Transition to Fixed-Wing.
+        VTOL_STATE_TRANSITION_TO_FW = 1,
+        //! Transition to MultiCopter.
+        VTOL_STATE_TRANSITION_TO_MC = 2,
+        //! MutiCopter.
+        VTOL_STATE_MC = 3,
+        //! Fixed-Wing.
+        VTOL_STATE_FW = 4
+      };
+
+      //! State.
+      uint8_t state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 519;
+      }
+
+      VtolState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new VtolState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return VtolState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VtolState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Arming State.
+    class ArmingState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Armed.
+        MOTORS_ARMED = 0,
+        //! Disarmed.
+        MOTORS_DISARMED = 1
+      };
+
+      //! State.
+      uint8_t state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 520;
+      }
+
+      ArmingState(void);
+
+      Message*
+      clone(void) const
+      {
+        return new ArmingState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ArmingState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ArmingState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Abort.
     class Abort: public Message
     {
@@ -24363,6 +24528,97 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! DMS Detection.
+    class DmsDetection: public Message
+    {
+    public:
+      //! Channel 1.
+      fp32_t ch01;
+      //! Channel 2.
+      fp32_t ch02;
+      //! Channel 3.
+      fp32_t ch03;
+      //! Channel 4.
+      fp32_t ch04;
+      //! Channel 5.
+      fp32_t ch05;
+      //! Channel 6.
+      fp32_t ch06;
+      //! Channel 7.
+      fp32_t ch07;
+      //! Channel 8.
+      fp32_t ch08;
+      //! Channel 9.
+      fp32_t ch09;
+      //! Channel 10.
+      fp32_t ch10;
+      //! Channel 11.
+      fp32_t ch11;
+      //! Channel 12.
+      fp32_t ch12;
+      //! Channel 13.
+      fp32_t ch13;
+      //! Channel 14.
+      fp32_t ch14;
+      //! Channel 15.
+      fp32_t ch15;
+      //! Channel 16.
+      fp32_t ch16;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 908;
+      }
+
+      DmsDetection(void);
+
+      Message*
+      clone(void) const
+      {
+        return new DmsDetection(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DmsDetection::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DmsDetection";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 64;
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
