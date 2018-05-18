@@ -100,6 +100,7 @@ namespace Transports
         bind<IMC::PlanSpecification>(this);
         bind<IMC::Sms>(this);
         bind<IMC::SmsStatus>(this);
+        bind<IMC::TCPStatus>(this);
         bind<IMC::TransmissionRequest>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
@@ -205,6 +206,7 @@ namespace Transports
         inf("Request to send data over satellite (%d)", msg->req_id);
 
         IridiumMsgTx tx;
+
         tx.destination = msg->destination;
         tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
         tx.setDestination(msg->getDestination());
@@ -313,11 +315,55 @@ namespace Transports
       }
 
       void
+      sendViaTCP(const IMC::TransmissionRequest* msg)
+      {
+        inf("Request to send data over TCP to %s (%d)",
+            msg->destination.c_str(), msg->req_id);
+
+        TCPRequest send;
+
+        send.timeout = msg->deadline;
+        if (send.timeout < 0)
+          send.timeout = 0;
+
+        if (msg->destination.empty())
+        {
+          answer(msg, "Destination of message can not be empty.",
+                 IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+          return;
+        }
+        else
+        {
+          send.destination = msg->destination;
+        }
+
+        switch(msg->data_mode){
+          case IMC::TransmissionRequest::DMODE_INLINEMSG:
+          {
+            send.msg_data.set(msg->msg_data.get()->clone());
+            break;
+          }
+          default:
+          {
+            answer(msg, "Communication mode not implemented for communication mean GSM", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+            return;
+
+            break;
+          }
+        }
+
+
+        uint16_t newId = createInternalId();
+        send.req_id = newId;
+        m_transmission_requests[newId] = msg->clone();
+        dispatch(send);
+
+      }
+
+      void
       sendViaAcoustic(const IMC::TransmissionRequest* msg)
       {
         inf("Request to send data over Acoustic to %s (%d)", msg->destination.c_str(), msg->req_id);
-
-        uint16_t newId = createInternalId();
 
         AcousticRequest tx;
 
@@ -376,6 +422,8 @@ namespace Transports
         dispatch(tx);
 
       }
+
+      void
 
       void
       consume(const IMC::IridiumTxStatus* msg)
@@ -664,6 +712,57 @@ namespace Transports
       }
 
       void
+      consume(const IMC::TCPStatus* msg){
+        if (msg->getSource() != getSystemId())
+          return;
+        if (m_transmission_requests.find(msg->req_id)
+            != m_transmission_requests.end())
+        {
+          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+          switch (msg->status)
+          {
+            case (IMC::TCPStatus::TCPSTAT_QUEUED):
+              answer(req, "Message has been queued for transmission.",
+                     IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+              break;
+
+            case (IMC::TCPStatus::TCPSTAT_SENT):
+              answer(req, "Message has been sent via TCP.",
+                     IMC::TransmissionStatus::TSTAT_SENT);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+
+            case (IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN):
+              answer(req, msg->info,
+                     IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+
+            case (IMC::TCPStatus::TCPSTAT_CANT_CONNECT):
+              answer(req, msg->info,
+                     IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+
+            case (IMC::TCPStatus::TCPSTAT_INPUT_FAILURE):
+              answer(req, msg->info,
+                     IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+              Memory::clear(req);
+              m_transmission_requests.erase(msg->req_id);
+              break;
+
+            default:
+              inf("ERROR: TCPStatus -> status not implemented");
+              break;
+          }
+        }
+
+      }
+
+      void
       consume(const IMC::TransmissionRequest* msg) {
         if (msg->getSource() != getSystemId()
           && msg->getDestination() != getSystemId())
@@ -679,7 +778,9 @@ namespace Transports
           case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
 				    sendViaAcoustic(msg);
           break;
-
+          case (IMC::TransmissionRequest::CMEAN_WIFI):
+            sendViaTCP(msg);
+          break;
           default:
             answer(msg, "Communication mean not implemented.",
               IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
