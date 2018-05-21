@@ -1077,6 +1077,7 @@ namespace Control
           uint16_t n;
           mavlink_heartbeat_t hbt;
           mavlink_msg_heartbeat_decode(msg, &hbt);
+          IMC::ArmingState arming;
 
           // Send GCS heartbeat (debug purposes)
           if(m_args.heartbeat)
@@ -1093,6 +1094,13 @@ namespace Control
 
           if (hbt.system_status == MAV_STATE_CRITICAL)
             war("PX4 failsafe active");
+
+          // Update motors current ArmingState
+          if (hbt.base_mode & MAV_MODE_FLAG_SAFETY_ARMED)
+            arming.state = IMC::ArmingState::MOTORS_ARMED;
+          else
+            arming.state = IMC::ArmingState::MOTORS_DISARMED;
+          dispatch(arming);
 
           uint8_t px4_mode = hbt.custom_mode >> 16;
           uint8_t px4_submode =  hbt.custom_mode >> 24;
@@ -1271,13 +1279,16 @@ namespace Control
         {
           spew("EXTENDED_SYSTEM_STATE");
 
+          IMC::VtolState vtol;
           mavlink_extended_sys_state_t extended_state;
           mavlink_msg_extended_sys_state_decode(msg, &extended_state);
 
           // Update vtol state
           m_vtol_state = (VTOL_State)extended_state.vtol_state;
 
-          //TODO Add VTOL_State to IMC so we can send it upstream.
+          // Dispatch vtol state
+          vtol.state = m_vtol_state;
+          dispatch(vtol);
         }
 
         void
