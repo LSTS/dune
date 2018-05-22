@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
+// IMC XML MD5: 4f17d060f6f9d32d249c24b9b10a9311                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -85,6 +85,8 @@ MESSAGE(185, CompressedHistory)
 MESSAGE(186, HistoricSample)
 MESSAGE(187, HistoricDataQuery)
 MESSAGE(188, RemoteCommand)
+MESSAGE(189, CommSystemsQuery)
+MESSAGE(190, TelemetryMsg)
 MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)

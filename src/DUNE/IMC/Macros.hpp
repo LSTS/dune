@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
+// IMC XML MD5: 4f17d060f6f9d32d249c24b9b10a9311                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -142,6 +142,10 @@
 #define DUNE_IMC_HISTORICDATAQUERY 187
 //! RemoteCommand identification number.
 #define DUNE_IMC_REMOTECOMMAND 188
+//! CommSystemsQuery identification number.
+#define DUNE_IMC_COMMSYSTEMSQUERY 189
+//! TelemetryMsg identification number.
+#define DUNE_IMC_TELEMETRYMSG 190
 //! LblRange identification number.
 #define DUNE_IMC_LBLRANGE 200
 //! LblBeacon identification number.

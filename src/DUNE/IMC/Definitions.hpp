@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
+// IMC XML MD5: 4f17d060f6f9d32d249c24b9b10a9311                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -4298,6 +4298,253 @@ namespace DUNE
 
       void
       setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Communication Systems Query.
+    class CommSystemsQuery: public Message
+    {
+    public:
+      //! Model.
+      enum ModelEnum
+      {
+        //! unknown.
+        CIQ_UNKNOWN = 0x00,
+        //! 3DR.
+        CIQ_3DR = 0x01,
+        //! RDFXXXxPtP.
+        CIQ_RDFXXXXPTP = 0x02
+      };
+
+      //! Type.
+      enum TypeBits
+      {
+        //! Query Systems.
+        CIQ_QUERY = 0x01,
+        //! Reply.
+        CIQ_REPLY = 0x02
+      };
+
+      //! Communication Interface.
+      enum CommunicationInterfaceBits
+      {
+        //! Acoustic.
+        CIQ_ACOUSTIC = 0x01,
+        //! Satellite.
+        CIQ_SATELLITE = 0x02,
+        //! GSM.
+        CIQ_GSM = 0x04,
+        //! Mobile.
+        CIQ_MOBILE = 0x08,
+        //! Radio.
+        CIQ_RADIO = 0x10
+      };
+
+      //! Type.
+      uint8_t type;
+      //! Communication Interface.
+      uint16_t comm_interface;
+      //! Model.
+      uint16_t model;
+      //! System List.
+      std::string list;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 189;
+      }
+
+      CommSystemsQuery(void);
+
+      CommSystemsQuery*
+      clone(void) const
+      {
+        return new CommSystemsQuery(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return CommSystemsQuery::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "CommSystemsQuery";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(list);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Telemetry Message.
+    class TelemetryMsg: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Tx.
+        TM_TX = 0x01,
+        //! Rx.
+        TM_RX = 0x02,
+        //! TxStatus.
+        TM_TXSTATUS = 0x03
+      };
+
+      //! Code.
+      enum CodeEnum
+      {
+        //! Code unknown.
+        TM_CODE_UNK = 0x00,
+        //! Code Report.
+        TM_CODE_REPORT = 0x01,
+        //! Code IMC.
+        TM_CODE_IMC = 0x02,
+        //! Code raw.
+        TM_CODE_RAW = 0x03
+      };
+
+      //! Status.
+      enum StatusEnum
+      {
+        //! Does not apply.
+        TM_NONE = 0x00,
+        //! Successfull transmission.
+        TM_DONE = 1,
+        //! Error while trying to transmit message.
+        TM_FAILED = 2,
+        //! Message has been queued for transmission.
+        TM_QUEUED = 3,
+        //! Message is currently being transmitted.
+        TM_TRANSMIT = 4,
+        //! Message's TTL has expired. Transmition cancelled.
+        TM_EXPIRED = 5,
+        //! No more messages to be transmitted or received.
+        TM_EMPTY = 6,
+        //! Invalid address.
+        TM_INV_ADDR = 7,
+        //! Invalid transmission size.
+        TM_INV_SIZE = 8
+      };
+
+      //! Acknowledge.
+      enum AcknowledgeBits
+      {
+        //! Not acknowledge.
+        TM_NAK = 0x00,
+        //! acknowledge.
+        TM_AK = 0x01
+      };
+
+      //! Type.
+      uint8_t type;
+      //! Request Identifier.
+      uint32_t req_id;
+      //! Time to live.
+      uint16_t ttl;
+      //! Code.
+      uint8_t code;
+      //! Destination Identifier.
+      std::string destination;
+      //! Source Identifier.
+      std::string source;
+      //! Acknowledge.
+      uint8_t acknowledge;
+      //! Status.
+      uint8_t status;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 190;
+      }
+
+      TelemetryMsg(void);
+
+      TelemetryMsg*
+      clone(void) const
+      {
+        return new TelemetryMsg(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TelemetryMsg::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TelemetryMsg";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 10;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(source) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! LBL Range.
@@ -17389,7 +17636,9 @@ namespace DUNE
         //! GSM.
         CI_GSM = 0x04,
         //! Mobile.
-        CI_MOBILE = 0x08
+        CI_MOBILE = 0x08,
+        //! Radio.
+        CI_RADIO = 0x10
       };
 
       //! Operation.

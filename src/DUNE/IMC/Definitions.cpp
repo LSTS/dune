@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 66a9fcd055dc1d1843f251836a38c6bc                            *
+// IMC XML MD5: 4f17d060f6f9d32d249c24b9b10a9311                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -4241,6 +4241,184 @@ namespace DUNE
       {
         cmd.get()->setDestinationEntity(value__);
       }
+    }
+
+    CommSystemsQuery::CommSystemsQuery(void)
+    {
+      m_header.mgid = 189;
+      clear();
+    }
+
+    void
+    CommSystemsQuery::clear(void)
+    {
+      type = 0;
+      comm_interface = 0;
+      model = 0;
+      list.clear();
+    }
+
+    bool
+    CommSystemsQuery::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::CommSystemsQuery& other__ = static_cast<const CommSystemsQuery&>(msg__);
+      if (type != other__.type) return false;
+      if (comm_interface != other__.comm_interface) return false;
+      if (model != other__.model) return false;
+      if (list != other__.list) return false;
+      return true;
+    }
+
+    int
+    CommSystemsQuery::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    CommSystemsQuery::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(comm_interface, ptr__);
+      ptr__ += IMC::serialize(model, ptr__);
+      ptr__ += IMC::serialize(list, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    CommSystemsQuery::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(comm_interface, bfr__, size__);
+      bfr__ += IMC::deserialize(model, bfr__, size__);
+      bfr__ += IMC::deserialize(list, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    CommSystemsQuery::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(comm_interface, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(model, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(list, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    CommSystemsQuery::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "comm_interface", comm_interface, nindent__);
+      IMC::toJSON(os__, "model", model, nindent__);
+      IMC::toJSON(os__, "list", list, nindent__);
+    }
+
+    TelemetryMsg::TelemetryMsg(void)
+    {
+      m_header.mgid = 190;
+      clear();
+    }
+
+    void
+    TelemetryMsg::clear(void)
+    {
+      type = 0;
+      req_id = 0;
+      ttl = 0;
+      code = 0;
+      destination.clear();
+      source.clear();
+      acknowledge = 0;
+      status = 0;
+      data.clear();
+    }
+
+    bool
+    TelemetryMsg::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TelemetryMsg& other__ = static_cast<const TelemetryMsg&>(msg__);
+      if (type != other__.type) return false;
+      if (req_id != other__.req_id) return false;
+      if (ttl != other__.ttl) return false;
+      if (code != other__.code) return false;
+      if (destination != other__.destination) return false;
+      if (source != other__.source) return false;
+      if (acknowledge != other__.acknowledge) return false;
+      if (status != other__.status) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    TelemetryMsg::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    TelemetryMsg::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(ttl, ptr__);
+      ptr__ += IMC::serialize(code, ptr__);
+      ptr__ += IMC::serialize(destination, ptr__);
+      ptr__ += IMC::serialize(source, ptr__);
+      ptr__ += IMC::serialize(acknowledge, ptr__);
+      ptr__ += IMC::serialize(status, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TelemetryMsg::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(ttl, bfr__, size__);
+      bfr__ += IMC::deserialize(code, bfr__, size__);
+      bfr__ += IMC::deserialize(destination, bfr__, size__);
+      bfr__ += IMC::deserialize(source, bfr__, size__);
+      bfr__ += IMC::deserialize(acknowledge, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TelemetryMsg::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ttl, bfr__, size__);
+      bfr__ += IMC::deserialize(code, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(source, bfr__, size__);
+      bfr__ += IMC::deserialize(acknowledge, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TelemetryMsg::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "ttl", ttl, nindent__);
+      IMC::toJSON(os__, "code", code, nindent__);
+      IMC::toJSON(os__, "destination", destination, nindent__);
+      IMC::toJSON(os__, "source", source, nindent__);
+      IMC::toJSON(os__, "acknowledge", acknowledge, nindent__);
+      IMC::toJSON(os__, "status", status, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
     }
 
     LblRange::LblRange(void)
