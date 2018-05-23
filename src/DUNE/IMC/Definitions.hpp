@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4f17d060f6f9d32d249c24b9b10a9311                            *
+// IMC XML MD5: 60bae9d2a5dfb6cb336b442c839133fb                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -4310,7 +4310,7 @@ namespace DUNE
         //! unknown.
         CIQ_UNKNOWN = 0x00,
         //! 3DR.
-        CIQ_3DR = 0x01,
+        CIQ_M3DR = 0x01,
         //! RDFXXXxPtP.
         CIQ_RDFXXXXPTP = 0x02
       };
