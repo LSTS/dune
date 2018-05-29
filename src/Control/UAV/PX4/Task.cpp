@@ -115,6 +115,12 @@ namespace Control
         bool mavlink_phototrigger;
         //! Debug GCS Heartbeat
         bool heartbeat;
+        //! Moving Home
+        bool moving_home;
+        //! Basestation (Moving Home)
+        std::string basestation;
+        //! Home Position Update (Moving Home)
+        uint8_t home_update;
       };
 
 
@@ -150,6 +156,8 @@ namespace Control
         uint8_t m_buf[512];
         //! VTOL State
         VTOL_State m_vtol_state;
+        //! Moving Home timer
+        Time::Counter<float> m_timer;
 
         //! Mavlink Timeouts
         bool m_error_missing;
@@ -255,6 +263,19 @@ namespace Control
           .defaultValue("false")
           .description("Produce GCS heartbeat (for debugging purposes).");
 
+          param("Moving Home", m_args.moving_home)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .defaultValue("false")
+		  .description("Enable/Disable moving basestation feature.");
+
+          param("Basestation", m_args.basestation)
+          .defaultValue("manta-3")
+		  .description("System to consider as the basestation for moving home feature.");
+
+          param("Home Position Update", m_args.home_update)
+          .defaultValue("60")
+		  .description("Period of home position update (if moving home enabled), in seconds");
+
 
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
@@ -285,6 +306,7 @@ namespace Control
           bind<Takeoff>(this);
           bind<Land>(this);
           bind<VehicleState>(this);
+          bind<Announce>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -348,6 +370,7 @@ namespace Control
         void
         onUpdateParameters(void)
         {
+          // Mavlink Phototrigger
           if(paramChanged(m_args.mavlink_phototrigger))
           {
             if(m_args.mavlink_phototrigger)
@@ -366,6 +389,10 @@ namespace Control
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
           }
+
+          // Moving Home
+          if(paramChanged(m_args.moving_home) && m_args.moving_home)
+            m_timer.setTop(m_args.home_update);
         }
 
         void
@@ -460,6 +487,20 @@ namespace Control
         consume(const IMC::VehicleState* msg)
         {
           m_maneuver = (msg->op_mode == IMC::VehicleState::VS_MANEUVER);
+        }
+
+        void
+        consume(const IMC::Announce* msg)
+        {
+          if(std::strcmp(m_args.basestation.c_str(), msg->sys_name.c_str()))
+            return;
+
+          if(m_timer.overflow() && m_args.moving_home)
+          {
+            sendCommandPacket(MAV_CMD_DO_SET_HOME, 0, 0, 0, 0, (float)Angles::degrees(msg->lat), (float)Angles::degrees(msg->lon), msg->height);
+            m_timer.reset();
+            inf("Basestation Update: %f, %f, %f", (float)Angles::degrees(msg->lat), (float)Angles::degrees(msg->lon), msg->height);
+          }
         }
 
         void
@@ -1197,8 +1238,6 @@ namespace Control
           }
 
           dispatch(m_mode);
-
-          //TODO Use hbt.base_mode (MAV_MODE_FLAG_SAFETY_ARMED) to send ARMED state upstream - will need to create an IMC message.
         }
 
         void
