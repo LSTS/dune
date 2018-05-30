@@ -376,13 +376,13 @@ namespace Control
             if(m_args.mavlink_phototrigger)
             {
               // Issue command to start phototrigger
-              mavlink_msg_command_long_pack(255, 0, &m_msg, m_sysid, 100, MAV_CMD_IMAGE_START_CAPTURE, 0, 1, 0, 2, 0, 0, 0, 0);
+              mavlink_msg_command_long_pack(m_sysid, 0, &m_msg, m_sysid, MAV_COMP_ID_CAMERA, MAV_CMD_IMAGE_START_CAPTURE, 0, 1, 0, 2, 0, 0, 0, 0);
               inf("Sent IMAGE_START_CAPTURE command.");
             }
             else
             {
               // Issue command to stop phototrigger
-              mavlink_msg_command_long_pack(255, 0, &m_msg, m_sysid, 100, MAV_CMD_IMAGE_STOP_CAPTURE, 0, 0, 0, 0, 0, 0, 0, 0);
+              mavlink_msg_command_long_pack(m_sysid, 0, &m_msg, m_sysid, MAV_COMP_ID_CAMERA, MAV_CMD_IMAGE_STOP_CAPTURE, 0, 0, 0, 0, 0, 0, 0, 0);
               inf("Sent IMAGE_STOP_CAPTURE command.");
             }
 
