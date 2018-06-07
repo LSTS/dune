@@ -54,6 +54,34 @@ namespace Autonomy
       }
 
       void
+      handleRebootCommand(const std::string& origin, const std::string& args)
+      {
+        char what[32];
+        std::sscanf(args.c_str(), "%s", what);
+        RestartSystem msg;
+        if (!strcmp(what, "dune"))
+        {
+          war("Restarting DUNE requested by %s", origin.c_str());
+          msg.type = RestartSystem::RSTYPE_DUNE;
+          dispatch(msg);
+        }
+        else if (!strcmp(what, "aux"))
+        {
+          war("Restarting Auxiliary CPU requested by %s", origin.c_str());
+          PowerChannelControl pcc;
+          pcc.op = PowerChannelControl::PCC_OP_RESTART;
+          pcc.name = "Auxiliary CPU";
+          dispatch(pcc);
+        }
+        else
+        {
+          war("Restarting Main CPU requested by %s", origin.c_str());
+          msg.type = RestartSystem::RSTYPE_SYSTEM;
+          dispatch(msg);
+        }
+      }
+
+      void
       handlePlanCommand(const std::string& origin, const std::string& args, bool ignore_errors = true)
       {
         // Plan control message!
@@ -131,6 +159,10 @@ namespace Autonomy
         else if (cmd == "start")
         {
           handlePlanCommand(msg->origin, args, false);
+        }
+        else if (cmd == "reboot")
+        {
+        	handleRebootCommand(msg->origin, args);
         }
         else
         {
