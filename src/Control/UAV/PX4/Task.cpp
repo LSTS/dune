@@ -1120,6 +1120,13 @@ namespace Control
           mavlink_msg_heartbeat_decode(msg, &hbt);
           IMC::ArmingState arming;
 
+          // check if it's a CAMERA heartbeat
+          if (static_cast<MAV_TYPE>(hbt.type) != 21)
+          {
+        	trace("Camera Heartbeat #%d", hbt.type);
+        	return;
+          }
+
           // Send GCS heartbeat (debug purposes)
           if(m_args.heartbeat)
           {
@@ -1128,10 +1135,6 @@ namespace Control
             sendData(m_buf, n);
             spew("GCS Heartbeat");
           }
-
-          // since GCS heartbeat are actually also sent, ignore if type is a GCS (6)
-          if (static_cast<MAV_TYPE>(hbt.type) == MAV_TYPE_GCS)
-            return;
 
           if (hbt.system_status == MAV_STATE_CRITICAL)
             war("PX4 failsafe active");
