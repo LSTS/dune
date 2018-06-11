@@ -574,8 +574,7 @@ namespace Transports
              }
 
              //for debug only
-             m_task->trace("TX header ak:%d code:%d src:%d des:%d npart:
-                           %d sync:%d n_parts: %d first_part: %d " ,
+             m_task->trace("TX header ak:%d code:%d src:%d des:%d npart: %d sync:%d n_parts: %d first_part: %d " ,
                            (int)m_tx_mesg.acknowledge, (int) m_tx_mesg.code,
                            m_tx_mesg.src_id, m_tx_mesg.des_id, (int) m_tx_mesg.npart
                            , m_tx_mesg.sync, m_tx_mesg.n_parts, (int)  m_tx_mesg.start_part);
