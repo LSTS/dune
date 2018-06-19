@@ -424,9 +424,6 @@ namespace Transports
       void
       consume(const IMC::UamRxRange* msg)
       {
-        if (msg->getDestination() != getSystemId())
-          return;
-
         if (m_transmission_requests.find(msg->seq)
             == m_transmission_requests.end()) {
           return;
@@ -439,8 +436,9 @@ namespace Transports
           return;
         }
 
-        std::ostringstream os;
-        os<<msg->value;
+        if(request->destination != msg->sys){
+          return;
+        }
 
         sendAcousticStatus(request,IMC::AcousticStatus::STATUS_RANGE_RECEIVED,"",msg->value);
         removeFromQueue(idOfMsg);
@@ -823,6 +821,26 @@ namespace Transports
       }
 
       void
+      clearTimeouts()
+      {
+        std::map<uint16_t, IMC::AcousticRequest*>::iterator it;
+        double time = Time::Clock::getSinceEpoch();
+        it = m_transmission_requests.begin();
+
+        while (it != m_transmission_requests.end())
+        {
+          if (it->second->timeout <= time)
+          {
+            sendAcousticStatus(it->second,IMC::AcousticStatus::STATUS_INPUT_FAILURE,"Transmission timed out.");
+            Memory::clear(it->second);
+            m_transmission_requests.erase(it++);
+          }
+          else
+            ++it;
+        }
+      }
+
+      void
       processQueue(void) {
         if (m_can_send && !m_transmission_requests.empty()) {
           m_can_send = false;
@@ -864,6 +882,7 @@ namespace Transports
               sendReport();
           }
           if(m_msg_send_timer.overflow()){
+            clearTimeouts();
             processQueue();
           }
 
