@@ -109,8 +109,6 @@ namespace UserInterfaces
       double m_last_acop;
       //! Sequence number.
       uint16_t m_reqid;
-      //! Message to send
-      TransmissionRequest msgToSend;
       //! Progress bar.
       unsigned m_prog_bar;
 
@@ -174,6 +172,7 @@ namespace UserInterfaces
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticSystemsQuery>(this);
         bind<IMC::PowerOperation>(this);
+        bind<IMC::TransmissionStatus>(this);
         bind<IMC::Abort>(this);
       }
 
@@ -271,11 +270,11 @@ namespace UserInterfaces
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
         tr.destination     = sys;
+        tr.deadline =  Time::Clock::getSinceEpoch() + 10;
         tr.req_id          = createInternalId();
         tr.comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         tr.data_mode       = code;
 
-        msgToSend = tr;
         dispatch(&tr, DF_LOOP_BACK);
 
       }
