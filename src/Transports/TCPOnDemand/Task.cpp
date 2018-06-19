@@ -40,19 +40,28 @@ namespace Transports
     const int c_wifi_timeout = 15;
 
     struct Arguments
-        {
-          //! Maximum number of tries for one requested message
-          uint8_t max_number_tries;
-          //! Time between tries for one requested message
-          double time_between_tries;
-        };
-
-    struct Connection
     {
-      Address address; // Server address.
-      uint16_t port; // Server port.
+      //! Maximum number of tries for one requested message
+      uint8_t max_number_tries;
+      //! Time between tries for one requested message
+      double time_between_tries;
     };
 
+    struct TCPRequest{
+
+      IMC::TCPRequest* msg;
+
+      bool
+      operator<(const TCPRequest& other) const
+      {
+        return msg->timeout > other.msg->timeout;
+      }
+
+      TCPRequest(IMC::TCPRequest* other){
+        msg = other;
+      }
+
+    };
 
     struct Task : public DUNE::Tasks::Task
     {
@@ -64,8 +73,8 @@ namespace Transports
       std::map<std::string, IMC::Announce> m_wifiVisibility;
       //! Map of states of other systems.
       std::map<std::string, IMC::EstimatedState> m_states;
-      //! Map of messages to send.
-      std::map<uint16_t, IMC::TCPRequest*> m_transmission_requests;
+      //! Queue of messages to send.
+      std::priority_queue<TCPRequest> m_queue;
       //! Last RSSI value.
       fp32_t m_value_RSSI;
       //! Flag for dispatch messages.
@@ -77,6 +86,8 @@ namespace Transports
       //! Timer for sending preceding message
       Counter<double> m_msg_send_timer;
 
+      double m_connection_timeout;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -85,7 +96,8 @@ namespace Transports
           m_value_RSSI(0),
           m_can_send(true),
           m_reqid(0),
-          m_number_tries(m_args.max_number_tries)
+          m_number_tries(m_args.max_number_tries),
+          m_connection_timeout(2)
       {
         param("Maximum Number of Tries", m_args.max_number_tries)
                 .description("Maximum number of tries for one requested message before throwing error.")
@@ -103,6 +115,7 @@ namespace Transports
 
       }
 
+
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
@@ -110,8 +123,15 @@ namespace Transports
       }
 
       void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
       consume(const IMC::Announce* msg)
       {
+        if(msg->services.find("imc+tcp://") == std::string::npos) return;
         m_wifiVisibility[msg->sys_name] = *msg;
       }
 
@@ -128,8 +148,24 @@ namespace Transports
         if(msg->getSource() != getSystemId()){
           return;
         }
+
+        if(msg->timeout == 0)
+        {
+          answer(msg,"TCPRequest timeout cannot be zero", IMC::TCPStatus::TCPSTAT_INPUT_FAILURE);
+          inf("%s", DTR("TCPRequest timeout cannot be zero"));
+          return;
+        }
+        if(msg->timeout < Time::Clock::getSinceEpoch())
+        {
+          answer(msg, "TCPRequest timeout cannot be less than current time", IMC::TCPStatus::TCPSTAT_INPUT_FAILURE);
+          inf("%s", DTR("TCPRequest timeout cannot be less than current time"));
+          return;
+
+        }
+
         //! Add message to the end of queue
-        m_transmission_requests[createInternalId()]=msg->clone();
+        m_queue.push(TCPRequest(msg->clone()));
+        answer(msg, "TCPRequest sent to queue", IMC::TCPStatus::TCPSTAT_QUEUED);
       }
 
       void
@@ -158,64 +194,59 @@ namespace Transports
         if(it == m_wifiVisibility.end()) return false;
 
         double curTime = Clock::getSinceEpoch();
-        if(curTime - it->second.getTimeStamp() > c_wifi_timeout) return false;
-
-        std::string services = it->second.services;
-        if(services.find("imc+tcp://") == std::string::npos) return false;
+        if( curTime - it->second.getTimeStamp() > c_wifi_timeout) return false;
 
         return true;
 
       }
 
-      Connection*
-      getAddressPort(std::string system)
+      void
+      getAddressPort(std::string system, Address& conn, uint16_t& port)
       {
         if(m_wifiVisibility.find(system)== m_wifiVisibility.end())
-          return NULL;
+          return;
         std::string services = m_wifiVisibility[system].services;
 
         std::vector<std::string> list;
         String::split(services, ";", list);
 
         char addr[128];
-        uint16_t port;
+        uint16_t pt;
 
         for(uint16_t i=0; i<list.size();i++){
-          int result=std::sscanf(list[i].c_str(), "imc+tcp://%[^:]:%hu", addr,&port);
+          int result=std::sscanf(list[i].c_str(), "imc+tcp://%[^:]:%hu", addr,&pt);
           if (result == 0)
           {
             continue;
           }
           else
           if(result == 2){
-            Connection* conn = new Connection;
-            conn->address = Address(addr);
-            conn->port = port;
-
-            return conn;
+            conn = addr;
+            port = pt;
+            return;
           }
           else
           {
             throw std::runtime_error(String::str(DTR("invalid address: '%s'"), services.c_str()));
-            return NULL;
+            return;
           }
         }
-        return NULL;
+
       }
 
-      TCPSocket*
-      createTCPSocket(std::string system){
+      void
+      createTCPSocket(std::string system, TCPSocket& socket){
 
-        Connection* conn = getAddressPort(system);
-        if(conn == NULL) return NULL;
+        Address addr;
+        uint16_t port = 0;
 
-        TCPSocket* socket = new TCPSocket;
-        socket->setKeepAlive(true);
-        //set timeout
-        socket->connect(conn->address, conn->port);
-        Memory::clear(conn);
+        getAddressPort(system, addr, port);
+        if(!addr.resolve() || port == 0) return;
 
-        return socket;
+        socket.setKeepAlive(true);
+        socket.setSendTimeout(m_connection_timeout);
+        socket.setReceiveTimeout(m_connection_timeout);
+        socket.connect(addr, port);
       }
 
       void
@@ -233,21 +264,11 @@ namespace Transports
       void
       clearTimeouts()
       {
-        std::map<uint16_t, IMC::TCPRequest*>::iterator it;
-        it = m_transmission_requests.begin();
-
         double time = Time::Clock::getSinceEpoch();
-
-        while (it != m_transmission_requests.end())
+        while (!m_queue.empty() && m_queue.top().msg->timeout < time)
         {
-          if (it->second->timeout <= time)
-          {
-            answer(it->second, "Transmission timed out.", IMC::TCPStatus::TCPSTAT_INPUT_FAILURE);
-            Memory::clear(it->second);
-            m_transmission_requests.erase(it++);
-          }
-          else
-            ++it;
+          answer(m_queue.top().msg, "Transmission timed out.", IMC::TCPStatus::TCPSTAT_INPUT_FAILURE);
+          removeFromQueue();
         }
       }
 
@@ -264,10 +285,10 @@ namespace Transports
 
       //! Remove message from the queue. Resets timer. And unlocks the queue
       void
-      removeFromQueue(uint16_t index){
-        if(m_transmission_requests.find(index) != m_transmission_requests.end()){
-          Memory::clear(m_transmission_requests.find(index)->second);
-          m_transmission_requests.erase(index);
+      removeFromQueue(){
+        if(!m_queue.empty())
+        {
+          m_queue.pop();
         }
         m_number_tries = m_args.max_number_tries;
         m_can_send=true;
@@ -276,23 +297,20 @@ namespace Transports
       void
       processQueue()
       {
-
-        const IMC::TCPRequest * req = m_transmission_requests.begin()->second;
-        uint16_t index = m_transmission_requests.begin()->first;
+        const IMC::TCPRequest * req = m_queue.top().msg;
 
         if(visibleOverWiFi(req->destination)){
 
           try{
-            TCPSocket* socket = createTCPSocket(req->destination);
+            TCPSocket socket;
+            createTCPSocket(req->destination, socket);
 
             Utils::ByteBuffer data;
             IMC::Packet::serialize(req->msg_data.get(), data);
-            socket->write(data.getBuffer(), data.getSize());
-
-            Memory::clear(socket);
+            socket.write(data.getBuffer(), data.getSize());
 
             answer(req,"Message sent over TCP",IMC::TCPStatus::TCPSTAT_SENT);
-            removeFromQueue(index);
+            removeFromQueue();
 
           }
           catch (std::exception& e)
@@ -300,7 +318,7 @@ namespace Transports
             m_number_tries--;
             if (m_number_tries <= 0)
             {
-              removeFromQueue(m_transmission_requests.begin()->first);
+              removeFromQueue();
               answer(req, "Couldn't connect with destination host",
                      IMC::TCPStatus::TCPSTAT_CANT_CONNECT);
               m_msg_send_timer.setTop(1);
@@ -313,7 +331,7 @@ namespace Transports
           }
 
         }else{
-          removeFromQueue(index);
+          removeFromQueue();
           answer(req,"Didn't find TCP server on destination host",IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN);
           m_msg_send_timer.reset();
         }
@@ -331,7 +349,7 @@ namespace Transports
           if (m_msg_send_timer.overflow())
           {
             clearTimeouts();
-            if (m_can_send && !m_transmission_requests.empty())
+            if (m_can_send && !m_queue.empty())
             {
               m_can_send = false;
               processQueue();
