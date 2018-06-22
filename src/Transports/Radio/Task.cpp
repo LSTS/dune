@@ -23,8 +23,9 @@
 // language governing permissions and limitations at                        *
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: João Teixeira                                                   *
+// Author: João Teixeira                                                    *
 //***************************************************************************
 
 // DUNE headers.
