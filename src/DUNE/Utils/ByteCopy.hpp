@@ -789,6 +789,27 @@ namespace DUNE
       std::memcpy(dest, src, size);
       return size;
     }
+
+    //! Convert signed number stored in B bits of an unsigned variable to
+    //! a signed number, performing sign extension.
+    //!
+    //! @tparam T return type.
+    //! @tparam B number of relevant bits.
+    //!
+    //! @param[in] x signed number stored in unsigned variable.
+    //!
+    //! @return signed number.
+    template <typename T, unsigned B>
+    inline T
+    signExtend(const T x)
+    {
+      struct
+      {
+        T x:B;
+      } s;
+
+      return s.x = x;
+    }
   }
 }
 

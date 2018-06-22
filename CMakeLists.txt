@@ -293,6 +293,16 @@ foreach(program ${programs})
   dune_program(${program} 0)
 endforeach(program ${programs})
 
+file(GLOB programs programs/bridges/*.cpp)
+foreach(program ${programs})
+  dune_program(${program} 0)
+endforeach(program ${programs})
+
+file(GLOB programs programs/bridges/utils/*.cpp)
+foreach(program ${programs})
+  dune_program(${program} 0)
+endforeach(program ${programs})
+
 ##########################################################################
 #                          Documentation                                 #
 ##########################################################################

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,20 +8,18 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
 //                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -84,25 +82,19 @@ namespace DUNE
       static std::string
       ltrim(const std::string& str);
 
+      //! Strip whitespace from the end of a string in place.
+      //! @param[in,out] str string.
+      static void
+      rightTrimInPlace(char* str);
+
+      void
+      resize(char* str, int size);
+
       //! Strip whitespace from the end of a string.
       //! @param str object string.
       //! @return string without trailing whitespaces.
       static std::string
       rtrim(const std::string& str);
-
-      //! Strip whitespace from the end of a string, modifying the
-      //! original string.
-      //! @param str object string.
-      static void
-      rtrim(char* str);
-
-      //! Resize string by replacing any extra characters with '\0'.
-      //! If size is greater than current size, the string is untouched.
-      //! If size is lower than 0, the resulting size is [strlen(str) + size].
-      //! @param str object string
-      //! @param size new size
-      static void
-      resize(char* str, int size);
 
       //! Strip whitespace from the beginning and end of a string.
       //! @param str object string.
@@ -186,9 +178,6 @@ namespace DUNE
       static std::string
       fromHex(const std::string& str);
 
-      static void
-      assign(std::vector<char>& dst, const char* src);
-
       static std::string
       getRemaining(const std::string& prefix, const std::string& str);
 
@@ -202,39 +191,43 @@ namespace DUNE
       }
 
       static std::string
-      str(const char* format, ...)
+      str(const char* fmt, ...)
+      {
+        std::va_list ap;
+        va_start(ap, fmt);
+        std::string result = strVl(fmt, ap);
+        va_end(ap);
+        return result;
+      }
+
+      static std::string
+      strVl(const char* fmt, std::va_list ap)
       {
         char bfr[1024] = {0};
-        std::va_list ap;
-        va_start(ap, format);
-
-#if defined(DUNE_SYS_HAS_VSNPRINTF)
-        vsnprintf(bfr, sizeof(bfr), format, ap);
-#elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
-        vsnprintf_s(bfr, sizeof(bfr), sizeof(bfr) - 1, format, ap);
-#else
-        std::vsprintf(bfr, format, ap);
-#endif
-        va_end(ap);
-
+        formatVl(bfr, sizeof(bfr), fmt, ap);
         return bfr;
       }
 
       static int
-      format(char* str, size_t size, const char* format, ...)
+      format(char* str, size_t size, const char* fmt, ...)
       {
         std::va_list ap;
-        va_start(ap, format);
-
-#if defined(DUNE_SYS_HAS_VSNPRINTF)
-        int rv = vsnprintf(str, size, format, ap);
-#elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
-        int rv = vsnprintf_s(str, size, size - 1, format, ap);
-#else
-        int rv = std::vsprintf(str, format, ap);
-#endif
-
+        va_start(ap, fmt);
+        int rv = formatVl(str, size, fmt, ap);
         va_end(ap);
+        return rv;
+      }
+
+      static int
+      formatVl(char* str, size_t size, const char* fmt, std::va_list ap)
+      {
+#if defined(DUNE_SYS_HAS_VSNPRINTF)
+        int rv = vsnprintf(str, size, fmt, ap);
+#elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
+        int rv = vsnprintf_s(str, size, size - 1, fmt, ap);
+#else
+        int rv = std::vsprintf(str, fmt, ap);
+#endif
         return rv;
       }
 
@@ -248,7 +241,7 @@ namespace DUNE
       escape(const std::string& input);
 
       static std::string
-      unescape(const std::string& input, bool unescape_all = true);
+      unescape(const std::string& input);
 
       //! Test if string 'str' starts with a specified 'prefix'.
       //! @param[in] str string.
@@ -256,6 +249,13 @@ namespace DUNE
       //! @return true if 'str' starts with 'prefix', false otherwise.
       static bool
       startsWith(const std::string& str, const std::string& prefix);
+
+      //! Test if string 'str' contains a specified sub-string.
+      //! @param[in] str string.
+      //! @param[in] sub sub-string.
+      //! @return true if 'str' contains 'sub', false otherwise.
+      static bool
+      contains(const std::string& str, const std::string& sub);
 
       //! Test if string 'str' ends with a specified 'suffix'.
       //! @param[in] str string.

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,20 +8,18 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
 //                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -108,7 +106,7 @@ namespace DUNE
         // Section name.
         if (std::sscanf(line, "[%[^]]] ", section) == 1)
         {
-          String::rtrim(section);
+          String::rightTrimInPlace(section);
 
           if (std::strncmp(section, "Include ", 8) == 0)
           {
@@ -133,28 +131,10 @@ namespace DUNE
         // Option and value.
         else if (getOptionAndValue(line, option, arg))
         {
-          if (section_count == 0)
-            throw SyntaxError(fname, line_count);
-
-          String::rtrim(option);
-          String::rtrim(arg);
-
-          bool append = false;
-          if (String::endsWith(String::str(option), "+"))
-          {
-            String::resize(option, -1);
-            // append if a previous value already exists
-            append = m_data[section].find(option) != m_data[section].end();
-          }
-
+          String::rightTrimInPlace(option);
+          String::rightTrimInPlace(arg);
           std::strncpy(tmp, option, c_max_bfr_size);
-          if (append)
-          {
-            m_data[section][option] += ", ";
-            m_data[section][option] += arg;
-          }
-          else
-            m_data[section][option] = arg;
+          m_data[section][option] = arg;
 
           if (std::strlen(arg) < 4)
             continue;
@@ -178,10 +158,7 @@ namespace DUNE
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
 
-          if (String::endsWith(String::str(option), "+"))
-            String::resize(option, -1);
-
-          String::rtrim(arg);
+          String::rightTrimInPlace(arg);
           m_data[section][tmp] += " ";
           m_data[section][tmp] += arg;
         }
@@ -193,20 +170,12 @@ namespace DUNE
       }
 
       std::fclose(fd);
-
-      m_files.push_back(fname);
-    }
-
-    void
-    Config::writeToFile(const char* file)
-    {
-      std::ofstream os(file);
-      os << *this;
     }
 
     std::vector<std::string>
     Config::sections(void)
     {
+      Concurrency::ScopedRWLock lock(m_lock);
       std::vector<std::string> vec;
       for (Sections::iterator itr = m_data.begin(); itr != m_data.end(); ++itr)
         vec.push_back(itr->first);
@@ -216,6 +185,7 @@ namespace DUNE
     std::vector<std::string>
     Config::options(const std::string& section)
     {
+      Concurrency::ScopedRWLock lock(m_lock);
       Sections::const_iterator sitr = m_data.find(section);
 
       if (sitr == m_data.end())
@@ -230,32 +200,40 @@ namespace DUNE
       return opts;
     }
 
-    std::ostream&
-    operator<<(std::ostream& os, const Config& cfg)
+    void
+    Config::writeToStream(std::ostream& os)
     {
-      Config::Sections::const_iterator sections;
-      Config::Section::const_iterator labels;
+      Concurrency::ScopedRWLock lock(m_lock);
       std::string banner = String::str("Generated by DUNE v%s", getFullVersion());
 
       os << std::setfill(';')
          << std::setw(74) << ";" << std::endl
          << String::str("; %-71s;", banner.c_str()) << std::endl
-         << std::setw(74) << ";" << std::endl;
+         << std::setw(74) << ";" << std::endl << std::endl;
 
-      for (sections = cfg.m_data.begin(); sections != cfg.m_data.end(); ++sections)
+      Config::Section::const_iterator labels;
+      Config::Sections::const_iterator sects;
+      for (sects = m_data.begin(); sects != m_data.end(); ++sects)
       {
-        os << "[" << (*sections).first << "]" << std::endl;
+        bool section_started = false;
 
-        for (labels = (*sections).second.begin(); labels != (*sections).second.end(); ++labels)
+        for (labels = (*sects).second.begin(); labels != (*sects).second.end(); ++labels)
         {
           if ((*labels).second != "")
+          {
+            if (!section_started)
+            {
+              section_started = true;
+              os << "[" << (*sects).first << "]" << std::endl;
+            }
+
             os << (*labels).first << " = " << (*labels).second << std::endl;
+          }
         }
 
-        os << std::endl;
+        if (section_started)
+          os << std::endl;
       }
-
-      return os;
     }
   }
 }

@@ -182,6 +182,16 @@ namespace DUNE
       void
       setCTSRTS(bool enabled);
 
+      bool
+      drain(void)
+      {
+#if defined(DUNE_SYS_HAS_STRUCT_TERMIOS)
+        return tcdrain(m_handle) == 0;
+#endif
+
+        return false;
+      }
+
     private:
       // POSIX implementation.
 #if defined(DUNE_SYS_HAS_STRUCT_TERMIOS)

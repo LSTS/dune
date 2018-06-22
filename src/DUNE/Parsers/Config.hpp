@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -8,20 +8,18 @@
 // Licencees holding valid commercial DUNE licences may use this file in    *
 // accordance with the commercial licence agreement provided with the       *
 // Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
 //                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
 // included in the packaging of this file. You may not use this work        *
 // except in compliance with the Licence. Unless required by applicable     *
 // law or agreed to in writing, software distributed under the Licence is   *
 // distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
 // ANY KIND, either express or implied. See the Licence for the specific    *
 // language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
@@ -82,6 +80,7 @@ namespace DUNE
       void
       set(const std::string& section, const std::string& option, const std::string& value)
       {
+        Concurrency::ScopedRWLock lock(m_lock, true);
         m_data[section][option] = value;
       }
 
@@ -92,6 +91,7 @@ namespace DUNE
       std::string
       get(const std::string& section, const std::string& option)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
         return m_data[section][option];
       }
 
@@ -101,6 +101,7 @@ namespace DUNE
       void
       setSection(const std::string& section, const std::map<std::string, std::string>& map)
       {
+        Concurrency::ScopedRWLock lock(m_lock, true);
         m_data[section] = map;
       }
 
@@ -110,6 +111,7 @@ namespace DUNE
       std::map<std::string, std::string>
       getSection(const std::string& section)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
         return m_data[section];
       }
 
@@ -122,6 +124,8 @@ namespace DUNE
       void
       get(const std::string& sec, const std::string& opt, const std::string& def, Type& var)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
+
         if (m_data[sec].find(opt) != m_data[sec].end())
         {
           if (castLexical(m_data[sec][opt], var))
@@ -153,6 +157,8 @@ namespace DUNE
       bool
       getList(const std::string& section, const std::string& option, T* dest, unsigned int size)
       {
+        Concurrency::ScopedRWLock lock(m_lock);
+
         std::vector<T> v;
         get(section, option, "", v);
 
@@ -161,19 +167,6 @@ namespace DUNE
 
         std::memcpy(dest, &v[0], sizeof(T) * size);
         return true;
-      }
-
-      //! Writes the current configuration to a file.
-      //! @param file output file option.
-      void
-      writeToFile(const char* file);
-
-      //! Retrieve the file option of the parsed configuration file.
-      //! @return parsed file option.
-      std::vector<std::string>
-      files(void)
-      {
-        return m_files;
       }
 
       //! Retrieve all the available sections.
@@ -187,19 +180,27 @@ namespace DUNE
       std::vector<std::string>
       options(const std::string& section);
 
-      //! Write the current configuration to a stream.
+      //! Write current values to an output stream.
       //! @param[in] os output stream.
-      //! @param[in] cfg Config instance.
-      friend DUNE_DLL_SYM std::ostream&
-      operator<<(std::ostream& os, const Config& cfg);
+      void
+      writeToStream(std::ostream& os);
+
+      //! Write current values to a file.
+      //! @param[in] file_name output file name.
+      void
+      writeToFile(const std::string& file_name)
+      {
+        std::ofstream ofs(file_name.c_str());
+        writeToStream(ofs);
+      }
 
     private:
       typedef std::map<std::string, std::string> Section;
       typedef std::map<std::string, Section> Sections;
       //! Representation of the configuration file as a map.
       Sections m_data;
-      //! List of parsed files.
-      std::vector<std::string> m_files;
+      //! Concurrency lock.
+      Concurrency::RWLock m_lock;
 
       // Non - copyable.
       Config(const Config&);
