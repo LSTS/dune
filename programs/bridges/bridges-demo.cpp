@@ -37,7 +37,7 @@ static const float c_log_timestep = 1.0;
 static const float c_subsamp_timestep = 10.0;
 
 //! Desired runtime.
-static const float c_runtime = 86400;
+static const float c_runtime = 60 * 5;
 
 int
 main(int argc, char** argv)
@@ -84,29 +84,21 @@ main(int argc, char** argv)
   /** MAIN LOOP **/
   DUNE::Time::Counter<double> timer(60.0); // print time each x seconds.
   DUNE::Time::Counter<double> timer_run(c_runtime); // runtime.
-  DUNE::Time::Counter<double> timer_update(5.0);
-  int depth_ref = 1400;
   while (!timer_run.overflow())
   {
     // listen to sensors.
     man.listen();
 
     // get data from glider.
-    if (timer_update.overflow())
+    if (glider.read())
+      man.setState(glider.getVehicle(), glider.getMission(), glider.getCycle(),
+                   glider.getLatitude(), glider.getLongitude(), glider.getDepth(),
+                   glider.getAltitude(), glider.getUpDown());
+
+    if (timer.overflow())
     {
-      timer_update.reset();
-      int time = (int)(timer_run.getElapsed() / 5) % depth_ref;
-
-      if (time > depth_ref / 2)
-        time = depth_ref - time;
-
-      man.setState("DBG", 1, 2, "LAT", "LON", time, -1, UDR_DOWN);
-
-      if (timer.overflow())
-      {
-        std::fprintf(stderr, "\t\t\t\t\t\t\t\t\t\t Runtime: %.1f, Depth: %d\n", timer_run.getElapsed(), time);
-        timer.reset();
-      }
+      std::fprintf(stderr, "\t\t\t\t\t\tcurrent runtime: %.1f | Depth: %.2f\n", timer_run.getElapsed(), glider.getDepth());
+      timer.reset();
     }
   }
   /** END OF MAIN LOOP **/
