@@ -97,6 +97,7 @@ namespace Transports
       double sms_tout;
       //! Device response timeout.
       float reply_tout;
+
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -180,6 +181,8 @@ namespace Transports
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
+          annouceNumber();
+
         }
         catch (std::runtime_error& e)
         {
@@ -259,6 +262,25 @@ namespace Transports
         sms_req.deadline = Clock::getSinceEpoch() + msg->timeout;
         m_queue.push(sms_req);
         sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_QUEUED,DTR("SMS sent to queue"));
+      }
+
+      void
+      annouceNumber(void)
+      {
+        std::string number = m_driver->getOwnNumber();
+        if (number != "")
+        {
+
+          std::stringstream os;
+          os << "imc+gsm://" << number << "/";
+
+          IMC::AnnounceService announce;
+          announce.service = os.str();
+          announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+
+          dispatch(announce);
+
+        }
       }
 
       void
