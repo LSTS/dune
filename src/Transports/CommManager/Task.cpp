@@ -35,6 +35,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Router.hpp"
+
 namespace Transports
 {
   namespace CommManager
@@ -67,8 +70,8 @@ namespace Transports
       Time::Counter<float> m_iridium_timer;
       Time::Counter<float> m_clean_timer;
       int m_plan_chksum;
-      uint16_t m_reqid;
-      std::map<uint16_t, IMC::TransmissionRequest*> m_transmission_requests;
+      Router m_router;
+
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
 
 
@@ -80,7 +83,7 @@ namespace Transports
         m_vstate(NULL),
         m_vmedium(NULL),
         m_plan_chksum(0),
-        m_reqid(0)
+        m_router(this)
       {
         param("Iridium Reports Period", m_args.iridium_period)
                 .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
@@ -93,11 +96,13 @@ namespace Transports
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
+        bind<IMC::Announce>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::PlanSpecification>(this);
+        bind<IMC::RSSI>(this);
         bind<IMC::Sms>(this);
         bind<IMC::SmsStatus>(this);
         bind<IMC::TCPStatus>(this);
@@ -158,6 +163,7 @@ namespace Transports
           return;
 
         Memory::replace(m_vmedium, new IMC::VehicleMedium(*msg));
+        m_router.process(msg->clone());
       }
 
       void
@@ -170,260 +176,19 @@ namespace Transports
       }
 
       void
-      clearTimeouts()
+      consume(const IMC::RSSI* msg)
       {
-        std::map<uint16_t, IMC::TransmissionRequest*>::iterator it;
-        double time = Time::Clock::getSinceEpoch();
-        it = m_transmission_requests.begin();
-
-        while (it != m_transmission_requests.end())
-        {
-          if (it->second->deadline <= time)
-          {
-            answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(it->second);
-            m_transmission_requests.erase(it++);
-          }
-          else
-            ++it;
-        }
-      }
-
-      uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
-          m_reqid=0;
-        }
-        else{
-          m_reqid++;
-        }
-        return m_reqid;
-      }
-
-      void
-      sendViaSatellite(const IMC::TransmissionRequest* msg)
-      {
-        inf("Request to send data over satellite (%d)", msg->req_id);
-
-        IridiumMsgTx tx;
-
-        tx.destination = msg->destination;
-        tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
-        tx.setDestination(msg->getDestination());
-        tx.setDestinationEntity(msg->getDestinationEntity());
-
-        switch(msg->data_mode){
-          case IMC::TransmissionRequest::DMODE_RAW:
-          {
-            tx.data.assign(msg->raw_data.begin(), msg->raw_data.end());
-
-            break;
-          }
-          case IMC::TransmissionRequest::DMODE_INLINEMSG:
-          {
-            IMC::ImcIridiumMessage m;
-            const IMC::Message * inlinemsg = msg->msg_data.get();
-            m.destination = 0xFFFF;
-            m.source = getSystemId();
-            m.msg = inlinemsg->clone();
-            uint8_t buffer[65535];
-            int len = m.serialize(buffer);
-            tx.data.assign(buffer, buffer + len);
-            Memory::clear(m.msg);
-
-            break;
-          }
-          case IMC::TransmissionRequest::DMODE_TEXT:
-          {
-            IMC::IridiumCommand m;
-            m.destination = 0xFFFF;
-            m.source = getSystemId();
-            m.command = msg->txt_data;
-            uint8_t buffer[65535];
-            int len = m.serialize(buffer);
-            tx.data.assign(buffer, buffer + len);
-
-            break;
-          }
-          default:
-            answer(msg, "Communication mode not implemented for communication mean Satellite", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-            return;
-
-            break;
-        }
-
-        uint16_t newId = createInternalId();
-        tx.req_id = newId;
-        m_transmission_requests[newId] = msg->clone();
-        dispatch(tx);
-      }
-
-      void
-      sendViaSms(const IMC::TransmissionRequest* msg)
-      {
-        inf("Request to send data over SMS to %s (%d)", msg->destination.c_str(), msg->req_id);
-
-        SmsRequest sms;
-
-        sms.timeout = msg->deadline - Time::Clock::getSinceEpoch();
-        if(sms.timeout < 0)
-          sms.timeout = 0;
-
-        if (msg->destination == "broadcast" || msg->destination == "")
-          m_ctx.config.get(c_sms_section, c_sms_field, "", sms.destination);
-        else
-          sms.destination  = msg->destination;
-
-        switch(msg->data_mode){
-          case IMC::TransmissionRequest::DMODE_TEXT:
-          {
-            if(msg->txt_data == "") {
-              answer(msg, "GSM message cannot be empty", IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              return;
-            }
-            sms.sms_text = msg->txt_data;
-
-            break;
-          }
-          case IMC::TransmissionRequest::DMODE_INLINEMSG:
-          {
-            Utils::ByteBuffer bfr;
-            IMC::Packet::serialize(msg->msg_data.get(), bfr);
-            std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),bfr.getSize());
-            sms.sms_text.assign(encoded);
-
-            break;
-          }
-          default:
-          {
-            answer(msg, "Communication mode not implemented for communication mean GSM", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-            return;
-
-            break;
-          }
-        }
-
-        if(sms.sms_text.length() > 160){ //160 characters -> 120 bytes for the inline message
-          answer(msg, "Can only send 160 characters over SMS.",
-                 IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+        if (msg->getSource() != getSystemId())
           return;
-        }
-        uint16_t newId = createInternalId();
-        sms.req_id = newId;
-        m_transmission_requests[newId] = msg->clone();
-        dispatch(sms);
+        m_router.process(msg->clone());
       }
 
       void
-      sendViaTCP(const IMC::TransmissionRequest* msg)
+      consume(const IMC::Announce* msg)
       {
-        inf("Request to send data over TCP to %s (%d)",
-            msg->destination.c_str(), msg->req_id);
-
-        TCPRequest send;
-
-        send.timeout = msg->deadline;
-        if (send.timeout < 0)
-          send.timeout = 0;
-
-        if (msg->destination.empty())
-        {
-          answer(msg, "Destination of message can not be empty.",
-                 IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-          return;
-        }
-        else
-        {
-          send.destination = msg->destination;
-        }
-
-        switch(msg->data_mode){
-          case IMC::TransmissionRequest::DMODE_INLINEMSG:
-          {
-            send.msg_data.set(msg->msg_data.get()->clone());
-            break;
-          }
-          default:
-          {
-            answer(msg, "Communication mode not implemented for communication mean GSM", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-            return;
-
-            break;
-          }
-        }
-
-
-        uint16_t newId = createInternalId();
-        send.req_id = newId;
-        m_transmission_requests[newId] = msg->clone();
-        dispatch(send);
-
+       m_router.process(msg->clone());
       }
 
-      void
-      sendViaAcoustic(const IMC::TransmissionRequest* msg)
-      {
-        inf("Request to send data over Acoustic to %s (%d)", msg->destination.c_str(), msg->req_id);
-
-        AcousticRequest tx;
-
-        tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
-        if(tx.timeout < 0)
-          tx.timeout = 0;
-
-        if (msg->destination == "")
-          tx.destination ="broadcast";
-        else
-          tx.destination  = msg->destination.c_str();
-
-        //FIXME not sure
-        tx.setDestination(msg->getDestination());
-
-        tx.range=msg->range;
-
-        switch(msg->data_mode){
-          case IMC::TransmissionRequest::DMODE_INLINEMSG:
-          {
-            tx.type=IMC::AcousticRequest::TYPE_MSG;
-            tx.msg.set(msg->msg_data.get()->clone());
-
-            break;
-          }
-
-          case IMC::TransmissionRequest::DMODE_ABORT:
-          {
-            tx.type=IMC::AcousticRequest::TYPE_ABORT;
-
-            break;
-          }
-          case IMC::TransmissionRequest::DMODE_RANGE:
-          {
-            tx.type=IMC::AcousticRequest::TYPE_RANGE;
-
-            break;
-          }
-          case IMC::TransmissionRequest::DMODE_REVERSE_RANGE:
-          {
-            tx.type=IMC::AcousticRequest::TYPE_REVERSE_RANGE;
-
-            break;
-          }
-          default:{
-            answer(msg, "Communication mode not implemented for communication mean Acoustic", IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-            return;
-
-            break;
-          }
-        }
-
-        uint16_t newId = createInternalId();
-        tx.req_id = newId;
-        m_transmission_requests[newId] = msg->clone();
-        dispatch(tx);
-
-      }
-
-      void
 
       void
       consume(const IMC::IridiumTxStatus* msg)
@@ -434,35 +199,43 @@ namespace Transports
         if(msg->getSourceEntity() != getEntityId())
           return;
 
-        if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+
+        if (tr_list->find(msg->req_id) != tr_list->end())
         {
-          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+          IMC::TransmissionRequest* req =  tr_list->operator [](msg->req_id);
 
           if (req->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
             return;
 
-          switch (msg->status) {
+          switch (msg->status)
+          {
             case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
-                answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-            break;
+              m_router.answer(req, "Message has been queued for Satellite transmission.",
+                              IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+              break;
             case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
-                answer(req, "Message is being transmitted.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-            break;
+              m_router.answer(req, "Message is being transmitted.",
+                              IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+              break;
             case (IMC::IridiumTxStatus::TXSTATUS_OK):
-                answer(req, "Message has been sent via Iridium.", IMC::TransmissionStatus::TSTAT_SENT);
-            Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
-            break;
+              m_router.answer(req, "Message has been sent via Iridium.",
+                              IMC::TransmissionStatus::TSTAT_SENT);
+              Memory::clear(req);
+              tr_list->erase(msg->req_id);
+              break;
             case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
-                answer(req, "Error while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
-            break;
+              m_router.answer(req, "Error while trying to transmit message.",
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              Memory::clear(req);
+              tr_list->erase(msg->req_id);
+              break;
             case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
-                answer(req, "Timeout while trying to transmit message.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
-            break;
+              m_router.answer(req, "Timeout while trying to transmit message.",
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              Memory::clear(req);
+              tr_list->erase(msg->req_id);
+              break;
             default:
               break;
           }
@@ -474,30 +247,32 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
-        if (m_transmission_requests.find(msg->req_id) != m_transmission_requests.end())
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+
+        if (tr_list->find(msg->req_id) != tr_list->end())
         {
-          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+          IMC::TransmissionRequest* req =  tr_list->operator [](msg->req_id);
           switch (msg->status) {
             case (IMC::SmsStatus::SMSSTAT_QUEUED):
-                answer(req, "Message has been queued for transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                m_router.answer(req, "Message has been queued for GSM transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
             break;
 
             case (IMC::SmsStatus::SMSSTAT_SENT):
-                answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
+                m_router.answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
             Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
+            tr_list->erase(msg->req_id);
             break;
 
             case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
-                answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+                m_router.answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
             Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
+            tr_list->erase(msg->req_id);
             break;
 
             case (IMC::SmsStatus::SMSSTAT_ERROR):
-                answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                m_router.answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             Memory::clear(req);
-            m_transmission_requests.erase(msg->req_id);
+            tr_list->erase(msg->req_id);
             break;
 
             default:
@@ -513,11 +288,12 @@ namespace Transports
         if (msg->getSource() != getSystemId()) {
           return;
         }
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
 
-        if (m_transmission_requests.find(msg->req_id)
-            != m_transmission_requests.end()) {
+        if (tr_list->find(msg->req_id)
+            != tr_list->end()) {
 
-          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+          IMC::TransmissionRequest* req =  tr_list->operator [](msg->req_id);
 
           if (req->comm_mean != IMC::TransmissionRequest::CMEAN_ACOUSTIC)
             return;
@@ -527,44 +303,44 @@ namespace Transports
             break;
 
             case (IMC::AcousticStatus::STATUS_IN_PROGRESS):
-              answer(req, "Message is being transmitted.",
+              m_router.answer(req, "Message has been queued for Acoustic transmission.",
                 IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
             break;
 
             case (IMC::AcousticStatus::STATUS_SENT):
-              answer(req, "Message has been sent via Acoustic.",
+              m_router.answer(req, "Message has been sent via Acoustic.",
                 IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
             break;
 
             case (IMC::AcousticStatus::STATUS_RANGE_RECEIVED):
-              answer(req, msg->info,
+              m_router.answer(req, msg->info,
                 IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED,
                 msg->range);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
             break;
 
             case (IMC::AcousticStatus::STATUS_ERROR):
-              answer(req, msg->info,
+              m_router.answer(req, msg->info,
                 IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
             break;
 
             case (IMC::AcousticStatus::STATUS_BUSY):
-              answer(req, "Acoustic modem is busy.",
+              m_router.answer(req, "Acoustic modem is busy.",
                 IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
             break;
 
             case (IMC::AcousticStatus::STATUS_INPUT_FAILURE):
-              answer(req, msg->info,
+              m_router.answer(req, msg->info,
                 IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
             break;
 
             default:
@@ -586,7 +362,7 @@ namespace Transports
             case (IMC::AcousticStatus::STATUS_QUEUED):
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_MSG:
-                  answer(req, IMC::AcousticOperation::AOP_MSG_QUEUED);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_QUEUED);
                   break;
 
                 default:
@@ -597,16 +373,16 @@ namespace Transports
             case (IMC::AcousticStatus::STATUS_IN_PROGRESS):
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_MSG:
-                  answer(req, IMC::AcousticOperation::AOP_MSG_IP);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_IP);
                   break;
 
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
-                  answer(req, IMC::AcousticOperation::AOP_RANGE_IP);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_IP);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
-                  answer(req, IMC::AcousticOperation::AOP_ABORT_IP);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_IP);
                   break;
 
                 default:
@@ -617,13 +393,13 @@ namespace Transports
             case (IMC::AcousticStatus::STATUS_SENT):
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_MSG:
-                  answer(req, IMC::AcousticOperation::AOP_MSG_DONE);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_DONE);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
-                  answer(req, IMC::AcousticOperation::AOP_ABORT_ACKED);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_ACKED);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -636,7 +412,7 @@ namespace Transports
             case (IMC::AcousticStatus::STATUS_RANGE_RECEIVED):
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_RANGE:
-                  answer(req, IMC::AcousticOperation::AOP_RANGE_RECVED, msg->range);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_RECVED, msg->range);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -649,20 +425,20 @@ namespace Transports
             case (IMC::AcousticStatus::STATUS_ERROR):
               switch (req->op) {
                 case IMC::AcousticOperation::AOP_MSG:
-                  answer(req, IMC::AcousticOperation::AOP_MSG_FAILURE);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_FAILURE);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
-                  answer(req, IMC::AcousticOperation::AOP_RANGE_TIMEOUT);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_TIMEOUT);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
-                  answer(req, IMC::AcousticOperation::AOP_ABORT_TIMEOUT);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_TIMEOUT);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -679,7 +455,7 @@ namespace Transports
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
                 case IMC::AcousticOperation::AOP_ABORT:
-                  answer(req, IMC::AcousticOperation::AOP_BUSY);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_BUSY);
                   break;
 
                 default:
@@ -693,7 +469,7 @@ namespace Transports
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
                 case IMC::AcousticOperation::AOP_ABORT:
-                  answer(req, IMC::AcousticOperation::AOP_UNSUPPORTED);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_UNSUPPORTED);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -715,43 +491,45 @@ namespace Transports
       consume(const IMC::TCPStatus* msg){
         if (msg->getSource() != getSystemId())
           return;
-        if (m_transmission_requests.find(msg->req_id)
-            != m_transmission_requests.end())
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+        if (tr_list->find(msg->req_id)
+            != tr_list->end())
         {
-          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+
+          IMC::TransmissionRequest* req =  tr_list->operator [](msg->req_id);
           switch (msg->status)
           {
             case (IMC::TCPStatus::TCPSTAT_QUEUED):
-              answer(req, "Message has been queued for transmission.",
+              m_router.answer(req, "Message has been queued for TCP transmission.",
                      IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_SENT):
-              answer(req, "Message has been sent via TCP.",
+              m_router.answer(req, "Message has been sent via TCP.",
                      IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN):
-              answer(req, msg->info,
+              m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_CANT_CONNECT):
-              answer(req, msg->info,
+              m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_INPUT_FAILURE):
-              answer(req, msg->info,
+              m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
               Memory::clear(req);
-              m_transmission_requests.erase(msg->req_id);
+              tr_list->erase(msg->req_id);
               break;
 
             default:
@@ -770,19 +548,22 @@ namespace Transports
 
         switch (msg->comm_mean) {
           case (IMC::TransmissionRequest::CMEAN_SATELLITE):
-				    sendViaSatellite(msg);
+            m_router.sendViaSatellite(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-				    sendViaSms(msg);
+				    m_router.sendViaGSM(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
-				    sendViaAcoustic(msg);
+            m_router.sendViaAcoustic(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_WIFI):
-            sendViaTCP(msg);
+            m_router.sendViaWifi(msg);
+          break;
+          case (IMC::TransmissionRequest::CMEAN_ANY):
+            m_router.sendViaAny(msg);
           break;
           default:
-            answer(msg, "Communication mean not implemented.",
+            m_router.answer(msg, "Communication mean not implemented.",
               IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
             break;
         }
@@ -795,7 +576,7 @@ namespace Transports
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
 
-        uint16_t newId = createInternalId();
+        uint16_t newId = m_router.createInternalId();
 
         SmsRequest sms_req;
 
@@ -821,7 +602,7 @@ namespace Transports
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
 
-        uint16_t newId = createInternalId();
+        uint16_t newId = m_router.createInternalId();
 
         AcousticRequest tx;
         //set message id
@@ -879,30 +660,7 @@ namespace Transports
         dispatch(tx);
       }
 
-      void
-      answer(const IMC::AcousticOperation* req, int status, fp32_t range = 0.0)
-      {
-        IMC::AcousticOperation msg(*req);
-        msg.op = status;
-        msg.range = range;
-        dispatch(msg);
 
-      }
-
-      void
-      answer(const IMC::TransmissionRequest* req, std::string info, int status, fp32_t range = 0.0)
-      {
-        IMC::TransmissionStatus msg;
-        msg.info      = info;
-        msg.req_id    = req->req_id;
-        msg.status    = status;
-        msg.range     = range;
-        msg.setDestination(req->getSource());
-        msg.setDestinationEntity(req->getSourceEntity());
-        dispatch(msg);
-
-        inf("Status of transmission message(%d) changed to: %s", req->req_id, info.c_str());
-      }
 
       void
       onResourceRelease(void)
@@ -990,14 +748,13 @@ namespace Transports
       void
       onMain(void)
       {
-        int req_id = 1;
         while (!stopping())
         {
           waitForMessages(1.0);
 
           if (m_clean_timer.overflow())
           {
-            clearTimeouts();
+            m_router.clearTimeouts();
             m_clean_timer.reset();
           }
 
@@ -1016,7 +773,7 @@ namespace Transports
                 request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
                 request.destination = "broadcast";
                 request.msg_data.set(msg);
-                request.req_id = req_id++;
+                request.req_id = m_router.createInternalId();
                 dispatch(request, DF_LOOP_BACK);
 
                 Memory::clear(msg);
