@@ -55,6 +55,7 @@ namespace DUNE
                            String::str(m_number);
       m_file_val = prefix + std::string("/value");
       m_file_dir = prefix + std::string("/direction");
+      m_file_alow = prefix + std::string("/active_low");
 
       // Lacking implementation.
 #else
@@ -123,8 +124,8 @@ namespace DUNE
     bool
     GPIO::getValue(void)
     {
-      if (m_direction != GPIO_DIR_INPUT)
-        throw Error("GPIO is not configured as input", String::str(m_number));
+      // if (m_direction != GPIO_DIR_INPUT)
+      //   throw Error("GPIO is not configured as input", String::str(m_number));
 
 #if defined(DUNE_OS_LINUX)
       std::FILE* fd = std::fopen(m_file_val.c_str(), "r");
@@ -136,6 +137,16 @@ namespace DUNE
 #endif
 
       return false;
+    }
+
+    void
+    GPIO::setActiveLow(bool value)
+    {
+#if defined(DUNE_OS_LINUX)
+      writeToFile(m_file_alow, value ? "1" : "0");
+#else
+      (void)value;
+#endif
     }
 
 #if defined(DUNE_OS_LINUX)

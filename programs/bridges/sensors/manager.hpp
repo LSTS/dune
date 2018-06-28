@@ -245,13 +245,19 @@ private:
     if (m_act[lane] == DUNE::IMC::EntityActivationState::EAS_INACTIVE)
       return false;
 
-    m_sib->selectLane(lane);
-    m_sensors[lane]->trigger();
+    try
+    {
+      m_sib->selectLane(lane);
+      m_sensors[lane]->trigger();
+    }
+    catch (std::runtime_error& e)
+    {
+      std::cerr << "Lane " << lane << ": access error: " << e.what() << std::endl;
+    }
 
     std::vector<uint8_t> data;
     try
     {
-
       while (true)
       {
         uint8_t rbfr[128];
