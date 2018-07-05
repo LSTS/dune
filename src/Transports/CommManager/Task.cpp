@@ -50,6 +50,14 @@ namespace Transports
       int iridium_period;
       //! Enable CommManager to process and convert legacy message -> AcousticOperation
       bool enable_acoustic;
+      //! Addresses Number - modem
+      std::string gsm_addr_section;
+      //! Entity label of Iridium modem
+      std::string iridium_label;
+      //! Entity label of GSM modem
+      std::string gsm_label;
+      //! Name of the configuration section with acoustic modem addresses
+      std::string acoustic_addr_section;
     };
 
     //! Config section from where to fetch emergency sms number
@@ -85,6 +93,23 @@ namespace Transports
         m_plan_chksum(0),
         m_router(this)
       {
+        param("Iridium - Entity Label", m_args.iridium_label)
+                .defaultValue("GSM")
+                .description("Entity label of Iridium modem");
+
+        param("GSM - Entity Label", m_args.gsm_label)
+                .defaultValue("Iridium Modem")
+                .description("Entity label of GSM modem");
+
+        param("GSM Address Section", m_args.gsm_addr_section)
+                .defaultValue("GSM Addresses")
+                .description("Name of the configuration section with gsm modem addresses");
+
+
+        param("Acoustic Address Section", m_args.acoustic_addr_section)
+                .defaultValue("Evologics Addresses")
+                .description("Name of the configuration section with acoustic modem addresses");
+
         param("Iridium Reports Period", m_args.iridium_period)
                 .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
                 .defaultValue("300");
@@ -112,6 +137,70 @@ namespace Transports
 
 
         m_clean_timer.setTop(3);
+      }
+
+
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_fuel);
+        Memory::clear(m_pstate);
+        Memory::clear(m_vstate);
+        Memory::clear(m_estate);
+      }
+
+      //! Initialize resources and configure modem
+      void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        // verify modem local address value -> GSM
+        std::map<std::string, std::string> mapName;
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.gsm_addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          std::string addr;
+          m_ctx.config.get(m_args.gsm_addr_section, addrs[i], "0", addr);
+          if(addr != "0")
+          {
+            mapName[addrs[i]] = addr;
+          }
+        }
+        m_router.setGSMMap(mapName);
+
+        // verify modem local address value -> Acoustic
+        std::vector<std::string> acousticMap;
+        addrs = m_ctx.config.options(m_args.acoustic_addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          std::string addr;
+          m_ctx.config.get(m_args.acoustic_addr_section, addrs[i], "-1", addr);
+          if(addr != "-1"){
+            acousticMap.push_back(addrs[i]);
+          }
+        }
+        m_router.setAcousticMap(acousticMap);
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try{
+          uint8_t gsm_id = resolveEntity(m_args.gsm_label);
+          m_router.setGsmLabel(gsm_id);
+        }catch(std::runtime_error& e){
+          war(DTR("ERROR Initializing CommManager. Couldn't resolve GSM label."));
+          //throw RestartNeeded(e.what(), 5, false);
+        }
+        try{
+          uint8_t iridium_id = resolveEntity(m_args.iridium_label);
+          m_router.setIridiumLabel(iridium_id);
+        }catch(std::runtime_error& e){
+          war(DTR("ERROR Initializing CommManager. Couldn't resolve Iridium label."));
+          //throw RestartNeeded(e.what(), 5, false);
+        }
       }
 
       void
@@ -199,7 +288,7 @@ namespace Transports
         if(msg->getSourceEntity() != getEntityId())
           return;
 
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
 
         if (tr_list->find(msg->req_id) != tr_list->end())
         {
@@ -247,7 +336,7 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
 
         if (tr_list->find(msg->req_id) != tr_list->end())
         {
@@ -288,7 +377,7 @@ namespace Transports
         if (msg->getSource() != getSystemId()) {
           return;
         }
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
 
         if (tr_list->find(msg->req_id)
             != tr_list->end()) {
@@ -491,7 +580,7 @@ namespace Transports
       consume(const IMC::TCPStatus* msg){
         if (msg->getSource() != getSystemId())
           return;
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.GetList();
+        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
         if (tr_list->find(msg->req_id)
             != tr_list->end())
         {
@@ -551,7 +640,7 @@ namespace Transports
             m_router.sendViaSatellite(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-				    m_router.sendViaGSM(msg);
+            m_router.sendViaGSM(msg);
           break;
           case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
             m_router.sendViaAcoustic(msg);
@@ -658,23 +747,6 @@ namespace Transports
         //add to transmission_queue
         m_acoustic_requests[newId] = msg->clone();
         dispatch(tx);
-      }
-
-
-
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_fuel);
-        Memory::clear(m_pstate);
-        Memory::clear(m_vstate);
-        Memory::clear(m_estate);
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       IMC::StateReport* produceReport()
