@@ -389,6 +389,17 @@ public:
     return m_active;
   }
 
+  //! Reload configuration settings.
+  void
+  reload(void)
+  {
+    if (m_sampler != NULL)
+    {
+      m_sampler->reload();
+      onUpdateParameters();
+    }
+  }
+
 protected:
   //! Very basic states.
   enum BaseStates

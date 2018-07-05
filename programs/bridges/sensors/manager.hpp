@@ -92,6 +92,14 @@ public:
     return true;
   }
 
+  //! Reload configuration settings.
+  void
+  reload(void)
+  {
+    for (size_t lane = 0; lane < m_sensors.size(); ++lane)
+      m_sensors[lane]->reload();
+  }
+
   //! Set mission information.
   //! @param[in] resource navigation resource.
   //! @param[in] id current mission id.

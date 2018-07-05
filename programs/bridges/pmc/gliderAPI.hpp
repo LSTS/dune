@@ -41,25 +41,39 @@
 //! Serial port baud rate.
 static const unsigned c_baud_rate = 115200;
 
-//! Glider strings identifiers.
+//! Glider remote helm strings identifiers.
 static const std::string c_helm_status = "MRS";
 static const std::string c_helm_nav = "NAV";
 static const std::string c_helm_dst = "DST";
+
+//! Glider payload string identifiers.
+static const std::string c_cfg_cmd = "$pld";
+static const std::string c_rpl_cmd = "$PLDOUT";
 
 //! Glider main API class.
 class GliderAPI
 {
 public:
   //! Constructor.
-  GliderAPI(const std::string& uart_port):
+  GliderAPI(const std::string& uart_port, DUNE::Parsers::Config* cfg):
     m_sm(GAS_SYNC),
     m_frame_index(0),
     m_csum_index(0),
     m_status(NULL),
     m_nav(NULL),
-    m_detailed(NULL)
+    m_detailed(NULL),
+    m_cfg(NULL),
+    m_cfg_changed(false)
   {
     m_uart = new DUNE::Hardware::SerialPort(uart_port, c_baud_rate);
+
+    // valid configuration.
+    if (cfg != NULL)
+    {
+      m_cfg = cfg;
+      std::string devices_str = cfg->get("PMC_BUS", "Lanes");
+      DUNE::Utils::String::split(devices_str, ", ", m_devices);
+    }
   }
 
   ~GliderAPI(void)
@@ -171,6 +185,7 @@ public:
       else
         return UDR_ELSE;
     }
+  }
 
   // //! Get up/down/else state of vehicle.
   // //! @return up/down/else state.
@@ -185,12 +200,22 @@ public:
   //     else if (m_buoy_up > c_min_zspeed)
   //       return UDR_DOWN;
   //   }
-
   //   return UDR_ELSE;
   // }
+  //return m_nav != NULL ? m_nav->getUpDown() : UDR_ELSE;
 
+  //! Check if configuration has changed.
+  bool
+  checkConfig(void)
+  {
+    return m_cfg_changed;
+  }
 
-    //return m_nav != NULL ? m_nav->getUpDown() : UDR_ELSE;
+  //! Reset configuration changed flag.
+  void
+  resetConfigChanged(void)
+  {
+    m_cfg_changed = false;
   }
 
 private:
@@ -246,26 +271,34 @@ private:
   decode(void)
   {
     std::string str((char*)m_frame, m_frame_index);
-    std::cerr << "[glider] " << DUNE::Streams::sanitize(str) << std::endl;
-
-    if (!checksum(str))
-      return;
+    std::cerr << "[glider] recv: '" << DUNE::Streams::sanitize(str) << "'" << std::endl;
 
     //! List of fields.
     std::vector<std::string> fields;
     fields.clear();
 
     size_t idx = str.find_last_of("*");
-    DUNE::Utils::String::split(str.substr(1, idx - 1), ",", fields);
+    // standard string.
+    if (idx != std::string::npos)
+    {
+      if (!checksum(str))
+        return;
 
-    // decode packet.
-    if (DUNE::Utils::String::endsWith(fields[0], c_helm_status))
-      decodeStatus(fields);
-    else if (DUNE::Utils::String::endsWith(fields[0], c_helm_nav))
-      decodeNav(fields);
-    else if (DUNE::Utils::String::endsWith(fields[0], c_helm_dst))
-      decodeDetailedStatus(fields);
+      DUNE::Utils::String::split(str.substr(1, idx - 1), ",", fields);
 
+      // decode packet.
+      if (DUNE::Utils::String::endsWith(fields[0], c_helm_status))
+        decodeStatus(fields);
+      else if (DUNE::Utils::String::endsWith(fields[0], c_helm_nav))
+        decodeNav(fields);
+      else if (DUNE::Utils::String::endsWith(fields[0], c_helm_dst))
+        decodeDetailedStatus(fields);
+    }
+    else
+    {
+      // maybe a configuration set command.
+      decodeConfigCommand(str);
+    }
   }
 
   //! Decode status messages.
@@ -316,8 +349,89 @@ private:
     unsigned short csum = CRC16((unsigned char*)&str[1], idx);
 
     // @todo: glider simulator checksum is not correct - will be fixed in future release.
-    std::printf("[PMC/csum] %04x == %04x (PMC csum will be fixed in future releases, don't care for now)\r\n", csum, rsum);
+    std::printf("[glider] csum: %04x == %04x (TO BE FIXED in future SHOEBOX release. Don't care for now)\r\n", csum, rsum);
     return true;
+  }
+
+  //! Decode received configuration command.
+  //! @param[in] str received frame.
+  void
+  decodeConfigCommand(const std::string& str)
+  {
+    // it is *not* a payload configuration command.
+    if (!DUNE::Utils::String::startsWith(str, c_cfg_cmd))
+      return;
+
+    unsigned lane = 99;
+    unsigned cmd = 99;
+    char option[32];
+    char value[32];
+
+    // set key
+    if (std::sscanf(str.c_str(), "$pld%u.%[^=]%*1[=]%[^;]",
+                    &lane, option, value) == 3)
+    {
+      if (lane > m_devices.size())
+        return;
+
+      std::string strop;
+      std::string strval;
+      strop.assign(option);
+      strval.assign(value);
+
+      // Update setting on configuration.
+      m_cfg->set(m_devices[lane - 1], strop, strval);
+      m_cfg_changed = true;
+      std::cerr << "[glider] set-cfg #" << lane - 1 << ": "
+                << strop.c_str() << " = " << strval.c_str() << std::endl;
+
+      reply(lane, strop, strval);
+    }
+    // get key.
+    else if (std::sscanf(str.c_str(), "$pld%u.%[^;]", &lane, option) == 2)
+    {
+      if (lane > m_devices.size())
+        return;
+
+      std::string strop;
+      strop.assign(option);
+
+      std::string value = m_cfg->get(m_devices[lane - 1], strop);
+      std::cerr << "[glider] get-cfg #" << lane - 1 << ": "
+                << strop.c_str() << " ? " << value.c_str() << std::endl;
+
+      reply(lane, strop, value);
+    }
+    // control device.
+    else if (std::sscanf(str.c_str(), "$pld%u=%u;", &lane, &cmd) == 2)
+    {
+      if (lane > m_devices.size() || cmd > 1)
+        return;
+
+      // forced mode.
+      m_cfg->set(m_devices[lane - 1], "forced", cmd == 1 ? "on" : "off");
+      m_cfg_changed = true;
+
+      std::cerr << "[glider] force-cfg #" << lane - 1 << ": " << cmd << std::endl;
+    }
+  }
+
+  //! Reply to navigation computer the current payload option and value.
+  //! @param[in] lane sensor lane (+ 1).
+  //! @param[in] option configuration option.
+  //! @param[in] value configuration value.
+  void
+  reply(unsigned lane, const std::string& option, const std::string& value)
+  {
+    std::string reply;
+    reply = DUNE::Utils::String::str("%s,%u,%s,%s*", c_rpl_cmd.c_str(), lane,
+                                     option.c_str(), value.c_str());
+
+    unsigned short csum = CRC16((unsigned char*)&reply[1], reply.size() - 1);
+    reply += DUNE::Utils::String::str("%04x;\r\n", csum);
+
+    std::cerr << "[glider] sent: '" << DUNE::Streams::sanitize(reply) << "'" << std::endl;
+    m_uart->writeString(reply.c_str());
   }
 
   //! State machine.
@@ -331,10 +445,17 @@ private:
   //! Index of checksum character.
   size_t m_csum_index;
 
-  //! NMC frames.
+  //! NMC remote helm frames.
   FrameStatus* m_status;
   FrameNav* m_nav;
   FrameDetailedStatus* m_detailed;
+
+  //! Pointer to configuration.
+  DUNE::Parsers::Config* m_cfg;
+  //! List of devices from configuration.
+  std::vector<std::string> m_devices;
+  //! Configuration has changed.
+  bool m_cfg_changed;
 };
 
 #endif

@@ -66,7 +66,7 @@ main(int argc, char** argv)
   // RS-485 bus with SIB.
   SibBus bus("/dev/ttyS3");
   // Command Bus with glider.
-  GliderAPI glider("/dev/ttyS5");
+  GliderAPI glider("/dev/ttyS5", &cfg);
   // Sensor manager.
   Manager man(&bus, &cfg, "/root/", c_log_timestep, c_subsamp_timestep);
 
@@ -94,6 +94,15 @@ main(int argc, char** argv)
       man.setState(glider.getVehicle(), glider.getMission(), glider.getCycle(),
                    glider.getLatitude(), glider.getLongitude(), glider.getDepth(),
                    glider.getAltitude(), glider.getUpDown());
+
+    // configuration has changed.
+    if (glider.checkConfig())
+    {
+      // reload settings.
+      std::cerr << "reloading settings" << std::endl;
+      man.reload();
+      glider.resetConfigChanged();
+    }
 
     if (timer.overflow())
     {

@@ -42,6 +42,14 @@ enum UpDownRule
   UDR_UP   = 2
 };
 
+//! Forced mode.
+enum ForcedMode
+{
+  FM_DISABLED,
+  FM_ON,
+  FM_OFF
+};
+
 //! Sensor acquisition rules.
 //! *******************************************************************************
 //! Sensors configuration (refer to manual for more information)
@@ -79,6 +87,12 @@ public:
     m_config(&cfg),
     m_section(section)
   {
+    reload();
+  }
+
+  void
+  reload(void)
+  {
     // fill all acquisition zones.
     for (size_t i = 0; i < c_acq_rules; ++i)
     {
@@ -90,6 +104,15 @@ public:
       m_config->get(m_section, str + "phase", "000", m_zones[i].phase);
       m_config->get(m_section, str + "yo", "1", m_zones[i].yo);
     }
+
+    std::string mode;
+    m_config->get(m_section, "forced", "", mode);
+
+    m_mode = FM_DISABLED;
+    if (mode == "on")
+      m_mode = FM_ON;
+    else if (mode == "off")
+      m_mode = FM_OFF;
   }
 
   //! Enable sensor sampling according with acquisition zones rules.
@@ -100,14 +123,28 @@ public:
   float
   enable(float depth, UpDownRule state, unsigned yo)
   {
+    // forced mode off.
+    if (m_mode == FM_OFF)
+      return -1.0;
+
     for (size_t i = 0; i < c_acq_rules; ++i)
     {
       // if our depth is beyond layer i, then check previous layer.
       // this assumes each layer has a depth defined greater than
       // previous' layer.
       if (depth < m_zones[i].depth)
+      {
+        // forced mode on, use period.
+        if (m_mode == FM_ON)
+          return m_zones[i].period;
+
         return check(depth, state, yo, i);
+      }
     }
+
+    // no depth zones are valid, but we force it on.
+    if (m_mode == FM_ON)
+      return 0;
 
     return -1.0;
   }
@@ -192,6 +229,8 @@ private:
   DUNE::Parsers::Config* m_config;
   //! Configuration header.
   std::string m_section;
+  //! Forced mode.
+  ForcedMode m_mode;
 };
 
 #endif
