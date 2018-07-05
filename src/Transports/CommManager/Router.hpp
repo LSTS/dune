@@ -53,7 +53,8 @@ namespace Transports
       Router(Task* task){
         m_parent = task;
         m_medium = 4;
-        m_rssi_msg = NULL;
+        m_gsm_entity_id = -1;
+        m_iridium_entity_id = -1;
         m_reqid = 0;
         c_wifi_timeout = 15;
       }
@@ -67,7 +68,7 @@ namespace Transports
       void
       process(IMC::RSSI* msg)
       {
-        m_rssi_msg = msg;
+        m_rssi_msg_map[msg->getSourceEntity()]=msg->value;
       }
 
       void
@@ -89,22 +90,11 @@ namespace Transports
           }
           int result_gsm = std::sscanf(list[i].c_str(), "imc+gsm://%[^/]", number);
           if(result_gsm == 1){
-            m_gsm_map[msg->sys_name]=std::string(number);
+            m_gsm_announce_map[msg->sys_name]=std::string(number);
           }
 
         }
 
-      }
-
-      uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
-          m_reqid=0;
-        }
-        else{
-          m_reqid++;
-        }
-        return m_reqid;
       }
 
       void
@@ -130,6 +120,29 @@ namespace Transports
         m_parent->dispatch(msg);
 
         m_parent->inf("Status of transmission message(%d) changed to: %s", req->req_id, info.c_str());
+      }
+
+      void
+      answerCommNotAvailable(const IMC::TransmissionRequest* msg)
+      {
+        answer(msg, "No communication mode available for this message type", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+      }
+
+      void
+      answerDestinationNotVisible(const IMC::TransmissionRequest* msg)
+      {
+        answer(msg, "No communication mode available for this destination", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+      }
+
+      uint16_t
+      createInternalId(){
+        if(m_reqid==0xFFFF){
+          m_reqid=0;
+        }
+        else{
+          m_reqid++;
+        }
+        return m_reqid;
       }
 
       void
@@ -285,67 +298,98 @@ namespace Transports
             return;
           }
           else{
-            answer(msg, "No communication mode available for this message type and medium", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            answer(msg, "No communication mode available for this message type", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             return;
           }
         }
         //end
 
         //restriction by transmission mode
-        switch(msg->data_mode){
+        std::string dest;
+        switch (msg->data_mode)
+        {
           //unique for uan modems
           case IMC::TransmissionRequest::DMODE_ABORT:
           case IMC::TransmissionRequest::DMODE_RANGE:
           case IMC::TransmissionRequest::DMODE_REVERSE_RANGE:
-            if(m_medium == IMC::VehicleMedium::VM_WATER){
-              sendViaAcoustic(msg);
+            if (m_medium == IMC::VehicleMedium::VM_WATER)
+            {
+              if(visibleOverAcoustic(msg->destination)){
+                sendViaAcoustic(msg);
+                return;
+              }
+              answerDestinationNotVisible(msg);
               return;
             }
-
-            answer(msg, "No communication mode available for this message type", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            answerCommNotAvailable(msg);
             return;
 
             break;
 
-          //unique for satellite modem
+            //unique for satellite modem
           case IMC::TransmissionRequest::DMODE_RAW:
-            sendViaSatellite(msg);
+            if(checkRSSISignal(IRIDIUM)){
+              sendViaSatellite(msg);
+              return;
+            }
+            answerCommNotAvailable(msg);
             return;
 
             break;
 
-          //only for satellite modem or gsm
+            //only for satellite modem or gsm
           case IMC::TransmissionRequest::DMODE_TEXT:
-            if (visibleOverGSM(msg->destination))
+
+            if (visibleOverGSM(msg->destination,dest)
+                && checkGSMMessageSize(msg))
             {
               sendViaGSM(msg);
               return;
             }
 
-            sendViaSatellite(msg);
+            if(checkRSSISignal(IRIDIUM)){
+              sendViaSatellite(msg);
+              return;
+            }
+            answerCommNotAvailable(msg);
             return;
 
             break;
 
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
-            ///add rssi variables?
             if (visibleOverWifi(msg->destination))
             {
               sendViaWifi(msg);
               return;
             }
-            if (visibleOverGSM(msg->destination))
+            if (visibleOverGSM(msg->destination,dest)
+                && checkGSMMessageSize(msg))
             {
               sendViaGSM(msg);
               return;
             }
+            if(m_medium == IMC::VehicleMedium::VM_WATER)
+            {
+              if(visibleOverAcoustic(msg->destination)){
+                sendViaAcoustic(msg);
+                return;
+              }
+              answerDestinationNotVisible(msg);
+              return;
+            }
 
-            sendViaSatellite(msg);
+            if(checkRSSISignal(IRIDIUM)){
+              sendViaSatellite(msg);
+              return;
+            }
+            answerCommNotAvailable(msg);
             return;
-
             break;
 
-          default:break;
+          default:
+            answerCommNotAvailable(msg);
+            return;
+            break;
         }
         //end
 
@@ -372,13 +416,13 @@ namespace Transports
         }
         else
         {
-          if(visibleOverGSM(msg->destination)){
-            sms.destination = m_gsm_map[msg->destination];
+          std::string dest;
+          if(visibleOverGSM(msg->destination, dest)){
+            sms.destination = dest;
           }else{
             sms.destination = msg->destination;
           }
         }
-
         sms.timeout = (sms.timeout < 0)? 0 : msg->deadline - Time::Clock::getSinceEpoch();
 
         switch(msg->data_mode){
@@ -469,6 +513,80 @@ namespace Transports
 
       }
 
+      void
+      setGSMMap(std::map<std::string, std::string> map)
+      {
+        m_gsm_config_map = map;
+      }
+
+      void
+      setAcousticMap(std::vector<std::string> map)
+      {
+        m_acoustic_map = map;
+      }
+
+      void
+      setGsmLabel(int id)
+      {
+        m_gsm_entity_id = id;
+      }
+
+      void
+      setIridiumLabel(int id)
+      {
+        m_iridium_entity_id = id;
+      }
+
+      std::map<uint16_t, IMC::TransmissionRequest*>*
+      getList(){
+        return &m_transmission_requests;
+      }
+
+      ~Router()
+      {
+      }
+    private:
+      Task* m_parent;
+      uint8_t m_medium;
+
+      int m_gsm_entity_id;
+      int m_iridium_entity_id;
+      std::map<uint8_t, fp32_t> m_rssi_msg_map;
+      uint16_t m_reqid;
+
+      typedef std::map<uint16_t, IMC::TransmissionRequest*> MessagesQueued;
+      MessagesQueued m_transmission_requests;
+
+      typedef std::map<std::string, TCPannounce> WifiMap;
+      WifiMap m_wifi_map;
+
+      typedef std::map<std::string, std::string> GsmAnnounceMap;
+      GsmAnnounceMap m_gsm_announce_map;
+
+      typedef std::map<std::string, std::string> GsmConfigMap;
+      GsmConfigMap m_gsm_config_map;
+
+      typedef std::vector<std::string> AcousticMap;
+      AcousticMap m_acoustic_map;
+
+      uint16_t c_wifi_timeout;
+
+      enum RSSIType{
+        GSM,
+        IRIDIUM
+      };
+
+      bool
+      visibleOverAcoustic(std::string system){
+        if(system.empty()) return false;
+
+        for(unsigned i = 0;i<m_acoustic_map.size();i++){
+          if(m_acoustic_map[i] == system) return true;
+        }
+
+        return false;
+      }
+
       bool
       visibleOverWifi(std::string system)
       {
@@ -487,35 +605,91 @@ namespace Transports
       }
 
       bool
-      visibleOverGSM(std::string system)
+      visibleOverGSM(std::string system, std::string& std)
       {
         if(system.empty()) return false;
 
         std::map<std::string, std::string>::iterator it;
+        it = m_gsm_announce_map.find(system);
+        if(it != m_gsm_announce_map.end()){
+          std = it->second;
+          return checkRSSISignal(GSM);
+        }
 
-        it = m_gsm_map.find(system);
-        if(it == m_gsm_map.end()) return false;
+        it = m_gsm_config_map.find(system);
+        if(it != m_gsm_config_map.end()){
+          std = it->second;
+          return checkRSSISignal(GSM);
+        }
 
-        return true;
+        return false;
+
       }
 
-      std::map<uint16_t, IMC::TransmissionRequest*>*
-      GetList(){
-        return &m_transmission_requests;
-      }
-
-      ~Router()
+      bool
+      checkRSSISignal(RSSIType type)
       {
+        switch (type)
+        {
+          case GSM:
+            {
+              if(m_gsm_entity_id == -1) return false;
+              std::map<uint8_t, fp32_t>::iterator it;
+              it = m_rssi_msg_map.find(m_gsm_entity_id);
+              if (it == m_rssi_msg_map.end())
+                return false;
+              if (it->second > 0)
+                return true;
+              return false;
+
+              break;
+            }
+          case IRIDIUM:
+            {
+              if(m_iridium_entity_id == -1) return false;
+              std::map<uint8_t, fp32_t>::iterator it;
+              it = m_rssi_msg_map.find(m_iridium_entity_id);
+              if (it == m_rssi_msg_map.end())
+                return false;
+              if (it->second >= 20)
+                return true;
+              return false;
+
+              break;
+            }
+          default:{
+            return false;
+            break;
+          }
+        }
       }
-    private:
-      Task* m_parent;
-      uint8_t m_medium;
-      IMC::RSSI* m_rssi_msg;
-      uint16_t m_reqid;
-      std::map<uint16_t, IMC::TransmissionRequest*> m_transmission_requests;
-      std::map<std::string, TCPannounce> m_wifi_map;
-      std::map<std::string, std::string> m_gsm_map;
-      uint16_t c_wifi_timeout;
+
+      bool
+      checkGSMMessageSize(const IMC::TransmissionRequest* msg)
+      {
+        switch (msg->data_mode)
+        {
+          case IMC::TransmissionRequest::DMODE_TEXT:
+            {
+              return msg->txt_data.length() <= 160;
+              break;
+            }
+          case IMC::TransmissionRequest::DMODE_INLINEMSG:
+            {
+              Utils::ByteBuffer bfr;
+              IMC::Packet::serialize(msg->msg_data.get(), bfr);
+              std::string encoded = Algorithms::Base64::encode(bfr.getBuffer(),
+                                                               bfr.getSize());
+              return encoded.length() <= 160;
+              break;
+            }
+          default:
+            {
+              return false;
+              break;
+            }
+        }
+      }
 
     };
   }
