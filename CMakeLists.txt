@@ -159,6 +159,10 @@ file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
 file(GLOB_RECURSE DUNE_CORE_DEFS    "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
 string(REPLACE ";" " " DUNE_CORE_HEADERS_STRING "${DUNE_CORE_HEADERS}")
 
+file(GLOB_RECURSE USER_CORE_SOURCES "${PROJECT_SOURCE_DIR}/user/src/USER/*.cpp")
+file(GLOB_RECURSE USER_CORE_HEADERS "${PROJECT_SOURCE_DIR}/user/src/USER/*.hpp")
+string(REPLACE ";" " " USER_CORE_HEADERS_STRING "${USER_CORE_HEADERS}")
+
 configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Config.hpp.in
   ${DUNE_GENERATED}/src/DUNE/Config.hpp)
 
@@ -167,7 +171,7 @@ install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
 
 include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
 
-set_source_files_properties(${DUNE_CORE_SOURCES}
+set_source_files_properties(${DUNE_CORE_SOURCES} ${USER_CORE_SOURCES}
   PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
 
 if(DUNE_OS_WINDOWS)
@@ -178,7 +182,7 @@ if(DUNE_OS_WINDOWS)
     ${DUNE_GENERATED}/src/DUNE/Version.rc)
 endif(DUNE_OS_WINDOWS)
 
-foreach(header ${DUNE_CORE_HEADERS})
+foreach(header ${DUNE_CORE_HEADERS} ${USER_CORE_HEADERS})
   string(REGEX REPLACE "${PROJECT_SOURCE_DIR}/" "" header ${header})
   string(REGEX REPLACE "src" "include" destination ${header})
   get_filename_component(destination ${destination} PATH)
@@ -203,18 +207,19 @@ foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
-include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_VENDOR_INCS_DIR})
+include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/user/src ${DUNE_VENDOR_INCS_DIR})
 link_directories(${DUNE_VENDOR_LIBS_DIR})
 set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
+set(USER_CORE_FILES ${USER_CORE_SOURCES} ${USER_VENDOR_FILES})
 
 if(DUNE_SHARED)
   message(STATUS "Building shared library")
-  add_library(dune-core SHARED ${DUNE_CORE_FILES})
+  add_library(dune-core SHARED ${DUNE_CORE_FILES} ${USER_CORE_FILES} )
   set_target_properties(dune-core PROPERTIES DEFINE_SYMBOL DUNE_DLL_EXPORT)
   target_link_libraries(dune-core ${DUNE_SYS_LIBS})
 else(DUNE_SHARED)
   message(STATUS "Building static library")
-  add_library(dune-core STATIC ${DUNE_CORE_FILES})
+  add_library(dune-core STATIC ${DUNE_CORE_FILES} ${USER_CORE_FILES} )
   if(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
     if(DUNE_CPU_32B)
       set_target_properties(dune-core PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")

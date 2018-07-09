@@ -96,6 +96,9 @@ static std::pair<int, int> brate_pairs[] =
 #  if defined(B921600)
   , std::pair<int, int>(921600, B921600)
 #  endif
+#  if defined(B1000000)
+  , std::pair<int, int>(1000000, B1000000)
+#  endif
 #  if defined(B3000000)
   , std::pair<int, int>(3000000, B3000000)
 #  endif

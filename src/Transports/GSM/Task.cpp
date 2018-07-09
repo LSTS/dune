@@ -56,10 +56,25 @@ namespace Transports
       std::string message;
       // Delivery deadline.
       double deadline;
+    };
 
+    struct SmsRequest
+    {
+      // Request id.
+      uint16_t req_id;
+      // Source address.
+      uint16_t src_adr;
+      // Source entity id.
+      uint8_t src_eid;
+      // Recipient.
+      std::string destination;
+      // Message to send.
+      std::string sms_text;
+      // Deadline to deliver the
+      double deadline;
       // Higher deadlines have less priority.
       bool
-      operator<(const SMS& other) const
+      operator<(const SmsRequest& other) const
       {
         return deadline > other.deadline;
       }
@@ -91,18 +106,21 @@ namespace Transports
       //! GSM driver.
       Driver* m_driver;
       //! SMS queue.
-      std::priority_queue<SMS> m_queue;
+      std::priority_queue<SmsRequest> m_queue;
       //! RSSI query timer.
       Counter<double> m_rssi_timer;
       //! SMS reception query timer.
       Counter<double> m_rsms_timer;
+      //! SMS Request id for SMS Messages
+      unsigned m_req_id;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_driver(NULL)
+        m_driver(NULL),
+        m_req_id(1560)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -136,7 +154,9 @@ namespace Transports
         .units(Units::Second)
         .description("Maximum amount of time to wait for SMS send completion");
 
+
         bind<IMC::Sms>(this);
+        bind<IMC::SmsRequest>(this);
         bind<IMC::IoEvent>(this);
       }
 
@@ -164,6 +184,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
+          war(DTR("ERROR Initializing the GSM modem"));
           throw RestartNeeded(e.what(), 5, false);
         }
       }
@@ -201,19 +222,58 @@ namespace Transports
       }
 
       void
-      consume(const IMC::Sms* msg)
+      sendSmsStatus(const SmsRequest* sms_req,IMC::SmsStatus::StatusEnum status,const std::string& info = "")
       {
+        IMC::SmsStatus sms_status;
+        sms_status.setDestination(sms_req->src_adr);
+        sms_status.setDestinationEntity(sms_req->src_eid);
+        sms_status.req_id = sms_req->req_id;
+        sms_status.info   = info;
+        sms_status.status = status;
+
+        dispatch(sms_status);
+      }
+
+    void
+    consume(const IMC::Sms* msg)
+    {
+      //Conversion to SmsRequest Message
+      IMC::SmsRequest sms_req;
+      //FIXME verify if req_id already exists
+      sms_req.req_id      = m_req_id++;
+      sms_req.destination = msg->number;
+      sms_req.sms_text    = msg->contents;
+      sms_req.timeout = msg->timeout;
+      sms_req.setSource(msg->getSource());
+      sms_req.setSourceEntity(msg->getSourceEntity());
+      dispatch(sms_req,DF_LOOP_BACK);
+    }
+
+      void
+      consume(const IMC::SmsRequest* msg)
+      {
+        SmsRequest sms_req;
+        sms_req.req_id      = msg->req_id;
+        sms_req.destination = msg->destination;
+        sms_req.sms_text    = msg->sms_text;
+        sms_req.src_adr     = msg->getSource();
+        sms_req.src_eid     = msg->getSourceEntity();
+
         if (msg->timeout == 0)
         {
-          err("%s", DTR("SMS timeout cannot be zero"));
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"SMS timeout cannot be zero");
+          inf("%s", DTR("SMS timeout cannot be zero"));
           return;
         }
-
-        SMS sms;
-        sms.recipient = msg->number;
-        sms.message = msg->contents;
-        sms.deadline = Clock::get() + msg->timeout;
-        m_queue.push(sms);
+        if(sms_req.sms_text.length() > 160) //160 characters encoded in 8-bit alphabet per SMS message
+        {
+        	sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"Can only send 160 characters over SMS.");
+        	inf("%s", DTR("Can only send 160 characters over SMS"));
+		    return;
+        }
+        sms_req.deadline = Clock::getSinceEpoch() + msg->timeout;
+        m_queue.push(sms_req);
+        sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_QUEUED,DTR("SMS sent to queue"));
       }
 
       void
@@ -227,24 +287,30 @@ namespace Transports
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-        SMS sms = m_queue.top();
+        SmsRequest sms_req = m_queue.top();
         m_queue.pop();
 
         // Message is too old, discard it.
-        if (Clock::get() >= sms.deadline)
+        if (Time::Clock::getSinceEpoch() >= sms_req.deadline)
         {
-          war(DTR("discarded expired SMS to recipient '%s'"), sms.recipient.c_str());
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,DTR("SMS timeout"));
+          war(DTR("discarded expired SMS to recipient %s"), sms_req.destination.c_str());
           return;
         }
 
         try
         {
           m_driver->getRSSI();
-          m_driver->sendSMS(sms.recipient, sms.message, m_args.sms_tout);
+          m_driver->sendSMS(sms_req.destination, sms_req.sms_text, m_args.sms_tout);
+          //SMS successfully sent, otherwise driver throws error
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_SENT);
         }
         catch (...)
         {
-          m_queue.push(sms);
+          m_queue.push(sms_req);
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,
+                        DTR("Error sending message over GSM modem"));
+          inf(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
         }
       }
 

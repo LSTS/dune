@@ -291,6 +291,7 @@ namespace Plan
               clearDatabase(*req);
               break;
             case IMC::PlanDB::DBOP_GET_STATE:
+            case IMC::PlanDB::DBOP_GET_DSTATE:
               m_reply.plan_id.clear();
               getDatabaseState(*req);
               break;

@@ -96,6 +96,14 @@ namespace DUNE
       static void
       rtrim(char* str);
 
+      //! Resize string by replacing any extra characters with '\0'.
+      //! If size is greater than current size, the string is untouched.
+      //! If size is lower than 0, the resulting size is [strlen(str) + size].
+      //! @param str object string
+      //! @param size new size
+      static void
+      resize(char* str, int size);
+
       //! Strip whitespace from the beginning and end of a string.
       //! @param str object string.
       //! @return string without leading and trailing whitespaces.

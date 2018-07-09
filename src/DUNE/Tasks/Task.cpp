@@ -43,6 +43,8 @@
 #include <DUNE/Tasks/Exceptions.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Utils/XML.hpp>
+#include <DUNE/Entities/BasicEntity.hpp>
+#include <DUNE/Entities/EntityUtils.hpp>
 
 #if defined(DUNE_OS_LINUX)
 #  include <sys/prctl.h>
@@ -107,6 +109,16 @@ namespace DUNE
 
       m_entities.push_back(e);
       return e->getId();
+    }
+
+    Entities::BasicEntity*
+    Task::getLocalEntity(const std::string& label)
+    {
+      std::vector<Entities::BasicEntity*>::iterator it = std::find(m_entities.begin(), m_entities.end(), label);
+      if (it == m_entities.end())
+          return NULL;
+      else
+        return (*it);
     }
 
     void
@@ -697,7 +709,14 @@ namespace DUNE
           err(DTR("invalid parameter '%s'"), pitr->first.c_str());
       }
 
-      updateParameters(false);
+      try
+      {
+        updateParameters(false);
+      }
+      catch (RestartNeeded& e)
+      {
+        err(DTR("unable to load parameters: %s"), e.getError());
+      }
     }
   }
 }

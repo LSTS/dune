@@ -51,8 +51,10 @@ namespace Monitors
     {
       //! Wet measurements timeout.
       float water_timeout;
-      //! Wet measurements threshold.
-      float water_lm;
+      //! Salinity threshold.
+      float salinity_lm;
+      //! Sound speed threshold.
+      float sspeed_lm;
       //! Initialization time.
       float init_time;
       //! GPS timeout.
@@ -106,6 +108,7 @@ namespace Monitors
         m_depth(0),
         m_airspeed(0),
         m_gndspeed(0),
+        m_medium_eid(UINT_MAX),
         m_altitude(0)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
@@ -124,11 +127,17 @@ namespace Monitors
         .minimumValue("1.5")
         .description("No valid wet sensor data timeout");
 
-        param("Wet Data Threshold", m_args.water_lm)
+        param("Salinity Threshold", m_args.salinity_lm)
         .defaultValue("1.0")
         .minimumValue("0.0")
         .maximumValue("5.0")
-        .description("No valid wet sensor data threshold value");
+        .description("No valid salinity threshold value");
+
+        param("Sound Speed Threshold", m_args.sspeed_lm)
+        .defaultValue("1000.0")
+        .minimumValue("0.0")
+        .maximumValue("2000.0")
+        .description("No valid sound speed threshold value");
 
         param("GPS Timeout", m_args.gps_timeout)
         .units(Units::Second)
@@ -218,8 +227,10 @@ namespace Monitors
 
         m_wet_devs.reset();
 
-        if (msg->description == DTR("water"))
+        if (msg->description == DTR("water")) {
           m_in_water.reset();
+          debug(DTR("Water detected using medium sensor."));
+        }
       }
 
       void
@@ -259,8 +270,10 @@ namespace Monitors
 
         m_wet_devs.reset();
 
-        if (msg->value >= m_args.water_lm)
+        if (msg->value >= m_args.salinity_lm) {
           m_in_water.reset();
+          debug(DTR("Water detected using salinity threshold."));
+        }
       }
 
       void
@@ -271,8 +284,10 @@ namespace Monitors
 
         m_wet_devs.reset();
 
-        if (msg->value >= m_args.water_lm)
+        if (msg->value >= m_args.sspeed_lm) {
           m_in_water.reset();
+          debug(DTR("Water detected using sound speed sensor."));
+        }
       }
 
       //! Routine to check if we have recent wet sensor measurements.
@@ -295,14 +310,18 @@ namespace Monitors
       void
       checkWater(void)
       {
+        spew("Water check.");
+
         if (m_wet_devs.overflow())
         {
           m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
           return;
         }
 
-        if (inWater())
+        if (inWater()) {
           m_vm.medium = IMC::VehicleMedium::VM_WATER;
+          spew("Vehicle is in water.");
+        }
         else
           m_vm.medium = IMC::VehicleMedium::VM_GROUND;
       }
@@ -380,11 +399,15 @@ namespace Monitors
         // No way to detect medium properly.
         if (isActive() && m_wet_devs.overflow())
         {
+
+          debug("No medium data has been received for %f seconds.", m_wet_devs.getElapsed());
           m_vm.medium = IMC::VehicleMedium::VM_UNKNOWN;
           dispatch(m_vm);
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
           return false;
         }
+
+        spew("Either not active or there was an overflow.");
 
         return true;
       }

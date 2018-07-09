@@ -100,7 +100,7 @@ namespace Transports
         std::map<Address, unsigned>::iterator itr;
         itr = m_addrs.find(addr);
 
-        return (itr != m_addrs.end() && itr->second != port);
+        return (itr != m_addrs.end() && itr->second == port);
       }
 
       //! Point active address to existing node service.

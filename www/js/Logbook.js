@@ -14,12 +14,13 @@ Logbook.prototype.update = function() {
 	    continue;
 
 	var msgType = typeAsString(msg.type);
-	logbookStr += "<p class=\"" + msgType + "\">" +
+	logbookStr = "<p class=\"" + msgType + "\">" +
 	    "[" + dateToString(msg.timestamp) + "] - "
 	    + msgType +
 	    " " + "[" + msg.context + "] >> " +
 	    msg.text +
-	    "<\p>";
+	    "<\p>" +
+	    logbookStr;
     }
 
     this.m_base.innerHTML = logbookStr;

@@ -53,7 +53,9 @@ namespace Supervisors
       //! GSM.
       IS_GSM = 0x04,
       //! Mobile.
-      IS_MOBILE = 0x08
+      IS_MOBILE = 0x08,
+      //! Radio
+      IS_RADIO = 0x10
     };
 
     //! Request structure.

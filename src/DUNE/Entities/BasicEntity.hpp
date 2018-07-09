@@ -121,7 +121,7 @@ namespace DUNE
       //! @param[in] label string to be compared against.
       //! @return true if the label and the string match, false otherwise.
       bool
-      operator==(const std::string label)
+      operator==(const std::string label) const
       {
         return getLabel() == label;
       }
@@ -130,7 +130,7 @@ namespace DUNE
       //! @param[in] id integer to use for comparison.
       //! @return true if the entity id and the integer match, false otherwise.
       bool
-      operator==(unsigned int id)
+      operator==(unsigned int id) const
       {
         return getId() == id;
       }

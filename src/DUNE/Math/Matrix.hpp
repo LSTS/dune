@@ -81,7 +81,7 @@ namespace DUNE
       //! @param[in] data pointer to data to be copied to new matrix
       //! @param[in] r number of rows of new matrix
       //! @param[in] c number of columns of new matrix
-      Matrix(double* data, size_t r, size_t c);
+      Matrix(const double* data, size_t r, size_t c);
 
       //! Constructor.
       //! Construct a matrix of size rows*columns.

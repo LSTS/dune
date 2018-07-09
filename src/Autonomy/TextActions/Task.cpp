@@ -54,13 +54,14 @@ namespace Autonomy
       }
 
       void
-      handlePlanCommand(const std::string& origin, const std::string& args)
+      handlePlanCommand(const std::string& origin, const std::string& args, bool ignore_errors = true)
       {
         // Plan control message!
         IMC::PlanControl pc;
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
-        pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+        if (ignore_errors)
+          pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
 
         char plan_id[32];
         std::sscanf(args.c_str(), "%s", plan_id);
@@ -121,11 +122,15 @@ namespace Autonomy
 
         if (cmd == "plan")
         {
-          handlePlanCommand(msg->origin, args);
+          handlePlanCommand(msg->origin, args, true);
         }
         else if (cmd == "abort")
         {
           handleAbortCommand(msg->origin, args);
+        }
+        else if (cmd == "start")
+        {
+          handlePlanCommand(msg->origin, args, false);
         }
         else
         {

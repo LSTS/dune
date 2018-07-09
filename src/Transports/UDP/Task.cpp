@@ -82,6 +82,8 @@ namespace Transports
       bool dynamic_nodes;
       // Only transmit messages from local system
       bool only_local;
+      // Optional custom service type
+      std::string custom_service;
     };
 
     // Internal buffer size.
@@ -178,6 +180,10 @@ namespace Transports
         .defaultValue("false")
         .description("Only transmit messsages from local system.");
 
+        param("Custom Service Type", m_args.custom_service)
+        .defaultValue("")
+        .description("Optional custom service type (imc+udp+<Custom Service Type>), empty entry gives default service (imc+udp)");
+
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
 
@@ -223,14 +229,14 @@ namespace Transports
           debug("limited communications simulation is not active");
           m_comm_limitations = false;
         }
-
-        // Register normal messages.
-        bind(this, m_args.messages);
       }
 
       void
       onResourceAcquisition(void)
       {
+        // Register normal messages.
+        bind(this, m_args.messages);
+
         // Find a free port.
         unsigned port_limit = m_args.port + c_port_retries;
         while (m_args.port != port_limit)
@@ -261,7 +267,17 @@ namespace Transports
           for (unsigned i = 0; i < itfs.size(); ++i)
           {
             std::stringstream os;
-            os << "imc+udp://" << itfs[i].address().str() << ":" << m_args.port
+            std::string service = "imc+udp";
+
+            // if custom service type is enabled
+            if (m_args.custom_service != "")
+            {
+              std::stringstream cs;
+              cs << service << "+" << m_args.custom_service;
+              service = cs.str();
+            }
+
+            os << service << "://" << itfs[i].address().str() << ":" << m_args.port
                << "/";
 
             IMC::AnnounceService announce;

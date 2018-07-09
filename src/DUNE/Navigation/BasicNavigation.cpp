@@ -75,10 +75,14 @@ namespace DUNE
       .size(2)
       .description("Constants used in current LBL rejection scheme");
 
+      param("Disable GPS for debug", m_gps_disable)
+      .defaultValue("false")
+      .description("Disable GPS for debug");
+
       param("GPS timeout", m_without_gps_timeout)
       .units(Units::Second)
       .defaultValue("3.0")
-      .minimumValue("2.0")
+      .minimumValue("1.5")
       .description("No GPS readings timeout");
 
       param("DVL timeout", m_without_dvl_timeout)
@@ -342,7 +346,7 @@ namespace DUNE
           std::fabs(msg->y) > c_max_accel ||
           std::fabs(msg->z) > c_max_accel)
       {
-        war(DTR("received acceleration beyond range: %f, %f, %f"),
+        err(DTR("received acceleration beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
 
         return;
@@ -498,6 +502,9 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::GpsFix* msg)
     {
+
+      if (m_gps_disable== true)
+        return;
       if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
         return;
 

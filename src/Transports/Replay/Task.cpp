@@ -322,8 +322,6 @@ namespace Transports
           m_is = 0;
         }
         m_eid2eid.clear();
-        m_name2eid.clear();
-        m_eid2name.clear();
         m_tstats.clear();
         m_tgstats = Stats();
       }

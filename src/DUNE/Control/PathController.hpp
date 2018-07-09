@@ -243,6 +243,27 @@ namespace DUNE
         return false;
       }
 
+      //! Default implementation for calculating estimated time of arrival,
+      //! that can be overridden to change how maneuver completion is signalized.
+      //! @param ts the current tracking state
+      //! @param time_factor for time of arrival factor
+      //! @param speed
+      //! @return the calculated estimated time of arrival
+      virtual double
+      getEta(const TrackingState& ts);
+
+      float
+      getSpeed(void)
+      { 
+        return std::max((double)m_eta_min_speed, m_ts.speed);
+      }
+
+      float
+      getTimeFactor(void)
+      {
+        return m_time_factor;
+      }
+
       //! Signal an error.
       //! This method should be used by subclasses to signal an error condition.
       //! @param msg error message
@@ -458,6 +479,8 @@ namespace DUNE
       BottomTracker* m_btrack;
       //! Control loops last reference
       uint32_t m_scope_ref;
+      //! Maximum admitted track length
+      double m_max_track_length;
     };
   }
 }

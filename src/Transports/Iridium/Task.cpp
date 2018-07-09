@@ -254,8 +254,10 @@ namespace Transports
             double age = Clock::getSinceEpoch() - irMsg->msg->getTimeStamp();
             if (age < m_args.max_age_secs)
             {
-              inf("received IMC message of type %s via Iridium.", irMsg->msg->getName());
-              dispatch(irMsg->msg);
+              inf("received IMC message of type %s via Iridium from %d.", irMsg->msg->getName(), irMsg->source);
+              IMC::Message* m2 = irMsg->msg;
+              m2->setSource(irMsg->source);
+              dispatch(m2);
             }
             else
             {

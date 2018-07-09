@@ -219,7 +219,13 @@ namespace Transports
         if (m_poll.wasTriggered(*m_uart))
         {
           char bfr[1024];
-          int rv = m_uart->read(bfr, sizeof(bfr));
+          int rv = 0;
+
+          if (Poll::poll(*m_uart, 1.0))
+            rv = m_uart->read(bfr, sizeof(bfr));
+          else
+            debug("None character read from uart!");
+
           dispatchToClients(bfr, rv);
         }
       }

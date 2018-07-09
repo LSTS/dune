@@ -69,6 +69,13 @@ namespace Control
         }
 
         void
+        onPathDeactivation(void)
+        {
+          // Deactivate heading controller.
+          disableControlLoops(IMC::CL_YAW);
+        }
+
+        void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           // Head straight to target

@@ -65,6 +65,9 @@ namespace DUNE
 
     ~Daemon(void);
 
+    bool
+    callReboot(void);
+
     void
     onResourceInitialization(void);
 
@@ -105,6 +108,8 @@ namespace DUNE
     int m_cpu_max_usage;
     //! Overall CPU usage - moving average.
     Math::MovingAverage<double>* m_cpu_avg;
+    //! Signal system reboot
+    bool call_reboot;
 
     void
     measureCpuUsage(void);

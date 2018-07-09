@@ -264,6 +264,7 @@ namespace Transports
         debug("dequeing message");
         m_driver->clearBufferMO();
         sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_OK);
+        inf(DTR("Message sent successfully."));
         Memory::clear(m_tx_request);
       }
 
@@ -376,6 +377,15 @@ namespace Transports
             m_driver->checkMailBoxAlert();
           else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
             m_driver->checkMailBox();
+          else if(m_driver->getQueuedMT() == 0) //No messages to be received or sent
+          {
+            unsigned src_adr = getSystemId();
+            unsigned src_eid = getEntityId();
+            const std::vector<char> data(1);
+            TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, data);
+            sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
+            debug(DTR("No message to be received or sent."));
+          }
         }
         else
         {

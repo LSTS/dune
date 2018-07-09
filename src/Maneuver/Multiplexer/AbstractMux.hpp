@@ -90,6 +90,13 @@ namespace Maneuver
         (void)msg;
       }
 
+      //! On Rpm message
+      virtual void
+      onThrottle(const IMC::Throttle* msg)
+      {
+        (void)msg;
+      }
+
       //! On GpsFix message
       virtual void
       onGpsFix(const IMC::GpsFix* msg)

@@ -100,6 +100,8 @@ namespace Monitors
       bool m_braking;
       //! Motor's rpms
       int m_rpms;
+      //! Collision report
+      std::string m_report;
       //! Task arguments.
       Arguments m_args;
 
@@ -120,9 +122,9 @@ namespace Monitors
         .description("Number of moving average samples to smooth accelerations");
 
         param("Absolute Moving Average Samples", m_args.avg_samples_abs)
-        .defaultValue("3")
+        .defaultValue("5")
         .minimumValue("2")
-        .maximumValue("5")
+        .maximumValue("100")
         .description("Number of moving average samples to smooth accelerations");
 
         param("Maximum Deviation Factor", m_args.k_std)
@@ -259,6 +261,7 @@ namespace Monitors
           m_collision.value = msg->x;
           m_collision.type = (IMC::Collision::CD_IMPACT |
                               IMC::Collision::CD_X);
+          m_report = "X-Axis | Impact";
 
           collided();
         }
@@ -269,6 +272,7 @@ namespace Monitors
           m_collision.value = msg->z;
           m_collision.type = (IMC::Collision::CD_IMPACT |
                               IMC::Collision::CD_Z);
+          m_report = "Z-Axis | Impact";
 
           collided();
         }
@@ -278,6 +282,7 @@ namespace Monitors
         {
           m_collision.value = mean_x_abs;
           m_collision.type = IMC::Collision::CD_X;
+          m_report = "X-Axis";
 
           collided();
         }
@@ -288,6 +293,7 @@ namespace Monitors
         {
           m_collision.value = mean_z_abs;
           m_collision.type = IMC::Collision::CD_Z;
+          m_report = "Z-Axis";
 
           collided();
         }
@@ -365,7 +371,7 @@ namespace Monitors
         }
 
         // Change state and send state to the bus.
-        setEntityState(IMC::EntityState::ESTA_ERROR, DTR("collision detected"));
+        setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR("Collision detected: %s"), m_report.c_str()));
       }
 
       void
