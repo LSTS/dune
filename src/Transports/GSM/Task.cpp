@@ -97,6 +97,10 @@ namespace Transports
       double sms_tout;
       //! Device response timeout.
       float reply_tout;
+      //! Code to request balance
+      unsigned ussd_code;
+      //! Request balance
+      bool request_balance;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -115,6 +119,8 @@ namespace Transports
       unsigned m_req_id;
       //! Task arguments.
       Arguments m_args;
+      //! Balance of card
+      std::string m_balance;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -154,7 +160,15 @@ namespace Transports
         .units(Units::Second)
         .description("Maximum amount of time to wait for SMS send completion");
 
+        param("USSD code", m_args.ussd_code)
+        .defaultValue("123")
+        .description("USSD code");
 
+        param("Enable Balance Request", m_args.request_balance)
+        .defaultValue("true")
+        .description("Enable Balance Request");
+
+        m_balance = "";
         bind<IMC::Sms>(this);
         bind<IMC::SmsRequest>(this);
         bind<IMC::IoEvent>(this);
@@ -170,6 +184,7 @@ namespace Transports
           m_rssi_timer.setTop(m_args.rssi_per);
       }
 
+
       void
       onResourceAcquisition(void)
       {
@@ -181,10 +196,17 @@ namespace Transports
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
+
+          if(m_args.request_balance && m_driver->getBalance(m_args.ussd_code, m_balance))
+            setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_ACTIVE).c_str());
         }
         catch (std::runtime_error& e)
         {
+<<<<<<< HEAD
           war(DTR("ERROR Initializing the GSM modem"));
+=======
+          inf("exception: %s" ,e.what());
+>>>>>>> e37fd1c52a9d3fe77a18be5251637a3c66b8dc29
           throw RestartNeeded(e.what(), 5, false);
         }
       }
@@ -192,7 +214,7 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_IDLE).c_str());
       }
 
       void
@@ -281,11 +303,11 @@ namespace Transports
       {
         if (m_queue.empty())
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_IDLE).c_str());
           return;
         }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_ACTIVE).c_str());
 
         SmsRequest sms_req = m_queue.top();
         m_queue.pop();
@@ -347,6 +369,15 @@ namespace Transports
           pollStatus();
           processQueue();
         }
+      }
+
+      std::string
+      getMessage(Status::Code code){
+
+        std::stringstream ss;
+        ss << getString(code) << m_balance;
+
+        return ss.str();
       }
     };
   }
