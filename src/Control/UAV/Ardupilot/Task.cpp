@@ -41,6 +41,13 @@
 // MAVLink headers.
 #include <mavlink/ardupilotmega/mavlink.h>
 
+// Not yet included in MAVLINK :(
+#define MAVLINK_MSG_ID_SET_ATTITUDE_R (1<<1)
+#define MAVLINK_MSG_ID_SET_ATTITUDE_P (1<<2)
+#define MAVLINK_MSG_ID_SET_ATTITUDE_Y (1<<3)
+#define MAVLINK_MSG_ID_SET_ATTITUDE_THR (1<<7)
+#define MAVLINK_MSG_ID_SET_ATTITUDE_ATT (1<<8)
+
 namespace Control
 {
   namespace UAV
@@ -112,6 +119,35 @@ namespace Control
         bool reverse;
       };
 
+      enum CLTrig
+      {
+        T_TIMEOUT = 0,
+        T_ACTIVATE_PITCH = 1,   // Activate Pitch
+        T_DEACTIVATE_PITCH = 2, // Deactivate Pitch
+        T_ACTIVATE_ROLL = 3,   // Activate Roll
+        T_DEACTIVATE_ROLL = 4  // Deactivate Roll
+      };
+
+      std::string CLTrigString[5] = {"T_TIMEOUT", "T_ACTIVATE_PITCH", "T_DEACTIVATE_PITCH", "T_ACTIVATE_ROLL", "T_DEACTIVATE_ROLL"};
+
+      enum CLState
+      {
+        ST_INIT = 0,
+        ST_FBWB = 1,
+        ST_GUIDED = 2
+      };
+
+      std::string CLStateString[3] = {"INIT", "FBWB", "GUIDED"};
+      
+      //! CL state machine
+      struct StateMachine_CL
+      {
+        StateMachine_CL(CLState initState = ST_INIT): time_of_FBWB_request(0.0), currState(initState) {};
+
+        double time_of_FBWB_request;
+        CLState currState;
+      };
+
       //! %Task arguments.
       struct Arguments
       {
@@ -156,6 +192,8 @@ namespace Control
         bool use_external_nav;
         //! Temperature of ESC failure (degrees)
         float esc_temp;
+        // How many milliseconds should we wait for other ControlLoops before going into FBWB?
+        double CLtimeout;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -223,7 +261,7 @@ namespace Control
         //! Vehicle is on ground
         bool m_ground;
         //! Desired control
-        float m_droll, m_dclimb, m_dspeed;
+        float m_droll, m_dclimb, m_dspeed, m_dthrottle,m_dpitch;
         //! Type of system to be controlled
         APM_Vehicle m_vehicle_type;
         //! Check if is in service
@@ -234,6 +272,8 @@ namespace Control
         std::queue<mavlink_message_t> m_mission_items;
         //! Desired gimbal angles
         float m_gb_pan, m_gb_tilt, m_gb_retract;
+        //! State of the ControlLoops state mechanism
+        StateMachine_CL m_stateMachineCL;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -260,6 +300,8 @@ namespace Control
           m_droll(0),
           m_dclimb(0),
           m_dspeed(20),
+          m_dthrottle(60),
+          m_dpitch(0.0),
           m_vehicle_type(VEHICLE_UNKNOWN),
           m_service(false),
           m_last_wp(0)
@@ -415,6 +457,10 @@ namespace Control
           .defaultValue("70.0")
           .description("Temperature of ESC failure (degrees).");
 
+          param("Control Loops timeout", m_args.CLtimeout)
+          .defaultValue("50.0")
+          .units(Units::Millisecond)
+          .description("How many milliseconds should we wait for other ControlLoops before going into FBWB?");
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -439,6 +485,8 @@ namespace Control
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
           bind<DesiredRoll>(this);
+          bind<DesiredPitch>(this);
+          bind<DesiredThrottle>(this);
           bind<DesiredZ>(this);
           bind<DesiredVerticalRate>(this);
           bind<DesiredSpeed>(this);
@@ -624,53 +672,133 @@ namespace Control
 
           if (cloops->enable)
           {
-            m_cloops |= cloops->mask;
-            if ((!m_args.ardu_tracker) && (cloops->mask & IMC::CL_PATH))
+            trace("CLoops enabled, %#010x, m_cloops is %#010x",cloops->mask, m_cloops);
+
+            if (!m_args.ardu_tracker)
             {
               inf("Ardupilot tracker is NOT enabled");
-              m_cloops &= ~IMC::CL_PATH;
+              m_cloops |= cloops->mask;
+              if(cloops->mask & IMC::CL_PITCH)
+                StateMachineCLTrigger(T_ACTIVATE_PITCH);
+              if (cloops->mask & IMC::CL_ROLL)
+                StateMachineCLTrigger(T_ACTIVATE_ROLL);
             }
-
-            if (!(m_args.ardu_tracker) && (cloops->mask & IMC::CL_ROLL))
-              activateFBW();
+            else
+            {
+              trace("CLoops enable lost, since ardu_tracker is active");//should not happen
+            }
           }
           else
           {
             m_cloops &= ~cloops->mask;
+            trace("CLoops disabled, %#010x, m_cloops is %#010x",cloops->mask, m_cloops);
 
-            if ((cloops->mask & IMC::CL_ROLL) && !m_ground && m_vehicle_type == VEHICLE_FIXEDWING)
+            if(!m_ground && m_vehicle_type == VEHICLE_FIXEDWING)
             {
-              mavlink_message_t msg;
-              uint8_t buf[512];
-
-              //! Sending value 0 disables RC override for that channel
-              mavlink_msg_rc_channels_override_pack(255, 0, &msg,
-                                                    1,
-                                                    1,
-                                                    0, //! RC Channel 1 (roll)
-                                                    0, //! RC Channel 2 (vertical rate)
-                                                    0, //! RC Channel 3 (speed)
-                                                    0, //! RC Channel 4 (rudder)
-                                                    0, //! RC Channel 5 (not used)
-                                                    0, //! RC Channel 6 (not used)
-                                                    0, //! RC Channel 7 (not used)
-                                                    0);//! RC Channel 8 (mode)
-              uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-              sendData(buf, n);
+              if(cloops->mask & IMC::CL_PITCH)
+                StateMachineCLTrigger(T_DEACTIVATE_PITCH);
+              if(cloops->mask & IMC::CL_ROLL)
+                StateMachineCLTrigger(T_DEACTIVATE_ROLL);
             }
           }
 
           info(prev, m_cloops, IMC::CL_SPEED, "speed control");
+          info(prev, m_cloops, IMC::CL_THROTTLE, "throttle control");
           info(prev, m_cloops, IMC::CL_ALTITUDE, "altitude control");
           info(prev, m_cloops, IMC::CL_VERTICAL_RATE, "vertical rate control");
           info(prev, m_cloops, IMC::CL_ROLL, "bank control");
           info(prev, m_cloops, IMC::CL_YAW, "heading control");
           info(prev, m_cloops, IMC::CL_PATH, "path control");
+          info(prev, m_cloops, IMC::CL_PITCH, "pitch control");
+        }
+
+        void
+        StateMachineCLTrigger(CLTrig trigger)
+        {
+          CLState was = m_stateMachineCL.currState;
+          m_stateMachineCL.time_of_FBWB_request = 0.0;
+
+          switch (trigger) {
+            case T_TIMEOUT:
+              activateFBWB();
+              m_stateMachineCL.currState = ST_FBWB;
+              break;
+            case T_ACTIVATE_PITCH:
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    activateGuided();
+                    m_stateMachineCL.currState = ST_GUIDED;
+                  break;
+                case ST_FBWB:
+                    deactivateFBWB();
+                    activateGuided();
+                    m_stateMachineCL.currState = ST_GUIDED;
+                  break;
+                case ST_GUIDED:
+                    debug("Got activate CL PITCH while in GUIDED");
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+              break;
+            case T_ACTIVATE_ROLL:
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    m_stateMachineCL.time_of_FBWB_request = Clock::getMsec();
+                    // wait for timeout to (potentially) change state
+                  break;
+                case ST_FBWB:
+                    debug("Got activate CL ROLL while in FBWB");
+                  break;
+                case ST_GUIDED:
+                    debug("Got activate CL ROLL while in GUIDED");
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+              break;
+            case T_DEACTIVATE_PITCH: // deactivation of Pitch
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    debug("Got deactivate CL PITCH while in INIT");
+                  break;
+                case ST_FBWB:
+                    debug("Got deactivate CL PITCH while in FBWB");
+                  break;
+                case ST_GUIDED:
+                    m_stateMachineCL.time_of_FBWB_request = Clock::getMsec();
+                    // wait for timeout to (potentially) change state
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+            case T_DEACTIVATE_ROLL: // deactivation of Roll
+              switch (m_stateMachineCL.currState) {
+                case ST_INIT:
+                    debug("Got deactivate CL ROLL while in INIT");
+                  break;
+                case ST_FBWB:
+                    deactivateFBWB();
+                    m_stateMachineCL.currState = ST_INIT;
+                  break;
+                case ST_GUIDED:
+                    m_stateMachineCL.currState = ST_INIT;
+                    //TODO: Pitch should also be inactive
+                  break;
+                default:
+                  m_stateMachineCL.currState = ST_INIT;
+              }
+              break;
+            default:
+              m_stateMachineCL.currState = ST_INIT;
+              
+          }
+          inf("ControlLoops FSM: Switched from %s to %s, due to %s", CLStateString[was].c_str(), CLStateString[m_stateMachineCL.currState].c_str(), CLTrigString[trigger].c_str());
         }
 
         //! Messages for FBWB control (using DUNE's controllers)
         void
-        activateFBW(void)
+        activateFBWB(void)
         {
           if (m_vehicle_type == VEHICLE_FIXEDWING)
           {
@@ -680,14 +808,70 @@ namespace Control
             mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
-                                      6); //! FBWB is mode 6
+                                      PL_MODE_FBWB);
 
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            trace("Activating FBWB");
+          }
+          else
+          {
+            debug("Tried to set FBWB on a non-supported vehicle!");
+          }
+        }
+        
+        //! Messages for FBWB control (using DUNE's controllers)
+        void
+        deactivateFBWB(void)
+        {
+          if (m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            inf("Deactivating RC override (FBWB)");
+            mavlink_message_t msg;
+            uint8_t buf[512];
+
+            //! Sending value 0 disables RC override for that channel
+            mavlink_msg_rc_channels_override_pack(255, 0, &msg,
+                                                  1,
+                                                  1,
+                                                  0, //! RC Channel 1 (roll)
+                                                  0, //! RC Channel 2 (vertical rate/pitch)
+                                                  0, //! RC Channel 3 (speed)
+                                                  0, //! RC Channel 4 (rudder)
+                                                  0, //! RC Channel 5 (not used)
+                                                  0, //! RC Channel 6 (not used)
+                                                  0, //! RC Channel 7 (not used)
+                                                  0);//! RC Channel 8 (mode)
             uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
           }
           else
           {
-            debug("Tried to set FBW on a non-supported vehicle!");
+            debug("Tried to disable FBWB on a non-supported vehicle!");
+          }
+        }
+
+        //! Messages for GUIDED control (using DUNE's controllers)
+        void
+        activateGuided(void)
+        {
+          if (m_vehicle_type == VEHICLE_FIXEDWING)
+          {
+            uint8_t buf[512];
+            mavlink_message_t msg;
+
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      PL_MODE_GUIDED);
+
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            trace("Activating GUIDED");
+          }
+          else
+          {
+            debug("Tried to set GUIDED on a non-supported vehicle!");
           }
         }
 
@@ -714,39 +898,77 @@ namespace Control
 
           m_droll = Angles::degrees(d_roll->value);
 
-          //! Convert references to PWM and send all
+          // Pitch control loop is active -> should be in GUIDED mode
+          if (m_stateMachineCL.currState == ST_GUIDED)
+          {
+            debug("V1: %f, V2: %f, V3: %f", d_roll->value, Angles::radians(m_dpitch), m_dthrottle);
 
-          int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
-                                 m_args.rc1.val_min, m_args.rc1.val_max,
-                                 m_droll, m_args.rc1.reverse);
+            uint8_t buf[512];
 
-          int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
-                                  m_args.rc2.val_min, m_args.rc2.val_max,
-                                  m_dclimb, m_args.rc2.reverse);
+            mavlink_message_t msg;
+            // Ignore everything but thr and attitude, interpret att as roll and pitch
+            uint8_t type_mask = !(MAVLINK_MSG_ID_SET_ATTITUDE_THR & MAVLINK_MSG_ID_SET_ATTITUDE_ATT & MAVLINK_MSG_ID_SET_ATTITUDE_R & MAVLINK_MSG_ID_SET_ATTITUDE_P);
+            debug("type mask: %d", type_mask);
+            float d_quat[4];
+            mavlink_euler_to_quaternion(d_roll->value, Angles::radians(m_dpitch), 0.0, d_quat);
+            debug("d_quat = [%f, %f, %f, %f]", d_quat[0], d_quat[1], d_quat[2], d_quat[3]);
+            float roll, pitch, yaw;
+            mavlink_quaternion_to_euler(d_quat, &roll, &pitch, &yaw);
+            debug("Back-calc rpy: %f, %f, %f",roll,pitch,yaw);
 
-          int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
-                                  m_args.rc3.val_min, m_args.rc3.val_max,
-                                  m_dspeed, m_args.rc3.reverse);
 
-          debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
-          debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
+            mavlink_msg_set_attitude_target_pack(255, 0, &msg,
+                                                  Clock::get(),
+                                                  m_sysid, //@param target_system System ID
+                                                  0, //@param target_component Component ID
+                                                  type_mask,
+                                                  d_quat,
+                                                  0, 0, 0, // rpy rate
+                                                  m_dthrottle*0.01);// percent to 0..1
+              //sysid = 255? component_id = 0? target_system = target_component = 1?
+              uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          else if (m_stateMachineCL.currState == ST_FBWB)
+          { 
+            // Sending RC override when in GUIDED will result in lock of pitch to LIM_PITCH_MIN/MAX
+            //! Convert references to PWM and send all
+            int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
+                                   m_args.rc1.val_min, m_args.rc1.val_max,
+                                   m_droll, m_args.rc1.reverse);
 
-          uint8_t buf[512];
+            int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
+                                    m_args.rc2.val_min, m_args.rc2.val_max,
+                                    m_dclimb, m_args.rc2.reverse);
 
-          mavlink_message_t msg;
-          mavlink_msg_rc_channels_override_pack(255, 0, &msg,
-                                                1,
-                                                1,
-                                                pwm_roll, //! RC Channel 1 (roll)
-                                                pwm_climb, //! RC Channel 2 (vertical rate)
-                                                pwm_speed, //! RC Channel 3 (speed)
-                                                1500, //! RC Channel 4 (rudder)
-                                                0, //! RC Channel 5 (not used)
-                                                0, //! RC Channel 6 (not used)
-                                                0, //! RC Channel 7 (not used)
-                                                0);//! RC Channel 8 (mode - do not override)
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+            int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
+                                    m_args.rc3.val_min, m_args.rc3.val_max,
+                                    m_dspeed, m_args.rc3.reverse);
+
+            debug("V1: %f, V2: %f, V3: %f", m_droll, m_dclimb, m_dspeed);
+            debug("RC1: %d, RC2: %d, RC3: %d", pwm_roll, pwm_climb, pwm_speed);
+
+            uint8_t buf[512];
+
+            mavlink_message_t msg;
+            mavlink_msg_rc_channels_override_pack(255, 0, &msg,
+                                                  1,
+                                                  1,
+                                                  pwm_roll, //! RC Channel 1 (roll)
+                                                  pwm_climb, //! RC Channel 2 (vertical rate)
+                                                  pwm_speed, //! RC Channel 3 (speed)
+                                                  1500, //! RC Channel 4 (rudder)
+                                                  0, //! RC Channel 5 (not used)
+                                                  0, //! RC Channel 6 (not used)
+                                                  0, //! RC Channel 7 (not used)
+                                                  0);//! RC Channel 8 (mode - do not override)
+            uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+          }
+          else
+          {
+            inf("Received DesiredRoll, but not in FBWB or GUIDED");
+          }
         }
 
         void
@@ -873,6 +1095,32 @@ namespace Control
           m_dspeed = d_speed->value;
         }
 
+        void
+        consume(const IMC::DesiredPitch* d_pitch)
+        {
+          if(!(m_cloops & IMC::CL_PITCH))
+          {
+            inf(DTR("pitch control is NOT active"));
+            return;
+          }
+
+          //! Saving value
+          m_dpitch = Angles::degrees(d_pitch->value);
+        }
+
+        void
+        consume(const IMC::DesiredThrottle* d_throttle)
+        {
+          if(!(m_cloops & IMC::CL_THROTTLE))
+          {
+            inf(DTR("throttle control is NOT active"));
+            return;
+          }
+
+          //! Saving value
+          m_dthrottle = d_throttle->value;
+        }
+
         //! Converts value in range min_value:max_value to a value_pwm in range min_pwm:max_pwm
         int
         map2PWM(int min_pwm, int max_pwm, float min_value, float max_value, float value, bool reverse)
@@ -898,7 +1146,7 @@ namespace Control
             return;
           }
 
-          if (!((m_cloops & IMC::CL_PATH) && m_args.ardu_tracker))
+          if (!m_args.ardu_tracker)
           {
             inf(DTR("path control is NOT active"));
             return;
@@ -907,7 +1155,6 @@ namespace Control
           //! In Auto mode but still in ground, performing takeoff first
           if (m_ground)
           {
-
             inf(DTR("ArduPilot in Auto mode but still in ground, performing takeoff first."));
             if (m_vehicle_type == VEHICLE_COPTER)
             {
@@ -1432,6 +1679,11 @@ namespace Control
                 m_esta_ext = false;
               }
             }
+            
+            // signal the state machine if the timer has timed out
+            if(m_stateMachineCL.time_of_FBWB_request && Clock::getMsec() > m_stateMachineCL.time_of_FBWB_request + m_args.CLtimeout)
+              StateMachineCLTrigger(T_TIMEOUT);
+
 
             // Handle IMC messages from bus
             consumeMessages();
@@ -2171,7 +2423,7 @@ namespace Control
           if (m_vehicle_type == VEHICLE_COPTER)
             is_valid_mode = (m_mode == CP_MODE_GUIDED || (m_mode == CP_MODE_AUTO                     )) ? true : false;
           else
-            is_valid_mode = (m_mode == 15             || (m_mode == 10           && m_current_wp == 3)) ? true : false;
+            is_valid_mode = (m_mode == PL_MODE_GUIDED || (m_mode == PL_MODE_AUTO && m_current_wp == 3)) ? true : false;
 
           // Check Loiter tolerance
           if (m_vehicle_type == VEHICLE_COPTER)
