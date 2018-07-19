@@ -398,6 +398,7 @@ for(int l = 0; l < (int)Carte.size(); l++){
 
 	Corner_Test Cot ;
 
+    vector < Raster_ALL > Liste;
 	Cot=get_Imagecorners(IM,Carte[l]);
 
 	if (Cot.Test){

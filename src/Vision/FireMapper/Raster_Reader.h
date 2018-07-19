@@ -8,8 +8,8 @@
 
 
 using namespace std;
-#include "gdal_priv.h"
-#include "cpl_conv.h" // for CPLMalloc()
+#include <gdal/gdal_priv.h>
+#include <gdal/cpl_conv.h> // for CPLMalloc()
 
 
 struct Point2D {

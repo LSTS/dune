@@ -4,7 +4,7 @@
 
 #include <fstream>
 #include <opencv2/opencv.hpp>
-#include "Raster_Reader.h"
+#include <Vision/FireMapper/Raster_Reader.h>
 #include <cmath>
 
 using namespace std;

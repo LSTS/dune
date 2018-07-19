@@ -41,6 +41,7 @@ class Image
     int nrows;
 
     Image(string InputImage, cv::Mat &Imat, cv::Mat Trans,cv::Mat Rot,cv::Mat Intr,vector<double> R_Dis,vector<double> T_Dis);
+    Image(cv::Mat &Imat,cv::Mat Trans,cv::Mat Rot,cv::Mat Intr);
 
     string get_name();
     cv::Mat get_rot();
