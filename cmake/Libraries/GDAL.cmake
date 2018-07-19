@@ -31,10 +31,10 @@ if(GDAL)
 
         dune_add_lib(gdal)
 
-    else(HAVE_LIB_GDAL)
+    else(GDAL_INCLUDE_DIRS)
         # GDAL not found on the system.
         message(SEND_ERROR "GDAL was not found on the system.")
         set(DUNE_SYS_HAS_GDAL 0 CACHE INTERNAL "GDAL library")
         set(DUNE_USING_GDAL 0 CACHE INTERNAL "GDAL library")
-    endif(HAVE_LIB_OPENCV)
-endif(OPENCV)
+    endif(GDAL_INCLUDE_DIRS)
+endif(GDAL)
