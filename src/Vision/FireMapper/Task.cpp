@@ -54,9 +54,9 @@ namespace Vision
     struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
-	cv::Mat Intrinsic = cv::Mat(3,3,CV_64FC1);
-	cv::Mat Translation = cv::Mat(3,1,CV_64FC1);
-	cv::Mat Rotation = cv::Mat(3,3,CV_64FC1);
+      cv::Mat Intrinsic = cv::Mat(3, 3, CV_64FC1);
+      cv::Mat Translation = cv::Mat(3, 1, CV_64FC1);
+      cv::Mat Rotation = cv::Mat(3, 3, CV_64FC1);
 
 
       Arguments m_args;
@@ -64,29 +64,29 @@ namespace Vision
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
+      Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx)
       {
         // Define configuration parameters.
-    	paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-    	param("Main System ID", m_args.system_id)
-    	.defaultValue("x8-06")
-		.description("Main CPU IMC address.");
+        param("Main System ID", m_args.system_id)
+          .defaultValue("x8-06")
+          .description("Main CPU IMC address.");
 
-	Intrinsic.cv::Mat::at<double>(0,0)  = 3272.1733924963492;
-	Intrinsic.cv::Mat::at<double>(0,1)  = 0;
-	Intrinsic.cv::Mat::at<double>(0,2)  = 2342.3086717022011;
-	Intrinsic.cv::Mat::at<double>(1,0)  = 0 ;
-	Intrinsic.cv::Mat::at<double>(1,1)  = 3272.1733924963492;
-	Intrinsic.cv::Mat::at<double>(1,2) = 1770.4377498787001;
-	Intrinsic.cv::Mat::at<double>(2,0) = 0 ;
-	Intrinsic.cv::Mat::at<double>(2,1) = 0 ;
-	Intrinsic.cv::Mat::at<double>(2,2) = 1 ;
+        Intrinsic.cv::Mat::at<double>(0, 0) = 3272.1733924963492;
+        Intrinsic.cv::Mat::at<double>(0, 1) = 0;
+        Intrinsic.cv::Mat::at<double>(0, 2) = 2342.3086717022011;
+        Intrinsic.cv::Mat::at<double>(1, 0) = 0;
+        Intrinsic.cv::Mat::at<double>(1, 1) = 3272.1733924963492;
+        Intrinsic.cv::Mat::at<double>(1, 2) = 1770.4377498787001;
+        Intrinsic.cv::Mat::at<double>(2, 0) = 0;
+        Intrinsic.cv::Mat::at<double>(2, 1) = 0;
+        Intrinsic.cv::Mat::at<double>(2, 2) = 1;
 
-    	// Setup processing of IMC messages
-    	bind<EstimatedState>(this);
+        // Setup processing of IMC messages
+        bind<EstimatedState>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -98,9 +98,10 @@ namespace Vision
 
 ////////////////////////////////////////////////////////////////////////
 
-Math::Matrix get_Image(int i ){
+      Math::Matrix get_Image(int i)
+      {
 
-	 std::string path0 = "/home/welarfao/fire-mapping/new_mapping/images/Black and White/";
+        std::string path0 = "/home/welarfao/fire-mapping/new_mapping/images/Black and White/";
 
 //	while (A.data = NULL && i<667-547 ){
 //
@@ -112,7 +113,7 @@ Math::Matrix get_Image(int i ){
 //	}
 //
 //  retrun A;
-}
+      }
 
 //////////////////////////////////////////////////////////////////
 
@@ -121,7 +122,7 @@ Math::Matrix get_Image(int i ){
       void
       consume(const IMC::EstimatedState* e_state)
       {
-      	debug("Hello World");
+        debug("Hello World");
 //    	Math::Matrix Rotationx = cv::Mat(3,3,CV_64FC1);
 //     	Math::Matrix Rotationy = cv::Mat(3,3,CV_64FC1);
 //	Math::Matrix Rotationz = cv::Mat(3,3,CV_64FC1);
@@ -214,7 +215,7 @@ Math::Matrix get_Image(int i ){
         while (!stopping())
         {
 
-	waitForMessages(3.0);
+          waitForMessages(3.0);
 //
 //	 Math::Matrix IMat = get_Image(int i );
 //	 Image IMG =(  IMat ,Translation,Rotation,Intrinsic);

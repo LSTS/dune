@@ -2,68 +2,54 @@
 #define MAPPING_H
 
 
-
 using namespace std;
 
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Esperce_Reader.h>
 
 
-
-
-
-
-struct Pixel_Test {
-    uchar Value;
-    bool Test;
+struct Pixel_Test
+{
+  uchar Value;
+  bool Test;
 };
 
 
-struct Corner_Test {
-    Pixel_Range PR;
-    bool Test;
+struct Corner_Test
+{
+  Pixel_Range PR;
+  bool Test;
 };
 
 class Mapping
 {
 
-    private:
+private:
 
-    Esperce_Reader Esp;
-    vector<Image> Images_to_Map;
-    vector<cv::Mat> Images_Mapped;
-    vector<Raster_Tile> Carte;
+  Esperce_Reader Esp;
+  vector<Image> Images_to_Map;
+  vector<cv::Mat> Images_Mapped;
+  vector<Raster_Tile> Carte;
 
-    public:
-        Mapping();
+public:
+  Mapping();
 
-        Pixel_Test Pixel_Mapping(Pixel_Data PD,int noDATA,Image IM);
-        double IMask( cv::Mat UndistortedImage , std::vector<PixelImage> Corners );
+  Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM);
 
-        void Map(Image IM);
+  double IMask(cv::Mat UndistortedImage, std::vector<PixelImage> Corners);
 
-        vector<cv::Mat> get_IMapped();
+  void Map(Image IM);
 
-        Point3D Raytracer(PixelImage Pix,Image I,Raster_Tile Rs);
-        Corner_Test get_Imagecorners(Image IM,Raster_Tile RS);
+  vector<cv::Mat> get_IMapped();
 
-        virtual ~Mapping();
+  Point3D Raytracer(PixelImage Pix, Image I, Raster_Tile Rs);
+
+  Corner_Test get_Imagecorners(Image IM, Raster_Tile RS);
+
+  virtual ~Mapping();
 
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif // MAPPING_H

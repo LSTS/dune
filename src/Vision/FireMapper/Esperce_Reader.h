@@ -12,24 +12,25 @@ using namespace std;
 
 class Esperce_Reader
 {
-    private:
+private:
 
-    string path_Data;
-    string path_Image ;
-    vector<Image> Liste_Images;
+  string path_Data;
+  string path_Image;
+  vector<Image> Liste_Images;
 
 
-    public:
+public:
 
-    Esperce_Reader();
-    Esperce_Reader(string path_Data, string path_Image);
+  Esperce_Reader();
 
-    void get_Dataset();
-    //void get_ImageM();
+  Esperce_Reader(string path_Data, string path_Image);
 
-    const vector<Image>& get_ListeImage();
+  void get_Dataset();
+  //void get_ImageM();
 
-    //virtual ~Esperce_Reader();
+  const vector<Image>& get_ListeImage();
+
+  //virtual ~Esperce_Reader();
 
 };
 
