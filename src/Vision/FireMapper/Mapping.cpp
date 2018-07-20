@@ -2,8 +2,8 @@
 
 Mapping::Mapping()
 {
-  Carte = Raster_Tile::get_allMaps("DEM.txt");//We have in return a vector with Rasters read and zith all their params
-  vector<Raster_ALL> Liste;
+  Carte = Raster_Tile::get_allMaps("/home/welarfao/mapping/Mapping/DEM.txt");//We have in return a vector with Rasters read and zith all their params
+ 
 
   for (int j = 0; j < (int) Carte.size(); j++)
   {///Carte est une liste des RasterTile ,chaque raster Tile est Un DEM
@@ -15,7 +15,7 @@ Mapping::Mapping()
 
   };
   cout << "nbr raster : " << (int) Liste.size() << endl;
-};
+}
 
 
 double Mapping::IMask(cv::Mat UndistortedImage, vector<PixelImage> Corners)
@@ -89,7 +89,7 @@ https://docs.opencv.org/2.4.13.4/doc/tutorials/core/basic_geometric_drawing/basi
 
   return somme / cpt;
 
-};
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +129,7 @@ Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM)
   }
 
   return pt;
-};
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +213,7 @@ void Mapping::Map(){
              Images_Mapped.push_back(fMap);///chaque Matrice est de la taille d un dem  avec des images mappe`s dedans
              //imwrite("Mtest.jpg",Mtest);
      };
-};
+}
 */
 
 ///////////////////////////////////////////
@@ -250,7 +250,7 @@ Point3D Mapping::Raytracer(PixelImage Pix, Image I, Raster_Tile Rs)
 
   return Pt;
 
-};
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -296,7 +296,7 @@ Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
     CT.Test = FALSE;
     return CT;
 
-  };
+  }
 
   ///if a corner of the the image is out of the raster
 
@@ -319,7 +319,7 @@ Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
   return CT;
 
 
-};
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -394,7 +394,7 @@ void Mapping::Map(){
              Images_Mapped.push_back(fMap);///chaque Matrice est de la taille d un dem  avec des images mappe`s dedans
              //imwrite("Mtest.jpg",Mtest);
      };
-};
+}
 */
 
 
@@ -420,7 +420,6 @@ void Mapping::Map(Image IM)
 
     Corner_Test Cot;
 
-    vector<Raster_ALL> Liste;
     Cot = get_Imagecorners(IM, Carte[l]);
 
     if (Cot.Test)
@@ -451,14 +450,14 @@ void Mapping::Map(Image IM)
           };
           cout << c << endl;
 
-        };
-      };
-    };
+        }
+      }
+    }
 
-  };
+  }
 
 
-};
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vector<cv::Mat> Mapping::get_IMapped()
@@ -470,12 +469,12 @@ vector<cv::Mat> Mapping::get_IMapped()
     Images_Mapped.push_back(
       Carte[j].get_fireMap());///chaque Matrice est de la taille d un dem  avec des images mappe`s dedans
     //imwrite("Mtest.jpg",Mtest);
-  };
+  }
 
 
   return Images_Mapped;
 
-};
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

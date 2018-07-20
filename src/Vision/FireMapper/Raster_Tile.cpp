@@ -17,14 +17,14 @@ Raster_Tile::Raster_Tile(string path)
   cout << "\n no data value :" << Map->get_noData() << endl;
 
 
-};
+}
 
 void Raster_Tile::set_fireMap(int row, int col, uchar value)
 {
 
   fireMap.cv::Mat::at<uchar>(row, col) = (uchar) value;
 
-};
+}
 
 cv::Mat Raster_Tile::get_fireMap()
 {
@@ -39,28 +39,28 @@ double Raster_Tile::get_max_west()
 
   return Map->get_max_west();
 
-};
+}
 
 double Raster_Tile::get_max_east()
 {
 
   return Map->get_max_east();
 
-};
+}
 
 double Raster_Tile::get_max_north()
 {
 
   return Map->get_max_north();
 
-};
+}
 
 double Raster_Tile::get_max_south()
 {
 
   return Map->get_max_south();
 
-};
+}
 
 bool
 Raster_Tile::Test_point(size_t x, size_t y)
@@ -76,12 +76,12 @@ Raster_Tile::Test_point(size_t x, size_t y)
 
       //cout<<"Position Valide"<<endl;
       testing = true;
-    };
-  };
+    }
+  }
 
   return testing;
 
-};
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,21 +100,20 @@ double Raster_Tile::get_elevation(size_t x, size_t y)
   return height;
 
 
-};
-
+}
 ////////////////////////////////////////////////////
 double Raster_Tile::get_maxheight()
 {
 
   return Map->maxheight;
-};
+}
 
 double Raster_Tile::get_minheight()
 {
 
   return Map->minheight;
 
-};
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -155,7 +154,7 @@ Pixel_Range Raster_Tile::get_corners(double x, double y)
 
   Pixel px = Map->get_pixel(x, y);
 
-  if ((px.col - ncol / f) < 0)
+  if ((int)(px.col - ncol / f) < 0)
   {
 
     pr.col_left = 0;
@@ -286,11 +285,11 @@ void Raster_Tile::ListePoints_Data()
       pt.row = r;
 
       Liste_Points.push_back(pt);
-    };
-  };
+    }
+  }
 
 
-};
+}
 
 
 Raster_ALL Raster_Tile::get_ListePoints()

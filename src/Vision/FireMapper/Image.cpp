@@ -63,7 +63,7 @@ Image::Image(string InputImage, cv::Mat& Imat, cv::Mat Trans, cv::Mat Rot, cv::M
   cv::undistort(IMatrix, undistortedImg, IntrinsicPixelMatrix, DistMatrix);
 
 
-};
+}
 
 Image::Image(cv::Mat& Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr)
 {
@@ -113,14 +113,14 @@ Image::Image(cv::Mat& Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr)
 
   CameraMatrix = IntrinsicMatrix * Extrinsic;
 
-};
+}
 
 
 string Image::get_name()
 {
 
   return Nom_Image;
-};
+}
 
 //function to calculate camera matrix given intrinsic matrix, rotation and translation matrix
 //http://ksimek.github.io/2012/08/22/extrinsic/
@@ -134,14 +134,14 @@ cv::Mat Image::get_CameraMatrix()
 
 
   return CameraMatrix;
-};
+}
 
 cv::Mat Image::get_IntrinsicMatrix()
 {
 
 
   return IntrinsicPixelMatrix;
-};
+}
 
 cv::Mat Image::get_rot()
 {
@@ -159,7 +159,7 @@ cv::Mat Image::get_UndistortedImage()
 
   return undistortedImg;
 
-};
+}
 
 cv::Mat Image::get_IMatrix()
 {
@@ -167,7 +167,7 @@ cv::Mat Image::get_IMatrix()
   return IMatrix;
 
 
-};
+}
 
 
 PixelImage Image::get_PixelImage(double x, double y, double z)
@@ -186,7 +186,7 @@ PixelImage Image::get_PixelImage(double x, double y, double z)
 
   return PI;
 
-};
+}
 
 
 Point3D Image::get_RayPosition(int u, int v, double Z)
@@ -233,7 +233,7 @@ Point3D Image::get_RayPosition(int u, int v, double Z)
 
   return PW;
 
-};
+}
 
 
 bool Image::Test_Image(PixelImage pxi)
@@ -254,7 +254,7 @@ bool Image::Test_Image(PixelImage pxi)
 
   return test;
 
-};
+}
 
 
 

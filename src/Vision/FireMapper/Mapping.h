@@ -5,8 +5,7 @@
 using namespace std;
 
 #include <Vision/FireMapper/Raster_Tile.h>
-#include <Vision/FireMapper/Esperce_Reader.h>
-
+#include <Vision/FireMapper/Image.h>
 
 struct Pixel_Test
 {
@@ -26,10 +25,11 @@ class Mapping
 
 private:
 
-  Esperce_Reader Esp;
+  
   vector<Image> Images_to_Map;
   vector<cv::Mat> Images_Mapped;
   vector<Raster_Tile> Carte;
+  vector < Raster_ALL > Liste;
 
 public:
   Mapping();

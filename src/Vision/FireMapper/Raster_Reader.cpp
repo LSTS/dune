@@ -23,14 +23,14 @@ passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update
     cerr << "No data found";
     //break ;
 
-  };
+  }
 
   nCols = gDataSet->GetRasterXSize();
   nRows = gDataSet->GetRasterYSize();
   nBands = gDataSet->GetRasterCount();
 
 
-};
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //this function fetches the values of :originX, originY, pWidth, pHeightusing GDAL geotransform ;
@@ -59,10 +59,10 @@ void Raster_Reader::geoTransform()
   {
 
     cerr << "no transform can be fetched";
-  };
+  }
   //ctor
 
-};
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Raster_Reader::Mat_height()
@@ -98,17 +98,17 @@ void Raster_Reader::Mat_height()
       if (Buffer[j] != poBand->GetNoDataValue())
       {
         minH = min(minH, Buffer[j]);
-      };
+      }
 
-    };
+    }
 
-  };
+  }
   maxheight = maxH;
   minheight = minH;
   CPLFree(Buffer);
 
 
-  ;
+  
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,28 +162,28 @@ double Raster_Reader::get_max_east()
   return originX + nCols * gTransform[1];
 
 
-};
+}
 
 double Raster_Reader::get_max_west()
 {
 
   return originX /*+ gTransform[1]/2 */;
 
-};
+}
 
 double Raster_Reader::get_max_south()
 {
 
   return originY + nRows * gTransform[5] /*+ gTransform[5]/2 */;
 
-};
+}
 
 double Raster_Reader::get_max_north()
 {
 
   return originY;
 
-};
+}
 
 
 double Raster_Reader::get_noData()
@@ -191,7 +191,7 @@ double Raster_Reader::get_noData()
 
   return gDataSet->GetRasterBand(1)->GetNoDataValue();
 
-};
+}
 
 
 ////////////////////////////////////////////////////////
@@ -209,7 +209,7 @@ so to get to the row number y we multiply it with number of cols ,and then we ad
 
 
   return RasterData[cpt];
-};
+}
 
 
 

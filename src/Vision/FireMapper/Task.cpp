@@ -31,6 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 #include <string>
+#include <sstream>
 #include <opencv2/opencv.hpp>
 #include <Vision/FireMapper/Mapping.h>
 #include <Vision/FireMapper/Raster_Reader.h>
@@ -54,9 +55,9 @@ namespace Vision
     struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
-      cv::Mat Intrinsic = cv::Mat(3, 3, CV_64FC1);
-      cv::Mat Translation = cv::Mat(3, 1, CV_64FC1);
-      cv::Mat Rotation = cv::Mat(3, 3, CV_64FC1);
+      cv::Mat Intrinsic ;
+      cv::Mat Translation ;
+      cv::Mat Rotation ;
 
 
       Arguments m_args;
@@ -74,6 +75,11 @@ namespace Vision
         param("Main System ID", m_args.system_id)
           .defaultValue("x8-06")
           .description("Main CPU IMC address.");
+
+	 Intrinsic =cv::Mat(cv::Size(3, 3),CV_64FC1);
+         Translation =cv::Mat(cv::Size(3, 1),CV_64FC1);
+         Rotation =cv::Mat(cv::Size(3, 3),CV_64FC1);
+
 
         Intrinsic.cv::Mat::at<double>(0, 0) = 3272.1733924963492;
         Intrinsic.cv::Mat::at<double>(0, 1) = 0;
@@ -98,21 +104,22 @@ namespace Vision
 
 ////////////////////////////////////////////////////////////////////////
 
-      Math::Matrix get_Image(int i)
+      cv::Mat get_Image( int i)
       {
 
-        std::string path0 = "/home/welarfao/fire-mapping/new_mapping/images/Black and White/";
+         std::string path0 = "/home/welarfao/fire-mapping/new_mapping/images/Black and White/";
 
-//	while (A.data = NULL && i<667-547 ){
-//
-//		 std::string Name= "IMG_0"+ std::to_string(547+i) +".JPG";
-//		 std::string path = std::string(    path0.append(  std::string(Name) )     );
-//		 cv::Mat A = cv::imread(path,CV_LOAD_IMAGE_GRAYSCALE);
-//		 i = i +1 ;
-//
-//	}
-//
-//  retrun A;
+
+ 	 std::stringstream ss;
+
+         ss << "IMG_0" << 547+i << ".JPG";
+
+	 std::string Name=  ss.str();
+	 std::string path = std::string(    path0.append(  std::string(Name) )     );
+         cv::Mat A = cv::imread(path,CV_LOAD_IMAGE_GRAYSCALE);
+
+
+         return A;
       }
 
 //////////////////////////////////////////////////////////////////
@@ -123,54 +130,54 @@ namespace Vision
       consume(const IMC::EstimatedState* e_state)
       {
         debug("Hello World");
-//    	Math::Matrix Rotationx = cv::Mat(3,3,CV_64FC1);
-//     	Math::Matrix Rotationy = cv::Mat(3,3,CV_64FC1);
-//	Math::Matrix Rotationz = cv::Mat(3,3,CV_64FC1);
-//
-//	//! TRanslation
-//
-//	Translation.at<double>(0) = e_state->lat;
-//        Translation.at<double>(1) = e_state->lon;
-//        Translation.at<double>(2) = e_state->height;
-//
-// 	//! Rotation over x axis phi.
-//	Rotationx.cv::Mat::at<double>(0,0) = 1;
-//	Rotationx.cv::Mat::at<double>(0,1)  = 0;
-//	Rotationx.cv::Mat::at<double>(0,2)  = 0;
-//	Rotationx.cv::Mat::at<double>(1,0)  = 0;
-//	Rotationx.cv::Mat::at<double>(1,1)  = cos(e_state->phi) ;
-//	Rotationx.cv::Mat::at<double>(1,2)  = -sin(e_state->phi);
-//	Rotationx.cv::Mat::at<double>(2,0)  = 0;
-//	Rotationx.cv::Mat::at<double>(2,1)  = sin(e_state->phi) ;
-//	Rotationx.cv::Mat::at<double>(2,2)  = cos(e_state->phi) ;
-//
-//	//! Rotation over y axis theta.
-//
-//	Rotationy.cv::Mat::at<double>(0,0) = cos(e_state->theta) ;
-//	Rotationy.cv::Mat::at<double>(0,1) = 0 ;
-//	Rotationy.cv::Mat::at<double>(0,2) = sin(e_state->theta) ;
-//	Rotationy.cv::Mat::at<double>(1,0) = 0;
-//	Rotationy.cv::Mat::at<double>(1,1) = 1 ;
-//	Rotationy.cv::Mat::at<double>(1,2) = 0 ;
-//	Rotationy.cv::Mat::at<double>(2,0) = -sin(e_state->theta);
-//	Rotationy.cv::Mat::at<double>(2,1) = 0 ;
-//	Rotationy.cv::Mat::at<double>(2,2) = cos(e_state->theta) ;
-//
-//	//! Rotation over z axis psi.
-//
-//        Rotationz.cv::Mat::at<double>(0,0)= cos(e_state->psi) ;
-//	Rotationz.cv::Mat::at<double>(0,1) = -sin(e_state->psi);
-//	Rotationz.cv::Mat::at<double>(0,2) = 0;
-//	Rotationz.cv::Mat::at<double>(1,2) = sin(e_state->psi) ;
-//	Rotationz.cv::Mat::at<double>(1,1) = cos(e_state->psi) ;
-//	Rotationz.cv::Mat::at<double>(1,2) = 0;
-//	Rotationz.cv::Mat::at<double>(2,2) = 0;
-//	Rotationz.cv::Mat::at<double>(2,2) = 0 ;
-//	Rotationz.cv::Mat::at<double>(2,2) = 1 ;
-//
-//	//! Rotation R=RX*RY*RZ
-//
-//	Rotation = Rotationz*Rotationy*Rotationx;
+   	cv::Mat Rotationx =cv::Mat(cv::Size(3, 3),CV_64FC1);
+     	cv::Mat Rotationy =cv::Mat(cv::Size(3, 3),CV_64FC1);
+	cv::Mat Rotationz =cv::Mat(cv::Size(3, 3),CV_64FC1);
+
+	//! TRanslation
+
+	Translation.at<double>(0) = e_state->lat;
+        Translation.at<double>(1) = e_state->lon;
+        Translation.at<double>(2) = e_state->height;
+
+ 	//! Rotation over x axis phi.
+	Rotationx.cv::Mat::at<double>(0,0) = 1;
+	Rotationx.cv::Mat::at<double>(0,1)  = 0;
+	Rotationx.cv::Mat::at<double>(0,2)  = 0;
+	Rotationx.cv::Mat::at<double>(1,0)  = 0;
+	Rotationx.cv::Mat::at<double>(1,1)  = cos(e_state->phi) ;
+	Rotationx.cv::Mat::at<double>(1,2)  = -sin(e_state->phi);
+	Rotationx.cv::Mat::at<double>(2,0)  = 0;
+	Rotationx.cv::Mat::at<double>(2,1)  = sin(e_state->phi) ;
+	Rotationx.cv::Mat::at<double>(2,2)  = cos(e_state->phi) ;
+
+	//! Rotation over y axis theta.
+
+	Rotationy.cv::Mat::at<double>(0,0) = cos(e_state->theta) ;
+	Rotationy.cv::Mat::at<double>(0,1) = 0 ;
+	Rotationy.cv::Mat::at<double>(0,2) = sin(e_state->theta) ;
+	Rotationy.cv::Mat::at<double>(1,0) = 0;
+	Rotationy.cv::Mat::at<double>(1,1) = 1 ;
+	Rotationy.cv::Mat::at<double>(1,2) = 0 ;
+	Rotationy.cv::Mat::at<double>(2,0) = -sin(e_state->theta);
+	Rotationy.cv::Mat::at<double>(2,1) = 0 ;
+	Rotationy.cv::Mat::at<double>(2,2) = cos(e_state->theta) ;
+
+	//! Rotation over z axis psi.
+
+       Rotationz.cv::Mat::at<double>(0,0)= cos(e_state->psi) ;
+	Rotationz.cv::Mat::at<double>(0,1) = -sin(e_state->psi);
+	Rotationz.cv::Mat::at<double>(0,2) = 0;
+	Rotationz.cv::Mat::at<double>(1,2) = sin(e_state->psi) ;
+	Rotationz.cv::Mat::at<double>(1,1) = cos(e_state->psi) ;
+	Rotationz.cv::Mat::at<double>(1,2) = 0;
+	Rotationz.cv::Mat::at<double>(2,2) = 0;
+	Rotationz.cv::Mat::at<double>(2,2) = 0 ;
+	Rotationz.cv::Mat::at<double>(2,2) = 1 ;
+
+	//! Rotation R=RX*RY*RZ
+
+	Rotation = Rotationz*Rotationy*Rotationx;
 
       }
 
@@ -209,24 +216,33 @@ namespace Vision
       onMain(void)
       {
 
-//	Mapping Mp =Mapping();
-//	int i=0 ;
+	Mapping Mp =Mapping();
+	int i=7 ;
 
         while (!stopping())
         {
 
           waitForMessages(3.0);
-//
-//	 Math::Matrix IMat = get_Image(int i );
-//	 Image IMG =(  IMat ,Translation,Rotation,Intrinsic);
-//	 Mp.Map(IMG);
-//          vector<cv::Mat> Maps = Mp.get_IMapped();
-//
-//          imwrite("Map"+ std::to_string(i) +".jpg",Maps[0]);
-//
-//
-//         i = i +1 ;
-//
+
+	 cv::Mat IMat = get_Image( i );
+
+	if( IMat.data != NULL){
+
+	 Image IMG =Image(  IMat , Translation , Rotation , Intrinsic );
+	 Mp.Map(IMG);
+          vector<cv::Mat> Maps = Mp.get_IMapped();
+           std::stringstream ss;
+
+         ss << "Map" << i << ".JPG";
+
+          imwrite(ss.str(),Maps[0]);
+
+	}else { cout<<"no IMage found \n"<<endl;
+	}
+
+
+         i = i +1 ;
+
 
 
 
