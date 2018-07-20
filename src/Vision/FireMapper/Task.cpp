@@ -76,9 +76,9 @@ namespace Vision
           .defaultValue("x8-06")
           .description("Main CPU IMC address.");
 
-	 Intrinsic =cv::Mat(cv::Size(3, 3),CV_64FC1);
-         Translation =cv::Mat(cv::Size(3, 1),CV_64FC1);
-         Rotation =cv::Mat(cv::Size(3, 3),CV_64FC1);
+	 Intrinsic =cv::Mat(3, 3,CV_64FC1);
+         Translation =cv::Mat(3, 1,CV_64FC1);
+         Rotation =cv::Mat(3, 3,CV_64FC1);
 
 
         Intrinsic.cv::Mat::at<double>(0, 0) = 3272.1733924963492;
@@ -90,7 +90,21 @@ namespace Vision
         Intrinsic.cv::Mat::at<double>(2, 0) = 0;
         Intrinsic.cv::Mat::at<double>(2, 1) = 0;
         Intrinsic.cv::Mat::at<double>(2, 2) = 1;
+	
+ 	Rotation.cv::Mat::at<double>(0, 0) = -0.94660184153532601;
+	Rotation.cv::Mat::at<double>(0, 1) = -0.28953614234150654;
+	Rotation.cv::Mat::at<double>(0, 2) = 0.14182304424855829;
+	Rotation.cv::Mat::at<double>(1, 0) = -0.31502259516218351;
+	Rotation.cv::Mat::at<double>(1, 1) = 0.92422734932632489;
+	Rotation.cv::Mat::at<double>(1, 2) = -0.21578825569182047;
+	Rotation.cv::Mat::at<double>(2, 0) = -0.068598237143622773;
+	Rotation.cv::Mat::at<double>(2, 1) = -0.24894302367255508;
+	Rotation.cv::Mat::at<double>(2, 2) = -0.96608573782328089;
 
+
+	Translation.cv::Mat::at<double>(0) = 370747.84931199555;
+	Translation.cv::Mat::at<double>(1) = 4797168.8641240774;
+	Translation.cv::Mat::at<double>(2) = 507.77970651053715;
         // Setup processing of IMC messages
         bind<EstimatedState>(this);
       }
@@ -104,7 +118,7 @@ namespace Vision
 
 ////////////////////////////////////////////////////////////////////////
 
-      cv::Mat get_Image( int i)
+/*      cv::Mat get_Image( int i)
       {
 
          std::string path0 = "/home/welarfao/fire-mapping/new_mapping/images/Black and White/";
@@ -115,12 +129,15 @@ namespace Vision
          ss << "IMG_0" << 547+i << ".JPG";
 
 	 std::string Name=  ss.str();
+
 	 std::string path = std::string(    path0.append(  std::string(Name) )     );
+
+	 cout<<path<<endl;
          cv::Mat A = cv::imread(path,CV_LOAD_IMAGE_GRAYSCALE);
 
 
          return A;
-      }
+   }*/
 
 //////////////////////////////////////////////////////////////////
 
@@ -136,9 +153,9 @@ namespace Vision
 
 	//! TRanslation
 
-	Translation.at<double>(0) = e_state->lat;
-        Translation.at<double>(1) = e_state->lon;
-        Translation.at<double>(2) = e_state->height;
+	//Translation.at<double>(0) = e_state->lat;
+        //Translation.at<double>(1) = e_state->lon;
+        //Translation.at<double>(2) = e_state->height;
 
  	//! Rotation over x axis phi.
 	Rotationx.cv::Mat::at<double>(0,0) = 1;
@@ -177,7 +194,7 @@ namespace Vision
 
 	//! Rotation R=RX*RY*RZ
 
-	Rotation = Rotationz*Rotationy*Rotationx;
+	//Rotation = Rotationz*Rotationy*Rotationx;
 
       }
 
@@ -217,27 +234,33 @@ namespace Vision
       {
 
 	Mapping Mp =Mapping();
-	int i=7 ;
+	int i=0 ;
+	
 
         while (!stopping())
         {
 
-          waitForMessages(3.0);
+          waitForMessages(10.0);
 
-	 cv::Mat IMat = get_Image( i );
+	 cv::Mat IMat = Image::get_Image( i );
 
 	if( IMat.data != NULL){
 
+
+
 	 Image IMG =Image(  IMat , Translation , Rotation , Intrinsic );
 	 Mp.Map(IMG);
-          vector<cv::Mat> Maps = Mp.get_IMapped();
-           std::stringstream ss;
+	 vector<cv::Mat> Maps = Mp.get_IMapped();
 
-         ss << "Map" << i << ".JPG";
+	 std::string path0 = "/home/welarfao/results/";
+	 std::stringstream ss;
 
-          imwrite(ss.str(),Maps[0]);
+	 ss << "Map" << i << ".JPG";
+	 std::string path = std::string(  path0.append(  std::string(ss.str()) ) );
 
-	}else { cout<<"no IMage found \n"<<endl;
+	 cv::imwrite(path,Maps[0]);
+
+	}else { cout<<"no Image found \n"<<endl;
 	}
 
 

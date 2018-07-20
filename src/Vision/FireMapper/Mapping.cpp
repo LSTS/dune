@@ -414,7 +414,7 @@ In the other side ,the other version of this function runs for every dem all the
 void Mapping::Map(Image IM)
 {
 
-  int cpt = 0;
+  //int cpt = 0;
   for (int l = 0; l < (int) Carte.size(); l++)
   {
 
@@ -446,9 +446,9 @@ void Mapping::Map(Image IM)
 
             Carte[l].Raster_Tile::set_fireMap((Liste[l].ListeP)[c].row, (Liste[l].ListeP)[c].col, px.Value);
 
-            cpt = cpt + 1;
+            //cpt = cpt + 1;
           };
-          cout << c << endl;
+          //cout << c << endl;
 
         }
       }

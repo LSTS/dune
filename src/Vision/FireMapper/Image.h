@@ -69,6 +69,29 @@ public:
   Point3D get_RayPosition(int u, int v, double Z);
 
   //virtual ~Image();
+	
+	
+  static cv::Mat get_Image( int i)
+      {
+
+         std::string path0 = "/home/welarfao/images/";
+
+
+ 	 std::stringstream ss;
+
+         ss << "IMG_0" << 547+i << ".JPG";
+
+	 std::string Name=  ss.str();
+
+	 std::string path = std::string(    path0.append(  std::string(Name) )     );
+
+	 cout<<path<<endl;
+         cv::Mat A = cv::imread(path,CV_LOAD_IMAGE_GRAYSCALE);
+
+
+         return A;
+      }
+
 
 
 };
