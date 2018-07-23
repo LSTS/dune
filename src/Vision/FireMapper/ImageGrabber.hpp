@@ -46,7 +46,7 @@ namespace Vision
     struct ImageGrabber: public Concurrency::Thread
     {
 
-      ImageGrabber(DUNE::Tasks::Task* task):
+      ImageGrabber(DUNE::Tasks::Task* task) :
         m_task(task),
         m_grab(false),
         m_is_available(false)
@@ -72,7 +72,7 @@ namespace Vision
       cv::Mat
       get_image(void)
       {
-        if(m_is_available)
+        if (m_is_available)
         {
           m_is_available = false;
           return m_frame;
@@ -86,11 +86,12 @@ namespace Vision
       {
         m_task->inf("Dummy image grabber started");
 
-        while(!isStopping())
+        while (!isStopping())
         {
-          if(m_grab) {
+          if (m_grab)
+          {
             m_grab = false;
-            
+
             // TODO: Get an image from 'm_image_folder' given 'm_state'
             // TODO: ¿ Resize it to (m_args.pic_w, m_args.pic_h) ?
             // TODO: Do all operations needed to prepare the image
