@@ -89,6 +89,8 @@ namespace Vision
         while(!isStopping())
         {
           if(m_grab) {
+            m_grab = false;
+            
             // TODO: Get an image from 'm_image_folder' given 'm_state'
             // TODO: ¿ Resize it to (m_args.pic_w, m_args.pic_h) ?
             // TODO: Do all operations needed to prepare the image
