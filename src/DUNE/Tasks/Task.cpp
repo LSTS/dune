@@ -640,6 +640,15 @@ namespace DUNE
     }
 
     void
+    Task::success(const char* format, ...)
+    {
+      std::va_list ap;
+      va_start(ap, format);
+      log(IMC::LogBookEntry::LBET_SUCCESS, format, ap);
+      va_end(ap);
+    }
+
+    void
     Task::log(IMC::LogBookEntry::TypeEnum type, const char* format, std::va_list arg_list)
     {
       char bfr[c_log_message_max_size] = {0};
@@ -683,6 +692,10 @@ namespace DUNE
 
         case IMC::LogBookEntry::LBET_DEBUG:
           DUNE_DEV(getName(), bfr);
+          break;
+
+        case IMC::LogBookEntry::LBET_SUCCESS:
+          DUNE_SUC(getName(), bfr);
           break;
       }
     }

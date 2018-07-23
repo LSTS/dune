@@ -300,6 +300,13 @@ namespace DUNE
       void
       spew(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3);
 
+      //! Send a human-readable success message to all
+      //! configured output channels and files.
+      //! @param format string format (similar to printf(3)).
+      //! @param ... arguments.
+      void
+      success(const char* format, ...) DUNE_PRINTF_FORMAT(2, 3);
+
       //! Dispatch message to the message bus.
       //! @param[in] msg message pointer.
       //! @param[in] flags bitfield with flags (see DispatchFlags).
