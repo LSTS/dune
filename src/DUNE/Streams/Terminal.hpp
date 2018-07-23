@@ -199,4 +199,13 @@ namespace DUNE
   << " [" << module << "] >> " << code << "\n"                          \
   << ::DUNE::Streams::dune_term_flush
 
+//! Prints a success message to standard error with the given
+//! parameters.
+#define DUNE_SUC(module, code)                                          \
+  ::DUNE::Streams::dune_term.lock("\033[1;32m")                         \
+  << "[" << ::DUNE::Time::Format::getTimeDate() << "] - " << DTR("SUC") \
+  << " [" << module << "] >> " << code                                  \
+  << "\n"                                                               \
+  << ::DUNE::Streams::dune_term_flush
+
 #endif
