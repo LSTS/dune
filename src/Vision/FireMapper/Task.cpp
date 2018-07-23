@@ -61,6 +61,7 @@ namespace Vision
       cv::Mat Translation;
       cv::Mat Rotation;
 
+      ImageGrabber* image_grabber;
 
       Arguments m_args;
 
@@ -222,12 +223,14 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
+        image_grabber = new ImageGrabber(this);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        delete image_grabber;
       }
 
       //! Main loop.
