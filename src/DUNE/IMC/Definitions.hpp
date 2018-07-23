@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 60bae9d2a5dfb6cb336b442c839133fb                            *
+// IMC XML MD5: 074ab4f889e1ce61c1c36af9799a308d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -1729,7 +1729,9 @@ namespace DUNE
         //! Critical.
         LBET_CRITICAL = 3,
         //! Debug.
-        LBET_DEBUG = 4
+        LBET_DEBUG = 4,
+        //! Success.
+        LBET_SUCCESS = 5
       };
 
       //! Type.
