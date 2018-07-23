@@ -22,16 +22,23 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+// ISO C++ 98 headers.
+#include <string>
+#include <sstream>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#include <string>
-#include <sstream>
+// OpenCV headers
 #include <opencv2/opencv.hpp>
+
+// Local headers
 #include <Vision/FireMapper/Mapping.h>
 #include <Vision/FireMapper/Raster_Reader.h>
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Image.h>
+
+#include <Vision/FireMapper/ImageGrabber.hpp>
 
 
 namespace Vision
