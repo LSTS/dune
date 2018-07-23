@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 namespace Vision
 {
-  namespace DummyGrabber
+  namespace FireMapper
   {
     using DUNE_NAMESPACES;
 
