@@ -98,13 +98,17 @@ namespace Autonomy
       void splitCommand(const std::string text, std::string& cmd, std::string& args)
       {
         cmd = sanitize(text);
-        size_t pos = cmd.find(" ");
+        size_t pos = cmd.find(" "), i;
 
         if (pos != std::string::npos)
         {
           args = cmd.substr(pos+1);
           cmd = cmd.substr(0, pos);
         }
+
+        for (i = 0; i < cmd.length(); i++)
+          cmd.at(i) = std::tolower(cmd.at(i));
+
         if (!args.empty())
           inf("Command is '%s', Argument is '%s'", cmd.c_str(), args.c_str());
       }
@@ -130,7 +134,7 @@ namespace Autonomy
 
         if (msg->op == PlanGeneration::OP_ERROR)
         {
-          ss << "Error: '" << msg->params << "'.";
+          ss << "PlanGeneration: '" << msg->params << "'.";
           reply(m_last->origin, ss.str());
         }
         else if (msg->op == PlanGeneration::OP_SUCCESS)
@@ -210,7 +214,7 @@ namespace Autonomy
 
         req.data_mode = TransmissionRequest::DMODE_TEXT;
         req.txt_data = text;
-        req.deadline = Clock::get() + m_args.reply_timeout;
+        req.deadline = Clock::getSinceEpoch() + m_args.reply_timeout;
         req.req_id = ++m_reqid;
 
         // if request was sent over sms
