@@ -32,154 +32,140 @@
 
 namespace Supervisors
 {
-  namespace PowerManager
-  {
-    using DUNE_NAMESPACES;
-
-    struct Task: public DUNE::Tasks::Task
+    namespace PowerManager
     {
-      //! Vehicle is in maneuver
-      bool m_vehicle_maneuver;
-      //! Vehicle is underwater
-      bool m_vehicle_underwater;
-      //! Last state has changed
-      bool m_has_changes;
+        using DUNE_NAMESPACES;
 
-      //! Constructor.
-      //! @param[in] name task name.
-      //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
-      {
-        m_vehicle_underwater = false;
-        m_vehicle_maneuver = false;
-        m_has_changes = false;
-
-        // Register consumer
-        bind<IMC::VehicleState>(this);
-        bind<IMC::VehicleMedium>(this);
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-      }
-
-      void
-      consume(const IMC::VehicleState * msg)
-      {
-        bool last_state = m_vehicle_maneuver;
-
-        if(msg->op_mode == IMC::VehicleState::VS_MANEUVER)
+        struct Task: public DUNE::Tasks::Task
         {
-          m_vehicle_maneuver = true;
-        }
-        else
-        {
-          m_vehicle_maneuver = false;
-        }
+            //! Vehicle is underwater
+            bool m_vehicle_underwater;
+            //! Last state has changed
+            bool m_has_changes;
+            //! Motor's rpms
+            int m_rpms;
 
-        if(last_state != m_vehicle_maneuver)
-        {
-          //debug messages
-          if(m_vehicle_maneuver)
-              debug("IN MANEUVER...'");
-          else
-              debug("NOT IN MANEUVER...'");
 
-          m_has_changes = true;
-        }
-      }
+            //! Constructor.
+            //! @param[in] name task name.
+            //! @param[in] ctx context.
+            Task(const std::string& name, Tasks::Context& ctx):
+                    DUNE::Tasks::Task(name, ctx),
+                    m_vehicle_underwater(false),
+                    m_has_changes(false),
+                    m_rpms(0)
+            {
 
-      void
-      consume(const IMC::VehicleMedium * msg)
-      {
-        bool last_state = m_vehicle_underwater;
+                // Register consumer
+                bind<IMC::Rpm>(this);
+                bind<IMC::VehicleMedium>(this);
+            }
 
-        if(msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-        {
-          m_vehicle_underwater = true;
-        }
-        else
-        {
-          m_vehicle_underwater = false;
-        }
+            //! Update internal state with new parameter values.
+            void
+            onUpdateParameters(void)
+            {
+            }
 
-        if(last_state != m_vehicle_underwater)
-        {
-          //debug messages
-          if(m_vehicle_underwater)
-            debug("IN UNDERWATER...'");
-          else
-            debug("NOT IN UNDERWATER...'");
+            //! Reserve entity identifiers.
+            void
+            onEntityReservation(void)
+            {
+            }
 
-          m_has_changes = true;
-        }
-       }
+            //! Resolve entity names.
+            void
+            onEntityResolution(void)
+            {
+            }
 
-      //! Main loop.
-      void
-      onMain(void)
-      {
-        IMC::PowerChannelControl power_control_channel;
-        power_control_channel.name = "Radio";
+            //! Acquire resources.
+            void
+            onResourceAcquisition(void)
+            {
+            }
 
-        while (!stopping())
-        {
-          waitForMessages(1.0);
-           consumeMessages();
+            //! Initialize resources.
+            void
+            onResourceInitialization(void)
+            {
+                setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+            }
 
-          if(!m_has_changes)
-            continue;
+            //! Release resources.
+            void
+            onResourceRelease(void)
+            {
+            }
 
-          m_has_changes = false;
+            void
+            consume(const IMC::VehicleMedium * msg)
+            {
+                bool last_state = m_vehicle_underwater;
 
-          if(m_vehicle_maneuver && m_vehicle_underwater){
-            debug("WIFI IS OFF...'");
-            power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-          }
-          else {
-            debug("WIFI IS ON...'");
-            power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-          }
+                if(msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+                {
+                    m_vehicle_underwater = true;
+                }
+                else
+                {
+                    m_vehicle_underwater = false;
+                }
 
-          dispatch(power_control_channel);
-        }
-      }
-    };
-  }
+                if(last_state != m_vehicle_underwater)
+                {
+                    //debug messages
+                    if(m_vehicle_underwater)
+                        debug("IN UNDERWATER...'");
+                    else
+                        debug("NOT IN UNDERWATER...'");
+
+                    m_has_changes = true;
+                }
+            }
+
+            void
+            consume(const IMC::Rpm* msg)
+            {
+                m_rpms = msg->value;
+
+                if(m_rpms == 0)
+                {
+                    m_has_changes = true;
+                }
+            }
+
+            //! Main loop.
+            void
+            onMain(void)
+            {
+                IMC::PowerChannelControl power_control_channel;
+                power_control_channel.name = "Radio";
+
+                while (!stopping())
+                {
+                    waitForMessages(1.0);
+                    consumeMessages();
+
+                    if(!m_has_changes)
+                        continue;
+
+                    m_has_changes = false;
+
+                    if(m_rpms > 0 && m_vehicle_underwater){
+                        debug("WIFI IS OFF...'");
+                        power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+                    }
+                    else {
+                        debug("WIFI IS ON...'");
+                        power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+                    }
+
+                    dispatch(power_control_channel);
+                }
+            }
+        };
+    }
 }
 
 DUNE_TASK
