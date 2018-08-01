@@ -41,16 +41,194 @@ namespace Autonomy
 
     struct Task: public DUNE::Tasks::Task
     {
-      Task(const std::string & name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+      //! last received PlanControlState
+      IMC::PlanControlState* m_pcs;
+
+      //! last received VehicleState
+      IMC::VehicleState* m_vstate;
+
+      //! last received message
+      IMC::TextMessage* m_last;
+
+      //! Transmission request id
+      int m_reqid;
+
+      //! %Task arguments
+      struct Arguments
       {
+        //! timeout, in seconds, for replies
+        int reply_timeout;
+      } m_args;
+
+      Task(const std::string & name, Tasks::Context& ctx):
+        DUNE::Tasks::Task(name, ctx),
+        m_pcs(NULL),
+        m_vstate(NULL),
+        m_last(NULL)
+      {
+        param("Reply timeout", m_args.reply_timeout)
+            .defaultValue("60")
+            .minimumValue("30");
+
         bind<IMC::TextMessage>(this);
+        bind<IMC::VehicleState>(this);
+        bind<IMC::PlanControlState>(this);
+        bind<IMC::PlanGeneration>(this);
+        m_reqid = 0;
       }
 
       void
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      consume(const IMC::PlanControlState * msg)
+      {
+        Memory::replace(m_pcs, msg->clone());
+      }
+
+      void
+      consume(const IMC::VehicleState * msg)
+      {
+        Memory::replace(m_vstate, msg->clone());
+      }
+
+      void splitCommand(const std::string text, std::string& cmd, std::string& args)
+      {
+        cmd = sanitize(text);
+        size_t pos = cmd.find(" ");
+
+        if (pos != std::string::npos)
+        {
+          args = cmd.substr(pos+1);
+          cmd = cmd.substr(0, pos);
+        }
+        if (!args.empty())
+          inf("Command is '%s', Argument is '%s'", cmd.c_str(), args.c_str());
+      }
+
+      void
+      consume(const IMC::TextMessage* msg)
+      {
+        inf("Processing text message from %s: '%s'", msg->origin.c_str(), sanitize(msg->text).c_str());
+        Memory::replace(m_last, msg->clone());
+        std::istringstream iss(msg->text);
+        std::string cmd, args;
+        splitCommand(msg->text, cmd, args);
+        handleCommand(msg->origin, cmd, args);
+      }
+
+      void
+      consume(const IMC::PlanGeneration* msg)
+      {
+        if (m_last == NULL)
+          return;
+
+        std::stringstream ss;
+
+        if (msg->op == PlanGeneration::OP_ERROR)
+        {
+          ss << "Error: '" << msg->params << "'.";
+          reply(m_last->origin, ss.str());
+        }
+        else if (msg->op == PlanGeneration::OP_SUCCESS)
+        {
+          ss << "Started: '" << msg->plan_id << " " << msg->params << "'.";
+          reply(m_last->origin, ss.str());
+        }
+      }
+
+      void handleCommand(const std::string& origin, const std::string& cmd, const std::string& args)
+      {
+        if (cmd == "plan" || cmd == "start")
+          handlePlanCommand(origin, args, false);
+        else if (cmd == "abort")
+          handleAbortCommand(origin, args);
+        else if (cmd == "force")
+          handlePlanCommand(origin, args, true);
+        else if (cmd == "errors")
+          handleErrorsCommand(origin);
+        else if (cmd == "info")
+          handleInfoCommand(origin);
+        else
+          handlePlanGeneratorCommand(origin, cmd, args);
+      }
+
+      void
+      handleErrorsCommand(const std::string& origin)
+      {
+        std::stringstream ss;
+
+        if (m_vstate != NULL)
+        {
+          if (m_vstate->error_count > 0) {
+            ss << m_vstate->error_ents << " errors: " << m_vstate->error_ents;
+            reply(origin, ss.str());
+          }
+          else
+            reply(origin, "Vehicle has no reported errors.");
+        }
+      }
+
+      void
+      handleInfoCommand(const std::string& origin)
+      {
+        std::stringstream ss;
+        if (m_pcs == NULL || m_vstate == NULL)
+        {
+          war("Not replying as no state messages are available.");
+          return;
+        }
+
+        bool executing = m_pcs->state == PlanControlState::PCS_EXECUTING;
+        bool initializing = m_pcs->state == PlanControlState::PCS_INITIALIZING;
+        bool succeeded = m_pcs->last_outcome == PlanControlState::LPO_SUCCESS &&
+            (m_pcs->state == PlanControlState::PCS_READY);
+        bool ready = m_pcs->last_outcome == PlanControlState::LPO_NONE &&
+            (m_pcs->state == PlanControlState::PCS_READY);
+
+        if (executing)
+          ss << "Executing " << m_pcs->plan_id << " / " << m_pcs->man_id
+              << ". ETA: " << m_pcs->plan_eta << " (" << std::fixed
+              << std::setprecision(1) << m_pcs->plan_progress << "%)";
+        else if (initializing)
+          ss << "Initializing " << m_pcs->plan_id << ".";
+        else if (ready)
+          ss << "Vehicle is ready.";
+        else if (succeeded)
+          ss << "Finished " << m_pcs->plan_id << ".";
+        else
+          ss << "Failed to exec " << m_pcs->plan_id <<": " << m_vstate->last_error << ".";
+
+        reply(origin, ss.str());
+      }
+
+      void reply(const std::string& origin, const std::string& text) {
+        TransmissionRequest req;
+
+        req.data_mode = TransmissionRequest::DMODE_TEXT;
+        req.txt_data = text;
+        req.deadline = Clock::get() + m_args.reply_timeout;
+        req.req_id = ++m_reqid;
+
+        // if request was sent over sms
+        if (origin.find("+") == 0)
+        {
+          req.comm_mean = TransmissionRequest::CMEAN_GSM;
+          req.destination = origin;
+          dispatch(req);
+        }
+        else if (origin == "iridium")
+        {
+          req.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
+          req.destination = "";
+          dispatch(req);
+        }
+        else
+          war("Not replying as origin is not addressable: '%s'.",
+              origin.c_str());
       }
 
       void
@@ -69,6 +247,13 @@ namespace Autonomy
 
         inf(DTR("received SMS request to start plan '%s'"),
             sanitize(pc.plan_id).c_str());
+        std::stringstream ss;
+        ss << "Started execution of " << plan_id;
+        if (ignore_errors)
+          ss << " ignoring errors.";
+        else
+          ss << ".";
+        reply(origin, ss.str());
 
         // Send the plan start request
         dispatch(pc);
@@ -82,60 +267,21 @@ namespace Autonomy
         IMC::Abort abort;
         abort.setDestination(getSystemId());
         dispatch(abort);
+        reply(origin, "Aborted.");
         (void)args;
       }
 
       void
-      handlePlanGeneratorCommand(const std::string& origin, const std::string& args)
+      handlePlanGeneratorCommand(const std::string& origin, const std::string& cmd, const std::string& args)
       {
         IMC::PlanGeneration pg;
-        std::istringstream iss(args);
-        std::string temp, tlist;
-        getline(iss, temp, ' ');
-        if (iss.str().size() > temp.size())
-          tlist = std::string(iss.str(), temp.size()+1, iss.str().size() - temp.size()+1);
-
-        //TupleList tlist(msg->params, "=", ";", true);
-        //TupleList t(tlist, "=", ",", true);
 
         pg.cmd = IMC::PlanGeneration::CMD_EXECUTE;
         pg.op = IMC::PlanGeneration::OP_REQUEST;
-        pg.params = tlist;
-        pg.plan_id = temp;
+        pg.plan_id = cmd;
+        pg.params = args;
         dispatch(pg);
         (void)origin;
-      }
-
-      void
-      consume(const IMC::TextMessage* msg)
-      {
-        inf("processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
-        std::istringstream iss(msg->text);
-        std::string cmd, args = "";
-        getline(iss, cmd, ' ');
-        if (iss.str().size() > cmd.size())
-          args = std::string(iss.str(), cmd.size()+1, iss.str().size() - cmd.size()+1);
-
-        //std::transform(cmd, cmd, cmd, ::tolower);
-
-        spew("command is %s, args are %s", cmd.c_str(), args.c_str());
-
-        if (cmd == "plan")
-        {
-          handlePlanCommand(msg->origin, args, true);
-        }
-        else if (cmd == "abort")
-        {
-          handleAbortCommand(msg->origin, args);
-        }
-        else if (cmd == "start")
-        {
-          handlePlanCommand(msg->origin, args, false);
-        }
-        else
-        {
-          handlePlanGeneratorCommand(msg->origin, msg->text);
-        }
       }
 
       void
