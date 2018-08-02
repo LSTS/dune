@@ -58,6 +58,8 @@ namespace Autonomy
       {
         //! timeout, in seconds, for replies
         int reply_timeout;
+        //! URL for documentation
+        std::string help_url;
       } m_args;
 
       Task(const std::string & name, Tasks::Context& ctx):
@@ -69,6 +71,9 @@ namespace Autonomy
         param("Reply timeout", m_args.reply_timeout)
             .defaultValue("60")
             .minimumValue("30");
+
+        param("Documentation URL", m_args.help_url)
+            .defaultValue("https://bit.ly/2LZ0EOc");
 
         bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
@@ -278,7 +283,9 @@ namespace Autonomy
       void
       handleHelpCommand(const std::string& origin, const std::string& args)
       {
-        reply(origin, "For a list of valid commands see https://bit.ly/2LZ0EOc.");
+        std::stringstream ss;
+        ss << "For a list of valid commands see " << m_args.help_url << ".";
+        reply(origin, ss.str());
         (void) args;
       }
 
