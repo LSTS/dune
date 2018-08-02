@@ -60,6 +60,9 @@ namespace Autonomy
         int reply_timeout;
         //! URL for documentation
         std::string help_url;
+        //! List of valid commands (does not reply to anything else)
+        std::vector<std::string> valid_cmds;
+
       } m_args;
 
       Task(const std::string & name, Tasks::Context& ctx):
@@ -69,11 +72,14 @@ namespace Autonomy
         m_last(NULL)
       {
         param("Reply timeout", m_args.reply_timeout)
-            .defaultValue("60")
-            .minimumValue("30");
+          .defaultValue("60")
+          .minimumValue("30");
 
         param("Documentation URL", m_args.help_url)
-            .defaultValue("https://bit.ly/2LZ0EOc");
+          .defaultValue("https://bit.ly/2LZ0EOc");
+
+        param("Valid Commands", m_args.valid_cmds)
+          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,sk,start,surface");
 
         bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
@@ -137,15 +143,22 @@ namespace Autonomy
 
         std::stringstream ss;
 
-        if (msg->op == PlanGeneration::OP_ERROR)
+        if (msg->op == PlanGeneration::OP_SUCCESS)
         {
-          ss << "PlanGeneration: '" << msg->params << "'.";
+          if (msg->params.empty())
+            ss << "Started: '" << msg->plan_id << "'.";
+          else
+            ss << "Started: '" << msg->plan_id << " " << msg->params << "'.";
           reply(m_last->origin, ss.str());
         }
-        else if (msg->op == PlanGeneration::OP_SUCCESS)
+        else if (msg->op == PlanGeneration::OP_ERROR)
         {
-          ss << "Started: '" << msg->plan_id << " " << msg->params << "'.";
-          reply(m_last->origin, ss.str());
+          if (std::find(m_args.valid_cmds.begin(), m_args.valid_cmds.end(),
+                        msg->plan_id) != m_args.valid_cmds.end())
+          {
+            ss << "Parser error: '" << msg->params << "'.";
+            reply(m_last->origin, ss.str());
+          }
         }
       }
 
@@ -161,6 +174,8 @@ namespace Autonomy
           handleErrorsCommand(origin);
         else if (cmd == "info")
           handleInfoCommand(origin);
+        else if (cmd == "help")
+          handleHelpCommand(origin);
         else
           handlePlanGeneratorCommand(origin, cmd, args);
       }
@@ -173,7 +188,7 @@ namespace Autonomy
         if (m_vstate != NULL)
         {
           if (m_vstate->error_count > 0) {
-            ss << m_vstate->error_ents << " errors: " << m_vstate->error_ents;
+            ss << (int) m_vstate->error_count << " errors: " << m_vstate->error_ents;
             reply(origin, ss.str());
           }
           else
@@ -227,12 +242,14 @@ namespace Autonomy
         {
           req.comm_mean = TransmissionRequest::CMEAN_GSM;
           req.destination = origin;
+          inf("Replying to %s: '%s'", req.destination.c_str(), req.txt_data.c_str());
           dispatch(req);
         }
         else if (origin == "iridium")
         {
           req.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
           req.destination = "";
+          inf("Replying via Iridium: '%s'", req.txt_data.c_str());
           dispatch(req);
         }
         else
@@ -281,12 +298,11 @@ namespace Autonomy
       }
 
       void
-      handleHelpCommand(const std::string& origin, const std::string& args)
+      handleHelpCommand(const std::string& origin)
       {
         std::stringstream ss;
         ss << "For a list of valid commands see " << m_args.help_url << ".";
         reply(origin, ss.str());
-        (void) args;
       }
 
       void
