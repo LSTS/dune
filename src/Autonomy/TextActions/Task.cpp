@@ -146,12 +146,12 @@ namespace Autonomy
 
       void handleCommand(const std::string& origin, const std::string& cmd, const std::string& args)
       {
-        if (cmd == "plan" || cmd == "start")
-          handlePlanCommand(origin, args, false);
+        if (cmd == "start")
+          handleStartCommand(origin, args, false);
+        else if (cmd == "force")
+          handleStartCommand(origin, args, true);
         else if (cmd == "abort")
           handleAbortCommand(origin, args);
-        else if (cmd == "force")
-          handlePlanCommand(origin, args, true);
         else if (cmd == "errors")
           handleErrorsCommand(origin);
         else if (cmd == "info")
@@ -236,7 +236,7 @@ namespace Autonomy
       }
 
       void
-      handlePlanCommand(const std::string& origin, const std::string& args, bool ignore_errors = true)
+      handleStartCommand(const std::string& origin, const std::string& args, bool ignore_errors = true)
       {
         // Plan control message!
         IMC::PlanControl pc;
@@ -273,6 +273,13 @@ namespace Autonomy
         dispatch(abort);
         reply(origin, "Aborted.");
         (void)args;
+      }
+
+      void
+      handleHelpCommand(const std::string& origin, const std::string& args)
+      {
+        reply(origin, "For a list of valid commands see https://bit.ly/2LZ0EOc.");
+        (void) args;
       }
 
       void
