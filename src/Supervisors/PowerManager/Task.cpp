@@ -97,7 +97,7 @@ namespace Supervisors
             onResourceRelease(void)
             {
             }
-
+            
             void
             consume(const IMC::VehicleMedium * msg)
             {
@@ -114,7 +114,6 @@ namespace Supervisors
 
                 if(last_state != m_vehicle_underwater)
                 {
-                    //debug messages
                     if(m_vehicle_underwater)
                         debug("IN UNDERWATER...'");
                     else
@@ -127,9 +126,13 @@ namespace Supervisors
             void
             consume(const IMC::Rpm* msg)
             {
+                int last_rpms = m_rpms;
+
                 m_rpms = msg->value;
 
-                if(m_rpms == 0)
+                //! If last rpms of vehicle are different from current ones a
+                //! and the current or previous rpms are equal to 0
+                if((m_rpms == 0 || last_rpms == 0) && last_rpms != m_rpms)
                 {
                     m_has_changes = true;
                 }
@@ -152,6 +155,7 @@ namespace Supervisors
 
                     m_has_changes = false;
 
+                    //! If vehicle is in moving and underwater then turn off wifi
                     if(m_rpms > 0 && m_vehicle_underwater){
                         debug("WIFI IS OFF...'");
                         power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
