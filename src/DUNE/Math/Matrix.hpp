@@ -426,7 +426,7 @@ namespace DUNE
       //! This method implements the unary minus operator.
       //! @return resultant matrix
       Matrix
-      operator-(void);
+      operator-(void) const;
 
       //! This method multiplies a Matrix by a real number.
       //! @param[in] x real number
