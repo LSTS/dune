@@ -108,6 +108,18 @@ namespace Transports
       }
 
       void
+      answerTCPStatus(const IMC::TransmissionRequest* req, std::string info, int status)
+      {
+        IMC::TCPStatus msg;
+        msg.info      = info;
+        msg.req_id    = req->req_id;
+        msg.status    = status;
+        msg.setDestination(req->getSource());
+        msg.setDestinationEntity(req->getSourceEntity());
+        m_parent->dispatch(msg, DF_LOOP_BACK);
+      }
+
+      void
       answer(const IMC::TransmissionRequest* req, std::string info, int status, fp32_t range = 0.0)
       {
         IMC::TransmissionStatus msg;
@@ -294,11 +306,16 @@ namespace Transports
         {
           if(msg->data_mode != IMC::TransmissionRequest::DMODE_RAW
               && msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT){
-            sendViaAcoustic(msg);
-            return;
+            if(visibleOverAcoustic(msg->destination)){
+              sendViaAcoustic(msg);
+              return;
+            }else{
+              answerDestinationNotVisible(msg);
+              return;
+            }
           }
           else{
-            answer(msg, "No communication mode available for this message type", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            answerCommNotAvailable(msg);
             return;
           }
         }
@@ -368,22 +385,32 @@ namespace Transports
               sendViaGSM(msg);
               return;
             }
-            if(m_medium == IMC::VehicleMedium::VM_WATER)
+            if (m_medium != IMC::VehicleMedium::VM_WATER)
             {
-              if(visibleOverAcoustic(msg->destination)){
+              if (checkRSSISignal(IRIDIUM))
+              {
+                sendViaSatellite(msg);
+                return;
+              }
+              answerCommNotAvailable(msg);
+              return;
+            }
+            else
+            {
+              if (visibleOverAcoustic(msg->destination))
+              {
                 sendViaAcoustic(msg);
                 return;
               }
-              answerDestinationNotVisible(msg);
+              if (checkRSSISignal(IRIDIUM))
+              {
+                sendViaSatellite(msg);
+                return;
+              }
+              answerCommNotAvailable(msg);
               return;
             }
 
-            if(checkRSSISignal(IRIDIUM)){
-              sendViaSatellite(msg);
-              return;
-            }
-            answerCommNotAvailable(msg);
-            return;
             break;
 
           default:
