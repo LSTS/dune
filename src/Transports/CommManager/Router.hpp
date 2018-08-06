@@ -511,7 +511,12 @@ namespace Transports
           if(visibleOverWifi(msg->destination)){
             send.destination = std::string(m_wifi_map[msg->destination].address);
           }else{
-            answer(msg,"Didn't find TCP server on destination host",IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+            uint16_t newId = createInternalId();
+            m_transmission_requests[newId] = msg->clone();
+            IMC::TransmissionRequest* msg2 = msg->clone();
+            msg2->req_id= newId;
+            answerTCPStatus(msg2,"Didn't find TCP server on destination host",IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN);
+            return;
           }
         }
 
