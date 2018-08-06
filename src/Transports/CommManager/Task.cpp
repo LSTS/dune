@@ -651,6 +651,9 @@ namespace Transports
           case (IMC::TransmissionRequest::CMEAN_ANY):
             m_router.sendViaAny(msg);
           break;
+          case (IMC::TransmissionRequest::CMEAN_ALL):
+            m_router.sendViaAll(msg);
+          break;
           default:
             m_router.answer(msg, "Communication mean not implemented.",
               IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
