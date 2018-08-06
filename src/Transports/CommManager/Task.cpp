@@ -58,6 +58,7 @@ namespace Transports
       std::string gsm_label;
       //! Name of the configuration section with acoustic modem addresses
       std::string acoustic_addr_section;
+
     };
 
     //! Config section from where to fetch emergency sms number
@@ -77,6 +78,8 @@ namespace Transports
       IMC::VehicleMedium* m_vmedium;
       Time::Counter<float> m_iridium_timer;
       Time::Counter<float> m_clean_timer;
+      Time::Counter<float> m_retransmission_timer;
+      std::list<IMC::TransmissionRequest*> m_retransmission_list;
       int m_plan_chksum;
       Router m_router;
 
@@ -137,6 +140,7 @@ namespace Transports
 
 
         m_clean_timer.setTop(3);
+        m_retransmission_timer.setTop(1);
       }
 
 
@@ -316,8 +320,10 @@ namespace Transports
             case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
               m_router.answer(req, "Error while trying to transmit message.",
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
               tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
+
               break;
             case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
               m_router.answer(req, "Timeout while trying to transmit message.",
@@ -340,29 +346,37 @@ namespace Transports
 
         if (tr_list->find(msg->req_id) != tr_list->end())
         {
-          IMC::TransmissionRequest* req =  tr_list->operator [](msg->req_id);
-          switch (msg->status) {
+          IMC::TransmissionRequest* req = tr_list->operator [](msg->req_id);
+          switch (msg->status)
+          {
             case (IMC::SmsStatus::SMSSTAT_QUEUED):
-                m_router.answer(req, "Message has been queued for GSM transmission.", IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-            break;
+              m_router.answer(req,
+                              "Message has been queued for GSM transmission.",
+                              IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+              break;
 
             case (IMC::SmsStatus::SMSSTAT_SENT):
-                m_router.answer(req, "Message has been sent via GSM.", IMC::TransmissionStatus::TSTAT_SENT);
-            Memory::clear(req);
-            tr_list->erase(msg->req_id);
-            break;
+              m_router.answer(req, "Message has been sent via GSM.",
+                              IMC::TransmissionStatus::TSTAT_SENT);
+              Memory::clear(req);
+              tr_list->erase(msg->req_id);
+              break;
 
             case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
-                m_router.answer(req, msg->info, IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-            Memory::clear(req);
-            tr_list->erase(msg->req_id);
-            break;
+              m_router.answer(req, msg->info,
+                              IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+              tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
+              break;
 
             case (IMC::SmsStatus::SMSSTAT_ERROR):
-                m_router.answer(req, msg->info, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(req);
-            tr_list->erase(msg->req_id);
-            break;
+              m_router.answer(req, msg->info,
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
+              break;
 
             default:
               inf("ERROR: SmsStatus->status not implemented");
@@ -414,22 +428,25 @@ namespace Transports
             case (IMC::AcousticStatus::STATUS_ERROR):
               m_router.answer(req, msg->info,
                 IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
               tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
             break;
 
             case (IMC::AcousticStatus::STATUS_BUSY):
               m_router.answer(req, "Acoustic modem is busy.",
                 IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
-              tr_list->erase(msg->req_id);
+                tr_list->erase(msg->req_id);
+                m_retransmission_list.push_back(req->clone());
+                Memory::clear(req);
             break;
 
             case (IMC::AcousticStatus::STATUS_INPUT_FAILURE):
               m_router.answer(req, msg->info,
                 IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              Memory::clear(req);
-              tr_list->erase(msg->req_id);
+                tr_list->erase(msg->req_id);
+                m_retransmission_list.push_back(req->clone());
+                Memory::clear(req);
             break;
 
             default:
@@ -581,8 +598,7 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
         std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
-        if (tr_list->find(msg->req_id)
-            != tr_list->end())
+        if (tr_list->find(msg->req_id) != tr_list->end())
         {
 
           IMC::TransmissionRequest* req =  tr_list->operator [](msg->req_id);
@@ -602,23 +618,26 @@ namespace Transports
 
             case (IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN):
               m_router.answer(req, msg->info,
-                     IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              Memory::clear(req);
+                     IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
               tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_CANT_CONNECT):
               m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
               tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_INPUT_FAILURE):
               m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              Memory::clear(req);
               tr_list->erase(msg->req_id);
+              m_retransmission_list.push_back(req->clone());
+              Memory::clear(req);
               break;
 
             default:
@@ -626,6 +645,7 @@ namespace Transports
               break;
           }
         }
+
 
       }
 
@@ -826,6 +846,15 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if(m_retransmission_timer.overflow()){
+            while(!m_retransmission_list.empty()){
+              consume(m_retransmission_list.front());
+              m_retransmission_list.pop_front();
+            }
+            m_retransmission_timer.reset();
+
+          }
 
           if (m_clean_timer.overflow())
           {
