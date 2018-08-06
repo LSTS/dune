@@ -214,11 +214,11 @@ namespace Transports
         tr.comm_mean            = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode            = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.msg_data.set(data->clone());
-        Memory::clear(data);
         tr.deadline             = Time::Clock::getSinceEpoch() + 120;
         tr.req_id               = createInternalId();
         m_parent->inf("Requesting upload of %u samples via Iridium.", (uint32_t) data->data.size());
         m_parent->dispatch(tr);
+        Memory::clear(data);        
       }
 
       ~Router()
