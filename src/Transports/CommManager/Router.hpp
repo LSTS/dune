@@ -514,6 +514,117 @@ namespace Transports
       }
 
       void
+      sendViaAll(const IMC::TransmissionRequest* msg){
+
+        //restriction by medium
+        if(m_medium == IMC::VehicleMedium::VM_UNDERWATER)
+        {
+          if(msg->data_mode != IMC::TransmissionRequest::DMODE_RAW
+              && msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT){
+            if(visibleOverAcoustic(msg->destination)){
+              sendViaAcoustic(msg);
+              return;
+            }
+          }
+          answerCommNotAvailable(msg);
+          return;
+        }
+        //end
+
+        //restriction by transmission mode
+        std::string dest;
+        bool flag = false;
+        switch (msg->data_mode)
+        {
+          //unique for uan modems
+          case IMC::TransmissionRequest::DMODE_ABORT:
+          case IMC::TransmissionRequest::DMODE_RANGE:
+          case IMC::TransmissionRequest::DMODE_REVERSE_RANGE:
+            if (m_medium == IMC::VehicleMedium::VM_WATER)
+            {
+              if(visibleOverAcoustic(msg->destination)){
+                sendViaAcoustic(msg);
+                return;
+              }
+            }
+            answerCommNotAvailable(msg);
+            return;
+
+            break;
+
+            //unique for satellite modem
+          case IMC::TransmissionRequest::DMODE_RAW:
+            if(checkRSSISignal(IRIDIUM)){
+              sendViaSatellite(msg);
+              return;
+            }
+            answerCommNotAvailable(msg);
+            return;
+
+            break;
+
+            //only for satellite modem or gsm
+          case IMC::TransmissionRequest::DMODE_TEXT:
+            if (visibleOverGSM(msg->destination,dest)
+                && checkGSMMessageSize(msg))
+            {
+              sendViaGSM(msg);
+              flag = true;
+            }
+
+            if(checkRSSISignal(IRIDIUM)){
+              sendViaSatellite(msg);
+              flag = true;
+            }
+            if(!flag)answerCommNotAvailable(msg);
+
+            return;
+
+            break;
+
+          case IMC::TransmissionRequest::DMODE_INLINEMSG:
+
+            if (visibleOverWifi(msg->destination))
+            {
+              sendViaWifi(msg);
+              flag = true;
+            }
+            if (visibleOverGSM(msg->destination,dest)
+                && checkGSMMessageSize(msg))
+            {
+              sendViaGSM(msg);
+              flag = true;
+            }
+
+            if (visibleOverAcoustic(msg->destination))
+            {
+              sendViaAcoustic(msg);
+              flag = true;
+            }
+            if (checkRSSISignal(IRIDIUM))
+            {
+              sendViaSatellite(msg);
+              flag = true;
+            }
+            if(!flag)answerCommNotAvailable(msg);
+            return;
+
+
+            break;
+
+          default:
+            answerCommNotAvailable(msg);
+            return;
+            break;
+        }
+        //end
+
+        return;
+
+
+      }
+
+      void
       setGSMMap(std::map<std::string, std::string> map)
       {
         m_gsm_config_map = map;
