@@ -207,7 +207,7 @@ namespace DUNE
       std::vector<std::string> m_files;
 
       //! Configuration map lock
-      Concurrency::RWLock m_data_lock;
+      mutable Concurrency::RWLock m_data_lock;
 
       // Non - copyable.
       Config(const Config&);
