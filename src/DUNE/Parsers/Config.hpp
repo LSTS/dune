@@ -82,6 +82,7 @@ namespace DUNE
       void
       set(const std::string& section, const std::string& option, const std::string& value)
       {
+        Concurrency::ScopedRWLock(m_data_lock, true);
         m_data[section][option] = value;
       }
 
@@ -92,6 +93,7 @@ namespace DUNE
       std::string
       get(const std::string& section, const std::string& option)
       {
+        Concurrency::ScopedRWLock(m_data_lock, false);
         return m_data[section][option];
       }
 
@@ -101,6 +103,7 @@ namespace DUNE
       void
       setSection(const std::string& section, const std::map<std::string, std::string>& map)
       {
+        Concurrency::ScopedRWLock(m_data_lock, true);
         m_data[section] = map;
       }
 
@@ -110,6 +113,7 @@ namespace DUNE
       std::map<std::string, std::string>
       getSection(const std::string& section)
       {
+        Concurrency::ScopedRWLock(m_data_lock, false);
         return m_data[section];
       }
 
@@ -122,6 +126,7 @@ namespace DUNE
       void
       get(const std::string& sec, const std::string& opt, const std::string& def, Type& var)
       {
+        Concurrency::ScopedRWLock(m_data_lock, false);
         if (m_data[sec].find(opt) != m_data[sec].end())
         {
           if (castLexical(m_data[sec][opt], var))
@@ -200,6 +205,9 @@ namespace DUNE
       Sections m_data;
       //! List of parsed files.
       std::vector<std::string> m_files;
+
+      //! Configuration map lock
+      Concurrency::RWLock m_data_lock;
 
       // Non - copyable.
       Config(const Config&);
