@@ -847,7 +847,7 @@ namespace DUNE
     }
 
     Matrix
-    Matrix::operator-(void)
+    Matrix::operator-(void) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
