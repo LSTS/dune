@@ -450,7 +450,7 @@ namespace Transports
             sms.destination = msg->destination;
           }
         }
-        sms.timeout = (sms.timeout < 0)? 0 : msg->deadline - Time::Clock::getSinceEpoch();
+        sms.timeout = (msg->deadline < Time::Clock::getSinceEpoch())? 0 : msg->deadline - Time::Clock::getSinceEpoch();
 
         switch(msg->data_mode){
           case IMC::TransmissionRequest::DMODE_TEXT:
