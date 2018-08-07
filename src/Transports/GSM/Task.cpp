@@ -247,7 +247,7 @@ namespace Transports
         sms_req.src_adr     = msg->getSource();
         sms_req.src_eid     = msg->getSourceEntity();
 
-        if (msg->timeout == 0)
+        if (msg->timeout <= 0)
         {
           sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"SMS timeout cannot be zero");
           inf("%s", DTR("SMS timeout cannot be zero"));
@@ -300,7 +300,7 @@ namespace Transports
         // Message is too old, discard it.
         if (Time::Clock::getSinceEpoch() >= sms_req.deadline)
         {
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,DTR("SMS timeout"));
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,DTR("SMS timeout"));
           war(DTR("discarded expired SMS to recipient %s"), sms_req.destination.c_str());
           return;
         }
