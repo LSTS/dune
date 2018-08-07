@@ -366,7 +366,6 @@ namespace Transports
               m_router.answer(req, msg->info,
                               IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
               tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
               Memory::clear(req);
               break;
 
