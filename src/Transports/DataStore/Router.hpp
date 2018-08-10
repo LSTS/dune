@@ -153,6 +153,33 @@ namespace Transports
       }
 
       void
+      forwardCommandsAnyMean(DataStore* store)
+      {
+        std::map<std::string, double>::iterator it;
+        Concurrency::ScopedRWLock l(m_lock, false);
+        double curTime = Clock::getSinceEpoch();
+
+        for (it = m_acousticVisibility.begin(); it != m_acousticVisibility.end(); it++)
+        {
+          if (curTime - it->second < c_acoustic_timeout)
+          {
+            int id = m_parent->resolveSystemName(it->first);
+
+            IMC::HistoricData* cmds = store->pollCommands(id, c_max_size_acoustic);
+            if (cmds != NULL)
+            {
+              cmds->setDestination(id);
+
+              TransmissionRequest tr = makeAcousticRequest(it->first,cmds);
+
+              m_parent->inf("Forwarding commands over Acoustic Modem to %s.", it->first.c_str());
+              m_parent->dispatch(tr);
+            }
+          }
+        }
+      }
+
+      void
       forwardCommandsAcoustic(DataStore* store)
       {
         std::map<std::string, double>::iterator it;
