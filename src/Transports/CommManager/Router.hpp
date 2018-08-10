@@ -168,7 +168,7 @@ namespace Transports
         {
           if (it->second->deadline <= time)
           {
-            answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            answer(it->second, "Transmission timed out.", IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
             Memory::clear(it->second);
             m_transmission_requests.erase(it++);
           }
