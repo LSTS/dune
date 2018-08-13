@@ -172,11 +172,11 @@ namespace Transports
         std::string firstPart = msg.substr(startPos);
         balance = firstPart.substr(6, firstPart.find("eur")-6);
 
+        getTask()->debug("Saldo: %s", balance.c_str());
+
         std::stringstream ss;
         ss << " | " << String::str(balance) << "Eur ";
         balance = ss.str();
-
-        getTask()->debug("Saldo: %s", balance.c_str());
 
         return true;
       }

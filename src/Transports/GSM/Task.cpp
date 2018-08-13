@@ -47,6 +47,9 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Default timer - security (m)
+    static const int m_balance_per_default = 5;
+
     //! SMS struct.
     struct SMS
     {
@@ -106,11 +109,10 @@ namespace Transports
       Arguments m_args;
       //! Balance of card
       std::string m_balance;
-
-      int m_balance_timer;
-
+      //! Balance timer count.
+      Time::Counter<int> m_balance_timer;
+      //! Balance periodicity (s).
       int m_balance_per;
-
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -173,6 +175,13 @@ namespace Transports
 
         if (paramChanged(m_args.rssi_per))
           m_rssi_timer.setTop(m_args.rssi_per);
+
+        if (paramChanged(m_args.balance_per)) {
+          if(m_args.balance_per > m_balance_per_default)
+            m_balance_timer.setTop(m_args.balance_per * 60);
+          else
+            m_balance_timer.setTop(m_balance_per_default * 60);
+        }
       }
 
 
@@ -189,10 +198,8 @@ namespace Transports
           debug("IMEI: %s", m_driver->getIMEI().c_str());
 
           if(m_args.request_balance && m_driver->getBalance(m_args.ussd_code, m_balance)) {
-            debug("Pediu saldo...");
+            m_balance_timer.reset();
             setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-            m_balance_timer = Clock::get();
-            m_balance_per = m_args.balance_per * 60;
           }
         }
         catch (std::runtime_error& e)
@@ -316,12 +323,10 @@ namespace Transports
           processQueue();
 
           if(m_args.request_balance) {
-            int elapsed_time = Clock::get() - m_balance_timer;
-
-            if (elapsed_time >= m_balance_per && m_driver->getBalance(m_args.ussd_code, m_balance)) {
-                debug("Pediu saldo...");
+            if (m_balance_timer.overflow() && m_driver->getBalance(m_args.ussd_code, m_balance)) {
+                m_balance_timer.reset();
                 setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-                m_balance_timer = Clock::get();
+
             }
           }
         }
