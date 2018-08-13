@@ -82,10 +82,12 @@ namespace Transports
       double sms_tout;
       //! Device response timeout.
       float reply_tout;
-      //! Code to request balance
+      //! Code to request balance.
       unsigned ussd_code;
-      //! Request balance
+      //! Request balance.
       bool request_balance;
+      //! Balance periodicity (m).
+      unsigned balance_per;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -104,6 +106,11 @@ namespace Transports
       Arguments m_args;
       //! Balance of card
       std::string m_balance;
+
+      int m_balance_timer;
+
+      int m_balance_per;
+
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -150,10 +157,12 @@ namespace Transports
         .defaultValue("true")
         .description("Enable Balance Request");
 
+        param("Balance Periodicity", m_args.balance_per)
+                .defaultValue("60")
+                .description("Balance Periodicity");
+
         bind<IMC::Sms>(this);
         bind<IMC::IoEvent>(this);
-
-        m_balance = "";
       }
 
       void
@@ -179,8 +188,12 @@ namespace Transports
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
 
-          if(m_args.request_balance && m_driver->getBalance(m_args.ussd_code, m_balance))
-            setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_ACTIVE).c_str());
+          if(m_args.request_balance && m_driver->getBalance(m_args.ussd_code, m_balance)) {
+            debug("Pediu saldo...");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+            m_balance_timer = Clock::get();
+            m_balance_per = m_args.balance_per * 60;
+          }
         }
         catch (std::runtime_error& e)
         {
@@ -301,6 +314,16 @@ namespace Transports
           waitForMessages(1.0);
           pollStatus();
           processQueue();
+
+          if(m_args.request_balance) {
+            int elapsed_time = Clock::get() - m_balance_timer;
+
+            if (elapsed_time >= m_balance_per && m_driver->getBalance(m_args.ussd_code, m_balance)) {
+                debug("Pediu saldo...");
+                setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+                m_balance_timer = Clock::get();
+            }
+          }
         }
       }
 

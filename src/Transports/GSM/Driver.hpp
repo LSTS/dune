@@ -176,6 +176,8 @@ namespace Transports
         ss << " | " << String::str(balance) << "Eur ";
         balance = ss.str();
 
+        getTask()->debug("Saldo: %s", balance.c_str());
+
         return true;
       }
 
