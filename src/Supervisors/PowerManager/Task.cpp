@@ -38,12 +38,15 @@ namespace Supervisors
 
         struct Task: public DUNE::Tasks::Task
         {
+            const c_rpm_counter_size = 6;
+
             //! Vehicle is underwater
             bool m_vehicle_underwater;
             //! Last state has changed
             bool m_has_changes;
             //! Motor's rpms
             int m_rpms;
+            int m_zero_rpm_counter;
 
 
             //! Constructor.
@@ -53,7 +56,8 @@ namespace Supervisors
                     DUNE::Tasks::Task(name, ctx),
                     m_vehicle_underwater(false),
                     m_has_changes(false),
-                    m_rpms(0)
+                    m_rpms(0),
+                    m_zero_rpm_counter(0)
             {
 
                 // Register consumer
@@ -103,14 +107,7 @@ namespace Supervisors
             {
                 bool last_state = m_vehicle_underwater;
 
-                if(msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-                {
-                    m_vehicle_underwater = true;
-                }
-                else
-                {
-                    m_vehicle_underwater = false;
-                }
+                m_vehicle_underwater = (msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
 
                 if(last_state != m_vehicle_underwater)
                 {
@@ -129,6 +126,11 @@ namespace Supervisors
                 int last_rpms = m_rpms;
 
                 m_rpms = msg->value;
+
+                if(m_rpms == 0)
+                    m_zero_rpm_counter++;
+                else
+                    m_zero_rpm_counter = 0;
 
                 //! If last rpms of vehicle are different from current ones a
                 //! and the current or previous rpms are equal to 0
@@ -156,13 +158,14 @@ namespace Supervisors
                     m_has_changes = false;
 
                     //! If vehicle is in moving and underwater then turn off wifi
-                    if(m_rpms > 0 && m_vehicle_underwater){
-                        debug("WIFI IS OFF...'");
-                        power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-                    }
-                    else {
+                    if(m_zero_rpm_counter == c_rpm_counter_size || !m_vehicle_underwater){
                         debug("WIFI IS ON...'");
                         power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+                        m_zero_rpm_counter = 0;
+                    }
+                    else {
+                        debug("WIFI IS OFF...'");
+                        power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
                     }
 
                     dispatch(power_control_channel);
