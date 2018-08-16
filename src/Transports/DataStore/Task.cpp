@@ -125,7 +125,7 @@ namespace Transports
         .description("If set, messages will be forwarded to gateway using acoustic modem")
         .defaultValue("");
 
-        param("Any Gateway", m_args.any_gateway)
+        param("Any Mean Gateway", m_args.any_gateway)
         .description("If set, messages will be forwarded to gateway using any comm available")
         .defaultValue("");
 
@@ -137,7 +137,7 @@ namespace Transports
         .description("Acoustic forwarding period, in seconds")
         .defaultValue("300");
 
-        param("Any mean Forward Period", m_args.any_forward_period)
+        param("Any Mean Forward Period", m_args.any_forward_period)
         .description("Any mean upload period, in seconds.")
         .defaultValue("30");
 
@@ -525,7 +525,7 @@ namespace Transports
             ss << "  Iridium: " << m_iridium_upload_timer.getRemaining();
           else
             ss << "  Iridium: N/A";
-          debug("Upload tasks: %s", ss.str().c_str());
+          trace("Upload tasks: %s", ss.str().c_str());
         }
       }
     };
