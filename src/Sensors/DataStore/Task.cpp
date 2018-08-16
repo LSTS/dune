@@ -70,7 +70,7 @@ namespace Sensors
         .scope(Parameter::SCOPE_GLOBAL);
 
         param("CTD Entity Name", m_args.ctd_label)
-        .defaultValue("CTD")
+        .defaultValue("")
         .description("Entity to use for getting temperature and conductivity.");
 
         param("Telemetry Sample Period", m_args.telemetry_period)
@@ -122,6 +122,7 @@ namespace Sensors
       void
       onEntityResolution(void)
       {
+        if(m_args.ctd_label != "")
         m_ctd_entity = m_ctx.entities.resolve(m_args.ctd_label);
       }
 
