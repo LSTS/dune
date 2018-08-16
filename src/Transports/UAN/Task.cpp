@@ -824,12 +824,11 @@ namespace Transports
       clearTimeouts()
       {
         std::map<uint16_t, IMC::AcousticRequest*>::iterator it;
-        double time = Time::Clock::getSinceEpoch();
         it = m_transmission_requests.begin();
 
         while (it != m_transmission_requests.end())
         {
-          if (it->second->timeout <= time)
+          if (it->second->timeout <= 0.0)
           {
             sendAcousticStatus(it->second,IMC::AcousticStatus::STATUS_INPUT_FAILURE,"Transmission timed out.");
             Memory::clear(it->second);
