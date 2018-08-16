@@ -729,6 +729,8 @@ namespace Transports
         tx.setSource(msg->getSource());
         tx.setSourceEntity(msg->getSourceEntity());
 
+        tx.timeout = Clock::getSinceEpoch() + 10;
+
         tx.range=msg->range;
 
         //set message type
