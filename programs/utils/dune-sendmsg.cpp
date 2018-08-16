@@ -1059,7 +1059,14 @@ main(int argc, char** argv)
         tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_ANY;
         tmsg->data_mode       = IMC::TransmissionRequest::DMODE_INLINEMSG;
 
-        recursive(tmsg,2);
+        IMC::DevDataText tm;
+
+
+        char numberstring[(((sizeof i) * CHAR_BIT) + 2)/3 + 2];
+        sprintf(numberstring, "%d", i);
+
+        tm.value = std::string("teste any: ") + numberstring;
+        tmsg->msg_data.set(tm);
 
         msg_list->push_back(tmsg);
 
