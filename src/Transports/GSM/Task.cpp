@@ -196,11 +196,6 @@ namespace Transports
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
-
-          if(m_args.request_balance && m_driver->getBalance(m_args.ussd_code, m_balance)) {
-            m_balance_timer.reset();
-            setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-          }
         }
         catch (std::runtime_error& e)
         {
@@ -213,6 +208,13 @@ namespace Transports
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_IDLE).c_str());
+          if (m_args.request_balance) {
+              if (m_driver->getBalance(m_args.ussd_code, m_balance)) {
+                  m_success_balance = true;
+                  m_balance_timer.reset();
+                  setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+                 }
+             }
       }
 
       void
