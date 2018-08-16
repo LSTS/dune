@@ -113,11 +113,14 @@ namespace Transports
       Time::Counter<int> m_balance_timer;
       //! Balance periodicity (s).
       int m_balance_per;
+      bool m_success_balance;
 
-      Task(const std::string& name, Tasks::Context& ctx):
+
+        Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_driver(NULL)
+        m_driver(NULL),
+        m_success_balance(false)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -325,10 +328,15 @@ namespace Transports
           processQueue();
 
           if(m_args.request_balance) {
-            if (m_balance_timer.overflow() && m_driver->getBalance(m_args.ussd_code, m_balance)) {
-                m_balance_timer.reset();
-                setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-
+            if (m_balance_timer.overflow() || (!m_success_balance && m_driver->getRSSI() > 0)){
+                if(m_driver->getBalance(m_args.ussd_code, m_balance)) {
+                    m_success_balance = true;
+                    m_balance_timer.reset();
+                    setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+                }
+                else {
+                    m_success_balance = false;
+                }
             }
           }
         }
