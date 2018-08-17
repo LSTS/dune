@@ -79,7 +79,7 @@ namespace Autonomy
           .defaultValue("https://bit.ly/2LZ0EOc");
 
         param("Valid Commands", m_args.valid_cmds)
-          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,sk,start,surface");
+          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,reboot,sk,start,surface");
 
         bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
@@ -250,6 +250,8 @@ namespace Autonomy
           handleInfoCommand(origin);
         else if (cmd == "help")
           handleHelpCommand(origin);
+        else if (cmd == "reboot")
+          handleRebootCommand(origin, args);
         else
           handlePlanGeneratorCommand(origin, cmd, args);
       }
@@ -308,6 +310,38 @@ namespace Autonomy
           ss << "Failed to exec " << m_pcs->plan_id <<": " << m_vstate->last_error << ".";
 
         reply(origin, ss.str());
+      }
+
+      //! Execute command 'REBOOT'
+      void
+      handleRebootCommand(const std::string& origin, const std::string& args)
+      {
+        char what[32];
+        std::sscanf(args.c_str(), "%s", what);
+        RestartSystem msg;
+        if (!strcmp(what, "dune"))
+        {
+          war("Restarting DUNE requested by %s", origin.c_str());
+          reply(origin, "Restarting DUNE.");
+          msg.type = RestartSystem::RSTYPE_DUNE;
+          dispatch(msg);
+        }
+        else if (!strcmp(what, "aux"))
+        {
+          war("Restarting Auxiliary CPU requested by %s", origin.c_str());
+          reply(origin, "Restarting Auxiliary CPU.");
+          PowerChannelControl pcc;
+          pcc.op = PowerChannelControl::PCC_OP_RESTART;
+          pcc.name = "Auxiliary CPU";
+          dispatch(pcc);
+        }
+        else
+        {
+          war("Restarting Main CPU requested by %s", origin.c_str());
+          reply(origin, "Restarting.");
+          msg.type = RestartSystem::RSTYPE_SYSTEM;
+          dispatch(msg);
+        }
       }
 
       //! Execute command 'START'
