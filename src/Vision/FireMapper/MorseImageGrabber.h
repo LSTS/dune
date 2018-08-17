@@ -369,13 +369,18 @@ namespace Vision
         // READ ANSWER
         size_t recv_last = 0;
         size_t recv_size = 0;
+        bool complete = false;
+        auto message_end = m_buffer.begin();
+        while (!complete)
+        {
+          recv_last = m_sock_datastream->read(m_buffer.data() + recv_size, m_buffer.size() - recv_size);
+          recv_size += recv_last;
 
-        recv_last = m_sock_datastream->read(m_buffer.data(), m_buffer.size());
-        recv_size += recv_last;
-
-        auto message_end = std::find(m_buffer.begin(), m_buffer.begin() + recv_size, '\n');
-        if(message_end == m_buffer.begin() + recv_size) {
-          m_task->err("%s", "Wrong message");
+          message_end = std::find(m_buffer.begin(), m_buffer.begin() + recv_size, '\n');
+          if (message_end != m_buffer.begin() + recv_size)
+          {
+            complete = true;
+          }
         }
 
         if (recv_size < 1)
