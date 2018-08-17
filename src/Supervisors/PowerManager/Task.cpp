@@ -38,7 +38,7 @@ namespace Supervisors
 
         struct Task: public DUNE::Tasks::Task
         {
-            const c_rpm_counter_size = 6;
+            const int c_rpm_counter_size;
 
             //! Vehicle is underwater
             bool m_vehicle_underwater;
@@ -54,6 +54,7 @@ namespace Supervisors
             //! @param[in] ctx context.
             Task(const std::string& name, Tasks::Context& ctx):
                     DUNE::Tasks::Task(name, ctx),
+                    c_rpm_counter_size(6),
                     m_vehicle_underwater(false),
                     m_has_changes(false),
                     m_rpms(0),
