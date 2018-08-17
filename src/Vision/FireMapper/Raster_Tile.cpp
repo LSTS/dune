@@ -31,7 +31,12 @@ Raster_Tile::Raster_Tile(string path)
   Map = new Raster_Reader(path);
   Map->geoTransform();
   Map->Mat_height();
-  fireMap = cv::Mat::zeros(Map->nRows - 1, Map->nCols - 1, CV_8UC1);
+  no_data = Map->get_noData();
+
+  fireMap = cv::Mat::zeros(Map->nRows , Map->nCols , CV_8UC1);
+
+
+  FireMap_modified = false;
 
 
   cout << "This map's range is : \n \t West" << Map->get_max_west() << "  \t  East " << Map->get_max_east() << endl;
@@ -46,12 +51,16 @@ Raster_Tile::Raster_Tile(string path)
 void Raster_Tile::set_fireMap(int row, int col, uchar value)
 {
 
+  FireMap_modified = true;
+
   fireMap.cv::Mat::at<uchar>(row, col) = (uchar) value;
 
 }
 
 cv::Mat Raster_Tile::get_fireMap()
 {
+
+  FireMap_modified = false;
 
   return fireMap;
 
@@ -86,19 +95,42 @@ double Raster_Tile::get_max_south()
 
 }
 
-bool
-Raster_Tile::Test_point(size_t x, size_t y)
+
+void Raster_Tile::get_DEM_info()
+{
+
+
+  if (Map->get_projection() != "") {
+
+    string line;
+    std::stringstream ss;
+    ss.str(Map->get_projection());
+    while (std::getline(ss, line, ',')) {
+
+      cout << line << endl;
+
+    }
+  }
+}
+
+////////////////////////////////////////////////////
+void Raster_Tile::Put_firemap_inGdal(string gdal_result_path)
+{
+
+  Map->Put_in_Raster(fireMap, gdal_result_path);
+
+}
+
+//////////////////////////////////////////////////////
+bool Raster_Tile::Test_point(size_t x, size_t y)
 {//checking if the position demanded exists in the map we have as an entry
 
   bool testing = false;
 
-  if (x >= Map->get_max_west() && x < Map->get_max_east())
-  {
+  if (x >= Map->get_max_west() && x < Map->get_max_east()) {
 
-    if (y > Map->get_max_south() && y <= Map->get_max_north())
-    {
+    if (y > Map->get_max_south() && y <= Map->get_max_north()) {
 
-      //cout<<"Position Valide"<<endl;
       testing = true;
     }
   }
@@ -110,21 +142,20 @@ Raster_Tile::Test_point(size_t x, size_t y)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 double Raster_Tile::get_elevation(size_t x, size_t y)
-{
+{// x and y are the coordinates of a  position in the world coord.
 
+  Pixel Elevation;
+  double Height;
 
-  Pixel elevation;
-  double height;
+  Elevation = Map->get_pixel(x, y);
 
-  elevation = Map->get_pixel(x, y);
-  //cout<<"Pixel valid"<<"col"<< elevation.col<<"\t row"<<elevation.row<<endl;
+  Height = Map->get_height(Elevation.col, Elevation.row);
 
-  height = Map->get_height(elevation.col, elevation.row);
-
-  return height;
+  return Height;
 
 
 }
+
 ////////////////////////////////////////////////////
 double Raster_Tile::get_maxheight()
 {
@@ -158,13 +189,15 @@ Pixel_Range Raster_Tile::get_Rastercorners(double x_left, double x_right, double
 
   return PR;
 
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//THis function is used with the versio of the function projection that doesn t use  raytracing,
-//it uses the position of the camera once the picture is taken to approximate the ROI
+/*
+THis function is used with the versiom of the function Map() that doesn t use  raytracing,
+it uses the position of the camera once the picture is taken to approximate the ROI
+
+*/
 Pixel_Range Raster_Tile::get_corners(double x, double y)
 {
 
@@ -178,44 +211,37 @@ Pixel_Range Raster_Tile::get_corners(double x, double y)
 
   Pixel px = Map->get_pixel(x, y);
 
-  if ((int)(px.col - ncol / f) < 0)
-  {
+  if ((int) (px.col - ncol / f) < 0) {
 
     pr.col_left = 0;
     pr.col_right = (int) (px.col + ncol / f);
 
 
-  } else if ((int) (px.col + ncol / f) > ncol - 1)
-  {
+  } else if ((int) (px.col + ncol / f) > ncol - 1) {
 
     pr.col_left = (int) (px.col - ncol / f);
     pr.col_right = ncol - 1;
 
 
-  } else
-  {
+  } else {
 
     pr.col_right = (int) (px.col + ncol / f);
     pr.col_left = (int) (px.col - ncol / f);
 
   }
 
-  if ((int) (px.row - nrow / f) < 0)
-  {
+  if ((int) (px.row - nrow / f) < 0) {
 
     pr.row_up = 0;
     pr.row_down = (int) (px.row + nrow / f);
 
-
-  } else if ((int) (px.row + nrow / f) > nrow)
-  {
+  } else if ((int) (px.row + nrow / f) > nrow) {
 
     pr.row_up = (int) (px.row - nrow / f);
     pr.row_down = nrow - 1;
 
 
-  } else
-  {
+  } else {
 
     pr.row_up = (int) (px.row - nrow / f);
     pr.row_down = (int) (px.row + nrow / f);
@@ -237,11 +263,9 @@ void Raster_Tile::ListePoints_Data()
   Pixel_Data pt;
 
 
-  for (int r = 0; r < Map->nRows - 1; r++)
-  {
+  for (int r = 0; r < Map->nRows - 1; r++) {
 
-    for (int c = 0; c < Map->nCols - 1; c++)
-    {
+    for (int c = 0; c < Map->nCols - 1; c++) {
 
       /*      For each pixel the position in  the world we have with the geotrnsform is the position of the upper left corner ,
       so to get the position in the world of each corner of the pixel ,we take the upper corner of of the neighbour pixels.
@@ -261,26 +285,7 @@ void Raster_Tile::ListePoints_Data()
 
 
       */
-/*
-                        Point2D pt_upleft = Map->get_World_coord( c,r );
-                        Point2D pt_upright = Map->get_World_coord( c+1,r);
-                        Point2D pt_downleft = Map->get_World_coord( c,r+1 );
-                        Point2D pt_downright = Map->get_World_coord( c+1,r+1);
-                        pt.x_upleft = pt_upleft.x;
-                        pt.y_upleft= pt_upleft.y;
 
-                        pt. x_upright= pt_upright.x;
-                        pt. y_upright= pt_upright.y;
-
-                        pt.x_downleft= pt_downleft.x;
-                        pt.y_downleft= pt_downleft.y;
-
-                        pt.x_downright= pt_downright.x;
-                        pt.y_downright= pt_downright.y;
-
-
-                        pt.z = Map->get_height(c,r) ;
-                       */
       Point2D pt_upleft = Map->get_World_coord(c + 1 / 2, r + 1 / 2);
       Point2D pt_upright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 / 2);
       Point2D pt_downleft = Map->get_World_coord(c + 1 / 2, r + 1 + 1 / 2);
@@ -316,6 +321,45 @@ void Raster_Tile::ListePoints_Data()
 }
 
 
+//See the description of the function below
+
+Pixel_Data Raster_Tile::All_data(int r, int c)
+{
+
+
+  Pixel_Data pt;
+
+  Point2D pt_upleft = Map->get_World_coord(c + 1 / 2, r + 1 / 2);
+  Point2D pt_upright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 / 2);
+  Point2D pt_downleft = Map->get_World_coord(c + 1 / 2, r + 1 + 1 / 2);
+  Point2D pt_downright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 + 1 / 2);
+
+  pt.x_upleft = pt_upleft.x;
+  pt.y_upleft = pt_upleft.y;
+  pt.z_upleft = Map->get_height(c, r);
+
+  pt.x_upright = pt_upright.x;
+  pt.y_upright = pt_upright.y;
+  pt.z_upright = Map->get_height(c + 1, r);
+
+  pt.x_downleft = pt_downleft.x;
+  pt.y_downleft = pt_downleft.y;
+  pt.z_downleft = Map->get_height(c, r + 1);
+
+  pt.x_downright = pt_downright.x;
+  pt.y_downright = pt_downright.y;
+  pt.z_downright = Map->get_height(c + 1, r + 1);
+
+  pt.col = c;
+  pt.row = r;
+
+
+  return pt;
+
+
+}
+
+
 Raster_ALL Raster_Tile::get_ListePoints()
 {
 
@@ -330,7 +374,12 @@ Raster_ALL Raster_Tile::get_ListePoints()
 
 }
 
+bool Raster_Tile::Test_fireMap_Modified()
+{
 
+  return FireMap_modified;
+
+}
 
 
 

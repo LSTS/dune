@@ -30,6 +30,8 @@ using namespace std;
 
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Image.h>
+#include <string>
+
 
 struct Pixel_Test
 {
@@ -49,14 +51,23 @@ class Mapping
 
 private:
 
-  
-  vector<Image> Images_to_Map;
   vector<cv::Mat> Images_Mapped;
   vector<Raster_Tile> Carte;
-  vector < Raster_ALL > Liste;
+  vector<Raster_ALL> Liste;
+  double threshold;
+  bool Segmentation, using_vector;
+
+  void Map_direct(Image IM);
+
+  void Map_with_vector(Image IM);
+
 
 public:
+
   Mapping();
+
+  Mapping(const std::string &path_DEM, bool use_pixelvector = false, bool Image_segmentation = false,
+          double threshold = 200);
 
   Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM);
 
@@ -65,6 +76,14 @@ public:
   void Map(Image IM);
 
   vector<cv::Mat> get_IMapped();
+
+  void Save_Show_FireM(string path_result);
+
+  void DEM_infos();
+
+  void set_threshold(double th);
+
+  double get_threshold() const;
 
   Point3D Raytracer(PixelImage Pix, Image I, Raster_Tile Rs);
 

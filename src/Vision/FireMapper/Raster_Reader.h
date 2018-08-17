@@ -29,13 +29,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <opencv2/opencv.hpp>
 
 
 using namespace std;
 
 #include <gdal/gdal_priv.h>
 #include <gdal/cpl_conv.h> // for CPLMalloc()
-
 
 struct Point2D
 {
@@ -53,7 +53,7 @@ struct Pixel
 class Raster_Reader
 {
 private:
-  GDALDataset* gDataSet;
+  GDALDataset *gDataSet;
   int nBands;
   double gTransform[6];
   double originX, originY, pWidth, pHeight;
@@ -87,7 +87,11 @@ public:
 
   double get_noData();
 
+  string get_projection();
+
   double get_height(size_t col, size_t row);
+
+  void Put_in_Raster(cv::Mat FP, string gdal_result_path);
 
 
   virtual ~Raster_Reader();

@@ -34,14 +34,13 @@ Raster_Reader::Raster_Reader(std::string path)
 passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update).*/
 
 
-/// get a DEM file
+  /// get a DEM file
 
-  gDataSet = (GDALDataset*) GDALOpen(path.c_str(), GA_ReadOnly);
+  gDataSet = (GDALDataset *) GDALOpen(path.c_str(), GA_ReadOnly);
 
   ///check if data is present
 
-  if (gDataSet == NULL)
-  {
+  if (gDataSet == NULL) {
 
     cerr << "No data found";
     //break ;
@@ -54,7 +53,6 @@ passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update
 
 
 }
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //this function fetches the values of :originX, originY, pWidth, pHeightusing GDAL geotransform ;
 
@@ -64,8 +62,7 @@ void Raster_Reader::geoTransform()
 {
 
 
-  if (gDataSet->GetGeoTransform(gTransform) == CE_None)
-  {
+  if (gDataSet->GetGeoTransform(gTransform) == CE_None) {
 
     //position of the top left x
     originX = gTransform[0];
@@ -76,63 +73,105 @@ void Raster_Reader::geoTransform()
     //the pixel height//north-south pixel resolution (negative value)
     pHeight = gTransform[5];
 
-    //It's important to note that the c and f parameters refer to the center of the cell, not the origin!
+  } else {
 
-  } else
-  {
-
-    cerr << "no transform can be fetched";
+    cerr << "DEM error : no transform can be fetched";
   }
-  //ctor
+
 
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+string Raster_Reader::get_projection()
+{
+
+  return gDataSet->GetProjectionRef();
+
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Raster_Reader::Mat_height()
 {
 
 
-  GDALRasterBand* poBand;
+  GDALRasterBand *poBand;
   poBand = gDataSet->GetRasterBand(1);
   float maxH = 0;
   float minH = 10000;
 
 
-  float* Buffer;
+  float *Buffer;
 
   int nXSize = poBand->GetXSize();
   //buffer to read row:creates a free space in the memory with the size we order
-  Buffer = (float*) CPLMalloc(sizeof(float) * nXSize);
+  // Buffer = (float *) CPLMalloc(sizeof(float)*nXSize);
 
   //read row data and store in vector
 
-  for (int i = 0; i < nRows; ++i)
-  {
+  for (int i = 0; i < nRows; i++) {
 
+    Buffer = (float *) CPLMalloc(sizeof(float) * nXSize);
     // read a row
-
     poBand->RasterIO(GF_Read, 0, i, nXSize, 1, Buffer, nXSize, 1, GDT_Float32, 0, 0);
 
-    for (int j = 0; j < nCols; ++j)
-    {
+    for (int j = 0; j < nCols; ++j) {
 
       RasterData.push_back(Buffer[j]);
       maxH = max(maxH, Buffer[j]);
-      if (Buffer[j] != poBand->GetNoDataValue())
-      {
+      if (Buffer[j] != poBand->GetNoDataValue()) {
         minH = min(minH, Buffer[j]);
       }
 
     }
+    CPLFree(Buffer);
 
   }
   maxheight = maxH;
   minheight = minH;
+
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Raster_Reader::Put_in_Raster(cv::Mat FP, string gdal_result_path)
+{
+
+
+  GDALDriver *poDriver;
+  const char *pszFormat = "GTiff";
+  poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
+
+  char **papszOptions = NULL;
+
+  GDALDataset *poDstDS;
+  poDstDS = poDriver->Create(gdal_result_path.c_str(), nCols, nRows, 1, GDT_Float32, papszOptions);
+
+  poDstDS->SetGeoTransform(gTransform);
+  poDstDS->SetProjection(gDataSet->GetProjectionRef());
+
+
+  GDALRasterBand *poBand;
+  poBand = poDstDS->GetRasterBand(1);
+  float *Buffer;
+  for (int i = 0; i < nRows; i++) {
+
+    Buffer = (float *) CPLMalloc(sizeof(float) * nCols);
+
+    for (int j = 0; j < nCols; ++j) {
+
+      Buffer[j] = FP.at<uchar>(i, j);
+
+    }
+
+    poBand->RasterIO(GF_Write, 0, i, nCols, 1, Buffer, nCols, 1, GDT_Float32, 0, 0);
+  }
+
   CPLFree(Buffer);
 
-
-  
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -142,8 +181,8 @@ Point2D Raster_Reader::get_World_coord(float col, float row)
 
   Point2D point;
 
-  point.x = originX + col * gTransform[1] + row * gTransform[2];
-  point.y = originY + col * gTransform[4] + row * gTransform[5];
+  point.x = originX + col * gTransform[1];//+ row*gTransform[2];
+  point.y = originY /* + col*gTransform[4]*/ + row * gTransform[5];
 
   return point;
 
@@ -166,10 +205,9 @@ Pixel Raster_Reader::get_pixel(double x, double y)
 
   Pixel pix;
 
-  pix.col = static_cast<int>(((x - originX) / gTransform[1]));
+  pix.col = (int) ((x - originX) / gTransform[1]);
 
-  pix.row = static_cast<int>(((y - originY) / gTransform[5]));
-
+  pix.row = (int) ((y - originY) / gTransform[5]);
 
   return pix;
 
@@ -181,7 +219,6 @@ Pixel Raster_Reader::get_pixel(double x, double y)
 double Raster_Reader::get_max_east()
 {
 
-
   return originX + nCols * gTransform[1];
 
 
@@ -190,14 +227,14 @@ double Raster_Reader::get_max_east()
 double Raster_Reader::get_max_west()
 {
 
-  return originX /*+ gTransform[1]/2 */;
+  return originX;
 
 }
 
 double Raster_Reader::get_max_south()
 {
 
-  return originY + nRows * gTransform[5] /*+ gTransform[5]/2 */;
+  return originY + nRows * gTransform[5];
 
 }
 
@@ -226,7 +263,7 @@ RasterData=[ (# # # # ... # # # nCols values)first row /  (# # # # ... # # # nCo
 
 so to get to the row number y we multiply it with number of cols ,and then we add the position of the the colonne x we need to be exqctly at the position (x,y) of the matrix
 */
-  size_t cpt;
+  size_t cpt = 0;
 
   cpt = nCols * row + col;
 
@@ -245,8 +282,7 @@ so to get to the row number y we multiply it with number of cols ,and then we ad
 
 Raster_Reader::~Raster_Reader()
 {
-  if (gDataSet != NULL)
-  {
+  if (gDataSet != NULL) {
     GDALClose(gDataSet);
 
   }

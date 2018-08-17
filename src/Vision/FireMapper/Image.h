@@ -25,10 +25,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #ifndef IMAGE_H
 #define IMAGE_H
 
+
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
+
 
 using namespace std;
 
@@ -66,16 +68,11 @@ public:
   int ncols;
   int nrows;
 
-  Image(string InputImage, cv::Mat& Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, vector<double> R_Dis,
-        vector<double> T_Dis);
+  Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, vector<double> R_Dis, vector<double> T_Dis);
 
-  Image(cv::Mat& Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr);
+  cv::Mat get_Rotation();
 
-  string get_name();
-
-  cv::Mat get_rot();
-
-  cv::Mat get_trans();
+  cv::Mat get_Translation();
 
   cv::Mat get_IntrinsicMatrix();
 
@@ -85,6 +82,8 @@ public:
   get_UndistortedImage();//function to undistort the distorted images due to camera Radial and Tangential distortion
   cv::Mat get_IMatrix();
 
+  void Segment(size_t thresholdValue);
+
 
   PixelImage get_PixelImage(double x, double y, double z);
 
@@ -93,29 +92,6 @@ public:
   Point3D get_RayPosition(int u, int v, double Z);
 
   //virtual ~Image();
-	
-	
-  static cv::Mat get_Image( int i)
-      {
-
-         std::string path0 = "/home/welarfao/images/";
-
-
- 	 std::stringstream ss;
-
-         ss << "IMG_0" << 547+i << ".JPG";
-
-	 std::string Name=  ss.str();
-
-	 std::string path = std::string(    path0.append(  std::string(Name) )     );
-
-	 cout<<path<<endl;
-         cv::Mat A = cv::imread(path,CV_LOAD_IMAGE_GRAYSCALE);
-
-
-         return A;
-      }
-
 
 
 };

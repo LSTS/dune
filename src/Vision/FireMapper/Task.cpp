@@ -28,18 +28,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Coordinates/UTM.hpp>
 
 // OpenCV headers
 #include <opencv2/opencv.hpp>
-
-// Local headers
 #include <Vision/FireMapper/Mapping.h>
 #include <Vision/FireMapper/Raster_Reader.h>
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Image.h>
-
 #include <Vision/FireMapper/ImageGrabber.hpp>
 #include <Vision/FireMapper/MorseImageGrabber.h>
+#include <Vision/FireMapper/GetImage.hpp>
+#include <Vision/FireMapper/Mapping_thread.hpp>
 
 
 namespace Vision
@@ -48,21 +48,28 @@ namespace Vision
   {
     using DUNE_NAMESPACES;
 
+
     //! Task Arguments
     struct Arguments
     {
       //! Main System ID
       std::string system_id;
+
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task : public DUNE::Tasks::Task
     {
       //! Task Arguments
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
+      double phi;
+      cv::Mat Image_Matrix;
+      vector<double> Radial_distortion;
+      vector<double> Tangential_distortion;
 
-      IMC::EstimatedState e;
+      GetImage *ImageReader;
+      Mapping_thread *Map_thrd;
 
       MorseImageGrabber* morse_grabber;
 
@@ -71,28 +78,34 @@ namespace Vision
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx) :
-        DUNE::Tasks::Task(name, ctx)
+      Task(const std::string &name, Tasks::Context &ctx) :
+              DUNE::Tasks::Task(name, ctx)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Main System ID", m_args.system_id)
-          .defaultValue("x8-06")
-          .description("Main CPU IMC address.");
+                .defaultValue("x8-06")
+                .description("Main CPU IMC address.");
 
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
         Rotation = cv::Mat(3, 3, CV_64FC1);
 
+        ImageReader = new GetImage(this, "thrd_Reader");
+        ImageReader->start();
 
-        Intrinsic.cv::Mat::at<double>(0, 0) = 3272.1733924963492;
-        Intrinsic.cv::Mat::at<double>(0, 1) = 0;
-        Intrinsic.cv::Mat::at<double>(0, 2) = 2342.3086717022011;
-        Intrinsic.cv::Mat::at<double>(1, 0) = 0;
-        Intrinsic.cv::Mat::at<double>(1, 1) = 3272.1733924963492;
-        Intrinsic.cv::Mat::at<double>(1, 2) = 1770.4377498787001;
+        Map_thrd = new Mapping_thread(this, "thrd_Mapper");
+        Map_thrd->start();
+
+
+        Intrinsic.cv::Mat::at<double>(0, 0) = 0.25 * 3272.1733924963492;
+        Intrinsic.cv::Mat::at<double>(0, 1) = 0.25 * 0;
+        Intrinsic.cv::Mat::at<double>(0, 2) = 0.25 * 2342.3086717022011;
+        Intrinsic.cv::Mat::at<double>(1, 0) = 0.25 * 0;
+        Intrinsic.cv::Mat::at<double>(1, 1) = 0.25 * 3272.1733924963492;
+        Intrinsic.cv::Mat::at<double>(1, 2) = 0.25 * 1770.4377498787001;
         Intrinsic.cv::Mat::at<double>(2, 0) = 0;
         Intrinsic.cv::Mat::at<double>(2, 1) = 0;
         Intrinsic.cv::Mat::at<double>(2, 2) = 1;
@@ -107,12 +120,18 @@ namespace Vision
         Rotation.cv::Mat::at<double>(2, 1) = -0.24894302367255508;
         Rotation.cv::Mat::at<double>(2, 2) = -0.96608573782328089;
 
-
         Translation.cv::Mat::at<double>(0) = 370747.84931199555;
         Translation.cv::Mat::at<double>(1) = 4797168.8641240774;
         Translation.cv::Mat::at<double>(2) = 507.77970651053715;
+
+        Radial_distortion.push_back(-0.04646865617107581);
+        Radial_distortion.push_back(0.051288490946210602);
+        Radial_distortion.push_back(-0.025988438162638149);
+        Tangential_distortion.push_back(0.0032416606187316522);
+        Tangential_distortion.push_back(0.0033995207337653736);
+
         // Setup processing of IMC messages
-        bind<EstimatedState>(this);
+        bind < EstimatedState > (this);
       }
 
       //! Update internal state with new parameter values.
@@ -122,48 +141,43 @@ namespace Vision
       }
 
 
-////////////////////////////////////////////////////////////////////////
-
-/*      cv::Mat get_Image( int i)
-      {
-
-         std::string path0 = "/home/welarfao/fire-mapping/new_mapping/images/Black and White/";
-
-
- 	 std::stringstream ss;
-
-         ss << "IMG_0" << 547+i << ".JPG";
-
-	 std::string Name=  ss.str();
-
-	 std::string path = std::string(    path0.append(  std::string(Name) )     );
-
-	 cout<<path<<endl;
-         cv::Mat A = cv::imread(path,CV_LOAD_IMAGE_GRAYSCALE);
-
-
-         return A;
-   }*/
-
-//////////////////////////////////////////////////////////////////
-
+///////////////////////////////////////////////////////////////////////
 
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
-      consume(const IMC::EstimatedState* e_state)
+      consume(const IMC::EstimatedState *e_state)
       {
-        e = *e_state;
         cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
 
         //! TRanslation
+        double north;
+        double east;
+        int zone;
+        bool in_north_hem;
+        UTM utm;
+        //! Converts WGS84 to UTM
+        //! @param[in] lat latitude
+        //! @param[in] lon longitude
+        //! @param[out] north pointer to variable to store the northing of the UTM coordinate
+        //! @param[out] east pointer to variable to store the easting of the UTM coordinate
+        //! @param[out] zone pointer to variable to store the zone of the UTM coordinate
+        //! @param[out] in_north_hem pointer to variable to store the hemisphere
+        //! true if UTM coordinate is in the north hemisphere, false otherwise
 
-        //Translation.at<double>(0) = e_state->lat;
-        //Translation.at<double>(1) = e_state->lon;
-        //Translation.at<double>(2) = e_state->height;
+        utm.fromWGS84(e_state->lat, e_state->lon, &north, &east, &zone, &in_north_hem);
+
+        Translation.at<double>(0) = east + e_state->x;
+        Translation.at<double>(1) = north + e_state->y;
+        Translation.at<double>(2) = e_state->z;
+
 
         //! Rotation over x axis phi.
+
+        //cout << e_state->phi << endl;
+        phi = e_state->phi;
+
         Rotationx.cv::Mat::at<double>(0, 0) = 1;
         Rotationx.cv::Mat::at<double>(0, 1) = 0;
         Rotationx.cv::Mat::at<double>(0, 2) = 0;
@@ -198,11 +212,10 @@ namespace Vision
         Rotationz.cv::Mat::at<double>(2, 2) = 0;
         Rotationz.cv::Mat::at<double>(2, 2) = 1;
 
-        //! Rotation R=RX*RY*RZ
-
-        //Rotation = Rotationz*Rotationy*Rotationx;
-
+        // Rotation R=RX*RY*RZ
+        Rotation = Rotationz * Rotationy * Rotationx;
       }
+
 
       //! Reserve entity identifiers.
       void
@@ -261,9 +274,62 @@ namespace Vision
 
           sleep(1);
 
+//        std::string path_DEM = "/home/welarfao/mapping/Mapping/DEM.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
+//        std::string m_path_results = "/home/welarfao/results/";
+//
+//        cv::Mat Image_Translation = cv::Mat(3, 1, CV_64FC1);
+//        cv::Mat Image_Rotation = cv::Mat(3, 3, CV_64FC1);
+//
+//        Mapping Mp = Mapping(path_DEM);
+//        bool need_mapping = false;
+//        bool need_Image = true;
+//        bool start_mapping = false;
+//
+//        while (!stopping()) {
+//
+//          waitForMessages(1.0);
+//
+//          if (need_Image) {
+//            ImageReader->Get_image();
+//            //Here we  fix the rotation and translation matrix to the the values appropriate with the image we just took
+//            need_Image = false;
+//          }
+//
+//          if (ImageReader->Image_Read()) {
+//
+//            Image_Translation = Translation;
+//            Image_Rotation = Rotation;
+//            Image_Matrix = ImageReader->Image_Matrix();
+//            if (Image_Matrix.data != NULL) {
+//              need_mapping = true;
+//            } else {
+//              cout<<"no IMage found "<<endl;
+//              need_Image = true;
+//            }
+//
+//          }
+//
+//          if (need_mapping) {
+//
+//            if (phi < 0.1 && phi > -0.1) {
+//              start_mapping = Map_thrd->Map_Image(Image_Matrix, Image_Translation, Image_Rotation, Intrinsic,
+//                                                  Radial_distortion, Tangential_distortion, Mp);
+//              need_mapping = false;
+//            } else {
+//              need_Image = true;
+//              need_mapping = false;
+//            }
+//          }
+//
+//          if (Map_thrd->Mapping_finished() && start_mapping) {
+//            Map_thrd->save_results(m_path_results);
+//            need_Image = true;
+//            start_mapping = false;
+//          }
 
         }
       }
+
     };
   }
 }
