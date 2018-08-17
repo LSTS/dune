@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <Vision/FireMapper/Image.h>
 
 #include <Vision/FireMapper/ImageGrabber.hpp>
+#include <Vision/FireMapper/MorseImageGrabber.h>
 
 
 namespace Vision
@@ -61,7 +62,9 @@ namespace Vision
       cv::Mat Translation;
       cv::Mat Rotation;
 
-      ImageGrabber* image_grabber;
+      IMC::EstimatedState e;
+
+      MorseImageGrabber* morse_grabber;
 
       Arguments m_args;
 
@@ -149,7 +152,7 @@ namespace Vision
       void
       consume(const IMC::EstimatedState* e_state)
       {
-        debug("Hello World");
+        e = *e_state;
         cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
@@ -223,55 +226,40 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
-        image_grabber = new ImageGrabber(this);
+        morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        delete image_grabber;
+        delete morse_grabber;
       }
 
       //! Main loop.
       void
       onMain(void)
       {
+        morse_grabber->start();
 
-        Mapping Mp = Mapping();
-        int i = 0;
-
-
+        double x=0;
+        double y=0;
         while (!stopping())
         {
-
           waitForMessages(10.0);
+          if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+          { morse_grabber->capture(x, 0, 1100, +M_PI_2, +M_PI, +M_PI/4);
 
-          cv::Mat IMat = Image::get_Image(i);
-
-          if (IMat.data != NULL)
+            x+=100;
+            y+=100;
+          }
+          TaggedImage t;
+          if (morse_grabber->is_image_available())
           {
-
-
-            Image IMG = Image(IMat, Translation, Rotation, Intrinsic);
-            Mp.Map(IMG);
-            vector<cv::Mat> Maps = Mp.get_IMapped();
-
-            std::string path0 = "/home/welarfao/results/";
-            std::stringstream ss;
-
-            ss << "Map" << i << ".JPG";
-            std::string path = std::string(path0.append(std::string(ss.str())));
-
-            cv::imwrite(path, Maps[0]);
-
-          } else
-          {
-            cout << "no Image found \n" << endl;
+            t = morse_grabber->get_image();
           }
 
-
-          i = i + 1;
+          sleep(1);
 
 
         }
