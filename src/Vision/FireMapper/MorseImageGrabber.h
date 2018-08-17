@@ -183,8 +183,8 @@ namespace Vision
 
             try
             {
-              if (!move_camera_to(m_tagged_image.x, m_tagged_image.y, m_tagged_image.z,
-                                  m_tagged_image.phi, m_tagged_image.theta, m_tagged_image.psi))
+              if (!translate_camera_to(m_tagged_image.x, m_tagged_image.y, m_tagged_image.z) ||
+                  !rotate_camera_to(m_tagged_image.phi, m_tagged_image.theta, m_tagged_image.psi))
               {
                 m_task->err("%s", "Move robot request failed");
                 m_error = true;
@@ -281,7 +281,7 @@ namespace Vision
       //! Morse camera name
       std::string m_camera_name = "ircam";
       //! Morse teleport name
-      std::string m_teleport_name = "motion";
+      std::string m_teleport_name = "teleport";
       //! Recv buffer.
       std::array<char, 0x100000> m_buffer = std::array<char, 0x100000>();
 
@@ -328,16 +328,30 @@ namespace Vision
         return true;
       }
 
-      bool move_camera_to(double x, double y, double z, double phi, double theta, double psi)
+      bool translate_camera_to(double x, double y, double z)
       {
-        std::stringstream camera_component;
-        camera_component << m_robot_name << "." << m_camera_name;
+        std::stringstream teleport_component;
+        teleport_component << m_robot_name << "." << m_teleport_name;
 
         std::stringstream pose_args;
-        pose_args << json::array({camera_component.str(), {x, y, z}, {phi, theta, psi}});
+        pose_args << json::array({x, y, z});
 
-        json result = rpc("simulation",
-                          "set_object_position",
+        json result = rpc(teleport_component.str(),
+                          "translate",
+                          pose_args.str());
+        return true;
+      }
+
+      bool rotate_camera_to(double phi, double theta, double psi)
+      {
+        std::stringstream teleport_component;
+        teleport_component << m_robot_name << "." << m_teleport_name;
+
+        std::stringstream pose_args;
+        pose_args << json::array({phi, theta, psi});
+
+        json result = rpc(teleport_component.str(),
+                          "rotate",
                           pose_args.str());
         return true;
       }

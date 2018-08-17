@@ -57,7 +57,7 @@ namespace Vision
 
     };
 
-    struct Task : public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
       cv::Mat Intrinsic;
@@ -68,8 +68,8 @@ namespace Vision
       vector<double> Radial_distortion;
       vector<double> Tangential_distortion;
 
-      GetImage *ImageReader;
-      Mapping_thread *Map_thrd;
+      GetImage* ImageReader;
+      Mapping_thread* Map_thrd;
 
       MorseImageGrabber* morse_grabber;
 
@@ -78,16 +78,16 @@ namespace Vision
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string &name, Tasks::Context &ctx) :
-              DUNE::Tasks::Task(name, ctx)
+      Task(const std::string& name, Tasks::Context& ctx) :
+        DUNE::Tasks::Task(name, ctx)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Main System ID", m_args.system_id)
-                .defaultValue("x8-06")
-                .description("Main CPU IMC address.");
+          .defaultValue("x8-06")
+          .description("Main CPU IMC address.");
 
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
@@ -145,7 +145,7 @@ namespace Vision
 
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
-      consume(const IMC::EstimatedState *e_state)
+      consume(const IMC::EstimatedState* e_state)
       {
         cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
@@ -255,16 +255,17 @@ namespace Vision
       {
         morse_grabber->start();
 
-        double x=0;
-        double y=0;
+        double x = 0;
+        double y = 0;
         while (!stopping())
         {
           waitForMessages(10.0);
           if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
-          { morse_grabber->capture(x, 0, 1100, +M_PI_2, +M_PI, +M_PI/4);
+          {
+            morse_grabber->capture(x, 0, 2000, 0, 0, 0);
 
-            x+=100;
-            y+=100;
+            x += 25;
+            y += 100;
           }
           TaggedImage t;
           if (morse_grabber->is_image_available())
