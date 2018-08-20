@@ -174,7 +174,7 @@ namespace Vision
           connect_datastream_socket(stream_port);
         }
 
-        while (!isStopping() || !m_error)
+        while (!isStopping() && !m_error)
         {
           m_is_idle = true;
           if (m_grab)
