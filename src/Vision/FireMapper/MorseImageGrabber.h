@@ -375,7 +375,7 @@ namespace Vision
         json result = rpc("simulation",
                           "get_stream_port",
                           args.str());
-        return 60000;
+        return result["result"];
       }
 
       json process_camera_datastream()
