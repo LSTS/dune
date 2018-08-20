@@ -38,7 +38,7 @@ namespace Supervisors
 
         struct Task: public DUNE::Tasks::Task
         {
-            const int c_rpm_counter_size;
+            const static int c_rpm_counter_size = 6;
 
             //! Vehicle is underwater
             bool m_vehicle_underwater;
@@ -46,7 +46,10 @@ namespace Supervisors
             bool m_has_changes;
             //! Motor's rpms
             int m_rpms;
+
             int m_zero_rpm_counter;
+
+            bool m_wifi_on;
 
 
             //! Constructor.
@@ -54,16 +57,17 @@ namespace Supervisors
             //! @param[in] ctx context.
             Task(const std::string& name, Tasks::Context& ctx):
                     DUNE::Tasks::Task(name, ctx),
-                    c_rpm_counter_size(6),
                     m_vehicle_underwater(false),
                     m_has_changes(false),
                     m_rpms(0),
-                    m_zero_rpm_counter(0)
+                    m_zero_rpm_counter(0),
+                    m_wifi_on(false)
             {
 
                 // Register consumer
                 bind<IMC::Rpm>(this);
                 bind<IMC::VehicleMedium>(this);
+                bind<IMC::PowerChannelState>(this);
             }
 
             //! Update internal state with new parameter values.
@@ -141,6 +145,18 @@ namespace Supervisors
                 }
             }
 
+            void
+            consume(const IMC::PowerChannelState * msg)
+            {
+               if(msg->name != "Radio")
+                   return;
+
+                if(msg->state == IMC::PowerChannelState::PCS_ON)
+                    m_wifi_on = true;
+                else
+                    m_wifi_on = false;
+            }
+
             //! Main loop.
             void
             onMain(void)
@@ -160,11 +176,15 @@ namespace Supervisors
 
                     //! If vehicle is in moving and underwater then turn off wifi
                     if(m_zero_rpm_counter == c_rpm_counter_size || !m_vehicle_underwater){
+                        if(m_wifi_on)
+                            continue;
                         debug("WIFI IS ON...'");
                         power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
                         m_zero_rpm_counter = 0;
                     }
                     else {
+                        if(!m_wifi_on)
+                            continue;
                         debug("WIFI IS OFF...'");
                         power_control_channel.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
                     }
