@@ -167,10 +167,12 @@ namespace Vision
         std::stringstream cam_component;
         cam_component << m_robot_name << "." << m_camera_name;
 
-        connect_rpc_socket();
-        uint16_t stream_port = get_stream_port(cam_component.str());
-
-        connect_datastream_socket(stream_port);
+        uint16_t stream_port = 0;
+        if (connect_rpc_socket())
+        {
+          stream_port = get_stream_port(cam_component.str());
+          connect_datastream_socket(stream_port);
+        }
 
         while (!isStopping() || !m_error)
         {
