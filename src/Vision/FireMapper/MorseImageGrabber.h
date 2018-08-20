@@ -204,7 +204,7 @@ namespace Vision
                   !check_field_is_present(cam_data, "width") ||
                   !check_field_is_present(cam_data, "intrinsic_matrix"))
               {
-                m_task->err("%s", "Received camera message format is wrong");
+                m_task->err("%s", "Received camera message doesn't have all the required fields");
                 m_error = true;
                 break;
               }
