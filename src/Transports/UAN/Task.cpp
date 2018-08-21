@@ -259,8 +259,8 @@ namespace Transports
       void
       consume(const IMC::AcousticRequest* msg)
       {
-
-        if (msg->getDestination() != getSystemId())
+        if (msg->getSource() != getSystemId()
+            || msg->getDestination() != getSystemId())
           return;
 
         switch(msg->type){
@@ -381,6 +381,8 @@ namespace Transports
           return;
         }
         uint16_t idOfMsg = msg->seq;
+
+        if (m_transmission_requests.find(idOfMsg) == m_transmission_requests.end()) return;
 
         const IMC::AcousticRequest* request = m_transmission_requests[idOfMsg];
 
@@ -520,8 +522,8 @@ namespace Transports
         acStat.status    = status;
         acStat.range     = range;
         acStat.info      = info;
-        acStat.setDestination(acReq->getDestination());
-        acStat.setDestinationEntity(acReq->getDestinationEntity());
+        acStat.setDestination(acReq->getSource());
+        acStat.setDestinationEntity(acReq->getSourceEntity());
 
         dispatch(acStat);
       }
@@ -593,6 +595,8 @@ namespace Transports
         Algorithms::CRC8 crc(c_poly);
 
         IMC::UamTxFrame frame;
+        frame.setSource(getSystemId());
+        frame.setSourceEntity(getEntityId());
         frame.setDestination(getSystemId());
         frame.sys_dst = sys;
         frame.seq = id;
