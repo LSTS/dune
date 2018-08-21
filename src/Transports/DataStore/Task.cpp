@@ -416,7 +416,7 @@ namespace Transports
         tr.setSource(getSystemId());
         tr.setSourceEntity(getEntityId());
         tr.setDestination(getSystemId());
-        tr.setDestinationEntity(getEntityId());
+
         tr.comm_mean         = IMC::TransmissionRequest::CMEAN_ANY;
         tr.data_mode         = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.destination       = m_args.any_gateway;
