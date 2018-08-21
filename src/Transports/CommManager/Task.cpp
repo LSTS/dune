@@ -649,7 +649,7 @@ namespace Transports
       void
       consume(const IMC::TransmissionRequest* msg) {
         if (msg->getSource() != getSystemId()
-          && msg->getDestination() != getSystemId())
+          || msg->getDestination() != getSystemId())
           return;
 
         switch (msg->comm_mean) {
