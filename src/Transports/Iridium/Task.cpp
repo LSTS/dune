@@ -48,6 +48,8 @@ namespace Transports
       int max_age_secs;
       //! Destination to send all iridium messages
       std::string iridium_destination;
+      //! Text messages received over Iridium are tagged with this origin
+      std::string text_origin;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -92,6 +94,10 @@ namespace Transports
         .units(Units::Second)
         .defaultValue("1200")
         .description("Age, in seconds, after which received IMC messages are discarded.");
+
+        param("Iridium Text Origin", m_args.text_origin)
+        .description("Text messages received via Iridium will be tagged with this origin")
+        .defaultValue("iridium");
 
         bind<IMC::Announce>(this);
         bind<IMC::IridiumMsgRx>(this);
@@ -139,7 +145,7 @@ namespace Transports
         IMC::TextMessage tm;
         inf("received command: '%s'", irCmd->command.c_str());
         tm.text = irCmd->command;
-        tm.origin = "Iridium";
+        tm.origin = m_args.text_origin;
         tm.setSource(irCmd->source);
         std::stringstream ss;
         tm.toText(ss);
