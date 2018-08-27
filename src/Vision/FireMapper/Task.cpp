@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <Vision/FireMapper/Raster_Reader.h>
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Image.h>
-#include <Vision/FireMapper/ImageGrabber.hpp>
+///#include <Vision/FireMapper/ImageGrabber.hpp>
 #include <Vision/FireMapper/MorseImageGrabber.h>
 #include <Vision/FireMapper/GetImage.hpp>
 #include <Vision/FireMapper/Mapping_thread.hpp>
@@ -57,37 +57,38 @@ namespace Vision
 
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task : public DUNE::Tasks::Task
     {
       //! Task Arguments
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
-      double phi;
+
       cv::Mat Image_Matrix;
+
       vector<double> Radial_distortion;
       vector<double> Tangential_distortion;
 
-      GetImage* ImageReader;
-      Mapping_thread* Map_thrd;
+      GetImage *ImageReader;
+      Mapping_thread *Map_thrd;
 
-      MorseImageGrabber* morse_grabber;
+      MorseImageGrabber *morse_grabber;
 
       Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx) :
-        DUNE::Tasks::Task(name, ctx)
+      Task(const std::string &name, Tasks::Context &ctx) :
+              DUNE::Tasks::Task(name, ctx)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Main System ID", m_args.system_id)
-          .defaultValue("x8-06")
-          .description("Main CPU IMC address.");
+                .defaultValue("x8-06")
+                .description("Main CPU IMC address.");
 
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
@@ -140,18 +141,66 @@ namespace Vision
       {
       }
 
-
-///////////////////////////////////////////////////////////////////////
-
-      // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
-      consume(const IMC::EstimatedState* e_state)
+      set_Rot_Trans_Matrix(float x, float y, float z, float phi, float theta, float psi)
       {
+
         cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
 
         //! TRanslation
+
+        Translation.at<double>(0) = x;
+        Translation.at<double>(1) = y;
+        Translation.at<double>(2) = z;
+
+        //! Rotation over x axis phi.
+
+        Rotationx.cv::Mat::at<double>(0, 0) = 1;
+        Rotationx.cv::Mat::at<double>(0, 1) = 0;
+        Rotationx.cv::Mat::at<double>(0, 2) = 0;
+        Rotationx.cv::Mat::at<double>(1, 0) = 0;
+        Rotationx.cv::Mat::at<double>(1, 1) = cos(phi);
+        Rotationx.cv::Mat::at<double>(1, 2) = -sin(phi);
+        Rotationx.cv::Mat::at<double>(2, 0) = 0;
+        Rotationx.cv::Mat::at<double>(2, 1) = sin(phi);
+        Rotationx.cv::Mat::at<double>(2, 2) = cos(phi);
+
+        //! Rotation over y axis theta.
+
+        Rotationy.cv::Mat::at<double>(0, 0) = cos(theta);
+        Rotationy.cv::Mat::at<double>(0, 1) = 0;
+        Rotationy.cv::Mat::at<double>(0, 2) = sin(theta);
+        Rotationy.cv::Mat::at<double>(1, 0) = 0;
+        Rotationy.cv::Mat::at<double>(1, 1) = 1;
+        Rotationy.cv::Mat::at<double>(1, 2) = 0;
+        Rotationy.cv::Mat::at<double>(2, 0) = -sin(theta);
+        Rotationy.cv::Mat::at<double>(2, 1) = 0;
+        Rotationy.cv::Mat::at<double>(2, 2) = cos(theta);
+
+        //! Rotation over z axis psi.
+
+        Rotationz.cv::Mat::at<double>(0, 0) = cos(psi);
+        Rotationz.cv::Mat::at<double>(0, 1) = -sin(psi);
+        Rotationz.cv::Mat::at<double>(0, 2) = 0;
+        Rotationz.cv::Mat::at<double>(1, 2) = sin(psi);
+        Rotationz.cv::Mat::at<double>(1, 1) = cos(psi);
+        Rotationz.cv::Mat::at<double>(1, 2) = 0;
+        Rotationz.cv::Mat::at<double>(2, 2) = 0;
+        Rotationz.cv::Mat::at<double>(2, 2) = 0;
+        Rotationz.cv::Mat::at<double>(2, 2) = 1;
+
+
+        Rotation = Rotationz * Rotationy * Rotationx;
+
+
+      }
+
+      // Test - Receive EstimatedState message from main CPU (if FireMapper active)
+      void
+      consume(const IMC::EstimatedState *e_state)
+      {
         double north;
         double east;
         int zone;
@@ -168,52 +217,9 @@ namespace Vision
 
         utm.fromWGS84(e_state->lat, e_state->lon, &north, &east, &zone, &in_north_hem);
 
-        Translation.at<double>(0) = east + e_state->x;
-        Translation.at<double>(1) = north + e_state->y;
-        Translation.at<double>(2) = e_state->z;
+        set_Rot_Trans_Matrix(east + e_state->x, north + e_state->y, e_state->z, e_state->phi, e_state->theta,
+                             e_state->psi);
 
-
-        //! Rotation over x axis phi.
-
-        //cout << e_state->phi << endl;
-        phi = e_state->phi;
-
-        Rotationx.cv::Mat::at<double>(0, 0) = 1;
-        Rotationx.cv::Mat::at<double>(0, 1) = 0;
-        Rotationx.cv::Mat::at<double>(0, 2) = 0;
-        Rotationx.cv::Mat::at<double>(1, 0) = 0;
-        Rotationx.cv::Mat::at<double>(1, 1) = cos(e_state->phi);
-        Rotationx.cv::Mat::at<double>(1, 2) = -sin(e_state->phi);
-        Rotationx.cv::Mat::at<double>(2, 0) = 0;
-        Rotationx.cv::Mat::at<double>(2, 1) = sin(e_state->phi);
-        Rotationx.cv::Mat::at<double>(2, 2) = cos(e_state->phi);
-
-        //! Rotation over y axis theta.
-
-        Rotationy.cv::Mat::at<double>(0, 0) = cos(e_state->theta);
-        Rotationy.cv::Mat::at<double>(0, 1) = 0;
-        Rotationy.cv::Mat::at<double>(0, 2) = sin(e_state->theta);
-        Rotationy.cv::Mat::at<double>(1, 0) = 0;
-        Rotationy.cv::Mat::at<double>(1, 1) = 1;
-        Rotationy.cv::Mat::at<double>(1, 2) = 0;
-        Rotationy.cv::Mat::at<double>(2, 0) = -sin(e_state->theta);
-        Rotationy.cv::Mat::at<double>(2, 1) = 0;
-        Rotationy.cv::Mat::at<double>(2, 2) = cos(e_state->theta);
-
-        //! Rotation over z axis psi.
-
-        Rotationz.cv::Mat::at<double>(0, 0) = cos(e_state->psi);
-        Rotationz.cv::Mat::at<double>(0, 1) = -sin(e_state->psi);
-        Rotationz.cv::Mat::at<double>(0, 2) = 0;
-        Rotationz.cv::Mat::at<double>(1, 2) = sin(e_state->psi);
-        Rotationz.cv::Mat::at<double>(1, 1) = cos(e_state->psi);
-        Rotationz.cv::Mat::at<double>(1, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 1;
-
-        // Rotation R=RX*RY*RZ
-        Rotation = Rotationz * Rotationy * Rotationx;
       }
 
 
@@ -253,80 +259,90 @@ namespace Vision
       void
       onMain(void)
       {
+        std::string path_DEM = "/home/welarfao/DEM.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
+        std::string m_path_results = "/home/welarfao/results/";
+
+        Mapping Mp = Mapping(path_DEM, 0, 1);
+        Mp.set_threshold(150);
+
+        bool need_mapping = false;
+        bool Image_ready = false;
+        bool need_Image = true;
+        bool start_mapping = false;
+
+        float Rotation_limit = 0.1;
+
         morse_grabber->start();
 
-        double x = 0;
-        double y = 0;
-        while (!stopping())
-        {
-          waitForMessages(10.0);
-          if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
-          {
-            morse_grabber->capture(x, 0, 2000, 0, 0, 0);
+        double x = 537254;
+        double y = 6212351;
 
-            x += 25;
-            y += 100;
+
+        while (!stopping()) {
+          ////////////////////////////////////////////////////////////////////////////
+
+          waitForMessages(10.0);
+          if (morse_grabber->is_idle() && !morse_grabber->is_image_available()) {
+            morse_grabber->capture(x, y, 2500, 0, 0, 0);
+
+            x += 300;
+            y += 300;
           }
           TaggedImage t;
-          if (morse_grabber->is_image_available())
-          {
+          if (morse_grabber->is_image_available()) {
             t = morse_grabber->get_image();
+            Image_ready = true;
           }
 
           sleep(1);
+          //////////////////////////////////////////////////////////////////////////////
 
-//        std::string path_DEM = "/home/welarfao/mapping/Mapping/DEM.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
-//        std::string m_path_results = "/home/welarfao/results/";
-//
-//        cv::Mat Image_Translation = cv::Mat(3, 1, CV_64FC1);
-//        cv::Mat Image_Rotation = cv::Mat(3, 3, CV_64FC1);
-//
-//        Mapping Mp = Mapping(path_DEM);
-//        bool need_mapping = false;
-//        bool need_Image = true;
-//        bool start_mapping = false;
-//
-//        while (!stopping()) {
-//
-//          waitForMessages(1.0);
-//
-//          if (need_Image) {
-//            ImageReader->Get_image();
-//            //Here we  fix the rotation and translation matrix to the the values appropriate with the image we just took
-//            need_Image = false;
-//          }
-//
-//          if (ImageReader->Image_Read()) {
-//
-//            Image_Translation = Translation;
-//            Image_Rotation = Rotation;
-//            Image_Matrix = ImageReader->Image_Matrix();
-//            if (Image_Matrix.data != NULL) {
-//              need_mapping = true;
-//            } else {
-//              cout<<"no IMage found "<<endl;
-//              need_Image = true;
-//            }
-//
-//          }
-//
-//          if (need_mapping) {
-//
-//            if (phi < 0.1 && phi > -0.1) {
-//              start_mapping = Map_thrd->Map_Image(Image_Matrix, Image_Translation, Image_Rotation, Intrinsic,
-//                                                  Radial_distortion, Tangential_distortion, Mp);
-//              need_mapping = false;
-//            } else {
-//              need_Image = true;
-//              need_mapping = false;
-//            }
-//          }
-//
-//          if (Map_thrd->Mapping_finished() && start_mapping) {
-//            Map_thrd->save_results(m_path_results);
-//            need_Image = true;
-//            start_mapping = false;
-//          }
+          if (Image_ready && need_Image) {
+
+            Image_Matrix = (t.image).clone();
+
+            if (Image_Matrix.data != NULL) {
+
+              if (t.phi < Rotation_limit && t.phi > -Rotation_limit) {
+
+                Intrinsic = (t.intrinsic_matrix).clone();
+                cv::transpose(Image_Matrix, Image_Matrix);
+
+                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
+
+                need_mapping = true;
+                Image_ready = false;
+                need_Image = false;
+              } else {
+                cout << "Received Image  doesn't respect the vision limits : Vison out of land" << endl;
+                Image_ready = false;
+                need_Image = true;
+
+              }
+            } else {
+              cout << "no IMage found " << endl;
+              Image_ready = false;
+              need_Image = true;
+
+            }
+
+          }
+          /////////////////////////////////////////////////////////////////
+
+          if (need_mapping) {
+            start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
+                                                Radial_distortion, Tangential_distortion, Mp);
+
+            need_mapping = false;
+
+          }
+          ////////////////////////////////////////////////////////////////////
+
+          if (Map_thrd->Mapping_finished() && start_mapping) {
+            Map_thrd->save_results(m_path_results);
+            start_mapping = false;
+            need_Image = true;
+          }
 
         }
       }

@@ -227,7 +227,7 @@ namespace Vision
               }
 
               // Warning! This cv::Mat constructor do not copy data!
-              cv::Mat unsafe_image = cv::Mat(cv::Size(h, w), CV_8UC1,
+              cv::Mat unsafe_image = cv::Mat(cv::Size(w, h), CV_8UC1,
                                              const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(image_decoded.c_str())),
                                              cv::Mat::AUTO_STEP);
               // It is now safe to keep m_image

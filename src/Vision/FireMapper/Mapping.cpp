@@ -327,6 +327,7 @@ Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
   /// Since the corners of the picture in world exist in the DEM we don t have to run a test to see if they do .
   CT.PR = RS.get_Rastercorners(x_left, x_right, y_up, y_down);
 
+
   return CT;
 
 
@@ -346,8 +347,9 @@ It uses a list of vectors of points to run the DEMs ,for every Dem it runs its v
 */
 
 
-void Mapping::Map_with_vector(Image IM)
+bool Mapping::Map_with_vector(Image IM)
 {
+  bool no_DEM_match= true;//turns to false if there s a  DEm that matchs the Image we re Mapping
 
   for (int l = 0; l < (int) Carte.size(); l++) {
 
@@ -356,6 +358,7 @@ void Mapping::Map_with_vector(Image IM)
     Cot = get_Imagecorners(IM, Carte[l]);
 
     if (Cot.Test) {
+      no_DEM_match= false;
 
       if (Segmentation) {
         IM.Segment(threshold);
@@ -382,6 +385,12 @@ void Mapping::Map_with_vector(Image IM)
     }
 
   }
+
+  if(no_DEM_match){
+    return false;
+
+  }
+  return true;
 }
 
 
@@ -393,27 +402,32 @@ Map : 3
 This function uses the DEM Raster Directly to get the data it needs about every pixel of the DEM.It can be faster if the DEM are big and need a lot of time and memory to be put then in a vector.
 
 */
-void Mapping::Map_direct(Image IM)
+bool Mapping::Map_direct(Image IM)
 {
-
+  bool no_DEM_match= true;//turns to false if there s a  DEm that matchs the Image we re Mapping
 
   for (int l = 0; l < (int) Carte.size(); l++) {// we run all the Dems we have
 
     Corner_Test Cot;
 
+
     Cot = get_Imagecorners(IM, Carte[l]);
+    //cout<<"just raytraced"<<endl;
+    //cout<<"row_up"<<Cot.PR.row_up<<"row_down"<<Cot.PR.row_down<<"col_left"<<Cot.PR.col_left<<"col_right"<<Cot.PR.col_right<<endl;
+
 
     if (Cot.Test) {
+      no_DEM_match= false;
 
       if (Segmentation) {
         IM.Segment(threshold);
 
       }
 
+
       Pixel_Data pt;
 
-      for (int r = Cot.PR.row_up; r < (int) Cot.PR.row_down -
-                                      1; r++) {// we Run all the pixels of the ROI( why the -1:since we took the centre of 4 pixels of the DEM we get to have 1 row and 1 col less)
+      for (int r = Cot.PR.row_up; r < (int) Cot.PR.row_down - 1; r++) {// we Run all the pixels of the ROI( why the -1:since we took the centre of 4 pixels of the DEM we get to have 1 row and 1 col less)
 
         for (int c = Cot.PR.col_left; c < (int) Cot.PR.col_right - 1; c++) {// we Run all the  pixels of the Raster
 
@@ -430,19 +444,25 @@ void Mapping::Map_direct(Image IM)
       }
     }
   }
+
+  if(no_DEM_match){
+    return false;
+
+  }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////
 
-void Mapping::Map(Image IM)
+bool Mapping::Map(Image IM)
 {
 
   if (using_vector == true) {
 
-    Map_with_vector(IM);
+    return  Map_with_vector(IM);
   } else {
 
-    Map_direct(IM);
+    return Map_direct(IM);
 
   }
 }
@@ -482,7 +502,7 @@ void Mapping::Save_Show_FireM(string path_result)
 
       stringstream ss;
       ss << j;
-      cv::imwrite(path_result + "Map" + ss.str() + ".jpg", Carte[j].get_fireMap());
+      cv::imwrite(path_result + "Map" + ss.str() + ".JPG", Carte[j].get_fireMap());
       Carte[j].Put_firemap_inGdal(path_result + "Map" + ss.str() + ".tif");
       //cv::imshow(path_result +"Map"+ ss.str() +".jpg",Carte[j].get_fireMap()); needs perimission
     }
@@ -493,16 +513,11 @@ void Mapping::Save_Show_FireM(string path_result)
 
 void Mapping::DEM_infos()
 {
-  char answer;
-  cout << "Do you want informations about any DEM ?(Y for yes)" << endl;
-
-  std::cin >> answer;
-
-  if (answer == 'Y') {
-    int i;
-    cout << "Enter the number the the map" << endl;
-    std::cin >> i;
-    Carte[i].get_DEM_info();
+  for (int j = 0; j < (int) Carte.size(); j++) {
+    stringstream ss;
+    ss << j;
+    cout << "Map number  "+ ss.str() << endl;
+    Carte[j].get_DEM_info();
 
   }
 }

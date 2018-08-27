@@ -33,26 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 using namespace std;
 
-/*
-struct Pixel_Data {
-
-    double x_upleft;
-    double y_upleft;
-
-    double x_upright;
-    double y_upright;
-
-    double x_downleft;
-    double y_downleft;
-
-    double x_downright;
-    double y_downright;
-
-    double z;
-
-    int col;
-    int row;
-};*/
 
 struct Pixel_Data {
 
@@ -143,8 +123,6 @@ public:
 
 	Pixel_Data All_data(int r,int c);
 	void Put_firemap_inGdal(string gdal_result_path );
-
-
 
 
 	static vector<Raster_Tile> get_allMaps(string folder){

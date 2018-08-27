@@ -117,7 +117,7 @@ void Raster_Tile::get_DEM_info()
 void Raster_Tile::Put_firemap_inGdal(string gdal_result_path)
 {
 
-  Map->Put_in_Raster(fireMap, gdal_result_path);
+  Map->Put_in_Raster( fireMap, gdal_result_path);
 
 }
 
@@ -255,109 +255,82 @@ Pixel_Range Raster_Tile::get_corners(double x, double y)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*      For each pixel the position in  the world we have with the geotrnsform in GDAL is the position of the upper left corner ,
+but the height we have is for the centerof the pixel so for the Mapping we will use the centre of 4 pixels to creat a pixel
+that we know the height of its corners
+
+                                         -----------------------------
+                                        | Pixel Raster||Pixel Raster |
+                     pt_upright --------|----->       ||     <-------|--------pt_upright
+                                        |             ||             |
+                                        |             ||             |
+                                        ------------- ----------------
+                                        | Pixel Raster||Pixel Raster |
+                    pt_downleft --------|----->       ||     <-------|--------downright
+                                        |             ||             |
+                                        |             ||             |
+                                        ------------------------------
 
 
-void Raster_Tile::ListePoints_Data()
-{
+*/
 
-  Pixel_Data pt;
-
-
-  for (int r = 0; r < Map->nRows - 1; r++) {
-
-    for (int c = 0; c < Map->nCols - 1; c++) {
-
-      /*      For each pixel the position in  the world we have with the geotrnsform is the position of the upper left corner ,
-      so to get the position in the world of each corner of the pixel ,we take the upper corner of of the neighbour pixels.
-
-
-                                               -----------------------------
-                                              | Pixel Raster||Pixel Raster |
-                           pt_upright --------|----->       ||     <-------|--------pt_upright
-                                              |             ||             |
-                                              |             ||             |
-                                              ------------- ----------------
-                                              | Pixel Raster||Pixel Raster |
-                          pt_downleft --------|----->       ||     <-------|--------downright
-                                              |             ||             |
-                                              |             ||             |
-                                              ------------------------------
-
-
-      */
-
-      Point2D pt_upleft = Map->get_World_coord(c + 1 / 2, r + 1 / 2);
-      Point2D pt_upright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 / 2);
-      Point2D pt_downleft = Map->get_World_coord(c + 1 / 2, r + 1 + 1 / 2);
-      Point2D pt_downright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 + 1 / 2);
-
-      pt.x_upleft = pt_upleft.x;
-      pt.y_upleft = pt_upleft.y;
-      pt.z_upleft = Map->get_height(c, r);
-
-
-      pt.x_upright = pt_upright.x;
-      pt.y_upright = pt_upright.y;
-      pt.z_upright = Map->get_height(c + 1, r);
-
-
-      pt.x_downleft = pt_downleft.x;
-      pt.y_downleft = pt_downleft.y;
-      pt.z_downleft = Map->get_height(c, r + 1);
-
-      pt.x_downright = pt_downright.x;
-      pt.y_downright = pt_downright.y;
-      pt.z_downright = Map->get_height(c + 1, r + 1);
-
-
-      pt.col = c;
-      pt.row = r;
-
-      Liste_Points.push_back(pt);
-    }
-  }
-
-
-}
-
-
-//See the description of the function below
-
-Pixel_Data Raster_Tile::All_data(int r, int c)
-{
-
+Pixel_Data Raster_Tile::All_data(int r,int c){
 
   Pixel_Data pt;
 
-  Point2D pt_upleft = Map->get_World_coord(c + 1 / 2, r + 1 / 2);
-  Point2D pt_upright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 / 2);
-  Point2D pt_downleft = Map->get_World_coord(c + 1 / 2, r + 1 + 1 / 2);
-  Point2D pt_downright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 + 1 / 2);
+  Point2D pt_upleft = Map->get_World_coord( c+1/2,r+1/2 );
+  Point2D pt_upright = Map->get_World_coord( c+1+1/2,r+1/2 );
+  Point2D pt_downleft = Map->get_World_coord( c+1/2,r+1+1/2 );
+  Point2D pt_downright = Map->get_World_coord( c+1+1/2,r+1+1/2);
 
   pt.x_upleft = pt_upleft.x;
-  pt.y_upleft = pt_upleft.y;
-  pt.z_upleft = Map->get_height(c, r);
+  pt.y_upleft= pt_upleft.y;
+  pt.z_upleft= Map->get_height(c,r) ;
 
-  pt.x_upright = pt_upright.x;
-  pt.y_upright = pt_upright.y;
-  pt.z_upright = Map->get_height(c + 1, r);
 
-  pt.x_downleft = pt_downleft.x;
-  pt.y_downleft = pt_downleft.y;
-  pt.z_downleft = Map->get_height(c, r + 1);
+  pt.x_upright= pt_upright.x;
+  pt.y_upright= pt_upright.y;
+  pt.z_upright= Map->get_height(c+1,r) ;
 
-  pt.x_downright = pt_downright.x;
-  pt.y_downright = pt_downright.y;
-  pt.z_downright = Map->get_height(c + 1, r + 1);
+  pt.x_downleft= pt_downleft.x;
+  pt.y_downleft= pt_downleft.y;
+  pt.z_downleft= Map->get_height(c,r+1) ;
+
+  pt.x_downright= pt_downright.x;
+  pt.y_downright= pt_downright.y;
+  pt.z_downright= Map->get_height(c+1,r+1) ;
 
   pt.col = c;
   pt.row = r;
 
 
+
   return pt;
 
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+void Raster_Tile::ListePoints_Data(){
+
+  Pixel_Data pt;
+
+  for(int r = 0; r < Map->nRows -1 ;r++){
+
+    for(int c = 0  ; c < Map->nCols -1 ; c++ ){
+
+      pt = All_data(r,c);
+
+      Liste_Points.push_back(pt);
+    }
+  }
 
 }
+
+
 
 
 Raster_ALL Raster_Tile::get_ListePoints()

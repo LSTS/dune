@@ -84,6 +84,7 @@ namespace Vision
         m_Image_Matrix = Image_matrix;
         m_Map = Mp;
         Mappingfinished = false;
+        IMage_with_DEM_match = false;
 
         isReady = true;
         return true;
@@ -111,6 +112,11 @@ namespace Vision
           if (isReady) {
             if (m_Image_Matrix.data != NULL) {
               Map_Image();
+              if(!IMage_with_DEM_match){
+                m_task->war("%s, NO Dem has matched this IMage\n", m_name_thread.c_str());
+
+              }
+
               Mappingfinished = true;
             } else {
               m_task->inf("%s: error no Image found", m_name_thread.c_str());
@@ -143,6 +149,7 @@ namespace Vision
       vector<cv::Mat> Maps;
       //flag Mapping_finished
       bool Mappingfinished;
+      bool IMage_with_DEM_match;
 
 
       bool
@@ -150,7 +157,7 @@ namespace Vision
       {
         try {
           m_mapping_mutex.lock();
-          m_Map.Map(*m_Img_to_map);
+          IMage_with_DEM_match = m_Map.Map(*m_Img_to_map);
           m_mapping_mutex.unlock();
           return true;
         }

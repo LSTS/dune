@@ -57,9 +57,9 @@ private:
   double threshold;
   bool Segmentation, using_vector;
 
-  void Map_direct(Image IM);
+  bool Map_direct(Image IM);
 
-  void Map_with_vector(Image IM);
+  bool Map_with_vector(Image IM);
 
 
 public:
@@ -73,7 +73,7 @@ public:
 
   double IMask(cv::Mat UndistortedImage, std::vector<PixelImage> Corners);
 
-  void Map(Image IM);
+  bool Map(Image IM);
 
   vector<cv::Mat> get_IMapped();
 

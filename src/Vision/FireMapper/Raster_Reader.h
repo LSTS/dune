@@ -91,7 +91,7 @@ public:
 
   double get_height(size_t col, size_t row);
 
-  void Put_in_Raster(cv::Mat FP, string gdal_result_path);
+  void Put_in_Raster(cv::Mat& FP, string gdal_result_path);
 
 
   virtual ~Raster_Reader();

@@ -95,7 +95,6 @@ string Raster_Reader::get_projection()
 void Raster_Reader::Mat_height()
 {
 
-
   GDALRasterBand *poBand;
   poBand = gDataSet->GetRasterBand(1);
   float maxH = 0;
@@ -135,11 +134,14 @@ void Raster_Reader::Mat_height()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Raster_Reader::Put_in_Raster(cv::Mat FP, string gdal_result_path)
+void Raster_Reader::Put_in_Raster(cv::Mat& FP, string gdal_result_path)
 {
+  cv::Mat firemap = FP.clone();
+  cv::imwrite("/home/welarfao/results/Map begore mapping.jpg", firemap);
 
 
   GDALDriver *poDriver;
+  GDALRasterBand* pBand;
   const char *pszFormat = "GTiff";
   poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
 
@@ -149,24 +151,25 @@ void Raster_Reader::Put_in_Raster(cv::Mat FP, string gdal_result_path)
   poDstDS = poDriver->Create(gdal_result_path.c_str(), nCols, nRows, 1, GDT_Float32, papszOptions);
 
   poDstDS->SetGeoTransform(gTransform);
-  poDstDS->SetProjection(gDataSet->GetProjectionRef());
+  poDstDS->SetProjection( gDataSet->GetProjectionRef() );
 
+  pBand = poDstDS->GetRasterBand(1);
+ //poDstDS->GetRasterBand(1)->SetNoDataValue(0); // with this option only the perimeter of the fire is shown
 
-  GDALRasterBand *poBand;
-  poBand = poDstDS->GetRasterBand(1);
   float *Buffer;
+  Buffer = (float *) CPLMalloc(sizeof(float) * nCols);
+
   for (int i = 0; i < nRows; i++) {
-
-    Buffer = (float *) CPLMalloc(sizeof(float) * nCols);
-
     for (int j = 0; j < nCols; ++j) {
 
-      Buffer[j] = FP.at<uchar>(i, j);
-
+      Buffer[j] = firemap.at<uchar>(i, j);
     }
 
-    poBand->RasterIO(GF_Write, 0, i, nCols, 1, Buffer, nCols, 1, GDT_Float32, 0, 0);
+    pBand->RasterIO(GF_Write, 0, i, nCols, 1, Buffer, nCols, 1, GDT_Float32, 0, 0);
   }
+
+  GDALClose( (GDALDatasetH) poDstDS );
+
 
   CPLFree(Buffer);
 

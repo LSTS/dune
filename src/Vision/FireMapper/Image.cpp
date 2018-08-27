@@ -46,9 +46,9 @@ Image::Image(cv::Mat Imat,cv::Mat Trans,cv::Mat Rot,cv::Mat Intr,vector<double> 
 
     /// Resizing the image so as it will take less time in being Mapped because we will reduce the number of pixels it holds doing so implies that we multiply the intrinsic matrix too by the same coef,
     ///the infra-red pictures we will use might not be in need for this option because they will already be in a small size.
-    if ((IMatrix.rows > 1500) || (IMatrix.cols > 1500)){
-                    cv::resize(IMatrix, IMatrix, cv::Size(), 0.25, 0.25); // resize image
-    }
+    //if ((IMatrix.rows > 1500) || (IMatrix.cols > 1500)){
+     //               cv::resize(IMatrix, IMatrix, cv::Size(), 0.25, 0.25); // resize image
+   // }
 
     ///Remove distortion
 
@@ -56,7 +56,7 @@ Image::Image(cv::Mat Imat,cv::Mat Trans,cv::Mat Rot,cv::Mat Intr,vector<double> 
 
     ///Given that our positions are in meters,we need to have all our Matrix in meters ,so we multiply with 0.001 to get to m.(This transformation can, not be done since we devide u and v by z to get the homogeneous coordinates)
 
-    IntrinsicMatrix=0.001*Intr;// intrinsic in meters
+    IntrinsicMatrix=/*0.001*/Intr;// intrinsic in meters
 
     /*
     This Matrix is given in a scale related to pixels ,so as to convert it to meters we will multiply it with the ratio between mm and pixel; wich is  0.001339453 m2
@@ -68,7 +68,7 @@ Image::Image(cv::Mat Imat,cv::Mat Trans,cv::Mat Rot,cv::Mat Intr,vector<double> 
 
      */
 
-    IntrinsicMatrix = 0.001339453*IntrinsicMatrix; //intrinsic in mm
+    //IntrinsicMatrix = 0.001339453*IntrinsicMatrix; //intrinsic in mm
 
     /// Compute camera matix
 
@@ -82,8 +82,8 @@ Image::Image(cv::Mat Imat,cv::Mat Trans,cv::Mat Rot,cv::Mat Intr,vector<double> 
 
      In our case we won't need to Transpose the Rotation Matrix ,its apparently already done in the parameters,
      in case the results of this code were t satisfaying trying to put the Tranpose Mtrix of the rotation might give the wanted results
-     cv::transpose(Rotation, Rotation);
-     */
+     cv::transpose(Rotation, Rotation);*/
+
     cv::hconcat(Rotation, -1*Rotation*Translation, Extrinsic );
     cv::Mat affineRow = (cv::Mat_<double>(1,4)<<0.0, 0.0, 0.0, 1.0);
     cv::vconcat(Extrinsic, affineRow, Extrinsic );
@@ -140,7 +140,8 @@ void Image::Segment(size_t thresholdValue){
 
     ///Segmentation
 
-    cv::threshold(undistortedImg, undistortedImg, thresholdValue, 255, cv::THRESH_BINARY);
+    cv::threshold(undistortedImg, undistortedImg, thresholdValue, 255, cv::THRESH_BINARY_INV);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -203,9 +204,13 @@ Point3D Image::get_RayPosition(int u ,int v ,double Z){
    double d3 =CameraMatrix.at<double>(2,3) ;
 
 
-   PW.x = (  (((b2-v*b3)/(u*b3-b1))*(c1-u*c3)+(c2-v*c3))*Z +((b2-v*b3)/(u*b3-b1))*(d1-u*d3)+(d2-v*d3)  ) / (   (v*a3-a2)*( 1 - ( (a1-u*a3)*(b2-v*b3) / ((u*b3-b1)*(v*a3-a2)) ) ));
+   PW.x = (  (((b1-u*b3)/(b2-v*b3))*(v*c3-c2)+(c1-u*c3))*Z + ((b1-u*b3)/(b2-v*b3))*(v*d3-d2)+(d1-u*d3)  ) / (   (u*a3-a1)*( 1 - ( (v*a3-a2)*(b1-u*b3) / ((b2-v*b3)*(u*a3-a1)) ) ));
 
-   PW.y =( (a1-u*a3)*PW.x + (c1-u*c3)*Z +(d1-u*d3) ) / (u*b3-b1) ;
+   PW.y =( (v*a3-a2)*PW.x + (v*c3-c2)*Z +(v*d3-d2) ) / (b2-v*b3) ;
+
+   //PW.x =((u*c3-c1)*Z+u*d3-d1)/a1 ;
+
+   //PW.y =((v*c3-c2)*Z+v*d3-d2)/b2 ;
 
    PW.z = Z;
 
