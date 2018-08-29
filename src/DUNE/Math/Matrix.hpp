@@ -99,7 +99,7 @@ namespace DUNE
       //! Constructor.
       //! Construct a square identity matrix of size n
       //! param[in] n size of new matrix (n * n)
-      Matrix(size_t n);
+      explicit Matrix(size_t n);
 
       //! Constructor.
       //! Construct a diagonal matrix using the values in data
