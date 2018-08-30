@@ -51,8 +51,6 @@ namespace Autonomy
       IMC::TextMessage* m_last;
       //! Transmission request id
       int m_reqid;
-      //! SMS Recipient Number
-      std::string m_number;
 
       //! %Task arguments
       struct Arguments
