@@ -287,7 +287,6 @@ namespace DUNE
         getNEBearingAndRange(lat1, lon1, lat2, lon2, azimuth, &tmp);
       }
 
-    private:
       //! Convert WGS-84 coordinates to ECEF (Earch Center Earth Fixed) coordinates.
       //!
       //! @param[in] lat WGS-84 latitude (rad).
@@ -349,6 +348,7 @@ namespace DUNE
         }
       }
 
+    private:
       //! Compute the radius of curvature in the prime vertical (Rn).
       //!
       //! @param[in] lat WGS-84 latitude (rad).
