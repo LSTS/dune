@@ -199,7 +199,7 @@ namespace DUNE
     IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
     for ( ; itr != msg->params.end(); ++itr)
     {
-      if (m_ctx.config.get(task_name, (*itr)->name) != (*itr)->value)
+      if (m_ctx.original_cfg.get(task_name, (*itr)->name) != (*itr)->value)
         m_scfg.set(task_name, (*itr)->name, (*itr)->value);
     }
 

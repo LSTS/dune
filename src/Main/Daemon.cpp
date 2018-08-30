@@ -287,6 +287,7 @@ main(int argc, char** argv)
   try
   {
     context.config.parseFile(cfg_file.c_str());
+    context.original_cfg.parseFile(cfg_file.c_str());
   }
   catch (std::runtime_error& e)
   {
@@ -294,6 +295,7 @@ main(int argc, char** argv)
     {
       cfg_file = context.dir_usr_cfg / options.value("--config-file") + ".ini";
       context.config.parseFile(cfg_file.c_str());
+      context.original_cfg.parseFile(cfg_file.c_str());
       context.dir_cfg = context.dir_usr_cfg;
     }
     catch (std::runtime_error& e2)
