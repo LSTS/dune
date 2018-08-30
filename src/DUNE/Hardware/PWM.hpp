@@ -24,37 +24,57 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Kristoffer Gryte                                                 *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+#ifndef USER2_HARDWARE_PWM_HPP_INCLUDED_
+#define USER2_HARDWARE_PWM_HPP_INCLUDED_
+
+#include <string>
 
 namespace DUNE
 {
-  //! Low level hardware drivers.
   namespace Hardware
-  { }
-}
+  {
+    class DUNE_DLL_SYM PWM;
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/BasicDeviceDriver.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
-#include <DUNE/Hardware/PWM.hpp>
+    class PWM
+    {
+    public:
+      PWM();
+      PWM(unsigned pwm_number);
+      PWM(unsigned pwm_number, const std::string& chip_path);
+      ~PWM();
+
+      // You'll only need one of these
+      void setFrequency(float frequency_hertz);
+      void setPeriod(float period_seconds);
+
+      void setDutyCyclePercentage(float duty_cycle_percentage);
+      void setDutyCycleNormalized(float duty_cycle_normalized);
+      void setPulseWidth(float pulse_width_seconds);
+
+      void enable();
+      void disable();
+
+    private:
+      unsigned m_pwm_number;
+      std::string m_chip_path;
+      unsigned m_period_nanoseconds;
+
+      void setPeriod(unsigned period_nanoseconds);
+      void setPulseWidth(unsigned active_time_nanoseconds);
+
+#   if defined(DUNE_OS_LINUX)
+      std::string m_file_duty_cycle_path;
+      std::string m_file_period_path;
+      std::string m_file_enable_path;
+
+      static void writeToFile(const std::string& file, unsigned value);
+      static void writeToFile(const std::string& file, const std::string& value);
+#   endif
+    };
+  }
+}
 
 #endif
