@@ -182,7 +182,9 @@ namespace DUNE
         toECEF(*lat, *lon, *hae, &x, &y, &z);
 
         // Compute Geocentric latitude
-        double phi = std::atan2(z, std::sqrt(x * x + y * y));
+        double N = computeRn(*lat);
+        double p = std::sqrt(x * x + y * y);
+        double phi = std::atan2(z,p*(1 - c_wgs84_e2 * N / (N + *hae)));
 
         // Compute all needed sine and cosine terms for conversion.
         double slon = std::sin(*lon);
