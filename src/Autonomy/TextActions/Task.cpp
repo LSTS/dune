@@ -51,6 +51,8 @@ namespace Autonomy
       IMC::TextMessage* m_last;
       //! Transmission request id
       int m_reqid;
+      //! SMS Recipient Number
+      std::string m_number;
 
       //! %Task arguments
       struct Arguments
@@ -79,7 +81,7 @@ namespace Autonomy
           .defaultValue("https://bit.ly/2LZ0EOc");
 
         param("Valid Commands", m_args.valid_cmds)
-          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,reboot,sk,start,surface");
+          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,phone,reboot,sk,start,surface");
 
         bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
@@ -176,6 +178,20 @@ namespace Autonomy
         }
       }
 
+      //! Checks if a string is a phone number
+      bool
+	  checkNumber(const std::string& str)
+      {
+    	  std::string::const_iterator it = str.begin();
+    	  if(String::startsWith(str,"+") && str.size() > 1)
+    		  it++;
+    	  else if(String::startsWith(str,"+") && str.size() <= 1)
+    		  return false;
+    	  while (it != str.end() && std::isdigit(*it))
+    		  ++it;
+    	  return !str.empty() && it == str.end();
+      }
+
       /**! Splits the text into command and arguments
        * \param[in] text The text to be split
        * \param[out] cmd The first word of the text
@@ -252,6 +268,8 @@ namespace Autonomy
           handleHelpCommand(origin);
         else if (cmd == "reboot")
           handleRebootCommand(origin, args);
+        else if (cmd == "phone")
+          handleChangeNumCommand(origin, args);
         else
           handlePlanGeneratorCommand(origin, cmd, args);
       }
@@ -271,6 +289,36 @@ namespace Autonomy
           else
             reply(origin, "Vehicle has no reported errors.");
         }
+      }
+
+      //!Execute command 'phone' for the one in args or for origin if the args is null
+      void
+	  handleChangeNumCommand(const std::string& origin,const std::string& args)
+      {
+    	  std::string newNum,foo;
+    	  std::stringstream ss;
+    	  if(args.empty())
+    		  newNum = origin;
+    	  else {
+    		  splitCommand(args,newNum,foo); //retrieves the first arg
+    		  newNum = sanitize(newNum);
+    		  if(!checkNumber(newNum))
+    		  {
+    			  war(DTR("Unable to change emergency number to %s"),newNum.c_str());
+    			  ss << "Unable to change emergency number, " << "see " << m_args.help_url << ".";
+    			  reply(origin,ss.str());
+    			  return; //Not a valid phone number
+    		  }
+    	  }
+    		  IMC::EntityParameter parmeter;
+    		  parmeter.name = "SMS Recipient Number";
+    		  parmeter.value = newNum;
+    		  IMC::SetEntityParameters params;
+    		  params.name = "Emergency Monitor";
+    		  params.params.push_back(parmeter);
+    		  dispatch(params, DF_LOOP_BACK);
+    		  ss << "Changed emergency number " << " to " << newNum;
+    		  reply(origin,ss.str());
       }
 
       //! Execute command 'INFO'
