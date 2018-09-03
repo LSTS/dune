@@ -30,6 +30,7 @@ using namespace std;
 
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Image.h>
+#include <Vision/FireMapper/sensor_model.h>
 #include <string>
 
 
@@ -56,10 +57,12 @@ private:
   vector<Raster_ALL> Liste;
   double threshold;
   bool Segmentation, using_vector;
+  sensor_model sen_mode;
 
   bool Map_direct(Image IM);
 
   bool Map_with_vector(Image IM);
+
 
 
 public:
@@ -84,6 +87,8 @@ public:
   void set_threshold(double th);
 
   double get_threshold() const;
+
+  void set_sensor_model(sensor_model sensor_mod);
 
   Point3D Raytracer(PixelImage Pix, Image I, Raster_Tile Rs);
 

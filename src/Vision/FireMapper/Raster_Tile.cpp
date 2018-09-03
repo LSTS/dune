@@ -34,29 +34,49 @@ Raster_Tile::Raster_Tile(string path)
   no_data = Map->get_noData();
 
   fireMap = cv::Mat::zeros(Map->nRows , Map->nCols , CV_8UC1);
-
+  fireMap_bayes = cv::Mat::zeros(Map->nRows,Map->nCols,CV_8UC1);
+  occupancy_map = cv::Mat::zeros(Map->nRows,Map->nCols,CV_32FC1);//this matrix has been created to store the probabilities we had about a pixel because once using
+  // the occupancy grid algo to fill the firemap we take in consideration the past acquisition.
 
   FireMap_modified = false;
 
-
-  cout << "This map's range is : \n \t West" << Map->get_max_west() << "  \t  East " << Map->get_max_east() << endl;
-
-  printf(" \n \t North %.6f  South %.6f ", Map->get_max_north(), Map->get_max_south());
-
-  cout << "\n no data value :" << Map->get_noData() << endl;
-
-
 }
 
-void Raster_Tile::set_fireMap(int row, int col, uchar value)
-{
+void  Raster_Tile::set_fireMap(int row,int col,uchar value,bool use_occupancygrid){
 
   FireMap_modified = true;
+  fireMap.cv::Mat::at<uchar>(row,col) = (uchar)value ;
 
-  fireMap.cv::Mat::at<uchar>(row, col) = (uchar) value;
+  if(use_occupancygrid){
+
+    // this link explains the logic used in here https://www.youtube.com/watch?v=kh35PqEFQxE&t=240s
+    double instant_fire_probablity = value/255.0;
+    double logOdd = log(  s_model.sensor_model_HavingFire(instant_fire_probablity)/ s_model.sensor_model_notHavingFire(instant_fire_probablity)  );
+    occupancy_map.cv::Mat::at<double>(row,col) += logOdd  ;
+    double new_fireprobability =  (1-1/( exp(occupancy_map.cv::Mat::at<double>(row,col))+1  ) ) ;
+
+
+    if(   new_fireprobability <  0 ){
+
+      fireMap_bayes.cv::Mat::at<uchar>(row,col) = (uchar) 255*0 ;
+
+    }else if(  new_fireprobability  >  1 ){
+
+      fireMap_bayes.cv::Mat::at<uchar>(row,col) = (uchar) 255*1 ;
+    }else{
+      fireMap_bayes.cv::Mat::at<uchar>(row,col) = static_cast<uchar>(255*new_fireprobability);
+
+    }
+  }
 
 }
 
+
+void Raster_Tile::set_sensor_model(sensor_model sen_mod ){
+
+  s_model = sen_mod ;
+
+}
 cv::Mat Raster_Tile::get_fireMap()
 {
 
@@ -65,6 +85,14 @@ cv::Mat Raster_Tile::get_fireMap()
   return fireMap;
 
 }
+cv::Mat Raster_Tile::get_fireMapbayes(){
+
+  FireMap_modified = false;
+
+  return fireMap_bayes.clone();
+
+}
+
 
 
 double Raster_Tile::get_max_west()

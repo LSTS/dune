@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <fstream>
 #include <opencv2/opencv.hpp>
 #include <Vision/FireMapper/Raster_Reader.h>
+#include <Vision/FireMapper/sensor_model.h>
 #include <cmath>
 
 using namespace std;
@@ -87,7 +88,10 @@ private:
 Raster_Reader *Map;
 vector<Pixel_Data> Liste_Points;
 cv::Mat fireMap;
+cv::Mat fireMap_bayes;
+cv::Mat occupancy_map;
 bool FireMap_modified;
+sensor_model s_model;
 
 
 
@@ -109,8 +113,11 @@ public:
 	double get_max_north();
 	double get_max_south();
 
-	void  set_fireMap(int row,int col,uchar value);
+	void  set_fireMap(int row,int col,uchar value,bool use_occupancygrid);
+	void set_sensor_model(sensor_model sen_mod );
+
 	cv::Mat  get_fireMap();
+	cv::Mat  get_fireMapbayes();
 	bool  Test_fireMap_Modified();
 	void get_DEM_info();
 

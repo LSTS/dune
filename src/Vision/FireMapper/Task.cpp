@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <Vision/FireMapper/Image.h>
 #include <Vision/FireMapper/MorseImageGrabber.h>
 #include <Vision/FireMapper/Mapping_thread.hpp>
+#include <Vision/FireMapper/sensor_model.h>
 #include <gdal/ogr_spatialref.h>
 
 
@@ -265,7 +266,7 @@ namespace Vision
       onResourceRelease(void)
       {
         delete morse_grabber;
-        delete Map_thrd ;
+        //delete Map_thrd ;
       }
 
       //! Main loop.
@@ -275,8 +276,8 @@ namespace Vision
         std::string path_DEM = "/home/welarfao/DEM.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
         std::string m_path_results = "/home/welarfao/results/";
 
-        Mapping Mp = Mapping(path_DEM);
-        Mp.set_threshold(150);
+        Mapping Mp = Mapping(path_DEM,0,1);
+        Mp.set_threshold(200);
 
         bool need_mapping = false;
         bool Image_ready = false;

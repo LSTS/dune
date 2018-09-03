@@ -26,8 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 Mapping::Mapping()
 {
-  Carte = Raster_Tile::get_allMaps(
-          "/home/welarfao/mapping/Mapping/DEM.txt");//We have in return a vector with Rasters read and zith all their params
+  Carte = vector<Raster_Tile>();
   Segmentation = false;
   using_vector = false;
 
@@ -75,6 +74,11 @@ double Mapping::get_threshold() const
 {
 
   return threshold;
+
+}
+void Mapping::set_sensor_model(sensor_model sensor_mod){
+
+  sen_mode = sensor_mod ;
 
 }
 
@@ -362,6 +366,7 @@ bool Mapping::Map_with_vector(Image IM)
 
       if (Segmentation) {
         IM.Segment(threshold);
+        Carte[l].set_sensor_model(sen_mode);
 
       }
       int linestart = 0;
@@ -378,7 +383,7 @@ bool Mapping::Map_with_vector(Image IM)
 
           if (px.Test) { //Si on a trouve une image qui correspond a ce ce pixel
 
-            Carte[l].set_fireMap((Liste[l].ListeP)[c].row, (Liste[l].ListeP)[c].col, px.Value);
+            Carte[l].set_fireMap((Liste[l].ListeP)[c].row, (Liste[l].ListeP)[c].col, px.Value,Segmentation);
           }
         }
       }
@@ -421,6 +426,7 @@ bool Mapping::Map_direct(Image IM)
 
       if (Segmentation) {
         IM.Segment(threshold);
+        Carte[l].set_sensor_model(sen_mode);
 
       }
 
@@ -437,7 +443,7 @@ bool Mapping::Map_direct(Image IM)
 
           if (px.Test) { //if that pixel matches with the IMage
 
-            Carte[l].set_fireMap(r, c, px.Value);
+            Carte[l].set_fireMap(r,c,px.Value,Segmentation);
 
           }
         }
@@ -504,6 +510,12 @@ void Mapping::Save_Show_FireM(string path_result)
       ss << j;
       cv::imwrite(path_result + "Map" + ss.str() + ".JPG", Carte[j].get_fireMap());
       Carte[j].Put_firemap_inGdal(path_result + "Map" + ss.str() + ".tif");
+
+      if(Segmentation){
+
+        cv::imwrite(path_result+ "Mapbayes" + ss.str() + ".jpg",Carte[j].get_fireMapbayes());
+        //cout<<Carte[j].get_fireMapbayes()<<endl;
+      }
       //cv::imshow(path_result +"Map"+ ss.str() +".jpg",Carte[j].get_fireMap()); needs perimission
     }
   }

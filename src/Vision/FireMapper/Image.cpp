@@ -140,7 +140,7 @@ void Image::Segment(size_t thresholdValue){
 
     ///Segmentation
 
-    cv::threshold(undistortedImg, undistortedImg, thresholdValue, 255, cv::THRESH_BINARY_INV);
+    cv::threshold(undistortedImg, undistortedImg, thresholdValue, 255, cv::THRESH_BINARY);
 
 }
 
