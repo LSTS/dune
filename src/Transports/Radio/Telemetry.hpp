@@ -56,7 +56,7 @@ namespace Transports
     {
     public:
       //! Constructor.
-      Telemetry(Tasks::Task* task, uint8_t system, MapName radio_names, MapAddr radio_addrs):
+      Telemetry(Tasks::Task* task, uint8_t system, MapName radio_names, MapAddr radio_addrs, int max_packet_size):
         m_task(task),
         m_tx_telemetry_State(IDLE),
         m_rx_telemetry_State(IDLE),
@@ -67,6 +67,8 @@ namespace Transports
       	m_tx_mesg.state = MSG_SEND;
         m_radio_names= radio_names;
         m_radio_addrs = radio_addrs;
+        m_max_packet_size = (int) max_packet_size * MAX_MESSAGE_PERIOD;
+        m_task->debug("Telemetry max_packet_size %d", m_max_packet_size);
       }
 
        //! Consume Estimated State messages.
@@ -143,37 +145,51 @@ namespace Transports
        consume(const IMC::TelemetryMsg* msg)
        {
           m_task->debug("consume Telemetry tx");
+          imc_TelemetryMsg_queue.push( * msg);
+       }
+       bool
+       imc_TelemetryMsg_tx()
+       {
+         if(!imc_TelemetryMsg_queue.empty())
+         {
+           IMC::TelemetryMsg msg;
+           msg = imc_TelemetryMsg_queue.front();
+           imc_TelemetryMsg_queue.pop();
 
-         if (msg->getDestination() !=  m_task->getSystemId())
-           return;
-         if(msg->type != IMC::TelemetryMsg::TM_TX)
-           return;
-         unsigned dst, src;
-         if( !lookupSystemAddress(msg->destination, dst))
-         {
-           m_task->err("Invalid Tx destination %s",msg->destination.c_str());
-          return;
-         }
-         if( !lookupSystemAddress(m_task->getSystemName(),src))
-         {
-          m_task->err("This src system is not in the Radio system list");
-          return;
-         }
-         uint16_t msgtype = (msg->data[1] << 8) + msg->data[0];
+           if (msg.getDestination() !=  m_task->getSystemId())
+             return false;
+           if(msg.type != IMC::TelemetryMsg::TM_TX)
+             return false;
+           unsigned dst, src;
+           if( !lookupSystemAddress(msg.destination, dst))
+           {
+             m_task->err("Invalid Tx destination %s",msg.destination.c_str());
+            return false;
+           }
+           if( !lookupSystemAddress(m_task->getSystemName(),src))
+           {
+            m_task->err("This src system is not in the Radio system list");
+            return false;
+           }
+           uint16_t msgtype = (msg.data[1] << 8) + msg.data[0];
 
-         m_task->debug("IMC type to tx %d , size %d ",msgtype, (int) msg->data.size());
-         XxMesg TxFrame;
-         if(TxFrame.imc_to_tx_msg(msg,src, dst))
-         {
-          updateTxSync();
-          TxFrame.encodeHeader(local_tx_sync, msg->ttl );
-          m_tx_msg_queue.push(TxFrame);
+           m_task->debug("IMC type to tx %d , size %d ",msgtype, (int) msg.data.size());
+           XxMesg TxFrame;
+           if(TxFrame.imc_to_tx_msg(&msg,src, dst))
+           {
+            updateTxSync();
+            TxFrame.encodeHeader(local_tx_sync, m_max_packet_size, msg.ttl );
+            m_tx_msg_queue.push(TxFrame);
+           }
+           else
+           {
+            m_task->err("Invalid Tx code type");
+            return false;
+           }
+           m_task->dispatch(TxFrame.telemetry_imc_status);
+           return true;
          }
-         else
-         {
-          m_task->err("Invalid Tx code type");
-         }
-         m_task->dispatch(TxFrame.telemetry_imc_status);
+         return false;
        }
 
        //! update the Tx synchronization number
@@ -262,14 +278,14 @@ namespace Transports
          ReportFrame.setMsgData(str);
          updateTxSync();
          ReportFrame.encodeHeader(CODE_REPORT,systemID, 0 ,
-                                  local_tx_sync, false, MAX_MESSAGE_PERIOD);
+                                  local_tx_sync, false, m_max_packet_size, MAX_MESSAGE_PERIOD*4);
          ReportFrame.state = MSG_QUEUE;
          ReportFrame.telemetry_imc_status.type = IMC::TelemetryMsg::TM_TXSTATUS;
          ReportFrame.telemetry_imc_status.code = CODE_REPORT ;
          ReportFrame.telemetry_imc_status.req_id= local_tx_sync;
 
          m_tx_msg_queue.push(ReportFrame);
-         m_task->debug("Report %s", ReportFrame.msg.c_str());
+         m_task->debug("Report to queue");
 
        }
 
@@ -360,7 +376,7 @@ namespace Transports
             m_task->err("RxData decoe error  %s ", rx_test.error_msg.c_str());
             return;
          }
-          m_task->trace("Rx header ak:%d code:%d src:%d des:%d npart: %d sync:%d n_parts: %d, first_part: %d ",
+          m_task->trace("RX header ak:%d code:%d src:%d des:%d npart: %d sync:%d n_parts: %d, first_part: %d ",
            (int)rx_test.acknowledge, (int) rx_test.code, rx_test.src_id, rx_test.des_id,
            (int) rx_test.npart , rx_test.sync, (int) rx_test.n_parts, rx_test.start_part);
 
@@ -370,8 +386,9 @@ namespace Transports
           acquisition_Rx_Frame.clear();
          }
 
-         if(local_rx_sync != rx_test.sync)
+         if(local_rx_sync != rx_test.sync && rx_test.code != CODE_AK)
          {
+          m_task->trace("local_rx_sync % d rx_test.sync %d",local_rx_sync,rx_test.sync);
           updateRxSync(rx_test.sync);
           m_task->inf("previous message(s) lost or first sync");
          }
@@ -444,6 +461,8 @@ namespace Transports
                 recvImcMessage(m_rx_msg);
               break;
             case CODE_AK:
+              // data transmition reciver side
+              m_task->debug("AK to message trasmition");
               if(m_rx_msg.sync== m_tx_mesg.sync)
               {
                 m_tx_telemetry_State = IDLE;
@@ -451,12 +470,14 @@ namespace Transports
                 m_tx_mesg.telemetry_imc_status.status= IMC::TelemetryMsg::TM_DONE;
                 m_tx_mesg.telemetry_imc_status.acknowledge = IMC::TelemetryMsg::TM_AK;
                 m_task->dispatch(m_tx_mesg.telemetry_imc_status);
+                m_task->debug("AK  dispatch");
               }
 
               break;
 
              default: return false;
          }
+         //data reciver side
          if(m_rx_msg.state == MSG_PROCESSED && m_rx_msg.acknowledge)
          {
            sendAKtoRXMsg();
@@ -492,14 +513,14 @@ namespace Transports
            if(m_tx_mesg.msg_multi_timer.overflow())
            {
 
-             m_tx_mesg.msg_multi_timer.setTop(MAX_MESSAGE_PERIOD);
+             m_tx_mesg.msg_multi_timer.setTop(MAX_MESSAGE_PERIOD*4);
              //send next part
              updateTxSync();
-             m_tx_mesg.encodeHeader(local_tx_sync);
+             m_tx_mesg.encodeHeader(local_tx_sync, m_max_packet_size);
              txData = m_tx_mesg.str_header + m_tx_mesg.msg;
              new_part = true;
-             m_task->trace("TX Next msg part m_tx_mesg.n_parts_status %d m_tx_mesg.n_parts %d",
-              (int) m_tx_mesg.n_parts_status, (int) m_tx_mesg.n_parts);
+             m_task->trace("TX Next msg part m_tx_mesg.n_parts_status %d m_tx_mesg.n_parts %d local_tx_sync %d",
+              (int) m_tx_mesg.n_parts_status, (int) m_tx_mesg.n_parts, (int) local_tx_sync);
            }
 
            if(m_tx_mesg.n_parts_status == m_tx_mesg.n_parts)
@@ -529,7 +550,8 @@ namespace Transports
        sendAKtoRXMsg(void)
        {
          XxMesg tx_ak_mesg;
-         tx_ak_mesg.encodeHeader(CODE_AK,systemID, m_rx_msg.src_id, m_rx_msg.sync, false, -1);
+         updateTxSync();
+         tx_ak_mesg.encodeHeader(CODE_AK,systemID, m_rx_msg.src_id, m_rx_msg.sync, false, m_max_packet_size,-1);
          tx_ak_mesg.state = MSG_QUEUE;
          m_tx_msg_queue.push(tx_ak_mesg);
          //for debug only
@@ -563,7 +585,10 @@ namespace Transports
            {
              //verify queue to send
              if(m_tx_msg_queue.empty())
+             {
+               imc_TelemetryMsg_tx();
                return false;
+             }
              //something in the queue
              m_task->trace("tx queue sixe %d:", (int) m_tx_msg_queue.size() );
              m_tx_mesg = m_tx_msg_queue.front();
@@ -702,11 +727,13 @@ namespace Transports
       XxMesg m_rx_msg;
       std::queue<XxMesg> m_tx_msg_queue;
       std::queue<XxMesg> m_rx_msg_queue;
+      std::queue<IMC::TelemetryMsg>  imc_TelemetryMsg_queue;
       TelemetryState m_tx_telemetry_State;
       TelemetryState m_rx_telemetry_State;
       uint8_t local_tx_sync;
       uint8_t local_rx_sync;
       uint8_t systemID;
+      int m_max_packet_size;
       //! Map of radio modems by name.
       MapName m_radio_names;
       //! Map of radio modems by address.

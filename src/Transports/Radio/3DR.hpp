@@ -474,9 +474,9 @@ namespace Transports
                    }
                    if(String::startsWith(msg,"max_data_packet_length:"))
                    {
-                       device_reports.tdm_timing_max_data_packet = msg;
-                       task->trace("%s",device_reports.tdm_timing_max_data_packet.c_str());
-
+                    std::string expectedCMD= "max_data_packet_length:";
+                       saveIfExpectedCmdIs(msg, expectedCMD,device_reports.tdm_timing_max_data_packet);
+                       task->trace("max_data_packet_length: %s",device_reports.tdm_timing_max_data_packet.c_str());
                    }
 
                  }

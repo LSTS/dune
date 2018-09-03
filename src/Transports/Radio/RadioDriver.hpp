@@ -128,8 +128,9 @@ namespace Transports
       virtual void process(const std::string msg) = 0;
 
       bool
-      processNewReport(std::string& rxData)
+      processNewReport()
       {
+        std::string rxData;
         if (device_reports.data_report.size() > 6 && device_reports.report_status[DATA_REPORT] == true)
         {
           if (processCrc())
@@ -137,6 +138,7 @@ namespace Transports
             rxData = String::fromHex(device_reports.data_report);
             device_reports.report_status[DATA_REPORT] = false;
             device_reports.data_report.clear();
+            driverRxRata.push(rxData);
             //task->trace( "New Telemetry Report size %d rxData: %s", (int) rxData.size(),rxData.c_str());
             return true;
           }
@@ -144,6 +146,27 @@ namespace Transports
         }
         return false;
 
+      }
+
+      bool
+      newRxData(std::string& rx_data)
+      {
+        if(!driverRxRata.empty())
+        {
+          rx_data = driverRxRata.front();
+          driverRxRata.pop();
+          return true;
+        }
+        return false;
+      }
+
+      void
+      clearNewRxData()
+      {
+       while (!driverRxRata.empty())
+       {
+          driverRxRata.pop();
+       }
       }
 
       virtual void sendString(std::string& data) = 0;
@@ -180,13 +203,20 @@ namespace Transports
         task->trace( "RadioDriver: size %d txData: %s CRC %d ", (int) message_build.size(), message_build.c_str(), crc);
         return 1;
       }
+      int
+      maxDataPacket()
+      {
+        //todo update
+        int max_data_packet = atoi(device_reports.tdm_timing_max_data_packet.c_str());
+        return max_data_packet;
+      }
 
       //! Read sentence.
       bool
       readSentence(void)
       {
         bool active = false;
-        if (Poll::poll(*m_handle, 0.001))
+        if (Poll::poll(*m_handle, 0.05))
         {
           char bfr[c_bfr_size];
           size_t rv = m_handle->readString(bfr, sizeof(bfr));
@@ -196,6 +226,7 @@ namespace Transports
             if (bfr[i] == '\n')
             {
               process(m_line);
+              processNewReport();
               m_last_line= m_line;
               m_line.clear();
             }
@@ -246,7 +277,7 @@ namespace Transports
       }
 
       void
-      processInputInit(double timeout = 0.1)
+      processInputInit(double timeout = 0.05)
       {
         double deadline = Clock::get() + timeout;
         do
@@ -257,7 +288,7 @@ namespace Transports
       }
 
       bool
-      processInput(double timeout = 0.1)
+      processInput(double timeout = 0.05)
       {
         bool active = false;
         double deadline = Clock::get() + timeout;
@@ -282,6 +313,8 @@ namespace Transports
       std::string m_last_line;
       //! radio Params
       RadioConfParam radioParams;
+
+      std::queue<std::string> driverRxRata;
 
     };
   }

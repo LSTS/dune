@@ -30,8 +30,7 @@
 #ifndef DUNE_TRANSPORTS_RADIO_TELEMETRYTYPES_HPP_INCLUDED_
 #define DUNE_TRANSPORTS_RADIO_TELEMETRYTYPES_HPP_INCLUDED_
 
-#define MAX_DATA_PACKAGING 118
-#define MAX_MESSAGE_PERIOD 1
+#define MAX_MESSAGE_PERIOD 0.1
 #define HEADER_SIZE 5
 // ISO C++ 98 headers.
 #include <string>
@@ -155,6 +154,7 @@ namespace Transports
       //imc dispatch
       IMC::TelemetryMsg telemetry_imc;
       IMC::TelemetryMsg telemetry_imc_status;
+      //channel max data packaging
 
       XxMesg(void)
       {
@@ -194,17 +194,17 @@ namespace Transports
       }
 
       void
-      encodeHeader(Codes code_t, uint8_t src, uint8_t dst, uint8_t sync_n, bool ak, double ttl)
+      encodeHeader(Codes code_t, uint8_t src, uint8_t dst, uint8_t sync_n, bool ak, int max_data_packaging, double ttl)
       {
         code = code_t;
         src_id = src;
         des_id = dst;
         acknowledge = ak;
-        encodeHeader(sync_n, ttl);
+        encodeHeader(sync_n, max_data_packaging, ttl);
       }
 
       void
-      encodeHeader(uint8_t sync_n, double ttl = -1.0)
+      encodeHeader(uint8_t sync_n, int max_data_packaging, double ttl = -1.0)
       {
         uint8_t tmp = 0;
         sync = sync_n;
@@ -215,7 +215,7 @@ namespace Transports
         if(first_call==true)
         {
           header = std::vector<char>(HEADER_SIZE,0);
-          max_data_payload = (MAX_DATA_PACKAGING - (HEADER_SIZE*2+4));
+          max_data_payload = (max_data_packaging - (HEADER_SIZE*2+4));
           if ( msg_compl.size()*2  > max_data_payload)
           {
             tmp+= ((uint8_t) 1 << 3); // multiple parts
@@ -225,7 +225,7 @@ namespace Transports
 
             int temp  = (msg_compl.size()*2) / max_data_payload;
             int n_sub_rest = (msg_compl.size()*2) % max_data_payload;
-            msg_multi_timer.setTop(MAX_MESSAGE_PERIOD);
+            msg_multi_timer.setTop(MAX_MESSAGE_PERIOD*4);
             if(temp <= 254)
             {
               n_parts = temp; // Header limit
@@ -349,7 +349,7 @@ namespace Transports
           acknowledge = (bool)((tmp & 0x1F) >> 4);
           // start_part
           start_part = (bool) ((tmp & 0x7) >> 2);
-          msg_timer.setTop((MAX_MESSAGE_PERIOD) * data[4] + 1);
+          msg_timer.setTop((MAX_MESSAGE_PERIOD*4) * data[4] + 1);
         }
         // sync number 1byte
         sync = data[1];

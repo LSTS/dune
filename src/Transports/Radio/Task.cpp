@@ -92,8 +92,13 @@ namespace Transports
       std::string coms_mode;
       //! Enable Telemetry report
       bool report_enable;
+      //! Enable Telemetry report
+      bool high_speed_report;
       //! IMU entity label.
       std::string elabel_voltage;
+      //! Radio reports periodicity.
+      double radio_period;
+
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -125,6 +130,10 @@ namespace Transports
       unsigned m_voltage_eid;
       //! Driver configuration
       IMC::CommSystemsQuery* m_comm_systems_query;
+      //! System ID
+      uint16_t m_systemID;
+      //! Higth speed radio report
+      Time::Counter<double> m_fast_treport_counter;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -186,14 +195,6 @@ namespace Transports
         param("Duty cycle", m_args.radioParams.duty_cycle)
         .defaultValue("10")
         .description("Duty cycle - the percentage of time to allow transmit");
-        //todo change max and min to configuration file by radio model - parameters updated in boot
-        param("Max frequency", m_args.radioParams.max_frequency)
-        .defaultValue("415000")
-        .description("Max frequency in KHz");
-
-        param("Min frequency", m_args.radioParams.min_frequency)
-        .defaultValue("414000")
-        .description("Min frequency in KHz");
 
         param("Air speed", m_args.radioParams.air_speed)
         .defaultValue("64")
@@ -225,6 +226,19 @@ namespace Transports
                      " shall acknowledge reception of requests to broadcast Reports"
                      " messages containing the overall state of the system."
                      " When disabled, those requests shall be ignored");
+
+        param("Enable UAV high speed report", m_args.high_speed_report)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description("Enable system state telemetry reporting.");
+
+        param(DTR_RT("UAV high speed Reports Periodicity"), m_args.radio_period)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .units(Units::Second)
+        .defaultValue("0.3")
+        .minimumValue("0.3")
+        .maximumValue("600")
+        .description("Reports periodicity");
 
         param("Entity Label - Voltage", m_args.elabel_voltage)
         .defaultValue("Autopilot")
@@ -385,7 +399,7 @@ namespace Transports
       {
 
         int m_addr = 0;
-        uint16_t systemID =0;
+        m_systemID =0;
         if(m_args.coms_mode.compare("Client")==0)
         {
           // Process modem addresses.
@@ -394,47 +408,49 @@ namespace Transports
           m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
           if (m_addr < 1 || m_addr > 256)
           {
-            throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
+            throw RestartNeeded(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()), 5.0, true);
           }
           m_ctx.config.get(m_args.addr_section, agent, "1024", m_args.radioParams.net_id);
           debug("MY_NET_ID IS: %s", m_args.radioParams.net_id.c_str());
-          castLexical(m_args.radioParams.net_id, systemID);
+          castLexical(m_args.radioParams.net_id, m_systemID);
         }
         else if(m_args.coms_mode.compare("Server")==0)
         {
           if(m_args.radioParams.vehicle_name.empty())
           {
-             throw std::runtime_error(String::str(DTR("Vehicle to bind is not define")));
+             throw RestartNeeded(String::str(DTR("Vehicle to bind is not define")), 5.0, true);
           }
 
           m_ctx.config.get(m_args.addr_section, m_args.radioParams.vehicle_name, "1024", m_addr);
           if (m_addr < 1 || m_addr > 256)
           {
-            throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), m_args.radioParams.vehicle_name.c_str()));
+            throw RestartNeeded(String::str(DTR("modem address for agent '%s' is invalid"), m_args.radioParams.vehicle_name.c_str()), 5.0, true);
           }
           m_ctx.config.get(m_args.addr_section, m_args.radioParams.vehicle_name, "1024", m_args.radioParams.net_id);
-          debug("MY_NET_ID for veicle %s is : %s",  m_args.radioParams.vehicle_name.c_str(), m_args.radioParams.net_id.c_str() );
+          debug("MY_NET_ID for vehicle %s is : %s",  m_args.radioParams.vehicle_name.c_str(), m_args.radioParams.net_id.c_str() );
         }
         else
         {
-         throw std::runtime_error(String::str(DTR("Invalid communication mode")));
+         throw RestartNeeded(String::str(DTR("Invalid communication mode")), 5.0, true);
         }
-
-        m_telemetry = new Telemetry(this, (uint8_t) systemID, m_radio_names, m_radio_addrs);
 
         if (m_args.radioParams.radio_model.compare("3DR") == 0)
         {
+          m_args.radioParams.max_frequency= "415000";
+          m_args.radioParams.min_frequency= "414000";
           m_radio = new Radio3dr(m_args.radioParams, this);
           m_comm_systems_query->model = IMC::CommSystemsQuery::CIQ_M3DR;
         }
         else if (m_args.radioParams.radio_model.compare("RDFXXXxPtP") == 0)
         {
+          m_args.radioParams.max_frequency= "870000";
+          m_args.radioParams.min_frequency= "868000";
           m_radio = new RadioRFDXXXxPtP(m_args.radioParams, this);
           m_comm_systems_query->model = IMC::CommSystemsQuery::CIQ_RDFXXXXPTP;
         }
         else
         {
-         throw std::runtime_error(String::str(DTR("Invalid radio model")));
+         throw RestartNeeded(String::str(DTR("Invalid radio model")), 5.0, true);
         }
 
         m_sm_state = SM_ACT_BEGIN;
@@ -454,7 +470,7 @@ namespace Transports
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_RADIO,
-                                                       2.0, false);
+                                                       0.1, false);
        m_comm_systems_query = new  IMC::CommSystemsQuery();
        m_comm_systems_query->type= IMC::CommSystemsQuery::CIQ_REPLY;
        m_comm_systems_query->comm_interface = IMC::CommSystemsQuery::CIQ_RADIO;
@@ -590,6 +606,9 @@ namespace Transports
                 break;
               }
             debug("configuration completed");
+            m_radio->clearNewRxData();
+            m_telemetry = new Telemetry(this, (uint8_t) m_systemID, m_radio_names, m_radio_addrs, m_radio->maxDataPacket());
+             m_fast_treport_counter.setTop(m_args.radio_period);
             m_sm_state = SM_ACT_DONE;
             /* no break */
 
@@ -681,19 +700,43 @@ namespace Transports
           }
         }
       }
+      void
+      highSpeedReport(void)
+      {
+
+        //report creation
+        if (m_args.high_speed_report)
+        {
+          if (m_reporter != NULL && m_telemetry!=NULL && m_fast_treport_counter.overflow())
+          {
+            m_fast_treport_counter.setTop(m_args.radio_period);
+           if(m_telemetry->isIdle())
+           {
+             m_telemetry->createReport();
+           }
+          }
+        }
+
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
         while (!stopping())
         {
-          waitForMessages(0.1);
+          if(!isActive())
+          {
+            waitForMessages(1.0);
+          }
+
           if( isActive()  && m_sm_state == SM_ACT_DONE)
           {
+            consumeMessages();
             //uart/ip
             m_radio->processInput();
             //RXdata
-            if(m_radio->processNewReport(m_rxData))
+            if(m_radio->newRxData(m_rxData))
             {
                m_telemetry->recivedDataToDecode(m_rxData);
             }
@@ -702,6 +745,7 @@ namespace Transports
             m_telemetry->anyDataToProcess();
             //report
             radioReport();
+            highSpeedReport();
             //Txdata
             std::string txData;
             if(m_telemetry->anyDatatosend(txData))
