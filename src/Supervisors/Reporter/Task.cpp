@@ -48,7 +48,7 @@ namespace Supervisors
       double acoustic_period;
       //! Enable radio reports.
       bool radio;
-      //! Acoustic reports periodicity.
+      //! Radio reports periodicity.
       double radio_period;
     };
 
@@ -89,7 +89,7 @@ namespace Supervisors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("3")
-        .minimumValue("0.3")
+        .minimumValue("1")
         .maximumValue("600")
         .description("Reports periodicity");
 
