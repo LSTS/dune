@@ -28,7 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <DUNE/Coordinates/UTM.hpp>
+#include <DUNE/Coordinates/WGS84.hpp>
 
 // OpenCV headers
 #include <opencv2/opencv.hpp>
@@ -36,10 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <Vision/FireMapper/Raster_Reader.h>
 #include <Vision/FireMapper/Raster_Tile.h>
 #include <Vision/FireMapper/Image.h>
-///#include <Vision/FireMapper/ImageGrabber.hpp>
 #include <Vision/FireMapper/MorseImageGrabber.h>
-#include <Vision/FireMapper/GetImage.hpp>
 #include <Vision/FireMapper/Mapping_thread.hpp>
+#include <gdal/ogr_spatialref.h>
+
 
 
 namespace Vision
@@ -56,6 +56,11 @@ namespace Vision
       std::string system_id;
 
     };
+    struct Lambert93Position
+    {
+      double x ;
+      double y ;
+    };
 
     struct Task : public DUNE::Tasks::Task
     {
@@ -63,15 +68,15 @@ namespace Vision
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
+      double position_x,position_y,position_z;
+      double phi,theta,psi;
 
       cv::Mat Image_Matrix;
 
       vector<double> Radial_distortion;
       vector<double> Tangential_distortion;
 
-      GetImage *ImageReader;
       Mapping_thread *Map_thrd;
-
       MorseImageGrabber *morse_grabber;
 
       Arguments m_args;
@@ -79,6 +84,7 @@ namespace Vision
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
+
       Task(const std::string &name, Tasks::Context &ctx) :
               DUNE::Tasks::Task(name, ctx)
       {
@@ -94,36 +100,9 @@ namespace Vision
         Translation = cv::Mat(3, 1, CV_64FC1);
         Rotation = cv::Mat(3, 3, CV_64FC1);
 
-        ImageReader = new GetImage(this, "thrd_Reader");
-        ImageReader->start();
 
         Map_thrd = new Mapping_thread(this, "thrd_Mapper");
         Map_thrd->start();
-
-
-        Intrinsic.cv::Mat::at<double>(0, 0) = 0.25 * 3272.1733924963492;
-        Intrinsic.cv::Mat::at<double>(0, 1) = 0.25 * 0;
-        Intrinsic.cv::Mat::at<double>(0, 2) = 0.25 * 2342.3086717022011;
-        Intrinsic.cv::Mat::at<double>(1, 0) = 0.25 * 0;
-        Intrinsic.cv::Mat::at<double>(1, 1) = 0.25 * 3272.1733924963492;
-        Intrinsic.cv::Mat::at<double>(1, 2) = 0.25 * 1770.4377498787001;
-        Intrinsic.cv::Mat::at<double>(2, 0) = 0;
-        Intrinsic.cv::Mat::at<double>(2, 1) = 0;
-        Intrinsic.cv::Mat::at<double>(2, 2) = 1;
-
-        Rotation.cv::Mat::at<double>(0, 0) = -0.94660184153532601;
-        Rotation.cv::Mat::at<double>(0, 1) = -0.28953614234150654;
-        Rotation.cv::Mat::at<double>(0, 2) = 0.14182304424855829;
-        Rotation.cv::Mat::at<double>(1, 0) = -0.31502259516218351;
-        Rotation.cv::Mat::at<double>(1, 1) = 0.92422734932632489;
-        Rotation.cv::Mat::at<double>(1, 2) = -0.21578825569182047;
-        Rotation.cv::Mat::at<double>(2, 0) = -0.068598237143622773;
-        Rotation.cv::Mat::at<double>(2, 1) = -0.24894302367255508;
-        Rotation.cv::Mat::at<double>(2, 2) = -0.96608573782328089;
-
-        Translation.cv::Mat::at<double>(0) = 370747.84931199555;
-        Translation.cv::Mat::at<double>(1) = 4797168.8641240774;
-        Translation.cv::Mat::at<double>(2) = 507.77970651053715;
 
         Radial_distortion.push_back(-0.04646865617107581);
         Radial_distortion.push_back(0.051288490946210602);
@@ -133,6 +112,7 @@ namespace Vision
 
         // Setup processing of IMC messages
         bind < EstimatedState > (this);
+
       }
 
       //! Update internal state with new parameter values.
@@ -142,7 +122,7 @@ namespace Vision
       }
 
       void
-      set_Rot_Trans_Matrix(float x, float y, float z, float phi, float theta, float psi)
+      set_Rot_Trans_Matrix(float xx, float yy, float zz, float _phi, float _theta, float _psi)
       {
 
         cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
@@ -151,9 +131,9 @@ namespace Vision
 
         //! TRanslation
 
-        Translation.at<double>(0) = x;
-        Translation.at<double>(1) = y;
-        Translation.at<double>(2) = z;
+        Translation.at<double>(0) = xx;
+        Translation.at<double>(1) = yy;
+        Translation.at<double>(2) = zz;
 
         //! Rotation over x axis phi.
 
@@ -161,31 +141,31 @@ namespace Vision
         Rotationx.cv::Mat::at<double>(0, 1) = 0;
         Rotationx.cv::Mat::at<double>(0, 2) = 0;
         Rotationx.cv::Mat::at<double>(1, 0) = 0;
-        Rotationx.cv::Mat::at<double>(1, 1) = cos(phi);
-        Rotationx.cv::Mat::at<double>(1, 2) = -sin(phi);
+        Rotationx.cv::Mat::at<double>(1, 1) = cos(_phi);
+        Rotationx.cv::Mat::at<double>(1, 2) = -sin(_phi);
         Rotationx.cv::Mat::at<double>(2, 0) = 0;
-        Rotationx.cv::Mat::at<double>(2, 1) = sin(phi);
-        Rotationx.cv::Mat::at<double>(2, 2) = cos(phi);
+        Rotationx.cv::Mat::at<double>(2, 1) = sin(_phi);
+        Rotationx.cv::Mat::at<double>(2, 2) = cos(_phi);
 
         //! Rotation over y axis theta.
 
-        Rotationy.cv::Mat::at<double>(0, 0) = cos(theta);
+        Rotationy.cv::Mat::at<double>(0, 0) = cos(_theta);
         Rotationy.cv::Mat::at<double>(0, 1) = 0;
-        Rotationy.cv::Mat::at<double>(0, 2) = sin(theta);
+        Rotationy.cv::Mat::at<double>(0, 2) = sin(_theta);
         Rotationy.cv::Mat::at<double>(1, 0) = 0;
         Rotationy.cv::Mat::at<double>(1, 1) = 1;
         Rotationy.cv::Mat::at<double>(1, 2) = 0;
-        Rotationy.cv::Mat::at<double>(2, 0) = -sin(theta);
+        Rotationy.cv::Mat::at<double>(2, 0) = -sin(_theta);
         Rotationy.cv::Mat::at<double>(2, 1) = 0;
-        Rotationy.cv::Mat::at<double>(2, 2) = cos(theta);
+        Rotationy.cv::Mat::at<double>(2, 2) = cos(_theta);
 
         //! Rotation over z axis psi.
 
-        Rotationz.cv::Mat::at<double>(0, 0) = cos(psi);
-        Rotationz.cv::Mat::at<double>(0, 1) = -sin(psi);
+        Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
+        Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
         Rotationz.cv::Mat::at<double>(0, 2) = 0;
-        Rotationz.cv::Mat::at<double>(1, 2) = sin(psi);
-        Rotationz.cv::Mat::at<double>(1, 1) = cos(psi);
+        Rotationz.cv::Mat::at<double>(1, 2) = sin(_psi);
+        Rotationz.cv::Mat::at<double>(1, 1) = cos(_psi);
         Rotationz.cv::Mat::at<double>(1, 2) = 0;
         Rotationz.cv::Mat::at<double>(2, 2) = 0;
         Rotationz.cv::Mat::at<double>(2, 2) = 0;
@@ -195,30 +175,62 @@ namespace Vision
         Rotation = Rotationz * Rotationy * Rotationx;
 
 
+
+      }
+
+      /*Convert Lambert93 (EPSG:2154) points to WGS84 (lat, lon) coordinates*/
+
+      Lambert93Position
+      wgs84_to_lambert93 (double lat, double lon)
+      {
+
+        OGRSpatialReference wgs84_gcs;
+        OGRSpatialReference lambert93_pcs;
+
+        wgs84_gcs.importFromEPSG(4171); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
+        lambert93_pcs.importFromEPSG(2154);
+
+        auto poCT = OGRCreateCoordinateTransformation( &wgs84_gcs,&lambert93_pcs);
+        //ASSERT(poCT); // If the conversion cannot take place, poCT is null
+
+
+        Lambert93Position lambert93_ps ;
+
+        auto xx =180/M_PI *lon;
+        auto yy =180/M_PI *lat;
+
+
+        poCT->Transform(1, &xx, &yy); // Again Transform must succed
+
+        lambert93_ps.x = xx ;
+        lambert93_ps.y = yy ;
+
+
+        OGRCoordinateTransformation::DestroyCT(poCT);
+        return lambert93_ps;
       }
 
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
-      consume(const IMC::EstimatedState *e_state)
+      consume(const IMC::EstimatedState *e_state )
       {
-        double north;
-        double east;
-        int zone;
-        bool in_north_hem;
-        UTM utm;
-        //! Converts WGS84 to UTM
-        //! @param[in] lat latitude
-        //! @param[in] lon longitude
-        //! @param[out] north pointer to variable to store the northing of the UTM coordinate
-        //! @param[out] east pointer to variable to store the easting of the UTM coordinate
-        //! @param[out] zone pointer to variable to store the zone of the UTM coordinate
-        //! @param[out] in_north_hem pointer to variable to store the hemisphere
-        //! true if UTM coordinate is in the north hemisphere, false otherwise
 
-        utm.fromWGS84(e_state->lat, e_state->lon, &north, &east, &zone, &in_north_hem);
+        double m_lat = e_state->lat;
+        double m_lon = e_state->lon;
+        double m_height = e_state->height ;
 
-        set_Rot_Trans_Matrix(east + e_state->x, north + e_state->y, e_state->z, e_state->phi, e_state->theta,
-                             e_state->psi);
+        WGS84::displace(e_state->x, e_state->y , &m_lat, &m_lon);
+
+        Lambert93Position lambert93_ps = wgs84_to_lambert93(m_lat,m_lon) ;
+
+        position_x  = lambert93_ps.x  ;
+        position_y = lambert93_ps.y  ;
+        position_z = m_height;
+
+        phi = e_state->phi ;
+        theta = e_state->theta ;
+        psi = e_state->psi ;
+
 
       }
 
@@ -253,6 +265,7 @@ namespace Vision
       onResourceRelease(void)
       {
         delete morse_grabber;
+        delete Map_thrd ;
       }
 
       //! Main loop.
@@ -262,7 +275,7 @@ namespace Vision
         std::string path_DEM = "/home/welarfao/DEM.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
         std::string m_path_results = "/home/welarfao/results/";
 
-        Mapping Mp = Mapping(path_DEM, 0, 1);
+        Mapping Mp = Mapping(path_DEM);
         Mp.set_threshold(150);
 
         bool need_mapping = false;
@@ -270,12 +283,12 @@ namespace Vision
         bool need_Image = true;
         bool start_mapping = false;
 
-        float Rotation_limit = 0.1;
+        float Rotation_limit = 0.15;
 
         morse_grabber->start();
 
-        double x = 537254;
-        double y = 6212351;
+        //double x = 537254;
+        //double y = 6212351;
 
 
         while (!stopping()) {
@@ -283,18 +296,19 @@ namespace Vision
 
           waitForMessages(10.0);
           if (morse_grabber->is_idle() && !morse_grabber->is_image_available()) {
-            morse_grabber->capture(x, y, 2500, 0, 0, 0);
 
-            x += 300;
-            y += 300;
+            morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0 , /*theta*/ 0 ,/*psi*/ 0 );
+           // x += 300;
+            //y += 300;
           }
           TaggedImage t;
+
           if (morse_grabber->is_image_available()) {
             t = morse_grabber->get_image();
             Image_ready = true;
           }
 
-          sleep(1);
+
           //////////////////////////////////////////////////////////////////////////////
 
           if (Image_ready && need_Image) {
@@ -303,24 +317,26 @@ namespace Vision
 
             if (Image_Matrix.data != NULL) {
 
-              if (t.phi < Rotation_limit && t.phi > -Rotation_limit) {
+              if (t.psi <= Rotation_limit  && t.psi > - Rotation_limit  ) {
 
                 Intrinsic = (t.intrinsic_matrix).clone();
-                cv::transpose(Image_Matrix, Image_Matrix);
 
-                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
+                cv::transpose(Image_Matrix, Image_Matrix);//this transpose is added only for Morse_grabber images
+                // because the images were tansposed so as to be sent and we have to transpose them back
+
+                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi , t.theta , t.psi );
 
                 need_mapping = true;
                 Image_ready = false;
                 need_Image = false;
               } else {
-                cout << "Received Image  doesn't respect the vision limits : Vison out of land" << endl;
+                war( "Received Image  doesn't respect the vision limits : Vison out of land" );
                 Image_ready = false;
                 need_Image = true;
 
               }
             } else {
-              cout << "no IMage found " << endl;
+              war( "no IMage found " );
               Image_ready = false;
               need_Image = true;
 

@@ -133,8 +133,8 @@ https://docs.opencv.org/2.4.13.4/doc/tutorials/core/basic_geometric_drawing/basi
   int cpt = 0;
   double somme = 0;
 
-  for (int i = minrow; i <= maxrow; i++) {
-    for (int j = mincol; j <= maxcol; j++) {
+  for (int i = minrow; i < maxrow; i++) {
+    for (int j = mincol; j < maxcol; j++) {
 
       if (mask.at<uchar>(i, j) == 255) {
 

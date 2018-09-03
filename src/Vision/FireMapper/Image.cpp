@@ -81,8 +81,8 @@ Image::Image(cv::Mat Imat,cv::Mat Trans,cv::Mat Rot,cv::Mat Intr,vector<double> 
     /!\
 
      In our case we won't need to Transpose the Rotation Matrix ,its apparently already done in the parameters,
-     in case the results of this code were t satisfaying trying to put the Tranpose Mtrix of the rotation might give the wanted results
-     cv::transpose(Rotation, Rotation);*/
+     in case the results of this code were t satisfaying trying to put the Tranpose Mtrix of the rotation might give the wanted results*/
+     cv::transpose(Rotation, Rotation);
 
     cv::hconcat(Rotation, -1*Rotation*Translation, Extrinsic );
     cv::Mat affineRow = (cv::Mat_<double>(1,4)<<0.0, 0.0, 0.0, 1.0);
