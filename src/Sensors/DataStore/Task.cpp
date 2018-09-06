@@ -122,7 +122,15 @@ namespace Sensors
       void
       onEntityResolution(void)
       {
-        m_ctd_entity = m_ctx.entities.resolve(m_args.ctd_label);
+    	  try
+    	  {
+            m_ctd_entity = m_ctx.entities.resolve(m_args.ctd_label);
+    	  }
+    	  catch (std::exception& what)
+    	  {
+            war("Error resolving CTD entity");
+            m_ctd_entity = -1;
+          }
       }
 
       //! On resource initialization
@@ -228,6 +236,7 @@ namespace Sensors
         if (m_args.ctd_period > 0 && m_got_ctd && m_ctd_counter.overflow())
         {
           m_ctd.depth = m_state.depth;
+          debug("Generated new HistoricCTD.");
           dispatch(m_ctd);
           m_ctd_counter.reset();
           m_got_ctd = false;
@@ -251,6 +260,7 @@ namespace Sensors
           msg.roll = attitude[0];
           msg.pitch = attitude[1];
           msg.yaw = attitude[2];
+          debug("Generated new HistoricTelemetry.");
           dispatch(msg);
 
           m_tel_counter.reset();
