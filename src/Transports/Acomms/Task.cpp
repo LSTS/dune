@@ -115,7 +115,8 @@ namespace Transports
       void
       consume(const IMC::DevDataText* msg)
       {
-        Parsers::NMEAReader nmea(msg->value);
+        try {
+          Parsers::NMEAReader nmea(msg->value);
 
           // sink only cares about configuration DevDataText messages
           if (m_args.role == "Sink" && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
@@ -128,20 +129,27 @@ namespace Transports
           }
 
           if (std::strcmp(nmea.code(), "ACOMMS_SET") == 0)
+          {
+            nmea >> m_args.role;
+
             if (m_args.role != "Sink" && m_args.role != "Source")
             {
               war(DTR("Unrecognized role: \'%s\'"), m_args.role.c_str());
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
               return;
             }
-        {
-          nmea >> m_args.role;
-          inf("Changing role to %s", m_args.role.c_str());
-          setEntityState(IMC::EntityState::ESTA_NORMAL, m_args.role);
-          return;
-        }
 
-        echo(nmea);
+            inf("Changing role to %s", m_args.role.c_str());
+            setEntityState(IMC::EntityState::ESTA_NORMAL, m_args.role);
+            return;
+          }
+
+          echo(nmea);
+        }
+        catch (...) // InvalidSentence, ChecksumMismatch
+        {
+          war("Failed to parse NMEA message: %s", msg->value.c_str());
+        }
       }
 
       void
