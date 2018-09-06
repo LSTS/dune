@@ -65,6 +65,8 @@ namespace Sensors
     static const unsigned c_rot_fields = 3;
     //! Minimum number of fields of PSATHPR sentence.
     static const unsigned c_psathpr_fields = 7;
+    //! Minumum number of fields of GLL sentence
+    static const unsigned c_gll_fields = 6;
     //! Power on delay.
     static const double c_pwr_on_delay = 5.0;
 
@@ -463,6 +465,8 @@ namespace Sensors
         {
           interpretVTG(parts);
         }
+        else if (hasNMEAMessageCode(parts[0], "GLL"))
+          interpretGLL(parts);
         else if (parts[0] == "PSAT")
         {
           if (parts[1] == "HPR")
@@ -743,6 +747,39 @@ namespace Sensors
         {
           m_euler.phi = Angles::normalizeRadian(Angles::radians(m_euler.phi));
           m_has_euler = true;
+        }
+      }
+
+      void
+      interpretGLL(const std::vector<std::string>& parts)
+      {
+        if (parts.size() < c_gll_fields)
+        {
+          war(DTR("invalid GLL sentence"));
+          return;
+        }
+
+        bool validity = false;
+        if (readLatitude(parts[1], parts[2], m_fix.lat)
+            && readLongitude(parts[3], parts[4], m_fix.lon)
+            && readTime(parts[5], m_fix.utc_time))
+        {
+          m_fix.lat = Angles::radians(m_fix.lat);
+          m_fix.lon = Angles::radians(m_fix.lon);
+
+          if (parts[6] == "A")
+          {
+            m_fix.validity |= IMC::GpsFix::GFV_VALID_TIME;
+            m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+
+            validity = true;
+          }
+        }
+
+        if (!validity)
+        {
+          m_fix.validity &= ~IMC::GpsFix::GFV_VALID_TIME;
+          m_fix.validity &= ~IMC::GpsFix::GFV_VALID_POS;
         }
       }
 
