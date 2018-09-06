@@ -192,6 +192,9 @@ namespace Transports
         ac_msg.op = IMC::AcousticOperation::AOP_MSG;
         ac_msg.msg.set(msg);
         debug("%s", msg.value.c_str());
+
+        if (getDebugLevel() >= DEBUG_LEVEL_DEBUG)
+          dispatch(msg.clone());
       }
 
       //! Main loop.
