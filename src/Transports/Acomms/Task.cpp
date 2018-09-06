@@ -177,12 +177,10 @@ namespace Transports
         IMC::DevDataText heartbeat;
         Parsers::NMEAWriter sntc("ACOMMS_H");
 
-        sntc << m_msg_id
-             << m_node_name
+        sntc << m_node_name
              << m_args.role;
 
         heartbeat.value = sntc.sentence();
-
         dispatchAcoustically(heartbeat);
       }
 
