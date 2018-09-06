@@ -117,17 +117,17 @@ namespace Transports
       {
         Parsers::NMEAReader nmea(msg->value);
 
-        // sink only cares about configuration DevDataText messages
-        if (m_args.role == "Sink" && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
-          return;
+          // sink only cares about configuration DevDataText messages
+          if (m_args.role == "Sink" && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
+            return;
 
-        if (std::strcmp(nmea.code(), "ACOMMS_ECHO") != 0)
-        {
-          inf("Got echo: %s", msg->value.c_str());
-          return;
-        }
+          if (std::strcmp(nmea.code(), "ACOMMS_ECHO") == 0)
+          {
+            inf("Got echo: %s", msg->value.c_str());
+            return;
+          }
 
-        if (std::strcmp(nmea.code(), "ACOMMS_SET"))
+          if (std::strcmp(nmea.code(), "ACOMMS_SET") == 0)
         {
           nmea >> m_args.role;
           inf("Changing role to %s", m_args.role.c_str());
