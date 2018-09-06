@@ -94,7 +94,7 @@ namespace Transports
           return;
 
         // send message to Sink
-        Parsers::NMEAWriter sntc("$ACOMS_G");
+        Parsers::NMEAWriter sntc("ACOMMS_G");
         sntc << messageId()
              << m_node_name
              << msg->validity
@@ -156,7 +156,7 @@ namespace Transports
       echo(Parsers::NMEAReader& nmea)
       {
         IMC::DevDataText msg;
-        Parsers::NMEAWriter echo_str("$ACOMS_ECHO");
+        Parsers::NMEAWriter echo_str("ACOMMS_ECHO");
 
         echo_str << nmea.code();
 
@@ -175,7 +175,7 @@ namespace Transports
       dispatchHeartbeat(void)
       {
         IMC::DevDataText heartbeat;
-        Parsers::NMEAWriter sntc("$ACOMMS_H");
+        Parsers::NMEAWriter sntc("ACOMMS_H");
 
         sntc << m_msg_id
              << m_node_name
