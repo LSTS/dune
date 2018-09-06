@@ -251,6 +251,7 @@ namespace Transports
       IMC::HistoricData*
       pollSamples(int size)
       {
+
         size -= BASE_HISTORY_SIZE; // base fields from HistoricData
         IMC::HistoricData* ret = new IMC::HistoricData();
 

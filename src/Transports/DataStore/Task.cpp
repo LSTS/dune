@@ -56,6 +56,9 @@ namespace Transports
       //! Period, in seconds, between acoustic forwarding
       int acoustic_forward_period;
 
+      //! Maximum size for acoustic messages
+      int acoustic_mtu;
+
       //! Period, in seconds, between iridium uploads (0 == deactivated)
       int iridium_upload_period;
 
@@ -120,6 +123,11 @@ namespace Transports
         param("Acoustic Forward Period", m_args.acoustic_forward_period)
         .description("Acoustic forwarding period, in seconds")
         .defaultValue("300");
+
+        param("Acoustic MTU", m_args.acoustic_mtu)
+        .description("Maximum Size To Transmit Over Acoustic")
+        .defaultValue("250");
+
 
         param("Iridium Upload Period", m_args.iridium_upload_period)
         .description("Iridium upload period, in seconds. 0 Deactivates uploading via Iridium.")
@@ -205,6 +213,8 @@ namespace Transports
         if (m_priorities.find(msg->getName()) == m_priorities.end())
           return;
 
+        war("Storing message of type %s.", msg->getName());
+
         // only start storing messages after there is a known system position
         if (m_state.lat == 0)
           return;
@@ -235,7 +245,7 @@ namespace Transports
           sample->sample = msg->clone();
           // retrieve priority set in the configuration
           sample->priority = m_priorities[msg->getName()] + add_priority;
-          debug("Added message of type %s with size %d and priority %d to data store.",
+          inf("Added message of type %s with size %d and priority %d to data store.",
               msg->getName(), sample->serializationSize(), sample->priority);
           m_store.addSample(sample);
         }
@@ -328,16 +338,22 @@ namespace Transports
       void
       acousticRouting()
       {
-        inf("forwarding to gateway over acoustic");
+        IMC::HistoricData* data = m_store.pollSamples(m_args.acoustic_mtu);
+        int size = 0;
+        if (data != NULL)
+          size = (int)data->data.size();
+        else
+          war("Nothing to forward via acoustic modem.");
 
-        IMC::HistoricData* data = m_store.pollSamples(1000);
-        if (!m_router.routeOverAcoustic(m_args.acoustic_gateway, data))
+        if (size > 0 && !m_router.routeOverAcoustic(m_args.acoustic_gateway, data))
         {
-          war("not possible to forward data through %s acoustically at this time.", m_args.acoustic_gateway.c_str());
+          war("not possible to forward data through %s acoustically at this time.",
+              m_args.acoustic_gateway.c_str());
           m_store.addData(data);
         }
-        else
-          inf("Routed %u samples to %s using Acoustic Modem", (uint32_t) data->data.size(), m_args.acoustic_gateway.c_str());
+        else {
+          inf("Routed %d samples to %s using Acoustic Modem", size, m_args.acoustic_gateway.c_str());
+        }
 
         Memory::clear(data);
       }
@@ -346,7 +362,7 @@ namespace Transports
       wifiRouting()
       {
 
-        inf("forwarding to gateway over wifi");
+        debug("forwarding to gateway over wifi");
 
         IMC::HistoricData* data = m_store.pollSamples(32 * 1024);
         if (data == NULL)
@@ -402,11 +418,6 @@ namespace Transports
             m_iridium_upload_timer.reset();
             m_router.iridiumUpload(&m_store);
           }
-          else if (m_args.iridium_upload_period > 0)
-            ss << "  Iridium: " << m_iridium_upload_timer.getRemaining();
-          else
-            ss << "  Iridium: N/A";
-          debug("Upload tasks: %s", ss.str().c_str());
         }
       }
     };
