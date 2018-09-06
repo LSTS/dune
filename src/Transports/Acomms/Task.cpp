@@ -128,6 +128,12 @@ namespace Transports
           }
 
           if (std::strcmp(nmea.code(), "ACOMMS_SET") == 0)
+            if (m_args.role != "Sink" && m_args.role != "Source")
+            {
+              war(DTR("Unrecognized role: \'%s\'"), m_args.role.c_str());
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+              return;
+            }
         {
           nmea >> m_args.role;
           inf("Changing role to %s", m_args.role.c_str());
