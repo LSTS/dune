@@ -95,7 +95,7 @@ namespace Transports
 
         // send message to Sink
         Parsers::NMEAWriter sntc("$ACOMS_G");
-        sntc << m_msg_id
+        sntc << messageId()
              << m_node_name
              << msg->validity
              << msg->type
