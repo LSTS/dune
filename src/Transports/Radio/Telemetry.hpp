@@ -146,6 +146,7 @@ namespace Transports
        {
           m_task->debug("consume Telemetry tx");
           imc_TelemetryMsg_queue.push( * msg);
+          imc_time.push(Time::Clock::get());
        }
        bool
        imc_TelemetryMsg_tx()
@@ -155,6 +156,15 @@ namespace Transports
            IMC::TelemetryMsg msg;
            msg = imc_TelemetryMsg_queue.front();
            imc_TelemetryMsg_queue.pop();
+           double valid = imc_time.front()+ msg.ttl;
+
+           imc_time.pop();
+           if( (Time::Clock::get()) > valid )
+           {
+            m_task->inf("IMC Radio msg %d discarded due to ttl timeout", msg.req_id);
+            return false;
+           }
+
 
            if (msg.getDestination() !=  m_task->getSystemId())
              return false;
@@ -728,6 +738,7 @@ namespace Transports
       std::queue<XxMesg> m_tx_msg_queue;
       std::queue<XxMesg> m_rx_msg_queue;
       std::queue<IMC::TelemetryMsg>  imc_TelemetryMsg_queue;
+      std::queue<double> imc_time;
       TelemetryState m_tx_telemetry_State;
       TelemetryState m_rx_telemetry_State;
       uint8_t local_tx_sync;
