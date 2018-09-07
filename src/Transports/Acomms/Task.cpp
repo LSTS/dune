@@ -138,7 +138,7 @@ namespace Transports
           {
             nmea >> m_args.role;
 
-            if (m_args.role != "Sink" && m_args.role != "Source")
+            if (m_args.role != "Sink" && m_args.role != "Source" && m_args.role != "")
             {
               war(DTR("Unrecognized role: \'%s\'"), m_args.role.c_str());
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
