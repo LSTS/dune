@@ -1120,8 +1120,8 @@ namespace Control
           mavlink_msg_heartbeat_decode(msg, &hbt);
           IMC::ArmingState arming;
 
-          // check if it's a CAMERA heartbeat
-          if (static_cast<MAV_TYPE>(hbt.type) != 21)
+          // Check if it's a CAMERA heartbeat (Autopilot Heartbeat: #21 - HW || #22 - SITL)
+          if ((static_cast<MAV_TYPE>(hbt.type) != 21) && (static_cast<MAV_TYPE>(hbt.type) != 22))
           {
         	trace("Camera Heartbeat #%d", hbt.type);
         	return;
