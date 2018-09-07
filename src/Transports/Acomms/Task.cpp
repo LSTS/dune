@@ -87,10 +87,16 @@ namespace Transports
         return m_msg_id++;
       }
 
+      bool
+      isSourceNode()
+      {
+        return m_args.role == "Source";
+      }
+
       void
       consume(const IMC::GpsFix* msg)
       {
-        if (m_args.role == "Sink")
+        if (!isSourceNode())
           return;
 
         // send message to Sink
@@ -119,7 +125,7 @@ namespace Transports
           Parsers::NMEAReader nmea(msg->value);
 
           // sink only cares about configuration DevDataText messages
-          if (m_args.role == "Sink" && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
+          if (!isSourceNode() && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
             return;
 
           if (std::strcmp(nmea.code(), "ACOMMS_ECHO") == 0)
