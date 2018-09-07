@@ -121,6 +121,9 @@ namespace Transports
       void
       consume(const IMC::DevDataText* msg)
       {
+        if (!Utils::String::startsWith(msg->value, "$ACOMMS_"))
+          return;
+
         try {
           Parsers::NMEAReader nmea(msg->value);
 
