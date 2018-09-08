@@ -130,9 +130,6 @@ namespace Transports
         try {
           Parsers::NMEAReader nmea(msg->value);
 
-          // sink only cares about configuration DevDataText messages
-          if (!isSourceNode() && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
-            return;
           // peer discovery
           if (std::strcmp(nmea.code(), "ACOMMS_H") == 0)
           {
@@ -147,15 +144,16 @@ namespace Transports
               inf("Found new peer %s as %s", peer.c_str(), role.c_str());
               m_peers.insert(peer);
             }
+
+            return;
           }
 
           if (std::strcmp(nmea.code(), "ACOMMS_ECHO") == 0)
           {
-            inf("Got echo: %s", msg->value.c_str());
+            inf("[rx] %s", msg->value.c_str());
             return;
           }
-
-          if (std::strcmp(nmea.code(), "ACOMMS_SET") == 0)
+          else if (std::strcmp(nmea.code(), "ACOMMS_SET") == 0)
           {
             std::string target;
             nmea >> target;
@@ -225,7 +223,6 @@ namespace Transports
         IMC::AcousticOperation ac_msg;
         ac_msg.op = IMC::AcousticOperation::AOP_MSG;
         ac_msg.msg.set(msg);
-        debug("%s", msg.value.c_str());
         ac_msg.system = "broadcast";
         ac_msg.setSource(getSystemId());
         ac_msg.setSourceEntity(getEntityId());
