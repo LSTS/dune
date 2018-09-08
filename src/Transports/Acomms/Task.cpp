@@ -139,6 +139,13 @@ namespace Transports
 
           if (std::strcmp(nmea.code(), "ACOMMS_SET") == 0)
           {
+            std::string target;
+            nmea >> target;
+
+            // not for me
+            if (std::strcmp(target.c_str(), getSystemName()) != 0)
+              return;
+
             nmea >> m_args.role;
 
             if (m_args.role != "Sink" && m_args.role != "Source" && m_args.role != "")
