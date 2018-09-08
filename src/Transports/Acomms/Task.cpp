@@ -208,9 +208,16 @@ namespace Transports
         ac_msg.op = IMC::AcousticOperation::AOP_MSG;
         ac_msg.msg.set(msg);
         debug("%s", msg.value.c_str());
+        ac_msg.system = "broadcast";
+        ac_msg.setSource(getSystemId());
+        ac_msg.setSourceEntity(getEntityId());
+        ac_msg.setDestination(getSystemId());
+        debug("[tx] %s", msg.value.c_str());
 
         if (getDebugLevel() >= DEBUG_LEVEL_DEBUG)
           dispatch(msg.clone());
+
+        dispatch(ac_msg);
       }
 
       //! Main loop.
