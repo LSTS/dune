@@ -51,12 +51,15 @@ namespace Transports
       int m_msg_id;
       //! Heartbeat timer
       Time::Counter<float> m_hbeat_timer;
+      //! Other nodes in the network
+      std::set<std::string> m_peers;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_msg_id(0)
+        m_msg_id(0),
+        m_peers()
       {
         param("Role", m_args.role)
         .defaultValue("").
@@ -130,6 +133,21 @@ namespace Transports
           // sink only cares about configuration DevDataText messages
           if (!isSourceNode() && std::strcmp(nmea.code(), "ACOMMS_SET") != 0)
             return;
+          // peer discovery
+          if (std::strcmp(nmea.code(), "ACOMMS_H") == 0)
+          {
+            std::string peer;
+            std::string role;
+
+            nmea >> peer;
+            nmea >> role;
+
+            if (m_peers.find(peer) == m_peers.end())
+            {
+              inf("Found new peer %s as %s", peer.c_str(), role.c_str());
+              m_peers.insert(peer);
+            }
+          }
 
           if (std::strcmp(nmea.code(), "ACOMMS_ECHO") == 0)
           {
