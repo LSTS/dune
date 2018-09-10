@@ -105,7 +105,7 @@ namespace DUNE
       //! Construct a diagonal matrix using the values in data
       //! param[in] diag pointer to data to be copied to diagonal matrix
       //! param[in] n size of new matrix (n * n)
-      Matrix(double* diag, size_t n);
+      Matrix(const double* diag, size_t n);
 
       //! Destructor.
       //! Decrement the number of copies of a Matrix and frees the

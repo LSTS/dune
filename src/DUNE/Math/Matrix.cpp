@@ -151,7 +151,7 @@ namespace DUNE
       identity();
     }
 
-    Matrix::Matrix(double* diag, size_t n)
+    Matrix::Matrix(const double* diag, size_t n)
     {
       m_nrows = n;
       m_ncols = n;
