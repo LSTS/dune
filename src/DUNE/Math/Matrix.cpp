@@ -1938,7 +1938,7 @@ namespace DUNE
     }
 
     Matrix
-    skew(double data[3])
+    skew(const double data[3])
     {
       Matrix m(3, 3, 0.0);
       m(0, 1) = -data[2];

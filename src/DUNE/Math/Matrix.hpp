@@ -721,13 +721,6 @@ namespace DUNE
       inverse(const Matrix& a, const Matrix& b);
 
       //! This function returns a 3x3 skew symmetrical
-      //! matrix using an array with 3 elements.
-      //! @param[in] data array with 3 elements
-      //! @return skewed matrix
-      friend Matrix
-      skew(double data[3]);
-
-      //! This function returns a 3x3 skew symmetrical
       //! matrix using a matrix (3x1 or 1x3)
       //! @param[in] a row or column vector with 3 elements
       //! @return skewed matrix
@@ -851,6 +844,13 @@ namespace DUNE
       void
       split(void);
     };
+
+    //! This function returns a 3x3 skew symmetrical
+    //! matrix using an array with 3 elements.
+    //! @param[in] data array with 3 elements
+    //! @return skewed matrix
+    Matrix
+    skew(const double data[3]);
   }
 }
 
