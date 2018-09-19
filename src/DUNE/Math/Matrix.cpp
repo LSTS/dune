@@ -206,6 +206,42 @@ namespace DUNE
       *m_counter = 1;
     }
 
+    double*
+    Matrix::begin(void)
+    {
+      return m_data;
+    }
+
+    double*
+    Matrix::end(void)
+    {
+      return m_data + m_size;
+    }
+
+    const double*
+    Matrix::begin(void) const
+    {
+      return m_data;
+    }
+
+    const double*
+    Matrix::end(void) const
+    {
+      return m_data + m_size;
+    }
+
+    const double*
+    Matrix::cbegin(void) const
+    {
+      return m_data;
+    }
+
+    const double*
+    Matrix::cend(void) const
+    {
+      return m_data + m_size;
+    }
+
     int
     Matrix::rows(void) const
     {

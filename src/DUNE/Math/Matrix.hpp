@@ -112,6 +112,30 @@ namespace DUNE
       //! allocated memory if this number reaches zero.
       ~Matrix(void);
 
+      //! Pointer to first element.
+      double*
+      begin(void);
+
+      //! Pointer to element after last element.
+      double*
+      end(void);
+
+      //! Const pointer to first element.
+      const double*
+      begin(void) const;
+
+      //! Const pointer to element after last element.
+      const double*
+      end(void) const;
+
+      //! Const pointer to first element.
+      const double*
+      cbegin(void) const;
+
+      //! Const pointer to element after last element.
+      const double*
+      cend(void) const;
+
       //! Retrieve the number of rows of the matrix.
       //! @return number of rows of the matrix.
       int
