@@ -49,6 +49,8 @@ namespace Transports
 
     //! Default timer - security (m)
     static const int m_balance_per_default = 5;
+    //! Maximum of attempts to get the balance
+    static const int m_max_balance_attempts = 3;
 
     //! SMS struct.
     struct SMS
@@ -115,6 +117,9 @@ namespace Transports
       int m_balance_per;
 
       bool m_success_balance;
+
+      int m_balance_attempts;
+
       int m_rssi;
 
 
@@ -123,6 +128,7 @@ namespace Transports
         m_uart(NULL),
         m_driver(NULL),
         m_success_balance(false),
+        m_balance_attempts(0),
         m_rssi(0)
       {
         param("Serial Port - Device", m_args.uart_dev)
@@ -331,15 +337,17 @@ namespace Transports
           pollStatus();
           processQueue();
 
-          if(m_args.request_balance) {
+          if(m_args.request_balance && m_balance_attempts < m_max_balance_attempts) {
             if (m_balance_timer.overflow() || (!m_success_balance && m_rssi > 0)){
                 if(m_driver->getBalance(m_args.ussd_code, m_balance)) {
                     m_success_balance = true;
                     m_balance_timer.reset();
                     setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+                  m_balance_attempts = 0;
                 }
                 else {
                     m_success_balance = false;
+                    ++m_balance_attempts;
                 }
             }
           }
