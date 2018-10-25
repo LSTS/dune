@@ -51,31 +51,42 @@ main(void)
   std::string str = "f";
   test.boolean("encode(f) == 'Zg=='", Base64::encode(str) == "Zg==");
   test.boolean("decode(Zg==) == 'f'", Base64::decode(Base64::encode(str)) == "f");
+  test.boolean("validBase64(encode(f))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(f)", !Base64::validBase64(str));
 
   // String: fo - Zm8=
   str = "fo";
   test.boolean("encode(fo) == 'Zm8='", Base64::encode(str) == "Zm8=");
   test.boolean("decode(Zm8=) == 'fo'", Base64::decode(Base64::encode(str)) == "fo");
+  test.boolean("validBase64(encode(fo))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(fo)", !Base64::validBase64(str));
 
   // String: foo - Zm9v
   str = "foo";
   test.boolean("encode(foo) == 'Zm9v'", Base64::encode(str) == "Zm9v");
   test.boolean("decode(Zm9v) == 'foo'", Base64::decode(Base64::encode(str)) == "foo");
+  test.boolean("validBase64(encode(foo))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(foo)", !Base64::validBase64(str));
 
   // String: foob - Zm9vYg==
   str = "foob";
   test.boolean("encode(foob) == 'Zm9vYg=='", Base64::encode(str) == "Zm9vYg==");
   test.boolean("decode(Zm9vYg==) == 'foob'", Base64::decode(Base64::encode(str)) == "foob");
+  test.boolean("validBase64(encode(foob))", Base64::validBase64(Base64::encode(str)));
 
   // String: fooba - Zm9vYmE=
   str = "fooba";
   test.boolean("encode(fooba) == 'Zm9vYmE='", Base64::encode(str) == "Zm9vYmE=");
   test.boolean("decode(Zm9vYmE=) == 'fooba'", Base64::decode(Base64::encode(str)) == "fooba");
+  test.boolean("validBase64(encode(fooba))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(fooba)", !Base64::validBase64(str));
 
   // String: foobar - Zm9vYmFy
   str = "foobar";
   test.boolean("encode(foobar) == 'Zm9vYmFy'", Base64::encode(str) == "Zm9vYmFy");
   test.boolean("decode(Zm9vYmFy) == 'foobar'", Base64::decode(Base64::encode(str)) == "foobar");
+  test.boolean("validBase64(encode(foobar))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(foobar)", !Base64::validBase64(str));
 
   /* RFC 2045 Strings Test */
 
@@ -83,11 +94,15 @@ main(void)
   str = "*";
   test.boolean("encode(*) == 'Kg=='", Base64::encode(str) == "Kg==");
   test.boolean("decode(Kg==) == '*'", Base64::decode(Base64::encode(str)) == "*");
+  test.boolean("validBase64(encode(*))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(*)", !Base64::validBase64(str));
 
   // String: "Hello World!" - "SGVsbG8gV29ybGQh"
   str = "Hello World!";
   test.boolean("encode(Hello World!) == 'SGVsbG8gV29ybGQh'", Base64::encode(str) == "SGVsbG8gV29ybGQh");
-  test.boolean("decode(SGVsbG8gV29ybGQh) == 'Hello World!'", Base64::decode(Base64::encode(str)) == "Hello World!")
-;
+  test.boolean("decode(SGVsbG8gV29ybGQh) == 'Hello World!'", Base64::decode(Base64::encode(str)) == "Hello World!");
+  test.boolean("validBase64(encode(Hello World!))", Base64::validBase64(Base64::encode(str)));
+  test.boolean("!validBase64(Hello World!)", !Base64::validBase64(str));
+
   return 0;
 }
