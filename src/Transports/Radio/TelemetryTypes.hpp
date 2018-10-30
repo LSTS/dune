@@ -59,12 +59,12 @@ namespace Transports
     enum MsgState
     {
       MSG_NONE,
-    	MSG_QUEUE,
-    	MSG_TO_DRIVER,
+      MSG_QUEUE,
+      MSG_TO_DRIVER,
       MSG_IN_PARTS,
       MSG_IN_PARTS_ERR,
-    	WAITING_ACKN,
-    	MSG_SEND,
+      WAITING_ACKN,
+      MSG_TRANSMIT,
       MSG_RECIVING,
       MSG_RECIVED,
       MSG_PROCESSED,
