@@ -32,6 +32,13 @@ import sys
 import os.path
 import argparse
 
+# Task description.
+DESCRIPTION = [
+    '//! Insert short task description here.',
+    '//!',
+    '//! Insert explanation on task behaviour here.',
+    ]
+
 # Task body.
 BODY = [
     'struct Task: public DUNE::Tasks::Task',
@@ -84,6 +91,10 @@ class Task:
         self.add('#include <DUNE/DUNE.hpp>', '\n')
         for ns in nss:
             self.add('namespace ' + ns, '{')
+            if ns == nss[0]:
+                self.add(*DESCRIPTION)
+                line = ('//! @author ' + self._author)
+                self.add(line)
         self.add('using DUNE_NAMESPACES;', '\n')
         self.add(*BODY)
         for ns in self._nss:
