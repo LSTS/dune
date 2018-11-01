@@ -98,6 +98,8 @@ namespace Sensors
     static const int c_rdata_dat_size = 1000;
     // Return data footer size.
     static const int c_rdata_ftr_size = 1;
+    // Raw log file name
+    static const std::string c_file_name = "data.872";
 
     struct Task: public Tasks::Periodic
     {
@@ -113,10 +115,15 @@ namespace Sensors
       IMC::SonarData m_ping;
       // Configuration parameters.
       Arguments m_args;
+      // Dune context
+      Context& m_ctx;
+      // Raw log file
+      std::ofstream m_data_file;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_sock(NULL)
+        m_sock(NULL),
+        m_ctx(ctx)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -174,6 +181,8 @@ namespace Sensors
         m_ping.type = IMC::SonarData::ST_SIDESCAN;
         m_ping.bits_per_point = 8;
         m_ping.scale_factor = 1.0f;
+
+        bind<IMC::LoggingControl>(this);
       }
 
       void
@@ -319,8 +328,44 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::LoggingControl* msg)
+      {
+
+        if (!isActive())
+          return;
+
+        if (msg->getSource() != getSystemId())
+          return;
+
+        switch (msg->op)
+        {
+          case IMC::LoggingControl::COP_STARTED:
+          case IMC::LoggingControl::COP_CURRENT_NAME:
+
+            if(m_data_file.is_open())
+              m_data_file.close();
+
+            std::string data_path = m_ctx.dir_log.c_str() + m_ctx.dir_log.extension() + "/" + msg->name +"/" + c_file_name;
+            m_data_file.open(data_path.c_str(), std::ofstream::app | std::ios::binary);
+
+            spew("Openning raw log: %s", data_path.c_str());
+
+          }
+        }
+
+      void
+      logRawData()
+      {
+          for (std::vector<char>::iterator it = m_ping.data.begin() ; it != m_ping.data.end(); ++it)
+              m_data_file << *it;
+      }
+
+      void
       task(void)
       {
+
+        consumeMessages();
+
         if (!isActive())
           return;
 
@@ -328,6 +373,7 @@ namespace Sensors
         {
           pingBoth();
           dispatch(m_ping);
+          logRawData();
         }
         catch (std::exception& e)
         {
