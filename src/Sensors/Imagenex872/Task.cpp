@@ -119,11 +119,14 @@ namespace Sensors
       Context& m_ctx;
       // Raw log file
       std::ofstream m_data_file;
+      //Raw log path
+      std::string m_data_path;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_sock(NULL),
-        m_ctx(ctx)
+        m_ctx(ctx),
+        m_data_path("")
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -331,9 +334,6 @@ namespace Sensors
       consume(const IMC::LoggingControl* msg)
       {
 
-        if (!isActive())
-          return;
-
         if (msg->getSource() != getSystemId())
           return;
 
@@ -345,10 +345,12 @@ namespace Sensors
             if(m_data_file.is_open())
               m_data_file.close();
 
-            std::string data_path = m_ctx.dir_log.c_str() + m_ctx.dir_log.extension() + "/" + msg->name +"/" + c_file_name;
-            m_data_file.open(data_path.c_str(), std::ofstream::app | std::ios::binary);
+            m_data_path = m_ctx.dir_log.c_str() + m_ctx.dir_log.extension() + "/" + msg->name +"/" + c_file_name;
 
-            spew("Openning raw log: %s", data_path.c_str());
+            if(isActive())
+                m_data_file.open(m_data_path.c_str(), std::ofstream::app | std::ios::binary);
+
+            spew("Openning raw log: %s", m_data_path.c_str());
 
           }
         }
@@ -373,6 +375,10 @@ namespace Sensors
         {
           pingBoth();
           dispatch(m_ping);
+
+          if(!m_data_file.is_open())
+            m_data_file.open(m_data_path.c_str(), std::ofstream::app | std::ios::binary);
+
           logRawData();
         }
         catch (std::exception& e)
