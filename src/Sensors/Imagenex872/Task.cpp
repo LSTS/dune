@@ -214,6 +214,9 @@ namespace Sensors
       onResourceRelease(void)
       {
         Memory::clear(m_sock);
+
+        if(m_data_file.is_open())
+          m_data_file.close();
       }
 
       void
