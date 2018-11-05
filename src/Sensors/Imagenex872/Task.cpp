@@ -358,12 +358,16 @@ namespace Sensors
           }
         }
 
+
       void
       logRawData()
       {
-          for (std::vector<char>::iterator it = m_ping.data.begin() ; it != m_ping.data.end(); ++it)
-              m_data_file << *it;
+        char data[m_ping.data.size()];
+        std::copy(m_ping.data.begin(), m_ping.data.end(), data);
+
+        m_data_file.write(data, m_ping.data.size());
       }
+
 
       void
       task(void)
