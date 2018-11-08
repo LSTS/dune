@@ -47,11 +47,6 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-    //! Default timer - security (m)
-    static const int m_balance_per_default = 5;
-    //! Maximum of attempts to get the balance
-    static const int m_max_balance_attempts = 3;
-
     //! SMS struct.
     struct SMS
     {
@@ -91,8 +86,6 @@ namespace Transports
       unsigned ussd_code;
       //! Request balance.
       bool request_balance;
-      //! Balance periodicity (m).
-      unsigned balance_per;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -111,25 +104,11 @@ namespace Transports
       Arguments m_args;
       //! Balance of card
       std::string m_balance;
-      //! Balance timer count.
-      Time::Counter<int> m_balance_timer;
-      //! Balance periodicity (s).
-      int m_balance_per;
-
-      bool m_success_balance;
-
-      int m_balance_attempts;
-
-      int m_rssi;
-
 
         Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
-        m_driver(NULL),
-        m_success_balance(false),
-        m_balance_attempts(0),
-        m_rssi(0)
+        m_driver(NULL)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -171,9 +150,6 @@ namespace Transports
         .defaultValue("true")
         .description("Enable Balance Request");
 
-        param("Balance Periodicity", m_args.balance_per)
-                .defaultValue("60")
-                .description("Balance Periodicity");
 
         bind<IMC::Sms>(this);
         bind<IMC::IoEvent>(this);
@@ -187,13 +163,6 @@ namespace Transports
 
         if (paramChanged(m_args.rssi_per))
           m_rssi_timer.setTop(m_args.rssi_per);
-
-        if (paramChanged(m_args.balance_per)) {
-          if(m_args.balance_per > m_balance_per_default)
-            m_balance_timer.setTop(m_args.balance_per * 60);
-          else
-            m_balance_timer.setTop(m_balance_per_default * 60);
-        }
       }
 
 
@@ -220,13 +189,6 @@ namespace Transports
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL , getMessage(Status::CODE_IDLE).c_str());
-          if (m_args.request_balance) {
-              if (m_driver->getBalance(m_args.ussd_code, m_balance)) {
-                  m_success_balance = true;
-                  m_balance_timer.reset();
-                  setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-                 }
-             }
       }
 
       void
@@ -311,7 +273,7 @@ namespace Transports
           if (m_rssi_timer.overflow())
           {
             m_rssi_timer.reset();
-            m_rssi = m_driver->getRSSI();
+            m_driver->getRSSI();
 
           }
 
@@ -337,19 +299,11 @@ namespace Transports
           pollStatus();
           processQueue();
 
-          if(m_args.request_balance && m_balance_attempts < m_max_balance_attempts) {
-            if (m_balance_timer.overflow() || (!m_success_balance && m_rssi > 0)){
-                if(m_driver->getBalance(m_args.ussd_code, m_balance)) {
-                    m_success_balance = true;
-                    m_balance_timer.reset();
-                    setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-                  m_balance_attempts = 0;
-                }
-                else {
-                    m_success_balance = false;
-                    ++m_balance_attempts;
-                }
-            }
+          if(m_args.request_balance) {
+              if(m_driver->getBalance(m_args.ussd_code, m_balance))
+                setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+
+              m_args.request_balance = false;
           }
         }
       }
