@@ -180,7 +180,7 @@ namespace Transports
         .description("USSD code");
 
         param("Enable Balance Request", m_args.request_balance)
-        .defaultValue("true")
+        .defaultValue("false")
         .description("Enable Balance Request");
 
         param("Balance Periodicity", m_args.balance_per)
