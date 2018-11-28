@@ -64,12 +64,11 @@ private:
   bool Map_with_vector(Image IM);
 
 
-
 public:
 
   Mapping();
 
-  Mapping(const std::string &path_DEM, bool use_pixelvector = false, bool Image_segmentation = false,
+  Mapping(const std::string& path_DEM, bool use_pixelvector = false, bool Image_segmentation = false,
           double threshold = 200);
 
   Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM);

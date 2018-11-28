@@ -33,38 +33,45 @@ Raster_Tile::Raster_Tile(string path)
   Map->Mat_height();
   no_data = Map->get_noData();
 
-  fireMap = cv::Mat::zeros(Map->nRows , Map->nCols , CV_8UC1);
-  fireMap_bayes = cv::Mat::zeros(Map->nRows,Map->nCols,CV_8UC1);
-  occupancy_map = cv::Mat::zeros(Map->nRows,Map->nCols,CV_32FC1);//this matrix has been created to store the probabilities we had about a pixel because once using
+  fireMap = cv::Mat::zeros(Map->nRows, Map->nCols, CV_8UC1);
+  fireMap_bayes = cv::Mat::zeros(Map->nRows, Map->nCols, CV_8UC1);
+  occupancy_map = cv::Mat::zeros(Map->nRows, Map->nCols,
+                                 CV_32FC1);//this matrix has been created to store the probabilities we had about a pixel because once using
   // the occupancy grid algo to fill the firemap we take in consideration the past acquisition.
 
   FireMap_modified = false;
 
 }
 
-void  Raster_Tile::set_fireMap(int row,int col,uchar value,bool use_occupancygrid){
+void Raster_Tile::set_fireMap(int row, int col, uchar value, bool use_occupancygrid)
+{
 
   FireMap_modified = true;
-  fireMap.cv::Mat::at<uchar>(row,col) = (uchar)value ;
+  fireMap.cv::Mat::at<uchar>(row, col) = (uchar) value;
 
-  if(use_occupancygrid){
+  if (use_occupancygrid)
+  {
 
     // this link explains the logic used in here https://www.youtube.com/watch?v=kh35PqEFQxE&t=240s
-    double instant_fire_probablity = value/255.0;
-    double logOdd = log(  s_model.sensor_model_HavingFire(instant_fire_probablity)/ s_model.sensor_model_notHavingFire(instant_fire_probablity)  );
-    occupancy_map.cv::Mat::at<double>(row,col) += logOdd  ;
-    double new_fireprobability =  (1-1/( exp(occupancy_map.cv::Mat::at<double>(row,col))+1  ) ) ;
+    double instant_fire_probablity = value / 255.0;
+    double logOdd = log(s_model.sensor_model_HavingFire(instant_fire_probablity) /
+                        s_model.sensor_model_notHavingFire(instant_fire_probablity));
+    occupancy_map.cv::Mat::at<double>(row, col) += logOdd;
+    double new_fireprobability = (1 - 1 / (exp(occupancy_map.cv::Mat::at<double>(row, col)) + 1));
 
 
-    if(   new_fireprobability <  0 ){
+    if (new_fireprobability < 0)
+    {
 
-      fireMap_bayes.cv::Mat::at<uchar>(row,col) = (uchar) 255*0 ;
+      fireMap_bayes.cv::Mat::at<uchar>(row, col) = (uchar) 255 * 0;
 
-    }else if(  new_fireprobability  >  1 ){
+    } else if (new_fireprobability > 1)
+    {
 
-      fireMap_bayes.cv::Mat::at<uchar>(row,col) = (uchar) 255*1 ;
-    }else{
-      fireMap_bayes.cv::Mat::at<uchar>(row,col) = static_cast<uchar>(255*new_fireprobability);
+      fireMap_bayes.cv::Mat::at<uchar>(row, col) = (uchar) 255 * 1;
+    } else
+    {
+      fireMap_bayes.cv::Mat::at<uchar>(row, col) = static_cast<uchar>(255 * new_fireprobability);
 
     }
   }
@@ -72,27 +79,30 @@ void  Raster_Tile::set_fireMap(int row,int col,uchar value,bool use_occupancygri
 }
 
 
-void Raster_Tile::set_sensor_model(sensor_model sen_mod ){
+void Raster_Tile::set_sensor_model(sensor_model sen_mod)
+{
 
-  s_model = sen_mod ;
+  s_model = sen_mod;
 
 }
+
 cv::Mat Raster_Tile::get_fireMap()
 {
 
   FireMap_modified = false;
 
-  return fireMap;
+  return fireMap.clone();
 
 }
-cv::Mat Raster_Tile::get_fireMapbayes(){
+
+cv::Mat Raster_Tile::get_fireMapbayes()
+{
 
   FireMap_modified = false;
 
   return fireMap_bayes.clone();
 
 }
-
 
 
 double Raster_Tile::get_max_west()
@@ -128,12 +138,14 @@ void Raster_Tile::get_DEM_info()
 {
 
 
-  if (Map->get_projection() != "") {
+  if (Map->get_projection() != "")
+  {
 
     string line;
     std::stringstream ss;
     ss.str(Map->get_projection());
-    while (std::getline(ss, line, ',')) {
+    while (std::getline(ss, line, ','))
+    {
 
       cout << line << endl;
 
@@ -145,7 +157,7 @@ void Raster_Tile::get_DEM_info()
 void Raster_Tile::Put_firemap_inGdal(string gdal_result_path)
 {
 
-  Map->Put_in_Raster( fireMap, gdal_result_path);
+  Map->Put_in_Raster(fireMap, gdal_result_path);
 
 }
 
@@ -155,9 +167,11 @@ bool Raster_Tile::Test_point(size_t x, size_t y)
 
   bool testing = false;
 
-  if (x >= Map->get_max_west() && x < Map->get_max_east()) {
+  if (x >= Map->get_max_west() && x < Map->get_max_east())
+  {
 
-    if (y > Map->get_max_south() && y <= Map->get_max_north()) {
+    if (y > Map->get_max_south() && y <= Map->get_max_north())
+    {
 
       testing = true;
     }
@@ -239,37 +253,43 @@ Pixel_Range Raster_Tile::get_corners(double x, double y)
 
   Pixel px = Map->get_pixel(x, y);
 
-  if ((int) (px.col - ncol / f) < 0) {
+  if ((int) (px.col - ncol / f) < 0)
+  {
 
     pr.col_left = 0;
     pr.col_right = (int) (px.col + ncol / f);
 
 
-  } else if ((int) (px.col + ncol / f) > ncol - 1) {
+  } else if ((int) (px.col + ncol / f) > ncol - 1)
+  {
 
     pr.col_left = (int) (px.col - ncol / f);
     pr.col_right = ncol - 1;
 
 
-  } else {
+  } else
+  {
 
     pr.col_right = (int) (px.col + ncol / f);
     pr.col_left = (int) (px.col - ncol / f);
 
   }
 
-  if ((int) (px.row - nrow / f) < 0) {
+  if ((int) (px.row - nrow / f) < 0)
+  {
 
     pr.row_up = 0;
     pr.row_down = (int) (px.row + nrow / f);
 
-  } else if ((int) (px.row + nrow / f) > nrow) {
+  } else if ((int) (px.row + nrow / f) > nrow)
+  {
 
     pr.row_up = (int) (px.row - nrow / f);
     pr.row_down = nrow - 1;
 
 
-  } else {
+  } else
+  {
 
     pr.row_up = (int) (px.row - nrow / f);
     pr.row_down = (int) (px.row + nrow / f);
@@ -302,35 +322,35 @@ that we know the height of its corners
 
 */
 
-Pixel_Data Raster_Tile::All_data(int r,int c){
+Pixel_Data Raster_Tile::All_data(int r, int c)
+{
 
   Pixel_Data pt;
 
-  Point2D pt_upleft = Map->get_World_coord( c+1/2,r+1/2 );
-  Point2D pt_upright = Map->get_World_coord( c+1+1/2,r+1/2 );
-  Point2D pt_downleft = Map->get_World_coord( c+1/2,r+1+1/2 );
-  Point2D pt_downright = Map->get_World_coord( c+1+1/2,r+1+1/2);
+  Point2D pt_upleft = Map->get_World_coord(c + 1 / 2, r + 1 / 2);
+  Point2D pt_upright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 / 2);
+  Point2D pt_downleft = Map->get_World_coord(c + 1 / 2, r + 1 + 1 / 2);
+  Point2D pt_downright = Map->get_World_coord(c + 1 + 1 / 2, r + 1 + 1 / 2);
 
   pt.x_upleft = pt_upleft.x;
-  pt.y_upleft= pt_upleft.y;
-  pt.z_upleft= Map->get_height(c,r) ;
+  pt.y_upleft = pt_upleft.y;
+  pt.z_upleft = Map->get_height(c, r);
 
 
-  pt.x_upright= pt_upright.x;
-  pt.y_upright= pt_upright.y;
-  pt.z_upright= Map->get_height(c+1,r) ;
+  pt.x_upright = pt_upright.x;
+  pt.y_upright = pt_upright.y;
+  pt.z_upright = Map->get_height(c + 1, r);
 
-  pt.x_downleft= pt_downleft.x;
-  pt.y_downleft= pt_downleft.y;
-  pt.z_downleft= Map->get_height(c,r+1) ;
+  pt.x_downleft = pt_downleft.x;
+  pt.y_downleft = pt_downleft.y;
+  pt.z_downleft = Map->get_height(c, r + 1);
 
-  pt.x_downright= pt_downright.x;
-  pt.y_downright= pt_downright.y;
-  pt.z_downright= Map->get_height(c+1,r+1) ;
+  pt.x_downright = pt_downright.x;
+  pt.y_downright = pt_downright.y;
+  pt.z_downright = Map->get_height(c + 1, r + 1);
 
   pt.col = c;
   pt.row = r;
-
 
 
   return pt;
@@ -342,23 +362,24 @@ Pixel_Data Raster_Tile::All_data(int r,int c){
 
 
 
-void Raster_Tile::ListePoints_Data(){
+void Raster_Tile::ListePoints_Data()
+{
 
   Pixel_Data pt;
 
-  for(int r = 0; r < Map->nRows -1 ;r++){
+  for (int r = 0; r < Map->nRows - 1; r++)
+  {
 
-    for(int c = 0  ; c < Map->nCols -1 ; c++ ){
+    for (int c = 0; c < Map->nCols - 1; c++)
+    {
 
-      pt = All_data(r,c);
+      pt = All_data(r, c);
 
       Liste_Points.push_back(pt);
     }
   }
 
 }
-
-
 
 
 Raster_ALL Raster_Tile::get_ListePoints()

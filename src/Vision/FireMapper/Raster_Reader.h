@@ -53,7 +53,7 @@ struct Pixel
 class Raster_Reader
 {
 private:
-  GDALDataset *gDataSet;
+  GDALDataset* gDataSet;
   int nBands;
   double gTransform[6];
   double originX, originY, pWidth, pHeight;

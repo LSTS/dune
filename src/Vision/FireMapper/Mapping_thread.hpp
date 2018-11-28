@@ -49,14 +49,14 @@ namespace Vision
     //! Mutex lock/unlock
     static Concurrency::Mutex m_mapping_mutex;
 
-    class Mapping_thread : public Concurrency::Thread
+    class Mapping_thread: public Concurrency::Thread
     {
     public:
 
       //! Name of thread
       std::string m_name_thread;
 
-      Mapping_thread(DUNE::Tasks::Task *task, std::string m_name) : m_task(task)
+      Mapping_thread(DUNE::Tasks::Task* task, std::string m_name) : m_task(task)
       {
         m_name_thread = m_name;
         isReady = false;
@@ -73,7 +73,7 @@ namespace Vision
 
       bool
       Map_Image(cv::Mat Image_matrix, cv::Mat Translation, cv::Mat Rototation, cv::Mat Intrinsic,
-                vector<double> R_Distortion, vector<double> T_Distortion, Mapping &Mp)
+                vector<double> R_Distortion, vector<double> T_Distortion, Mapping& Mp)
       {
         if (!m_is_free)
           return false;
@@ -108,23 +108,29 @@ namespace Vision
       void
       run(void)
       {
-        while (!isStopping()) {
-          if (isReady) {
-            if (m_Image_Matrix.data != NULL) {
+        while (!isStopping())
+        {
+          if (isReady)
+          {
+            if (m_Image_Matrix.data != NULL)
+            {
               Map_Image();
-              if(!IMage_with_DEM_match){
+              if (!IMage_with_DEM_match)
+              {
                 m_task->war("%s, NO Dem has matched this IMage\n", m_name_thread.c_str());
 
               }
 
               Mappingfinished = true;
-            } else {
+            } else
+            {
               m_task->inf("%s: error no Image found", m_name_thread.c_str());
             }
 
             isReady = false;
             m_is_free = true;
-          } else {
+          } else
+          {
             Delay::waitMsec(20);
           }
 
@@ -134,7 +140,7 @@ namespace Vision
 
     private:
       //! Parent task.
-      DUNE::Tasks::Task *m_task;
+      DUNE::Tasks::Task* m_task;
       //Mapping
       Mapping m_Map;
       //! Flag to control capture of frames
@@ -142,7 +148,7 @@ namespace Vision
       //! Opencv Buffer for Image Matrix
       cv::Mat m_Image_Matrix;
       ////Image to MAP
-      Image *m_Img_to_map;
+      Image* m_Img_to_map;
       //! flag to control state of thread
       bool m_is_free;
       // resulted maps
@@ -155,13 +161,15 @@ namespace Vision
       bool
       Map_Image(void)
       {
-        try {
+        try
+        {
           m_mapping_mutex.lock();
           IMage_with_DEM_match = m_Map.Map(*m_Img_to_map);
           m_mapping_mutex.unlock();
           return true;
         }
-        catch (std::runtime_error &ex) {
+        catch (std::runtime_error& ex)
+        {
           m_mapping_mutex.unlock();
           m_task->war("%s, Exception Mapping image: %s\n", m_name_thread.c_str(), ex.what());
           return false;

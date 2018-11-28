@@ -42,7 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <gdal/ogr_spatialref.h>
 
 
-
 namespace Vision
 {
   namespace FireMapper
@@ -59,26 +58,26 @@ namespace Vision
     };
     struct Lambert93Position
     {
-      double x ;
-      double y ;
+      double x;
+      double y;
     };
 
-    struct Task : public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
-      double position_x,position_y,position_z;
-      double phi,theta,psi;
+      double position_x, position_y, position_z;
+      double phi, theta, psi;
 
       cv::Mat Image_Matrix;
 
       vector<double> Radial_distortion;
       vector<double> Tangential_distortion;
 
-      Mapping_thread *Map_thrd;
-      MorseImageGrabber *morse_grabber;
+      Mapping_thread* Map_thrd;
+      MorseImageGrabber* morse_grabber;
 
       Arguments m_args;
 
@@ -86,16 +85,17 @@ namespace Vision
       //! @param[in] name task name.
       //! @param[in] ctx context.
 
-      Task(const std::string &name, Tasks::Context &ctx) :
-              DUNE::Tasks::Task(name, ctx)
+      Task(const std::string& name, Tasks::Context& ctx) :
+        DUNE::Tasks::Task(name, ctx)
       {
+
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Main System ID", m_args.system_id)
-                .defaultValue("x8-06")
-                .description("Main CPU IMC address.");
+          .defaultValue("x8-06")
+          .description("Main CPU IMC address.");
 
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
@@ -176,13 +176,12 @@ namespace Vision
         Rotation = Rotationz * Rotationy * Rotationx;
 
 
-
       }
 
       /*Convert Lambert93 (EPSG:2154) points to WGS84 (lat, lon) coordinates*/
 
       Lambert93Position
-      wgs84_to_lambert93 (double lat, double lon)
+      wgs84_to_lambert93(double lat, double lon)
       {
 
         OGRSpatialReference wgs84_gcs;
@@ -191,20 +190,20 @@ namespace Vision
         wgs84_gcs.importFromEPSG(4171); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
         lambert93_pcs.importFromEPSG(2154);
 
-        auto poCT = OGRCreateCoordinateTransformation( &wgs84_gcs,&lambert93_pcs);
+        auto poCT = OGRCreateCoordinateTransformation(&wgs84_gcs, &lambert93_pcs);
         //ASSERT(poCT); // If the conversion cannot take place, poCT is null
 
 
-        Lambert93Position lambert93_ps ;
+        Lambert93Position lambert93_ps;
 
-        auto xx =180/M_PI *lon;
-        auto yy =180/M_PI *lat;
+        auto xx = 180 / M_PI * lon;
+        auto yy = 180 / M_PI * lat;
 
 
         poCT->Transform(1, &xx, &yy); // Again Transform must succed
 
-        lambert93_ps.x = xx ;
-        lambert93_ps.y = yy ;
+        lambert93_ps.x = xx;
+        lambert93_ps.y = yy;
 
 
         OGRCoordinateTransformation::DestroyCT(poCT);
@@ -213,26 +212,23 @@ namespace Vision
 
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
-      consume(const IMC::EstimatedState *e_state )
+      consume(const IMC::EstimatedState* e_state)
       {
-
         double m_lat = e_state->lat;
         double m_lon = e_state->lon;
-        double m_height = e_state->height ;
+        double m_height = e_state->height;
 
-        WGS84::displace(e_state->x, e_state->y , &m_lat, &m_lon);
+        WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
 
-        Lambert93Position lambert93_ps = wgs84_to_lambert93(m_lat,m_lon) ;
+        Lambert93Position lambert93_ps = wgs84_to_lambert93(m_lat, m_lon);
 
-        position_x  = lambert93_ps.x  ;
-        position_y = lambert93_ps.y  ;
+        position_x = lambert93_ps.x;
+        position_y = lambert93_ps.y;
         position_z = m_height;
 
-        phi = e_state->phi ;
-        theta = e_state->theta ;
-        psi = e_state->psi ;
-
-
+        phi = e_state->phi;
+        theta = e_state->theta;
+        psi = e_state->psi;
       }
 
 
@@ -273,10 +269,10 @@ namespace Vision
       void
       onMain(void)
       {
-        std::string path_DEM = "/home/welarfao/DEM.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
-        std::string m_path_results = "/home/welarfao/results/";
+        std::string path_DEM = "/home/rbailonr/mapping_folder/dems.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
+        std::string m_path_results = "/home/rbailonr/mapping_folder/";
 
-        Mapping Mp = Mapping(path_DEM,0,1);
+        Mapping Mp = Mapping(path_DEM);
         Mp.set_threshold(200);
 
         bool need_mapping = false;
@@ -292,19 +288,22 @@ namespace Vision
         //double y = 6212351;
 
 
-        while (!stopping()) {
+        while (!stopping())
+        {
           ////////////////////////////////////////////////////////////////////////////
 
           waitForMessages(10.0);
-          if (morse_grabber->is_idle() && !morse_grabber->is_image_available()) {
+          if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+          {
 
-            morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0 , /*theta*/ 0 ,/*psi*/ 0 );
-           // x += 300;
+            morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
+            // x += 300;
             //y += 300;
           }
           TaggedImage t;
 
-          if (morse_grabber->is_image_available()) {
+          if (morse_grabber->is_image_available())
+          {
             t = morse_grabber->get_image();
             Image_ready = true;
           }
@@ -312,32 +311,37 @@ namespace Vision
 
           //////////////////////////////////////////////////////////////////////////////
 
-          if (Image_ready && need_Image) {
+          if (Image_ready && need_Image)
+          {
 
             Image_Matrix = (t.image).clone();
 
-            if (Image_Matrix.data != NULL) {
+            if (Image_Matrix.data != NULL)
+            {
 
-              if (t.psi <= Rotation_limit  && t.psi > - Rotation_limit  ) {
+              if (t.psi <= Rotation_limit && t.psi > -Rotation_limit)
+              {
 
                 Intrinsic = (t.intrinsic_matrix).clone();
 
                 cv::transpose(Image_Matrix, Image_Matrix);//this transpose is added only for Morse_grabber images
                 // because the images were tansposed so as to be sent and we have to transpose them back
 
-                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi , t.theta , t.psi );
+                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
 
                 need_mapping = true;
                 Image_ready = false;
                 need_Image = false;
-              } else {
-                war( "Received Image  doesn't respect the vision limits : Vison out of land" );
+              } else
+              {
+                war("Received Image  doesn't respect the vision limits : Vison out of land");
                 Image_ready = false;
                 need_Image = true;
 
               }
-            } else {
-              war( "no IMage found " );
+            } else
+            {
+              war("no IMage found ");
               Image_ready = false;
               need_Image = true;
 
@@ -346,7 +350,8 @@ namespace Vision
           }
           /////////////////////////////////////////////////////////////////
 
-          if (need_mapping) {
+          if (need_mapping)
+          {
             start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
                                                 Radial_distortion, Tangential_distortion, Mp);
 
@@ -355,7 +360,8 @@ namespace Vision
           }
           ////////////////////////////////////////////////////////////////////
 
-          if (Map_thrd->Mapping_finished() && start_mapping) {
+          if (Map_thrd->Mapping_finished() && start_mapping)
+          {
             Map_thrd->save_results(m_path_results);
             start_mapping = false;
             need_Image = true;

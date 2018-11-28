@@ -36,11 +36,12 @@ passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update
 
   /// get a DEM file
 
-  gDataSet = (GDALDataset *) GDALOpen(path.c_str(), GA_ReadOnly);
+  gDataSet = (GDALDataset*) GDALOpen(path.c_str(), GA_ReadOnly);
 
   ///check if data is present
 
-  if (gDataSet == NULL) {
+  if (gDataSet == NULL)
+  {
 
     cerr << "No data found";
     //break ;
@@ -62,7 +63,8 @@ void Raster_Reader::geoTransform()
 {
 
 
-  if (gDataSet->GetGeoTransform(gTransform) == CE_None) {
+  if (gDataSet->GetGeoTransform(gTransform) == CE_None)
+  {
 
     //position of the top left x
     originX = gTransform[0];
@@ -73,7 +75,8 @@ void Raster_Reader::geoTransform()
     //the pixel height//north-south pixel resolution (negative value)
     pHeight = gTransform[5];
 
-  } else {
+  } else
+  {
 
     cerr << "DEM error : no transform can be fetched";
   }
@@ -95,13 +98,13 @@ string Raster_Reader::get_projection()
 void Raster_Reader::Mat_height()
 {
 
-  GDALRasterBand *poBand;
+  GDALRasterBand* poBand;
   poBand = gDataSet->GetRasterBand(1);
   float maxH = 0;
   float minH = 10000;
 
 
-  float *Buffer;
+  float* Buffer;
 
   int nXSize = poBand->GetXSize();
   //buffer to read row:creates a free space in the memory with the size we order
@@ -109,17 +112,20 @@ void Raster_Reader::Mat_height()
 
   //read row data and store in vector
 
-  for (int i = 0; i < nRows; i++) {
+  for (int i = 0; i < nRows; i++)
+  {
 
-    Buffer = (float *) CPLMalloc(sizeof(float) * nXSize);
+    Buffer = (float*) CPLMalloc(sizeof(float) * nXSize);
     // read a row
     poBand->RasterIO(GF_Read, 0, i, nXSize, 1, Buffer, nXSize, 1, GDT_Float32, 0, 0);
 
-    for (int j = 0; j < nCols; ++j) {
+    for (int j = 0; j < nCols; ++j)
+    {
 
       RasterData.push_back(Buffer[j]);
       maxH = max(maxH, Buffer[j]);
-      if (Buffer[j] != poBand->GetNoDataValue()) {
+      if (Buffer[j] != poBand->GetNoDataValue())
+      {
         minH = min(minH, Buffer[j]);
       }
 
@@ -140,27 +146,29 @@ void Raster_Reader::Put_in_Raster(cv::Mat& FP, string gdal_result_path)
   cv::imwrite("/home/welarfao/results/Map begore mapping.jpg", firemap);
 
 
-  GDALDriver *poDriver;
+  GDALDriver* poDriver;
   GDALRasterBand* pBand;
-  const char *pszFormat = "GTiff";
+  const char* pszFormat = "GTiff";
   poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
 
-  char **papszOptions = NULL;
+  char** papszOptions = NULL;
 
-  GDALDataset *poDstDS;
+  GDALDataset* poDstDS;
   poDstDS = poDriver->Create(gdal_result_path.c_str(), nCols, nRows, 1, GDT_Float32, papszOptions);
 
   poDstDS->SetGeoTransform(gTransform);
-  poDstDS->SetProjection( gDataSet->GetProjectionRef() );
+  poDstDS->SetProjection(gDataSet->GetProjectionRef());
 
   pBand = poDstDS->GetRasterBand(1);
- //poDstDS->GetRasterBand(1)->SetNoDataValue(0); // with this option only the perimeter of the fire is shown
+  //poDstDS->GetRasterBand(1)->SetNoDataValue(0); // with this option only the perimeter of the fire is shown
 
-  float *Buffer;
-  Buffer = (float *) CPLMalloc(sizeof(float) * nCols);
+  float* Buffer;
+  Buffer = (float*) CPLMalloc(sizeof(float) * nCols);
 
-  for (int i = 0; i < nRows; i++) {
-    for (int j = 0; j < nCols; ++j) {
+  for (int i = 0; i < nRows; i++)
+  {
+    for (int j = 0; j < nCols; ++j)
+    {
 
       Buffer[j] = firemap.at<uchar>(i, j);
     }
@@ -168,7 +176,7 @@ void Raster_Reader::Put_in_Raster(cv::Mat& FP, string gdal_result_path)
     pBand->RasterIO(GF_Write, 0, i, nCols, 1, Buffer, nCols, 1, GDT_Float32, 0, 0);
   }
 
-  GDALClose( (GDALDatasetH) poDstDS );
+  GDALClose((GDALDatasetH) poDstDS);
 
 
   CPLFree(Buffer);
@@ -285,7 +293,8 @@ so to get to the row number y we multiply it with number of cols ,and then we ad
 
 Raster_Reader::~Raster_Reader()
 {
-  if (gDataSet != NULL) {
+  if (gDataSet != NULL)
+  {
     GDALClose(gDataSet);
 
   }

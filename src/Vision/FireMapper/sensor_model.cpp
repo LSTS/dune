@@ -2,17 +2,19 @@
 
 sensor_model::sensor_model()
 {
-    //ctor
+  //ctor
 }
 
-double sensor_model::sensor_model_HavingFire(double x){
+double sensor_model::sensor_model_HavingFire(double x)
+{
 
-    return ( pow(x,2)+ 0.2  )/1.3;
-  }
+  return (pow(x, 2) + 0.2) / 1.3;
+}
 
-double sensor_model::sensor_model_notHavingFire(double x){
+double sensor_model::sensor_model_notHavingFire(double x)
+{
 
-    return -log10(x+0.5)+0.4 ;/// (-pow(x,2)+2)/3 ;
+  return -log10(x + 0.5) + 0.4;/// (-pow(x,2)+2)/3 ;
 }
 
 
