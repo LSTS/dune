@@ -265,109 +265,159 @@ namespace Vision
         //delete Map_thrd ;
       }
 
+      template<typename T>
+      void serialize(const T& obj, std::vector<char>& buffer)
+      {
+        char const* obj_begin = reinterpret_cast<char const*>(&obj);
+        std::copy(obj_begin, obj_begin + sizeof(T), std::back_inserter(buffer));
+      }
+
+      void dispatch_firemap()
+      {
+        IMC::DevDataBinary msg = IMC::DevDataBinary();
+        msg.setTimeStamp();
+        msg.setSource(static_cast<uint16_t>(getSystemId()));
+        msg.setSourceEntity(static_cast<uint8_t>(getEntityId()));
+
+        // Magic number
+        msg.value.emplace_back(0xF1);
+        msg.value.emplace_back(0x3E);
+        // x size
+        uint64_t x_size = 1;
+        serialize<uint64_t>(x_size, msg.value);
+
+        // y size
+        uint64_t y_size = 0x1;
+        serialize<uint64_t>(y_size, msg.value);
+
+        // x offset
+        double x_offset = 2.;
+        serialize<double>(x_offset, msg.value);
+
+        // y offset
+        double y_offset = 2.;
+        serialize<double>(y_offset, msg.value);
+
+        // cell width
+        double cell_width = 3.;
+        serialize<double>(cell_width, msg.value);
+
+        // raster data
+        double data = 123456789.;
+        serialize<double>(data, msg.value);
+
+        this->dispatch(&msg);
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
-        std::string path_DEM = "/home/rbailonr/mapping_folder/dems.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
-        std::string m_path_results = "/home/rbailonr/mapping_folder/";
+//        std::string path_DEM = "/home/rbailonr/mapping_folder/dems.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
+//        std::string m_path_results = "/home/rbailonr/mapping_folder/";
+//
+//        Mapping Mp = Mapping(path_DEM);
+//        Mp.set_threshold(200);
+//
+//        bool need_mapping = false;
+//        bool Image_ready = false;
+//        bool need_Image = true;
+//        bool start_mapping = false;
+//
+//        float Rotation_limit = 0.15;
 
-        Mapping Mp = Mapping(path_DEM);
-        Mp.set_threshold(200);
-
-        bool need_mapping = false;
-        bool Image_ready = false;
-        bool need_Image = true;
-        bool start_mapping = false;
-
-        float Rotation_limit = 0.15;
-
-        morse_grabber->start();
+//        morse_grabber->start();
 
         //double x = 537254;
         //double y = 6212351;
 
-
         while (!stopping())
         {
-          ////////////////////////////////////////////////////////////////////////////
-
-          waitForMessages(10.0);
-          if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
-          {
-
-            morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
-            // x += 300;
-            //y += 300;
-          }
-          TaggedImage t;
-
-          if (morse_grabber->is_image_available())
-          {
-            t = morse_grabber->get_image();
-            Image_ready = true;
-          }
-
-
-          //////////////////////////////////////////////////////////////////////////////
-
-          if (Image_ready && need_Image)
-          {
-
-            Image_Matrix = (t.image).clone();
-
-            if (Image_Matrix.data != NULL)
-            {
-
-              if (t.psi <= Rotation_limit && t.psi > -Rotation_limit)
-              {
-
-                Intrinsic = (t.intrinsic_matrix).clone();
-
-                cv::transpose(Image_Matrix, Image_Matrix);//this transpose is added only for Morse_grabber images
-                // because the images were tansposed so as to be sent and we have to transpose them back
-
-                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
-
-                need_mapping = true;
-                Image_ready = false;
-                need_Image = false;
-              } else
-              {
-                war("Received Image  doesn't respect the vision limits : Vison out of land");
-                Image_ready = false;
-                need_Image = true;
-
-              }
-            } else
-            {
-              war("no IMage found ");
-              Image_ready = false;
-              need_Image = true;
-
-            }
-
-          }
-          /////////////////////////////////////////////////////////////////
-
-          if (need_mapping)
-          {
-            start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
-                                                Radial_distortion, Tangential_distortion, Mp);
-
-            need_mapping = false;
-
-          }
-          ////////////////////////////////////////////////////////////////////
-
-          if (Map_thrd->Mapping_finished() && start_mapping)
-          {
-            Map_thrd->save_results(m_path_results);
-            start_mapping = false;
-            need_Image = true;
-          }
-
+          waitForMessages(1.0);
+          dispatch_firemap();
         }
+
+
+//        while (!stopping())
+//        {
+//          ////////////////////////////////////////////////////////////////////////////
+//
+//          waitForMessages(10.0);
+//          if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+//          {
+//
+//            morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
+//            // x += 300;
+//            //y += 300;
+//          }
+//          TaggedImage t;
+//
+//          if (morse_grabber->is_image_available())
+//          {
+//            t = morse_grabber->get_image();
+//            Image_ready = true;
+//          }
+//
+//
+//          //////////////////////////////////////////////////////////////////////////////
+//
+//          if (Image_ready && need_Image)
+//          {
+//
+//            Image_Matrix = (t.image).clone();
+//
+//            if (Image_Matrix.data != NULL)
+//            {
+//
+//              if (t.psi <= Rotation_limit && t.psi > -Rotation_limit)
+//              {
+//
+//                Intrinsic = (t.intrinsic_matrix).clone();
+//
+//                cv::transpose(Image_Matrix, Image_Matrix);//this transpose is added only for Morse_grabber images
+//                // because the images were tansposed so as to be sent and we have to transpose them back
+//
+//                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
+//
+//                need_mapping = true;
+//                Image_ready = false;
+//                need_Image = false;
+//              } else
+//              {
+//                war("Received Image  doesn't respect the vision limits : Vison out of land");
+//                Image_ready = false;
+//                need_Image = true;
+//
+//              }
+//            } else
+//            {
+//              war("no IMage found ");
+//              Image_ready = false;
+//              need_Image = true;
+//
+//            }
+//
+//          }
+//          /////////////////////////////////////////////////////////////////
+//
+//          if (need_mapping)
+//          {
+//            start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
+//                                                Radial_distortion, Tangential_distortion, Mp);
+//
+//            need_mapping = false;
+//
+//          }
+//          ////////////////////////////////////////////////////////////////////
+//
+//          if (Map_thrd->Mapping_finished() && start_mapping)
+//          {
+//            Map_thrd->save_results(m_path_results);
+//            start_mapping = false;
+//            need_Image = true;
+//          }
+//
+//        }
       }
 
     };
