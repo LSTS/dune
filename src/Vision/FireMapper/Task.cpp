@@ -54,20 +54,38 @@ namespace Vision
     {
       //! Main System ID
       std::string system_id;
-
+      std::string dem_dir;
+      uint8_t threshold;
+      size_t projected_coordinate_system_epsg;
+      size_t geodetic_coordinate_system_epsg;
     };
-    struct Lambert93Position
+
+    struct PositionProjected
     {
       double x;
       double y;
     };
 
+    enum FireMappingState
+    {
+      None = 0,
+      FetchImage = 1,
+      MapImage = 2,
+      DispatchFireMap = 3
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
-      //! Task Arguments
+
+      FireMappingState fm_state;
+
+      std::string m_path_results = "/home/rbailonr/mapping_folder/";
+      bool save_result = true;
+
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
+      // Position in the projected coordinate system
       double position_x, position_y, position_z;
       double phi, theta, psi;
 
@@ -77,6 +95,7 @@ namespace Vision
       vector<double> Tangential_distortion;
 
       Mapping_thread* Map_thrd;
+      Mapping mapper;
       MorseImageGrabber* morse_grabber;
 
       Arguments m_args;
@@ -88,6 +107,7 @@ namespace Vision
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx)
       {
+//        setFrequency(1);
 
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -97,14 +117,30 @@ namespace Vision
           .defaultValue("x8-06")
           .description("Main CPU IMC address.");
 
+        param("DEM Directory", m_args.dem_dir)
+          .defaultValue("./")
+          .description("Directory where Digital Elevation Maps are located.");
+        // TODO: Coordinate System is retrieved from these DEM
+
+        param("Threshold", m_args.threshold)
+          .defaultValue("200")
+          .description("Threshold.");
+
+        param("Projected Coordinate System", m_args.projected_coordinate_system_epsg)
+          .defaultValue("3035") // LAEA
+          .description("EPSG of the projected coordinate system used for the fire maps.");
+
+        param("Geodetic Coordinate System", m_args.geodetic_coordinate_system_epsg)
+          .defaultValue("4258") // ETRS89
+          .description("EPSG of the corresponding geodetic coordinate system for the projected one.");
+
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
         Rotation = cv::Mat(3, 3, CV_64FC1);
 
 
-        Map_thrd = new Mapping_thread(this, "thrd_Mapper");
-        Map_thrd->start();
-
+        // TODO: Replace this information with the obtanied from the real IR camera
+        //       or take this from a parameter. Can parameters be 2d matrices?
         Radial_distortion.push_back(-0.04646865617107581);
         Radial_distortion.push_back(0.051288490946210602);
         Radial_distortion.push_back(-0.025988438162638149);
@@ -123,21 +159,18 @@ namespace Vision
       }
 
       void
-      set_Rot_Trans_Matrix(float xx, float yy, float zz, float _phi, float _theta, float _psi)
+      set_Rot_Trans_Matrix(double xx, double yy, double zz, double _phi, double _theta, double _psi)
       {
-
         cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
         cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
 
-        //! TRanslation
-
+        // Translation
         Translation.at<double>(0) = xx;
         Translation.at<double>(1) = yy;
         Translation.at<double>(2) = zz;
 
-        //! Rotation over x axis phi.
-
+        // Rotation over x axis phi.
         Rotationx.cv::Mat::at<double>(0, 0) = 1;
         Rotationx.cv::Mat::at<double>(0, 1) = 0;
         Rotationx.cv::Mat::at<double>(0, 2) = 0;
@@ -148,8 +181,7 @@ namespace Vision
         Rotationx.cv::Mat::at<double>(2, 1) = sin(_phi);
         Rotationx.cv::Mat::at<double>(2, 2) = cos(_phi);
 
-        //! Rotation over y axis theta.
-
+        // Rotation over y axis theta.
         Rotationy.cv::Mat::at<double>(0, 0) = cos(_theta);
         Rotationy.cv::Mat::at<double>(0, 1) = 0;
         Rotationy.cv::Mat::at<double>(0, 2) = sin(_theta);
@@ -160,8 +192,7 @@ namespace Vision
         Rotationy.cv::Mat::at<double>(2, 1) = 0;
         Rotationy.cv::Mat::at<double>(2, 2) = cos(_theta);
 
-        //! Rotation over z axis psi.
-
+        // Rotation over z axis psi.
         Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
         Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
         Rotationz.cv::Mat::at<double>(0, 2) = 0;
@@ -172,42 +203,32 @@ namespace Vision
         Rotationz.cv::Mat::at<double>(2, 2) = 0;
         Rotationz.cv::Mat::at<double>(2, 2) = 1;
 
-
         Rotation = Rotationz * Rotationy * Rotationx;
-
-
       }
 
-      /*Convert Lambert93 (EPSG:2154) points to WGS84 (lat, lon) coordinates*/
-
-      Lambert93Position
-      wgs84_to_lambert93(double lat, double lon)
+      PositionProjected
+      transform_coordinates(double lat, double lon, int from_epsg, int to_epsg)
       {
-
         OGRSpatialReference wgs84_gcs;
-        OGRSpatialReference lambert93_pcs;
+        OGRSpatialReference pcs;
 
-        wgs84_gcs.importFromEPSG(4171); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
-        lambert93_pcs.importFromEPSG(2154);
+        wgs84_gcs.importFromEPSG(from_epsg); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
+        pcs.importFromEPSG(to_epsg);
 
-        auto poCT = OGRCreateCoordinateTransformation(&wgs84_gcs, &lambert93_pcs);
-        //ASSERT(poCT); // If the conversion cannot take place, poCT is null
+        auto poCT = OGRCreateCoordinateTransformation(&wgs84_gcs, &pcs);
 
-
-        Lambert93Position lambert93_ps;
+        PositionProjected proj_coords;
 
         auto xx = 180 / M_PI * lon;
         auto yy = 180 / M_PI * lat;
 
+        poCT->Transform(1, &xx, &yy); // Again Transform must succeed
 
-        poCT->Transform(1, &xx, &yy); // Again Transform must succed
-
-        lambert93_ps.x = xx;
-        lambert93_ps.y = yy;
-
+        proj_coords.x = xx;
+        proj_coords.y = yy;
 
         OGRCoordinateTransformation::DestroyCT(poCT);
-        return lambert93_ps;
+        return proj_coords;
       }
 
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
@@ -220,10 +241,12 @@ namespace Vision
 
         WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
 
-        Lambert93Position lambert93_ps = wgs84_to_lambert93(m_lat, m_lon);
+        PositionProjected point = transform_coordinates(m_lat, m_lon,
+                                                        m_args.geodetic_coordinate_system_epsg,
+                                                        m_args.projected_coordinate_system_epsg);
 
-        position_x = lambert93_ps.x;
-        position_y = lambert93_ps.y;
+        position_x = point.x;
+        position_y = point.y;
         position_z = m_height;
 
         phi = e_state->phi;
@@ -255,6 +278,12 @@ namespace Vision
       onResourceInitialization(void)
       {
         morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+
+        Map_thrd = new Mapping_thread(this, "thrd_Mapper");
+
+        std::string path_DEM = "/home/rbailonr/firers_data_porto/mapping_folder/dems.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
+        mapper = Mapping(path_DEM);
+        mapper.set_threshold(m_args.threshold);
       }
 
       //! Release resources.
@@ -262,7 +291,7 @@ namespace Vision
       onResourceRelease(void)
       {
         delete morse_grabber;
-        //delete Map_thrd ;
+        delete Map_thrd;
       }
 
       template<typename T>
@@ -313,113 +342,136 @@ namespace Vision
       void
       onMain(void)
       {
-//        std::string path_DEM = "/home/rbailonr/mapping_folder/dems.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
-//        std::string m_path_results = "/home/rbailonr/mapping_folder/";
-//
-//        Mapping Mp = Mapping(path_DEM);
-//        Mp.set_threshold(200);
-//
-//        bool need_mapping = false;
-//        bool Image_ready = false;
-//        bool need_Image = true;
-//        bool start_mapping = false;
-//
-//        float Rotation_limit = 0.15;
+        bool need_mapping = false;
+        bool Image_ready = false;
+        bool need_Image = true;
+        bool start_mapping = false;
 
-//        morse_grabber->start();
+        float Rotation_limit = 0.15;
 
-        //double x = 537254;
-        //double y = 6212351;
+        Map_thrd->start();
+        morse_grabber->start();
 
+        TaggedImage t;
+
+        // This Task works as an state machine:
+        // FireMappingState::FetchImage -> MapImage -> DispatchFireMap
+
+        // When FireMappingState::FetchImage is active, an image is requested to the morse_grabber.
+        // If the request succeeds the task moves to FireMappingState::MapImage or else to an error state
+
+        // When FireMappingState::MapImage is active, the image is mapped into the firemap.
+        // If the actions succeeds the task moves to FireMappingState::DispatchFireMap
+        // or else to FireMappingState::MapImage
         while (!stopping())
         {
           waitForMessages(1.0);
-          dispatch_firemap();
+          if (isActive())
+          {
+
+            fm_state = FireMappingState::None;
+          } else
+          {
+            if (fm_state == FireMappingState::None)
+            {
+              inf("FireMappingState::None");
+              fm_state = FireMappingState::FetchImage;
+
+            } else if (fm_state == FireMappingState::FetchImage)
+            {
+              inf("FireMappingState::FetchImage");
+
+              // If morse graber fails, restart it
+              if (morse_grabber->error())
+              {
+                err("MorseImageGrabber error");
+                delete morse_grabber;
+                morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+                morse_grabber->start();
+              }
+                // If the morse grabber is free to do work...
+              else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+              {
+                morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
+              }
+                // If morse grabber work is finished...
+              else if (morse_grabber->is_image_available())
+              {
+                t = morse_grabber->get_image();
+                cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
+                // because the images were tansposed so as to be sent and we have to transpose them back
+                fm_state = FireMappingState::MapImage;
+              }
+
+            } else if (fm_state == FireMappingState::MapImage)
+            {
+              inf("FireMappingState::MapImage");
+              Image_Matrix = (t.image).clone();
+
+              // TODO: Handle Mapping errors
+
+              if (Map_thrd->mapping_finished())
+              {
+
+                fm_state = FireMappingState::DispatchFireMap;
+              } else if (Map_thrd->is_idle())
+              {
+                // If the image has some content
+                if (Image_Matrix.data != NULL)
+                {
+                  if (abs(t.phi) <= Rotation_limit)
+                  {
+                    Intrinsic = (t.intrinsic_matrix).clone();
+
+                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
+
+                    // FIXME: Restore threaded mapping
+//                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
+//                                                        Radial_distortion, Tangential_distortion, mapper);
+
+                    Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
+                                          Tangential_distortion);
+                    bool Image_with_DEM_match = mapper.Map(*im);
+                    mapper.Save_Show_FireM(m_path_results);
+
+                    if (Image_with_DEM_match)
+                    {
+                      inf("Image was mapped");
+
+                    } else
+                    {
+                      inf("Image out of bounds");
+                    }
+                    delete im;
+                    fm_state = FireMappingState::DispatchFireMap;
+
+                  } else
+                  {
+                    war("Roll limit exceded. The image is discarded.");
+                    fm_state = FireMappingState::FetchImage;
+                  }
+                } else
+                {
+                  war("Empty image.");
+                  fm_state = FireMappingState::FetchImage;
+
+                }
+              } else
+              {
+                inf("Still working on mapping");
+              }
+            } else if (fm_state == FireMappingState::DispatchFireMap)
+            {
+              inf("FireMappingState::DispatchFireMap");
+              mapper.Save_Show_FireM(m_path_results);
+              dispatch_firemap();
+              fm_state = FireMappingState::FetchImage;
+            }
+          }
+
+          Delay::waitMsec(500);
         }
-
-
-//        while (!stopping())
-//        {
-//          ////////////////////////////////////////////////////////////////////////////
-//
-//          waitForMessages(10.0);
-//          if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
-//          {
-//
-//            morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
-//            // x += 300;
-//            //y += 300;
-//          }
-//          TaggedImage t;
-//
-//          if (morse_grabber->is_image_available())
-//          {
-//            t = morse_grabber->get_image();
-//            Image_ready = true;
-//          }
-//
-//
-//          //////////////////////////////////////////////////////////////////////////////
-//
-//          if (Image_ready && need_Image)
-//          {
-//
-//            Image_Matrix = (t.image).clone();
-//
-//            if (Image_Matrix.data != NULL)
-//            {
-//
-//              if (t.psi <= Rotation_limit && t.psi > -Rotation_limit)
-//              {
-//
-//                Intrinsic = (t.intrinsic_matrix).clone();
-//
-//                cv::transpose(Image_Matrix, Image_Matrix);//this transpose is added only for Morse_grabber images
-//                // because the images were tansposed so as to be sent and we have to transpose them back
-//
-//                set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
-//
-//                need_mapping = true;
-//                Image_ready = false;
-//                need_Image = false;
-//              } else
-//              {
-//                war("Received Image  doesn't respect the vision limits : Vison out of land");
-//                Image_ready = false;
-//                need_Image = true;
-//
-//              }
-//            } else
-//            {
-//              war("no IMage found ");
-//              Image_ready = false;
-//              need_Image = true;
-//
-//            }
-//
-//          }
-//          /////////////////////////////////////////////////////////////////
-//
-//          if (need_mapping)
-//          {
-//            start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
-//                                                Radial_distortion, Tangential_distortion, Mp);
-//
-//            need_mapping = false;
-//
-//          }
-//          ////////////////////////////////////////////////////////////////////
-//
-//          if (Map_thrd->Mapping_finished() && start_mapping)
-//          {
-//            Map_thrd->save_results(m_path_results);
-//            start_mapping = false;
-//            need_Image = true;
-//          }
-//
-//        }
       }
-
     };
   }
 }

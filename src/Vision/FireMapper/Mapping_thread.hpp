@@ -46,8 +46,6 @@ namespace Vision
 {
   namespace FireMapper
   {
-    //! Mutex lock/unlock
-    static Concurrency::Mutex m_mapping_mutex;
 
     class Mapping_thread: public Concurrency::Thread
     {
@@ -59,76 +57,79 @@ namespace Vision
       Mapping_thread(DUNE::Tasks::Task* task, std::string m_name) : m_task(task)
       {
         m_name_thread = m_name;
-        isReady = false;
-        m_is_free = true;
-        Mappingfinished = true;
-
+        m_error = false;
+        m_is_idle = true;
+        m_start_mapping_flag = false;
       }
-
-      //! Destructor.
-      ~Mapping_thread(void)
-      {
-      }
-
 
       bool
       Map_Image(cv::Mat Image_matrix, cv::Mat Translation, cv::Mat Rototation, cv::Mat Intrinsic,
                 vector<double> R_Distortion, vector<double> T_Distortion, Mapping& Mp)
       {
-        if (!m_is_free)
+        if (!m_is_idle)
           return false;
 
-        m_is_free = false;
+        m_is_idle = false;
 
         m_Img_to_map = new Image(Image_matrix, Translation, Rototation, Intrinsic, R_Distortion, T_Distortion);
         m_Image_Matrix = Image_matrix;
         m_Map = Mp;
-        Mappingfinished = false;
-        IMage_with_DEM_match = false;
 
-        isReady = true;
+        m_error = false;
+        m_start_mapping_flag = true;
+
         return true;
       }
 
-
-      bool
-      Mapping_finished()
+      bool error()
       {
-        return Mappingfinished;
+        return m_error;
       }
 
-
-      void
-      save_results(std::string m_path_file)
+      bool is_idle()
       {
-        m_Map.Save_Show_FireM(m_path_file);
+        return m_is_idle;
       }
 
+      //! True if an mapping procedure has just finished
+      bool mapping_finished() {
+        bool result = m_end_mapping_flag;
+        if (m_end_mapping_flag) {
+          m_end_mapping_flag = false;
+        }
+        return result;
+      }
 
       void
       run(void)
       {
         while (!isStopping())
         {
-          if (isReady)
+          if (m_start_mapping_flag)
           {
+            m_start_mapping_flag = false;
+            m_end_mapping_flag = false;
+            m_is_idle = false;
+
             if (m_Image_Matrix.data != NULL)
             {
-              Map_Image();
-              if (!IMage_with_DEM_match)
+              bool mapping_result = Map_Image();
+
+              if (!mapping_result)
               {
-                m_task->war("%s, NO Dem has matched this IMage\n", m_name_thread.c_str());
+                m_task->war("%s: Image out of DEM bounds.", m_name_thread.c_str());
+                m_error = true;
 
               }
 
-              Mappingfinished = true;
             } else
             {
-              m_task->inf("%s: error no Image found", m_name_thread.c_str());
+              m_task->err("%s: Empty image", m_name_thread.c_str());
+              m_error = true;
             }
 
-            isReady = false;
-            m_is_free = true;
+            m_is_idle = true;
+            m_end_mapping_flag = true;
           } else
           {
             Delay::waitMsec(20);
@@ -143,35 +144,30 @@ namespace Vision
       DUNE::Tasks::Task* m_task;
       //Mapping
       Mapping m_Map;
-      //! Flag to control capture of frames
-      bool isReady;
+      //! Flag to start mapping
+      bool m_start_mapping_flag;
+      bool m_end_mapping_flag;
+      //! Error flag
+      bool m_error;
       //! Opencv Buffer for Image Matrix
       cv::Mat m_Image_Matrix;
       ////Image to MAP
       Image* m_Img_to_map;
       //! flag to control state of thread
-      bool m_is_free;
+      bool m_is_idle;
       // resulted maps
       vector<cv::Mat> Maps;
-      //flag Mapping_finished
-      bool Mappingfinished;
-      bool IMage_with_DEM_match;
-
 
       bool
       Map_Image(void)
       {
         try
         {
-          m_mapping_mutex.lock();
-          IMage_with_DEM_match = m_Map.Map(*m_Img_to_map);
-          m_mapping_mutex.unlock();
-          return true;
+          return m_Map.Map(*m_Img_to_map);
         }
         catch (std::runtime_error& ex)
         {
-          m_mapping_mutex.unlock();
-          m_task->war("%s, Exception Mapping image: %s\n", m_name_thread.c_str(), ex.what());
+          m_task->war("%s: Exception Mapping image: %s\n", m_name_thread.c_str(), ex.what());
           return false;
         }
       }
