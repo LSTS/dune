@@ -25,11 +25,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #ifndef RASTER_TILE_H
 #define RASTER_TILE_H
 
+#include <cmath>
 #include <fstream>
+#include <limits>
+
 #include <opencv2/opencv.hpp>
+
 #include <Vision/FireMapper/Raster_Reader.h>
 #include <Vision/FireMapper/sensor_model.h>
-#include <cmath>
 
 using namespace std;
 
@@ -82,6 +85,7 @@ private:
   cv::Mat fireMap;
   cv::Mat fireMap_bayes;
   cv::Mat occupancy_map;
+  cv::Mat fireMap_time;
   bool FireMap_modified;
   sensor_model s_model;
 
@@ -109,11 +113,15 @@ public:
 
   void set_fireMap(int row, int col, uchar value, bool use_occupancygrid);
 
+  void set_fireMap_time(int row, int col, double value);
+
   void set_sensor_model(sensor_model sen_mod);
 
   cv::Mat get_fireMap();
 
   cv::Mat get_fireMapbayes();
+
+  cv::Mat get_fireMap_time();
 
   bool Test_fireMap_Modified();
 
@@ -134,26 +142,14 @@ public:
   void Put_firemap_inGdal(string gdal_result_path);
 
 
-  static vector<Raster_Tile> get_allMaps(string folder)
+  static vector<Raster_Tile> get_allMaps(const std::vector<std::string>& files)
   {
-
     vector<Raster_Tile> Carte;
 
-    ifstream fichier(folder.c_str(), ios::in);  // we open the file containing
-
-    if (fichier)  // si l'ouverture a fonctionné
-    {
-      string path;
-      while (getline(fichier, path))  // tant que l'on peut mettre la ligne dans "contenu"
-      {
-        Raster_Tile RAST = Raster_Tile(path);
-        Carte.push_back(RAST);
-      };
-      fichier.close();
-    } else
-    {
-      cerr << "Impossible d'ouvrir le fichier des DEM !" << endl;
-    };
+    for (const auto& f: files){
+        Raster_Tile RAST = Raster_Tile(f);
+        Carte.emplace_back(RAST);
+      }
 
     return Carte;
 

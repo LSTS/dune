@@ -39,6 +39,9 @@ Raster_Tile::Raster_Tile(string path)
                                  CV_32FC1);//this matrix has been created to store the probabilities we had about a pixel because once using
   // the occupancy grid algo to fill the firemap we take in consideration the past acquisition.
 
+  // Burning time map
+  fireMap_time = cv::Mat::zeros(Map->nRows, Map->nCols, CV_64F) * std::numeric_limits<double>::infinity();
+
   FireMap_modified = false;
 
 }
@@ -76,6 +79,12 @@ void Raster_Tile::set_fireMap(int row, int col, uchar value, bool use_occupancyg
     }
   }
 
+}
+
+void Raster_Tile::set_fireMap_time(int row, int col, double time)
+{
+  FireMap_modified = true;
+  fireMap_time.cv::Mat::at<double>(row, col) = time;
 }
 
 
@@ -401,6 +410,11 @@ bool Raster_Tile::Test_fireMap_Modified()
 
   return FireMap_modified;
 
+}
+
+cv::Mat Raster_Tile::get_fireMap_time()
+{
+  return fireMap_time;
 }
 
 

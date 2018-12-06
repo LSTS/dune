@@ -59,7 +59,7 @@ private:
   bool Segmentation, using_vector;
   sensor_model sen_mode;
 
-  bool Map_direct(Image IM);
+  bool Map_direct(Image IM, double time);
 
   bool Map_with_vector(Image IM);
 
@@ -68,14 +68,16 @@ public:
 
   Mapping();
 
-  Mapping(const std::string& path_DEM, bool use_pixelvector = false, bool Image_segmentation = false,
+  Mapping(const std::vector<std::string>& path_DEM, bool use_pixelvector = false, bool Image_segmentation = false,
           double threshold = 200);
+
+  std::vector<Raster_Tile>& maps();
 
   Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM);
 
   double IMask(cv::Mat UndistortedImage, std::vector<PixelImage> Corners);
 
-  bool Map(Image IM);
+  bool Map(Image IM, double time = std::numeric_limits<double>::infinity());
 
   vector<cv::Mat> get_IMapped();
 
