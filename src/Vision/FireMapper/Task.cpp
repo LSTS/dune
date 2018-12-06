@@ -54,7 +54,7 @@ namespace Vision
     {
       //! Main System ID
       std::string system_id;
-      std::string dem_dir;
+      std::string dem_file;
       uint8_t threshold;
       size_t projected_coordinate_system_epsg;
       size_t geodetic_coordinate_system_epsg;
@@ -79,7 +79,7 @@ namespace Vision
 
       FireMappingState fm_state;
 
-      std::string m_path_results = "/home/rbailonr/mapping_folder/";
+      std::string m_path_results;
       bool save_result = true;
 
       cv::Mat Intrinsic;
@@ -117,9 +117,9 @@ namespace Vision
           .defaultValue("x8-06")
           .description("Main CPU IMC address.");
 
-        param("DEM Directory", m_args.dem_dir)
-          .defaultValue("./")
-          .description("Directory where Digital Elevation Maps are located.");
+        param("DEM File", m_args.dem_file)
+          .defaultValue("/home/rbailonr/firers_data_porto/dem/porto_dem.tif")
+          .description("Digital Elevation Map path.");
         // TODO: Coordinate System is retrieved from these DEM
 
         param("Threshold", m_args.threshold)
@@ -281,8 +281,11 @@ namespace Vision
 
         Map_thrd = new Mapping_thread(this, "thrd_Mapper");
 
-        std::string path_DEM = "/home/rbailonr/firers_data_porto/mapping_folder/dems.txt";//we chose to give a file that holds the paths of all the DEM knowing that in the real case we will need more than one DEM
-        mapper = Mapping(path_DEM);
+        Path path_DEM = Path(m_args.dem_file);
+        m_path_results = path_DEM.dirname(true).str();
+        std::vector<std::string> file_vec = std::vector<std::string>();
+        file_vec.push_back(m_args.dem_file);
+        mapper = Mapping(file_vec);
         mapper.set_threshold(m_args.threshold);
       }
 
@@ -301,7 +304,7 @@ namespace Vision
         std::copy(obj_begin, obj_begin + sizeof(T), std::back_inserter(buffer));
       }
 
-      void dispatch_firemap()
+      void dispatch_firemap(Raster_Tile map)
       {
         IMC::DevDataBinary msg = IMC::DevDataBinary();
         msg.setTimeStamp();
@@ -332,21 +335,18 @@ namespace Vision
         serialize<double>(cell_width, msg.value);
 
         // raster data
-        double data = 123456789.;
-        serialize<double>(data, msg.value);
+        char const* datastart = reinterpret_cast<char const*>(map.get_fireMap_time().datastart);
+        char const* dataend = reinterpret_cast<char const*>(map.get_fireMap_time().dataend);
+        std::copy(datastart, dataend, std::back_inserter(msg.value));
 
-        this->dispatch(&msg);
+        //this->dispatch(&msg);
+        inf("Skipping fire map message dispatch");
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        bool need_mapping = false;
-        bool Image_ready = false;
-        bool need_Image = true;
-        bool start_mapping = false;
-
         float Rotation_limit = 0.15;
 
         Map_thrd->start();
@@ -366,7 +366,7 @@ namespace Vision
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (isActive())
+          if (!isActive())
           {
 
             fm_state = FireMappingState::None;
@@ -464,7 +464,7 @@ namespace Vision
             {
               inf("FireMappingState::DispatchFireMap");
               mapper.Save_Show_FireM(m_path_results);
-              dispatch_firemap();
+              dispatch_firemap(mapper.maps()[0]);
               fm_state = FireMappingState::FetchImage;
             }
           }
