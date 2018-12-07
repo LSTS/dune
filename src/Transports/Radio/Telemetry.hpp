@@ -64,7 +64,7 @@ namespace Transports
         local_rx_sync(0),
         systemID(system)
       {
-      	m_tx_mesg.state = MSG_SEND;
+      	m_tx_mesg.state = MSG_TRANSMIT;
         m_radio_names= radio_names;
         m_radio_addrs = radio_addrs;
         m_max_packet_size = (int) max_packet_size * MAX_MESSAGE_PERIOD;
@@ -542,7 +542,7 @@ namespace Transports
              else
              {
                m_tx_telemetry_State = IDLE;
-               m_tx_mesg.state = MSG_SEND;
+               m_tx_mesg.state = MSG_TRANSMIT;
              }
            }
            if (new_part)
@@ -550,7 +550,7 @@ namespace Transports
             return true;
            }
          }
-         else if(m_tx_mesg.state == MSG_SEND)
+         else if(m_tx_mesg.state == MSG_TRANSMIT)
          {
            m_tx_telemetry_State = IDLE;
          }
@@ -590,7 +590,7 @@ namespace Transports
          if( m_tx_telemetry_State == IDLE)
          {
            //if last trasmition is done
-           if(m_tx_mesg.state == MSG_SEND || m_tx_mesg.state == MSG_NAK ||
+           if(m_tx_mesg.state == MSG_TRANSMIT || m_tx_mesg.state == MSG_NAK ||
               m_tx_mesg.state == MSG_AK || m_tx_mesg.state == MSG_ERROR)
            {
              //verify queue to send
@@ -645,7 +645,7 @@ namespace Transports
           }
           else if (m_tx_mesg.state == MSG_QUEUE && !m_tx_mesg.npart)
           { //if is single msg and sent for radio Driver
-            m_tx_mesg.state = MSG_SEND;
+            m_tx_mesg.state = MSG_TRANSMIT;
             m_tx_mesg.telemetry_imc_status.status= IMC::TelemetryMsg::TM_DONE ;
             m_task->dispatch(m_tx_mesg.telemetry_imc_status);
           }
