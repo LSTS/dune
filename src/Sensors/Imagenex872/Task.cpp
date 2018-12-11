@@ -351,16 +351,6 @@ namespace Sensors
                 if (rv != c_rdata_ftr_size)
                     throw std::runtime_error(DTR("failed to read footer"));
 
-                if (side == SIDE_PORT)
-                {
-                    inf("SIDE_PORT ...");
-                    std::memcpy(&m_ping_data[0], &m_ping.data.at(0), c_rdata_dat_size);
-                }
-                else {
-                    inf("SIDE_STARBOARD ...");
-                    std::memcpy(&m_ping_data[c_rdata_dat_size], &m_ping.data.at(c_rdata_dat_size), c_rdata_dat_size);
-                }
-
                 // Correct port imagery.
                 if (side == SIDE_PORT)
                 {
@@ -380,6 +370,7 @@ namespace Sensors
                 ping(SIDE_STARBOARD);
                 setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
                 ++m_ping_number;
+                std::memcpy(&m_ping_data[0], &m_ping.data.at(0), c_rdata_dat_size*2);
             }
 
             void
