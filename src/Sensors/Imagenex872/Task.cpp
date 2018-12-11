@@ -606,7 +606,7 @@ namespace Sensors
                 // 0's fill 2
                 char zeroFill2[993];
                 memset(zeroFill2, '\0' , 993);
-                std::memcpy(&m_header[993], &zeroFill2, 993);
+                std::memcpy(&m_header[3100], &zeroFill2, 993);
 
                 // previous ping
                 //m_header[4094] = c_bytes_previous_ping;
