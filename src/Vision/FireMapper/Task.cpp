@@ -1,34 +1,46 @@
-//***************************************************************************
-// Copyright 2007-2017 Universidade do Porto - Faculdade de Engenharia      *
-// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
-//***************************************************************************
-// This file is part of DUNE: Unified Navigation Environment.               *
-//                                                                          *
-// Commercial Licence Usage                                                 *
-// Licencees holding valid commercial DUNE licences may use this file in    *
-// accordance with the commercial licence agreement provided with the       *
-// Software or, alternatively, in accordance with the terms contained in a  *
-// written agreement between you and Faculdade de Engenharia da             *
-// Universidade do Porto. For licensing terms, conditions, and further      *
-// information contact lsts@fe.up.pt.                                       *
-//                                                                          *
-// Modified European Union Public Licence - EUPL v.1.1 Usage                *
-// Alternatively, this file may be used under the terms of the Modified     *
-// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
-// included in the packaging of this file. You may not use this work        *
-// except in compliance with the Licence. Unless required by applicable     *
-// law or agreed to in writing, software distributed under the Licence is   *
-// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
-// ANY KIND, either express or implied. See the Licence for the specific    *
-// language governing permissions and limitations at                        *
-// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
-// http://ec.europa.eu/idabc/eupl.html.                                     *
-//***************************************************************************
-// Author: Maria Costa                                                      *
-//***************************************************************************
+/* Copyright (c) 2017-2018, CNRS-LAAS
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+
+// ISO C++ 98 headers.
+#include <string>
+#include <sstream>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Coordinates/WGS84.hpp>
+
+// OpenCV headers
+#include <opencv2/opencv.hpp>
+#include <Vision/FireMapper/Mapping.h>
+#include <Vision/FireMapper/Raster_Reader.h>
+#include <Vision/FireMapper/Raster_Tile.h>
+#include <Vision/FireMapper/Image.h>
+#include <Vision/FireMapper/MorseImageGrabber.h>
+#include <Vision/FireMapper/Mapping_thread.hpp>
+#include <Vision/FireMapper/sensor_model.h>
+#include <gdal/ogr_spatialref.h>
+
 
 namespace Vision
 {
@@ -36,34 +48,108 @@ namespace Vision
   {
     using DUNE_NAMESPACES;
 
+
     //! Task Arguments
     struct Arguments
     {
       //! Main System ID
       std::string system_id;
+      std::string dem_file;
+      uint8_t threshold;
+      size_t projected_coordinate_system_epsg;
+      size_t geodetic_coordinate_system_epsg;
+    };
+
+    struct PositionProjected
+    {
+      double x;
+      double y;
+    };
+
+    enum FireMappingState
+    {
+      None = 0,
+      FetchImage = 1,
+      MapImage = 2,
+      DispatchFireMap = 3
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Task Arguments
+
+      FireMappingState fm_state;
+
+      std::string m_path_results;
+      bool save_result = true;
+
+      cv::Mat Intrinsic;
+      cv::Mat Translation;
+      cv::Mat Rotation;
+      // Position in the projected coordinate system
+      double position_x, position_y, position_z;
+      double phi, theta, psi;
+
+      cv::Mat Image_Matrix;
+
+      vector<double> Radial_distortion;
+      vector<double> Tangential_distortion;
+
+      Mapping_thread* Map_thrd;
+      Mapping mapper;
+      MorseImageGrabber* morse_grabber;
+
       Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
+
+      Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx)
       {
+//        setFrequency(1);
+
         // Define configuration parameters.
-    	paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-    	param("Main System ID", m_args.system_id)
-    	.defaultValue("x8-06")
-		.description("Main CPU IMC address.");
+        param("Main System ID", m_args.system_id)
+          .defaultValue("x8-06")
+          .description("Main CPU IMC address.");
 
-    	// Setup processing of IMC messages
-    	bind<EstimatedState>(this);
+        param("DEM File", m_args.dem_file)
+          .defaultValue("/home/rbailonr/firers_data_porto/dem/porto_dem.tif")
+          .description("Digital Elevation Map path.");
+        // TODO: Coordinate System is retrieved from these DEM
+
+        param("Threshold", m_args.threshold)
+          .defaultValue("200")
+          .description("Threshold.");
+
+        param("Projected Coordinate System", m_args.projected_coordinate_system_epsg)
+          .defaultValue("3035") // LAEA
+          .description("EPSG of the projected coordinate system used for the fire maps.");
+
+        param("Geodetic Coordinate System", m_args.geodetic_coordinate_system_epsg)
+          .defaultValue("4258") // ETRS89
+          .description("EPSG of the corresponding geodetic coordinate system for the projected one.");
+
+        Intrinsic = cv::Mat(3, 3, CV_64FC1);
+        Translation = cv::Mat(3, 1, CV_64FC1);
+        Rotation = cv::Mat(3, 3, CV_64FC1);
+
+
+        // TODO: Replace this information with the obtanied from the real IR camera
+        //       or take this from a parameter. Can parameters be 2d matrices?
+        Radial_distortion.push_back(-0.04646865617107581);
+        Radial_distortion.push_back(0.051288490946210602);
+        Radial_distortion.push_back(-0.025988438162638149);
+        Tangential_distortion.push_back(0.0032416606187316522);
+        Tangential_distortion.push_back(0.0033995207337653736);
+
+        // Setup processing of IMC messages
+        bind < EstimatedState > (this);
+
       }
 
       //! Update internal state with new parameter values.
@@ -72,13 +158,102 @@ namespace Vision
       {
       }
 
+      void
+      set_Rot_Trans_Matrix(double xx, double yy, double zz, double _phi, double _theta, double _psi)
+      {
+        cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
+        cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
+        cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
+
+        // Translation
+        Translation.at<double>(0) = xx;
+        Translation.at<double>(1) = yy;
+        Translation.at<double>(2) = zz;
+
+        // Rotation over x axis phi.
+        Rotationx.cv::Mat::at<double>(0, 0) = 1;
+        Rotationx.cv::Mat::at<double>(0, 1) = 0;
+        Rotationx.cv::Mat::at<double>(0, 2) = 0;
+        Rotationx.cv::Mat::at<double>(1, 0) = 0;
+        Rotationx.cv::Mat::at<double>(1, 1) = cos(_phi);
+        Rotationx.cv::Mat::at<double>(1, 2) = -sin(_phi);
+        Rotationx.cv::Mat::at<double>(2, 0) = 0;
+        Rotationx.cv::Mat::at<double>(2, 1) = sin(_phi);
+        Rotationx.cv::Mat::at<double>(2, 2) = cos(_phi);
+
+        // Rotation over y axis theta.
+        Rotationy.cv::Mat::at<double>(0, 0) = cos(_theta);
+        Rotationy.cv::Mat::at<double>(0, 1) = 0;
+        Rotationy.cv::Mat::at<double>(0, 2) = sin(_theta);
+        Rotationy.cv::Mat::at<double>(1, 0) = 0;
+        Rotationy.cv::Mat::at<double>(1, 1) = 1;
+        Rotationy.cv::Mat::at<double>(1, 2) = 0;
+        Rotationy.cv::Mat::at<double>(2, 0) = -sin(_theta);
+        Rotationy.cv::Mat::at<double>(2, 1) = 0;
+        Rotationy.cv::Mat::at<double>(2, 2) = cos(_theta);
+
+        // Rotation over z axis psi.
+        Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
+        Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
+        Rotationz.cv::Mat::at<double>(0, 2) = 0;
+        Rotationz.cv::Mat::at<double>(1, 2) = sin(_psi);
+        Rotationz.cv::Mat::at<double>(1, 1) = cos(_psi);
+        Rotationz.cv::Mat::at<double>(1, 2) = 0;
+        Rotationz.cv::Mat::at<double>(2, 2) = 0;
+        Rotationz.cv::Mat::at<double>(2, 2) = 0;
+        Rotationz.cv::Mat::at<double>(2, 2) = 1;
+
+        Rotation = Rotationz * Rotationy * Rotationx;
+      }
+
+      PositionProjected
+      transform_coordinates(double lat, double lon, int from_epsg, int to_epsg)
+      {
+        OGRSpatialReference wgs84_gcs;
+        OGRSpatialReference pcs;
+
+        wgs84_gcs.importFromEPSG(from_epsg); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
+        pcs.importFromEPSG(to_epsg);
+
+        auto poCT = OGRCreateCoordinateTransformation(&wgs84_gcs, &pcs);
+
+        PositionProjected proj_coords;
+
+        auto xx = 180 / M_PI * lon;
+        auto yy = 180 / M_PI * lat;
+
+        poCT->Transform(1, &xx, &yy); // Again Transform must succeed
+
+        proj_coords.x = xx;
+        proj_coords.y = yy;
+
+        OGRCoordinateTransformation::DestroyCT(poCT);
+        return proj_coords;
+      }
+
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
       consume(const IMC::EstimatedState* e_state)
       {
-    	if(e_state->getSource() == resolveSystemName(m_args.system_id) && isActive())
-          debug("EstimatedState!, Height = %f", e_state->height);
+        double m_lat = e_state->lat;
+        double m_lon = e_state->lon;
+        double m_height = e_state->height;
+
+        WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
+
+        PositionProjected point = transform_coordinates(m_lat, m_lon,
+                                                        m_args.geodetic_coordinate_system_epsg,
+                                                        m_args.projected_coordinate_system_epsg);
+
+        position_x = point.x;
+        position_y = point.y;
+        position_z = m_height;
+
+        phi = e_state->phi;
+        theta = e_state->theta;
+        psi = e_state->psi;
       }
+
 
       //! Reserve entity identifiers.
       void
@@ -102,21 +277,199 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
+        morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+
+        Map_thrd = new Mapping_thread(this, "thrd_Mapper");
+
+        Path path_DEM = Path(m_args.dem_file);
+        m_path_results = path_DEM.dirname(true).str();
+        std::vector<std::string> file_vec = std::vector<std::string>();
+        file_vec.push_back(m_args.dem_file);
+        mapper = Mapping(file_vec);
+        mapper.set_threshold(m_args.threshold);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        delete morse_grabber;
+        delete Map_thrd;
+      }
+
+      template<typename T>
+      void serialize(const T& obj, std::vector<char>& buffer)
+      {
+        char const* obj_begin = reinterpret_cast<char const*>(&obj);
+        std::copy(obj_begin, obj_begin + sizeof(T), std::back_inserter(buffer));
+      }
+
+      void dispatch_firemap(Raster_Tile map)
+      {
+        IMC::DevDataBinary msg = IMC::DevDataBinary();
+        msg.setTimeStamp();
+        msg.setSource(static_cast<uint16_t>(getSystemId()));
+        msg.setSourceEntity(static_cast<uint8_t>(getEntityId()));
+
+        // Magic number
+        msg.value.emplace_back(0xF1);
+        msg.value.emplace_back(0x3E);
+        // x size
+        uint64_t x_size = 1;
+        serialize<uint64_t>(x_size, msg.value);
+
+        // y size
+        uint64_t y_size = 0x1;
+        serialize<uint64_t>(y_size, msg.value);
+
+        // x offset
+        double x_offset = 2.;
+        serialize<double>(x_offset, msg.value);
+
+        // y offset
+        double y_offset = 2.;
+        serialize<double>(y_offset, msg.value);
+
+        // cell width
+        double cell_width = 3.;
+        serialize<double>(cell_width, msg.value);
+
+        // raster data
+        char const* datastart = reinterpret_cast<char const*>(map.get_fireMap_time().datastart);
+        char const* dataend = reinterpret_cast<char const*>(map.get_fireMap_time().dataend);
+        std::copy(datastart, dataend, std::back_inserter(msg.value));
+
+        //this->dispatch(&msg);
+        inf("Skipping fire map message dispatch");
       }
 
       //! Main loop.
       void
       onMain(void)
       {
+        float Rotation_limit = 0.15;
+
+        Map_thrd->start();
+        morse_grabber->start();
+
+        TaggedImage t;
+
+        // This Task works as an state machine:
+        // FireMappingState::FetchImage -> MapImage -> DispatchFireMap
+
+        // When FireMappingState::FetchImage is active, an image is requested to the morse_grabber.
+        // If the request succeeds the task moves to FireMappingState::MapImage or else to an error state
+
+        // When FireMappingState::MapImage is active, the image is mapped into the firemap.
+        // If the actions succeeds the task moves to FireMappingState::DispatchFireMap
+        // or else to FireMappingState::MapImage
         while (!stopping())
         {
           waitForMessages(1.0);
+          if (!isActive())
+          {
+
+            fm_state = FireMappingState::None;
+          } else
+          {
+            if (fm_state == FireMappingState::None)
+            {
+              inf("FireMappingState::None");
+              fm_state = FireMappingState::FetchImage;
+
+            } else if (fm_state == FireMappingState::FetchImage)
+            {
+              inf("FireMappingState::FetchImage");
+
+              // If morse graber fails, restart it
+              if (morse_grabber->error())
+              {
+                err("MorseImageGrabber error");
+                delete morse_grabber;
+                morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+                morse_grabber->start();
+              }
+                // If the morse grabber is free to do work...
+              else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+              {
+                morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
+              }
+                // If morse grabber work is finished...
+              else if (morse_grabber->is_image_available())
+              {
+                t = morse_grabber->get_image();
+                cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
+                // because the images were tansposed so as to be sent and we have to transpose them back
+                fm_state = FireMappingState::MapImage;
+              }
+
+            } else if (fm_state == FireMappingState::MapImage)
+            {
+              inf("FireMappingState::MapImage");
+              Image_Matrix = (t.image).clone();
+
+              // TODO: Handle Mapping errors
+
+              if (Map_thrd->mapping_finished())
+              {
+
+                fm_state = FireMappingState::DispatchFireMap;
+              } else if (Map_thrd->is_idle())
+              {
+                // If the image has some content
+                if (Image_Matrix.data != NULL)
+                {
+                  if (abs(t.phi) <= Rotation_limit)
+                  {
+                    Intrinsic = (t.intrinsic_matrix).clone();
+
+                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
+
+                    // FIXME: Restore threaded mapping
+//                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
+//                                                        Radial_distortion, Tangential_distortion, mapper);
+
+                    Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
+                                          Tangential_distortion);
+                    bool Image_with_DEM_match = mapper.Map(*im);
+                    mapper.Save_Show_FireM(m_path_results);
+
+                    if (Image_with_DEM_match)
+                    {
+                      inf("Image was mapped");
+
+                    } else
+                    {
+                      inf("Image out of bounds");
+                    }
+                    delete im;
+                    fm_state = FireMappingState::DispatchFireMap;
+
+                  } else
+                  {
+                    war("Roll limit exceded. The image is discarded.");
+                    fm_state = FireMappingState::FetchImage;
+                  }
+                } else
+                {
+                  war("Empty image.");
+                  fm_state = FireMappingState::FetchImage;
+
+                }
+              } else
+              {
+                inf("Still working on mapping");
+              }
+            } else if (fm_state == FireMappingState::DispatchFireMap)
+            {
+              inf("FireMappingState::DispatchFireMap");
+              mapper.Save_Show_FireM(m_path_results);
+              dispatch_firemap(mapper.maps()[0]);
+              fm_state = FireMappingState::FetchImage;
+            }
+          }
+
+          Delay::waitMsec(500);
         }
       }
     };

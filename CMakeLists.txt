@@ -49,6 +49,7 @@ set(PROJECT_VERSION_YEAR  "2017")
 set(PROJECT_VERSION_MONTH "01")
 set(PROJECT_VERSION_PATCH "0")
 set(PROJECT_VERSION_RCN   "0")
+set(CMAKE_CXX_STANDARD "11")
 
 # Version formats.
 set(PROJECT_VERSION
@@ -88,6 +89,7 @@ dune_option(JS "Enable support for SpiderMonkey javascript engine")
 dune_option(XENETH "Enable support for the Xeneth SDK")
 dune_option(BLUEVIEW "Enable support for the BlueView SDK")
 dune_option(OPENCV "Enable support for OpenCV")
+dune_option(GDAL "Enable support for GDAL")
 dune_option(EXIV2 "Enable support for Exiv2")
 dune_option(NO_RTTI "Disable support for RTTI")
 dune_option(UEYE "Enable support for IDS uEye cameras")
