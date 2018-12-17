@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 // ISO C++ 98 headers.
 #include <string>
 #include <sstream>
+#include <stdexcept>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -233,18 +234,24 @@ namespace Vision
 
         auto poCT = OGRCreateCoordinateTransformation(&wgs84_gcs, &pcs);
 
-        PositionProjected proj_coords;
+        if (poCT == nullptr)
+        {
+          throw std::invalid_argument("");
+        } else
+        {
+          PositionProjected proj_coords;
 
-        auto xx = 180 / M_PI * lon;
-        auto yy = 180 / M_PI * lat;
+          auto xx = 180 / M_PI * lon;
+          auto yy = 180 / M_PI * lat;
 
-        poCT->Transform(1, &xx, &yy); // Again Transform must succeed
+          poCT->Transform(1, &xx, &yy); // Again Transform must succeed
 
-        proj_coords.x = xx;
-        proj_coords.y = yy;
+          proj_coords.x = xx;
+          proj_coords.y = yy;
 
-        OGRCoordinateTransformation::DestroyCT(poCT);
-        return proj_coords;
+          OGRCoordinateTransformation::DestroyCT(poCT);
+          return proj_coords;
+        }
       }
 
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
@@ -257,17 +264,25 @@ namespace Vision
 
         WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
 
-        PositionProjected point = transform_coordinates(m_lat, m_lon,
-                                                        m_args.geodetic_coordinate_system_epsg,
-                                                        m_args.projected_coordinate_system_epsg);
+        try
+        {
+          PositionProjected point = transform_coordinates(m_lat, m_lon,
+                                                          m_args.geodetic_coordinate_system_epsg,
+                                                          m_args.projected_coordinate_system_epsg);
 
-        position_x = point.x;
-        position_y = point.y;
-        position_z = m_height;
+          position_x = point.x;
+          position_y = point.y;
+          position_z = m_height;
 
-        phi = e_state->phi;
-        theta = e_state->theta;
-        psi = e_state->psi;
+          phi = e_state->phi;
+          theta = e_state->theta;
+          psi = e_state->psi;
+        } catch (...)
+        {
+          err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
+              m_args.projected_coordinate_system_epsg);
+          this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+        }
       }
 
 
@@ -301,8 +316,16 @@ namespace Vision
         m_path_results = path_DEM.dirname(true).str();
         std::vector<std::string> file_vec = std::vector<std::string>();
         file_vec.push_back(m_args.dem_file);
-        mapper = Mapping(file_vec);
-        mapper.set_threshold(m_args.threshold);
+        try
+        {
+          mapper = Mapping(file_vec);
+          mapper.set_threshold(m_args.threshold);
+        }
+        catch (const std::invalid_argument& e)
+        {
+          err("%s", e.what());
+          this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+        }
       }
 
       //! Release resources.
@@ -395,9 +418,8 @@ namespace Vision
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (!isActive())
+          if (!isActive() || this->getEntityState() != IMC::EntityState::ESTA_NORMAL)
           {
-
             fm_state = FireMappingState::None;
           } else
           {
@@ -421,7 +443,7 @@ namespace Vision
                 // If the morse grabber is free to do work...
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
               {
-                morse_grabber->capture(position_x, position_y, position_z, phi, /*theta*/ 0, psi);
+                morse_grabber->capture(position_x, position_y, position_z, 0, /*theta*/ 0, 0);
               }
                 // If morse grabber work is finished...
               else if (morse_grabber->is_image_available())

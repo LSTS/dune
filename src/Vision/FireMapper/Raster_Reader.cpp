@@ -42,10 +42,7 @@ passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update
 
   if (gDataSet == NULL)
   {
-
-    cerr << "No data found";
-    //break ;
-
+    throw std::invalid_argument("Unable to open "+path);
   }
 
   nCols = gDataSet->GetRasterXSize();

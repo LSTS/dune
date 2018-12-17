@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 #include <opencv2/opencv.hpp>
 
 
