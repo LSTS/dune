@@ -288,18 +288,26 @@ namespace Vision
           m_sock_rpc = new TCPSocket();
         }
         // Try connect to Morse
-        try
+        int num_restarts = 3;
+        while (num_restarts > 0)
         {
-          m_sock_rpc->setReceiveTimeout(20);
+          try
+          {
+            m_sock_rpc->setReceiveTimeout(20);
 
-          m_sock_rpc->connect(m_address, m_port);
-        } catch (const NetworkError& e)
-        {
-          m_task->err("%s", e.what());
-          m_error = true;
-          return false;
+            m_sock_rpc->connect(m_address, m_port);
+            m_error = false;
+            num_restarts = -1;
+            return true;
+          } catch (const NetworkError& e)
+          {
+            m_task->err("%s", e.what());
+            m_error = true;
+            num_restarts -= 1;
+            Delay::wait(1);
+          }
         }
-        return true;
+        return false;
       }
 
       bool connect_datastream_socket(uint16_t port)
