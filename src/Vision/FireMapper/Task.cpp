@@ -63,6 +63,8 @@ namespace Vision
       uint8_t threshold;
       int projected_coordinate_system_epsg;
       int geodetic_coordinate_system_epsg;
+      Address morse_ip;
+      uint16_t morse_port;
     };
 
     struct PositionProjected
@@ -138,6 +140,15 @@ namespace Vision
         param("Geodetic Coordinate System", m_args.geodetic_coordinate_system_epsg)
           .defaultValue("4258") // ETRS89
           .description("EPSG of the corresponding geodetic coordinate system for the projected one.");
+
+        param("Morse IP", m_args.morse_ip)
+          .defaultValue("127.0.0.1")
+          .description("IP address of the morse simulation");
+
+        param("Morse Port", m_args.morse_port)
+          .defaultValue("4000")
+          .description("Port of the morse simulation");
+
 
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
@@ -404,7 +415,7 @@ namespace Vision
               {
                 err("MorseImageGrabber error");
                 delete morse_grabber;
-                morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+                morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
                 morse_grabber->start();
               }
                 // If the morse grabber is free to do work...
