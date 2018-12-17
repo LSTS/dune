@@ -45,8 +45,8 @@ struct Point2D
 
 struct Pixel
 {
-  size_t col;
-  size_t row;
+  uint64_t col;
+  uint64_t row;
 };
 
 
@@ -77,6 +77,8 @@ public:
 
   Pixel get_pixel(double X, double Y);
 
+  double get_pixel_width();
+
   double get_max_east();
 
   double get_max_west();
@@ -89,7 +91,7 @@ public:
 
   string get_projection();
 
-  double get_height(size_t col, size_t row);
+  double get_height(uint64_t col, uint64_t row);
 
   void Put_in_Raster(cv::Mat& FP, string gdal_result_path);
 

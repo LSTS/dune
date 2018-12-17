@@ -108,15 +108,8 @@ namespace Vision
 
       virtual ~MorseImageGrabber()
       {
-        if (m_sock_rpc != nullptr)
-        {
-          delete m_sock_rpc;
-        }
-
-        if (m_sock_datastream != nullptr)
-        {
-          delete m_sock_datastream;
-        }
+        delete m_sock_rpc;
+        delete m_sock_datastream;
       }
 
       void
