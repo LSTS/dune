@@ -29,9 +29,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Coordinates/WGS84.hpp>
+#include <DUNE/Compression/ZlibCompressor.hpp>
 
 // OpenCV headers
 #include <opencv2/opencv.hpp>
+
+// GDAL headers
+#include <gdal/ogr_spatialref.h>
+
+// Firemapper headers
 #include <Vision/FireMapper/Mapping.h>
 #include <Vision/FireMapper/Raster_Reader.h>
 #include <Vision/FireMapper/Raster_Tile.h>
@@ -39,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <Vision/FireMapper/MorseImageGrabber.h>
 #include <Vision/FireMapper/Mapping_thread.hpp>
 #include <Vision/FireMapper/sensor_model.h>
-#include <gdal/ogr_spatialref.h>
 
 
 namespace Vision
@@ -56,8 +61,10 @@ namespace Vision
       std::string system_id;
       std::string dem_file;
       uint8_t threshold;
-      size_t projected_coordinate_system_epsg;
-      size_t geodetic_coordinate_system_epsg;
+      int projected_coordinate_system_epsg;
+      int geodetic_coordinate_system_epsg;
+      Address morse_ip;
+      uint16_t morse_port;
     };
 
     struct PositionProjected
@@ -133,6 +140,15 @@ namespace Vision
         param("Geodetic Coordinate System", m_args.geodetic_coordinate_system_epsg)
           .defaultValue("4258") // ETRS89
           .description("EPSG of the corresponding geodetic coordinate system for the projected one.");
+
+        param("Morse IP", m_args.morse_ip)
+          .defaultValue("127.0.0.1")
+          .description("IP address of the morse simulation");
+
+        param("Morse Port", m_args.morse_port)
+          .defaultValue("4000")
+          .description("Port of the morse simulation");
+
 
         Intrinsic = cv::Mat(3, 3, CV_64FC1);
         Translation = cv::Mat(3, 1, CV_64FC1);
@@ -315,39 +331,52 @@ namespace Vision
         msg.value.emplace_back(0xF1);
         msg.value.emplace_back(0x3E);
         // x size
-        uint64_t x_size = 1;
+        uint64_t x_size = map.get_fireMap_time().rows;
         serialize<uint64_t>(x_size, msg.value);
 
         // y size
-        uint64_t y_size = 0x1;
+        uint64_t y_size = map.get_fireMap_time().cols;
         serialize<uint64_t>(y_size, msg.value);
 
         // x offset
-        double x_offset = 2.;
+        double x_offset = map.get_max_west();
         serialize<double>(x_offset, msg.value);
 
         // y offset
-        double y_offset = 2.;
+        double y_offset = map.get_max_north();
         serialize<double>(y_offset, msg.value);
 
         // cell width
-        double cell_width = 3.;
+        double cell_width = map.get_pixel_width();
         serialize<double>(cell_width, msg.value);
 
         // raster data
-        char const* datastart = reinterpret_cast<char const*>(map.get_fireMap_time().datastart);
-        char const* dataend = reinterpret_cast<char const*>(map.get_fireMap_time().dataend);
-        std::copy(datastart, dataend, std::back_inserter(msg.value));
+        // Uncompressed fire map data
+        // char const* datastart = reinterpret_cast<char const*>(map.get_fireMap_time().datastart);
+        // char const* dataend = reinterpret_cast<char const*>(map.get_fireMap_time().dataend);
+        // std::copy(datastart, dataend, std::back_inserter(msg.value));
 
-        //this->dispatch(&msg);
-        inf("Skipping fire map message dispatch");
+        // Uncompressed size
+        uint64_t uncomp_size = map.get_fireMap_time().step[0] * map.get_fireMap_time().rows;
+        serialize<uint64_t>(uncomp_size, msg.value);
+
+        // Compressed fire map data
+        Compression::ZlibCompressor c = Compression::ZlibCompressor();
+        auto buff = c.compress(reinterpret_cast<char*>(map.get_fireMap_time().data),
+                               map.get_fireMap_time().step[0] * map.get_fireMap_time().rows);
+        std::copy(buff.getBufferSigned(), buff.getBufferSigned() + buff.getSize(), std::back_inserter(msg.value));
+
+        inf("Compressed fire map size: %zu bytes", msg.value.size());
+
+        this->dispatch(&msg);
+        //inf("Skipping fire map message dispatch");
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        float Rotation_limit = 0.15;
+        float Rotation_limit = 0.08; // 5 degrees
 
         Map_thrd->start();
         morse_grabber->start();
@@ -386,13 +415,13 @@ namespace Vision
               {
                 err("MorseImageGrabber error");
                 delete morse_grabber;
-                morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+                morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
                 morse_grabber->start();
               }
                 // If the morse grabber is free to do work...
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
               {
-                morse_grabber->capture(position_x, position_y, 2500, /*phi*/ 0, /*theta*/ 0,/*psi*/ 0);
+                morse_grabber->capture(position_x, position_y, position_z, phi, /*theta*/ 0, psi);
               }
                 // If morse grabber work is finished...
               else if (morse_grabber->is_image_available())

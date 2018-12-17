@@ -42,11 +42,13 @@ Raster_Tile::Raster_Tile(string path)
   // Burning time map
   fireMap_time = cv::Mat::zeros(Map->nRows, Map->nCols, CV_64F) * std::numeric_limits<double>::infinity();
 
+  mapped_area = Pixel_Range();
+
   FireMap_modified = false;
 
 }
 
-void Raster_Tile::set_fireMap(int row, int col, uchar value, bool use_occupancygrid)
+void Raster_Tile::set_fireMap(uint64_t row, uint64_t col, uchar value, bool use_occupancygrid)
 {
 
   FireMap_modified = true;
@@ -79,12 +81,21 @@ void Raster_Tile::set_fireMap(int row, int col, uchar value, bool use_occupancyg
     }
   }
 
+  mapped_area.col_left = std::min(col, mapped_area.col_left);
+  mapped_area.col_right = std::max(col, mapped_area.col_right);
+  mapped_area.row_up = std::min(col, mapped_area.row_up);
+  mapped_area.row_down = std::max(col, mapped_area.row_down);
+
 }
 
-void Raster_Tile::set_fireMap_time(int row, int col, double time)
+void Raster_Tile::set_fireMap_time(uint64_t row, uint64_t col, double time)
 {
   FireMap_modified = true;
   fireMap_time.cv::Mat::at<double>(row, col) = time;
+  mapped_area.col_left = std::min(col, mapped_area.col_left);
+  mapped_area.col_right = std::max(col, mapped_area.col_right);
+  mapped_area.row_up = std::min(col, mapped_area.row_up);
+  mapped_area.row_down = std::max(col, mapped_area.row_down);
 }
 
 
@@ -171,7 +182,7 @@ void Raster_Tile::Put_firemap_inGdal(string gdal_result_path)
 }
 
 //////////////////////////////////////////////////////
-bool Raster_Tile::Test_point(size_t x, size_t y)
+bool Raster_Tile::Test_point(uint64_t x, uint64_t y)
 {//checking if the position demanded exists in the map we have as an entry
 
   bool testing = false;
@@ -192,7 +203,7 @@ bool Raster_Tile::Test_point(size_t x, size_t y)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-double Raster_Tile::get_elevation(size_t x, size_t y)
+double Raster_Tile::get_elevation(uint64_t x, uint64_t y)
 {// x and y are the coordinates of a  position in the world coord.
 
   Pixel Elevation;
@@ -416,6 +427,12 @@ cv::Mat Raster_Tile::get_fireMap_time()
 {
   return fireMap_time;
 }
+
+double Raster_Tile::get_pixel_width()
+{
+  return Map->get_pixel_width();
+}
+
 
 
 

@@ -61,11 +61,19 @@ struct Pixel_Data
 
 struct Pixel_Range
 {
-  size_t col_left;
-  size_t col_right;
+  uint64_t col_left;
+  uint64_t col_right;
 
-  size_t row_up;
-  size_t row_down;
+  uint64_t row_up;
+  uint64_t row_down;
+
+  Pixel_Range() {
+    // This is an invalid range
+    col_left = std::numeric_limits<uint64_t>::max();
+    col_right = 0;
+    row_up = std::numeric_limits<uint64_t>::max();
+    row_down = 0;
+  }
 };
 
 struct Raster_ALL
@@ -87,6 +95,8 @@ private:
   cv::Mat occupancy_map;
   cv::Mat fireMap_time;
   bool FireMap_modified;
+  // Area of the raster where fire has been mapped into
+  Pixel_Range mapped_area;
   sensor_model s_model;
 
 public:
@@ -95,9 +105,9 @@ public:
 
   Raster_Tile(string path);
 
-  bool Test_point(size_t x, size_t y);
+  bool Test_point(uint64_t x, uint64_t y);
 
-  double get_elevation(size_t x, size_t y);
+  double get_elevation(uint64_t x, uint64_t y);
 
   double get_maxheight();
 
@@ -111,9 +121,11 @@ public:
 
   double get_max_south();
 
-  void set_fireMap(int row, int col, uchar value, bool use_occupancygrid);
+  double get_pixel_width();
 
-  void set_fireMap_time(int row, int col, double value);
+  void set_fireMap(uint64_t row, uint64_t col, uchar value, bool use_occupancygrid);
+
+  void set_fireMap_time(uint64_t row, uint64_t col, double value);
 
   void set_sensor_model(sensor_model sen_mod);
 
@@ -122,6 +134,8 @@ public:
   cv::Mat get_fireMapbayes();
 
   cv::Mat get_fireMap_time();
+
+  GDALDataset fireMap_time_gdal();
 
   bool Test_fireMap_Modified();
 

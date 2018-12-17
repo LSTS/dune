@@ -267,14 +267,14 @@ double Raster_Reader::get_noData()
 
 ////////////////////////////////////////////////////////
 
-double Raster_Reader::get_height(size_t col, size_t row)
+double Raster_Reader::get_height(uint64_t col, uint64_t row)
 {
 /*
 RasterData=[ (# # # # ... # # # nCols values)first row /  (# # # # ... # # # nCols values )second row / ..............(# # # # ... # # # nCols values)last row which is the row number nRows]
 
 so to get to the row number y we multiply it with number of cols ,and then we add the position of the the colonne x we need to be exqctly at the position (x,y) of the matrix
 */
-  size_t cpt = 0;
+  uint64_t cpt = 0;
 
   cpt = nCols * row + col;
 
@@ -298,5 +298,10 @@ Raster_Reader::~Raster_Reader()
     GDALClose(gDataSet);
 
   }
+}
+
+double Raster_Reader::get_pixel_width()
+{
+  return pWidth;
 }
 
