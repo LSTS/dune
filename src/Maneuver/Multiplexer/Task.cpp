@@ -50,8 +50,11 @@
 #include "Dislodge.hpp"
 #include "MuxedManeuver.hpp"
 #include "ScheduledGoto.hpp"
+#include "Takeoff.hpp"
+#include "Land.hpp"
 #include "Drop.hpp"
 #include "Sample.hpp"
+#include "StationKeepingExtended.hpp"
 
 namespace Maneuver
 {
@@ -62,7 +65,8 @@ namespace Maneuver
     static const std::string c_names[] = {"IdleManeuver", "Goto", "Launch", "Loiter",
                                           "StationKeeping", "YoYo", "Rows",
                                           "FollowPath", "Elevator", "PopUp",
-                                          "Dislodge","ScheduledGoto","Drop","Sample"};
+                                          "Dislodge","ScheduledGoto", "Takeoff", "Land",
+                                          "Drop", "Sample", "StationKeepingExtended"};
 
     enum ManeuverType
     {
@@ -90,10 +94,16 @@ namespace Maneuver
       TYPE_DISLODGE,
       //! Type ScheduledGoto
       TYPE_SCHEDULEDGOTO,
+      //! Type Takeoff
+      TYPE_TAKEOFF,
+      //! Type Land
+      TYPE_LAND,
       //! Type Drop
       TYPE_DROP,
       //! Type Sample
       TYPE_SAMPLE,
+	  //! Type StationKeepingExtended
+	  TYPE_SKEEPEXT,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -122,7 +132,8 @@ namespace Maneuver
       DropArgs drop;
       //! Sample Arguments
       SampleArgs sample;
-
+      //! StationKeepingExtended Arguments
+      StationKeepingExtendedArgs skext;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -306,6 +317,10 @@ namespace Maneuver
         .defaultValue("30")
         .description("Default time tolerance to execute maneuver");
 
+        param("StationKeepingExtended -- Minimum Radius", m_args.skext.min_radius)
+        .defaultValue("10.0")
+        .description("Minimum radius for StationKeepingExtended to prevent incompatibility with path controller");
+
         m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.dislodge.depth_threshold);
 
         m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.yoyo.max_depth);
@@ -389,8 +404,11 @@ namespace Maneuver
         m_maneuvers[TYPE_POPUP] = create<PopUp>(&m_args.popup);
         m_maneuvers[TYPE_DISLODGE] = create<Dislodge>(&m_args.dislodge);
         m_maneuvers[TYPE_SCHEDULEDGOTO] = create<ScheduledGoto>(&m_args.scheduled);
+        m_maneuvers[TYPE_TAKEOFF] = create<Takeoff>();
+        m_maneuvers[TYPE_LAND] = create<Land>();
         m_maneuvers[TYPE_DROP] = create<Drop>(&m_args.drop);
         m_maneuvers[TYPE_SAMPLE] = create<Sample>(&m_args.sample);
+        m_maneuvers[TYPE_SKEEPEXT] = create<StationKeepingExtended>(&m_args.skext);
       }
 
       void

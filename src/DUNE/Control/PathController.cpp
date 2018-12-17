@@ -299,7 +299,7 @@ namespace DUNE
     {
       if (!isActive())
       {
-        err(DTR("not active"));
+        war(DTR("not active"));
         return;
       }
 
@@ -739,16 +739,7 @@ namespace DUNE
         getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
         m_ts.course_error = Angles::normalizeRadian(m_ts.course - m_ts.track_bearing);
 
-        float errx = std::abs(m_ts.track_length - m_ts.track_pos.x);
-        float erry = std::abs(m_ts.track_pos.y);
-        float s = std::max((double)m_eta_min_speed, m_ts.speed);
-
-        if (errx <= erry && erry < c_erry_factor * m_time_factor * s)
-          m_ts.eta = errx / s;
-        else
-          m_ts.eta = Math::norm(errx, erry) / s;
-
-        m_ts.eta = std::min(65535.0, m_ts.eta - m_time_factor);
+        m_ts.eta = getEta(m_ts);
 
         bool was_nearby = m_ts.nearby;
 
@@ -1057,6 +1048,23 @@ namespace DUNE
       lts.los_angle = getBearing(state, lts.end);
 
       step(state, lts);
+    }
+
+    double
+    PathController::getEta(const TrackingState& ts)
+    {
+      double eta;
+      float errx = std::abs(ts.track_length - ts.track_pos.x);
+      float erry = std::abs(ts.track_pos.y);
+      float time_factor = getTimeFactor();
+      float speed = getSpeed();
+
+      if (errx <= erry && erry < c_erry_factor * time_factor * speed)
+        eta = errx / speed;
+      else
+        eta = Math::norm(errx, erry) / speed;
+
+      return std::min(65535.0, eta - time_factor);
     }
 
     void

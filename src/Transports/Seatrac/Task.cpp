@@ -798,7 +798,7 @@ namespace Transports
         if (aco_fix.outputflags_list[2])
         {
           IMC::UsblPositionExtended usblPosition;
-          usblPosition.target = safeLookup(aco_fix.dest_id);
+          usblPosition.target = sys_src;
           usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
           usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
           usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
@@ -816,7 +816,7 @@ namespace Transports
           if (aco_fix.outputflags_list[1] && m_usbl_receiver)
           {
             IMC::UsblAnglesExtended usblAnglesMsg;
-            usblAnglesMsg.target =  safeLookup(aco_fix.dest_id);
+            usblAnglesMsg.target = sys_src;
             usblAnglesMsg.lbearing = Angles::radians(aco_fix.usbl_azimuth / 10.0);
             usblAnglesMsg.lelevation = Angles::radians(aco_fix.usbl_elevation / 10.0);
             usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
@@ -845,7 +845,7 @@ namespace Transports
           else
           {
             war(DTR("Communication failed"));
-            clearTicket(IMC::UamTxStatus::UTS_DONE);
+            clearTicket(IMC::UamTxStatus::UTS_FAILED);
           }
         }
         else
@@ -1105,18 +1105,6 @@ namespace Transports
         return itr->second;
       }
 
-      std::string
-      safeLookup(unsigned addr)
-      {
-        try
-        {
-          return lookupSystemName(addr);
-        }
-        catch (...)
-        { }
-
-        return "unknown";
-      }
       //! Lookup system name.
       //! @param[in] addr system address.
       //! @return system name.
@@ -1193,7 +1181,7 @@ namespace Transports
               else
               {
                 debug(DTR("Msg transmission complete"));
-                clearTicket(IMC::UamTxStatus::UTS_FAILED);
+                clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
             }
           }

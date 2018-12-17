@@ -313,7 +313,7 @@ namespace DUNE
         *z = (((1.0 - c_wgs84_e2) * rn) + hae) * sin_lat;
       }
 
-      //! Convert ECEF (x,y,z) to WGS-84 (lat, lon, hae).
+      //! Convert ECEF (x,y,z) to WGS-84 (lat, lon, hae) using non-iterative solution.
       //!
       //! @param[in] x ECEF x coordinate (m).
       //! @param[in] y ECEF y coordinate (m).
@@ -331,20 +331,11 @@ namespace DUNE
 
         double p = std::sqrt(x * x + y * y);
         *lon = std::atan2(y, x);
-        *lat = std::atan2(z / p, 0.01);
-        double n = computeRn(*lat);
-        *hae = p / std::cos(*lat) - n;
-        double old_hae = -1e-9;
-        double num = z / p;
-
-        while (std::fabs(*hae - old_hae) > 1e-4)
-        {
-          old_hae = *hae;
-          double den = 1 - c_wgs84_e2 * n / (n + *hae);
-          *lat = std::atan2(num, den);
-          n = computeRn(*lat);
-          *hae = p / std::cos(*lat) - n;
-        }
+        double theta = std::atan2(c_wgs84_a * z, p * c_wgs84_b);
+        double num = z + c_wgs84_ep2 * c_wgs84_b * std::pow(std::sin(theta), 3.0);
+        double den = p - c_wgs84_e2 * c_wgs84_a * std::pow(std::cos(theta), 3.0);
+        *lat = std::atan2(num, den);
+        *hae = p / std::cos(*lat) - computeRn(*lat);
       }
 
       //! Compute the radius of curvature in the prime vertical (Rn).

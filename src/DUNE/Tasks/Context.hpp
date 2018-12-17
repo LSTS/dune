@@ -56,8 +56,10 @@ namespace DUNE
     {
       Context(void);
 
-      //! Configuration directives.
+      //! Current configuration.
       Parsers::Config config;
+      //! Configuration loaded from disk.
+      Parsers::Config original_cfg;
       //! Message bus.
       IMC::Bus mbus;
       //! IMC address resolver.

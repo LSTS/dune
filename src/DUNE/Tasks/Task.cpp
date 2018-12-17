@@ -483,6 +483,7 @@ namespace DUNE
         try
         {
           m_params.set((*itr)->name, (*itr)->value);
+          m_ctx.config.set(getName(), (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
         {
@@ -709,7 +710,14 @@ namespace DUNE
           err(DTR("invalid parameter '%s'"), pitr->first.c_str());
       }
 
-      updateParameters(false);
+      try
+      {
+        updateParameters(false);
+      }
+      catch (RestartNeeded& e)
+      {
+        err(DTR("unable to load parameters: %s"), e.getError());
+      }
     }
   }
 }

@@ -49,7 +49,8 @@ namespace DUNE
   Daemon::Daemon(DUNE::Tasks::Context& ctx, const std::string& profiles):
     DUNE::Tasks::Task("Daemon", ctx),
     m_tman(NULL),
-    m_fs_capacity(0)
+    m_fs_capacity(0),
+    call_reboot(false)
   {
     // Retrieve known IMC addresses.
     std::vector<std::string> addrs = m_ctx.config.options("IMC Addresses");
@@ -151,6 +152,12 @@ namespace DUNE
     inf(DTR("clean shutdown"));
   }
 
+  bool
+  Daemon::callReboot(void)
+  {
+    return call_reboot;
+  }
+
   void
   Daemon::onResourceInitialization(void)
   {
@@ -192,7 +199,7 @@ namespace DUNE
     IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
     for ( ; itr != msg->params.end(); ++itr)
     {
-      if (m_ctx.config.get(task_name, (*itr)->name) != (*itr)->value)
+      if (m_ctx.original_cfg.get(task_name, (*itr)->name) != (*itr)->value)
         m_scfg.set(task_name, (*itr)->name, (*itr)->value);
     }
 
@@ -210,7 +217,11 @@ namespace DUNE
   void
   Daemon::consume(const IMC::RestartSystem* msg)
   {
-    (void)msg;
+    if (msg -> type == IMC::RestartSystem::RSTYPE_SYSTEM)
+    {
+      call_reboot = true;
+      inf(DTR("Got message to reboot system"));
+    }
     stop();
   }
 

@@ -98,6 +98,12 @@ namespace Transports
       bool ip_fwd;
       //! Enable USB Mode switch (USB pen).
       bool code_presentation_mode;
+      //! Enable dynamic DNS
+      bool dyn_dns;
+      //! Dynamic DNS update periodicity
+      double dyn_dns_period;
+      //! Dynamic DNS update url
+      std::string dyn_dns_url;
     };
 
     struct Task: public Tasks::Task
@@ -112,6 +118,8 @@ namespace Transports
       std::string m_command_nat_start;
       //! Stop NAT command.
       std::string m_command_nat_stop;
+      //! Update dynamic DNS command
+      std::string m_command_dyndns_update;
       //! True if modem is powered on.
       bool m_powered;
       //! Current state machine state.
@@ -119,6 +127,7 @@ namespace Transports
       //! Interface IPv4 address.
       Address m_address;
       Time::Counter<double> m_conn_watchdog;
+      Time::Counter<double> m_dyndns_watchdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -186,11 +195,28 @@ namespace Transports
         .defaultValue("true")
         .description("Enable or disable IP forward");
 
+        param("Enable Dynamic DNS", m_args.dyn_dns)
+        .defaultValue("false")
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Enable or disable Dynamic DNS");
+
+        param("DynDNS Update Periodicity", m_args.dyn_dns_period)
+        .defaultValue("60")
+        .units(Units::Second)
+        .description("Number of seconds between dynamic DNS updates");
+
+        param("DynDNS URL", m_args.dyn_dns_url)
+        .defaultValue("")
+        .description("URL used to update dynamic DNS");
+
+
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
         m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
         m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
         m_command_nat_start = String::str("/bin/sh %s nat_start > /dev/null 2>&1", script.c_str());
         m_command_nat_stop = String::str("/bin/sh %s nat_stop > /dev/null 2>&1", script.c_str());
+        m_command_dyndns_update = String::str("/bin/sh %s dyndns_update > /dev/null 2>&1", script.c_str());
 
         bind<IMC::PowerChannelState>(this);
 
@@ -207,6 +233,9 @@ namespace Transports
       {
         if (m_args.power_channel.empty())
           m_powered = true;
+
+        if (paramChanged(m_args.dyn_dns_period))
+          m_dyndns_watchdog.setTop(m_args.dyn_dns_period);
       }
 
       void
@@ -353,6 +382,22 @@ namespace Transports
       }
 
       void
+      updateDynDNS()
+      {
+
+        inf("Updating dynamic dns.");
+
+        if (!m_args.dyn_dns)
+          return;
+
+        Environment::set("DYNDNS_URL", m_args.dyn_dns_url);
+        if (std::system(m_command_dyndns_update.c_str()) == -1)
+          err(DTR("failed to update dynamic DNS"));
+
+        m_dyndns_watchdog.reset();
+      }
+
+      void
       updateStateMachine(void)
       {
         switch (m_sm_state)
@@ -364,7 +409,7 @@ namespace Transports
             debug("starting activation sequence");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
             if (!m_args.power_channel.empty())
-             m_sm_state = SM_ACT_POWER_ON;
+              m_sm_state = SM_ACT_POWER_ON;
             else
               m_sm_state = SM_ACT_MODEM_WAIT;
             /* no break */
@@ -486,6 +531,11 @@ namespace Transports
         {
           waitForMessages(1.0);
           updateStateMachine();
+
+          if( m_dyndns_watchdog.overflow() && isConnected())
+          {
+            updateDynDNS();
+          }
         }
       }
     };

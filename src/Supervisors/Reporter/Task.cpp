@@ -46,6 +46,10 @@ namespace Supervisors
       bool acoustic;
       //! Acoustic reports periodicity.
       double acoustic_period;
+      //! Enable radio reports.
+      bool radio;
+      //! Radio reports periodicity.
+      double radio_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -76,6 +80,20 @@ namespace Supervisors
         .maximumValue("600")
         .description("Reports periodicity");
 
+        param(DTR_RT("Radio Reports"), m_args.radio)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description("Enable Radio system state reporting");
+
+        param(DTR_RT("Radio Reports Periodicity"), m_args.radio_period)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .units(Units::Second)
+        .defaultValue("3")
+        .minimumValue("1")
+        .maximumValue("600")
+        .description("Reports periodicity");
+
+
         bind<IMC::ReportControl>(this);
       }
 
@@ -104,6 +122,29 @@ namespace Supervisors
             dispatch(rc, DF_LOOP_BACK);
           }
         }
+
+        if (paramChanged(m_args.radio) || paramChanged(m_args.radio_period))
+        {
+          if (m_args.radio)
+          {
+            IMC::ReportControl rc;
+            rc.op = IMC::ReportControl::OP_REQUEST_START;
+            rc.comm_interface = IMC::ReportControl::CI_RADIO;
+            rc.period = m_args.radio_period;
+            rc.sys_dst = "broadcast";
+            dispatch(rc, DF_LOOP_BACK);
+          }
+          else
+          {
+            IMC::ReportControl rc;
+            rc.op = IMC::ReportControl::OP_REQUEST_STOP;
+            rc.comm_interface = IMC::ReportControl::CI_RADIO;
+            rc.period = m_args.radio_period;
+            rc.sys_dst = "broadcast";
+            dispatch(rc, DF_LOOP_BACK);
+          }
+        }
+
 
         if (m_dispatcher.isEmpty())
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);

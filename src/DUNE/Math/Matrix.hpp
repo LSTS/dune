@@ -81,7 +81,7 @@ namespace DUNE
       //! @param[in] data pointer to data to be copied to new matrix
       //! @param[in] r number of rows of new matrix
       //! @param[in] c number of columns of new matrix
-      Matrix(double* data, size_t r, size_t c);
+      Matrix(const double* data, size_t r, size_t c);
 
       //! Constructor.
       //! Construct a matrix of size rows*columns.
@@ -426,7 +426,7 @@ namespace DUNE
       //! This method implements the unary minus operator.
       //! @return resultant matrix
       Matrix
-      operator-(void);
+      operator-(void) const;
 
       //! This method multiplies a Matrix by a real number.
       //! @param[in] x real number

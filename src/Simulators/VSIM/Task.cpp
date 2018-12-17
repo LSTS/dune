@@ -77,6 +77,8 @@ namespace Simulators
       IMC::SimulatedState m_sstate;
       //! Start time.
       double m_start_time;
+      //! Last step time.
+      double m_last_time;
       //! Task arguments.
       Arguments m_args;
 
@@ -84,7 +86,8 @@ namespace Simulators
         Periodic(name, ctx),
         m_vehicle(NULL),
         m_world(NULL),
-        m_start_time(Clock::get())
+        m_start_time(Clock::get()),
+        m_last_time(m_start_time)
       {
         // Retrieve configuration values.
         param("Stream Speed North", m_args.wx)
@@ -180,7 +183,8 @@ namespace Simulators
 
         // Fill position.
         double* position = m_vehicle->getPosition();
-        double sim_time = Clock::get() - m_start_time;
+        double time = Clock::get();
+        double sim_time = time - m_start_time;
         m_sstate.x = position[0] + sim_time * m_args.wx;
         m_sstate.y = position[1] + sim_time * m_args.wy;
         m_sstate.z = std::max(position[2], 0.0);
@@ -199,8 +203,8 @@ namespace Simulators
 
         // Fill linear velocity.
         double* lv = m_vehicle->getLinearVelocity();
-        m_sstate.u = lv[0];
-        m_sstate.v = lv[1];
+        m_sstate.u = lv[0] + cos(m_sstate.psi) * m_args.wx;
+        m_sstate.v = lv[1] + sin(m_sstate.psi) * m_args.wy;
         m_sstate.w = lv[2];
 
         // Fill stream velocity.

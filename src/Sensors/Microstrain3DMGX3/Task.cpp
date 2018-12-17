@@ -49,6 +49,8 @@ namespace Sensors
 
     //! Hard Iron calibration parameter name.
     static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+    //! Hard Iron calibration date.
+    static const std::string c_calib_time_param = "Last Calibration Time";
     //! Time to wait for soft-reset.
     static const float c_reset_tout = 5.0;
     //! Number of axis.
@@ -103,6 +105,8 @@ namespace Sensors
       //! Number of seconds without data before
       //! reporting a failure and restarting.
       double timeout_failure;
+      //! Calibration time stamp
+      std::string calib_time;
     };
 
     //! %Microstrain3DMGX3 software driver.
@@ -193,6 +197,11 @@ namespace Sensors
         .minimumValue("1.0")
         .units(Units::Second)
         .description("Number of seconds without data before restarting task");
+
+        param(c_calib_time_param, m_args.calib_time)
+        .description("Date of last successful calibration")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("N/A");
 
         m_timer.setTop(c_reset_tout);
 
@@ -292,9 +301,16 @@ namespace Sensors
         hip.name = c_hard_iron_param;
         hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
 
+        IMC::EntityParameter calt;
+        Time::BrokenDown bdt(Time::Clock::getSinceEpochMsec() / 1000);
+        calt.name = c_calib_time_param;
+        calt.value = String::str("%04u-%02u-%02u %02u:%02u", bdt.year, bdt.month,
+                                 bdt.day, bdt.hour, bdt.minutes);
+
         IMC::SetEntityParameters np;
         np.name = getEntityLabel();
         np.params.push_back(hip);
+        np.params.push_back(calt);
         dispatch(np, DF_LOOP_BACK);
 
         IMC::SaveEntityParameters sp;

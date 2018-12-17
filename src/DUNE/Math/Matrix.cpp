@@ -46,6 +46,7 @@
 
 // DUNE headers.
 #include <DUNE/Utils/String.hpp>
+#include <DUNE/Math/Constants.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/Math/General.hpp>
 #include <DUNE/Parsers/Config.hpp>
@@ -117,7 +118,7 @@ namespace DUNE
       }
     }
 
-    Matrix::Matrix(double* data, size_t r, size_t c)
+    Matrix::Matrix(const double* data, size_t r, size_t c)
     {
       if (!r || !c)
         throw Error("Invalid dimension!");
@@ -846,7 +847,7 @@ namespace DUNE
     }
 
     Matrix
-    Matrix::operator-(void)
+    Matrix::operator-(void) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
@@ -1203,7 +1204,11 @@ namespace DUNE
         double cy = std::cos(ea[2] / 2);
         double sy = std::sin(ea[2] / 2);
 
-        double q[4] = {cr* cp * cy + sr * sp * sy, sr * cp * cy - cr * sp * sy, cr * sp * cy + sr * cp * sy, cr * cp * sy - sr * sp * cy};
+        double q[4] = {cr * cp * cy + sr * sp * sy,
+                       sr * cp * cy - cr * sp * sy,
+                       cr * sp * cy + sr * cp * sy,
+                       cr * cp * sy - sr * sp * cy};
+
         return Matrix(q, 4, 1);
       }
 
@@ -1247,17 +1252,26 @@ namespace DUNE
         return Matrix(ea, 3, 1);
       }
 
-      // quaternion to Euler angles
+      // Quaternion to Euler angles
       if (m_nrows == 4 && m_ncols == 1)
       {
-        double q[4] = {element(0, 0), element(1, 0), element(2, 0), element(3, 0)};
+        double norm = norm_p(2);
+        double q[4] = {element(0, 0) / norm,
+                       element(1, 0) / norm,
+                       element(2, 0) / norm,
+                       element(3, 0) / norm};
 
-        double ea[3] =
-        {
-          std::atan2(2 * (q[2] * q[3] - q[0] * q[1]), 1 - 2 * (q[1] * q[1] + q[2] * q[2])),
-          std::asin(2 * (q[1] * q[3] - q[0] * q[2])),
-          std::atan2(2 * (q[1] * q[2] - q[0] * q[3]), 1 - 2 * (q[2] * q[2] + q[3] * q[3]))
-        };
+        double roll = std::atan2(2 * (q[0] * q[1] + q[2] * q[3]), 1 - 2 * (q[1] * q[1] + q[2] * q[2]));
+
+        double pitch = 2 * (q[0] * q[2] - q[3] * q[1]);
+        if (std::fabs(pitch) >= 1)
+          pitch = c_half_pi * pitch / std::fabs(pitch);
+        else
+          pitch = std::asin(pitch);
+
+        double yaw =  std::atan2(2 * (q[0] * q[3] + q[1] * q[2]), 1 - 2 * (q[2] * q[2] + q[3] * q[3]));
+
+        double ea[3] = { roll, pitch, yaw };
 
         return Matrix(ea, 3, 1);
       }
