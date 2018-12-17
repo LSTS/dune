@@ -694,11 +694,11 @@ namespace Control
         void
         consume(const IMC::DesiredRoll* d_roll)
         {
-          //! If in Manual mode or on Ground do not send
+          //! If in Manual mode, Taking-Off, Landing or on Ground do not send
           //! control references to ArduPilot
-          if (m_external || m_ground)
+          if (m_external || m_critical || m_ground)
           {
-        	debug("external: %d, ground: %d", (int)m_external, (int)m_ground);
+            debug("external: %d, critical: %d, ground: %d", (int)m_external, (int)m_critical, (int)m_ground);
             return;
           }
 
