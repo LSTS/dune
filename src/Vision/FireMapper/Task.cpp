@@ -418,7 +418,7 @@ namespace Vision
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (!isActive() || this->getEntityState() != IMC::EntityState::ESTA_NORMAL)
+          if (!isActive())
           {
             fm_state = FireMappingState::None;
           } else
