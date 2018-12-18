@@ -436,9 +436,12 @@ namespace Vision
               if (morse_grabber->error())
               {
                 err("MorseImageGrabber error");
+                morse_grabber->stopAndJoin();
                 delete morse_grabber;
                 morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
                 morse_grabber->start();
+                fm_state = FireMappingState::None;
+                continue;
               }
                 // If the morse grabber is free to do work...
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())

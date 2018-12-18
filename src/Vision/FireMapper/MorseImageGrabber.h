@@ -293,7 +293,7 @@ namespace Vision
         {
           try
           {
-            m_sock_rpc->setReceiveTimeout(20);
+//            m_sock_rpc->setReceiveTimeout(20);
 
             m_sock_rpc->connect(m_address, m_port);
             m_error = false;
