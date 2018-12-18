@@ -31,6 +31,11 @@ if(GDAL)
 
         dune_add_lib(gdal)
 
+        # Check Headers
+        dune_test_header(/usr/include/gdal/gdal_priv.h)
+        dune_test_header(/usr/include/gdal/cpl_conv.h)
+        dune_test_header(/usr/include/gdal/ogr_spatialref.h)
+
     else(GDAL_INCLUDE_DIRS)
         # GDAL not found on the system.
         message(SEND_ERROR "GDAL was not found on the system.")
