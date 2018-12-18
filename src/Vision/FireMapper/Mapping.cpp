@@ -480,10 +480,10 @@ bool Mapping::Map_direct(Image IM, double time)
 
             // If the ground cell is on fire, set the ignition time
             // Only if cell time wasn't already set
-            // if (px.Value > 0 && Carte[l].get_fireMap_time().at<double>(r, c) < std::numeric_limits<double>::infinity())
-            //{
+//            if (Carte[l].get_fireMap_time().at<double>(r, c) >= std::numeric_limits<double>::infinity())
+//            {
             Carte[l].set_fireMap_time(r, c, time);
-            //}
+//            }
           }
         }
       }

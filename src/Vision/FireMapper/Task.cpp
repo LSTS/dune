@@ -436,9 +436,12 @@ namespace Vision
               if (morse_grabber->error())
               {
                 err("MorseImageGrabber error");
+                morse_grabber->stopAndJoin();
                 delete morse_grabber;
                 morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
                 morse_grabber->start();
+                fm_state = FireMappingState::None;
+                continue;
               }
                 // If the morse grabber is free to do work...
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
@@ -482,7 +485,7 @@ namespace Vision
 
                     Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
                                           Tangential_distortion);
-                    bool Image_with_DEM_match = mapper.Map(*im);
+                    bool Image_with_DEM_match = mapper.Map(*im, Time::Clock::getSinceEpoch());
                     mapper.Save_Show_FireM(m_path_results);
 
                     if (Image_with_DEM_match)
