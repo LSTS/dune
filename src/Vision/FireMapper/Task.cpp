@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <opencv2/opencv.hpp>
 
 // GDAL headers
-#include <gdal/ogr_spatialref.h>
+#include </usr/include/gdal/ogr_spatialref.h>
 
 // Firemapper headers
 #include <Vision/FireMapper/Mapping.h>

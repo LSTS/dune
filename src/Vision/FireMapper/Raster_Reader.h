@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 using namespace std;
 
-#include <gdal/gdal_priv.h>
-#include <gdal/cpl_conv.h> // for CPLMalloc()
+#include </usr/include/gdal/gdal_priv.h>
+#include </usr/include/gdal/cpl_conv.h> // for CPLMalloc()
 
 struct Point2D
 {
