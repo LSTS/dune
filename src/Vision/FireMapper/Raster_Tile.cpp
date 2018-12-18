@@ -40,7 +40,7 @@ Raster_Tile::Raster_Tile(string path)
   // the occupancy grid algo to fill the firemap we take in consideration the past acquisition.
 
   // Burning time map
-  fireMap_time = cv::Mat::zeros(Map->nRows, Map->nCols, CV_64F) * std::numeric_limits<double>::infinity();
+  fireMap_time = cv::Mat::ones(Map->nRows, Map->nCols, CV_64F) * std::numeric_limits<double>::infinity();
 
   mapped_area = Pixel_Range();
 

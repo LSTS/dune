@@ -482,7 +482,7 @@ namespace Vision
 
                     Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
                                           Tangential_distortion);
-                    bool Image_with_DEM_match = mapper.Map(*im);
+                    bool Image_with_DEM_match = mapper.Map(*im, Time::Clock::getSinceEpoch());
                     mapper.Save_Show_FireM(m_path_results);
 
                     if (Image_with_DEM_match)
