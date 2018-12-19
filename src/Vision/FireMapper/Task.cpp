@@ -308,7 +308,7 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
-        morse_grabber = new MorseImageGrabber(this, Address::Loopback, 4000);
+        morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
 
         Map_thrd = new Mapping_thread(this, "thrd_Mapper");
 

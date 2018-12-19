@@ -297,7 +297,7 @@ namespace Vision
 //            delete m_sock_rpc;
             m_sock_rpc = new TCPSocket();
 //            m_sock_rpc->setReceiveTimeout(20);
-
+            m_task->inf("Connecting to morse at %s:%d", m_address.c_str(), m_port);
             m_sock_rpc->connect(m_address, m_port);
             m_error = false;
             num_restarts = -1;
