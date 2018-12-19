@@ -108,8 +108,14 @@ namespace Vision
 
       virtual ~MorseImageGrabber()
       {
-        delete m_sock_rpc;
-        delete m_sock_datastream;
+        if (m_sock_rpc != nullptr)
+        {
+          delete m_sock_rpc;
+        }
+        if (m_sock_datastream != nullptr)
+        {
+          delete m_sock_datastream;
+        }
       }
 
       void
@@ -282,28 +288,26 @@ namespace Vision
 
       bool connect_rpc_socket()
       {
-        // Create socket if needed
-        if (m_sock_rpc == nullptr)
-        {
-          m_sock_rpc = new TCPSocket();
-        }
         // Try connect to Morse
-        int num_restarts = 3;
+        int num_restarts = 999;
         while (num_restarts > 0)
         {
           try
           {
+//            delete m_sock_rpc;
+            m_sock_rpc = new TCPSocket();
 //            m_sock_rpc->setReceiveTimeout(20);
-
+            m_task->inf("Connecting to morse at %s:%d", m_address.c_str(), m_port);
             m_sock_rpc->connect(m_address, m_port);
             m_error = false;
             num_restarts = -1;
             return true;
-          } catch (const NetworkError& e)
+          } catch (const Exception& e)
           {
             m_task->err("%s", e.what());
             m_error = true;
             num_restarts -= 1;
+            delete m_sock_rpc;
             Delay::wait(1);
           }
         }
@@ -312,21 +316,26 @@ namespace Vision
 
       bool connect_datastream_socket(uint16_t port)
       {
-        // Create socket if needed
-        if (m_sock_datastream == nullptr)
+        int num_restarts = 10;
+        while (num_restarts > 0)
         {
-          m_sock_datastream = new TCPSocket();
-        }
-        // Try connect to Morse
-        try
-        {
-          m_sock_datastream->setReceiveTimeout(1);
-          m_sock_datastream->connect(m_address, port);
-        } catch (const NetworkError& e)
-        {
-          m_task->err("%s", e.what());
-          m_error = true;
-          return false;
+          // Try connect to Morse
+          try
+          {
+            m_sock_datastream = new TCPSocket();
+//          m_sock_datastream->setReceiveTimeout(1);
+            m_sock_datastream->connect(m_address, port);
+            m_error = false;
+            num_restarts = -1;
+            return true;
+          } catch (const Exception& e)
+          {
+            m_task->err("%s", e.what());
+            m_error = true;
+            num_restarts -= 1;
+            delete m_sock_datastream;
+            Delay::wait(1);
+          }
         }
         return true;
       }
