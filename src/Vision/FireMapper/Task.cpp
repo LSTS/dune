@@ -441,6 +441,7 @@ namespace Vision
                 morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
                 morse_grabber->start();
                 fm_state = FireMappingState::None;
+                Delay::wait(1);
                 continue;
               }
                 // If the morse grabber is free to do work...
