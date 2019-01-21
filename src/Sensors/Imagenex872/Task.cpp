@@ -553,13 +553,13 @@ namespace Sensors
                 m_header[45] = m_args.exec_freq;
 
                 //Range index
-                m_header[46] = 0x07; //TODO don't hardcode
+                m_header[46] = 0x07;
 
                 //Data gain
-                m_header[47] = 0x14; //TODO don't hardcode
+                m_header[47] = m_args.dat_gain;
 
-                //Channel balance
-                m_header[48] = 0x1e; //TODO don't hardcode
+                //Channel balance (balance gain)
+                m_header[48] = m_args.bal_gain;
 
                 //Repetition rate (time between pings)
                 m_header[49] = m_args.frequency >> 8;
@@ -579,19 +579,18 @@ namespace Sensors
                 m_header[69] = 0;
 
                 //Sonar type
-                m_header[70] = 1;
+                m_header[70] = 0;
 
                 //Real range
-                m_header[71] = 0x07; //TODO don't hardcode
+                m_header[71] =  m_rdata_hdr[4];
 
                 // 0's fill 1
                 char zeroFill1[928];
                 memset(zeroFill1, '\0', 928);
                 std::memcpy(&m_header[72], &zeroFill1, 928);
 
-                // PORT & STARBOARD channel echo data fixme
+                // PORT & STARBOARD channel echo data
                 std::memcpy(&m_header[1000], &m_ping_data, c_rdata_dat_size * 2);
-
 
                 // GPS Strings
                 char gpsString[100];
