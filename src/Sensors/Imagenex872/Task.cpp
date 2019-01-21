@@ -534,20 +534,19 @@ namespace Sensors
                 inf("time %s", time);
 
                 // Thousandths of seconds
-                float value = m_time_stamp/1000.0;
-                uint8_t *bytes;
-                bytes = reinterpret_cast<uint8_t*>(&value);
-                m_header[40] = bytes[3];
-                m_header[41] = bytes[2];
-                m_header[42] = bytes[1];
-                m_header[43] = bytes[0];
-                m_header[44] = '\0';
+                float n = m_time_stamp / 1000.0;
+                double whole;
 
-                inf("seconds: %f",value);
-                inf("seconds 0: %02x", bytes[0]);
-                inf("seconds 1: %02x", bytes[1]);
-                inf("seconds 2: %02x", bytes[2]);
-                inf("seconds 3: %02x", bytes[3]);
+                char buffer[3];
+                int ms = modf(n, &whole) * 1000;
+
+                sprintf(buffer,"%03d",  ms);
+
+                m_header[40] = '.';
+                m_header[41] = buffer[0];
+                m_header[42] = buffer[1];
+                m_header[43] = buffer[2];
+                m_header[44] = '\0';
 
                 //Operating frequency
                 m_header[45] = m_args.exec_freq;
