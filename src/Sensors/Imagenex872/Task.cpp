@@ -143,8 +143,6 @@ namespace Sensors
             uint16_t m_sound_speed;
             // Time stamp of vehicle
             time_t m_time_stamp;
-            // Receive sound speed message
-            bool m_receive_sound_speed;
             // Receive estimated state message
             bool m_receive_estimated_state;
             // Receive dev data text message
@@ -158,7 +156,7 @@ namespace Sensors
                     m_ctx(ctx),
                     m_data_path(""),
                     m_ping_number(0),
-                    m_receive_sound_speed(false),
+                    m_sound_speed(1500),
                     m_receive_estimated_state(false),
                     m_receive_dev_data_text(false),
                     m_receive_log_control(false)
@@ -414,7 +412,6 @@ namespace Sensors
                 if (msg->getSource() != getSystemId())
                     return;
 
-                m_receive_sound_speed = true;
                 m_sound_speed = msg->value * 10;
             }
 
@@ -609,7 +606,6 @@ namespace Sensors
             logRawData()
             {
                 if(!m_receive_dev_data_text ||
-                   !m_receive_sound_speed   ||
                    !m_receive_log_control   ||
                    !m_receive_estimated_state) {
                     debug("Missing some message...");
