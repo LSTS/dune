@@ -74,6 +74,8 @@ namespace Sensors
             unsigned frequency;
             // Default range.
             unsigned range;
+            //Execution frequency
+            unsigned exec_freq;
         };
 
         // List of available ranges.
@@ -205,6 +207,13 @@ namespace Sensors
                         .valuesIf("Frequency", "330", "10, 20, 30, 40, 50, 60, 80, 100, 150, 200")
                         .valuesIf("Frequency", "770", "10, 20, 30, 40, 50")
                         .description(DTR("Operating range"));
+
+                param(DTR_RT("Execution Frequency"), m_args.exec_freq)
+                        .visibility(Tasks::Parameter::VISIBILITY_USER)
+                        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+                        .defaultValue("1.0")
+                        .values("0.0, 1.0, 2.0")
+                        .description(DTR("Execution frequency"));
 
                 // Initialize switch data.
                 std::memset(m_sdata, 0, sizeof(m_sdata));
@@ -541,7 +550,7 @@ namespace Sensors
                 inf("seconds 3: %02x", bytes[3]);
 
                 //Operating frequency
-                m_header[45] = 0x02; //TODO don't hardcode
+                m_header[45] = m_args.exec_freq;
 
                 //Range index
                 m_header[46] = 0x07; //TODO don't hardcode
