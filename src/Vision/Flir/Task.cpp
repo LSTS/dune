@@ -259,6 +259,7 @@ namespace Vision
           m_capture->start();
           inf("Camera Ready");
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          onActivation(); // TEMP
         }
       }
 
