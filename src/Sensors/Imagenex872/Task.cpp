@@ -107,7 +107,7 @@ namespace Sensors
         // Data points channel
         static const uint16_t c_data_points_channel = 1000;
         // GPS string file offset
-        static const uint16_t c_gps_string_file_offset = 3000;
+        static const uint16_t c_gps_string_file_offset = 3200;
         // Event/annotation counter
         static const uint16_t c_event_annotation_counter  = 0;
         // Number of bytes to previous ping
