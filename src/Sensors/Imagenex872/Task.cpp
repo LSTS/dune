@@ -144,7 +144,7 @@ namespace Sensors
             // Last valid sound speed value
             uint16_t m_sound_speed;
             // Time stamp of vehicle
-            time_t m_time_stamp;
+            long m_time_stamp;
             // Receive estimated state message
             bool m_receive_estimated_state;
             // Receive dev data text message
@@ -229,7 +229,6 @@ namespace Sensors
 
                 bind<IMC::LoggingControl>(this);
                 bind<IMC::EstimatedState>(this);
-                bind<IMC::DevDataText>(this);
                 bind<IMC::SoundSpeed>(this);
             }
 
@@ -425,17 +424,6 @@ namespace Sensors
                 m_sound_speed = msg->value * 10;
             }
 
-            void
-            consume(const IMC::DevDataText* msg)
-            {
-                if (msg->getSource() != getSystemId())
-                    return;
-
-                m_receive_dev_data_text = true;
-                m_time_stamp = msg->getTimeStamp();
-
-            }
-
             std::string
             createRMC()
             {
@@ -519,6 +507,7 @@ namespace Sensors
                 m_header[18] = 0;
 
                 // date
+                m_time_stamp = Clock::getSinceEpochMsec();
                 struct tm *tm = localtime(&m_time_stamp);
                 char date[12];
                 strftime(date, sizeof(date), "%d-%b-%Y", tm);
@@ -534,13 +523,10 @@ namespace Sensors
                 inf("time %s", time);
 
                 // Thousandths of seconds
-                float n = m_time_stamp / 1000.0;
-                double whole;
+                int n = m_time_stamp % 1000;
 
                 char buffer[3];
-                int ms = modf(n, &whole) * 1000;
-
-                sprintf(buffer,"%03d",  ms);
+                sprintf(buffer,"%03d",  n);
 
                 m_header[40] = '.';
                 m_header[41] = buffer[0];
@@ -611,8 +597,7 @@ namespace Sensors
             void
             logRawData()
             {
-                if(!m_receive_dev_data_text ||
-                   !m_receive_log_control   ||
+                if(!m_receive_log_control   ||
                    !m_receive_estimated_state) {
                     debug("Missing some message...");
                     return;
