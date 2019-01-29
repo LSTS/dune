@@ -413,6 +413,7 @@ namespace Sensors
 
                 m_receive_estimated_state = true;
                 m_estate = *msg;
+
             }
 
             void
@@ -481,7 +482,6 @@ namespace Sensors
 
                 //File version
                 m_header[3] = '0';
-
 
                 //Ping number
                 m_header[4] = m_ping_number >> 24;
@@ -604,7 +604,6 @@ namespace Sensors
                 std::memcpy(&m_header[3100], &zeroFill2, 993);
 
                 // previous ping
-                //m_header[4094] = c_bytes_previous_ping;
                 m_header[4094] = c_bytes_previous_ping >> 8;
                 m_header[4095] = c_bytes_previous_ping & 0xFF;
             }
@@ -637,10 +636,12 @@ namespace Sensors
                     pingBoth();
                     dispatch(m_ping);
 
+
                     if(!m_data_file.is_open())
                         m_data_file.open(m_data_path.c_str(), std::ofstream::app | std::ios::binary);
 
                     logRawData();
+
                 }
                 catch (std::exception& e)
                 {
