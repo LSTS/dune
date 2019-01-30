@@ -32,6 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include "Frame872.hpp"
 
 namespace Sensors
 {
@@ -101,17 +102,8 @@ namespace Sensors
         // Return data footer size.
         static const uint32_t c_rdata_ftr_size = 1;
         // Raw log file name
-        static const std::string c_file_name = "data.872";
-        // Total bytes to each ping
-        static const uint16_t c_total_bytes_ping = 4096;
-        // Data points channel
-        static const uint16_t c_data_points_channel = 1000;
-        // GPS string file offset
-        static const uint16_t c_gps_string_file_offset = 3200;
-        // Event/annotation counter
-        static const uint16_t c_event_annotation_counter  = 0;
-        // Number of bytes to previous ping
-        static const uint16_t c_bytes_previous_ping = 8192;
+        static const std::string c_file_name = "Data.872";
+
 
         struct Task: public Tasks::Periodic
         {
@@ -133,18 +125,14 @@ namespace Sensors
             std::ofstream m_data_file;
             // Raw log path
             std::string m_data_path;
-            // Header to 872 file
-            uint8_t m_header[c_total_bytes_ping];
-            // Ping data
-            uint8_t m_ping_data[2000];
-            // Ping number counter
+            //! 872 Frame.
+            Frame872* m_frame872;
+            //! Ping counter
             uint32_t m_ping_number;
-            // Estimated state
-            IMC::EstimatedState m_estate;
-            // Last valid sound speed value
+
+            //! Last valid sound speed value
             uint16_t m_sound_speed;
-            // Time stamp of vehicle
-            long m_time_stamp;
+
             // Receive estimated state message
             bool m_receive_estimated_state;
             // Receive dev data text message
@@ -157,6 +145,7 @@ namespace Sensors
                     m_sock(NULL),
                     m_ctx(ctx),
                     m_data_path(""),
+                    m_frame872(NULL),
                     m_ping_number(0),
                     m_sound_speed(1500),
                     m_receive_estimated_state(false),
@@ -245,6 +234,14 @@ namespace Sensors
 
                 if (paramChanged(m_args.port) && m_sock != NULL)
                     throw RestartNeeded(DTR("restarting to change TCP port"), 1);
+
+                if (m_frame872 == NULL)
+                    m_frame872 = new Frame872();
+
+                m_frame872->setOperationFrequency(m_args.exec_freq);
+                m_frame872->setDataGain(m_args.dat_gain);
+                m_frame872->setBalanceGain(m_args.bal_gain);
+                m_frame872->setRepetitionRate(m_args.frequency);
             }
 
             void
@@ -252,6 +249,12 @@ namespace Sensors
             {
                 m_sock = new TCPSocket();
                 m_sock->setNoDelay(true);
+
+                m_frame872 = new Frame872();
+                m_frame872->setOperationFrequency(m_args.exec_freq);
+                m_frame872->setDataGain(m_args.dat_gain);
+                m_frame872->setBalanceGain(m_args.bal_gain);
+                m_frame872->setRepetitionRate(m_args.frequency);
             }
 
             void
@@ -261,6 +264,8 @@ namespace Sensors
 
                 if(m_data_file.is_open())
                     m_data_file.close();
+
+                Memory::clear(m_frame872);
             }
 
             void
@@ -375,8 +380,15 @@ namespace Sensors
                 ping(SIDE_PORT);
                 ping(SIDE_STARBOARD);
                 setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-                ++m_ping_number;
-                std::memcpy(&m_ping_data[0], &m_ping.data.at(0), c_rdata_dat_size*2);
+
+                if(m_frame872 != NULL) {
+                    m_frame872->setTimeInfo();
+                    m_frame872->setPingNumber(++m_ping_number);
+                    m_frame872->setFileHeader(m_rdata_hdr);
+                    m_frame872->setData(m_ping.data);
+                    m_frame872->setRealRange(m_rdata_hdr[4]);
+                }
+
             }
 
             void
@@ -411,7 +423,9 @@ namespace Sensors
                     return;
 
                 m_receive_estimated_state = true;
-                m_estate = *msg;
+
+                if(m_frame872 != NULL)
+                    m_frame872->setGpsString(*msg);
 
             }
 
@@ -422,177 +436,11 @@ namespace Sensors
                     return;
 
                 m_sound_speed = msg->value * 10;
+
+                if(m_frame872 != NULL)
+                    m_frame872->setSoundSpeed(m_sound_speed);
             }
 
-            std::string
-            createRMC()
-            {
-                double time_reference = Math::round(m_time_stamp);
-                time_t secs = (time_t)time_reference;
-                double fraction = time_reference - secs;
-                unsigned fsec = fraction * 100;
-                Time::BrokenDown bdt(secs);
-                std::string stn_str;
-
-                double lat = m_estate.lat;
-                double lon = m_estate.lon;
-
-                Coordinates::toWGS84(m_estate, lat, lon);
-
-                std::string lat_nmea = latitudeToNMEA(lat);
-                std::string lon_nmea = longitudeToNMEA(lon);
-
-                double vel = Math::norm(m_estate.vx, m_estate.vy);
-
-                NMEAWriter stn("GPRMC");
-                stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, fsec)
-                    << "A"
-                    << lat_nmea
-                    << lon_nmea
-                    << vel * DUNE::Units::c_ms_to_knot
-                    << 0 // azimuth.
-                    << String::str("%02u%02u%02u", bdt.day, bdt.month, bdt.year - 2000)
-                    << ""
-                    << ""
-                    << "A";
-
-                return stn.sentence();
-            }
-
-            void
-            getFileData() {
-
-                memset(m_header, '\0', c_total_bytes_ping);
-
-                m_header[0] = '8';
-                m_header[1] = '7';
-                m_header[2] = '2';
-
-                //File version
-                m_header[3] = '0';
-
-                //Ping number
-                m_header[4] = m_ping_number >> 24;
-                m_header[5] = m_ping_number >> 16;
-                m_header[6] = m_ping_number >>  8;
-                m_header[7] = m_ping_number & 0xff;
-
-
-                //Number of bytes that are written to the disk
-                m_header[8] = c_total_bytes_ping >> 8;
-                m_header[9] = c_total_bytes_ping & 0xff;
-
-
-                //Data points per channel
-                m_header[10] = c_data_points_channel >> 8;
-                m_header[11] = c_data_points_channel & 0xff;
-
-
-                //Bytes per data point - always 1
-                m_header[12] = 1;
-
-                //Data point bit depth - always 8
-                m_header[13] = 8;
-
-                //Gps type (GPRMC) and number of strings (1)  - 00100001
-                m_header[14] = 0x21;
-
-                //GPS string file offset - 3000
-                m_header[15] = c_gps_string_file_offset >> 8;
-                m_header[16] = c_gps_string_file_offset & 0xff;
-
-                //Event/Annotation counter
-                // TODO check if we need this
-                m_header[17] = 0;
-                m_header[18] = 0;
-
-                // date
-                m_time_stamp = Clock::getSinceEpochMsec();
-                struct tm *tm = localtime(&m_time_stamp);
-                char date[12];
-                strftime(date, sizeof(date), "%d-%b-%Y", tm);
-                std::memcpy(&m_header[19], &date, 12);
-                m_header[30] = '\0';
-                inf("date %s", date);
-
-                // time
-                char time[9];
-                strftime(time, sizeof(time), "%H:%M:%S", tm);
-                std::memcpy(&m_header[31], &time, 9);
-                m_header[39] = '\0';
-                inf("time %s", time);
-
-                // Thousandths of seconds
-                int n = m_time_stamp % 1000;
-
-                char buffer[3];
-                sprintf(buffer,"%03d",  n);
-
-                m_header[40] = '.';
-                m_header[41] = buffer[0];
-                m_header[42] = buffer[1];
-                m_header[43] = buffer[2];
-                m_header[44] = '\0';
-
-                //Operating frequency
-                m_header[45] = m_args.exec_freq;
-
-                //Range index
-                m_header[46] = 0x07;
-
-                //Data gain
-                m_header[47] = m_args.dat_gain;
-
-                //Channel balance (balance gain)
-                m_header[48] = m_args.bal_gain;
-
-                //Repetition rate (time between pings)
-                m_header[49] = m_args.frequency >> 8;
-                m_header[50] = m_args.frequency & 0xff;
-
-                //Sound velocity
-                m_header[51] = m_sound_speed >> 8;
-                m_header[52] = m_sound_speed & 0xff ;
-
-                // 12 Byte file header
-                std::memcpy(&m_header[53], &m_rdata_hdr, 12);
-
-                // Reserved always 0
-                m_header[66] = 0;
-                m_header[67] = 0;
-                m_header[68] = 0;
-                m_header[69] = 0;
-
-                //Sonar type
-                m_header[70] = 0;
-
-                //Real range
-                m_header[71] =  m_rdata_hdr[4];
-
-                // 0's fill 1
-                char zeroFill1[928];
-                memset(zeroFill1, '\0', 928);
-                std::memcpy(&m_header[72], &zeroFill1, 928);
-
-                // PORT & STARBOARD channel echo data
-                std::memcpy(&m_header[1000], &m_ping_data, c_rdata_dat_size * 2);
-
-                // GPS Strings
-                char gpsString[100];
-                memset(gpsString, 0, 100);
-                std::string sentence = createRMC();
-                sprintf(gpsString, "%s", sentence.c_str());
-                std::memcpy(&m_header[3000], &gpsString, 100);
-
-                // 0's fill 2
-                char zeroFill2[993];
-                memset(zeroFill2, '\0' , 993);
-                std::memcpy(&m_header[3100], &zeroFill2, 993);
-
-                // previous ping
-                m_header[4094] = c_bytes_previous_ping >> 8;
-                m_header[4095] = c_bytes_previous_ping & 0xFF;
-            }
 
             void
             logRawData()
@@ -603,8 +451,7 @@ namespace Sensors
                     return;
                 }
 
-                getFileData();
-                m_data_file.write((const char*)m_header, c_total_bytes_ping);
+                m_data_file.write((const char*)m_frame872->getData(), c_ping_size);
             }
 
 
@@ -621,6 +468,8 @@ namespace Sensors
                     pingBoth();
                     dispatch(m_ping);
 
+                    if(m_frame872 == NULL)
+                        return;
 
                     if(!m_data_file.is_open())
                         m_data_file.open(m_data_path.c_str(), std::ofstream::app | std::ios::binary);
