@@ -129,9 +129,10 @@ namespace Sensors
             Frame872* m_frame872;
             //! Ping counter
             uint32_t m_ping_number;
-
             //! Last valid sound speed value
             uint16_t m_sound_speed;
+            //! Time of last ping
+            uint64_t m_time_last_ping;
 
             // Receive estimated state message
             bool m_receive_estimated_state;
@@ -148,6 +149,7 @@ namespace Sensors
                     m_frame872(NULL),
                     m_ping_number(0),
                     m_sound_speed(1500),
+                    m_time_last_ping(Clock::getSinceEpochMsec() * 1000),
                     m_receive_estimated_state(false),
                     m_receive_dev_data_text(false),
                     m_receive_log_control(false)
@@ -241,7 +243,6 @@ namespace Sensors
                 m_frame872->setOperationFrequency(m_args.exec_freq);
                 m_frame872->setDataGain(m_args.dat_gain);
                 m_frame872->setBalanceGain(m_args.bal_gain);
-                m_frame872->setRepetitionRate(m_args.frequency);
             }
 
             void
@@ -254,7 +255,6 @@ namespace Sensors
                 m_frame872->setOperationFrequency(m_args.exec_freq);
                 m_frame872->setDataGain(m_args.dat_gain);
                 m_frame872->setBalanceGain(m_args.bal_gain);
-                m_frame872->setRepetitionRate(m_args.frequency);
             }
 
             void
@@ -387,6 +387,11 @@ namespace Sensors
                     m_frame872->setFileHeader(m_rdata_hdr);
                     m_frame872->setData(m_ping.data);
                     m_frame872->setRealRange(m_rdata_hdr[4]);
+                    m_frame872->setRangeIndex(m_rdata_hdr[4]);
+
+                    uint64_t current_time = Clock::getSinceEpochMsec() * 1000;
+                    m_frame872->setRepetitionRate(current_time - m_time_last_ping);
+                    m_time_last_ping = current_time;
                 }
 
             }

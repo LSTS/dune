@@ -88,16 +88,13 @@ namespace Sensors
                 m_data[17] = 0;
                 m_data[18] = 0;
 
-                //Range index
-                m_data[46] = 0x07;
-
                 // Reserved always 0
                 m_data[66] = 0;
                 m_data[67] = 0;
                 m_data[68] = 0;
                 m_data[69] = 0;
 
-                //Sonar type
+                // Sonar type
                 m_data[70] = 0;
 
                 // 0's fill 1
@@ -110,7 +107,7 @@ namespace Sensors
                 memset(zeroFill2, '\0' , 993);
                 std::memcpy(&m_data[3100], &zeroFill2, 993);
 
-                // previous ping
+                // Previous ping
                 m_data[4094] = c_bytes_previous_ping >> 8;
                 m_data[4095] = c_bytes_previous_ping & 0xFF;
 
@@ -127,9 +124,8 @@ namespace Sensors
                 return &m_data[0];
             }
 
-            //todo m_ping_number
             void
-            setPingNumber(uint32_t ping_number){
+             (uint32_t ping_number){
                 m_data[4] = ping_number >> 24;
                 m_data[5] = ping_number >> 16;
                 m_data[6] = ping_number >>  8;
@@ -184,9 +180,9 @@ namespace Sensors
 
             // Repetition rate (time between pings)
             void
-            setRepetitionRate(unsigned frequency){
-                m_data[49] = frequency >> 8;
-                m_data[50] = frequency & 0xff;
+            setRepetitionRate(unsigned time_between_pings){
+                m_data[49] = time_between_pings >> 8;
+                m_data[50] = time_between_pings & 0xff;
             }
 
             // Sound velocity
@@ -257,6 +253,52 @@ namespace Sensors
                     << "A";
 
                 return stn.sentence();
+            }
+
+            void
+            setRangeIndex(const uint32_t range) {
+
+                uint8_t index = 0x07;
+
+                switch (range)
+                {
+                    case 10:
+                        index = 0x05;
+                        break;
+                    case 20:
+                        index = 0x06;
+                        break;
+                    case 30:
+                        index = 0x07;
+                        break;
+                    case 40:
+                        index = 0x08;
+                        break;
+                    case 50:
+                        index = 0x09;
+                        break;
+                    case 60:
+                        index = 0x0a;
+                        break;
+                    case 80:
+                        index = 0x0b;
+                        break;
+                    case 100:
+                        index = 0x0c;
+                        break;
+                    case 125:
+                        index = 0x0d;
+                        break;
+                    case 150:
+                        index = 0x0f;
+                        break;
+                    case 200:
+                        index = 0x10;
+                        break;
+                }
+
+                //Range index
+                m_data[46] = index;
             }
 
         private:
