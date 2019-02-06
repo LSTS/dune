@@ -125,7 +125,7 @@ namespace Sensors
             }
 
             void
-             (uint32_t ping_number){
+            setPingNumber(uint32_t ping_number){
                 m_data[4] = ping_number >> 24;
                 m_data[5] = ping_number >> 16;
                 m_data[6] = ping_number >>  8;
@@ -256,7 +256,7 @@ namespace Sensors
             }
 
             void
-            setRangeIndex(const uint32_t range) {
+            setRangeIndex(const uint8_t range) {
 
                 uint8_t index = 0x07;
 
