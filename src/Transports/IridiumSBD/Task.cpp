@@ -103,7 +103,7 @@ namespace Transports
         .units(Units::Second)
         .defaultValue("300")
         .description("Amount of time without alert rings or "
-                     "MT SBDs before doing a mailbox check");
+            "MT SBDs before doing a mailbox check");
 
         param("Maximum Transmission Rate", m_args.max_tx_rate)
         .units(Units::Second)
@@ -124,7 +124,7 @@ namespace Transports
           TxRequest* req = m_tx_requests.front();
           m_tx_requests.pop_front();
           sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_ERROR,
-                              DTR("task is shutting down"));
+              DTR("task is shutting down"));
           delete req;
         }
       }
@@ -210,9 +210,10 @@ namespace Transports
       void
       consume(const IMC::IridiumMsgTx* msg)
       {
-        // FIXME: check if req_id already exists.
-        // FIXME: check MTU.
-        debug("queueing message");
+        if (msg->getSource() != getSystemId()
+            && msg->getDestination() != getSystemId())
+          return;
+
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
         TxRequest* request = new TxRequest(src_adr, src_eid, msg->req_id,
@@ -224,8 +225,8 @@ namespace Transports
 
       void
       sendTxRequestStatus(const TxRequest* request,
-                          IMC::IridiumTxStatus::StatusCodeEnum code,
-                          const std::string& text = "")
+          IMC::IridiumTxStatus::StatusCodeEnum code,
+          const std::string& text = "")
       {
         IMC::IridiumTxStatus status;
         status.setDestination(request->getSource());
@@ -281,7 +282,7 @@ namespace Transports
         m_tx_request->invalidateMSN();
 
         sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
-                            String::str(DTR("failed with error %u"), err_code));
+            String::str(DTR("failed with error %u"), err_code));
 
         enqueueTxRequest(m_tx_request);
         m_tx_request = NULL;

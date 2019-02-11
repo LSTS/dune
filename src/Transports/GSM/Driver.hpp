@@ -96,6 +96,53 @@ namespace Transports
         }
       }
 
+      std::string
+      getOwnNumber(void)
+      {
+        try
+        {
+          sendAT("+CPBS=ON");
+          expectOK();
+          sendAT("+CPBS?");
+          std::string line = readLine();
+          int n_registered_numbers = 0;
+          int n_total_capacity = 0;
+          if (std::sscanf(line.c_str(), "+CPBS: \"ON\",%d,%d",
+                          &n_registered_numbers, &n_total_capacity) == 2)
+          {
+            expectOK();
+            if (n_registered_numbers > 0)
+            {
+              sendAT("+CPBR=1");
+              line = readLine();
+              int n_index;
+              char n_number[20];
+              int n_type;
+              char n_name[20];
+              if (std::sscanf(line.c_str(), "+CPBR: %d,\"%[^\"]\",%d,\"%[^\"]", &n_index,
+                              n_number,&n_type,n_name) == 4)
+              {
+                expectOK();
+                if (n_index == 1)
+                {
+
+                  getTask()->inf(DTR("SIM card number: %s"), n_number);
+                  return std::string(n_number);
+                }
+              }
+
+            }
+          }
+        }
+        catch (...)
+        {
+          getTask()->inf("SIM card number: not found");
+          return "";
+        }
+        return "";
+
+      }
+
       void
       sendSMS(const std::string& number, const std::string& msg, double timeout)
       {

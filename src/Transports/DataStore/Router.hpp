@@ -50,8 +50,11 @@ namespace Transports
     class Router
     {
     public:
+      uint16_t m_reqid;
+
       Router(Task* parent)
       {
+        m_reqid=0,
         m_parent = parent;
       }
 
@@ -109,12 +112,9 @@ namespace Transports
         if (!visibleOverAcoustic(destination))
           return false;
 
-        AcousticOperation acOp;
-        acOp.msg.set(data);
-        acOp.op = AcousticOperation::AOP_MSG;
-        acOp.system = destination;
-        acOp.setDestination(m_parent->getSystemId());
-        m_parent->dispatch(acOp);
+        TransmissionRequest tr = makeAcousticRequest(destination,data);
+        tr.setDestination(m_parent->getSystemId());
+        m_parent->dispatch(tr);
         return true;
       }
 
@@ -153,6 +153,33 @@ namespace Transports
       }
 
       void
+      forwardCommandsAnyMean(DataStore* store)
+      {
+        std::map<std::string, double>::iterator it;
+        Concurrency::ScopedRWLock l(m_lock, false);
+        double curTime = Clock::getSinceEpoch();
+
+        for (it = m_acousticVisibility.begin(); it != m_acousticVisibility.end(); it++)
+        {
+          if (curTime - it->second < c_acoustic_timeout)
+          {
+            int id = m_parent->resolveSystemName(it->first);
+
+            IMC::HistoricData* cmds = store->pollCommands(id, c_max_size_acoustic);
+            if (cmds != NULL)
+            {
+              cmds->setDestination(id);
+
+              TransmissionRequest tr = makeAcousticRequest(it->first,cmds);
+
+              m_parent->inf("Forwarding commands over Acoustic Modem to %s.", it->first.c_str());
+              m_parent->dispatch(tr);
+            }
+          }
+        }
+      }
+
+      void
       forwardCommandsAcoustic(DataStore* store)
       {
         std::map<std::string, double>::iterator it;
@@ -169,15 +196,39 @@ namespace Transports
             if (cmds != NULL)
             {
               cmds->setDestination(id);
-              AcousticOperation acOp;
-              acOp.msg.set(cmds);
-              acOp.op = AcousticOperation::AOP_MSG;
-              acOp.system = it->first;
+
+              TransmissionRequest tr = makeAcousticRequest(it->first,cmds);
+
               m_parent->inf("Forwarding commands over Acoustic Modem to %s.", it->first.c_str());
-              m_parent->dispatch(acOp);
+              m_parent->dispatch(tr);
             }
           }
         }
+      }
+
+      TransmissionRequest
+      makeAcousticRequest(std::string destination,IMC::HistoricData* hist){
+
+        IMC::TransmissionRequest msg;
+        msg.comm_mean         = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+        msg.data_mode         = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        msg.destination       = destination;
+        msg.req_id            = createInternalId();
+        msg.msg_data.set(hist);
+
+        return msg;
+
+      }
+
+      uint16_t
+      createInternalId(){
+        if(m_reqid==0xFFFF){
+          m_reqid=0;
+        }
+        else{
+          m_reqid++;
+        }
+        return m_reqid;
       }
 
       void iridiumUpload(DataStore* store)
@@ -185,18 +236,16 @@ namespace Transports
         IMC::HistoricData* data = store->pollSamples(c_max_size_iridium);
         if (data == NULL)
           return;
-        IMC::ImcIridiumMessage msg(data);
-        msg.source = m_parent->getSystemId();
-        msg.destination = 65535;
-        uint8_t buffer[65535];
-        int len = msg.serialize(buffer);
-        Memory::clear(data);
+
+        IMC::TransmissionRequest tr;
+        tr.comm_mean            = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.data_mode            = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.msg_data.set(data->clone());
+        tr.deadline             = Time::Clock::getSinceEpoch() + 120;
+        tr.req_id               = createInternalId();
         m_parent->inf("Requesting upload of %u samples via Iridium.", (uint32_t) data->data.size());
-        DUNE::IMC::IridiumMsgTx m;
-        m.data.assign(buffer, buffer + len);
-        m.ttl = 120;
-        m.setTimeStamp();
-        m_parent->dispatch(m);
+        m_parent->dispatch(tr);
+        Memory::clear(data);        
       }
 
       ~Router()
