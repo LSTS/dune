@@ -1,7 +1,7 @@
 DUNE: Unified Navigation Environment
 ====================================
 
-DUNE © Universidade do Porto - Faculdade de Engenharia 2007-2017.
+DUNE © Universidade do Porto - Faculdade de Engenharia 2007-2019.
 
 Commercial Licence Usage
 ------------------------

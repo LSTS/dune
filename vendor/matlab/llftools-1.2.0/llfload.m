@@ -1,5 +1,5 @@
 %+--------------------------------------------------------------------------+
-%| Copyright (C) 2007-2017 Laboratório de Sistemas e Tecnologia Subaquática |
+%| Copyright (C) 2007-2019 Laboratório de Sistemas e Tecnologia Subaquática |
 %| Departamento de Engenharia Electrotécnica e de Computadores              |
 %| Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          |
 %+--------------------------------------------------------------------------+
