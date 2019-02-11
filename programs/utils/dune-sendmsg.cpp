@@ -32,12 +32,106 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <math.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 using DUNE_NAMESPACES;
 using namespace std;
+
+void recursive(IMC::TransmissionRequest* tmsg, int count)
+{
+  if(count == 0){
+    IMC::Abort* abort = new IMC::Abort;
+    tmsg->msg_data.set(abort->clone());
+  }
+  else{
+    tmsg->msg_data.set(tmsg->clone());
+    recursive((IMC::TransmissionRequest*)tmsg->msg_data.get(),--count);
+  }
+
+}
+
+void createRandomMsg(IMC::TransmissionRequest* tmsg)
+{
+
+  int type = rand() % 6;
+
+  switch (type)
+  {
+    case 0:
+      tmsg->comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
+      tmsg->data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+      tmsg->txt_data = "Pos";
+      tmsg->destination = "+351912037728";
+
+      break;
+
+    case 1:
+      tmsg->comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+      tmsg->data_mode = IMC::TransmissionRequest::DMODE_ABORT;
+
+      break;
+    case 2:
+      tmsg->comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+      tmsg->data_mode = IMC::TransmissionRequest::DMODE_RANGE;
+
+      break;
+    case 3:
+      tmsg->comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+      tmsg->data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+
+      recursive(tmsg, (rand() % 5));
+
+      break;
+    case 4:
+      tmsg->comm_mean = IMC::TransmissionRequest::CMEAN_WIFI;
+      tmsg->data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+
+      recursive(tmsg, (rand() % 5));
+
+      break;
+    case 5:
+      tmsg->comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
+      tmsg->data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+      tmsg->destination = "+351912037728";
+      recursive(tmsg, (rand() % 5));
+
+      break;
+
+  }
+
+}
+
+void logMsg(char ** argv, int argc)
+{
+   fprintf(stdout, "Processing message width %d arguments:",argc);
+   fprintf(stdout, "\n system host ip                 -> %s",argv[1]);
+   fprintf(stdout, "\n system host port               -> %s",argv[2]);
+   fprintf(stdout, "\n message / test                 -> %s",argv[3]);
+}
+
+void logSystemDuneID(unsigned short& sh,char ** argv)
+{
+  sh = (unsigned short) strtoul(argv[4], NULL, 0);
+  fprintf(stdout, "\n system host dune ID            -> %d",sh);
+}
+
+void logNumberOfMessages(unsigned short& count, char ** argv, int argc){
+  if(argc >=7){
+    try
+    {
+      count = (unsigned short)strtoul(argv[6], NULL, 0);
+    }
+    catch (std::runtime_error& e)
+    {
+    }
+
+  }
+  fprintf(stdout, "\n number of messages to transmit -> %d",count);
+
+}
 
 int
 main(int argc, char** argv)
@@ -70,9 +164,13 @@ main(int argc, char** argv)
       fprintf(stdout, "       RestartSystem\n");
       fprintf(stdout, "  [S]: SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition,\n");
       fprintf(stdout, "       SetThrusterActuation, Sms, SoundSpeed\n");
-      fprintf(stdout, "  [T]: Target, TeleoperationDone, Temperature, TextMessage, TrexCommand\n");
+      fprintf(stdout, "  [T]: Target, TeleoperationDone, Temperature, TextMessage, TransmissionRequest, TrexCommand\n");
       fprintf(stdout, "  [U]: UASimulation\n");
       fprintf(stdout, "  [V]: VehicleCommand, VehicleMedium\n");
+      fprintf(stdout, "\n");
+      fprintf(stdout, "Available Scaled Tests:\n");
+      fprintf(stdout, "  [T]: teste_abort, teste_any, teste_random, teste_range, teste_sms, teste_wifi_1\n");
+
       return 1;
     }
 
@@ -100,6 +198,8 @@ main(int argc, char** argv)
   }
 
   IMC::Message* msg = NULL;
+  std::list<IMC::Message*>* msg_list = new std::list<IMC::Message*>();
+
 
   if (strcmp(argv[3], "Abort") == 0)
   {
@@ -775,6 +875,33 @@ main(int argc, char** argv)
     }
   }
 
+  if(strcmp(argv[3], "TransmissionRequest") == 0)
+    {
+      uint16_t id = 0;
+      unsigned short sh = (unsigned short) strtoul(argv[4], NULL, 0);
+
+      for(int i=0; i<1; i++){
+        IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+        IMC::Abort* abort = new IMC::Abort;
+
+        tmsg->setSource(sh);
+        tmsg->setDestination(sh);
+        tmsg->destination     = argv[5];
+        tmsg->deadline        = Time::Clock::getSinceEpoch() + 200;
+        tmsg->req_id          = id;
+        id++;
+        tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+        tmsg->data_mode       = IMC::TransmissionRequest::DMODE_INLINEMSG;
+
+        recursive(tmsg,5);
+
+        msg_list->push_back(tmsg);
+
+      }
+
+    }
+
   if (strcmp(argv[3], "TrexCommand") == 0)
   {
     IMC::TrexCommand* tmsg = new IMC::TrexCommand;
@@ -829,11 +956,381 @@ main(int argc, char** argv)
     tmsg->medium = atoi(argv[4]);
   }
 
-  if (msg == NULL)
+  double delay=0;
+  if(strcmp(argv[3], "teste_wifi_1") == 0)
+  {
+    if (argc < 6){
+      fprintf(stderr, "Error: missing arguments...");
+      fprintf(stderr, "\n arg1 : ip (ex: 127.0.0.1)");
+      fprintf(stderr, "\n arg2 : port (ex: 6002)");
+      fprintf(stderr, "\n arg3 : testingmessage (ex: testewifi_1)");
+      fprintf(stderr, "\n arg4 : system_receiver_id (ex: 26)");
+      fprintf(stderr, "\n arg5 : system_destination_name (ex: lauv-noptilus-1)");
+      fprintf(stderr, "\n arg6 (optional) : number_of_messages (ex: 5)");
+      fprintf(stderr, "\n arg7 (optional) : set_delay_between_messages (ex: 3.5)");
+      fprintf(stderr, "\n");
+
+      return 0;
+    }
+
+    logMsg(argv,argc);
+
+    uint16_t id = 0;
+
+    unsigned short sh=0;
+    logSystemDuneID(sh,argv);
+
+    fprintf(stdout, "\n destination of message         -> %s",argv[5]);
+    unsigned short count = 1;
+    logNumberOfMessages(count,argv,argc);
+
+    if(argc == 8){
+      delay = -atof(argv[7]);
+    }
+    fprintf(stdout, "\n delay between transmissions    -> %lf",-delay);
+    fprintf(stdout, "\n\n");
+
+    for(int i=0; i<count; i++){
+      IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+      IMC::Abort abort;
+
+      tmsg->setSource(sh);
+      tmsg->setDestination(sh);
+      tmsg->destination     = argv[5];
+      tmsg->deadline        = Time::Clock::getSinceEpoch() + (-delay * (i+1)) + 40;
+      tmsg->req_id          = id;
+      id++;
+      tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_WIFI;
+      tmsg->data_mode       = IMC::TransmissionRequest::DMODE_INLINEMSG;
+
+      recursive(tmsg,3);
+
+      msg_list->push_back(tmsg);
+
+    }
+
+  }
+
+  if(strcmp(argv[3], "teste_any") == 0)
+    {
+      if (argc < 6){
+        fprintf(stderr, "Error: missing arguments...");
+        fprintf(stderr, "\n arg1 : ip (ex: 127.0.0.1)");
+        fprintf(stderr, "\n arg2 : port (ex: 6002)");
+        fprintf(stderr, "\n arg3 : testingmessage (ex: testewifi_1)");
+        fprintf(stderr, "\n arg4 : system_receiver_id (ex: 26)");
+        fprintf(stderr, "\n arg5 : system_destination_name (ex: lauv-noptilus-1)");
+        fprintf(stderr, "\n arg6 (optional) : number_of_messages (ex: 5)");
+        fprintf(stderr, "\n arg7 (optional) : set_delay_between_messages (ex: 3.5)");
+        fprintf(stderr, "\n");
+
+        return 0;
+      }
+
+      logMsg(argv,argc);
+
+      uint16_t id = 0;
+
+      unsigned short sh=0;
+      logSystemDuneID(sh,argv);
+
+      fprintf(stdout, "\n destination of message         -> %s",argv[5]);
+      unsigned short count = 1;
+      logNumberOfMessages(count,argv,argc);
+
+      if(argc == 8){
+        delay = -atof(argv[7]);
+      }
+      fprintf(stdout, "\n delay between transmissions    -> %lf",-delay);
+      fprintf(stdout, "\n\n");
+
+      for(int i=0; i<count; i++){
+        IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+        IMC::Abort abort;
+
+        tmsg->setSource(sh);
+        tmsg->setDestination(sh);
+        tmsg->destination     = argv[5];
+        tmsg->deadline        = Time::Clock::getSinceEpoch() + (-delay * (i+1)) + rand() % 15;
+        tmsg->req_id          = id;
+        id++;
+        tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_ANY;
+        tmsg->data_mode       = IMC::TransmissionRequest::DMODE_INLINEMSG;
+
+        IMC::DevDataText tm;
+
+
+        char numberstring[(((sizeof i) * CHAR_BIT) + 2)/3 + 2];
+        sprintf(numberstring, "%d", i);
+
+        tm.value = std::string("teste any: ") + numberstring;
+        tmsg->msg_data.set(tm);
+
+        msg_list->push_back(tmsg);
+
+      }
+
+    }
+
+  if(strcmp(argv[3], "teste_range") == 0)
+  {
+    if (argc < 6){
+      fprintf(stderr, "Error: missing arguments...");
+      fprintf(stderr, "\n arg1 : ip (ex: 127.0.0.1)");
+      fprintf(stderr, "\n arg2 : port (ex: 6002)");
+      fprintf(stderr, "\n arg3 : testingmessage (ex: teste_range)");
+      fprintf(stderr, "\n arg4 : system_receiver_id (ex: 26)");
+      fprintf(stderr, "\n arg5 : system_destination_name (ex: lauv-noptilus-1)");
+      fprintf(stderr, "\n arg6 (optional) : number_of_messages (ex: 5)");
+      fprintf(stderr, "\n arg7 (optional) : set_delay_between_messages (ex: 3.5)");
+      fprintf(stderr, "\n");
+      return 0;
+    }
+    logMsg(argv,argc);
+
+    uint16_t id = 0;
+
+    unsigned short sh=0;
+    logSystemDuneID(sh,argv);
+
+    fprintf(stdout, "\n destination of message         -> %s",argv[5]);
+    unsigned short count = 1;
+    logNumberOfMessages(count,argv,argc);
+
+    if(argc == 8){
+      delay = -atof(argv[7]);
+    }
+    fprintf(stdout, "\n delay between transmissions    -> %lf",-delay);
+    fprintf(stdout, "\n\n");
+
+
+    for(int i=0; i<count; i++){
+      IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+      tmsg->setSource(sh);
+      tmsg->setDestination(sh);
+      tmsg->destination     = argv[5];
+      tmsg->deadline        = Time::Clock::getSinceEpoch() + (-delay*(i+1)) +5;
+      tmsg->req_id          = id;
+      id++;
+      tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+      tmsg->data_mode       = IMC::TransmissionRequest::DMODE_RANGE;
+
+      msg_list->push_back(tmsg);
+
+    }
+
+  }
+  if(strcmp(argv[3], "teste_abort") == 0)
+  {
+    if (argc < 6){
+      fprintf(stderr, "Error: missing arguments...");
+      fprintf(stderr, "\n arg1 : ip (ex: 127.0.0.1)");
+      fprintf(stderr, "\n arg2 : port (ex: 6002)");
+      fprintf(stderr, "\n arg3 : testingmessage (ex: teste_abort)");
+      fprintf(stderr, "\n arg4 : system_receiver_id (ex: 26)");
+      fprintf(stderr, "\n arg5 : system_destination_name (ex: lauv-noptilus-1)");
+      fprintf(stderr, "\n arg6 (optional) : number_of_messages (ex: 5)");
+      fprintf(stderr, "\n arg7 (optional) : set_delay_between_messages (ex: 3.5)");
+      fprintf(stderr, "\n");
+      return 0;
+    }
+    logMsg(argv,argc);
+
+    uint16_t id = 0;
+
+    unsigned short sh=0;
+    logSystemDuneID(sh,argv);
+
+    fprintf(stdout, "\n destination of message         -> %s",argv[5]);
+    unsigned short count = 1;
+    logNumberOfMessages(count,argv,argc);
+
+    if(argc == 8){
+      delay = -atof(argv[7]);
+    }
+    fprintf(stdout, "\n delay between transmissions    -> %lf",-delay);
+    fprintf(stdout, "\n\n");
+
+
+    for(int i=0; i<count; i++){
+      IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+      tmsg->setSource(sh);
+      tmsg->setDestination(sh);
+      tmsg->destination     = argv[5];
+      tmsg->deadline        = Time::Clock::getSinceEpoch() + (-delay*(i+1)) +5;
+      tmsg->req_id          = id;
+      id++;
+      tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+      tmsg->data_mode       = IMC::TransmissionRequest::DMODE_ABORT;
+
+      msg_list->push_back(tmsg);
+
+    }
+
+  }
+  if(strcmp(argv[3], "teste_sms") == 0)
+    {
+      if (argc < 6){
+        fprintf(stderr, "Error: missing arguments...");
+        fprintf(stderr, "\n arg1 : ip (ex: 127.0.0.1)");
+        fprintf(stderr, "\n arg2 : port (ex: 6002)");
+        fprintf(stderr, "\n arg3 : testingmessage (ex: teste_sms)");
+        fprintf(stderr, "\n arg4 : system_receiver_id (ex: 26)");
+        fprintf(stderr, "\n arg5 : system_destination_name (ex: lauv-noptilus-1)");
+        fprintf(stderr, "\n arg6 (optional) : number_of_messages (ex: 5)");
+        fprintf(stderr, "\n arg7 (optional) : set_delay_between_messages (ex: 3.5)");
+        fprintf(stderr, "\n");
+        return 0;
+      }
+      logMsg(argv,argc);
+
+      uint16_t id = 0;
+
+      unsigned short sh=0;
+      logSystemDuneID(sh,argv);
+
+      fprintf(stdout, "\n destination of message         -> %s",argv[5]);
+      unsigned short count = 1;
+      logNumberOfMessages(count,argv,argc);
+
+      if(argc == 8){
+        delay = -atof(argv[7]);
+      }
+      fprintf(stdout, "\n delay between transmissions    -> %lf",-delay);
+      fprintf(stdout, "\n\n");
+
+      for(int i=0; i<count; i++){
+        IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+        tmsg->setSource(sh);
+        tmsg->setDestination(sh);
+        tmsg->destination     = argv[5];
+        tmsg->deadline        = Time::Clock::getSinceEpoch() + (-delay*(i+1)) +5;
+        tmsg->req_id          = id;
+        id++;
+        tmsg->comm_mean       = IMC::TransmissionRequest::CMEAN_GSM;
+        tmsg->data_mode       = IMC::TransmissionRequest::DMODE_TEXT;
+        tmsg->txt_data        = "Pos";
+
+        msg_list->push_back(tmsg);
+
+      }
+
+    }
+
+  if(strcmp(argv[3], "teste_random") == 0){
+
+
+    if (argc < 6){
+      fprintf(stderr, "Error: missing arguments...");
+      fprintf(stderr, "\n arg1 : ip (ex: 127.0.0.1)");
+      fprintf(stderr, "\n arg2 : port (ex: 6002)");
+      fprintf(stderr, "\n arg3 : testingmessage (ex: teste_random)");
+      fprintf(stderr, "\n arg4 : system_receiver_id (ex: 26)");
+      fprintf(stderr, "\n arg5 : system_destination_name (ex: lauv-noptilus-1)");
+      fprintf(stderr, "\n arg6 (optional) : number_of_messages (ex: 5)");
+      fprintf(stderr, "\n arg7 (optional) : set_delay_between_messages (ex: 3.5)");
+      fprintf(stderr, "\n");
+      return 0;
+    }
+    logMsg(argv,argc);
+
+        uint16_t id = 0;
+
+        unsigned short sh=0;
+        logSystemDuneID(sh,argv);
+
+        fprintf(stdout, "\n destination of message         -> %s",argv[5]);
+        unsigned short count = 1;
+        logNumberOfMessages(count,argv,argc);
+
+        if(argc == 8){
+          delay = atof(argv[7]);
+        }
+        fprintf(stdout, "\n delay between transmissions    -> %lf",delay);
+        fprintf(stdout, "\n\n");
+
+
+    for(int i=0; i<count; i++){
+
+      IMC::TransmissionRequest* tmsg = new IMC::TransmissionRequest;
+
+      tmsg->setSource(sh);
+      tmsg->setDestination(sh);
+      tmsg->destination     = argv[5];
+      tmsg->deadline        = Time::Clock::getSinceEpoch() + (delay*(i+1)) +5;
+      tmsg->req_id          = id;
+      id++;
+      createRandomMsg(tmsg);
+
+      msg_list->push_back(tmsg);
+
+    }
+
+  }
+
+
+
+  if (msg == NULL && msg_list->empty())
   {
     fprintf(stderr, "ERROR: unknown message '%s'\n", argv[3]);
     return 1;
   }
+
+  if(!msg_list->empty()){
+    int delay_copy = Math::round(delay * 1000);
+
+    IMC::Message* aux;
+
+    int list_size = msg_list->size();
+    for(uint i=0; i < (uint)list_size; i++)
+    {
+
+      if(delay>0){
+        int dl = rand() % delay_copy + 1;
+        sleep(dl);
+      }
+      else{
+        sleep(-delay);
+
+      }
+
+      aux=msg_list->front();
+      msg_list->pop_front();
+
+      aux->setTimeStamp();
+
+      uint8_t bfr[1024] = {0};
+      uint16_t rv = IMC::Packet::serialize(aux, bfr, sizeof(bfr));
+
+      UDPSocket sock;
+      try
+      {
+        sock.write(bfr, rv, dest, port);
+        aux->toText(cerr);
+      }
+      catch (std::runtime_error& e)
+      {
+        std::cerr << "ERROR: " << e.what() << std::endl;
+        return 1;
+      }
+
+      if (aux != NULL)
+      {
+        delete aux;
+        aux = NULL;
+      }
+
+    }
+
+
+    return 0;
+  }
+
 
   msg->setTimeStamp();
 
@@ -866,3 +1363,5 @@ main(int argc, char** argv)
 
   return 0;
 }
+
+

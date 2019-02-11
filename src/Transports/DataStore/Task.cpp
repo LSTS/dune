@@ -50,6 +50,9 @@ namespace Transports
       //! If set, messages will be forwarded to gateway using acoustic modem
       std::string acoustic_gateway;
 
+      //! If set, messages will be forwarded to gateway using any comm available
+      std::string any_gateway;
+
       //! Period, in seconds, between wifi forwarding
       int wifi_forward_period;
 
@@ -58,6 +61,9 @@ namespace Transports
 
       //! Maximum size for acoustic messages
       int acoustic_mtu;
+
+      //! Period, in seconds, between forwarding
+      int any_forward_period;
 
       //! Period, in seconds, between iridium uploads (0 == deactivated)
       int iridium_upload_period;
@@ -90,6 +96,9 @@ namespace Transports
       //! Timer used for forwarding data over wifi
       Time::Counter<double> m_wifi_forward_timer;
 
+      //! Timer used for forwarding data over any mean
+      Time::Counter<double> m_any_forward_timer;
+
       //! Timer used for uploading data over iridium
       Time::Counter<double> m_iridium_upload_timer;
 
@@ -98,6 +107,9 @@ namespace Transports
 
       //! Router is used to forward data to other systems
       Router m_router;
+
+      typedef std::map<uint16_t, IMC::TransmissionRequest*> MessagesQueued;
+      MessagesQueued m_transmission_requests;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -116,6 +128,10 @@ namespace Transports
         .description("If set, messages will be forwarded to gateway using acoustic modem")
         .defaultValue("");
 
+        param("Any Mean Gateway", m_args.any_gateway)
+        .description("If set, messages will be forwarded to gateway using any comm available")
+        .defaultValue("");
+
         param("WiFi Forward Period", m_args.wifi_forward_period)
         .description("WiFi forwarding period, in seconds")
         .defaultValue("30");
@@ -128,6 +144,9 @@ namespace Transports
         .description("Maximum Size To Transmit Over Acoustic")
         .defaultValue("250");
 
+        param("Any Mean Forward Period", m_args.any_forward_period)
+        .description("Any mean upload period, in seconds.")
+        .defaultValue("30");
 
         param("Iridium Upload Period", m_args.iridium_upload_period)
         .description("Iridium upload period, in seconds. 0 Deactivates uploading via Iridium.")
@@ -139,6 +158,7 @@ namespace Transports
 
         m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
         m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
+        m_any_forward_timer.setTop(m_args.any_forward_period);
         m_iridium_upload_timer.setTop(m_args.iridium_upload_period);
       }
 
@@ -174,6 +194,7 @@ namespace Transports
         consumed.push_back("HistoricDataQuery");
         consumed.push_back("Announce");
         consumed.push_back("UamRxFrame");
+        consumed.push_back("TransmissionStatus");
 
         std::stringstream ss;
         for (std::vector<std::string>::const_iterator it = consumed.begin(); it != consumed.end(); it++)
@@ -183,6 +204,7 @@ namespace Transports
 
         m_wifi_forward_timer.setTop(m_args.wifi_forward_period);
         m_acoustic_forward_timer.setTop(m_args.acoustic_forward_period);
+        m_any_forward_timer.setTop(m_args.any_forward_period);
         m_iridium_upload_timer.setTop(m_args.iridium_upload_period);
       }
 
@@ -208,6 +230,8 @@ namespace Transports
           m_router.process(static_cast<const IMC::UamRxFrame*>(msg->clone()));
         else if (msg->getId() == Announce::getIdStatic())
           m_router.process(static_cast<const IMC::Announce*>(msg->clone()));
+        else if (msg->getId() == TransmissionStatus::getIdStatic())
+          process(static_cast<const IMC::TransmissionStatus*>(msg->clone()));
 
         // only store messages with some defined priority (transported)
         if (m_priorities.find(msg->getName()) == m_priorities.end())
@@ -257,6 +281,59 @@ namespace Transports
       {
         if (m_ctx.resolver.isLocal(msg->getSource()))
           m_state = *msg;
+      }
+
+      //! Updates position of this platform
+      void
+      process(const IMC::TransmissionStatus* msg)
+      {
+        if (msg->getDestination() != getSystemId()
+            || msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (m_transmission_requests.find(msg->req_id)
+            != m_transmission_requests.end())
+        {
+          IMC::TransmissionRequest* req = m_transmission_requests[msg->req_id];
+          switch (msg->status)
+          {
+            case IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE:
+              war("not possible to forward data through %s by any mean at this time.",
+                  m_args.any_gateway.c_str());
+              m_store.addData((IMC::HistoricData*)req->msg_data.get());
+              m_transmission_requests.erase(msg->req_id);
+              Memory::clear(req);
+              break;
+
+            case IMC::TransmissionStatus::TSTAT_SENT:
+              inf("Routed samples to %s using any mean available",
+                  m_args.any_gateway.c_str());
+              m_transmission_requests.erase(msg->req_id);
+              Memory::clear(req);
+              break;
+
+            case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
+              war("not possible to forward data through %s by any mean at this time.",
+                  m_args.any_gateway.c_str());
+              m_store.addData((IMC::HistoricData*)req->msg_data.get());
+              m_transmission_requests.erase(msg->req_id);
+              Memory::clear(req);
+              break;
+
+            case IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE:
+              war("not possible to forward data through %s by any mean at this time.",
+                  m_args.any_gateway.c_str());
+              m_store.addData((IMC::HistoricData*)req->msg_data.get());
+              m_transmission_requests.erase(msg->req_id);
+              Memory::clear(req);
+              break;
+
+            default:
+              return;
+          }
+
+        }
+
       }
 
       //! Process incoming HistoricData (multi-hop forwarding)
@@ -336,6 +413,33 @@ namespace Transports
       }
 
       void
+      anyMeanRouting()
+      {
+        inf("forwarding to gateway over any mean");
+
+        IMC::HistoricData* data = m_store.pollSamples(1000);
+
+        uint16_t newId = m_router.createInternalId();
+
+        TransmissionRequest tr;
+        tr.setSource(getSystemId());
+        tr.setSourceEntity(getEntityId());
+        tr.setDestination(getSystemId());
+
+        tr.comm_mean         = IMC::TransmissionRequest::CMEAN_ANY;
+        tr.data_mode         = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.destination       = m_args.any_gateway;
+        tr.req_id            = newId;
+        tr.msg_data.set(data);
+        tr.deadline          = Clock::getSinceEpoch() + m_args.any_forward_period;
+
+        dispatch(tr);
+        m_transmission_requests[newId] = tr.clone();
+
+        Memory::clear(data);
+      }
+
+      void
       acousticRouting()
       {
         IMC::HistoricData* data = m_store.pollSamples(m_args.acoustic_mtu);
@@ -386,6 +490,20 @@ namespace Transports
           waitForMessages(1.0);
 
           std::stringstream ss;
+
+          if (m_args.any_forward_period > 0 && m_any_forward_timer.overflow())
+          {
+            m_any_forward_timer.reset();
+            //m_router.forwardCommandsAnyMean(&m_store);
+
+            if (!m_args.any_gateway.empty())
+              anyMeanRouting();
+          }
+          else if (m_args.any_forward_period > 0)
+            ss << "  Any mean: " << m_any_forward_timer.getRemaining();
+          else
+            ss << "  Any mean: N/A";
+
 
           if (m_args.acoustic_forward_period > 0 && m_acoustic_forward_timer.overflow())
           {
