@@ -48,6 +48,7 @@ namespace Transports
       std::vector<std::string> msgs;
       std::vector<std::string> ents;
       double time_multiplier;
+      double initial_log_skip_seconds;
     };
 
     static const int c_stats_period = 10;
@@ -114,6 +115,11 @@ namespace Transports
         param("Time Multiplier", m_args.time_multiplier)
         .defaultValue("1.0")
         .description("Time multiplier for fast replay.");
+
+        param("Seconds to skip", m_args.initial_log_skip_seconds)
+        .minimumValue("0")
+        .defaultValue("0")
+        .description("Number of seconds to skip in the beginning of the log");
 
         bind<IMC::ReplayControl>(this);
       }
@@ -272,8 +278,38 @@ namespace Transports
         lc->op = IMC::LoggingControl::COP_REQUEST_START;
         dispatch(lc); // change log (if Logging task happens to be active)
 
-        m_ts_delta = lc->getTimeStamp() - m_ts_delta;
-        m_start_time = lc->getTimeStamp();
+        // skip messages
+        if (m_args.initial_log_skip_seconds > 0)
+        {
+          double time_origin = m_ts_delta;
+          m = IMC::Packet::deserialize(*m_is);
+          while (m)
+          {
+            if (m->getTimeStamp() - time_origin >= m_args.initial_log_skip_seconds)
+              break;
+            // Do not miss information from EntityInfo
+            if (m->getId() == DUNE_IMC_ENTITYINFO)
+            {
+              updateEntityMap(m);
+            }
+
+            delete m;
+            m = IMC::Packet::deserialize(*m_is);
+            if(getDebugLevel() >= DEBUG_LEVEL_SPEW)
+              m->toText(std::cout);
+          }
+
+          if (!m)
+          {
+            err("No messages for specified time range");
+            return;
+          }
+          else
+            inf("Skipped messages up to %s", Time::Format::getTimeDate(m->getTimeStamp()).c_str());
+        }
+
+        m_ts_delta = lc->getTimeStamp() - m_ts_delta - m_args.initial_log_skip_seconds;
+        m_start_time = m->getTimeStamp();
         m_next_stats = m_start_time + c_stats_period;
         delete m;
 
