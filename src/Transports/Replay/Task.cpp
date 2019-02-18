@@ -338,6 +338,55 @@ namespace Transports
       }
 
       void
+      dispatchWithNewTime(IMC::Message* m)
+      {
+        double original_ts;
+
+        if (m->getId() == DUNE_IMC_LBLCONFIG)
+          original_ts = m_start_time - m_ts_delta;
+        else
+          original_ts = m->getTimeStamp();
+
+        double new_ts = original_ts + m_ts_delta;
+        m->setTimeStamp(new_ts);
+
+        // Wait till the time is right
+        double now = Clock::getSinceEpoch();
+        double delta = new_ts - now;
+
+        double delay;
+
+        if (delta >= 1e-03)
+        {
+          // Delay::wait does not behave satisfactorily otherwise
+          // in some systems
+          Delay::wait(delta);
+          delay = Clock::getSinceEpoch() - new_ts;
+        }
+        else
+        {
+          delay = 0;
+          delta = 0;
+        }
+
+        // Counter for delay before bus delivery
+        updateStats(m_tstats[m->getName()], delay);
+        updateStats(m_tgstats, delay);
+
+        // Dispatch message
+        dispatch(m, DF_KEEP_TIME);
+
+        if (now >= m_next_stats)
+        {
+          displayStats();
+          m_next_stats += c_stats_period;
+        }
+
+        spew("%s %0.4f %s", m->getName(), (new_ts - m_start_time),
+             m_eid2name[m->getSourceEntity()].c_str());
+      }
+
+      void
       onMain(void)
       {
 
@@ -386,50 +435,7 @@ namespace Transports
 
             if ((m->getId() == DUNE_IMC_ENTITYSTATE && m->getSourceEntity() != DUNE_IMC_CONST_UNK_EID) || m_replay.find(m->getName()) != m_replay.end())
             {
-              double original_ts;
-
-              if (m->getId() == DUNE_IMC_LBLCONFIG)
-                original_ts = m_start_time - m_ts_delta;
-              else
-                original_ts = m->getTimeStamp();
-
-              double new_ts = original_ts + m_ts_delta;
-              m->setTimeStamp(new_ts);
-
-              // Wait till the time is right
-              double now = Clock::getSinceEpoch();
-              double delta = new_ts - now;
-
-              double delay;
-
-              if (delta >= 1e-03)
-              {
-                // Delay::wait does not behave satisfactorily otherwise
-                // in some systems
-                Delay::wait(delta);
-                delay = Clock::getSinceEpoch() - new_ts;
-              }
-              else
-              {
-                delay = 0;
-                delta = 0;
-              }
-
-              // Counter for delay before bus delivery
-              updateStats(m_tstats[m->getName()], delay);
-              updateStats(m_tgstats, delay);
-
-              // Dispatch message
-              dispatch(m, DF_KEEP_TIME);
-
-              if (now >= m_next_stats)
-              {
-                displayStats();
-                m_next_stats += c_stats_period;
-              }
-
-              spew("%s %0.4f %s", m->getName(), (new_ts - m_start_time),
-                   m_eid2name[m->getSourceEntity()].c_str());
+              dispatchWithNewTime(m);
             }
           }
 
