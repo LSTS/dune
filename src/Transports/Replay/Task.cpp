@@ -338,6 +338,20 @@ namespace Transports
       }
 
       void
+      updateEntityMap(IMC::Message* m)
+      {
+        IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
+        Name2Eid::iterator itr = m_name2eid.find(ei->label);
+
+        if (itr != m_name2eid.end())
+        {
+          m_eid2eid[ei->id] = itr->second;
+
+          trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
+        }
+      }
+
+      void
       dispatchWithNewTime(IMC::Message* m)
       {
         double original_ts;
@@ -419,15 +433,7 @@ namespace Transports
             else if (m->getId() == DUNE_IMC_ENTITYINFO)
             {
               // Update entity id map
-              IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
-              Name2Eid::iterator itr = m_name2eid.find(ei->label);
-
-              if (itr != m_name2eid.end())
-              {
-                m_eid2eid[ei->id] = itr->second;
-
-                trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
-              }
+              updateEntityMap(m);
             }
 
             m->setSourceEntity(mapEntity(m->getSourceEntity()));
