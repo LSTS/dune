@@ -449,6 +449,13 @@ namespace Transports
       void
       consume(const IMC::UsblPositionExtended* msg)
       {
+        debug("Received USBL position for %s.", msg->target.c_str());
+
+        // always dispatch UsblFixExtended.
+        IMC::UsblFixExtended fix = UsblTools::toFix(*msg, m_estate);
+        dispatch(fix);
+        debug("Generated USBL fix to %s.", fix.target.c_str());
+
         if (m_usbl_modem == NULL)
         {
           announceUSBL();
@@ -466,8 +473,6 @@ namespace Transports
         // The target wants an absolute fix?
         if (m_usbl_modem->wantsFix(msg->target))
         {
-          // transform data.
-          IMC::UsblFixExtended fix = UsblTools::toFix(*msg, m_estate);
           if (m_usbl_modem->encode(&fix, data))
             sendFrame(msg->target, createInternalId(), data, false);
         }
@@ -481,6 +486,8 @@ namespace Transports
       void
       consume(const IMC::UsblAnglesExtended* msg)
       {
+    	debug("Received USBL angles to %s.", msg->target.c_str());
+
         if (m_usbl_modem == NULL)
         {
           announceUSBL();
