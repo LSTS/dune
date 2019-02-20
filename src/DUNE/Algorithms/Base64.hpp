@@ -104,7 +104,7 @@ namespace DUNE
       //! @param[in] str source string.
       //! @return true if string is decoded in Base64.
       static bool
-	  validBase64(const std::string& str)
+	    validBase64(const std::string& str)
       {
         return validBase64((str.c_str()));
       }
@@ -113,7 +113,7 @@ namespace DUNE
       //! @param[in] str source string.
       //! @return true if string is decoded in Base64.
       static bool
-	  validBase64(const char* str);
+	    validBase64(const char* str);
 
     };
   }

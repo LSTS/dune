@@ -31,8 +31,6 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
-#include <regex.h>
-
 
 // DUNE headers.
 #include <DUNE/Algorithms/Base64.hpp>
@@ -45,8 +43,6 @@ namespace DUNE
     static const std::string c_b64_en = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "abcdefghijklmnopqrstuvwxyz"
                                         "0123456789+/";
-    //! Base64 regular expression
-    static const char* c_b64_regex = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$";
 
     //! Base64 decoding table.
     static const unsigned char c_b64_de[] =
@@ -66,22 +62,52 @@ namespace DUNE
 
     //! Verify if string is a valid Base64
     bool
-	Base64::validBase64(const  char* str)
+	  Base64::validBase64(const char* str)
     {
-    	regex_t  base64R;
-    	if(regcomp(&base64R,c_b64_regex,REG_EXTENDED|REG_NOSUB) != 0 )
-    	{
-    		regfree(&base64R);
-    		return false;
-    	}
-    	if(regexec(&base64R,str,0,NULL,0) == REG_NOMATCH)
-    	{
-    		regfree(&base64R);
-    		return false;
-    	}
-    	regfree(&base64R);
-    	return true;
+      try
+      {
+        size_t inLen = std::strlen(str);
+        // All valid Base64 encoded strings will be multiples of 4
+        if (0 != (inLen % 4))
+        {
+            return false;
+        }
+        for (size_t i = 0; i < inLen; ++i)
+        {
+            // "[A-Z][a-z][0-9]+/=" are the only valid
+            // letters str a Base64 encoded string
+            if ((('A' > str[i]) || ('Z' < str[i])) &&
+                (('a' > str[i]) || ('z' < str[i])) &&
+                (('0' > str[i]) || ('9' < str[i])) &&
+                ('+' != str[i]) &&
+                ('/' != str[i]) &&
+                ('=' != str[i]))
+            {
+                return false;
+            }
+            // Padding character "=" can only show up as last 2 characters
+            if ('=' == str[i])
+            {
+                if (i < inLen - 2)
+                {
+                    return false;
+                }
+                if (i == inLen - 2 && '=' != str[i+1])
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+      }
+      catch (std::exception& e)
+      {
+         // If exception is caught, then it is not a base64 encoded string
+        return false;
+      }
+      return false;
     }
+
     //! Encode a sequence of bytes in Base64.
     std::string
     Base64::encode(const unsigned char* bytes, size_t len)
