@@ -9,6 +9,8 @@ private/
 CMakeLists.txt.user
 user/
 build/
+lauv-build/
 .cproject
 .settings/
 /.vscode
+/.vs
