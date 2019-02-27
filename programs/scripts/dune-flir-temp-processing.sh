@@ -1,4 +1,32 @@
 #!/bin/sh
+############################################################################
+# Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      #
+# Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
+############################################################################
+# This file is part of DUNE: Unified Navigation Environment.               #
+#                                                                          #
+# Commercial Licence Usage                                                 #
+# Licencees holding valid commercial DUNE licences may use this file in    #
+# accordance with the commercial licence agreement provided with the       #
+# Software or, alternatively, in accordance with the terms contained in a  #
+# written agreement between you and Faculdade de Engenharia da             #
+# Universidade do Porto. For licensing terms, conditions, and further      #
+# information contact lsts@fe.up.pt.                                       #
+#                                                                          #
+# Modified European Union Public Licence - EUPL v.1.1 Usage                #
+# Alternatively, this file may be used under the terms of the Modified     #
+# EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md #
+# included in the packaging of this file. You may not use this work        #
+# except in compliance with the Licence. Unless required by applicable     #
+# law or agreed to in writing, software distributed under the Licence is   #
+# distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     #
+# ANY KIND, either express or implied. See the Licence for the specific    #
+# language governing permissions and limitations at                        #
+# https://github.com/LSTS/dune/blob/master/LICENCE.md and                  #
+# http://ec.europa.eu/idabc/eupl.html.                                     #
+############################################################################
+# Author: Eduardo Ramos                                                    #
+############################################################################
 
 CSVName="FlirThermalData.csv"
 
@@ -45,7 +73,9 @@ findLog() {
 	done
 }
 
+
 getEpochFilename() {
+	# $1 is in the format "YYYYMMDD_hhmmss_(3 digits for miliseconds)"
 	local name=$1
 	local year=`echo $name | cut -b 1-4`
 	local month=`echo $name | cut -b 5-6`
@@ -53,8 +83,8 @@ getEpochFilename() {
 	local hour=`echo $name | cut -b 10-11`
 	local minute=`echo $name | cut -b 12-13`
 	local second=`echo $name | cut -b 14-15`
-	# date "+%s" -d "2013-02-20 08:41:15"
 	local date="$year-$month-$day $hour:$minute:$second"
+	# date "+%s" -d "2013-02-20 08:41:15"
 	epochFilename="$(date +%s -d "$date")".`echo $name | cut -b 17-19`.jpg
 }
 
@@ -139,9 +169,15 @@ then
 	exit 1
 fi
 
+if [ $START \> $END ] || [ $START = $END ]
+then
+	printf 'The start(-s) and end(-e) dates are not compatible\n\n'
+	exit 1
+fi
+
 noSave=0
 nextLog="0"
-savePath="$(printf %s$CSVNAme $OUTPUT)"
+savePath="$(printf %s$CSVName $OUTPUT)"
 epochFilename=""
 currPhotosDir=""
 currPhotoIndex=0
@@ -194,7 +230,7 @@ for top_filename in $DEVICE/*; do
 				if [ -e $savePath -a $NOREPLACE ] || [ -z $currDayPath ] || [ -z $currTimePath ];
 				then
 					noSave=1
-					printf "Skipped: $filename\n"
+					printf "Skipped: $filename; No suitable log folder was found OR no overwrite option is enabled\n"
 					continue
 				else
 					noSave=0
@@ -209,7 +245,7 @@ for top_filename in $DEVICE/*; do
 			# check if the file should be processed
 			if [ $noSave = 1 ];
 			then 
-				printf "Skipped: $filename\n"
+				printf "Skipped: $filename; No suitable log folder was found OR no overwrite option is enabled\n"
 				continue
 			fi
 

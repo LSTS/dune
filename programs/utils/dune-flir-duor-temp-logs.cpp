@@ -18,6 +18,7 @@
 
 using namespace std;
 
+// information used to calculate image temperature
 string readInfo[] =
 { "ReflectedApparentTemperature", "AtmosphericTemperature", "ObjectDistance",
 	"RelativeHumidity", "Emissivity", "PlanckR1", "PlanckR2", "PlanckB",
@@ -25,7 +26,7 @@ string readInfo[] =
 	"AtmosphericTransBeta1", "AtmosphericTransBeta2", "AtmosphericTransX",
 	"RawValueMedian", "RawValueRange", "RawThermalImage" };
 
-
+// output information to save on CSV
 string csvInfo[] = {
 	"DateTimeOriginal", "MAVRoll", "MAVPitch", "MAVYaw", "GPSAltitude", "GPSLatitude", "GPSLongitude"
 };
