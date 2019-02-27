@@ -217,11 +217,11 @@ namespace Transports
         .description("URL used to update dynamic DNS");
 
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
-        m_command_connect = String::str("/bin/sh %s start >> /var/log/ppp2.log 2>&1", script.c_str());
-        m_command_disconnect = String::str("/bin/sh %s stop >> /var/log/ppp2.log 2>&1", script.c_str());
-        m_command_nat_start = String::str("/bin/sh %s nat_start >> /var/log/ppp2.log 2>&1", script.c_str());
-        m_command_nat_stop = String::str("/bin/sh %s nat_stop >> /var/log/ppp2.log 2>&1", script.c_str());
-        m_command_dyndns_update = String::str("/bin/sh %s dyndns_update >> /var/log/ppp2.log 2>&1", script.c_str());
+        m_command_connect = String::str("/bin/sh %s start >> /dev/null 2>&1", script.c_str());
+        m_command_disconnect = String::str("/bin/sh %s stop >> /dev/null 2>&1", script.c_str());
+        m_command_nat_start = String::str("/bin/sh %s nat_start >> /dev/null 2>&1", script.c_str());
+        m_command_nat_stop = String::str("/bin/sh %s nat_stop >> /dev/null 2>&1", script.c_str());
+        m_command_dyndns_update = String::str("/bin/sh %s dyndns_update >> /dev/null 2>&1", script.c_str());
 
         bind<IMC::PowerChannelState>(this);
 
