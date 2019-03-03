@@ -31,7 +31,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
-#include <regex.h>
+#include <regex>
 
 
 // DUNE headers.
@@ -66,22 +66,12 @@ namespace DUNE
 
     //! Verify if string is a valid Base64
     bool
-	Base64::validBase64(const  char* str)
+    Base64::validBase64(const  char* str)
     {
-    	regex_t  base64R;
-    	if(regcomp(&base64R,c_b64_regex,REG_EXTENDED|REG_NOSUB) != 0 )
-    	{
-    		regfree(&base64R);
-    		return false;
-    	}
-    	if(regexec(&base64R,str,0,NULL,0) == REG_NOMATCH)
-    	{
-    		regfree(&base64R);
-    		return false;
-    	}
-    	regfree(&base64R);
-    	return true;
+      std::basic_regex<char> b64_expr(c_b64_regex, std::regex_constants::extended);
+      return (std::regex_match(str, b64_expr));
     }
+
     //! Encode a sequence of bytes in Base64.
     std::string
     Base64::encode(const unsigned char* bytes, size_t len)
