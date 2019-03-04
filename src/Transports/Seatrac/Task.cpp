@@ -232,7 +232,6 @@ namespace Transports
         .minimumValue("0.0")
         .description("Minimum magnetic field calibration values to reset hard iron parameters");
 
-
         param("Max Range", m_args.max_range)
         .defaultValue("1000")
         .minimumValue("250")
