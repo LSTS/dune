@@ -96,6 +96,8 @@ namespace Transports
       double calib_threshold;
       //! max range
       uint16_t max_range;
+      //! dummy connection
+      bool dummy_connection;
     };
 
     //! Map of system's names.
@@ -236,6 +238,9 @@ namespace Transports
         .minimumValue("250")
         .description("Maximum value of distance at which Ranges are considered");
 
+        param("Dummy Connection", m_args.dummy_connection)
+        .defaultValue("false")
+        .description("To assume a dummy connection and not a modem (no replies");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -440,7 +445,7 @@ namespace Transports
             sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
             processInput();
           }
-          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0);
+          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection);
 
           sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
 
