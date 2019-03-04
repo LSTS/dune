@@ -669,7 +669,9 @@ namespace Transports
       void
       sendCommand(const std::string& cmd)
       {
+        debug(DTR("Send command to the acoustic modem %s"), cmd.c_str());
         m_handle->writeString(cmd.c_str());
+        debug(DTR("Sent done"));
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
       }
@@ -969,6 +971,8 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
+        debug(DTR("Received UamTxFrame with dst=0x%04X. Msg for system '%s'"), msg->getDestination(), msg->sys_dst.c_str());
+
         std::string hex = String::toHex(msg->data);
         std::vector<char> data_t;
         std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
@@ -983,9 +987,12 @@ namespace Transports
         ticket.seq = msg->seq;
         ticket.ack = (msg->flags & IMC::UamTxFrame::UTF_ACK) != 0;
 
+        debug(DTR("Creating ticket %d"), ticket.seq);
+
         if (msg->sys_dst == getSystemName())
         {
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          debug(DTR("Sending UamTxStatus::UTS_INV_ADDR. Ticket %d died"), ticket.seq);
           return;
         }
 
@@ -1004,12 +1011,14 @@ namespace Transports
         if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
+          debug(DTR("Sending UamTxStatus::UTS_BUSY. Ticket %d died"), ticket.seq);          
           return;
         }
 
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
+        debug(DTR("Sending UamTxStatus::UTS_IP. Ticket %d being processed"), ticket.seq);          
 
         // Fill the message type.
         if ((ticket.addr != 0) && (ticket.ack == true))
@@ -1025,6 +1034,7 @@ namespace Transports
           {
             m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQ;
           }
+          debug(DTR("Configuration as %s %s"), m_args.usbl_mode ? "USBL" : "MSG_ONLY", m_args.usbl_mode && m_args.enhanced_usbl ? "enhanced" : "");
         }
         else
         {
@@ -1032,6 +1042,7 @@ namespace Transports
             m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAYU;
           else
             m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAY;
+          debug(DTR("Configuration as ONEWAY %s"), m_args.usbl_mode ? "USBL" : "MSG_ONLY");
         }
 
         int code;
@@ -1050,6 +1061,7 @@ namespace Transports
             break;
           default:
             resetOneWayTimer();
+            debug(DTR("Sending package %f s"), m_oway_timer.getTop());
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             break;
         }
