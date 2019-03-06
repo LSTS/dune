@@ -1181,7 +1181,7 @@ namespace Transports
       //! Checks if an OWAY message is waiting to be sent.
       void
       checkTxOWAY(void) {
-
+        debug("checkTxOWAY call");
         if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
