@@ -497,7 +497,20 @@ namespace Transports
               war(DTR("failed to configure device"));
             }
 
-            debug("ready");
+            inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d"),
+                m_data_beacon.cid_settings_msg.xcvr_beacon_id,
+                m_data_beacon.cid_sys_info.hardware.part_number,
+                m_data_beacon.cid_sys_info.hardware.part_rev,
+                m_data_beacon.cid_sys_info.hardware.serial_number,
+                m_data_beacon.cid_sys_info.boot_firmware.part_number,
+                m_data_beacon.cid_sys_info.boot_firmware.version_maj,
+                m_data_beacon.cid_sys_info.boot_firmware.version_min,
+                m_data_beacon.cid_sys_info.boot_firmware.version_build,
+                m_data_beacon.cid_sys_info.main_firmware.part_number,
+                m_data_beacon.cid_sys_info.main_firmware.version_maj,
+                m_data_beacon.cid_sys_info.main_firmware.version_min,
+                m_data_beacon.cid_sys_info.main_firmware.version_build);
+            debug("ready)");
             setAndSendState(STA_IDLE);
             m_config_status=true;
           }
