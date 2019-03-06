@@ -448,7 +448,7 @@ namespace Transports
 
           sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
 
-          if( m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
+          if (m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
             m_usbl_receiver = true;
 
           uint8_t output_flags = (ENVIRONMENT_FLAG | ATTITUDE_FLAG
@@ -1191,7 +1191,7 @@ namespace Transports
             {
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
               {
-                 resetOneWayTimer();
+                resetOneWayTimer();
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
               }
               else
