@@ -714,6 +714,7 @@ namespace Transports
               m_oway_timer.getElapsed());
           if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
+            resetOneWayTimer();
             debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
@@ -868,6 +869,7 @@ namespace Transports
         {
           if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
           {
+            resetOneWayTimer();
             debug(DTR("Error sending (handleCommunicationError) part %d of %d for ticket %d, resending"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
