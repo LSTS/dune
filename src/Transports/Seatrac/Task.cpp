@@ -496,19 +496,6 @@ namespace Transports
               war(DTR("failed to configure device"));
             }
 
-            inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d"),
-                m_data_beacon.cid_settings_msg.xcvr_beacon_id,
-                m_data_beacon.cid_sys_info.hardware.part_number,
-                m_data_beacon.cid_sys_info.hardware.part_rev,
-                m_data_beacon.cid_sys_info.hardware.serial_number,
-                m_data_beacon.cid_sys_info.boot_firmware.part_number,
-                m_data_beacon.cid_sys_info.boot_firmware.version_maj,
-                m_data_beacon.cid_sys_info.boot_firmware.version_min,
-                m_data_beacon.cid_sys_info.boot_firmware.version_build,
-                m_data_beacon.cid_sys_info.main_firmware.part_number,
-                m_data_beacon.cid_sys_info.main_firmware.version_maj,
-                m_data_beacon.cid_sys_info.main_firmware.version_min,
-                m_data_beacon.cid_sys_info.main_firmware.version_build);
             debug("ready)");
             setAndSendState(STA_IDLE);
             m_config_status=true;
@@ -519,6 +506,20 @@ namespace Transports
             setAndSendState(STA_IDLE);
             m_config_status=true;
           }
+
+          inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d"),
+              m_data_beacon.cid_settings_msg.xcvr_beacon_id,
+              m_data_beacon.cid_sys_info.hardware.part_number,
+              m_data_beacon.cid_sys_info.hardware.part_rev,
+              m_data_beacon.cid_sys_info.hardware.serial_number,
+              m_data_beacon.cid_sys_info.boot_firmware.part_number,
+              m_data_beacon.cid_sys_info.boot_firmware.version_maj,
+              m_data_beacon.cid_sys_info.boot_firmware.version_min,
+              m_data_beacon.cid_sys_info.boot_firmware.version_build,
+              m_data_beacon.cid_sys_info.main_firmware.part_number,
+              m_data_beacon.cid_sys_info.main_firmware.version_maj,
+              m_data_beacon.cid_sys_info.main_firmware.version_min,
+              m_data_beacon.cid_sys_info.main_firmware.version_build);
         }
         else
         {
@@ -706,8 +707,18 @@ namespace Transports
         if (m_data_beacon.cid_dat_receive_msg.ack_flag != 0)
         {
           // if msg has more than 1 packet, send next part
+          debug(DTR("Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
+              m_data_beacon.cid_dat_send_msg.message_index,
+              m_data_beacon.cid_dat_send_msg.n_sub_messages,
+              m_ticket->seq, 
+              m_oway_timer.getElapsed());
           if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
+            debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s"), 
+                m_data_beacon.cid_dat_send_msg.message_index,
+                m_data_beacon.cid_dat_send_msg.n_sub_messages,
+                m_ticket->seq,
+                m_oway_timer.getTop());
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
@@ -717,6 +728,7 @@ namespace Transports
             handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
 
             // Data communication done
+            debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), m_ticket->seq, m_oway_timer.getElapsed());
             clearTicket(IMC::UamTxStatus::UTS_DONE);
           }
           return;
@@ -856,17 +868,21 @@ namespace Transports
         {
           if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
           {
+            debug(DTR("Error sending (handleCommunicationError) part %d of %d for ticket %d, resending"), 
+                m_data_beacon.cid_dat_send_msg.message_index,
+                m_data_beacon.cid_dat_send_msg.n_sub_messages,
+                m_ticket->seq);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
           {
-            war(DTR("Communication failed"));
+            war(DTR("Communication failed for ticket %d"), m_ticket->seq);
             clearTicket(IMC::UamTxStatus::UTS_FAILED);
           }
         }
         else
         {
-          war(DTR("Next msg or part send to son"));
+          war(DTR("Next msg or part send to son for ticket %d with ERROR"), m_ticket->seq);
         }
       }
 
@@ -1073,6 +1089,11 @@ namespace Transports
           default:
             resetOneWayTimer();
             debug(DTR("Sending package %f s"), m_oway_timer.getTop());
+            debug(DTR("Sending (consume UamTxFrame) part %d of %d for ticket %d will take up to %f s"), 
+                m_data_beacon.cid_dat_send_msg.message_index,
+                m_data_beacon.cid_dat_send_msg.n_sub_messages,
+                ticket.seq,
+                m_oway_timer.getTop());
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             break;
         }
@@ -1192,7 +1213,6 @@ namespace Transports
       //! Checks if an OWAY message is waiting to be sent.
       void
       checkTxOWAY(void) {
-        debug("checkTxOWAY call");
         if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           if (m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
@@ -1200,14 +1220,25 @@ namespace Transports
           {
             if (m_oway_timer.overflow())
             {
+              debug(DTR("NOACK Success transmission complete (part %d of %d) for ticket %d (in %f s)"), 
+                  m_data_beacon.cid_dat_send_msg.message_index,
+                  m_data_beacon.cid_dat_send_msg.n_sub_messages,
+                  m_ticket->seq, 
+                  m_oway_timer.getElapsed());
+
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
               {
                 resetOneWayTimer();
+                debug(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s"), 
+                    m_data_beacon.cid_dat_send_msg.message_index,
+                    m_data_beacon.cid_dat_send_msg.n_sub_messages,
+                    m_ticket->seq,
+                    m_oway_timer.getTop());
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
               }
               else
               {
-                debug(DTR("Msg transmission complete"));
+                debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), m_ticket->seq, m_oway_timer.getElapsed());
                 clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
             }
