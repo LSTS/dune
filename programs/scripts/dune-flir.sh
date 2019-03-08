@@ -27,6 +27,9 @@
 ############################################################################
 # Author: Eduardo Ramos                                                    #
 ############################################################################
+# This script will extract the data capture from the FLIR cameras          #
+# (model DuoR or VueProR).                                                 #
+############################################################################
 
 CSVName="FlirThermalData.csv"
 execPath="./dune-flir-metadata"

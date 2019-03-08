@@ -1,11 +1,36 @@
-//#***************************************************************************
-//# Copyright (C) 2018 Laboratório de Sistemas e Tecnologia Subaquática      *
-//# Departamento de Engenharia Electrotécnica e de Computadores              *
-//# Rua Dr. Roberto Frias, 4200-465 Porto, Portugal                          *
-//#***************************************************************************
-//# Author: Pedro Gonçalves                                                  *
-//#***************************************************************************
+//***************************************************************************
+// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
+//                                                                          *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+// Author: Pedro Gonçalves e Eduardo Ramos                                  *
+//***************************************************************************
+// Utility to process the metadata contained in the EXIF of the images      *
+// captured by the FLIR cameras(model DuoR or VueProR).                     *
+//***************************************************************************
 
+// ISO C++ 98 headers.
 #include <iostream>
 #include <string>
 #include <math.h>
@@ -14,9 +39,10 @@
 #include <map>
 #include <algorithm>
 
+// ExifTool headers.
 #include "../../vendor/libraries/exiftool/ExifTool.h"
 
-using namespace std;
+    using namespace std;
 
 // information used to calculate image temperature
 string readInfo[] =
@@ -81,7 +107,6 @@ int main(int argc, char **argv)
     {
       lineInfo[cntMetaData][0] = i->name;
       lineInfo[cntMetaData++][1] = i->value;
-      // cout << "#    " << i->name << " = " << i->value << endl;
     }
     delete info;
   }
@@ -124,23 +149,20 @@ void saveData(void)
       try
       {
         readInfoValues.insert(pair<string, float>(*currLine, stof(lineInfo[t][1])));
-        // cout << "#    " << *currLine << " = " << lineInfo[t][1] << endl;
       }
       catch (...)
       {
-        //cout << "#    " << lineInfo[t][0] << " = error getting value, is binary data ?!?" << endl;
-        //cout << lineInfo[t][1] << endl;
+        cerr << "#    " << lineInfo[t][0] << " = error getting value, is binary data ?!?" << endl;
+        cerr << lineInfo[t][1] << endl;
       }
     }
-    //cout << "Line Info: " << lineInfo[t][0] << " Find Result: " << find(csvInfo, csvInfo + sizeof(csvInfo), lineInfo[t][0]) << " CSVINFO: " << csvInfo << " CSVINFO + size off: " << csvInfo + sizeof(csvInfo) << endl;
     if (find(csvInfo, csvInfo + 7, lineInfo[t][0]) != csvInfo + 7)
     {
       csvInfoValues[lineInfo[t][0]] = lineInfo[t][1];
-      //cout << "Inserted: " << lineInfo[t][0] << " with value: " << lineInfo[t][1] << endl;
     }
     if ((t == cntMetaData - 1) && !haveInfo)
     {
-      //cout << *currLine << " = Not found " << endl;
+      cerr << *currLine << " = Not found " << endl;
     }
   }
 }
@@ -214,8 +236,6 @@ void getRawThermalImage(char *path)
   TagInfo *infoEP = et->ImageInfo(path, "\n-RawThermalImage\n-b\n");
   const int imageHeight = readInfoValues["RawThermalImageHeight"];
   const int imageWidth = readInfoValues["RawThermalImageWidth"];
-  // cout << "Image Height = " << imageHeight << endl;
-  // cout << "Image Width = " << imageWidth << endl;
   int cnt = 0;
   for (TagInfo *i = infoEP; i; i = i->next)
   {
@@ -275,7 +295,6 @@ void printCSVLine(char separtor)
   cout.precision(8);
   cout << endl
        << fixed
-       //<< csvInfoValues["DateTimeOriginal"] << separtor
        << toUnixTime(csvInfoValues["DateTimeOriginal"]) << separtor
        << toDecimalDegrees(csvInfoValues["GPSLatitude"]) << separtor
        << toDecimalDegrees(csvInfoValues["GPSLongitude"]) << separtor;
@@ -301,12 +320,12 @@ int toUnixTime(string date_time)
       sec = stoi(date_time.substr(17, 19)),
       UTCOffset = stoi(date_time.substr(23, 26));
 
-  /* get current timeinfo: */
+  // get current timeinfo:
   time(&rawtime); //or: rawtime = time(0);
-  /* convert to struct: */
+  // convert to struct:
   timeinfo = localtime(&rawtime);
 
-  /* now modify the timeinfo to the given date: */
+  // now modify the timeinfo to the given date:
   timeinfo->tm_year = year - 1900;
   timeinfo->tm_mon = month - 1; //months since January - [0,11]
   timeinfo->tm_mday = day;      //day of the month - [1,31]
@@ -319,15 +338,13 @@ int toUnixTime(string date_time)
   //account GTM offset hours to be true GMT 1 hour = 3600 sec
   rawtime -= UTCOffset * 3600;
 
-  /* call gmtime: create unix time stamp from timeinfo struct in gmt time*/
-  //int date = gmtime(rawtime);
+  // call gmtime: create unix time stamp from timeinfo struct in gmt time
   return rawtime;
 }
 
 float toDecimalDegrees(string dms)
 {
   //0 deg 0' 0.00" N
-
   int degreeDelimiter = dms.find(' ');
   int minutesPos = degreeDelimiter + 5;
   int minuteDelimiter = dms.find('\'');
@@ -335,9 +352,7 @@ float toDecimalDegrees(string dms)
   int secondsDelimiter = dms.find('"');
 
   float result = stoi(dms.substr(0, minutesPos - 1));
-  //cout << dms.substr(minutesPos, minuteDelimiter - minutesPos) << endl;
   result += stoi(dms.substr(minutesPos, minuteDelimiter - minutesPos)) / 60.0;
-  //cout << dms.substr(secondsPos, secondsDelimiter - secondsPos) << endl;
   result += stof(dms.substr(secondsPos, secondsDelimiter - secondsPos)) / 3600.0;
 
   if (dms.find('W') != string::npos || dms.find('S') != string::npos)
