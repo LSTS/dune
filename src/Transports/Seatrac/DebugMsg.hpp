@@ -296,8 +296,8 @@ namespace Transports
           task->debug("data_Beacon.cid_dat_receive_msg.packet_len %d",
                       (int)data_Beacon.cid_dat_receive_msg.packet_len);
           for (int i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
-            task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%d] %d ", i,
-                        (unsigned)data_Beacon.cid_dat_receive_msg.packet_data[i]);
+            task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%02d] 0x%02X ", i,
+                        (unsigned)(data_Beacon.cid_dat_receive_msg.packet_data[i] & 0xFF));
           break;
 
         case CID_DAT_ERROR:
