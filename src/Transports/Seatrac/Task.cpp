@@ -1209,7 +1209,13 @@ namespace Transports
       void
       resetOneWayTimer()
       {
-        m_oway_timer.setTop( (m_data_beacon.cid_dat_send_msg.packet_len * 8 * 1/c_acoustic_bitrate + (m_args.max_range / MIN_SOUND_SPEED))*2 );
+        int multiplier = 2;
+        if(!(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
+              m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
+          multiplier = 8;
+        m_oway_timer.setTop((m_data_beacon.cid_dat_send_msg.packet_len * 8 
+            * 1/c_acoustic_bitrate + (m_args.max_range / MIN_SOUND_SPEED))
+            * multiplier );
       }
 
       //! Checks if an OWAY message is waiting to be sent.
@@ -1243,6 +1249,18 @@ namespace Transports
                 debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), m_ticket->seq, m_oway_timer.getElapsed());
                 clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
+            }
+          }
+          else
+          {
+            // is with ack
+            if (m_ticket != NULL && m_oway_timer.overflow())
+            {
+              //Took too long, lets bail with error
+              debug(DTR("!!!!!! Msg transmission with ack for ticket %d timeout ACK. Lets bail! %f s > %f s"), 
+                  m_ticket->seq, m_oway_timer.getElapsed(), m_oway_timer.getTop());
+              m_data_beacon.cid_dat_send_msg.lock_flag = 0;
+              clearTicket(IMC::UamTxStatus::UTS_FAILED);
             }
           }
         }
