@@ -42,7 +42,7 @@
 // ExifTool headers.
 #include "../../vendor/libraries/exiftool/ExifTool.h"
 
-    using namespace std;
+using namespace std;
 
 // information used to calculate image temperature
 string readInfo[] =
@@ -258,7 +258,7 @@ void getRawThermalImage(char *path)
       {
         bufferMat[r][c] = (buff[t + 1] << 8) | (buff[t] & 0xff);
         c++;
-        if (c > imageWidth-1)
+        if (c > imageWidth - 1)
         {
           c = 0;
           r++;
