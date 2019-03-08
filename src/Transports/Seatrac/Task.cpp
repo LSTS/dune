@@ -484,7 +484,6 @@ namespace Transports
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
-
             }
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
@@ -528,6 +527,7 @@ namespace Transports
           throw std::runtime_error(m_states[m_state_entity].description);
         }
       }
+
       //! Update parameters.
       void
       onUpdateParameters(void)
@@ -602,7 +602,6 @@ namespace Transports
       bool
       isCalibrated(void)
       {
-
         if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x*100)) != ( (int32_t) (m_args.hard_iron[0]*100)))
         {
           war(DTR("different calibration parameters"));
@@ -627,7 +626,6 @@ namespace Transports
       bool
       setHardIron(void)
       {
-
         m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
         m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
         m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
@@ -853,7 +851,6 @@ namespace Transports
       void
       handleCommunicationError(void)
       {
-
         if( !(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
         {
@@ -872,6 +869,7 @@ namespace Transports
           war(DTR("Next msg or part send to son"));
         }
       }
+
       //! Correct data according with mounting position.
       void
       rotateData(void)
