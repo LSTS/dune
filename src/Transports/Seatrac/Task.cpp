@@ -1212,10 +1212,16 @@ namespace Transports
         int multiplier = 2;
         if(!(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
-          multiplier = 8;
+          multiplier = 6;
         m_oway_timer.setTop((m_data_beacon.cid_dat_send_msg.packet_len * 8 
-            * 1/c_acoustic_bitrate + (m_args.max_range / MIN_SOUND_SPEED))
+            * 1.0/c_acoustic_bitrate + (m_args.max_range * 1.0 / MIN_SOUND_SPEED))
             * multiplier );
+        debug(DTR("Calc new timer (bytes %d | bit-rate %f | max-range %d m | multiplier %d) calculated to %f s"), 
+                m_data_beacon.cid_dat_send_msg.packet_len,
+                c_acoustic_bitrate,
+                m_args.max_range,
+                multiplier,
+                m_oway_timer.getTop());
       }
 
       //! Checks if an OWAY message is waiting to be sent.
