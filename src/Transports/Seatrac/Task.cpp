@@ -715,11 +715,12 @@ namespace Transports
           if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             resetOneWayTimer();
-            debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s"), 
+            debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
                 m_ticket->seq,
-                m_oway_timer.getTop());
+                m_oway_timer.getTop(),
+                m_data_beacon.cid_dat_send_msg.packet_len);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
@@ -1091,11 +1092,12 @@ namespace Transports
           default:
             resetOneWayTimer();
             debug(DTR("Sending package %f s"), m_oway_timer.getTop());
-            debug(DTR("Sending (consume UamTxFrame) part %d of %d for ticket %d will take up to %f s"), 
+            debug(DTR("Sending (consume UamTxFrame) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
                 ticket.seq,
-                m_oway_timer.getTop());
+                m_oway_timer.getTop(),
+                m_data_beacon.cid_dat_send_msg.packet_len);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
             break;
         }
@@ -1216,7 +1218,7 @@ namespace Transports
         m_oway_timer.setTop((m_data_beacon.cid_dat_send_msg.packet_len * 8 
             * 1.0/c_acoustic_bitrate + (m_args.max_range * 1.0 / MIN_SOUND_SPEED))
             * multiplier );
-        debug(DTR("Calc new timer (bytes %d | bit-rate %f | max-range %d m | multiplier %d) calculated to %f s"), 
+        trace(DTR("Calc new timer (bytes %d | bit-rate %f | max-range %d m | multiplier %d) calculated to %f s"), 
                 m_data_beacon.cid_dat_send_msg.packet_len,
                 c_acoustic_bitrate,
                 m_args.max_range,
@@ -1243,11 +1245,12 @@ namespace Transports
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
               {
                 resetOneWayTimer();
-                debug(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s"), 
+                debug(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                     m_data_beacon.cid_dat_send_msg.message_index,
                     m_data_beacon.cid_dat_send_msg.n_sub_messages,
                     m_ticket->seq,
-                    m_oway_timer.getTop());
+                    m_oway_timer.getTop(),
+                    m_data_beacon.cid_dat_send_msg.packet_len);
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
               }
               else
