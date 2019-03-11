@@ -96,6 +96,8 @@ namespace Transports
       double calib_threshold;
       //! max range
       uint16_t max_range;
+      //! Timeout time multiplier for ack wait
+      uint8_t ack_timeout_time_multiplier;
       //! dummy connection
       bool dummy_connection;
     };
@@ -236,6 +238,11 @@ namespace Transports
         .defaultValue("1000")
         .minimumValue("250")
         .description("Maximum value of distance at which Ranges are considered");
+
+        param("Acknowledged timeout time multiplier", m_args.ack_timeout_time_multiplier)
+        .defaultValue("6")
+        .minimumValue("3")
+        .description("A time multiplier to wait before timeout for acknowledge (it ack requested)");
 
         param("Dummy Connection", m_args.dummy_connection)
         .defaultValue("false")
@@ -1214,7 +1221,7 @@ namespace Transports
         int multiplier = 2;
         if(!(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
-          multiplier = 6;
+          multiplier = m_args.ack_timeout_time_multiplier;
         m_oway_timer.setTop((m_data_beacon.cid_dat_send_msg.packet_len * 8 
             * 1.0/c_acoustic_bitrate + (m_args.max_range * 1.0 / MIN_SOUND_SPEED))
             * multiplier );
