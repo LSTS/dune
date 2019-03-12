@@ -100,11 +100,12 @@ namespace Transports
       void
       answer(const IMC::AcousticOperation* req, int status, fp32_t range = 0.0)
       {
-        IMC::AcousticOperation msg(*req);
+        IMC::AcousticOperation msg;
         msg.op = status;
         msg.range = range;
+        msg.setDestination(req->getSource());
+        msg.setDestinationEntity(req->getSourceEntity());
         m_parent->dispatch(msg);
-
       }
 
       void
