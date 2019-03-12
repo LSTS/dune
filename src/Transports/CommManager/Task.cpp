@@ -723,11 +723,10 @@ namespace Transports
         else
           tx.destination  = msg->system.c_str();
 
-        //FIXME not sure
         tx.setDestination(msg->getDestination());
         tx.setDestinationEntity(msg->getDestinationEntity());
-        tx.setSource(msg->getSource());
-        tx.setSourceEntity(msg->getSourceEntity());
+        tx.setSource(getSystemId());
+        tx.setSourceEntity(getEntityId());
 
         tx.timeout = Clock::getSinceEpoch() + 10;
 
