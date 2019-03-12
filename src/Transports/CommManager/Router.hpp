@@ -705,7 +705,6 @@ namespace Transports
         //end
 
         return;
-
       }
 
       void
@@ -741,6 +740,7 @@ namespace Transports
       ~Router()
       {
       }
+
     private:
       Task* m_parent;
       uint8_t m_medium;
@@ -804,7 +804,6 @@ namespace Transports
           return false;
 
         return true;
-
       }
 
       bool
@@ -829,7 +828,6 @@ namespace Transports
         }
 
         return false;
-
       }
 
       bool

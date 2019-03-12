@@ -58,7 +58,6 @@ namespace Transports
       std::string gsm_label;
       //! Name of the configuration section with acoustic modem addresses
       std::string acoustic_addr_section;
-
     };
 
     //! Config section from where to fetch emergency sms number
@@ -84,7 +83,6 @@ namespace Transports
       Router m_router;
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
-
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -120,7 +118,6 @@ namespace Transports
         param("Process AcousticOperation Messages", m_args.enable_acoustic)
                 .description("Enable CommManager to process and convert legacy message -> AcousticOperation")
                 .defaultValue("true");
-
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
@@ -196,8 +193,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          war(DTR(
-              "ERROR Initializing CommManager. Couldn't resolve GSM label."));
+          war(DTR("ERROR Initializing CommManager. Couldn't resolve GSM label."));
           //throw RestartNeeded(e.what(), 5, false);
         }
         try
@@ -207,8 +203,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          war(DTR(
-              "ERROR Initializing CommManager. Couldn't resolve Iridium label."));
+          war(DTR("ERROR Initializing CommManager. Couldn't resolve Iridium label."));
           //throw RestartNeeded(e.what(), 5, false);
         }
       }
