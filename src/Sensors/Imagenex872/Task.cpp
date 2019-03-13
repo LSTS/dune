@@ -75,8 +75,12 @@ namespace Sensors
             unsigned frequency;
             // Default range.
             unsigned range;
-            //Execution frequency
+            // Execution frequency
             unsigned exec_freq;
+            // Filter pings between UAM communication
+            bool filter_uam;
+            // Time stop write pings to file
+            float time_filter_uam;
         };
 
         // List of available ranges.
@@ -140,6 +144,10 @@ namespace Sensors
             bool m_receive_dev_data_text;
             // Receive logging control message
             bool m_receive_log_control;
+            // Vehicle transmission uam
+            bool m_transmission_uam;
+            // Timer to break pings between acoustic operations
+            Time::Counter<float> m_timer_counter;
 
             Task(const std::string& name, Tasks::Context& ctx):
                     Tasks::Periodic(name, ctx),
@@ -152,7 +160,8 @@ namespace Sensors
                     m_time_last_ping(Clock::getSinceEpochMsec() * 1000),
                     m_receive_estimated_state(false),
                     m_receive_dev_data_text(false),
-                    m_receive_log_control(false)
+                    m_receive_log_control(false),
+                    m_transmission_uam(false)
             {
                 // Define configuration parameters.
                 paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -206,6 +215,19 @@ namespace Sensors
                         .values("0.0, 1.0, 2.0")
                         .description(DTR("Execution frequency"));
 
+                param(DTR_RT("Filter UAM"), m_args.filter_uam)
+                        .visibility(Tasks::Parameter::VISIBILITY_USER)
+                        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+                        .defaultValue("false")
+                        .values("true, false")
+                        .description(DTR("Filter UAM"));
+
+                param(DTR_RT("Time filter UAM"), m_args.time_filter_uam)
+                        .visibility(Tasks::Parameter::VISIBILITY_USER)
+                        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+                        .defaultValue("0.4")
+                        .description(DTR("Time filter UAM"));
+
                 // Initialize switch data.
                 std::memset(m_sdata, 0, sizeof(m_sdata));
                 m_sdata[0] = 0xfe;
@@ -221,6 +243,7 @@ namespace Sensors
                 bind<IMC::LoggingControl>(this);
                 bind<IMC::EstimatedState>(this);
                 bind<IMC::SoundSpeed>(this);
+                bind<IMC::UamTxStatus>(this);
             }
 
             void
@@ -446,6 +469,33 @@ namespace Sensors
                     m_frame872->setSoundSpeed(m_sound_speed);
             }
 
+            void
+            consume(const IMC::UamTxStatus* msg)
+            {
+
+                if(!m_args.filter_uam)
+                    return;
+
+                if (msg->getSource() != getSystemId())
+                    return;
+
+                debug("Transmission of acoustic message...");
+
+                if (msg->value == IMC::UamTxStatus::UTS_IP)
+                {
+                    //Stop
+                    debug("Acoustic communication start");
+                    debug("Stop writing pings between %f s", m_args.time_filter_uam);
+                    m_transmission_uam = true;
+                    m_timer_counter.setTop(m_args.time_filter_uam);
+                }
+                else {
+                    //Restart
+                    debug("Acoustic communication stop.");
+                    m_transmission_uam = false;
+                }
+            }
+
 
             void
             logRawData()
@@ -474,6 +524,9 @@ namespace Sensors
                     dispatch(m_ping);
 
                     if(m_frame872 == NULL)
+                        return;
+
+                    if(!m_timer_counter.overflow() || m_transmission_uam)
                         return;
 
                     if(!m_data_file.is_open())
