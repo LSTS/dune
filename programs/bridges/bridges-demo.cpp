@@ -32,6 +32,7 @@
 #include "pmc/gliderAPI.hpp"
 #include "sensors/factory.hpp"
 #include "sensors/manager.hpp"
+#include "pmc/bme280.hpp"
 
 static const float c_log_timestep = 1.0;
 static const float c_subsamp_timestep = 10.0;
@@ -39,8 +40,7 @@ static const float c_subsamp_timestep = 10.0;
 //! Desired runtime.
 static const float c_runtime = 60 * 5;
 
-int
-main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   /** fetch from config file **/
   if (argc != 2)
@@ -70,6 +70,24 @@ main(int argc, char** argv)
   // Sensor manager.
   Manager man(&bus, &cfg, "/root/", c_log_timestep, c_subsamp_timestep);
 
+  //BME280 Sensor control temperature, pressure and humidity
+  BME280 *bme280 = new BME280("/dev/i2c-0", 118);
+  //read config bme280
+  float temperatureMin = 0;
+  float temperatureMax = 0;
+  cfg.get("BME280", "temperature.min", "0", temperatureMin);
+  cfg.get("BME280", "temperature.max", "9999", temperatureMax);
+
+  float humidityMin = 0;
+  float humidityMax = 0;
+  cfg.get("BME280", "humidity.min", "0", humidityMin);
+  cfg.get("BME280", "humidity.max", "100", humidityMax);
+
+  float pressureMin = 0;
+  float pressureMax = 0;
+  cfg.get("BME280", "pressure.min", "0", pressureMin);
+  cfg.get("BME280", "pressure.max", "9999999", pressureMax);
+
   // Enable trigger output buffer.
   bus.enableTriggers(true);
 
@@ -82,10 +100,33 @@ main(int argc, char** argv)
   }
 
   /** MAIN LOOP **/
-  DUNE::Time::Counter<double> timer(60.0); // print time each x seconds.
+  DUNE::Time::Counter<double> timer(60.0);          // print time each x seconds.
   DUNE::Time::Counter<double> timer_run(c_runtime); // runtime.
   while (!timer_run.overflow())
   {
+    //Check BME280
+    float t = 0, h = 0;
+    double p = 0;
+    bme280->read(t, p, h);
+    //std::cerr << "t: " << t << "\tp: " << p << "\th: " << h << std::endl;
+
+    if (t < temperatureMin || t > temperatureMax)
+    {
+      std::cerr << " alert: temperature out of parameters" << std::endl;
+      glider.sendAlert(cfg.get("BME280", "temperature.alertmsg"));
+    }
+
+    if (h < humidityMin || h > humidityMax)
+    {
+      std::cerr << " alert: humidity out of parameters" << std::endl;
+      glider.sendAlert(cfg.get("BME280", "humidity.alertmsg"));
+    }
+    if (p < pressureMin || p > pressureMax)
+    {
+      std::cerr << " alert: pressure out of parameters" << std::endl;
+      glider.sendAlert(cfg.get("BME280", "pressure.alertmsg"));
+    }
+
     // listen to sensors.
     man.listen();
 

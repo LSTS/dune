@@ -55,15 +55,14 @@ class GliderAPI
 {
 public:
   //! Constructor.
-  GliderAPI(const std::string& uart_port, DUNE::Parsers::Config* cfg):
-    m_sm(GAS_SYNC),
-    m_frame_index(0),
-    m_csum_index(0),
-    m_status(NULL),
-    m_nav(NULL),
-    m_detailed(NULL),
-    m_cfg(NULL),
-    m_cfg_changed(false)
+  GliderAPI(const std::string &uart_port, DUNE::Parsers::Config *cfg) : m_sm(GAS_SYNC),
+                                                                        m_frame_index(0),
+                                                                        m_csum_index(0),
+                                                                        m_status(NULL),
+                                                                        m_nav(NULL),
+                                                                        m_detailed(NULL),
+                                                                        m_cfg(NULL),
+                                                                        m_cfg_changed(false)
   {
     m_uart = new DUNE::Hardware::SerialPort(uart_port, c_baud_rate);
 
@@ -125,16 +124,14 @@ public:
 
   //! Get current mission id.
   //! @return mission id.
-  int
-  getMission(void) const
+  int getMission(void) const
   {
     return m_status != NULL ? m_status->getMission() : 0;
   }
 
   //! Get current cycle number (cycle = yo).
   //! @return current cycle number.
-  int
-  getCycle(void) const
+  int getCycle(void) const
   {
     return m_status != NULL ? m_status->getCycle() : 0;
   }
@@ -218,6 +215,13 @@ public:
     m_cfg_changed = false;
   }
 
+  void sendAlert(std::string msg)
+  {
+    std::cerr << "[glider] sent: '" << DUNE::Streams::sanitize(msg) << "'" << std::endl;
+    msg += "\r\n";
+    m_uart->writeString(msg.c_str());
+  }
+
 private:
   //! Very basic states.
   enum GliderAPIStates
@@ -234,33 +238,33 @@ private:
   {
     switch (m_sm)
     {
-      case (GAS_SYNC):
-        if (byte == '$')
-        {
-          m_frame_index = 0;
-          m_frame[m_frame_index++] = byte;
-          m_sm = GAS_CSUM;
-        }
-        break;
-      case (GAS_CSUM):
+    case (GAS_SYNC):
+      if (byte == '$')
+      {
+        m_frame_index = 0;
         m_frame[m_frame_index++] = byte;
+        m_sm = GAS_CSUM;
+      }
+      break;
+    case (GAS_CSUM):
+      m_frame[m_frame_index++] = byte;
 
-        if (byte == '*')
-        {
-          m_csum_index = m_frame_index - 1;
-          m_sm = GAS_TERM;
-        }
-        break;
-      case (GAS_TERM):
-        m_frame[m_frame_index++] = byte;
+      if (byte == '*')
+      {
+        m_csum_index = m_frame_index - 1;
+        m_sm = GAS_TERM;
+      }
+      break;
+    case (GAS_TERM):
+      m_frame[m_frame_index++] = byte;
 
-        if (byte == '\n')
-        {
-          decode();
-          m_sm = GAS_SYNC;
-          return true;
-        }
-        break;
+      if (byte == '\n')
+      {
+        decode();
+        m_sm = GAS_SYNC;
+        return true;
+      }
+      break;
     }
 
     return false;
@@ -270,7 +274,7 @@ private:
   void
   decode(void)
   {
-    std::string str((char*)m_frame, m_frame_index);
+    std::string str((char *)m_frame, m_frame_index);
     std::cerr << "[glider] recv: '" << DUNE::Streams::sanitize(str) << "'" << std::endl;
 
     //! List of fields.
@@ -329,7 +333,7 @@ private:
   //! @param[in] str received string.
   //! @return true if checksum matches, false otherwise.
   bool
-  checksum(const std::string& str)
+  checksum(const std::string &str)
   {
     size_t idx = str.find_last_of("*");
 
@@ -346,7 +350,7 @@ private:
       shift += 4;
     }
 
-    unsigned short csum = CRC16((unsigned char*)&str[1], idx);
+    unsigned short csum = CRC16((unsigned char *)&str[1], idx);
 
     // @todo: glider simulator checksum is not correct - will be fixed in future release.
     std::printf("[glider] csum: %04x == %04x (TO BE FIXED in future SHOEBOX release. Don't care for now)\r\n", csum, rsum);
@@ -356,7 +360,7 @@ private:
   //! Decode received configuration command.
   //! @param[in] str received frame.
   void
-  decodeConfigCommand(const std::string& str)
+  decodeConfigCommand(const std::string &str)
   {
     // it is *not* a payload configuration command.
     if (!DUNE::Utils::String::startsWith(str, c_cfg_cmd))
@@ -421,13 +425,13 @@ private:
   //! @param[in] option configuration option.
   //! @param[in] value configuration value.
   void
-  reply(unsigned lane, const std::string& option, const std::string& value)
+  reply(unsigned lane, const std::string &option, const std::string &value)
   {
     std::string reply;
     reply = DUNE::Utils::String::str("%s,%u,%s,%s*", c_rpl_cmd.c_str(), lane,
                                      option.c_str(), value.c_str());
 
-    unsigned short csum = CRC16((unsigned char*)&reply[1], reply.size() - 1);
+    unsigned short csum = CRC16((unsigned char *)&reply[1], reply.size() - 1);
     reply += DUNE::Utils::String::str("%04x;\r\n", csum);
 
     std::cerr << "[glider] sent: '" << DUNE::Streams::sanitize(reply) << "'" << std::endl;
@@ -437,7 +441,7 @@ private:
   //! State machine.
   unsigned m_sm;
   //! Serial port interface.
-  DUNE::Hardware::SerialPort* m_uart;
+  DUNE::Hardware::SerialPort *m_uart;
   //! Frame buffer.
   uint8_t m_frame[255];
   //! Current data packet index.
@@ -446,12 +450,12 @@ private:
   size_t m_csum_index;
 
   //! NMC remote helm frames.
-  FrameStatus* m_status;
-  FrameNav* m_nav;
-  FrameDetailedStatus* m_detailed;
+  FrameStatus *m_status;
+  FrameNav *m_nav;
+  FrameDetailedStatus *m_detailed;
 
   //! Pointer to configuration.
-  DUNE::Parsers::Config* m_cfg;
+  DUNE::Parsers::Config *m_cfg;
   //! List of devices from configuration.
   std::vector<std::string> m_devices;
   //! Configuration has changed.
