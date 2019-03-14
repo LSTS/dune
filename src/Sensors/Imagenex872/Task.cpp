@@ -473,25 +473,24 @@ namespace Sensors
             consume(const IMC::UamTxStatus* msg)
             {
 
+                if (!isActive())
+                    return;
+
                 if(!m_args.filter_uam)
                     return;
 
                 if (msg->getSource() != getSystemId())
                     return;
 
-                debug("Transmission of acoustic message...");
-
                 if (msg->value == IMC::UamTxStatus::UTS_IP)
                 {
                     //Stop
-                    debug("Acoustic communication start");
-                    debug("Stop writing pings between %f s", m_args.time_filter_uam);
                     m_transmission_uam = true;
                     m_timer_counter.setTop(m_args.time_filter_uam);
                 }
                 else {
                     //Restart
-                    debug("Acoustic communication stop.");
+                    debug("Transmission of acoustic message stop.");
                     m_transmission_uam = false;
                 }
             }
@@ -526,8 +525,11 @@ namespace Sensors
                     if(m_frame872 == NULL)
                         return;
 
-                    if(!m_timer_counter.overflow() || m_transmission_uam)
+                    if(!m_timer_counter.overflow() || m_transmission_uam) {
+                        debug("Transmission of acoustic message");
+                        debug("Stop write pings in file");
                         return;
+                    }
 
                     if(!m_data_file.is_open())
                         m_data_file.open(m_data_path.c_str(), std::ofstream::app | std::ios::binary);
