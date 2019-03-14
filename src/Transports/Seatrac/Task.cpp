@@ -309,13 +309,14 @@ namespace Transports
 
           if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
             handleCommunicationError();
+          
           if(m_data_beacon.newDataAvailable(CID_STATUS))
           {
-            if(m_args.arhs_mode==true)
+            if(m_args.arhs_mode == true)
             {
               handleAhrsData();
             }
-            if(m_args.pressure_sensor_mode==true)
+            if(m_args.pressure_sensor_mode == true)
             {
               handlePressureSensor();
             }
@@ -715,18 +716,22 @@ namespace Transports
         if (m_data_beacon.cid_dat_receive_msg.ack_flag != 0)
         {
           // if msg has more than 1 packet, send next part
-          debug(DTR("Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
-              m_data_beacon.cid_dat_send_msg.message_index,
-              m_data_beacon.cid_dat_send_msg.n_sub_messages,
-              m_ticket->seq, 
-              m_oway_timer.getElapsed());
-          if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
+          if (m_ticket != NULL)
+          {
+            debug(DTR("Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
+                m_data_beacon.cid_dat_send_msg.message_index,
+                m_data_beacon.cid_dat_send_msg.n_sub_messages,
+                m_ticket->seq,
+                m_oway_timer.getElapsed());
+          }
+
+          if (m_ticket != NULL && m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             resetOneWayTimer();
             debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                m_ticket->seq,
+                m_ticket == NULL ? -1 : m_ticket->seq,
                 m_oway_timer.getTop(),
                 m_data_beacon.cid_dat_send_msg.packet_len);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
@@ -738,8 +743,13 @@ namespace Transports
             handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
 
             // Data communication done
-            debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), m_ticket->seq, m_oway_timer.getElapsed());
-            clearTicket(IMC::UamTxStatus::UTS_DONE);
+            if (m_ticket != NULL)
+            {
+              debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
+                  m_ticket->seq, 
+                  m_oway_timer.getElapsed());
+              clearTicket(IMC::UamTxStatus::UTS_DONE);
+            }
           }
           return;
         }
@@ -876,24 +886,27 @@ namespace Transports
         if( !(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
         {
-          if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(0) < MAX_MESSAGE_ERRORS)
+          int next_part_code = m_ticket == NULL ? -1 : m_data_beacon.cid_dat_send_msg.packetDataNextPart(0);
+          if (next_part_code < MAX_MESSAGE_ERRORS && next_part_code > 0)
           {
             resetOneWayTimer();
             debug(DTR("Error sending (handleCommunicationError) part %d of %d for ticket %d, resending"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                m_ticket->seq);
+                m_ticket == NULL ? -1 : m_ticket->seq);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
           {
-            war(DTR("Communication failed for ticket %d"), m_ticket->seq);
+            war(DTR("Communication failed for ticket %d %d"), 
+                m_ticket == NULL ? -1 : m_ticket->seq,
+                next_part_code);
             clearTicket(IMC::UamTxStatus::UTS_FAILED);
           }
         }
         else
         {
-          war(DTR("Next msg or part send to son for ticket %d with ERROR"), m_ticket->seq);
+          war(DTR("Next msg or part send to son for ticket %d with ERROR"), m_ticket == NULL ? -1 : m_ticket->seq);
         }
       }
 
@@ -1004,6 +1017,16 @@ namespace Transports
           if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
             handleCommunicationError();
         }
+        // else
+        // {
+        //   if (m_ticket != NULL)
+        //   {
+        //     debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
+        //         m_ticket == NULL ? -1 : m_ticket->seq,
+        //         m_oway_timer.getElapsed());
+        //     clearTicket(IMC::UamTxStatus::UTS_DONE);
+        //   }
+        // }
       }
 
       void
@@ -1247,7 +1270,7 @@ namespace Transports
               debug(DTR("NOACK Success transmission complete (part %d of %d) for ticket %d (in %f s)"), 
                   m_data_beacon.cid_dat_send_msg.message_index,
                   m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                  m_ticket->seq, 
+                  m_ticket == NULL ? -1 : m_ticket->seq,
                   m_oway_timer.getElapsed());
 
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
@@ -1256,14 +1279,16 @@ namespace Transports
                 debug(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                     m_data_beacon.cid_dat_send_msg.message_index,
                     m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                    m_ticket->seq,
+                    m_ticket == NULL ? -1 : m_ticket->seq,
                     m_oway_timer.getTop(),
                     m_data_beacon.cid_dat_send_msg.packet_len);
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
               }
               else
               {
-                debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), m_ticket->seq, m_oway_timer.getElapsed());
+                debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
+                    m_ticket == NULL ? -1 : m_ticket->seq,
+                    m_oway_timer.getElapsed());
                 clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
             }
