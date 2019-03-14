@@ -430,7 +430,7 @@ namespace Transports
         for (unsigned i = 0; i < addrs.size(); ++i)
         {
           unsigned addr = 0;
-          m_ctx.config.get("Seatrac Addresses", addrs[i], "0", addr);
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
           m_modem_names[addrs[i]] = addr;
           m_modem_addrs[addr] = addrs[i];
         }
