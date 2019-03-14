@@ -514,7 +514,7 @@ namespace Transports
             m_config_status=true;
           }
 
-          inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d"),
+          inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d | %s USBL beacon"),
               m_data_beacon.cid_settings_msg.xcvr_beacon_id,
               m_data_beacon.cid_sys_info.hardware.part_number,
               m_data_beacon.cid_sys_info.hardware.part_rev,
@@ -526,7 +526,8 @@ namespace Transports
               m_data_beacon.cid_sys_info.main_firmware.part_number,
               m_data_beacon.cid_sys_info.main_firmware.version_maj,
               m_data_beacon.cid_sys_info.main_firmware.version_min,
-              m_data_beacon.cid_sys_info.main_firmware.version_build);
+              m_data_beacon.cid_sys_info.main_firmware.version_build,
+              m_usbl_receiver ? "Is" : "Not");
         }
         else
         {
