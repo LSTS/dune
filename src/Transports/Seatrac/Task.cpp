@@ -426,7 +426,7 @@ namespace Transports
         std::string agent = getSystemName();
         std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
 
-        // verify modem local addres value.
+        // verify modem local address value.
         for (unsigned i = 0; i < addrs.size(); ++i)
         {
           unsigned addr = 0;
@@ -503,13 +503,13 @@ namespace Transports
               war(DTR("failed to configure device"));
             }
 
-            debug("ready)");
+            debug("ready");
             setAndSendState(STA_IDLE);
             m_config_status=true;
           }
           else
           {
-            debug("ready");
+            debug("ready (settings already set)");
             setAndSendState(STA_IDLE);
             m_config_status=true;
           }
