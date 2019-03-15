@@ -656,13 +656,14 @@ namespace Simulators
           else
           {
             // use forward distance to bottom of the sea if the current pitch angle allows it
+            //LV - for theta<0 -> sin(theta)<0 -> d_max*sin(theta) > d_b NEVER, since d_b>0
             if (m_bd.value >= 0 && m_sstate.theta <= 0 &&
-                m_args.max_range * sin(m_sstate.theta) >= m_bd.value)
+                -m_args.max_range * sin(m_sstate.theta) >= m_bd.value)
             {
               // make sure it is not null otherwise we'll be dividing by zero
               if (sin(m_sstate.theta) != 0)
               {
-                double value = std::abs(m_sstate.z / sin(m_sstate.theta));
+                double value = std::abs(m_bd.value / sin(m_sstate.theta));
                 range = std::min(range, value);
               }
             }

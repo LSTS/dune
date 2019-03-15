@@ -58,16 +58,20 @@ main(void)
           for (v_in = -1; v_in <= 1 && success; v_in += 0.5)
             for (w_in = -1; w_in <= 1 && success; w_in += 0.5)
             {
+              if(theta == c_pi * 0.5 || theta == c_pi * 1.5)
+                continue;
+
               BodyFixedFrame::toBodyFrame(phi, theta, psi, u_in, v_in, w_in, &u, &v, &w);
               BodyFixedFrame::toInertialFrame(phi, theta, psi, u, v, w, &u_in2, &v_in2, &w_in2);
               d = u_in - u_in2 + v_in - v_in2 + w_in - w_in2;
 
               if (d > 1e-04)
+              {
                 success = false;
-
-              //std::cout << std::fixed << "ERR "<<Angles::degrees(phi) << ' ' << Angles::degrees(theta) << ' ' << Angles::degrees(psi) << " | "
-              //     << u_in << ' ' << v_in << ' ' << w_in << " | "
-              //     << u << ' ' << v << ' ' << w << " | " << d << '\n';
+                // std::cout << std::fixed << "ERR "<<Angles::degrees(phi) << ' ' << Angles::degrees(theta) << ' ' << Angles::degrees(psi) << " | "
+                //   << u_in << ' ' << v_in << ' ' << w_in << " | "
+                //   << u << ' ' << v << ' ' << w << " | " << d << '\n';
+              }
             }
   test.boolean("BFF", success);
   return 0;

@@ -36,6 +36,7 @@
 // VSIM headers.
 #include <VSIM/Object.hpp>
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Coordinates/BodyFixedFrame.hpp>
 
 namespace Simulators
 {
@@ -168,15 +169,9 @@ namespace Simulators
     Object::update(double ts)
     {
       // Initialize variables.
-      double c1 = std::cos(m_orientation[0]);
-      double c2 = std::cos(m_orientation[1]);
-      double c3 = std::cos(m_orientation[2]);
-
-      double s1 = std::sin(m_orientation[0]);
-      double s2 = std::sin(m_orientation[1]);
-      double s3 = std::sin(m_orientation[2]);
-
-      double t2 = std::tan(m_orientation[1]);
+      double phi = m_orientation[0];
+      double theta = m_orientation[1];
+      double psi = m_orientation[2];
 
       double u = m_linear_velocity[0];
       double v = m_linear_velocity[1];
@@ -200,17 +195,17 @@ namespace Simulators
       //    J1=[ c3*c2   c3*s2*s1-s3*c1  s3*s1+c3*c1*s2
       //         s3*c2   c1*c3+s1*s2*s3  c1*s2*s3-c3*s1
       //          -s2        c2*s1           c1*c2     ];
-      d_pos[0] = (c3 * c2) * u + (c3 * s2 * s1 - s3 * c1) * v + (s3 * s1 + c3 * c1 * s2) * w;
-      d_pos[1] = (s3 * c2) * u + (c1 * c3 + s1 * s2 * s3) * v + (c1 * s2 * s3 - c3 * s1) * w;
-      d_pos[2] = (-s2) * u + (c2 * s1) * v + (c1 * c2) * w;
+      BodyFixedFrame::toInertialFrame(phi, theta, psi,
+                                      u, v, w,
+                                      d_pos, d_pos+1, d_pos+2);
 
       // Transformation Matrix: eta2dot = J1(eta2)*nu2
       //   J2=[ 1   s1*t2   c1*t2
       //        0    c1      -s1
       //        0   s1/c2   c1/c2 ];
-      d_pos[3] = p + (s1 * t2) * q + (c1 * t2) * r;
-      d_pos[4] = c1 * q + (-s1) * r;
-      d_pos[5] = (s1 / c2) * q + (c1 / c2) * r;
+      BodyFixedFrame::angularToInertialFrame(phi, theta, psi,
+                                              p, q, r,
+                                              d_pos+3, d_pos+4, d_pos+5);
 
       // Integrate using Euler's method.
       for (unsigned i = 0; i < 3; i++)

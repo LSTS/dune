@@ -121,6 +121,69 @@ namespace DUNE
         *vy = spsi * ctheta * u + t6 * t4 + t3 * cphi + t11 * t9 - t8 * sphi;
         *vz = -stheta * u + ctheta * sphi * v + ctheta * cphi * w;
       }
+
+      //! Inertial to body frame conversion of angular velocities.
+      //! Given the angles of a body in respect to the reference axes
+      //! (psi, theta, psi)
+      //! and its inertial frame angular velocities (u_in,v_in,w_in)
+      //! calculate the body fixed angular velocities (u,v,w).
+      //! @param phi pitch angle
+      //! @param theta roll angle
+      //! @param psi yaw angle
+      //! @param vphi angular velocity in x-axis in the inertial frame
+      //! @param vtheta angular velocity in y-axis in the inertial frame
+      //! @param vpsi angular velocity in z-axis in the inertial frame
+      //! @param u on return, angular velocity in x-axis in the body-fixed frame
+      //! @param v on return, angular velocity in y-axis in the body-fixed frame
+      //! @param w on return, angular velocity in z-axis in the body-fixed frame
+      template <typename Ta, typename Tb, typename Tc>
+      static void
+      angularToBodyFrame(Ta phi, Ta theta, Ta psi, Tb vphi, Tb vtheta, Tb vpsi, Tc* p, Tc* q, Tc* r)
+      {
+
+        double cphi = std::cos(phi);
+        double ctheta = std::cos(theta);
+        double sphi = std::sin(phi);
+        double stheta = std::sin(theta);
+        double t1 = ctheta * vpsi;
+
+        *p = vphi - stheta * vpsi;
+        *q = cphi * vtheta + sphi * t1;
+        *r = -sphi * vtheta + cphi * t1;
+      }
+
+      //! Body to inertial frame conversion of angular velocities.
+      //! Given the angles of a body in respect to the reference axes
+      //! (psi, theta, psi)
+      //! and its body frame angular velocities (u,v,w)
+      //! calculate the body fixed angular velocities (u_in,v_in,w_in)
+      //! @param phi pitch angle
+      //! @param theta roll angle
+      //! @param psi yaw angle
+      //! @param p angular velocity in x-axis in the body-fixed frame
+      //! @param q angular velocity in y-axis in the body-fixed frame
+      //! @param r angular velocity in z-axis in the body-fixed frame
+      //! @param vphi on return, angular velocity in x-axis in the inertial frame
+      //! @param vtheta on return, angular velocity in y-axis in the inertial frame
+      //! @param vpsi on return, angular velocity in z-axis in the inertial frame
+      template <typename Ta, typename Tb, typename Tc>
+      static void
+      angularToInertialFrame(Ta phi, Ta theta, Ta psi, Tb p, Tb q, Tb r, Tc* vphi, Tc* vtheta, Tc* vpsi)
+      {
+
+        //LV Careful for a pitch angle theta = 90 -> divide by 0
+        double cphi = std::cos(phi);
+        double ctheta = std::cos(theta);
+        double sphi = std::sin(phi);
+        double stheta = std::sin(theta);
+        double ttheta = std::tan(theta);
+        double t1 = sphi * q;
+        double t2 = cphi * r;
+
+        *vphi = p + ttheta * t1 + ttheta * t2;
+        *vtheta = cphi * q - sphi * r;
+        *vpsi = (t1/ctheta) + (t2/ctheta);
+      }
     };
   }
 }
