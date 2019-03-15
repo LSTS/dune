@@ -251,8 +251,8 @@ namespace Transports
 
         case CID_PING_ERROR:  //Message sent when a PING response error/timeout
           task->debug("MESSAGE CID_PING_ERROR");
-          task->debug("data_Beacon.cid_ping_error_msg.status %d",
-                      (int) data_Beacon.cid_ping_error_msg.status);
+          task->debug("data_Beacon.cid_ping_error_msg.status 0x%02X",
+                      (unsigned) data_Beacon.cid_ping_error_msg.status);
           switch(data_Beacon.cid_ping_error_msg.status)
           {
             case CST_XCVR_RESP_TIMEOUT:
@@ -273,16 +273,16 @@ namespace Transports
 
         case CID_PING_SEND:
           task->debug("MESSAGE  CID_PING_SEND ACK");
-          task->debug("data_Beacon.cid_ping_send_msg.status %d",
-                      (int)data_Beacon.cid_ping_send_msg.status);
+          task->debug("data_Beacon.cid_ping_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_ping_send_msg.status);
           task->debug("data_Beacon.cid_ping_send_msg.beacon_id %d",
                       (int)data_Beacon.cid_ping_send_msg.beacon_id);
           break;
 
         case CID_DAT_SEND: // Report of CID_DAT_SEND operation
           task->debug("MESSAGE  CID_DAT_SEND ACK ");
-          task->debug("data_Beacon.cid_dat_send_msg.status %d",
-                      (int)data_Beacon.cid_dat_send_msg.status);
+          task->debug("data_Beacon.cid_dat_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
                       (int)data_Beacon.cid_dat_send_msg.beacon_id);
           break;
@@ -302,8 +302,8 @@ namespace Transports
 
         case CID_DAT_ERROR:
           task->debug("MESSAGE  CID_DAT_ERROR ");
-          task->debug("data_Beacon.cid_dat_send_msg.status %d",
-                      data_Beacon.cid_dat_send_msg.status);
+          task->debug("data_Beacon.cid_dat_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
                       data_Beacon.cid_dat_send_msg.beacon_id);
           break;
@@ -414,26 +414,26 @@ namespace Transports
 
         case CID_SYS_REBOOT:
           task->debug("MESSAGE  CID_SYS_REBOOT");
-          task->debug("data_Beacon.cid_sys_reboot_msg.status %d",
-                      data_Beacon.cid_sys_reboot_msg.status);
+          task->debug("data_Beacon.cid_sys_reboot_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_sys_reboot_msg.status);
           break;
 
         case CID_SETTINGS_SET:
           task->debug("MESSAGE  CID_SETTINGS_SET");
-          task->debug("data_Beacon.cid_sys_settings_set_msg.status %d",
-                      data_Beacon.cid_sys_settings_set_msg.status);
+          task->debug("data_Beacon.cid_sys_settings_set_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_sys_settings_set_msg.status);
           break;
 
         case  CID_SETTINGS_SAVE:
           task->debug("MESSAGE  CID_SETTINGS_SAVE");
-          task->debug("data_Beacon.cid_settings_save_msg.status %d",
-                      data_Beacon.cid_settings_save_msg.status);
+          task->debug("data_Beacon.cid_settings_save_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_settings_save_msg.status);
           break;
 
         case CID_NAV_QUERY_SEND:
           task->debug("MESSAGE  CID_NAV_QUERY_SEND");
-          task->debug("data_Beacon.cid_settings_save_msg.status %d",
-                      data_Beacon.cid_nav_query_send_msg.status);
+          task->debug("data_Beacon.cid_settings_save_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_nav_query_send_msg.status);
           break;
 
         case CID_NAV_QUERY_RESP:
@@ -481,14 +481,14 @@ namespace Transports
 
         case CID_NAV_BEACON_POS_SEND:
           task->debug("CID_NAV_BEACON_POS_SEND");
-          task->debug("data_Beacon.cid_nav_beacon_pos_send_msg.status %d",
-                      data_Beacon.cid_nav_beacon_pos_send_msg.status);
+          task->debug("data_Beacon.cid_nav_beacon_pos_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_nav_beacon_pos_send_msg.status);
           break;
 
         case CID_NAV_REF_POS_SEND:
           task->debug("CID_NAV_REF_POS_SEND");
-          task->debug("data_Beacon.cid_nav_ref_pos_send_msg.status %d",
-                      data_Beacon.cid_nav_ref_pos_send_msg.status);
+          task->debug("data_Beacon.cid_nav_ref_pos_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_nav_ref_pos_send_msg.status);
           break;
 
         case CID_NAV_REF_POS_UPDATE:
