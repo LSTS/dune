@@ -144,8 +144,8 @@ namespace Sensors
             bool m_receive_dev_data_text;
             // Receive logging control message
             bool m_receive_log_control;
-            // Vehicle transmission uam
-            bool m_transmission_uam;
+            // If an acoustic message is being transmitted
+            bool m_acoustic_transmission;
             // Timer to break pings between acoustic operations
             Time::Counter<float> m_timer_counter;
 
@@ -161,7 +161,7 @@ namespace Sensors
                     m_receive_estimated_state(false),
                     m_receive_dev_data_text(false),
                     m_receive_log_control(false),
-                    m_transmission_uam(false)
+                    m_acoustic_transmission(false)
             {
                 // Define configuration parameters.
                 paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -473,25 +473,23 @@ namespace Sensors
             consume(const IMC::UamTxStatus* msg)
             {
 
-                if (!isActive())
-                    return;
-
-                if(!m_args.filter_uam)
-                    return;
-
                 if (msg->getSource() != getSystemId())
+                    return;
+
+                if (!isActive() ||
+                    !m_args.filter_uam)
                     return;
 
                 if (msg->value == IMC::UamTxStatus::UTS_IP)
                 {
                     //Stop
-                    m_transmission_uam = true;
+                    m_acoustic_transmission = true;
                     m_timer_counter.setTop(m_args.time_filter_uam);
                 }
                 else {
                     //Restart
-                    debug("Transmission of acoustic message stop.");
-                    m_transmission_uam = false;
+                    debug("Finished acoustic transmission.");
+                    m_acoustic_transmission = false;
                 }
             }
 
@@ -525,9 +523,9 @@ namespace Sensors
                     if(m_frame872 == NULL)
                         return;
 
-                    if(!m_timer_counter.overflow() || m_transmission_uam) {
-                        debug("Transmission of acoustic message");
-                        debug("Stop write pings in file");
+                    if(!m_timer_counter.overflow() ||
+                       m_acoustic_transmission) {
+                        debug("Not writting 872 data; acoustic transmission in progress.");
                         return;
                     }
 
