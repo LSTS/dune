@@ -27,8 +27,14 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <iomanip>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "QuadTree.hpp"
 
 using DUNE_NAMESPACES;
 
@@ -41,13 +47,20 @@ namespace Simulators
   //! and applying a standard deviation to received values.
   namespace CTD
   {
+
     //! %Task arguments.
     struct Arguments
     {
+      //! Where temperature data was taken from.
+      std::string location;
       //! Standard deviation of temperature measurements.
       double std_dev_temp;
       //! Mean temperature value.
       float mean_temp;
+      //! Out of bounds temperature value.
+      float oob_temp;
+      //! Tide level (m).
+      float tide_level;
       //! Standard deviation of conductivity measurements.
       double std_dev_cond;
       //! Mean conductivity value.
@@ -77,19 +90,35 @@ namespace Simulators
       IMC::SimulatedState m_sstate;
       //! PRNG handle.
       Random::Generator* m_prng;
+      //! Reference latitude and longitude for data points.
+      double m_ref_lat, m_ref_lon;
+      //! NE offsets in regard to navigational reference.
+      double m_off_n, m_off_e;
+      //! The tree.
+      QuadTree* m_qtree;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_prng(NULL)
+        m_prng(NULL),
+        m_qtree(NULL)
       {
         // Retrieve configuration values.
+        param("Location", m_args.location)
+        .defaultValue("Data");
+
         param("Standard Deviation - Temperature", m_args.std_dev_temp)
         .defaultValue("1.0");
 
         param("Mean Value - Temperature", m_args.mean_temp)
         .defaultValue("14.0");
+
+        param("Out Of Bounds Temperature", m_args.oob_temp)
+        .defaultValue("5.0");
+
+        param("Tide Level", m_args.tide_level)
+        .defaultValue("0.0");
 
         param("Standard Deviation - Conductivity", m_args.std_dev_cond)
         .defaultValue("1.0");
@@ -109,6 +138,7 @@ namespace Simulators
         .defaultValue("-1");
 
         // Register consumers.
+        bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
       }
 
@@ -118,6 +148,64 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
+        Utils::String::toLowerCase(m_args.location);
+        Path path = m_ctx.dir_cfg / "simulation" / ("temperature-"+ m_args.location +".ini");
+        DUNE::Parsers::Config cfg(path.c_str());
+        std::vector<std::string> lines;
+        cfg.get("Temperature", "Data", "", lines);
+        cfg.get("Temperature", "Latitude (degrees)", "", m_ref_lat);
+        cfg.get("Temperature", "Longitude (degrees)", "", m_ref_lon);
+
+        //Convert angular coordinates from degrees to radians
+        m_ref_lat = Angles::radians(m_ref_lat);
+        m_ref_lon = Angles::radians(m_ref_lon);
+
+
+        //Auxiliary objects to fill qtree
+        std::vector<QuadTree::Item> data;
+        QuadTree::Item item;
+        Bounds* bounds = 0;
+
+        //Set data points
+        for(unsigned i = 0; i < lines.size(); ++i)
+        {
+          //Get individual fields
+          std::vector<std::string> v;
+          DUNE::Utils::String::split(lines[i], " ", v);
+
+          //Set x and y
+          std::stringstream sin(v[0]);
+          sin >> item.x;
+          sin.clear();
+          sin.str(v[1]);
+          sin >> item.y;
+
+          //Set data values
+          //Read all data values after x,y (the first 2)
+          for(unsigned it = 0; it<v.size()-2; ++it)
+          {
+            sin.clear();
+            sin.str(v[it+2].compare("nan") != 0 ? v[it+2] : "-999");
+            sin >> item.value[it];
+          }
+          data.push_back(item);
+
+          //Expand bounds
+          if (!bounds)
+            bounds = new Bounds(Point(item.x, item.y));
+          else
+            bounds->cover(Point(item.x, item.y));
+
+          sin.clear();
+        }
+
+        // Fill the tree
+        m_qtree = new QuadTree(*bounds);
+        delete bounds;
+
+        for (unsigned i = 0; i < data.size(); ++i)
+          m_qtree->insert(data[i]);
+
         requestDeactivation();
       }
 
@@ -134,6 +222,21 @@ namespace Simulators
       onResourceRelease(void)
       {
         Memory::clear(m_prng);
+        Memory::clear(m_qtree);
+      }
+
+      //! Calculates offset between data and GPS reference origins
+      //! for referential convertion ((OFF) = (GPS) - (BAT))
+      void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+
+        // Get offsets for data
+        //(m_off_n, m_off_e) = (GPS_offset)-(DATA_offset)
+        WGS84::displacement(m_ref_lat, m_ref_lon, 0, msg->lat, msg->lon, 0,
+                            &m_off_n, &m_off_e);
       }
 
       //! Requests activation of the task (if not active already) and stores
@@ -146,7 +249,6 @@ namespace Simulators
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           requestActivation();
         }
-
         m_sstate = *msg;
       }
 
@@ -165,7 +267,8 @@ namespace Simulators
           return;
 
         m_temp.setTimeStamp();
-        m_temp.value = m_args.mean_temp + m_prng->gaussian() * m_args.std_dev_temp;
+        m_temp.value = temperatureAt(m_sstate.x + m_off_n, m_sstate.y + m_off_e, m_sstate.z);
+        m_temp.value = m_temp.value + m_prng->gaussian() * m_args.std_dev_temp;
 
         m_cond.setTimeStamp(m_temp.getTimeStamp());
         m_cond.value = m_args.mean_cond + m_prng->gaussian() * m_args.std_dev_cond;
@@ -189,6 +292,41 @@ namespace Simulators
         dispatch(m_pressure, DF_KEEP_TIME);
         dispatch(m_salinity, DF_KEEP_TIME);
         dispatch(m_sspeed, DF_KEEP_TIME);
+      }
+
+      double
+      temperatureAt(double x, double y, double z)
+      {
+        Point p(x, y);
+        Bounds search_area(p, 10);
+
+        std::vector<QuadTree::Item> items;
+        m_qtree->search(search_area, items);
+
+        if (items.size() == 0)
+        {
+          trace("out of bounds");
+          return m_args.oob_temp;//m_args.oob_depth
+        }
+
+        trace("found %lu close data values", (long unsigned int)items.size());
+
+        // @todo interpolate rather than picking closest one
+        double dmin = p.distance(Point(items[0].x, items[0].y));
+        unsigned value_index = int((z - m_args.tide_level)/3);
+        double temp = items[0].value[value_index];
+
+        for (unsigned int i = 1; i < items.size(); ++i)
+        {
+          double d = p.distance(Point(items[i].x, items[i].y));
+          if (d < dmin)
+          {
+            dmin = d;
+            temp = items[i].value[value_index];
+          }
+        }
+
+        return temp;
       }
     };
   }
