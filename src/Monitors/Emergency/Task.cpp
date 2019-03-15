@@ -329,7 +329,6 @@ namespace Monitors
       void
       sendSMS(const char* prefix, unsigned timeout, std::string recipient = "")
       {
-
         IMC::TransmissionRequest msg;
         msg.data_mode= IMC::TransmissionRequest::DMODE_TEXT;
 
@@ -358,6 +357,9 @@ namespace Monitors
 
           msg.txt_data = String::str("(%s) %s", prefix, s.c_str());
         }
+
+        msg.setDestination(getSystemId());
+        msg.setDestinationEntity(getEntityId());
 
         bool ird = m_args.interface == "Iridium" || m_args.interface == "Both";
         bool gsm = m_args.interface == "GSM" || m_args.interface == "Both";
