@@ -88,6 +88,11 @@ namespace Transports
       DataSeatrac(void)
       {
         cid_dat_send_msg.lock_flag = 0;
+        cid_dat_send_msg.status = CST_E::CST_OK;
+
+        cid_ping_error_msg.status = CST_E::CST_OK;
+        cid_ping_send_msg.status = CST_E::CST_OK;
+
         cid_dat_receive_msg.data_rec_flag = 0;
         for (int i = 0; i < MESSAGE_NUMBER; i++)
           new_message[i] = 0;
