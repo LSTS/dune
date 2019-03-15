@@ -78,6 +78,8 @@ map<string, string> csvInfoValues;
 
 float averageTemp = 0;
 
+int timeStampOffset = 0;
+
 float tau;
 float raw_atm;
 float emmissivity;
@@ -92,8 +94,11 @@ int main(int argc, char **argv)
 {
   if (argc < 2)
   {
-    cout << "Please specify input fil e name" << endl;
+    cout << "Please specify input file name and optionally an ineteger representing the seconds of advance to add to the timestamp" << endl;
     return 1;
+  } else if(argc == 3)
+  {
+    timeStampOffset = stoi(argv[2]);
   }
   // create our ExifTool object
   et = new ExifTool();
@@ -325,7 +330,7 @@ int toUnixTime(string date_time)
   // convert to struct:
   timeinfo = localtime(&rawtime);
 
-  // now modify the timeinfo to the given date:
+  // modify the timeinfo to the given date:
   timeinfo->tm_year = year - 1900;
   timeinfo->tm_mon = month - 1; //months since January - [0,11]
   timeinfo->tm_mday = day;      //day of the month - [1,31]
@@ -338,7 +343,9 @@ int toUnixTime(string date_time)
   //account GTM offset hours to be true GMT 1 hour = 3600 sec
   rawtime -= UTCOffset * 3600;
 
-  // call gmtime: create unix time stamp from timeinfo struct in gmt time
+  //fix clock synchronization
+  rawtime += timeStampOffset;
+
   return rawtime;
 }
 

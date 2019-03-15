@@ -33,18 +33,20 @@
 
 CSVName="FlirThermalData.csv"
 execPath="./dune-flir-metadata"
+CLOCK_OFFSET=0
 
 usage() {
-  echo "Usage: $0  -s=start_date -e=end_date -d=device_name (-l=logs_folder || -o=output_file_name) [-jc] [-fn=data_filename][-nr] [-c]"
-  echo "  -s  start      start date from which to start processing at the photos directory (yyyymmdd_hhmmss or partial)"
-  echo "  -e  end        date at which to stop processing at the photos directory(yyyymmdd_hhmmss or partial)"
-  echo "  -d  device     path to the device to be mounted in order to access the photos"
-  echo "  -l  logs       vehicle logs path"
-  echo "  -o  output     output path, overrides the logs parameter and outputs to a single file"
-  echo "  -c  copy       enable file copying to logs"
-  echo "  -jc just-copy  disable image analisys and enable file copying to logs"
-  echo "  -fn file-name  name of the output file (defaults to \"FlirThermalDatav.csv\")"
-  echo "  -nr no-replace prevents the program from overwriting existing data files"
+  echo "Usage: $0  -s=start_date -e=end_date -d=device_name (-l=logs_folder || -o=output_file_name) [-jc] [-fn=data_filename][-nr] [-c] [-co=seconds_of_delay]"
+  echo "  -s  start        start date from which to start processing at the photos directory (yyyymmdd_hhmmss or partial)"
+  echo "  -e  end          date at which to stop processing at the photos directory(yyyymmdd_hhmmss or partial)"
+  echo "  -d  device       path to the device to be mounted in order to access the photos"
+  echo "  -l  logs         vehicle logs path"
+  echo "  -o  output       output path, overrides the logs parameter and outputs to a single file"
+  echo "  -c  copy         enable file copying to logs"
+  echo "  -co clock-offset number of seconds the camera timestamp should be advanced to match IMAGE_START_CAPTURE command"
+  echo "  -jc just-copy    disable image analisys and enable file copying to logs"
+  echo "  -fn file-name    name of the output file (defaults to \"FlirThermalDatav.csv\")"
+  echo "  -nr no-replace   prevents the program from overwriting existing data files"
 }
 
 inRange() {
@@ -115,7 +117,7 @@ getEpochFilename() {
 fillUTCOffset() {
   getEpochFilename $(basename $filename _R.jpg)
   local tempTime=${epochFilename%%\.*}
-  local output="$($execPath $filename)"
+  local output="$($execPath $filename $CLOCK_OFFSET)"
   local tempUTCTime="${output%%,*}"
   UTCOffset=$(($tempUTCTime - $tempTime))
   # printf "\nUTC Offset: %d\n\n" $UTCOffset
@@ -171,6 +173,10 @@ case $i in
   ;;
   -o=*|--output=*)
   OUTPUT="${i#*=}"
+  shift # past argument=value
+  ;;
+  -co=*|--clock-offset=*)
+  CLOCK_OFFSET="${i#*=}"
   shift # past argument=value
   ;;
   -c|--copy)
@@ -307,7 +313,7 @@ for top_filename in $DEVICE/*; do
       # process file
       if [ -z $JUSTCOPY ];
       then
-        $execPath $filename >> $savePath
+        $execPath $filename $CLOCK_OFFSET >> $savePath
         printf "Processed $filename\n"
         printf "Saving to: %s\n" $savePath
       fi
