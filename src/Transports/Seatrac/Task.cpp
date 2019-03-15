@@ -84,6 +84,8 @@ namespace Transports
       bool arhs_mode;
       //! Enable pressure sensor
       bool pressure_sensor_mode;
+      //! Enable pressure sensor use for checking if underwater
+      bool use_pressure_sensor_for_medium;
       //! Enable usbl mode
       bool usbl_mode;
       //! Hard iron calibration.
@@ -207,6 +209,10 @@ namespace Transports
         param("Pressure Sensor Mode", m_args.pressure_sensor_mode)
         .defaultValue("false")
         .description("Enable the pressure sensor, depth, sound velocity and temperature information ");
+
+        param("Use Internal Pressure Sensor for Medium", m_args.use_pressure_sensor_for_medium)
+        .defaultValue("false")
+        .description("Enable pressure sensor use for checking if underwater");
 
         param("USBL Mode", m_args.usbl_mode)
         .defaultValue("false")
@@ -670,12 +676,23 @@ namespace Transports
         processInput(delay_aft);
       }
 
+      //! Check if medium and configuration for protected msg send.
+      bool
+      isCommsBlockedByMedium(void)
+      {
+        if (m_args.only_underwater && m_args.pressure_sensor_mode 
+            && m_args.use_pressure_sensor_for_medium)
+          return m_pressure.value <= 0;
+        
+        return m_stop_comms;
+      }
+
       //! Send command if the modem has conditions to operate.
       //! @param[in] cmd command string.
       void
       sendProtectedCommand(const std::string& cmd)
       {
-        if (m_stop_comms)
+        if (isCommsBlockedByMedium())
         {
           war(DTR("Sending stopped: Communication out of water forbidden."));
           clearTicket(IMC::UamTxStatus::UTS_FAILED);
@@ -1002,6 +1019,11 @@ namespace Transports
         dispatch(m_pressure);
         dispatch(m_temperature);
         dispatch(m_sspeed);
+        trace("Depth %f  |  Presure %f  |  Temperature %f  |  SoundSpeed %f",
+            m_depth.value,
+            m_pressure.value,
+            m_temperature.value,
+            m_sspeed.value);
       }
 
       //! Handle the response to a CID_Data_Send command.
