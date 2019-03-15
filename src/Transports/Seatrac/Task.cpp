@@ -1299,7 +1299,7 @@ namespace Transports
             if (m_ticket != NULL && m_oway_timer.overflow())
             {
               //Took too long, lets bail with error
-              debug(DTR("!!!!!! Msg transmission with ack for ticket %d timeout ACK. Lets bail! %f s > %f s"), 
+              war(DTR("!!!!!! Msg transmission with ack for ticket %d timeout ACK. Lets bail! %f s > %f s"), 
                   m_ticket->seq, m_oway_timer.getElapsed(), m_oway_timer.getTop());
               m_data_beacon.cid_dat_send_msg.lock_flag = 0;
               clearTicket(IMC::UamTxStatus::UTS_FAILED);
