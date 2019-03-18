@@ -501,6 +501,26 @@ namespace Maneuver
       }
 
       void
+      onPeekManeuver(const IMC::PeekManeuver* pman)
+      {
+        // figure out what maneuver pman is, and call onPeekManeuver for that maneuver
+        // as the maneuver type might be different from the current maneuver
+        const IMC::PlanManeuver* planman = pman->man.get();
+        const IMC::Maneuver* maneuver = planman->data.get();
+        MultiplexMap::const_iterator itr = m_map.find(maneuver->getId());
+        if (itr == m_map.end())
+        {
+          //Only warn, as the current maneuver might be supported
+          war(DTR("unsupported maneuver. Not peeking forward."));
+          return;
+        }
+
+        ManeuverType type = (ManeuverType)itr->second;
+        debug("Calling specific onPeekManeuver for %s", maneuver->getName());
+        m_maneuvers[type]->onPeekManeuver(pman);
+      }
+
+      void
       onStateReport(void)
       {
         m_maneuvers[m_type]->onStateReport();
