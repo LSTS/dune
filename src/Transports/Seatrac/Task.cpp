@@ -479,10 +479,10 @@ namespace Transports
             xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
 
           StatusMode_E status_mode= STATUS_MODE_1HZ;
-          bool chage_IMU=true;
-          if (m_args.arhs_mode==true)
+          bool chage_IMU = true;
+          if (m_args.arhs_mode == true)
           {
-            status_mode= STATUS_MODE_10HZ;
+            status_mode = STATUS_MODE_10HZ;
             chage_IMU = isCalibrated();
           }
           if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
@@ -497,12 +497,14 @@ namespace Transports
             m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
             m_data_beacon.cid_settings_msg.xcvr_range_tmo = m_args.max_range;
-            if(chage_IMU==false)
+            
+            if(chage_IMU == false)
             {
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
             }
+            
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
@@ -516,13 +518,13 @@ namespace Transports
 
             debug("ready");
             setAndSendState(STA_IDLE);
-            m_config_status=true;
+            m_config_status = true;
           }
           else
           {
             debug("ready (settings already set)");
             setAndSendState(STA_IDLE);
-            m_config_status=true;
+            m_config_status = true;
           }
 
           inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d | %s USBL beacon"),
