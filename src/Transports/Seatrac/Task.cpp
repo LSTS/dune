@@ -412,6 +412,9 @@ namespace Transports
         setAndSendState(STA_BOOT);
         try
         {
+          if (m_args.only_underwater == true)
+            m_stop_comms = true;
+
           if (openSocket())
             return;
 
