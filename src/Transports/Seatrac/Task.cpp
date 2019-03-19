@@ -25,6 +25,7 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 // Author: Raúl Sáez                                                        *
+// Author: Paulo Dias                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -42,7 +43,6 @@
 #include "MsgTypes.hpp"
 #include "DataTypes.hpp"
 #include "DebugMsg.hpp"
-
 
 namespace Transports
 {
@@ -188,7 +188,8 @@ namespace Transports
 
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        .description("Serial port device used to communicate with the sensor. "
+                     "For TCP connection use in the form of 'tcp://xxx.xxx.xxx.xxx:xxxx'.");
 
         param("Serial Port - Baud Rate", m_args.uart_baud)
         .defaultValue("19200")
