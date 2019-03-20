@@ -143,10 +143,10 @@ namespace Transports
                        data_Beacon.cid_status_msg.environment_temperature/10);
             task->spew("data_Beacon.cid_status_msg.environment_pressure) %d",
                        data_Beacon.cid_status_msg.environment_pressure);
-            task->spew("data_Beacon.cid_status_msg.EnvironmentDepth %d",
-                       data_Beacon.cid_status_msg.EnvironmentDepth);
-            task->spew("data_Beacon.cid_status_msg.EnvironmentVos/10 %d",
-                       data_Beacon.cid_status_msg.EnvironmentVos/10);
+            task->spew("data_Beacon.cid_status_msg.environment_depth/10 %f m",
+                       data_Beacon.cid_status_msg.environment_depth / 10.0);
+            task->spew("data_Beacon.cid_status_msg.environmentVos/10 %f m/s",
+                       data_Beacon.cid_status_msg.environment_vos / 10.0);
           }
 
           // Attitude.

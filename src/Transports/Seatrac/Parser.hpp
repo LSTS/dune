@@ -208,8 +208,8 @@ namespace Transports
                         msg_raw + ind + 2, 2);
             std::memcpy(&data_Beacon.cid_status_msg.environment_pressure,
                         msg_raw + ind + 4, 4);
-            std::memcpy(&data_Beacon.cid_status_msg.EnvironmentDepth, msg_raw + ind + 8, 4);
-            std::memcpy(&data_Beacon.cid_status_msg.EnvironmentVos, msg_raw + ind + 12, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_depth, msg_raw + ind + 8, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_vos, msg_raw + ind + 12, 2);
             ind += 14;
           }
 

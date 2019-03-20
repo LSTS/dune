@@ -1017,10 +1017,10 @@ namespace Transports
       void
       handlePressureSensor (void)
       {
-        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentDepth)) / 10.0; //int32_t // m_channel_readout * m_args.depth_conv;
+        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_depth)) / 10.0; //int32_t // m_channel_readout * m_args.depth_conv;
         m_pressure.value =  (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure)) / 1000.0) * Math::c_pascal_per_bar;
         m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature)) / 10.0;  //int16_t//m_channel_readout;
-        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentVos)) / 10.0;  //uint16_t
+        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_vos)) / 10.0;  //uint16_t
         dispatch(m_depth);
         dispatch(m_pressure);
         dispatch(m_temperature);
