@@ -1045,16 +1045,6 @@ namespace Transports
           if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
             handleCommunicationError();
         }
-        // else
-        // {
-        //   if (m_ticket != NULL)
-        //   {
-        //     debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
-        //         m_ticket == NULL ? -1 : m_ticket->seq,
-        //         m_oway_timer.getElapsed());
-        //     clearTicket(IMC::UamTxStatus::UTS_DONE);
-        //   }
-        // }
       }
 
       void
