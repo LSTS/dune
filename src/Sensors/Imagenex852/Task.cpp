@@ -455,7 +455,10 @@ namespace Sensors
           consumeMessages();
 
           if (m_wdog.overflow())
+          {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            err("%s", DTR(Status::getString(Status::CODE_COM_ERROR)));
+          }
 
           if (!Poll::poll(*m_uart, 1.0))
             continue;

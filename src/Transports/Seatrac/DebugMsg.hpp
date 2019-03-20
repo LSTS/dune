@@ -124,7 +124,6 @@ namespace Transports
     printDebugFunction(unsigned message_type, DataSeatrac& data_Beacon,
                        Tasks::Task* task = NULL)
     {
-
       switch(message_type)
       {
         case CID_STATUS:
@@ -139,25 +138,25 @@ namespace Transports
           {
             task->spew("data_Beacon.cid_status_msg.environment_supply %d",
                        data_Beacon.cid_status_msg.environment_supply);
-            task->spew("data_Beacon.cid_status_msg.environment_temperature/10 %d",
-                       data_Beacon.cid_status_msg.environment_temperature/10);
-            task->spew("data_Beacon.cid_status_msg.environment_pressure) %d",
+            task->spew("data_Beacon.cid_status_msg.environment_temperature/10 %f \u00B0C",
+                       data_Beacon.cid_status_msg.environment_temperature / 10.0);
+            task->spew("data_Beacon.cid_status_msg.environment_pressure %d mbar",
                        data_Beacon.cid_status_msg.environment_pressure);
-            task->spew("data_Beacon.cid_status_msg.EnvironmentDepth %d",
-                       data_Beacon.cid_status_msg.EnvironmentDepth);
-            task->spew("data_Beacon.cid_status_msg.EnvironmentVos/10 %d",
-                       data_Beacon.cid_status_msg.EnvironmentVos/10);
+            task->spew("data_Beacon.cid_status_msg.environment_depth/10 %f m",
+                       data_Beacon.cid_status_msg.environment_depth / 10.0);
+            task->spew("data_Beacon.cid_status_msg.environmentVos/10 %f m/s",
+                       data_Beacon.cid_status_msg.environment_vos / 10.0);
           }
 
           // Attitude.
           if (data_Beacon.cid_status_msg.outputflags_list[1])
           {
             task->spew("data_Beacon.cid_status_msg.attitude_yaw/10 %d",
-                       data_Beacon.cid_status_msg.attitude_yaw/10);
+                       data_Beacon.cid_status_msg.attitude_yaw / 10);
             task->spew("data_Beacon.cid_status_msg.attitude_pitch/10 %d",
-                       data_Beacon.cid_status_msg.attitude_pitch/10);
+                       data_Beacon.cid_status_msg.attitude_pitch / 10);
             task->spew("data_Beacon.cid_status_msg.attitude_roll/10 %d",
-                       data_Beacon.cid_status_msg.attitude_roll/10);
+                       data_Beacon.cid_status_msg.attitude_roll / 10);
           }
 
           // Mag cal.
@@ -251,8 +250,8 @@ namespace Transports
 
         case CID_PING_ERROR:  //Message sent when a PING response error/timeout
           task->debug("MESSAGE CID_PING_ERROR");
-          task->debug("data_Beacon.cid_ping_error_msg.status %d",
-                      (int) data_Beacon.cid_ping_error_msg.status);
+          task->debug("data_Beacon.cid_ping_error_msg.status 0x%02X",
+                      (unsigned) data_Beacon.cid_ping_error_msg.status);
           switch(data_Beacon.cid_ping_error_msg.status)
           {
             case CST_XCVR_RESP_TIMEOUT:
@@ -273,16 +272,16 @@ namespace Transports
 
         case CID_PING_SEND:
           task->debug("MESSAGE  CID_PING_SEND ACK");
-          task->debug("data_Beacon.cid_ping_send_msg.status %d",
-                      (int)data_Beacon.cid_ping_send_msg.status);
+          task->debug("data_Beacon.cid_ping_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_ping_send_msg.status);
           task->debug("data_Beacon.cid_ping_send_msg.beacon_id %d",
                       (int)data_Beacon.cid_ping_send_msg.beacon_id);
           break;
 
         case CID_DAT_SEND: // Report of CID_DAT_SEND operation
           task->debug("MESSAGE  CID_DAT_SEND ACK ");
-          task->debug("data_Beacon.cid_dat_send_msg.status %d",
-                      (int)data_Beacon.cid_dat_send_msg.status);
+          task->debug("data_Beacon.cid_dat_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
                       (int)data_Beacon.cid_dat_send_msg.beacon_id);
           break;
@@ -296,14 +295,14 @@ namespace Transports
           task->debug("data_Beacon.cid_dat_receive_msg.packet_len %d",
                       (int)data_Beacon.cid_dat_receive_msg.packet_len);
           for (int i = 0; i < (int)data_Beacon.cid_dat_receive_msg.packet_len; i++)
-            task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%d] %d ", i,
-                        (unsigned)data_Beacon.cid_dat_receive_msg.packet_data[i]);
+            task->debug("data_Beacon.cid_dat_receive_msg.packet_data[%02d] 0x%02X ", i,
+                        (unsigned)(data_Beacon.cid_dat_receive_msg.packet_data[i] & 0xFF));
           break;
 
         case CID_DAT_ERROR:
           task->debug("MESSAGE  CID_DAT_ERROR ");
-          task->debug("data_Beacon.cid_dat_send_msg.status %d",
-                      data_Beacon.cid_dat_send_msg.status);
+          task->debug("data_Beacon.cid_dat_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_dat_send_msg.status);
           task->debug("data_Beacon.cid_dat_send_msg.beacon_id %d",
                       data_Beacon.cid_dat_send_msg.beacon_id);
           break;
@@ -414,26 +413,26 @@ namespace Transports
 
         case CID_SYS_REBOOT:
           task->debug("MESSAGE  CID_SYS_REBOOT");
-          task->debug("data_Beacon.cid_sys_reboot_msg.status %d",
-                      data_Beacon.cid_sys_reboot_msg.status);
+          task->debug("data_Beacon.cid_sys_reboot_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_sys_reboot_msg.status);
           break;
 
         case CID_SETTINGS_SET:
           task->debug("MESSAGE  CID_SETTINGS_SET");
-          task->debug("data_Beacon.cid_sys_settings_set_msg.status %d",
-                      data_Beacon.cid_sys_settings_set_msg.status);
+          task->debug("data_Beacon.cid_sys_settings_set_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_sys_settings_set_msg.status);
           break;
 
         case  CID_SETTINGS_SAVE:
           task->debug("MESSAGE  CID_SETTINGS_SAVE");
-          task->debug("data_Beacon.cid_settings_save_msg.status %d",
-                      data_Beacon.cid_settings_save_msg.status);
+          task->debug("data_Beacon.cid_settings_save_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_settings_save_msg.status);
           break;
 
         case CID_NAV_QUERY_SEND:
           task->debug("MESSAGE  CID_NAV_QUERY_SEND");
-          task->debug("data_Beacon.cid_settings_save_msg.status %d",
-                      data_Beacon.cid_nav_query_send_msg.status);
+          task->debug("data_Beacon.cid_settings_save_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_nav_query_send_msg.status);
           break;
 
         case CID_NAV_QUERY_RESP:
@@ -481,14 +480,14 @@ namespace Transports
 
         case CID_NAV_BEACON_POS_SEND:
           task->debug("CID_NAV_BEACON_POS_SEND");
-          task->debug("data_Beacon.cid_nav_beacon_pos_send_msg.status %d",
-                      data_Beacon.cid_nav_beacon_pos_send_msg.status);
+          task->debug("data_Beacon.cid_nav_beacon_pos_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_nav_beacon_pos_send_msg.status);
           break;
 
         case CID_NAV_REF_POS_SEND:
           task->debug("CID_NAV_REF_POS_SEND");
-          task->debug("data_Beacon.cid_nav_ref_pos_send_msg.status %d",
-                      data_Beacon.cid_nav_ref_pos_send_msg.status);
+          task->debug("data_Beacon.cid_nav_ref_pos_send_msg.status 0x%02X",
+                      (unsigned)data_Beacon.cid_nav_ref_pos_send_msg.status);
           break;
 
         case CID_NAV_REF_POS_UPDATE:

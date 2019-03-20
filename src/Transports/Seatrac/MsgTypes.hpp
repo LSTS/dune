@@ -57,8 +57,8 @@ namespace Transports
       uint16_t environment_supply;
       int16_t  environment_temperature;
       int32_t  environment_pressure;
-      int32_t  EnvironmentDepth;
-      uint16_t EnvironmentVos;
+      int32_t  environment_depth;
+      uint16_t environment_vos;
       // Attitude.
       int16_t attitude_yaw;
       int16_t attitude_pitch;

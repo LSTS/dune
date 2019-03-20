@@ -104,6 +104,8 @@ namespace Transports
       double dyn_dns_period;
       //! Dynamic DNS update url
       std::string dyn_dns_url;
+      //! Connection timeout (seconds)
+      int conn_timeout;
     };
 
     struct Task: public Tasks::Task
@@ -128,6 +130,10 @@ namespace Transports
       Address m_address;
       Time::Counter<double> m_conn_watchdog;
       Time::Counter<double> m_dyndns_watchdog;
+      //! Are we reactivating the task?
+      bool m_reactivating;
+      //! Connection timeout time in seconds
+      int m_conn_timeout;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -210,17 +216,20 @@ namespace Transports
         .defaultValue("")
         .description("URL used to update dynamic DNS");
 
-
         Path script = m_ctx.dir_scripts / "dune-mobile-inet.sh";
-        m_command_connect = String::str("/bin/sh %s start > /dev/null 2>&1", script.c_str());
-        m_command_disconnect = String::str("/bin/sh %s stop > /dev/null 2>&1", script.c_str());
-        m_command_nat_start = String::str("/bin/sh %s nat_start > /dev/null 2>&1", script.c_str());
-        m_command_nat_stop = String::str("/bin/sh %s nat_stop > /dev/null 2>&1", script.c_str());
-        m_command_dyndns_update = String::str("/bin/sh %s dyndns_update > /dev/null 2>&1", script.c_str());
+        m_command_connect = String::str("/bin/sh %s start >> /dev/null 2>&1", script.c_str());
+        m_command_disconnect = String::str("/bin/sh %s stop >> /dev/null 2>&1", script.c_str());
+        m_command_nat_start = String::str("/bin/sh %s nat_start >> /dev/null 2>&1", script.c_str());
+        m_command_nat_stop = String::str("/bin/sh %s nat_stop >> /dev/null 2>&1", script.c_str());
+        m_command_dyndns_update = String::str("/bin/sh %s dyndns_update >> /dev/null 2>&1", script.c_str());
 
         bind<IMC::PowerChannelState>(this);
 
-        m_conn_watchdog.setTop(60);
+        m_conn_timeout = 30;
+
+        m_conn_watchdog.setTop(m_conn_timeout);
+
+        m_reactivating = false;
       }
 
       ~Task(void)
@@ -241,7 +250,8 @@ namespace Transports
       void
       consume(const IMC::PowerChannelState* msg)
       {
-        if (msg->name != m_args.power_channel)
+
+    	if (msg->name != m_args.power_channel)
           return;
 
         m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
@@ -263,8 +273,28 @@ namespace Transports
       void
       onRequestDeactivation(void)
       {
-        m_sm_state = SM_DEACT_BEGIN;
-        updateStateMachine();
+    	m_sm_state = SM_DEACT_BEGIN;
+    	updateStateMachine();
+      }
+
+      void
+	  onDeactivation(void)
+      {
+    	if (m_reactivating)
+    	{
+    	  m_reactivating = false;
+    	  requestActivation();
+    	}
+      }
+
+      void
+	  requestReactivation(void)
+      {
+    	m_reactivating = true;
+    	m_conn_timeout = std::min(m_conn_timeout + 10, 240);
+    	debug("Retrying connection using %d seconds timeout.", m_conn_timeout);
+    	m_conn_watchdog.setTop(m_conn_timeout);
+    	requestDeactivation();
       }
 
       void
@@ -324,11 +354,16 @@ namespace Transports
         else
           Environment::set("PRESENTATION_MODE", "AT");
 
-        if (std::system(m_command_connect.c_str()) == -1)
+        int ret = std::system(m_command_connect.c_str());
+        if (ret == -1)
         {
           err(DTR("failed to execute connect command"));
           return false;
         }
+        else {
+        	debug("PPP start returned %d.", ret);
+        }
+
         return true;
       }
 
@@ -400,7 +435,7 @@ namespace Transports
       void
       updateStateMachine(void)
       {
-        switch (m_sm_state)
+    	switch (m_sm_state)
         {
           case SM_IDLE:
             break;
@@ -428,6 +463,7 @@ namespace Transports
             }
             else
             {
+              spew("waiting for power to be on");
               break;
             }
             /* no break */
@@ -443,6 +479,7 @@ namespace Transports
               debug("No modem detected in %s, retrying...", m_args.uart_dev.c_str());
               break;
             }
+            /* no break */
 
           case SM_ACT_CONNECT:
             connect();
@@ -452,21 +489,22 @@ namespace Transports
             /* no break */
 
           case SM_ACT_DONE:
+            if (!isActive())
+            	activate();
             debug("activation complete");
-            activate();
+
             m_sm_state = SM_ACT_CONNECTING;
             /* no break */
 
           case SM_ACT_CONNECTING:
             if (m_conn_watchdog.overflow())
             {
-              err("Connection timed out");
-              requestDeactivation();
-              requestActivation();
+              war("Connection timed out. Retrying...");
+              requestReactivation();
             }
             if (isConnected(&m_address))
             {
-              debug("connected: %s", m_address.c_str());
+              inf("connected: %s", m_address.c_str());
               startNAT();
               setEntityState(IMC::EntityState::ESTA_NORMAL,
                              String::str(DTR("connected to the Internet with public address '%s'"), m_address.c_str()));
@@ -518,8 +556,8 @@ namespace Transports
           case SM_DEACT_DONE:
             debug("deactivation complete");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-            deactivate();
             m_sm_state = SM_IDLE;
+            deactivate();
             break;
         }
       }
@@ -532,7 +570,7 @@ namespace Transports
           waitForMessages(1.0);
           updateStateMachine();
 
-          if( m_dyndns_watchdog.overflow() && isConnected())
+          if(m_args.dyn_dns && m_dyndns_watchdog.overflow() && isConnected())
           {
             updateDynDNS();
           }

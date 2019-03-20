@@ -35,13 +35,13 @@ namespace Power
 {
   namespace CPMBv2
   {
-    //! Device driver for CPMBv2 (Copter Power Management Board v2).
+    //! Device driver for CPMBv2 (Copter Power Management Board v2.1.0).
     //!
     //! This board is able to monitor voltages and currents measurements.
     //! It's also capable of controlling the following I/O's:
     //! 2x (5V Outputs)
     //! 3x (12V Outputs)
-    //! 1x (24V output)
+    //! 2x (24V output)
     //! 2x (Batteries Outputs)
     //!
     //! @author Maria Costa
@@ -55,7 +55,7 @@ namespace Power
     //! Amount of seconds to wait before restarting task.
     static const unsigned c_restart_delay = 1;
     //! Number of Power channels.
-    static const unsigned c_pwrs_count = 8;
+    static const unsigned c_pwrs_count = 9;
     //! Number of ADC channels.
     static const unsigned c_adcs_count = 5;
 
@@ -321,7 +321,7 @@ namespace Power
 
         for (; itr != m_channels.end(); ++itr)
         {
-            dispatch(itr->second->state);
+          dispatch(itr->second->state);
         }
       }
 
@@ -352,7 +352,7 @@ namespace Power
         }
 
         // Reads power channel states.
-        uint8_t power_state = 0;
+        uint16_t power_state = 0;
         frame.get(power_state, c_adcs_count*2);
         std::map<unsigned, PowerChannel*>::const_iterator itr = m_channels.begin();
         for ( ; itr != m_channels.end(); ++itr)
