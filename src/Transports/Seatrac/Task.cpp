@@ -47,6 +47,7 @@
 namespace Transports
 {
   //! Blueprint Subsea's Seatrac acoustic modem driver.
+  //! Tested for AppFW v1.5.2041, v1.9.2132, v2.2.2191
   //!
   //! @author João Teixeira.
   namespace Seatrac
