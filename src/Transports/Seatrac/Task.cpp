@@ -1268,11 +1268,11 @@ namespace Transports
             * 1.0/c_acoustic_bitrate + (m_args.max_range * 1.0 / MIN_SOUND_SPEED))
             * multiplier );
         trace(DTR("Calc new timer (bytes %d | bit-rate %f | max-range %d m | multiplier %d) calculated to %f s"), 
-                m_data_beacon.cid_dat_send_msg.packet_len,
-                c_acoustic_bitrate,
-                m_args.max_range,
-                multiplier,
-                m_oway_timer.getTop());
+            m_data_beacon.cid_dat_send_msg.packet_len,
+            c_acoustic_bitrate,
+            m_args.max_range,
+            multiplier,
+            m_oway_timer.getTop());
       }
 
       //! Checks if an OWAY message is waiting to be sent.
@@ -1318,8 +1318,10 @@ namespace Transports
             if (m_ticket != NULL && m_oway_timer.overflow())
             {
               //Took too long, lets bail with error
-              war(DTR("!!!!!! Msg transmission with ack for ticket %d timeout ACK. Lets bail! %f s > %f s"), 
-                  m_ticket->seq, m_oway_timer.getElapsed(), m_oway_timer.getTop());
+              war(DTR("ACK TIMEOUT: Msg transmission with ack for ticket %d timeout ACK. Lets bail with error!! (%f s > %f s)"),
+                  m_ticket->seq,
+                  m_oway_timer.getElapsed(),
+                  m_oway_timer.getTop());
               m_data_beacon.cid_dat_send_msg.lock_flag = 0;
               clearTicket(IMC::UamTxStatus::UTS_FAILED);
             }
