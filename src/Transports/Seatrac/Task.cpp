@@ -1017,15 +1017,15 @@ namespace Transports
       void
       handlePressureSensor (void)
       {
-        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentDepth))/10; //int32_t // m_channel_readout * m_args.depth_conv;
-        m_pressure.value =  (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure))/1000)* Math::c_pascal_per_bar;
-        m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature))/10;  //int16_t//m_channel_readout;
-        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentVos))/10;  //uint16_t
+        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentDepth)) / 10.0; //int32_t // m_channel_readout * m_args.depth_conv;
+        m_pressure.value =  (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure)) / 1000.0) * Math::c_pascal_per_bar;
+        m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature)) / 10.0;  //int16_t//m_channel_readout;
+        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.EnvironmentVos)) / 10.0;  //uint16_t
         dispatch(m_depth);
         dispatch(m_pressure);
         dispatch(m_temperature);
         dispatch(m_sspeed);
-        trace("Depth %f  |  Presure %f  |  Temperature %f  |  SoundSpeed %f",
+        trace("Received from modem: Depth %f m | Presure %f P | Temperature %f \u00B0C | SoundSpeed %f m/s",
             m_depth.value,
             m_pressure.value,
             m_temperature.value,
