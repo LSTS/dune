@@ -505,8 +505,10 @@ namespace Transports
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
             }
             
+            inf("asking to save settings to modem");
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
+            inf("rebooting modem");
             sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
             sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon), 2);
 
@@ -516,13 +518,13 @@ namespace Transports
               war(DTR("failed to configure device"));
             }
 
-            debug("ready");
+            inf("ready");
             setAndSendState(STA_IDLE);
             m_config_status = true;
           }
           else
           {
-            debug("ready (settings already set)");
+            inf("ready (settings already set)");
             setAndSendState(STA_IDLE);
             m_config_status = true;
           }
@@ -582,7 +584,6 @@ namespace Transports
         // See if vehicle has same hard iron calibration parameters.
         if (!isCalibrated())
         {
-
           // Set hard iron calibration parameters and reset device.
           if (!setHardIron())
           {
@@ -1010,7 +1011,6 @@ namespace Transports
           dispatch(m_magfield, DF_KEEP_TIME);
         }
       }
-
 
       //! Handle Pressure , Depth, Temperature and Sound Speed data and dispactch .
       //! The method tries to dispach data prom sensors:Pressure , Depth, Temperature and Sound Speed data
