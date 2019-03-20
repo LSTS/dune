@@ -124,7 +124,6 @@ namespace Transports
     printDebugFunction(unsigned message_type, DataSeatrac& data_Beacon,
                        Tasks::Task* task = NULL)
     {
-
       switch(message_type)
       {
         case CID_STATUS:
@@ -139,9 +138,9 @@ namespace Transports
           {
             task->spew("data_Beacon.cid_status_msg.environment_supply %d",
                        data_Beacon.cid_status_msg.environment_supply);
-            task->spew("data_Beacon.cid_status_msg.environment_temperature/10 %d",
-                       data_Beacon.cid_status_msg.environment_temperature/10);
-            task->spew("data_Beacon.cid_status_msg.environment_pressure) %d",
+            task->spew("data_Beacon.cid_status_msg.environment_temperature/10 %f \u00B0C",
+                       data_Beacon.cid_status_msg.environment_temperature / 10.0);
+            task->spew("data_Beacon.cid_status_msg.environment_pressure %d mbar",
                        data_Beacon.cid_status_msg.environment_pressure);
             task->spew("data_Beacon.cid_status_msg.environment_depth/10 %f m",
                        data_Beacon.cid_status_msg.environment_depth / 10.0);
@@ -153,11 +152,11 @@ namespace Transports
           if (data_Beacon.cid_status_msg.outputflags_list[1])
           {
             task->spew("data_Beacon.cid_status_msg.attitude_yaw/10 %d",
-                       data_Beacon.cid_status_msg.attitude_yaw/10);
+                       data_Beacon.cid_status_msg.attitude_yaw / 10);
             task->spew("data_Beacon.cid_status_msg.attitude_pitch/10 %d",
-                       data_Beacon.cid_status_msg.attitude_pitch/10);
+                       data_Beacon.cid_status_msg.attitude_pitch / 10);
             task->spew("data_Beacon.cid_status_msg.attitude_roll/10 %d",
-                       data_Beacon.cid_status_msg.attitude_roll/10);
+                       data_Beacon.cid_status_msg.attitude_roll / 10);
           }
 
           // Mag cal.
