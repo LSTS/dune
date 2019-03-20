@@ -969,7 +969,7 @@ namespace Transports
       }
 
       //! Handle AHRS data send by local beacon.
-      //! The method tries to dispach all the necessary information for navigation
+      //! The method tries to dispatch all the necessary information for navigation
       void
       handleAhrsData(void)
       {
@@ -1012,8 +1012,8 @@ namespace Transports
         }
       }
 
-      //! Handle Pressure , Depth, Temperature and Sound Speed data and dispactch .
-      //! The method tries to dispach data prom sensors:Pressure , Depth, Temperature and Sound Speed data
+      //! Handle Pressure, Depth, Temperature and Sound Speed data and dispatch.
+      //! The method tries to dispatch data prom sensors: Pressure, Depth, Temperature, and Sound Speed data
       void
       handlePressureSensor (void)
       {
