@@ -206,8 +206,8 @@ namespace Transports
         else
           tx.destination = msg->destination.c_str();
 
-        //FIXME not sure
-        tx.setDestination(msg->getDestination());
+        tx.setDestination(m_parent->getSystemId());
+        tx.setDestinationEntity(m_parent->getEntityId());
 
         tx.range = msg->range;
 

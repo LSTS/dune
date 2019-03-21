@@ -659,16 +659,17 @@ namespace Transports
               break;
           }
         }
-
-
       }
 
       void
       consume(const IMC::TransmissionRequest* msg)
       {
-        if (msg->getSource() != getSystemId()
-          || msg->getDestination() != getSystemId())
+        err("consume(const IMC::TransmissionRequest* msg)");
+        if (/*msg->getSource() != getSystemId()
+          || */ msg->getDestination() != getSystemId())
           return;
+
+        err("2 consume(const IMC::TransmissionRequest* msg)");
 
         switch (msg->comm_mean)
         {
