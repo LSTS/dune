@@ -106,7 +106,6 @@ namespace Transports
                 .defaultValue("GSM Addresses")
                 .description("Name of the configuration section with gsm modem addresses");
 
-
         param("Acoustic Address Section", m_args.acoustic_addr_section)
                 .defaultValue("Evologics Addresses")
                 .description("Name of the configuration section with acoustic modem addresses");
@@ -602,9 +601,7 @@ namespace Transports
             default:
               break;
           }
-
         }
-
       }
 
       void
@@ -612,10 +609,10 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
+        
         std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
         if (tr_list->find(msg->req_id) != tr_list->end())
         {
-
           IMC::TransmissionRequest* req = tr_list->operator [](msg->req_id);
           switch (msg->status)
           {
@@ -713,7 +710,6 @@ namespace Transports
         sms_req.setSourceEntity(msg->getSourceEntity());
 
         dispatch(sms_req);
-
       }
 
       //Conversion from AcousticOperation to AcousticRequest Message
@@ -873,7 +869,6 @@ namespace Transports
               m_retransmission_list.pop_front();
             }
             m_retransmission_timer.reset();
-
           }
 
           if (m_clean_timer.overflow())
