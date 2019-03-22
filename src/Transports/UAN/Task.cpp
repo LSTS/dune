@@ -755,8 +755,8 @@ namespace Transports
       recvPlanControl(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         IMC::OperationalLimits ol;
-        ol.setDestination(imc_dst);
         ol.setSource(imc_src);
+        ol.setDestination(imc_dst);
         ol.mask = 0;
         dispatch(ol);
 
@@ -764,13 +764,16 @@ namespace Transports
 
         IMC::PlanControl pc;
         pc.setSource(imc_src);
+        pc.setDestination(imc_dst);
         pc.type = IMC::PlanControl::PC_REQUEST;
         pc.op = IMC::PlanControl::PC_START;
         pc.plan_id.assign(&msg->data[2], msg->data.size() - 3);
         pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
         dispatch(pc);
 
-        war(DTR("start plan detected"));
+        war(DTR("start plan detected with id: %s for 0x%02X"),
+            pc.plan_id.c_str(),
+            pc.getDestination() & 0xFFFF);
       }
 
       void
