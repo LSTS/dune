@@ -322,6 +322,7 @@ namespace Supervisors
                 pc.request_id = 0;
                 pc.plan_id = m_args.plan_name;
                 pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+                pc.setDestination(m_ctx.resolver.id());
                 pc.arg.set(m_plan);
 
                 dispatch(pc);
