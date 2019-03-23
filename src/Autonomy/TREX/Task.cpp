@@ -307,7 +307,7 @@ namespace Autonomy
         startPlan.arg.set(spec);
         startPlan.request_id = 0;
         startPlan.flags = 0;
-
+        startPlan.setDestination(m_ctx.resolver.id());
         dispatch(startPlan);
       }
 
