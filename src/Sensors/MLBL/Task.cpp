@@ -936,6 +936,7 @@ namespace Sensors
           pc.op = IMC::PlanControl::PC_START;
           pc.plan_id.assign(plan_name);
           pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
+          pc.setDestination(m_ctx.resolver.id());
           dispatch(pc);
 
           war(DTR("start plan detected"));
