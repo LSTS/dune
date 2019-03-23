@@ -249,6 +249,7 @@ namespace Plan
           pcontrol.request_id = 0;
           pcontrol.type = IMC::PlanControl::PC_REQUEST;
           pcontrol.op = IMC::PlanControl::PC_START;
+          pcontrol.setDestination(m_ctx.resolver.id());
           dispatch(pcontrol);
         }
 
