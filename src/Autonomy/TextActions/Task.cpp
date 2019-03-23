@@ -244,7 +244,7 @@ namespace Autonomy
         while(!cur_man.empty()) {
           if (maneuvers.find(cur_man) == maneuvers.end())
           {
-            throw new std::invalid_argument("Invalid maneuver id");
+            throw std::invalid_argument("Invalid maneuver id");
           }
 
           newSpec.maneuvers.push_back(maneuvers[cur_man]);
