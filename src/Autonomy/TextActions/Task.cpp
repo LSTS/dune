@@ -51,6 +51,9 @@ namespace Autonomy
       IMC::TextMessage* m_last;
       //! Transmission request id
       int m_reqid;
+      //! Plan database file.
+      Path m_db_file;
+
 
       //! %Task arguments
       struct Arguments
@@ -80,6 +83,8 @@ namespace Autonomy
 
         param("Valid Commands", m_args.valid_cmds)
           .defaultValue("abort,dislodge,dive,errors,info,force,go,help,phone,reboot,sk,start,surface");
+
+        m_db_file = m_ctx.dir_db / "Plan.db";
 
         bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
@@ -176,6 +181,89 @@ namespace Autonomy
         }
       }
 
+      bool
+      retrievePlan(const std::string& plan_id, IMC::PlanSpecification& ps)
+      {
+        try
+        {
+          Database::Connection db(m_db_file.c_str(), Database::Connection::CF_RDONLY);
+          Database::Statement get_plan_stmt("select data from Plan where plan_id=?", db);
+          get_plan_stmt << plan_id;
+          if (!get_plan_stmt.execute())
+          {
+            return false;
+          }
+
+          Database::Blob data;
+          get_plan_stmt >> data;
+          ps.deserializeFields((const uint8_t*)&data[0], data.size());
+
+        }
+        catch (std::runtime_error& e)
+        {
+          return false;
+        }
+
+        return true;
+      }
+
+      PlanSpecification
+      splitPlan(const std::string& plan_id, const std::string& man_id)
+      {
+        PlanSpecification ps;
+        std::map<std::string, IMC::PlanManeuver*> maneuvers;
+        std::map<std::string, IMC::PlanTransition*> transitions;
+
+        ps.clear();
+        if (!retrievePlan(plan_id, ps))
+        {
+          throw std::invalid_argument("Invalid plan id");
+        }
+
+        for (PlanManeuver *man : ps.maneuvers)
+        {
+          maneuvers[man->maneuver_id] = man;
+        }
+
+        for (PlanTransition *pt : ps.transitions)
+        {
+          transitions[pt->source_man] = pt;
+        }
+
+        PlanSpecification newSpec;
+        newSpec.end_actions = ps.end_actions;
+        newSpec.start_actions = ps.start_actions;
+        newSpec.variables = ps.variables;
+        newSpec.vnamespace = ps.vnamespace;
+        newSpec.description = ps.description;
+        newSpec.plan_id = ps.plan_id + "-" + man_id;
+        newSpec.start_man_id = man_id;
+
+
+        std::string cur_man = man_id;
+        while(!cur_man.empty()) {
+          if (maneuvers.find(cur_man) == maneuvers.end())
+          {
+            throw new std::invalid_argument("Invalid maneuver id");
+          }
+
+          newSpec.maneuvers.push_back(maneuvers[cur_man]);
+          if (transitions.find(cur_man) == transitions.end())
+          {
+            cur_man = "";
+          }
+          else
+          {
+            PlanTransition *pt = transitions[cur_man];
+            newSpec.transitions.push_back(pt);
+            cur_man = pt->dest_man;
+          }
+        }
+
+        return newSpec;
+      }
+
+
       //! Checks if a string is a phone number
       bool
 	  checkNumber(const std::string& str)
@@ -268,6 +356,8 @@ namespace Autonomy
           handleRebootCommand(origin, args);
         else if (cmd == "phone")
           handleChangeNumCommand(origin, args);
+        else if (cmd == "resume")
+          handleResumeCommand(origin, args, false);
         else
           handlePlanGeneratorCommand(origin, cmd, args);
       }
@@ -400,7 +490,7 @@ namespace Autonomy
         pc.op = IMC::PlanControl::PC_START;
         if (ignore_errors)
           pc.flags = IMC::PlanControl::FLG_IGNORE_ERRORS;
-
+        pc.setDestination(m_ctx.resolver.id());
         char plan_id[32];
         std::sscanf(args.c_str(), "%s", plan_id);
         pc.plan_id = plan_id;
@@ -418,6 +508,45 @@ namespace Autonomy
         // Send the plan start request
         dispatch(pc);
         (void)origin;
+      }
+
+
+      //! Execute command 'RESUME'
+      void
+      handleResumeCommand(const std::string& origin, const std::string& args, bool ignore_errors = true)
+      {
+        char plan_id[32];
+        char man_id[32];
+
+        std::sscanf(args.c_str(), "%s %s", plan_id, man_id);
+
+        inf(DTR("received SMS request to resume plan '%s' starting from maneuver '%s'"),
+            sanitize(plan_id).c_str(), sanitize(man_id).c_str());
+
+        std::stringstream ss;
+
+        try {
+          PlanSpecification spec = splitPlan(sanitize(plan_id), sanitize(man_id));
+          IMC::PlanControl pcontrol;
+          pcontrol.arg.set(spec);
+          pcontrol.info = DTR("Plan generated automatically");
+          pcontrol.type = IMC::PlanControl::PC_REQUEST;
+          pcontrol.op = IMC::PlanControl::PC_START;
+          pcontrol.plan_id = spec.plan_id;
+          pcontrol.setDestination(m_ctx.resolver.id());
+          if (ignore_errors)
+            pcontrol.flags = IMC::PlanControl::FLG_CALIBRATE | IMC::PlanControl::FLG_IGNORE_ERRORS;
+          else
+            pcontrol.flags = IMC::PlanControl::FLG_CALIBRATE;
+
+          dispatch(pcontrol);
+          ss << "Resuming plan " << sanitize(plan_id) << " from maneuver " << spec.start_man_id << ".";
+          reply(origin, ss.str());
+        }
+        catch (std::exception& e) {
+          ss << "Error processing resume: " << e.what() << ".";
+          reply(origin, ss.str());
+        }
       }
 
       //! Execute command 'ABORT'
@@ -454,6 +583,9 @@ namespace Autonomy
         dispatch(pg);
         (void)origin;
       }
+
+
+
 
       void
       onMain(void)
