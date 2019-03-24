@@ -213,6 +213,20 @@ namespace Transports
       }
 
       void
+      updateEntityMap(IMC::Message* m)
+      {
+        IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
+        Name2Eid::iterator itr = m_name2eid.find(ei->label);
+
+        if (itr != m_name2eid.end())
+        {
+          m_eid2eid[ei->id] = itr->second;
+
+          trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
+        }
+      }
+
+      void
       startReplay(const std::string& file)
       {
         if (isActive())
@@ -371,20 +385,6 @@ namespace Transports
         m_eid2eid.clear();
         m_tstats.clear();
         m_tgstats = Stats();
-      }
-
-      void
-      updateEntityMap(IMC::Message* m)
-      {
-        IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
-        Name2Eid::iterator itr = m_name2eid.find(ei->label);
-
-        if (itr != m_name2eid.end())
-        {
-          m_eid2eid[ei->id] = itr->second;
-
-          trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
-        }
       }
 
       void
