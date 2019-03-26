@@ -548,18 +548,19 @@ namespace Transports
 
       //! Add message to the end of queue
       void
-      addToQueue(const IMC::AcousticRequest* msg){
-        m_transmission_requests[createInternalId()]=msg->clone();
+      addToQueue(const IMC::AcousticRequest* msg)
+      {
+        m_transmission_requests[createInternalId()] = msg->clone();
       }
 
       //! Remove message from the queue. Resets timer. And unlocks the queue
       void
-      removeFromQueue(uint16_t index){
+      removeFromQueue(uint16_t index)
+      {
         delete m_transmission_requests.find(index)->second;
         m_transmission_requests.erase(index);
         m_msg_send_timer.setTop(2);
-        m_can_send=true;
-
+        m_can_send = true;
       }
 
       //! Announce USBL service.
@@ -568,7 +569,7 @@ namespace Transports
       {
         IMC::AnnounceService announce;
         announce.service = std::string("imc+any://acoustic/usbl/")
-        + URL::encode(getEntityLabel());
+            + URL::encode(getEntityLabel());
         dispatch(announce);
       }
 
@@ -619,11 +620,11 @@ namespace Transports
         frame.data.push_back(crc.get());
 
         dispatch(frame);
-
       }
 
       void
-      sendAbort(const std::string& sys, const uint16_t id){
+      sendAbort(const std::string& sys, const uint16_t id)
+      {
         std::vector<uint8_t> data;
         data.push_back(CODE_ABORT);
         sendFrame(sys, id, data, true);
@@ -854,29 +855,31 @@ namespace Transports
       }
 
       void
-      processQueue(void) {
-        if (m_can_send && !m_transmission_requests.empty()) {
+      processQueue(void)
+      {
+        if (m_can_send && !m_transmission_requests.empty())
+        {
           m_can_send = false;
-          const IMC::AcousticRequest * req = m_transmission_requests.begin()->second;
-          uint16_t id= m_transmission_requests.begin()->first;
+          const IMC::AcousticRequest* req = m_transmission_requests.begin()->second;
+          uint16_t id = m_transmission_requests.begin()->first;
 
-          switch (req->type) {
+          switch (req->type)
+          {
             case (IMC::AcousticRequest::TYPE_ABORT):
-				    sendAbort(req->destination,id);
-            break;
+              sendAbort(req->destination,id);
+              break;
 
             case (IMC::AcousticRequest::TYPE_RANGE):
-				    sendRange(req->destination,id);
-            break;
+              sendRange(req->destination,id);
+              break;
 
             case (IMC::AcousticRequest::TYPE_MSG):
-				    sendMessage(req->destination, id, req->msg);
-            break;
+              sendMessage(req->destination, id, req->msg);
+              break;
 
             default:
               break;
           }
-
         }
       }
 
