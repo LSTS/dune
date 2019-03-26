@@ -31,10 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include <opencv2/opencv.hpp>
 
-#include <Vision/FireMapper/Raster_Reader.h>
-#include <Vision/FireMapper/sensor_model.h>
-
-using namespace std;
+#include "ElevationRaster.hpp"
+#include "SensorModel.hpp"
 
 struct Pixel_Data
 {
@@ -67,7 +65,8 @@ struct Pixel_Range
   uint64_t row_up;
   uint64_t row_down;
 
-  Pixel_Range() {
+  Pixel_Range()
+  {
     // This is an invalid range
     col_left = std::numeric_limits<uint64_t>::max();
     col_right = 0;
@@ -81,96 +80,74 @@ struct Raster_ALL
   int ncols;
   int nrows;
   int noData;
-  vector<Pixel_Data> ListeP;
+  std::vector<Pixel_Data> ListeP;
 };
 
 
-class Raster_Tile
+class FireRaster
 {
 private:
-  Raster_Reader* Map;
-  vector<Pixel_Data> Liste_Points;
-  cv::Mat fireMap;
-  cv::Mat fireMap_bayes;
+  ElevationRaster* elevation_raster;
+  std::unique_ptr<AbstractSensorModel> s_model;
+  std::vector<Pixel_Data> Liste_Points;
+  cv::Mat firemap_bin;
+  cv::Mat firemap_bayes;
   cv::Mat occupancy_map;
-  cv::Mat fireMap_time;
-  bool FireMap_modified;
+  cv::Mat firemap_time;
+  bool firemap_modified;
   // Area of the raster where fire has been mapped into
   Pixel_Range mapped_area;
-  sensor_model s_model;
+  double no_data;
 
 public:
-  double no_data;
-  //Raster_Tile() = default;
+  explicit FireRaster(ElevationRaster* elevation);
 
-  Raster_Tile(string path);
+  bool test_within_bounds(double x, double y) const;
 
-  bool Test_point(uint64_t x, uint64_t y);
+  double get_elevation_at(double x, double y) const;
 
-  double get_elevation(uint64_t x, uint64_t y);
+  double get_max_elevation() const;
 
-  double get_maxheight();
+  double get_min_elevation() const;
 
-  double get_minheight();
+  double get_max_east() const;
 
-  double get_max_east();
+  double get_max_west() const;
 
-  double get_max_west();
+  double get_max_north() const;
 
-  double get_max_north();
+  double get_max_south() const;
 
-  double get_max_south();
+  double get_pixel_width() const;
 
-  double get_pixel_width();
+  double get_no_data() const;
 
-  void set_fireMap(uint64_t row, uint64_t col, uchar value, bool use_occupancygrid);
+  void set_firemap_cell(uint64_t row, uint64_t col, uchar value, bool use_occupancygrid);
 
-  void set_fireMap_time(uint64_t row, uint64_t col, double value);
+  void set_firemap_cell(uint64_t row, uint64_t col, double time);
 
-  void set_sensor_model(sensor_model sen_mod);
+  void set_sensor_model(std::unique_ptr<AbstractSensorModel>&& sen_mod);
 
-  cv::Mat get_fireMap();
+  cv::Mat get_firemap_bin() const;
 
-  cv::Mat get_fireMapbayes();
+  cv::Mat get_firemap_bayes() const;
 
-  cv::Mat get_fireMap_time();
+  cv::Mat get_firemap_time() const;
 
-  GDALDataset fireMap_time_gdal();
+  bool is_modified() const;
 
-  bool Test_fireMap_Modified();
+  void print_dem_info() const;
 
-  void get_DEM_info();
-
-
-  void ListePoints_Data();
-
-  Raster_ALL get_ListePoints();
+  Raster_ALL get_ListePoints() const;
 
   Pixel_Range get_corners(double x,
-                          double y);///Calculates four corners of the pixel that will be used to compute with in the raster, given the position of the camera centre.
-  Pixel_Range get_Rastercorners(double x_left, double x_right, double y_up,
-                                double y_down);///Gets the equivalent pixel position for the coordinates of the corners .
+                          double y) const;///Calculates four corners of the pixel that will be used to compute with in the raster, given the position of the camera centre.
+  Pixel_Range get_pixelrage_of_coordinates(double x_left, double x_right, double y_up,
+                                           double y_down) const;///Gets the equivalent pixel position for the coordinates of the corners .
 
-  Pixel_Data All_data(int r, int c);
+  Pixel_Data All_data(size_t r, size_t c) const;
 
-  void Put_firemap_inGdal(string gdal_result_path);
-
-
-  static vector<Raster_Tile> get_allMaps(const std::vector<std::string>& files)
-  {
-    vector<Raster_Tile> Carte;
-
-    for (const auto& f: files){
-        Raster_Tile RAST = Raster_Tile(f);
-        Carte.emplace_back(RAST);
-      }
-
-    return Carte;
-
-  };
-
-  //vector<Raster_Tile*> get_allMaps(string folder);
-  //virtual ~Raster_Tile();
+  void Put_firemap_inGdal(string gdal_result_path) const;
 
 };
 

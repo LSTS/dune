@@ -32,11 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdexcept>
 #include <opencv2/opencv.hpp>
 
-
 using namespace std;
 
-#include </usr/include/gdal/gdal_priv.h>
-#include </usr/include/gdal/cpl_conv.h> // for CPLMalloc()
+#include <gdal/gdal_priv.h>
+#include <gdal/cpl_conv.h> // for CPLMalloc()
 
 struct Point2D
 {
@@ -51,56 +50,50 @@ struct Pixel
 };
 
 
-class Raster_Reader
+class ElevationRaster
 {
-private:
-  GDALDataset* gDataSet;
-  int nBands;
-  double gTransform[6];
-  double originX, originY, pWidth, pHeight;
-  vector<double> RasterData;
-
-
 public:
 
   int nCols, nRows;
-  double maxheight;
-  double minheight;
 
-  //Raster_Reader() = default;
-  Raster_Reader(std::string path);
+  explicit ElevationRaster(std::string path);
 
-  void geoTransform();
+  Point2D get_world_coords(float col, float row) const;
 
-  void Mat_height();
+  Pixel get_pixel(double X, double Y) const;
 
-  Point2D get_World_coord(float col, float row);
+  double get_pixel_width() const;
 
-  Pixel get_pixel(double X, double Y);
+  double get_max_east() const;
 
-  double get_pixel_width();
+  double get_max_west() const;
 
-  double get_max_east();
+  double get_max_north() const;
 
-  double get_max_west();
+  double get_max_south() const;
 
-  double get_max_north();
+  double get_noData() const;
 
-  double get_max_south();
+  double get_min_elevation() const;
 
-  double get_noData();
+  double get_max_elevation() const;
 
-  string get_projection();
+  std::string get_projection_ref() const;
 
-  double get_height(uint64_t col, uint64_t row);
+  double value_at(Pixel pixel) const;
 
-  void Put_in_Raster(cv::Mat& FP, string gdal_result_path);
+  double value_at(uint64_t col, uint64_t row) const;
 
+  void write_to_file(const cv::Mat& FP, string gdal_result_path)const;
 
-  virtual ~Raster_Reader();
-
-
-protected:
+private:
+  double gTransform[6];
+  double originX, originY, pWidth, pHeight;
+  vector<double> RasterData;
+  std::string projectionref;
+  double no_data;
+  double max_elevation = std::numeric_limits<double>::min();
+  double min_elevation = std::numeric_limits<double>::max();
 
 
 };

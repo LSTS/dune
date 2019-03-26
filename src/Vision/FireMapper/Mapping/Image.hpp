@@ -22,83 +22,74 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef MAPPING_H
-#define MAPPING_H
+#ifndef IMAGE_H
+#define IMAGE_H
 
 
-using namespace std;
-
-#include <Vision/FireMapper/Raster_Tile.h>
-#include <Vision/FireMapper/Image.h>
-#include <Vision/FireMapper/sensor_model.h>
+#include <opencv2/opencv.hpp>
+#include <iostream>
 #include <string>
+#include <vector>
 
-
-struct Pixel_Test
+struct ImagePixel
 {
-  uchar Value;
-  bool Test;
+  int col;
+  int row;
 };
 
-
-struct Corner_Test
+struct Point3D
 {
-  Pixel_Range PR;
-  bool Test;
+  double x;
+  double y;
+  double z;
 };
 
-class Mapping
+class Image
 {
+public:
+  int ncols;
+  int nrows;
+
+  Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector<double> R_Dis, std::vector<double> T_Dis);
+
+  cv::Mat get_Rotation() const;
+
+  cv::Mat get_Translation() const;
+
+  cv::Mat get_IntrinsicMatrix() const;
+
+  cv::Mat get_CameraMatrix() const;
+
+  //function to undistort the distorted images due to camera Radial and Tangential distortion
+  cv::Mat get_UndistortedImage() const;
+
+  cv::Mat get_ImageMatrix() const;
+
+  void Segment(double thresholdValue);
+
+  ImagePixel get_ImagePixel_of(double x, double y, double z) const;
+
+  bool Test_Image(ImagePixel pxi) const;
+
+  Point3D get_RayPosition(int u, int v, double Z) const;
+
 
 private:
+  cv::Mat ImageMatrix;
+  cv::Mat undistortedImg;
 
-  vector<cv::Mat> Images_Mapped;
-  vector<Raster_Tile> Carte;
-  vector<Raster_ALL> Liste;
-  double threshold;
-  bool Segmentation, using_vector;
-  sensor_model sen_mode;
+  cv::Mat Translation; /* In Meters */
+  cv::Mat Rotation;
+  cv::Mat IntrinsicPixelMatrix;
+  cv::Mat IntrinsicMatrix;
+  std::vector<double> Radial_distortion;
+  std::vector<double> Tangential_distortion;
 
-  bool Map_direct(Image IM, double time);
-
-  bool Map_with_vector(Image IM);
-
-
-public:
-
-  Mapping();
-
-  Mapping(const std::vector<std::string>& path_DEM, bool use_pixelvector = false, bool Image_segmentation = false,
-          double threshold = 200);
-
-  std::vector<Raster_Tile>& maps();
-
-  Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM);
-
-  double IMask(cv::Mat UndistortedImage, std::vector<PixelImage> Corners);
-
-  bool Map(Image IM, double time = std::numeric_limits<double>::infinity());
-
-  vector<cv::Mat> get_IMapped();
-
-  void Save_Show_FireM(string path_result);
-
-  void DEM_infos();
-
-  void set_threshold(double th);
-
-  double get_threshold() const;
-
-  void set_sensor_model(sensor_model sensor_mod);
-
-  Point3D Raytracer(PixelImage Pix, Image I, Raster_Tile Rs);
-
-  Corner_Test get_Imagecorners(Image IM, Raster_Tile RS);
-
-  virtual ~Mapping();
+  cv::Mat CameraMatrix;
+  cv::Mat DistMatrix;
 
 
 };
 
 
-#endif // MAPPING_H
+#endif // IMAGE_H

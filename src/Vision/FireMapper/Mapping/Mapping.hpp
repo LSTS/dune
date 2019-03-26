@@ -22,79 +22,62 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef MAPPING_H
+#define MAPPING_H
 
-
-#include <opencv2/opencv.hpp>
-#include <iostream>
 #include <string>
-#include <vector>
+#include "FireRaster.hpp"
+#include "Image.hpp"
+#include "SensorModel.hpp"
 
 
-using namespace std;
-
-struct PixelImage
+struct Pixel_Test
 {
-  int col;
-  int row;
+  uchar Value;
+  bool Test;
 };
 
-struct Point3D
+
+struct Corner_Test
 {
-  double x;
-  double y;
-  double z;
+  Pixel_Range PR;
+  bool Test;
 };
 
-class Image
+
+class Mapping
 {
 private:
-  string Nom_Image;
-  cv::Mat IMatrix;
-  cv::Mat undistortedImg;
+  FireRaster* firemap;
+//  std::vector<Raster_ALL> Liste;
+  double threshold;
+  bool use_segmentation;
 
-  cv::Mat Translation;/*InMeters*/
-  cv::Mat Rotation;
-  cv::Mat IntrinsicPixelMatrix;
-  cv::Mat IntrinsicMatrix;
-  vector<double> Radial_distortion;
-  vector<double> Tangential_distortion;
+  bool Map_direct(Image IM, double time);
 
-  cv::Mat CameraMatrix;
-  cv::Mat DistMatrix;
+  Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM) const;
+
+  double IMask(cv::Mat UndistortedImage, std::vector<ImagePixel> Corners) const;
+
+  Point3D Raytracer(ImagePixel Pix, const Image& I, const FireRaster& Rs) const;
+
+  Corner_Test get_Imagecorners(const Image& IM, const FireRaster& RS) const;
 
 public:
-  int ncols;
-  int nrows;
+  explicit Mapping(FireRaster* fireraster, double threshold = 200, bool Image_segmentation = false);
 
-  Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, vector<double> R_Dis, vector<double> T_Dis);
+  FireRaster& fire_map();
 
-  cv::Mat get_Rotation();
+  bool map(Image IM, double time = std::numeric_limits<double>::infinity());
 
-  cv::Mat get_Translation();
+  std::vector<cv::Mat>& get_images_mapped();
 
-  cv::Mat get_IntrinsicMatrix();
+  void save_firemap(string folder_result);
 
-  cv::Mat get_CameraMatrix();
+  void set_threshold(double th);
 
-  cv::Mat
-  get_UndistortedImage();//function to undistort the distorted images due to camera Radial and Tangential distortion
-  cv::Mat get_IMatrix();
+  double get_threshold() const;
 
-  void Segment(size_t thresholdValue);
-
-
-  PixelImage get_PixelImage(double x, double y, double z);
-
-  bool Test_Image(PixelImage pxi);
-
-  Point3D get_RayPosition(int u, int v, double Z);
-
-  //virtual ~Image();
-
-
+  virtual ~Mapping() = default;
 };
-
-
-#endif // IMAGE_H
+#endif // MAPPING_H

@@ -22,74 +22,23 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "Mapping.h"
+#include "Mapping.hpp"
 
-Mapping::Mapping()
-{
-  Carte = vector<Raster_Tile>();
-  Segmentation = false;
-  using_vector = false;
-
-
-}
-
-Mapping::Mapping(const std::vector<string>& path_DEM, bool use_pixelvector, bool Image_segmentation, double thd)
-{
-
-  Carte = Raster_Tile::get_allMaps(path_DEM);//We have in return a vector with Rasters read and with all their params
-  Segmentation = Image_segmentation;
-  using_vector = use_pixelvector;
-  threshold = thd;
-
-
-
-
-  ///  This part creates a vector of points for each DEM so as to make the Mapping  easy for the Mapping function and so to take less time if the DEM will be used more than once,
-  ///  nevertheless it might take a considerable amount of time if the DEMs are very precise but in all cases it will be needed only once
-
-  if (use_pixelvector)
-  {
-
-    for (int j = 0; j < (int) Carte.size(); j++)
-    {///Carte est une liste des RasterTile ,chaque raster Tile est Un DEM
-
-      Carte[j].ListePoints_Data();
-      //here we get a vector of the structure Ratser all that holds all the info about a pixel in the DEM  the position of it s corners and its col and row.
-      //in this vector we gather the vectors that represent a DEM ,so every column of this vector is a vecotor full of the points of a DEM
-      Liste.push_back(Carte[j].get_ListePoints());
-
-    }
-  }
-
-
-}
-
-Mapping::~Mapping()
+Mapping::Mapping(FireRaster* fireraster, double thd, bool Image_segmentation)
+  : firemap(std::move(fireraster)), threshold(thd), use_segmentation(Image_segmentation)
 {}
 
 void Mapping::set_threshold(double thd)
 {
-
   threshold = thd;
-
 }
 
 double Mapping::get_threshold() const
 {
-
   return threshold;
-
 }
 
-void Mapping::set_sensor_model(sensor_model sensor_mod)
-{
-
-  sen_mode = sensor_mod;
-
-}
-
-
-double Mapping::IMask(cv::Mat UndistortedImage, vector<PixelImage> Corners)
+double Mapping::IMask(cv::Mat UndistortedImage, std::vector<ImagePixel> Corners) const
 {
 
 
@@ -165,10 +114,10 @@ https://docs.opencv.org/2.4.13.4/doc/tutorials/core/basic_geometric_drawing/basi
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM)
+Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM) const
 {
 
-  vector<PixelImage> Corners(
+  vector<ImagePixel> Corners(
     4);//this vector will store the 4 corners in the image that are related to the 4 coners of the pixel in the world
 
   Pixel_Test pt;
@@ -179,10 +128,10 @@ Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM)
       (PD.z_downright != noDATA))
   {//we check if any of the corners has no height in the dem
 
-    Corners[0] = (IM.get_PixelImage(PD.x_upleft, PD.y_upleft, PD.z_upleft));
-    Corners[1] = (IM.get_PixelImage(PD.x_downleft, PD.y_downleft, PD.z_downleft));
-    Corners[2] = (IM.get_PixelImage(PD.x_upright, PD.y_upright, PD.z_upright));
-    Corners[3] = (IM.get_PixelImage(PD.x_downright, PD.y_downright, PD.z_downright));
+    Corners[0] = (IM.get_ImagePixel_of(PD.x_upleft, PD.y_upleft, PD.z_upleft));
+    Corners[1] = (IM.get_ImagePixel_of(PD.x_downleft, PD.y_downleft, PD.z_downleft));
+    Corners[2] = (IM.get_ImagePixel_of(PD.x_upright, PD.y_upright, PD.z_upright));
+    Corners[3] = (IM.get_ImagePixel_of(PD.x_downright, PD.y_downright, PD.z_downright));
 
     //if the 4 corners are inside the IMage .
     if ((IM.Test_Image(Corners[0])) && (IM.Test_Image(Corners[1])) && (IM.Test_Image(Corners[2])) &&
@@ -253,22 +202,22 @@ void Mapping::Map(){
 
 ///////////////////////////////////////////
 
-Point3D Mapping::Raytracer(PixelImage Pix, Image I, Raster_Tile Rs)
+Point3D Mapping::Raytracer(ImagePixel Pix, const Image& I, const FireRaster& Rs) const
 {
 
   double right_Z = 0;
-  double test_Z = Rs.get_maxheight();
+  double test_Z = Rs.get_max_elevation();
   Point3D Pt;
 
-  while (test_Z >= Rs.get_minheight())
+  while (test_Z >= Rs.get_min_elevation())
   {
 
     Pt = I.get_RayPosition(Pix.col, Pix.row, test_Z);
 
-    if (Rs.Test_point(Pt.x, Pt.y))
+    if (Rs.test_within_bounds(Pt.x, Pt.y))
     {
 
-      right_Z = Rs.get_elevation(Pt.x, Pt.y);
+      right_Z = Rs.get_elevation_at(Pt.x, Pt.y);
 
       if (right_Z >= test_Z)
       {
@@ -290,17 +239,17 @@ Point3D Mapping::Raytracer(PixelImage Pix, Image I, Raster_Tile Rs)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-///This function is used in the raytracing ,it takes the 4 corners of the Image and raytraces them, it runs some tests to see if the IMage is in the DEM (Raster Tile)
-///and then gives back the borders of the image in the DEM .
+// This function is used in the raytracing, it takes the 4 corners of the Image and raytraces them,
+// it runs some tests to see if the IMage is in the DEM (Raster Tile)
+// and then gives back the borders of the image in the DEM .
 
 
-Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
+Corner_Test Mapping::get_Imagecorners(const Image& IM, const FireRaster& RS) const
 {
-
   Corner_Test CT;
   CT.Test = true;
 
-  PixelImage Pix;
+  ImagePixel Pix;
   Pix.col = 0;
   Pix.row = 0;
   Point3D upleft = Raytracer(Pix, IM, RS);
@@ -317,7 +266,6 @@ Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
   Pix.row = IM.nrows;
   Point3D downright = Raytracer(Pix, IM, RS);
 
-
   int x_left = min(upleft.x, min(upright.x, min(downleft.x, downright.x)));
   int x_right = max(upleft.x, max(upright.x, max(downleft.x, downright.x)));
   int y_down = min(upleft.y, min(upright.y, min(downleft.y, downright.y)));
@@ -332,9 +280,7 @@ Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
     return CT;
 
   }
-
   ///if a corner of the the image is out of the raster
-
   if (x_left < RS.get_max_west())
   { x_left = RS.get_max_west(); }
 
@@ -347,13 +293,10 @@ Corner_Test Mapping::get_Imagecorners(Image IM, Raster_Tile RS)
   if (y_down < RS.get_max_south())
   { y_down = RS.get_max_south(); }
 
-
   /// Since the corners of the picture in world exist in the DEM we don t have to run a test to see if they do .
-  CT.PR = RS.get_Rastercorners(x_left, x_right, y_up, y_down);
-
+  CT.PR = RS.get_pixelrage_of_coordinates(x_left, x_right, y_up, y_down);
 
   return CT;
-
 
 }
 
@@ -370,170 +313,123 @@ It uses a list of vectors of points to run the DEMs ,for every Dem it runs its v
 
 */
 
-
-bool Mapping::Map_with_vector(Image IM)
-{
-  bool no_DEM_match = true;//turns to false if there s a  DEm that matchs the Image we re Mapping
-
-  for (int l = 0; l < (int) Carte.size(); l++)
-  {
-
-    Corner_Test Cot;
-
-    Cot = get_Imagecorners(IM, Carte[l]);
-
-    if (Cot.Test)
-    {
-      no_DEM_match = false;
-
-      if (Segmentation)
-      {
-        IM.Segment(threshold);
-        Carte[l].set_sensor_model(sen_mode);
-
-      }
-      int linestart = 0;
-      int lineend = 0;
-
-      for (int r = Cot.PR.row_up; r < (int) Cot.PR.row_down - 1; r++)
-      {// we Run all the pixels of the ROI
-
-        linestart = ((Liste[l].ncols - 1) * r) + Cot.PR.col_left;
-        lineend = ((Liste[l].ncols - 1) * r) + Cot.PR.col_right - 1;
-
-        for (int c = linestart; c <= lineend; c++)
-        {// we Run all the  pixels of the Raster
-
-          Pixel_Test px = Pixel_Mapping((Liste[l].ListeP)[c], Liste[l].noData, IM);
-
-          if (px.Test)
-          { //Si on a trouve une image qui correspond a ce ce pixel
-
-            Carte[l].set_fireMap((Liste[l].ListeP)[c].row, (Liste[l].ListeP)[c].col, px.Value, Segmentation);
-          }
-        }
-      }
-    }
-
-  }
-
-  if (no_DEM_match)
-  {
-    return false;
-
-  }
-  return true;
-}
-
+//
+//bool Mapping::Map_with_vector(Image IM)
+//{
+//  bool no_DEM_match = true;//turns to false if there s a  DEm that matchs the Image we re Mapping
+//
+//  for (int l = 0; l < (int) firemap.size(); l++)
+//  {
+//
+//    Corner_Test Cot;
+//
+//    Cot = get_Imagecorners(IM, firemap[l]);
+//
+//    if (Cot.Test)
+//    {
+//      no_DEM_match = false;
+//
+//      if (use_segmentation)
+//      {
+//        IM.Segment(threshold);
+//        firemap[l].set_sensor_model(sen_mode);
+//
+//      }
+//      int linestart = 0;
+//      int lineend = 0;
+//
+//      for (int r = Cot.PR.row_up; r < (int) Cot.PR.row_down - 1; r++)
+//      {// we Run all the pixels of the ROI
+//
+//        linestart = ((Liste[l].ncols - 1) * r) + Cot.PR.col_left;
+//        lineend = ((Liste[l].ncols - 1) * r) + Cot.PR.col_right - 1;
+//
+//        for (int c = linestart; c <= lineend; c++)
+//        {// we Run all the  pixels of the Raster
+//
+//          Pixel_Test px = Pixel_Mapping((Liste[l].ListeP)[c], Liste[l].noData, IM);
+//
+//          if (px.Test)
+//          { //Si on a trouve une image qui correspond a ce ce pixel
+//
+//            firemap[l].set_firemap_cell((Liste[l].ListeP)[c].row, (Liste[l].ListeP)[c].col, px.Value,
+//                                         use_segmentation);
+//          }
+//        }
+//      }
+//    }
+//
+//  }
+//
+//  if (no_DEM_match)
+//  {
+//    return false;
+//
+//  }
+//  return true;
+//}
+//
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
 Map : 3
 
-This function uses the DEM Raster Directly to get the data it needs about every pixel of the DEM.It can be faster if the DEM are big and need a lot of time and memory to be put then in a vector.
-
+ This function uses the DEM Raster Directly to get the data it needs about every pixel of the DEM.It can be faster
+ if the DEM are big and need a lot of time and memory to be put then in a vector.
 */
 bool Mapping::Map_direct(Image IM, double time)
 {
-  bool no_DEM_match = true;//turns to false if there s a  DEm that matchs the Image we re Mapping
-
-  for (int l = 0; l < (int) Carte.size(); l++)
-  {// we run all the Dems we have
-
-    Corner_Test Cot;
+  bool DEM_match = false; //turns to false if there s a DEM that matchs the Image we re Mapping
 
 
-    Cot = get_Imagecorners(IM, Carte[l]);
-    //cout<<"just raytraced"<<endl;
-    //cout<<"row_up"<<Cot.PR.row_up<<"row_down"<<Cot.PR.row_down<<"col_left"<<Cot.PR.col_left<<"col_right"<<Cot.PR.col_right<<endl;
+  Corner_Test Cot;
 
 
-    if (Cot.Test)
+  Cot = get_Imagecorners(IM, *firemap);
+  //cout<<"just raytraced"<<endl;
+  //cout<<"row_up"<<Cot.PR.row_up<<"row_down"<<Cot.PR.row_down<<"col_left"<<Cot.PR.col_left<<"col_right"<<Cot.PR.col_right<<endl;
+
+
+  if (Cot.Test)
+  {
+    DEM_match = true;
+
+    if (use_segmentation)
     {
-      no_DEM_match = false;
+      IM.Segment(threshold);
+    }
 
-      if (Segmentation)
-      {
-        IM.Segment(threshold);
-        Carte[l].set_sensor_model(sen_mode);
+    Pixel_Data pt;
+    int nodata = static_cast<int>(firemap->get_no_data());
 
-      }
+    for (size_t r = Cot.PR.row_up; r < Cot.PR.row_down - 1; r++)
+    {// we Run all the pixels of the ROI( why the -1:since we took the centre of 4 pixels of the DEM we get to have 1 row and 1 col less)
 
+      for (size_t c = Cot.PR.col_left; c < Cot.PR.col_right - 1; c++)
+      {// we Run all the  pixels of the Raster
 
-      Pixel_Data pt;
+        pt = firemap->All_data(r, c);
 
-      for (int r = Cot.PR.row_up; r < (int) Cot.PR.row_down - 1; r++)
-      {// we Run all the pixels of the ROI( why the -1:since we took the centre of 4 pixels of the DEM we get to have 1 row and 1 col less)
+        Pixel_Test px = Pixel_Mapping(pt, nodata, IM);
 
-        for (int c = Cot.PR.col_left; c < (int) Cot.PR.col_right - 1; c++)
-        {// we Run all the  pixels of the Raster
-
-          pt = Carte[l].All_data(r, c);
-
-          Pixel_Test px = Pixel_Mapping(pt, Carte[l].no_data, IM);
-
-          if (px.Test)
-          { //if that pixel matches with the IMage
-
-            Carte[l].set_fireMap(r, c, px.Value, Segmentation);
-
-            // If the ground cell is on fire, set the ignition time
-            // Only if cell time wasn't already set
-//            if (Carte[l].get_fireMap_time().at<double>(r, c) >= std::numeric_limits<double>::infinity())
-//            {
-            Carte[l].set_fireMap_time(r, c, time);
-//            }
-          }
+        if (px.Test)
+        { //if that pixel matches with the IMage
+          firemap->set_firemap_cell(r, c, px.Value, use_segmentation);
+          firemap->set_firemap_cell(r, c, time);
         }
       }
     }
   }
 
-  if (no_DEM_match)
-  {
-    return false;
-
-  }
-  return true;
+  return DEM_match;
 }
 
 ///////////////////////////////////////////////////////////////
 
-bool Mapping::Map(Image IM, double time)
+bool Mapping::map(Image IM, double time)
 {
-
-  if (using_vector == true)
-  {
-
-    return Map_with_vector(IM);
-  } else
-  {
-
-    return Map_direct(IM, time);
-
-  }
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-THis function saves all the fireMaps in a Vector so as they can be easly used
-*/
-
-vector<cv::Mat> Mapping::get_IMapped()
-{
-
-  for (int j = 0; j < (int) Carte.size(); j++)
-  {
-
-    Images_Mapped.push_back(
-      Carte[j].get_fireMap());///Every DEM has a Matrix with its same size that maps in it the images
-  }
-
-  return Images_Mapped;
+  return Map_direct(std::move(IM), time);
 
 }
 
@@ -542,47 +438,22 @@ vector<cv::Mat> Mapping::get_IMapped()
 This function can be used to show the update we had on the fireMap without being in need to check all the fireMaps
 
 */
-void Mapping::Save_Show_FireM(string path_result)
+void Mapping::save_firemap(string folder_result)
 {
 
-  for (int j = 0; j < (int) Carte.size(); j++)
+  auto a = firemap->get_firemap_bin();
+  cv::imwrite(folder_result + "firemap_bin" + ".png", a);
+  firemap->Put_firemap_inGdal(folder_result + "firemap_bin" + ".tif");
+
+  if (use_segmentation)
   {
-
-    if (Carte[j].Test_fireMap_Modified())
-    {///if the FIREMAP related to this dem is  modified we show  it
-
-      auto a = Carte[j].get_fireMap();
-      stringstream ss;
-      ss << j;
-      cv::imwrite(path_result + "Map" + ss.str() + ".png", a);
-      Carte[j].Put_firemap_inGdal(path_result + "Map" + ss.str() + ".tif");
-
-      if (Segmentation)
-      {
-
-        cv::imwrite(path_result + "Mapbayes" + ss.str() + ".jpg", Carte[j].get_fireMapbayes());
-        //cout<<Carte[j].get_fireMapbayes()<<endl;
-      }
-      //cv::imshow(path_result +"Map"+ ss.str() +".jpg",Carte[j].get_fireMap()); needs perimission
-    }
+    cv::imwrite(folder_result + "Mapbayes" + ".jpg", firemap->get_firemap_bayes());
+    //cout<<Carte[j].get_fireMapbayes()<<endl;
   }
-
-
+  //cv::imshow(path_result +"Map"+ ss.str() +".jpg",Carte[j].get_fireMap()); needs perimission
 }
 
-void Mapping::DEM_infos()
+FireRaster& Mapping::fire_map()
 {
-  for (int j = 0; j < (int) Carte.size(); j++)
-  {
-    stringstream ss;
-    ss << j;
-    cout << "Map number  " + ss.str() << endl;
-    Carte[j].get_DEM_info();
-
-  }
-}
-
-std::vector<Raster_Tile>& Mapping::maps()
-{
-  return Carte;
+  return *firemap;
 }

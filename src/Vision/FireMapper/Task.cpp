@@ -36,16 +36,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <opencv2/opencv.hpp>
 
 // GDAL headers
-#include </usr/include/gdal/ogr_spatialref.h>
+#include <gdal/ogr_spatialref.h>
 
-// Firemapper headers
-#include <Vision/FireMapper/Mapping.h>
-#include <Vision/FireMapper/Raster_Reader.h>
-#include <Vision/FireMapper/Raster_Tile.h>
-#include <Vision/FireMapper/Image.h>
-#include <Vision/FireMapper/MorseImageGrabber.h>
-#include <Vision/FireMapper/Mapping_thread.hpp>
-#include <Vision/FireMapper/sensor_model.h>
+// Mapping headers
+#include "Mapping/Mapping.hpp"
+#include "Mapping/ElevationRaster.hpp"
+#include "Mapping/FireRaster.hpp"
+#include "Mapping/Image.hpp"
+#include "Mapping/SensorModel.hpp"
+
+// Firemapper task headers
+#include "MorseImageGrabber.hpp"
+#include "Mapping_thread.hpp"
 
 
 namespace Vision
@@ -103,7 +105,9 @@ namespace Vision
       vector<double> Tangential_distortion;
 
       Mapping_thread* Map_thrd;
-      Mapping mapper;
+      FireRaster* fire_raster;
+      ElevationRaster* elevation_raster;
+      Mapping* mapper;
       MorseImageGrabber* morse_grabber;
 
       Arguments m_args;
@@ -312,14 +316,14 @@ namespace Vision
 
         Map_thrd = new Mapping_thread(this, "thrd_Mapper");
 
-        Path path_DEM = Path(m_args.dem_file);
-        m_path_results = path_DEM.dirname(true).str();
-        std::vector<std::string> file_vec = std::vector<std::string>();
-        file_vec.push_back(m_args.dem_file);
         try
         {
-          mapper = Mapping(file_vec);
-          mapper.set_threshold(m_args.threshold);
+          Path path_DEM = Path(m_args.dem_file);
+          m_path_results = path_DEM.dirname(true).str();
+          elevation_raster = new ElevationRaster(m_args.dem_file);
+          fire_raster = new FireRaster(elevation_raster);
+          mapper = new Mapping(fire_raster);
+          mapper->set_threshold(m_args.threshold);
         }
         catch (const std::invalid_argument& e)
         {
@@ -332,6 +336,9 @@ namespace Vision
       void
       onResourceRelease(void)
       {
+        delete elevation_raster;
+        delete fire_raster;
+        delete mapper;
         delete morse_grabber;
         delete Map_thrd;
       }
@@ -343,7 +350,7 @@ namespace Vision
         std::copy(obj_begin, obj_begin + sizeof(T), std::back_inserter(buffer));
       }
 
-      void dispatch_firemap(Raster_Tile map)
+      void dispatch_firemap(const FireRaster& map)
       {
         IMC::DevDataBinary msg = IMC::DevDataBinary();
         msg.setTimeStamp();
@@ -354,11 +361,11 @@ namespace Vision
         msg.value.emplace_back(0xF1);
         msg.value.emplace_back(0x3E);
         // x size
-        uint64_t x_size = map.get_fireMap_time().rows;
+        uint64_t x_size = map.get_firemap_time().rows;
         serialize<uint64_t>(x_size, msg.value);
 
         // y size
-        uint64_t y_size = map.get_fireMap_time().cols;
+        uint64_t y_size = map.get_firemap_time().cols;
         serialize<uint64_t>(y_size, msg.value);
 
         // x offset
@@ -380,13 +387,13 @@ namespace Vision
         // std::copy(datastart, dataend, std::back_inserter(msg.value));
 
         // Uncompressed size
-        uint64_t uncomp_size = map.get_fireMap_time().step[0] * map.get_fireMap_time().rows;
+        uint64_t uncomp_size = map.get_firemap_time().step[0] * map.get_firemap_time().rows;
         serialize<uint64_t>(uncomp_size, msg.value);
 
         // Compressed fire map data
         Compression::ZlibCompressor c = Compression::ZlibCompressor();
-        auto buff = c.compress(reinterpret_cast<char*>(map.get_fireMap_time().data),
-                               map.get_fireMap_time().step[0] * map.get_fireMap_time().rows);
+        auto buff = c.compress(reinterpret_cast<char*>(map.get_firemap_time().data),
+                               map.get_firemap_time().step[0] * map.get_firemap_time().rows);
         std::copy(buff.getBufferSigned(), buff.getBufferSigned() + buff.getSize(), std::back_inserter(msg.value));
 
         inf("Compressed fire map size: %zu bytes", msg.value.size());
@@ -486,8 +493,8 @@ namespace Vision
 
                     Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
                                           Tangential_distortion);
-                    bool Image_with_DEM_match = mapper.Map(*im, Time::Clock::getSinceEpoch());
-                    mapper.Save_Show_FireM(m_path_results);
+                    bool Image_with_DEM_match = mapper->map(*im, Time::Clock::getSinceEpoch());
+                    mapper->save_firemap(m_path_results);
 
                     if (Image_with_DEM_match)
                     {
@@ -518,8 +525,8 @@ namespace Vision
             } else if (fm_state == FireMappingState::DispatchFireMap)
             {
               inf("FireMappingState::DispatchFireMap");
-              mapper.Save_Show_FireM(m_path_results);
-              dispatch_firemap(mapper.maps()[0]);
+              mapper->save_firemap(m_path_results);
+              dispatch_firemap(mapper->fire_map());
               fm_state = FireMappingState::FetchImage;
             }
           }
