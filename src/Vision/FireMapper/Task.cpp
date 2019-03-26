@@ -101,8 +101,8 @@ namespace Vision
 
       cv::Mat Image_Matrix;
 
-      vector<double> Radial_distortion;
-      vector<double> Tangential_distortion;
+      std::vector<double> Radial_distortion;
+      std::vector<double> Tangential_distortion;
 
       Mapping_thread* Map_thrd;
       FireRaster* fire_raster;

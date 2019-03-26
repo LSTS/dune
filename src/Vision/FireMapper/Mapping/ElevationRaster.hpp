@@ -30,9 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <string>
 #include <algorithm>
 #include <stdexcept>
+#include <memory>
 #include <opencv2/opencv.hpp>
-
-using namespace std;
 
 #include <gdal/gdal_priv.h>
 #include <gdal/cpl_conv.h> // for CPLMalloc()
@@ -84,12 +83,12 @@ public:
 
   double value_at(uint64_t col, uint64_t row) const;
 
-  void write_to_file(const cv::Mat& FP, string gdal_result_path)const;
+  void write_to_file(const cv::Mat& FP, std::string gdal_result_path)const;
 
 private:
   double gTransform[6];
   double originX, originY, pWidth, pHeight;
-  vector<double> RasterData;
+  std::vector<double> RasterData;
   std::string projectionref;
   double no_data;
   double max_elevation = std::numeric_limits<double>::min();

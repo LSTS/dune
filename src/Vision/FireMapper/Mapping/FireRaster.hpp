@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <cmath>
 #include <fstream>
 #include <limits>
+#include <memory>
 
 #include <opencv2/opencv.hpp>
 
@@ -147,7 +148,7 @@ public:
 
   Pixel_Data All_data(size_t r, size_t c) const;
 
-  void Put_firemap_inGdal(string gdal_result_path) const;
+  void Put_firemap_inGdal(std::string gdal_result_path) const;
 
 };
 

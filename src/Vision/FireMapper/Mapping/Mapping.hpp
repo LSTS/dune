@@ -72,7 +72,7 @@ public:
 
   std::vector<cv::Mat>& get_images_mapped();
 
-  void save_firemap(string folder_result);
+  void save_firemap(std::string folder_result);
 
   void set_threshold(double th);
 

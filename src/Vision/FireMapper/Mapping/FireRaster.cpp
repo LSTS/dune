@@ -144,18 +144,18 @@ void FireRaster::print_dem_info() const
 {
   if (!elevation_raster->get_projection_ref().empty())
   {
-    string line;
+    std::string line;
     std::stringstream ss;
     ss.str(elevation_raster->get_projection_ref());
     while (std::getline(ss, line, ','))
     {
-      cout << line << endl;
+      std::cout << line << std::endl;
     }
   }
 }
 
 ////////////////////////////////////////////////////
-void FireRaster::Put_firemap_inGdal(string gdal_result_path) const
+void FireRaster::Put_firemap_inGdal(std::string gdal_result_path) const
 {
   elevation_raster->write_to_file(firemap_bin, gdal_result_path);
 }

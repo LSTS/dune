@@ -79,10 +79,10 @@ https://docs.opencv.org/2.4.13.4/doc/tutorials/core/basic_geometric_drawing/basi
 
     PointsImage[0][j] = cv::Point(Corners[j].col, Corners[j].row);
     //we take this values to precise the area where the equivalent pixels in the IMage exist,this way we won t be in need to run the whole mask looking for them.
-    maxcol = max(Corners[j].col, maxcol);
-    maxrow = max(Corners[j].row, maxrow);
-    mincol = min(Corners[j].col, mincol);
-    minrow = min(Corners[j].row, minrow);
+    maxcol = std::max(Corners[j].col, maxcol);
+    maxrow = std::max(Corners[j].row, maxrow);
+    mincol = std::min(Corners[j].col, mincol);
+    minrow = std::min(Corners[j].row, minrow);
   }
 
   const cv::Point* ppt[1] = {PointsImage[0]};
@@ -117,8 +117,8 @@ https://docs.opencv.org/2.4.13.4/doc/tutorials/core/basic_geometric_drawing/basi
 Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM) const
 {
 
-  vector<ImagePixel> Corners(
-    4);//this vector will store the 4 corners in the image that are related to the 4 coners of the pixel in the world
+  std::vector<ImagePixel> Corners(4);
+  //this vector will store the 4 corners in the image that are related to the 4 coners of the pixel in the world
 
   Pixel_Test pt;
   pt.Test = false;
@@ -266,10 +266,10 @@ Corner_Test Mapping::get_Imagecorners(const Image& IM, const FireRaster& RS) con
   Pix.row = IM.nrows;
   Point3D downright = Raytracer(Pix, IM, RS);
 
-  int x_left = min(upleft.x, min(upright.x, min(downleft.x, downright.x)));
-  int x_right = max(upleft.x, max(upright.x, max(downleft.x, downright.x)));
-  int y_down = min(upleft.y, min(upright.y, min(downleft.y, downright.y)));
-  int y_up = max(upleft.y, max(upright.y, max(downleft.y, downright.y)));
+  int x_left = std::min(upleft.x, std::min(upright.x, std::min(downleft.x, downright.x)));
+  int x_right = std::max(upleft.x, std::max(upright.x, std::max(downleft.x, downright.x)));
+  int y_down = std::min(upleft.y, std::min(upright.y, std::min(downleft.y, downright.y)));
+  int y_up = std::max(upleft.y, std::max(upright.y, std::max(downleft.y, downright.y)));
 
   if ((x_left > RS.get_max_east()) || (x_right < RS.get_max_west()) || (y_up < RS.get_max_south()) ||
       (y_down > RS.get_max_north()))
@@ -438,7 +438,7 @@ bool Mapping::map(Image IM, double time)
 This function can be used to show the update we had on the fireMap without being in need to check all the fireMaps
 
 */
-void Mapping::save_firemap(string folder_result)
+void Mapping::save_firemap(std::string folder_result)
 {
 
   auto a = firemap->get_firemap_bin();

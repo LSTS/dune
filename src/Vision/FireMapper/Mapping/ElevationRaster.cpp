@@ -31,8 +31,7 @@ ElevationRaster::ElevationRaster(std::string path)
 
   /* Once the drivers are registered, the application should call the free standing GDALOpen() function to open a
    * dataset, passing the name of the dataset and the access desired (GA_ReadOnly or GA_Update).*/
-  std::unique_ptr<GDALDataset> gDataSet = std::unique_ptr<GDALDataset>(
-    GDALDataset::FromHandle(GDALOpen(path.c_str(), GA_ReadOnly)));
+  GDALDataset* gDataSet = static_cast<GDALDataset*>(GDALOpen(path.c_str(), GA_ReadOnly));
 
   //check if data is present
   if (!gDataSet)
@@ -57,6 +56,7 @@ ElevationRaster::ElevationRaster(std::string path)
     pHeight = gTransform[5];
   } else
   {
+    GDALClose(gDataSet);
     throw std::runtime_error("DEM error : no transform can be fetched");
   }
 
@@ -77,13 +77,14 @@ ElevationRaster::ElevationRaster(std::string path)
     {
       for (int j = 0; j < nCols; ++j)
       {
-        min_elevation = min(min_elevation, Buffer[j]);
-        max_elevation = max(max_elevation, Buffer[j]);
+        min_elevation = std::min(min_elevation, Buffer[j]);
+        max_elevation = std::max(max_elevation, Buffer[j]);
         RasterData.push_back(Buffer[j]);
       }
     }
     CPLFree(Buffer);
   }
+  GDALClose(gDataSet);
 }
 
 Point2D ElevationRaster::get_world_coords(float col, float row) const
@@ -175,7 +176,7 @@ double ElevationRaster::value_at(uint64_t col, uint64_t row) const
   return RasterData.at(cpt);
 }
 
-void ElevationRaster::write_to_file(const cv::Mat& FP, string gdal_result_path) const
+void ElevationRaster::write_to_file(const cv::Mat& FP, std::string gdal_result_path) const
 {
   GDALDriver* poDriver;
   std::string pszFormat = "GTiff";
@@ -206,7 +207,7 @@ void ElevationRaster::write_to_file(const cv::Mat& FP, string gdal_result_path) 
     pBand->RasterIO(GF_Write, 0, i, nCols, 1, Buffer, nCols, 1, GDT_Float64, 0, 0);
   }
 
-  GDALClose(GDALDataset::ToHandle(poDstDS));
+  GDALClose(poDstDS);
   CPLFree(Buffer);
 }
 
