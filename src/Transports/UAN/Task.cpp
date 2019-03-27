@@ -848,6 +848,7 @@ namespace Transports
             sendAcousticStatus(it->second,IMC::AcousticStatus::STATUS_INPUT_FAILURE,"Transmission timed out.");
             Memory::clear(it->second);
             m_transmission_requests.erase(it++);
+            m_can_send = true;
           }
           else
             ++it;
