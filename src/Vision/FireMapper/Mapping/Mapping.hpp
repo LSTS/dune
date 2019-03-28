@@ -53,7 +53,7 @@ private:
   double threshold;
   bool use_segmentation;
 
-  bool Map_direct(Image IM, double time);
+  bool Map_direct(Image& IM, double time);
 
   Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM) const;
 
@@ -68,9 +68,9 @@ public:
 
   FireRaster& fire_map();
 
-  bool map(Image IM, double time = std::numeric_limits<double>::infinity());
+  bool map(Image& IM, double time = std::numeric_limits<double>::infinity());
 
-  std::vector<cv::Mat>& get_images_mapped();
+//  std::vector<cv::Mat>& get_images_mapped();
 
   void save_firemap(std::string folder_result);
 
@@ -79,5 +79,48 @@ public:
   double get_threshold() const;
 
   virtual ~Mapping() = default;
+
+  static cv::Mat rotation_matrix(double _phi, double _theta, double _psi)
+  {
+    cv::Mat Rotationx = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
+    cv::Mat Rotationy = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
+    cv::Mat Rotationz = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
+
+    // Rotation over x axis phi.
+    Rotationx.cv::Mat::at<double>(0, 0) = 1.;
+    Rotationx.cv::Mat::at<double>(0, 1) = 0.;
+    Rotationx.cv::Mat::at<double>(0, 2) = 0.;
+    Rotationx.cv::Mat::at<double>(1, 0) = 0.;
+    Rotationx.cv::Mat::at<double>(1, 1) = cos(_phi);
+    Rotationx.cv::Mat::at<double>(1, 2) = -sin(_phi);
+    Rotationx.cv::Mat::at<double>(2, 0) = 0.;
+    Rotationx.cv::Mat::at<double>(2, 1) = sin(_phi);
+    Rotationx.cv::Mat::at<double>(2, 2) = cos(_phi);
+
+    // Rotation over y axis theta.
+    Rotationy.cv::Mat::at<double>(0, 0) = cos(_theta);
+    Rotationy.cv::Mat::at<double>(0, 1) = 0;
+    Rotationy.cv::Mat::at<double>(0, 2) = sin(_theta);
+    Rotationy.cv::Mat::at<double>(1, 0) = 0.;
+    Rotationy.cv::Mat::at<double>(1, 1) = 1.;
+    Rotationy.cv::Mat::at<double>(1, 2) = 0.;
+    Rotationy.cv::Mat::at<double>(2, 0) = -sin(_theta);
+    Rotationy.cv::Mat::at<double>(2, 1) = 0.;
+    Rotationy.cv::Mat::at<double>(2, 2) = cos(_theta);
+
+    // Rotation over z axis psi.
+    Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
+    Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
+    Rotationz.cv::Mat::at<double>(0, 2) = 0.;
+    Rotationz.cv::Mat::at<double>(1, 2) = sin(_psi);
+    Rotationz.cv::Mat::at<double>(1, 1) = cos(_psi);
+    Rotationz.cv::Mat::at<double>(1, 2) = 0.;
+    Rotationz.cv::Mat::at<double>(2, 2) = 0.;
+    Rotationz.cv::Mat::at<double>(2, 2) = 0.;
+    Rotationz.cv::Mat::at<double>(2, 2) = 1.;
+
+    return (Rotationz * Rotationy * Rotationx);
+  }
+
 };
 #endif // MAPPING_H

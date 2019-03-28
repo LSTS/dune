@@ -146,12 +146,12 @@ double ElevationRaster::get_noData() const
 
 double ElevationRaster::get_min_elevation() const
 {
-  return 0;
+  return min_elevation;
 }
 
 double ElevationRaster::get_max_elevation() const
 {
-  return 0;
+  return max_elevation;
 }
 
 std::string ElevationRaster::get_projection_ref() const
@@ -192,6 +192,7 @@ void ElevationRaster::write_to_file(const cv::Mat& FP, std::string gdal_result_p
 
   GDALRasterBand* pBand;
   pBand = poDstDS->GetRasterBand(1);
+  pBand->SetNoDataValue(std::numeric_limits<double>::infinity());
   //poDstDS->GetRasterBand(1)->SetNoDataValue(0); // with this option only the perimeter of the fire is shown
 
   double* Buffer;
@@ -201,7 +202,7 @@ void ElevationRaster::write_to_file(const cv::Mat& FP, std::string gdal_result_p
   {
     for (int j = 0; j < nCols; ++j)
     {
-      Buffer[j] = value_at(i, j);
+      Buffer[j] = static_cast<double>(FP.at<uchar>(i, j));
     }
 
     pBand->RasterIO(GF_Write, 0, i, nCols, 1, Buffer, nCols, 1, GDT_Float64, 0, 0);

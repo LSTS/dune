@@ -182,49 +182,12 @@ namespace Vision
       void
       set_Rot_Trans_Matrix(double xx, double yy, double zz, double _phi, double _theta, double _psi)
       {
-        cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
-        cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
-        cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
-
         // Translation
         Translation.at<double>(0) = xx;
         Translation.at<double>(1) = yy;
         Translation.at<double>(2) = zz;
 
-        // Rotation over x axis phi.
-        Rotationx.cv::Mat::at<double>(0, 0) = 1;
-        Rotationx.cv::Mat::at<double>(0, 1) = 0;
-        Rotationx.cv::Mat::at<double>(0, 2) = 0;
-        Rotationx.cv::Mat::at<double>(1, 0) = 0;
-        Rotationx.cv::Mat::at<double>(1, 1) = cos(_phi);
-        Rotationx.cv::Mat::at<double>(1, 2) = -sin(_phi);
-        Rotationx.cv::Mat::at<double>(2, 0) = 0;
-        Rotationx.cv::Mat::at<double>(2, 1) = sin(_phi);
-        Rotationx.cv::Mat::at<double>(2, 2) = cos(_phi);
-
-        // Rotation over y axis theta.
-        Rotationy.cv::Mat::at<double>(0, 0) = cos(_theta);
-        Rotationy.cv::Mat::at<double>(0, 1) = 0;
-        Rotationy.cv::Mat::at<double>(0, 2) = sin(_theta);
-        Rotationy.cv::Mat::at<double>(1, 0) = 0;
-        Rotationy.cv::Mat::at<double>(1, 1) = 1;
-        Rotationy.cv::Mat::at<double>(1, 2) = 0;
-        Rotationy.cv::Mat::at<double>(2, 0) = -sin(_theta);
-        Rotationy.cv::Mat::at<double>(2, 1) = 0;
-        Rotationy.cv::Mat::at<double>(2, 2) = cos(_theta);
-
-        // Rotation over z axis psi.
-        Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
-        Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
-        Rotationz.cv::Mat::at<double>(0, 2) = 0;
-        Rotationz.cv::Mat::at<double>(1, 2) = sin(_psi);
-        Rotationz.cv::Mat::at<double>(1, 1) = cos(_psi);
-        Rotationz.cv::Mat::at<double>(1, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 1;
-
-        Rotation = Rotationz * Rotationy * Rotationx;
+        Rotation = Mapping::rotation_matrix(_phi, _theta, _psi);
       }
 
       PositionProjected

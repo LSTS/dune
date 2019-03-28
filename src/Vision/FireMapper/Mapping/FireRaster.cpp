@@ -95,7 +95,7 @@ void FireRaster::set_firemap_cell(uint64_t row, uint64_t col, double time)
 {
   firemap_modified = true;
   firemap_time.cv::Mat::at<double>(row, col) = time;
-  firemap_bin.cv::Mat::at<uchar>(row, col) = 255;
+//  firemap_bin.cv::Mat::at<uchar>(row, col) = 255;
 
   mapped_area.col_left = std::min(col, mapped_area.col_left);
   mapped_area.col_right = std::max(col, mapped_area.col_right);
@@ -201,7 +201,7 @@ double FireRaster::get_min_elevation() const
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //THis function just gives back the equivalent pixels for the 4 corners given in wolrd coordinates
-Pixel_Range FireRaster::get_pixelrage_of_coordinates(double x_left, double x_right, double y_up, double y_down) const
+Pixel_Range FireRaster::get_pixelrange_of_coordinates(double x_left, double x_right, double y_up, double y_down) const
 {
   Pixel_Range PR;
 

@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector<double> R_Dis, std::vector<double> T_Dis)
 {
-  CameraMatrix = cv::Mat(3, 4, CV_64FC1);
+  CameraMatrix = cv::Mat::zeros(3, 4, CV_64FC1);
 
   ImageMatrix = Imat;
   ncols = ImageMatrix.cols;
@@ -72,7 +72,7 @@ Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector
   //P = K [R|-Rt]
   // [R|-Rt] extrinsics
 
-  cv::Mat Extrinsic;
+  cv::Mat Extrinsic = cv::Mat::zeros(4, 4, CV_64FC1);
   /* In our case we won't need to Transpose the Rotation Matrix ,its apparently already done in the parameters,
    * in case the results of this code were t satisfaying trying to put the Tranpose Mtrix of the rotation might give
    * the wanted results*/

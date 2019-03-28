@@ -294,7 +294,7 @@ Corner_Test Mapping::get_Imagecorners(const Image& IM, const FireRaster& RS) con
   { y_down = RS.get_max_south(); }
 
   /// Since the corners of the picture in world exist in the DEM we don t have to run a test to see if they do .
-  CT.PR = RS.get_pixelrage_of_coordinates(x_left, x_right, y_up, y_down);
+  CT.PR = RS.get_pixelrange_of_coordinates(x_left, x_right, y_up, y_down);
 
   return CT;
 
@@ -378,7 +378,7 @@ Map : 3
  This function uses the DEM Raster Directly to get the data it needs about every pixel of the DEM.It can be faster
  if the DEM are big and need a lot of time and memory to be put then in a vector.
 */
-bool Mapping::Map_direct(Image IM, double time)
+bool Mapping::Map_direct(Image& IM, double time)
 {
   bool DEM_match = false; //turns to false if there s a DEM that matchs the Image we re Mapping
 
@@ -427,9 +427,9 @@ bool Mapping::Map_direct(Image IM, double time)
 
 ///////////////////////////////////////////////////////////////
 
-bool Mapping::map(Image IM, double time)
+bool Mapping::map(Image& IM, double time)
 {
-  return Map_direct(std::move(IM), time);
+  return Map_direct(IM, time);
 
 }
 
@@ -443,7 +443,7 @@ void Mapping::save_firemap(std::string folder_result)
 
   auto a = firemap->get_firemap_bin();
   cv::imwrite(folder_result + "firemap_bin" + ".png", a);
-  firemap->Put_firemap_inGdal(folder_result + "firemap_bin" + ".tif");
+  firemap->Put_firemap_inGdal(folder_result + "firemap_time" + ".tif");
 
   if (use_segmentation)
   {

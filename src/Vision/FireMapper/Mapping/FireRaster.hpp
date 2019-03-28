@@ -143,8 +143,8 @@ public:
 
   Pixel_Range get_corners(double x,
                           double y) const;///Calculates four corners of the pixel that will be used to compute with in the raster, given the position of the camera centre.
-  Pixel_Range get_pixelrage_of_coordinates(double x_left, double x_right, double y_up,
-                                           double y_down) const;///Gets the equivalent pixel position for the coordinates of the corners .
+  Pixel_Range get_pixelrange_of_coordinates(double x_left, double x_right, double y_up,
+                                            double y_down) const;///Gets the equivalent pixel position for the coordinates of the corners .
 
   Pixel_Data All_data(size_t r, size_t c) const;
 
