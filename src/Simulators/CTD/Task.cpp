@@ -25,6 +25,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Pedro Calado                                                     *
+// Author: Luis Venancio                                                    *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -54,36 +55,189 @@ namespace Simulators
     public:
       struct DPArguments
       {
+        //!Parameter Name
+        std::string parameter;
+        //! Data files and times.
+        //! Element 1: Parameter, Element n+1: data file name
+        std::vector<std::string> data_files;
         //! Step size
         float oob_value;
         //! Time step
         float interp_radius;
       };
 
-      DataParameters(DPArguments* args, std::string parameter_name, Path path):
-        m_otree(NULL),
+      //! Constructor. Fill trees for data at multiple times
+      DataParameters(DPArguments* args, Path path):
+        m_trees(NULL),
         m_args(args)
       {
-        fillTree(parameter_name, path);
+        m_trees_size = m_args->data_files.size();
+        m_earliest_idx = 0;
+        m_latest_idx = 0;
+
+        //Fill trees
+        m_trees = new TreeData[m_trees_size];
+        for(uint8_t i = 0; i < m_trees_size; ++i)
+        {
+          m_trees[i].fillTree(m_args->parameter, path,
+                                m_args->data_files[i]);
+
+          //Get upper and lower time bounds of data
+          if(m_trees[i].time > m_trees[m_latest_idx].time)
+            m_latest_idx = i;
+          if(m_trees[i].time < m_trees[m_earliest_idx].time)
+            m_earliest_idx = i;
+        }
       }
 
+      //! Destructor
+      ~DataParameters()
+      {
+        for(uint8_t i = 0; i < m_trees_size; ++i)
+          Memory::clear(m_trees[i].otree);
+        Memory::clear(m_trees);
+      }
+
+      //! Set offset for
       void
       setOffset(double gps_ref_lat, double gps_ref_lon)
       {
         // Get offsets for data
         //(m_off_n, m_off_e) = (GPS_offset)-(DATA_offset)
-        WGS84::displacement(m_ref_lat, m_ref_lon, 0, gps_ref_lat, gps_ref_lon, 0,
-                            &m_off_n, &m_off_e);
+        for(unsigned i = 0; i < m_trees_size; ++i)
+        {
+          WGS84::displacement(m_trees[i].ref_lat, m_trees[i].ref_lon, 0,
+                              gps_ref_lat, gps_ref_lon, 0,
+                              &m_trees[i].off_n, &m_trees[i].off_e);
+        }
       }
 
+      //! Get temperature using time interpolation
       double
-      valueAt(double x, double y, double z)
+      valueAt(double x, double y, double z, double t)
       {
-        Point p(x + m_off_n, y + m_off_e, z);
+        //Convert seconds to decimal hours
+        t = t/3600;
+
+        //Interpolate in time
+        //Time superior to data time
+        if(t >= m_trees[m_latest_idx].time)
+          return spacialInterpolationAt(x, y, z, m_latest_idx);
+        //Time inferior to data time
+        else if(t <= m_trees[m_earliest_idx].time)
+          return spacialInterpolationAt(x, y, z, m_earliest_idx);
+        //Time in data time frame
+        else
+        {
+          uint8_t low_idx = m_earliest_idx;
+          uint8_t high_idx = m_latest_idx;
+          for(uint8_t i = 0; i < m_trees_size; ++i)
+          {
+              if(t < m_trees[i].time && m_trees[i].time < m_trees[high_idx].time)
+                  high_idx = i;
+              if(t >= m_trees[i].time && m_trees[i].time > m_trees[low_idx].time)
+                  low_idx = i;
+          }
+
+          //Get temperature values at lower and upper limits
+          double early_value = spacialInterpolationAt(x, y, z, low_idx);
+          double late_value = spacialInterpolationAt(x, y, z, high_idx);
+
+          //Calculate linear parameters (value = m*time+b)
+          double m = (late_value - early_value)/
+                      (m_trees[high_idx].time - m_trees[low_idx].time);
+          double b = early_value - m*m_trees[low_idx].time;
+
+          return m*t+b;
+        }
+      }
+
+    private:
+      //! Octree and associated data
+      struct TreeData
+      {
+        //! NE offsets in regard to navigational reference.
+        double off_n, off_e;
+        //! Reference latitude and longitude for data points.
+        double ref_lat, ref_lon;
+        //! Time of data in decimal hours, relative to simulation start time.
+        double time;
+        //! The tree.
+        OcTree* otree;
+
+        //! Assign reference latitude and longitude and octree data
+        void
+        fillTree(std::string parameter_name, Path path,
+                  std::string file)
+        {
+          //Get file name and corresponding time
+          std::vector<std::string> name_time;
+          DUNE::Utils::String::split(file, ":", name_time);
+
+          //Fill time
+          time = atof(name_time[1].c_str());
+
+          //Get data from file
+          path = path / name_time[0] + ".ini";
+          DUNE::Parsers::Config cfg(path.c_str());
+          std::vector<std::string> lines;
+          cfg.get(parameter_name, "Data", "", lines);
+          cfg.get(parameter_name, "Latitude (degrees)", "", ref_lat);
+          cfg.get(parameter_name, "Longitude (degrees)", "", ref_lon);
+
+          //Convert angular coordinates from degrees to radians
+          ref_lat = Angles::radians(ref_lat);
+          ref_lon = Angles::radians(ref_lon);
+
+          //Auxiliary objects to fill otree
+          std::vector<OcTree::Item> data;
+          OcTree::Item item;
+          Bounds* bounds = 0;
+
+          //Set data points
+          for(unsigned i = 0; i < lines.size(); ++i)
+          {
+            //Get individual fields
+            std::vector<std::string> v;
+            DUNE::Utils::String::split(lines[i], " ", v);
+
+            //Set data values (x, y, z, data)
+            //Check for invalid data
+            if(v[3].compare("nan") != 0)
+            {
+              std::stringstream sin(v[0]);
+              sin >> item.x; sin.clear();
+              sin.str(v[1]); sin >> item.y; sin.clear();
+              sin.str(v[2]); sin >> item.z; sin.clear();
+              sin.str(v[3]); sin >> item.value; sin.clear();
+              data.push_back(item);
+            }
+
+            //Expand bounds
+            if (!bounds)
+              bounds = new Bounds(Point(item.x, item.y, item.z));
+            else
+              bounds->cover(Point(item.x, item.y, item.z));
+          }
+
+          // Fill the tree
+          otree = new OcTree(*bounds);
+          delete bounds;
+
+          for (unsigned i = 0; i < data.size(); ++i)
+            otree->insert(data[i]);
+        }
+      };
+
+      //! Interpolation of spacial data in the specified tree
+      double
+      spacialInterpolationAt(double x, double y, double z, unsigned idx)
+      {
+        Point p(x + m_trees[idx].off_n, y + m_trees[idx].off_e, z);
         Bounds search_area(p, m_args->interp_radius);
 
         std::vector<OcTree::Item> items;
-        m_otree->search(search_area, items);
+        m_trees[idx].otree->search(search_area, items);
 
         if (items.size() == 0)
           return m_args->oob_value;
@@ -101,78 +255,20 @@ namespace Simulators
         return numer/denom;
       }
 
-      void
-      ocTreeClear()
-      {
-        Memory::clear(m_otree);
-      }
-
-    private:
-      //! Assign reference latitude and longitude and octree data
-      void
-      fillTree(std::string parameter_name, Path path)
-      {
-        DUNE::Parsers::Config cfg(path.c_str());
-        std::vector<std::string> lines;
-        cfg.get(parameter_name, "Data", "", lines);
-        cfg.get(parameter_name, "Latitude (degrees)", "", m_ref_lat);
-        cfg.get(parameter_name, "Longitude (degrees)", "", m_ref_lon);
-
-        //Convert angular coordinates from degrees to radians
-        m_ref_lat = Angles::radians(m_ref_lat);
-        m_ref_lon = Angles::radians(m_ref_lon);
-
-        //Auxiliary objects to fill otree
-        std::vector<OcTree::Item> data;
-        OcTree::Item item;
-        Bounds* bounds = 0;
-
-        //Set data points
-        for(unsigned i = 0; i < lines.size(); ++i)
-        {
-          //Get individual fields
-          std::vector<std::string> v;
-          DUNE::Utils::String::split(lines[i], " ", v);
-
-          //Set data values
-          //x, y, z, data
-          std::stringstream sin(v[0]);
-          sin >> item.x; sin.clear();
-          sin.str(v[1]); sin >> item.y; sin.clear();
-          sin.str(v[2]); sin >> item.z; sin.clear();
-          sin.str(v[3]); sin >> item.value; sin.clear();
-          data.push_back(item);
-
-          //Expand bounds
-          if (!bounds)
-            bounds = new Bounds(Point(item.x, item.y, item.z));
-          else
-            bounds->cover(Point(item.x, item.y, item.z));
-        }
-
-        // Fill the tree
-        m_otree = new OcTree(*bounds);
-        delete bounds;
-
-        for (unsigned i = 0; i < data.size(); ++i)
-          m_otree->insert(data[i]);
-      }
-
       //! Pointer to arguments
       DPArguments* m_args;
-      //! NE offsets in regard to navigational reference.
-      double m_off_n, m_off_e;
-      //! Reference latitude and longitude for data points.
-      double m_ref_lat, m_ref_lon;
-      //! The tree.
-      OcTree* m_otree;
+      //! Octrees data
+      TreeData* m_trees;
+      //! Number of trees
+      uint8_t m_trees_size;
+      //! Index of lower and upper time bounds
+      uint8_t m_earliest_idx, m_latest_idx;
+
     };
 
     //! %Task arguments.
     struct Arguments
     {
-      //! Where temperature data was taken from.
-      std::string location;
       //! Tide level (m).
       float tide_level;
       //! Standard deviation of temperature measurements.
@@ -187,8 +283,12 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! Temperature data files and times.
+      std::vector<std::string> temp_files;
       //! Data Parameters temperature arguments
       DataParameters::DPArguments dp_temp;
+      //! Salinity data files and times.
+      std::vector<std::string> sal_files;
       //! Data Parameters salinity arguments
       DataParameters::DPArguments dp_sal;
     };
@@ -216,17 +316,23 @@ namespace Simulators
       DataParameters* m_sal_data;
       //! Task arguments.
       Arguments m_args;
+      //! Delta for time keeping
+      Delta current_time;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_prng(NULL)
       {
         // Retrieve configuration values.
-        param("Location", m_args.location)
-        .defaultValue("Data");
-
         param("Tide Level", m_args.tide_level)
         .defaultValue("0.0");
+
+        param("Temperature Parameter", m_args.dp_temp.parameter)
+        .description("Parameter name.")
+        .defaultValue("Temperature");
+
+        param("Temperature Files", m_args.dp_temp.data_files)
+        .description("First element is desired parameter, remaining: list of <File>:<Time (Hours)>.");
 
         param("Interpolation Radius - Temperature", m_args.dp_temp.interp_radius)
         .units(Units::Meter)
@@ -238,12 +344,19 @@ namespace Simulators
         param("Standard Deviation - Temperature", m_args.std_dev_temp)
         .defaultValue("0.5");
 
+        param("Salinity Parameter", m_args.dp_sal.parameter)
+        .description("Parameter name.")
+        .defaultValue("Salinity");
+
+        param("Salinity Files", m_args.dp_sal.data_files)
+        .description("First element is desired parameter, remaining: list of <File>:<Time (Hours)>.");
+
         param("Interpolation Radius - Salinity", m_args.dp_sal.interp_radius)
         .units(Units::Meter)
         .defaultValue("10.0");
 
         param("Out Of Bounds - Salinity", m_args.dp_sal.oob_value)
-        .defaultValue("5.0");
+        .defaultValue("20.0");
 
         param("Standard Deviation - Salinity", m_args.std_dev_sal)
         .defaultValue("0.5");
@@ -270,13 +383,10 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        Utils::String::toLowerCase(m_args.location);
         Path path = m_ctx.dir_cfg / "simulation";
-        Path full_path = path / ("temperature-"+ m_args.location +".ini");
-        m_temp_data = new DataParameters(&m_args.dp_temp, "Temperature", full_path);
 
-        full_path = path / ("salinity-"+ m_args.location +".ini");
-        m_sal_data = new DataParameters(&m_args.dp_sal, "Salinity", full_path);
+        m_temp_data = new DataParameters(&m_args.dp_temp, path);
+        m_sal_data = new DataParameters(&m_args.dp_sal, path);
 
         requestDeactivation();
       }
@@ -319,6 +429,7 @@ namespace Simulators
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           requestActivation();
+          current_time.reset();
         }
         m_sstate = *msg;
       }
@@ -337,14 +448,17 @@ namespace Simulators
         if (!isActive())
           return;
 
+        double time = current_time.check();
+
         m_temp.setTimeStamp();
-        m_temp.value = m_temp_data->valueAt(m_sstate.x, m_sstate.y, m_sstate.z);
+        m_temp.value = m_temp_data->valueAt(m_sstate.x, m_sstate.y, m_sstate.z, time);
         m_temp.value = m_temp.value + m_prng->gaussian() * m_args.std_dev_temp;
+        // inf("Temperature: %f", m_temp_data->valueAt(m_sstate.x, m_sstate.y, m_sstate.z, time));
 
         m_salinity.setTimeStamp(m_temp.getTimeStamp());
-        m_salinity.value = m_sal_data->valueAt(m_sstate.x, m_sstate.y, m_sstate.z);
-        inf("Salinity Value: %f", m_salinity.value);
+        m_salinity.value = m_sal_data->valueAt(m_sstate.x, m_sstate.y, m_sstate.z, time);
         m_salinity.value = m_salinity.value + m_prng->gaussian() * m_args.std_dev_sal;
+        // inf("Salinity: %f", m_sal_data->valueAt(m_sstate.x, m_sstate.y, m_sstate.z, time));
 
         m_depth.setTimeStamp(m_temp.getTimeStamp());
         m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0);
