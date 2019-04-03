@@ -72,8 +72,8 @@ namespace Simulators
         m_args(args)
       {
         m_trees_size = m_args->data_files.size();
-        m_earliest_idx = 0;
-        m_latest_idx = 0;
+        m_begin_idx = 0;
+        m_end_idx = 0;
 
         //Fill trees
         m_trees = new TreeData[m_trees_size];
@@ -83,10 +83,10 @@ namespace Simulators
                                 m_args->data_files[i]);
 
           //Get upper and lower time bounds of data
-          if(m_trees[i].time > m_trees[m_latest_idx].time)
-            m_latest_idx = i;
-          if(m_trees[i].time < m_trees[m_earliest_idx].time)
-            m_earliest_idx = i;
+          if(m_trees[i].time > m_trees[m_end_idx].time)
+            m_end_idx = i;
+          if(m_trees[i].time < m_trees[m_begin_idx].time)
+            m_begin_idx = i;
         }
       }
 
@@ -121,32 +121,32 @@ namespace Simulators
 
         //Interpolate in time
         //Time superior to data time
-        if(t >= m_trees[m_latest_idx].time)
-          return spacialInterpolationAt(x, y, z, m_latest_idx);
+        if(t >= m_trees[m_end_idx].time)
+          return interpolateSpaceAt(x, y, z, m_end_idx);
         //Time inferior to data time
-        else if(t <= m_trees[m_earliest_idx].time)
-          return spacialInterpolationAt(x, y, z, m_earliest_idx);
+        else if(t <= m_trees[m_begin_idx].time)
+          return interpolateSpaceAt(x, y, z, m_begin_idx);
         //Time in data time frame
         else
         {
-          uint8_t low_idx = m_earliest_idx;
-          uint8_t high_idx = m_latest_idx;
+          uint8_t before_idx = m_begin_idx;
+          uint8_t after_idx = m_end_idx;
           for(uint8_t i = 0; i < m_trees_size; ++i)
           {
-              if(t < m_trees[i].time && m_trees[i].time < m_trees[high_idx].time)
-                  high_idx = i;
-              if(t >= m_trees[i].time && m_trees[i].time > m_trees[low_idx].time)
-                  low_idx = i;
+              if(t < m_trees[i].time && m_trees[i].time < m_trees[after_idx].time)
+                  after_idx = i;
+              if(t >= m_trees[i].time && m_trees[i].time > m_trees[before_idx].time)
+                  before_idx = i;
           }
 
           //Get temperature values at lower and upper limits
-          double early_value = spacialInterpolationAt(x, y, z, low_idx);
-          double late_value = spacialInterpolationAt(x, y, z, high_idx);
+          double early_value = interpolateSpaceAt(x, y, z, before_idx);
+          double late_value = interpolateSpaceAt(x, y, z, after_idx);
 
           //Calculate linear parameters (value = m*time+b)
           double m = (late_value - early_value)/
-                      (m_trees[high_idx].time - m_trees[low_idx].time);
-          double b = early_value - m*m_trees[low_idx].time;
+                      (m_trees[after_idx].time - m_trees[before_idx].time);
+          double b = early_value - m*m_trees[before_idx].time;
 
           return m*t+b;
         }
@@ -231,7 +231,7 @@ namespace Simulators
 
       //! Interpolation of spacial data in the specified tree
       double
-      spacialInterpolationAt(double x, double y, double z, unsigned idx)
+      interpolateSpaceAt(double x, double y, double z, unsigned idx)
       {
         Point p(x + m_trees[idx].off_n, y + m_trees[idx].off_e, z);
         Bounds search_area(p, m_args->interp_radius);
@@ -244,15 +244,15 @@ namespace Simulators
 
         //Temperature calculated using:
         //Inverse distance weighting
-        double denom = 0;
-        double numer = 0;
+        double denominator = 0;
+        double numerator = 0;
         for (unsigned int i = 0; i < items.size(); ++i)
         {
           double inverse_d = 1/p.distance(Point(items[i].x, items[i].y, items[i].z));
-          denom += inverse_d;
-          numer += inverse_d*items[i].value;
+          denominator += inverse_d;
+          numerator += inverse_d*items[i].value;
         }
-        return numer/denom;
+        return numerator/denominator;
       }
 
       //! Pointer to arguments
@@ -262,7 +262,7 @@ namespace Simulators
       //! Number of trees
       uint8_t m_trees_size;
       //! Index of lower and upper time bounds
-      uint8_t m_earliest_idx, m_latest_idx;
+      uint8_t m_begin_idx, m_end_idx;
 
     };
 
