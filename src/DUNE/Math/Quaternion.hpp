@@ -22,19 +22,19 @@ namespace DUNE
       Quaternion();
 
       // Initialize from individual elements.
-      Quaternion(double w, double x, double y, double z);
+      Quaternion(double qw, double qx, double qy, double qz);
 
       // Initialize from size 4 vector q = [w x y z].
       explicit Quaternion(const std::vector<double>& q);
 
       // Initialize from real element w and size 3 vector v = [x y z].
-      Quaternion(double w, const std::vector<double>& v);
+      Quaternion(double qw, const std::vector<double>& v);
 
       // Initialize from 4x1 Matrix q = [w x y z].
       explicit Quaternion(const Matrix& q);
 
       // Initialize from scalar element w and 3x1 Matrix v = [x y z].
-      Quaternion(double w, const Matrix& v);
+      Quaternion(double qw, const Matrix& v);
 
       // Convert from ZYX-convention Euler angles.
       explicit Quaternion(const EulerAnglesZyx& euler);

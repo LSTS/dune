@@ -13,13 +13,13 @@ namespace DUNE
       this->identity();
     }
 
-    Quaternion::Quaternion(double w, double x, double y, double z)
+    Quaternion::Quaternion(double qw, double qx, double qy, double qz)
     : m_matrix(4, 1)
     {
-      m_matrix(INDEX_W) = w;
-      m_matrix(INDEX_X) = x;
-      m_matrix(INDEX_Y) = y;
-      m_matrix(INDEX_Z) = z;
+      m_matrix(INDEX_W) = qw;
+      m_matrix(INDEX_X) = qx;
+      m_matrix(INDEX_Y) = qy;
+      m_matrix(INDEX_Z) = qz;
     }
 
     Quaternion::Quaternion(const std::vector<double>& q)
@@ -34,13 +34,13 @@ namespace DUNE
       m_matrix(INDEX_Z) = q[3];
     }
 
-    Quaternion::Quaternion(const double w, const std::vector<double>& v)
+    Quaternion::Quaternion(const double qw, const std::vector<double>& v)
     : m_matrix(4, 1)
     {
       if (v.size() != 3)
         throw std::invalid_argument("vector must have length 3");
 
-      m_matrix(INDEX_W) = w;
+      m_matrix(INDEX_W) = qw;
       m_matrix(INDEX_X) = v[0];
       m_matrix(INDEX_Y) = v[1];
       m_matrix(INDEX_Z) = v[2];
@@ -55,13 +55,13 @@ namespace DUNE
       m_matrix = q;
     }
 
-    Quaternion::Quaternion(double w, const Matrix& v)
+    Quaternion::Quaternion(double qw, const Matrix& v)
     : m_matrix(4, 1)
     {
       if (!v.isColumnVector() || v.size() != 3)
         throw std::invalid_argument("matrix must have size 3x1");
 
-      m_matrix(INDEX_W) = w;
+      m_matrix(INDEX_W) = qw;
       m_matrix(INDEX_X) = v(0);
       m_matrix(INDEX_Y) = v(1);
       m_matrix(INDEX_Z) = v(2);
