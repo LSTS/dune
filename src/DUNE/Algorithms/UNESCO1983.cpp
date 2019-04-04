@@ -109,7 +109,7 @@ namespace DUNE
       double rt = std::sqrt(std::abs(s / 35));
       // Salinity initial aproximation
       double s_aprox = salinity_poli(rt, dt);
-      for(unsigned i=0; std::abs(s - s_aprox) > 1e-5; ++i)//std::abs(s - s_aprox) > 1e-10
+      for(unsigned i=0; std::abs(s - s_aprox) > 1e-5; ++i)
       {
         rt = rt + (s - s_aprox)/salinity_poli_deriv(rt, dt);
         s_aprox = salinity_poli(rt, dt);
