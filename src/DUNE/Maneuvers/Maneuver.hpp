@@ -252,7 +252,7 @@ namespace DUNE
       void
       signalNoAltitude(void);
 
-      //! Signal an error.
+      //! Signal maneuver completion.
       //! This method should be used by subclasses to signal maneuver completion.
       //! @param msg completion message
       void
