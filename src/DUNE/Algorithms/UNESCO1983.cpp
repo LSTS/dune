@@ -62,7 +62,7 @@ namespace DUNE
       double cr = c / 4.2914;
 
       // Equation is not defined for conductivity ratios below 5e-4.
-      if (cr <= 5e-4)
+      if (cr <= 5e-4 || (t<-2 || t>35))
         return -1.0;
 
       double dt = t - 15;
@@ -75,16 +75,54 @@ namespace DUNE
       double rt35 = (((1.0031e-9 * t - 6.9698e-7) * t + 1.104259e-4) * t + 2.00564e-2) * t + 0.6766097;
       double rt = cr / (rt35 * (1.0 + cxp / (bxt + axt * cr)));
       rt = std::sqrt(std::fabs(rt));
-      double salinity = (((((2.7081 * rt - 7.0261) * rt + 14.0941) * rt + 25.3851) * rt - 0.1692)
-                         * rt + 0.0080 + (dt / (1.0 + 0.0162 * dt))
-                         * (((((-0.0144 * rt + 0.0636) * rt - 0.0375) * rt - 0.0066) * rt - 0.0056)
-                            * rt + 0.0005));
+      double salinity = salinity_poli(rt, dt);
 
       // Check if result is in the validity range of PSS-78.
       if ((salinity < 2) || (salinity > 42))
         return -1;
 
       return salinity;
+    }
+
+    double
+    UNESCO1983::computeConductivity(double s, double p, double t)
+    {
+      // Equation is not defined for salinity below 0.02.
+      if (s <= 0.02 || (t<-2 || t>35))
+        return -1.0;
+
+      // Convert bar to dbar.
+      p *= 10;
+
+      // Auxiliars
+      double dt = t - 15;
+      double axt = -3.107e-3 * t + 0.4215;
+      // Polynomial corresponds to B3 and B4 constants (Lewis 1980).
+      double bxt = (4.464e-4 * t + 3.426e-2) * t + 1.0;
+      // Polynomial corresponds to A1-A3 constants (Lewis 1980).
+      double cxp = ((3.989e-15 * p - 6.370e-10) * p + 2.070e-5) * p;
+      // Variation with temperature.
+      double rt35 = (((1.0031e-9 * t - 6.9698e-7) * t + 1.104259e-4) * t + 2.00564e-2) * t + 0.6766097;
+
+      //Newton Raphson method
+      // Temperature ratio sqrt. Initial guess
+      double rt = std::sqrt(std::abs(s / 35));
+      // Salinity initial aproximation
+      double s_aprox = salinity_poli(rt, dt);
+      for(unsigned i=0; std::abs(s - s_aprox) > 1e-5; ++i)
+      {
+        rt = rt + (s - s_aprox)/salinity_poli_deriv(rt, dt);
+        s_aprox = salinity_poli(rt, dt);
+      }
+
+      // Solve quadratic equation
+      rt = rt*rt;
+      double cr = bxt-axt*rt35*rt;
+      cr = std::sqrt(std::abs(cr*cr + 4*rt35*rt*axt*(bxt+cxp)));
+      cr = cr - (bxt - axt*rt35*rt);
+      cr = 0.5*cr/axt;
+
+      return cr*4.2914;
     }
 
     double
