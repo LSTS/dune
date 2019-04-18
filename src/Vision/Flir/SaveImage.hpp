@@ -106,7 +106,7 @@
          }
          catch(...)
          {
-           m_task->war("erro writing exif data to %s", image.c_str());
+           m_task->war("error writing exif data to %s", image.c_str());
            m_imageTag.release();
            return false;
          }

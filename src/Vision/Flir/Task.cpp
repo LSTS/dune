@@ -51,6 +51,7 @@ namespace Vision
     static const int c_number_max_thread = 25;
     static const float c_time_to_update_cnt_info = 5.0;
     static const float c_time_to_release_cached_ram = 6000.0;
+    static const std::string c_log_path = "/opt/lsts/dune/log";
 
     //! %Task arguments.
     struct Arguments
@@ -71,6 +72,12 @@ namespace Vision
       bool split_photos;
       //! Number of photos to folder
       unsigned int number_photos;
+      //! Load task in mode master
+      bool is_master_mode;
+      //! Master Name.
+      std::string master_name;
+      //! Slave entity
+      std::string slave_entity;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -131,6 +138,10 @@ namespace Vision
       bool m_is_to_capture;
       //! Flag to control check of resources
       bool m_is_start_resources;
+      //! actual log folder of dune master
+      std::string m_actual_log_folder_master;
+      //! entitie id of master
+      uint8_t m_entity_master;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -185,81 +196,113 @@ namespace Vision
         .maximumValue("3000")
         .description("Split photos by folder.");
 
+        param("Master Mode", m_args.is_master_mode)
+        .description("Load task in master mode.");
+
+        param("Master Name", m_args.master_name)
+        .description("Master Name.");
+
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
+        bind<IMC::EntityActivationState>(this);
+        bind<IMC::EntityInfo>(this);
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.number_fs))
+        //updateSlaveEntities();
+        if (m_args.is_master_mode)
         {
-          if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
-            m_cnt_fps.setTop((1.0/m_args.number_fs));
-          else
-            m_cnt_fps.setTop(0.25);
-
-          inf("new value of fps: %d", m_args.number_fs);
+          debug("master mode: update parameters");
         }
+        else
+        {
+          debug("slave mode: update parameters");
+          if (paramChanged(m_args.number_fs))
+          {
+            if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
+              m_cnt_fps.setTop((1.0/m_args.number_fs));
+            else
+              m_cnt_fps.setTop(0.25);
+
+            inf("new value of fps: %d", m_args.number_fs);
+          }
+        }
+      }
+
+      void
+      onResourceAcquisition(void){
+        if (!m_args.is_master_mode)
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
       }
 
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        m_is_start_resources = false;
-
-        if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
-          m_cnt_fps.setTop((1.0/m_args.number_fs));
-        else
-          m_cnt_fps.setTop(0.25);
-
-        if(m_args.number_photos < 500 && m_args.split_photos)
+        if(!m_args.is_master_mode)
         {
-          war("Number of photos by folder is to small (mim: 500)");
-          war("Setting Number of photos by folder to default (1000)");
-          m_args.number_photos = 1000;
-        }
-        else if(m_args.number_photos > 3000 && m_args.split_photos)
-        {
-          war("Number of photos by folder is to high (max: 3000)");
-          war("Setting Number of photos by folder to default (1000)");
-          m_args.number_photos = 1000;
-        }
+          debug("slave mode: onResourceInitialization");
+          m_is_start_resources = false;
+          set_cpu_governor();
 
-        m_cnt_photos_by_folder = 0;
-        m_folder_number = 0;
-        m_thread_cnt = 0;
-        m_frame_cnt = 0;
-        m_frame_lost_cnt = 0;
-        m_is_to_capture = false;
+          if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
+            m_cnt_fps.setTop((1.0/m_args.number_fs));
+          else
+            m_cnt_fps.setTop(0.25);
 
-        m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
-        m_timeout_cap.setTop(c_timeout_capture);
-        m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
-
-        m_capture = new CreateCapture(this, m_args.camera_url, m_args.number_fps_framegrabber);
-        if(!m_capture->initSetupCamera())
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded("Cannot connect to camera", 10);
-        }
-        else
-        {
-          m_is_start_resources = true;
-          char text[8];
-          for(int i = 0; i < c_number_max_thread; i++)
+          if(m_args.number_photos < 500 && m_args.split_photos)
           {
-            sprintf(text, "thr%d", i);
-            m_save_image[i] = new SaveImage(this, text);
-            m_save_image[i]->start();
+            war("Number of photos by folder is to small (mim: 500)");
+            war("Setting Number of photos by folder to default (1000)");
+            m_args.number_photos = 1000;
+          }
+          else if(m_args.number_photos > 3000 && m_args.split_photos)
+          {
+            war("Number of photos by folder is to high (max: 3000)");
+            war("Setting Number of photos by folder to default (1000)");
+            m_args.number_photos = 1000;
           }
 
-          m_capture->start();
-          inf("Camera Ready");
+          m_cnt_photos_by_folder = 0;
+          m_folder_number = 0;
+          m_thread_cnt = 0;
+          m_frame_cnt = 0;
+          m_frame_lost_cnt = 0;
+          m_is_to_capture = false;
+
+          m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
+          m_timeout_cap.setTop(c_timeout_capture);
+          m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
+
+          m_capture = new CreateCapture(this, m_args.camera_url, m_args.number_fps_framegrabber);
+          if(!m_capture->initSetupCamera())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded("Cannot connect to camera", 10);
+          }
+          else
+          {
+            m_is_start_resources = true;
+            char text[8];
+            for(int i = 0; i < c_number_max_thread; i++)
+            {
+              sprintf(text, "thr%d", i);
+              m_save_image[i] = new SaveImage(this, text);
+              m_save_image[i]->start();
+            }
+
+            m_capture->start();
+            inf("Camera Ready");
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          }
+        }
+        else
+        {
+          debug("master mode: onResourceInitialization");
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          onActivation(); // TEMP
         }
       }
 
@@ -267,22 +310,74 @@ namespace Vision
       void
       onResourceRelease(void)
       {
-        if(m_is_start_resources)
+        if (!m_args.is_master_mode)
         {
-          for(int i = 0; i < c_number_max_thread; i++)
+          debug("slave mode: onResourceRelease");
+          if(m_is_start_resources)
           {
-            if (m_save_image[i] != NULL)
+            for(int i = 0; i < c_number_max_thread; i++)
             {
-              m_save_image[i]->stopAndJoin();
-              delete m_save_image[i];
-              m_save_image[i] = NULL;
+              if (m_save_image[i] != NULL)
+              {
+                m_save_image[i]->stopAndJoin();
+                delete m_save_image[i];
+                m_save_image[i] = NULL;
+              }
+            }
+            if (m_capture != NULL)
+            {
+              m_capture->stopAndJoin();
+              delete m_capture;
+              m_capture = NULL;
             }
           }
-          if (m_capture != NULL)
+        }
+        else
+        {
+          debug("master mode: onResourceRelease");
+        }
+      }
+
+      void
+      consume(const IMC::EntityActivationState* msg)
+      {
+        if(!m_args.is_master_mode)
+        {
+          if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
+            return;
+
+          std::string system_id = resolveSystemId(msg->getSource());
+          //Only for debug of entity
+          /*if(msg->getSourceEntity() != 45)
           {
-            m_capture->stopAndJoin();
-            delete m_capture;
-            m_capture = NULL;
+            std::string ds = resolveEntity(msg->getSourceEntity());
+            debug("%s | %d | %s", system_id.c_str(), msg->state, ds.c_str());
+          }*/
+          if(m_entity_master == msg->getSourceEntity() && msg->state == EntityActivationState::EAS_ACT_IP)
+          {
+            debug("%s | %d | %s | activation", system_id.c_str(), msg->state, getEntityLabel());
+            inf("received activation request");
+            onActivation();
+          }
+          else if (m_entity_master == msg->getSourceEntity() && msg->state == EntityActivationState::EAS_DEACT_IP)
+          {
+            debug("%s | %d | %s | deactivation", system_id.c_str(), msg->state, getEntityLabel());
+            inf("received deactivation request");
+            onDeactivation();
+          }
+        }
+      }
+
+      void
+      consume(const IMC::EntityInfo* msg)
+      {
+        if (!m_args.is_master_mode)
+        {
+          std::string master_dune = resolveSystemId(msg->getSource());
+          if (master_dune.compare(m_args.master_name) == 0 && msg->label.compare(getEntityLabel()) == 0)
+          {
+            debug("entity master id: %s | %d | %s", master_dune.c_str(), msg->id, msg->label.c_str());
+            m_entity_master = msg->id;
           }
         }
       }
@@ -290,87 +385,114 @@ namespace Vision
       void
       consume(const IMC::LoggingControl* msg)
       {
-        if(msg->getSource() != getSystemId())
-          return;
+        if (!m_args.is_master_mode)
+        {
+          debug("slave mode: consume LoggingControl");
+          std::string sysNameMsg = resolveSystemId(msg->getSource());
+          std::string sysLocalName = getSystemName();
 
-        if (msg->op == IMC::LoggingControl::COP_STARTED)
-        {;
-          m_cnt_photos_by_folder = 0;
-          if(m_args.split_photos)
-            m_log_dir = m_ctx.dir_log / msg->name / m_args.save_image_dir / String::str("%06u", m_folder_number);
-          else
-            m_log_dir = m_ctx.dir_log / msg->name / m_args.save_image_dir;
+          if(sysNameMsg.compare(m_args.master_name) == 0)
+            m_actual_log_folder_master = c_log_path + "/" + m_args.master_name + "/" + msg->name + "/" + m_args.save_image_dir;
 
-          m_back_path_image = m_log_dir.c_str();
-          m_log_dir.create();
-          m_log_name = msg->name;
+          if(sysNameMsg != m_args.master_name && sysNameMsg != sysLocalName)
+            return;
+
+          if(sysNameMsg != sysLocalName)
+          {
+            if (msg->op == IMC::LoggingControl::COP_STARTED)
+            {
+              m_cnt_photos_by_folder = 0;
+              m_folder_number = 0;
+              if(m_args.split_photos)
+                m_log_dir = c_log_path / m_args.master_name / msg->name / m_args.save_image_dir / String::str("%06u", m_folder_number);
+              else
+                m_log_dir = c_log_path / m_args.master_name / msg->name / m_args.save_image_dir;
+
+              m_back_path_image = m_log_dir.c_str();
+              m_log_dir.create();
+              m_log_name = msg->name;
+            }
+          }
+        }
+        else
+        {
+          debug("master mode: consume LoggingControl");
         }
       }
 
-      //! Consume message IMC::GpsFix
       void
       consume(const IMC::EstimatedState* msg)
       {
-        if(msg->getSource() != getSystemId())
-          return;
+        if (!m_args.is_master_mode)
+        {
+          std::string sysName = resolveSystemId(msg->getSource());
+          if(sysName != m_args.master_name)
+            return;
 
-        Angles::convertDecimalToDMS(Angles::degrees(msg->lat), m_lat_deg, m_lat_min, m_lat_sec);
-        Angles::convertDecimalToDMS(Angles::degrees(msg->lon), m_lon_deg, m_lon_min, m_lon_sec);
-        m_note_comment = "Depth: "+m_save_image[m_thread_cnt]->to_string(msg->depth)+" m # Height: "+m_save_image[m_thread_cnt]->to_string(msg->height - msg->z)+" m";
-        debug("%s - thr: %d (%f - %f)", m_note_comment.c_str(), m_thread_cnt, msg->depth, msg->height - msg->z);
-      }
-
-      void
-      onRequestActivation(void)
-      {
-        inf("received activation request");
-        activate();
-      }
-
-      void
-      onRequestDeactivation(void)
-      {
-        inf("received deactivation request");
-        deactivate();
+          Angles::convertDecimalToDMS(Angles::degrees(msg->lat), m_lat_deg, m_lat_min, m_lat_sec);
+          Angles::convertDecimalToDMS(Angles::degrees(msg->lon), m_lon_deg, m_lon_min, m_lon_sec);
+          m_note_comment = "Depth: "+m_save_image[m_thread_cnt]->to_string(msg->depth)+" m # Height: "+m_save_image[m_thread_cnt]->to_string(msg->height - msg->z)+" m";
+          debug("%s - thr: %d (%f - %f) master:%s", m_note_comment.c_str(), m_thread_cnt, msg->depth, msg->height - msg->z, sysName.c_str());
+        }
+        else
+        {
+          debug("master mode: consume EstimatedState");
+        }
       }
 
       void
       onActivation(void)
       {
-        inf("on Activation");
-        releaseRamCached();
-        m_frame_cnt = 0;
-        m_frame_lost_cnt = 0;
-        m_cnt_photos_by_folder = 0;
-        m_folder_number = 0;
-        try
+        if (!m_args.is_master_mode)
         {
-          if(!m_capture->startCapture())
+          inf("on Activation - Slave mode");
+          releaseRamCached();
+          m_frame_cnt = 0;
+          m_frame_lost_cnt = 0;
+          m_cnt_photos_by_folder = 0;
+          m_folder_number = 0;
+          try
+          {
+            if(!m_capture->startCapture())
+            {
+              onRequestDeactivation();
+              throw RestartNeeded("Cannot connect to camera", 10);
+            }
+
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+            m_thread_cnt = 0;
+            m_cnt_fps.reset();
+          }
+          catch(...)
           {
             onRequestDeactivation();
-            throw RestartNeeded("Cannot connect to camera", 10);
+            throw RestartNeeded("Erro config camera", 10);
           }
-
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-          m_thread_cnt = 0;
-          m_cnt_fps.reset();
+          m_is_to_capture = true;
+          inf("Starting Capture.");
         }
-        catch(...)
+        else
         {
-          onRequestDeactivation();
-          throw RestartNeeded("Erro config camera", 10);
+          inf("on Activation - master mode");
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
-        m_is_to_capture = true;
-        inf("Starting Capture.");
       }
 
       void
       onDeactivation(void)
       {
-        inf("on Deactivation");
-        m_is_to_capture = false;
-        m_capture->stopCapture();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        if (!m_args.is_master_mode)
+        {
+          war("on Deactivation - slave mode");
+          m_is_to_capture = false;
+          m_capture->stopCapture();
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+        else
+        {
+          inf("on Deactivation - master mode");
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
       }
 
       void
@@ -381,7 +503,22 @@ namespace Vision
         std::sprintf(m_text_exif_timestamp, "%0.4f", Clock::getSinceEpoch());
         m_back_epoch = m_text_exif_timestamp;
 
-        m_path_image = m_back_path_image.c_str();
+        if(m_back_path_image.empty())
+        {
+          debug("no path to save image, setting default to last log in master cpu.");
+          if (m_args.split_photos)
+            m_log_dir = m_actual_log_folder_master / String::str("%06u", m_folder_number);
+          else
+            m_log_dir = m_actual_log_folder_master;
+
+          m_back_path_image = m_log_dir.c_str();
+          m_log_dir.create();
+          m_path_image = m_actual_log_folder_master;
+        }
+        else
+        {
+          m_path_image = m_back_path_image.c_str();
+        }
         m_path_image.append("/");
         m_path_image.append(m_back_epoch);
         m_path_image.append(".jpg");
@@ -415,9 +552,7 @@ namespace Vision
         {
           debug("THR: %d", m_thread_cnt);
           debug("Path: %s", m_path_image.c_str());
-
           m_thread_cnt = send_image_thread(m_thread_cnt);
-
           if(m_thread_cnt >= c_number_max_thread)
             m_thread_cnt = 0;
         }
@@ -439,11 +574,24 @@ namespace Vision
           }
           catch(...)
           {
-            war("erro thread");
+            war("error thread");
           }
 
           if(result_thread)
           {
+            if (m_args.split_photos)
+            {
+              m_cnt_photos_by_folder++;
+              if (m_cnt_photos_by_folder >= m_args.number_photos)
+              {
+                std::string m_path = c_log_path + m_args.master_name;
+                m_cnt_photos_by_folder = 0;
+                m_folder_number++;
+                m_log_dir = m_path / m_log_name / m_args.save_image_dir / String::str("%06u", m_folder_number);
+                m_back_path_image = m_log_dir.c_str();
+                m_log_dir.create();
+              }
+            }
             pointer_cnt_thread++;
             jump_over = true;
             m_frame_cnt++;
@@ -459,7 +607,7 @@ namespace Vision
             if(cnt_thread == pointer_cnt_thread)
             {
               pointer_cnt_thread++;
-              inf("Erro saving image, all thread working");
+              inf("Error saving image, all thread working");
               m_frame_lost_cnt++;
               jump_over = true;
               return pointer_cnt_thread;
@@ -479,6 +627,50 @@ namespace Vision
         return result;
       }
 
+      int
+      set_cpu_governor(void)
+      {
+        char buffer[16];
+        char governor[16];
+        std::string result = "";
+        FILE* pipe;
+        if ((pipe = popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
+        {
+          war("fopen() failed!");
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+        }
+        else
+        {
+          std::memset(&buffer, '\0', sizeof(buffer));
+          try
+          {
+            while (!std::feof(pipe))
+            {
+              if (std::fgets(buffer, sizeof(buffer), pipe) != NULL)
+                result += buffer;
+            }
+          }
+          catch (...)
+          {
+            std::fclose(pipe);
+            throw;
+          }
+          std::fclose(pipe);
+          std::sscanf(buffer, "%s", governor);
+          if( std::strcmp(governor, "ondemand") == 0)
+          {
+            inf("CPU governor is already ondemand");
+          }
+          else
+          {
+            war("CPU governor is not in ondemand, setting to ondemand");
+            return std::system("echo ondemand > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+          }
+        }
+
+        return -1;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -486,31 +678,44 @@ namespace Vision
         m_cnt_fps.reset();
         while (!stopping())
         {
-          if(m_cnt_fps.overflow() && m_is_to_capture)
+          if (!m_args.is_master_mode)
           {
-            m_cnt_fps.reset();
-            consumeMessages();
-            capture_image();
-          }
-          else if(m_update_cnt_frames.overflow() && m_is_to_capture)
-          {
-            m_update_cnt_frames.reset();
-            setEntityState(IMC::EntityState::ESTA_NORMAL, "active (Fps: "+m_save_image[0]->to_string(m_args.number_fs)+" # "+m_save_image[0]->to_string(m_frame_cnt)+" - "+m_save_image[0]->to_string(m_frame_lost_cnt)+")");
-          }
-          else if(!m_is_to_capture)
-          {
-            waitForMessages(1.0);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-            m_cnt_fps.reset();
-          }
-          else if(m_clean_cached_ram.overflow())
-          {
-            m_clean_cached_ram.reset();
-            releaseRamCached();
+            if(m_cnt_fps.overflow() && m_is_to_capture)
+            {
+              m_cnt_fps.reset();
+              consumeMessages();
+              capture_image();
+            }
+
+            if(m_update_cnt_frames.overflow() && m_is_to_capture)
+            {
+              m_update_cnt_frames.reset();
+              setEntityState(IMC::EntityState::ESTA_NORMAL, "active (Fps: "+m_save_image[0]->to_string(m_args.number_fs)+" # "+m_save_image[0]->to_string(m_frame_cnt)+" - "+m_save_image[0]->to_string(m_frame_lost_cnt)+")");
+            }
+
+            if(!m_is_to_capture)
+            {
+              waitForMessages(1.0);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+              m_cnt_fps.reset();
+            }
+
+            if(m_clean_cached_ram.overflow())
+            {
+              m_clean_cached_ram.reset();
+              releaseRamCached();
+            }
+
+            Delay::waitMsec(1);
+
           }
           else
           {
-            Delay::waitMsec(1);
+            waitForMessages(0.2);
+            if(isActive())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           }
         }
       }
