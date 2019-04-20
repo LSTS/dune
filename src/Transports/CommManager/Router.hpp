@@ -239,6 +239,16 @@ namespace Transports
 
               break;
             }
+          case IMC::TransmissionRequest::DMODE_RAW:
+            {
+              tx.type = IMC::AcousticRequest::TYPE_REVERSE_RANGE;
+              if (msg->msg_data.get()->getId() == IMC::DevDataBinary::getIdStatic())
+              {
+                tx.msg.set(msg->msg_data.get()->clone());
+                break;
+              }
+              // else falls for default for error
+            }
           default:
             {
               answer(
@@ -326,8 +336,7 @@ namespace Transports
         //restriction by medium
         if (m_medium == IMC::VehicleMedium::VM_UNDERWATER)
         {
-          if (msg->data_mode != IMC::TransmissionRequest::DMODE_RAW
-              && msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
+          if (msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
           {
             if (visibleOverAcoustic(msg->destination))
             {
@@ -604,8 +613,7 @@ namespace Transports
         //restriction by medium
         if (m_medium == IMC::VehicleMedium::VM_UNDERWATER)
         {
-          if (msg->data_mode != IMC::TransmissionRequest::DMODE_RAW
-              && msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
+          if (msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
           {
             if (visibleOverAcoustic(msg->destination))
             {
