@@ -267,6 +267,7 @@ namespace Transports
           case (IMC::AcousticRequest::TYPE_MSG):
           case (IMC::AcousticRequest::TYPE_ABORT):
           case (IMC::AcousticRequest::TYPE_RANGE):
+          case (IMC::AcousticRequest::TYPE_RAW):
           addToQueue((const IMC::AcousticRequest*)msg->clone());
           processQueue();
           break;
@@ -486,7 +487,7 @@ namespace Transports
       void
       consume(const IMC::UsblAnglesExtended* msg)
       {
-    	debug("Received USBL angles to %s.", msg->target.c_str());
+      	debug("Received USBL angles to %s.", msg->target.c_str());
 
         if (m_usbl_modem == NULL)
         {
@@ -623,6 +624,26 @@ namespace Transports
       }
 
       void
+      sendFrameRaw(const std::string& sys, const uint16_t id, const std::vector<uint8_t>& data, bool ack)
+      {
+        IMC::UamTxFrame frame;
+        frame.setSource(getSystemId());
+        frame.setSourceEntity(getEntityId());
+        frame.setDestination(getSystemId());
+        frame.sys_dst = sys;
+        frame.seq = id;
+        frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
+
+        frame.data.push_back(c_sync);
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+          frame.data.push_back(data[i]);
+        }
+
+        dispatch(frame);
+      }
+
+      void
       sendAbort(const std::string& sys, const uint16_t id)
       {
         std::vector<uint8_t> data;
@@ -687,6 +708,44 @@ namespace Transports
         int length = end - buf;
         data.insert(data.end(), buf, buf + length);
         sendFrame(sys, id, data, true);
+      }
+
+      void
+      sendRaw(const IMC::AcousticRequest& req, const std::string& sys, const uint16_t id, const InlineMessage<IMC::Message>& imsg)
+      {
+        const IMC::Message* msg = NULL;
+
+        try
+        {
+          msg = imsg.get();
+        }
+        catch (...)
+        {
+          sendAcousticStatus(&req, IMC::AcousticStatus::STATUS_INPUT_FAILURE, "Null pointer.");
+          removeFromQueue(req.req_id);
+          return;
+        }
+
+        // Check if is DevDataBinary...
+        if (msg->getId() == IMC::DevDataBinary::getIdStatic())
+        {
+          const IMC::DevDataBinary * ddb = static_cast<const IMC::DevDataBinary*>(msg);
+          if (ddb->value.size() > 0)
+          {
+            std::vector<uint8_t> data;
+            // no coding, send as is
+            for (size_t i = 0; i < ddb->value.size(); ++i)
+            {
+              data.push_back(ddb->value[i]);
+            }
+
+            sendFrameRaw(sys, id, data, true);
+            return;
+          }
+        }
+
+        sendAcousticStatus(&req, IMC::AcousticStatus::STATUS_UNSUPPORTED, "Unsupported type for raw send.");
+        removeFromQueue(req.req_id);
       }
 
       void
@@ -876,6 +935,10 @@ namespace Transports
 
             case (IMC::AcousticRequest::TYPE_MSG):
               sendMessage(req->destination, id, req->msg);
+              break;
+
+            case (IMC::AcousticRequest::TYPE_RAW):
+              sendRaw(*req, req->destination, id, req->msg);
               break;
 
             default:
