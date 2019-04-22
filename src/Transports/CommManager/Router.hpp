@@ -241,13 +241,11 @@ namespace Transports
             }
           case IMC::TransmissionRequest::DMODE_RAW:
             {
-              tx.type = IMC::AcousticRequest::TYPE_REVERSE_RANGE;
-              if (msg->msg_data.get()->getId() == IMC::DevDataBinary::getIdStatic())
-              {
-                tx.msg.set(msg->msg_data.get()->clone());
-                break;
-              }
-              // else falls for default for error
+              tx.type = IMC::AcousticRequest::TYPE_RAW;
+              IMC::DevDataBinary ddb;
+              ddb.value = msg->raw_data;
+              tx.msg.set(ddb);
+              break;
             }
           default:
             {
