@@ -634,7 +634,6 @@ namespace Transports
         frame.seq = id;
         frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
 
-        frame.data.push_back(c_sync);
         for (size_t i = 0; i < data.size(); ++i)
         {
           frame.data.push_back(data[i]);
