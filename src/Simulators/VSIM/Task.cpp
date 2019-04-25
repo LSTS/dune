@@ -77,8 +77,6 @@ namespace Simulators
       IMC::SimulatedState m_sstate;
       //! Start time.
       double m_start_time;
-      //! Last step time.
-      double m_last_time;
       //! Task arguments.
       Arguments m_args;
 
@@ -86,8 +84,7 @@ namespace Simulators
         Periodic(name, ctx),
         m_vehicle(NULL),
         m_world(NULL),
-        m_start_time(Clock::get()),
-        m_last_time(m_start_time)
+        m_start_time(Clock::get())
       {
         // Retrieve configuration values.
         param("Stream Speed North", m_args.wx)
