@@ -191,6 +191,15 @@ namespace Simulators
           std::memcpy(&data[1], &dat, sizeof(dat));
 
           war("%s", Utils::String::toHex(data).c_str());
+          debug("%f, %f, %d, %d, %d, %d, %d, %d",
+                    dat.lat,
+                    dat.lon,
+                    dat.depth,
+                    dat.yaw,
+                    dat.alt,
+                    dat.progress,
+                    dat.fuel_level,
+                    dat.fuel_conf);
           sendReport(data);
           m_timer.reset();
         }
