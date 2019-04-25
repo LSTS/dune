@@ -162,7 +162,6 @@ namespace Simulators
       void
       consume(const IMC::ServoPosition* msg)
       {
-        using Simulators::VSIM::UUV;
         UUV* v = static_cast<UUV*>(m_vehicle);
         v->updateFin(msg->id, msg->value);
       }
