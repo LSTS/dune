@@ -205,8 +205,8 @@ namespace Simulators
 
         // Fill linear velocity.
         double* lv = m_vehicle->getLinearVelocity();
-        m_sstate.u = lv[0] + cos(m_sstate.psi) * m_args.wx;
-        m_sstate.v = lv[1] + sin(m_sstate.psi) * m_args.wy;
+        m_sstate.u = lv[0];
+        m_sstate.v = lv[1];
         m_sstate.w = lv[2];
 
         // Fill stream velocity.
