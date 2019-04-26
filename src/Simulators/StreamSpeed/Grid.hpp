@@ -44,35 +44,57 @@ namespace Simulators
     {
       //! Converts between grid indices, coordinate points and row-major
       //! ordering.
+      //! @tparam dim number of dimensions.
       template<size_t dim>
       class Grid
       {
       public:
+        //! Constructor.
+        //! @param[in] min the lower limits of the grid in each dimension.
+        //! @param[in] max the upper limits of the grid in each dimension.
+        //! @param[in] dimensions the number of points in each dimension.
         Grid(std::vector<double> const& min,
              std::vector<double> const& max,
              std::vector<size_t> const& dimensions);
 
         //! Convert an array of grid indices to a row-major ordered offset.
+        //! @param[in] indices the indices of the grid point.
+        //! @return the row-major offset of the grid point.
         size_t
         getOffset(std::array<size_t, dim> const& indices) const;
 
         //! Convert a row-major ordered offset to an array of grid indices.
+        //! @param[in] offset the row-major offset of the gridpoint.
+        //! @return indices of the gridpoint.
         std::array<size_t, dim>
         getIndices(size_t offset) const;
 
         //! Get the indices of the "lower corner" of the grid cell where a
         //! point lies.
+        //! @param[in] coordinates coordinates of a point in dim-dimensional
+        //! space.
+        //! @return grid indices of the "lower" vertex of the grid cell where
+        //! the point lies.
         std::array<size_t, dim>
         getCorner(std::array<double, dim> const& coordinates) const;
 
         //! Get the coordinates of a gridpoint given by an array of indices.
+        //! @param[in] indices indices of a gridpoint.
+        //! @return the coordinates of the corresponding point in
+        //! dim-dimensional space.
         std::array<double, dim>
         getCoordinates(std::array<size_t, dim> const& indices) const;
 
         //! Get the coordinates of a gridpoint given by a row-major offset.
+        //! @param[in] offset the row-major offset of the gridpoint.
+        //! @return the coordinates of the corresponding point in
+        //! dim-dimensional space.
         std::array<double, dim>
         getCoordinates(size_t offset) const;
 
+        //! Get the number of points in the grid along a dimension.
+        //! @param[in] dimension index of the dimension to query.
+        //! @return number of points along the given dimension.
         size_t
         getDimensions(size_t dimension) const
         {
@@ -82,12 +104,16 @@ namespace Simulators
           return m_npts[dimension];
         }
 
+        //! @return the total number of gridpoints.
         size_t
         size() const
         {
           return m_size;
         }
 
+        //! Get the upper limit of the grid along a dimension.
+        //! @param[in] dimension index of the dimension to query.
+        //! @return upper limit along the given dimension.
         double
         getUpper(size_t dimension) const
         {
@@ -97,6 +123,9 @@ namespace Simulators
           return m_max[dimension];
         }
 
+        //! Get the loer limit of the grid along a dimension.
+        //! @param[in] dimension index of the dimension to query.
+        //! @return lower limit along the given dimension.
         double
         getLower(size_t dimension) const
         {
@@ -173,7 +202,7 @@ namespace Simulators
       std::array<size_t, dim>
       Grid<dim>::getIndices(size_t offset) const
       {
-        if(offset >= m_size)
+        if (offset >= m_size)
           throw std::runtime_error("Grid::getIndices(): out of bounds.");
 
         std::array<size_t, dim> point;

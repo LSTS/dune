@@ -43,16 +43,34 @@ namespace Simulators
       class StreamGenerator
       {
       public:
+        //! Constructor.
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
         StreamGenerator(double wx, double wy, double wz = 0.0);
 
         ~StreamGenerator() = default;
 
+        //! Get a stream speed value.
+        //! @param[in] lat WGS84 latitude in degrees.
+        //! @param[in] lon WGS84 longitude in degrees.
+        //! @param[in] depth depth in meters.
+        //! @param[in] time time elapsed since the simulation started.
+        //! @return 3-dimensional array containing the stream velocity in the
+        //! North, East and Down directions in meters per second.
         virtual std::array<double, 3>
         getSpeed(double lat, double lon, double depth, double time = 0.0) const;
 
+        //! Get the default stream speed.
+        //! @return 3-dimensional array containing the default stream velocity
+        //! value in the North, East and Down directions in meters per second.
         std::array<double, 3>
         getDefaultSpeed() const;
 
+        //! Set the default stream speed.
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
         void
         setSpeed(double wx, double wy, double wz = 0.0);
 

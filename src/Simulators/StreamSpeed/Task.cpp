@@ -78,9 +78,13 @@ namespace Simulators
 
     struct Task : public DUNE::Tasks::Periodic
     {
+      //! Task arguments.
       Arguments m_args;
+      //! Source for stream velocity values.
       std::unique_ptr<StreamGenerator::StreamGenerator> m_ssg;
+      //! Dispatched EstimatedStreamVelocity message
       IMC::EstimatedStreamVelocity m_esv;
+      //! Latest consumed SimulatedState
       IMC::SimulatedState m_state;
       //! Time offset in seconds.
       double m_time0;
@@ -179,6 +183,8 @@ namespace Simulators
         m_time0 -= DUNE::Time::Clock::get();
       }
 
+      //! Update the EstimatedStreamVelocity message, using the most recent
+      //! SimulatedState data.
       void
       updateMessage(void)
       {
@@ -186,6 +192,8 @@ namespace Simulators
                                  Angles::degrees(m_state.lon),
                                  m_state.height,
                                  DUNE::Time::Clock::get() + m_time0);
+
+        //! Fill EstimatedStreamVelocity.
         m_esv.x = p[0];
         m_esv.y = p[1];
         m_esv.z = p[2];

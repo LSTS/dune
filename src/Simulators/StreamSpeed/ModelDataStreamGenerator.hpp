@@ -47,8 +47,13 @@ namespace Simulators
       // stored on disk to generate the stream velocity values.
       struct ModelDataConfig
       {
+        //! Path to the file containing the data.
         std::string filename;
+        //! Path to the node in the file containing the velocity values in the
+        //! East direction.
         std::string u_data_path;
+        //! Path to the node in the file containing the velocity values in the
+        //! North direction.
         std::string v_data_path;
         // TODO std::string units;
       };
@@ -56,6 +61,7 @@ namespace Simulators
       // Extra configuration parameters if the model is gridded.
       struct GriddedModelDataConfig : public ModelDataConfig
       {
+        //! Path to the node in the file containing the grid parameters.
         std::string grid_path;
       };
 
@@ -65,6 +71,12 @@ namespace Simulators
       class Gridded2DModelDataStreamGenerator : public StreamGenerator
       {
       public:
+        //! Constructor.
+        //! @param[in] config structure containing the configuration parameters
+        //! for reading the data from the file.
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
         Gridded2DModelDataStreamGenerator(GriddedModelDataConfig const& config,
                                           double wx = 0.0,
                                           double wy = 0.0,

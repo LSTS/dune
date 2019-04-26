@@ -43,6 +43,9 @@ namespace Simulators
   {
     namespace StreamGenerator
     {
+      //! Factory method for the stream velocity source.
+      //! @param[in] config structure with configuration fields
+      //! @return handle to the stream velocity source.
       template<typename Configuration>
       std::unique_ptr<StreamGenerator>
       factory(Configuration const& config)
