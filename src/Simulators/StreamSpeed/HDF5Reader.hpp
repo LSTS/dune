@@ -27,8 +27,8 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef DUNE_SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HDF5_READER_HPP_INCLUDED_
-#define DUNE_SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HDF5_READER_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_SPEED_HDF5_READER_HPP_INCLUDED_
+#define SIMULATORS_STREAM_SPEED_HDF5_READER_HPP_INCLUDED_
 
 #include <map>
 #include <memory>

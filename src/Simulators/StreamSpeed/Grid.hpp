@@ -27,8 +27,8 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef DUNE_SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_GRID_HPP_INCLUDED_
-#define DUNE_SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_GRID_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_SPEED_GRID_HPP_INCLUDED_
+#define SIMULATORS_STREAM_SPEED_GRID_HPP_INCLUDED_
 
 #include <algorithm>
 #include <array>
