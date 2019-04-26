@@ -141,26 +141,6 @@ namespace Simulators
                 "the time of the first datapoint.");
       }
 
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {}
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {}
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {}
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {}
-
       //! Initialize resources.
       void
       onResourceInitialization(void)
@@ -198,11 +178,6 @@ namespace Simulators
 
         m_time0 -= DUNE::Time::Clock::get();
       }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {}
 
       void
       updateMessage(void)
