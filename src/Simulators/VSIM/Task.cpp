@@ -75,16 +75,13 @@ namespace Simulators
       Simulators::VSIM::World* m_world;
       //! Simulated position (X,Y,Z).
       IMC::SimulatedState m_sstate;
-      //! Start time.
-      double m_start_time;
       //! Task arguments.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
         m_vehicle(NULL),
-        m_world(NULL),
-        m_start_time(Clock::get())
+        m_world(NULL)
       {
         // Retrieve configuration values.
         param("Stream Speed North", m_args.wx)
@@ -144,8 +141,6 @@ namespace Simulators
         m_sstate.lat = msg->lat;
         m_sstate.lon = msg->lon;
         m_sstate.height = msg->height;
-
-        m_start_time = Clock::get();
 
         requestActivation();
 
