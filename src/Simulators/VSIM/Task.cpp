@@ -77,7 +77,7 @@ namespace Simulators
       //! Task arguments.
       Arguments m_args;
       //! Stream speed.
-      double m_sspeed[2];
+      double m_sspeed[3];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
@@ -121,6 +121,7 @@ namespace Simulators
 
         m_sspeed[0] = 0.0;
         m_sspeed[1] = 0.0;
+        m_sspeed[2] = 0.0;
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -171,10 +172,12 @@ namespace Simulators
 
         m_sspeed[0] = msg->x;
         m_sspeed[1] = msg->y;
+        m_sspeed[2] = msg->z;
 
-        debug(DTR("Setting stream speed: %f m/s N : %f m/s E"),
+        debug(DTR("Setting stream speed: %f m/s N : %f m/s E : %f m/s D"),
               m_sspeed[0],
-              m_sspeed[1]);
+              m_sspeed[1],
+              m_sspeed[2]);
       }
 
       void
@@ -194,6 +197,7 @@ namespace Simulators
         // Add stream speed.
         position[0] += m_world->getTimeStep() * m_sspeed[0];
         position[1] += m_world->getTimeStep() * m_sspeed[1];
+        position[2] += m_world->getTimeStep() * m_sspeed[2];
 
         m_sstate.x = position[0];
         m_sstate.y = position[1];
@@ -220,7 +224,7 @@ namespace Simulators
         // Fill stream velocity.
         m_sstate.svx = m_sspeed[0];
         m_sstate.svy = m_sspeed[1];
-        m_sstate.svz = 0;
+        m_sstate.svz = m_sspeed[2];
 
         dispatch(m_sstate);
       }
