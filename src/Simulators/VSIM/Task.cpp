@@ -32,6 +32,7 @@
 // ISO C++ 98 headers.
 #include <cmath>
 #include <algorithm>
+#include <string>
 #include <vector>
 #include <stdexcept>
 #include <cstdlib>
@@ -60,10 +61,8 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
-      //! Stream speed North parameter (m/s).
-      double wx;
-      //! Stream speed East parameter (m/s).
-      double wy;
+      //! Entity label of the stream speed source.
+      std::string sslabel;
     };
 
     //! Simulator task.
@@ -77,27 +76,23 @@ namespace Simulators
       IMC::SimulatedState m_sstate;
       //! Task arguments.
       Arguments m_args;
+      //! Stream speed.
+      double m_sspeed[2];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
         m_vehicle(NULL),
         m_world(NULL)
       {
-        // Retrieve configuration values.
-        param("Stream Speed North", m_args.wx)
-        .units(Units::MeterPerSecond)
-        .defaultValue("0.0")
-        .description("Water current speed along the North in the NED frame");
-
-        param("Stream Speed East", m_args.wy)
-        .units(Units::MeterPerSecond)
-        .defaultValue("0.0")
-        .description("Water current speed along the East in the NED frame");
-
         // Register handler routines.
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::EstimatedStreamVelocity>(this);
+
+        param("Stream Speed Source Entity Label", m_args.sslabel)
+            .defaultValue("Stream Speed Producer")
+            .description("Entity label of the stream speed source.");
       }
 
       //! Release allocated resources.
@@ -123,6 +118,9 @@ namespace Simulators
 
         m_world->addVehicle(m_vehicle);
         m_world->setTimeStep(1.0 / getFrequency());
+
+        m_sspeed[0] = 0.0;
+        m_sspeed[1] = 0.0;
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -165,6 +163,21 @@ namespace Simulators
       }
 
       void
+      consume(const IMC::EstimatedStreamVelocity* msg)
+      {
+        // Filter valid messages.
+        if(m_ctx.entities.resolve(msg->getSourceEntity()) != m_args.sslabel)
+          return;
+
+        m_sspeed[0] = msg->x;
+        m_sspeed[1] = msg->y;
+
+        debug(DTR("Setting stream speed: %f m/s N : %f m/s E"),
+              m_sspeed[0],
+              m_sspeed[1]);
+      }
+
+      void
       task(void)
       {
         if (!isActive())
@@ -179,8 +192,8 @@ namespace Simulators
         // This is a temporary fix and this operation should probably be done
         // inside the Vehicle class.
         // Add stream speed.
-        position[0] += m_world->getTimeStep() * m_args.wx;
-        position[1] += m_world->getTimeStep() * m_args.wy;
+        position[0] += m_world->getTimeStep() * m_sspeed[0];
+        position[1] += m_world->getTimeStep() * m_sspeed[1];
 
         m_sstate.x = position[0];
         m_sstate.y = position[1];
@@ -205,8 +218,8 @@ namespace Simulators
         m_sstate.w = lv[2];
 
         // Fill stream velocity.
-        m_sstate.svx = m_args.wx;
-        m_sstate.svy = m_args.wy;
+        m_sstate.svx = m_sspeed[0];
+        m_sstate.svy = m_sspeed[1];
         m_sstate.svz = 0;
 
         dispatch(m_sstate);
