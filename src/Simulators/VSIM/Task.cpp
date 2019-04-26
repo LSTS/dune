@@ -179,10 +179,16 @@ namespace Simulators
 
         // Fill position.
         double* position = m_vehicle->getPosition();
-        double time = Clock::get();
-        double sim_time = time - m_start_time;
-        m_sstate.x = position[0] + sim_time * m_args.wx;
-        m_sstate.y = position[1] + sim_time * m_args.wy;
+
+        // TODO
+        // This is a temporary fix and this operation should probably be done
+        // inside the Vehicle class.
+        // Add stream speed.
+        position[0] += m_world->getTimeStep() * m_args.wx;
+        position[1] += m_world->getTimeStep() * m_args.wy;
+
+        m_sstate.x = position[0];
+        m_sstate.y = position[1];
         m_sstate.z = std::max(position[2], 0.0);
 
         // Fill attitude.
