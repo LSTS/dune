@@ -85,7 +85,7 @@ private:
   std::vector<double> Radial_distortion;
   std::vector<double> Tangential_distortion;
 
-  cv::Mat CameraMatrix;
+  cv::Mat camera_matrix;
   cv::Mat DistMatrix;
 
 

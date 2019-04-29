@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector<double> R_Dis, std::vector<double> T_Dis)
 {
-  CameraMatrix = cv::Mat::zeros(3, 4, CV_64FC1);
+  camera_matrix = cv::Mat::zeros(3, 4, CV_64FC1);
 
   ImageMatrix = Imat;
   ncols = ImageMatrix.cols;
@@ -72,28 +72,28 @@ Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector
   //P = K [R|-Rt]
   // [R|-Rt] extrinsics
 
-  cv::Mat Extrinsic = cv::Mat::zeros(4, 4, CV_64FC1);
+  cv::Mat world_to_cam = cv::Mat::zeros(4, 4, CV_64FC1);
   /* In our case we won't need to Transpose the Rotation Matrix ,its apparently already done in the parameters,
    * in case the results of this code were t satisfaying trying to put the Tranpose Mtrix of the rotation might give
    * the wanted results*/
   cv::transpose(Rotation, Rotation);
 
-  cv::hconcat(Rotation, -1 * Rotation * Translation, Extrinsic);
+  cv::hconcat(Rotation, -1 * Rotation * Translation, world_to_cam);
   cv::Mat affineRow = (cv::Mat_<double>(1, 4) << 0.0, 0.0, 0.0, 1.0);
-  cv::vconcat(Extrinsic, affineRow, Extrinsic);
+  cv::vconcat(world_to_cam, affineRow, world_to_cam);
   //K Intrinsics
 
   cv::Mat zeroCol = (cv::Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
   cv::hconcat(IntrinsicMatrix, zeroCol, IntrinsicMatrix);
 
-  CameraMatrix = IntrinsicMatrix * Extrinsic;
+  camera_matrix = IntrinsicMatrix * world_to_cam;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 cv::Mat Image::get_CameraMatrix() const
 {
-  return CameraMatrix;
+  return camera_matrix;
 }
 
 cv::Mat Image::get_IntrinsicMatrix() const
@@ -136,7 +136,7 @@ ImagePixel Image::get_ImagePixel_of(double x, double y, double z) const
 
   cv::Mat Pointworld = (cv::Mat_<double>(4, 1) << x, y, z, 1.0);
 
-  cv::Mat PointImage = CameraMatrix * Pointworld;
+  cv::Mat PointImage = camera_matrix * Pointworld;
 
   PI.col = static_cast<int>(round(PointImage.at<double>(0) / (PointImage.at<double>(2)))); // divide by Z-cordinate
   PI.row = static_cast<int>(round(PointImage.at<double>(1) / (PointImage.at<double>(2)))); // divide by Z-cordinate
@@ -163,18 +163,18 @@ Point3D Image::get_RayPosition(int u, int v, double Z) const
   */
   Point3D PW;
 
-  double a1 = CameraMatrix.at<double>(0, 0);
-  double b1 = CameraMatrix.at<double>(0, 1);
-  double c1 = CameraMatrix.at<double>(0, 2);
-  double d1 = CameraMatrix.at<double>(0, 3);
-  double a2 = CameraMatrix.at<double>(1, 0);
-  double b2 = CameraMatrix.at<double>(1, 1);
-  double c2 = CameraMatrix.at<double>(1, 2);
-  double d2 = CameraMatrix.at<double>(1, 3);
-  double a3 = CameraMatrix.at<double>(2, 0);
-  double b3 = CameraMatrix.at<double>(2, 1);
-  double c3 = CameraMatrix.at<double>(2, 2);
-  double d3 = CameraMatrix.at<double>(2, 3);
+  double a1 = camera_matrix.at<double>(0, 0);
+  double b1 = camera_matrix.at<double>(0, 1);
+  double c1 = camera_matrix.at<double>(0, 2);
+  double d1 = camera_matrix.at<double>(0, 3);
+  double a2 = camera_matrix.at<double>(1, 0);
+  double b2 = camera_matrix.at<double>(1, 1);
+  double c2 = camera_matrix.at<double>(1, 2);
+  double d2 = camera_matrix.at<double>(1, 3);
+  double a3 = camera_matrix.at<double>(2, 0);
+  double b3 = camera_matrix.at<double>(2, 1);
+  double c3 = camera_matrix.at<double>(2, 2);
+  double d3 = camera_matrix.at<double>(2, 3);
 
   PW.x = ((((b1 - u * b3) / (b2 - v * b3)) * (v * c3 - c2) + (c1 - u * c3)) * Z +
           ((b1 - u * b3) / (b2 - v * b3)) * (v * d3 - d2) + (d1 - u * d3)) /
