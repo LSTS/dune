@@ -71,6 +71,7 @@ namespace Simulators
     {
       int period;
       std::string dest;
+      bool as_struct;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -93,6 +94,10 @@ namespace Simulators
 
         param("Destination", m_args.dest)
         .defaultValue("lauv-noptilus-1")
+        .description("");
+
+        param("As Struct", m_args.as_struct)
+        .defaultValue("true")
         .description("");
 
         m_bfr.resize(255);
@@ -188,7 +193,36 @@ namespace Simulators
           std::vector<char> data;
           data.resize(sizeof(dat) + 1);
           data[0] = CODE_REPORT;
-          std::memcpy(&data[1], &dat, sizeof(dat));
+
+          if (m_args.as_struct)
+            std::memcpy(&data[1], &dat, sizeof(dat));
+          else
+          {
+            int idx = 1;
+            std::memcpy(&data[idx], &dat.lat, sizeof(dat.lat));
+            idx += sizeof(dat.lat);
+
+            std::memcpy(&data[idx], &dat.lon, sizeof(dat.lon));
+            idx += sizeof(dat.lon);
+
+            std::memcpy(&data[idx], &dat.depth, sizeof(dat.depth));
+            idx += sizeof(dat.depth);
+
+            std::memcpy(&data[idx], &dat.yaw, sizeof(dat.yaw));
+            idx += sizeof(dat.yaw);
+
+            std::memcpy(&data[idx], &dat.alt, sizeof(dat.alt));
+            idx += sizeof(dat.alt);
+
+            std::memcpy(&data[idx], &dat.progress, sizeof(dat.progress));
+            idx += sizeof(dat.progress);
+
+            std::memcpy(&data[idx], &dat.fuel_level, sizeof(dat.fuel_level));
+            idx += sizeof(dat.fuel_level);
+
+            std::memcpy(&data[idx], &dat.fuel_conf, sizeof(dat.fuel_conf));
+            idx += sizeof(dat.fuel_conf);
+          }
 
           war("%s", Utils::String::toHex(data).c_str());
           debug("%f, %f, %d, %d, %d, %d, %d, %d",
