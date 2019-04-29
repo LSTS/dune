@@ -323,6 +323,11 @@ namespace Vision
         // Magic number
         msg.value.emplace_back(0xF1);
         msg.value.emplace_back(0x3E);
+
+        // srsid
+        uint64_t srsid = m_args.projected_coordinate_system_epsg;
+        serialize<uint64_t>(srsid, msg.value);
+
         // x size
         uint64_t x_size = map.get_firemap_time().rows;
         serialize<uint64_t>(x_size, msg.value);
@@ -342,16 +347,6 @@ namespace Vision
         // cell width
         double cell_width = map.get_pixel_width();
         serialize<double>(cell_width, msg.value);
-
-        // raster data
-        // Uncompressed fire map data
-        // char const* datastart = reinterpret_cast<char const*>(map.get_fireMap_time().datastart);
-        // char const* dataend = reinterpret_cast<char const*>(map.get_fireMap_time().dataend);
-        // std::copy(datastart, dataend, std::back_inserter(msg.value));
-
-        // Uncompressed size
-        uint64_t uncomp_size = map.get_firemap_time().step[0] * map.get_firemap_time().rows;
-        serialize<uint64_t>(uncomp_size, msg.value);
 
         // Compressed fire map data
         Compression::ZlibCompressor c = Compression::ZlibCompressor();
