@@ -104,7 +104,8 @@ namespace Simulators
 
         auto corner_point = m_grid.getCoordinates(corner_indices);
 
-        double delta[2] = {lat - corner_point[0], lon - corner_point[1]};
+        double delta[2] = {(lat - corner_point[0]) / m_grid.getSpacing(0),
+                           (lon - corner_point[1]) / m_grid.getSpacing(1)};
 
         double u_values[4];
         double v_values[4];
