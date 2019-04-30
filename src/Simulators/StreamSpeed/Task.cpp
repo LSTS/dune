@@ -188,9 +188,16 @@ namespace Simulators
       void
       updateMessage(void)
       {
-        auto p = m_ssg->getSpeed(Angles::degrees(m_state.lat),
-                                 Angles::degrees(m_state.lon),
-                                 m_state.height,
+        double lat = m_state.lat;
+        double lon = m_state.lon;
+        double height = m_state.height;
+
+        Coordinates::WGS84::displace(
+            m_state.x, m_state.y, m_state.z, &lat, &lon, &height);
+
+        auto p = m_ssg->getSpeed(Angles::degrees(lat),
+                                 Angles::degrees(lon),
+                                 -m_state.height,
                                  DUNE::Time::Clock::get() + m_time0);
 
         //! Fill EstimatedStreamVelocity.

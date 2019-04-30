@@ -135,6 +135,18 @@ namespace Simulators
           return m_min[dimension];
         }
 
+        //! Get the grid spacing along a dimension.
+        //! @param[in] dimension index of the dimension to query.
+        //! @return spacing along the given dimension.
+        double
+        getSpacing(size_t dimension) const
+        {
+          if(dimension >= dim)
+            throw std::runtime_error("Grid::getSpacing(): invalid index");
+
+          return m_h[dimension];
+        }
+
       private:
         //! The upper limits of the grid in each dimension.
         std::array<double, dim> m_max;
