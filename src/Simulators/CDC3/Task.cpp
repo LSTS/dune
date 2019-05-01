@@ -99,8 +99,16 @@ namespace Simulators
       int period_rtm;
       //! RetaskWaypoint periodicty
       int period_rtw;
+      //! IMC Source
+      std::string src;
       //! IMC destination
       std::string dest;
+      //! Override EstimatedState Lat and Lon
+      bool override_location;
+      //! Origin latitude in degrees
+      double origin_lat_degs;
+      //! Origin longitude in degrees
+      double origin_lon_degs;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -132,8 +140,26 @@ namespace Simulators
         .units(Units::Second)
         .description("");
 
+        param("Source", m_args.src)
+        .defaultValue("lauv-nemo-1")
+        .description("");
+
         param("Destination", m_args.dest)
-        .defaultValue("lauv-noptilus-1")
+        .defaultValue("iver-3055")
+        .description("");
+
+        param("Override Location", m_args.override_location)
+        .defaultValue("false")
+        .description("");
+
+        param("Origin Latitude", m_args.origin_lat_degs)
+        .defaultValue("33.28413")
+        .units(Units::Degree)
+        .description("");
+
+        param("Origin Longitude", m_args.origin_lon_degs)
+        .defaultValue("-117.46737")
+        .units(Units::Degree)
         .description("");
 
         m_bfr.resize(255);
@@ -174,7 +200,7 @@ namespace Simulators
         frame.push_back(crc.get());
 
         IMC::UamRxFrame rx;
-        rx.sys_src = resolveSystemId(getSystemId());
+        rx.sys_src = m_args.src;
         rx.sys_dst = m_args.dest;
         rx.data = frame;
 
@@ -266,8 +292,18 @@ namespace Simulators
         Coordinates::toWGS84(*m_eestate, lat, lon);
 
         Report dat;
-        dat.lat = lat;
-        dat.lon = lon;
+
+        if (!m_args.override_location)
+        {
+          dat.lat = lat;
+          dat.lon = lon;
+        }
+        else
+        {
+          dat.lat = Angles::radians(m_args.origin_lat_degs);
+          dat.lon = Angles::radians(m_args.origin_lon_degs);
+        }
+
         dat.depth = (uint8_t)m_eestate->depth;
         dat.yaw = (int16_t)(m_eestate->psi * 100.0);
         dat.alt = (int16_t)(m_eestate->alt * 10.0);
