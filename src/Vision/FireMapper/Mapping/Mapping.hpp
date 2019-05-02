@@ -55,7 +55,7 @@ private:
 
   bool Map_direct(Image& IM, double time);
 
-  Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM) const;
+  Pixel_Test Pixel_Mapping(Pixel_Data PD, int noDATA, const Image& IM) const;
 
   double IMask(cv::Mat UndistortedImage, std::vector<ImagePixel> Corners) const;
 
@@ -112,15 +112,16 @@ public:
     Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
     Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
     Rotationz.cv::Mat::at<double>(0, 2) = 0.;
-    Rotationz.cv::Mat::at<double>(1, 2) = sin(_psi);
+    Rotationz.cv::Mat::at<double>(1, 0) = sin(_psi);
     Rotationz.cv::Mat::at<double>(1, 1) = cos(_psi);
     Rotationz.cv::Mat::at<double>(1, 2) = 0.;
-    Rotationz.cv::Mat::at<double>(2, 2) = 0.;
-    Rotationz.cv::Mat::at<double>(2, 2) = 0.;
+    Rotationz.cv::Mat::at<double>(2, 0) = 0.;
+    Rotationz.cv::Mat::at<double>(2, 1) = 0.;
     Rotationz.cv::Mat::at<double>(2, 2) = 1.;
 
-    return (Rotationz * Rotationy * Rotationx);
+    return (Rotationx * Rotationy * Rotationz);
   }
 
 };
+
 #endif // MAPPING_H
