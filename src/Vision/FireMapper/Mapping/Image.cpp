@@ -24,7 +24,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "Image.hpp"
 
-Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector<double> R_Dis, std::vector<double> T_Dis)
+Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot_cam_to_world, cv::Mat Intr, std::vector<double> R_Dis,
+             std::vector<double> T_Dis)
 {
   camera_matrix = cv::Mat::zeros(3, 4, CV_64FC1);
 
@@ -32,7 +33,7 @@ Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector
   ncols = ImageMatrix.cols;
   nrows = ImageMatrix.rows;
   Translation = Trans;
-  Rotation = Rot;
+  Rotation_cam_to_world = Rot_cam_to_world;
   IntrinsicPixelMatrix = Intr;
   Radial_distortion = R_Dis;
   Tangential_distortion = T_Dis;
@@ -72,21 +73,24 @@ Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector
   //P = K [R|-Rt]
   // [R|-Rt] extrinsics
 
-  cv::Mat world_to_cam = cv::Mat::zeros(4, 4, CV_64FC1);
-  /* In our case we won't need to Transpose the Rotation Matrix ,its apparently already done in the parameters,
-   * in case the results of this code were t satisfaying trying to put the Tranpose Mtrix of the rotation might give
-   * the wanted results*/
-  cv::transpose(Rotation, Rotation);
+  cv::Mat Transform_world_to_cam = cv::Mat::zeros(4, 4, CV_64FC1);
+  cv::Mat Rotation_world_to_cam;
+  cv::transpose(Rotation_cam_to_world, Rotation_world_to_cam);
+  std::cout << "Rotation C -> W matrix: " << std::endl << Rotation_cam_to_world << std::endl << std::endl;
 
-  cv::hconcat(Rotation, -1 * Rotation * Translation, world_to_cam);
+  cv::hconcat(Rotation_world_to_cam, -1 * Rotation_world_to_cam * Translation, Transform_world_to_cam);
   cv::Mat affineRow = (cv::Mat_<double>(1, 4) << 0.0, 0.0, 0.0, 1.0);
-  cv::vconcat(world_to_cam, affineRow, world_to_cam);
+  cv::vconcat(Transform_world_to_cam, affineRow, Transform_world_to_cam);
   //K Intrinsics
 
   cv::Mat zeroCol = (cv::Mat_<double>(3, 1) << 0.0, 0.0, 0.0);
   cv::hconcat(IntrinsicMatrix, zeroCol, IntrinsicMatrix);
 
-  camera_matrix = IntrinsicMatrix * world_to_cam;
+  camera_matrix = IntrinsicMatrix * Transform_world_to_cam;
+//  std::cout << "Intrinsic matrix: " << std::endl << IntrinsicMatrix << std::endl << std::endl;
+//  std::cout << "Extrinsic matrix: " << std::endl << Transform_world_to_cam << std::endl << std::endl;
+//  std::cout << "Camera    matrix: " << std::endl << camera_matrix << std::endl << std::endl;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +107,7 @@ cv::Mat Image::get_IntrinsicMatrix() const
 
 cv::Mat Image::get_Rotation() const
 {
-  return Rotation;
+  return Rotation_cam_to_world;
 }
 
 cv::Mat Image::get_Translation() const
@@ -134,7 +138,8 @@ ImagePixel Image::get_ImagePixel_of(double x, double y, double z) const
 {
   ImagePixel PI;
 
-  cv::Mat Pointworld = (cv::Mat_<double>(4, 1) << x, y, z, 1.0);
+  double ppp[4] = {x, y, z, 1.};
+  cv::Mat Pointworld = cv::Mat(4, 1, CV_64FC1, &ppp);
 
   cv::Mat PointImage = camera_matrix * Pointworld;
 

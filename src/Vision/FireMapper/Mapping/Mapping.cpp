@@ -114,7 +114,7 @@ https://docs.opencv.org/2.4.13.4/doc/tutorials/core/basic_geometric_drawing/basi
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, Image IM) const
+Pixel_Test Mapping::Pixel_Mapping(Pixel_Data PD, int noDATA, const Image& IM) const
 {
 
   std::vector<ImagePixel> Corners(4);

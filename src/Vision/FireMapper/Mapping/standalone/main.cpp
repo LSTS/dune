@@ -57,11 +57,20 @@ transform_coordinates(double lat, double lon, int from_epsg, int to_epsg)
  -p /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/poses.csv \
  -o /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/map.tif \
  /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/photos/*.jpg
+
+ OR
+
+ ./standalone_mapping \
+ -e /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/dem.tif \
+ -p /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/poses.csv \
+ -o /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/map.tif \
+ /home/rbailonr/Documents/FireRS/ir_image_dataset_porto_2019/mapping/photos/*.jpg
+
 */
 int main(int argc, char* argv[])
 {
   std::string wait;
-  std::cin >> wait;
+//  std::cin >> wait;
 
   std::string pose_file;
   std::string elevation_file;
@@ -124,8 +133,8 @@ int main(int argc, char* argv[])
   double im_height = 480.0;
   // http://answers.opencv.org/question/139166/focal-length-from-calibration-parameters
   // https://ksimek.github.io/2013/08/13/intrinsic/
-  double intr[] = {4.7407656455715507e+04, 0.0, 3.1950000000000000e+02,
-                   0.0, 4.7407656455715507e+04, 2.3950000000000000e+02,
+  double intr[] = {4.7407656455715507e+04*0.05, 0.0, 3.1950000000000000e+02,
+                   0.0, 4.7407656455715507e+04*0.05, 2.3950000000000000e+02,
                    0.0, 0.0, 1.0};
   //intiric matrix is in pixel units
   cv::Mat intrinsic = cv::Mat(3, 3, CV_64FC1, &intr);
@@ -162,14 +171,30 @@ int main(int argc, char* argv[])
     PositionProjected p = transform_coordinates(lat, lon, 4258, 3035);
     double pp[] = {p.x, p.y, height};
     cv::Mat translation = cv::Mat(3, 1, CV_64FC1, &pp);
-    cv::Mat rotation = Mapping::rotation_matrix(0.0,0., 0.);
+    cv::Mat world_to_uav = Mapping::rotation_matrix(phi, theta, -psi+M_PI_2);
+    cv::Mat uav_to_camera = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
+    uav_to_camera.at<double>(0, 0) = 1.;
+    uav_to_camera.at<double>(1, 1) = -1.;
+    uav_to_camera.at<double>(2, 2) = -1.;
+    cv::Mat camera_to_world = uav_to_camera * world_to_uav;
+    std::cout << camera_to_world << std::endl;
+
+    cv::Mat Rotation = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
 
     // cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector<double> R_Dis, std::vector<double> T_Dis
-    Image im = Image(image_mat, translation, rotation, intrinsic, rdis, tdis);
+    Image im = Image(image_mat, translation, camera_to_world, intrinsic, rdis, tdis);
+//    TestImage::test_camera_matrix(im, 0, 0);
+//    TestImage::test_camera_matrix(im, 100, 100);
+//    TestImage::test_camera_matrix(im, -100, 100);
+//    TestImage::test_camera_matrix(im, -100, -100);
+//    TestImage::test_camera_matrix(im, 100, -100);
+
     bool Image_with_DEM_match = mapper.map(im, timestamp);
-    if (Image_with_DEM_match){
+    if (Image_with_DEM_match)
+    {
       std::cout << "OK" << std::endl;
-    }else{
+    } else
+    {
       std::cout << "Not OK" << std::endl;
     }
     mapper.save_firemap(out_folder);

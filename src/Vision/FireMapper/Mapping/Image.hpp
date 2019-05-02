@@ -50,7 +50,8 @@ public:
   int ncols;
   int nrows;
 
-  Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot, cv::Mat Intr, std::vector<double> R_Dis, std::vector<double> T_Dis);
+  Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot_cam_to_world, cv::Mat Intr, std::vector<double> R_Dis,
+        std::vector<double> T_Dis);
 
   cv::Mat get_Rotation() const;
 
@@ -79,7 +80,7 @@ private:
   cv::Mat undistortedImg;
 
   cv::Mat Translation; /* In Meters */
-  cv::Mat Rotation;
+  cv::Mat Rotation_cam_to_world;
   cv::Mat IntrinsicPixelMatrix;
   cv::Mat IntrinsicMatrix;
   std::vector<double> Radial_distortion;
@@ -88,6 +89,23 @@ private:
   cv::Mat camera_matrix;
   cv::Mat DistMatrix;
 
+
+};
+
+class TestImage
+{
+public:
+  static void test_camera_matrix(const Image& im, double delta_x=0., double delta_y=0.)
+  {
+    double ppp[4] = {im.get_Translation().at<double>(0)+delta_x, im.get_Translation().at<double>(1)+delta_y, 0, 1.};
+    cv::Mat point = cv::Mat(4, 1, CV_64FC1, &ppp);
+    std::cout << "Target position in world " << point << std::endl;
+    cv::Mat p_image = im.get_CameraMatrix() * point;
+    p_image.at<double>(0) = p_image.at<double>(0) / p_image.at<double>(2);
+    p_image.at<double>(1) = p_image.at<double>(1) / p_image.at<double>(2);
+    p_image.at<double>(2) = p_image.at<double>(2) / p_image.at<double>(2);
+    std::cout << "Target position in picture " << p_image << std::endl;
+  };
 
 };
 
