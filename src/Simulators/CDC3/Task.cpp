@@ -221,8 +221,18 @@ namespace Simulators
 
         RetaskWaypoint rtw;
         rtw.m_timestamp_s = Time::Clock::getSinceEpoch();
-        rtw.m_lat_rads = lat;
-        rtw.m_lon_rads = lon;
+
+        if (!m_args.override_location)
+        {
+          rtw.m_lat_rads = lat;
+          rtw.m_lon_rads = lon;
+        }
+        else
+        {
+          rtw.m_lat_rads = Angles::radians(m_args.origin_lat_degs);
+          rtw.m_lon_rads = Angles::radians(m_args.origin_lon_degs);
+        }
+
         rtw.m_speed_mps = m_eestate->u;
 
         std::vector<char> data;
