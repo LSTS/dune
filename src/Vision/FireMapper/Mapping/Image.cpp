@@ -76,7 +76,7 @@ Image::Image(cv::Mat Imat, cv::Mat Trans, cv::Mat Rot_cam_to_world, cv::Mat Intr
   cv::Mat Transform_world_to_cam = cv::Mat::zeros(4, 4, CV_64FC1);
   cv::Mat Rotation_world_to_cam;
   cv::transpose(Rotation_cam_to_world, Rotation_world_to_cam);
-  std::cout << "Rotation C -> W matrix: " << std::endl << Rotation_cam_to_world << std::endl << std::endl;
+//  std::cout << "Rotation C -> W matrix: " << std::endl << Rotation_cam_to_world << std::endl << std::endl;
 
   cv::hconcat(Rotation_world_to_cam, -1 * Rotation_world_to_cam * Translation, Transform_world_to_cam);
   cv::Mat affineRow = (cv::Mat_<double>(1, 4) << 0.0, 0.0, 0.0, 1.0);

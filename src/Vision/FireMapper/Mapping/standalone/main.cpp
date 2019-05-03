@@ -133,8 +133,8 @@ int main(int argc, char* argv[])
   double im_height = 480.0;
   // http://answers.opencv.org/question/139166/focal-length-from-calibration-parameters
   // https://ksimek.github.io/2013/08/13/intrinsic/
-  double intr[] = {4.7407656455715507e+04*0.05, 0.0, 3.1950000000000000e+02,
-                   0.0, 4.7407656455715507e+04*0.05, 2.3950000000000000e+02,
+  double intr[] = {4.7407656455715507e+04 * 0.05, 0.0, 3.1950000000000000e+02,
+                   0.0, 4.7407656455715507e+04 * 0.05, 2.3950000000000000e+02,
                    0.0, 0.0, 1.0};
   //intiric matrix is in pixel units
   cv::Mat intrinsic = cv::Mat(3, 3, CV_64FC1, &intr);
@@ -169,9 +169,10 @@ int main(int argc, char* argv[])
 
     cv::Mat image_mat = cv::imread((*photo_path_it), cv::ImreadModes::IMREAD_GRAYSCALE);
     PositionProjected p = transform_coordinates(lat, lon, 4258, 3035);
+    std::cout << "Location: " << static_cast<int>(p.x) << ", " << static_cast<int>(p.y) << std::endl;
     double pp[] = {p.x, p.y, height};
     cv::Mat translation = cv::Mat(3, 1, CV_64FC1, &pp);
-    cv::Mat world_to_uav = Mapping::rotation_matrix(phi, theta, -psi+M_PI_2);
+    cv::Mat world_to_uav = Mapping::rotation_matrix(phi, theta, -psi + M_PI_2);
     cv::Mat uav_to_camera = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
     uav_to_camera.at<double>(0, 0) = 1.;
     uav_to_camera.at<double>(1, 1) = -1.;
