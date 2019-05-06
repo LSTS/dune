@@ -307,6 +307,9 @@ namespace Simulators
         }
         else
         {
+          op.msg.setDestination(m_task->getSystemId());
+          op.msg.setDestinationEntity(m_task->getEntityId());
+
           m_task->dispatch(&op.msg, DF_LOOP_BACK);
 
           if (op.msg.flags == IMC::SAMessage::SAM_ACK)

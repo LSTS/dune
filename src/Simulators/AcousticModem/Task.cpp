@@ -27,6 +27,9 @@
 // Author: Luis Venancio                                                    *
 //***************************************************************************
 
+// TODO: Add support for USBL simulation 
+// (requires modification of the USBL simulator)
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -193,10 +196,10 @@ namespace Simulators
       void
       consume(const IMC::SAMessage* amsg)
       {
-        if (amsg->getSource() != getSystemId())
+        if (amsg->getDestination() != getSystemId())
           return;
         
-        if (amsg->getSourceEntity() != getEntityId())
+        if (amsg->getDestinationEntity() != getEntityId())
           return;
 
         if (String::startsWith(
@@ -261,7 +264,7 @@ namespace Simulators
       rcvRxFrame(const IMC::SAMessage* amsg)
       {
         IMC::UamRxFrame rx;
-        rx.sys_src  = resolveSystemId(amsg->getSource());
+        rx.sys_src  = amsg->sys_src;
         rx.sys_dst  = amsg->sys_dst;
         rx.data     = amsg->data;
 
