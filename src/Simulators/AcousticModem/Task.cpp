@@ -28,7 +28,7 @@
 //***************************************************************************
 
 // TODO: Add support for USBL simulation 
-// (requires modification of the USBL simulator)
+// (requires modification of the USBL simulator).
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -37,13 +37,22 @@
 
 namespace Simulators
 {
+  //! Simulates an Acoustic Modem.
+  //!
+  //! Receives UamTxFrame messages, encapsulates in SAMessages and sends over 
+  //! UDP multicast.
+  //! Receives SAMessages, simulates message travel time and data loss (based
+  //! on a Gaussian distribution of distance and message size) and sends
+  //! corresponding UamRxFrame.
+  //! @author Luis Venancio
   namespace AcousticModem
   {
     using DUNE_NAMESPACES;
 
-    //! Timeout time
+    //! Timeout time.
     static const double c_timeout = 5.0;
 
+    //! Transmission ticket structure.
     struct Ticket
     {
       //! IMC source address.
@@ -58,8 +67,8 @@ namespace Simulators
 
     struct Arguments
     {
-      //! Modem operation arguments
-      MOArguments moargs;
+      //! Modem operation arguments.
+      SDArguments sdargs;
     };
 
     struct Task: public Tasks::Task
@@ -70,38 +79,40 @@ namespace Simulators
       Ticket* m_ticket;
       //! Timeout counter.
       Time::Counter<double> m_timeout;
-      //! Modem driver handler
+      //! Modem driver handler.
       SimulatedDriver* m_driver;
       
-
+      //! Constructor.
+      //! @param[in] name task name.
+      //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_ticket(NULL)
       {
-        param("UDP Communications -- Multicast Address", m_args.moargs.udp_maddr)
+        param("UDP Communications -- Multicast Address", m_args.sdargs.udp_maddr)
         .defaultValue("225.0.2.1")
         .description("UDP multicast address for communications");
 
-        param("UDP Communications -- Port", m_args.moargs.udp_port)
+        param("UDP Communications -- Port", m_args.sdargs.udp_port)
         .defaultValue("8021")
         .description("UDP port for communications");
 
-        param("Modem Type", m_args.moargs.mtype)
+        param("Modem Type", m_args.sdargs.mtype)
         .description("Vehicle modem type (Ex. Evologics, Seatrac)");
 
-        param("Transmission Speed", m_args.moargs.tx_speed)
+        param("Transmission Speed", m_args.sdargs.tx_speed)
         .description("Modem transmission speed (bps)");
 
-        param("Distance Standard Deviation", m_args.moargs.dst_peak_width)
+        param("Distance Standard Deviation", m_args.sdargs.dst_peak_width)
         .defaultValue("750");
 
-        param("Size Standard Deviation", m_args.moargs.dsize_peak_width)
+        param("Size Standard Deviation", m_args.sdargs.dsize_peak_width)
         .defaultValue("200");
 
-        param("PRNG Type", m_args.moargs.prng_type)
+        param("PRNG Type", m_args.sdargs.prng_type)
         .defaultValue(Random::Factory::c_default);
 
-        param("PRNG Seed", m_args.moargs.prng_seed)
+        param("PRNG Seed", m_args.sdargs.prng_seed)
         .defaultValue("-1");
 
         // Register consumers.
@@ -112,15 +123,17 @@ namespace Simulators
         bind<IMC::SAMessage>(this);
       }
 
+      //! Initialize resources.
       void
       onResourceAcquisition(void)
       {
-        m_driver = new SimulatedDriver(&m_args.moargs, this);
+        m_driver = new SimulatedDriver(&m_args.sdargs, this);
 
         //Deactivate until SimulatedState message is received
         requestDeactivation();
       }
 
+      //! Release resources.
       void
       onResourceRelease(void)
       {
@@ -129,6 +142,9 @@ namespace Simulators
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
       }
 
+      //! Clear ticket and send status.
+      //! @param[in] reason status to send.
+      //! @param[in] error error message, if available.
       void
       clearTicket(IMC::UamTxStatus::ValueEnum reason, const std::string& error = "")
       {
@@ -139,7 +155,10 @@ namespace Simulators
           m_ticket = NULL;
         }
       }
-
+      
+      //! Replace current ticket.
+      //! @param[in] ticket ticket to replae current.
+      //! @param[in] reason status to send.
       void
       replaceTicket(const Ticket* ticket)
       {
@@ -148,7 +167,10 @@ namespace Simulators
         m_timeout.setTop(c_timeout);
       }
 
-      //! Send status
+      //! Send status.
+      //! @param[in] ticket ticket to return status.
+      //! @param[in] value status to send.
+      //! @param[in] error error message, if available.
       void
       sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
                     const std::string& error = "")
@@ -259,7 +281,8 @@ namespace Simulators
         m_driver->setSimState(*msg);
       }
 
-      //! Parse SAMessage into UamRxFrame and send
+      //! Parse SAMessage into UamRxFrame and send.
+      //! @param[in] amsg SAMessage encapsulating UamRxFrame data.
       void
       rcvRxFrame(const IMC::SAMessage* amsg)
       {
@@ -276,7 +299,8 @@ namespace Simulators
         dispatch(rx);
       }
 
-      //! Parse SAMessage into UamRxRange and send
+      //! Parse SAMessage into UamRxRange and send.
+      //! @param[in] amsg SAMessage encapsulating UamRxRange data.
       void
       rcvRxRange(const IMC::SAMessage* amsg)
       {
@@ -290,7 +314,8 @@ namespace Simulators
         clearTicket(IMC::UamTxStatus::UTS_DONE);
       }
 
-      //! Handle status messages from the driver
+      //! Handle status messages from the driver.
+      //! @param[in] str string containing status message.
       void
       handleStatus(const std::string& str)
       {
@@ -323,7 +348,7 @@ namespace Simulators
       }      
 
       //! Check timeout counter for overflow if there is
-      //! an open transmission ticket
+      //! an open transmission ticket.
       void
       checkTimeout()
       {

@@ -42,16 +42,16 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
-    //! Sound speed
+    //! Sound speed.
     static const double c_sound_speed = 1500;
-    //! Absolute maximum transmission range
+    //! Absolute maximum transmission range.
     static const double c_max_range = 3000;
 
-    struct MOArguments
+    struct SDArguments
     {      
-      //! Multicast Address
+      //! Multicast Address.
       Address udp_maddr;
-      //! UDP port
+      //! UDP port.
       uint16_t udp_port;
       //! Modem type.
       std::string mtype;
@@ -66,14 +66,16 @@ namespace Simulators
       //! PRNG seed.
       int prng_seed;
     };
-
+    
+    //! Structure holding transmission/receival operation
+    //! parameters.
     struct Operation
     {
-      //! Transmission flag
+      //! Transmission flag.
       bool isTx;
-      //! Absolute time to start receiving
+      //! Absolute time to start receiving.
       double start_time;
-      //! Message to handle
+      //! Message to handle.
       IMC::SAMessage msg;
     };
 
@@ -81,8 +83,10 @@ namespace Simulators
     {
     public:
       //! Constructor.
-      SimulatedDriver(MOArguments* moargs, Tasks::Task* task):
-      m_args(moargs),
+      //! @param[in] sdargs arguments of simulated driver.
+      //! @param[in] task task handle.
+      SimulatedDriver(SDArguments* sdargs, Tasks::Task* task):
+      m_args(sdargs),
       m_task(task),
       m_current_op(NULL)
       {
@@ -112,6 +116,8 @@ namespace Simulators
         Memory::clear(m_current_op);
       }
 
+      //! Change current operation to transmission operation.
+      //! @param[in] msg message to transmit.
       void
       transmit(const IMC::UamTxFrame* msg)
       {
@@ -126,6 +132,7 @@ namespace Simulators
         setBusy(m_current_op->msg.txtime);
       }
 
+      //! Modem driver main.
       void
       runModem()
       {
@@ -134,13 +141,16 @@ namespace Simulators
         exeOperation();
       }
 
+      //! Set current vehicle state.
+      //! @param[in] msg current vehicle state.
       void
       setSimState(IMC::SimulatedState msg)
       {
         m_lstate = msg;
       }
 
-      //! Distance to source vehicle
+      //! Distance to source vehicle.
+      //! @param[in] msg current vehicle state.
       double
       distance(const IMC::SAMessage* src_state)
       {
@@ -151,7 +161,7 @@ namespace Simulators
                               src_state->lat, src_state->lon, src_state->depth);
       }
       
-      //! Check if modem is busy
+      //! Check if modem is busy.
       bool
       isBusy()
       {
@@ -159,8 +169,8 @@ namespace Simulators
       }
     
     private:
-      //! Arguments
-      MOArguments* m_args;
+      //! Arguments.
+      SDArguments* m_args;
       //! Parent task. 
       Tasks::Task* m_task;
       //! UDP socket.
@@ -179,7 +189,8 @@ namespace Simulators
       //! Timeout counter.
       Time::Counter<double> m_busy_counter;
 
-      //! Transmit message over TCP
+      //! Transmit message over TCP.
+      //! @param[in] message to transmit.
       void
       share(const IMC::Message* msg)
       {
@@ -188,6 +199,7 @@ namespace Simulators
         m_sock->write(m_buf, n, m_args->udp_maddr, m_args->udp_port);
       }
 
+      //! Check UDP socket for incoming message.
       void
       checkIncomingData(void)
       {
@@ -219,6 +231,8 @@ namespace Simulators
         }
       }
 
+      //! Add message to receiving queue.
+      //! @param[in] amsg message to add to queue.
       void
       toQueue(const IMC::SAMessage* amsg)
       {
@@ -236,6 +250,7 @@ namespace Simulators
         }
       }
 
+      //! Check queue for start of message reception.
       void
       checkQueue()
       {
@@ -261,6 +276,9 @@ namespace Simulators
         }
       }
 
+      //! Check for message collisions.
+      //! Change current operation to receiving operation.
+      //! @param[in] op operation to perform.
       void
       receive(Operation* op)
       {
@@ -277,6 +295,7 @@ namespace Simulators
         }
       }
 
+      //! Execute current operation.
       void
       exeOperation()
       {
@@ -317,8 +336,9 @@ namespace Simulators
         }
       }
 
-      //! Build range request reply and send 
-      void
+      //! Build range request reply and send.
+      //! @param[in] range_request range request message.
+      void 
       sendRangeReply(const IMC::SAMessage* range_request)
       {
         IMC::UamTxFrame msg;
@@ -329,10 +349,14 @@ namespace Simulators
         msg.data.assign(str.begin(), str.end());
 
         if (!isBusy())
+        {
           transmit(&msg);
+          std::cout << "Reply sent\n";
+        }
       }
 
-      //! Check destination and modem compatibility
+      //! Check destination and modem compatibility.
+      //! @param[in] amsg message to check.
       bool
       toParse(const IMC::SAMessage* amsg)
       {
@@ -349,7 +373,10 @@ namespace Simulators
         return check;
       }
 
-      //! Simulate random successful delivery
+      //! Simulate random successful delivery 
+      //! based on gaussian model of distance and data size.
+      //! @param[in] distance distance to source vehicle.
+      //! @param[in] data_size size of message data.
       bool
       deliverySucceeds(double distance, uint16_t data_size)
       {
@@ -365,13 +392,17 @@ namespace Simulators
         return m_prng->uniform() <= dist_prob*size_prob;
       }
 
-      //! Set busy counter for the transmission time
+      //! Set busy counter for the transmission time.
+      //! @param[in] busy_time modem busy time in seconds.
       void
       setBusy(double busy_time)
       {
         m_busy_counter.setTop(busy_time);
       }
 
+      //! Encapsulate UamTxFrame to SAMessage.
+      //! @param[in] amsg reference to SAMessage.
+      //! @param[in] msg UamTxFrame to encapsulate.
       void
       UTF2SAM(IMC::SAMessage& amsg, const IMC::UamTxFrame* msg)
       {
@@ -394,6 +425,8 @@ namespace Simulators
         amsg.setTimeStamp();
       }
 
+      //! Dispatch DevDataText to acoustic modem task.
+      //! @param[in] str string to send.
       void
       dispatch(const std::string& str)
       {
