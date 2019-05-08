@@ -39,9 +39,9 @@ namespace Simulators
 {
   //! Simulates an Acoustic Modem.
   //!
-  //! Receives UamTxFrame messages, encapsulates in SAMessages and sends over 
+  //! Receives UamTxFrame messages, encapsulates in SimAcousticMessages and sends over 
   //! UDP multicast.
-  //! Receives SAMessages, simulates message travel time and data loss (based
+  //! Receives SimAcousticMessages, simulates message travel time and data loss (based
   //! on a Gaussian distribution of distance and message size) and sends
   //! corresponding UamRxFrame.
   //! @author Luis Venancio
@@ -120,7 +120,7 @@ namespace Simulators
         bind<IMC::SimulatedState>(this);
         bind<IMC::UamTxFrame>(this);
         bind<IMC::DevDataText>(this);
-        bind<IMC::SAMessage>(this);
+        bind<IMC::SimAcousticMessage>(this);
       }
 
       //! Initialize resources.
@@ -216,7 +216,7 @@ namespace Simulators
       }
 
       void
-      consume(const IMC::SAMessage* amsg)
+      consume(const IMC::SimAcousticMessage* amsg)
       {
         if (amsg->getDestination() != getSystemId())
           return;
@@ -281,10 +281,10 @@ namespace Simulators
         m_driver->setSimState(*msg);
       }
 
-      //! Parse SAMessage into UamRxFrame and send.
-      //! @param[in] amsg SAMessage encapsulating UamRxFrame data.
+      //! Parse SimAcousticMessage into UamRxFrame and send.
+      //! @param[in] amsg SimAcousticMessage encapsulating UamRxFrame data.
       void
-      rcvRxFrame(const IMC::SAMessage* amsg)
+      rcvRxFrame(const IMC::SimAcousticMessage* amsg)
       {
         IMC::UamRxFrame rx;
         rx.sys_src  = amsg->sys_src;
@@ -299,10 +299,10 @@ namespace Simulators
         dispatch(rx);
       }
 
-      //! Parse SAMessage into UamRxRange and send.
-      //! @param[in] amsg SAMessage encapsulating UamRxRange data.
+      //! Parse SimAcousticMessage into UamRxRange and send.
+      //! @param[in] amsg SimAcousticMessage encapsulating UamRxRange data.
       void
-      rcvRxRange(const IMC::SAMessage* amsg)
+      rcvRxRange(const IMC::SimAcousticMessage* amsg)
       {
         IMC::UamRxRange range;
         range.sys   = amsg->sys_src;

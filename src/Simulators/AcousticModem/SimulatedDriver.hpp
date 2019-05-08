@@ -76,7 +76,7 @@ namespace Simulators
       //! Absolute time to start receiving.
       double start_time;
       //! Message to handle.
-      IMC::SAMessage msg;
+      IMC::SimAcousticMessage msg;
     };
 
     class SimulatedDriver
@@ -152,7 +152,7 @@ namespace Simulators
       //! Distance to source vehicle.
       //! @param[in] msg current vehicle state.
       double
-      distance(const IMC::SAMessage* src_state)
+      distance(const IMC::SimAcousticMessage* src_state)
       {
         double llat, llon;
         Coordinates::toWGS84(m_lstate, llat, llon);
@@ -212,9 +212,9 @@ namespace Simulators
             size_t n = m_sock->read(m_buf, sizeof(m_buf), &dummy);
             IMC::Message* msg = IMC::Packet::deserialize(m_buf, n);
 
-            if (msg->getId() == DUNE_IMC_SAMESSAGE)
+            if (msg->getId() == DUNE_IMC_SIMACOUSTICMESSAGE)
             {
-              IMC::SAMessage* amsg = static_cast<IMC::SAMessage*>(msg);
+              IMC::SimAcousticMessage* amsg = static_cast<IMC::SimAcousticMessage*>(msg);
               if (toParse(amsg))
                 toQueue(amsg);
             }
@@ -234,7 +234,7 @@ namespace Simulators
       //! Add message to receiving queue.
       //! @param[in] amsg message to add to queue.
       void
-      toQueue(const IMC::SAMessage* amsg)
+      toQueue(const IMC::SimAcousticMessage* amsg)
       {
         double d = distance(amsg);
         if (deliverySucceeds(d, amsg->data.size()))
@@ -331,7 +331,7 @@ namespace Simulators
 
           m_task->dispatch(&op.msg, DF_LOOP_BACK);
 
-          if (op.msg.flags == IMC::SAMessage::SAM_ACK)
+          if (op.msg.flags == IMC::SimAcousticMessage::SAM_ACK)
             sendRangeReply(&op.msg);		
         }
       }
@@ -339,7 +339,7 @@ namespace Simulators
       //! Build range request reply and send.
       //! @param[in] range_request range request message.
       void 
-      sendRangeReply(const IMC::SAMessage* range_request)
+      sendRangeReply(const IMC::SimAcousticMessage* range_request)
       {
         IMC::UamTxFrame msg;
         msg.seq = range_request->seq;
@@ -358,7 +358,7 @@ namespace Simulators
       //! Check destination and modem compatibility.
       //! @param[in] amsg message to check.
       bool
-      toParse(const IMC::SAMessage* amsg)
+      toParse(const IMC::SimAcousticMessage* amsg)
       {
         bool check;
 
@@ -400,11 +400,11 @@ namespace Simulators
         m_busy_counter.setTop(busy_time);
       }
 
-      //! Encapsulate UamTxFrame to SAMessage.
-      //! @param[in] amsg reference to SAMessage.
+      //! Encapsulate UamTxFrame to SimAcousticMessage.
+      //! @param[in] amsg reference to SimAcousticMessage.
       //! @param[in] msg UamTxFrame to encapsulate.
       void
-      UTF2SAM(IMC::SAMessage& amsg, const IMC::UamTxFrame* msg)
+      UTF2SAM(IMC::SimAcousticMessage& amsg, const IMC::UamTxFrame* msg)
       {
         // Construct simulated acoustic message metadata
         Coordinates::toWGS84(m_lstate, amsg.lat, amsg.lon);
