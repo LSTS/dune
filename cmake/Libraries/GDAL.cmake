@@ -23,23 +23,23 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 if(GDAL)
-    find_package(GDAL REQUIRED)
-    if(GDAL_INCLUDE_DIRS)
-        # GDAL Present
-        set(DUNE_SYS_HAS_GDAL 1 CACHE INTERNAL "GDAL library")
-        set(DUNE_USING_GDAL 1 CACHE INTERNAL "GDAL library")
+  CHECK_LIBRARY_EXISTS(gdal gdal_json_object_get_int "" HAVE_LIB_GDAL)
+  if(HAVE_LIB_GDAL)
+    # GDAL Present
+    set(DUNE_SYS_HAS_GDAL 1 CACHE INTERNAL "GDAL library")
+    set(DUNE_USING_GDAL 1 CACHE INTERNAL "GDAL library")
 
-        dune_add_lib(gdal)
+    dune_add_lib(gdal)
 
-        # Check Headers
-        dune_test_header(/usr/include/gdal/gdal_priv.h)
-        dune_test_header(/usr/include/gdal/cpl_conv.h)
-        dune_test_header(/usr/include/gdal/ogr_spatialref.h)
+    # Check Headers
+    dune_test_header(gdal/gdal_priv.h)
+    dune_test_header(gdal/cpl_conv.h)
+    dune_test_header(gdal/ogr_spatialref.h)
 
-    else(GDAL_INCLUDE_DIRS)
-        # GDAL not found on the system.
-        message(SEND_ERROR "GDAL was not found on the system.")
-        set(DUNE_SYS_HAS_GDAL 0 CACHE INTERNAL "GDAL library")
-        set(DUNE_USING_GDAL 0 CACHE INTERNAL "GDAL library")
-    endif(GDAL_INCLUDE_DIRS)
+  else(HAVE_LIB_GDAL)
+    # GDAL not found on the system.
+    message(SEND_ERROR "GDAL was not found on the system.")
+    set(DUNE_SYS_HAS_GDAL 0 CACHE INTERNAL "GDAL library")
+    set(DUNE_USING_GDAL 0 CACHE INTERNAL "GDAL library")
+  endif(HAVE_LIB_GDAL)
 endif(GDAL)
