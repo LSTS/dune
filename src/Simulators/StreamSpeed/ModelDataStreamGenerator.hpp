@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "Grid.hpp"
-#include "HDF5Reader.hpp"
+#include "DUNE/Parsers/HDF5Reader.hpp"
 #include "StreamGenerator.hpp"
 
 namespace Simulators
@@ -91,7 +91,7 @@ namespace Simulators
                  double time = 0.0) const override;
 
       private:
-        HDF5Reader m_file;
+        DUNE::Parsers::HDF5Reader m_file;
         //! Velocity in the East direction.
         std::vector<double> m_u;
         //! Velocity in the North direction.

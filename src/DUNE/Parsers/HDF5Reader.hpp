@@ -43,63 +43,60 @@ namespace hdf5
   }
 }    // namespace hdf5
 
-namespace Simulators
+namespace DUNE
 {
-  namespace StreamSpeed
+  namespace Parsers
   {
-    namespace StreamGenerator
+    using hdf5::file::File;
+
+    //! Simplifies reading data and attributes from HDF5 format files.
+    class HDF5Reader
     {
-      using hdf5::file::File;
+    public:
+      //! Constructor.
+      //! @param[in] filename path to an hdf5 file.
+      HDF5Reader(std::string const& filename);
 
-      //! Simplifies reading data and attributes from HDF5 format files.
-      class HDF5Reader
+      //! Destructor.
+      ~HDF5Reader();
+
+      //! Structure holding an arbitrary multidimensional HDF5 dataset.
+      template<typename T>
+      struct HDF5Dataset
       {
-      public:
-        //! Constructor.
-        //! @param[in] filename path to an hdf5 file.
-        HDF5Reader(std::string const& filename);
-
-        //! Destructor.
-        ~HDF5Reader();
-
-        //! Structure holding an arbitrary multidimensional HDF5 dataset.
-        template<typename T>
-        struct HDF5Dataset
-        {
-          //! Number of points in each dimension.
-          std::vector<size_t> dimensions;
-          //! The data values in row-major (C-style) order.
-          std::vector<T> data;
-        };
-
-        //! Check if a dataset exists in the given file.
-        //! @param[in] path path to the dataset in the file.
-        //! @return whether the dataset exists in the file.
-        bool
-        datasetExists(std::string const& path) const;
-
-        //! Get a dataset and its dimensions.
-        //! @param[in] path path to the dataset in the file.
-        //! @return structure containing the data and the dataset dimensions.
-        template<typename T>
-        HDF5Dataset<T>
-        getDataset(std::string const& path) const;
-
-        //! Get an attribute.
-        //! @param[in] path path to the node in the file where the attribute is
-        //! stored.
-        //! @param[in] attribute name of the attribute to get.
-        //! @return the attribute's data.
-        template<typename T>
-        std::vector<T>
-        getAttribute(std::string const& path,
-                     std::string const& attribute) const;
-
-      private:
-        //! Handle to an HDF5 file.
-        std::unique_ptr<File> m_file;
+        //! Number of points in each dimension.
+        std::vector<size_t> dimensions;
+        //! The data values in row-major (C-style) order.
+        std::vector<T> data;
       };
-    }    // namespace StreamGenerator
+
+      //! Check if a dataset exists in the given file.
+      //! @param[in] path path to the dataset in the file.
+      //! @return whether the dataset exists in the file.
+      bool
+      datasetExists(std::string const& path) const;
+
+      //! Get a dataset and its dimensions.
+      //! @param[in] path path to the dataset in the file.
+      //! @return structure containing the data and the dataset dimensions.
+      template<typename T>
+      HDF5Dataset<T>
+      getDataset(std::string const& path) const;
+
+      //! Get an attribute.
+      //! @param[in] path path to the node in the file where the attribute is
+      //! stored.
+      //! @param[in] attribute name of the attribute to get.
+      //! @return the attribute's data.
+      template<typename T>
+      std::vector<T>
+      getAttribute(std::string const& path,
+                    std::string const& attribute) const;
+
+    private:
+      //! Handle to an HDF5 file.
+      std::unique_ptr<File> m_file;
+    };
   }      // namespace StreamSpeed
 }    // namespace Simulators
 
