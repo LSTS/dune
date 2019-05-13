@@ -518,7 +518,7 @@ namespace DUNE
     void
     Matrix::swapRows(size_t i, size_t j)
     {
-      if (i >= m_ncols || j >= m_ncols)
+      if (i >= m_nrows || j >= m_nrows)
         throw Error("Invalid index!");
 
       if (i == j)
