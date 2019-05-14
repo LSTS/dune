@@ -95,8 +95,10 @@ namespace Vision
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
-      // Position in the projected coordinate system
-      double position_x, position_y, position_z;
+      // Position in the projected coordinate system (ETRS89/LAEA)
+      double position_x_pcs, position_y_pcs, position_z;
+      // Position in UTM29N (EPSG:32629)
+      double position_x_utm, position_y_utm;
       double phi, theta, psi;
 
       cv::Mat Image_Matrix;
@@ -130,7 +132,7 @@ namespace Vision
           .description("Main CPU IMC address.");
 
         param("DEM File", m_args.dem_file)
-          .defaultValue("/home/rbailonr/firers_data_porto/dem/porto_dem.tif")
+          .defaultValue("/home/rbailonr/firers_data_porto_utm/dem/porto_dem.tif")
           .description("Digital Elevation Map path.");
         // TODO: Coordinate System is retrieved from these DEM
 
@@ -139,11 +141,11 @@ namespace Vision
           .description("Threshold.");
 
         param("Projected Coordinate System", m_args.projected_coordinate_system_epsg)
-          .defaultValue("3035") // LAEA
+          .defaultValue("32629") // UTM29N
           .description("EPSG of the projected coordinate system used for the fire maps.");
 
         param("Geodetic Coordinate System", m_args.geodetic_coordinate_system_epsg)
-          .defaultValue("4258") // ETRS89
+          .defaultValue("4326") // WGS84
           .description("EPSG of the corresponding geodetic coordinate system for the projected one.");
 
         param("Morse IP", m_args.morse_ip)
@@ -191,7 +193,7 @@ namespace Vision
       }
 
       PositionProjected
-      transform_coordinates(double lat, double lon, int from_epsg, int to_epsg)
+      transform_gcs_to_pcs(double lat, double lon, int from_epsg, int to_epsg)
       {
         OGRSpatialReference wgs84_gcs;
         OGRSpatialReference pcs;
@@ -221,25 +223,61 @@ namespace Vision
         }
       }
 
+      PositionProjected
+      coordinate_transform(double x, double y, int from_epsg, int to_epsg)
+      {
+        OGRSpatialReference orig_srs;
+        OGRSpatialReference dest_srs;
+
+        orig_srs.importFromEPSG(from_epsg); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
+        dest_srs.importFromEPSG(to_epsg);
+
+        auto poCT = OGRCreateCoordinateTransformation(&orig_srs, &dest_srs);
+
+        if (poCT == nullptr)
+        {
+          throw std::invalid_argument("Invalid transformation");
+        } else
+        {
+          PositionProjected proj_coords;
+
+          auto xx = x;
+          auto yy = y;
+
+          poCT->Transform(1, &xx, &yy); // Again Transform must succeed
+
+          proj_coords.x = xx;
+          proj_coords.y = yy;
+
+          OGRCoordinateTransformation::DestroyCT(poCT);
+          return proj_coords;
+        }
+      }
+
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
       consume(const IMC::EstimatedState* e_state)
       {
         double m_lat = e_state->lat;
         double m_lon = e_state->lon;
-        double m_height = e_state->height;
+        double m_height = e_state->height + (-e_state->z);
 
         WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
 
         try
         {
-          PositionProjected point = transform_coordinates(m_lat, m_lon,
-                                                          m_args.geodetic_coordinate_system_epsg,
-                                                          m_args.projected_coordinate_system_epsg);
+          PositionProjected point = transform_gcs_to_pcs(m_lat, m_lon,
+                                                         m_args.geodetic_coordinate_system_epsg,
+                                                         m_args.projected_coordinate_system_epsg);
 
-          position_x = point.x;
-          position_y = point.y;
+          PositionProjected point_utm = transform_gcs_to_pcs(m_lat, m_lon, 4326, 32629);
+
+          position_x_pcs = point.x;
+          position_y_pcs = point.y;
           position_z = m_height;
+
+          position_x_utm = point_utm.x;
+          position_y_utm = point_utm.y;
 
           phi = e_state->phi;
           theta = e_state->theta;
@@ -356,8 +394,14 @@ namespace Vision
 
         inf("Compressed fire map size: %zu bytes", msg.value.size());
 
-        this->dispatch(&msg);
-        //inf("Skipping fire map message dispatch");
+        if (msg.getSerializationSize() < 65535)
+        {
+          this->dispatch(&msg);
+        } else
+        {
+          war("Skipping fire map message dispatch. The message is too long.");
+        }
+
       }
 
       //! Main loop.
@@ -412,13 +456,18 @@ namespace Vision
                 // If the morse grabber is free to do work...
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
               {
-                morse_grabber->capture(position_x, position_y, position_z, 0, /*theta*/ 0, 0);
+                std::cout << psi << std::endl;
+                morse_grabber->capture(position_x_utm, position_y_utm, position_z, phi,
+                                       theta, psi);
               }
                 // If morse grabber work is finished...
               else if (morse_grabber->is_image_available())
               {
                 t = morse_grabber->get_image();
-                cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
+                cv::Mat flipped_image;
+                cv::flip(t.image, flipped_image, 1);
+                t.image = flipped_image;
+                //cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
                 // because the images were tansposed so as to be sent and we have to transpose them back
                 fm_state = FireMappingState::MapImage;
               }
@@ -442,8 +491,14 @@ namespace Vision
                   if (abs(t.phi) <= Rotation_limit)
                   {
                     Intrinsic = (t.intrinsic_matrix).clone();
+                    // Convert from UTM to the LAEA coordiante system
+//                    std::cout << " UTM: " << t.x << "; " << t.y << std::endl;
+//                    auto gps = coordinate_transform(t.x, t.y, 32629, 4326);
+//                    std::cout << " GPS: " << gps.x << "; " << gps.y << std::endl;
+//                    auto pcs_defined = coordinate_transform(gps.x, gps.y, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
+//                    std::cout << "LAEA: " << pcs_defined.x << "; " << pcs_defined.y << std::endl;
 
-                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
+                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, -(t.psi));
 
                     // FIXME: Restore threaded mapping
 //                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
@@ -496,4 +551,4 @@ namespace Vision
   }
 }
 
-DUNE_TASK
+DUNE_TASK;
