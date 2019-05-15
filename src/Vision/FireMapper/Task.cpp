@@ -305,8 +305,8 @@ namespace Vision
             psi = e_state->psi;
           } catch (...)
           {
-//            err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
-//                m_args.projected_coordinate_system_epsg);
+            err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
+                m_args.projected_coordinate_system_epsg);
             this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
           }
         }
