@@ -483,7 +483,7 @@ namespace Vision
       {
         if (!m_args.is_master_mode)
         {
-          war("on Deactivation - slave mode");
+          inf("on Deactivation - slave mode");
           m_is_to_capture = false;
           m_capture->stopCapture();
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
