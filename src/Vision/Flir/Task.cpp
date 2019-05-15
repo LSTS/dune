@@ -40,6 +40,12 @@
 #include <Vision/Flir/Capture.hpp>
 #include <Vision/Flir/SaveImage.hpp>
 
+//Headers
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iterator>
+
 namespace Vision
 {
   namespace Flir
@@ -142,6 +148,8 @@ namespace Vision
       std::string m_actual_log_folder_master;
       //! entitie id of master
       uint8_t m_entity_master;
+      //! flag to control set of date system
+      bool m_date_set;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -206,6 +214,7 @@ namespace Vision
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::EntityInfo>(this);
+        bind<IMC::GpsFix>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -244,6 +253,7 @@ namespace Vision
       {
         if(!m_args.is_master_mode)
         {
+          m_date_set = false;
           debug("slave mode: onResourceInitialization");
           m_is_start_resources = false;
           set_cpu_governor();
@@ -438,6 +448,40 @@ namespace Vision
         {
           debug("master mode: consume EstimatedState");
         }
+      }
+
+      void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (!m_args.is_master_mode)
+        {
+          std::string master_dune = resolveSystemId(msg->getSource());
+          if (master_dune.compare(m_args.master_name) == 0)
+          {
+            debug("%f %d-%d-%d", msg->utc_time, msg->utc_day, msg->utc_month, msg->utc_year);
+            debug("%s", Format::getTimeDate(msg->utc_time, true).c_str());
+            std::vector<std::string> words;
+            splitString(Format::getTimeDate(msg->utc_time, true), words);
+            debug("%d - %s", words.size(), words[1].c_str());
+
+            if(msg->utc_year > 2018 && !m_date_set)
+            {
+              m_date_set = true;
+              char date[32];
+              sprintf(date, "date -s '%d-%d-%d %s'", msg->utc_year, msg->utc_month, msg->utc_day, words[1].c_str());
+              war("Setting %s", date);
+              system(date);
+            }
+          }
+         }
+       }
+
+      template <class Container>
+      void
+      splitString(const std::string& str, Container& cont)
+      {
+        std::istringstream iss(str);
+        std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), std::back_inserter(cont));
       }
 
       void
