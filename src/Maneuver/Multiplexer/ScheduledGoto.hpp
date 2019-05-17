@@ -82,7 +82,7 @@ namespace Maneuver
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        bool timeout = m_maneuver.arrival_time - Clock::getSinceEpoch() <= 0;
+        bool timeout = abs(m_maneuver.arrival_time - Clock::getSinceEpoch()) <= 5.;
         bool nearby = (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
         bool delayed = m_speed >= m_args->max_speed;
 

@@ -38,8 +38,9 @@ using DUNE_NAMESPACES;
 
 //OpenCV headers
 #include <opencv2/opencv.hpp>
-#include <Vision/FireMapper/Mapping.h>
-#include <Vision/FireMapper/Image.h>
+
+#include "Mapping/Mapping.hpp"
+#include "Mapping/Image.hpp"
 
 
 namespace Vision
@@ -64,7 +65,7 @@ namespace Vision
 
       bool
       Map_Image(cv::Mat Image_matrix, cv::Mat Translation, cv::Mat Rototation, cv::Mat Intrinsic,
-                vector<double> R_Distortion, vector<double> T_Distortion, Mapping& Mp)
+                std::vector<double> R_Distortion, std::vector<double> T_Distortion, Mapping* Mp)
       {
         if (!m_is_idle)
           return false;
@@ -143,7 +144,7 @@ namespace Vision
       //! Parent task.
       DUNE::Tasks::Task* m_task;
       //Mapping
-      Mapping m_Map;
+      Mapping* m_Map;
       //! Flag to start mapping
       bool m_start_mapping_flag;
       bool m_end_mapping_flag;
@@ -156,14 +157,14 @@ namespace Vision
       //! flag to control state of thread
       bool m_is_idle;
       // resulted maps
-      vector<cv::Mat> Maps;
+      std::vector<cv::Mat> Maps;
 
       bool
       Map_Image(void)
       {
         try
         {
-          return m_Map.Map(*m_Img_to_map);
+          return m_Map->map(*m_Img_to_map);
         }
         catch (std::runtime_error& ex)
         {

@@ -38,7 +38,7 @@ namespace DUNE
   namespace Concurrency
   {
     //! Stack size for threads.
-    static const uint32_t c_thread_stack_size = 128 * 1024;
+    static const uint32_t c_thread_stack_size = 1024 * 1024;
   }
 }
 
