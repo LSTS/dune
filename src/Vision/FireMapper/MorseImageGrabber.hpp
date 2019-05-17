@@ -128,6 +128,10 @@ namespace Vision
         }
       }
 
+      double psi_uav_to_camera(double psi) {
+        return -psi + M_PI_2;
+      }
+
       bool
       is_image_available(void)
       {
@@ -184,13 +188,16 @@ namespace Vision
 
             try
             {
+              // PSI is tranformed to
               if (!translate_camera_to(m_tagged_image.x, m_tagged_image.y, m_tagged_image.z) ||
-                  !rotate_camera_to(m_tagged_image.phi, m_tagged_image.theta, m_tagged_image.psi))
+                  !rotate_camera_to(m_tagged_image.phi, m_tagged_image.theta, psi_uav_to_camera(m_tagged_image.psi)))
               {
                 m_task->err("%s", "Move robot request failed");
                 m_error = true;
                 break;
               }
+
+              Delay::waitMsec(50);
 
               if (!capture_image())
               {
@@ -224,6 +231,7 @@ namespace Vision
                   m_tagged_image.intrinsic_matrix.at<double>(r, c) = cam_data["intrinsic_matrix"][r][c];
                 }
               }
+              std::cout << m_tagged_image.intrinsic_matrix << std::endl;
 
               // Warning! This cv::Mat constructor do not copy data!
               cv::Mat unsafe_image = cv::Mat(cv::Size(w, h), CV_8UC1,
@@ -292,6 +300,9 @@ namespace Vision
         int num_restarts = 999;
         while (num_restarts > 0)
         {
+          if (m_task->isStopping())
+          { return false; }
+
           try
           {
 //            delete m_sock_rpc;

@@ -38,14 +38,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 // GDAL headers
 #include <gdal/ogr_spatialref.h>
 
-// Firemapper headers
-#include <Vision/FireMapper/Mapping.h>
-#include <Vision/FireMapper/Raster_Reader.h>
-#include <Vision/FireMapper/Raster_Tile.h>
-#include <Vision/FireMapper/Image.h>
-#include <Vision/FireMapper/MorseImageGrabber.h>
-#include <Vision/FireMapper/Mapping_thread.hpp>
-#include <Vision/FireMapper/sensor_model.h>
+// Mapping headers
+#include "Mapping/Mapping.hpp"
+#include "Mapping/ElevationRaster.hpp"
+#include "Mapping/FireRaster.hpp"
+#include "Mapping/Image.hpp"
+#include "Mapping/SensorModel.hpp"
+
+// Firemapper task headers
+#include "MorseImageGrabber.hpp"
+#include "Mapping_thread.hpp"
 
 
 namespace Vision
@@ -95,17 +97,21 @@ namespace Vision
       cv::Mat Intrinsic;
       cv::Mat Translation;
       cv::Mat Rotation;
-      // Position in the projected coordinate system
-      double position_x, position_y, position_z;
+      // Position in the projected coordinate system (ETRS89/LAEA)
+      double position_x_pcs, position_y_pcs, position_z;
+      // Position in UTM29N (EPSG:32629)
+      double position_x_utm, position_y_utm;
       double phi, theta, psi;
 
       cv::Mat Image_Matrix;
 
-      vector<double> Radial_distortion;
-      vector<double> Tangential_distortion;
+      std::vector<double> Radial_distortion;
+      std::vector<double> Tangential_distortion;
 
       Mapping_thread* Map_thrd;
-      Mapping mapper;
+      FireRaster* fire_raster;
+      ElevationRaster* elevation_raster;
+      Mapping* mapper;
       MorseImageGrabber* morse_grabber;
 
       Arguments m_args;
@@ -133,20 +139,20 @@ namespace Vision
           .description("Main CPU IMC address.");
 
         param("DEM File", m_args.dem_file)
-          .defaultValue("/home/rbailonr/firers_data_porto/dem/porto_dem.tif")
+          .defaultValue("/home/rbailonr/firers_data_porto_utm/dem/porto_dem.tif")
           .description("Digital Elevation Map path.");
         // TODO: Coordinate System is retrieved from these DEM
 
         param("Threshold", m_args.threshold)
-          .defaultValue("200")
+          .defaultValue("128")
           .description("Threshold.");
 
         param("Projected Coordinate System", m_args.projected_coordinate_system_epsg)
-          .defaultValue("3035") // LAEA
+          .defaultValue("32629") // UTM29N
           .description("EPSG of the projected coordinate system used for the fire maps.");
 
         param("Geodetic Coordinate System", m_args.geodetic_coordinate_system_epsg)
-          .defaultValue("4258") // ETRS89
+          .defaultValue("4326") // WGS84
           .description("EPSG of the corresponding geodetic coordinate system for the projected one.");
 
         param("Morse IP", m_args.morse_ip)
@@ -197,53 +203,16 @@ namespace Vision
       void
       set_Rot_Trans_Matrix(double xx, double yy, double zz, double _phi, double _theta, double _psi)
       {
-        cv::Mat Rotationx = cv::Mat(cv::Size(3, 3), CV_64FC1);
-        cv::Mat Rotationy = cv::Mat(cv::Size(3, 3), CV_64FC1);
-        cv::Mat Rotationz = cv::Mat(cv::Size(3, 3), CV_64FC1);
-
         // Translation
         Translation.at<double>(0) = xx;
         Translation.at<double>(1) = yy;
         Translation.at<double>(2) = zz;
 
-        // Rotation over x axis phi.
-        Rotationx.cv::Mat::at<double>(0, 0) = 1;
-        Rotationx.cv::Mat::at<double>(0, 1) = 0;
-        Rotationx.cv::Mat::at<double>(0, 2) = 0;
-        Rotationx.cv::Mat::at<double>(1, 0) = 0;
-        Rotationx.cv::Mat::at<double>(1, 1) = cos(_phi);
-        Rotationx.cv::Mat::at<double>(1, 2) = -sin(_phi);
-        Rotationx.cv::Mat::at<double>(2, 0) = 0;
-        Rotationx.cv::Mat::at<double>(2, 1) = sin(_phi);
-        Rotationx.cv::Mat::at<double>(2, 2) = cos(_phi);
-
-        // Rotation over y axis theta.
-        Rotationy.cv::Mat::at<double>(0, 0) = cos(_theta);
-        Rotationy.cv::Mat::at<double>(0, 1) = 0;
-        Rotationy.cv::Mat::at<double>(0, 2) = sin(_theta);
-        Rotationy.cv::Mat::at<double>(1, 0) = 0;
-        Rotationy.cv::Mat::at<double>(1, 1) = 1;
-        Rotationy.cv::Mat::at<double>(1, 2) = 0;
-        Rotationy.cv::Mat::at<double>(2, 0) = -sin(_theta);
-        Rotationy.cv::Mat::at<double>(2, 1) = 0;
-        Rotationy.cv::Mat::at<double>(2, 2) = cos(_theta);
-
-        // Rotation over z axis psi.
-        Rotationz.cv::Mat::at<double>(0, 0) = cos(_psi);
-        Rotationz.cv::Mat::at<double>(0, 1) = -sin(_psi);
-        Rotationz.cv::Mat::at<double>(0, 2) = 0;
-        Rotationz.cv::Mat::at<double>(1, 2) = sin(_psi);
-        Rotationz.cv::Mat::at<double>(1, 1) = cos(_psi);
-        Rotationz.cv::Mat::at<double>(1, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 0;
-        Rotationz.cv::Mat::at<double>(2, 2) = 1;
-
-        Rotation = Rotationz * Rotationy * Rotationx;
+        Rotation = Mapping::rotation_matrix(_phi, _theta, _psi);
       }
 
       PositionProjected
-      transform_coordinates(double lat, double lon, int from_epsg, int to_epsg)
+      transform_gcs_to_pcs(double lat, double lon, int from_epsg, int to_epsg)
       {
         OGRSpatialReference wgs84_gcs;
         OGRSpatialReference pcs;
@@ -273,6 +242,37 @@ namespace Vision
         }
       }
 
+      PositionProjected
+      coordinate_transform(double x, double y, int from_epsg, int to_epsg)
+      {
+        OGRSpatialReference orig_srs;
+        OGRSpatialReference dest_srs;
+
+        orig_srs.importFromEPSG(from_epsg); // RGF93 (EPSG:4171) is in practice equal to WGS84 (EPSG:4326)
+        dest_srs.importFromEPSG(to_epsg);
+
+        auto poCT = OGRCreateCoordinateTransformation(&orig_srs, &dest_srs);
+
+        if (poCT == nullptr)
+        {
+          throw std::invalid_argument("Invalid transformation");
+        } else
+        {
+          PositionProjected proj_coords;
+
+          auto xx = x;
+          auto yy = y;
+
+          poCT->Transform(1, &xx, &yy); // Again Transform must succeed
+
+          proj_coords.x = xx;
+          proj_coords.y = yy;
+
+          OGRCoordinateTransformation::DestroyCT(poCT);
+          return proj_coords;
+        }
+      }
+
       // Test - Receive EstimatedState message from main CPU (if FireMapper active)
       void
       consume(const IMC::EstimatedState* e_state)
@@ -284,36 +284,36 @@ namespace Vision
           if(sysName != m_args.system_id)
             return;
 
-          double m_lat = e_state->lat;
-          double m_lon = e_state->lon;
-          double m_height = e_state->height;
+        double m_lat = e_state->lat;
+        double m_lon = e_state->lon;
+        double m_height = e_state->height + (-e_state->z);
 
-          WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
+        WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon)
 
-          try
-          {
-            PositionProjected point = transform_coordinates(m_lat, m_lon,
-                                                            m_args.geodetic_coordinate_system_epsg,
-                                                            m_args.projected_coordinate_system_epsg);
-
-            position_x = point.x;
-            position_y = point.y;
-            position_z = m_height;
-
-            phi = e_state->phi;
-            theta = e_state->theta;
-            psi = e_state->psi;
-          } catch (...)
-          {
-            err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
-                m_args.projected_coordinate_system_epsg);
-            this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
-          }
-        }
-        /*else
+        try
         {
-          war("master mode: consume EstimatedState");
-        }*/
+          PositionProjected point = transform_gcs_to_pcs(m_lat, m_lon,
+                                                         m_args.geodetic_coordinate_system_epsg,
+                                                         m_args.projected_coordinate_system_epsg);
+
+          PositionProjected point_utm = transform_gcs_to_pcs(m_lat, m_lon, 4326, 32629);
+
+          position_x_pcs = point.x;
+          position_y_pcs = point.y;
+          position_z = m_height;
+
+          position_x_utm = point_utm.x;
+          position_y_utm = point_utm.y;
+
+          phi = e_state->phi;
+          theta = e_state->theta;
+          psi = e_state->psi;
+        } catch (...)
+        {
+          err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
+              m_args.projected_coordinate_system_epsg);
+          this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+        }
       }
 
       void
@@ -389,26 +389,21 @@ namespace Vision
           m_is_to_acivate = false;
           morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
 
-          Map_thrd = new Mapping_thread(this, "thrd_Mapper");
+        Map_thrd = new Mapping_thread(this, "thrd_Mapper");
 
+        try
+        {
           Path path_DEM = Path(m_args.dem_file);
           m_path_results = path_DEM.dirname(true).str();
-          std::vector<std::string> file_vec = std::vector<std::string>();
-          file_vec.push_back(m_args.dem_file);
-          try
-          {
-            mapper = Mapping(file_vec);
-            mapper.set_threshold(m_args.threshold);
-          }
-          catch (const std::invalid_argument& e)
-          {
-            err("%s", e.what());
-            this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
-          }
+          elevation_raster = new ElevationRaster(m_args.dem_file);
+          fire_raster = new FireRaster(elevation_raster);
+          mapper = new Mapping(fire_raster, m_args.threshold, true);
+          mapper->set_threshold(m_args.threshold);
         }
-        else
+        catch (const std::invalid_argument& e)
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          err("%s", e.what());
+          this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
         }
       }
 
@@ -416,15 +411,11 @@ namespace Vision
       void
       onResourceRelease(void)
       {
-        if (!m_args.is_master_mode)
-        {
-          try
-          {
-            delete morse_grabber;
-            delete Map_thrd;
-          }
-          catch (const std::invalid_argument& e){}
-        }
+        delete elevation_raster;
+        delete fire_raster;
+        delete mapper;
+        delete morse_grabber;
+        delete Map_thrd;
       }
 
       template<typename T>
@@ -434,7 +425,7 @@ namespace Vision
         std::copy(obj_begin, obj_begin + sizeof(T), std::back_inserter(buffer));
       }
 
-      void dispatch_firemap(Raster_Tile map)
+      void dispatch_firemap(const FireRaster& map)
       {
         IMC::DevDataBinary msg = IMC::DevDataBinary();
         msg.setTimeStamp();
@@ -444,12 +435,17 @@ namespace Vision
         // Magic number
         msg.value.emplace_back(0xF1);
         msg.value.emplace_back(0x3E);
+
+        // srsid
+        uint64_t srsid = m_args.projected_coordinate_system_epsg;
+        serialize<uint64_t>(srsid, msg.value);
+
         // x size
-        uint64_t x_size = map.get_fireMap_time().rows;
+        uint64_t x_size = map.get_firemap_time().rows;
         serialize<uint64_t>(x_size, msg.value);
 
         // y size
-        uint64_t y_size = map.get_fireMap_time().cols;
+        uint64_t y_size = map.get_firemap_time().cols;
         serialize<uint64_t>(y_size, msg.value);
 
         // x offset
@@ -464,65 +460,34 @@ namespace Vision
         double cell_width = map.get_pixel_width();
         serialize<double>(cell_width, msg.value);
 
-        // raster data
-        // Uncompressed fire map data
-        // char const* datastart = reinterpret_cast<char const*>(map.get_fireMap_time().datastart);
-        // char const* dataend = reinterpret_cast<char const*>(map.get_fireMap_time().dataend);
-        // std::copy(datastart, dataend, std::back_inserter(msg.value));
-
-        // Uncompressed size
-        uint64_t uncomp_size = map.get_fireMap_time().step[0] * map.get_fireMap_time().rows;
-        serialize<uint64_t>(uncomp_size, msg.value);
-
         // Compressed fire map data
         Compression::ZlibCompressor c = Compression::ZlibCompressor();
-        auto buff = c.compress(reinterpret_cast<char*>(map.get_fireMap_time().data),
-                               map.get_fireMap_time().step[0] * map.get_fireMap_time().rows);
+        auto buff = c.compress(reinterpret_cast<char*>(map.get_firemap_time().data),
+                               map.get_firemap_time().step[0] * map.get_firemap_time().rows);
         std::copy(buff.getBufferSigned(), buff.getBufferSigned() + buff.getSize(), std::back_inserter(msg.value));
 
         inf("Compressed fire map size: %zu bytes", msg.value.size());
 
-        this->dispatch(&msg);
-        //inf("Skipping fire map message dispatch");
+        if (msg.getSerializationSize() < 65535)
+        {
+          this->dispatch(&msg);
+        } else
+        {
+          war("Skipping fire map message dispatch. The message is too long.");
+        }
+
       }
 
-      void
-      onActivation(void)
-      {
-        if (!m_args.is_master_mode)
-        {
-          inf("slave mode: onActivation");
-
-        }
-        else
-        {
-          inf("master mode: onActivation");
-        }
-      }
-
-      void
-      onDeactivation(void)
-      {
-        if (!m_args.is_master_mode)
-        {
-          inf("slave mode: onDeactivation");
-        }
-        else
-        {
-          inf("master mode: onDeactivation");
-        }
-      }
       //! Main loop.
       void
       onMain(void)
       {
         float Rotation_limit = 0.08; // 5 degrees
+
+        Map_thrd->start();
+        morse_grabber->start();
+
         TaggedImage t;
-        if (!m_args.is_master_mode)
-        {
-          Map_thrd->start();
-          morse_grabber->start();
-        }
 
         // This Task works as an state machine:
         // FireMappingState::FetchImage -> MapImage -> DispatchFireMap
@@ -535,131 +500,125 @@ namespace Vision
         // or else to FireMappingState::MapImage
         while (!stopping())
         {
-          if (!m_args.is_master_mode)
+          waitForMessages(1.0);
+          if (!isActive())
           {
-            waitForMessages(1.0);
-            if (m_is_to_acivate)
+            fm_state = FireMappingState::None;
+          } else
+          {
+            if (fm_state == FireMappingState::None)
             {
-              fm_state = FireMappingState::None;
-            }
-            else
+              inf("FireMappingState::None");
+              fm_state = FireMappingState::FetchImage;
+
+            } else if (fm_state == FireMappingState::FetchImage)
             {
-              if (fm_state == FireMappingState::None)
-              {
-                inf("FireMappingState::None");
-                fm_state = FireMappingState::FetchImage;
+              inf("FireMappingState::FetchImage");
 
+              // If morse graber fails, restart it
+              if (morse_grabber->error())
+              {
+                err("MorseImageGrabber error");
+                morse_grabber->stopAndJoin();
+                delete morse_grabber;
+                morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
+                morse_grabber->start();
+                fm_state = FireMappingState::None;
+                Delay::wait(1);
+                continue;
               }
-              else if (fm_state == FireMappingState::FetchImage)
+                // If the morse grabber is free to do work...
+              else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
               {
-                inf("FireMappingState::FetchImage");
-
-                // If morse graber fails, restart it
-                if (morse_grabber->error())
-                {
-                  err("MorseImageGrabber error");
-                  morse_grabber->stopAndJoin();
-                  delete morse_grabber;
-                  morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
-                  morse_grabber->start();
-                  fm_state = FireMappingState::None;
-                  Delay::wait(1);
-                  continue;
-                }
-                  // If the morse grabber is free to do work...
-                else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
-                {
-                  morse_grabber->capture(position_x, position_y, position_z, 0, /*theta*/ 0, 0);
-                }
-                  // If morse grabber work is finished...
-                else if (morse_grabber->is_image_available())
-                {
-                  t = morse_grabber->get_image();
-                  cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
-                  // because the images were tansposed so as to be sent and we have to transpose them back
-                  fm_state = FireMappingState::MapImage;
-                }
-
+                std::cout << psi << std::endl;
+                morse_grabber->capture(position_x_utm, position_y_utm, position_z, phi,
+                                       theta, psi);
               }
-              else if (fm_state == FireMappingState::MapImage)
+                // If morse grabber work is finished...
+              else if (morse_grabber->is_image_available())
               {
-                inf("FireMappingState::MapImage");
-                Image_Matrix = (t.image).clone();
+                t = morse_grabber->get_image();
+                cv::Mat flipped_image;
+                cv::flip(t.image, flipped_image, 1);
+                t.image = flipped_image;
+                //cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
+                // because the images were tansposed so as to be sent and we have to transpose them back
+                fm_state = FireMappingState::MapImage;
+              }
 
-                // TODO: Handle Mapping errors
+            } else if (fm_state == FireMappingState::MapImage)
+            {
+              inf("FireMappingState::MapImage");
+              Image_Matrix = (t.image).clone();
 
-                if (Map_thrd->mapping_finished())
+              // TODO: Handle Mapping errors
+
+              if (Map_thrd->mapping_finished())
+              {
+
+                fm_state = FireMappingState::DispatchFireMap;
+              } else if (Map_thrd->is_idle())
+              {
+                // If the image has some content
+                if (Image_Matrix.data != NULL)
                 {
-
-                  fm_state = FireMappingState::DispatchFireMap;
-                } else if (Map_thrd->is_idle())
-                {
-                  // If the image has some content
-                  if (Image_Matrix.data != NULL)
+                  if (abs(t.phi) <= Rotation_limit)
                   {
-                    if (abs(t.phi) <= Rotation_limit)
+                    Intrinsic = (t.intrinsic_matrix).clone();
+                    // Convert from UTM to the LAEA coordiante system
+//                    std::cout << " UTM: " << t.x << "; " << t.y << std::endl;
+//                    auto gps = coordinate_transform(t.x, t.y, 32629, 4326);
+//                    std::cout << " GPS: " << gps.x << "; " << gps.y << std::endl;
+//                    auto pcs_defined = coordinate_transform(gps.x, gps.y, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
+//                    std::cout << "LAEA: " << pcs_defined.x << "; " << pcs_defined.y << std::endl;
+
+                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, 0., -(t.psi));
+
+                    // FIXME: Restore threaded mapping
+//                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
+//                                                        Radial_distortion, Tangential_distortion, mapper);
+
+                    Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
+                                          Tangential_distortion);
+                    bool Image_with_DEM_match = mapper->map(*im, Time::Clock::getSinceEpoch());
+                    mapper->save_firemap(m_path_results);
+
+                    if (Image_with_DEM_match)
                     {
-                      Intrinsic = (t.intrinsic_matrix).clone();
-
-                      set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, t.psi);
-
-                      // FIXME: Restore threaded mapping
-                      // start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
-                      //             Radial_distortion, Tangential_distortion, mapper);
-
-                      Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
-                                            Tangential_distortion);
-                      bool Image_with_DEM_match = mapper.Map(*im, Time::Clock::getSinceEpoch());
-                      mapper.Save_Show_FireM(m_path_results);
-
-                      if (Image_with_DEM_match)
-                      {
-                        inf("Image was mapped");
-
-                      } else
-                      {
-                        inf("Image out of bounds");
-                      }
-                      delete im;
-                      fm_state = FireMappingState::DispatchFireMap;
+                      inf("Image was mapped");
 
                     } else
                     {
-                      war("Roll limit exceded. The image is discarded.");
-                      fm_state = FireMappingState::FetchImage;
+                      inf("Image out of bounds");
                     }
-                  }
-                  else
+                    delete im;
+                    fm_state = FireMappingState::DispatchFireMap;
+
+                  } else
                   {
-                    war("Empty image.");
+                    war("Roll limit exceded. The image is discarded.");
                     fm_state = FireMappingState::FetchImage;
-
                   }
-                }
-                else
+                } else
                 {
-                  inf("Still working on mapping");
-                }
-              }
-              else if (fm_state == FireMappingState::DispatchFireMap)
-              {
-                inf("FireMappingState::DispatchFireMap");
-                mapper.Save_Show_FireM(m_path_results);
-                dispatch_firemap(mapper.maps()[0]);
-                fm_state = FireMappingState::FetchImage;
-              }
-            }
-            Delay::waitMsec(500);
-          }
-          else
-          {
-            if(isActive())
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            else
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+                  war("Empty image.");
+                  fm_state = FireMappingState::FetchImage;
 
-            waitForMessages(1.0);
+                }
+              } else
+              {
+                inf("Still working on mapping");
+              }
+            } else if (fm_state == FireMappingState::DispatchFireMap)
+            {
+              inf("FireMappingState::DispatchFireMap");
+              mapper->save_firemap(m_path_results);
+              dispatch_firemap(mapper->fire_map());
+              fm_state = FireMappingState::FetchImage;
+            }
           }
+
+          Delay::waitMsec(500);
         }
       }
     };
