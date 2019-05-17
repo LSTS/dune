@@ -181,9 +181,9 @@ namespace Vision
         Tangential_distortion.push_back(0.0033995207337653736);
 
         // Setup processing of IMC messages
-        bind < EstimatedState > (this);
-        bind<IMC::EntityActivationState>(this);
-        bind<IMC::EntityInfo>(this);
+        bind<EstimatedState>(this);
+        bind<EntityActivationState>(this);
+        bind<EntityInfo>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -284,35 +284,36 @@ namespace Vision
           if(sysName != m_args.system_id)
             return;
 
-        double m_lat = e_state->lat;
-        double m_lon = e_state->lon;
-        double m_height = e_state->height + (-e_state->z);
+          double m_lat = e_state->lat;
+          double m_lon = e_state->lon;
+          double m_height = e_state->height + (-e_state->z);
 
-        WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon)
+          WGS84::displace(e_state->x, e_state->y, &m_lat, &m_lon);
 
-        try
-        {
-          PositionProjected point = transform_gcs_to_pcs(m_lat, m_lon,
-                                                         m_args.geodetic_coordinate_system_epsg,
-                                                         m_args.projected_coordinate_system_epsg);
+          try
+          {
+            PositionProjected point = transform_gcs_to_pcs(m_lat, m_lon,
+                                                           m_args.geodetic_coordinate_system_epsg,
+                                                           m_args.projected_coordinate_system_epsg);
 
-          PositionProjected point_utm = transform_gcs_to_pcs(m_lat, m_lon, 4326, 32629);
+            PositionProjected point_utm = transform_gcs_to_pcs(m_lat, m_lon, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
 
-          position_x_pcs = point.x;
-          position_y_pcs = point.y;
-          position_z = m_height;
+            position_x_pcs = point.x;
+            position_y_pcs = point.y;
+            position_z = m_height;
 
-          position_x_utm = point_utm.x;
-          position_y_utm = point_utm.y;
+            position_x_utm = point_utm.x;
+            position_y_utm = point_utm.y;
 
-          phi = e_state->phi;
-          theta = e_state->theta;
-          psi = e_state->psi;
-        } catch (...)
-        {
-          err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
-              m_args.projected_coordinate_system_epsg);
-          this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+            phi = e_state->phi;
+            theta = e_state->theta;
+            psi = e_state->psi;
+          } catch (...)
+          {
+            err("Cannot transform coordinates from %d to %d", m_args.geodetic_coordinate_system_epsg,
+                m_args.projected_coordinate_system_epsg);
+            this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+          }
         }
       }
 
@@ -389,21 +390,22 @@ namespace Vision
           m_is_to_acivate = false;
           morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
 
-        Map_thrd = new Mapping_thread(this, "thrd_Mapper");
+          Map_thrd = new Mapping_thread(this, "thrd_Mapper");
 
-        try
-        {
-          Path path_DEM = Path(m_args.dem_file);
-          m_path_results = path_DEM.dirname(true).str();
-          elevation_raster = new ElevationRaster(m_args.dem_file);
-          fire_raster = new FireRaster(elevation_raster);
-          mapper = new Mapping(fire_raster, m_args.threshold, true);
-          mapper->set_threshold(m_args.threshold);
-        }
-        catch (const std::invalid_argument& e)
-        {
-          err("%s", e.what());
-          this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+          try
+          {
+            Path path_DEM = Path(m_args.dem_file);
+            m_path_results = path_DEM.dirname(true).str();
+            elevation_raster = new ElevationRaster(m_args.dem_file);
+            fire_raster = new FireRaster(elevation_raster);
+            mapper = new Mapping(fire_raster, m_args.threshold, true);
+            mapper->set_threshold(m_args.threshold);
+          }
+          catch (const std::invalid_argument& e)
+          {
+            err("%s", e.what());
+            this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+          }
         }
       }
 

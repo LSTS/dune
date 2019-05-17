@@ -51,14 +51,6 @@ struct Pixel
 
 class ElevationRaster
 {
-private:
-  GDALDataset* gDataSet;
-  int nBands;
-  double gTransform[6];
-  double originX, originY, pWidth, pHeight;
-  vector<double> RasterData;
-
-
 public:
 
   int nCols, nRows;
