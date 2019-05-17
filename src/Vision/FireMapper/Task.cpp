@@ -99,8 +99,6 @@ namespace Vision
       cv::Mat Rotation;
       // Position in the projected coordinate system (ETRS89/LAEA)
       double position_x_pcs, position_y_pcs, position_z;
-      // Position in UTM29N (EPSG:32629)
-      double position_x_utm, position_y_utm;
       double phi, theta, psi;
 
       cv::Mat Image_Matrix;
@@ -279,11 +277,6 @@ namespace Vision
       {
         if (!m_args.is_master_mode)
         {
-          //war("slave mode: consume EstimatedState - %s", resolveSystemId(e_state->getSource()));
-          std::string sysName = resolveSystemId(e_state->getSource());
-          if(sysName != m_args.system_id)
-            return;
-
           double m_lat = e_state->lat;
           double m_lon = e_state->lon;
           double m_height = e_state->height + (-e_state->z);
@@ -296,14 +289,10 @@ namespace Vision
                                                            m_args.geodetic_coordinate_system_epsg,
                                                            m_args.projected_coordinate_system_epsg);
 
-            PositionProjected point_utm = transform_gcs_to_pcs(m_lat, m_lon, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
 
             position_x_pcs = point.x;
             position_y_pcs = point.y;
             position_z = m_height;
-
-            position_x_utm = point_utm.x;
-            position_y_utm = point_utm.y;
 
             phi = e_state->phi;
             theta = e_state->theta;
@@ -317,51 +306,6 @@ namespace Vision
         }
       }
 
-      void
-      consume(const IMC::EntityInfo* msg)
-      {
-        if (!m_args.is_master_mode)
-        {
-          std::string master_dune = resolveSystemId(msg->getSource());
-          if (master_dune.compare(m_args.system_id) == 0 && msg->label.compare(getEntityLabel()) == 0)
-          {
-            debug("entity master id: %s | %d | %s", master_dune.c_str(), msg->id, msg->label.c_str());
-            m_entity_master = msg->id;
-          }
-        }
-      }
-
-      void
-      consume(const IMC::EntityActivationState* msg)
-      {
-        if (!m_args.is_master_mode)
-        {
-          if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
-            return;
-
-          std::string system_id = resolveSystemId(msg->getSource());
-          //Only for debug of entity
-          /*if(msg->getSourceEntity() != 45)
-           {
-           std::string ds = resolveEntity(msg->getSourceEntity());
-           debug("%s | %d | %s", system_id.c_str(), msg->state, ds.c_str());
-           }*/
-          if (m_entity_master == msg->getSourceEntity() && msg->state == EntityActivationState::EAS_ACT_IP)
-          {
-            debug("%s | %d | %s | activation", system_id.c_str(), msg->state, getEntityLabel());
-            inf("received activation request - Slave");
-            onActivation();
-            m_is_to_acivate = true;
-          }
-          else if (m_entity_master == msg->getSourceEntity() && msg->state == EntityActivationState::EAS_DEACT_IP)
-          {
-            debug("%s | %d | %s | deactivation", system_id.c_str(), msg->state, getEntityLabel());
-            inf("received deactivation request - Slave");
-            onDeactivation();
-            m_is_to_acivate = false;
-          }
-        }
-      }
 
       //! Reserve entity identifiers.
       void
@@ -533,7 +477,7 @@ namespace Vision
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
               {
                 std::cout << psi << std::endl;
-                morse_grabber->capture(position_x_utm, position_y_utm, position_z, phi,
+                morse_grabber->capture(position_x_pcs, position_y_pcs, position_z, phi,
                                        theta, psi);
               }
                 // If morse grabber work is finished...
