@@ -197,6 +197,8 @@ namespace Vision
                 break;
               }
 
+              Delay::waitMsec(50);
+
               if (!capture_image())
               {
                 m_task->err("%s", "Capture image request failed");

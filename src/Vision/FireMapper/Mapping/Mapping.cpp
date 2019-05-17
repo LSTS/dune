@@ -415,8 +415,20 @@ bool Mapping::Map_direct(Image& IM, double time)
 
         if (px.Test)
         { //if that pixel matches with the IMage
-          firemap->set_firemap_cell(r, c, px.Value, use_segmentation);
-          firemap->set_firemap_cell(r, c, time);
+          if (use_segmentation)
+          {
+            if (px.Value >= threshold)
+            {
+              px.Value = 255;
+              firemap->set_firemap_cell(r, c, px.Value, use_segmentation);
+              firemap->set_firemap_cell(r, c, time);
+            }
+          } else
+          {
+            firemap->set_firemap_cell(r, c, px.Value, use_segmentation);
+            firemap->set_firemap_cell(r, c, time);
+          }
+
         }
       }
     }
@@ -447,7 +459,7 @@ void Mapping::save_firemap(std::string folder_result)
 
   if (use_segmentation)
   {
-    cv::imwrite(folder_result + "Mapbayes" + ".jpg", firemap->get_firemap_bayes());
+    //cv::imwrite(folder_result + "Mapbayes" + ".jpg", firemap->get_firemap_bayes());
     //cout<<Carte[j].get_fireMapbayes()<<endl;
   }
   //cv::imshow(path_result +"Map"+ ss.str() +".jpg",Carte[j].get_fireMap()); needs perimission

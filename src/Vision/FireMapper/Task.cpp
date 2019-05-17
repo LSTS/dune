@@ -137,7 +137,7 @@ namespace Vision
         // TODO: Coordinate System is retrieved from these DEM
 
         param("Threshold", m_args.threshold)
-          .defaultValue("200")
+          .defaultValue("128")
           .description("Threshold.");
 
         param("Projected Coordinate System", m_args.projected_coordinate_system_epsg)
@@ -323,7 +323,7 @@ namespace Vision
           m_path_results = path_DEM.dirname(true).str();
           elevation_raster = new ElevationRaster(m_args.dem_file);
           fire_raster = new FireRaster(elevation_raster);
-          mapper = new Mapping(fire_raster);
+          mapper = new Mapping(fire_raster, m_args.threshold, true);
           mapper->set_threshold(m_args.threshold);
         }
         catch (const std::invalid_argument& e)
@@ -498,7 +498,7 @@ namespace Vision
 //                    auto pcs_defined = coordinate_transform(gps.x, gps.y, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
 //                    std::cout << "LAEA: " << pcs_defined.x << "; " << pcs_defined.y << std::endl;
 
-                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, t.theta, -(t.psi));
+                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, 0., -(t.psi));
 
                     // FIXME: Restore threaded mapping
 //                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
