@@ -306,6 +306,51 @@ namespace Vision
         }
       }
 
+      void
+      consume(const IMC::EntityInfo* msg)
+      {
+        if (!m_args.is_master_mode)
+        {
+          std::string master_dune = resolveSystemId(msg->getSource());
+          if (master_dune.compare(m_args.system_id) == 0 && msg->label.compare(getEntityLabel()) == 0)
+          {
+            debug("entity master id: %s | %d | %s", master_dune.c_str(), msg->id, msg->label.c_str());
+            m_entity_master = msg->id;
+          }
+        }
+      }
+
+      void
+      consume(const IMC::EntityActivationState* msg)
+      {
+        if (!m_args.is_master_mode)
+        {
+          if (msg->getSourceEntity() == DUNE_IMC_CONST_UNK_EID)
+            return;
+
+          std::string system_id = resolveSystemId(msg->getSource());
+          //Only for debug of entity
+          /*if(msg->getSourceEntity() != 45)
+           {
+           std::string ds = resolveEntity(msg->getSourceEntity());
+           debug("%s | %d | %s", system_id.c_str(), msg->state, ds.c_str());
+           }*/
+          if (m_entity_master == msg->getSourceEntity() && msg->state == EntityActivationState::EAS_ACT_IP)
+          {
+            debug("%s | %d | %s | activation", system_id.c_str(), msg->state, getEntityLabel());
+            inf("received activation request - Slave");
+            onActivation();
+            m_is_to_acivate = true;
+          }
+          else if (m_entity_master == msg->getSourceEntity() && msg->state == EntityActivationState::EAS_DEACT_IP)
+          {
+            debug("%s | %d | %s | deactivation", system_id.c_str(), msg->state, getEntityLabel());
+            inf("received deactivation request - Slave");
+            onDeactivation();
+            m_is_to_acivate = false;
+          }
+        }
+      }
 
       //! Reserve entity identifiers.
       void
@@ -357,11 +402,18 @@ namespace Vision
       void
       onResourceRelease(void)
       {
-        delete elevation_raster;
-        delete fire_raster;
-        delete mapper;
-        delete morse_grabber;
-        delete Map_thrd;
+        if (!m_args.is_master_mode)
+        {
+          try
+          {
+            delete elevation_raster;
+            delete fire_raster;
+            delete mapper;
+            delete morse_grabber;
+            delete Map_thrd;
+          }
+          catch (const std::invalid_argument& e){}
+        }
       }
 
       template<typename T>
@@ -422,6 +474,33 @@ namespace Vision
           war("Skipping fire map message dispatch. The message is too long.");
         }
 
+      }
+
+      void
+      onActivation(void)
+      {
+        if (!m_args.is_master_mode)
+        {
+          inf("slave mode: onActivation");
+
+        }
+        else
+        {
+          inf("master mode: onActivation");
+        }
+      }
+
+      void
+      onDeactivation(void)
+      {
+        if (!m_args.is_master_mode)
+        {
+          inf("slave mode: onDeactivation");
+        }
+        else
+        {
+          inf("master mode: onDeactivation");
+        }
       }
 
       //! Main loop.
