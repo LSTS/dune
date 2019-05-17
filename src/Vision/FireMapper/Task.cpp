@@ -97,8 +97,6 @@ namespace Vision
       cv::Mat Rotation;
       // Position in the projected coordinate system (ETRS89/LAEA)
       double position_x_pcs, position_y_pcs, position_z;
-      // Position in UTM29N (EPSG:32629)
-      double position_x_utm, position_y_utm;
       double phi, theta, psi;
 
       cv::Mat Image_Matrix;
@@ -270,14 +268,9 @@ namespace Vision
                                                          m_args.geodetic_coordinate_system_epsg,
                                                          m_args.projected_coordinate_system_epsg);
 
-          PositionProjected point_utm = transform_gcs_to_pcs(m_lat, m_lon, 4326, 32629);
-
           position_x_pcs = point.x;
           position_y_pcs = point.y;
           position_z = m_height;
-
-          position_x_utm = point_utm.x;
-          position_y_utm = point_utm.y;
 
           phi = e_state->phi;
           theta = e_state->theta;
@@ -457,7 +450,7 @@ namespace Vision
               else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
               {
                 std::cout << psi << std::endl;
-                morse_grabber->capture(position_x_utm, position_y_utm, position_z, phi,
+                morse_grabber->capture(position_x_pcs, position_y_pcs, position_z, phi,
                                        theta, psi);
               }
                 // If morse grabber work is finished...
