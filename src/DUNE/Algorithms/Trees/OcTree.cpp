@@ -187,12 +187,9 @@ namespace DUNE
       bool
       OcTree::insert(const OcTree::Item& item)
       {
-        //LV - if item is not in bounds -> discard
         if (!m_bounds.contains(item))
           return false;
 
-        //LV - if root is not initialized -> initialize
-        //else -> insert item
         if (!m_root)
           m_root = new Node(item);
         else

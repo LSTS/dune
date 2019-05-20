@@ -52,11 +52,21 @@ namespace DUNE
         double min_x, max_x, min_y, max_y, min_z, max_z;
 
         Bounds(const Point& p, double r):
-          min_x(p.x - r), max_x(p.x + r), min_y(p.y - r), max_y(p.y + r), min_z(p.z - r), max_z(p.z + r)
+          min_x(p.x - r), max_x(p.x + r), 
+          min_y(p.y - r), max_y(p.y + r), 
+          min_z(p.z - r), max_z(p.z + r)
+        { }
+
+        Bounds(const Point& p, double rx, double ry, double rz):
+          min_x(p.x - rx), max_x(p.x + rx),
+          min_y(p.y - ry), max_y(p.y + ry), 
+          min_z(p.z - rz), max_z(p.z + rz)
         { }
 
         Bounds(const Point& p):
-          min_x(p.x), max_x(p.x), min_y(p.y), max_y(p.y), min_z(p.z), max_z(p.z)
+          min_x(p.x), max_x(p.x), 
+          min_y(p.y), max_y(p.y), 
+          min_z(p.z), max_z(p.z)
         { }
 
         Bounds(const Bounds& parent, const Point& lim, int dir)
@@ -157,8 +167,7 @@ namespace DUNE
             return false;
           return true;
         }
-
-        //LV - Expand boundary limits based on added point
+        
         template <typename T>
         void
         cover(const T& p)
