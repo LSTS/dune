@@ -539,7 +539,7 @@ namespace Vision
           if (!m_args.is_master_mode)
           {
             waitForMessages(1.0);
-            if (!isActive())
+            if (m_is_to_acivate)
             {
               fm_state = FireMappingState::None;
             } else
