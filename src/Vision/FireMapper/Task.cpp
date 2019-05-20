@@ -277,6 +277,11 @@ namespace Vision
       {
         if (!m_args.is_master_mode)
         {
+          //war("slave mode: consume EstimatedState - %s", resolveSystemId(e_state->getSource()));
+          std::string sysName = resolveSystemId(e_state->getSource());
+          if(sysName != m_args.system_id)
+            return;
+
           double m_lat = e_state->lat;
           double m_lon = e_state->lon;
           double m_height = e_state->height + (-e_state->z);
@@ -396,6 +401,10 @@ namespace Vision
             this->setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
           }
         }
+        else
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
       }
 
       //! Release resources.
@@ -508,9 +517,11 @@ namespace Vision
       onMain(void)
       {
         float Rotation_limit = 0.08; // 5 degrees
-
-        Map_thrd->start();
-        morse_grabber->start();
+        if (!m_args.is_master_mode)
+        {
+          Map_thrd->start();
+          morse_grabber->start();
+        }
 
         TaggedImage t;
 
@@ -525,125 +536,131 @@ namespace Vision
         // or else to FireMappingState::MapImage
         while (!stopping())
         {
-          waitForMessages(1.0);
-          if (!isActive())
+          if (!m_args.is_master_mode)
           {
-            fm_state = FireMappingState::None;
-          } else
-          {
-            if (fm_state == FireMappingState::None)
+            waitForMessages(1.0);
+            if (!isActive())
             {
-              inf("FireMappingState::None");
-              fm_state = FireMappingState::FetchImage;
-
-            } else if (fm_state == FireMappingState::FetchImage)
+              fm_state = FireMappingState::None;
+            } else
             {
-              inf("FireMappingState::FetchImage");
-
-              // If morse graber fails, restart it
-              if (morse_grabber->error())
+              if (fm_state == FireMappingState::None)
               {
-                err("MorseImageGrabber error");
-                morse_grabber->stopAndJoin();
-                delete morse_grabber;
-                morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
-                morse_grabber->start();
-                fm_state = FireMappingState::None;
-                Delay::wait(1);
-                continue;
-              }
-                // If the morse grabber is free to do work...
-              else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+                inf("FireMappingState::None");
+                fm_state = FireMappingState::FetchImage;
+              } else if (fm_state == FireMappingState::FetchImage)
               {
-                std::cout << psi << std::endl;
-                morse_grabber->capture(position_x_pcs, position_y_pcs, position_z, phi,
-                                       theta, psi);
-              }
-                // If morse grabber work is finished...
-              else if (morse_grabber->is_image_available())
-              {
-                t = morse_grabber->get_image();
-                cv::Mat flipped_image;
-                cv::flip(t.image, flipped_image, 1);
-                t.image = flipped_image;
-                //cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
-                // because the images were tansposed so as to be sent and we have to transpose them back
-                fm_state = FireMappingState::MapImage;
-              }
+                inf("FireMappingState::FetchImage");
 
-            } else if (fm_state == FireMappingState::MapImage)
-            {
-              inf("FireMappingState::MapImage");
-              Image_Matrix = (t.image).clone();
-
-              // TODO: Handle Mapping errors
-
-              if (Map_thrd->mapping_finished())
-              {
-
-                fm_state = FireMappingState::DispatchFireMap;
-              } else if (Map_thrd->is_idle())
-              {
-                // If the image has some content
-                if (Image_Matrix.data != NULL)
+                // If morse graber fails, restart it
+                if (morse_grabber->error())
                 {
-                  if (abs(t.phi) <= Rotation_limit)
+                  err("MorseImageGrabber error");
+                  morse_grabber->stopAndJoin();
+                  delete morse_grabber;
+                  morse_grabber = new MorseImageGrabber(this, m_args.morse_ip, m_args.morse_port);
+                  morse_grabber->start();
+                  fm_state = FireMappingState::None;
+                  Delay::wait(1);
+                  continue;
+                }
+                // If the morse grabber is free to do work...
+                else if (morse_grabber->is_idle() && !morse_grabber->is_image_available())
+                {
+                  std::cout << psi << std::endl;
+                  morse_grabber->capture(position_x_pcs, position_y_pcs, position_z, phi,
+                                       theta, psi);
+                }
+                // If morse grabber work is finished...
+                else if (morse_grabber->is_image_available())
+                {
+                  t = morse_grabber->get_image();
+                  cv::Mat flipped_image;
+                  cv::flip(t.image, flipped_image, 1);
+                  t.image = flipped_image;
+                  //cv::transpose(t.image, t.image);//this transpose is added only for Morse_grabber images
+                  // because the images were tansposed so as to be sent and we have to transpose them back
+                  fm_state = FireMappingState::MapImage;
+                }
+
+              } else if (fm_state == FireMappingState::MapImage)
+              {
+                inf("FireMappingState::MapImage");
+                Image_Matrix = (t.image).clone();
+
+                // TODO: Handle Mapping errors
+
+                if (Map_thrd->mapping_finished())
+                {
+                  fm_state = FireMappingState::DispatchFireMap;
+                } else if (Map_thrd->is_idle())
+                {
+                  // If the image has some content
+                  if (Image_Matrix.data != NULL)
                   {
-                    Intrinsic = (t.intrinsic_matrix).clone();
-                    // Convert from UTM to the LAEA coordiante system
-//                    std::cout << " UTM: " << t.x << "; " << t.y << std::endl;
-//                    auto gps = coordinate_transform(t.x, t.y, 32629, 4326);
-//                    std::cout << " GPS: " << gps.x << "; " << gps.y << std::endl;
-//                    auto pcs_defined = coordinate_transform(gps.x, gps.y, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
-//                    std::cout << "LAEA: " << pcs_defined.x << "; " << pcs_defined.y << std::endl;
+                    if (abs(t.phi) <= Rotation_limit)
+                    {
+                      Intrinsic = (t.intrinsic_matrix).clone();
+                      // Convert from UTM to the LAEA coordiante system
+//                      std::cout << " UTM: " << t.x << "; " << t.y << std::endl;
+//                      auto gps = coordinate_transform(t.x, t.y, 32629, 4326);
+//                      std::cout << " GPS: " << gps.x << "; " << gps.y << std::endl;
+//                      auto pcs_defined = coordinate_transform(gps.x, gps.y, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
+//                      std::cout << "LAEA: " << pcs_defined.x << "; " << pcs_defined.y << std::endl;
 
-                    set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, 0., -(t.psi));
+                      set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, 0., -(t.psi));
 
-                    // FIXME: Restore threaded mapping
+                      // FIXME: Restore threaded mapping
 //                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
 //                                                        Radial_distortion, Tangential_distortion, mapper);
 
-                    Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
-                                          Tangential_distortion);
-                    bool Image_with_DEM_match = mapper->map(*im, Time::Clock::getSinceEpoch());
-                    mapper->save_firemap(m_path_results);
+                      Image* im = new Image(Image_Matrix, Translation, Rotation, Intrinsic, Radial_distortion,
+                                            Tangential_distortion);
+                      bool Image_with_DEM_match = mapper->map(*im, Time::Clock::getSinceEpoch());
+                      mapper->save_firemap(m_path_results);
 
-                    if (Image_with_DEM_match)
-                    {
-                      inf("Image was mapped");
-
-                    } else
-                    {
-                      inf("Image out of bounds");
-                    }
-                    delete im;
-                    fm_state = FireMappingState::DispatchFireMap;
-
+                      if (Image_with_DEM_match)
+                      {
+                        inf("Image was mapped");
+                     } else
+                     {
+                       inf("Image out of bounds");
+                     }
+                     delete im;
+                     fm_state = FireMappingState::DispatchFireMap;
                   } else
                   {
                     war("Roll limit exceded. The image is discarded.");
                     fm_state = FireMappingState::FetchImage;
                   }
+                  } else
+                  {
+                    war("Empty image.");
+                    fm_state = FireMappingState::FetchImage;
+                  }
                 } else
                 {
-                  war("Empty image.");
-                  fm_state = FireMappingState::FetchImage;
-
+                  inf("Still working on mapping");
                 }
-              } else
+              } else if (fm_state == FireMappingState::DispatchFireMap)
               {
-                inf("Still working on mapping");
+                inf("FireMappingState::DispatchFireMap");
+                mapper->save_firemap(m_path_results);
+                dispatch_firemap(mapper->fire_map());
+                fm_state = FireMappingState::FetchImage;
               }
-            } else if (fm_state == FireMappingState::DispatchFireMap)
-            {
-              inf("FireMappingState::DispatchFireMap");
-              mapper->save_firemap(m_path_results);
-              dispatch_firemap(mapper->fire_map());
-              fm_state = FireMappingState::FetchImage;
             }
+            Delay::waitMsec(500);
           }
+          else
+          {
+            if(isActive())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
-          Delay::waitMsec(500);
+            waitForMessages(1.0);
+          }
         }
       }
     };
