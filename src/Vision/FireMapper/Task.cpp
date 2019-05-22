@@ -477,6 +477,8 @@ namespace Vision
 
         if (msg.getSerializationSize() < 65535)
         {
+//          msg.toText(std::cout);
+//          std::cout << std::endl;
           this->dispatch(&msg);
         } else
         {
@@ -516,7 +518,7 @@ namespace Vision
       void
       onMain(void)
       {
-        float Rotation_limit = 0.08; // 5 degrees
+        float Rotation_limit = 0.08*4; // 5 degrees
         if (!m_args.is_master_mode)
         {
           Map_thrd->start();
@@ -608,7 +610,7 @@ namespace Vision
 //                      auto pcs_defined = coordinate_transform(gps.x, gps.y, m_args.geodetic_coordinate_system_epsg, m_args.projected_coordinate_system_epsg);
 //                      std::cout << "LAEA: " << pcs_defined.x << "; " << pcs_defined.y << std::endl;
 
-                      set_Rot_Trans_Matrix(t.x, t.y, t.z, t.phi, 0., -(t.psi));
+                      set_Rot_Trans_Matrix(t.x, t.y, t.z, 0., 0., -(t.psi));
 
                       // FIXME: Restore threaded mapping
 //                    start_mapping = Map_thrd->Map_Image(Image_Matrix, Translation, Rotation, Intrinsic,
