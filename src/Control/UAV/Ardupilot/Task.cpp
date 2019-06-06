@@ -1772,21 +1772,21 @@ namespace Control
           acce.y = raw.yacc;
           acce.z = raw.zacc;
           acce.setTimeStamp(tstamp);
-          dispatch(acce);
+          dispatch(acce, DF_KEEP_TIME);
 
           IMC::AngularVelocity avel;
           avel.x = raw.xgyro;
           avel.y = raw.ygyro;
           avel.z = raw.zgyro;
           avel.setTimeStamp(tstamp);
-          dispatch(avel);
+          dispatch(avel, DF_KEEP_TIME);
 
           IMC::MagneticField magn;
           magn.x = raw.xmag;
           magn.y = raw.ymag;
           magn.z = raw.zmag;
           magn.setTimeStamp(tstamp);
-          dispatch(magn);
+          dispatch(magn, DF_KEEP_TIME);
         }
 
         void
