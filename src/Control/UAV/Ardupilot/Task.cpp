@@ -1828,7 +1828,7 @@ namespace Control
 
           m_estate.vx = 1e-02 * gp.vx;
           m_estate.vy = 1e-02 * gp.vy;
-          m_estate.vz = -1e-02 * gp.vz;
+          m_estate.vz = 1e-02 * gp.vz;
 
           // Note: the following will yield body-fixed *ground* velocity
           // Maybe this can be fixed w/IAS readings (anyway not too important)
