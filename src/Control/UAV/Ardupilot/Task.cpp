@@ -137,7 +137,7 @@ namespace Control
         //! Has Power Module
         bool pwrm;
         //! WP seconds before reach
-        int secs;
+        float secs;
         //! WP Copter: Minimum wp switch radius
         float cp_wp_radius;
         //! RC setup
