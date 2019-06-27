@@ -181,7 +181,8 @@ namespace Transports
         m_pre_detected(false),
         m_stop_comms(false),
         m_usbl_receiver(false),
-        m_tstamp(0)
+        m_tstamp(0), 
+        m_ticket(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
