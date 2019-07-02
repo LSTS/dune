@@ -80,6 +80,10 @@ namespace Simulators
       IMC::AngularVelocity m_agvel;
       //! Acceleration.
       IMC::Acceleration m_accel;
+      //! Velocity Delta
+      IMC::VelocityDelta m_vdel;
+      //! Euler Angles Delta
+      IMC::EulerAnglesDelta m_agdel;
       //! Stored Velocity.
       double m_vel[3];
       //! Pseudo-random generator.
@@ -228,6 +232,22 @@ namespace Simulators
         m_accel.setTimeStamp(msg->getTimeStamp());
         dispatch(m_agvel, DF_KEEP_TIME);
         dispatch(m_accel, DF_KEEP_TIME);
+        
+        // Compute deltas
+        m_vdel.x = m_accel.x * tstep;
+        m_vdel.y = m_accel.y * tstep;
+        m_vdel.z = m_accel.z * tstep;
+
+        m_agdel.x = m_agvel.x * tstep;
+        m_agdel.y = m_agvel.y * tstep;
+        m_agdel.z = m_agvel.z * tstep;
+
+        m_agdel.timestep = tstep;
+
+        m_agdel.setTimeStamp(msg->getTimeStamp());
+        m_vdel.setTimeStamp(msg->getTimeStamp());
+        dispatch(m_agdel, DF_KEEP_TIME);
+        dispatch(m_vdel, DF_KEEP_TIME);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
