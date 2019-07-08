@@ -110,8 +110,16 @@ namespace Simulators
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
+      }
 
-        Time::Clock::setTimeMultiplier(m_args.time_multiplier);
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.time_multiplier != 1.0)
+        {
+          Time::Clock::setTimeMultiplier(m_args.time_multiplier);
+          war("Using time multiplier: x%.2f", Time::Clock::getTimeMultiplier());
+        }
       }
 
       //! Release allocated resources.
