@@ -47,6 +47,7 @@ namespace Transports
       std::string startup_file;
       std::vector<std::string> msgs;
       std::vector<std::string> ents;
+      double time_multiplier;
     };
 
     static const int c_stats_period = 10;
@@ -110,6 +111,10 @@ namespace Transports
         .defaultValue("")
         .description("Entities for which state should be reported");
 
+        param("Time Multiplier", m_args.time_multiplier)
+        .defaultValue("1.0")
+        .description("Time multiplier for fast replay.");
+
         bind<IMC::ReplayControl>(this);
       }
 
@@ -123,6 +128,12 @@ namespace Transports
           bind<IMC::EstimatedState>(this);
 
         reset();
+
+        if (m_args.time_multiplier != 1.0)
+        {
+          Time::Clock::setTimeMultiplier(m_args.time_multiplier);
+          war("Using time multiplier: x%.2f", Time::Clock::getTimeMultiplier());
+        }
       }
 
       ~Task(void)
@@ -329,6 +340,7 @@ namespace Transports
       void
       onMain(void)
       {
+
         if (!m_args.startup_file.empty())
           startReplay(m_args.startup_file);
 
