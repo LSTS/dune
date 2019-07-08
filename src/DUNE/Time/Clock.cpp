@@ -55,15 +55,24 @@ namespace DUNE
 {
   namespace Time
   {
-    uint64_t Clock::s_starttime = getSinceEpochNsec();
+    uint64_t Clock::s_starttime_epoch = getSinceEpochNsecRT();
+    uint64_t Clock::s_starttime_mono = getNsecRT();
     double Clock::s_time_multiplier = 1.0;
 
     uint64_t
     Clock::getNsec(void)
     {
-      if (Clock::s_time_multiplier != 1.0)
-        return getSinceEpochNsec() - s_starttime;
+      uint64_t time = getNsecRT();
+      if (Clock::s_time_multiplier != 1.0) {
+        double ellapsed_time = (time - s_starttime_mono);
+        time = ellapsed_time * Clock::s_time_multiplier + s_starttime_mono;
+      }
+      return time;
+    }
 
+    uint64_t
+    Clock::getNsecRT(void)
+    {
       // POSIX RT.
 #if defined(DUNE_SYS_HAS_CLOCK_GETTIME)
       timespec ts;
@@ -90,8 +99,8 @@ namespace DUNE
     {
       uint64_t time = getSinceEpochNsecRT();
       if (Clock::s_time_multiplier != 1.0) {
-        double ellapsed_time = (time - s_starttime);
-        time = ellapsed_time * Clock::s_time_multiplier + s_starttime;
+        double ellapsed_time = (time - s_starttime_epoch);
+        time = ellapsed_time * Clock::s_time_multiplier + s_starttime_epoch;
       }
       return time;
     }
@@ -100,7 +109,7 @@ namespace DUNE
     Clock::set(double value)
     {
       if (Clock::s_time_multiplier != 1.0) {
-        s_starttime = value * c_nsec_per_sec;
+        s_starttime_epoch = value * c_nsec_per_sec;
         setTimeMultiplier(Clock::s_time_multiplier);
         return;
       }
@@ -120,7 +129,8 @@ namespace DUNE
     Clock::setTimeMultiplier(double mul)
     {
       Clock::s_time_multiplier = 1.0;
-      s_starttime = getSinceEpochNsec();
+      s_starttime_epoch = getSinceEpochNsecRT();
+      s_starttime_mono = getNsecRT();
       Clock::s_time_multiplier = mul;
     }
 
@@ -130,9 +140,7 @@ namespace DUNE
       return Clock::s_time_multiplier;
     }
 
-
-
-    double
+    uint64_t
     Clock::getSinceEpochNsecRT(void)
     {
       // POSIX RT.
@@ -170,7 +178,7 @@ namespace DUNE
     double
     Clock::toSimTime(double timestamp)
     {
-      double starttime = s_starttime / c_nsec_per_sec_fp;
+      double starttime = s_starttime_epoch / c_nsec_per_sec_fp;
       if (timestamp < starttime)
         return timestamp;
 

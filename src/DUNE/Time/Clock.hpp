@@ -46,14 +46,14 @@ namespace DUNE
     class Clock
     {
     public:
-      //! Get the amount of time (in nanoseconds) since an unspecified
+      //! Get the amount of non-realtime (in nanoseconds) since an unspecified
       //! point in the past. If the system permits, this point does
       //! not change after system start-up time.
       //! @return time in nanoseconds.
       static uint64_t
       getNsec(void);
 
-      //! Get the amount of time (in microseconds) since an unspecified
+      //! Get the amount of non-realtime (in microseconds) since an unspecified
       //! point in the past. If the system permits, this point does
       //! not change after system start-up time.
       //! @return time in microseconds.
@@ -63,7 +63,7 @@ namespace DUNE
         return getNsec() / c_nsec_per_usec;
       }
 
-      //! Get the amount of time (in milliseconds) since an unspecified
+      //! Get the amount of non-realtime (in milliseconds) since an unspecified
       //! point in the past. If the system permits, this point does
       //! not change after system start-up time.
       //! @return time in milliseconds.
@@ -73,7 +73,7 @@ namespace DUNE
         return getNsec() / c_nsec_per_msec;
       }
 
-      //! Get the amount of time (in seconds) since an unspecified
+      //! Get the amount of non-realtime (in seconds) since an unspecified
       //! point in the past. If the system permits, this point does
       //! not change after system start-up time.
       //! @return time in seconds.
@@ -83,13 +83,13 @@ namespace DUNE
         return getNsec() / c_nsec_per_sec_fp;
       }
 
-      //! Get the amount of time (in nanoseconds) elapsed since the
+      //! Get the amount of non-realtime (in nanoseconds) elapsed since the
       //! UNIX Epoch (Midnight UTC of January 1, 1970).
       //! @return time in nanoseconds.
       static uint64_t
       getSinceEpochNsec(void);
 
-      //! Get the amount of time (in microseconds) elapsed since the
+      //! Get the amount of non-realtime (in microseconds) elapsed since the
       //! UNIX Epoch (Midnight UTC of January 1, 1970).
       //! @return time in microseconds.
       static uint64_t
@@ -98,7 +98,7 @@ namespace DUNE
         return getSinceEpochNsec() / c_nsec_per_usec;
       }
 
-      //! Get the amount of time (in milliseconds) elapsed since the
+      //! Get the amount of non-realtime (in milliseconds) elapsed since the
       //! UNIX Epoch (Midnight UTC of January 1, 1970).
       //! @return time in milliseconds.
       static uint64_t
@@ -107,7 +107,7 @@ namespace DUNE
         return getSinceEpochNsec() / c_nsec_per_msec;
       }
 
-      //! Get the amount of time (in seconds) elapsed since the
+      //! Get the amount of non-realtime (in seconds) elapsed since the
       //! UNIX Epoch (Midnight UTC of January 1, 1970).
       //! @return time in seconds.
       static double
@@ -132,26 +132,60 @@ namespace DUNE
       static double
       getTimeMultiplier();
 
+      //! Return reference time used for epoch clock acceleration
+      //! @return s_starttime_epoch epoch time reference
       static double
-      getStartTime()
+      getStartTimeEpoch()
       {
-        return s_starttime;
+        return s_starttime_epoch;
+      }
+    
+      //! Return reference time used for monotonic clock acceleration
+      //! @return s_starttime_epoch epoch time reference
+      static double
+      getStartTimeMono()
+      {
+        return s_starttime_mono;
       }
 
-      static double
+      //! Get the amount of realtime (in nanoseconds) elapsed since the
+      //! UNIX Epoch (Midnight UTC of January 1, 1970).
+      //! @return time in nanoseconds.
+      static uint64_t
       getSinceEpochNsecRT(void);
 
+      //! Get the amount of realtime (in nanoseconds) since an unspecified
+      //! point in the past. If the system permits, this point does
+      //! not change after system start-up time.
+      //! @return time in nanoseconds.
+      static uint64_t
+      getNsecRT(void);
+
+      //! Get the amount of realtime (in seconds) elapsed since the
+      //! UNIX Epoch (Midnight UTC of January 1, 1970).
+      //! @return time in seconds.
       static double
       getSinceEpochRT(void)
       {
         return getSinceEpochNsecRT() / c_nsec_per_sec_fp;
       }
 
+      //! Get the amount of realtime (in seconds) since an unspecified
+      //! point in the past. If the system permits, this point does
+      //! not change after system start-up time.
+      //! @return time in seconds.
+      static double
+      getRT(void)
+      {
+        return getNsecRT() / c_nsec_per_sec_fp;
+      }
+
       static double
       toSimTime(double timestamp);
 
     private:
-      static uint64_t s_starttime;
+      static uint64_t s_starttime_epoch;
+      static uint64_t s_starttime_mono;
       static double s_time_multiplier;
     };
   }
