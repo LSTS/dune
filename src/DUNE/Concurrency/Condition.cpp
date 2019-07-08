@@ -99,7 +99,7 @@ namespace DUNE
         if (Time::Clock::getTimeMultiplier() != 1.0)
         {
           t /= Time::Clock::getTimeMultiplier();
-          t += Time::Clock::getSinceEpochNsecRT() / Time::c_nsec_per_sec_fp;
+          t += m_clock_monotonic ? Time::Clock::getRT() : Time::Clock::getSinceEpochRT();
         }
         else
           t += m_clock_monotonic ? Time::Clock::get() : Time::Clock::getSinceEpoch();
