@@ -64,6 +64,8 @@ namespace Simulators
       double wx;
       //! Stream speed East parameter (m/s).
       double wy;
+      //! Simulation time multiplier
+      double time_multiplier;
     };
 
     //! Simulator task.
@@ -100,10 +102,24 @@ namespace Simulators
         .defaultValue("0.0")
         .description("Water current speed along the East in the NED frame");
 
+        param("Time Multiplier", m_args.time_multiplier)
+        .defaultValue("1.0")
+        .description("Simulation time multiplier");
+
         // Register handler routines.
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.time_multiplier != 1.0)
+        {
+          Time::Clock::setTimeMultiplier(m_args.time_multiplier);
+          war("Using time multiplier: x%.2f", Time::Clock::getTimeMultiplier());
+        }
       }
 
       //! Release allocated resources.
