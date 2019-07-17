@@ -182,9 +182,15 @@ namespace DUNE
         toECEF(*lat, *lon, *hae, &x, &y, &z);
 
         // Compute Geocentric latitude
-        double N = computeRn(*lat);
         double p = std::sqrt(x * x + y * y);
+#if defined(DUNE_ELLIPSOIDAL_DISPLACE)
+        // Use elliptical coordinates
+        double N = computeRn(*lat);
         double phi = std::atan2(z,p*(1 - c_wgs84_e2 * N / (N + *hae)));
+#else
+        // Use spherical coordinates
+        double phi = std::atan2(z,p);
+#endif
 
         // Compute all needed sine and cosine terms for conversion.
         double slon = std::sin(*lon);
