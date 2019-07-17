@@ -182,7 +182,15 @@ namespace DUNE
         toECEF(*lat, *lon, *hae, &x, &y, &z);
 
         // Compute Geocentric latitude
-        double phi = std::atan2(z, std::sqrt(x * x + y * y));
+        double p = std::sqrt(x * x + y * y);
+#if defined(DUNE_ELLIPSOIDAL_DISPLACE)
+        // Use elliptical coordinates
+        double N = computeRn(*lat);
+        double phi = std::atan2(z,p*(1 - c_wgs84_e2 * N / (N + *hae)));
+#else
+        // Use spherical coordinates
+        double phi = std::atan2(z,p);
+#endif
 
         // Compute all needed sine and cosine terms for conversion.
         double slon = std::sin(*lon);
@@ -285,7 +293,6 @@ namespace DUNE
         getNEBearingAndRange(lat1, lon1, lat2, lon2, azimuth, &tmp);
       }
 
-    private:
       //! Convert WGS-84 coordinates to ECEF (Earch Center Earth Fixed) coordinates.
       //!
       //! @param[in] lat WGS-84 latitude (rad).
@@ -338,6 +345,7 @@ namespace DUNE
         *hae = p / std::cos(*lat) - computeRn(*lat);
       }
 
+    private:
       //! Compute the radius of curvature in the prime vertical (Rn).
       //!
       //! @param[in] lat WGS-84 latitude (rad).
