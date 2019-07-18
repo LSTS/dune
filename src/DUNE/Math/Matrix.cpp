@@ -151,7 +151,7 @@ namespace DUNE
       identity();
     }
 
-    Matrix::Matrix(double* diag, size_t n)
+    Matrix::Matrix(const double* diag, size_t n)
     {
       m_nrows = n;
       m_ncols = n;
@@ -204,6 +204,42 @@ namespace DUNE
       m_data = newdata;
       m_counter = m_data + m_size;
       *m_counter = 1;
+    }
+
+    double*
+    Matrix::begin(void)
+    {
+      return m_data;
+    }
+
+    double*
+    Matrix::end(void)
+    {
+      return m_data + m_size;
+    }
+
+    const double*
+    Matrix::begin(void) const
+    {
+      return m_data;
+    }
+
+    const double*
+    Matrix::end(void) const
+    {
+      return m_data + m_size;
+    }
+
+    const double*
+    Matrix::cbegin(void) const
+    {
+      return m_data;
+    }
+
+    const double*
+    Matrix::cend(void) const
+    {
+      return m_data + m_size;
     }
 
     int
@@ -1938,7 +1974,7 @@ namespace DUNE
     }
 
     Matrix
-    skew(double data[3])
+    skew(const double data[3])
     {
       Matrix m(3, 3, 0.0);
       m(0, 1) = -data[2];
