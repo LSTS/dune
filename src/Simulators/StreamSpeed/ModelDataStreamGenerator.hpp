@@ -34,8 +34,8 @@
 #include <vector>
 
 #include "DUNE/Parsers/HDF5Reader.hpp"
+#include "DUNE/Math/Grid.hpp"
 
-#include "Grid.hpp"
 #include "StreamGenerator.hpp"
 
 namespace Simulators
@@ -98,7 +98,7 @@ namespace Simulators
         //! Velocity in the North direction.
         std::vector<double> m_v;
         //! Converts between grid indices and datapoint indices.
-        Grid<3> m_grid;
+        DUNE::Math::Grid<3> m_grid;
       };
     }    // namespace StreamGenerator
   }      // namespace StreamSpeed
