@@ -61,6 +61,7 @@ namespace DUNE
         : m_file(std::make_unique<File>())
     {
 #ifndef DUNE_H5CPP_ENABLED
+      (void)filename;
       throw std::runtime_error(
           DTR("HDF5Reader::HDF5Reader(): support for HDF5 i/o is not "
               "enabled."));
@@ -97,6 +98,7 @@ namespace DUNE
 #ifdef DUNE_H5CPP_ENABLED
       return dsetExists(m_file.get(), path);
 #else
+      (void)path;
       return false;
 #endif
     }
@@ -132,6 +134,7 @@ namespace DUNE
 
       return {dimensions_, data};
 #else
+      (void)path;
       return {};
 #endif
     }
@@ -158,6 +161,8 @@ namespace DUNE
 
       return data;
 #else
+      (void)path;
+      (void)attribute;
       return {};
 #endif
     }
