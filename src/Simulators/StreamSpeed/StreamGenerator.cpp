@@ -40,10 +40,10 @@ namespace Simulators
       {}
 
       std::array<double, 3>
-      StreamGenerator::getSpeed(double lat,
-                                double lon,
-                                double depth,
-                                double time) const
+      StreamGenerator::getSpeed(double,
+                                double,
+                                double,
+                                double) const
       {
         return getDefaultSpeed();
       }

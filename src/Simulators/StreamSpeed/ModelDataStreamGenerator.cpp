@@ -90,7 +90,7 @@ namespace Simulators
       std::array<double, 3>
       Gridded2DModelDataStreamGenerator::getSpeed(double lat,
                                                   double lon,
-                                                  double depth,
+                                                  double,
                                                   double time) const
       {
         // Find closest grid cell
