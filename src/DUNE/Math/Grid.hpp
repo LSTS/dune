@@ -173,7 +173,7 @@ namespace DUNE
       std::copy_n(std::begin(max), dim, std::begin(m_max));
       std::copy_n(std::begin(dimensions), dim, std::begin(m_npts));
 
-      for (auto i = 0; i < dim; ++i)
+      for (size_t i = 0; i < dim; ++i)
       {
         if (m_npts[i] < 2)
           throw std::runtime_error("Grid::Grid(): invalid grid dimensions.");
@@ -197,7 +197,7 @@ namespace DUNE
 
       size_t offset = indices[0];
 
-      for (auto i = 1; i < dim; ++i)
+      for (size_t i = 1; i < dim; ++i)
       {
         if (indices[i] >= m_npts[i])
           throw std::runtime_error("Grid::getOffset(): out of bounds.");
@@ -217,7 +217,7 @@ namespace DUNE
 
       std::array<size_t, dim> point;
 
-      for (auto i = dim; i > 0; --i)
+      for (size_t i = dim; i > 0; --i)
       {
         point[i - 1] = offset % m_npts[i - 1];
         offset /= m_npts[i - 1];
@@ -232,7 +232,7 @@ namespace DUNE
     {
       std::array<size_t, dim> corner;
 
-      for (auto i = 0; i < dim; ++i)
+      for (size_t i = 0; i < dim; ++i)
       {
         if (coordinates[i] < m_min[i] || coordinates[i] > m_max[i])
           corner[i] = m_npts[i];
@@ -249,7 +249,7 @@ namespace DUNE
     {
       std::array<double, dim> coordinates;
 
-      for (auto i = 0; i < dim; ++i)
+      for (size_t i = 0; i < dim; ++i)
         coordinates[i] = m_min[i] + m_h[i] * indices[i];
 
       return coordinates;
