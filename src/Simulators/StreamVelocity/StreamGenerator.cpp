@@ -27,57 +27,40 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
-
-#include <memory>
-
-#include "DUNE/I18N.hpp"
-
-#include "ModelDataStreamGenerator.hpp"
 #include "StreamGenerator.hpp"
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
-      //! Factory method for the stream velocity source.
-      //! @param[in] config structure with configuration fields
-      //! @return handle to the stream velocity source.
-      template<typename Configuration>
-      std::unique_ptr<StreamGenerator>
-      factory(Configuration const& config)
-      {
-        if (config.type == "Constant")
-          return std::make_unique<StreamGenerator>(
-              config.default_wx, config.default_wy, config.default_wz);
-        if (config.type == "Gridded 2D Model Data")
-        {
-          GriddedModelDataConfig mdcfg;
-          mdcfg.filename = config.filename;
-          // Path to the dataset in the file containing the velocity values in
-          // the East direction, given in m/s as u = u(Lat, Lon, Time).
-          mdcfg.u_data_path = "u";
-          // Path to the dataset in the file containing the velocity values in
-          // the North direction, given in m/s as v = v(Lat, Lon, Time).
-          mdcfg.v_data_path = "v";
-          //! Path to the node in the file containing the grid data.
-          //! This node should include the following child nodes:
-          //!   min - array with the lower grid limits.
-          //!   max - array with the upper grid limits.
-          //!   npts - array with the number of points in each dimension.
-          mdcfg.grid_path = "grid";
+      StreamGenerator::StreamGenerator(double wx, double wy, double wz)
+          : m_wx(wx), m_wy(wy), m_wz(wz)
+      {}
 
-          return std::make_unique<Gridded2DModelDataStreamGenerator>(
-              mdcfg, config.default_wx, config.default_wy, config.default_wz);
-        }
-        else
-          throw std::runtime_error(DTR("Unknown stream velocity source type."));
+      std::array<double, 3>
+      StreamGenerator::getSpeed(double,
+                                double,
+                                double,
+                                double) const
+      {
+        return getDefaultSpeed();
+      }
+
+      std::array<double, 3>
+      StreamGenerator::getDefaultSpeed() const
+      {
+        return {m_wx, m_wy, m_wz};
+      }
+
+      void
+      StreamGenerator::setSpeed(double wx, double wy, double wz)
+      {
+        m_wx = wx;
+        m_wy = wy;
+        m_wz = wz;
       }
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
-
-#endif

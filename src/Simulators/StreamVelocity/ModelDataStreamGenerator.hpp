@@ -40,7 +40,7 @@
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
@@ -101,7 +101,7 @@ namespace Simulators
         DUNE::Math::Grid<3> m_grid;
       };
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
 
 #endif

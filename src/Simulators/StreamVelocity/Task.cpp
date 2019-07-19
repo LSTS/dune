@@ -47,7 +47,7 @@ namespace Simulators
   //! message.
   //! Currently supports only a single vehicle.
   //! @author Miguel Aguiar
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     using DUNE_NAMESPACES;
 
@@ -226,7 +226,7 @@ namespace Simulators
         dispatch(m_esv);
       }
     };
-  }    // namespace StreamSpeed
+  }    // namespace StreamVelocity
 }    // namespace Simulators
 
 DUNE_TASK

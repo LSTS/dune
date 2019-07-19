@@ -27,40 +27,63 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#include "StreamGenerator.hpp"
+#ifndef SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HPP_INCLUDED_
+#define SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HPP_INCLUDED_
+
+#include <array>
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
-      StreamGenerator::StreamGenerator(double wx, double wy, double wz)
-          : m_wx(wx), m_wy(wy), m_wz(wz)
-      {}
-
-      std::array<double, 3>
-      StreamGenerator::getSpeed(double,
-                                double,
-                                double,
-                                double) const
+      // A simple interface for any sort of source of velocity values.
+      // This base class just provides a constant value.
+      class StreamGenerator
       {
-        return getDefaultSpeed();
-      }
+      public:
+        //! Constructor.
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
+        StreamGenerator(double wx, double wy, double wz = 0.0);
 
-      std::array<double, 3>
-      StreamGenerator::getDefaultSpeed() const
-      {
-        return {m_wx, m_wy, m_wz};
-      }
+        ~StreamGenerator() = default;
 
-      void
-      StreamGenerator::setSpeed(double wx, double wy, double wz)
-      {
-        m_wx = wx;
-        m_wy = wy;
-        m_wz = wz;
-      }
+        //! Get a stream speed value.
+        //! @param[in] lat WGS84 latitude in degrees.
+        //! @param[in] lon WGS84 longitude in degrees.
+        //! @param[in] depth depth in meters.
+        //! @param[in] time time elapsed since the simulation started.
+        //! @return 3-dimensional array containing the stream velocity in the
+        //! North, East and Down directions in meters per second.
+        virtual std::array<double, 3>
+        getSpeed(double lat, double lon, double depth, double time = 0.0) const;
+
+        //! Get the default stream speed.
+        //! @return 3-dimensional array containing the default stream velocity
+        //! value in the North, East and Down directions in meters per second.
+        std::array<double, 3>
+        getDefaultSpeed() const;
+
+        //! Set the default stream speed.
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
+        void
+        setSpeed(double wx, double wy, double wz = 0.0);
+
+      private:
+        //! Default speed North.
+        double m_wx;
+        //! Default speed East.
+        double m_wy;
+        //! Default speed Down.
+        double m_wz;
+      };
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
+
+#endif

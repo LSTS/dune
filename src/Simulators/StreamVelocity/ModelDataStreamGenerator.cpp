@@ -34,7 +34,7 @@
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
@@ -137,5 +137,5 @@ namespace Simulators
         return {v_val, u_val, 0.0};
       }
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
