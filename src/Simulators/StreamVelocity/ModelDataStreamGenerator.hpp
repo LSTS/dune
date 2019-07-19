@@ -27,8 +27,8 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_VELOCITY_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
+#define SIMULATORS_STREAM_VELOCITY_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
 
 #include <string>
 #include <vector>
@@ -86,10 +86,10 @@ namespace Simulators
         ~Gridded2DModelDataStreamGenerator() = default;
 
         virtual std::array<double, 3>
-        getSpeed(double lat,
-                 double lon,
-                 double depth,
-                 double time = 0.0) const override;
+        getVelocity(double lat,
+                    double lon,
+                    double depth,
+                    double time = 0.0) const override;
 
       private:
         DUNE::Parsers::HDF5Reader m_file;

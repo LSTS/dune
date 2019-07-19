@@ -27,8 +27,8 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_HPP_INCLUDED_
+#define SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_HPP_INCLUDED_
 
 #include <array>
 
@@ -51,7 +51,7 @@ namespace Simulators
 
         ~StreamGenerator() = default;
 
-        //! Get a stream speed value.
+        //! Get a stream velocity value.
         //! @param[in] lat WGS84 latitude in degrees.
         //! @param[in] lon WGS84 longitude in degrees.
         //! @param[in] depth depth in meters.
@@ -59,20 +59,23 @@ namespace Simulators
         //! @return 3-dimensional array containing the stream velocity in the
         //! North, East and Down directions in meters per second.
         virtual std::array<double, 3>
-        getSpeed(double lat, double lon, double depth, double time = 0.0) const;
+        getVelocity(double lat,
+                    double lon,
+                    double depth,
+                    double time = 0.0) const;
 
-        //! Get the default stream speed.
+        //! Get the default stream velocity.
         //! @return 3-dimensional array containing the default stream velocity
         //! value in the North, East and Down directions in meters per second.
         std::array<double, 3>
-        getDefaultSpeed() const;
+        getDefaultVelocity() const;
 
-        //! Set the default stream speed.
+        //! Set the default stream velocity.
         //! @param[in] wx default stream speed in the North direction (m/s).
         //! @param[in] wy default stream speed in the East direction (m/s).
         //! @param[in] wz default stream speed in the Down direction (m/s).
         void
-        setSpeed(double wx, double wy, double wz = 0.0);
+        setVelocity(double wx, double wy, double wz = 0.0);
 
       private:
         //! Default speed North.
