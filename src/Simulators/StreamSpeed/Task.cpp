@@ -30,6 +30,7 @@
 // Standard library headers.
 #include <memory>
 #include <string>
+#include <cmath>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -201,14 +202,14 @@ namespace Simulators
                                  DUNE::Time::Clock::get() + m_time0);
 
         //! Fill EstimatedStreamVelocity.
-        m_esv.x = p[0];
-        m_esv.y = p[1];
-        m_esv.z = p[2];
+        m_esv.x = std::isnan(p[0]) ? m_args.default_wx : p[0];
+        m_esv.y = std::isnan(p[1]) ? m_args.default_wy : p[1];
+        m_esv.z = std::isnan(p[2]) ? m_args.default_wz : p[2];
 
         debug(DTR("Stream speed is %f m/s N : %f m/s E : %f m/s D"),
-              p[0],
-              p[1],
-              p[2]);
+              m_esv.x,
+              m_esv.y,
+              m_esv.z);
       }
 
       void
