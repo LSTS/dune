@@ -198,7 +198,7 @@ namespace Simulators
 
         auto p = m_ssg->getSpeed(Angles::degrees(lat),
                                  Angles::degrees(lon),
-                                 -m_state.height,
+                                 -height,
                                  DUNE::Time::Clock::get() + m_time0);
 
         //! Fill EstimatedStreamVelocity.
