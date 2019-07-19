@@ -215,7 +215,8 @@ namespace Simulators
       void
       consume(IMC::SimulatedState const* msg)
       {
-        m_state = *msg;
+        if (msg->getSource() == getSystemId())
+          m_state = *msg;
       }
 
       void
