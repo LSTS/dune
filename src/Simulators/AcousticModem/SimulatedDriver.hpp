@@ -349,10 +349,7 @@ namespace Simulators
         msg.data.assign(str.begin(), str.end());
 
         if (!isBusy())
-        {
           transmit(&msg);
-          std::cout << "Reply sent\n";
-        }
       }
 
       //! Check destination and modem compatibility.
