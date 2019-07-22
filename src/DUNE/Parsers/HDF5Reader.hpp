@@ -24,28 +24,79 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef DUNE_PARSERS_HPP_INCLUDED_
-#define DUNE_PARSERS_HPP_INCLUDED_
+#ifndef DUNE_PARSERS_HDF5_READER_HPP_INCLUDED_
+#define DUNE_PARSERS_HDF5_READER_HPP_INCLUDED_
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace hdf5
+{
+  namespace file
+  {
+    class File;
+  }
+}    // namespace hdf5
 
 namespace DUNE
 {
-  //! %Parsers.
   namespace Parsers
-  { }
-}
+  {
+    using hdf5::file::File;
 
-#include <DUNE/Parsers/Config.hpp>
-#include <DUNE/Parsers/PD4.hpp>
-#include <DUNE/Parsers/NMEAReader.hpp>
-#include <DUNE/Parsers/NMEAWriter.hpp>
-#include <DUNE/Parsers/AbstractStringReader.hpp>
-#include <DUNE/Parsers/BasicStringReader.hpp>
-#include <DUNE/Parsers/AbstractStringWriter.hpp>
-#include <DUNE/Parsers/BasicStringWriter.hpp>
-#include <DUNE/Parsers/PlanConfigParser.hpp>
-#include <DUNE/Parsers/HDF5Reader.hpp>
+    //! Simplifies reading data and attributes from HDF5 format files.
+    class HDF5Reader
+    {
+    public:
+      //! Constructor.
+      //! @param[in] filename path to an hdf5 file.
+      HDF5Reader(std::string const& filename);
+
+      //! Destructor.
+      ~HDF5Reader();
+
+      //! Structure holding an arbitrary multidimensional HDF5 dataset.
+      template<typename T>
+      struct HDF5Dataset
+      {
+        //! Number of points in each dimension.
+        std::vector<size_t> dimensions;
+        //! The data values in row-major (C-style) order.
+        std::vector<T> data;
+      };
+
+      //! Check if a dataset exists in the given file.
+      //! @param[in] path path to the dataset in the file.
+      //! @return whether the dataset exists in the file.
+      bool
+      datasetExists(std::string const& path) const;
+
+      //! Get a dataset and its dimensions.
+      //! @param[in] path path to the dataset in the file.
+      //! @return structure containing the data and the dataset dimensions.
+      template<typename T>
+      HDF5Dataset<T>
+      getDataset(std::string const& path) const;
+
+      //! Get an attribute.
+      //! @param[in] path path to the node in the file where the attribute is
+      //! stored.
+      //! @param[in] attribute name of the attribute to get.
+      //! @return the attribute's data.
+      template<typename T>
+      std::vector<T>
+      getAttribute(std::string const& path, std::string const& attribute) const;
+
+    private:
+      //! Handle to an HDF5 file.
+      std::unique_ptr<File> m_file;
+    };
+  }    // namespace Parsers
+}    // namespace DUNE
 
 #endif

@@ -24,28 +24,40 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef DUNE_PARSERS_HPP_INCLUDED_
-#define DUNE_PARSERS_HPP_INCLUDED_
+#include "StreamGenerator.hpp"
 
-namespace DUNE
+namespace Simulators
 {
-  //! %Parsers.
-  namespace Parsers
-  { }
-}
+  namespace StreamVelocity
+  {
+    namespace StreamGenerator
+    {
+      StreamGenerator::StreamGenerator(double wx, double wy, double wz)
+          : m_wx(wx), m_wy(wy), m_wz(wz)
+      {}
 
-#include <DUNE/Parsers/Config.hpp>
-#include <DUNE/Parsers/PD4.hpp>
-#include <DUNE/Parsers/NMEAReader.hpp>
-#include <DUNE/Parsers/NMEAWriter.hpp>
-#include <DUNE/Parsers/AbstractStringReader.hpp>
-#include <DUNE/Parsers/BasicStringReader.hpp>
-#include <DUNE/Parsers/AbstractStringWriter.hpp>
-#include <DUNE/Parsers/BasicStringWriter.hpp>
-#include <DUNE/Parsers/PlanConfigParser.hpp>
-#include <DUNE/Parsers/HDF5Reader.hpp>
+      std::array<double, 3>
+      StreamGenerator::getVelocity(double, double, double, double) const
+      {
+        return getDefaultVelocity();
+      }
 
-#endif
+      std::array<double, 3>
+      StreamGenerator::getDefaultVelocity() const
+      {
+        return {m_wx, m_wy, m_wz};
+      }
+
+      void
+      StreamGenerator::setVelocity(double wx, double wy, double wz)
+      {
+        m_wx = wx;
+        m_wy = wy;
+        m_wz = wz;
+      }
+    }    // namespace StreamGenerator
+  }      // namespace StreamVelocity
+}    // namespace Simulators
