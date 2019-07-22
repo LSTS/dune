@@ -77,7 +77,7 @@ namespace DUNE
       dispatch(m_act_state);
     }
 
-    void
+    bool
     StatefulEntity::requestActivation(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_INACTIVE)
@@ -99,15 +99,16 @@ namespace DUNE
         }
 
         dispatch(m_act_state);
-        return;
+        return false;
       }
 
       m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_ACT_IP;
       dispatch(m_act_state);
+      return true;
     }
 
-    void
+    bool
     StatefulEntity::requestDeactivation(void)
     {
       if (m_act_state.state != IMC::EntityActivationState::EAS_ACTIVE)
@@ -129,12 +130,13 @@ namespace DUNE
         }
 
         dispatch(m_act_state);
-        return;
+        return false;
       }
 
       m_next_act_state = NAS_SAME;
       m_act_state.state = IMC::EntityActivationState::EAS_DEACT_IP;
       dispatch(m_act_state);
+      return true;
     }
 
     void
