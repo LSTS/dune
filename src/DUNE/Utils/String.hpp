@@ -244,6 +244,14 @@ namespace DUNE
       static std::string
       replace(const std::string& str, char rep, const std::string& pat);
 
+      //! Replace all occurrences of a substring in a string
+      //! @param[in] inStr string.
+      //! @param[in] searchStr substring to search for.
+      //! @param[in] replaceStr substring replacement.
+      //! @return resulting string with all substring occurrences replaced.
+      static std::string
+      replaceAll(const std::string& inStr, const std::string& searchStr, const std::string& replaceStr);
+
       static std::string
       escape(const std::string& input);
 
