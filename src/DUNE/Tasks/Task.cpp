@@ -274,9 +274,8 @@ namespace DUNE
     Task::requestActivation(void)
     {
       spew("request activation");
-      m_entity->requestActivation();
 
-      if (m_entity->isActivating())
+      if (m_entity->requestActivation())
       {
         spew("calling on request activation");
         onRequestActivation();
@@ -314,9 +313,8 @@ namespace DUNE
     Task::requestDeactivation(void)
     {
       spew("request deactivation");
-      m_entity->requestDeactivation();
 
-      if (m_entity->isDeactivating())
+      if (m_entity->requestDeactivation())
       {
         spew("calling on request deactivation");
         onRequestDeactivation();
