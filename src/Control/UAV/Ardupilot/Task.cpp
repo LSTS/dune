@@ -1811,12 +1811,16 @@ namespace Control
               m_hae_offset = wmm.height(m_lat, m_lon);
               m_reboot = false;
               m_offset_st = true;
+              debug("Height offset at %3.10f/%3.10f is %f", Angles::degrees(m_lat), Angles::degrees(m_lon), m_hae_offset);
             }
           }
-          else
+          else if (m_args.convert_msl == false)
           {
             m_hae_offset = 0;
+            m_offset_st = false;
+            debug("Height offset set to zero (convert?%d, gpstype: %d)",m_args.convert_msl, m_fix.type);
           }
+          //else: m_args.convert_msl is true, but we do not have/have lost GPS: leave m_hae_offset as is
 
           m_estate.lat = m_lat;
           m_estate.lon = m_lon;
