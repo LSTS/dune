@@ -932,20 +932,23 @@ namespace Control
             return;
           }
 
-          uint8_t buf[512], mode;
+          uint8_t buf[512];
           mavlink_message_t msg;
           uint16_t n;
 
-          // Copters must first be set to guided as of AC 3.2
-          // Planes must first be set to guided as of AP 3.3.0
-          mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
-          mavlink_msg_set_mode_pack(255, 0, &msg,
-                                    m_sysid,
-                                    1,
-                                    mode);
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-          debug("Guided MODE on ardupilot is set.");
+          if (!((m_mode == CP_MODE_GUIDED) || (m_mode == PL_MODE_GUIDED)))
+          {
+            // Copters must first be set to guided as of AC 3.2
+            // Planes must first be set to guided as of AP 3.3.0
+            uint8_t mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      mode);
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            debug("Guided MODE on ardupilot is set.");
+          }
 
           //! Setting airspeed parameter
           if (m_vehicle_type == VEHICLE_COPTER)
