@@ -70,6 +70,16 @@ namespace Simulators
       uint8_t fuel_conf;
     };
 
+    struct TargetOfInterest
+    {
+      uint32_t hashCode;
+      uint32_t timestamp;
+      float lat;
+      float lon;
+      uint32_t sourceId;
+      int8_t confidence;
+    };
+
     struct RetaskMission
     {
       //! Time of request in seconds
@@ -95,6 +105,8 @@ namespace Simulators
     {
       //! RetaskWaypoint periodicty
       int period_report;
+      //! TargetOfInterest periodicty
+      int period_toi;
       //! RetaskMission periodicty
       int period_rtm;
       //! RetaskWaypoint periodicty
@@ -109,11 +121,16 @@ namespace Simulators
       double origin_lat_degs;
       //! Origin longitude in degrees
       double origin_lon_degs;
+      //! toi latitude in degrees
+      double toi_lat_degs;
+      //! toi longitude in degrees
+      double toi_lon_degs;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       Time::Counter<double> m_wdog_report;
+      Time::Counter<double> m_wdog_toi;
       Time::Counter<double> m_wdog_rtm;
       Time::Counter<double> m_wdog_rtw;
       IMC::EstimatedState* m_eestate;
@@ -129,6 +146,11 @@ namespace Simulators
         .defaultValue("1")
         .units(Units::Second)
         .description("");
+
+        param("Period -- TargetOfInterest", m_args.period_toi)
+            .defaultValue("-1")
+            .units(Units::Second)
+            .description("");
 
         param("Period -- RetaskMission", m_args.period_rtm)
         .defaultValue("-1")
@@ -162,6 +184,16 @@ namespace Simulators
         .units(Units::Degree)
         .description("");
 
+        param("TargetOfInterest Latitude", m_args.toi_lat_degs)
+        .defaultValue("21.43422")
+        .units(Units::Degree)
+        .description("");
+
+        param("TargetOfInterest Longitude", m_args.toi_lon_degs)
+        .defaultValue("-157.78612")
+        .units(Units::Degree)
+        .description("");
+
         m_bfr.resize(255);
         bind<IMC::EstimatedState>(this);
       }
@@ -171,6 +203,7 @@ namespace Simulators
       onUpdateParameters(void)
       {
         m_wdog_report.setTop(m_args.period_report);
+        m_wdog_toi.setTop(m_args.period_toi);
         m_wdog_rtm.setTop(m_args.period_rtm);
         m_wdog_rtw.setTop(m_args.period_rtw);
       }
@@ -371,6 +404,84 @@ namespace Simulators
         m_wdog_report.reset();
       }
 
+      inline static int64_t positionToInteger(const double& pos)
+      {
+        return (int64_t) std::round((double) pos * 1e6);
+      }
+
+      inline uint32_t calculateHash(const uint32_t& seconds, const double& latDeg, const double& lonDeg, const uint32_t& sourceId) const
+      {
+        //  http://stackoverflow.com/a/1646913/126995
+        uint32_t rtn = 17;
+        rtn = rtn * 31 + (uint32_t) std::hash<int64_t>()(((int64_t)seconds * 1000));
+        rtn = rtn * 31 + (uint32_t) std::hash<int32_t>()(positionToInteger(latDeg));
+        rtn = rtn * 31 + (uint32_t) std::hash<int32_t>()(positionToInteger(lonDeg));
+        rtn = rtn * 31 + (uint32_t) std::hash<uint32_t>()(sourceId);
+        return rtn;
+      }
+
+      void
+      sendTargetOfInterest(void)
+      {
+        if (m_eestate == NULL || m_wdog_toi.getTop() == -1 || !m_wdog_toi.overflow())
+          return;
+
+        static const uint32_t initialTime = Time::Clock::getSinceEpoch();
+
+        double lat = Angles::radians(m_args.toi_lat_degs);
+        double lon = Angles::radians(m_args.toi_lon_degs);
+
+        TargetOfInterest toi;
+
+        toi.timestamp = initialTime;
+        toi.lat = lat;
+        toi.lon = lon;
+        toi.sourceId = 0x00470101;
+        toi.confidence = 43;
+
+        toi.hashCode = calculateHash(initialTime, toi.lat, toi.lon, toi.sourceId );
+
+        std::vector<char> data;
+        data.resize(sizeof (toi.hashCode) +
+            sizeof (toi.timestamp) +
+            sizeof (toi.lat) +
+            sizeof (toi.lon) +
+            sizeof (toi.sourceId) +
+            sizeof (toi.confidence) + 1);
+
+        data[0] = CODE_TOI;
+
+        int idx = 1;
+        std::memcpy(&data[idx], &toi.hashCode, sizeof (toi.hashCode));
+        idx += sizeof (toi.hashCode);
+
+        std::memcpy(&data[idx], &toi.timestamp, sizeof (toi.timestamp));
+        idx += sizeof (toi.timestamp);
+
+        std::memcpy(&data[idx], &toi.lat, sizeof (toi.lat));
+        idx += sizeof (toi.lat);
+
+        std::memcpy(&data[idx], &toi.lon, sizeof (toi.lon));
+        idx += sizeof (toi.lon);
+
+        std::memcpy(&data[idx], &toi.sourceId, sizeof (toi.sourceId));
+        idx += sizeof (toi.sourceId);
+
+        std::memcpy(&data[idx], &toi.confidence, sizeof (toi.confidence));
+        idx += sizeof (toi.confidence);
+
+        war("%s", Utils::String::toHex(data).c_str());
+        debug("%d, %d, %f, %f, %d, %d",
+            toi.hashCode,
+            toi.sourceId,
+            toi.lat,
+            toi.lon,
+            toi.timestamp,
+            (int) toi.confidence);
+        sendAcomms(data);
+        m_wdog_toi.reset();
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -379,6 +490,7 @@ namespace Simulators
         {
           waitForMessages(1.0);
           sendReport();
+          sendTargetOfInterest();
           sendRetaskMission();
           sendRetaskWaypoint();
         }
