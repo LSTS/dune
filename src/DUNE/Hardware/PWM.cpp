@@ -34,7 +34,7 @@
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Utils/String.hpp>
 
-#include <USER/Hardware/PWM.hpp>
+#include <DUNE/Hardware/PWM.hpp>
 
 namespace DUNE
 {
