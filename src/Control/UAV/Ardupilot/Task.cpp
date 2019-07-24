@@ -1777,7 +1777,7 @@ namespace Control
           acce.y = raw.yacc*0.001*9.80665;
           acce.z = raw.zacc*0.001*9.80665;
           acce.setTimeStamp(tstamp);
-          dispatch(acce);
+          dispatch(acce, DF_KEEP_TIME);
 
           // raw_imu ars unit is milli rad/s
           IMC::AngularVelocity avel;
@@ -1785,7 +1785,7 @@ namespace Control
           avel.y = raw.ygyro*0.001;
           avel.z = raw.zgyro*0.001;
           avel.setTimeStamp(tstamp);
-          dispatch(avel);
+          dispatch(avel, DF_KEEP_TIME);
 
           // raw_imu mag unit is milli Tesla
           // IMC mag unit is Gauss = 10^-4 Tesla
@@ -1794,7 +1794,7 @@ namespace Control
           magn.y = raw.ymag*0.1;
           magn.z = raw.zmag*0.1;
           magn.setTimeStamp(tstamp);
-          dispatch(magn);
+          dispatch(magn, DF_KEEP_TIME);
         }
 
         void
