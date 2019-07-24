@@ -154,7 +154,13 @@ def abbrev_to_macro(abbrev, prefix = ''):
 
 # Compute MD5 sum.
 def compute_md5(imc_xml):
-    m = hashlib.md5()
+    try:
+        # To account for the need to use the not part of the upstream
+        # but needed in Red Hat Enterprise Linux and derivatives that
+        # need to call "hashlib.new('md5', usedforsecurity=False)"
+        m = hashlib.new('md5', usedforsecurity=False)
+    except TypeError:
+        m = hashlib.md5()
     m.update(open(imc_xml, 'rb').read())
     return m.hexdigest()
 
