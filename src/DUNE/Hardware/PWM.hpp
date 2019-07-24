@@ -27,8 +27,8 @@
 // Author: Kristoffer Gryte                                                 *
 //***************************************************************************
 
-#ifndef USER2_HARDWARE_PWM_HPP_INCLUDED_
-#define USER2_HARDWARE_PWM_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_PWM_HPP_INCLUDED_
+#define DUNE_HARDWARE_PWM_HPP_INCLUDED_
 
 #include <string>
 
