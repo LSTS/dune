@@ -121,6 +121,10 @@ namespace Simulators
       double origin_lat_degs;
       //! Origin longitude in degrees
       double origin_lon_degs;
+      //! toi latitude in degrees
+      double toi_lat_degs;
+      //! toi longitude in degrees
+      double toi_lon_degs;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -177,6 +181,16 @@ namespace Simulators
 
         param("Origin Longitude", m_args.origin_lon_degs)
         .defaultValue("-117.46737")
+        .units(Units::Degree)
+        .description("");
+
+        param("TargetOfInterest Latitude", m_args.toi_lat_degs)
+        .defaultValue("21.43422")
+        .units(Units::Degree)
+        .description("");
+
+        param("TargetOfInterest Longitude", m_args.toi_lon_degs)
+        .defaultValue("-157.78612")
         .units(Units::Degree)
         .description("");
 
@@ -414,12 +428,10 @@ namespace Simulators
 
         static const uint32_t initialTime = Time::Clock::getSinceEpoch();
 
-        /// @TODO: Stop hard-coding these values. Can we get them from the config file?
-        double lat = Angles::radians(21.43422);
-        double lon = Angles::radians(-157.78612);
+        double lat = Angles::radians(m_args.toi_lat_degs);
+        double lon = Angles::radians(m_args.toi_lon_degs);
 
         TargetOfInterest toi;
-
 
         toi.timestamp = initialTime;
         toi.lat = lat;
@@ -427,8 +439,7 @@ namespace Simulators
         toi.sourceId = 0x00470101;
         toi.confidence = 43;
 
-        toi.hashCode = calculateHash(initialTime,21.43422,-157.78612, toi.sourceId );
-
+        toi.hashCode = calculateHash(initialTime, toi.lat, toi.lon, toi.sourceId );
 
         std::vector<char> data;
         data.resize(sizeof (toi.hashCode) +
