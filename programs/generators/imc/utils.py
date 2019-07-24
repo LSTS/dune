@@ -154,7 +154,7 @@ def abbrev_to_macro(abbrev, prefix = ''):
 
 # Compute MD5 sum.
 def compute_md5(imc_xml):
-    m = hashlib.md5()
+    m = hashlib.new('md5',usedforsecurity=False)
     m.update(open(imc_xml, 'rb').read())
     return m.hexdigest()
 
