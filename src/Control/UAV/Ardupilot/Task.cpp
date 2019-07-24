@@ -1771,23 +1771,28 @@ namespace Control
           double tstamp = Clock::getSinceEpoch();
 
           IMC::Acceleration acce;
-          acce.x = raw.xacc;
-          acce.y = raw.yacc;
-          acce.z = raw.zacc;
+          // raw_imu acc unit is in milli gs
+          // g used in AP is 9.80665 (see libraries/AP_Math/definitions.h)
+          acce.x = raw.xacc*0.001*9.80665;
+          acce.y = raw.yacc*0.001*9.80665;
+          acce.z = raw.zacc*0.001*9.80665;
           acce.setTimeStamp(tstamp);
           dispatch(acce);
 
+          // raw_imu ars unit is milli rad/s
           IMC::AngularVelocity avel;
-          avel.x = raw.xgyro;
-          avel.y = raw.ygyro;
-          avel.z = raw.zgyro;
+          avel.x = raw.xgyro*0.001;
+          avel.y = raw.ygyro*0.001;
+          avel.z = raw.zgyro*0.001;
           avel.setTimeStamp(tstamp);
           dispatch(avel);
 
+          // raw_imu mag unit is milli Tesla
+          // IMC mag unit is Gauss = 10^-4 Tesla
           IMC::MagneticField magn;
-          magn.x = raw.xmag;
-          magn.y = raw.ymag;
-          magn.z = raw.zmag;
+          magn.x = raw.xmag*0.1;
+          magn.y = raw.ymag*0.1;
+          magn.z = raw.zmag*0.1;
           magn.setTimeStamp(tstamp);
           dispatch(magn);
         }
