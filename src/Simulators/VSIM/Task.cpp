@@ -61,8 +61,8 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
-      //! Entity label of the stream speed source.
-      std::string sslabel;
+      //! Entity label of the stream velocity source.
+      std::string svlabel;
       //! Simulation time multiplier
       double time_multiplier;
     };
@@ -78,8 +78,8 @@ namespace Simulators
       IMC::SimulatedState m_sstate;
       //! Task arguments.
       Arguments m_args;
-      //! Stream speed.
-      double m_sspeed[3];
+      //! Stream velocity.
+      double m_svel[3];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
@@ -90,9 +90,9 @@ namespace Simulators
         .defaultValue("1.0")
         .description("Simulation time multiplier");
 
-        param("Stream Speed Source Entity Label", m_args.sslabel)
-            .defaultValue("Stream Speed Producer")
-            .description("Entity label of the stream speed source.");
+        param("Stream Velocity Source Entity Label", m_args.svlabel)
+            .defaultValue("Stream Velocity Simulator")
+            .description("Entity label of the stream velocity source.");
 
         // Register handler routines.
         bind<IMC::GpsFix>(this);
@@ -135,9 +135,9 @@ namespace Simulators
         m_world->addVehicle(m_vehicle);
         m_world->setTimeStep(1.0 / getFrequency());
 
-        m_sspeed[0] = 0.0;
-        m_sspeed[1] = 0.0;
-        m_sspeed[2] = 0.0;
+        m_svel[0] = 0.0;
+        m_svel[1] = 0.0;
+        m_svel[2] = 0.0;
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -183,17 +183,17 @@ namespace Simulators
       consume(const IMC::EstimatedStreamVelocity* msg)
       {
         // Filter valid messages.
-        if(resolveEntity(msg->getSourceEntity()) != m_args.sslabel)
+        if(resolveEntity(msg->getSourceEntity()) != m_args.svlabel)
           return;
 
-        m_sspeed[0] = msg->x;
-        m_sspeed[1] = msg->y;
-        m_sspeed[2] = msg->z;
+        m_svel[0] = msg->x;
+        m_svel[1] = msg->y;
+        m_svel[2] = msg->z;
 
-        debug(DTR("Setting stream speed: %f m/s N : %f m/s E : %f m/s D"),
-              m_sspeed[0],
-              m_sspeed[1],
-              m_sspeed[2]);
+        debug(DTR("Setting stream velocity: %f m/s N : %f m/s E : %f m/s D"),
+              m_svel[0],
+              m_svel[1],
+              m_svel[2]);
       }
 
       void
@@ -210,10 +210,10 @@ namespace Simulators
         // TODO
         // This is a temporary fix and this operation should probably be done
         // inside the Vehicle class.
-        // Add stream speed.
-        position[0] += m_world->getTimeStep() * m_sspeed[0];
-        position[1] += m_world->getTimeStep() * m_sspeed[1];
-        position[2] += m_world->getTimeStep() * m_sspeed[2];
+        // Add stream velocity.
+        position[0] += m_world->getTimeStep() * m_svel[0];
+        position[1] += m_world->getTimeStep() * m_svel[1];
+        position[2] += m_world->getTimeStep() * m_svel[2];
 
         m_sstate.x = position[0];
         m_sstate.y = position[1];
@@ -238,9 +238,9 @@ namespace Simulators
         m_sstate.w = lv[2];
 
         // Fill stream velocity.
-        m_sstate.svx = m_sspeed[0];
-        m_sstate.svy = m_sspeed[1];
-        m_sstate.svz = m_sspeed[2];
+        m_sstate.svx = m_svel[0];
+        m_sstate.svy = m_svel[1];
+        m_sstate.svz = m_svel[2];
 
         dispatch(m_sstate);
       }
