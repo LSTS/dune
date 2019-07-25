@@ -24,29 +24,26 @@
 # https://github.com/LSTS/dune/blob/master/LICENCE.md and                  #
 # http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
-# Author: Jose Pinto                                                       #
-############################################################################
-# LAUV Xplore 2 SOI-specific simulation                                    #
+# Author: Miguel Aguiar                                                    #
 ############################################################################
 
-[Require ../lauv-xplore-2.ini]
+if(H5CPP)
+    find_package(h5cpp)
 
-[Require ../common/drip.ini]
-
-[Simulators.VSIM]
-Stream Speed North          = -0.3
-Stream Speed East           = 0.1
-
-[Simulators.Iridium]
-Enabled                     = Simulation
-Entity Label                = Iridium Simulator
-Server Address              = localhost
-Server Port                 = 9090
-Debug Level                 = Debug
-
-[Transports.TCP.Server/BackSeat]
-Port                        = 6007
-
-[Transports.UDP]
-Underwater Communications   = false
-Always Transmitted Messages = SimulatedState
+    if(${h5cpp_FOUND})
+        dune_add_lib(h5cpp)
+        add_definitions(-DDUNE_H5CPP_ENABLED)
+        set(DUNE_USING_H5CPP
+            1
+            CACHE INTERNAL
+                  "libh5cpp")
+    else()
+        message(SEND_ERROR "Library h5cpp not found on this system. "
+            "See https://github.com/ess-dmsc/h5cpp for installation "
+            "instructions.")
+        set(DUNE_USING_H5CPP
+            0
+            CACHE INTERNAL
+                  "libh5cpp")
+    endif()
+endif(H5CPP)

@@ -45,6 +45,8 @@ namespace Transports
     {
       //! Period, in seconds, between state report transmissions over iridium
       int iridium_period;
+      //! Send Iridium text messages as plain text
+      bool iridium_plain_texts;
     };
 
     //! Config section from where to fetch emergency sms number
@@ -81,6 +83,10 @@ namespace Transports
         param("Iridium Reports Period", m_args.iridium_period)
             .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
             .defaultValue("300");
+
+        param("Send Iridium plain texts", m_args.iridium_plain_texts)
+            .description("Send Iridium text messages as plain text (and not IMC)")
+            .defaultValue("1");
 
         bind<IMC::PlanControlState>(this);
         bind<IMC::FuelLevel>(this);
@@ -181,13 +187,21 @@ namespace Transports
         }
         else // text mode
         {
-          IMC::IridiumCommand m;
-          m.destination = 0xFFFF;
-          m.source = getSystemId();
-          m.command = msg->txt_data;
-          uint8_t buffer[65535];
-          int len = m.serialize(buffer);
-          tx.data.assign(buffer, buffer + len);
+          if (m_args.iridium_plain_texts)
+          {
+            const char* txt = msg->txt_data.c_str();
+            tx.data.assign(txt, txt + msg->txt_data.length());
+          }
+          else
+          {
+            IMC::IridiumCommand m;
+            m.destination = 0xFFFF;
+            m.source = getSystemId();
+            m.command = msg->txt_data;
+            uint8_t buffer[65535];
+            int len = m.serialize(buffer);
+            tx.data.assign(buffer, buffer + len);
+          }
         }
         m_transmission_requests[tx.req_id] = msg->clone();
         dispatch(tx);

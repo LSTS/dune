@@ -24,37 +24,40 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+#include "StreamGenerator.hpp"
 
-namespace DUNE
+namespace Simulators
 {
-  //! Low level hardware drivers.
-  namespace Hardware
-  { }
-}
+  namespace StreamVelocity
+  {
+    namespace StreamGenerator
+    {
+      StreamGenerator::StreamGenerator(double wx, double wy, double wz)
+          : m_wx(wx), m_wy(wy), m_wz(wz)
+      {}
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/BasicDeviceDriver.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
-#include <DUNE/Hardware/PWM.hpp>
+      std::array<double, 3>
+      StreamGenerator::getVelocity(double, double, double, double) const
+      {
+        return getDefaultVelocity();
+      }
 
-#endif
+      std::array<double, 3>
+      StreamGenerator::getDefaultVelocity() const
+      {
+        return {m_wx, m_wy, m_wz};
+      }
+
+      void
+      StreamGenerator::setVelocity(double wx, double wy, double wz)
+      {
+        m_wx = wx;
+        m_wy = wy;
+        m_wz = wz;
+      }
+    }    // namespace StreamGenerator
+  }      // namespace StreamVelocity
+}    // namespace Simulators

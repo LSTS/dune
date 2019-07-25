@@ -24,59 +24,60 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-// DUNE headers.
-#include <DUNE/Config.hpp>
-#include <DUNE/Time/Delay.hpp>
-#include <DUNE/Time/Constants.hpp>
-#include <DUNE/Time/Clock.hpp>
+#ifndef SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
+#define SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
 
-// Platform headers.
-#if defined(DUNE_SYS_HAS_TIME_H)
-#  include <time.h>
-#endif
+#include <memory>
 
-#if defined(DUNE_SYS_HAS_WINDOWS_H)
-#  include <windows.h>
-#endif
+#include "DUNE/I18N.hpp"
 
-namespace DUNE
+#include "ModelDataStreamGenerator.hpp"
+#include "StreamGenerator.hpp"
+
+namespace Simulators
 {
-  namespace Time
+  namespace StreamVelocity
   {
-    void
-    Delay::waitNsec(uint64_t nsec)
+    namespace StreamGenerator
     {
+      //! Factory method for the stream velocity source.
+      //! @param[in] config structure with configuration fields
+      //! @return handle to the stream velocity source.
+      template<typename Configuration>
+      std::unique_ptr<StreamGenerator>
+      factory(Configuration const& config)
+      {
+        if (config.type == "Constant")
+          return std::make_unique<StreamGenerator>(
+              config.default_wx, config.default_wy, config.default_wz);
+        if (config.type == "Gridded 2D Model Data")
+        {
+          GriddedModelDataConfig mdcfg;
+          mdcfg.filename = config.filename;
+          // Path to the dataset in the file containing the velocity values in
+          // the East direction, given in m/s as u = u(Lat, Lon, Time).
+          mdcfg.u_data_path = "u";
+          // Path to the dataset in the file containing the velocity values in
+          // the North direction, given in m/s as v = v(Lat, Lon, Time).
+          mdcfg.v_data_path = "v";
+          //! Path to the node in the file containing the grid data.
+          //! This node should include the following child nodes:
+          //!   min - array with the lower grid limits.
+          //!   max - array with the upper grid limits.
+          //!   npts - array with the number of points in each dimension.
+          mdcfg.grid_path = "grid";
 
-      // Microsoft Windows.
-#if defined(DUNE_SYS_HAS_CREATE_WAITABLE_TIMER)
-      HANDLE t = CreateWaitableTimer(0, TRUE, 0);
-      LARGE_INTEGER dl;
-      dl.QuadPart = (uint64_t)nsec / 100;
-      // Negative value means relative time.
-      dl.QuadPart *= -1;
-      SetWaitableTimer(t, &dl, 0, 0, 0, 0);
-      WaitForSingleObject(t, INFINITE);
-      CloseHandle(t);
+          return std::make_unique<Gridded2DModelDataStreamGenerator>(
+              mdcfg, config.default_wx, config.default_wy, config.default_wz);
+        }
+        else
+          throw std::runtime_error(DTR("Unknown stream velocity source type."));
+      }
+    }    // namespace StreamGenerator
+  }      // namespace StreamVelocity
+}    // namespace Simulators
 
-      // POSIX.
-#elif defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP) || defined(DUNE_SYS_HAS_NANOSLEEP)
-      timespec ts;
-      ts.tv_sec = nsec / c_nsec_per_sec;
-      ts.tv_nsec = nsec - (ts.tv_sec * c_nsec_per_sec);
-
-#  if defined(DUNE_SYS_HAS_CLOCK_NANOSLEEP)
-      clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, 0);
-#  else
-      nanosleep(&ts, 0);
-#  endif
-
-      // Unsupported system.
-#else
-#  error Delay::waitNsec() is not yet implemented in this system
 #endif
-    }
-  }
-}

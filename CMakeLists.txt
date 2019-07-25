@@ -95,6 +95,8 @@ dune_option(BLUEVIEW "Enable support for the BlueView SDK")
 dune_option(OPENCV "Enable support for OpenCV")
 dune_option(NO_RTTI "Disable support for RTTI")
 dune_option(UEYE "Enable support for IDS uEye cameras")
+dune_option(H5CPP "Enable support for hdf5 format i/o using the h5cpp library")
+dune_option(ELLIPSOIDAL "Enable ellipsoidal coordinates in (WGS84) displace")
 
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
@@ -235,6 +237,11 @@ else(DUNE_SHARED)
 endif(DUNE_SHARED)
 
 add_dependencies(dune-core dune-version)
+
+# WGS84 Coordinate Type
+if(ELLIPSOIDAL)
+  add_definitions(-DDUNE_ELLIPSOIDAL_DISPLACE)
+endif(ELLIPSOIDAL)
 
 ##########################################################################
 #                          Tasks                                         #

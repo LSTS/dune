@@ -179,6 +179,20 @@ namespace DUNE
       return rv;
     }
 
+    std::string
+    String::replaceAll(const std::string& inStr, const std::string& searchStr, const std::string& replaceStr)
+    {
+      std::string result = inStr;
+      size_t pos = result.find(searchStr);
+      while (pos != std::string::npos)
+      {
+        result.replace(pos, searchStr.size(), replaceStr);
+        pos = result.find(searchStr, pos + searchStr.size());
+      }
+
+      return result;
+    }
+
     void
     String::toLowerCase(std::string& str)
     {

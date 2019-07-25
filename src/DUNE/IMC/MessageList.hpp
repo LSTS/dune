@@ -126,6 +126,14 @@ namespace DUNE
         return m_list.end();
       }
 
+      //! Check if the list is empty.
+      //! @return true if the list is empty.
+      bool
+      empty(void) const
+      {
+        return m_list.empty();
+      }
+
       //! Add a new element at the end of the list, after its current
       //! last element. The content of this new element is initialized
       //! to a copy of 'msg'.

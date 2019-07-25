@@ -99,18 +99,42 @@ namespace DUNE
       //! Constructor.
       //! Construct a square identity matrix of size n
       //! param[in] n size of new matrix (n * n)
-      Matrix(size_t n);
+      explicit Matrix(size_t n);
 
       //! Constructor.
       //! Construct a diagonal matrix using the values in data
       //! param[in] diag pointer to data to be copied to diagonal matrix
       //! param[in] n size of new matrix (n * n)
-      Matrix(double* diag, size_t n);
+      Matrix(const double* diag, size_t n);
 
       //! Destructor.
       //! Decrement the number of copies of a Matrix and frees the
       //! allocated memory if this number reaches zero.
       ~Matrix(void);
+
+      //! Pointer to first element.
+      double*
+      begin(void);
+
+      //! Pointer to element after last element.
+      double*
+      end(void);
+
+      //! Const pointer to first element.
+      const double*
+      begin(void) const;
+
+      //! Const pointer to element after last element.
+      const double*
+      end(void) const;
+
+      //! Const pointer to first element.
+      const double*
+      cbegin(void) const;
+
+      //! Const pointer to element after last element.
+      const double*
+      cend(void) const;
 
       //! Retrieve the number of rows of the matrix.
       //! @return number of rows of the matrix.
@@ -721,13 +745,6 @@ namespace DUNE
       inverse(const Matrix& a, const Matrix& b);
 
       //! This function returns a 3x3 skew symmetrical
-      //! matrix using an array with 3 elements.
-      //! @param[in] data array with 3 elements
-      //! @return skewed matrix
-      friend Matrix
-      skew(double data[3]);
-
-      //! This function returns a 3x3 skew symmetrical
       //! matrix using a matrix (3x1 or 1x3)
       //! @param[in] a row or column vector with 3 elements
       //! @return skewed matrix
@@ -851,6 +868,13 @@ namespace DUNE
       void
       split(void);
     };
+
+    //! This function returns a 3x3 skew symmetrical
+    //! matrix using an array with 3 elements.
+    //! @param[in] data array with 3 elements
+    //! @return skewed matrix
+    Matrix
+    skew(const double data[3]);
   }
 }
 
