@@ -183,7 +183,7 @@ namespace Simulators
       consume(const IMC::EstimatedStreamVelocity* msg)
       {
         // Filter valid messages.
-        if(m_ctx.entities.resolve(msg->getSourceEntity()) != m_args.sslabel)
+        if(resolveEntity(msg->getSourceEntity()) != m_args.sslabel)
           return;
 
         m_sspeed[0] = msg->x;
