@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Ricardo Martins, Ana Santos                                      *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -43,14 +43,14 @@ namespace Sensors
     //! Finite state machine states.
     enum StateMachineStates
     {
-        //! Waiting for activation.
-        SM_IDLE,
-        //! Start activation sequence
-        SM_BEGIN,
-        //! Connect with sidescan
-        SM_ACTIVE,
-        //! Wait for connection
-        SM_WAIT
+      //! Waiting for activation.
+      SM_IDLE,
+      //! Start activation sequence
+      SM_BEGIN,
+      //! Connect with sidescan
+      SM_ACTIVE,
+      //! Wait for connection
+      SM_WAIT
     };
 
     enum Side
@@ -228,15 +228,6 @@ namespace Sensors
       }
 
       void
-      onResourceAcquisition(void)
-      {
-        //setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-
-        //m_sock = new TCPSocket();
-        //m_sock->setNoDelay(true);
-      }
-
-      void
       onResourceRelease(void)
       {
         Memory::clear(m_sock);
@@ -245,9 +236,7 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-
       }
 
       //! Set current state of task
@@ -272,15 +261,14 @@ namespace Sensors
         }
         catch (std::runtime_error& e)
         {
-          debug("deu erro!!! state wait!");
           m_wdog.setTop(m_args.wait_time);
           m_timer_attempts.setTop(m_args.wait_attempts);
           setState(SM_WAIT);
-
         }
       }
 
-      void connect() {
+      void
+      connect(void) {
         m_sock = new TCPSocket();
         m_sock->setNoDelay(true);
         m_sock->setReceiveTimeout(5);
@@ -295,7 +283,6 @@ namespace Sensors
       onDeactivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        debug("Deactivation Sidescan: error to connect.");
       }
 
       void
@@ -325,39 +312,40 @@ namespace Sensors
         }
       }
 
-        void
+      void
       updateStateMachine(void)
       {
-          switch(m_sm_state) {
-            // Wait for activation.
-            case SM_IDLE:
-              break;
+        switch(m_sm_state) {
 
-            // Begin activation
-            case SM_BEGIN:
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-              activation();
-              break;
+          // Wait for activation.
+          case SM_IDLE:
+            break;
 
-            // Works
-            case SM_ACTIVE:
-              handleSonarData();
-              debug("Ping and send data!");
-              break;
+          // Begin activation
+          case SM_BEGIN:
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+            activation();
+            break;
 
-            // Wait
-            case SM_WAIT:
-              if (m_wdog.overflow()) {
-                setState(SM_IDLE);
-                requestDeactivation();
-              }
-              else if(m_timer_attempts.overflow()) {
-                debug("Problem to connect. Try again...");
-                tryConnectAgain();
-              }
-              break;
-          }
+          // Works
+          case SM_ACTIVE:
+            handleSonarData();
+            debug("Ping and send data!");
+            break;
 
+          // Wait
+          case SM_WAIT:
+            if (m_wdog.overflow()) {
+              setState(SM_IDLE);
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+            }
+            else if(m_timer_attempts.overflow()) {
+              debug("Problem to connect. Try again...");
+              tryConnectAgain();
+            }
+            break;
+        }
       }
 
 
