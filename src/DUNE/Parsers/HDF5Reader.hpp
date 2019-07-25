@@ -27,63 +27,76 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_HPP_INCLUDED_
+#ifndef DUNE_PARSERS_HDF5_READER_HPP_INCLUDED_
+#define DUNE_PARSERS_HDF5_READER_HPP_INCLUDED_
 
-#include <array>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-namespace Simulators
+namespace hdf5
 {
-  namespace StreamSpeed
+  namespace file
   {
-    namespace StreamGenerator
+    class File;
+  }
+}    // namespace hdf5
+
+namespace DUNE
+{
+  namespace Parsers
+  {
+    using hdf5::file::File;
+
+    //! Simplifies reading data and attributes from HDF5 format files.
+    class HDF5Reader
     {
-      // A simple interface for any sort of source of velocity values.
-      // This base class just provides a constant value.
-      class StreamGenerator
+    public:
+      //! Constructor.
+      //! @param[in] filename path to an hdf5 file.
+      HDF5Reader(std::string const& filename);
+
+      //! Destructor.
+      ~HDF5Reader();
+
+      //! Structure holding an arbitrary multidimensional HDF5 dataset.
+      template<typename T>
+      struct HDF5Dataset
       {
-      public:
-        //! Constructor.
-        //! @param[in] wx default stream speed in the North direction (m/s).
-        //! @param[in] wy default stream speed in the East direction (m/s).
-        //! @param[in] wz default stream speed in the Down direction (m/s).
-        StreamGenerator(double wx, double wy, double wz = 0.0);
-
-        ~StreamGenerator() = default;
-
-        //! Get a stream speed value.
-        //! @param[in] lat WGS84 latitude in degrees.
-        //! @param[in] lon WGS84 longitude in degrees.
-        //! @param[in] depth depth in meters.
-        //! @param[in] time time elapsed since the simulation started.
-        //! @return 3-dimensional array containing the stream velocity in the
-        //! North, East and Down directions in meters per second.
-        virtual std::array<double, 3>
-        getSpeed(double lat, double lon, double depth, double time = 0.0) const;
-
-        //! Get the default stream speed.
-        //! @return 3-dimensional array containing the default stream velocity
-        //! value in the North, East and Down directions in meters per second.
-        std::array<double, 3>
-        getDefaultSpeed() const;
-
-        //! Set the default stream speed.
-        //! @param[in] wx default stream speed in the North direction (m/s).
-        //! @param[in] wy default stream speed in the East direction (m/s).
-        //! @param[in] wz default stream speed in the Down direction (m/s).
-        void
-        setSpeed(double wx, double wy, double wz = 0.0);
-
-      private:
-        //! Default speed North.
-        double m_wx;
-        //! Default speed East.
-        double m_wy;
-        //! Default speed Down.
-        double m_wz;
+        //! Number of points in each dimension.
+        std::vector<size_t> dimensions;
+        //! The data values in row-major (C-style) order.
+        std::vector<T> data;
       };
-    }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
-}    // namespace Simulators
+
+      //! Check if a dataset exists in the given file.
+      //! @param[in] path path to the dataset in the file.
+      //! @return whether the dataset exists in the file.
+      bool
+      datasetExists(std::string const& path) const;
+
+      //! Get a dataset and its dimensions.
+      //! @param[in] path path to the dataset in the file.
+      //! @return structure containing the data and the dataset dimensions.
+      template<typename T>
+      HDF5Dataset<T>
+      getDataset(std::string const& path) const;
+
+      //! Get an attribute.
+      //! @param[in] path path to the node in the file where the attribute is
+      //! stored.
+      //! @param[in] attribute name of the attribute to get.
+      //! @return the attribute's data.
+      template<typename T>
+      std::vector<T>
+      getAttribute(std::string const& path, std::string const& attribute) const;
+
+    private:
+      //! Handle to an HDF5 file.
+      std::unique_ptr<File> m_file;
+    };
+  }    // namespace Parsers
+}    // namespace DUNE
 
 #endif

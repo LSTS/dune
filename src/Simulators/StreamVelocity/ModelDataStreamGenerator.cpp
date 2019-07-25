@@ -34,7 +34,7 @@
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
@@ -88,19 +88,19 @@ namespace Simulators
       }
 
       std::array<double, 3>
-      Gridded2DModelDataStreamGenerator::getSpeed(double lat,
-                                                  double lon,
-                                                  double depth,
-                                                  double time) const
+      Gridded2DModelDataStreamGenerator::getVelocity(double lat,
+                                                     double lon,
+                                                     double,
+                                                     double time) const
       {
         // Find closest grid cell
         auto corner_indices =
             m_grid.getCorner({lat, lon, time + m_grid.getLower(2)});
 
-        // If vehicles is outside the grid, fall back to default stream speed
+        // If vehicles is outside the grid, fall back to default stream velocity
         for (auto i = 0; i < 3; ++i)
           if (corner_indices[i] >= m_grid.getDimensions(i))
-            return getDefaultSpeed();
+            return getDefaultVelocity();
 
         auto corner_point = m_grid.getCoordinates(corner_indices);
 
@@ -137,5 +137,5 @@ namespace Simulators
         return {v_val, u_val, 0.0};
       }
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators

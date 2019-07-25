@@ -27,19 +27,20 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_VELOCITY_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
+#define SIMULATORS_STREAM_VELOCITY_MODEL_DATA_STREAM_GENERATOR_HPP_INCLUDED_
 
 #include <string>
 #include <vector>
 
-#include "Grid.hpp"
-#include "HDF5Reader.hpp"
+#include "DUNE/Parsers/HDF5Reader.hpp"
+#include "DUNE/Math/Grid.hpp"
+
 #include "StreamGenerator.hpp"
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
@@ -85,22 +86,22 @@ namespace Simulators
         ~Gridded2DModelDataStreamGenerator() = default;
 
         virtual std::array<double, 3>
-        getSpeed(double lat,
-                 double lon,
-                 double depth,
-                 double time = 0.0) const override;
+        getVelocity(double lat,
+                    double lon,
+                    double depth,
+                    double time = 0.0) const override;
 
       private:
-        HDF5Reader m_file;
+        DUNE::Parsers::HDF5Reader m_file;
         //! Velocity in the East direction.
         std::vector<double> m_u;
         //! Velocity in the North direction.
         std::vector<double> m_v;
         //! Converts between grid indices and datapoint indices.
-        Grid<3> m_grid;
+        DUNE::Math::Grid<3> m_grid;
       };
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
 
 #endif

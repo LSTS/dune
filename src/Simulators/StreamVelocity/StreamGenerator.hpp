@@ -27,80 +27,66 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_HDF5_READER_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_HDF5_READER_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_HPP_INCLUDED_
+#define SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_HPP_INCLUDED_
 
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-
-namespace hdf5
-{
-  namespace file
-  {
-    class File;
-  }
-}    // namespace hdf5
+#include <array>
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
-      using hdf5::file::File;
-
-      //! Simplifies reading data and attributes from HDF5 format files.
-      class HDF5Reader
+      // A simple interface for any sort of source of velocity values.
+      // This base class just provides a constant value.
+      class StreamGenerator
       {
       public:
         //! Constructor.
-        //! @param[in] filename path to an hdf5 file.
-        HDF5Reader(std::string const& filename);
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
+        StreamGenerator(double wx, double wy, double wz = 0.0);
 
-        //! Destructor.
-        ~HDF5Reader();
+        ~StreamGenerator() = default;
 
-        //! Structure holding an arbitrary multidimensional HDF5 dataset.
-        template<typename T>
-        struct HDF5Dataset
-        {
-          //! Number of points in each dimension.
-          std::vector<size_t> dimensions;
-          //! The data values in row-major (C-style) order.
-          std::vector<T> data;
-        };
+        //! Get a stream velocity value.
+        //! @param[in] lat WGS84 latitude in degrees.
+        //! @param[in] lon WGS84 longitude in degrees.
+        //! @param[in] depth depth in meters.
+        //! @param[in] time time elapsed since the simulation started.
+        //! @return 3-dimensional array containing the stream velocity in the
+        //! North, East and Down directions in meters per second.
+        virtual std::array<double, 3>
+        getVelocity(double lat,
+                    double lon,
+                    double depth,
+                    double time = 0.0) const;
 
-        //! Check if a dataset exists in the given file.
-        //! @param[in] path path to the dataset in the file.
-        //! @return whether the dataset exists in the file.
-        bool
-        datasetExists(std::string const& path) const;
+        //! Get the default stream velocity.
+        //! @return 3-dimensional array containing the default stream velocity
+        //! value in the North, East and Down directions in meters per second.
+        std::array<double, 3>
+        getDefaultVelocity() const;
 
-        //! Get a dataset and its dimensions.
-        //! @param[in] path path to the dataset in the file.
-        //! @return structure containing the data and the dataset dimensions.
-        template<typename T>
-        HDF5Dataset<T>
-        getDataset(std::string const& path) const;
-
-        //! Get an attribute.
-        //! @param[in] path path to the node in the file where the attribute is
-        //! stored.
-        //! @param[in] attribute name of the attribute to get.
-        //! @return the attribute's data.
-        template<typename T>
-        std::vector<T>
-        getAttribute(std::string const& path,
-                     std::string const& attribute) const;
+        //! Set the default stream velocity.
+        //! @param[in] wx default stream speed in the North direction (m/s).
+        //! @param[in] wy default stream speed in the East direction (m/s).
+        //! @param[in] wz default stream speed in the Down direction (m/s).
+        void
+        setVelocity(double wx, double wy, double wz = 0.0);
 
       private:
-        //! Handle to an HDF5 file.
-        std::unique_ptr<File> m_file;
+        //! Default speed North.
+        double m_wx;
+        //! Default speed East.
+        double m_wy;
+        //! Default speed Down.
+        double m_wz;
       };
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
 
 #endif

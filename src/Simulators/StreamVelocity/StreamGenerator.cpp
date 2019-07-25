@@ -31,7 +31,7 @@
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
@@ -40,27 +40,24 @@ namespace Simulators
       {}
 
       std::array<double, 3>
-      StreamGenerator::getSpeed(double lat,
-                                double lon,
-                                double depth,
-                                double time) const
+      StreamGenerator::getVelocity(double, double, double, double) const
       {
-        return getDefaultSpeed();
+        return getDefaultVelocity();
       }
 
       std::array<double, 3>
-      StreamGenerator::getDefaultSpeed() const
+      StreamGenerator::getDefaultVelocity() const
       {
         return {m_wx, m_wy, m_wz};
       }
 
       void
-      StreamGenerator::setSpeed(double wx, double wy, double wz)
+      StreamGenerator::setVelocity(double wx, double wy, double wz)
       {
         m_wx = wx;
         m_wy = wy;
         m_wz = wz;
       }
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators

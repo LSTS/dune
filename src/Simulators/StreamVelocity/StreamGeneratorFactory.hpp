@@ -27,8 +27,8 @@
 // Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
-#define SIMULATORS_STREAM_SPEED_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
+#ifndef SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
+#define SIMULATORS_STREAM_VELOCITY_STREAM_GENERATOR_FACTORY_HPP_INCLUDED_
 
 #include <memory>
 
@@ -39,7 +39,7 @@
 
 namespace Simulators
 {
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     namespace StreamGenerator
     {
@@ -77,7 +77,7 @@ namespace Simulators
           throw std::runtime_error(DTR("Unknown stream velocity source type."));
       }
     }    // namespace StreamGenerator
-  }      // namespace StreamSpeed
+  }      // namespace StreamVelocity
 }    // namespace Simulators
 
 #endif

@@ -49,5 +49,6 @@ namespace DUNE
 #include <DUNE/Math/Quaternion.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Math/MultiMovingAverage.hpp>
+#include <DUNE/Math/Grid.hpp>
 
 #endif

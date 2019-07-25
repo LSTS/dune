@@ -137,7 +137,7 @@ namespace Control
         //! Has Power Module
         bool pwrm;
         //! WP seconds before reach
-        int secs;
+        float secs;
         //! WP Copter: Minimum wp switch radius
         float cp_wp_radius;
         //! RC setup
@@ -932,20 +932,23 @@ namespace Control
             return;
           }
 
-          uint8_t buf[512], mode;
+          uint8_t buf[512];
           mavlink_message_t msg;
           uint16_t n;
 
-          // Copters must first be set to guided as of AC 3.2
-          // Planes must first be set to guided as of AP 3.3.0
-          mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
-          mavlink_msg_set_mode_pack(255, 0, &msg,
-                                    m_sysid,
-                                    1,
-                                    mode);
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
-          debug("Guided MODE on ardupilot is set.");
+          if (!((m_mode == CP_MODE_GUIDED) || (m_mode == PL_MODE_GUIDED)))
+          {
+            // Copters must first be set to guided as of AC 3.2
+            // Planes must first be set to guided as of AP 3.3.0
+            uint8_t mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      mode);
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            debug("Guided MODE on ardupilot is set.");
+          }
 
           //! Setting airspeed parameter
           if (m_vehicle_type == VEHICLE_COPTER)
@@ -1768,25 +1771,30 @@ namespace Control
           double tstamp = Clock::getSinceEpoch();
 
           IMC::Acceleration acce;
-          acce.x = raw.xacc;
-          acce.y = raw.yacc;
-          acce.z = raw.zacc;
+          // raw_imu acc unit is in milli gs
+          // g used in AP is 9.80665 (see libraries/AP_Math/definitions.h)
+          acce.x = raw.xacc*0.001*9.80665;
+          acce.y = raw.yacc*0.001*9.80665;
+          acce.z = raw.zacc*0.001*9.80665;
           acce.setTimeStamp(tstamp);
-          dispatch(acce);
+          dispatch(acce, DF_KEEP_TIME);
 
+          // raw_imu ars unit is milli rad/s
           IMC::AngularVelocity avel;
-          avel.x = raw.xgyro;
-          avel.y = raw.ygyro;
-          avel.z = raw.zgyro;
+          avel.x = raw.xgyro*0.001;
+          avel.y = raw.ygyro*0.001;
+          avel.z = raw.zgyro*0.001;
           avel.setTimeStamp(tstamp);
-          dispatch(avel);
+          dispatch(avel, DF_KEEP_TIME);
 
+          // raw_imu mag unit is milli Tesla
+          // IMC mag unit is Gauss = 10^-4 Tesla
           IMC::MagneticField magn;
-          magn.x = raw.xmag;
-          magn.y = raw.ymag;
-          magn.z = raw.zmag;
+          magn.x = raw.xmag*0.1;
+          magn.y = raw.ymag*0.1;
+          magn.z = raw.zmag*0.1;
           magn.setTimeStamp(tstamp);
-          dispatch(magn);
+          dispatch(magn, DF_KEEP_TIME);
         }
 
         void
@@ -1811,12 +1819,16 @@ namespace Control
               m_hae_offset = wmm.height(m_lat, m_lon);
               m_reboot = false;
               m_offset_st = true;
+              debug("Height offset at %3.10f/%3.10f is %f", Angles::degrees(m_lat), Angles::degrees(m_lon), m_hae_offset);
             }
           }
-          else
+          else if (m_args.convert_msl == false)
           {
             m_hae_offset = 0;
+            m_offset_st = false;
+            debug("Height offset set to zero (convert?%d, gpstype: %d)",m_args.convert_msl, m_fix.type);
           }
+          //else: m_args.convert_msl is true, but we do not have/have lost GPS: leave m_hae_offset as is
 
           m_estate.lat = m_lat;
           m_estate.lon = m_lon;
@@ -1828,7 +1840,7 @@ namespace Control
 
           m_estate.vx = 1e-02 * gp.vx;
           m_estate.vy = 1e-02 * gp.vy;
-          m_estate.vz = -1e-02 * gp.vz;
+          m_estate.vz = 1e-02 * gp.vz;
 
           // Note: the following will yield body-fixed *ground* velocity
           // Maybe this can be fixed w/IAS readings (anyway not too important)

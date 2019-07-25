@@ -63,6 +63,8 @@ namespace Simulators
     {
       //! Entity label of the stream speed source.
       std::string sslabel;
+      //! Simulation time multiplier
+      double time_multiplier;
     };
 
     //! Simulator task.
@@ -84,15 +86,29 @@ namespace Simulators
         m_vehicle(NULL),
         m_world(NULL)
       {
+        param("Time Multiplier", m_args.time_multiplier)
+        .defaultValue("1.0")
+        .description("Simulation time multiplier");
+
+        param("Stream Speed Source Entity Label", m_args.sslabel)
+            .defaultValue("Stream Speed Producer")
+            .description("Entity label of the stream speed source.");
+
         // Register handler routines.
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
         bind<IMC::EstimatedStreamVelocity>(this);
+      }
 
-        param("Stream Speed Source Entity Label", m_args.sslabel)
-            .defaultValue("Stream Speed Producer")
-            .description("Entity label of the stream speed source.");
+      void
+      onUpdateParameters(void)
+      {
+        if (m_args.time_multiplier != 1.0)
+        {
+          Time::Clock::setTimeMultiplier(m_args.time_multiplier);
+          war("Using time multiplier: x%.2f", Time::Clock::getTimeMultiplier());
+        }
       }
 
       //! Release allocated resources.

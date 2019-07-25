@@ -46,5 +46,6 @@ namespace DUNE
 #include <DUNE/Parsers/AbstractStringWriter.hpp>
 #include <DUNE/Parsers/BasicStringWriter.hpp>
 #include <DUNE/Parsers/PlanConfigParser.hpp>
+#include <DUNE/Parsers/HDF5Reader.hpp>
 
 #endif

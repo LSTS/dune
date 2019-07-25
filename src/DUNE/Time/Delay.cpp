@@ -31,6 +31,7 @@
 #include <DUNE/Config.hpp>
 #include <DUNE/Time/Delay.hpp>
 #include <DUNE/Time/Constants.hpp>
+#include <DUNE/Time/Clock.hpp>
 
 // Platform headers.
 #if defined(DUNE_SYS_HAS_TIME_H)
@@ -48,6 +49,7 @@ namespace DUNE
     void
     Delay::waitNsec(uint64_t nsec)
     {
+
       // Microsoft Windows.
 #if defined(DUNE_SYS_HAS_CREATE_WAITABLE_TIMER)
       HANDLE t = CreateWaitableTimer(0, TRUE, 0);

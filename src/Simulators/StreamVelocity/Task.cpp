@@ -30,6 +30,7 @@
 // Standard library headers.
 #include <memory>
 #include <string>
+#include <cmath>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -46,7 +47,7 @@ namespace Simulators
   //! message.
   //! Currently supports only a single vehicle.
   //! @author Miguel Aguiar
-  namespace StreamSpeed
+  namespace StreamVelocity
   {
     using DUNE_NAMESPACES;
 
@@ -149,7 +150,7 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        debug(DTR("Setting default stream speed values: %f m/s N : %f m/s E : "
+        debug(DTR("Setting default stream velocity: %f m/s N : %f m/s E : "
                   "%f m/s D"),
               m_args.default_wx,
               m_args.default_wy,
@@ -195,26 +196,27 @@ namespace Simulators
         Coordinates::WGS84::displace(
             m_state.x, m_state.y, m_state.z, &lat, &lon, &height);
 
-        auto p = m_ssg->getSpeed(Angles::degrees(lat),
-                                 Angles::degrees(lon),
-                                 -m_state.height,
-                                 DUNE::Time::Clock::get() + m_time0);
+        auto p = m_ssg->getVelocity(Angles::degrees(lat),
+                                    Angles::degrees(lon),
+                                    -height,
+                                    DUNE::Time::Clock::get() + m_time0);
 
         //! Fill EstimatedStreamVelocity.
-        m_esv.x = p[0];
-        m_esv.y = p[1];
-        m_esv.z = p[2];
+        m_esv.x = std::isnan(p[0]) ? m_args.default_wx : p[0];
+        m_esv.y = std::isnan(p[1]) ? m_args.default_wy : p[1];
+        m_esv.z = std::isnan(p[2]) ? m_args.default_wz : p[2];
 
-        debug(DTR("Stream speed is %f m/s N : %f m/s E : %f m/s D"),
-              p[0],
-              p[1],
-              p[2]);
+        debug(DTR("Stream velocity is %f m/s N : %f m/s E : %f m/s D"),
+              m_esv.x,
+              m_esv.y,
+              m_esv.z);
       }
 
       void
       consume(IMC::SimulatedState const* msg)
       {
-        m_state = *msg;
+        if (msg->getSource() == getSystemId())
+          m_state = *msg;
       }
 
       void
@@ -224,7 +226,7 @@ namespace Simulators
         dispatch(m_esv);
       }
     };
-  }    // namespace StreamSpeed
+  }    // namespace StreamVelocity
 }    // namespace Simulators
 
 DUNE_TASK

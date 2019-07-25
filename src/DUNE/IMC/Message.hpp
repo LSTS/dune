@@ -107,7 +107,7 @@ namespace DUNE
       double
       setTimeStamp(void)
       {
-        return setTimeStamp(Time::Clock::getSinceEpoch());
+        return setTimeStamp(Time::Clock::getSinceEpochRT());
       }
 
       //! Retrieve the message's time stamp.
