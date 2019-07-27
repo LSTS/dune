@@ -47,6 +47,8 @@ namespace Simulators
     enum AcommsCodes
     {
       //! Acoustic report
+      CODE_ENABLE_MESSAGE = 0x01,
+      //! Acoustic report
       CODE_REPORT         = 0x03,
       //! Target of Interest
       CODE_TOI            = 0x04,
@@ -56,6 +58,14 @@ namespace Simulators
       CODE_RETASK_WP      = 0x06,
       //! Extended format
       CODE_EXT            = 0x07
+    };
+
+    struct EnableMessage
+    {
+      //! Message ordinal
+      uint8_t m_msg_ordinal;
+      //! Mission ID
+      uint8_t m_enable_disable;
     };
 
     struct Report
@@ -103,7 +113,9 @@ namespace Simulators
 
     struct Arguments
     {
-      //! RetaskWaypoint periodicty
+      //! EnableMessage periodicty
+      int period_enable;
+      //! Report periodicty
       int period_report;
       //! TargetOfInterest periodicty
       int period_toi;
@@ -125,10 +137,17 @@ namespace Simulators
       double toi_lat_degs;
       //! toi longitude in degrees
       double toi_lon_degs;
+      //! Retask mission id
+      int retask_mission_id;
+      //! Enable msg ordinal
+      int enbl_ordinal;
+      //! Enable value (0=Disable, 1=Enable, 2->255=minutes from reception to be enable)
+      int enbl_value;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
+      Time::Counter<double> m_wdog_enable;
       Time::Counter<double> m_wdog_report;
       Time::Counter<double> m_wdog_toi;
       Time::Counter<double> m_wdog_rtm;
@@ -142,15 +161,20 @@ namespace Simulators
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
+        param("Period -- Enable", m_args.period_enable)
+        .defaultValue("-1")
+        .units(Units::Second)
+        .description("");
+
         param("Period -- Report", m_args.period_report)
         .defaultValue("1")
         .units(Units::Second)
         .description("");
 
         param("Period -- TargetOfInterest", m_args.period_toi)
-            .defaultValue("-1")
-            .units(Units::Second)
-            .description("");
+        .defaultValue("-1")
+        .units(Units::Second)
+        .description("");
 
         param("Period -- RetaskMission", m_args.period_rtm)
         .defaultValue("-1")
@@ -194,6 +218,18 @@ namespace Simulators
         .units(Units::Degree)
         .description("");
 
+        param("Retask Mission ID", m_args.retask_mission_id)
+        .defaultValue("10")
+        .description("");
+
+        param("Enable Message Ordinal", m_args.enbl_ordinal)
+        .defaultValue("3")
+        .description("");
+
+        param("Enable Value", m_args.enbl_value)
+        .defaultValue("2")
+        .description("");
+
         m_bfr.resize(255);
         bind<IMC::EstimatedState>(this);
       }
@@ -202,6 +238,7 @@ namespace Simulators
       void
       onUpdateParameters(void)
       {
+        m_wdog_enable.setTop(m_args.period_enable);
         m_wdog_report.setTop(m_args.period_report);
         m_wdog_toi.setTop(m_args.period_toi);
         m_wdog_rtm.setTop(m_args.period_rtm);
@@ -240,6 +277,35 @@ namespace Simulators
         debug("%s", Utils::String::toHex(frame).c_str());
 
         dispatch(rx);
+      }
+
+      void
+      sendEnable(void)
+      {
+        if (m_wdog_enable.getTop() == -1 || !m_wdog_enable.overflow())
+          return;
+
+        EnableMessage enbl;
+        enbl.m_msg_ordinal = m_args.enbl_ordinal;
+        enbl.m_enable_disable = m_args.enbl_value;
+
+        std::vector<char> data;
+        data.resize(sizeof(enbl.m_msg_ordinal) + sizeof(enbl.m_enable_disable) + 1);
+        data[0] = CODE_ENABLE_MESSAGE;
+
+        unsigned idx = 1;
+        std::memcpy(&data[idx], &enbl.m_msg_ordinal, sizeof(enbl.m_msg_ordinal));
+        idx += sizeof(enbl.m_msg_ordinal);
+
+        std::memcpy(&data[idx], &enbl.m_enable_disable, sizeof(enbl.m_enable_disable));
+        idx += sizeof(enbl.m_enable_disable);
+
+        war("%s", Utils::String::toHex(data).c_str());
+        debug("%d, %d",
+              enbl.m_msg_ordinal,
+              enbl.m_enable_disable);
+        sendAcomms(data);
+        m_wdog_enable.reset();
       }
 
       void
@@ -303,7 +369,7 @@ namespace Simulators
 
         RetaskMission rtm;
         rtm.m_timestamp_s = Time::Clock::getSinceEpoch();
-        rtm.m_mission_id = 10;
+        rtm.m_mission_id = m_args.retask_mission_id;
 
         std::vector<char> data;
         data.resize(sizeof(rtm.m_mission_id) + sizeof(rtm.m_timestamp_s) + 1);
@@ -489,6 +555,7 @@ namespace Simulators
         while (!stopping())
         {
           waitForMessages(1.0);
+          sendEnable();
           sendReport();
           sendTargetOfInterest();
           sendRetaskMission();
