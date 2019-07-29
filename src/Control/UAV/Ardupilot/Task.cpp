@@ -685,7 +685,7 @@ namespace Control
             }
             else
             {
-              trace("CLoops enable lost, since ardu_tracker is active");//should not happen
+              m_cloops |= cloops->mask;
             }
           }
           else
