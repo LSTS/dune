@@ -88,6 +88,11 @@ namespace Transports
       DataSeatrac(void)
       {
         cid_dat_send_msg.lock_flag = 0;
+        cid_dat_send_msg.status = CST_E::CST_OK;
+
+        cid_ping_error_msg.status = CST_E::CST_OK;
+        cid_ping_send_msg.status = CST_E::CST_OK;
+
         cid_dat_receive_msg.data_rec_flag = 0;
         for (int i = 0; i < MESSAGE_NUMBER; i++)
           new_message[i] = 0;
@@ -203,8 +208,8 @@ namespace Transports
                         msg_raw + ind + 2, 2);
             std::memcpy(&data_Beacon.cid_status_msg.environment_pressure,
                         msg_raw + ind + 4, 4);
-            std::memcpy(&data_Beacon.cid_status_msg.EnvironmentDepth, msg_raw + ind + 8, 4);
-            std::memcpy(&data_Beacon.cid_status_msg.EnvironmentVos, msg_raw + ind + 12, 2);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_depth, msg_raw + ind + 8, 4);
+            std::memcpy(&data_Beacon.cid_status_msg.environment_vos, msg_raw + ind + 12, 2);
             ind += 14;
           }
 

@@ -61,6 +61,7 @@ namespace Transports
       bool m_announce_pool_empty;
       int m_dev_update_req_id;
       int m_announce_req_id;
+      uint16_t req_id;
 
       IMC::FuelLevel m_fuel_state;
       IMC::PlanControlState m_plan_state;
@@ -76,6 +77,7 @@ namespace Transports
         m_announce_pool_empty(true),
         m_dev_update_req_id(10),
         m_announce_req_id(75),
+        req_id(0),
         m_rnd(NULL)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -340,7 +342,7 @@ namespace Transports
 
         if (m_last_announces.find(getSystemName()) != m_last_announces.end())
         {
-          Announce ann = m_last_announces[getSystemName()];
+          IMC::Announce* ann = &m_last_announces[getSystemName()];
 
           std::stringstream ss;
           if (m_plan_state.state == IMC::PlanControlState::PCS_EXECUTING)
@@ -351,20 +353,10 @@ namespace Transports
           if (m_vehicle_state.error_count > 0)
             ss << "E:" << m_vehicle_state.last_error;
 
-          ann.services = ss.str();
-          DUNE::IMC::ImcIridiumMessage irMsg(&ann);
-          irMsg.source = getSystemId();
-          irMsg.destination = 65535;
-          uint8_t buffer[65535];
-          int len = irMsg.serialize(buffer);
+          ann->services = ss.str();
 
-          DUNE::IMC::IridiumMsgTx m;
-          m.data.assign(buffer, buffer + len);
-          m.req_id = m_rnd->random() % 65535;
-          m_announce_req_id = m.req_id;
-          m.ttl = 60;
-          m.setTimeStamp();
-          dispatch(m);
+          sendIridiumMsg(ann);
+
           m_announce_pool_empty = false;
           return true;
         }
@@ -382,8 +374,7 @@ namespace Transports
         }
 
         debug("queuing device updates");
-        DUNE::IMC::DeviceUpdate msg;
-        uint8_t buffer[65535];
+        IMC::DeviceUpdate msg;
         std::map<std::string, IMC::Announce>::iterator it;
 
         for (it = m_last_announces.begin(); it != m_last_announces.end(); it++)
@@ -402,21 +393,52 @@ namespace Transports
         msg.source = getSystemId();
         msg.destination = 0xFFFF;
 
-        IMC::IridiumMsgTx m;
-        int len = msg.serialize(buffer);
-        m.data.assign(buffer, buffer + len);
-        m.req_id = m_rnd->random() % 65535;
-        m.ttl = 60;
-        m.setTimeStamp();
-        m_dev_update_req_id = m.req_id;
-        dispatch(m);
 
-        std::stringstream ss;
-        m.toText(ss);
-        spew("sent the following message: %s", ss.str().c_str());
+        sendIridiumMsg(&msg);
+
         m_update_pool_empty = false;
 
         return true;
+      }
+
+      void
+      sendIridiumMsg(IMC::DeviceUpdate* msg)
+      {
+
+        IMC::TransmissionRequest tr;
+        tr.data_mode     = IMC::TransmissionRequest::DMODE_RAW;
+        tr.comm_mean     = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.req_id        = req_id++;
+        tr.deadline      = Time::Clock::getSinceEpoch() + 60;
+        uint8_t buffer[65535];
+        int len = msg->serialize(buffer);
+        tr.raw_data.assign(buffer, buffer + len);
+
+        m_dev_update_req_id = tr.req_id;
+
+        dispatch(tr);
+        std::stringstream ss;
+        tr.toText(ss);
+        spew("sent the following message: %s", ss.str().c_str());
+      }
+
+      void
+      sendIridiumMsg(const IMC::Message* msg)
+      {
+
+        IMC::TransmissionRequest tr;
+        tr.data_mode     = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.comm_mean     = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.req_id        = req_id++;
+        tr.msg_data.set(msg->clone());
+        tr.deadline      = Time::Clock::getSinceEpoch() + 60;
+
+        m_announce_req_id= tr.req_id;
+
+        dispatch(tr);
+        std::stringstream ss;
+        tr.toText(ss);
+        spew("sent the following message: %s", ss.str().c_str());
       }
 
       void
