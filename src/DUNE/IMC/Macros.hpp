@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: cdc4c6dfe2baed8395138f0b1b8e1910                            *
+// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -162,6 +162,10 @@
 #define DUNE_IMC_ACOUSTICSYSTEMS 213
 //! AcousticLink identification number.
 #define DUNE_IMC_ACOUSTICLINK 214
+//! AcousticRequest identification number.
+#define DUNE_IMC_ACOUSTICREQUEST 215
+//! AcousticStatus identification number.
+#define DUNE_IMC_ACOUSTICSTATUS 216
 //! Rpm identification number.
 #define DUNE_IMC_RPM 250
 //! Voltage identification number.
@@ -492,6 +496,10 @@
 #define DUNE_IMC_VTOLSTATE 519
 //! ArmingState identification number.
 #define DUNE_IMC_ARMINGSTATE 520
+//! TCPRequest identification number.
+#define DUNE_IMC_TCPREQUEST 521
+//! TCPStatus identification number.
+#define DUNE_IMC_TCPSTATUS 522
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.

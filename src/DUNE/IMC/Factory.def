@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: cdc4c6dfe2baed8395138f0b1b8e1910                            *
+// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -95,6 +95,8 @@ MESSAGE(211, AcousticOperation)
 MESSAGE(212, AcousticSystemsQuery)
 MESSAGE(213, AcousticSystems)
 MESSAGE(214, AcousticLink)
+MESSAGE(215, AcousticRequest)
+MESSAGE(216, AcousticStatus)
 MESSAGE(250, Rpm)
 MESSAGE(251, Voltage)
 MESSAGE(252, Current)
@@ -260,6 +262,8 @@ MESSAGE(517, SmsRequest)
 MESSAGE(518, SmsStatus)
 MESSAGE(519, VtolState)
 MESSAGE(520, ArmingState)
+MESSAGE(521, TCPRequest)
+MESSAGE(522, TCPStatus)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)
 MESSAGE(552, PlanManeuver)

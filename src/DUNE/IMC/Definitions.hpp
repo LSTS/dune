@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: cdc4c6dfe2baed8395138f0b1b8e1910                            *
+// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5189,6 +5189,225 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(peer);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Acoustic Transmission Request.
+    class AcousticRequest: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Abort.
+        TYPE_ABORT = 0,
+        //! Range.
+        TYPE_RANGE = 1,
+        //! Reverse Range.
+        TYPE_REVERSE_RANGE = 2,
+        //! Message.
+        TYPE_MSG = 3,
+        //! Raw.
+        TYPE_RAW = 4
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Destination System.
+      std::string destination;
+      //! Timeout.
+      fp64_t timeout;
+      //! Range.
+      fp32_t range;
+      //! Type.
+      uint8_t type;
+      //! Message To Send.
+      InlineMessage<Message> msg;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 215;
+      }
+
+      AcousticRequest(void);
+
+      AcousticRequest*
+      clone(void) const
+      {
+        return new AcousticRequest(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AcousticRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticRequest";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 15;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + msg.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Acoustic Transmission Status.
+    class AcousticStatus: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Abort.
+        TYPE_ABORT = 0,
+        //! Range.
+        TYPE_RANGE = 1,
+        //! Reverse Range.
+        TYPE_REVERSE_RANGE = 2,
+        //! Message.
+        TYPE_MSG = 3,
+        //! Raw.
+        TYPE_RAW = 4
+      };
+
+      //! Status.
+      enum StatusEnum
+      {
+        //! Queued.
+        STATUS_QUEUED = 0,
+        //! In Progress.
+        STATUS_IN_PROGRESS = 1,
+        //! Sent.
+        STATUS_SENT = 2,
+        //! Range Received.
+        STATUS_RANGE_RECEIVED = 3,
+        //! Busy.
+        STATUS_BUSY = 100,
+        //! Input Error.
+        STATUS_INPUT_FAILURE = 101,
+        //! Error trying to send acoustic text.
+        STATUS_ERROR = 102,
+        //! Message Type is not defined or is unsupported.
+        STATUS_UNSUPPORTED = 666
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Type.
+      uint8_t type;
+      //! Status.
+      uint8_t status;
+      //! Information.
+      std::string info;
+      //! Range.
+      fp32_t range;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 216;
+      }
+
+      AcousticStatus(void);
+
+      AcousticStatus*
+      clone(void) const
+      {
+        return new AcousticStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AcousticStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 8;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(info);
       }
 
       void
@@ -17899,7 +18118,11 @@ namespace DUNE
         //! Satellite.
         CMEAN_SATELLITE = 2,
         //! GSM.
-        CMEAN_GSM = 3
+        CMEAN_GSM = 3,
+        //! Any.
+        CMEAN_ANY = 4,
+        //! All.
+        CMEAN_ALL = 5
       };
 
       //! Data Mode.
@@ -17910,7 +18133,13 @@ namespace DUNE
         //! Text.
         DMODE_TEXT = 1,
         //! Raw Data.
-        DMODE_RAW = 2
+        DMODE_RAW = 2,
+        //! Abort.
+        DMODE_ABORT = 3,
+        //! Range.
+        DMODE_RANGE = 4,
+        //! Reverse Range.
+        DMODE_REVERSE_RANGE = 5
       };
 
       //! Request Identifier.
@@ -17921,6 +18150,8 @@ namespace DUNE
       std::string destination;
       //! Deadline.
       fp64_t deadline;
+      //! Range.
+      fp32_t range;
       //! Data Mode.
       uint8_t data_mode;
       //! Message Data.
@@ -17977,7 +18208,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 12;
+        return 16;
       }
 
       unsigned
@@ -18021,6 +18252,8 @@ namespace DUNE
         TSTAT_DELIVERED = 51,
         //! Delivery is unknown.
         TSTAT_MAYBE_DELIVERED = 52,
+        //! Range received.
+        TSTAT_RANGE_RECEIVED = 60,
         //! Input Error.
         TSTAT_INPUT_FAILURE = 101,
         //! Temporary Error.
@@ -18033,6 +18266,8 @@ namespace DUNE
       uint16_t req_id;
       //! Status.
       uint8_t status;
+      //! Range.
+      fp32_t range;
       //! Information.
       std::string info;
 
@@ -18083,7 +18318,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 7;
       }
 
       unsigned
@@ -18393,6 +18628,183 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 1;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! TCP Transmission Request.
+    class TCPRequest: public Message
+    {
+    public:
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Destination.
+      std::string destination;
+      //! Timeout.
+      fp64_t timeout;
+      //! Message Data.
+      InlineMessage<Message> msg_data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 521;
+      }
+
+      TCPRequest(void);
+
+      TCPRequest*
+      clone(void) const
+      {
+        return new TCPRequest(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TCPRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TCPRequest";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 10;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(destination) + msg_data.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! TCP Transmission Status.
+    class TCPStatus: public Message
+    {
+    public:
+      //! Status.
+      enum StatusEnum
+      {
+        //! Queued.
+        TCPSTAT_QUEUED = 0,
+        //! Sent.
+        TCPSTAT_SENT = 1,
+        //! Input Error.
+        TCPSTAT_INPUT_FAILURE = 100,
+        //! Host Unknown.
+        TCPSTAT_HOST_UNKNOWN = 101,
+        //! Can't Connect.
+        TCPSTAT_CANT_CONNECT = 102,
+        //! Error trying to send sms.
+        TCPSTAT_ERROR = 103
+      };
+
+      //! Request Identifier.
+      uint16_t req_id;
+      //! Status.
+      uint8_t status;
+      //! Information.
+      std::string info;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 522;
+      }
+
+      TCPStatus(void);
+
+      TCPStatus*
+      clone(void) const
+      {
+        return new TCPStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TCPStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TCPStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(info);
       }
 
       void
