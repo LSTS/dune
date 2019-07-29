@@ -267,7 +267,7 @@ namespace Transports
       }
 
       void
-      sendViaSatellite(const IMC::TransmissionRequest* msg)
+      sendViaSatellite(const IMC::TransmissionRequest* msg, bool plain_text)
       {
         m_parent->inf("Request to send data over satellite (%d)", msg->req_id);
 
@@ -302,13 +302,21 @@ namespace Transports
             }
           case IMC::TransmissionRequest::DMODE_TEXT:
             {
-              IMC::IridiumCommand m;
-              m.destination = 0xFFFF;
-              m.source = m_parent->getSystemId();
-              m.command = msg->txt_data;
-              uint8_t buffer[65535];
-              int len = m.serialize(buffer);
-              tx.data.assign(buffer, buffer + len);
+              if(plain_text)
+              {
+                const char* txt = msg->txt_data.c_str();
+                tx.data.assign(txt, txt + msg->txt_data.length());
+              }
+              else
+              {
+                IMC::IridiumCommand m;
+                m.destination = 0xFFFF;
+                m.source = m_parent->getSystemId();
+                m.command = msg->txt_data;
+                uint8_t buffer[65535];
+                int len = m.serialize(buffer);
+                tx.data.assign(buffer, buffer + len);
+              }
 
               break;
             }
@@ -329,7 +337,7 @@ namespace Transports
       }
 
       void
-      sendViaAny(const IMC::TransmissionRequest* msg)
+      sendViaAny(const IMC::TransmissionRequest* msg, bool plain_text)
       {
         //restriction by medium
         if (m_medium == IMC::VehicleMedium::VM_UNDERWATER)
@@ -382,7 +390,7 @@ namespace Transports
           case IMC::TransmissionRequest::DMODE_RAW:
             if (checkRSSISignal(IRIDIUM))
             {
-              sendViaSatellite(msg);
+              sendViaSatellite(msg, plain_text);
               return;
             }
             answerCommNotAvailable(msg);
@@ -402,7 +410,7 @@ namespace Transports
 
             if (checkRSSISignal(IRIDIUM))
             {
-              sendViaSatellite(msg);
+              sendViaSatellite(msg, plain_text);
               return;
             }
             answerCommNotAvailable(msg);
@@ -426,7 +434,7 @@ namespace Transports
             {
               if (checkRSSISignal(IRIDIUM))
               {
-                sendViaSatellite(msg);
+                sendViaSatellite(msg, plain_text);
                 return;
               }
               answerCommNotAvailable(msg);
@@ -441,7 +449,7 @@ namespace Transports
               }
               if (checkRSSISignal(IRIDIUM))
               {
-                sendViaSatellite(msg);
+                sendViaSatellite(msg, plain_text);
                 return;
               }
               answerCommNotAvailable(msg);
@@ -605,7 +613,7 @@ namespace Transports
       }
 
       void
-      sendViaAll(const IMC::TransmissionRequest* msg)
+      sendViaAll(const IMC::TransmissionRequest* msg, bool plain_text)
       {
 
         //restriction by medium
@@ -649,7 +657,7 @@ namespace Transports
           case IMC::TransmissionRequest::DMODE_RAW:
             if (checkRSSISignal(IRIDIUM))
             {
-              sendViaSatellite(msg);
+              sendViaSatellite(msg, plain_text);
               return;
             }
             answerCommNotAvailable(msg);
@@ -666,7 +674,7 @@ namespace Transports
             }
             if (checkRSSISignal(IRIDIUM))
             {
-              sendViaSatellite(msg);
+              sendViaSatellite(msg, plain_text);
               flag = true;
             }
             if (!flag)
@@ -694,7 +702,7 @@ namespace Transports
             }
             if (checkRSSISignal(IRIDIUM))
             {
-              sendViaSatellite(msg);
+              sendViaSatellite(msg, plain_text);
               flag = true;
             }
             if (!flag)
