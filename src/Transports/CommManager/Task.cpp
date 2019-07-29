@@ -863,7 +863,6 @@ namespace Transports
       void
       onMain(void)
       {
-        int req_id = 1;
         while (!stopping())
         {
           waitForMessages(1.0);
