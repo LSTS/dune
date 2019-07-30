@@ -185,7 +185,7 @@ namespace DUNE
       }
 
       m_size = std::accumulate(
-          std::begin(m_npts), std::end(m_npts), 1.0, std::multiplies<>());
+          std::begin(m_npts), std::end(m_npts), 1.0, std::multiplies<size_t>());
     }
 
     template<size_t dim>
