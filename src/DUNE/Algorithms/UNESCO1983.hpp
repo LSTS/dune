@@ -64,6 +64,15 @@ namespace DUNE
       static double
       computeSalinity(double conductivity, double pressure, double temperature);
 
+      //! Compute conductivity.
+      //! @param salinity (PSU).
+      //! @param pressure (bar).
+      //! @param temperature (ºC).
+      //! @return conductivity (S/m) or a negative number if the
+      //! computation is not reliable.
+      static double
+      computeConductivity(double s, double p, double t);
+
       //! Compute sound speed.
       //! @param salinity (PSU)
       //! @param pressure (bar).
@@ -71,6 +80,37 @@ namespace DUNE
       //! @return sound speed (m/s).
       static double
       computeSoundSpeed(double salinity, double pressure, double temperature);
+
+    private:
+      //! Salinity polinomial as defined in:
+      //! 'Algorithms for computation of fundamental
+      //! properties of seawater' (UNESCO 1983)
+      //! @param rt sqrt of temperature ratio.
+      //! @param dt (ºC) corrected temperature (t-15).
+      //! @return salinity (PSU).
+      static double
+      salinity_poli(double rt, double dt)
+      {
+        return (((((2.7081 * rt - 7.0261) * rt + 14.0941) * rt + 25.3851) * rt - 0.1692)
+                           * rt + 0.0080 + (dt / (1.0 + 0.0162 * dt))
+                           * (((((-0.0144 * rt + 0.0636) * rt - 0.0375) * rt - 0.0066) * rt - 0.0056)
+                              * rt + 0.0005));
+      }
+
+      //! Salinity polinomial derivative:
+      //! 'Algorithms for computation of fundamental
+      //! properties of seawater' (UNESCO 1983)
+      //! @param rt sqrt of temperature ratio.
+      //! @param dt (ºC) corrected temperature (t-15).
+      //! @return polinomial derivative with respect to rt.
+      static double
+      salinity_poli_deriv(double rt, double dt)
+      {
+        return (((((13.5405 * rt - 28.1044) * rt + 42.2823) * rt + 50.7702) * rt - 0.1692)
+                  + (dt / (1.0 + 0.0162 * dt))
+                   * ((((-0.072 * rt + 0.2544) * rt - 0.1125) * rt - 0.0132) * rt - 0.0056));
+      }
+
     };
   }
 }
