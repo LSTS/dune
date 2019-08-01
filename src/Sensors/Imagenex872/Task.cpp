@@ -330,7 +330,6 @@ namespace Sensors
           // Works
           case SM_ACTIVE:
             handleSonarData();
-            debug("Ping and send data!");
             break;
 
           // Wait
