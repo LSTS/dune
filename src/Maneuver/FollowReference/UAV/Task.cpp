@@ -463,7 +463,7 @@ namespace Maneuver
         offlineOrWaiting(void)
         {
           return ((m_fref_state.state & IMC::FollowRefState::FR_TIMEOUT)
-                  && (m_fref_state.state & IMC::FollowRefState::FR_WAIT));
+                  || (m_fref_state.state & IMC::FollowRefState::FR_WAIT));
         }
 
         void
