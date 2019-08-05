@@ -72,6 +72,7 @@ namespace DUNE
       m_path.end_z_units = z_units;
       m_path.speed = speed;
       m_path.speed_units = speed_units;
+      m_path.flags |= IMC::DesiredPath::FL_DIRECT;
     }
 
     double
