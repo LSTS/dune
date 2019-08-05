@@ -41,6 +41,8 @@ namespace DUNE
   {
     //! Factor for the radius to consider traveling at the surface
     static const float c_surface_factor = 2.5f;
+    //! Limits the rate at which DesiredPath messages are dispatched.
+    static const double c_dpath_dispatch_period = 1.0;
 
     //! Default constructor.
     StationKeep::StationKeep(const IMC::StationKeeping* maneuver, Maneuvers::Maneuver* task,
@@ -113,6 +115,8 @@ namespace DUNE
       {
         m_task->dispatch(m_path);
       }
+
+      m_last_dpath_dispatch = DUNE::Time::Clock::get();
     }
 
     void
@@ -169,10 +173,27 @@ namespace DUNE
       switch (m_sks)
       {
         case ST_OFF_STATION:
-          if (pcs->flags & IMC::PathControlState::FL_NEAR && range < m_radius)
+          if (pcs->flags & IMC::PathControlState::FL_NEAR)
           {
-            stopMoving(range);
-            m_sks = ST_ON_STATION;
+            if (range < m_radius)
+            {
+              stopMoving(range);
+              m_sks = ST_ON_STATION;
+            }
+            else
+            {
+              const double now = DUNE::Time::Clock::get();
+
+              if (now >= m_last_dpath_dispatch + c_dpath_dispatch_period)
+              {
+                m_task->debug("FL_NEAR is set but range is %.2f >= %.2f",
+                              range,
+                              m_radius);
+
+                m_task->dispatch(m_path);
+                m_last_dpath_dispatch = now;
+              }
+            }
           }
           break;
         default:
