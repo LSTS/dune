@@ -98,7 +98,8 @@ namespace Maneuver
           m_last_ref_time = 0;
 
           bindToManeuver<Task, IMC::FollowReference>();
-          bind<IMC::Reference>(this);
+          //Always consume Reference, as it is needed by consume(FollowReference)
+          bind<IMC::Reference>(this,true);
           //Always consume EstimatedState, as it is needed by consume(FollowReference)
           bind<IMC::EstimatedState>(this,true);
         }
@@ -108,15 +109,21 @@ namespace Maneuver
         {
           // initialize maneuver definitions and time for timeout calculation.
           m_spec = *msg;
-          m_last_ref_time = Clock::get();
+          // assume that we have received a Reference message already.
+          // If not, or if it came from a source that is now non-authorized, set ref from estate
+          if(((Clock::get() - m_last_ref_time) > m_spec.timeout) || (m_cur_ref.getSource() != msg->control_src))
+          {
+            debug("Using estate as ref");
+            m_last_ref_time = Clock::get();
 
-          // Waiting for the first reference in the current position.
-          m_cur_ref.flags = Reference::FLAG_LOCATION;
-          m_cur_ref.lat = m_estate.lat;
-          m_cur_ref.lon = m_estate.lon;
-          m_cur_ref.radius = m_args.loitering_radius;
+            // Waiting for the first reference in the current position.
+            m_cur_ref.flags = Reference::FLAG_LOCATION;
+            m_cur_ref.lat = m_estate.lat;
+            m_cur_ref.lon = m_estate.lon;
+            m_cur_ref.radius = m_args.loitering_radius;
 
-          WGS84::displace(m_estate.x, m_estate.y, &(m_cur_ref.lat), &(m_cur_ref.lon));
+            WGS84::displace(m_estate.x, m_estate.y, &(m_cur_ref.lat), &(m_cur_ref.lon));
+          }
 
           debug("lat lon = 0 ? %f", m_cur_ref.lat);
 
@@ -132,15 +139,15 @@ namespace Maneuver
         void
         consume(const IMC::Reference* msg)
         {
-          // accept control source or broadcast.
-          if (m_spec.control_src != 0xFFFF && m_spec.control_src != msg->getSource())
+          // accept control source, broadcast, and all messages before start of maneuver
+          if (m_spec.control_src != 0xFFFF && m_spec.control_src != msg->getSource() && m_spec.control_src != 0)
           {
             debug("ignored reference from non-authorized source: %d", msg->getSource());
             return;
           }
 
-          // accept control source entity or broadcast.
-          if (m_spec.control_ent != 0xFF && m_spec.control_ent != msg->getSourceEntity())
+          // accept control source, broadcast, and all messages before start of maneuver
+          if (m_spec.control_ent != 0xFF && m_spec.control_ent != msg->getSourceEntity() && m_spec.control_ent != 0)
           {
             debug("ignored reference from non-authorized entity: %d", msg->getSourceEntity());
             return;
@@ -153,6 +160,9 @@ namespace Maneuver
           {
             m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
             m_fref_state.state = IMC::FollowRefState::FR_WAIT;
+            // reset, since we no longer know who will send Reference
+            m_spec.control_src = 0;
+            m_spec.control_ent = 0; 
             signalCompletion("maneuver terminated by reference source");
           }
           else
