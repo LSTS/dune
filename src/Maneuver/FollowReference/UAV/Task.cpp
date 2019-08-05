@@ -99,7 +99,8 @@ namespace Maneuver
 
           bindToManeuver<Task, IMC::FollowReference>();
           bind<IMC::Reference>(this);
-          bind<IMC::EstimatedState>(this);
+          //Always consume EstimatedState, as it is needed by consume(FollowReference)
+          bind<IMC::EstimatedState>(this,true);
         }
 
         void
