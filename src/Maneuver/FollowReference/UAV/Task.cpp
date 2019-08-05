@@ -441,8 +441,8 @@ namespace Maneuver
           if (delta > m_spec.timeout  && isActive())
           {
             m_fref_state.state = IMC::FollowRefState::FR_TIMEOUT;
-            signalError("reference source timed out");
             dispatch(m_fref_state);
+            signalError("reference source timed out");
           }
         }
 
