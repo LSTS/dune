@@ -307,7 +307,7 @@ namespace Autonomy
       void
       reply(const std::string& origin, const std::string& text) {
         TransmissionRequest req;
-
+        req.setDestination(m_ctx.resolver.id());
         req.data_mode = TransmissionRequest::DMODE_TEXT;
         req.txt_data = text;
         req.deadline = Clock::getSinceEpoch() + m_args.reply_timeout;
