@@ -38,10 +38,13 @@ CONST_NULL_ID = 65535
 def get_cxx_type(field_node):
     type = field_node.get('type')
     msg_type = field_node.get('message-type', 'Message')
+
     if type == 'plaintext':
         return 'std::string'
     elif type == 'rawdata':
         return 'std::vector<char>'
+    elif type == 'vector':
+        return 'std::vector<%s>' % field_node.get('vector-type', 'uint8_t')
     elif type == 'message':
         return 'InlineMessage<%s>' % msg_type
     elif type == 'message-list':
@@ -51,15 +54,7 @@ def get_cxx_type(field_node):
 
 def is_fixed(field_node):
     type = field_node.get('type')
-    if type == 'message':
-        return False
-    elif type == 'plaintext':
-        return False
-    elif type == 'rawdata':
-        return False
-    elif type == 'message-list':
-        return False
-    return True
+    return type not in ['message', 'plaintext', 'rawdata', 'vector', 'message-list']
 
 def get_clear(field_node):
     rv = get_name(field_node)

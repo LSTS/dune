@@ -34,6 +34,7 @@
 #include <istream>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 // DUNE headers.
 #include <DUNE/Utils/ByteCopy.hpp>
@@ -63,6 +64,17 @@ namespace DUNE
     getSerializationSize(const std::vector<char>& variable)
     {
       return static_cast<unsigned>(variable.size()) + 2;
+    }
+
+    //! Retrieve the number of bytes required to serialize a variable
+    //! of type 'vector'. Only enabled for numeric vector types
+    //! @param[in] variable variable.
+    //! @return number of bytes required to serialize variable.
+    template <typename Type, typename = typename std::enable_if<std::is_arithmetic<Type>::value, Type>::type>
+    inline unsigned
+    getSerializationSize(const std::vector<Type>& variable)
+    {
+      return static_cast<unsigned>(variable.size() * sizeof(Type)) + 2;
     }
 
     //! Serializator for scalar types.
@@ -109,6 +121,18 @@ namespace DUNE
     uint16_t
     serialize(const std::vector<char>& t, uint8_t* bfr);
 
+    template <typename Type, typename = typename std::enable_if<std::is_arithmetic<Type>::value, Type>::type>
+    uint16_t
+    serialize(const std::vector<Type>& t, uint8_t* bfr)
+    {
+      const uint16_t s = t.size();
+      std::memcpy(bfr, &s, sizeof(s));
+      bfr += sizeof(s);
+      if (s > 0)
+        std::copy(t.begin(), t.end(), bfr);
+      return s*sizeof(Type) + 2;
+    }
+
     //! Deserializator for scalar types.
     //! @param t scalar where to place the unserialized bytes.
     //! @param bfr buffer where to read the serialized bytes.
@@ -139,7 +163,7 @@ namespace DUNE
     uint16_t
     deserialize(std::string& t, const uint8_t* bfr, uint16_t& length);
 
-    //! Deserializator for string objects.
+    //! Deserializator for rawdata objects.
     //! @param t string object where to place the deserialized bytes.
     //! @param bfr buffer where to read the serialized bytes.
     //! @param length amount of bytes available to deserialize.
@@ -147,6 +171,32 @@ namespace DUNE
     //! @throw BufferTooShort
     uint16_t
     deserialize(std::vector<char>& t, const uint8_t* bfr, uint16_t& length);
+
+
+    //! Deserializator for numeric vector objects.
+    //! @param t vector object where to place the deserialized bytes.
+    //! @param bfr buffer where to read the serialized bytes.
+    //! @param length amount of bytes available to deserialize.
+    //! @return number of deserialized bytes.
+    //! @throw BufferTooShort
+    template <typename Type, typename = typename std::enable_if<std::is_arithmetic<Type>::value, Type>::type>
+    uint16_t
+    deserialize(std::vector<Type>& t, const uint8_t* bfr, uint16_t& bfr_len)
+    {
+      if (bfr_len < 2)
+        throw BufferTooShort();
+
+      uint16_t s = 0;
+      std::memcpy(&s, bfr, 2);
+
+      if (bfr_len < s*sizeof(Type) + 2)
+        throw BufferTooShort();
+
+      t.assign(reinterpret_cast<const Type*>(bfr + 2), reinterpret_cast<const Type*>(bfr + 2 + s*sizeof(Type)));
+      bfr_len -= s*sizeof(Type) + 2;
+
+      return s*sizeof(Type) + 2;
+    }
 
     //! Deserialize a numeric field with a different byte.
     //! @param t variable where to place the unserialized result.
@@ -174,6 +224,35 @@ namespace DUNE
 
     uint16_t
     reverseDeserialize(std::vector<char>& t, const uint8_t* bfr, uint16_t& length);
+
+    //! Reverse deserializator for numeric vector objects.
+    //! @param t vector object where to place the deserialized bytes.
+    //! @param bfr buffer where to read the serialized bytes.
+    //! @param length amount of bytes available to deserialize.
+    //! @return number of deserialized bytes.
+    //! @throw BufferTooShort
+    template <typename Type, typename = typename std::enable_if<std::is_arithmetic<Type>::value, Type>::type>
+    uint16_t
+    reverseDeserialize(std::vector<Type>& t, const uint8_t* bfr, uint16_t& bfr_len)
+    {
+      if (bfr_len < 2)
+        throw BufferTooShort();
+
+      uint16_t s = 0;
+      Utils::reverseCopy(s, (char*)bfr);
+
+      if (bfr_len < s*sizeof(Type) + 2)
+        throw BufferTooShort();
+
+      t.clear();
+      t.reserve(s);
+      for(unsigned int i = 0; i < s; i++)
+        Utils::reverseCopy(reinterpret_cast<char*>(&t[i]), *reinterpret_cast<const Type*>(bfr + 2 + i*sizeof(Type)));
+
+      bfr_len -= s*sizeof(Type) + 2;
+
+      return s*sizeof(Type) + 2;
+    }
   }
 }
 
