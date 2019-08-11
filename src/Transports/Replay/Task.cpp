@@ -295,24 +295,7 @@ namespace Transports
         // skip messages
         if (m_args.initial_log_skip_seconds > 0)
         {
-          double time_origin = m_ts_delta;
-          m = IMC::Packet::deserialize(*m_is);
-          while (m)
-          {
-            if (m->getTimeStamp() - time_origin >= m_args.initial_log_skip_seconds)
-              break;
-            // Do not miss information from EntityInfo
-            if (m->getId() == DUNE_IMC_ENTITYINFO)
-            {
-              updateEntityMap(m);
-            }
-
-            delete m;
-            m = IMC::Packet::deserialize(*m_is);
-            if(getDebugLevel() >= DEBUG_LEVEL_SPEW)
-              m->toText(std::cout);
-          }
-
+          m = getFirstMessageAfterSkip(m_args.initial_log_skip_seconds);
           if (!m)
           {
             err("No messages for specified time range");
@@ -330,6 +313,30 @@ namespace Transports
         requestActivation();
 
         war("%s '%s'", DTR("started replay of"), file.c_str());
+      }
+
+      IMC::Message*
+      getFirstMessageAfterSkip(double time_to_skip)
+      {
+        IMC::Message* m = 0;
+        double time_origin = m_ts_delta;
+        m = IMC::Packet::deserialize(*m_is);
+        while (m)
+        {
+          if (m->getTimeStamp() - time_origin >= time_to_skip)
+            return m;
+          // Do not miss information from EntityInfo
+          if (m->getId() == DUNE_IMC_ENTITYINFO)
+          {
+            updateEntityMap(m);
+          }
+
+          delete m;
+          m = IMC::Packet::deserialize(*m_is);
+          if(getDebugLevel() >= DEBUG_LEVEL_SPEW)
+            m->toText(std::cout);
+        }
+        return NULL;
       }
 
       void
