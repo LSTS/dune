@@ -129,7 +129,7 @@ namespace DUNE
       std::memcpy(bfr, &s, sizeof(s));
       bfr += sizeof(s);
       if (s > 0)
-        std::copy(t.begin(), t.end(), bfr);
+        std::memcpy(bfr, &t[0], s*sizeof(Type));
       return s*sizeof(Type) + 2;
     }
 
