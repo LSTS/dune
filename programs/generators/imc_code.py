@@ -339,7 +339,7 @@ class Message:
         for field in self._node.findall('field'):
             type = field.get('type')
             abbrev = get_name(field)
-            if type == 'plaintext' or type == 'rawdata':
+            if type in ['plaintext', 'rawdata', 'vector']:
                 size.append('IMC::getSerializationSize(%s)' % abbrev)
             elif type == 'message' or type == 'message-list':
                 size.append(abbrev + '.getSerializationSize()')
