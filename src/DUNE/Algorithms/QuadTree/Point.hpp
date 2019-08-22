@@ -24,27 +24,64 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef DUNE_ALGORITHMS_HPP_INCLUDED_
-#define DUNE_ALGORITHMS_HPP_INCLUDED_
+#ifndef SIMULATORS_ALGORITHMS_QUAD_TREE_POINT_HPP_INCLUDED_
+#define SIMULATORS_ALGORITHMS_QUAD_TREE_POINT_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <iomanip>
+#include <cmath>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
 
 namespace DUNE
 {
-  //! %General purpose algorithms.
   namespace Algorithms
-  { }
-}
+  {
+    namespace Quad
+    {
+      //! Directions for search/insertion
+      enum
+      {
+        DIR_NW, DIR_NE, DIR_SW, DIR_SE
+      };
 
-#include <DUNE/Algorithms/Base64.hpp>
-#include <DUNE/Algorithms/CRC8.hpp>
-#include <DUNE/Algorithms/CRC16.hpp>
-#include <DUNE/Algorithms/FletcherChecksum.hpp>
-#include <DUNE/Algorithms/MD5.hpp>
-#include <DUNE/Algorithms/XORChecksum.hpp>
-#include <DUNE/Algorithms/UNESCO1983.hpp>
-#include <DUNE/Algorithms/QuadTree/QuadTree.hpp>
-#include <DUNE/Algorithms/OcTree/OcTree.hpp>
+      //! Point structure.
+      struct Point
+      {
+        double x, y;
+
+        Point(double x_, double y_):
+          x(x_), y(y_) { }
+
+        double
+        distance(const Point& other) const
+        {
+          double dx = x - other.x;
+          double dy = y - other.y;
+          return std::sqrt(dx * dx + dy * dy);
+        }
+
+        template <typename T>
+        int
+        direction(const T& other) const
+        {
+          double dx = other.x - x;
+          double dy = other.y - y;
+
+          int dir = dx >= 0 ? DIR_NW : DIR_SW;
+
+          if (dy > 0)
+            dir++;      // other is East of this
+
+          return dir;
+        }
+      };
+    }
+  }
+}
 
 #endif

@@ -31,11 +31,10 @@
 #include <DUNE/DUNE.hpp>
 
 #include <memory>
-#include "DUNE/Algorithms/Trees/OcTree.hpp"
 #include "MOHIDCTDGenerator.hpp"
 
 using DUNE_NAMESPACES;
-using namespace Trees;
+using namespace Oc;
 
 namespace Simulators
 {

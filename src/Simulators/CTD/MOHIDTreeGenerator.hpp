@@ -35,11 +35,12 @@
 
 #include <memory>
 #include <algorithm>
-#include "DUNE/Algorithms/Trees/OcTree.hpp"
 #include "DUNE/Parsers/HDF5Reader.hpp"
 
 using DUNE_NAMESPACES;
-using namespace Trees;
+
+// OcTree specific namespace
+using namespace Oc;
 
 namespace Simulators
 {

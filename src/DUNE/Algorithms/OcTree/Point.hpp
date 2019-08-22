@@ -27,93 +27,61 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef SIMULATORS_ALGORITHMS_TREES_OC_TREE_HPP_INCLUDED_
-#define SIMULATORS_ALGORITHMS_TREES_OC_TREE_HPP_INCLUDED_
+#ifndef SIMULATORS_ALGORITHMS_OC_TREE_POINT_HPP_INCLUDED_
+#define SIMULATORS_ALGORITHMS_OC_TREE_POINT_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <iomanip>
-#include <iostream>
-#include <vector>
+#include <cmath>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
-
-// Local headers.
-#include "Point.hpp"
-#include "Bounds.hpp"
 
 namespace DUNE
 {
   namespace Algorithms
   {
-    namespace Trees
+    namespace Oc
     {
-      //! Forward declaration.
-      struct Node;
-
-      //! "Oc-tree" structure used to index spatial data in two dimensions.
-      class OcTree
+      //! Directions for search/insertion
+      enum
       {
-      public:
-        //! Item datum.
-        struct Item
-        {
-          double x, y, z, value;
-        };
-
-        //! Iteration handle.
-        class Iteration
-        {
-        public:
-          virtual void
-          process(const Item& item) = 0;
-
-          virtual
-          ~Iteration(){ }
-        };
-
-        //! Constructor.
-        OcTree(const Bounds& bounds);
-
-        ~OcTree();
-
-        //! Insert an item.
-        //! Returns 'false' if item is out-of-bounds.
-        bool
-        insert(const Item& item);
-
-        //! Iterate tree.
-        void
-        iterate(Iteration& iteration) const;
-
-        //! Iterate tree over a given area.
-        void
-        iterate(Iteration& iteration, const Bounds& area) const;
-
-        //! Clear entire tree.
-        void
-        clear(void);
-
-        //! Remove items in a given area.
-        void
-        remove(const Bounds& area);
-
-        //! Search for items in a given area.
-        //! If any are found returns 'true' and adds results to 'item' vector.
-        bool
-        search(const Bounds& area, std::vector<Item>& items) const;
-
-        //! Get number of elements in a given area.
-        uint32_t
-        size(const Bounds& area) const;
-
-      private:
-        Bounds m_bounds;     //!< Bounds.
-        Node* m_root;     //!< Node handle providing actual implementation.
+        DIR_UNW, DIR_UNE, DIR_USW, DIR_USE,
+        DIR_DNW, DIR_DNE, DIR_DSW, DIR_DSE
       };
 
-      std::ostream&
-      operator<<(std::ostream& os, const OcTree& tree);
+      //! Point structure.
+      struct Point
+      {
+        double x, y, z;
+
+        Point(double x_, double y_, double z_):
+          x(x_), y(y_), z(z_) { }
+
+        double
+        distance(const Point& other) const
+        {
+          double dx = x - other.x;
+          double dy = y - other.y;
+          double dz = z - other.z;
+          return std::sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        template <typename T>
+        int
+        direction(const T& other) const
+        {
+          double dx = other.x - x;
+          double dy = other.y - y;
+          double dz = other.z - z;
+
+          uint8_t dir = dz >= 0 ? DIR_UNW : DIR_DNW; // U/D selection
+          dir += dx >= 0 ? 0 : 2; // N/S selection
+          dir += dy >= 0 ? 1 : 0; // E/W selection
+
+          return dir;
+        }
+      };
     }
   }
 }

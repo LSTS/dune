@@ -35,26 +35,26 @@
 #include <DUNE/Config.hpp>
 
 // Local headers.
-#include "OcTree.hpp"
+#include "QuadTree.hpp"
 
 namespace DUNE
 {
   namespace Algorithms
   {
-    namespace Trees
+    namespace Quad
     {
-      // The actual implementation
+            // The actual implementation
       struct Node
       {
         union
         {
-          OcTree::Item item;
-          Node* children[8];
+          QuadTree::Item item;
+          Node* children[4];
         } m_data;
 
         bool m_leaf;
 
-        Node(const OcTree::Item& item)
+        Node(const QuadTree::Item& item)
         {
           m_data.item = item;
           m_leaf = true;
@@ -64,7 +64,7 @@ namespace DUNE
         {
           if (!m_leaf)
           {
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 4; ++i)
             {
               if (m_data.children[i])
                 delete m_data.children[i];
@@ -73,16 +73,16 @@ namespace DUNE
         }
 
         void
-        insert(const OcTree::Item& item, Bounds& b)
+        insert(const QuadTree::Item& item, Bounds& b)
         {
           if (m_leaf)
           {
             m_leaf = false;
-            OcTree::Item prev_item = m_data.item;
+            QuadTree::Item prev_item = m_data.item;
             std::memset(m_data.children, 0, sizeof(m_data.children));
             insert(prev_item, b);   // Split
           }
-          std::pair<int, Bounds> bq = b.octant(item);
+          std::pair<int, Bounds> bq = b.quadrant(item);
           Node** c = m_data.children + bq.first;
           if (*c)
             (*c)->insert(item, bq.second);   // Branch
@@ -104,14 +104,14 @@ namespace DUNE
 
           int cdel = 0;
 
-          for (int i = 0; i < 8; ++i)
+          for (int i = 0; i < 4; ++i)
           {
             Node** c = m_data.children + i;
 
             if (!*c)
               continue;
 
-            Bounds cb = b.octant(i);
+            Bounds cb = b.quadrant(i);
 
             if (area.intersects(cb) && (*c)->remove(area, cb))
             {
@@ -120,22 +120,20 @@ namespace DUNE
               ++cdel;
             }
           }
-          return cdel == 8;   // true if all sub-nodes were removed
+          return cdel == 4;   // true if all sub-nodes were removed
         }
 
         void
-        iterate(OcTree::Iteration& iter, const Bounds& area, const Bounds& b) const
+        iterate(QuadTree::Iteration& iter, const Bounds& area, const Bounds& b) const
         {
           if (m_leaf && b.contains(m_data.item))
-          {
             iter.process(m_data.item);
-          }
           else
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 4; ++i)
             {
               if (m_data.children[i])
               {
-                Bounds cb = b.octant(i);
+                Bounds cb = b.quadrant(i);
                 if (area.intersects(cb))
                   m_data.children[i]->iterate(iter, area, cb);
               }
@@ -143,23 +141,23 @@ namespace DUNE
         }
       };
 
-      OcTree::OcTree(const Bounds& bounds):
+      QuadTree::QuadTree(const Bounds& bounds):
         m_bounds(bounds), m_root(0)
       { }
 
-      OcTree::~OcTree()
+      QuadTree::~QuadTree()
       {
         clear();
       }
 
       void
-      OcTree::iterate(Iteration& iter) const
+      QuadTree::iterate(Iteration& iter) const
       {
         iterate(iter, m_bounds);
       }
 
       void
-      OcTree::iterate(Iteration& iter, const Bounds& area) const
+      QuadTree::iterate(Iteration& iter, const Bounds& area) const
       {
         if (!m_root)
           return;
@@ -168,7 +166,7 @@ namespace DUNE
       }
 
       void
-      OcTree::clear()
+      QuadTree::clear()
       {
         if (m_root)
         {
@@ -178,14 +176,14 @@ namespace DUNE
       }
 
       void
-      OcTree::remove(const Bounds& area)
+      QuadTree::remove(const Bounds& area)
       {
         if (m_root && m_root->remove(area, m_bounds))
           clear();   // entire contents were deleted
       }
 
       bool
-      OcTree::insert(const OcTree::Item& item)
+      QuadTree::insert(const QuadTree::Item& item)
       {
         if (!m_bounds.contains(item))
           return false;
@@ -199,23 +197,23 @@ namespace DUNE
       }
 
       bool
-      OcTree::search(const Bounds& search_area, std::vector<OcTree::Item>& v) const
+      QuadTree::search(const Bounds& search_area, std::vector<QuadTree::Item>& v) const
       {
-        class Search: public OcTree::Iteration
+        class Search: public QuadTree::Iteration
         {
         public:
-          Search(std::vector<OcTree::Item>& vector): m_vector(vector) { }
+          Search(std::vector<QuadTree::Item>& vector): m_vector(vector) { }
 
           ~Search(){ }
 
           void
-          process(const OcTree::Item& item)
+          process(const QuadTree::Item& item)
           {
             m_vector.push_back(item);
           }
 
         private:
-          std::vector<OcTree::Item>& m_vector;
+          std::vector<QuadTree::Item>& m_vector;
         };
 
         v.clear();
@@ -228,9 +226,9 @@ namespace DUNE
       }
 
       uint32_t
-      OcTree::size(const Bounds& area) const
+      QuadTree::size(const Bounds& area) const
       {
-        class count: public OcTree::Iteration
+        class count: public QuadTree::Iteration
         {
         public:
           count(): m_elems(0) { }
@@ -238,7 +236,7 @@ namespace DUNE
           ~count(){ }
 
           void
-          process(const OcTree::Item& item)
+          process(const QuadTree::Item& item)
           {
             (void)item;
             ++m_elems;
@@ -259,7 +257,7 @@ namespace DUNE
         return iter.result();
       }
 
-      class Dump: public OcTree::Iteration
+      class Dump: public QuadTree::Iteration
       {
       public:
         Dump(std::ostream& stream):
@@ -270,11 +268,9 @@ namespace DUNE
         { }
 
         void
-        process(const OcTree::Item& item)
+        process(const QuadTree::Item& item)
         {
-          m_stream << item.x << ' ' << item.y << ' ' << item.z;
-          m_stream << ' ' << item.value;
-          m_stream << std::endl;
+          m_stream << item.x << ' ' << item.y << ' ' << item.value << std::endl;
         }
 
       private:
@@ -282,7 +278,7 @@ namespace DUNE
       };
 
       std::ostream&
-      operator<<(std::ostream& os, const OcTree& tree)
+      operator<<(std::ostream& os, const QuadTree& tree)
       {
         Dump iter(os);
         tree.iterate(iter);
@@ -296,8 +292,7 @@ namespace DUNE
         os << std::fixed << std::setprecision(2) <<
         b.min_x << ' ' << b.max_x << " | " <<
         b.min_y << ' ' << b.max_y << " | " <<
-        b.min_z << ' ' << b.max_z << " | " <<
-        b.width() << " x " << b.lenght() << " x " << b.height();
+        b.width() << " x " << b.height();
       }
     }
   }

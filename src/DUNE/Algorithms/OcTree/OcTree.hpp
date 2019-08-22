@@ -27,8 +27,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef SIMULATORS_ENVIRONMENT_QUAD_TREE_HPP_INCLUDED_
-#define SIMULATORS_ENVIRONMENT_QUAD_TREE_HPP_INCLUDED_
+#ifndef SIMULATORS_ALGORITHMS_OC_TREE_OC_TREE_HPP_INCLUDED_
+#define SIMULATORS_ALGORITHMS_OC_TREE_OC_TREE_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <iomanip>
@@ -42,76 +42,79 @@
 #include "Point.hpp"
 #include "Bounds.hpp"
 
-namespace Simulators
+namespace DUNE
 {
-  namespace Environment
+  namespace Algorithms
   {
-    //! Forward declaration.
-    struct Node;
-
-    //! "Quad-tree" structure used to index spatial data in two dimensions.
-    class QuadTree
+    namespace Oc
     {
-    public:
-      //! Item datum.
-      struct Item
-      {
-        double x, y, value;
-      };
+      //! Forward declaration.
+      struct Node;
 
-      //! Iteration handle.
-      class Iteration
+      //! "Oc-tree" structure used to index spatial data in two dimensions.
+      class OcTree
       {
       public:
-        virtual void
-        process(const Item& item) = 0;
+        //! Item datum.
+        struct Item
+        {
+          double x, y, z, value;
+        };
 
-        virtual
-        ~Iteration(){ }
+        //! Iteration handle.
+        class Iteration
+        {
+        public:
+          virtual void
+          process(const Item& item) = 0;
+
+          virtual
+          ~Iteration(){ }
+        };
+
+        //! Constructor.
+        OcTree(const Bounds& bounds);
+
+        ~OcTree();
+
+        //! Insert an item.
+        //! Returns 'false' if item is out-of-bounds.
+        bool
+        insert(const Item& item);
+
+        //! Iterate tree.
+        void
+        iterate(Iteration& iteration) const;
+
+        //! Iterate tree over a given area.
+        void
+        iterate(Iteration& iteration, const Bounds& area) const;
+
+        //! Clear entire tree.
+        void
+        clear(void);
+
+        //! Remove items in a given area.
+        void
+        remove(const Bounds& area);
+
+        //! Search for items in a given area.
+        //! If any are found returns 'true' and adds results to 'item' vector.
+        bool
+        search(const Bounds& area, std::vector<Item>& items) const;
+
+        //! Get number of elements in a given area.
+        uint32_t
+        size(const Bounds& area) const;
+
+      private:
+        Bounds m_bounds;     //!< Bounds.
+        Node* m_root;     //!< Node handle providing actual implementation.
       };
 
-      //! Constructor.
-      QuadTree(const Bounds& bounds);
-
-      ~QuadTree();
-
-      //! Insert an item.
-      //! Returns 'false' if item is out-of-bounds.
-      bool
-      insert(const Item& item);
-
-      //! Iterate tree.
-      void
-      iterate(Iteration& iteration) const;
-
-      //! Iterate tree over a given area.
-      void
-      iterate(Iteration& iteration, const Bounds& area) const;
-
-      //! Clear entire tree.
-      void
-      clear(void);
-
-      //! Remove items in a given area.
-      void
-      remove(const Bounds& area);
-
-      //! Search for items in a given area.
-      //! If any are found returns 'true' and adds results to 'item' vector.
-      bool
-      search(const Bounds& area, std::vector<Item>& items) const;
-
-      //! Get number of elements in a given area.
-      uint32_t
-      size(const Bounds& area) const;
-
-    private:
-      Bounds m_bounds;     //!< Bounds.
-      Node* m_root;     //!< Node handle providing actual implementation.
-    };
-
-    std::ostream&
-    operator<<(std::ostream& os, const QuadTree& tree);
+      std::ostream&
+      operator<<(std::ostream& os, const OcTree& tree);
+    }
   }
 }
 

@@ -32,14 +32,13 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include "DUNE/Algorithms/Trees/OcTree.hpp"
 
 #include <memory>
 #include "MOHIDTreeGenerator.hpp"
 #include "CTDGenerator.hpp"
 
 using DUNE_NAMESPACES;
-using namespace Trees;
+using namespace Oc;
 
 namespace Simulators
 {

@@ -30,7 +30,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include "DUNE/I18N.hpp"
-#include "DUNE/Algorithms/Trees/OcTree.hpp"
 #include "DUNE/Parsers/HDF5Reader.hpp"
 
 #include <memory>
@@ -38,7 +37,7 @@
 #include "MOHIDTreeGenerator.hpp"
 
 using DUNE_NAMESPACES;
-using namespace Trees;
+using namespace Oc;
 
 namespace Simulators
 {

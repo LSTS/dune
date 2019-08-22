@@ -27,8 +27,8 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-#ifndef SIMULATORS_ALGORITHMS_TREES_BOUNDS_HPP_INCLUDED_
-#define SIMULATORS_ALGORITHMS_TREES_BOUNDS_HPP_INCLUDED_
+#ifndef SIMULATORS_ALGORITHMS_OC_TREE_BOUNDS_HPP_INCLUDED_
+#define SIMULATORS_ALGORITHMS_OC_TREE_BOUNDS_HPP_INCLUDED_
 
 // ISO C++ headers.
 #include <iomanip>
@@ -45,7 +45,7 @@ namespace DUNE
 {
   namespace Algorithms
   {
-    namespace Trees
+    namespace Oc
     {
       struct Bounds
       {
