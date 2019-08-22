@@ -44,8 +44,7 @@ namespace Simulators
                         double default_temp, double default_sal):
                         m_args(args),
                         CTDGenerator(default_temp, default_sal),
-                        m_tree_generator(args.file_path),
-                        m_invalid(pow(-10,15))
+                        m_tree_generator(args.file_path)
     {
       m_model_time.first  = 0;
       m_model_time.second = 1;
@@ -74,13 +73,13 @@ namespace Simulators
                           {pos[0], pos[1], pos[2]});
 
       //Invalid
-      if (lower_val <= m_invalid || upper_val <= m_invalid)
-        return m_invalid;
+      if (lower_val <= c_invalid || upper_val <= c_invalid)
+        return c_invalid;
 
-      //Calculate linear parameters (value = m*time+b)
+      //Calculate linear parameters (value = m * time + b)
       double m = (upper_val - lower_val)/
                   (m_model_time.second - m_model_time.first);
-      double b = lower_val - m*m_model_time.first;
+      double b = lower_val - m * m_model_time.first;
 
       return m*pos[3]+b;
     }
@@ -97,7 +96,7 @@ namespace Simulators
       otree->search(search_area, items);
       
       if (items.size() == 0)
-        return m_invalid;
+        return c_invalid;
 
       //Temperature calculated using:
       //Inverse distance weighting
@@ -142,7 +141,7 @@ namespace Simulators
 
       float temp = timeInterpolation(&m_temp_model, pos);
 
-      if (temp <= m_invalid)
+      if (temp <= c_invalid)
         return m_default_temp;
 
       return temp;
@@ -156,7 +155,7 @@ namespace Simulators
 
       float sal = timeInterpolation(&m_sal_model, pos);
 
-      if (sal <= m_invalid)
+      if (sal <= c_invalid)
         return m_default_sal;
 
       return sal;

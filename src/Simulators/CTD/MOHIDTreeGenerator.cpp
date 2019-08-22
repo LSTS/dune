@@ -36,6 +36,8 @@
 #include <numeric>
 #include "MOHIDTreeGenerator.hpp"
 
+#include <iostream>
+
 using DUNE_NAMESPACES;
 using namespace Oc;
 
@@ -43,59 +45,64 @@ namespace Simulators
 {
   namespace CTD
   {
-    MOHIDTreeGenerator::MOHIDTreeGenerator(std::string file_path):
-                                            m_file(file_path),
-                                            m_invalid(pow(-10,15))
+    // Auxiliary
+    std::string
+    time2string(unsigned time)
     {
-      auto lat = m_file.getDataset<float>("Grid/Latitude");
-      auto lon = m_file.getDataset<float>("Grid/Longitude");
-
-      if (lat.dimensions != lon.dimensions)
-        throw std::runtime_error(DTR("MOHIDTreeGenerator::MOHIDTreeGenerator():" 
-                                  "lat-lon dimension mismatch."));
-      
-      m_cell_lat = grid2CellSurface(&lat.data, &lat.dimensions);
-      m_cell_lon = grid2CellSurface(&lon.data, &lon.dimensions);
-    }
-
-    std::unique_ptr<OcTree>
-    MOHIDTreeGenerator::getTree(std::string quantity, size_t time)
-    {
-      //Process time into string
       std::stringstream sin; sin.clear();
       sin << time + 1;
       std::string time_str = std::string(5-sin.str().size(), '0');
       time_str += sin.str();
-      std::cout << sin.str();
 
-      std::string height_path = "Grid/VerticalZ/Vertical_" + time_str;
+      return time_str;
+    }
+
+    MOHIDTreeGenerator::MOHIDTreeGenerator(std::string file_path):
+                                            m_file(file_path)
+    {
+      get2DCoordinates();
+    }
+
+    std::unique_ptr<OcTree>
+    MOHIDTreeGenerator::getTree(std::string quantity, unsigned time)
+    {
+      //Get path for time slice
+      std::string time_str = time2string(time);
       std::string data_path   = "Results/" + quantity + "/" + quantity + "_" + time_str;
 
-      //Get vertical height and quantity data
-      auto vert = m_file.getDataset<float>(height_path);
+      //Get data
       auto data = m_file.getDataset<float>(data_path);
-      
-      //Transform vertical grid values to cell values
-      auto cell_height = grid2CellVertical(&vert.data, &vert.dimensions);
 
-      return fillTree(&data.data, &cell_height);
+      std::vector<float> cell_depth;
+      if (is3D())
+      {
+        std::string height_path = "Grid/VerticalZ/Vertical_" + time_str;
+        cell_depth = getZCoordinates(height_path);
+
+        // Check dimensions
+        if (data.data.size() != cell_depth.size())
+          throw std::runtime_error(DTR("MOHIDTreeGenerator::fillTree(): " 
+                                    "data-vertical grid dimension mismatch."));
+        
+        return fillTree(&data.data, &cell_depth);
+      }
+      else
+      {
+        return fillTree(&data.data);
+      }
     }
 
     std::unique_ptr<OcTree>
     MOHIDTreeGenerator::fillTree(std::vector<float>* quantity, 
-                                  std::vector<float>* cell_height)
+                                  std::vector<float>* cell_depth)
     {
-      if (!quantity || !cell_height)
+      if (!quantity || !cell_depth)
         throw std::runtime_error(DTR("MOHIDTreeGenerator::fillTree(): " 
                                   "Null pointer."));
       
-      if (quantity->size() == 0 || cell_height->size() == 0)
+      if (quantity->size() == 0 || cell_depth->size() == 0)
         throw std::runtime_error(DTR("MOHIDTreeGenerator::fillTree(): " 
                                   "Empty data vector."));
-
-      if (quantity->size() != cell_height->size())
-        throw std::runtime_error(DTR("MOHIDTreeGenerator::fillTree(): " 
-                                  "data-vertical grid dimension mismatch."));
       
       //Auxiliary objects to fill otree
       std::vector<OcTree::Item> data;
@@ -105,12 +112,12 @@ namespace Simulators
       //Set data points
       for(unsigned offset = 0; offset < quantity->size(); ++offset)
       {
-        if (quantity->at(offset) > m_invalid && 
-            cell_height->at(offset) > m_invalid)
+        if (quantity->at(offset) > c_invalid && 
+            cell_depth->at(offset) > c_invalid)
         {
           item.x      = m_cell_lat[offset % m_cell_lat.size()];
           item.y      = m_cell_lon[offset % m_cell_lon.size()];
-          item.z      = cell_height->at(offset);
+          item.z      = cell_depth->at(offset);
           item.value  = quantity->at(offset);
           data.push_back(item);
 
@@ -122,7 +129,49 @@ namespace Simulators
         }
       }
 
-      //Pointer to tree
+      std::unique_ptr<OcTree> otree = std::make_unique<OcTree>(*bounds);
+      delete bounds;
+      for (unsigned i = 0; i < data.size(); ++i)
+        otree->insert(data[i]);
+
+      return otree;
+    }
+
+    std::unique_ptr<OcTree>
+    MOHIDTreeGenerator::fillTree(std::vector<float>* quantity)
+    {
+      if (!quantity)
+        throw std::runtime_error(DTR("MOHIDTreeGenerator::fillTree(): " 
+                                  "Null pointer."));
+      
+      if (quantity->size() == 0)
+        throw std::runtime_error(DTR("MOHIDTreeGenerator::fillTree(): " 
+                                  "Empty data vector."));
+      
+      //Auxiliary objects to fill otree
+      std::vector<OcTree::Item> data;
+      OcTree::Item item;
+      Bounds* bounds = 0;
+
+      //Set data points
+      for(unsigned offset = 0; offset < quantity->size(); ++offset)
+      {
+        if (quantity->at(offset) > c_invalid)
+        {
+          item.x      = m_cell_lat[offset % m_cell_lat.size()];
+          item.y      = m_cell_lon[offset % m_cell_lon.size()];
+          item.z      = 0;
+          item.value  = quantity->at(offset);
+          data.push_back(item);
+
+          //Expand bounds
+          if (!bounds)
+            bounds = new Bounds(Point(item.x, item.y, item.z));
+          else
+            bounds->cover(Point(item.x, item.y, item.z));
+        }
+      }
+
       std::unique_ptr<OcTree> otree = std::make_unique<OcTree>(*bounds);
       delete bounds;
       for (unsigned i = 0; i < data.size(); ++i)
@@ -132,25 +181,26 @@ namespace Simulators
     }
 
     std::vector<float>
-    MOHIDTreeGenerator::grid2CellSurface(std::vector<float>* data, 
+    MOHIDTreeGenerator::grid2CellSurface(std::vector<float>* data,
                                           std::vector<size_t>* dim)
-    { 
-      size_t dimentions_total = std::accumulate((*dim).begin(), (*dim).end(),
+    {
+      size_t dimentions_total = std::accumulate(dim->begin(), dim->end(),
                                                 1.0,
-                                                std::multiplies<>());
+                                                std::multiplies<size_t>());
       if (data->size() != dimentions_total)
         throw std::runtime_error(DTR("MOHIDTreeGenerator::grid2CellSurface(): "
                                   "dimention mismatch."));
       
       std::vector<float> cells;
-      for (unsigned offset = 0; offset < data->size(); ++offset)
+      // Grid x boundary
+      unsigned boundary = dim->at(1) * (dim->at(0)-1) - 1;
+      for (unsigned offset = 0; offset < boundary; ++offset)
       {
+        //Grid y boundary
         if ((offset+1) % dim->at(1) == 0)
           continue;
-        
-        if (offset >= dim->at(1) * (dim->at(0)-1))
-          break; 
 
+        //Average grid vertices
         auto val = data->at(offset);
         val += data->at(offset+1);
         val += data->at(offset + dim->at(1));
@@ -166,29 +216,66 @@ namespace Simulators
     MOHIDTreeGenerator::grid2CellVertical(std::vector<float>* data, 
                                           std::vector<size_t>* dim)
     {
-      size_t dimentions_total = std::accumulate((*dim).begin(), (*dim).end(),
+      // Check size
+      size_t dimentions_total = std::accumulate(dim->begin(), dim->end(),
                                       1.0,
-                                      std::multiplies<>());
+                                      std::multiplies<size_t>());
       if (data->size() != dimentions_total)
         throw std::runtime_error(DTR("MOHIDTreeGenerator::grid2CellVertical(): "
                                   "dimention mismatch."));
 
       std::vector<float> cells;
-      size_t size_2d = dim->at(2) * dim->at(1);
-      for (unsigned offset = 0; offset < data->size(); ++offset)
+      unsigned size_2d = dim->at(2) * dim->at(1);
+      // Grid z boundary
+      unsigned boundary = size_2d * (dim->at(0) - 1);
+      for (unsigned offset = 0; offset < boundary; ++offset)
       {
-        //Cutoff last layer
-        if (offset >= size_2d * (dim->at(0)-1))
-          break;
-
+        //Average grid vertices
         auto val = data->at(offset);
-        val += data->at(offset+size_2d);
+        val += data->at(offset + size_2d);
 
         cells.push_back(val/2);
       }
       
       return cells;
     }
+
+    void
+    MOHIDTreeGenerator::get2DCoordinates()
+    {
+      auto lat = m_file.getDataset<float>("Grid/Latitude");
+      auto lon = m_file.getDataset<float>("Grid/Longitude");
+
+      if (lat.dimensions != lon.dimensions)
+        throw std::runtime_error(DTR("MOHIDTreeGenerator::MOHIDTreeGenerator():" 
+                                  "lat-lon dimension mismatch."));
+
+      m_cell_lat = grid2CellSurface(&lat.data, &lat.dimensions);
+      m_cell_lon = grid2CellSurface(&lon.data, &lon.dimensions);
+    }
+
+    std::vector<float>
+    MOHIDTreeGenerator::getZCoordinates(std::string path)
+    {
+      // Get depth
+      auto depth = m_file.getDataset<float>(path);
+
+      // Transform vertical grid values to cell values
+      std::vector<float> cell_depth = grid2CellVertical(&depth.data, &depth.dimensions);
+
+      // Check dimensions
+      if (cell_depth.size() % m_cell_lat.size() != 0 ||
+          cell_depth.size() % m_cell_lon.size() != 0)
+        throw std::runtime_error(DTR("MOHIDTreeGenerator::MOHIDTreeGenerator():" 
+                                  "lat/lon - depth dimension mismatch."));
+
+      return cell_depth;
+    }
+
+    bool
+    MOHIDTreeGenerator::is3D()
+    {
+      return m_file.datasetExists("Grid/VerticalZ/Vertical_00001");
+    }
   }
 }
-

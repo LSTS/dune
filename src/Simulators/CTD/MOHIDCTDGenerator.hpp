@@ -75,11 +75,10 @@ namespace Simulators
       virtual float
       getSalinity(std::array<double, 4> pos);
 
+
       private:
-      //! Arguments for MIHID model generator.
+      //! Arguments for MOHID model generator.
       MOHIDArguments m_args;
-      //! Constante value for invalid comparison.
-      const float m_invalid;
       //! Tree generator for MOHID model data.
       MOHIDTreeGenerator m_tree_generator;
       //! Current loaded data times, in decimal hours.

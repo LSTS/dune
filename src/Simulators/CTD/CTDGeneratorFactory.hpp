@@ -51,6 +51,7 @@ namespace Simulators
       if (config.type == "Constant")
         return std::make_unique<CTDGenerator>(
                 config.default_temp, config.default_sal);
+      
       if (config.type == "MOHID Model Data")
       {
         MOHIDArguments mohid_args;

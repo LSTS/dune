@@ -46,6 +46,9 @@ namespace Simulators
 {
   namespace CTD
   {
+    //! Constante value for invalid comparison.
+    static const float c_invalid = pow(-10,15);
+
     class MOHIDTreeGenerator
     {
       public:
@@ -61,7 +64,12 @@ namespace Simulators
         //! MOHID data file.
         //! @return unique pointer to data tree.
         std::unique_ptr<OcTree>
-        getTree(std::string quantity, size_t time);
+        getTree(std::string quantity, unsigned time);
+
+        //! Returns 3D data flag.
+        //! @return true if data is in 3D space, false if 2D space.
+        bool
+        is3D();
 
       private:
         //! Handler of HDF5 interface.
@@ -70,18 +78,23 @@ namespace Simulators
         std::vector<float> m_cell_lat;
         //! Longitude of cells in row-major order.
         std::vector<float> m_cell_lon;
-        //! Constante value for invalid comparison.
-        const float m_invalid;
 
-        //! Fill data tree from file data.
+        //! Fill data tree from file data (3D).
         //! @param[in] data Pointer to cell data, 
         //! in row-major order.
         //! @param[in] vert Pointer to cell depth 
         //! values, in row-major order.
         //! @return Unique poitner to data tree.
         std::unique_ptr<OcTree>
-        fillTree(std::vector<float>* data, 
-                  std::vector<float>* vert);
+        fillTree(std::vector<float>* quantity, 
+                  std::vector<float>* cell_depth);
+
+        //! Fill data tree from file data (2D).
+        //! @param[in] data Pointer to cell data, 
+        //! in row-major order.
+        //! @return Unique pointer to data tree.
+        std::unique_ptr<OcTree>
+        fillTree(std::vector<float>* quantity);
 
         //! Average latitude and longitude grid
         //! values to cell values.
@@ -101,6 +114,16 @@ namespace Simulators
         std::vector<float>
         grid2CellVertical(std::vector<float>* data, 
                           std::vector<size_t>* dim);
+
+        //! Fill lat/lon cell values.
+        void
+        get2DCoordinates();
+
+        //! Get Z coordinate vector.
+        //! @param[in] path Path to depth data in hdf5 file.
+        //! @return Vector with cell center values.
+        std::vector<float>
+        getZCoordinates(std::string path);
     };
   }
 }
