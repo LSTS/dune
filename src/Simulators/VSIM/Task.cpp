@@ -90,7 +90,7 @@ namespace Simulators
         .defaultValue("1.0")
         .description("Simulation time multiplier");
 
-        param("Stream Velocity Source Entity Label", m_args.svlabel)
+        param("Entity Label - Stream Velocity Source", m_args.svlabel)
             .defaultValue("Stream Velocity Simulator")
             .description("Entity label of the stream velocity source.");
 
