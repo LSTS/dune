@@ -120,7 +120,7 @@ namespace DUNE
       // Total number of gridpoints is the product of the sizes of all
       // dimensions.
       size_t size = std::accumulate(
-          std::begin(dimensions), std::end(dimensions), 1, std::multiplies<>());
+          std::begin(dimensions), std::end(dimensions), 1, std::multiplies<size_t>());
 
       std::vector<T> data(size);
       dset.read(data);
