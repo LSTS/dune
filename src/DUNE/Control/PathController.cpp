@@ -432,10 +432,6 @@ namespace DUNE
       {
         m_ts.loiter.center = m_ts.end;
 
-        double course_err;
-        course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
-        double sign;
-
         double range = c_lkeep_distance + 1.0;
 
         // if we're already loitering
@@ -462,6 +458,10 @@ namespace DUNE
         }
         else
         {
+          double course_err = std::fabs(
+              Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
+          double sign;
+
           // if inside the circle and turned inwards
           if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
               (course_err < Math::c_half_pi))
