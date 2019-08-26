@@ -564,25 +564,7 @@ namespace DUNE
 
       if (isTrackingBottom())
       {
-        try
-        {
-          m_btrack->onEstimatedState(es);
-        }
-        catch (std::runtime_error& e)
-        {
-          // If braking then stop braking
-          if (m_braking)
-          {
-            IMC::Brake brk;
-            brk.op = IMC::Brake::OP_STOP;
-            dispatch(brk);
-
-            m_braking = false;
-          }
-
-          signalError(e.what());
-          return;
-        }
+        m_btrack->onEstimatedState(es);
       }
 
       if (m_setup)
