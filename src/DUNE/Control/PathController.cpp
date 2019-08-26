@@ -599,20 +599,6 @@ namespace DUNE
         updateEntityState();
       }
 
-      bool change_ref = false;
-      double lat = 0.0;
-      double lon = 0.0;
-
-      // Save different LLH reference.
-      if (es->lat != m_estate.lat ||
-          es->lon != m_estate.lon ||
-          es->height != m_estate.height)
-      {
-        change_ref = true;
-        lat = es->lat;
-        lon = es->lon;
-      }
-
       // Save previous EstimatedState values
       IMC::EstimatedState prev_estate = m_estate;
 
@@ -621,6 +607,10 @@ namespace DUNE
 
       if (!isActive() || m_error || !m_tracking)
         return;
+
+      bool change_ref =
+          (m_estate.lat != prev_estate.lat || m_estate.lon != prev_estate.lon ||
+           m_estate.height != prev_estate.height);
 
       // If navigation jumped, disable path monitors for an amount time
       // proportional to the size of the navigation jump (by m_jump_factor)
@@ -652,6 +642,9 @@ namespace DUNE
       // Apply new LLH reference.
       if (change_ref)
       {
+        double lat = m_estate.lat;
+        double lon = m_estate.lon;
+
         WGS84::displacement(lat, lon, 0,
                             m_pcs.start_lat, m_pcs.start_lon, 0,
                             &m_ts.start.x, &m_ts.start.y);
