@@ -318,6 +318,16 @@ namespace DUNE
       void
       updateTrackingState(void);
 
+      // Helper functions for consume(const IMC::DesiredPath*)
+      bool
+      setStartPoint(double now, const IMC::DesiredPath* dpath);
+      void
+      setEndPoint(const IMC::DesiredPath* dpath);
+      void
+      setControlLoops(const IMC::DesiredPath* dpath);
+      void
+      handleLoiter(const IMC::DesiredPath* dpath);
+
       //! Test if there has been a jump in navigation
       //! @param[in] new_state newly received EstimatedState
       //! @param[in] old_state newly received EstimatedState

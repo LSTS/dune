@@ -304,65 +304,8 @@ namespace DUNE
       }
 
       double now = Clock::get();
-      m_pcs.flags = 0;
-      m_pcs.path_ref = dpath->path_ref;
-      bool no_start = false;
-
-      if (dpath->flags & IMC::DesiredPath::FL_START)
-      {
-        m_pcs.start_lat = dpath->start_lat;
-        m_pcs.start_lon = dpath->start_lon;
-        m_pcs.start_z = dpath->start_z;
-        m_pcs.start_z_units = dpath->start_z_units;
-      }
-      else if ((!m_tracking && now - m_ts.end_time > 1) ||
-               (!m_ts.nearby && !m_ts.loitering) ||
-               (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
-      {
-        m_pcs.start_lat = m_estate.lat;
-        m_pcs.start_lon = m_estate.lon;
-
-        Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
-
-        m_pcs.start_z = m_estate.height - m_estate.z;
-        m_pcs.start_z_units = dpath->start_z_units;
-
-        no_start = true;
-      }
-      else
-      {
-        m_pcs.start_lat = m_pcs.end_lat;
-        m_pcs.start_lon = m_pcs.end_lon;
-        m_pcs.start_z = m_pcs.end_z;
-        m_pcs.start_z_units = m_pcs.end_z_units;
-      }
-
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.start_lat, m_pcs.start_lon, 0,
-                          &m_ts.start.x, &m_ts.start.y);
-      m_ts.start.z = m_pcs.start_z;
-
-      if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 && dpath->lradius > 0)
-      {
-        m_pcs.end_lat = m_estate.lat;
-        m_pcs.end_lon = m_estate.lon;
-
-        Coordinates::toWGS84(m_estate, m_pcs.end_lat, m_pcs.end_lon);
-        m_pcs.end_z = dpath->end_z;
-        m_pcs.end_z_units = dpath->end_z_units;
-      }
-      else
-      {
-        m_pcs.end_lat = dpath->end_lat;
-        m_pcs.end_lon = dpath->end_lon;
-        m_pcs.end_z = dpath->end_z;
-        m_pcs.end_z_units = dpath->end_z_units;
-      }
-
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.end_lat, m_pcs.end_lon, 0,
-                          &m_ts.end.x, &m_ts.end.y);
-      m_ts.end.z = m_pcs.end_z;
+      bool no_start = setStartPoint(now, dpath);
+      setEndPoint(dpath);
 
       Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
                                       &m_ts.track_bearing, &m_ts.track_length);
@@ -372,7 +315,6 @@ namespace DUNE
         signalError(DTR("track length is too long"));
         return;
       }
-
 
       // Re-initializing tracking state values
       m_ts.start_time = now;
@@ -386,106 +328,8 @@ namespace DUNE
       if (no_start)
         m_jump_monitors = false;
 
-      // Send altitude or depth references, unless NO_Z flag is set
-      // or controller wishes to handle depth/altitude in a specific manner
-      if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
-      {
-        m_ts.z_control = true;
-        if (dpath->end_z_units == IMC::Z_ALTITUDE || dpath->end_z_units == IMC::Z_HEIGHT)
-        {
-          disableControlLoops(IMC::CL_DEPTH);
-          enableControlLoops(IMC::CL_ALTITUDE);
-        }
-        else if (dpath->end_z_units == IMC::Z_DEPTH)
-        {
-          disableControlLoops(IMC::CL_ALTITUDE);
-          enableControlLoops(IMC::CL_DEPTH);
-        }
-
-        m_zref.value = dpath->end_z;
-        m_zref.z_units = dpath->end_z_units;
-
-        if (isTrackingBottom())
-          m_btrack->onDesiredZ(&m_zref, true);
-        else
-          dispatch(m_zref);
-      }
-      else
-      {
-        m_ts.z_control = false;
-        m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
-      }
-
-      // Send speed reference
-      m_speed.value = dpath->speed;
-      m_speed.speed_units = dpath->speed_units;
-
-      enableControlLoops(IMC::CL_SPEED);
-
-      dispatch(m_speed, Tasks::DF_LOOP_BACK);
-
-      // Loiter handling
-      m_ts.loiter.radius = dpath->lradius;
-      m_ts.loiter.clockwise = (dpath->flags & IMC::DesiredPath::FL_CCLOCKW) == 0;
-
-      if (m_ts.loiter.radius > 0)
-      {
-        m_ts.loiter.center = m_ts.end;
-
-        double range = c_lkeep_distance + 1.0;
-
-        // if we're already loitering
-        if (m_ts.loitering)
-        {
-          range = Coordinates::getRange(m_ts.end, m_ts.loiter.center);
-        }
-
-        // loiter's center has not changed much and vehicle is close to circle
-        if (range < c_lkeep_distance && m_ts.loitering &&
-            m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
-            m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
-        {
-          inf(DTR("keep loitering"));
-        }
-        // avoid singularities (very close to loiter center)
-        else if (m_ts.track_length < c_ldistance)
-        {
-          Coordinates::setBearingAndRange(m_ts.loiter.center, m_estate.psi,
-                                          m_ts.loiter.radius, m_ts.end);
-
-          m_ts.loitering = false;
-          m_ts.nearby = false;
-        }
-        else
-        {
-          double course_err = std::fabs(
-              Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
-          double sign;
-
-          // if inside the circle and turned inwards
-          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
-              (course_err < Math::c_half_pi))
-            sign = m_ts.loiter.clockwise ? 1.0 : -1.0;
-          else
-            sign = m_ts.loiter.clockwise ? -1.0 : 1.0;
-
-          Coordinates::setBearingAndRange(m_ts.loiter.center,
-                                          m_ts.track_bearing + sign * Math::c_half_pi,
-                                          m_ts.loiter.radius,
-                                          m_ts.end);
-
-          m_ts.loitering = false;
-          m_ts.nearby = false;
-        }
-
-        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                        &m_ts.track_bearing, &m_ts.track_length);
-      }
-      else
-      {
-        m_ts.loitering = false;
-        m_ts.nearby = false;
-      }
+      setControlLoops(dpath);
+      handleLoiter(dpath);
 
       updateTrackingState();
       reportPathControlState(true);
@@ -526,6 +370,188 @@ namespace DUNE
 
       // Call path startup handler.
       onPathStartup(m_estate, m_ts);
+    }
+
+    bool
+    PathController::setStartPoint(double now, const IMC::DesiredPath* dpath)
+    {
+      m_pcs.flags = 0;
+      m_pcs.path_ref = dpath->path_ref;
+
+      if (dpath->flags & IMC::DesiredPath::FL_START)
+      {
+        m_pcs.start_lat = dpath->start_lat;
+        m_pcs.start_lon = dpath->start_lon;
+        m_pcs.start_z = dpath->start_z;
+        m_pcs.start_z_units = dpath->start_z_units;
+
+        return false;
+      }
+
+      if ((!m_tracking && now - m_ts.end_time > 1) ||
+          (!m_ts.nearby && !m_ts.loitering) ||
+          (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
+      {
+        m_pcs.start_lat = m_estate.lat;
+        m_pcs.start_lon = m_estate.lon;
+
+        Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
+
+        m_pcs.start_z = m_estate.height - m_estate.z;
+        m_pcs.start_z_units = dpath->start_z_units;
+
+        return true;
+      }
+
+      m_pcs.start_lat = m_pcs.end_lat;
+      m_pcs.start_lon = m_pcs.end_lon;
+      m_pcs.start_z = m_pcs.end_z;
+      m_pcs.start_z_units = m_pcs.end_z_units;
+
+      return false;
+    }
+
+    void
+    PathController::setEndPoint(const IMC::DesiredPath* dpath)
+    {
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                          m_pcs.start_lat, m_pcs.start_lon, 0,
+                          &m_ts.start.x, &m_ts.start.y);
+      m_ts.start.z = m_pcs.start_z;
+
+      if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
+          dpath->lradius > 0)
+      {
+        m_pcs.end_lat = m_estate.lat;
+        m_pcs.end_lon = m_estate.lon;
+
+        Coordinates::toWGS84(m_estate, m_pcs.end_lat, m_pcs.end_lon);
+        m_pcs.end_z = dpath->end_z;
+        m_pcs.end_z_units = dpath->end_z_units;
+      }
+      else
+      {
+        m_pcs.end_lat = dpath->end_lat;
+        m_pcs.end_lon = dpath->end_lon;
+        m_pcs.end_z = dpath->end_z;
+        m_pcs.end_z_units = dpath->end_z_units;
+      }
+
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                          m_pcs.end_lat, m_pcs.end_lon, 0,
+                          &m_ts.end.x, &m_ts.end.y);
+      m_ts.end.z = m_pcs.end_z;
+    }
+
+    void
+    PathController::setControlLoops(const IMC::DesiredPath* dpath)
+    {
+      // Send altitude or depth references, unless NO_Z flag is set
+      // or controller wishes to handle depth/altitude in a specific manner
+      if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
+      {
+        m_ts.z_control = true;
+        if (dpath->end_z_units == IMC::Z_ALTITUDE ||
+            dpath->end_z_units == IMC::Z_HEIGHT)
+        {
+          disableControlLoops(IMC::CL_DEPTH);
+          enableControlLoops(IMC::CL_ALTITUDE);
+        }
+        else if (dpath->end_z_units == IMC::Z_DEPTH)
+        {
+          disableControlLoops(IMC::CL_ALTITUDE);
+          enableControlLoops(IMC::CL_DEPTH);
+        }
+
+        m_zref.value = dpath->end_z;
+        m_zref.z_units = dpath->end_z_units;
+
+        if (isTrackingBottom())
+          m_btrack->onDesiredZ(&m_zref, true);
+        else
+          dispatch(m_zref);
+      }
+      else
+      {
+        m_ts.z_control = false;
+        m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
+      }
+
+      // Send speed reference
+      m_speed.value = dpath->speed;
+      m_speed.speed_units = dpath->speed_units;
+
+      enableControlLoops(IMC::CL_SPEED);
+
+      dispatch(m_speed, Tasks::DF_LOOP_BACK);
+    }
+
+    void
+    PathController::handleLoiter(const IMC::DesiredPath* dpath)
+    {
+      m_ts.loiter.radius = dpath->lradius;
+      m_ts.loiter.clockwise =
+          (dpath->flags & IMC::DesiredPath::FL_CCLOCKW) == 0;
+
+      if (m_ts.loiter.radius > 0)
+      {
+        m_ts.loiter.center = m_ts.end;
+
+        double range = c_lkeep_distance + 1.0;
+
+        // if we're already loitering
+        if (m_ts.loitering)
+        {
+          range = Coordinates::getRange(m_ts.end, m_ts.loiter.center);
+        }
+
+        // loiter's center has not changed much and vehicle is close to circle
+        if (range < c_lkeep_distance && m_ts.loitering &&
+            m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
+            m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
+        {
+          inf(DTR("keep loitering"));
+        }
+        // avoid singularities (very close to loiter center)
+        else if (m_ts.track_length < c_ldistance)
+        {
+          Coordinates::setBearingAndRange(
+              m_ts.loiter.center, m_estate.psi, m_ts.loiter.radius, m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
+        }
+        else
+        {
+          double course_err = std::fabs(
+              Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
+          double sign;
+
+          // if inside the circle and turned inwards
+          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
+              (course_err < Math::c_half_pi))
+            sign = m_ts.loiter.clockwise ? 1.0 : -1.0;
+          else
+            sign = m_ts.loiter.clockwise ? -1.0 : 1.0;
+
+          Coordinates::setBearingAndRange(
+              m_ts.loiter.center,
+              m_ts.track_bearing + sign * Math::c_half_pi,
+              m_ts.loiter.radius,
+              m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
+        }
+
+        Coordinates::getBearingAndRange(
+            m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+      }
+      else
+      {
+        m_ts.loitering = false;
+        m_ts.nearby = false;
+      }
     }
 
     void
