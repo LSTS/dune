@@ -678,6 +678,20 @@ namespace DUNE
       else
         loiter(*es, m_ts);
 
+      handleMonitors();
+
+      if (!m_ts.loitering && m_ts.nearby && m_ts.loiter.radius > 0)
+      {
+        m_ts.end = m_ts.loiter.center;
+        m_ts.loitering = true;
+        m_ts.nearby = false;
+        inf(DTR("now loitering"));
+      }
+    }
+
+    void
+    PathController::handleMonitors(void)
+    {
       // If we're braking or there has been a jump in the navigation
       // filter then do not check for errors in monitoring
       if ((m_braking && !m_brake_timer.overflow()) || m_jump_monitors)
@@ -713,14 +727,6 @@ namespace DUNE
 
         if (m_ctm.enabled)
           monitorCrossTrackError();
-      }
-
-      if (!m_ts.loitering && m_ts.nearby && m_ts.loiter.radius > 0)
-      {
-        m_ts.end = m_ts.loiter.center;
-        m_ts.loitering = true;
-        m_ts.nearby = false;
-        inf(DTR("now loitering"));
       }
     }
 

@@ -328,6 +328,10 @@ namespace DUNE
       void
       handleLoiter(const IMC::DesiredPath* dpath);
 
+      // Helper function for consume(const IMC::EstimatedState*)
+      void
+      handleMonitors(void);
+
       //! Test if there has been a jump in navigation
       //! @param[in] new_state newly received EstimatedState
       //! @param[in] old_state newly received EstimatedState
