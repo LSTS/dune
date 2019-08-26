@@ -327,7 +327,7 @@ namespace DUNE
       bool
       navigationJumped(const IMC::EstimatedState* new_state,
                        const IMC::EstimatedState* old_state,
-                       float &distance, bool change_ref);
+                       float& distance, bool change_ref);
 
       //! Monitor along track error and update variables
       void

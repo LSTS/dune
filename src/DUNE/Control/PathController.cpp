@@ -777,7 +777,7 @@ namespace DUNE
     bool
     PathController::navigationJumped(const IMC::EstimatedState* new_state,
                                      const IMC::EstimatedState* old_state,
-                                     float &distance, bool change_ref)
+                                     float& distance, bool change_ref)
     {
       if (change_ref)
       {
