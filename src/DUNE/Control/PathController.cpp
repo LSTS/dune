@@ -441,8 +441,7 @@ namespace DUNE
         // if we're already loitering
         if (m_ts.loitering)
         {
-          double dummy;
-          Coordinates::getBearingAndRange(m_ts.end, m_ts.loiter.center, &dummy, &range);
+          range = Coordinates::getRange(m_ts.end, m_ts.loiter.center);
         }
 
         // loiter's center has not changed much and vehicle is close to circle
