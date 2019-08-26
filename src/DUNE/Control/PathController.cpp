@@ -189,8 +189,8 @@ namespace DUNE
 
       param("Maximum Track Length", m_max_track_length)
       .defaultValue("25000")
-	  .units(Units::Meter)
-	  .description("Maximum adimissible track length");
+      .units(Units::Meter)
+      .description("Maximum adimissible track length");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
@@ -369,8 +369,8 @@ namespace DUNE
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
-    	  signalError(DTR("track length is too long"));
-    	  return;
+        signalError(DTR("track length is too long"));
+        return;
       }
 
 
