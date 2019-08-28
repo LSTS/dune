@@ -34,9 +34,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers.
-#include "QuadTree.hpp"
-
 namespace Simulators
 {
   //! This task simulates signals for the bottom and forward looking echo sounders
@@ -48,6 +45,8 @@ namespace Simulators
     using DUNE_NAMESPACES;
     using std::sin;
     using std::cos;
+    // QuadTree specific namespace
+    using namespace Quad;
 
     //! Number of points in the forward direction for bottom intersection
     static const unsigned c_forward_points = 10;

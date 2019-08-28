@@ -44,5 +44,7 @@ namespace DUNE
 #include <DUNE/Algorithms/MD5.hpp>
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Algorithms/UNESCO1983.hpp>
+#include <DUNE/Algorithms/QuadTree/QuadTree.hpp>
+#include <DUNE/Algorithms/OcTree/OcTree.hpp>
 
 #endif
