@@ -32,7 +32,6 @@
 
 // ISO C++ 98 headers.
 #include <string>
-#include <map>
 
 // DUNE headers.
 #include <DUNE/Coordinates.hpp>
