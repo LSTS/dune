@@ -300,8 +300,8 @@ namespace DUNE
         return;
       }
 
-      double now = Clock::get();
-      bool no_start = setStartPoint(now, dpath);
+      const double now = Clock::get();
+      const bool no_start = setStartPoint(now, dpath);
       setEndPoint(dpath);
 
       Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
@@ -494,13 +494,9 @@ namespace DUNE
       {
         m_ts.loiter.center = m_ts.end;
 
-        double range = c_lkeep_distance + 1.0;
-
-        // if we're already loitering
-        if (m_ts.loitering)
-        {
-          range = Coordinates::getRange(m_ts.end, m_ts.loiter.center);
-        }
+        const double range =
+            m_ts.loitering ? Coordinates::getRange(m_ts.end, m_ts.loiter.center)
+                           : c_lkeep_distance + 1.0;
 
         // loiter's center has not changed much and vehicle is close to circle
         if (range < c_lkeep_distance && m_ts.loitering &&
@@ -520,8 +516,9 @@ namespace DUNE
         }
         else
         {
-          double course_err = std::fabs(
+          const double course_err = std::fabs(
               Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
+
           double sign;
 
           // if inside the circle and turned inwards
@@ -605,7 +602,7 @@ namespace DUNE
       if (!isActive() || m_error || !m_tracking)
         return;
 
-      bool change_ref =
+      const bool change_ref =
           (m_estate.lat != prev_estate.lat || m_estate.lon != prev_estate.lon ||
            m_estate.height != prev_estate.height);
 
@@ -620,7 +617,7 @@ namespace DUNE
           m_jump_monitors = true;
 
           // Limit the distance
-          float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
+          const float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
           m_jump_timer.setTop(top);
 
           debug("disabling monitors, navigation jumped %.1f meters", dist);
@@ -639,8 +636,8 @@ namespace DUNE
       // Apply new LLH reference.
       if (change_ref)
       {
-        double lat = m_estate.lat;
-        double lon = m_estate.lon;
+        const double lat = m_estate.lat;
+        const double lon = m_estate.lon;
 
         WGS84::displacement(lat, lon, 0,
                             m_pcs.start_lat, m_pcs.start_lon, 0,
@@ -650,7 +647,7 @@ namespace DUNE
                             &m_ts.end.x, &m_ts.end.y);
       }
 
-      double now = Clock::get();
+      const double now = Clock::get();
 
       if (now < m_ts.now + m_cperiod)
         return;
@@ -664,7 +661,7 @@ namespace DUNE
         return;
       }
 
-      bool prev_nearby = m_ts.nearby;
+      const bool prev_nearby = m_ts.nearby;
 
       updateTrackingState();
 
@@ -744,7 +741,7 @@ namespace DUNE
 
         m_ts.eta = getEta(m_ts);
 
-        bool was_nearby = m_ts.nearby;
+        const bool was_nearby = m_ts.nearby;
 
         if (!m_ts.nearby && m_ts.eta <= 0)
         {
@@ -764,8 +761,9 @@ namespace DUNE
         if (m_ts.loiter.clockwise)
           m_ts.track_pos.y = -m_ts.track_pos.y;
 
-        double ang_increment = (m_ts.loiter.clockwise ?
-                                Math::c_half_pi : -Math::c_half_pi);
+        const double ang_increment =
+            m_ts.loiter.clockwise ? Math::c_half_pi : -Math::c_half_pi;
+
         m_ts.course_error = m_ts.course - m_ts.los_angle + ang_increment;
         m_ts.course_error = Angles::normalizeRadian(m_ts.course_error);
         m_ts.eta = 0;
@@ -874,7 +872,7 @@ namespace DUNE
     void
     PathController::monitorCrossTrackError(void)
     {
-      double d = std::fabs(m_ts.track_pos.y);
+      const double d = std::fabs(m_ts.track_pos.y);
 
       if (d >= m_ctm.distance_limit + m_ctm.nav_uncertainty)
       {
@@ -913,8 +911,8 @@ namespace DUNE
       if (!(cloops->mask & IMC::CL_PATH))
         return;
 
-      bool was = isActive();
-      bool will = cloops->enable == IMC::ControlLoops::CL_ENABLE;
+      const bool was = isActive();
+      const bool will = cloops->enable == IMC::ControlLoops::CL_ENABLE;
 
       if (was != will)
       {
@@ -1056,16 +1054,15 @@ namespace DUNE
     double
     PathController::getEta(const TrackingState& ts)
     {
-      double eta;
-      float errx = std::abs(ts.track_length - ts.track_pos.x);
-      float erry = std::abs(ts.track_pos.y);
-      float time_factor = getTimeFactor();
-      float speed = getSpeed();
+      const float errx = std::abs(ts.track_length - ts.track_pos.x);
+      const float erry = std::abs(ts.track_pos.y);
+      const float time_factor = getTimeFactor();
+      const float speed = getSpeed();
 
-      if (errx <= erry && erry < c_erry_factor * time_factor * speed)
-        eta = errx / speed;
-      else
-        eta = Math::norm(errx, erry) / speed;
+      const double eta =
+          errx <= erry && erry < c_erry_factor * time_factor * speed
+              ? errx / speed
+              : Math::norm(errx, erry) / speed;
 
       return std::min(65535.0, eta - time_factor);
     }
