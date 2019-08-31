@@ -252,13 +252,13 @@ namespace DUNE
       getEta(const TrackingState& ts);
 
       float
-      getSpeed(void)
+      getSpeed(void) const
       { 
         return std::max((double)m_eta_min_speed, m_ts.speed);
       }
 
       float
-      getTimeFactor(void)
+      getTimeFactor(void) const
       {
         return m_time_factor;
       }
@@ -370,7 +370,7 @@ namespace DUNE
       //! @param[out] y y coordinate relatively to path
       template <typename T>
       inline void
-      getTrackPosition(const T& coord, double* x, double* y = 0)
+      getTrackPosition(const T& coord, double* x, double* y = 0) const
       {
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
@@ -382,7 +382,7 @@ namespace DUNE
       //! Is the system performing bottom tracking ?
       //! @return true if it is bottom tracking, false otherwise.
       bool
-      isTrackingBottom(void)
+      isTrackingBottom(void) const
       {
         return m_btd.enabled && (m_btrack != NULL);
       }
