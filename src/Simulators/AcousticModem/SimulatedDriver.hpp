@@ -42,7 +42,7 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
-    //! Sound speed.
+    //! Sound speed (m/s).
     static const double c_sound_speed = 1500;
     //! Absolute maximum transmission range.
     static const double c_max_range = 3000;
@@ -189,7 +189,7 @@ namespace Simulators
       //! Timeout counter.
       Time::Counter<double> m_busy_counter;
 
-      //! Transmit message over TCP.
+      //! Transmit message over UDP.
       //! @param[in] message to transmit.
       void
       share(const IMC::Message* msg)
@@ -215,8 +215,7 @@ namespace Simulators
             if (msg->getId() == DUNE_IMC_SIMACOUSTICMESSAGE)
             {
               IMC::SimAcousticMessage* amsg = static_cast<IMC::SimAcousticMessage*>(msg);
-              if (toParse(amsg))
-                toQueue(amsg);
+              parse(amsg);
             }
             else
             {
@@ -234,16 +233,28 @@ namespace Simulators
       //! Add message to receiving queue.
       //! @param[in] amsg message to add to queue.
       void
-      toQueue(const IMC::SimAcousticMessage* amsg)
+      parse(const IMC::SimAcousticMessage* amsg)
       {
-        double d = distance(amsg);
-        if (deliverySucceeds(d, amsg->data.size()))
+        // Check destination and modem compatibility 
+        bool check;
+        // Specific destination
+        check = amsg->sys_dst == m_task->getSystemName();
+        // or Broadcast 
+        check |= ((amsg->sys_dst == "broadcast") & (amsg->sys_src != m_task->getSystemName()));
+        // and modem type
+        check &= amsg->mtype == m_args->mtype;
+        if (!check)
+          return;
+
+        // Simulate data loss
+        double dist = distance(amsg);
+        if (deliverySucceeds(dist, amsg->data.size()))
         {
           Operation* op = new Operation;
 
           op->isTx 				= false;
           op->start_time 	= amsg->getTimeStamp()
-                            + d/c_sound_speed;
+                            + dist/c_sound_speed;
           op->msg 				= *amsg;
 
           m_queue.push_back(op);
@@ -270,7 +281,7 @@ namespace Simulators
             m_queue.erase(it);
           }
           else
-          {            
+          {
             ++it;
           }
         }
@@ -352,24 +363,6 @@ namespace Simulators
           transmit(&msg);
       }
 
-      //! Check destination and modem compatibility.
-      //! @param[in] amsg message to check.
-      bool
-      toParse(const IMC::SimAcousticMessage* amsg)
-      {
-        bool check;
-
-        // Specific destination
-        check = amsg->sys_dst == m_task->getSystemName();
-        // or Broadcast 
-        check |= ((amsg->sys_dst == "broadcast") & (amsg->sys_src != m_task->getSystemName()));
-
-        // and modem type
-        check &= amsg->mtype == m_args->mtype;
-
-        return check;
-      }
-
       //! Simulate random successful delivery 
       //! based on gaussian model of distance and data size.
       //! @param[in] distance distance to source vehicle.
@@ -379,7 +372,7 @@ namespace Simulators
       {
         // Out of range
         if (distance > c_max_range)
-          return 0;
+          return false;
 
         // Gaussian profiles for distance and msg size
         float dist_prob = exp(-1 * (distance*distance)/(2 * m_args->dst_peak_width * m_args->dst_peak_width));
@@ -407,7 +400,7 @@ namespace Simulators
         Coordinates::toWGS84(m_lstate, amsg.lat, amsg.lon);
         amsg.depth    = m_lstate.z;
         amsg.mtype    = m_args->mtype;
-        amsg.txtime   = (double)msg->data.size()*8 / m_args->tx_speed;
+        amsg.txtime   = (double)msg->data.size() * 8 / m_args->tx_speed;
         amsg.sys_src  = m_task->getSystemName();
 
         // Copy UamTxFrame data
