@@ -77,7 +77,8 @@ namespace Transports
       "SENDEND",
       "SENDPBM",
       "RECVPBM",
-      "CANCELEDPBM"
+      "CANCELEDPBM",
+      "RECVSRV"
     };
 
     class Driver: public HayesModem
@@ -496,6 +497,12 @@ namespace Transports
         m_declination = value;
       }
 
+      void
+      changeMode()
+      {
+          sendAT("C",true);
+      }
+
     private:
       //! Firmware version.
       std::string m_version;
@@ -509,9 +516,13 @@ namespace Transports
       void
       sendInitialization(void)
       {
+
+          getTask()->debug("sendInitialization");
         // Get firmware version.
         sendAT("I0");
         m_version = readLine();
+
+          getTask()->debug("sendInitialization 2");
 
         // Get PHY and MAC versions.
         char phy[64] = {0};
@@ -608,9 +619,16 @@ namespace Transports
       void
       expectOK(void)
       {
+          getTask()->debug("expect ok");
+
         std::string rv = readLine();
+
+          getTask()->debug("read line");
+
         if ((rv != "OK") && (rv != "[*]OK"))
           throw UnexpectedReply("OK", rv);
+
+          getTask()->debug("recebeu ok");
       }
     };
   }
