@@ -33,7 +33,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#include "SimulatedDriver.hpp"
+#include "Driver.hpp"
 
 namespace Simulators
 {
@@ -68,7 +68,7 @@ namespace Simulators
     struct Arguments
     {
       //! Modem operation arguments.
-      SDArguments sdargs;
+      DriverArguments driver_args;
     };
 
     struct Task: public Tasks::Task
@@ -80,39 +80,43 @@ namespace Simulators
       //! Timeout counter.
       Time::Counter<double> m_timeout;
       //! Modem driver handler.
-      SimulatedDriver* m_driver;
+      Driver* m_driver;
+      //! Simulated state.
+      IMC::SimulatedState* m_sstate;
       
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_ticket(NULL)
+        m_ticket(NULL),
+        m_driver(NULL),
+        m_sstate(NULL)
       {
-        param("UDP Communications -- Multicast Address", m_args.sdargs.udp_maddr)
+        param("UDP Communications -- Multicast Address", m_args.driver_args.udp_maddr)
         .defaultValue("225.0.2.1")
         .description("UDP multicast address for communications");
 
-        param("UDP Communications -- Port", m_args.sdargs.udp_port)
+        param("UDP Communications -- Port", m_args.driver_args.udp_port)
         .defaultValue("8021")
         .description("UDP port for communications");
 
-        param("Modem Type", m_args.sdargs.mtype)
+        param("Modem Type", m_args.driver_args.modem_type)
         .description("Vehicle modem type (Ex. Evologics, Seatrac)");
 
-        param("Transmission Speed", m_args.sdargs.tx_speed)
+        param("Transmission Speed", m_args.driver_args.tx_speed)
         .description("Modem transmission speed (bps)");
 
-        param("Distance Standard Deviation", m_args.sdargs.dst_peak_width)
+        param("Distance Standard Deviation", m_args.driver_args.dst_peak_width)
         .defaultValue("750");
 
-        param("Size Standard Deviation", m_args.sdargs.dsize_peak_width)
-        .defaultValue("200");
+        param("Size Standard Deviation", m_args.driver_args.dsize_peak_width)
+        .defaultValue("800");
 
-        param("PRNG Type", m_args.sdargs.prng_type)
+        param("PRNG Type", m_args.driver_args.prng_type)
         .defaultValue(Random::Factory::c_default);
 
-        param("PRNG Seed", m_args.sdargs.prng_seed)
+        param("PRNG Seed", m_args.driver_args.prng_seed)
         .defaultValue("-1");
 
         // Register consumers.
@@ -127,7 +131,9 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
-        m_driver = new SimulatedDriver(&m_args.sdargs, this);
+        m_sstate = new IMC::SimulatedState;
+        m_driver = new Driver(&m_args.driver_args, m_sstate, this);
+        m_driver->start();
 
         //Deactivate until SimulatedState message is received
         requestDeactivation();
@@ -137,7 +143,12 @@ namespace Simulators
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_driver);
+        if (m_driver)
+        {
+          m_driver->stopAndJoin();
+          delete m_driver;
+          m_driver = NULL;
+        }
 
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
       }
@@ -195,7 +206,7 @@ namespace Simulators
         ticket.imc_sid  = msg->getSource();
         ticket.imc_eid  = msg->getSourceEntity();
         ticket.seq      = msg->seq;
-        ticket.ack      = (msg->flags & IMC::UamTxFrame::UTF_ACK) != 0;
+        ticket.ack      = (msg->flags == IMC::UamTxFrame::UTF_ACK);
 
         if (msg->sys_dst == getSystemName())
         {
@@ -209,7 +220,7 @@ namespace Simulators
           return;
         }
 
-        m_driver->transmit(msg);
+        m_driver->transmit(*msg);
 
         replaceTicket(&ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
@@ -223,17 +234,11 @@ namespace Simulators
         
         if (amsg->getDestinationEntity() != getEntityId())
           return;
-
-        if (String::startsWith(
-                        std::string(amsg->data.begin(), amsg->data.end()), 
-                        "REPLY"))
-        {
+        
+        if (amsg->flags == IMC::SimAcousticMessage::SAM_REPLY)
           rcvRxRange(amsg);
-        }
         else
-        {
           rcvRxFrame(amsg);
-        }
       }
 
       void
@@ -245,10 +250,31 @@ namespace Simulators
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (String::startsWith(msg->value, "STATUS"))
-          handleStatus(msg->value);
+        if (String::startsWith(msg->value, "DONE"))
+        {
+          if (!m_ticket)
+            return;
+
+          if (!m_ticket->ack)
+            return;
+          
+          clearTicket(IMC::UamTxStatus::UTS_DONE);
+          debug("Ticket cleared!!!!");
+        }
+        else if (String::startsWith(msg->value, "FAILED"))
+        {
+          int offset = 0;
+          std::sscanf(msg->value.c_str(), "FAILED%n", &offset);
+
+          if ((unsigned)offset == msg->value.size())
+            clearTicket(IMC::UamTxStatus::UTS_FAILED);
+          else
+            clearTicket(IMC::UamTxStatus::UTS_FAILED, msg->value.substr(offset+1));
+        }
         else
-          err(DTR("Unknown data text: %s."), msg->value.c_str());
+        {
+          err(DTR("Unknown transmission status: %s"), msg->value.c_str());
+        }
       }
 
       void
@@ -261,15 +287,9 @@ namespace Simulators
           requestActivation();
 
         // Define vehicle origin.
-        IMC::SimulatedState lstate;
-        lstate.lat    = msg->lat;
-        lstate.lon    = msg->lon;
-        lstate.height = msg->height;
-        lstate.x      = 0;
-        lstate.y      = 0;
-        lstate.z      = 0;
-
-        m_driver->setSimState(lstate);
+        m_sstate->lat    = msg->lat;
+        m_sstate->lon    = msg->lon;
+        m_sstate->height = msg->height;
       }
 
       void
@@ -278,7 +298,7 @@ namespace Simulators
         if(!isActive())
           requestActivation();
 
-        m_driver->setSimState(*msg);
+        *m_sstate = *msg;
       }
 
       //! Parse SimAcousticMessage into UamRxFrame and send.
@@ -314,39 +334,6 @@ namespace Simulators
         clearTicket(IMC::UamTxStatus::UTS_DONE);
       }
 
-      //! Handle status messages from the driver.
-      //! @param[in] str string containing status message.
-      void
-      handleStatus(const std::string& str)
-      {
-        if (String::startsWith(str, "STATUS,DONE"))
-        {
-          if (!m_ticket)
-            return;
-
-          if (m_ticket->ack)
-            return;
-          
-          clearTicket(IMC::UamTxStatus::UTS_DONE);
-        }
-        else if (String::startsWith(str, "STATUS,FAILED"))
-        {
-          int offset = 0;
-          std::sscanf(str.c_str(),
-                          "STATUS,FAILED%n",
-                          &offset);
-
-          if ((size_t)offset == str.size())
-            clearTicket(IMC::UamTxStatus::UTS_FAILED);
-          else
-            clearTicket(IMC::UamTxStatus::UTS_FAILED, str.substr(offset+1));
-        }
-        else
-        {
-          err(DTR("Unknown transmission status."));
-        }
-      }      
-
       //! Check timeout counter for overflow if there is
       //! an open transmission ticket.
       void
@@ -364,8 +351,9 @@ namespace Simulators
       {
         while (!stopping())
         {
-          m_driver->runModem();
+          //Reference: Sensors/GPS Reader.hpp
           checkTimeout();
+          // m_driver->run();
 
           waitForMessages(0.1);
         }
