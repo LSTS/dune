@@ -2229,7 +2229,8 @@ namespace Control
           }
 
           // Store mavlink distance.
-          nav_out.wp_dist = (uint16_t) wp_distance;
+          if(!m_service)
+            nav_out.wp_dist = (uint16_t) wp_distance;
 
           d_roll.value = Angles::radians(nav_out.nav_roll);
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
