@@ -63,8 +63,6 @@ namespace DUNE
       start();
 
       sendInitialization();
-
-      getTask()->debug("pummmmmm");
     }
 
     //! Query the ISU manufacturer.
@@ -179,8 +177,6 @@ namespace DUNE
       getTask()->dispatch(txt);
 
       send(cmd);
-
-        getTask()->debug("send cmd: %s", cmd.c_str());
     }
 
     void

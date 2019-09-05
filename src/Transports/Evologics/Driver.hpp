@@ -500,7 +500,8 @@ namespace Transports
       void
       changeMode()
       {
-          sendAT("C",true);
+        sendAT("C",true);
+        //expectOK();
       }
 
     private:
@@ -516,13 +517,9 @@ namespace Transports
       void
       sendInitialization(void)
       {
-
-          getTask()->debug("sendInitialization");
         // Get firmware version.
         sendAT("I0");
         m_version = readLine();
-
-          getTask()->debug("sendInitialization 2");
 
         // Get PHY and MAC versions.
         char phy[64] = {0};
@@ -598,6 +595,7 @@ namespace Transports
         {
           if (String::startsWith(str, c_async_msgs[i]))
           {
+            getTask()->debug("Dispatch: %s", str.c_str());
             dispatch(str);
             return true;
           }
@@ -619,16 +617,10 @@ namespace Transports
       void
       expectOK(void)
       {
-          getTask()->debug("expect ok");
-
         std::string rv = readLine();
-
-          getTask()->debug("read line");
 
         if ((rv != "OK") && (rv != "[*]OK"))
           throw UnexpectedReply("OK", rv);
-
-          getTask()->debug("recebeu ok");
       }
     };
   }
