@@ -1852,7 +1852,8 @@ namespace Control
           m_estate.depth = -1;
 
           // Save WGS84 height on the ground
-          m_href = m_estate.height;
+          if(m_ground)
+            m_href = m_estate.height;
         }
 
         float
