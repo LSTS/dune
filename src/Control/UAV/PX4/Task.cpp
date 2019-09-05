@@ -51,7 +51,7 @@ namespace Control
       //! From px4_custom_mode.h in PX4/Firmware git repository.
       enum PX4_Modes
       {
-        PX4_CUSTOM_MAIN_MODE_MANUAL=1,
+        PX4_CUSTOM_MAIN_MODE_MANUAL = 1,
         PX4_CUSTOM_MAIN_MODE_ALTCTL,
         PX4_CUSTOM_MAIN_MODE_POSCTL,
         PX4_CUSTOM_MAIN_MODE_AUTO,
@@ -121,6 +121,8 @@ namespace Control
         std::string basestation;
         //! Home Position Update (Moving Home)
         uint8_t home_update;
+        //! Send full plan option
+        bool full_plan;
       };
 
 
@@ -143,6 +145,10 @@ namespace Control
         int m_duration;
         //! Vehicle State is "Maneuver"
         bool m_maneuver;
+        //! Signals if a plan was started
+        bool m_start;
+        //! Signals if maneuver is a takeoff or landing
+        bool m_tkoff_land;
 
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
@@ -178,6 +184,8 @@ namespace Control
         IMC::TrueSpeed m_groundspeed;
         //! ControlLoops message
         IMC::ControlLoops m_cloops;
+        //! PlanSpecification message
+        IMC::PlanSpecification m_pspec;
 
         //! Constructor.
         //! @param[in] name task name.
@@ -189,6 +197,8 @@ namespace Control
           m_offset(false),
           m_duration(0),
           m_maneuver(false),
+          m_start(false),
+          m_tkoff_land(false),
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
           m_sysid(1),
@@ -260,7 +270,7 @@ namespace Control
           .description("Mavlink phototrigger enable/disbale.");
 
           param("GCS Heartbeat", m_args.heartbeat)
-          .defaultValue("false")
+          .defaultValue("true")
           .description("Produce GCS heartbeat (for debugging purposes).");
 
           param("Moving Home", m_args.moving_home)
@@ -275,6 +285,10 @@ namespace Control
           param("Home Position Update", m_args.home_update)
           .defaultValue("60")
 		  .description("Period of home position update (if moving home enabled), in seconds");
+
+          param("Send Full Plan to Autopilot", m_args.full_plan)
+          .defaultValue("false")
+          .description("If true the full plan will be sent to the autopilot, instead of only the next waypoint.");
 
 
           // Setup packet handlers
@@ -307,6 +321,7 @@ namespace Control
           bind<Land>(this);
           bind<VehicleState>(this);
           bind<Announce>(this);
+          bind<PlanSpecification>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -451,11 +466,17 @@ namespace Control
           if(!cloops->enable && m_mode.autonomy == IMC::AutopilotMode::AL_AUTO && !m_mission
               && !m_maneuver && std::strcmp(m_mode.mode.c_str(), "LAND"))
           {
-            inf("Setting LOITER mode.");
-            clearMission();
-            m_pcs.clear();
-            dispatch(m_pcs);
-            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+            if(std::strcmp(m_mode.mode.c_str(), "LOITER"))
+            {
+              inf("Setting LOITER mode.");
+              clearMission();
+              m_pcs.clear();
+              dispatch(m_pcs);
+              sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO,PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+              m_mission = false;
+              m_start = false;
+              m_tkoff_land = false;
+            }
           }
         }
 
@@ -467,14 +488,29 @@ namespace Control
             case IMC::PlanControl::PC_STOP:
               spew("PC_STOP");
               m_mission = false;
+              m_start = false;
+              m_tkoff_land = false;
+              if(std::strcmp(m_mode.mode.c_str(), "LOITER"))
+              {
+                clearMission();
+                sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO,PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+                inf("Setting LOITER mode.");
+              }
               break;
             case IMC::PlanControl::PC_START:
               spew("PC_START");
               m_mission = false;
+              m_start = true;
               break;
             default:
               break;
           }
+        }
+
+        void
+        consume(const IMC::PlanSpecification* msg)
+        {
+          m_pspec = *msg;
         }
 
         void
@@ -520,6 +556,8 @@ namespace Control
             inf(DTR("PX4 is in a Manual mode, saving desired path."));
             return;
           }
+
+          m_tkoff_land = true;
 
           // Setting Desired Airspeed
           sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, 0, tkoff->speed, 0, 0, 0, 0, 0);
@@ -583,6 +621,10 @@ namespace Control
             return;
           }
 
+          // Clear previous mission
+          clearMission();
+          m_tkoff_land = true;
+
           // Check if it has order to send to PX4 LAND command
           if(!(m_dpath.flags & IMC::DesiredPath::FL_LAND))
           {
@@ -621,6 +663,8 @@ namespace Control
            // Set AUTO mode and LAND submode
            sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LAND);
            inf("Setting LAND mode.");
+
+           m_tkoff_land = false;
         }
 
         //! Message for AUTO(MISSION) control (using PX4's controllers)
@@ -676,30 +720,121 @@ namespace Control
             // Setting Desired Airspeed
             sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, 0, path->speed, 0, 0, 0, 0, 0);
 
-            // Send Mission Count
-            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 1);
-            n = mavlink_msg_to_send_buffer(buf, &msg);
-            sendData(buf, n);
+            if(!m_args.full_plan || m_tkoff_land)
+            {
+              // Send Mission Count
+              mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 1);
+              n = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf, n);
 
-            // Send Mission Item
-            mavlink_msg_mission_item_pack(255, 0, &msg,
-                                          m_sysid, //! target_system System ID
-                                          0, //! target_component Component ID
-                                          0, //! seq Sequence
-                                          altitude ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                          command, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                          1, //! current false:0, true:1, guided mode:2
-                                          1, //! autocontinue to next wp
-                                          m_duration, //! Used only in MAV_CMD_NAV_LOITER_TIME
-                                          0, //! Not used
-                                          param_radius, //! If <0, then CCW loiter
-                                          0, //! Not used
-                                          (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
-                                          (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                          altitude ? path->end_z : path->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
+              // Send Mission Item
+              mavlink_msg_mission_item_pack(255, 0, &msg,
+                                            m_sysid, //! target_system System ID
+                                            0, //! target_component Component ID
+                                            0, //! seq Sequence
+                                            altitude ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                            command, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                            1, //! current false:0, true:1, guided mode:2
+                                            1, //! autocontinue to next wp
+                                            m_duration, //! Used only in MAV_CMD_NAV_LOITER_TIME
+                                            0, //! Not used
+                                            param_radius, //! If <0, then CCW loiter
+                                            0, //! Not used
+                                            (float) Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+                                            (float) Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+                                            altitude ? path->end_z : path->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
 
-            n = mavlink_msg_to_send_buffer(buf, &msg);
-            sendData(buf, n);
+               n = mavlink_msg_to_send_buffer(buf, &msg);
+               sendData(buf, n);
+            }
+            else if(m_start) // Send Full Plan to Autopilot
+            {
+              // Clear previous mission
+              //clearMission();
+              m_start = false;
+
+              // Send Mission Count
+              mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, (uint16_t)m_pspec.maneuvers.size());
+              n = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf, n);
+
+              // Retrieve and send mission items
+              std::vector<IMC::PlanManeuver*>::const_iterator itr;
+              unsigned i=0;
+              for (itr = m_pspec.maneuvers.begin(); itr != m_pspec.maneuvers.end(); itr++, i++)
+              {
+                switch ((*itr)->data.get()->getId())
+                {
+                  case DUNE_IMC_GOTO:
+                  {
+                    debug("GOTO");
+                    const IMC::Goto *man_goto = static_cast<const IMC::Goto *>((*itr)->data.get());
+
+                    // Send Mission Item
+                    mavlink_msg_mission_item_pack(255, 0, &msg,
+                                                  m_sysid, //! target_system System ID
+                                                  0, //! target_component Component ID
+                                                  i, //! seq Sequence
+                                                  (man_goto->z_units == IMC::Z_ALTITUDE) ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                                  MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                                  0, //! current false:0, true:1, guided mode:2
+                                                  1, //! autocontinue to next wp
+                                                  0, //! Used only in MAV_CMD_NAV_LOITER_TIME
+                                                  0, //! Not used
+                                                  (m_vtol_state == MAV_VTOL_STATE_FW) ? param_radius : 0, //! If <0, then CCW loiter
+                                                  0, //! Not used
+                                                  (float) Angles::degrees(man_goto->lat), //! x PARAM5 / local: x position, global: latitude
+                                                  (float) Angles::degrees(man_goto->lon), //! y PARAM6 / y position: global: longitude
+                                                  (man_goto->z_units == IMC::Z_ALTITUDE) ? man_goto->z : man_goto->z - m_hae_offset);//! z PARAM7 / z position: global: altitude
+
+                    n = mavlink_msg_to_send_buffer(buf, &msg);
+                    sendData(buf, n);
+
+                    //delete man_goto;
+                    break;
+                  }
+                  case DUNE_IMC_LOITER:
+                  {
+                    debug("LOITER");
+                    const IMC::Loiter *man_loiter = static_cast<const IMC::Loiter *>((*itr)->data.get());
+
+                    // Send Mission Item
+                    mavlink_msg_mission_item_pack(255, 0, &msg,
+                                                  m_sysid, //! target_system System ID
+                                                  0, //! target_component Component ID
+                                                  i, //! seq Sequence
+                                                  (man_loiter->z_units == IMC::Z_ALTITUDE) ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                                  m_duration ?  MAV_CMD_NAV_LOITER_TIME : MAV_CMD_NAV_LOITER_UNLIM, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                                  0, //! current false:0, true:1, guided mode:2
+                                                  1, //! autocontinue to next wp
+                                                  m_duration ? man_loiter->duration : 0, //! Used only in MAV_CMD_NAV_LOITER_TIME
+                                                  0, //! Not used
+                                                  path->flags & DesiredPath::FL_CCLOCKW ? (-1 * man_loiter->radius) : (man_loiter->radius), //! If <0, then CCW loiter
+                                                  0, //! Not used
+                                                  (float) Angles::degrees(man_loiter->lat), //! x PARAM5 / local: x position, global: latitude
+                                                  (float) Angles::degrees(man_loiter->lon), //! y PARAM6 / y position: global: longitude
+                                                  (man_loiter->z_units == IMC::Z_ALTITUDE) ? man_loiter->z : man_loiter->z - m_hae_offset);//! z PARAM7 / z position: global: altitude
+
+                    n = mavlink_msg_to_send_buffer(buf, &msg);
+                    sendData(buf, n);
+
+                    //delete man_loiter;
+                    break;
+                  }
+                  default:
+                    err("Full Plan option only has support for GoTo and Loiter maneuvers currently.");
+                    sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
+                    inf("Setting LOITER mode.");
+                    //m_tkoff_land = false;
+                    return;
+                    //break;
+                }
+              }
+
+              inf("Full plan loaded to autopilot!");
+              //TODO: Check if plan is cyclic (add support for plan transitions)
+              //TODO: Add support for other maneuvers: Takeoff, Land, Rows, ...
+            }
 
             // Set AUTO mode and MISSION submode
             if(std::strcmp(m_mode.mode.c_str(), "MISSION"))
@@ -1360,6 +1495,7 @@ namespace Control
             sendCommandPacket(MAV_CMD_DO_SET_MODE, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, PX4_CUSTOM_MAIN_MODE_AUTO, PX4_CUSTOM_SUB_MODE_AUTO_LOITER);
             clearMission();
             m_mission = false;
+            m_start = false;
             debug("Timed loiter ended.");
           }
         }
@@ -1405,7 +1541,7 @@ namespace Control
 
             trace("FL_NEAR!");
             m_pcs.flags |= PathControlState::FL_NEAR;
-            m_mission = 0;
+            m_mission = false;
           }
 
           if (m_last_wp && since_last_wp > 1.5)
