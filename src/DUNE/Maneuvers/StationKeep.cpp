@@ -86,13 +86,7 @@ namespace DUNE
       double y;
       WGS84::displacement(lat, lon, 0, m_lat, m_lon, 0, &x, &y);
 
-      // dummy variable
-      double bearing;
-      double range;
-
-      toPolar(x, y, &bearing, &range);
-
-      return range;
+      return Math::norm(x, y);
     }
 
     void
