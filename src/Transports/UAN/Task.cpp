@@ -808,6 +808,16 @@ namespace Transports
           m->setDestination(imc_dst);
           m->setTimeStamp(msg->getTimeStamp());
           m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
+
+          // mark the message's origin as acoustic if it is an acoustic command
+          if (m->getId() == IMC::TextMessage::getIdStatic())
+          {
+        	IMC::TextMessage* txtmsg = static_cast<IMC::TextMessage*>(m);
+        	std::stringstream ss;
+        	ss << "acoustic/" << msg->sys_src;
+        	txtmsg->origin = ss.str();
+          }
+
           dispatch(m, DF_KEEP_TIME | DF_LOOP_BACK);
           debug("Acoustic message successfully parsed as '%s'.", m->getName());
         }
