@@ -108,6 +108,8 @@ namespace Transports
       unsigned balance_per;
     };
 
+    static const std::string c_balance_request_param = "Request Balance";
+
     struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
@@ -179,13 +181,15 @@ namespace Transports
         .defaultValue("123")
         .description("USSD code");
 
-        param("Enable Balance Request", m_args.request_balance)
-        .defaultValue("false")
+        param("Request Balance", m_args.request_balance)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("true")
         .description("Enable Balance Request");
 
         param("Balance Periodicity", m_args.balance_per)
-                .defaultValue("60")
-                .description("Balance Periodicity");
+        .defaultValue("60")
+        .description("Balance Periodicity");
 
         bind<IMC::SmsRequest>(this);
         bind<IMC::IoEvent>(this);
@@ -233,13 +237,6 @@ namespace Transports
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_IDLE).c_str());
-          if (m_args.request_balance) {
-              if (m_driver->getBalance(m_args.ussd_code, m_balance)) {
-                  m_success_balance = true;
-                  m_balance_timer.reset();
-                  setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-                 }
-             }
       }
 
       void
@@ -389,6 +386,25 @@ namespace Transports
         }
       }
 
+      void checkBalance(void)
+      {
+        if(m_args.request_balance)
+        {
+          if(m_driver->getBalance(m_args.ussd_code, m_balance))
+            setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+
+          m_args.request_balance = false;
+
+          IMC::SetEntityParameters msg;
+          IMC::EntityParameter balance_param;
+          balance_param.name = c_balance_request_param;
+          balance_param.value = "false";
+          msg.params.push_back(balance_param);
+          msg.name = getEntityLabel();
+          dispatch(msg, DF_LOOP_BACK);
+        }
+      }
+
       void
       onMain(void)
       {
@@ -398,24 +414,14 @@ namespace Transports
           pollStatus();
           processQueue();
 
-          if(m_args.request_balance) {
-            if (m_balance_timer.overflow() || (!m_success_balance && m_rssi > 0)){
-                if(m_driver->getBalance(m_args.ussd_code, m_balance)) {
-                    m_success_balance = true;
-                    m_balance_timer.reset();
-                    setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-                }
-                else {
-                    m_success_balance = false;
-                }
-            }
-          }
+          checkBalance();
+
         }
       }
 
       std::string
-      getMessage(Status::Code code){
-
+      getMessage(Status::Code code)
+      {
         std::stringstream ss;
         ss << getString(code) << m_balance;
 
