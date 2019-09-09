@@ -142,11 +142,11 @@ namespace DUNE
       }
 
       //! Request entity activation
-      void
+      bool
       requestActivation(void);
 
       //! Request entity deactivation
-      void
+      bool
       requestDeactivation(void);
 
       //! Mark the activation as unsuccessful.
