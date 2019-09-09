@@ -330,8 +330,14 @@ namespace Autonomy
         }
         else if (String::startsWith(origin, "acoustic/"))
         {
+          if (origin.length() < 10)
+          {
+          	war("Bad acoustic origin: %s", origin.c_str());
+          	return;
+          }
           req.comm_mean = TransmissionRequest::CMEAN_ACOUSTIC;
           req.destination = origin.substr(9);
+          dispatch(req);
         }
         else
           war("Not replying as origin is not addressable: '%s'.",
