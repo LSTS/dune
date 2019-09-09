@@ -126,6 +126,8 @@ namespace DUNE
       double m_radius;
       //! Current state of the state machine
       StationState m_sks;
+      //! Time of last DesiredPath dispatch.
+      double m_last_dpath_dispatch;
     };
   }
 }
