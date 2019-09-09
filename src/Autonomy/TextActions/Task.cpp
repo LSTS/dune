@@ -328,6 +328,11 @@ namespace Autonomy
           inf("Replying via Iridium: '%s'", req.txt_data.c_str());
           dispatch(req);
         }
+        else if (String::startsWith(origin, "acoustic/"))
+        {
+          req.comm_mean = TransmissionRequest::CMEAN_ACOUSTIC;
+          req.destination = origin.substr(9);
+        }
         else
           war("Not replying as origin is not addressable: '%s'.",
               origin.c_str());
