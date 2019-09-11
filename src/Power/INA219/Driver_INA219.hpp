@@ -45,7 +45,7 @@ namespace Power
 
     class DriverINA219
     {
-      public:
+      private:
       typedef struct
       {
         std::string elabel;
@@ -53,13 +53,20 @@ namespace Power
         float shunt_resistance;
       } INA_DEVICE_t;
 
-      typedef enum
-      {
-        INA_STATUS_SUCCESS = 0,
-        INA_STATUS_ERROR = 1
-      } INA_STATUS_e;
 
-      typedef enum uint8_t
+      // Parent task.
+      DUNE::Tasks::Periodic* m_task;
+      // I2C Port Device
+      DUNE::Hardware::I2C* m_i2c;
+      // Device information
+      INA_DEVICE_t m_device;
+
+      // Constant value to calibrate the device
+      static constexpr float c_cal_value = 0.04096f ;
+
+      public:
+
+      typedef enum
       {
         INA_REG_CONFIG          = 0x00,
         INA_REG_SHUNT           = 0x01,
@@ -68,6 +75,12 @@ namespace Power
         INA_REG_CURRENT         = 0x04,
         INA_REG_CALIBRATION     = 0x05
       } INA_REG_e;
+
+      typedef enum
+      {
+        INA_STATUS_SUCCESS = 0,
+        INA_STATUS_ERROR = 1
+      } INA_STATUS_e;
 
       /**
        * @brief Construct a new DriverINA219 object. Initializes the pointers and tests the connection
@@ -83,22 +96,78 @@ namespace Power
         m_task(task),
         m_i2c(i2c)
       {
-        device.elabel = elabel;
-        device.address = address;
-        device.shunt_resistance = shunt_resistance;
+        trace("Initializing DriverINA219");
+        m_device.elabel = elabel;
+        m_device.address = address;
+        m_device.shunt_resistance = shunt_resistance;
 
         // testing connection
         std::uint8_t buffer[2] = {0};
-        m_i2c->read(device.address, buffer, 2);
+        m_i2c->read(m_device.address, buffer, 2);
       }
 
-      private:
-      // Parent task.
-      DUNE::Tasks::Periodic* m_task;
-      // I2C Port Device
-      DUNE::Hardware::I2C* m_i2c;
-      // Device information
-      INA_DEVICE_t device;
+      /**
+       * @brief This function allows to write a full register of the ina219.
+       * 
+       * @param reg_addr Register to write.
+       * @param data Data to write in the register.
+       * 
+       * @return INA_STATUS_SUCCESS In case the writing is a success.
+       * @return INA_STATUS_ERROR Otherwise.
+       */
+      INA_STATUS_e
+      write(INA_REG_e reg_addr, std::uint16_t data)
+      {
+        trace("DriverINA219::write executing");
+        std::uint8_t write_data[2] = {(std::uint8_t)(data>>8), (std::uint8_t)data}, recv_data[2], bytes;
+        try
+        {
+          if(m_i2c->transfer(m_device.address, reg_addr, write_data, 2, recv_data, 2, &bytes))
+            return INA_STATUS_ERROR; //If the transfer is not successfull.
+
+          if(bytes != 2)
+            return INA_STATUS_ERROR; // If the data received doesn't have the expected length.
+
+          if((write_data[0] != recv_data[0]) || (write_data[1] != recv_data[1]))
+            return INA_STATUS_ERROR; // If the read data is not equal to data intended to write.
+        }
+        catch(const std::exception& e)
+        {
+          throw RestartNeeded(("[DriverINA219::write] "+std::string(e.what())).c_str(), 10, true);
+        } 
+        return INA_STATUS_SUCCESS;
+      }
+
+      /**
+       * @brief This function allows to read data from a register of the ina219.
+       * 
+       * @param reg_addr Register to read.
+       * @param data data read from the register.
+       *
+       * @return INA_STATUS_SUCCESS In case the writing is a success.
+       * @return INA_STATUS_ERROR Otherwise.
+       */
+      INA_STATUS_e
+      read(INA_REG_e reg_addr, int* data)
+      {
+        trace("DriverINA219::read executing");
+        std::uint8_t recv_data[2], bytes;
+        try
+        {
+          if(m_i2c->transfer(m_device.address, reg_addr, NULL, 0, recv_data, 2, &bytes))
+            return INA_STATUS_ERROR; // If the transfer is not successfull.
+
+          if(bytes != 2)
+            return INA_STATUS_ERROR; // If the received bytes doesn have the expected length.
+
+          *data = (int)(recv_data[0]<<8) | recv_data[1];
+        }
+        catch(const std::exception& e)
+        {
+          throw RestartNeeded(("[DriverINA219::read] "+std::string(e.what())).c_str(), 10, true);
+        } 
+        return INA_STATUS_SUCCESS;
+      }
     };
   }
 }
