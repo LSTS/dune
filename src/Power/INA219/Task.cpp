@@ -30,6 +30,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Driver headers.
+#include "Driver_INA219.hpp"
+
 
 namespace Power
 {
@@ -41,7 +44,7 @@ namespace Power
   {
     using DUNE_NAMESPACES;
 
-    static const uint8_t c_max_devices = 3;
+    static const int c_max_devices = 3;
 
     struct Arguments
     {
@@ -63,6 +66,8 @@ namespace Power
       Hardware::I2C* m_i2c;
       // Task arguments.
       Arguments m_args;
+      // Driver INA219.
+      DriverINA219* ina219[c_max_devices];
 
       //! Constructor.
       //! @param[in] name task name.
@@ -117,6 +122,17 @@ namespace Power
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        try
+        {
+          m_i2c = new I2C(m_args.i2c_dev);
+          for(int i = 0; i < m_args.i2c_number; i++)
+            ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i]);
+        }
+        catch(const std::exception& e)
+        {
+          throw RestartNeeded(e.what(), 10, true);
+        }
       }
 
       //! Initialize resources.
@@ -135,14 +151,6 @@ namespace Power
       void
       onMain(void)
       {
-        inf("I2C - Device: %s", m_args.i2c_dev.c_str());
-        inf("Number of Devices: %u", m_args.i2c_number);
-        inf("Device 1 - Entity Label: %s", m_args.i2c_elabels[0].c_str());
-        inf("Device 1 - I2C Address: %u", m_args.i2c_address[0]);
-        inf("Device 1 - Shunt Resistance: %f", m_args.i2c_shunt_resistance[0]);
-        inf("Device 2 - Entity Label: %s", m_args.i2c_elabels[1].c_str());
-        inf("Device 2 - I2C Address: %u", m_args.i2c_address[1]);
-        inf("Device 2 - Shunt Resistance: %f", m_args.i2c_shunt_resistance[1]);
         while (!stopping())
         {
           waitForMessages(1.0);
