@@ -125,7 +125,7 @@ namespace Power
         }
         catch(const std::exception& e)
         {
-          (void)e;
+          debug("%s",e.what());
         }
       }
 

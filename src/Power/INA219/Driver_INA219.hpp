@@ -96,7 +96,7 @@ namespace Power
         m_task(task),
         m_i2c(i2c)
       {
-        trace("Initializing DriverINA219");
+        m_task->trace("Initializing DriverINA219");
         m_device.elabel = elabel;
         m_device.address = address;
         m_device.shunt_resistance = shunt_resistance;
@@ -118,7 +118,7 @@ namespace Power
       INA_STATUS_e
       write(INA_REG_e reg_addr, std::uint16_t data)
       {
-        trace("DriverINA219::write executing");
+        m_task->trace("DriverINA219::write executing");
         std::uint8_t write_data[2] = {(std::uint8_t)(data>>8), (std::uint8_t)data}, recv_data[2], bytes;
         try
         {
@@ -150,7 +150,7 @@ namespace Power
       INA_STATUS_e
       read(INA_REG_e reg_addr, int* data)
       {
-        trace("DriverINA219::read executing");
+        m_task->trace("DriverINA219::read executing");
         std::uint8_t recv_data[2], bytes;
         try
         {
