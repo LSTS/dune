@@ -148,6 +148,9 @@ namespace Power
       INA_STATUS_e
       config(bool bus_32V, INA_CONFIG_SHUNT_e shunt_mode, INA_CONFIG_ADC_e badc_mode, INA_CONFIG_ADC_e sadc_mode, INA_CONFIG_MODE_e mode);
 
+      INA_STATUS_e
+      calibrate(unsigned max_current);
+
 
       private:
       INA_STATUS_e

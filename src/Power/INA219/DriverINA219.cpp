@@ -148,3 +148,19 @@ DriverINA219::config(bool bus_32V, INA_CONFIG_SHUNT_e shunt_mode, INA_CONFIG_ADC
 
   return INA_STATUS_SUCCESS;
 }
+
+DriverINA219::INA_STATUS_e
+DriverINA219::calibrate(unsigned max_current)
+{
+  float current_lsb = (float)(max_current) / 32768;
+  unsigned cal = c_cal_value / (current_lsb * m_device.shunt_resistance);
+
+  // Write the calibration value
+  if(write(INA_REG_CALIBRATION, cal) == INA_STATUS_ERROR)
+    return INA_STATUS_ERROR;
+
+  // Change m_device current settings
+  m_device.settings.calibration = cal;
+
+  return INA_STATUS_SUCCESS;
+}
