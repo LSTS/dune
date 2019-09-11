@@ -69,7 +69,17 @@ namespace Power
         INA_REG_CALIBRATION     = 0x05
       } INA_REG_e;
 
-      DriverINA219(DUNE::Tasks::Task* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance):
+      /**
+       * @brief Construct a new DriverINA219 object. Initializes the pointers and tests the connection
+       * with the device, throws an exception in case there is no connection.
+       * 
+       * @param task Pointer to parent task.
+       * @param i2c Pointer to the I2C device.
+       * @param elabel Entity label of the device.
+       * @param address I2C address to the device.
+       * @param shunt_resistance Value of the shunt resistance of the device.
+       */
+      DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance):
         m_task(task),
         m_i2c(i2c)
       {
@@ -84,7 +94,7 @@ namespace Power
 
       private:
       // Parent task.
-      DUNE::Tasks::Task* m_task;
+      DUNE::Tasks::Periodic* m_task;
       // I2C Port Device
       DUNE::Hardware::I2C* m_i2c;
       // Device information

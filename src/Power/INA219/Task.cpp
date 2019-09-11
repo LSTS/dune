@@ -60,20 +60,24 @@ namespace Power
       float i2c_shunt_resistance[c_max_devices];
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Periodic
     {
       // I2C handle.
       Hardware::I2C* m_i2c;
       // Task arguments.
       Arguments m_args;
       // Driver INA219.
-      DriverINA219* ina219[c_max_devices];
+      DriverINA219* m_ina219[c_max_devices];
+      // IMC Bus Voltage message.
+      IMC::Voltage m_bus_volt[c_max_devices];
+      // IMC Current message.
+      IMC::Current m_current[c_max_devices];
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        DUNE::Tasks::Periodic(name, ctx),
         m_i2c(NULL)
       {
         param("I2C - Device", m_args.i2c_dev)
@@ -104,18 +108,35 @@ namespace Power
       void
       onUpdateParameters(void)
       {
+        // Only relevant parameter is to add or remove ina219 devices?
       }
 
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
       {
+        try
+        {
+          for(int i = 0; i < m_args.i2c_number; i++)
+            reserveEntity(m_args.i2c_elabels[i]);
+        }
+        catch(const std::exception& e)
+        {
+          (void)e;
+        }
       }
 
       //! Resolve entity names.
       void
       onEntityResolution(void)
       {
+        int temp;
+        for(int i = 0; i < m_args.i2c_number; i++)
+        {
+          temp = resolveEntity(m_args.i2c_elabels[i]);
+          m_bus_volt[i].setSourceEntity(temp);
+          m_current[i].setSourceEntity(temp);
+        }
       }
 
       //! Acquire resources.
@@ -125,12 +146,15 @@ namespace Power
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         try
         {
-          m_i2c = new I2C(m_args.i2c_dev);
+          m_i2c = new I2C(m_args.i2c_dev); // Initialize the I2C.
+
+          // Initializes the driver for each I2C device connected.
           for(int i = 0; i < m_args.i2c_number; i++)
-            ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i]);
+            m_ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i]);
         }
         catch(const std::exception& e)
         {
+          // In case of failure waits 10 seconds and restarts the task.
           throw RestartNeeded(e.what(), 10, true);
         }
       }
@@ -145,16 +169,16 @@ namespace Power
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_i2c);
+        for(int i = 0; i < m_args.i2c_number; i++)
+          Memory::clear(m_ina219[i]);
       }
 
       //! Main loop.
       void
-      onMain(void)
+      task(void)
       {
-        while (!stopping())
-        {
-          waitForMessages(1.0);
-        }
+        waitForMessages(1.0);
       }
     };
   }
