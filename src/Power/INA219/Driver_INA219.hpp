@@ -45,27 +45,14 @@ namespace Power
 
     class DriverINA219
     {
-      private:
-      typedef struct
-      {
-        std::string elabel;
-        uint8_t address;
-        float shunt_resistance;
-      } INA_DEVICE_t;
-
-
-      // Parent task.
-      DUNE::Tasks::Periodic* m_task;
-      // I2C Port Device
-      DUNE::Hardware::I2C* m_i2c;
-      // Device information
-      INA_DEVICE_t m_device;
-
-      // Constant value to calibrate the device
-      static constexpr float c_cal_value = 0.04096f ;
-
+      /*===========================================================================
+        DriverINA219 Enums and Structs
+        =========================================================================*/
       public:
-
+      
+      /*---------------------------------------------------------------------------
+        Register Addresses
+      ---------------------------------------------------------------------------*/
       typedef enum
       {
         INA_REG_CONFIG          = 0x00,
@@ -75,99 +62,109 @@ namespace Power
         INA_REG_CURRENT         = 0x04,
         INA_REG_CALIBRATION     = 0x05
       } INA_REG_e;
+      /*--------------------------------------------------------------------------*/
 
+      /*---------------------------------------------------------------------------
+        Function Return Status
+      ---------------------------------------------------------------------------*/
       typedef enum
       {
         INA_STATUS_SUCCESS = 0,
         INA_STATUS_ERROR = 1
       } INA_STATUS_e;
+      /*--------------------------------------------------------------------------*/
 
-      /**
-       * @brief Construct a new DriverINA219 object. Initializes the pointers and tests the connection
-       * with the device, throws an exception in case there is no connection.
-       * 
-       * @param task Pointer to parent task.
-       * @param i2c Pointer to the I2C device.
-       * @param elabel Entity label of the device.
-       * @param address I2C address to the device.
-       * @param shunt_resistance Value of the shunt resistance of the device.
-       */
-      DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance):
-        m_task(task),
-        m_i2c(i2c)
+      /*---------------------------------------------------------------------------
+        Config Register Settings
+      ---------------------------------------------------------------------------*/
+
+      // CONFIG: Voltage range in the Shunt resistance
+      typedef enum INA_CONFIG_SHUNT_e
       {
-        m_task->trace("Initializing DriverINA219");
-        m_device.elabel = elabel;
-        m_device.address = address;
-        m_device.shunt_resistance = shunt_resistance;
+          INA_CONFIG_SHUNT_40MV = 0,
+          INA_CONFIG_SHUNT_80MV = 1,
+          INA_CONFIG_SHUNT_160MV = 2,
+          INA_CONFIG_SHUNT_320MV = 3
+      } INA_CONFIG_SHUNT_e;
 
-        // testing connection
-        std::uint8_t buffer[2] = {0};
-        m_i2c->read(m_device.address, buffer, 2);
-      }
+      // CONFIG: ADC reading/sampling mode
+      typedef enum
+      {
+        INA_CONFIG_ADC_9BIT = 0,
+        INA_CONFIG_ADC_10BIT = 1,
+        INA_CONFIG_ADC_11BIT = 2,
+        INA_CONFIG_ADC_12BIT = 3,
+        INA_CONFIG_ADC_2SAMPLES = 9,
+        INA_CONFIG_ADC_4SAMPLES = 10,
+        INA_CONFIG_ADC_8SAMPLES = 11,
+        INA_CONFIG_ADC_16SAMPLES = 12,
+        INA_CONFIG_ADC_32SAMPLES = 13,
+        INA_CONFIG_ADC_64SAMPLES = 14,
+        INA_CONFIG_ADC_128SAMPLES = 15,
+      } INA_CONFIG_ADC_e;
 
-      /**
-       * @brief This function allows to write a full register of the ina219.
-       * 
-       * @param reg_addr Register to write.
-       * @param data Data to write in the register.
-       * 
-       * @return INA_STATUS_SUCCESS In case the writing is a success.
-       * @return INA_STATUS_ERROR Otherwise.
-       */
+      // CONFIG: Operating mode
+      typedef enum
+      {
+        INA_CONFIG_MODE_POWERDOWN = 0,
+        INA_CONFIG_MODE_SHUNTVOLT_TRIG = 1,
+        INA_CONFIG_MODE_BUSVOLT_TRIG = 2,
+        INA_CONFIG_MODE_SHUNTBUSVOLT_TRIG = 3,
+        INA_CONFIG_MODE_ADC_DISABLE = 4,
+        INA_CONFIG_MODE_SHUNTVOLT_CONT = 5,
+        INA_CONFIG_MODE_BUSVOLT_CONT = 6,
+        INA_CONFIG_MODE_SHUNTBUSVOLT_CONT = 7
+      } INA_CONFIG_MODE_e;
+      /*--------------------------------------------------------------------------*/
+
+      private:
+
+      //Current device settings.
+      typedef struct
+      {
+        uint8_t bus_range;
+        INA_CONFIG_SHUNT_e shunt_range;
+        INA_CONFIG_ADC_e badc_mode;
+        INA_CONFIG_ADC_e sadc_mode;
+        INA_CONFIG_MODE_e mode;
+        int calibration;
+      } INA_CONFIG_t;
+
+      // Device information and settings.
+      typedef struct
+      {
+        std::string elabel;
+        uint8_t address;
+        float shunt_resistance;
+        INA_CONFIG_t settings;
+      } INA_DEVICE_t;
+
+      /*===========================================================================
+        DriverINA219 Functions
+        =========================================================================*/
+      public:
+      DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance);
+
       INA_STATUS_e
-      write(INA_REG_e reg_addr, std::uint16_t data)
-      {
-        m_task->trace("DriverINA219::write executing");
-        std::uint8_t write_data[2] = {(std::uint8_t)(data>>8), (std::uint8_t)data}, recv_data[2], bytes;
-        try
-        {
-          if(m_i2c->transfer(m_device.address, reg_addr, write_data, 2, recv_data, 2, &bytes))
-            return INA_STATUS_ERROR; //If the transfer is not successfull.
+      config(bool bus_32V, INA_CONFIG_SHUNT_e shunt_mode, INA_CONFIG_ADC_e badc_mode, INA_CONFIG_ADC_e sadc_mode, INA_CONFIG_MODE_e mode);
 
-          if(bytes != 2)
-            return INA_STATUS_ERROR; // If the data received doesn't have the expected length.
 
-          if((write_data[0] != recv_data[0]) || (write_data[1] != recv_data[1]))
-            return INA_STATUS_ERROR; // If the read data is not equal to data intended to write.
-        }
-        catch(const std::exception& e)
-        {
-          throw RestartNeeded(("[DriverINA219::write] "+std::string(e.what())).c_str(), 10, true);
-        } 
-        return INA_STATUS_SUCCESS;
-      }
-
-      /**
-       * @brief This function allows to read data from a register of the ina219.
-       * 
-       * @param reg_addr Register to read.
-       * @param data data read from the register.
-       *
-       * @return INA_STATUS_SUCCESS In case the writing is a success.
-       * @return INA_STATUS_ERROR Otherwise.
-       */
+      private:
       INA_STATUS_e
-      read(INA_REG_e reg_addr, int* data)
-      {
-        m_task->trace("DriverINA219::read executing");
-        std::uint8_t recv_data[2], bytes;
-        try
-        {
-          if(m_i2c->transfer(m_device.address, reg_addr, NULL, 0, recv_data, 2, &bytes))
-            return INA_STATUS_ERROR; // If the transfer is not successfull.
+      write(INA_REG_e reg_addr, int data);
 
-          if(bytes != 2)
-            return INA_STATUS_ERROR; // If the received bytes doesn have the expected length.
+      INA_STATUS_e
+      read(INA_REG_e reg_addr, int* data);
 
-          *data = (int)(recv_data[0]<<8) | recv_data[1];
-        }
-        catch(const std::exception& e)
-        {
-          throw RestartNeeded(("[DriverINA219::read] "+std::string(e.what())).c_str(), 10, true);
-        } 
-        return INA_STATUS_SUCCESS;
-      }
+      // Parent task.
+      DUNE::Tasks::Periodic* m_task;
+      // I2C Port Device
+      DUNE::Hardware::I2C* m_i2c;
+      // Device information
+      INA_DEVICE_t m_device;
+
+      // Constant value to calibrate the device
+      static constexpr float c_cal_value = 0.04096f;
     };
   }
 }
