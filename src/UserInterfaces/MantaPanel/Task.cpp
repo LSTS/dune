@@ -170,7 +170,7 @@ namespace UserInterfaces
         .description("List of excluded systems");
 
         param("Reply to System Queries", m_args.reply_asq)
-        .defaultValue(false);
+        .defaultValue("false");
 
         // Register listeners.
         bind<IMC::ButtonEvent>(this);
