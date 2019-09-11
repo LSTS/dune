@@ -80,6 +80,7 @@ namespace Power
         DUNE::Tasks::Periodic(name, ctx),
         m_i2c(NULL)
       {
+        trace("starting");
         param("I2C - Device", m_args.i2c_dev)
         .defaultValue("/dev/i2c-1")
         .description("I2C port device");
@@ -108,6 +109,7 @@ namespace Power
       void
       onUpdateParameters(void)
       {
+        trace("Updating Parameters");
         // Only relevant parameter is to add or remove ina219 devices?
       }
 
@@ -115,6 +117,7 @@ namespace Power
       void
       onEntityReservation(void)
       {
+        trace("Reserving Entities");
         try
         {
           for(int i = 0; i < m_args.i2c_number; i++)
@@ -130,6 +133,7 @@ namespace Power
       void
       onEntityResolution(void)
       {
+        trace("Resolving Entities");
         int temp;
         for(int i = 0; i < m_args.i2c_number; i++)
         {
@@ -143,6 +147,7 @@ namespace Power
       void
       onResourceAcquisition(void)
       {
+        trace("Acquiring resources");
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         try
         {
@@ -169,6 +174,7 @@ namespace Power
       void
       onResourceRelease(void)
       {
+        trace("Releasing Task Resources");
         Memory::clear(m_i2c);
         for(int i = 0; i < m_args.i2c_number; i++)
           Memory::clear(m_ina219[i]);
@@ -178,7 +184,7 @@ namespace Power
       void
       task(void)
       {
-        waitForMessages(1.0);
+        trace("Executing periodic task");
       }
     };
   }
