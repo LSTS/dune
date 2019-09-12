@@ -126,13 +126,14 @@ namespace Power
         uint8_t address;
         float shunt_resistance;
         float current_lsb;
+        int max_current;
       } INA_DEVICE_t;
 
       /*===========================================================================
         DriverINA219 Functions
         =========================================================================*/
       public:
-      DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance);
+      DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance, const int max_current);
 
       INA_STATUS_e
       config(bool bus_32V, INA_CONFIG_SHUNT_e shunt_mode, INA_CONFIG_ADC_e badc_mode, INA_CONFIG_ADC_e sadc_mode, INA_CONFIG_MODE_e mode);

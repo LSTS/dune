@@ -66,6 +66,8 @@ namespace Power
       uint8_t i2c_address[c_max_devices];
       // Shunt Resistance value for each device.
       float i2c_shunt_resistance[c_max_devices];
+      // Maximum current expected for each device.
+      int i2c_max_current[c_max_devices];
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -110,6 +112,10 @@ namespace Power
           param(String::str("Device %u - Shunt Resistance",i), m_args.i2c_shunt_resistance[i-1])
           .defaultValue("0.04")
           .description("Shunt resistance value for the i2c device");
+
+          param(String::str("Device %u - Maximum Current",i), m_args.i2c_max_current[i-1])
+          .defaultValue("1")
+          .description("Maximum current expected for the i2c device in Amps");
         }
       }
 
@@ -163,7 +169,7 @@ namespace Power
 
           // Initializes the driver for each I2C device connected.
           for(int i = 0; i < m_args.i2c_number; i++)
-            m_ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i]);
+            m_ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i], m_args.i2c_max_current[i]);
         }
         catch(const std::exception& e)
         {

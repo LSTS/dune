@@ -41,7 +41,7 @@ using namespace Power::INA219;
  * @param address I2C address to the device.
  * @param shunt_resistance Value of the shunt resistance of the device.
  */
-DriverINA219::DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance):
+DriverINA219::DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address, const float shunt_resistance, const int max_current):
   m_task(task),
   m_i2c(i2c)
 {
@@ -50,6 +50,7 @@ DriverINA219::DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c
   m_device.address = address;
   m_device.shunt_resistance = shunt_resistance;
   m_device.current_lsb = 0.0;
+  m_device.max_current = max_current;
 
   // testing connection
   std::uint8_t buffer[2] = {0};
