@@ -97,7 +97,7 @@ DriverINA219::write(INA_REG_e reg_addr, int data)
  * @return INA_STATUS_ERROR Otherwise.
  */
 DriverINA219::INA_STATUS_e
-DriverINA219::read(INA_REG_e reg_addr, int* data)
+DriverINA219::read(INA_REG_e reg_addr, unsigned& data)
 {
   m_task->trace("DriverINA219::read executing");
   std::uint8_t recv_data[2], bytes;
@@ -109,7 +109,7 @@ DriverINA219::read(INA_REG_e reg_addr, int* data)
     if(bytes != 2)
       return INA_STATUS_ERROR; // If the received bytes doesn have the expected length.
 
-    *data = (int)(recv_data[0]<<8) | recv_data[1];
+    data = (unsigned)(recv_data[0]<<8) | recv_data[1];
   }
   catch(const std::exception& e)
   {
@@ -136,31 +136,54 @@ DriverINA219::config(bool bus_32V, INA_CONFIG_SHUNT_e shunt_mode, INA_CONFIG_ADC
   m_task->trace("DriverINA219::config executing");
   
   // Write on the config register.
-  if(write(INA_REG_CONFIG, ((bus_32V<<13) | (shunt_mode<<11) | (badc_mode<<7) | (sadc_mode<<3) | mode)) == INA_STATUS_ERROR)
+  return write(INA_REG_CONFIG, ((bus_32V<<13) | (shunt_mode<<11) | (badc_mode<<7) | (sadc_mode<<3) | mode));
+}
+
+/**
+ * @brief Calculates and writes the calibration value for the device to
+ * read correctly the current in the shunt resistance.
+ * 
+ * @param max_current maximum current expected to be read.
+ *
+ * @return INA_STATUS_SUCCESS In case the writing is a success.
+ * @return INA_STATUS_ERROR Otherwise.
+ */
+DriverINA219::INA_STATUS_e
+DriverINA219::calibrate(unsigned max_current)
+{
+  m_task->trace("DriverINA219::calibrate executing");
+
+  // Calibration value calculation.
+  float current_lsb = (float)(max_current) / 32768;
+  unsigned cal = c_cal_value / (current_lsb * m_device.shunt_resistance);
+
+  // Write the calibration value.
+  if(write(INA_REG_CALIBRATION, cal) == INA_STATUS_ERROR)
     return INA_STATUS_ERROR;
 
   // Change m_device current settings.
-  m_device.settings.bus_range = (bus_32V? 32:16);
-  m_device.settings.shunt_range = shunt_mode;
-  m_device.settings.badc_mode = badc_mode;
-  m_device.settings.sadc_mode = sadc_mode;
-  m_device.settings.mode = mode;
+  m_device.calibration = cal;
 
   return INA_STATUS_SUCCESS;
 }
 
 DriverINA219::INA_STATUS_e
-DriverINA219::calibrate(unsigned max_current)
+DriverINA219::getBusVoltage(float& bus_voltage)
 {
-  float current_lsb = (float)(max_current) / 32768;
-  unsigned cal = c_cal_value / (current_lsb * m_device.shunt_resistance);
+  m_task->trace("DriverINA219::getBusVoltage executing");
 
-  // Write the calibration value
-  if(write(INA_REG_CALIBRATION, cal) == INA_STATUS_ERROR)
+  unsigned recv;
+
+  if(read(INA_REG_BUS, recv) == INA_STATUS_ERROR)
     return INA_STATUS_ERROR;
 
-  // Change m_device current settings
-  m_device.settings.calibration = cal;
+  if(!(recv & 0x02))
+  {
+    m_task->spew("DriverINA219::getBusVoltage the conversion is not available");
+    return INA_STATUS_ERROR; //The conversion is not available
+  }
+
+  bus_voltage = (float)(recv>>3) * 0.004;
 
   return INA_STATUS_SUCCESS;
 }

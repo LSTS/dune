@@ -184,7 +184,7 @@ namespace Power
       void
       task(void)
       {
-        trace("Executing periodic task");
+        trace("Executing periodic task"); 
       }
     };
   }

@@ -119,24 +119,13 @@ namespace Power
 
       private:
 
-      //Current device settings.
-      typedef struct
-      {
-        uint8_t bus_range;
-        INA_CONFIG_SHUNT_e shunt_range;
-        INA_CONFIG_ADC_e badc_mode;
-        INA_CONFIG_ADC_e sadc_mode;
-        INA_CONFIG_MODE_e mode;
-        int calibration;
-      } INA_CONFIG_t;
-
       // Device information and settings.
       typedef struct
       {
         std::string elabel;
         uint8_t address;
         float shunt_resistance;
-        INA_CONFIG_t settings;
+        unsigned calibration;
       } INA_DEVICE_t;
 
       /*===========================================================================
@@ -151,13 +140,16 @@ namespace Power
       INA_STATUS_e
       calibrate(unsigned max_current);
 
+      INA_STATUS_e
+      getBusVoltage(float& bus_voltage);
+
 
       private:
       INA_STATUS_e
       write(INA_REG_e reg_addr, int data);
 
       INA_STATUS_e
-      read(INA_REG_e reg_addr, int* data);
+      read(INA_REG_e reg_addr, unsigned& data);
 
       // Parent task.
       DUNE::Tasks::Periodic* m_task;
