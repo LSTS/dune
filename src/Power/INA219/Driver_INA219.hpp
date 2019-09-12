@@ -125,7 +125,7 @@ namespace Power
         std::string elabel;
         uint8_t address;
         float shunt_resistance;
-        unsigned calibration;
+        float current_lsb;
       } INA_DEVICE_t;
 
       /*===========================================================================
@@ -143,13 +143,16 @@ namespace Power
       INA_STATUS_e
       getBusVoltage(float& bus_voltage);
 
+      INA_STATUS_e
+      getCurrent(float& current);
+
 
       private:
       INA_STATUS_e
-      write(INA_REG_e reg_addr, int data);
+      write(INA_REG_e reg_addr, void* data);
 
       INA_STATUS_e
-      read(INA_REG_e reg_addr, unsigned& data);
+      read(INA_REG_e reg_addr, void* data);
 
       // Parent task.
       DUNE::Tasks::Periodic* m_task;

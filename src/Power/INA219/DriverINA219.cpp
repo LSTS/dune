@@ -49,6 +49,7 @@ DriverINA219::DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c
   m_device.elabel = elabel;
   m_device.address = address;
   m_device.shunt_resistance = shunt_resistance;
+  m_device.current_lsb = 0.0;
 
   // testing connection
   std::uint8_t buffer[2] = {0};
@@ -65,20 +66,29 @@ DriverINA219::DriverINA219(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c
  * @return INA_STATUS_ERROR Otherwise.
  */
 DriverINA219::INA_STATUS_e
-DriverINA219::write(INA_REG_e reg_addr, int data)
+DriverINA219::write(INA_REG_e reg_addr, void* data)
 {
   m_task->trace("DriverINA219::write executing");
-  std::uint8_t write_data[2] = {(std::uint8_t)(data>>8), (std::uint8_t)data}, recv_data[2], bytes;
+  std::uint8_t write_data[2] = {(std::uint8_t)(*(int*)data>>8), (std::uint8_t)*(int*)data}, recv_data[2], bytes;
   try
   {
     if(m_i2c->transfer(m_device.address, reg_addr, write_data, 2, recv_data, 2, &bytes))
-      return INA_STATUS_ERROR; //If the transfer is not successfull.
+    {
+      m_task->spew("[DriverINA219::write] data transfer was not successful.");
+      return INA_STATUS_ERROR;
+    }
 
     if(bytes != 2)
-      return INA_STATUS_ERROR; // If the data received doesn't have the expected length.
+    {
+      m_task->spew("[DriverINA219::write] length of data receive is an unexpected value.");
+      return INA_STATUS_ERROR;
+    }
 
     if((write_data[0] != recv_data[0]) || (write_data[1] != recv_data[1]))
-      return INA_STATUS_ERROR; // If the read data is not equal to data intended to write.
+    {
+      m_task->spew("[DriverINA219::write] data received is not the same as the intended to be written.");
+      return INA_STATUS_ERROR;
+    }
   }
   catch(const std::exception& e)
   {
@@ -97,19 +107,25 @@ DriverINA219::write(INA_REG_e reg_addr, int data)
  * @return INA_STATUS_ERROR Otherwise.
  */
 DriverINA219::INA_STATUS_e
-DriverINA219::read(INA_REG_e reg_addr, unsigned& data)
+DriverINA219::read(INA_REG_e reg_addr, void* data)
 {
   m_task->trace("DriverINA219::read executing");
   std::uint8_t recv_data[2], bytes;
   try
   {
     if(m_i2c->transfer(m_device.address, reg_addr, NULL, 0, recv_data, 2, &bytes))
-      return INA_STATUS_ERROR; // If the transfer is not successfull.
+    {
+      m_task->spew("[DriverINA219::read] data transfer was not successful.");
+      return INA_STATUS_ERROR;
+    }
 
     if(bytes != 2)
-      return INA_STATUS_ERROR; // If the received bytes doesn have the expected length.
+    {
+      m_task->spew("[DriverINA219::read] length of data receive is an unexpected value.");
+      return INA_STATUS_ERROR;
+    }
 
-    data = (unsigned)(recv_data[0]<<8) | recv_data[1];
+    *(int*)data = (unsigned)(recv_data[0]<<8) | recv_data[1];
   }
   catch(const std::exception& e)
   {
@@ -135,8 +151,9 @@ DriverINA219::config(bool bus_32V, INA_CONFIG_SHUNT_e shunt_mode, INA_CONFIG_ADC
 {
   m_task->trace("DriverINA219::config executing");
   
+  std::uint16_t value = ((bus_32V<<13) | (shunt_mode<<11) | (badc_mode<<7) | (sadc_mode<<3) | mode);
   // Write on the config register.
-  return write(INA_REG_CONFIG, ((bus_32V<<13) | (shunt_mode<<11) | (badc_mode<<7) | (sadc_mode<<3) | mode));
+  return write(INA_REG_CONFIG, &value);
 }
 
 /**
@@ -158,15 +175,27 @@ DriverINA219::calibrate(unsigned max_current)
   unsigned cal = c_cal_value / (current_lsb * m_device.shunt_resistance);
 
   // Write the calibration value.
-  if(write(INA_REG_CALIBRATION, cal) == INA_STATUS_ERROR)
+  if(write(INA_REG_CALIBRATION, &cal) == INA_STATUS_ERROR)
+  {
+    m_task->spew("[DriverINA219::calibrate] error while writing the value.");
     return INA_STATUS_ERROR;
+  }
 
   // Change m_device current settings.
-  m_device.calibration = cal;
+  m_device.current_lsb = current_lsb;
+  m_task->debug("Current lsb is: %f", current_lsb);
 
   return INA_STATUS_SUCCESS;
 }
 
+/**
+ * @brief Reads and converts the value present in the bus voltage register.
+ * 
+ * @param bus_voltage Value in Volts of the bus voltage.
+ *
+ * @return INA_STATUS_SUCCESS In case the writing is a success.
+ * @return INA_STATUS_ERROR Otherwise.
+ */
 DriverINA219::INA_STATUS_e
 DriverINA219::getBusVoltage(float& bus_voltage)
 {
@@ -174,16 +203,72 @@ DriverINA219::getBusVoltage(float& bus_voltage)
 
   unsigned recv;
 
-  if(read(INA_REG_BUS, recv) == INA_STATUS_ERROR)
+  // Get the value on the bus register.
+  if(read(INA_REG_BUS, &recv) == INA_STATUS_ERROR)
+  {
+    m_task->spew("[DriverINA219::getBusVoltage] error while reading the value.");
     return INA_STATUS_ERROR;
+  }
 
+  // Check is the measurement is ready.
   if(!(recv & 0x02))
   {
     m_task->spew("DriverINA219::getBusVoltage the conversion is not available");
-    return INA_STATUS_ERROR; //The conversion is not available
+    return INA_STATUS_ERROR; //The conversion is not available.
   }
 
+  // Convert the data to volts.
   bus_voltage = (float)(recv>>3) * 0.004;
+
+  return INA_STATUS_SUCCESS;
+}
+
+/**
+ * @brief Reads and converts the value read in current register.
+ * This function can only be used after calibration.
+ * 
+ * @param current  Value in Amps of the current.
+ *
+ * @return INA_STATUS_SUCCESS In case the writing is a success.
+ * @return INA_STATUS_ERROR Otherwise.
+ */
+DriverINA219::INA_STATUS_e
+DriverINA219::getCurrent(float& current)
+{
+  m_task->trace("DriverINA219::getCurrent executing");
+
+  std::int16_t recv;
+
+  // Get the value on the bus register.
+  if(read(INA_REG_BUS, &recv) == INA_STATUS_ERROR)
+  {
+    m_task->spew("[DriverINA219::getCurrent] reading of bus register error.");
+    return INA_STATUS_ERROR;
+  }
+
+  // Check if overflow is detected.
+  if(recv & 0x01)
+  {
+    m_task->spew("[DriverINA219::getCurrent] overflow detected");
+    return INA_STATUS_ERROR;
+  }
+
+  // Get the value on the current register.
+  if(read(INA_REG_CURRENT, &recv) == INA_STATUS_ERROR)
+  {
+    m_task->spew("[DriverINA219::getCurrent] reading of current register error.");
+    return INA_STATUS_ERROR;
+  }
+
+  m_task->debug("Current read value: %d", recv);
+  // Check if calibration is done
+  if(m_device.current_lsb == 0)
+  {
+    m_task->spew("[DriverINA219::getCurrent] calibration value error.");
+    return INA_STATUS_ERROR;
+  }
+
+  current = recv*m_device.current_lsb;
 
   return INA_STATUS_SUCCESS;
 }

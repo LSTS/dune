@@ -36,9 +36,17 @@
 
 namespace Power
 {
-  //! Insert short task description here.
+  //! Task to publish measurements of current and voltage provided by INA219 devices.
   //!
-  //! Insert explanation on task behaviour here.
+  //! After initial checks, the task will publish regularly the measurements provided
+  //! by the INA219 devices indicated in the ini file. This task allows several INA219
+  //! devices. This task averages 10 measuments, this means that the publish frequency 
+  //! is 1/10th of the task execution frequency.
+  //!
+  //! For developers: The trace() is used in the beggining of every function to indicate
+  //! the execution of it. The spew() is used in all error to indicate the reason of it.
+  //! The debug() is used freely at your convenience.
+  //!
   //! @author Miguel Lançós
   namespace INA219
   {
@@ -184,7 +192,7 @@ namespace Power
       void
       task(void)
       {
-        trace("Executing periodic task"); 
+        trace("Executing periodic task");
       }
     };
   }
