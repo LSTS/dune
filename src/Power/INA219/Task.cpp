@@ -40,8 +40,7 @@ namespace Power
   //!
   //! After initial checks, the task will publish regularly the measurements provided
   //! by the INA219 devices indicated in the ini file. This task allows several INA219
-  //! devices. This task averages 10 measuments, this means that the publish frequency 
-  //! is 1/10th of the task execution frequency.
+  //! devices.
   //!
   //! For developers: The trace() is used in the beggining of every function to indicate
   //! the execution of it. The spew() is used in all error to indicate the reason of it.
@@ -73,12 +72,6 @@ namespace Power
       int i2c_max_current[c_max_devices];
     };
 
-    struct MovingAvg
-    {
-      float oldest_value;
-      float sum;
-    };
-
     struct Task: public DUNE::Tasks::Periodic
     {
       // I2C handle.
@@ -92,9 +85,9 @@ namespace Power
       // IMC Current message.
       IMC::Current m_current[c_max_devices];
       // Voltage average calculation.
-      MovingAvg m_avg_volt[c_max_devices];
+      Math::MovingAverage<float>* m_avg_volt[c_max_devices];
       // Current average calculation.
-      MovingAvg m_avg_current[c_max_devices];
+      Math::MovingAverage<float>* m_avg_current[c_max_devices];
       // Timestamp for IMC messages.
       double time_stamp;
       // Temporary variables for direct value publishing.
@@ -187,7 +180,12 @@ namespace Power
 
           // Initializes the driver for each I2C device connected.
           for(int i = 0; i < m_args.i2c_number; i++)
+          {
             m_ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i], m_args.i2c_max_current[i]);
+
+            m_avg_volt[i] = new Math::MovingAverage<float>(c_moving_avg_size);
+            m_avg_current[i] = new Math::MovingAverage<float>(c_moving_avg_size);
+          }
         }
         catch(const std::exception& e)
         {
@@ -222,7 +220,11 @@ namespace Power
         trace("Releasing Task Resources");
         Memory::clear(m_i2c);
         for(int i = 0; i < m_args.i2c_number; i++)
+        {
           Memory::clear(m_ina219[i]);
+          Memory::clear(m_avg_volt[i]);
+          Memory::clear(m_avg_current[i]);
+        }
       }
 
       //! Main loop.
@@ -237,15 +239,23 @@ namespace Power
         for(int i=0; i < m_args.i2c_number; i++)
         {
           // Bus Voltage message
-          m_ina219[i]->getBusVoltage(value);
+          if(m_ina219[i]->getBusVoltage(value) == DriverINA219::INA_STATUS_SUCCESS)
+            m_avg_volt[i]->update(value);
+          else
+            err("Bus voltage measurement error");
+
           m_bus_volt[i].setTimeStamp(time_stamp);
-          m_bus_volt[i].value = value;
+          m_bus_volt[i].value = m_avg_volt[i]->mean();
           dispatch(m_bus_volt[i], DF_KEEP_TIME);
 
           // Current message;
-          m_ina219[i]->getCurrent(value);
+          if(m_ina219[i]->getCurrent(value) == DriverINA219::INA_STATUS_SUCCESS)
+            m_avg_current[i]->update(value);
+          else
+            err("Current measurement error");
+
           m_current[i].setTimeStamp(time_stamp);
-          m_current[i].value = value;
+          m_current[i].value = m_avg_current[i]->mean();
           dispatch(m_current[i], DF_KEEP_TIME);
         }
       }
