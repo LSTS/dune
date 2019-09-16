@@ -52,7 +52,10 @@ namespace Power
   {
     using DUNE_NAMESPACES;
 
+    // Maximum of devices able to manage.
     static const int c_max_devices = 3;
+    // Number of measurements to average before dispatching.
+    static const int c_moving_avg_size = 10;
 
     struct Arguments
     {
@@ -70,6 +73,12 @@ namespace Power
       int i2c_max_current[c_max_devices];
     };
 
+    struct MovingAvg
+    {
+      float oldest_value;
+      float sum;
+    };
+
     struct Task: public DUNE::Tasks::Periodic
     {
       // I2C handle.
@@ -82,6 +91,11 @@ namespace Power
       IMC::Voltage m_bus_volt[c_max_devices];
       // IMC Current message.
       IMC::Current m_current[c_max_devices];
+      // Voltage average calculation
+      MovingAvg m_avg_volt[c_max_devices];
+      // Current average calculation
+      MovingAvg m_avg_current[c_max_devices];
+
 
       //! Constructor.
       //! @param[in] name task name.
@@ -182,6 +196,17 @@ namespace Power
       void
       onResourceInitialization(void)
       {
+        trace("Initializing resources");
+        for(int i=0; i < m_args.i2c_number; i++)
+        {
+          // Writing the configuration values to the devices
+          if(m_ina219[i]->config(true, DriverINA219::INA_CONFIG_SHUNT_320MV, DriverINA219::INA_CONFIG_ADC_10BIT, DriverINA219::INA_CONFIG_ADC_10BIT, DriverINA219::INA_CONFIG_MODE_SHUNTBUSVOLT_CONT) == DriverINA219::INA_STATUS_ERROR)
+            throw RestartNeeded(DTR("[INA219] Unable to write to device"), 10, true);
+
+          // Calibrating devices
+          if(m_ina219[i]->calibrate(m_args.i2c_max_current[i]) == DriverINA219::INA_STATUS_ERROR)
+            throw RestartNeeded(DTR("[INA219] Unable to calibrate device"), 10 , true);
+        }
       }
 
       //! Release resources.

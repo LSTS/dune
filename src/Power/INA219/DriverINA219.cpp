@@ -175,6 +175,9 @@ DriverINA219::calibrate(unsigned max_current)
   float current_lsb = (float)(max_current) / 32768;
   unsigned cal = c_cal_value / (current_lsb * m_device.shunt_resistance);
 
+  // Set last bit to zero (datasheet)
+  cal &= ~(1);
+
   // Write the calibration value.
   if(write(INA_REG_CALIBRATION, &cal) == INA_STATUS_ERROR)
   {
@@ -184,7 +187,6 @@ DriverINA219::calibrate(unsigned max_current)
 
   // Change m_device current settings.
   m_device.current_lsb = current_lsb;
-  m_task->debug("Current lsb is: %f", current_lsb);
 
   return INA_STATUS_SUCCESS;
 }
@@ -261,7 +263,6 @@ DriverINA219::getCurrent(float& current)
     return INA_STATUS_ERROR;
   }
 
-  m_task->debug("Current read value: %d", recv);
   // Check if calibration is done
   if(m_device.current_lsb == 0)
   {
