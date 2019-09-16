@@ -91,10 +91,14 @@ namespace Power
       IMC::Voltage m_bus_volt[c_max_devices];
       // IMC Current message.
       IMC::Current m_current[c_max_devices];
-      // Voltage average calculation
+      // Voltage average calculation.
       MovingAvg m_avg_volt[c_max_devices];
-      // Current average calculation
+      // Current average calculation.
       MovingAvg m_avg_current[c_max_devices];
+      // Timestamp for IMC messages.
+      double time_stamp;
+      // Temporary variables for direct value publishing.
+      float value;
 
 
       //! Constructor.
@@ -197,6 +201,8 @@ namespace Power
       onResourceInitialization(void)
       {
         trace("Initializing resources");
+
+        // Configure the devices
         for(int i=0; i < m_args.i2c_number; i++)
         {
           // Writing the configuration values to the devices
@@ -224,6 +230,24 @@ namespace Power
       task(void)
       {
         trace("Executing periodic task");
+
+        // set timestamp for next dispatching messages.
+        time_stamp = Clock::getSinceEpoch();
+
+        for(int i=0; i < m_args.i2c_number; i++)
+        {
+          // Bus Voltage message
+          m_ina219[i]->getBusVoltage(value);
+          m_bus_volt[i].setTimeStamp(time_stamp);
+          m_bus_volt[i].value = value;
+          dispatch(m_bus_volt[i], DF_KEEP_TIME);
+
+          // Current message;
+          m_ina219[i]->getCurrent(value);
+          m_current[i].setTimeStamp(time_stamp);
+          m_current[i].value = value;
+          dispatch(m_current[i], DF_KEEP_TIME);
+        }
       }
     };
   }
