@@ -53,8 +53,6 @@ namespace Power
 
     // Maximum of devices able to manage.
     static const int c_max_devices = 3;
-    // Number of measurements to average before dispatching.
-    static const int c_moving_avg_size = 10;
 
     struct Arguments
     {
@@ -62,6 +60,8 @@ namespace Power
       std::string i2c_dev;
       // Number of devices.
       int i2c_number;
+      // Moving average window size.
+      int moving_avg_size;
       // Entity labels for each device.
       std::string i2c_elabels[c_max_devices];
       // I2C address for each device.
@@ -90,7 +90,7 @@ namespace Power
       Math::MovingAverage<float>* m_avg_current[c_max_devices];
       // Timestamp for IMC messages.
       double time_stamp;
-      // Temporary variables for direct value publishing.
+      // Auxiliary variable to get measurements.
       float value;
 
 
@@ -109,6 +109,10 @@ namespace Power
         param("Number of Devices", m_args.i2c_number)
         .defaultValue("1")
         .description("Number of INA219 devices present");
+
+        param("Moving Average - Window Size", m_args.moving_avg_size)
+        .defaultValue("10")
+        .description("Number of measurements in the moving average");
 
         for(int i=1; i <= c_max_devices; i++)
         {
@@ -183,8 +187,8 @@ namespace Power
           {
             m_ina219[i] = new DriverINA219(this, m_i2c, m_args.i2c_elabels[i], m_args.i2c_address[i], m_args.i2c_shunt_resistance[i], m_args.i2c_max_current[i]);
 
-            m_avg_volt[i] = new Math::MovingAverage<float>(c_moving_avg_size);
-            m_avg_current[i] = new Math::MovingAverage<float>(c_moving_avg_size);
+            m_avg_volt[i] = new Math::MovingAverage<float>(m_args.moving_avg_size);
+            m_avg_current[i] = new Math::MovingAverage<float>(m_args.moving_avg_size);
           }
         }
         catch(const std::exception& e)
@@ -199,6 +203,7 @@ namespace Power
       onResourceInitialization(void)
       {
         trace("Initializing resources");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         // Configure the devices
         for(int i=0; i < m_args.i2c_number; i++)
