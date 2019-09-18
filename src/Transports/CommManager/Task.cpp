@@ -294,7 +294,7 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        if (msg->getSourceEntity() != getEntityId())
+        if (msg->getDestinationEntity() != getEntityId())
           return;
 
         std::map<uint16_t, IMC::TransmissionRequest*>* tr_list =
@@ -676,7 +676,13 @@ namespace Transports
             m_router.sendViaSatellite(msg, m_args.iridium_plain_texts);
             break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-            m_router.sendViaGSM(msg);
+            if (msg->destination.empty() || msg->destination == "broadcast") {
+              IMC::TransmissionRequest req = *msg->clone();
+              req.destination = m_ctx.config.get(c_sms_section, c_sms_field);
+              m_router.sendViaGSM(&req);
+            }
+            else
+              m_router.sendViaGSM(msg);
             break;
           case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
             m_router.sendViaAcoustic(msg);
