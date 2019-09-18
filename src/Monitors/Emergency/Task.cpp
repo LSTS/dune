@@ -272,10 +272,15 @@ namespace Monitors
       void
       consume(const IMC::Voltage* msg)
       {
-        if(msg->getSourceEntity() != resolveEntity("Batteries"))
-          return;
-
-        m_bat_voltage = msg->value * 10;
+        try
+        {
+          if(msg->getSourceEntity() != resolveEntity("Batteries"))
+            return;
+          m_bat_voltage = msg->value * 10;
+        }
+        catch (std::runtime_error& e) {
+          spew("Batteries entity is not present.");
+        }
       }
 
       void
