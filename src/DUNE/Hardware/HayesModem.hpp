@@ -102,7 +102,7 @@ namespace DUNE
       expectOK(void);
 
       void
-      sendAT(const std::string& str);
+      sendAT(const std::string& str, bool=false);
 
       void
       sendRaw(const uint8_t* data, unsigned data_size);

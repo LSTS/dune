@@ -81,6 +81,8 @@ namespace Transports
       unsigned src_level_underwater;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Firmaware version
+      std::string firm_version;
     };
 
     // Type definition for mapping addresses.
@@ -211,6 +213,10 @@ namespace Transports
         .defaultValue("Evologics Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("Firmware version", m_args.firm_version)
+        .defaultValue("1.9")
+        .description("Modem Firmware version");
+
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
         bind<IMC::DevDataText>(this);
@@ -248,14 +254,12 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        TCPSocket atz;
         try
         {
-          {
-            TCPSocket atz;
-            atz.connect(m_args.address, m_args.port);
-            atz.writeString("ATZ0\n");
-            Delay::wait(5.0);
-          }
+          atz.connect(m_args.address, m_args.port);
+          atz.writeString("ATZ0\n");
+          Delay::wait(5.0);
 
           m_sock = new TCPSocket;
           m_sock->connect(m_args.address, m_args.port);
@@ -265,10 +269,24 @@ namespace Transports
           throw RestartNeeded(e.what(), 5, false);
         }
 
+        try
+        {
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
-        m_driver->setLineTermOut("\n");
+
+        if(m_args.firm_version == "2.0"){
+          m_driver->setLineTermOut("\r");
+          m_driver->changeMode();
+        }
+        else
+            m_driver->setLineTermOut("\n");
+
         m_driver->initialize();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 5, false);
+        }
       }
 
       void
@@ -444,6 +462,8 @@ namespace Transports
         else if (String::startsWith(msg->value, "RECVEND"))
           return;
         else if (String::startsWith(msg->value, "RECVFAILED"))
+          return;
+        else if (String::startsWith(msg->value, "RECVSRV"))
           return;
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);

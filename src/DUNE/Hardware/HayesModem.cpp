@@ -61,6 +61,7 @@ namespace DUNE
       // Perform initialization.
       setReadMode(READ_MODE_LINE);
       start();
+
       sendInitialization();
     }
 
@@ -158,9 +159,14 @@ namespace DUNE
     }
 
     void
-    HayesModem::sendAT(const std::string& str)
-    {
-      std::string cmd("AT");
+    HayesModem::sendAT(const std::string& str, bool flag) {
+
+      std::string cmd;
+      if(flag)
+        cmd = "+++AT";
+      else
+        cmd = "AT";
+
       cmd.append(str);
       m_last_cmd = cmd;
       cmd.append(getLineTermOut());
