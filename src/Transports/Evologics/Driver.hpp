@@ -77,8 +77,7 @@ namespace Transports
       "SENDEND",
       "SENDPBM",
       "RECVPBM",
-      "CANCELEDPBM",
-      "RECVSRV"
+      "CANCELEDPBM"
     };
 
     class Driver: public HayesModem
@@ -497,13 +496,6 @@ namespace Transports
         m_declination = value;
       }
 
-      void
-      changeMode()
-      {
-        sendAT("C",true);
-        //expectOK();
-      }
-
     private:
       //! Firmware version.
       std::string m_version;
@@ -595,7 +587,6 @@ namespace Transports
         {
           if (String::startsWith(str, c_async_msgs[i]))
           {
-            getTask()->debug("Dispatch: %s", str.c_str());
             dispatch(str);
             return true;
           }
@@ -618,7 +609,6 @@ namespace Transports
       expectOK(void)
       {
         std::string rv = readLine();
-
         if ((rv != "OK") && (rv != "[*]OK"))
           throw UnexpectedReply("OK", rv);
       }
