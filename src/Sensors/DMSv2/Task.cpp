@@ -30,6 +30,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "DriverAD5272.hpp"
+
 namespace Sensors
 {
   //! Insert short task description here.
@@ -51,18 +54,20 @@ namespace Sensors
     struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
-      SerialPort* m_uart;
-      //! I/O Multiplexer.
-      Poll m_poll;
+      Hardware::SerialPort* m_uart;
       //! Task arguments.
       Arguments m_args;
+      //! Driver of the AD5272 class.
+      DriverAD5272* m_ad5272;
+
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_uart(NULL),
+        m_ad5272(NULL)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("/dev/ttyUSB0")
@@ -98,6 +103,7 @@ namespace Sensors
         try
         {
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_ad5272 = new DriverAD5272(this, m_uart);
         }
         catch (std::runtime_error& e)
         {
@@ -109,12 +115,15 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_uart);
+        Memory::clear(m_ad5272);
       }
 
       //! Main loop.
