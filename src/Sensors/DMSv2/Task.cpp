@@ -40,14 +40,37 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    struct Arguments
+    {
+      //! Serial port device.
+      std::string uart_dev;
+      //! Serial port baud rate.
+      unsigned uart_baud;
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
+      //! Serial port handle.
+      SerialPort* m_uart;
+      //! I/O Multiplexer.
+      Poll m_poll;
+      //! Task arguments.
+      Arguments m_args;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_uart(NULL)
       {
+        param("Serial Port - Device", m_args.uart_dev)
+        .defaultValue("/dev/ttyUSB0")
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("38400")
+        .description("Serial port baud rate");
       }
 
       //! Update internal state with new parameter values.
@@ -72,6 +95,14 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 15);
+        }
       }
 
       //! Initialize resources.
