@@ -353,5 +353,50 @@ namespace Sensors
       return false;
     }
 
+    /**
+     * @brief This function allows to write the value present in the RDAC register
+     * to the 50-TP memory.
+     * 
+     * @return True if communication and response is as expected and writing to the 
+     * 50-TP memory is enabled. 
+     */
+    bool
+    DriverAD5272::writeMemoryFromRDAC(void)
+    {
+      m_task->trace("DriverAD5272::writeMemoryFromRDAC executing.");
+
+      uint8_t recv_data;
+      uint16_t aux;
+      bool frame_error;
+
+      if(readCTRL(aux))
+      {
+        if(!(aux & 0x01))
+        {
+          m_task->spew("[DriverAD5272::changeResistance] Memory writing is not active.");
+          return false;
+        }
+      }
+      else
+      {
+        m_task->spew("[DriverAD5272::changeResistance] Error reading the CTRL register.");
+        return false;
+      }
+
+      if(request(CMD_AD5272_WRITEMEM, NULL, 0, &recv_data, 1, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::writeMemoryFromRDAC] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data == 1)
+          return true;
+      }
+
+      m_task->spew("[DriverAD5272::writeMemoryFromRDAC] Communication error.");
+      return false;
+    }
   }
 }

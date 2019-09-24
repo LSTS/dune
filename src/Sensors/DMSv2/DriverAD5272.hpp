@@ -88,6 +88,9 @@ namespace Sensors
       bool
       readMemory(int& mem_value);
 
+      bool
+      writeMemoryFromRDAC(void);
+
       private:
       typedef enum
       {
