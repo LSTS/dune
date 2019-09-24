@@ -54,6 +54,21 @@ namespace Sensors
       {
         m_task->trace("Initializing DriverAD5272.");
       }
+
+      private:
+      typedef enum
+      {
+        CMD_AD5272_RESET = 0x02,
+        CMD_AD5272_SHUTDOWN = 0x03,
+        CMD_AD5272_READCTRL = 0x04,
+        CMD_AD5272_WRITECTRL = 0x05,
+        CMD_AD5272_READRDAC = 0x06,
+        CMD_AD5272_WRITERDAC = 0x07,
+        CMD_AD5272_READMEMADDR = 0x08,
+        CMD_AD5272_READMEM = 0x09,
+        CMD_AD5272_WRITEMEM = 0x0A,
+        CMD_AD5272_CTRLSETTING = 0x0B
+      } DriverAD5272_cmd;
     };
   }
 }
