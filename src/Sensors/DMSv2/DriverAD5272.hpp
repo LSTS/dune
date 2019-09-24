@@ -46,6 +46,12 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    //! Maximum value of the resistance of AD5272.
+    static const unsigned int c_max_resistor = 20e3;
+    //! Bits of the RDAC register.
+    static const unsigned int c_rdac_bits = 10;
+
+
     class DriverAD5272: private CommsDMSv2
     {
       public:
@@ -69,6 +75,9 @@ namespace Sensors
 
       bool
       setCTRLSettings(bool mem_write, bool rdac_write, bool rcal, bool enable);
+
+      bool
+      readResistance(int& resistor);
 
       private:
       typedef enum

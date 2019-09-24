@@ -202,5 +202,37 @@ namespace Sensors
       m_task->spew("[DriverAD5272::setCTRLSettings] Communication error.");
       return false; 
     }
+
+    /**
+     * @brief This function allows to read the current resistance value of the
+     * AD5272 by reading its RDAC register.
+     * 
+     * @param resistor Current value of the resistance.
+     * @return True if communication and response is as expected.
+     */
+    bool
+    DriverAD5272::readResistance(int& resistor)
+    {
+      m_task->trace("DriverAD5272::readResistance executing.");
+
+      uint8_t recv_data[2];
+      bool frame_error;
+
+      if(request(CMD_AD5272_READRDAC, NULL, 0, recv_data, 2, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::readResistance] Received an error frame type.");
+          return false;
+        }
+
+        resistor = (recv_data[0]<<8) | recv_data[1];
+        resistor = (resistor * c_max_resistor) / (1 << c_rdac_bits);
+        return true;
+      }
+
+      m_task->spew("[DriverAD5272::readResistance] Communication error.");
+      return false;
+    }
   }
 }
