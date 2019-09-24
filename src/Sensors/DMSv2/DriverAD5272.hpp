@@ -58,6 +58,9 @@ namespace Sensors
       bool
       doReset(void);
 
+      bool
+      setShutdownMode(bool enable);
+
       private:
       typedef enum
       {

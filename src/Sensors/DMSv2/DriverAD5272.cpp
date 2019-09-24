@@ -65,5 +65,35 @@ namespace Sensors
       m_task->spew("[DriverAD5272::doReset] Communication error.");
       return false;
     }
+
+    /**
+     * @brief This function allows to enable or disable the shutdown mode of the AD5272.
+     * 
+     * @param enable True to enable the Shutdown mode.
+     * @return True if communication and response is as expected.
+     */
+    bool
+    DriverAD5272::setShutdownMode(bool enable)
+    {
+      m_task->trace("DriverAD5272::setShutdownMode executing.");
+
+      uint8_t recv_data;
+      bool frame_error;
+
+      if(request(CMD_AD5272_SHUTDOWN, (uint8_t*)&enable, 1, &recv_data, 1, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::setShutdownMode] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data == 1)
+          return true;
+      }
+
+      m_task->spew("[DriverAD5272::setShutdownMode] Communication error.");
+      return false;
+    }
   }
 }
