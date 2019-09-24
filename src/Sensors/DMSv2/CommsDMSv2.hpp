@@ -53,6 +53,12 @@ namespace Sensors
 		class CommsDMSv2
 		{
 			public:
+			/**
+			 * @brief Construct a new CommsDMSv2 object.
+			 * 
+			 * @param task Pointer to the parent task.
+			 * @param uart Pointer to the uart object.
+			 */
       CommsDMSv2(DUNE::Tasks::Task* task, DUNE::Hardware::SerialPort* uart):
       m_task(task),
       m_uart(uart)
@@ -60,6 +66,18 @@ namespace Sensors
 				m_task->trace("Initializing CommsDMSv2.");
 			}
 
+			/**
+			 * @brief This function allows to send a request and receive a response from the DMS microcontroller
+			 * using the established communication protocol.
+			 * 
+			 * @param cmd	Command to execute in the micro.
+			 * @param send_data Data to send in the request frame.
+			 * @param send_len Length of the data in the request frame.
+			 * @param recv_data Data received in the response frame.
+			 * @param recv_len Expected length of the data received in the response frame.
+			 * @param error True in case the received frame is of error type.
+			 * @return True if the communication is successful independent of coherence of the data.
+			 */
 			bool
 			request(uint8_t cmd, uint8_t *send_data, uint8_t send_len, uint8_t* recv_data, uint8_t recv_len, bool& error)
 			{
