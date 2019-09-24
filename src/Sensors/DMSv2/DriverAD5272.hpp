@@ -82,6 +82,9 @@ namespace Sensors
       bool
       changeResistance(int resistor);
 
+      bool
+      readMemoryAddress(int& mem_address);
+
       private:
       typedef enum
       {
