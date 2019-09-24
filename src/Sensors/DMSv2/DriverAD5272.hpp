@@ -61,6 +61,12 @@ namespace Sensors
       bool
       setShutdownMode(bool enable);
 
+      bool
+      readCTRL(uint16_t& ctrl_register);
+
+      bool
+      writeCTRL(bool mem_write, bool rdac_write, bool rcal);
+
       private:
       typedef enum
       {

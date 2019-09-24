@@ -95,5 +95,76 @@ namespace Sensors
       m_task->spew("[DriverAD5272::setShutdownMode] Communication error.");
       return false;
     }
+
+    /**
+     * @brief This function allows to read the contents of the CTRL register of
+     * the AD5272.
+     * 
+     * @param ctrl_register Contents of the CTRL register.
+     * @return True if communication and response is as expected.
+     */
+    bool
+    DriverAD5272::readCTRL(uint16_t& ctrl_register)
+    {
+      m_task->trace("DriverAD5272::readCTRL executing.");
+
+      uint8_t recv_data[2];
+      bool frame_error;
+
+      if(request(CMD_AD5272_READCTRL, NULL, 0, recv_data, 2, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::readCTRL] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data[1] > 0x0F)
+        {
+          m_task->spew("[DriverAD5272::readCTRL] Received data is not expected.");
+          return false;
+        }
+
+        ctrl_register = (recv_data[0]<<8) | recv_data[1];
+        return true;
+      }
+
+      m_task->spew("[DriverAD5272::readCTRL] Communication error.");
+      return false;
+    }
+
+    /**
+     * @brief This function allows to write the CTRL register with the
+     * desired settings.
+     * 
+     * @param mem_write Activate the writing in the 50-TP memory.
+     * @param rdac_write Activate the writing in the RDAC register.
+     * @param rcal  Activate the Resistor Calibration.
+     * @return True if communication and response is as expected.
+     */
+    bool
+    DriverAD5272::writeCTRL(bool mem_write, bool rdac_write, bool rcal)
+    {
+      m_task->trace("DriverAD5272::writeCTRL executing.");
+
+      uint8_t recv_data, send_data;
+      bool frame_error;
+
+      send_data = ((uint8_t)rcal << 2) | ((uint8_t)rdac_write << 1) | (uint8_t)mem_write;
+      if(request(CMD_AD5272_WRITECTRL, &send_data, 1, &recv_data, 1, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::writeCTRL] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data == 1)
+          return true;
+      }
+
+      m_task->spew("[DriverAD5272::writeCTRL] Communication error.");
+      return false; 
+    }
   }
 }
