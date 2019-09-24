@@ -109,8 +109,7 @@ namespace Sensors
 					return false;
 				}
 				}
-				
-
+	
 				// Received data filtering
 				if((recv_buff[0] != '#') || (recv_buff[1] != cmd))
 				{
@@ -143,7 +142,7 @@ namespace Sensors
 
 				if(error)
 				{
-					if(recv_buff[i+1] != cmd)
+					if(recv_buff[i+3] != cmd)
 					{
 						m_task->spew("[CommsDMSv2::request] Error frame checksum not match.");
 						return false;
@@ -151,7 +150,8 @@ namespace Sensors
 				}
 				else
 				{
-					if(recv_buff[i+1] != ck_recv.putArray(recv_data, recv_len))
+					ck_recv.putByte(cmd);
+					if(recv_buff[i+3] != ck_recv.putArray(recv_data, recv_len))
 					{
 						m_task->spew("[CommsDMSv2::request] Received frame checksum not match.");
 						return false;
