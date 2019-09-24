@@ -34,6 +34,29 @@ namespace Sensors
   namespace DMSv2
   {
     using DUNE_NAMESPACES;
-  }
 
+    bool
+    DriverDMSv2::getFirmwareVersion(float& firmware_version)
+    {
+      m_task->trace("DriverDMSv2::getFirmwareVersion executing.");
+
+      uint8_t recv_data[2];
+      bool frame_error;
+
+      if(request(CMD_FIRMWARE_VERSION, NULL, 0, recv_data, 2, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverDMSv2::getFirmwareVersion] Received an error frame type.");
+          return false;
+        }
+
+        firmware_version = recv_data[0] + (recv_data[1]*0.01f);
+        return true;
+      }
+
+      m_task->spew("[DriverDMSv2::getFirmwareVersion] Communication error.");
+      return false;
+    }
+  }
 }

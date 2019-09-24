@@ -56,6 +56,16 @@ namespace Sensors
       {
         m_task->trace("Initializing DriverDMSv2.");
       }
+
+      bool
+      getFirmwareVersion(float& firmware_version);
+
+      private:
+      
+      typedef enum
+      {
+        CMD_FIRMWARE_VERSION = 0x01
+      } DriverDMSv2_cmd;
     };
   }
 }
