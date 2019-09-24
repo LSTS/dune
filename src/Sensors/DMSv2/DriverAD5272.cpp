@@ -166,5 +166,41 @@ namespace Sensors
       m_task->spew("[DriverAD5272::writeCTRL] Communication error.");
       return false; 
     }
+
+    /**
+     * @brief This function allows to change one or more CTRL settings without altering
+     * the other settings. The selected settings (TRUE) will change to the value present
+     * in the @enable.
+     * 
+     * @param mem_write Activate the writing in the 50-TP memory.
+     * @param rdac_write Activate the writing in the RDAC register.
+     * @param rcal  Activate the Resistor Calibration.
+     * @param enable Value to set the selected settings.
+     * @return True if communication and response is as expected.
+     */
+    bool
+    DriverAD5272::setCTRLSettings(bool mem_write, bool rdac_write, bool rcal, bool enable)
+    {
+      m_task->trace("DriverAD5272::setCTRLSettings executing.");
+
+      uint8_t recv_data, send_data;
+      bool frame_error;
+
+      send_data = ((uint8_t)rcal << 3) | ((uint8_t)rdac_write << 2) | ((uint8_t)mem_write << 1) | (uint8_t)enable;
+      if(request(CMD_AD5272_CTRLSETTING, &send_data, 1, &recv_data, 1, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::setCTRLSettings] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data == 1)
+          return true;
+      }
+
+      m_task->spew("[DriverAD5272::setCTRLSettings] Communication error.");
+      return false; 
+    }
   }
 }

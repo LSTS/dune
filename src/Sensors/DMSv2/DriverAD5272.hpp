@@ -67,6 +67,9 @@ namespace Sensors
       bool
       writeCTRL(bool mem_write, bool rdac_write, bool rcal);
 
+      bool
+      setCTRLSettings(bool mem_write, bool rdac_write, bool rcal, bool enable);
+
       private:
       typedef enum
       {
