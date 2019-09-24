@@ -85,6 +85,9 @@ namespace Sensors
       bool
       readMemoryAddress(int& mem_address);
 
+      bool
+      readMemory(int& mem_value);
+
       private:
       typedef enum
       {

@@ -285,7 +285,7 @@ namespace Sensors
     }
 
     /**
-     * @brief This function allows to read the next 50-TP memory address to be written
+     * @brief This function allows to read the last 50-TP memory address written
      * on the AD5272. There is only 50 addresses.
      * 
      * @param mem_address Memory address.
@@ -320,5 +320,38 @@ namespace Sensors
       m_task->spew("[DriverAD5272::readMemoryAddress] Communication error.");
       return false;
     }
+
+    /**
+     * @brief This function allows to read the last value written on the 50-TP
+     * memory of the AD5272.
+     * 
+     * @param mem_value Resistance value on the memory.
+     * @return True if communication and response is as expected.
+     */
+    bool
+    DriverAD5272::readMemory(int& mem_value)
+    {
+      m_task->trace("DriverAD5272::readMemory executing.");
+
+      uint8_t recv_data[2];
+      bool frame_error;
+
+      if(request(CMD_AD5272_READMEM, NULL, 0, recv_data, 2, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::readMemory] Received an error frame type.");
+          return false;
+        }
+
+        mem_value = (recv_data[0]<<8) | recv_data[1];
+        mem_value = (mem_value * c_max_resistor) / (1 << c_rdac_bits);
+        return true;
+      }
+
+      m_task->spew("[DriverAD5272::readMemory] Communication error.");
+      return false;
+    }
+
   }
 }
