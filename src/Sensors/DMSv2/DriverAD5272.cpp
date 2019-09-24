@@ -234,5 +234,54 @@ namespace Sensors
       m_task->spew("[DriverAD5272::readResistance] Communication error.");
       return false;
     }
+
+    /**
+     * @brief This function allows to change the AD5272 resistance by writing in 
+     * the RDAC register.
+     * 
+     * @param resistor Desired resistance of AD5272.
+     * @return True if communication and response is as expected and writing to the 
+     * RDAC register is enabled.
+     */
+    bool
+    DriverAD5272::changeResistance(int resistor)
+    {
+      m_task->trace("DriverAD5272::changeResistance executing.");
+
+      uint8_t recv_data, send_data[2];
+      uint16_t aux;
+      bool frame_error;
+
+      if(readCTRL(aux))
+      {
+        if(!(aux & 0x02))
+        {
+          m_task->spew("[DriverAD5272::changeResistance] RDAC writing is not active.");
+          return false;
+        }
+      }
+      else
+      {
+        m_task->spew("[DriverAD5272::changeResistance] Error reading the CTRL register.");
+        return false;
+      }
+
+      send_data[0] = (resistor >> 8);
+      send_data[1] = resistor;
+      if(request(CMD_AD5272_WRITERDAC, send_data, 2, &recv_data, 1, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::changeResistance] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data == 1)
+          return true;
+      }
+
+      m_task->spew("[DriverAD5272::changeResistance] Communication error.");
+      return false; 
+    }
   }
 }
