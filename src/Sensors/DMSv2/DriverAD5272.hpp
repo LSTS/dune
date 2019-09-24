@@ -33,26 +33,27 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "CommsDMSv2.hpp"
+
 namespace Sensors
 {
+  //! Class to control the AD5272 peripheral.
+  //!
+  //! This class allows to send commands related to the AD5272.
+  //! @author Miguel Lançós
   namespace DMSv2
   {
     using DUNE_NAMESPACES;
 
-    class DriverAD5272
+    class DriverAD5272: private CommsDMSv2
     {
       public:
-      DriverAD5272(DUNE::Tasks::Task* task, DUNE::Hardware::SerialPort* uart);
-
-      private:
-      //! Parent task.
-      DUNE::Tasks::Task* m_task;
-      //! Serial port handle.
-      SerialPort* m_uart;
-
-      bool
-      request(uint8_t cmd, uint8_t *send_data, uint8_t send_len, uint8_t* recv_data, uint8_t recv_len, bool& error);
-
+      DriverAD5272(DUNE::Tasks::Task* task, DUNE::Hardware::SerialPort* uart):
+      CommsDMSv2(task,uart)
+      {
+        m_task->trace("Initializing DriverAD5272.");
+      }
     };
   }
 }
