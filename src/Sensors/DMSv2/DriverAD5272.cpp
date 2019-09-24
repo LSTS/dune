@@ -27,6 +27,7 @@
 // Author: Miguel Lançós                                                    *
 //***************************************************************************
 
+// Local headers
 #include "DriverAD5272.hpp"
 
 namespace Sensors
@@ -34,5 +35,35 @@ namespace Sensors
   namespace DMSv2
   {
     using DUNE_NAMESPACES;
+
+    /**
+     * @brief This function allows to reset the AD5272 RDAC register to the Memory set 
+     * value and the CTRL register to zero.
+     * 
+     * @return True if the response and communication is as expected.
+     */
+    bool
+    DriverAD5272::doReset(void)
+    {
+      m_task->trace("DriverAD5272::doReset executing.");
+
+      uint8_t recv_data;
+      bool frame_error;
+
+      if(request(CMD_AD5272_RESET, NULL, 0, &recv_data, 1, frame_error))
+      {
+        if(frame_error)
+        {
+          m_task->spew("[DriverAD5272::doReset] Received an error frame type.");
+          return false;
+        }
+
+        if(recv_data == 1)
+          return true;
+      }
+
+      m_task->spew("[DriverAD5272::doReset] Communication error.");
+      return false;
+    }
   }
 }

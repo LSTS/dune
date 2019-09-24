@@ -55,6 +55,9 @@ namespace Sensors
         m_task->trace("Initializing DriverAD5272.");
       }
 
+      bool
+      doReset(void);
+
       private:
       typedef enum
       {
