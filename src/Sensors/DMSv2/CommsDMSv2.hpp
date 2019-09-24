@@ -40,6 +40,11 @@ namespace Sensors
 	//! correct protocol.
   //!
   //! This class only provides the basic function to communicate.
+	//!
+  //! For developers: The trace() is used in the beggining of every function to indicate
+  //! the execution of it. The spew() is used in all error to indicate the reason of it.
+  //! The debug() is used freely at your convenience.
+  //!
   //! @author Miguel Lançós
   namespace DMSv2
   {
@@ -109,7 +114,8 @@ namespace Sensors
 					return false;
 				}
 				}
-	
+				m_task->debug("Recv frame: %02x %02x %02x %02x %02x %02x", recv_buff[0], recv_buff[1], recv_buff[2], recv_buff[3], recv_buff[4], recv_buff[5]);
+
 				// Received data filtering
 				if((recv_buff[0] != '#') || (recv_buff[1] != cmd))
 				{

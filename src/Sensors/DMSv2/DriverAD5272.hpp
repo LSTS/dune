@@ -41,6 +41,11 @@ namespace Sensors
   //! Class to control the AD5272 peripheral.
   //!
   //! This class allows to send commands related to the AD5272.
+  //!
+  //! For developers: The trace() is used in the beggining of every function to indicate
+  //! the execution of it. The spew() is used in all error to indicate the reason of it.
+  //! The debug() is used freely at your convenience.
+  //!
   //! @author Miguel Lançós
   namespace DMSv2
   {
