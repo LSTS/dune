@@ -31,6 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
+#include "DriverDMSv2.hpp"
 #include "DriverAD5272.hpp"
 
 namespace Sensors
@@ -57,7 +58,9 @@ namespace Sensors
       Hardware::SerialPort* m_uart;
       //! Task arguments.
       Arguments m_args;
-      //! Driver of the AD5272 class.
+      //! Driver of DMSv2 board.
+      DriverDMSv2* m_dms;
+      //! Driver of AD5272 peripheral.
       DriverAD5272* m_ad5272;
 
 
@@ -67,6 +70,7 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
+        m_dms(NULL),
         m_ad5272(NULL)
       {
         param("Serial Port - Device", m_args.uart_dev)
@@ -103,11 +107,12 @@ namespace Sensors
         try
         {
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_dms = new DriverDMSv2(this, m_uart);
           m_ad5272 = new DriverAD5272(this, m_uart);
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 15);
+          throw RestartNeeded(e.what(), 10);
         }
       }
 
@@ -122,8 +127,9 @@ namespace Sensors
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_uart);
+        Memory::clear(m_dms);
         Memory::clear(m_ad5272);
+        Memory::clear(m_uart);
       }
 
       //! Main loop.
