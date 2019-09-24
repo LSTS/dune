@@ -35,6 +35,13 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
+    /**
+     * @brief This function allows to receive the current firmware version present
+     * in the DMS microcontroller.
+     * 
+     * @param firmware_version 
+     * @return  True if the communication and data are as expected. 
+     */
     bool
     DriverDMSv2::getFirmwareVersion(float& firmware_version)
     {
