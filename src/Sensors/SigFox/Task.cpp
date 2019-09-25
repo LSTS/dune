@@ -46,7 +46,7 @@ namespace Sensors
       std::string uart_dev;
       //! Serial port baud rate.
       unsigned uart_baud;
-    }
+    };
 
     struct Task: public DUNE::Tasks::Task
     {
