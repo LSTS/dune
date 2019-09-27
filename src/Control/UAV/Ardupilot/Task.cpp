@@ -58,7 +58,22 @@ namespace Control
         //! Fixed wing types
         VEHICLE_FIXEDWING,
         //! Copter types (quad, hexa, etc)
-        VEHICLE_COPTER
+        VEHICLE_COPTER,
+        //! Submarine
+        VEHICLE_SUBMARINE
+      };
+
+      //! List of Submarine Modes.
+      enum APM_submarineModes
+      {
+        SUB_MODE_STABILIZE = 0,                     // Hold level position
+        SUB_MODE_ACRO = 1,                          // Manual angular rate, throttle
+        SUB_MODE_DEPTH_HOLD = 2,                    // Hold level and depth position
+        SUB_MODE_AUTO = 3,                          // AUTO control (Waypoint)
+        SUB_MODE_GUIDED = 4,                        // AUTO control (Coordinate/Direction)
+        SUB_MODE_CIRCLE = 7,                        // AUTO control (Circling)
+        SUB_MODE_POS_HOLD = 16,                     // Hold position
+        SUB_MODE_MANUAL   =19                       // Manual
       };
 
       //! List of Arducopter Modes.
@@ -120,10 +135,18 @@ namespace Control
         uint8_t comm_timeout;
         //! Use Ardupilot's waypoint tracker
         bool ardu_tracker;
+        //! Use TCP or UDP
+        bool tcp_or_udp;
         //! TCP Port
         uint16_t TCP_port;
         //! TCP Address
         Address TCP_addr;
+        //! UDP Port
+        uint16_t UDP_listen_port;
+        //! UDP Port
+        uint16_t UDP_port;
+        //! UDP Address
+        Address UDP_addr;
         //! IPv4 Address
         Address ip;
         //! Telemetry Rate
@@ -194,6 +217,8 @@ namespace Control
         IMC::ControlLoops m_controllps;
         //! TCP socket
         Network::TCPSocket* m_TCP_sock;
+        //! UDP socket
+        Network::UDPSocket* m_UDP_sock;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -245,6 +270,7 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
+          m_UDP_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
@@ -286,6 +312,10 @@ namespace Control
           .defaultValue("false")
           .description("Use Ardupilot's waypoint tracker");
 
+          param("Use TCP (or UDP)", m_args.tcp_or_udp)
+           .defaultValue("true")
+           .description("Ardupilot communications timeout");
+
           param("TCP - Port", m_args.TCP_port)
           .defaultValue("5760")
           .description("Port for connection to Ardupilot");
@@ -297,6 +327,18 @@ namespace Control
           param("IPv4 - Address", m_args.ip)
           .defaultValue("0.0.0.0")
           .description("Address for neptus connection to Ardupilot");
+
+          param("UDP - Listen Port", m_args.UDP_listen_port)
+          .defaultValue("14550")
+          .description("Port for connection from Ardupilot");
+
+          param("UDP - Port", m_args.UDP_port)
+          .defaultValue("14549")
+          .description("Port for connection to Ardupilot");
+
+          param("UDP - Address", m_args.UDP_addr)
+          .defaultValue("127.0.0.1")
+          .description("Address for connection to Ardupilot");
 
           param("Telemetry Rate", m_args.trate)
           .defaultValue("10")
@@ -475,6 +517,7 @@ namespace Control
         onResourceRelease(void)
         {
           Memory::clear(m_TCP_sock);
+          Memory::clear(m_UDP_sock);
         }
 
         void
@@ -505,9 +548,20 @@ namespace Control
         {
           try
           {
-            m_TCP_sock = new TCPSocket;
-            m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
-            m_TCP_sock->setNoDelay(true);
+            if (m_args.tcp_or_udp)
+             {
+               m_TCP_sock = new TCPSocket;
+               m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+               m_TCP_sock->setNoDelay(true);
+             }
+             else
+             {
+               m_UDP_sock = new UDPSocket;
+               m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+
+               inf(DTR("Ardupilot UDP connected."));
+             }
+
             setupRate(m_args.trate);
             inf(DTR("Ardupilot interface initialized"));
 
@@ -520,6 +574,7 @@ namespace Control
           catch (...)
           {
             Memory::clear(m_TCP_sock);
+            Memory::clear(m_UDP_sock);
             war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
@@ -793,8 +848,7 @@ namespace Control
             return;
           }
 
-          if (m_vehicle_type == VEHICLE_COPTER &&
-              m_mode != CP_MODE_GUIDED)
+          if (m_vehicle_type == VEHICLE_COPTER && m_mode != CP_MODE_GUIDED)
           {
             // Copters must first be set to guided as of AC 3.2
             uint8_t buf[512];
@@ -812,8 +866,7 @@ namespace Control
 
           // Pack and send to arducopter
           // only if ardu_tracker is disabled.
-          if (m_vehicle_type == VEHICLE_COPTER
-              && !m_args.ardu_tracker)
+          if ((m_vehicle_type == VEHICLE_COPTER || m_vehicle_type == VEHICLE_SUBMARINE) && !m_args.ardu_tracker)
           {
             uint32_t mask = 0x07FF; // Start, ignore all. (1s 12 first bits)
             mask &= ~(1 << 9); // Clear bit 10.
@@ -926,7 +979,7 @@ namespace Control
           }
 
           //! In Auto mode but still in ground - warns operator to add takeoff to the plan.
-          if (m_ground)
+          if (m_ground && (m_vehicle_type != VEHICLE_SUBMARINE))
           {
             war(DTR("ArduPilot in Auto mode, but still in ground! Add a takeoff waypoint to the plan."));
             return;
@@ -936,11 +989,16 @@ namespace Control
           mavlink_message_t msg;
           uint16_t n;
 
-          if (!((m_mode == CP_MODE_GUIDED) || (m_mode == PL_MODE_GUIDED)))
+          if (!((m_mode == CP_MODE_GUIDED) || (m_mode == PL_MODE_GUIDED) || (m_mode == SUB_MODE_GUIDED)))
           {
             // Copters must first be set to guided as of AC 3.2
             // Planes must first be set to guided as of AP 3.3.0
-            uint8_t mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
+            uint8_t mode;
+            if(m_vehicle_type == VEHICLE_SUBMARINE)
+              mode = (uint8_t) SUB_MODE_GUIDED;
+            else
+              mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
+
             mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
@@ -954,26 +1012,29 @@ namespace Control
           if (m_vehicle_type == VEHICLE_COPTER)
           {
             mavlink_msg_param_set_pack(255, 0, &msg,
-                                                 m_sysid, //! target_system System ID
-                                                 0, //! target_component Component ID
-                                                 "WPNAV_SPEED", //! Parameter name
-                                                 (int)(path->speed * 100), //! Parameter value
-                                                 MAV_PARAM_TYPE_INT16); //! Parameter type
+                                       m_sysid, //! target_system System ID
+                                       0, //! target_component Component ID
+                                       "WPNAV_SPEED", //! Parameter name
+                                       (int)(path->speed * 100), //! Parameter value
+                                       MAV_PARAM_TYPE_INT16); //! Parameter type
           }
           else
           {
             mavlink_msg_param_set_pack(255, 0, &msg,
-                                     m_sysid, //! target_system System ID
-                                     0, //! target_component Component ID
-                                     "TRIM_ARSPD_CM", //! Parameter name
-                                     (int)(path->speed * 100), //! Parameter value
-                                     MAV_PARAM_TYPE_INT16); //! Parameter type
+                                       m_sysid, //! target_system System ID
+                                       0, //! target_component Component ID
+                                       "TRIM_ARSPD_CM", //! Parameter name
+                                       (int)(path->speed * 100), //! Parameter value
+                                       MAV_PARAM_TYPE_INT16); //! Parameter type
           }
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
 
+          if(m_vehicle_type == VEHICLE_SUBMARINE)
+            sendCommandPacket(MAV_CMD_DO_CHANGE_SPEED, 0, path->speed, 0, 0, 0, 0, 0); // Setting Desired Airspeed
+
           //! Setting loiter radius parameter
-          if (m_vehicle_type != VEHICLE_COPTER)
+          if ((m_vehicle_type != VEHICLE_COPTER) && (m_vehicle_type != VEHICLE_SUBMARINE))
           {
             mavlink_msg_param_set_pack(255, 0, &msg,
                                        m_sysid, //! target_system System ID
@@ -989,44 +1050,64 @@ namespace Control
 
           float alt = (path->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)path->end_z;
 
+          // Check if plan is in Altitude or Height
+          bool altitude = (path->end_z_units == IMC::Z_ALTITUDE) ? true : false;
+
           //! Destination
           if (m_vehicle_type == VEHICLE_COPTER)
           {
             mavlink_msg_mission_item_pack(255, 0, &msg,
-                                                    m_sysid, //! target_system System ID
-                                                    0, //! target_component Component ID
-                                                    1, //! seq Sequence
-                                                    MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                                    MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                                    2, //! current false:0, true:1, guided mode:2
-                                                    0, //! autocontinue to next wp
-                                                    0, //! p1 - Radius of acceptance? Think not used.
-                                                    0, //! Not used
-                                                    0, // direction does not matter for copter.
-                                                    0, //! Not used
-                                                    (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
-                                                    (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                                    alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
+                                          m_sysid, //! target_system System ID
+                                          0, //! target_component Component ID
+                                          1, //! seq Sequence
+                                          altitude ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                          MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                          2, //! current false:0, true:1, guided mode:2
+                                          0, //! autocontinue to next wp
+                                          0, //! p1 - Radius of acceptance? Think not used.
+                                          0, //! Not used
+                                          0, // direction does not matter for copter.
+                                          0, //! Not used
+                                          (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+                                          (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+                                          altitude ? path->end_z : path->end_z - m_hae_offset); //! z PARAM7 / z position: global: altitude
+          }
+          else if (m_vehicle_type == VEHICLE_SUBMARINE)
+          {
+            mavlink_msg_mission_item_pack(255, 0, &msg,
+                                          m_sysid, //! target_system System ID
+                                          0, //! target_component Component ID
+                                          1, //! seq Sequence
+                                          MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                          MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                          2, //! current false:0, true:1, guided mode:2
+                                          0, //! autocontinue to next wp
+                                          0, //! p1 - Radius of acceptance? Think not used.
+                                          0, //! Not used
+                                          0, // direction does not matter for copter.
+                                          0, //! Not used
+                                          (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+                                          (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+                                          -path->end_z); //! z PARAM7 / z position: global: -altitude (depth)
           }
           else
           {
-          //! Because this is a GUIDED waypoint, MISSION_COUNT and WRITE_PARTIAL_LIST messages should not be sent
-          mavlink_msg_mission_item_pack(255, 0, &msg,
-                                        m_sysid, //! target_system System ID
-                                        0, //! target_component Component ID
-                                        0, //! seq Sequence
-                                        MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                        (path->lradius ? MAV_CMD_NAV_LOITER_UNLIM : MAV_CMD_NAV_WAYPOINT), //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                        2, //! current false:0, true:1, guided mode:2
-                                        1, //! autocontinue to next wp
-                                        0, //! Not used
-                                        0, //! Not used
-                                        path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0, //! If <0, then CCW loiter
-                                        0, //! Not used
-                                        (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
-                                        (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                        alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
-
+            //! Because this is a GUIDED waypoint, MISSION_COUNT and WRITE_PARTIAL_LIST messages should not be sent
+            mavlink_msg_mission_item_pack(255, 0, &msg,
+                                          m_sysid, //! target_system System ID
+                                          0, //! target_component Component ID
+                                          0, //! seq Sequence
+                                          MAV_FRAME_GLOBAL, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                          (path->lradius ? MAV_CMD_NAV_LOITER_UNLIM : MAV_CMD_NAV_WAYPOINT), //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                          2, //! current false:0, true:1, guided mode:2
+                                          1, //! autocontinue to next wp
+                                          0, //! Not used
+                                          0, //! Not used
+                                          path->flags & DesiredPath::FL_CCLOCKW ? -1 : 0, //! If <0, then CCW loiter
+                                          0, //! Not used
+                                          (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
+                                          (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+                                          alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
           }
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -1035,13 +1116,15 @@ namespace Control
 
           m_pcs.start_lat = m_lat;
           m_pcs.start_lon = m_lon;
-          m_pcs.start_z = getHeight();
-          m_pcs.start_z_units = IMC::Z_HEIGHT;
-
+          m_pcs.start_z = altitude ? m_estate.alt : getHeight();
+          if (m_vehicle_type == VEHICLE_SUBMARINE)
+            m_pcs.start_z_units = IMC::Z_DEPTH;
+          else
+            m_pcs.start_z_units = altitude ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
           m_pcs.end_lat = path->end_lat;
           m_pcs.end_lon = path->end_lon;
-          m_pcs.end_z = alt;
-          m_pcs.end_z_units = IMC::Z_HEIGHT;
+          m_pcs.end_z = path->end_z_units;;
+          m_pcs.end_z_units = path->end_z_units;
           m_pcs.flags = PathControlState::FL_3DTRACK | PathControlState::FL_CCLOCKW;
           m_pcs.flags &= path->flags;
           m_pcs.lradius = path->lradius;
@@ -1286,25 +1369,41 @@ namespace Control
         loiterHere(void)
         {
 
-          if ((getEntityState() != IMC::EntityState::ESTA_NORMAL) || m_external || m_ground)
+          if ((getEntityState() != IMC::EntityState::ESTA_NORMAL) || m_external || (m_ground && (m_vehicle_type != VEHICLE_SUBMARINE)))
             return;
 
+          uint16_t n;
           mavlink_message_t msg;
-          uint8_t buf[512];
+          uint8_t mode, buf[512];
 
-          mavlink_msg_param_set_pack(255, 0, &msg,
-                                     m_sysid, //! target_system System ID
-                                     0, //! target_component Component ID
-                                     "WP_LOITER_RAD", //! Parameter name
-                                     m_args.lradius, //! Parameter value
-                                     MAV_PARAM_TYPE_INT16); //! Parameter type
+          if(m_vehicle_type != VEHICLE_SUBMARINE)
+          {
+            mavlink_msg_param_set_pack(255, 0, &msg,
+                                       m_sysid, //! target_system System ID
+                                       0, //! target_component Component ID
+                                       "WP_LOITER_RAD", //! Parameter name
+                                       m_args.lradius, //! Parameter value
+                                       MAV_PARAM_TYPE_INT16); //! Parameter type
 
-          uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
 
-          sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
+            sendCommandPacket(MAV_CMD_NAV_LOITER_UNLIM);
 
-          debug("Sent LOITER packet to Ardupilot");
+            debug("Sent LOITER packet to Ardupilot");
+          }
+          else
+          {
+            mode = (uint8_t) SUB_MODE_POS_HOLD;
+
+            mavlink_msg_set_mode_pack(255, 0, &msg,
+                                      m_sysid,
+                                      1,
+                                      mode);
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            debug("Changed to POS_HOLD mode.");
+          }
 
           m_pcs.start_lat = m_fix.lat;
           m_pcs.start_lon = m_fix.lon;
@@ -1343,6 +1442,15 @@ namespace Control
         void
         consume(const IMC::VehicleMedium* vm)
         {
+          if(m_vehicle_type == VEHICLE_SUBMARINE)
+          {
+            if(m_estate.depth < 1)
+              m_ground = true;
+            else
+              m_ground = false;
+            return;
+          }
+
           m_ground = (vm->medium == IMC::VehicleMedium::VM_GROUND);
 
           if (!m_ground)
@@ -1479,7 +1587,7 @@ namespace Control
           while (!stopping())
           {
             // Handle data
-            if (m_TCP_sock)
+            if (m_TCP_sock || m_UDP_sock)
             {
               handleArdupilotData();
             }
@@ -1517,6 +1625,9 @@ namespace Control
           if (m_TCP_sock != NULL)
             return Poll::poll(*m_TCP_sock, timeout);
 
+          if (m_UDP_sock != NULL)
+             return Poll::poll(*m_UDP_sock, timeout);
+
           return false;
         }
 
@@ -1528,26 +1639,45 @@ namespace Control
             trace("Sending something");
             return m_TCP_sock->write((char*)bfr, size);
           }
+          else if (m_UDP_sock)
+          {
+            trace("Sending something");
+            return m_UDP_sock->write(bfr, size, m_args.UDP_addr, m_args.UDP_port);
+          }
           return 0;
         }
 
         int
         receiveData(uint8_t* buf, size_t blen)
         {
-          if (m_TCP_sock)
+          if (m_TCP_sock || m_UDP_sock)
           {
             try
             {
-              return m_TCP_sock->read(buf, blen);
+               if (m_TCP_sock)
+                 return m_TCP_sock->read(buf, blen);
+               if (m_UDP_sock)
+                 return m_UDP_sock->read(buf, blen, &m_args.UDP_addr, &m_args.UDP_listen_port);
             }
             catch (std::runtime_error& e)
             {
               err("%s", e.what());
               war(DTR("Connection lost, retrying..."));
               Memory::clear(m_TCP_sock);
+              Memory::clear(m_UDP_sock);
 
-              m_TCP_sock = new Network::TCPSocket;
-              m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+              if (m_args.tcp_or_udp)
+              {
+                m_TCP_sock = new TCPSocket;
+                m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+                m_TCP_sock->setNoDelay(true);
+              }
+              else
+              {
+                m_UDP_sock = new UDPSocket;
+                m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+              }
+
               return 0;
             }
           }
@@ -1848,8 +1978,16 @@ namespace Control
                                       m_estate.vx, m_estate.vy, m_estate.vz,
                                       &m_estate.u, &m_estate.v, &m_estate.w);
 
-          m_estate.alt = (double) gp.relative_alt * 1e-3;   //AGL (relative to home altitude)
-          m_estate.depth = -1;
+          if(m_vehicle_type == VEHICLE_SUBMARINE)
+          {
+            m_estate.depth = (double) gp.relative_alt * 1e-3 * (-1);   //AGL (relative to home altitude)
+            m_estate.alt = -1;
+          }
+          else
+          {
+            m_estate.alt = (double) gp.relative_alt * 1e-3;   //AGL (relative to home altitude)
+            m_estate.depth = -1;
+          }
 
           // Save WGS84 height on the ground
           if(m_ground)
@@ -2040,14 +2178,18 @@ namespace Control
               return;
             case MAV_TYPE_FIXED_WING:
               m_vehicle_type = VEHICLE_FIXEDWING;
-              inf(DTR("Controlling a fixed-wing vehicle."));
+              war(DTR("Controlling a fixed-wing vehicle."));
               break;
             case MAV_TYPE_QUADROTOR:
             case MAV_TYPE_HEXAROTOR:
             case MAV_TYPE_OCTOROTOR:
             case MAV_TYPE_TRICOPTER:
               m_vehicle_type = VEHICLE_COPTER;
-              inf(DTR("Controlling a multirotor."));
+              war(DTR("Controlling a multirotor."));
+              break;
+            case MAV_TYPE_SUBMARINE:
+              m_vehicle_type = VEHICLE_SUBMARINE;
+              inf(DTR("Controlling a submarine."));
               break;
             }
           }
@@ -2056,7 +2198,53 @@ namespace Control
             debug("Switched mode from %d to %d", m_mode, hbt.custom_mode);
 
           m_mode = hbt.custom_mode;
-          if (m_vehicle_type == VEHICLE_COPTER)
+          if (m_vehicle_type == VEHICLE_SUBMARINE)
+          {
+            switch(m_mode)
+            {
+              default:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "MANUAL";
+                m_external = true;
+                break;
+              case SUB_MODE_STABILIZE:
+                mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
+                mode.mode = "STABILIZE";
+                m_external = true;
+                break;
+              case SUB_MODE_DEPTH_HOLD:
+                mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
+                mode.mode = "DEPTH HOLD";
+                m_external = true;
+                break;
+              case SUB_MODE_POS_HOLD:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "POS_HOLD";
+                m_external = false;
+                break;
+              case SUB_MODE_AUTO:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "AUTO";
+                m_external = false;
+                break;
+              case SUB_MODE_CIRCLE:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "CIRCLE";
+                m_external = false;
+                break;
+              case SUB_MODE_GUIDED:
+                mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+                mode.mode = "GUIDED";
+                m_external = false;
+                break;
+              case SUB_MODE_ACRO:
+                mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+                mode.mode = "ACRO";
+                m_external = true;
+                break;
+            }
+          }
+          else if (m_vehicle_type == VEHICLE_COPTER)
           {
             switch(m_mode)
             {
@@ -2227,6 +2415,9 @@ namespace Control
                                 &destination(0), &destination(1));
 
             wp_distance = (destination - current_pos).norm_2();
+
+            if(m_vehicle_type == VEHICLE_SUBMARINE)
+              wp_distance = nav_out.wp_dist;
           }
 
           // Store mavlink distance.
@@ -2237,7 +2428,7 @@ namespace Control
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
           d_z.value = getHeight() + nav_out.alt_error;
-          d_z.z_units = IMC::Z_HEIGHT;
+          d_z.z_units = (m_vehicle_type == VEHICLE_SUBMARINE) ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
 
           dispatch(d_roll);
           dispatch(d_pitch);
@@ -2256,11 +2447,13 @@ namespace Control
 
           if (m_vehicle_type == VEHICLE_COPTER)
             is_valid_mode = (m_mode == CP_MODE_GUIDED || (m_mode == CP_MODE_AUTO                     )) ? true : false;
+          else if (m_vehicle_type == VEHICLE_SUBMARINE)
+            is_valid_mode = (m_mode == SUB_MODE_GUIDED || (m_mode == SUB_MODE_AUTO                   )) ? true : false;
           else
             is_valid_mode = (m_mode == PL_MODE_GUIDED || (m_mode == PL_MODE_AUTO && m_current_wp == 3)) ? true : false;
 
           // Check Loiter tolerance
-          if (m_vehicle_type == VEHICLE_COPTER)
+          if (m_vehicle_type == VEHICLE_COPTER || m_vehicle_type == VEHICLE_SUBMARINE)
           {
             if ((wp_distance <= m_args.ltolerance)
                && is_valid_mode)
@@ -2281,7 +2474,7 @@ namespace Control
           float since_last_wp = Clock::get() - m_last_wp;
 
           bool is_near = false;
-          if (m_vehicle_type == VEHICLE_COPTER)
+          if (m_vehicle_type == VEHICLE_COPTER || m_vehicle_type == VEHICLE_SUBMARINE)
           {
             is_near = (!m_changing_wp
                 && (wp_distance <= m_args.secs * m_gnd_speed
