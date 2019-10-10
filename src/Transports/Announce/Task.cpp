@@ -58,8 +58,6 @@ namespace Transports
       double announce_delay;
       // Ports.
       std::vector<unsigned> ports;
-      // Local UDP port.
-      unsigned port;
       // True if multicast is enabled.
       bool enable_mcast;
       // True of broadcast is enabled.
@@ -88,8 +86,6 @@ namespace Transports
       IMC::EstimatedState* m_estate;
       // Socket.
       UDPSocket m_sock;
-      // Port bind retries.
-      static const int c_port_retries = 5;
       // List of destinations.
       std::vector<Destination> m_dsts;
       // Task arguments.
@@ -146,11 +142,6 @@ namespace Transports
         .defaultValue("")
         .description("Additional external services");
 
-        param("Local Port", m_args.port)
-        .defaultValue("30090")
-        .description("Local UDP port");
-
-
         param("System Type", m_args.sys_type)
         .defaultValue("")
         .description("System type");
@@ -173,28 +164,6 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        // Find a free port.
-        unsigned port_limit = m_args.port + c_port_retries;
-        while (m_args.port != port_limit)
-        {
-          try
-          {
-            m_sock.bind(m_args.port, Address::Any, false);
-            break;
-          }
-          catch (std::runtime_error& e)
-          {
-            war(DTR("failed to bind to port %u: %s"), m_args.port, e.what());
-            ++m_args.port;
-          }
-        }
-
-        if (m_args.port == port_limit)
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
-          throw std::runtime_error(DTR("failed to find one available port"));
-        }
-        inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.port);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
