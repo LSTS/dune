@@ -227,7 +227,54 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
-        // Bind listener socket to expect connection from driver
+        // Initial setup
+        networkSetup();
+        simulatorSetup();
+
+        // Set state update period.
+        m_pos_update.setTop(m_args.update_period);
+
+        // Deactivate until valid simulated message
+        requestDeactivation();
+      }
+
+      //! Release resources. Clears TCP sockets.
+      void
+      onResourceRelease(void)
+      {
+        for (unsigned i = 0; i < NUM_SOCK; ++i)
+          Memory::clear(m_socket[i]);
+      }
+
+      void
+      connect(unsigned sock_num, 
+              Address add, 
+              uint16_t port)
+      {
+        try
+        {
+          Memory::clear(m_socket[sock_num]);
+          m_socket[sock_num] = new TCPSocket;
+          m_socket[sock_num]->connect(add, port);
+
+          debug(DTR("%s socket connected: %s:%d"),
+                c_sock_name[sock_num].c_str(),
+                add.c_str(),
+                port);
+        }
+        catch (std::runtime_error& e)
+        {
+          std::string str = "Unable to start " + c_sock_name[sock_num] 
+                            + " socket: " + std::string(e.what());
+          throw RestartNeeded(DTR(str.c_str()), 2, false);
+        }
+      }
+
+      //! Initial network setup
+      void
+      networkSetup(void)
+      {
+        // Bind listener socket, to expect connection from driver
         try
         {
           m_socket[LISTENER] = new TCPSocket;
@@ -241,10 +288,7 @@ namespace Simulators
           throw RestartNeeded(DTR(str.c_str()), 2, false);
         }
 
-        // Set state update period.
-        m_pos_update.setTop(m_args.update_period);
-
-        // Get modem address and use this to set modem IP.
+        // Get modem address and use this to choose modem IP.
         if (m_args.modem_address == Address("0.0.0.0"))
         {
           std::string system = getSystemName();
@@ -260,26 +304,22 @@ namespace Simulators
           }
           else
           {
-            throw RestartNeeded("System not suported: " + system, 0);
+            std::string str = "System not suported: " + system;
+            throw RestartNeeded(DTR(str.c_str()), 0);
           }
         }
 
-        // Connect to modem and send initial settings.
+        // Connect to modem.
         connectToModem();
-        simulatorSetup();
-        
-        // Deactivate until valid simulated message
-        requestDeactivation();
-      }
-
-      //! Release resources. Clears TCP sockets.
-      void
-      onResourceRelease(void)
-      {
-        for (unsigned i = 0; i < NUM_SOCK; ++i)
-          Memory::clear(m_socket[i]);
       }
       
+      void
+      connectToModem(void)
+      {
+        connect(MODEM, m_args.modem_address, m_args.modem_port);
+        connect(SETTINGS, m_args.modem_address, m_args.settings_port);
+      }
+
       //! Consume vehicle position
       void
       consume(const IMC::SimulatedState* msg)
@@ -289,11 +329,11 @@ namespace Simulators
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           requestActivation();
         }
-        
+
         m_sstate = *msg;
       }
 
-            //! Consume vehicle position and update modem position
+      //! Consume vehicle position and update modem position
       void
       consume(const IMC::GpsFix* msg)
       {
@@ -303,13 +343,61 @@ namespace Simulators
           requestActivation();
         }
 
-        m_sstate.x = 0;
-        m_sstate.y = 0;
-        m_sstate.z = 0;
-        
+        if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
+          return;
+
+        inf("GPSFix (WGS84) = %f %f %f", msg->lat, msg->lon, msg->height);
+
         m_sstate.lat = msg->lat;
         m_sstate.lon = msg->lon;
         m_sstate.height = msg->height;
+
+        m_sstate.x = 0;
+        m_sstate.y = 0;
+        m_sstate.z = 0;
+      }
+
+      void
+      waitReply(std::string parameter)
+      {
+        while (!Poll::poll(*m_socket[SETTINGS], 1.0))
+
+        m_bfr.clear();
+        m_bfr.resize(c_bfr_size);
+        size_t rv = m_socket[SETTINGS]->read(&m_bfr[0], m_bfr.size());
+        if (rv)
+        {
+          std::string str(m_bfr.begin(), m_bfr.end());
+          str = str.substr(0,rv);
+
+          if (String::startsWith(str, parameter))
+            return;
+          else
+            throw RestartNeeded(DTR("Wrong setting. Please restart modem."), 1);
+        }
+      }
+
+      template<typename T>
+      void
+      sendSetting(std::string parameter, std::vector<T> values)
+      {
+        std::string str = parameter + " =";
+        
+        for (auto itr = values.begin(); itr != values.end(); ++itr)
+          str += " " + std::to_string(*itr);
+        
+        str += "\n";
+        m_socket[SETTINGS]->writeString(str.c_str());
+
+        trace("Set: %s", sanitize(str).c_str());
+        waitReply(parameter);
+      }
+
+      template<typename T>
+      void
+      sendSetting(std::string parameter, T value)
+      {
+        sendSetting(parameter, std::vector<T>(1, value));
       }
 
       void
@@ -348,79 +436,8 @@ namespace Simulators
         m_pos_update.reset();
       }
 
-      template<typename T>
       void
-      sendSetting(std::string parameter, std::vector<T> values)
-      {
-        std::string str = parameter + " =";
-        
-        for (auto itr = values.begin(); itr != values.end(); ++itr)
-          str += " " + std::to_string(*itr);
-        
-        str += "\n";
-        m_socket[SETTINGS]->writeString(str.c_str());
-      }
-
-      template<typename T>
-      void
-      sendSetting(std::string parameter, T value)
-      {
-        sendSetting(parameter, std::vector<T>(1, value));
-      }
-
-      void
-      replySettings()
-      {
-        if (getDebugLevel() < DebugLevel::DEBUG_LEVEL_SPEW)
-          return;
-
-        if (!Poll::poll(*m_socket[SETTINGS], 1.0))
-          return;
-
-        m_bfr.clear();
-        m_bfr.resize(c_bfr_size);
-        size_t rv = m_socket[SETTINGS]->read(&m_bfr[0], m_bfr.size());
-        if (rv)
-        {
-          std::string str(m_bfr.begin(), m_bfr.end());
-          str = str.substr(0,rv);
-          spew(DTR("Settings: %s"), sanitize(str).c_str());
-        }
-      }
-      
-      void
-      connect(unsigned sock_num, 
-              Address add, 
-              uint16_t port)
-      {
-        try
-        {
-          Memory::clear(m_socket[sock_num]);
-          m_socket[sock_num] = new TCPSocket;
-          m_socket[sock_num]->connect(add, port);
-
-          debug(DTR("%s socket connected: %s:%d"),
-                c_sock_name[sock_num].c_str(),
-                add.c_str(),
-                port);
-        }
-        catch (std::runtime_error& e)
-        {
-          std::string str = "Unable to start " + c_sock_name[sock_num] 
-                            + " socket: " + std::string(e.what());
-          throw RestartNeeded(DTR(str.c_str()), 2, false);
-        }
-      }
-
-      void
-      connectToModem(void)
-      {
-        connect(MODEM, m_args.modem_address, m_args.modem_port);
-        connect(SETTINGS, m_args.modem_address, m_args.settings_port);
-      }
-
-      void
-      checkSocket()
+      checkSocket(void)
       {
         if (!Poll::poll(*m_socket[LISTENER], 1.0))
           return;
@@ -432,6 +449,19 @@ namespace Simulators
               c_sock_name[DRIVER].c_str(),
               m_socket[DRIVER]->getBoundAddress().c_str(), 
               m_socket[DRIVER]->getBoundPort());
+      }
+
+      void
+      checkReset(std::string str)
+      {
+        if (String::startsWith(str, "ATZ0") || 
+            String::startsWith(str, "PHYOFF"))
+        {
+          debug(DTR("Reset command: %s -> Reconnecting to modem."), 
+                sanitize(str.substr(0, str.find('\n'))).c_str());
+          Delay::wait(5.0);
+          connectToModem();
+        }
       }
 
       //! Read incoming datagrams. If incoming data is a DUNE::IMC::AcousticMessage,
@@ -455,14 +485,7 @@ namespace Simulators
           std::string str(m_bfr.begin(), m_bfr.end());
           str = str.substr(0, rv);
 
-          if (String::startsWith(str, "ATZ0") || 
-              String::startsWith(str, "PHYOFF"))
-          {
-            debug(DTR("Reset command: %s -> Reconnecting to modem."), 
-                  sanitize(str.substr(0, str.find('\n'))).c_str());
-            Delay::wait(5.0);
-            connectToModem();
-          }
+          checkReset(str);
           
           // Debug
           if (!m_init && String::startsWith(str, "AT?CLOCK"))
@@ -488,9 +511,6 @@ namespace Simulators
           
           checkSocket();
           updateState();
-
-          //Debug
-          replySettings();
           
           if (m_socket[DRIVER] && m_socket[MODEM])
           {
