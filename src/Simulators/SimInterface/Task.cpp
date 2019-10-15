@@ -346,8 +346,6 @@ namespace Simulators
         if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
-        inf("GPSFix (WGS84) = %f %f %f", msg->lat, msg->lon, msg->height);
-
         m_sstate.lat = msg->lat;
         m_sstate.lon = msg->lon;
         m_sstate.height = msg->height;
@@ -491,7 +489,7 @@ namespace Simulators
           if (!m_init && String::startsWith(str, "AT?CLOCK"))
           {
             m_init = true;
-            debug(DTR("Modem setup finished."));
+            inf(DTR("Modem simulator ready."));
           }
           spew(DTR("Message [%s -> %s]: %s"), c_sock_name[in].c_str(), 
                                               c_sock_name[out].c_str(), 
