@@ -64,13 +64,15 @@ namespace Simulators
       uint16_t modem_port;
       //! Port for settigns of simulated modem
       uint16_t settings_port;
+      //! Flag for auto assign local port and simulator IP
+      bool auto_assign;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
       //! Position update period
       double update_period;
       //! Common position reference
       //! to use as origin
       std::vector<double> ref;
-      //! Name of the section with modem addresses.
-      std::string addr_section;
       //! Modem settings
       struct set
       {
@@ -134,7 +136,7 @@ namespace Simulators
         .description("IP address of remote system.");
 
         param("Modem Address", m_args.modem_address)
-        .defaultValue("0.0.0.0")
+        .defaultValue("10.42.74.1")
         .description("IP address of remote system.");
 
         param("Modem Port", m_args.modem_port)
@@ -149,14 +151,18 @@ namespace Simulators
         .maximumValue("65535")
         .description("TCP port for simulated modem settings.");
 
-        param("State Update Period", m_args.update_period)
-        .defaultValue("3.0")
-        .minimumValue("1.0")
-        .description("Position update period.");
+        param("Auto Assign", m_args.auto_assign)
+        .defaultValue("true")
+        .description("Flag for auto assign local port and simulator IP");
 
         param("Address Section", m_args.addr_section)
         .defaultValue("Evologics Addresses")
         .description("Name of the configuration section with modem addresses");
+
+        param("State Update Period", m_args.update_period)
+        .defaultValue("3.0")
+        .minimumValue("1.0")
+        .description("Position update period.");
 
         param("Bit Error Rate", m_args.settings.ber)
         .defaultValue("0.001")
@@ -270,10 +276,38 @@ namespace Simulators
         }
       }
 
+      void
+      autoAssign(void)
+      {
+        std::string system = getSystemName();
+        unsigned address = 0;
+
+        m_ctx.config.get(m_args.addr_section, system, "0", address);
+
+        // Maximum number of nodes = 10; Add more
+        if (address > 0 && address <= 10)
+        {
+          std::string simulator_address = "10.42.74." + std::to_string(address);
+          m_args.modem_address = Address(simulator_address.c_str());
+
+          m_args.local_port = 9200 + address;
+        }
+        else
+        {
+          std::string str = "System not suported: " + system;
+          throw RestartNeeded(DTR(str.c_str()), 0);
+        }
+      }
+
       //! Initial network setup
       void
       networkSetup(void)
       {
+        // Auto assign local port and simulator IP
+        // based on evologics address
+        if (m_args.auto_assign)
+          autoAssign();
+        
         // Bind listener socket, to expect connection from driver
         try
         {
@@ -286,27 +320,6 @@ namespace Simulators
           std::string str = "Unable to start listener socket: ";
           str += e.what();
           throw RestartNeeded(DTR(str.c_str()), 2, false);
-        }
-
-        // Get modem address and use this to choose modem IP.
-        if (m_args.modem_address == Address("0.0.0.0"))
-        {
-          std::string system = getSystemName();
-          unsigned addr = 0;
-
-          m_ctx.config.get(m_args.addr_section, system, "0", addr);
-          std::string ip("10.42.74." + std::to_string(addr));
-
-          // Maximum number of nodes = 10; Add more
-          if (addr != 0 || addr > 10)
-          {
-            m_args.modem_address = Address(ip.c_str());
-          }
-          else
-          {
-            std::string str = "System not suported: " + system;
-            throw RestartNeeded(DTR(str.c_str()), 0);
-          }
         }
 
         // Connect to modem.
