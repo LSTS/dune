@@ -210,6 +210,13 @@ namespace Simulators
         m_origin.lon = Math::Angles::radians(m_args.ref[1]);
         m_origin.height = Math::Angles::radians(m_args.ref[2]);
 
+        if ((paramChanged(m_args.settings.ber) ||
+            paramChanged(m_args.settings.rmax) ||
+            paramChanged(m_args.settings.rshallow) ||
+            paramChanged(m_args.settings.betta)) &&
+            m_socket[SETTINGS])
+          simulatorSetup();
+
         if (isActive())
         {
           if (paramChanged(m_args.local_address))
@@ -446,6 +453,7 @@ namespace Simulators
 
         sendSetting<double>("position", {n, e, d});
 
+        // TODO: Fix crash when setting orientation. Talk to Evologics.
         // sendSetting<fp64_t>("orientation", {Angles::degrees(m_sstate.theta),
         //                                     Angles::degrees(m_sstate.phi),
         //                                     Angles::degrees(m_sstate.psi)});
@@ -474,7 +482,7 @@ namespace Simulators
         if (String::startsWith(str, "ATZ0") || 
             String::startsWith(str, "PHYOFF"))
         {
-          debug(DTR("Reset command: %s -> Reconnecting to modem."), 
+          debug(DTR("Reset command: %s -> Reconnecting to modem"), 
                 sanitize(str.substr(0, str.find('\n'))).c_str());
           Delay::wait(5.0);
           connectToModem();
