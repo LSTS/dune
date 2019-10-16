@@ -358,8 +358,14 @@ namespace Simulators
       void
       waitReply(std::string parameter)
       {
+        // Wait reply (timeout after 5s)
+        double timeout = 5.0;
+        double now = Clock::get();
         while (!Poll::poll(*m_socket[SETTINGS], 1.0))
+          if (Clock::get() - now > timeout)
+            throw RestartNeeded(DTR("No setting acknowledgement."), 1);
 
+        // Read reply
         m_bfr.clear();
         m_bfr.resize(c_bfr_size);
         size_t rv = m_socket[SETTINGS]->read(&m_bfr[0], m_bfr.size());
