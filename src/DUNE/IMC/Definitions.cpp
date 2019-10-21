@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
+// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -26945,6 +26945,94 @@ namespace DUNE
     TotalMagIntensity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    HomePosition::HomePosition(void)
+    {
+      m_header.mgid = 909;
+      clear();
+    }
+
+    void
+    HomePosition::clear(void)
+    {
+      op = 0;
+      lat = 0;
+      lon = 0;
+      height = 0;
+      depth = 0;
+      alt = 0;
+    }
+
+    bool
+    HomePosition::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::HomePosition& other__ = static_cast<const HomePosition&>(msg__);
+      if (op != other__.op) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (height != other__.height) return false;
+      if (depth != other__.depth) return false;
+      if (alt != other__.alt) return false;
+      return true;
+    }
+
+    int
+    HomePosition::validate(void) const
+    {
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    HomePosition::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(height, ptr__);
+      ptr__ += IMC::serialize(depth, ptr__);
+      ptr__ += IMC::serialize(alt, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    HomePosition::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(height, bfr__, size__);
+      bfr__ += IMC::deserialize(depth, bfr__, size__);
+      bfr__ += IMC::deserialize(alt, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    HomePosition::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(height, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(depth, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(alt, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    HomePosition::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "height", height, nindent__);
+      IMC::toJSON(os__, "depth", depth, nindent__);
+      IMC::toJSON(os__, "alt", alt, nindent__);
     }
   }
 }

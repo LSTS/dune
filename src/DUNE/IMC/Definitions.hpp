@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
+// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -25443,6 +25443,86 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Home Position.
+    class HomePosition: public Message
+    {
+    public:
+      //! Action on the vehicle home position.
+      enum ActiononthevehiclehomepositionEnum
+      {
+        //! Set.
+        OP_SET = 1,
+        //! Report.
+        OP_REPORT = 2
+      };
+
+      //! Action on the vehicle home position.
+      uint8_t op;
+      //! Latitude (WGS-84).
+      fp64_t lat;
+      //! Longitude (WGS-84).
+      fp64_t lon;
+      //! Height (WGS-84).
+      fp32_t height;
+      //! Depth.
+      fp32_t depth;
+      //! Altitude.
+      fp32_t alt;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 909;
+      }
+
+      HomePosition(void);
+
+      HomePosition*
+      clone(void) const
+      {
+        return new HomePosition(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HomePosition::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HomePosition";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 29;
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

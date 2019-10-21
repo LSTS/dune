@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
+// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -345,4 +345,5 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(2006, TotalMagIntensity)
+MESSAGE(909, HomePosition)
 #undef MESSAGE
