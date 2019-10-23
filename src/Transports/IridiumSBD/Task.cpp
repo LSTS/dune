@@ -58,6 +58,8 @@ namespace Transports
       double mbox_check_per;
       //! Maximum transmission rate.
       unsigned max_tx_rate;
+      //! Flush Iridium Queue on start
+      bool flush_queue;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -110,8 +112,12 @@ namespace Transports
         .defaultValue("0")
         .description("");
 
+        param("Flush Iridium Queue", m_args.flush_queue)
+        .defaultValue("false");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
+        m_queued_mt = 0;
       }
 
       //! Destructor.
@@ -172,6 +178,19 @@ namespace Transports
       {
         m_mbox_check_timer.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        if (m_args.flush_queue)
+        {
+          IridiumMsgTx req;
+          std::string data = "FLUSH_MT";
+          req.data.assign(data.begin(), data.end());
+          req.destination = "broadcast";
+          req.ttl = 60;
+          req.setSource(m_ctx.resolver.id());
+          req.setDestination(m_ctx.resolver.id());
+          consume(&req);
+          war("Flushing MT Queue");
+        }
       }
 
       void

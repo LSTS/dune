@@ -249,6 +249,24 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        // Process modem addresses.
+        std::string system = getSystemName();
+        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        for (unsigned i = 0; i < addrs.size(); ++i)
+        {
+          unsigned addr = 0;
+          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
+          m_modem_names[addrs[i]] = addr;
+          m_modem_addrs[addr] = addrs[i];
+
+          if (addrs[i] == system)
+            m_address = addr;
+        }
+
+        // Change port for simulation purposes
+        if (m_ctx.profiles.isSelected("Simulation") && m_args.port == 9200)
+          m_args.port += m_address;
+
         try
         {
           {
@@ -289,20 +307,6 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        // Process modem addresses.
-        std::string system = getSystemName();
-        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned addr = 0;
-          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-
-          if (addrs[i] == system)
-            m_address = addr;
-        }
-
         m_driver->setControl();
         m_driver->setAddress(m_address);
         m_driver->setSourceLevel(m_args.source_level);
