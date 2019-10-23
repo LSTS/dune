@@ -245,6 +245,7 @@ namespace Transports
         m_sound_speed = m_args.sound_speed_def;
       }
 
+      //todo check mode and change it
       void
       onResourceAcquisition(void)
       {
@@ -413,13 +414,14 @@ namespace Transports
       }
 
       void
-      consume(const IMC::DevDataText* msg)
-      {
+      consume(const IMC::DevDataText* msg) {
         if (msg->getDestination() != getSystemId())
           return;
 
         if (msg->getDestinationEntity() != getEntityId())
           return;
+
+        debug("msg: %s", msg->value.c_str());
 
         if (String::startsWith(msg->value, "RECVIMS"))
           return;
@@ -445,6 +447,8 @@ namespace Transports
           return;
         else if (String::startsWith(msg->value, "RECVFAILED"))
           return;
+        else if (String::startsWith(msg->value, "RECVSRV"))
+          return;
         else if (String::startsWith(msg->value, "RECV"))
           handleBurstMessage(msg->value);
 
@@ -459,6 +463,9 @@ namespace Transports
           handleUsblPosition(msg->value);
         else if (String::startsWith(msg->value, "USBLANGLES"))
           handleUsblAngles(msg->value);
+
+        else if (String::startsWith(msg->value, "STATUS"))
+          return;
       }
 
       void
@@ -544,6 +551,7 @@ namespace Transports
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
         m_kalive_counter.reset();
+
       }
 
       void
