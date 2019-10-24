@@ -528,14 +528,8 @@ namespace Transports
         m_mode = readLine();
         getTask()->debug("Mode: %s", m_mode.c_str());
 
-        if(m_mode.compare("NET") != 0){
+        if(m_mode.compare("NET") != 0)
           getTask()->war(DTR("Evologics modem mode: %s"), m_mode.c_str());
-        }
-
-        getTask()->debug("set gain");
-        sendAT("!G1");
-        expectOK();
-        getTask()->debug("set gain done");
 
         // Get firmware version.
         sendAT("I0");
