@@ -845,8 +845,10 @@ namespace Plan
       {
         bool stopped = stopPlan(true);
 
-        // Change plan_id before dispatching first PlanControlState
+        // Reset plan state before dispatching first pcs
         m_pcs.plan_id = plan_id;
+        m_pcs.plan_eta = -1;
+        m_pcs.plan_progress = -1;
 
         changeMode(IMC::PlanControlState::PCS_INITIALIZING,
                    DTR("plan initializing: ") + plan_id, TYPE_INF);
