@@ -746,10 +746,10 @@ namespace Transports
         m_iridium_entity_id = id;
       }
 
-      std::map<uint16_t, IMC::TransmissionRequest*>*
+      std::map<uint16_t, IMC::TransmissionRequest*>&
       getList()
       {
-        return &m_transmission_requests;
+        return m_transmission_requests;
       }
 
       ~Router()

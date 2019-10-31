@@ -44,6 +44,17 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Strategy to be used when a message is to be retransmitted.
+    enum RetransmisionStrategy
+    {
+      //! Round Robin strategy
+      ROUND_ROBIN = 0,
+      //! All messages are retried a similar number of times
+      STOCHASTIC = 1,
+      //! Messages about to expire will be transmitted first
+      EXPIRING_MESSAGES_FIRST = 2
+    };
+
     struct Arguments
     {
       //! Period, in seconds, between state report transmissions over iridium
@@ -60,6 +71,8 @@ namespace Transports
       std::string acoustic_addr_section;
       //! Send Iridium text messages as plain text
       bool iridium_plain_texts;
+      //! Strategy to use when retransmitting messages
+      std::string retransmit_strategy;
     };
 
     //! Config section from where to fetch emergency sms number
@@ -80,11 +93,12 @@ namespace Transports
       Time::Counter<float> m_iridium_timer;
       Time::Counter<float> m_clean_timer;
       Time::Counter<float> m_retransmission_timer;
-      std::list<IMC::TransmissionRequest*> m_retransmission_list;
+      std::vector<IMC::TransmissionRequest*> m_retransmission_list;
       int m_plan_chksum;
       Router m_router;
-
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
+      RetransmisionStrategy m_retransmit_strategy;
+      Random::Generator* m_prng;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -94,7 +108,8 @@ namespace Transports
         m_vstate(NULL),
         m_vmedium(NULL),
         m_plan_chksum(0),
-        m_router(this)
+        m_router(this),
+        m_retransmit_strategy(ROUND_ROBIN)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
@@ -124,6 +139,11 @@ namespace Transports
             .description("Send Iridium text messages as plain text (and not IMC)")
             .defaultValue("1");
 
+        param("Message retransmission strategy", m_args.retransmit_strategy)
+            .description("Strategy to be used when a message is to be retransmitted")
+            .defaultValue("Stochastic")
+            .values("Round Robin, Stochastic, Expiring Messages First");
+
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
         bind<IMC::Announce>(this);
@@ -142,7 +162,9 @@ namespace Transports
 
         m_clean_timer.setTop(3);
         m_retransmission_timer.setTop(1);
+        m_prng = Random::Factory::create(Random::Factory::c_default, Random::Generator::arbitrarySeed());
       }
+
 
       void
       onResourceRelease(void)
@@ -217,6 +239,18 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_iridium_timer.setTop(m_args.iridium_period);
+
+        if (paramChanged(m_args.retransmit_strategy))
+        {
+          if (m_args.retransmit_strategy == "Stochastic")
+            m_retransmit_strategy = STOCHASTIC;
+          else if (m_args.retransmit_strategy == "Expiring Messages First")
+            m_retransmit_strategy = EXPIRING_MESSAGES_FIRST;
+          else
+            m_retransmit_strategy = ROUND_ROBIN;
+
+          inf("Retransmission strategy set to \"%s\"", m_args.retransmit_strategy.c_str());
+        }
       }
 
       void
@@ -297,12 +331,12 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list =
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list =
             m_router.getList();
 
-        if (tr_list->find(msg->req_id) != tr_list->end())
+        if (tr_list.find(msg->req_id) != tr_list.end())
         {
-          IMC::TransmissionRequest* req = tr_list->operator [](msg->req_id);
+          IMC::TransmissionRequest* req = tr_list[msg->req_id];
 
           if (req->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
             return;
@@ -322,13 +356,13 @@ namespace Transports
               m_router.answer(req, "Message has been sent via Iridium.",
                               IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               break;
             case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
               m_router.answer(req, "Error while trying to transmit message.",
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
+              tr_list.erase(msg->req_id);
+              pushRetransmission(req->clone());
               Memory::clear(req);
 
               break;
@@ -336,7 +370,7 @@ namespace Transports
               m_router.answer(req, "Timeout while trying to transmit message.",
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
               Memory::clear(req);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               break;
             default:
               break;
@@ -349,11 +383,11 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
 
-        if (tr_list->find(msg->req_id) != tr_list->end())
+        if (tr_list.find(msg->req_id) != tr_list.end())
         {
-          IMC::TransmissionRequest* req = tr_list->operator [](msg->req_id);
+          IMC::TransmissionRequest* req = tr_list[msg->req_id];
           switch (msg->status)
           {
             case (IMC::SmsStatus::SMSSTAT_QUEUED):
@@ -366,21 +400,21 @@ namespace Transports
               m_router.answer(req, "Message has been sent via GSM.",
                               IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               break;
 
             case (IMC::SmsStatus::SMSSTAT_INPUT_FAILURE):
               m_router.answer(req, msg->info,
                               IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               Memory::clear(req);
               break;
 
             case (IMC::SmsStatus::SMSSTAT_ERROR):
               m_router.answer(req, msg->info,
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
+              tr_list.erase(msg->req_id);
+              pushRetransmission(req->clone());
               Memory::clear(req);
               break;
 
@@ -392,19 +426,63 @@ namespace Transports
       }
 
       void
+      pushRetransmission(IMC::TransmissionRequest* request)
+      {
+        m_retransmission_list.push_back(request);
+      }
+
+      IMC::TransmissionRequest *
+      popRetransmission() {
+
+        if (m_retransmission_list.empty())
+          return nullptr;
+
+        // ROUND_ROBIN strategy
+        int winner = 0;
+        double winner_value = (m_retransmission_list[winner]->deadline - Clock::getSinceEpoch()) * m_prng->uniform(0.0, 10.0);
+
+        switch(m_retransmit_strategy)
+        {
+          case (EXPIRING_MESSAGES_FIRST):
+            for (unsigned i = 1; i < m_retransmission_list.size(); i++)
+            {
+              if (m_retransmission_list[i]->deadline <  m_retransmission_list[winner]->deadline)
+                winner = i;
+            }
+            break;
+          case (STOCHASTIC):
+            for (unsigned i = 1; i < m_retransmission_list.size(); i++)
+            {
+              double value = (m_retransmission_list[winner]->deadline - Clock::getSinceEpoch()) * m_prng->uniform(0.0, 10.0);
+              if (value > winner_value)
+              {
+                winner_value = value;
+                winner = i;
+              }
+            }
+            break;
+          default:
+            break;
+        }
+        IMC::TransmissionRequest* ret = m_retransmission_list[winner];
+        m_retransmission_list.erase(m_retransmission_list.begin()+winner);
+        return ret;
+      }
+
+      void
       consume(const IMC::AcousticStatus* msg)
       {
         if (msg->getSource() != getSystemId())
         {
           return;
         }
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list =
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list =
             m_router.getList();
 
-        if (tr_list->find(msg->req_id) != tr_list->end())
+        if (tr_list.find(msg->req_id) != tr_list.end())
         {
 
-          IMC::TransmissionRequest* req = tr_list->operator [](msg->req_id);
+          IMC::TransmissionRequest* req = tr_list[msg->req_id];
 
           if (req->comm_mean != IMC::TransmissionRequest::CMEAN_ACOUSTIC)
             return;
@@ -424,7 +502,7 @@ namespace Transports
               m_router.answer(req, "Message has been sent via Acoustic.",
                               IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               break;
 
             case (IMC::AcousticStatus::STATUS_RANGE_RECEIVED):
@@ -432,29 +510,29 @@ namespace Transports
                               IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED,
                               msg->range);
               Memory::clear(req);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               break;
 
             case (IMC::AcousticStatus::STATUS_ERROR):
               m_router.answer(req, msg->info,
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
+              tr_list.erase(msg->req_id);
+              pushRetransmission(req->clone());
               Memory::clear(req);
               break;
 
             case (IMC::AcousticStatus::STATUS_BUSY):
               m_router.answer(req, "Acoustic modem is busy.",
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
+              tr_list.erase(msg->req_id);
+              pushRetransmission(req->clone());
               Memory::clear(req);
               break;
 
             case (IMC::AcousticStatus::STATUS_INPUT_FAILURE):
               m_router.answer(req, msg->info,
                               IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               Memory::clear(req);
               break;
 
@@ -616,10 +694,10 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
         
-        std::map<uint16_t, IMC::TransmissionRequest*>* tr_list = m_router.getList();
-        if (tr_list->find(msg->req_id) != tr_list->end())
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
+        if (tr_list.find(msg->req_id) != tr_list.end())
         {
-          IMC::TransmissionRequest* req = tr_list->operator [](msg->req_id);
+          IMC::TransmissionRequest* req = tr_list[msg->req_id];
           switch (msg->status)
           {
             case (IMC::TCPStatus::TCPSTAT_QUEUED):
@@ -631,29 +709,29 @@ namespace Transports
               m_router.answer(req, "Message has been sent via TCP.",
                      IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN):
               m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
+              tr_list.erase(msg->req_id);
+              pushRetransmission(req->clone());
               Memory::clear(req);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_CANT_CONNECT):
               m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              tr_list->erase(msg->req_id);
-              m_retransmission_list.push_back(req->clone());
+              tr_list.erase(msg->req_id);
+              pushRetransmission(req->clone());
               Memory::clear(req);
               break;
 
             case (IMC::TCPStatus::TCPSTAT_INPUT_FAILURE):
               m_router.answer(req, msg->info,
                      IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
-              tr_list->erase(msg->req_id);
+              tr_list.erase(msg->req_id);
               Memory::clear(req);
               break;
 
@@ -873,12 +951,16 @@ namespace Transports
         {
           waitForMessages(1.0);
 
+          // periodically check if there are messages to be retransmitted
           if (m_retransmission_timer.overflow())
           {
-            while (!m_retransmission_list.empty())
+            // get a retransmission according to current strategy
+            IMC::TransmissionRequest* retransmission = popRetransmission();
+
+            if (retransmission != nullptr)
             {
-              consume(m_retransmission_list.front());
-              m_retransmission_list.pop_front();
+              consume(retransmission);
+              Memory::clear(retransmission);
             }
             m_retransmission_timer.reset();
           }
