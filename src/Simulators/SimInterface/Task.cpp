@@ -44,13 +44,210 @@ namespace Simulators
       DRIVER = 1,
       //! Modem socket
       MODEM = 2,
+      //! Modem status socket
+      STATE = 3,
       //! Modem settings socket
-      SETTINGS = 3,
+      SETTINGS = 4,
       //! Number of sockets
       NUM_SOCK
     };
 
-    std::array<std::string, NUM_SOCK> c_sock_name = {"listener", "driver", "modem", "settings"};
+    //! TCPSocket wraper for the specific usecase
+    struct SafeTCPSocket
+    {
+      Tasks::Task* task;
+      TCPSocket* sock;
+      std::string name;
+      uint16_t port;
+      Address address;
+
+      SafeTCPSocket(Tasks::Task* a_task, std::string a_name):
+      task(a_task),
+      sock(new TCPSocket),
+      name(a_name),
+      port(0),
+      address("0.0.0.0")
+      {}
+
+      SafeTCPSocket(Tasks::Task* a_task, std::string a_name, TCPSocket* a_sock):
+      task(a_task),
+      sock(a_sock),
+      name(a_name),
+      port(0),
+      address("0.0.0.0")
+      {}
+
+      ~SafeTCPSocket()
+      {
+        delete sock;
+      }
+
+      void
+      startListen(uint16_t a_port, Address a_address, bool reuse, int backlog)
+      {
+        try
+        {
+          sock->bind(a_port, a_address, reuse);
+          sock->listen(backlog);
+        }
+        catch (std::exception& e)
+        {
+          std::string str = "Unable to start listener socket: ";
+          str += e.what();
+          throw RestartNeeded(DTR(str.c_str()), 2, false);
+        }
+      }
+
+      void
+      connect(Address a_address, uint16_t a_port)
+      {
+        if (port == 0 && address.str() == "0.0.0.0")
+        {
+          port = a_port;
+          address = a_address;
+        }
+
+        try
+        {
+          Memory::clear(sock);
+          sock = new TCPSocket;
+          sock->connect(a_address, a_port);
+
+          task->debug(DTR("%s socket connected: %s:%d"),
+                      name.c_str(),
+                      address.c_str(),
+                      port);
+        }
+        catch (std::exception& e)
+        {
+          std::string str = "Unable to start " + name
+                            + " socket: " + std::string(e.what());
+          throw RestartNeeded(DTR(str.c_str()), 2, false);
+        }
+      }
+
+      void
+      reconnect()
+      {
+        if (port == 0 && address.str() == "0.0.0.0")
+          return;
+
+        connect(address, port);
+      }
+
+      SafeTCPSocket*
+      accept(std::string a_name)
+      {
+        return new SafeTCPSocket(task, a_name, sock->accept());
+      }
+      
+      bool
+      poll(double timeout)
+      {
+        try
+        {
+          return Poll::poll(*sock, timeout);
+        }
+        catch(const std::exception& e)
+        {
+          task->err("error polling %s socket: %s", name.c_str(), e.what());
+          return false;
+        }
+      }
+
+      size_t
+      read(uint8_t *data, size_t length)
+      {
+        try
+        {
+          return sock->read(data, length);
+        }
+        catch(const ConnectionClosed& e)
+        {
+          task->err("%s socket not connected, attepting to reconnect", name.c_str());
+          reconnect();
+        }
+        catch(const NetworkError& e)
+        {
+          std::string str = name + "socket network error: " + std::string(e.what());
+          str += " -> restarting";
+          throw RestartNeeded(DTR(str.c_str()), 1);
+        }
+
+        return 0;
+      }
+
+      size_t
+      write(const char *data, size_t length)
+      {
+        try
+        {
+          return sock->write(data, length);
+        }
+        catch(const ConnectionClosed& e)
+        {
+          task->err("%s socket not connected, attepting to reconnect", name.c_str());
+          reconnect();
+        }
+        catch(const NetworkError& e)
+        {
+          std::string str = name + "socket network error: " + std::string(e.what());
+          str += " -> restarting";
+          throw RestartNeeded(DTR(str.c_str()), 1);
+        }
+
+        return 0;
+      }
+
+      size_t
+      write(const uint8_t *data, size_t length)
+      {
+        try
+        {
+          return sock->write(data, length);
+        }
+        catch(const ConnectionClosed& e)
+        {
+          task->err("%s socket not connected, attepting to reconnect", name.c_str());
+          reconnect();
+        }
+        catch(const NetworkError& e)
+        {
+          std::string str = name + "socket network error: " + std::string(e.what());
+          str += " -> restarting";
+          throw RestartNeeded(DTR(str.c_str()), 1);
+        }
+
+        return 0;
+      }
+
+      size_t
+      writeString(const std::string str)
+      {
+        try
+        {
+          return sock->writeString(str.c_str());
+        }
+        catch(const ConnectionClosed& e)
+        {
+          task->err("%s socket not connected, attepting to reconnect", name.c_str());
+          reconnect();
+        }
+        catch(const NetworkError& e)
+        {
+          std::string msg = name + "socket network error: " + std::string(e.what());
+          msg += " -> restarting";
+          throw RestartNeeded(DTR(str.c_str()), 1);
+        }
+
+        return 0;
+      }
+    };
+    
+    //! Buffer capacity.
+    static const unsigned c_bfr_size = 255;
+    //! Timeout for settings reply
+    double c_reply_timeout = 5.0;
 
     struct Arguments
     {
@@ -62,8 +259,10 @@ namespace Simulators
       Address modem_address;
       //! Port for simulated modem
       uint16_t modem_port;
-      //! Port for settigns of simulated modem
+      //! Port for settings of simulated modem
       uint16_t settings_port;
+      //! Port for state of simulated modem (position and orientation)
+      uint16_t state_port;
       //! Flag for auto assign local port and simulator IP
       bool auto_assign;
       //! Name of the section with modem addresses.
@@ -94,20 +293,16 @@ namespace Simulators
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Buffer capacity.
-      static const unsigned c_bfr_size = 255;
       // Task arguments.
       Arguments m_args;
       //! TCP sockets
-      TCPSocket* m_socket[NUM_SOCK];
+      SafeTCPSocket* m_socket[NUM_SOCK];
       //! Last received SimulatedState
       IMC::SimulatedState m_sstate;
       //! Position update timer
       Time::Counter<double> m_pos_update;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
-      //! Initialization flag
-      bool m_init;
       //! Common position reference
       //! to use as origin in simulator
       struct pos
@@ -122,18 +317,17 @@ namespace Simulators
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_init(false)
+        DUNE::Tasks::Task(name, ctx)
       {
+        param("Local Address", m_args.local_address)
+        .defaultValue("172.0.0.1")
+        .description("IP address of remote system.");
+
         param("Local Port", m_args.local_port)
         .defaultValue("9200")
         .minimumValue("0")
         .maximumValue("65535")
         .description("Local TCP port.");
-
-        param("Local Address", m_args.local_address)
-        .defaultValue("172.0.0.1")
-        .description("IP address of remote system.");
 
         param("Modem Address", m_args.modem_address)
         .defaultValue("10.42.74.1")
@@ -150,6 +344,12 @@ namespace Simulators
         .minimumValue("0")
         .maximumValue("65535")
         .description("TCP port for simulated modem settings.");
+
+        param("Modem State Port", m_args.state_port)
+        .defaultValue("11000")
+        .minimumValue("0")
+        .maximumValue("65535")
+        .description("TCP port for simulated modem state (position and orientation).");
 
         param("Auto Assign", m_args.auto_assign)
         .defaultValue("true")
@@ -197,9 +397,6 @@ namespace Simulators
 
         bind<IMC::SimulatedState>(this);
         bind<IMC::GpsFix>(this);
-        
-        for (unsigned i = 0; i < NUM_SOCK; ++i)
-          m_socket[i] = NULL;
       }
 
       //! Update internal state with new parameter values.
@@ -210,15 +407,14 @@ namespace Simulators
         m_origin.lon = Math::Angles::radians(m_args.ref[1]);
         m_origin.height = Math::Angles::radians(m_args.ref[2]);
 
-        if ((paramChanged(m_args.settings.ber) ||
-            paramChanged(m_args.settings.rmax) ||
-            paramChanged(m_args.settings.rshallow) ||
-            paramChanged(m_args.settings.betta)) &&
-            m_socket[SETTINGS])
-          simulatorSetup();
-
         if (isActive())
         {
+          if (paramChanged(m_args.settings.ber) ||
+            paramChanged(m_args.settings.rmax) ||
+            paramChanged(m_args.settings.rshallow) ||
+            paramChanged(m_args.settings.betta))
+          simulatorSetup();
+
           if (paramChanged(m_args.local_address))
             throw RestartNeeded(DTR("Restarting to change local address"), 1);
 
@@ -240,11 +436,33 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
-        // Initial setup
-        networkSetup();
+        // Buffer sizing
+        m_bfr.clear();
+        m_bfr.resize(c_bfr_size);
+
+        // Auto assign local port and simulator IP
+        // based on evologics address
+        if (m_args.auto_assign)
+          autoAssign();
+        
+        // Socket array initialization
+        m_socket[LISTENER]  = new SafeTCPSocket(this, "listener");
+        m_socket[MODEM]     = new SafeTCPSocket(this, "modem");
+        m_socket[STATE]     = new SafeTCPSocket(this, "state");
+        m_socket[SETTINGS]  = new SafeTCPSocket(this, "settings");
+
+        m_socket[LISTENER]  ->startListen(m_args.local_port, 
+                                          Address(m_args.local_address), 
+                                          false,
+                                          15);
+        m_socket[MODEM]     ->connect(m_args.modem_address, m_args.modem_port);
+        m_socket[STATE]     ->connect(m_args.modem_address, m_args.state_port);
+        m_socket[SETTINGS]  ->connect(m_args.modem_address, m_args.settings_port);
+
+        // Acoustic model settings
         simulatorSetup();
 
-        // Set state update period.
+        // Set state update period
         m_pos_update.setTop(m_args.update_period);
 
         // Deactivate until valid simulated message
@@ -260,35 +478,11 @@ namespace Simulators
       }
 
       void
-      connect(unsigned sock_num, 
-              Address add, 
-              uint16_t port)
-      {
-        try
-        {
-          Memory::clear(m_socket[sock_num]);
-          m_socket[sock_num] = new TCPSocket;
-          m_socket[sock_num]->connect(add, port);
-
-          debug(DTR("%s socket connected: %s:%d"),
-                c_sock_name[sock_num].c_str(),
-                add.c_str(),
-                port);
-        }
-        catch (std::runtime_error& e)
-        {
-          std::string str = "Unable to start " + c_sock_name[sock_num] 
-                            + " socket: " + std::string(e.what());
-          throw RestartNeeded(DTR(str.c_str()), 2, false);
-        }
-      }
-
-      void
       autoAssign(void)
       {
+        // Get evologics address
         std::string system = getSystemName();
         unsigned address = 0;
-
         m_ctx.config.get(m_args.addr_section, system, "0", address);
 
         // Maximum number of nodes = 10; Add more
@@ -306,38 +500,13 @@ namespace Simulators
         }
       }
 
-      //! Initial network setup
       void
-      networkSetup(void)
+      simulatorSetup()
       {
-        // Auto assign local port and simulator IP
-        // based on evologics address
-        if (m_args.auto_assign)
-          autoAssign();
-        
-        // Bind listener socket, to expect connection from driver
-        try
-        {
-          m_socket[LISTENER] = new TCPSocket;
-          m_socket[LISTENER]->bind(m_args.local_port, Address(m_args.local_address), false);
-          m_socket[LISTENER]->listen(15);
-        }
-        catch (std::runtime_error& e)
-        {
-          std::string str = "Unable to start listener socket: ";
-          str += e.what();
-          throw RestartNeeded(DTR(str.c_str()), 2, false);
-        }
-
-        // Connect to modem.
-        connectToModem();
-      }
-      
-      void
-      connectToModem(void)
-      {
-        connect(MODEM, m_args.modem_address, m_args.modem_port);
-        connect(SETTINGS, m_args.modem_address, m_args.settings_port);
+        sendSetting<double>("ber", m_args.settings.ber);
+        sendSetting<double>("rmax", m_args.settings.rmax);
+        sendSetting<double>("rshallow", m_args.settings.rshallow);
+        sendSetting<double>("betta", m_args.settings.betta);
       }
 
       //! Consume vehicle position
@@ -353,7 +522,7 @@ namespace Simulators
         m_sstate = *msg;
       }
 
-      //! Consume vehicle position and update modem position
+      //! Consume vehicle position
       void
       consume(const IMC::GpsFix* msg)
       {
@@ -378,26 +547,19 @@ namespace Simulators
       void
       waitReply(std::string parameter)
       {
-        // Wait reply (timeout after 5s)
-        double timeout = 5.0;
+        // Wait reply (timeout after c_reply_timeout)
         double now = Clock::get();
-        while (!Poll::poll(*m_socket[SETTINGS], 1.0))
-          if (Clock::get() - now > timeout)
-            throw RestartNeeded(DTR("No setting acknowledgement."), 1);
+        while (!m_socket[SETTINGS]->poll(1.0))
+          if (Clock::get() - now > c_reply_timeout)
+            war("%s setting reply timedout", parameter.c_str());
 
         // Read reply
-        m_bfr.clear();
-        m_bfr.resize(c_bfr_size);
         size_t rv = m_socket[SETTINGS]->read(&m_bfr[0], m_bfr.size());
         if (rv)
         {
-          std::string str(m_bfr.begin(), m_bfr.end());
-          str = str.substr(0,rv);
-
-          if (String::startsWith(str, parameter))
-            return;
-          else
-            throw RestartNeeded(DTR("Wrong setting. Please restart modem."), 1);
+          std::string str(m_bfr.begin(), m_bfr.begin()+rv);
+          if (!String::startsWith(str, parameter))
+            war("expected reply to %s, got: %s", parameter.c_str(), str.c_str());
         }
       }
 
@@ -405,16 +567,20 @@ namespace Simulators
       void
       sendSetting(std::string parameter, std::vector<T> values)
       {
+        if (!m_socket[SETTINGS])
+          throw RestartNeeded(DTR("error in settings socket, restarting"), 1);
+
+        // Command format:
+        // parameter = val1 val2 val3 ... valn\n
         std::string str = parameter + " =";
-        
         for (auto itr = values.begin(); itr != values.end(); ++itr)
           str += " " + std::to_string(*itr);
-        
         str += "\n";
+
         m_socket[SETTINGS]->writeString(str.c_str());
 
-        trace("Set: %s", sanitize(str).c_str());
         waitReply(parameter);
+        trace("Set: %s", sanitize(str).c_str());
       }
 
       template<typename T>
@@ -425,17 +591,26 @@ namespace Simulators
       }
 
       void
-      simulatorSetup()
+      checkSocket(void)
       {
-        sendSetting<double>("ber", m_args.settings.ber);
-        sendSetting<double>("rmax", m_args.settings.rmax);
-        sendSetting<double>("rshallow", m_args.settings.rshallow);
-        sendSetting<double>("betta", m_args.settings.betta);
+        if (!m_socket[LISTENER]->poll(1.0))
+          return;
+
+        Memory::clear(m_socket[DRIVER]);
+        m_socket[DRIVER] = m_socket[LISTENER]->accept("driver");
+
+        debug(DTR("%s socket connected: %s:%d"),
+              m_socket[DRIVER]->name.c_str(),
+              m_socket[DRIVER]->sock->getBoundAddress().c_str(), 
+              m_socket[DRIVER]->sock->getBoundPort());
       }
-      
+
       void
       updateState()
       {
+        if (!m_socket[STATE])
+          throw RestartNeeded(DTR("error in state socket, restarting"), 1);
+
         if (!m_pos_update.overflow())
           return;
 
@@ -451,75 +626,64 @@ namespace Simulators
                             lat, lon, height,
                             &n, &e, &d);
 
-        sendSetting<double>("position", {n, e, d});
 
-        // TODO: Fix crash when setting orientation. Talk to Evologics.
-        // sendSetting<fp64_t>("orientation", {Angles::degrees(m_sstate.theta),
-        //                                     Angles::degrees(m_sstate.phi),
-        //                                     Angles::degrees(m_sstate.psi)});
+
+        std::array<double, 6> state;
+        state = {n, e, d, Angles::degrees(m_sstate.phi), 
+                          Angles::degrees(m_sstate.theta),
+                          Angles::degrees(m_sstate.psi)};
+
+        auto itr = state.begin();
+        std::string state_str = std::to_string(*itr);
+        ++itr;
+        for (; itr != state.end(); ++itr)
+          state_str += " " + std::to_string(*itr);
+        state_str += "\n";
+
+        m_socket[STATE]->writeString(state_str.c_str());
+        spew("State: %s", sanitize(state_str).c_str());
 
         m_pos_update.reset();
       }
 
       void
-      checkSocket(void)
-      {
-        if (!Poll::poll(*m_socket[LISTENER], 1.0))
-          return;
-
-        Memory::clear(m_socket[DRIVER]);
-        m_socket[DRIVER] = m_socket[LISTENER]->accept();
-
-        debug(DTR("%s socket connected: %s:%d"),
-              c_sock_name[DRIVER].c_str(),
-              m_socket[DRIVER]->getBoundAddress().c_str(), 
-              m_socket[DRIVER]->getBoundPort());
-      }
-
-      void
       checkReset(std::string str)
       {
-        if (String::startsWith(str, "ATZ0") || 
-            String::startsWith(str, "PHYOFF"))
-        {
-          debug(DTR("Reset command: %s -> Reconnecting to modem"), 
-                sanitize(str.substr(0, str.find('\n'))).c_str());
-          Delay::wait(5.0);
-          connectToModem();
-        }
+        if (!(String::startsWith(str, "ATZ0") ||
+            String::startsWith(str, "PHYOFF")))
+          return;
+          
+        debug(DTR("Reset command: %s -> Reconnecting to modem"), 
+              sanitize(str.substr(0, str.find('\n'))).c_str());
+        Delay::wait(5.0);
+        m_socket[MODEM]->connect(m_args.modem_address, m_args.modem_port);
       }
-
+      
       //! Read incoming datagrams. If incoming data is a DUNE::IMC::AcousticMessage,
       //! and contains a DUNE::IMC::UamTxFrame (inline) it gets translated to a
       //! @publish DUNE::IMC::UamRxFrame and gets posted to the local bus.
       void
       transport(unsigned in, unsigned out)
       {
-        if (!Poll::poll(*m_socket[in], 1.0))
+        if (!m_socket[MODEM] || !m_socket[DRIVER])
+          throw RestartNeeded(DTR("error in modem or driver socket, restarting"), 1);
+
+        if (!m_socket[in]->poll(1.0))
           return;
 
-        m_bfr.clear();
-        m_bfr.resize(c_bfr_size);
         size_t rv = m_socket[in]->read(&m_bfr[0], m_bfr.size());
         if (rv)
         {
           // Forward message
           m_socket[out]->write(&m_bfr[0], rv);
 
-          // Handle resets request
-          std::string str(m_bfr.begin(), m_bfr.end());
-          str = str.substr(0, rv);
-
+          // Check for reset command and reconnect
+          std::string str(m_bfr.begin(), m_bfr.begin()+rv);
           checkReset(str);
-          
+
           // Debug
-          if (!m_init && String::startsWith(str, "AT?CLOCK"))
-          {
-            m_init = true;
-            inf(DTR("Modem simulator ready."));
-          }
-          spew(DTR("Message [%s -> %s]: %s"), c_sock_name[in].c_str(), 
-                                              c_sock_name[out].c_str(), 
+          spew(DTR("Message [%s -> %s]: %s"), m_socket[in]->name.c_str(), 
+                                              m_socket[out]->name.c_str(), 
                                               sanitize(str).c_str());
         }
       }
@@ -531,21 +695,14 @@ namespace Simulators
         while (!stopping())
         {
           consumeMessages();
+
           if (!isActive())
             continue;
           
           checkSocket();
           updateState();
-          
-          if (m_socket[DRIVER] && m_socket[MODEM])
-          {
-            transport(DRIVER, MODEM);
-            transport(MODEM, DRIVER);
-          }
-          else
-          {
-            war(DTR("Null socket."));
-          }
+          transport(DRIVER, MODEM);
+          transport(MODEM, DRIVER);
         }
       }
     };
