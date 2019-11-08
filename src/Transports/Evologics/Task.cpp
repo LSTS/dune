@@ -232,8 +232,9 @@ namespace Transports
         {
           m_sound_speed_eid = resolveEntity(m_args.sound_speed_elabel);
         }
-        catch (...)
+        catch (std::exception& e)
         {
+          err("problem: %s", e.what());
           debug("dynamic sound speed corrections are disabled");
           m_sound_speed = m_args.sound_speed_def;
         }
@@ -277,6 +278,7 @@ namespace Transports
 
           m_sock = new TCPSocket;
           m_sock->connect(m_args.address, m_args.port);
+
         }
         catch (std::runtime_error& e)
         {
@@ -286,7 +288,7 @@ namespace Transports
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
         m_driver->setLineTermOut("\n");
-        m_driver->initialize();
+
       }
 
       void
@@ -306,20 +308,37 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        m_driver->setControl();
-        m_driver->setAddress(m_address);
-        m_driver->setSourceLevel(m_args.source_level);
-        m_driver->setLowGain(m_args.low_gain);
-        m_driver->setRetryCount(m_args.con_retry_count);
-        m_driver->setRetryTimeout(m_args.con_retry_tout);
-        m_driver->setRetryCountIM(m_args.im_retry_count);
-        m_driver->setIdleTimeout(m_args.con_idle_tout);
-        m_driver->setHighestAddress(m_args.highest_addr);
-        m_driver->setPositionDataOutput(true);
-        m_driver->setPromiscuous(true);
-        m_driver->setExtendedNotifications(true);
-        m_kalive_counter.setTop(m_args.kalive_tout);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        try{
+          m_driver->initialize();
+        }
+        catch(std::runtime_error& e)
+        {
+          war(DTR("Evologics Task desactivation: %s"), e.what());
+          requestDeactivation();
+          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
+        }
+
+        if (!isActive())
+          requestActivation();
+
+        if(isActive())
+        {
+          m_driver->setControl();
+          m_driver->setAddress(m_address);
+          m_driver->setSourceLevel(m_args.source_level);
+          m_driver->setLowGain(m_args.low_gain);
+          m_driver->setRetryCount(m_args.con_retry_count);
+          m_driver->setRetryTimeout(m_args.con_retry_tout);
+          m_driver->setRetryCountIM(m_args.im_retry_count);
+          m_driver->setIdleTimeout(m_args.con_idle_tout);
+          m_driver->setHighestAddress(m_args.highest_addr);
+          m_driver->setPositionDataOutput(true);
+          m_driver->setPromiscuous(true);
+          m_driver->setExtendedNotifications(true);
+          m_kalive_counter.setTop(m_args.kalive_tout);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
       }
 
       unsigned
@@ -735,6 +754,9 @@ namespace Transports
       {
         while (!stopping())
         {
+          if(!isActive())
+            return;
+
           waitForMessages(1.0);
           keepAlive();
         }

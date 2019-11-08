@@ -528,8 +528,9 @@ namespace Transports
         m_mode = readLine();
         getTask()->debug("Mode: %s", m_mode.c_str());
 
-        if(m_mode.compare("NET") != 0)
-          getTask()->war(DTR("Evologics modem mode: %s"), m_mode.c_str());
+        if(m_mode.compare("NET") != 0) {
+            throw std::runtime_error("invalid mode for Evologics");
+        }
 
         // Get firmware version.
         sendAT("I0");
