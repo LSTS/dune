@@ -32,7 +32,7 @@
 
 namespace Simulators
 {
-  namespace SimInterface
+  namespace EvoSimulator
   {
     using DUNE_NAMESPACES;
 
@@ -671,6 +671,7 @@ namespace Simulators
         double height = m_sstate.height;
         double n = 0, e = 0, d = 0;
 
+        // TODO: Check height vs depth
         WGS84::displace(m_sstate.x, m_sstate.y, m_sstate.z,
                         &lat, &lon, &height);
 
@@ -679,9 +680,9 @@ namespace Simulators
                             &n, &e, &d);
 
 
-
+        // Changed order to be compatible with modem reference frame
         std::array<double, 6> state;
-        state = {n, e, d, Angles::degrees(m_sstate.phi), 
+        state = {e, n, d, Angles::degrees(m_sstate.phi), 
                           Angles::degrees(m_sstate.theta),
                           Angles::degrees(m_sstate.psi)};
 
