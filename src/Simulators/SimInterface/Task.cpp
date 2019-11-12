@@ -55,12 +55,19 @@ namespace Simulators
     //! TCPSocket wraper for the specific usecase
     struct SafeTCPSocket
     {
+      //! Handle to task using the wraper
       Tasks::Task* task;
+      //! TCP socket
       TCPSocket* sock;
+      //! Name of socket
       std::string name;
+
+      //! Port used in case of connection
       uint16_t port;
+      //! Address used in case of connection
       Address address;
 
+      //! Constructor for new socket
       SafeTCPSocket(Tasks::Task* a_task, std::string a_name):
       task(a_task),
       sock(new TCPSocket),
@@ -69,6 +76,7 @@ namespace Simulators
       address("0.0.0.0")
       {}
 
+      //! Constructor for existing socket
       SafeTCPSocket(Tasks::Task* a_task, std::string a_name, TCPSocket* a_sock):
       task(a_task),
       sock(a_sock),
@@ -76,12 +84,18 @@ namespace Simulators
       port(0),
       address("0.0.0.0")
       {}
-
+      
+      //! Destructor
       ~SafeTCPSocket()
       {
         delete sock;
       }
 
+      //! Socket starts listening for connection requests
+      //! @param[in] a_port port to bind socket
+      //! @param[in] a_address address to bind socket
+      //! @param[in] reuse flag to allow reuse of address
+      //! @param[in] backlog number of connections allowed
       void
       startListen(uint16_t a_port, Address a_address, bool reuse, int backlog)
       {
@@ -98,6 +112,9 @@ namespace Simulators
         }
       }
 
+      //! Connect socket to remote port
+      //! @param[in] a_address address of remote socket
+      //! @param[in] a_port port of remote socket
       void
       connect(Address a_address, uint16_t a_port)
       {
@@ -126,6 +143,7 @@ namespace Simulators
         }
       }
 
+      //! Attempt reconnection to saved socket address
       void
       reconnect()
       {
@@ -135,12 +153,18 @@ namespace Simulators
         connect(address, port);
       }
 
+      //! Accept connection from outside socket
+      //! @param[in] a_name name of new SafeTCPSocket
+      //! @returns Safe
       SafeTCPSocket*
       accept(std::string a_name)
       {
         return new SafeTCPSocket(task, a_name, sock->accept());
       }
       
+      //! Poll socket for reading
+      //! @param[in] timeout time it waits for socket in seconds
+      //! @return true if there is something to read, false otherwise
       bool
       poll(double timeout)
       {
@@ -154,7 +178,11 @@ namespace Simulators
           return false;
         }
       }
-
+      
+      //! Read from socket to buffer
+      //! @param[in] data buffer
+      //! @param[in] length number of bytes to read
+      //! @return number of bytes read 
       size_t
       read(uint8_t *data, size_t length)
       {
@@ -177,6 +205,10 @@ namespace Simulators
         return 0;
       }
 
+      //! Write to socket
+      //! @param[in] data data buffer
+      //! @param[in] lenght number of bytes to write
+      //! @return number of bytes written
       size_t
       write(const char *data, size_t length)
       {
@@ -199,6 +231,10 @@ namespace Simulators
         return 0;
       }
 
+      //! Write to socket
+      //! @param[in] data data buffer
+      //! @param[in] lenght number of bytes to write
+      //! @return number of bytes written
       size_t
       write(const uint8_t *data, size_t length)
       {
@@ -221,6 +257,9 @@ namespace Simulators
         return 0;
       }
 
+      //! Write string to socket
+      //! @param[in] str string to write
+      //! @return number of bytes written
       size_t
       writeString(const std::string str)
       {
@@ -477,6 +516,8 @@ namespace Simulators
           Memory::clear(m_socket[i]);
       }
 
+      //! Auto assign simualtor IP (node) and local port
+      //! based on local evologics address.
       void
       autoAssign(void)
       {
@@ -500,6 +541,7 @@ namespace Simulators
         }
       }
 
+      //! Send initial settings to modem (acoustic model parameters)
       void
       simulatorSetup()
       {
@@ -544,6 +586,8 @@ namespace Simulators
         m_sstate.z = 0;
       }
 
+      //! Wait for simulator reply after sending setting
+      //! @param[in] parameter name of setting to wait for 
       void
       waitReply(std::string parameter)
       {
@@ -563,6 +607,9 @@ namespace Simulators
         }
       }
 
+      //! Send setting to modem
+      //! @param[in] parameter name of setting to send
+      //! @param[in] values setting values
       template<typename T>
       void
       sendSetting(std::string parameter, std::vector<T> values)
@@ -583,6 +630,9 @@ namespace Simulators
         trace("Set: %s", sanitize(str).c_str());
       }
 
+      //! Send setting to modem
+      //! @param[in] parameter name of setting to send
+      //! @param[in] value setting value
       template<typename T>
       void
       sendSetting(std::string parameter, T value)
@@ -590,8 +640,9 @@ namespace Simulators
         sendSetting(parameter, std::vector<T>(1, value));
       }
 
+      //! Check listener socket for connection requests
       void
-      checkSocket(void)
+      checkSocket()
       {
         if (!m_socket[LISTENER]->poll(1.0))
           return;
@@ -605,6 +656,7 @@ namespace Simulators
               m_socket[DRIVER]->sock->getBoundPort());
       }
 
+      //! Update modem position and attitude based on vehicle position and attitude
       void
       updateState()
       {
@@ -646,6 +698,8 @@ namespace Simulators
         m_pos_update.reset();
       }
 
+      //! Check string for a reset command
+      //! @param[in] str string to check
       void
       checkReset(std::string str)
       {
@@ -659,9 +713,9 @@ namespace Simulators
         m_socket[MODEM]->connect(m_args.modem_address, m_args.modem_port);
       }
       
-      //! Read incoming datagrams. If incoming data is a DUNE::IMC::AcousticMessage,
-      //! and contains a DUNE::IMC::UamTxFrame (inline) it gets translated to a
-      //! @publish DUNE::IMC::UamRxFrame and gets posted to the local bus.
+      //! Relay incomming messages (modem to driver or driver to modem)
+      //! @param[in] in identifier of incomming message socket
+      //! @param[in] out identifier of outgoing message socket
       void
       transport(unsigned in, unsigned out)
       {
