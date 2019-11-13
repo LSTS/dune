@@ -29,7 +29,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <regex>
 
 namespace Transports
 {
@@ -107,11 +106,11 @@ namespace Transports
           .description("Entity Label for the Transports.Micromodem task");
 
           param("Evologics Addresses Section", m_args.evo_section)
-          .defaultValue("Evologics Addresses")
+          .defaultValue("Dummy Addresses")
           .description("Section of configuration holding Evologics addresses");
 
           param("Micromodem Addresses Section", m_args.mmodem_section)
-          .defaultValue("Micromodem Addresses")
+          .defaultValue("Dummy Addresses")
           .description("Section of configuration holding micromodem addresses");
 
           bind<IMC::UamTxFrame>(this);
@@ -122,7 +121,6 @@ namespace Transports
         void
         onEntityResolution(void)
         {
-          inf("Entity Resolution");
           try {
             m_mmodem_id = m_ctx.entities.resolve(m_args.mmodem_label);
           }
@@ -285,15 +283,73 @@ namespace Transports
           }
         }
 
-        void
+
+        std::string
         handleData(uint8_t* buf, unsigned int size)
         {
-          std::string command(reinterpret_cast<char const*>(buf), size);
-          inf("Received command: '%s'", String::trim(command).c_str());
+          std::string line(reinterpret_cast<char const*>(buf), size);
+          std::vector<std::string> parts;
+          debug("command: '%s'", String::trim(line).c_str());
+          String::toLowerCase(line);
+          String::split(line, " ", parts);
 
-          std::regex cmd("([^\\s]+) ([^\\s]+) ([^\\s]+)");
+          if (parts.size() < 2)
+            return "Parse exception: Commands take at least one argument\r\n";
 
+          std::vector<std::string> addr_parts;
+          String::split(parts[1], ".", addr_parts);
 
+          if (addr_parts.size() != 2)
+            return "Parse exception: Invalid destination\r\n";
+          int dest_entity;
+
+          if (addr_parts[0] == "evologics")
+            dest_entity = m_evo_id;
+          else if (addr_parts[0] == "umodem")
+            dest_entity = m_mmodem_id;
+          else
+            return "Parse exception: Invalid modem type\r\n";
+
+          std::string command = parts[0];
+          UamTxFrame req;
+
+          req.seq = m_seq_id++;
+          req.sys_dst = addr_parts[1];
+
+          if (command == "range")
+          {
+            debug("Send evologics range to %s!", addr_parts[1].c_str());
+            req.flags = UamTxFrame::UTF_ACK;
+            req.setDestinationEntity(dest_entity);
+            req.sys_dst = addr_parts[1];
+            req.data.push_back(0x01);
+          }
+          else if (command == "deliver")
+          {
+            if (parts.size() < 3)
+              return "Parse exception: Deliver command takes two arguments\r\n";
+            std::string msg = parts[2];
+            std::string data = String::fromHex(msg);
+            req.flags = UamTxFrame::UTF_ACK;
+            std::copy(data.begin(), data.end(), std::back_inserter(req.data));
+            req.setDestinationEntity(dest_entity);
+            req.sys_dst = addr_parts[1];
+            debug("Deliver %s to %s", msg.c_str(), addr_parts[1].c_str());
+          }
+          else if (command == "send")
+          {
+            if (parts.size() < 3)
+              return "Parse exception: Send command takes two arguments\r\n";
+            std::string msg = parts[2];
+            std::string data = String::fromHex(msg);
+            std::copy(data.begin(), data.end(), std::back_inserter(req.data));
+            req.setDestinationEntity(dest_entity);
+            req.sys_dst = addr_parts[1];
+            debug("Send %s to %s", msg.c_str(), addr_parts[1].c_str());
+          }
+
+          dispatch(req, DF_LOOP_BACK);
+          return "";
         }
 
         void
@@ -329,7 +385,14 @@ namespace Transports
             }
 
             if (n > 0)
-              handleData(buf, n);
+            {
+              std::string errors = handleData(buf, n);
+              if (!errors.empty())
+              {
+                itr->socket->write(errors.data(), errors.length());
+                war("Exception sent to client: %s", errors.c_str());
+              }
+            }
 
             ++itr;
           }
@@ -340,7 +403,7 @@ namespace Transports
         {
           std::string src_label = m_ctx.resolver.name();
           std::string dst_label = frame.sys_dst;
-          std::string addr_section = "Modem Addresses";
+          std::string addr_section = "";
 
           if (frame.getDestinationEntity() == m_mmodem_id)
             addr_section = m_args.mmodem_section;
@@ -402,7 +465,7 @@ namespace Transports
 
           ss << tstamp << "," << event << "," << src << "," << dst << "," << std::hex;
           for (char c : request.data)
-            ss << c;
+            ss << (int)c;
           inf("%s", ss.str().c_str());
           ss << "\r\n";
           sendToClients(ss.str());
@@ -425,7 +488,7 @@ namespace Transports
 
           ss << tstamp << "," << event << "," << src << "," << dst << "," << std::hex;
           for (char c : rx.data)
-            ss << c;
+            ss << (int)c;
 
           inf("%s", ss.str().c_str());
           ss << "\r\n";
@@ -442,9 +505,9 @@ namespace Transports
 
           std::string event = "";
           if (status.getSourceEntity() == m_mmodem_id)
-            event = "Micromodem.";
+            event = "M.";
           else if (status.getSourceEntity() == m_evo_id)
-            event = "Evologics.";
+            event = "E.";
 
           if (m_requests.find(status.seq) == m_requests.end())
           {
@@ -486,7 +549,7 @@ namespace Transports
           resolve(req, &src, &dst);
           ss << tstamp << "," << event << "," << src << "," << dst << "," << std::hex;
           for (char c : req.data)
-            ss << c;
+            ss << (int)c;
 
           inf("%s", ss.str().c_str());
           ss << "\r\n";
