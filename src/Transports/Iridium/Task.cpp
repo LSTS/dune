@@ -174,6 +174,8 @@ namespace Transports
           sensorInfo.lon = p.lon;
           sensorInfo.heading = 0;
 
+          war("  System %X is at (%.5f, %.5f).", p.id, Angles::degrees(p.lat), Angles::degrees(p.lon));
+
           std::string name = resolveSystemId(p.id);
 
           switch (selector)
