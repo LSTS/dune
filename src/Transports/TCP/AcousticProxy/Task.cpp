@@ -116,6 +116,8 @@ namespace Transports
           bind<IMC::UamTxFrame>(this);
           bind<IMC::UamTxStatus>(this);
           bind<IMC::UamRxFrame>(this);
+          bind<IMC::UamRxRange>(this);
+          bind<IMC::UsblFixExtended>(this);
         }
 
         void
@@ -134,7 +136,6 @@ namespace Transports
           catch (...) {
             war("Could not get entity id for Evologics task: %s", m_args.evo_label.c_str());
           }
-
         }
 
         void
@@ -221,15 +222,16 @@ namespace Transports
         }
 
         void
-        onDataTransmission(const uint8_t* p, unsigned int n)
+        sendToClients(std::string text)
         {
+
           ClientList::iterator itr = m_clients.begin();
 
           while (itr != m_clients.end())
           {
             try
             {
-              itr->socket->write((char*)p, n);
+              itr->socket->write((uint8_t*) text.data(), text.size());
             }
             catch (std::runtime_error& e)
             {
@@ -398,185 +400,155 @@ namespace Transports
           }
         }
 
-        //! Resolve ids for source and destination of a transmitted frame
-        void resolve(const IMC::UamTxFrame& frame, int* source, int* destination)
+        int
+        resolveEvologics(std::string sys_name)
         {
-          std::string src_label = m_ctx.resolver.name();
-          std::string dst_label = frame.sys_dst;
-          std::string addr_section = "";
+          try {
+           return std::stoi(m_ctx.config.get(m_args.evo_section, sys_name));
+          }
+          catch (...) {
+            return -1;
+          }
+        }
 
-          if (frame.getDestinationEntity() == m_mmodem_id)
-            addr_section = m_args.mmodem_section;
-          else if (frame.getDestinationEntity() == m_evo_id)
-            addr_section = m_args.evo_section;
+        int
+        resolveMModem(std::string sys_name)
+        {
+          try {
+            return std::stoi(m_ctx.config.get(m_args.mmodem_section, sys_name));
+          }
+          catch (...) {
+            return -1;
+          }
+        }
+
+        void
+        log(double timestamp, std::string event, std::string source, std::string destination, int entity, std::vector<char> data, float range = 0)
+        {
+          std::stringstream ss;
+          if (entity == m_mmodem_id || (entity == 255 && m_mmodem_id != -1))
+          {
+            ss << (long) (timestamp * 1000) << "," << "mmodem." << event << "," << resolveMModem(source) << "," << resolveMModem(destination) << ",";
+          }
+          if (entity == m_evo_id || (entity == 255 && m_evo_id != -1))
+          {
+            ss << (long) (timestamp * 1000) << "," << "evologics." << event << "," << resolveEvologics(source) << "," << resolveEvologics(destination) << ",";
+          }
+
+          if (event != "Range")
+          {
+            ss << std::hex << std::fixed << std::setw(2) << std::setfill('0');
+            for (char c : data)
+              ss << (int) (c & 0xFF);
+          }
           else
           {
-            war("Could not resolve modem address for %s.", frame.sys_dst.c_str());
-            *source = *destination = -1;
-            return;
+            ss << range;
           }
 
-          *source = std::stoi(m_ctx.config.get(addr_section, src_label));
-          *destination = std::stoi(m_ctx.config.get(addr_section, dst_label));
-        }
-
-        //! Resolve ids for source and destination of a received frame
-        void resolve(const IMC::UamRxFrame& frame, int* source, int* destination)
-        {
-          std::string src_label = frame.sys_src;
-          std::string dst_label = frame.sys_dst;
-          std::string addr_section = "Modem Addresses";
-
-          if (frame.getSourceEntity() == m_mmodem_id)
-            addr_section = m_args.mmodem_section;
-          else if (frame.getSourceEntity() == m_evo_id)
-            addr_section = m_args.evo_section;
-          else
-          {
-            war("Could not resolve modem address for %s.", frame.sys_dst.c_str());
-            *source = *destination = -1;
-            return;
-          }
-
-          *source = std::stoi(m_ctx.config.get(addr_section, src_label));
-          *destination = std::stoi(m_ctx.config.get(addr_section, dst_label));
-        }
-
-        void
-        sendToClients(std::string text)
-        {
-          onDataTransmission((uint8_t*) text.data(), text.size());
-        }
-
-        void
-        log(const IMC::UamTxFrame& request)
-        {
-          std::stringstream ss;
-
-          long tstamp = abs(request.getTimeStamp() * 1000);
-          int src, dst;
-          resolve(request, &src, &dst);
-
-          std::string event = "Tx";
-          if (request.getDestinationEntity() == m_mmodem_id)
-            event = "Micromodem.Tx";
-          else if (request.getDestinationEntity() == m_evo_id)
-            event = "Evologics.Tx";
-
-          ss << tstamp << "," << event << "," << src << "," << dst << "," << std::hex;
-          for (char c : request.data)
-            ss << (int)c;
-          inf("%s", ss.str().c_str());
-          ss << "\r\n";
-          sendToClients(ss.str());
-        }
-
-        void
-        log(const IMC::UamRxFrame& rx)
-        {
-          std::stringstream ss;
-
-          long tstamp = abs(rx.getTimeStamp() * 1000);
-          int src, dst;
-          resolve(rx, &src, &dst);
-
-          std::string event = "Rx";
-          if (rx.getSourceEntity() == m_mmodem_id)
-            event = "Micromodem.Rx";
-          else if (rx.getSourceEntity() == m_evo_id)
-            event = "Evologics.Rx";
-
-          ss << tstamp << "," << event << "," << src << "," << dst << "," << std::hex;
-          for (char c : rx.data)
-            ss << (int)c;
-
-          inf("%s", ss.str().c_str());
-          ss << "\r\n";
-          sendToClients(ss.str());
-        }
-
-        void
-        log(const IMC::UamTxStatus& status)
-        {
-          std::stringstream ss;
-
-          long tstamp = abs(status.getTimeStamp() * 1000);
-          int src, dst;
-
-          std::string event = "";
-          if (status.getSourceEntity() == m_mmodem_id)
-            event = "M.";
-          else if (status.getSourceEntity() == m_evo_id)
-            event = "E.";
-
-          if (m_requests.find(status.seq) == m_requests.end())
-          {
-            war("Could not find matching transmission request (%d)", status.seq);
-            return;
-          }
-
-          switch (status.value) {
-            case UamTxStatus::UTS_DONE:
-              event += "TxOk";
-              break;
-            case UamTxStatus::UTS_BUSY:
-              event += "TxBusy";
-              break;
-            case UamTxStatus::UTS_CANCELED:
-              event += "TxCanceled";
-              break;
-            case UamTxStatus::UTS_IP:
-              event += "TxInProgress";
-              break;
-            case UamTxStatus::UTS_FAILED:
-              event += "TxFailed";
-              break;
-            case UamTxStatus::UTS_INV_SIZE:
-              event += "TxInvalidSize";
-              break;
-            case UamTxStatus::UTS_INV_ADDR:
-              event += "TxInvalidAddress";
-              break;
-            case UamTxStatus::UTS_UNSUPPORTED:
-              event += "TxUnsupported";
-              break;
-            default:
-              event += "TxUnknown";
-              break;
-          }
-
-          IMC::UamTxFrame req = m_requests[status.seq];
-          resolve(req, &src, &dst);
-          ss << tstamp << "," << event << "," << src << "," << dst << "," << std::hex;
-          for (char c : req.data)
-            ss << (int)c;
-
-          inf("%s", ss.str().c_str());
+          debug("%s", ss.str().c_str());
           ss << "\r\n";
 
           sendToClients(ss.str());
+        }
+
+        void
+        consume(const IMC::UamRxRange* msg)
+        {
+          log(msg->getTimeStamp(), "Range", m_ctx.resolver.name() , msg->sys, msg->getSourceEntity(), std::vector<char>(), msg->value);
         }
 
         void
         consume(const IMC::UamTxFrame* msg)
         {
           m_requests[msg->seq] = *msg;
-          log(*msg);
+          log(msg->getTimeStamp(), "Tx", m_ctx.resolver.name(), msg->sys_dst, msg->getDestinationEntity(), msg->data);
         }
 
         void
         consume(const IMC::UamRxFrame* msg)
         {
-          log(*msg);
+          log(msg->getTimeStamp(), "Rx", msg->sys_src, msg->sys_dst, msg->getSourceEntity(), msg->data);
         }
 
         void
         consume(const IMC::UamTxStatus* msg)
         {
-          log(*msg);
+          std::string event = "";
+
+          if (m_requests.find(msg->seq) == m_requests.end())
+          {
+            war("Could not find matching transmission request (%d)", msg->seq);
+            return;
+          }
+
+          IMC::UamTxFrame req = m_requests[msg->seq];
+
+          switch (msg->value) {
+            case UamTxStatus::UTS_DONE:
+              event = "TxOk";
+              break;
+            case UamTxStatus::UTS_BUSY:
+              event = "TxBusy";
+              break;
+            case UamTxStatus::UTS_CANCELED:
+              event = "TxCanceled";
+              break;
+            case UamTxStatus::UTS_IP:
+              event = "TxInProgress";
+              break;
+            case UamTxStatus::UTS_FAILED:
+              event = "TxFailed";
+              break;
+            case UamTxStatus::UTS_INV_SIZE:
+              event = "TxInvalidSize";
+              break;
+            case UamTxStatus::UTS_INV_ADDR:
+              event = "TxInvalidAddress";
+              break;
+            case UamTxStatus::UTS_UNSUPPORTED:
+              event = "TxUnsupported";
+              break;
+            default:
+              event = "TxUnknown";
+              break;
+          }
+
+          log(msg->getTimeStamp(), event, m_ctx.resolver.name() , req.sys_dst, msg->getSourceEntity(), req.data);
 
           if (msg->value != UamTxStatus::UTS_IP)
             m_requests.erase(msg->seq);
+        }
+
+        void
+        consume(const IMC::UsblFixExtended* msg)
+        {
+          std::stringstream ss;
+          ss << (long) (msg->getTimeStamp() * 1000) << ",";
+          ss << "evologics.usbl_abs" << "," << resolveEvologics(m_ctx.resolver.name()) << "," << resolveEvologics(msg->target) << ",";
+          ss << Angles::degrees(msg->lat) << "," << Angles::degrees(msg->lon) << ",";
+          ss << msg->z << "," << msg->accuracy;
+
+          debug("%s", ss.str().c_str());
+          ss << "\r\n";
+
+          sendToClients(ss.str());
+        }
+
+        void
+        consume(const IMC::UsblPositionExtended* msg)
+        {
+          std::stringstream ss;
+          ss << (long) (msg->getTimeStamp() * 1000) << ",";
+          ss << "evologics.usbl_rel" << "," << resolveEvologics(m_ctx.resolver.name()) << "," << resolveEvologics(msg->target) << ",";
+          ss << std::setprecision(2) << Angles::degrees(msg->phi) << "," << Angles::degrees(msg->theta) << "," << Angles::degrees(msg->psi) << ",";
+          ss << msg->x << "," << msg->y << "," << msg->z << ",";
+          ss << msg->n << "," << msg->e << "," << msg->d << "," << msg->accuracy;
+
+          debug("%s", ss.str().c_str());
+          ss << "\r\n";
+
+          sendToClients(ss.str());
         }
 
         void
