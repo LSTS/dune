@@ -259,7 +259,14 @@ namespace Simulators
             return;
           
           clearTicket(IMC::UamTxStatus::UTS_DONE);
-          debug("Ticket cleared!!!!");
+          debug("Ticket cleared");
+        }
+        else if (String::startsWith(msg->value, "IP"))
+        {
+          if (!m_ticket)
+            return;
+
+          debug("Message is being sent");
         }
         else if (String::startsWith(msg->value, "FAILED"))
         {

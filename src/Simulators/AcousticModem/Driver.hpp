@@ -410,7 +410,7 @@ namespace Simulators
             try
             {
               share(&m_current_op->msg);
-              str = "DONE";
+              str = "IP";
             }
             catch (std::runtime_error& e)
             {
