@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
+// IMC XML MD5: 52e8ed7dae56165e5cb85d3a1111bdfd                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -4872,6 +4872,104 @@ namespace DUNE
 
       void
       setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Simulated Acoustic Message.
+    class SimAcousticMessage: public Message
+    {
+    public:
+      //! Flags.
+      enum FlagsBits
+      {
+        //! Acknowledgement.
+        SAM_ACK = 0x01,
+        //! Delayed.
+        SAM_DELAYED = 0x02,
+        //! Reply.
+        SAM_REPLY = 0x03
+      };
+
+      //! Latitude.
+      fp64_t lat;
+      //! Longitude.
+      fp64_t lon;
+      //! Depth.
+      fp32_t depth;
+      //! Sentence.
+      std::string sentence;
+      //! Transmission Time.
+      fp64_t txtime;
+      //! Modem Type.
+      std::string modem_type;
+      //! Source system.
+      std::string sys_src;
+      //! Sequence Id.
+      uint16_t seq;
+      //! Destination System.
+      std::string sys_dst;
+      //! Flags.
+      uint8_t flags;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 207;
+      }
+
+      SimAcousticMessage(void);
+
+      SimAcousticMessage*
+      clone(void) const
+      {
+        return new SimAcousticMessage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SimAcousticMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SimAcousticMessage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 31;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(sentence) + IMC::getSerializationSize(modem_type) + IMC::getSerializationSize(sys_src) + IMC::getSerializationSize(sys_dst) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Acoustic Operation.

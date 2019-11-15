@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
+// IMC XML MD5: 52e8ed7dae56165e5cb85d3a1111bdfd                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -154,6 +154,8 @@
 #define DUNE_IMC_LBLCONFIG 203
 //! AcousticMessage identification number.
 #define DUNE_IMC_ACOUSTICMESSAGE 206
+//! SimAcousticMessage identification number.
+#define DUNE_IMC_SIMACOUSTICMESSAGE 207
 //! AcousticOperation identification number.
 #define DUNE_IMC_ACOUSTICOPERATION 211
 //! AcousticSystemsQuery identification number.
