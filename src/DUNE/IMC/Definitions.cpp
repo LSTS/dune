@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
+// IMC XML MD5: 52e8ed7dae56165e5cb85d3a1111bdfd                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -4782,6 +4782,122 @@ namespace DUNE
       {
         message.get()->setDestinationEntity(value__);
       }
+    }
+
+    SimAcousticMessage::SimAcousticMessage(void)
+    {
+      m_header.mgid = 207;
+      clear();
+    }
+
+    void
+    SimAcousticMessage::clear(void)
+    {
+      lat = 0;
+      lon = 0;
+      depth = 0;
+      sentence.clear();
+      txtime = 0;
+      modem_type.clear();
+      sys_src.clear();
+      seq = 0;
+      sys_dst.clear();
+      flags = 0;
+      data.clear();
+    }
+
+    bool
+    SimAcousticMessage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SimAcousticMessage& other__ = static_cast<const SimAcousticMessage&>(msg__);
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (depth != other__.depth) return false;
+      if (sentence != other__.sentence) return false;
+      if (txtime != other__.txtime) return false;
+      if (modem_type != other__.modem_type) return false;
+      if (sys_src != other__.sys_src) return false;
+      if (seq != other__.seq) return false;
+      if (sys_dst != other__.sys_dst) return false;
+      if (flags != other__.flags) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    SimAcousticMessage::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    SimAcousticMessage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(depth, ptr__);
+      ptr__ += IMC::serialize(sentence, ptr__);
+      ptr__ += IMC::serialize(txtime, ptr__);
+      ptr__ += IMC::serialize(modem_type, ptr__);
+      ptr__ += IMC::serialize(sys_src, ptr__);
+      ptr__ += IMC::serialize(seq, ptr__);
+      ptr__ += IMC::serialize(sys_dst, ptr__);
+      ptr__ += IMC::serialize(flags, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SimAcousticMessage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(depth, bfr__, size__);
+      bfr__ += IMC::deserialize(sentence, bfr__, size__);
+      bfr__ += IMC::deserialize(txtime, bfr__, size__);
+      bfr__ += IMC::deserialize(modem_type, bfr__, size__);
+      bfr__ += IMC::deserialize(sys_src, bfr__, size__);
+      bfr__ += IMC::deserialize(seq, bfr__, size__);
+      bfr__ += IMC::deserialize(sys_dst, bfr__, size__);
+      bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SimAcousticMessage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(depth, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sentence, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(txtime, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(modem_type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sys_src, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(seq, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sys_dst, bfr__, size__);
+      bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    SimAcousticMessage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "depth", depth, nindent__);
+      IMC::toJSON(os__, "sentence", sentence, nindent__);
+      IMC::toJSON(os__, "txtime", txtime, nindent__);
+      IMC::toJSON(os__, "modem_type", modem_type, nindent__);
+      IMC::toJSON(os__, "sys_src", sys_src, nindent__);
+      IMC::toJSON(os__, "seq", seq, nindent__);
+      IMC::toJSON(os__, "sys_dst", sys_dst, nindent__);
+      IMC::toJSON(os__, "flags", flags, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
     }
 
     AcousticOperation::AcousticOperation(void)

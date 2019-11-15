@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2a5f30dbbf2c8bf48b108c920bd86353                            *
+// IMC XML MD5: 52e8ed7dae56165e5cb85d3a1111bdfd                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -91,6 +91,7 @@ MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)
 MESSAGE(206, AcousticMessage)
+MESSAGE(207, SimAcousticMessage)
 MESSAGE(211, AcousticOperation)
 MESSAGE(212, AcousticSystemsQuery)
 MESSAGE(213, AcousticSystems)
