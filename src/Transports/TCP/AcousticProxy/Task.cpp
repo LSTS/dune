@@ -34,6 +34,8 @@ namespace Transports
 {
   namespace TCP
   {
+    //! %AcousticProxy task allows interacting with acoustic modems over a
+    //! TCP / text-based interface
     namespace AcousticProxy
     {
       using DUNE_NAMESPACES;
@@ -46,11 +48,11 @@ namespace Transports
         //! Evologics Task Label
         std::string evo_label;
         //! MicroModem Task Label
-        std::string mmodem_label;
+        std::string umodem_label;
         //! Evologics Addresses Section
         std::string evo_section;
         //! MicroModem Addresses Section
-        std::string mmodem_section;
+        std::string umodem_section;
       };
 
       struct Task: public Tasks::Task
@@ -64,17 +66,18 @@ namespace Transports
         // I/O selector.
         Poll m_poll;
         //! Entity id for modems
-        int m_mmodem_id, m_evo_id;
-
+        int m_umodem_id, m_evo_id;
         //! incoming data buffer
         Utils::ByteBuffer m_buf;
 
         // Client data.
         struct Client
         {
-          TCPSocket* socket; // Socket handle.
-          Address address; // Client address.
-          uint16_t port; // Client port.
+          TCPSocket* socket;  // Socket handle.
+          Address address;    // Client address.
+          uint16_t port;      // Client port.
+          char buffer[65535]; // Incoming buffer.
+          int buf_pos;        // Buffer position.
         };
 
         // Client list.
@@ -85,12 +88,13 @@ namespace Transports
         typedef std::map<uint16_t, IMC::UamTxFrame> RequestMap;
         RequestMap m_requests;
 
+        // Increasing sequence number to use when sending transmission requests
         int m_seq_id = 0;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_sock(0),
-          m_mmodem_id(-1),
+          m_umodem_id(-1),
           m_evo_id(-1)
         {
           param("Port", m_args.port)
@@ -101,7 +105,7 @@ namespace Transports
           .defaultValue("Evologics Modem")
           .description("Entity Label for the Transports.Evologics task");
 
-          param("Micromodem Entity Label", m_args.mmodem_label)
+          param("Micromodem Entity Label", m_args.umodem_label)
           .defaultValue("Micromodem Modem")
           .description("Entity Label for the Transports.Micromodem task");
 
@@ -109,7 +113,7 @@ namespace Transports
           .defaultValue("Dummy Addresses")
           .description("Section of configuration holding Evologics addresses");
 
-          param("Micromodem Addresses Section", m_args.mmodem_section)
+          param("Micromodem Addresses Section", m_args.umodem_section)
           .defaultValue("Dummy Addresses")
           .description("Section of configuration holding micromodem addresses");
 
@@ -118,16 +122,18 @@ namespace Transports
           bind<IMC::UamRxFrame>(this);
           bind<IMC::UamRxRange>(this);
           bind<IMC::UsblFixExtended>(this);
+          bind<IMC::UsblPositionExtended>(this);
         }
 
         void
         onEntityResolution(void)
         {
+          // Try to obtain entity ids of modem tasks. It's fine if some of them do not exist.
           try {
-            m_mmodem_id = m_ctx.entities.resolve(m_args.mmodem_label);
+            m_umodem_id = m_ctx.entities.resolve(m_args.umodem_label);
           }
           catch (...) {
-            war("Could not get entity id for Micromodem task: %s", m_args.mmodem_label.c_str());
+            war("Could not get entity id for Micromodem task: %s", m_args.umodem_label.c_str());
           }
 
           try {
@@ -142,9 +148,8 @@ namespace Transports
         onResourceAcquisition(void)
         {
           int port_limit = m_args.port + c_port_retries;
-
           m_sock = new TCPSocket;
-
+          // Start listening for incoming TCP connections
           while (m_args.port != port_limit)
           {
             try
@@ -224,7 +229,6 @@ namespace Transports
         void
         sendToClients(std::string text)
         {
-
           ClientList::iterator itr = m_clients.begin();
 
           while (itr != m_clients.end())
@@ -258,11 +262,30 @@ namespace Transports
           handleClients(buf, cap);
         }
 
+        std::vector<char>
+        fromHex(std::string hexBytes)
+        {
+          hexBytes = String::trim(hexBytes);
+          std::vector<char> result;
+          if ((hexBytes.size() % 2) != 0)
+            throw std::invalid_argument("String length is not even");
+
+          for (unsigned i = 0; i < hexBytes.size(); i += 2)
+          {
+            unsigned c;
+            std::sscanf(hexBytes.c_str() + i, "%02X", &c);
+            result.push_back(c);
+          }
+          return result;
+        }
+
         void
         acceptNewClient(void)
         {
           Client c;
           c.socket = 0;
+          c.buf_pos = 0;
+
           try
           {
             c.socket = m_sock->accept(&c.address, &c.port);
@@ -285,13 +308,19 @@ namespace Transports
           }
         }
 
-
         std::string
-        handleData(uint8_t* buf, unsigned int size)
+        handleData(Client& client, uint8_t* buf, unsigned int size)
         {
-          std::string line(reinterpret_cast<char const*>(buf), size);
+          memcpy(client.buffer + client.buf_pos, buf, size);
+          client.buf_pos += size;
+
+          std::string line(reinterpret_cast<char const*>(client.buffer), client.buf_pos);
+
+          if (!String::endsWith(line, "\n"))
+            return "";
+
+          client.buf_pos = 0;
           std::vector<std::string> parts;
-          debug("command: '%s'", String::trim(line).c_str());
           String::toLowerCase(line);
           String::split(line, " ", parts);
 
@@ -302,13 +331,13 @@ namespace Transports
           String::split(parts[1], ".", addr_parts);
 
           if (addr_parts.size() != 2)
-            return "Parse exception: Invalid destination\r\n";
+            return "Parse exception: Destination arguments are in the form <modem>.<id>\r\n";
           int dest_entity;
 
           if (addr_parts[0] == "evologics")
             dest_entity = m_evo_id;
           else if (addr_parts[0] == "umodem")
-            dest_entity = m_mmodem_id;
+            dest_entity = m_umodem_id;
           else
             return "Parse exception: Invalid modem type\r\n";
 
@@ -320,31 +349,23 @@ namespace Transports
 
           if (command == "range")
           {
-            debug("Send evologics range to %s!", addr_parts[1].c_str());
+            debug("Send range to %s!", addr_parts[1].c_str());
             req.flags = UamTxFrame::UTF_ACK;
             req.setDestinationEntity(dest_entity);
             req.sys_dst = addr_parts[1];
-            req.data.push_back(0x01);
+            req.data.push_back(0);
           }
-          else if (command == "deliver")
+          else if (command == "deliver" || command == "send")
           {
             if (parts.size() < 3)
-              return "Parse exception: Deliver command takes two arguments\r\n";
+              return "Parse exception: command takes two arguments\r\n";
             std::string msg = parts[2];
-            std::string data = String::fromHex(msg);
-            req.flags = UamTxFrame::UTF_ACK;
-            std::copy(data.begin(), data.end(), std::back_inserter(req.data));
-            req.setDestinationEntity(dest_entity);
-            req.sys_dst = addr_parts[1];
-            debug("Deliver %s to %s", msg.c_str(), addr_parts[1].c_str());
-          }
-          else if (command == "send")
-          {
-            if (parts.size() < 3)
-              return "Parse exception: Send command takes two arguments\r\n";
-            std::string msg = parts[2];
-            std::string data = String::fromHex(msg);
-            std::copy(data.begin(), data.end(), std::back_inserter(req.data));
+            // deliver requests for message acknowledgment while send doesn't
+            req.flags = (command == "deliver")? UamTxFrame::UTF_ACK : 0;
+            msg = String::trim(msg);
+            if (msg.length()%2 != 0)
+              return "Parse exception: Hexadecimal value must have even length\r\n";
+            req.data = fromHex(msg);
             req.setDestinationEntity(dest_entity);
             req.sys_dst = addr_parts[1];
             debug("Send %s to %s", msg.c_str(), addr_parts[1].c_str());
@@ -388,7 +409,7 @@ namespace Transports
 
             if (n > 0)
             {
-              std::string errors = handleData(buf, n);
+              std::string errors = handleData(*itr, buf, n);
               if (!errors.empty())
               {
                 itr->socket->write(errors.data(), errors.length());
@@ -401,21 +422,10 @@ namespace Transports
         }
 
         int
-        resolveEvologics(std::string sys_name)
+        resolveAddress(std::string modem_section, std::string sys_name)
         {
           try {
-           return std::stoi(m_ctx.config.get(m_args.evo_section, sys_name));
-          }
-          catch (...) {
-            return -1;
-          }
-        }
-
-        int
-        resolveMModem(std::string sys_name)
-        {
-          try {
-            return std::stoi(m_ctx.config.get(m_args.mmodem_section, sys_name));
+           return std::stoi(m_ctx.config.get(modem_section, sys_name));
           }
           catch (...) {
             return -1;
@@ -426,20 +436,21 @@ namespace Transports
         log(double timestamp, std::string event, std::string source, std::string destination, int entity, std::vector<char> data, float range = 0)
         {
           std::stringstream ss;
-          if (entity == m_mmodem_id || (entity == 255 && m_mmodem_id != -1))
+          if (entity == m_umodem_id || (entity == 255 && m_umodem_id != -1))
           {
-            ss << (long) (timestamp * 1000) << "," << "mmodem." << event << "," << resolveMModem(source) << "," << resolveMModem(destination) << ",";
+            ss << (long)(timestamp * 1000) << "," << "umodem." << event << "," << resolveAddress(m_args.umodem_section, source) << ","
+               << resolveAddress(m_args.umodem_section, destination) << ",";
           }
           if (entity == m_evo_id || (entity == 255 && m_evo_id != -1))
           {
-            ss << (long) (timestamp * 1000) << "," << "evologics." << event << "," << resolveEvologics(source) << "," << resolveEvologics(destination) << ",";
+            ss << (long) (timestamp * 1000) << "," << "evologics." << event << "," << resolveAddress(m_args.evo_section, source)
+               << "," << resolveAddress(m_args.evo_section, destination) << ",";
           }
 
           if (event != "Range")
           {
-            ss << std::hex << std::fixed << std::setw(2) << std::setfill('0');
             for (char c : data)
-              ss << (int) (c & 0xFF);
+              ss << std::hex << std::setw(2) << std::setfill('0') << (int) (c & 0xFF);
           }
           else
           {
@@ -525,7 +536,8 @@ namespace Transports
         {
           std::stringstream ss;
           ss << (long) (msg->getTimeStamp() * 1000) << ",";
-          ss << "evologics.usbl_abs" << "," << resolveEvologics(m_ctx.resolver.name()) << "," << resolveEvologics(msg->target) << ",";
+          ss << "evologics.usbl_abs" << "," << resolveAddress(m_args.evo_section, m_ctx.resolver.name()) << ",";
+          ss << resolveAddress(m_args.evo_section, msg->target) << ",";
           ss << Angles::degrees(msg->lat) << "," << Angles::degrees(msg->lon) << ",";
           ss << msg->z << "," << msg->accuracy;
 
@@ -540,7 +552,8 @@ namespace Transports
         {
           std::stringstream ss;
           ss << (long) (msg->getTimeStamp() * 1000) << ",";
-          ss << "evologics.usbl_rel" << "," << resolveEvologics(m_ctx.resolver.name()) << "," << resolveEvologics(msg->target) << ",";
+          ss << "evologics.usbl_rel" << "," << resolveAddress(m_args.evo_section, m_ctx.resolver.name()) << ",";
+          ss << resolveAddress(m_args.evo_section, msg->target) << ",";
           ss << std::setprecision(2) << Angles::degrees(msg->phi) << "," << Angles::degrees(msg->theta) << "," << Angles::degrees(msg->psi) << ",";
           ss << msg->x << "," << msg->y << "," << msg->z << ",";
           ss << msg->n << "," << msg->e << "," << msg->d << "," << msg->accuracy;
