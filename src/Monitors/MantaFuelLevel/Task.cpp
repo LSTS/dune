@@ -95,6 +95,10 @@ namespace Monitors
         .defaultValue("Charger")
         .description("Entity label to get charger current level.");
 
+        param("Current Value Charger Reject", m_args.chager_current)
+        .defaultValue("0.2")
+        .description("Minimun value to ignore charge.");
+
         bind<IMC::Voltage>(this);
         bind<IMC::Current>(this);
       }
