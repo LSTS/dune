@@ -66,6 +66,8 @@ namespace Power
     static const unsigned c_pwrs_count = 17;
     //! Id of the backlight power channel.
     static const unsigned c_pwr_blight = 16;
+    //! Minimum of readings before power off system
+    static const unsigned c_minimum_reads_sys_off = 5;
 
     //! Commands to the device.
     enum Commands
@@ -129,6 +131,8 @@ namespace Power
       unsigned pwr_states[c_pwrs_count];
       //! True to drived LCD from MCB.
       bool lcd;
+      //! True to activate counter for system off readings
+      bool counter_sys_off;
     };
 
     struct Task: public Tasks::Task
@@ -153,6 +157,8 @@ namespace Power
       IMC::Message* m_adcs[c_adcs_count];
       //! Power channels by name.
       PowerChannelMap m_pwr_chs;
+      //! Counter to control Power Off
+      uint8_t m_counter_sys_off;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -207,6 +213,10 @@ namespace Power
         param("Drive LCD", m_args.lcd)
         .defaultValue("false")
         .description("LCD is controlled by MCB");
+
+        param("Use Counter System Off", m_args.counter_sys_off)
+        .defaultValue("false")
+        .description("True to activate counter for system off readings.");
 
         // Register consumers.
         bind<IMC::LcdControl>(this);
@@ -334,6 +344,8 @@ namespace Power
           else
             controlPowerChannel(itr->second, IMC::PowerChannelControl::PCC_OP_TURN_OFF);
         }
+
+        m_counter_sys_off = 0;
       }
 
       //! Write value to position in a given buffer.
@@ -522,12 +534,34 @@ namespace Power
           // Check power off.
           if ((data[8] & BIT_SW_SYS_ON) == 0)
           {
-            m_pwr_down = true;
-            IMC::PowerOperation pop;
-            pop.setDestination(getSystemId());
-            pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
-            pop.time_remain = (float)(data[8] & 0x1F);
-            dispatch(pop);
+            if(m_args.counter_sys_off)
+            {
+              if(m_counter_sys_off >= c_minimum_reads_sys_off)
+              {
+                m_pwr_down = true;
+                IMC::PowerOperation pop;
+                pop.setDestination(getSystemId());
+                pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+                pop.time_remain = (float)(data[8] & 0x1F);
+                dispatch(pop);
+                debug("power down sys");
+              }
+              else
+              {
+                debug("counter int :%d", m_counter_sys_off);
+                m_counter_sys_off++;
+              }
+            }
+            else
+            {
+              m_pwr_down = true;
+              IMC::PowerOperation pop;
+              pop.setDestination(getSystemId());
+              pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+              pop.time_remain = (float)(data[8] & 0x1F);
+              dispatch(pop);
+              debug("power down sys");
+            }
           }
           else if (m_pwr_down)
           {
@@ -536,6 +570,15 @@ namespace Power
             pop.setDestination(getSystemId());
             pop.op = IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
             dispatch(pop);
+            m_counter_sys_off = 0;
+          }
+          else
+          {
+            if(m_counter_sys_off > 0 && m_args.counter_sys_off)
+            {
+              debug("counter reset");
+              m_counter_sys_off = 0;
+            }
           }
         }
         (void)data_size;
