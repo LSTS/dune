@@ -364,6 +364,8 @@ namespace Simulators
       Time::Counter<double> m_pos_update;
       //! Read buffer.
       std::vector<uint8_t> m_bfr;
+      //! Rotation matrix
+      Matrix m_rotation;
       //! Common position reference
       //! to use as origin in simulator
       struct pos
@@ -421,7 +423,7 @@ namespace Simulators
         .description("Name of the configuration section with modem addresses");
 
         param("State Update Period", m_args.update_period)
-        .defaultValue("3.0")
+        .defaultValue("1.0")
         .minimumValue("1.0")
         .description("Position update period.");
 
@@ -500,6 +502,11 @@ namespace Simulators
         // Buffer sizing
         m_bfr.clear();
         m_bfr.resize(c_bfr_size);
+
+        // Rotation matrix
+        // To convert from vehicle frame to modem frame
+        double angles[3] = {0, Angles::radians(180), Angles::radians(-90)};
+        m_rotation = Matrix(angles, 3, 1).toDCM();
 
         // Auto assign local port and simulator IP
         // based on evologics address
@@ -688,31 +695,34 @@ namespace Simulators
         if (!m_pos_update.overflow())
           return;
 
-        double lat = m_sstate.lat;
-        double lon = m_sstate.lon;
-        double height = m_sstate.height;
-        double n = 0, e = 0, d = 0;
+        double llh[3] = {m_sstate.lat, 
+                         m_sstate.lon,
+                         m_sstate.height};
+        double ned[3] = {0.0};
+        double att[3] = {m_sstate.phi,
+                         m_sstate.theta,
+                         m_sstate.psi};
 
-        // TODO: Check height vs depth
         WGS84::displace(m_sstate.x, m_sstate.y, m_sstate.z,
-                        &lat, &lon, &height);
+                        &llh[0], &llh[1], &llh[2]);
 
         WGS84::displacement(m_origin.lat, m_origin.lon, m_origin.height,
-                            lat, lon, height,
-                            &n, &e, &d);
+                            llh[0], llh[1], llh[2],
+                            &ned[0], &ned[1], &ned[2]);
 
 
-        // Changed order to be compatible with modem reference frame
-        std::array<double, 6> state;
-        state = {e, n, d, Angles::degrees(m_sstate.phi), 
-                          Angles::degrees(m_sstate.theta),
-                          Angles::degrees(m_sstate.psi)};
+        // Rotate to be compatible with modem reference frame
+        // Refer to evologics modem manual
+        // x = east
+        // y = north
+        // z = up
+        Matrix state;
+        state.vertCat(m_rotation * Matrix(ned, 3, 1));
+        state.vertCat(m_rotation * Matrix(att, 3, 1));
 
-        auto itr = state.begin();
-        std::string state_str = std::to_string(*itr);
-        ++itr;
-        for (; itr != state.end(); ++itr)
-          state_str += " " + std::to_string(*itr);
+        std::string state_str = std::to_string(state(0));
+        for (int i = 1; i < state.size(); ++i)
+          state_str += " " + std::to_string(state(i));
         state_str += "\n";
 
         m_socket[STATE]->writeString(state_str.c_str());
@@ -730,7 +740,7 @@ namespace Simulators
             String::startsWith(str, "PHYOFF")))
           return;
           
-        debug(DTR("Reset command: %s -> Reconnecting to modem"), 
+        debug(DTR("Reset command: %s -> Reconnecting to modem"),
               sanitize(str.substr(0, str.find('\n'))).c_str());
         Delay::wait(5.0);
         m_socket[MODEM]->connect(m_args.modem_address, m_args.modem_port);
