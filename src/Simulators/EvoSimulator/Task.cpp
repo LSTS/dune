@@ -32,6 +32,28 @@
 
 namespace Simulators
 {
+  //! Interface between DUNE Evologics driver and Evologics simulator.
+  //!
+  //! To use this simulator first connect to Evologics' VPN by following the 
+  //! instructions found in "dmace-74-FEUP-1-user-guide.pdf", at:
+  //! https://drive.google.com/file/d/1ya361hHqA2l3uRWixb0BMUCODfzFMgxm/view?usp=sharing
+  //!
+  //! You must also enable a driver task that connects to this interface.
+  //! Try enabling "Transports.Evologics/Simulator".
+  //! 
+  //! You must now be able to simulate all of the following vehicles:
+  //! lauv-noptilus-1
+  //! lauv-noptilus-2
+  //! lauv-noptilus-3
+  //! lauv-xtreme-2  
+  //! manta-11       
+  //! manta-rugged   
+  //! manta-1        
+  //! manta-2        
+  //! manta-3        
+  //! lauv-nemo-1   
+  //!  
+  //! @author Luís Venâncio
   namespace EvoSimulator
   {
     using DUNE_NAMESPACES;
