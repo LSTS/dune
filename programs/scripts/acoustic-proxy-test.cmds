@@ -1,0 +1,16 @@
+send evologics.lauv-noptilus-1 101010
+deliver evologics.lauv-noptilus-1 101010
+send evologics.broadcast AABB101010
+send evologics.lauv-noptilus-2 101010
+deliver evologics.lauv-noptilus-2 101010
+send evologics.broadcast AABB101010
+send evologics.lauv-noptilus-3 101010
+deliver evologics.lauv-noptilus-3 101010
+send evologics.broadcast AABB101010
+send evologics.lauv-noptilus-2 101010
+deliver evologics.lauv-noptilus-2 101010
+send evologics.broadcast AABB101010
+send evologics.lauv-noptilus-3 101010
+deliver evologics.lauv-noptilus-3 101010
+send evologics.broadcast AABB101010
+
