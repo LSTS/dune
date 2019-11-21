@@ -346,6 +346,7 @@ namespace Transports
 
           req.seq = m_seq_id++;
           req.sys_dst = addr_parts[1];
+          req.setDestination(getSystemId());
 
           if (command == "range")
           {
