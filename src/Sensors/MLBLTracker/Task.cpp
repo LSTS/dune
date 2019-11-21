@@ -169,15 +169,19 @@ namespace Sensors
       std::string m_line;
       // System position
       IMC::EstimatedState *m_estate;
+      // Ongoing frame transmission
+      IMC::UamTxFrame* m_frame;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
         m_op_deadline(-1.0),
+        m_address(0),
         m_pc(NULL),
         m_op(OP_NONE),
         m_gpio_txd(NULL),
-        m_estate(NULL)
+        m_estate(NULL),
+        m_frame(NULL)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -251,6 +255,7 @@ namespace Sensors
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
+        bind<IMC::UamTxFrame>(this);
       }
 
       ~Task(void)
@@ -357,6 +362,7 @@ namespace Sensors
         Memory::clear(m_pc);
         Memory::clear(m_gpio_txd);
         Memory::clear(m_handle);
+        Memory::clear(m_frame);
       }
 
       void
@@ -406,6 +412,112 @@ namespace Sensors
       consume(const IMC::EstimatedState* msg)
       {
         Memory::replace(m_estate, new IMC::EstimatedState(*msg));
+      }
+
+      void
+      consume(const IMC::UamTxFrame* msg)
+      {
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->sys_dst == getSystemName())
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_ADDR);
+          return;
+        }
+
+        try
+        {
+          lookupSystemAddress(msg->sys_dst);
+        }
+        catch (...)
+        {
+          war(DTR("invalid system name %s"), msg->sys_dst.c_str());
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_ADDR);
+          return;
+        }
+
+        // check if we have a transducer connected.
+        if (!hasTransducer())
+        {
+          war(DTR("No MicroModem transducer connected!"));
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_CANCELED);
+          return;
+        }
+
+        // Fail if busy.
+        if ((m_op != OP_NONE) || (m_frame != NULL))
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_BUSY);
+          return;
+        }
+
+        // does the message fit in a packet?
+        if (msg->data.size() > c_binary_size)
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_SIZE, "Packet exceeds maximum allowed size");
+          return;
+        }
+
+        try
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_IP);
+          transmitRawMessage(m_ummap[msg->sys_dst], msg->data);
+        }
+        catch (std::runtime_error& e)
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_FAILED, e.what());
+          Memory::clear(m_frame);
+        }
+      }
+
+      void
+      sendTxStatus(const IMC::UamTxFrame* msg, IMC::UamTxStatus::ValueEnum value,
+                   const std::string& error = "")
+      {
+        IMC::UamTxStatus status;
+        status.setDestination(msg->getSource());
+        status.setDestinationEntity(msg->getSourceEntity());
+        status.seq = msg->seq;
+        status.value = value;
+        status.error = error;
+        dispatch(status);
+      }
+
+      unsigned
+      lookupSystemAddress(const std::string& name)
+      {
+        MicroModemMap::iterator itr = m_ummap.find(name);
+        if (itr == m_ummap.end())
+          throw std::runtime_error("unknown system name");
+
+        return itr->second;
+      }
+
+      std::string
+      lookupSystemName(unsigned addr)
+      {
+        for (std::pair<std::string, unsigned> entry : m_ummap)
+        {
+          if (entry.second == addr)
+            return entry.first;
+        }
+        return "unknown";
+      }
+
+      void
+      transmitRawMessage(int destination, const std::vector<char>& data)
+      {
+        std::vector<char> msg(c_binary_size, 0);
+        std::string hex = String::toHex(data);
+        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",  m_address, destination, hex.c_str());
+        sendCommand(cmd);
+
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, destination);
+        sendCommand(cyc);
+
+        sendTxStatus(m_frame, IMC::UamTxStatus::UTS_DONE);
+        Memory::clear(m_frame);
       }
 
       void
@@ -659,6 +771,13 @@ namespace Sensors
         if (ttime < 0)
           ttime = 0;
 
+        // Send received range (? no handleRangeTransponder não?)
+        UamRxRange range;
+        range.seq = 0;
+        range.sys = lookupSystemName(src);
+        range.value = ttime * m_args.sspeed;
+        dispatch(range);
+
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
         m_acop_out.system = m_acop.system;
         m_acop_out.range = ttime * m_args.sspeed;
@@ -789,6 +908,13 @@ namespace Sensors
 
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
+
+        // Dispatch received frame
+        UamRxFrame rx;
+        rx.data.assign(msg.begin(), msg.end());
+        rx.sys_src = lookupSystemName(src);
+        rx.sys_dst = lookupSystemName(dst);
+        dispatch(rx);
 
         uint8_t code = static_cast<uint8_t>(msg_raw[0]);
 
