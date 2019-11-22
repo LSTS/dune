@@ -69,6 +69,8 @@ namespace Transports
         int m_umodem_id, m_evo_id;
         //! incoming data buffer
         Utils::ByteBuffer m_buf;
+        //! echo received commands
+        bool m_echo;
 
         // Client data.
         struct Client
@@ -95,7 +97,8 @@ namespace Transports
           Tasks::Task(name, ctx),
           m_sock(0),
           m_umodem_id(-1),
-          m_evo_id(-1)
+          m_evo_id(-1),
+          m_echo(false)
         {
           param("Port", m_args.port)
           .defaultValue("9999")
@@ -319,6 +322,9 @@ namespace Transports
           if (!String::endsWith(line, "\n"))
             return "";
 
+          if (m_echo)
+            sendToClients(String::trim(line) + "\r\n");
+
           client.buf_pos = 0;
           std::vector<std::string> parts;
           String::toLowerCase(line);
@@ -327,17 +333,35 @@ namespace Transports
           if (parts.size() < 2)
             return "Parse exception: Commands take at least one argument\r\n";
 
+          // echo on/off command
+          if (parts[0] == "echo")
+          {
+            if (parts[1] == "on")
+              m_echo = true;
+            else if(parts[1] == "off")
+              m_echo = false;
+            else
+              return "Parse exception: Echo is either \"on\" or \"off\"\r\n";
+            return "";
+          }
+
           std::vector<std::string> addr_parts;
           String::split(parts[1], ".", addr_parts);
 
           if (addr_parts.size() != 2)
             return "Parse exception: Destination arguments are in the form <modem>.<id>\r\n";
           int dest_entity;
+          std::string addr_section = "";
 
           if (addr_parts[0] == "evologics")
+          {
             dest_entity = m_evo_id;
+            addr_section = m_args.evo_section;
+          }
           else if (addr_parts[0] == "umodem")
+          {
             dest_entity = m_umodem_id;
+            addr_section = m_args.umodem_section;}
           else
             return "Parse exception: Invalid modem type\r\n";
 
@@ -353,7 +377,7 @@ namespace Transports
             debug("Send range to %s!", addr_parts[1].c_str());
             req.flags = UamTxFrame::UTF_ACK;
             req.setDestinationEntity(dest_entity);
-            req.sys_dst = addr_parts[1];
+            req.sys_dst = resolveName(addr_section, addr_parts[1]);
             req.data.push_back(0);
           }
           else if (command == "deliver" || command == "send")
@@ -434,6 +458,27 @@ namespace Transports
           catch (...) {
             return -1;
           }
+        }
+
+        //! Resolves the destination by checking if its either a name or a modem address
+        //! consistent with the existing modem address sections
+        std::string
+        resolveName(std::string modem_section, std::string modem_name)
+        {
+          try {
+            std::map<std::string, std::string> addrs = m_ctx.config.getSection(modem_section);
+            for (std::pair<std::string, std::string> entry : addrs)
+            {
+              if (entry.first == modem_name)
+                return modem_name;
+
+              if (entry.second == modem_name)
+                return entry.first;
+            }
+          }
+          catch (...) { }
+
+          return modem_name;
         }
 
         void
