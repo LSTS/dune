@@ -373,6 +373,9 @@ namespace Transports
           }
 
           dispatch(req, DF_LOOP_BACK);
+          std::stringstream ss;
+          req.toJSON(ss);
+          debug("Sent this request: %s", ss.str().c_str());
           return "";
         }
 
@@ -439,12 +442,12 @@ namespace Transports
           std::stringstream ss;
           if (entity == m_umodem_id || (entity == 255 && m_umodem_id != -1))
           {
-            ss << (long)(timestamp * 1000) << "," << "umodem." << event << "," << resolveAddress(m_args.umodem_section, source) << ","
+            ss << std::setprecision(3) << std::fixed << timestamp << "," << "umodem." << event << "," << resolveAddress(m_args.umodem_section, source) << ","
                << resolveAddress(m_args.umodem_section, destination) << ",";
           }
           if (entity == m_evo_id || (entity == 255 && m_evo_id != -1))
           {
-            ss << (long) (timestamp * 1000) << "," << "evologics." << event << "," << resolveAddress(m_args.evo_section, source)
+            ss << std::setprecision(3) << std::fixed << timestamp << "," << "evologics." << event << "," << resolveAddress(m_args.evo_section, source)
                << "," << resolveAddress(m_args.evo_section, destination) << ",";
           }
 
