@@ -569,6 +569,8 @@ namespace Transports
       void
       handleMessageFailed(const std::string& str)
       {
+        debug("Message failed.");
+
         (void)str;
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
@@ -577,6 +579,9 @@ namespace Transports
       void
       handleMessageDelivered(const std::string& str)
       {
+
+        debug("Message delivered.");
+
         //! Query propagation time.
         unsigned dst = 0;
         if ((std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1) ||
@@ -585,7 +590,10 @@ namespace Transports
           try
           {
             double ptime = m_driver->getPropagationTime();
-            if (ptime > 0)
+
+            debug("Propagation time is %f", ptime);
+
+            if (ptime >= 0)
             {
               IMC::UamRxRange range;
               range.sys = lookupSystemName(dst);
