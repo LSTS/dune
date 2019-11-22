@@ -198,9 +198,7 @@ namespace Transports
 
         AcousticRequest tx;
 
-        tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
-        if (tx.timeout < 0)
-          tx.timeout = 0;
+        tx.timeout = msg->deadline;
 
         if (msg->destination == "")
           tx.destination = "broadcast";
