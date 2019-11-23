@@ -372,7 +372,7 @@ namespace UserInterfaces
             break;
 
           case IMC::TransmissionStatus::TSTAT_SENT:
-            m_lcd.text = fill("Aborted!");
+            m_lcd.text = fill("Sent!");
             reset();
             break;
 
