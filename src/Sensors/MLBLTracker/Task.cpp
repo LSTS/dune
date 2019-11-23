@@ -462,6 +462,7 @@ namespace Sensors
         try
         {
           sendTxStatus(msg, IMC::UamTxStatus::UTS_IP);
+          m_frame = msg->clone();
           transmitRawMessage(m_ummap[msg->sys_dst], msg->data);
         }
         catch (std::runtime_error& e)
