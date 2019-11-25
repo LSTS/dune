@@ -369,7 +369,7 @@ namespace Transports
           UamTxFrame req;
 
           req.seq = m_seq_id++;
-          req.sys_dst = addr_parts[1];
+          req.sys_dst = resolveName(addr_section, addr_parts[1]);
           req.setDestination(getSystemId());
 
           if (command == "range")
