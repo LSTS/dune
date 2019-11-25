@@ -932,7 +932,7 @@ namespace Transports
 
         while (it != m_transmission_requests.end())
         {
-          if (it->second->timeout <= Clock::getSinceEpoch())
+          if (it->second->getTimeStamp() + it->second->timeout <= Clock::getSinceEpoch())
           {
             sendAcousticStatus(it->second,IMC::AcousticStatus::STATUS_INPUT_FAILURE,"Transmission timed out.");
             Memory::clear(it->second);

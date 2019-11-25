@@ -198,8 +198,6 @@ namespace Transports
 
         AcousticRequest tx;
 
-        tx.timeout = msg->deadline;
-
         if (msg->destination == "")
           tx.destination = "broadcast";
         else
@@ -261,8 +259,12 @@ namespace Transports
         uint16_t newId = createInternalId();
         tx.req_id = newId;
         m_transmission_requests[newId] = msg->clone();
-        m_parent->dispatch(tx);
 
+        tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
+        if (tx.timeout < 0)
+          tx.timeout = 0;
+
+        m_parent->dispatch(tx);
       }
 
       void
