@@ -703,13 +703,10 @@ namespace Simulators
                          m_sstate.theta,
                          m_sstate.psi};
 
-        WGS84::displace(m_sstate.x, m_sstate.y, m_sstate.z,
-                        &llh[0], &llh[1], &llh[2]);
-
+        Coordinates::toWGS84(m_sstate, llh[0], llh[1], (float&)llh[2]);
         WGS84::displacement(m_origin.lat, m_origin.lon, m_origin.height,
                             llh[0], llh[1], llh[2],
                             &ned[0], &ned[1], &ned[2]);
-
 
         // Rotate to be compatible with modem reference frame
         // Refer to evologics modem manual
