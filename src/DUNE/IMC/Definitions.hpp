@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 52e8ed7dae56165e5cb85d3a1111bdfd                            *
+// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5431,6 +5431,8 @@ namespace DUNE
         STATUS_SENT = 2,
         //! Range Received.
         STATUS_RANGE_RECEIVED = 3,
+        //! Delivered.
+        STATUS_DELIVERED = 4,
         //! Busy.
         STATUS_BUSY = 100,
         //! Input Error.
@@ -22981,7 +22983,11 @@ namespace DUNE
         //! Unsupported operation.
         UTS_UNSUPPORTED = 6,
         //! Invalid transmission size.
-        UTS_INV_SIZE = 7
+        UTS_INV_SIZE = 7,
+        //! Message has been sent.
+        UTS_SENT = 8,
+        //! Message has been acknowledged by the destination.
+        UTS_DELIVERED = 9
       };
 
       //! Sequence Id.
