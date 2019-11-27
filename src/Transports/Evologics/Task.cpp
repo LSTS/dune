@@ -228,15 +228,29 @@ namespace Transports
       void
       onEntityResolution(void)
       {
+        processEntityForSoundSpeed();
+      }
+
+      void
+      processEntityForSoundSpeed(void)
+      {
         try
         {
-          m_sound_speed_eid = resolveEntity(m_args.sound_speed_elabel);
+          if (m_args.sound_speed_elabel.length() == 0)
+          {
+            inf("dynamic sound speed corrections are disabled, using default %d", (int)m_args.sound_speed_def);
+            m_sound_speed = m_args.sound_speed_def;
+            m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
+          }
+          else
+            m_sound_speed_eid = resolveEntity(m_args.sound_speed_elabel);
         }
         catch (std::exception& e)
         {
-          err("problem: %s", e.what());
-          debug("dynamic sound speed corrections are disabled");
+          err("problem resolving entity for dynamic sound speed corrections: %s", e.what());
+          war("dynamic sound speed corrections are disabled, using default %f", m_args.sound_speed_def);
           m_sound_speed = m_args.sound_speed_def;
+          m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
         }
       }
 
@@ -244,6 +258,7 @@ namespace Transports
       onUpdateParameters(void)
       {
         m_sound_speed = m_args.sound_speed_def;
+        processEntityForSoundSpeed();
       }
 
       void
