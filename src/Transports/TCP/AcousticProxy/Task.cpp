@@ -541,42 +541,56 @@ namespace Transports
             war("Could not find matching transmission request (%d)", msg->seq);
             return;
           }
-
+          bool shouldErase = false;
           IMC::UamTxFrame req = m_requests[msg->seq];
 
           switch (msg->value) {
-            case UamTxStatus::UTS_DONE:
-              event = "TxOk";
+            case UamTxStatus::UTS_DELIVERED:
+              event = "TxDelivered";
+              break;
+            case UamTxStatus::UTS_SENT:
+              event = "TxSent";
               break;
             case UamTxStatus::UTS_BUSY:
               event = "TxBusy";
+              shouldErase = true;
               break;
             case UamTxStatus::UTS_CANCELED:
               event = "TxCanceled";
+              shouldErase = true;
               break;
             case UamTxStatus::UTS_IP:
               event = "TxInProgress";
               break;
             case UamTxStatus::UTS_FAILED:
               event = "TxFailed";
+              shouldErase = true;
               break;
             case UamTxStatus::UTS_INV_SIZE:
               event = "TxInvalidSize";
+              shouldErase = true;
               break;
             case UamTxStatus::UTS_INV_ADDR:
               event = "TxInvalidAddress";
+              shouldErase = true;
               break;
             case UamTxStatus::UTS_UNSUPPORTED:
               event = "TxUnsupported";
+              shouldErase = true;
+              break;
+            case UamTxStatus::UTS_DONE:
+              event = "TxDone";
+              shouldErase = true;
               break;
             default:
               event = "TxUnknown";
+              shouldErase = true;
               break;
           }
 
           log(msg->getTimeStamp(), event, m_ctx.resolver.name() , req.sys_dst, msg->getSourceEntity(), req.data);
 
-          if (msg->value != UamTxStatus::UTS_IP)
+          if (shouldErase)
             m_requests.erase(msg->seq);
         }
 
