@@ -652,6 +652,7 @@ namespace Transports
 
         // Clear ticket.
         m_driver->setBusy(false);
+        sendTxStatus(*m_ticket, IMC::UamTxStatus::UTS_DELIVERED, "");
         clearTicket(IMC::UamTxStatus::UTS_DONE);
       }
 
@@ -666,6 +667,7 @@ namespace Transports
         if (!m_ticket->ack)
         {
           m_driver->setBusy(false);
+          sendTxStatus(*m_ticket, IMC::UamTxStatus::UTS_SENT, "");
           clearTicket(IMC::UamTxStatus::UTS_DONE);
         }
       }
