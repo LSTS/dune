@@ -311,6 +311,17 @@ namespace Transports
           }
         }
 
+        void
+        sendAddresses()
+        {
+          std::map<std::string, std::string> addrs = m_ctx.config.getSection(m_args.evo_section);
+          for (std::pair<std::string, std::string> entry : addrs)
+            sendToClients("evologics."+entry.first+" / "+entry.second+"\r\n");
+          addrs = m_ctx.config.getSection(m_args.umodem_section);
+          for (std::pair<std::string, std::string> entry : addrs)
+            sendToClients("umodem."+entry.first+"\r\n");
+        }
+
         std::string
         handleData(Client& client, uint8_t* buf, unsigned int size)
         {
@@ -329,6 +340,12 @@ namespace Transports
           std::vector<std::string> parts;
           String::toLowerCase(line);
           String::split(line, " ", parts);
+
+          if (parts.size() == 1 && parts[0] == "addresses")
+          {
+            sendAddresses();
+            return "";
+          }
 
           if (parts.size() < 2)
             return "Parse exception: Commands take at least one argument\r\n";
@@ -453,7 +470,11 @@ namespace Transports
         resolveAddress(std::string modem_section, std::string sys_name)
         {
           try {
-           return std::stoi(m_ctx.config.get(modem_section, sys_name));
+            std::map<std::string, std::string> section = m_ctx.config.getSection(modem_section);
+            if (section.find(sys_name) == section.end())
+              return std::stoi(sys_name);
+            else
+              return std::stoi(m_ctx.config.get(modem_section, sys_name));
           }
           catch (...) {
             return -1;
@@ -469,15 +490,11 @@ namespace Transports
             std::map<std::string, std::string> addrs = m_ctx.config.getSection(modem_section);
             for (std::pair<std::string, std::string> entry : addrs)
             {
-              if (entry.first == modem_name)
-                return modem_name;
-
-              if (entry.second == modem_name)
+              if (entry.first == modem_name || entry.second == modem_name)
                 return entry.first;
             }
           }
           catch (...) { }
-
           return modem_name;
         }
 
