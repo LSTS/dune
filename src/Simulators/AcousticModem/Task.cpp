@@ -250,22 +250,24 @@ namespace Simulators
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (String::startsWith(msg->value, "DONE"))
-        {
-          if (!m_ticket)
-            return;
+        if (!m_ticket)
+          return;
 
-          if (!m_ticket->ack)
-            return;
-          
+        if (String::startsWith(msg->value, "SENT"))
+        {
+          sendTxStatus(*m_ticket, UamTxStatus::UTS_SENT, "");
+        }
+        else if (String::startsWith(msg->value, "DELIVERED"))
+        {
+          sendTxStatus(*m_ticket, UamTxStatus::UTS_DELIVERED, "");
+        }
+        else if (String::startsWith(msg->value, "DONE"))
+        {
           clearTicket(IMC::UamTxStatus::UTS_DONE);
           debug("Ticket cleared");
         }
         else if (String::startsWith(msg->value, "IP"))
         {
-          if (!m_ticket)
-            return;
-
           debug("Message is being sent");
         }
         else if (String::startsWith(msg->value, "FAILED"))

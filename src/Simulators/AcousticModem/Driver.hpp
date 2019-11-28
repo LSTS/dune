@@ -53,6 +53,7 @@ namespace Simulators
     {
       Operation(const Operation &op):
       is_tx(op.is_tx),
+      was_sent(false),
       start_time(op.start_time),
       msg(op.msg)
       {}
@@ -61,12 +62,15 @@ namespace Simulators
                 const double &a_start_time, 
                 const SimAcousticMessage &a_msg):
       is_tx(a_is_tx),
+      was_sent(false),
       start_time(a_start_time),
       msg(a_msg)
       {}
 
       //! Transmission flag.
       bool is_tx;
+      //! Is the message sent and waiting for ack?.
+      bool was_sent;
       //! Absolute time to start receiving.
       double start_time;
       //! Message to handle.
@@ -100,7 +104,8 @@ namespace Simulators
       Driver(DriverArguments* a_args, IMC::SimulatedState* a_sstate, Tasks::Task* a_task):
       m_task(a_task),
       m_args(a_args),
-      m_sstate(a_sstate)
+      m_sstate(a_sstate),
+      m_current_op(NULL)
       {
         //Initialize UDP socket in multicast
         m_sock = new DUNE::Network::UDPSocket();
@@ -338,8 +343,7 @@ namespace Simulators
       void
       resetCurrentOperation()
       {
-        delete m_current_op;
-        m_current_op = NULL;
+        Memory::clear(m_current_op);
       }
 
       // TODO: Explain collision logic
@@ -382,6 +386,8 @@ namespace Simulators
             //Remove from queue
             delete op;
             m_queue.erase(it);
+            // one operation at a time
+            break;
           }
           else
           {
@@ -398,54 +404,92 @@ namespace Simulators
         while (!isStopping())
         {
           checkIncomingData();
-          checkQueue();
+
+          // check if transmission timed out
+          if (m_current_op && m_current_op->was_sent)
+          {
+            double timeout = m_current_op->msg.getTimeStamp() + c_timeout;
+            if (timeout < Clock::getSinceEpoch())
+            {
+              dispatch("FAILEDTransmission Timed Out");
+              resetCurrentOperation();
+              continue;
+            }
+          }
+          // only poll operations if no operation is in progress
+          if (!m_current_op)
+            checkQueue();
 
           //  Ready to execute operation
           if (!(m_current_op && m_operation_timer.overflow()))
             continue;
 
-          if (m_current_op->is_tx) // Transmission Op
+          if (m_current_op->is_tx && !m_current_op->was_sent) // Transmission Op starting
           {
             std::string str;
             try
             {
               share(&m_current_op->msg);
-              str = "IP";
+              dispatch("SENT");
+              m_current_op->was_sent = true;
+              // no ack, operation is done
+              if ((m_current_op->msg.flags && IMC::SimAcousticMessage::SAM_ACK) == 0)
+              {
+                dispatch("DONE");
+              }
+              resetCurrentOperation();
             }
             catch (std::runtime_error& e)
             {
               str = "FAILED";
               str += e.what();
+              dispatch(str);
             }
-            dispatch(str);
-
-            resetCurrentOperation();
           }
-          else // Reception Op
+          else if (!m_current_op->is_tx) // Reception Op
           {
-            m_current_op->msg.setDestination(m_task->getSystemId());
-            m_current_op->msg.setDestinationEntity(m_task->getEntityId());
-
-            m_task->dispatch(&m_current_op->msg, DF_LOOP_BACK);
-
             IMC::SimAcousticMessage request = m_current_op->msg;
-            resetCurrentOperation();
 
-            if (request.flags == IMC::SimAcousticMessage::SAM_ACK)
-              sendRangeReply(&request);
+            // received ack
+            if (request.flags == IMC::SimAcousticMessage::SAM_REPLY)
+            {
+              dispatch("DELIVERED");
+              dispatch("DONE");
+              IMC::UamRxRange range;
+              range.sys   = m_current_op->msg.sys_src;
+              range.seq   = m_current_op->msg.seq;
+              range.value = distance(&m_current_op->msg);
+              range.setTimeStamp();
+              m_task->dispatch(range);
+              resetCurrentOperation();
+            }
+            // received message from other modem
+            else
+            {
+              m_current_op->msg.setDestination(m_task->getSystemId());
+              m_current_op->msg.setDestinationEntity(m_task->getEntityId());
+
+              m_task->dispatch(&m_current_op->msg, DF_LOOP_BACK);
+
+              resetCurrentOperation();
+
+              if (request.flags == IMC::SimAcousticMessage::SAM_ACK)
+              {
+                sendAcknowledgement(&request);
+              }
+            }
           }
-          
         }
       }
 
-      //! Build range request reply and send.
+      //! Build request reply and send.
       //! @param[in] range_request range request message.
       void 
-      sendRangeReply(const IMC::SimAcousticMessage* range_request)
+      sendAcknowledgement(const IMC::SimAcousticMessage* incoming)
       {
         IMC::UamTxFrame msg;
-        msg.seq = range_request->seq;
-        msg.sys_dst = range_request->sys_src;
+        msg.seq = incoming->seq;
+        msg.sys_dst = incoming->sys_src;
         msg.flags = IMC::SimAcousticMessage::SAM_REPLY;
 
         transmit(msg);
