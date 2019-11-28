@@ -299,6 +299,9 @@ namespace UserInterfaces
       void
       consume(const IMC::Abort* msg)
       {
+        // Because mantas don't need to be aborted...
+        if (msg->getDestination() == getSystemId())
+          return;
         requestAbort(resolveSystemId(msg->getDestination()));
       }
 
