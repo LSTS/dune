@@ -298,7 +298,7 @@ namespace Autonomy
         std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
 
         if (!args.empty())
-          inf("Command is '%s', Argument is '%s'", cmd.c_str(), args.c_str());
+          debug("Command is '%s', Argument is '%s'", cmd.c_str(), args.c_str());
       }
 
       //! Send back a reply to a TextMessage's origin
@@ -356,6 +356,8 @@ namespace Autonomy
       void
       handleCommand(const std::string& origin, const std::string& cmd, const std::string& args)
       {
+
+        inf("%d", cmd == "param");
         if (cmd == "start")
           handleStartCommand(origin, args, false);
         else if (cmd == "force")
@@ -374,6 +376,8 @@ namespace Autonomy
           handleChangeNumCommand(origin, args);
         else if (cmd == "resume")
           handleResumeCommand(origin, args, false);
+        else if (cmd == "param")
+          handleParamsCommand(origin, args);
         else
           handlePlanGeneratorCommand(origin, cmd, args);
       }
@@ -600,8 +604,58 @@ namespace Autonomy
         (void)origin;
       }
 
+      //! Execute command 'PARAMS'
+      void
+      handleParamsCommand(const std::string& origin, std::string args)
+      {
+        std::string entity = "";
+        std::string parameter = "";
+        std::string value = "";
 
+        if (args.find("=") != std::string::npos)
+        {
+          value = args.substr(args.find("=")+1);
+          args = args.substr(0, args.find("=") - 1);
+        }
 
+        if (args.find("/") == std::string::npos)
+        {
+          reply(origin, "Invalid syntax. Use <entity name> / <parameter> = <value>");
+          return;
+        }
+
+        entity = args.substr(0, args.find("/")-1);
+        parameter = args.substr(args.find("/")+1);
+
+        value = String::trim(value);
+        parameter = String::trim(parameter);
+        entity = String::trim(entity);
+
+        if (value.empty()) {
+          for (std::string section : m_ctx.config.sections())
+          {
+            std::map<std::string, std::string> sec = m_ctx.config.getSection(section);
+            if (sec.find("Entity Label") == sec.end())
+              continue;
+
+            if (sec["Entity Label"] == entity) {
+              value = sec[parameter];
+              reply(origin, "param " + entity + " / " + parameter + " = " + value);
+            }
+          }
+        }
+        else {
+          SetEntityParameters params;
+          EntityParameter par;
+          par.name = parameter;
+          par.value = value;
+          params.name = entity;
+          params.params.push_back(par);
+          params.setDestination(getSystemId());
+          dispatch(params);
+          reply(origin, "param " + entity + " / " + parameter + " = " + value);
+        }
+      }
 
       void
       onMain(void)
