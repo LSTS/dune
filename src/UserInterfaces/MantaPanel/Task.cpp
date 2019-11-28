@@ -377,7 +377,7 @@ namespace UserInterfaces
             break;
 
           case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
-            m_lcd.text = fill("Not Supported");
+            m_lcd.text = fill("Failure");
             reset();
             break;
 
