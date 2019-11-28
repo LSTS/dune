@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
+// IMC XML MD5: 0fe4582bf06b504af601569d6a25a3a2                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -23135,6 +23135,77 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! UamTxRange.
+    class UamTxRange: public Message
+    {
+    public:
+      //! Sequence Id.
+      uint16_t seq;
+      //! Destination System.
+      std::string sys_dst;
+      //! Timeout.
+      fp32_t timeout;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 818;
+      }
+
+      UamTxRange(void);
+
+      UamTxRange*
+      clone(void) const
+      {
+        return new UamTxRange(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return UamTxRange::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UamTxRange";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(sys_dst);
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

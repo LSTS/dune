@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
+// IMC XML MD5: 0fe4582bf06b504af601569d6a25a3a2                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -24421,6 +24421,74 @@ namespace DUNE
       IMC::toJSON(os__, "seq", seq, nindent__);
       IMC::toJSON(os__, "sys", sys, nindent__);
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    UamTxRange::UamTxRange(void)
+    {
+      m_header.mgid = 818;
+      clear();
+    }
+
+    void
+    UamTxRange::clear(void)
+    {
+      seq = 0;
+      sys_dst.clear();
+      timeout = 0;
+    }
+
+    bool
+    UamTxRange::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::UamTxRange& other__ = static_cast<const UamTxRange&>(msg__);
+      if (seq != other__.seq) return false;
+      if (sys_dst != other__.sys_dst) return false;
+      if (timeout != other__.timeout) return false;
+      return true;
+    }
+
+    int
+    UamTxRange::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    UamTxRange::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(seq, ptr__);
+      ptr__ += IMC::serialize(sys_dst, ptr__);
+      ptr__ += IMC::serialize(timeout, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    UamTxRange::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(seq, bfr__, size__);
+      bfr__ += IMC::deserialize(sys_dst, bfr__, size__);
+      bfr__ += IMC::deserialize(timeout, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    UamTxRange::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(seq, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sys_dst, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    UamTxRange::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "seq", seq, nindent__);
+      IMC::toJSON(os__, "sys_dst", sys_dst, nindent__);
+      IMC::toJSON(os__, "timeout", timeout, nindent__);
     }
 
     FormCtrlParam::FormCtrlParam(void)

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
+// IMC XML MD5: 0fe4582bf06b504af601569d6a25a3a2                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -315,6 +315,7 @@ MESSAGE(814, UamTxFrame)
 MESSAGE(815, UamRxFrame)
 MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
+MESSAGE(818, UamTxRange)
 MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
 MESSAGE(822, FormationControlParams)
