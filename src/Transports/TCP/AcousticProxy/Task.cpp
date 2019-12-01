@@ -126,6 +126,7 @@ namespace Transports
           bind<IMC::UamRxRange>(this);
           bind<IMC::UsblFixExtended>(this);
           bind<IMC::UsblPositionExtended>(this);
+          bind<IMC::UamTxRange>(this);
         }
 
         void
@@ -389,13 +390,33 @@ namespace Transports
           req.sys_dst = resolveName(addr_section, addr_parts[1]);
           req.setDestination(getSystemId());
 
+
           if (command == "range")
           {
-            debug("Send range to %s!", addr_parts[1].c_str());
-            req.flags = UamTxFrame::UTF_ACK;
-            req.setDestinationEntity(dest_entity);
-            req.sys_dst = resolveName(addr_section, addr_parts[1]);
-            req.data.push_back(0);
+            // special treatment for micromodem...
+            if (addr_section == m_args.umodem_section)
+            {
+              UamTxRange range_req;
+              range_req.seq = req.seq;
+              range_req.sys_dst = resolveName(addr_section, addr_parts[1]);
+              range_req.setDestination(getSystemId());
+              range_req.setDestinationEntity(dest_entity);
+              range_req.timeout = 5.0;
+              dispatch(range_req, DF_LOOP_BACK);
+
+              std::stringstream ss;
+              range_req.toJSON(ss);
+              debug("Sent this request: %s", ss.str().c_str());
+              return "";
+            }
+            else
+            {
+              req.data.push_back((char)0xA1);
+              req.data.push_back((char)0x01);
+              req.setDestinationEntity(dest_entity);
+              req.flags |= UamTxFrame::UTF_ACK ;
+            }
+
           }
           else if (command == "deliver" || command == "send")
           {
@@ -649,6 +670,13 @@ namespace Transports
           ss << "\r\n";
 
           sendToClients(ss.str());
+        }
+
+        void
+        consume(const IMC::UamTxRange* msg)
+        {
+          std::vector<char> empty_vec;
+          log(msg->getTimeStamp(), "TxRange", m_ctx.resolver.name(), msg->sys_dst, msg->getDestinationEntity(), empty_vec);
         }
 
         void
