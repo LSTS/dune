@@ -319,7 +319,7 @@ namespace Transports
             sendToClients("evologics."+entry.first+" / "+entry.second+"\r\n");
           addrs = m_ctx.config.getSection(m_args.umodem_section);
           for (std::pair<std::string, std::string> entry : addrs)
-            sendToClients("umodem."+entry.first+"\r\n");
+            sendToClients("umodem."+entry.first+" / "+entry.second+"\r\n");
         }
 
         std::string
@@ -466,6 +466,7 @@ namespace Transports
           }
         }
 
+        //! Resolves the destination modem identifier
         int
         resolveAddress(std::string modem_section, std::string sys_name)
         {
@@ -486,16 +487,22 @@ namespace Transports
         std::string
         resolveName(std::string modem_section, std::string modem_name)
         {
+          modem_name = String::trim(modem_name);
+
+          std::string result = modem_name;
           try {
             std::map<std::string, std::string> addrs = m_ctx.config.getSection(modem_section);
             for (std::pair<std::string, std::string> entry : addrs)
             {
               if (entry.first == modem_name || entry.second == modem_name)
-                return entry.first;
+                result = entry.first;
             }
           }
-          catch (...) { }
-          return modem_name;
+          catch (...)
+          { }
+
+          debug("'%s' :: '%s' resolved as '%s'", modem_section.c_str(), modem_name.c_str(), result.c_str());
+          return result;
         }
 
         void
