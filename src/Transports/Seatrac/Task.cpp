@@ -1061,6 +1061,10 @@ namespace Transports
         if (msg->getDestination() != getSystemId())
           return;
 
+        if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
+          return;
+
+
         // Create and fill new ticket.
         Ticket ticket;
         ticket.imc_sid = msg->getSource();
