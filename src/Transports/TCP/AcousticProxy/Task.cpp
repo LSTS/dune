@@ -315,11 +315,17 @@ namespace Transports
         sendAddresses()
         {
           std::map<std::string, std::string> addrs = m_ctx.config.getSection(m_args.evo_section);
-          for (std::pair<std::string, std::string> entry : addrs)
-            sendToClients("evologics."+entry.first+" / "+entry.second+"\r\n");
-          addrs = m_ctx.config.getSection(m_args.umodem_section);
-          for (std::pair<std::string, std::string> entry : addrs)
-            sendToClients("umodem."+entry.first+" / "+entry.second+"\r\n");
+          if (m_evo_id != -1)
+          {
+            for (std::pair<std::string, std::string> entry : addrs)
+              sendToClients("evologics."+entry.first+" / "+entry.second+"\r\n");
+          }
+          if (m_umodem_id != -1)
+          {
+            addrs = m_ctx.config.getSection(m_args.umodem_section);
+            for (std::pair<std::string, std::string> entry : addrs)
+              sendToClients("umodem."+entry.first+" / "+entry.second+"\r\n");
+          }
         }
 
         std::string
@@ -370,15 +376,18 @@ namespace Transports
           int dest_entity;
           std::string addr_section = "";
 
-          if (addr_parts[0] == "evologics")
+          if (addr_parts[0] == "evologics" && m_evo_id != -1)
           {
             dest_entity = m_evo_id;
             addr_section = m_args.evo_section;
+            debug("Setting destination entity as %d for evologics", m_evo_id);
           }
-          else if (addr_parts[0] == "umodem")
+          else if (addr_parts[0] == "umodem" && m_umodem_id != -1)
           {
             dest_entity = m_umodem_id;
-            addr_section = m_args.umodem_section;}
+            addr_section = m_args.umodem_section;
+            debug("Setting destination entity as %d for umodem", m_umodem_id);
+          }
           else
             return "Parse exception: Invalid modem type\r\n";
 
@@ -528,15 +537,22 @@ namespace Transports
         log(double timestamp, std::string event, std::string source, std::string destination, int entity, std::vector<char> data, float range = 0)
         {
           std::stringstream ss;
-          if (entity == m_umodem_id || (entity == 255 && m_umodem_id != -1))
+          if (entity == m_umodem_id || (entity == 255 && m_evo_id == -1))
           {
             ss << std::setprecision(3) << std::fixed << timestamp << "," << "umodem." << event << "," << resolveAddress(m_args.umodem_section, source) << ","
                << resolveAddress(m_args.umodem_section, destination) << ",";
           }
-          if (entity == m_evo_id || (entity == 255 && m_evo_id != -1))
+          else if (entity == m_evo_id || (entity == 255 && m_umodem_id == -1))
           {
             ss << std::setprecision(3) << std::fixed << timestamp << "," << "evologics." << event << "," << resolveAddress(m_args.evo_section, source)
                << "," << resolveAddress(m_args.evo_section, destination) << ",";
+          }
+          else if (entity == 255)
+          {
+            // this request is associated with both modems, log 1 event for each
+            log(timestamp, event, source, destination, m_evo_id, data, range);
+            log(timestamp, event, source, destination, m_umodem_id, data, range);
+            return;
           }
 
           if (event != "Range")
