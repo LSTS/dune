@@ -437,8 +437,8 @@ namespace Transports
               return "Parse exception: Hexadecimal value must have even length\r\n";
             req.data = fromHex(msg);
             req.setDestinationEntity(dest_entity);
-            req.sys_dst = addr_parts[1];
-            debug("Send %s to %s", msg.c_str(), addr_parts[1].c_str());
+            req.sys_dst = resolveName(addr_section, addr_parts[1]);
+            debug("Send %s to %s", msg.c_str(), req.sys_dst.c_str());
           }
 
           dispatch(req, DF_LOOP_BACK);
