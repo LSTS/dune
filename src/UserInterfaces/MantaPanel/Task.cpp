@@ -143,7 +143,7 @@ namespace UserInterfaces
 
         param("Button - Abort", m_args.btn_abort)
         .defaultValue("2")
-        .description("Ping button");
+        .description("Abort button");
 
         param("Command - On Power Down", m_args.cmd_pwr_down)
         .defaultValue("")
