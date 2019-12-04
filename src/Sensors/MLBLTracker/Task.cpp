@@ -71,6 +71,9 @@ namespace Sensors
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
+    // .
+    static const std::string c_broadcast_string = "broadcast";
+
     enum Operation
     {
       // No operation is in progress.
@@ -122,6 +125,8 @@ namespace Sensors
       unsigned rx_length;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Mode to receive messages not address to it.
+      bool promiscuous_mode;
       //! Navigation turn around time.
       unsigned turn_around_time;
       //! UamTxFrame timeout
@@ -252,6 +257,10 @@ namespace Sensors
         param("Address Section", m_args.addr_section)
         .defaultValue("Micromodem Addresses")
         .description("Name of the configuration section with modem addresses");
+
+        param("Promiscuous Mode", m_args.promiscuous_mode)
+        .defaultValue("false")
+        .description("Mode to receive messages not address to it");
 
         // Process narrow band transponders.
         std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
@@ -992,8 +1001,18 @@ namespace Sensors
           return;
         }
 
-        if (dst != 0 && (lookupSystemName(dst) != getSystemName()))
+        if (!m_args.promiscuous_mode && dst != 0 
+            && (lookupSystemName(dst) != getSystemName()
+            || lookupSystemName(dst) != c_broadcast_string))
           return;
+
+        bool broadcast = false;
+        bool process_reception = true;
+
+        if (m_args.promiscuous_mode && lookupSystemName(dst) != getSystemName())
+          process_reception = false;
+        else if (lookupSystemName(dst) == c_broadcast_string)
+          broadcast = true;
 
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
@@ -1002,8 +1021,11 @@ namespace Sensors
         UamRxFrame rx;
         rx.data.assign(msg.begin(), msg.end());
         rx.sys_src = lookupSystemName(src);
-        rx.sys_dst = lookupSystemName(dst);
+        rx.sys_dst = broadcast ? c_broadcast_string : lookupSystemName(dst);
         dispatch(rx);
+
+        if (!process_reception)
+          return;
 
         uint8_t code = static_cast<uint8_t>(msg_raw[0]);
 
