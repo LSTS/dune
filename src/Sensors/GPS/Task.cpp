@@ -428,7 +428,17 @@ namespace Sensors
         // Validate checksum.
         unsigned rcsum = 0;
         if (std::sscanf(&line[0] + eidx + 1, "%02X", &rcsum) != 1)
+        {
+          trace("No checksum found, will not parse sentence.");
           return;
+        }
+
+        if (ccsum != rcsum)
+        {
+          trace("Checksum field does not match computed checksum, will not "
+                "parse sentence.");
+          return;
+        }
 
         // Split sentence
         std::vector<std::string> parts;
