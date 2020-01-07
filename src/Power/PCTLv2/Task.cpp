@@ -251,6 +251,7 @@ namespace Power
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::SetLedBrightness>(this);
         bind<IMC::QueryLedBrightness>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -729,6 +730,19 @@ namespace Power
           return;
 
         dispatchReply(*msg, m_led_bright[itr->second]);
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        IMC::PowerChannelControl radio_ctl;
+        radio_ctl.name = "Radio";
+        if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+          radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        else
+          radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+
+        dispatch(radio_ctl, DF_LOOP_BACK);
       }
 
       //! Dispatch power channel state messages to bus.
