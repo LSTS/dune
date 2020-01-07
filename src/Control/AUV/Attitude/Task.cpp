@@ -578,44 +578,49 @@ namespace Control
             if (use_offset)
               z_error += m_args.depth_offset;
 
-
             // Depth-to-pitch PID sampling rate relation
             m_sampling_rate_relation++;
 
-            if(m_sampling_rate_relation >= m_args.sampling_rate_relation)
-            { 
+            if (m_sampling_rate_relation >= m_args.sampling_rate_relation)
+            {
               m_sampling_rate_relation = 0;
 
               if (!surface)
               {
-              // extra pitch.
-              if (m_extra_pitch)
-              {
-                // remove extra pitch.
-                if (std::fabs(z_error) < m_args.zref_extra - c_depth_hyst ||
-                    std::fabs(m_hrate_ref.value) > Angles::radians(c_max_hrate))
+                // extra pitch.
+                if (m_extra_pitch)
                 {
-                  m_extra_pitch = false;
-                  m_pid[LP_DEPTH].setOutputLimits(-m_args.max_pitch, m_args.max_pitch);
+                  // remove extra pitch.
+                  if (std::fabs(z_error) < m_args.zref_extra - c_depth_hyst
+                      || std::fabs(m_hrate_ref.value)
+                         > Angles::radians(c_max_hrate))
+                  {
+                    m_extra_pitch = false;
+                    m_pid[LP_DEPTH].setOutputLimits(-m_args.max_pitch,
+                                                    m_args.max_pitch);
+                  }
                 }
-              }
-              else
-              {
-                // add extra pitch.
-                if ((std::fabs(z_error) > m_args.zref_extra) && (m_args.extra_pitch > 0.0)
-                    && std::fabs(m_hrate_ref.value) < Angles::radians(c_max_hrate))
+                else
                 {
-                  m_extra_pitch = true;
-                  float pitch = m_args.max_pitch + m_args.extra_pitch;
-                  m_pid[LP_DEPTH].setOutputLimits(-pitch, pitch);
+                  // add extra pitch.
+                  if ((std::fabs(z_error) > m_args.zref_extra)
+                      && (m_args.extra_pitch > 0.0)
+                      && std::fabs(m_hrate_ref.value)
+                         < Angles::radians(c_max_hrate))
+                  {
+                    m_extra_pitch = true;
+                    float pitch = m_args.max_pitch + m_args.extra_pitch;
+                    m_pid[LP_DEPTH].setOutputLimits(-pitch, pitch);
+                  }
                 }
-              }
 
-              double val = -(-sin(msg->theta) * msg->u + cos(msg->theta) *
-                             (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w));
+                double val
+                = -(-sin(msg->theta) * msg->u
+                    + cos(msg->theta)
+                      * (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w));
 
-              // Positive depth implies negative pitch
-              cmd = -m_pid[LP_DEPTH].step(timestep, z_error, val);
+                // Positive depth implies negative pitch
+                cmd = -m_pid[LP_DEPTH].step(timestep, z_error, val);
               }
               else
               {
@@ -628,9 +633,8 @@ namespace Control
             else
             {
               cmd = m_pitch_ref.value;
-              dispatch(m_pitch_ref); 
+              dispatch(m_pitch_ref);
             }
-
           }
 
           //Now, track pitch
