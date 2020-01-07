@@ -137,6 +137,8 @@ namespace Power
       double vol_wup;
       //! LED names.
       std::vector<std::string> leds;
+      //! True to turn off radio underwater
+      bool radio_off;
     };
 
     struct Task: public Tasks::Task
@@ -243,6 +245,10 @@ namespace Power
           param(option, m_args.leak_medium[i])
           .defaultValue("false");
         }
+
+        param("Power Off Radio Underwater", m_args.radio_off)
+        .defaultValue("true")
+        .description("True to power radio off when underwater");
 
         m_pwr_op.setDestination(getSystemId());
 
@@ -735,6 +741,9 @@ namespace Power
       void
       consume(const IMC::VehicleMedium* msg)
       {
+        if (!m_args.radio_off)
+          return;
+
         IMC::PowerChannelControl radio_ctl;
         radio_ctl.name = "Radio";
         if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
