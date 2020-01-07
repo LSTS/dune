@@ -744,12 +744,25 @@ namespace Power
         if (!m_args.radio_off)
           return;
 
+        auto radio_state = m_channels.find_by_name("Radio")->second->state;
+
         IMC::PowerChannelControl radio_ctl;
         radio_ctl.name = "Radio";
+
         if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+        {
+          if (radio_state.state == IMC::PowerChannelState::PCS_OFF)
+            return;
+
           radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        }
         else
+        {
+          if (radio_state.state == IMC::PowerChannelState::PCS_ON)
+            return;
+
           radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        }
 
         dispatch(radio_ctl, DF_LOOP_BACK);
       }
