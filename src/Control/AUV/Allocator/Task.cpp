@@ -112,6 +112,8 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
+          m_last_estimated_state(NULL),
+          m_last_rpm(NULL),
           m_braking(false),
           m_scope_ref(0)
         {
