@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,32 +24,75 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Miguel Aguiar                                                    *
 //***************************************************************************
 
-#ifndef DUNE_MATH_HPP_INCLUDED_
-#define DUNE_MATH_HPP_INCLUDED_
+#ifndef DUNE_MATH_FIR_FILTER_HPP_INCLUDED_
+#define DUNE_MATH_FIR_FILTER_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <vector>
+
+// DUNE headers.
+#include "DUNE/Utils/CircularBuffer.hpp"
 
 namespace DUNE
 {
-  //! %Math routines and classes.
   namespace Math
-  { }
-}
+  {
+    template <typename T> class FIRFilter
+    {
+    public:
+      //! Create a zero-initialized filter.
+      FIRFilter(std::vector<T> weights)
+      : m_weights(std::move(weights)), m_buffer(m_weights.size()), m_val(T{ 0 })
+      {
+        for (size_t i = 0; i < m_weights.size(); ++i)
+          m_buffer.add(T{ 0 });
+      }
 
-#include <DUNE/Math/Constants.hpp>
-#include <DUNE/Math/Derivative.hpp>
-#include <DUNE/Math/EulerAnglesZyx.hpp>
-#include <DUNE/Math/General.hpp>
-#include <DUNE/Math/Matrix.hpp>
-#include <DUNE/Math/Angles.hpp>
-#include <DUNE/Math/Random.hpp>
-#include <DUNE/Math/Optimization.hpp>
-#include <DUNE/Math/QPSolver.hpp>
-#include <DUNE/Math/Quaternion.hpp>
-#include <DUNE/Math/MovingAverage.hpp>
-#include <DUNE/Math/MultiMovingAverage.hpp>
-#include <DUNE/Math/Grid.hpp>
-#include <DUNE/Math/FIRFilter.hpp>
+      //! Clear samples and reset state.
+      void
+      clear(void)
+      {
+        m_val = T{ 0 };
+
+        for (size_t i = 0; i < m_weights.size(); ++i)
+          m_buffer(i) = T{ 0 };
+      }
+
+      //! Add a new sample to the buffer.
+      //! @return new filter output
+      T
+      update(T value)
+      {
+        m_buffer.add(value);
+
+        m_val = T{ 0 };
+
+        for (size_t i = 0; i < m_weights.size(); ++i)
+          m_val += m_weights[i] * m_buffer(i);
+
+        return m_val;
+      }
+
+      //! Get filter output.
+      //! @return filter output.
+      T
+      get(void) const
+      {
+        return m_val;
+      }
+
+    private:
+      //! Impulse response.
+      std::vector<T> m_weights;
+      //! Input samples.
+      DUNE::Utils::CircularBuffer<T> m_buffer;
+      //! Caches the last filter output.
+      T m_val;
+    };
+  } // namespace Math
+} // namespace DUNE
 
 #endif
