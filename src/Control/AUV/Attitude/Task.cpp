@@ -31,6 +31,7 @@
 
 // ISO C++ 98 headers.
 #include <cmath>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -60,11 +61,13 @@ namespace Control
       //! Required loops.
       static const uint32_t c_required = IMC::CL_TORQUE;
       //! Loops names.
-      static const std::string c_loop_name[] = {DTR_RT("Roll"), DTR_RT("Pitch"),
-                                                DTR_RT("Depth"), DTR_RT("Heading"),
-                                                DTR_RT("Heading Rate")};
+      static const std::string c_loop_name[]
+      = { DTR_RT("Roll"),     DTR_RT("Pitch"),   DTR_RT("Depth"),
+          DTR_RT("Altitude"), DTR_RT("Heading"), DTR_RT("Heading Rate") };
       //! Loops units.
-      static const unsigned c_loop_unit[] = {Units::Degree, Units::Degree, Units::Degree, Units::DegreePerSecond, Units::Degree};
+      static const unsigned c_loop_unit[]
+      = { Units::Degree, Units::Degree,          Units::Degree,
+          Units::Degree, Units::DegreePerSecond, Units::Degree };
 
       enum Loops
       {
@@ -74,6 +77,8 @@ namespace Control
         LP_PITCH,
         //! Depth loop.
         LP_DEPTH,
+        //! Altitude loop.
+        LP_ALT,
         //! Heading loop.
         LP_HEADING,
         //! Heading rate loop.
@@ -140,6 +145,8 @@ namespace Control
         RollCompensation rc;
         //!
         int sampling_rate_relation;
+        //! Weights of the vertical reference filter.
+        std::vector<float> vref_filt_weights;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -165,10 +172,20 @@ namespace Control
 
         int m_sampling_rate_relation;
 
+        //! Smoothed altitude reference.
+        std::unique_ptr<Math::FIRFilter<float>> m_vref;
+        //! Derivative of the altitude reference.
+        Math::Derivative<float> m_vref_d;
+        //! Derivative of the pitch reference.
+        Math::Derivative<float> m_pref_d;
+
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
           m_ca(NULL),
-          m_extra_pitch(false)
+          m_extra_pitch(false),
+          m_vref(nullptr),
+          m_vref_d(),
+          m_pref_d()
         {
           // Load controller gains and integral limits.
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -321,6 +338,10 @@ namespace Control
           .maximumValue("5")
           .description("Depth-to-pitch sampling rate relation");
 
+          param("Altitude Control -- Filter Weights", m_args.vref_filt_weights)
+          .description("Impulse response of the FIR filter used to smooth the "
+                       "depth reference during altitude control.");
+
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
         }
 
@@ -340,6 +361,8 @@ namespace Control
 
           if (m_ca_args.enabled)
             m_ca = new CoarseAltitude(&m_ca_args);
+
+          m_vref = std::make_unique<FIRFilter<float>>(m_args.vref_filt_weights);
         }
 
         //! Release Resources.
@@ -347,6 +370,7 @@ namespace Control
         onResourceRelease(void)
         {
           Memory::clear(m_ca);
+          m_vref.reset();
 
           BasicAutopilot::onResourceRelease();
         }
@@ -427,6 +451,7 @@ namespace Control
           output_limits[LP_ROLL] = m_args.max_fin_rot;
           output_limits[LP_PITCH] = m_args.max_pitch_act;
           output_limits[LP_DEPTH] = m_args.max_pitch;
+          output_limits[LP_ALT] = m_args.max_pitch;
           output_limits[LP_HEADING] = m_args.max_hrate;
           output_limits[LP_HRATE] = m_args.max_fin_rot;
 
@@ -448,6 +473,12 @@ namespace Control
         reset(void)
         {
           BasicAutopilot::reset();
+
+          if (m_vref)
+            m_vref->clear();
+
+          m_vref_d.clear();
+          m_pref_d.clear();
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
             m_pid[i].reset();
@@ -547,11 +578,15 @@ namespace Control
               case VERTICAL_MODE_ALTITUDE:
                 if (msg->alt < m_args.min_dvl_alt && msg->depth < m_args.min_dvl_depth)
                 {
+                  m_vref->clear();
+                  m_vref_d.clear();
+
                   z_error = c_min_depth_ref;
                 }
                 else
                 {
                   float bfd = getBottomFollowDepth();
+                  m_vref->update(bfd);
 
                   if (m_ca != NULL)
                   {
@@ -598,6 +633,8 @@ namespace Control
                     m_extra_pitch = false;
                     m_pid[LP_DEPTH].setOutputLimits(-m_args.max_pitch,
                                                     m_args.max_pitch);
+                    m_pid[LP_ALT].setOutputLimits(-m_args.max_pitch,
+                                                  m_args.max_pitch);
                   }
                 }
                 else
@@ -611,21 +648,31 @@ namespace Control
                     m_extra_pitch = true;
                     float pitch = m_args.max_pitch + m_args.extra_pitch;
                     m_pid[LP_DEPTH].setOutputLimits(-pitch, pitch);
+                    m_pid[LP_ALT].setOutputLimits(-pitch, pitch);
                   }
                 }
 
-                double val
-                = -(-sin(msg->theta) * msg->u
-                    + cos(msg->theta)
-                      * (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w));
+                const float z_rate
+                = -sin(msg->theta) * msg->u
+                  + cos(msg->theta)
+                    * (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w);
 
-                // Positive depth implies negative pitch
-                cmd = -m_pid[LP_DEPTH].step(timestep, z_error, val);
+                // Positive depth rate implies negative pitch, so the PID output
+                // is inverted.
+                if (getVerticalMode() == VERTICAL_MODE_DEPTH)
+                  cmd = -m_pid[LP_DEPTH].step(timestep, z_error, -z_rate);
+                else
+                {
+                  const float ref_rate = m_vref_d.update(m_vref->get());
+                  cmd
+                  = -m_pid[LP_ALT].step(timestep, z_error, ref_rate - z_rate);
+                }
               }
               else
               {
                 cmd = m_args.surface_pitch;
               }
+
               // Log the desired pitch
               m_pitch_ref.value = cmd;
               dispatch(m_pitch_ref);
@@ -637,14 +684,20 @@ namespace Control
             }
           }
 
-          //Now, track pitch
+          // Now, track pitch
           float pitch_err = (cmd - msg->theta);
 
           // With attitude compensation we use a different approach
           if (m_args.error_attitude)
             return pitch_err;
 
-          cmd = m_pid[LP_PITCH].step(timestep, pitch_err, -(msg->q * cos(msg->phi) - msg->r * sin(msg->phi)));
+          const float ref_rate = m_pref_d.update(cmd);
+          const float pitch_rate
+          = msg->q * cos(msg->phi) - msg->r * sin(msg->phi);
+
+          cmd
+          = m_pid[LP_PITCH].step(timestep, pitch_err, ref_rate - pitch_rate);
+
           return cmd;
         }
 
