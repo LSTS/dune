@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -31,7 +31,6 @@
 
 using namespace Sensors::MCP9800;
 
-
 /**
  * @brief Construct a new DriverMCP9800 object. Initializes the pointers and tests the connection
  * with the device, throws an exception in case there is no connection.
@@ -41,20 +40,20 @@ using namespace Sensors::MCP9800;
  * @param elabel Entity label of the device.
  * @param address I2C address to the device.
  */
-DriverMCP9800::DriverMCP9800(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address):
-	m_task(task),
-	m_i2c(i2c)
-{
-	m_task->trace("Initializing DriverMCP9800");
-	m_device.elabel = elabel;
-	m_device.address = address;
-	
-	uint8_t buffer_w[1] = {0}, bytes;
-	
-	//testing connection
-    m_i2c->transfer(m_device.address, 0x01, buffer_w, 1, 0, 0, &bytes);
-}
 
+DriverMCP9800::DriverMCP9800(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address):
+  m_task(task),
+  m_i2c(i2c)
+{
+  m_task->trace("Initializing DriverMCP9800");
+  m_device.elabel = elabel;
+  m_device.address = address;
+	
+  uint8_t buffer_w[1] = {0}, bytes;
+	
+  //testing connection
+  m_i2c->transfer(m_device.address, 0x01, buffer_w, 1, 0, 0, &bytes);
+}
 
 /** @brief This function allows to write a full register of the MCP9800.  
  *
@@ -64,36 +63,36 @@ DriverMCP9800::DriverMCP9800(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i
  * @return MCP_STATUS_SUCCESS In case the writing is a success. 
  * @return MCP_STATUS_ERROR Otherwise.
  */
+
 DriverMCP9800::MCP_STATUS_e
 DriverMCP9800::write(MCP_REG_e reg_addr, uint8_t* data)
 {
-	m_task->trace("DriverMCP9800::write executing");
-    uint8_t recv_data[2] = {0}, bytes;
-    try
-    {
-	    if(m_i2c->transfer(m_device.address, reg_addr, data, 1, recv_data, 1, &bytes))
-	    {
-            m_task->spew("Driver:MCP9800::write] data transfer was not successful.");
-            return MCP_STATUS_ERROR;
-	    }
-	    if(bytes != 1)
-	    {
-	        m_task->spew("Driver:MCP9800::write] length of data receive is an unexpected value.");
-	        return MCP_STATUS_ERROR;
-	    }
-	    if(data[0] != recv_data[0])
-	    {
-	        m_task->spew("Driver:MCP9800::write] data received is not the same as the intended to be written.");
-	        return MCP_STATUS_ERROR;
-	    }
-    }
-    catch(const std::exception& e)
-    {
-        throw RestartNeeded(("[Driver:MCP9800::write] "+std::string(e.what())).c_str(), 10, true);
-    }
-    return MCP_STATUS_SUCCESS;
+  m_task->trace("DriverMCP9800::write executing");
+  uint8_t recv_data[2] = {0}, bytes;
+  try
+  {
+    if(m_i2c->transfer(m_device.address, reg_addr, data, 1, recv_data, 1, &bytes))
+	{
+      m_task->spew("Driver:MCP9800::write] data transfer was not successful.");
+      return MCP_STATUS_ERROR;
+	}
+	if(bytes != 1)
+	{
+	  m_task->spew("Driver:MCP9800::write] length of data receive is an unexpected value.");
+	  return MCP_STATUS_ERROR;
+	}
+	if(data[0] != recv_data[0])
+	{
+	  m_task->spew("Driver:MCP9800::write] data received is not the same as the intended to be written.");
+	  return MCP_STATUS_ERROR;
+	}
+  }
+  catch(const std::exception& e)
+  {
+    throw RestartNeeded(("[Driver:MCP9800::write] "+std::string(e.what())).c_str(), 10, true);
+  }
+  return MCP_STATUS_SUCCESS;
 }
-
 
 /** @brief This function allows to read data from a register of the MCP9800.  
  *
@@ -103,33 +102,33 @@ DriverMCP9800::write(MCP_REG_e reg_addr, uint8_t* data)
  * @return MCP_STATUS_SUCCESS In case the reading is a success. 
  * @return MCP_STATUS_ERROR Otherwise.                             
  */
+
 DriverMCP9800::MCP_STATUS_e
 DriverMCP9800::read(MCP_REG_e reg_addr, uint8_t* data)
 {
-	m_task->trace("DriverMCP9800::read executing");
-	uint8_t recv_data[2] = {0}, bytes = 0;
-	try
-	{	 
-        if(m_i2c->transfer(m_device.address, reg_addr, 0, 0, recv_data, 2, &bytes))
-        {
-            m_task->spew("[DriverMCP9801::read] data transfer was not successful.");
-            return MCP_STATUS_ERROR;
-        }
-	    if(bytes != 2)
-	    {
-            m_task->spew("[DriverMCP9800::read] length of data receive is an unexpected value.");
-            return MCP_STATUS_ERROR;
-	    }
-	    data[0] = recv_data[0];
-	    data[1] = recv_data[1];
-    }
-    catch(const std::exception& e)
+  m_task->trace("DriverMCP9800::read executing");
+  uint8_t recv_data[2] = {0}, bytes = 0;
+  try
+  {	 
+    if(m_i2c->transfer(m_device.address, reg_addr, 0, 0, recv_data, 2, &bytes))
     {
-        throw RestartNeeded(("[DriverMCP9800::read] "+std::string(e.what())).c_str(), 10, true);
-    } 
-    return MCP_STATUS_SUCCESS;
+      m_task->spew("[DriverMCP9801::read] data transfer was not successful.");
+      return MCP_STATUS_ERROR;
+    }
+	if(bytes != 2)
+	{
+      m_task->spew("[DriverMCP9800::read] length of data receive is an unexpected value.");
+      return MCP_STATUS_ERROR;
+	}
+	data[0] = recv_data[0];
+	data[1] = recv_data[1];
+  }
+  catch(const std::exception& e)
+  {
+    throw RestartNeeded(("[DriverMCP9800::read] "+std::string(e.what())).c_str(), 10, true);
+  } 
+  return MCP_STATUS_SUCCESS;
 }
-
 
 /**
  * @brief Allows to write the desired configurations on the device.
@@ -144,18 +143,16 @@ DriverMCP9800::read(MCP_REG_e reg_addr, uint8_t* data)
  * @return MCP_STATUS_SUCCESS In case the reading is a success. 
  * @return MCP_STATUS_ERROR Otherwise.     
  */
+
 DriverMCP9800::MCP_STATUS_e
 DriverMCP9800::config(DriverMCP9800::MCP_CONFIG_ONESHOT_e oneshot_mode, DriverMCP9800::MCP_CONFIG_ADC_e adc_mode, DriverMCP9800::MCP_CONFIG_QUEQUE_e queque, DriverMCP9800::MCP_CONFIG_POLARITY_e polarity, DriverMCP9800::MCP_CONFIG_MODE_e mode, DriverMCP9800::MCP_CONFIG_SHUTDOWN_e shutdown)
 {
-    m_task->trace("DriverMCP9800::config executing");
+  m_task->trace("DriverMCP9800::config executing");
 
-	uint8_t value = ((oneshot_mode<<7) | (adc_mode<<5) | (queque<<3) | (polarity<<2) | (mode<<1) | shutdown);
-	//Write on the config register.
-	return write(MCP_REG_CONFIG, &value);
+  uint8_t value = ((oneshot_mode<<7) | (adc_mode<<5) | (queque<<3) | (polarity<<2) | (mode<<1) | shutdown);
+  //Write on the config register.
+  return write(MCP_REG_CONFIG, &value);
 }
-
-
-
 
 /**
  * @brief Reads and converts the value present in the ambient temperature bus. 
@@ -165,28 +162,25 @@ DriverMCP9800::config(DriverMCP9800::MCP_CONFIG_ONESHOT_e oneshot_mode, DriverMC
  * @return MCP_STATUS_SUCCESS In case the reading is a success. 
  * @return MCP_STATUS_ERROR Otherwise.     
  */
+
 DriverMCP9800::MCP_STATUS_e
 DriverMCP9800::getBusTemperature(float& bus_temperature)
 {
-	m_task->trace("DriverMCP9800::getBustemperature executing");
+  m_task->trace("DriverMCP9800::getBustemperature executing");
+  uint8_t recv[2];
+  
+  //Get the value on the bus register.
+  if(read(MCP_REG_TA, recv) == MCP_STATUS_ERROR)
+  {
+    m_task->spew("[DriverMCP9800::getBustemperature] error while reading the value.");
+    return MCP_STATUS_ERROR;
+  }
 
-	uint8_t recv[2];
-
-	//Get the value on the bus register.
-	if(read(MCP_REG_TA, recv) == MCP_STATUS_ERROR)
-	{
-        m_task->spew("[DriverMCP9800::getBustemperature] error while reading the value.");
-        return MCP_STATUS_ERROR;
-	}
-
-	//Convert the data to degree Celsius
-	bus_temperature = (float)((recv[0] & 0x7F) + ((recv[1]>>4) * 0.0625));
-	if(recv[0]>>7 & 1)
-	{
-	    bus_temperature *= -1;
-	}
-	return MCP_STATUS_SUCCESS;
+  //Convert the data to degree Celsius
+  bus_temperature = (float)((recv[0] & 0x7F) + ((recv[1]>>4) * 0.0625));
+  if(recv[0]>>7 & 1)
+  {
+    bus_temperature *= -1;
+  }
+  return MCP_STATUS_SUCCESS;
 }
-
-
-

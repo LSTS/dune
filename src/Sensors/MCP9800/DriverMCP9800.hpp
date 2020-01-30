@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,138 +34,130 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-
 namespace Sensors
 {
   //! Insert short task description here.
   //!
   //! Insert explanation on task behaviour here.
   //! @author Miguel Macedo
-    namespace MCP9800
+  namespace MCP9800
+  {
+    using DUNE_NAMESPACES;
+    class DriverMCP9800
     {
-        using DUNE_NAMESPACES;
+    /*===========================================================================
+	                  	 DriverINA219 Enums and Structs
+	=========================================================================*/
+    public:        
+	  /*---------------------------------------------------------------------------
+	         	                Register Pointers
+	  ---------------------------------------------------------------------------*/
+      typedef enum  
+      {
+   	    MCP_REG_TA		    = 0x00,
+        MCP_REG_CONFIG		= 0x01,
+        MCP_REG_THYST		= 0x10,
+        MCP_REG_TSET		= 0x11
+      } MCP_REG_e;
+	  /*-------------------------------------------------------------------------*/
 
 
-        class DriverMCP9800
-        {
-	   	 /*===========================================================================
-	           	 DriverINA219 Enums and Structs
-	   	 =========================================================================*/
-            public:
-			        
-		/*---------------------------------------------------------------------------
-			 Register Pointers
-		---------------------------------------------------------------------------*/
-            typedef enum  
-            {
-    		    MCP_REG_TA		    = 0x00,
-    		    MCP_REG_CONFIG		= 0x01,
-    		    MCP_REG_THYST		= 0x10,
-    		    MCP_REG_TSET		= 0x11
-            } MCP_REG_e;
-		/*-------------------------------------------------------------------------*/
+  	  /*--------------------------------------------------------------------------- 
+	                           Function Return Status
+	  ---------------------------------------------------------------------------*/
+      typedef enum 
+	  {
+	    MCP_STATUS_SUCCESS = 0x00,
+	    MCP_STATUS_ERROR = 0x01
+	  } MCP_STATUS_e;	
+	  /*--------------------------------------------------------------------------*/	     
 
 
-	       /*---------------------------------------------------------------------------
-		          Function Return Status
-		---------------------------------------------------------------------------*/
-            typedef enum 
-	        {
-	            MCP_STATUS_SUCCESS = 0x00,
-		        MCP_STATUS_ERROR = 0x01
-		    } MCP_STATUS_e;	
-		/*--------------------------------------------------------------------------*/	     
-
-
-		/*---------------------------------------------------------------------------
-    			Config Register Settings
-		--------------------------------------------------------------------------*/
+  	  /*---------------------------------------------------------------------------
+      	                       Config Register Settings
+ 	  --------------------------------------------------------------------------*/
 		
-		//CONFIG: One-shot mode (single conversion while in shutdown)
-            typedef enum
-		    {
-		        MCP_CONFIG_ONESHOT_ENABLE = 0x01,
-		        MCP_CONFIG_ONESHOT_DISABLE = 0x00
-		    } MCP_CONFIG_ONESHOT_e;
+	  //CONFIG: One-shot mode (single conversion while in shutdown)
+      typedef enum
+	  {
+	    MCP_CONFIG_ONESHOT_ENABLE = 0x01,
+ 	    MCP_CONFIG_ONESHOT_DISABLE = 0x00
+	  } MCP_CONFIG_ONESHOT_e;
 
-		//CONFIG: Delta-Sigma ADC Resolution
-            typedef enum
-    		{
-	        	 MCP_CONFIG_ADC_9BIT = 0x00,	//0.5ºC
-	             MCP_CONFIG_ADC_10BIT = 0x01, 	//0.25ºC
-	             MCP_CONFIG_ADC_11BIT = 0x02, 	//0.125ºC
-	        	 MCP_CONFIG_ADC_12BIT = 0x03 	//0.0625ºC
-	    	} MCP_CONFIG_ADC_e;
+ 	  //CONFIG: Delta-Sigma ADC Resolution
+      typedef enum
+      {
+	    MCP_CONFIG_ADC_9BIT = 0x00,	//0.5ºC
+	    MCP_CONFIG_ADC_10BIT = 0x01, 	//0.25ºC
+	    MCP_CONFIG_ADC_11BIT = 0x02, 	//0.125ºC
+	    MCP_CONFIG_ADC_12BIT = 0x03 	//0.0625ºC
+	  } MCP_CONFIG_ADC_e;
 
-		//CONFIG: Fault queque bits  
-            typedef enum
-    		{
-        		 MCP_CONFIG_QUEQUE_1BIT = 0x00,
-        		 MCP_CONFIG_QUEQUE_2BIT = 0x01,
-        		 MCP_CONFIG_QUEQUE_4BIT = 0x02 ,
-        		 MCP_CONFIG_QUEQUE_6BIT = 0x03
-    		} MCP_CONFIG_QUEQUE_e;
+	  //CONFIG: Fault queque bits  
+      typedef enum
+      {
+        MCP_CONFIG_QUEQUE_1BIT = 0x00,
+        MCP_CONFIG_QUEQUE_2BIT = 0x01,
+        MCP_CONFIG_QUEQUE_4BIT = 0x02 ,
+        MCP_CONFIG_QUEQUE_6BIT = 0x03
+      } MCP_CONFIG_QUEQUE_e;
 	      
-		//CONFIG: Alert output Polarity bit
-            typedef enum
-    		{
-        		 MCP_CONFIG_POLARITY_LOW   = 0x00,
-        		 MCP_CONFIG_POLARITY_HIGH  = 0x01
-       		} MCP_CONFIG_POLARITY_e;
+	  //CONFIG: Alert output Polarity bit
+      typedef enum
+      {
+        MCP_CONFIG_POLARITY_LOW   = 0x00,
+        MCP_CONFIG_POLARITY_HIGH  = 0x01
+      } MCP_CONFIG_POLARITY_e;
 	      
-		//CONFIG: Comparator/Interruipt output mode 
-		    typedef enum
-		    {
-		        MCP_CONFIG_MODE_COMP= 0x00,
-		        MCP_CONFIG_MODE_INT= 0x01
-		    } MCP_CONFIG_MODE_e;
+	  //CONFIG: Comparator/Interruipt output mode 
+	  typedef enum
+ 	  {
+	    MCP_CONFIG_MODE_COMP= 0x00,
+	    MCP_CONFIG_MODE_INT= 0x01
+	  } MCP_CONFIG_MODE_e;
 	      
-		//CONFIG: Shutdown 
-		    typedef enum
-		    {
-		        MCP_CONFIG_SHUTDOWN_DISABLE= 0x00,
-		        MCP_CONFIG_SHUTDOWN_ENABLE= 0x01
-		    } MCP_CONFIG_SHUTDOWN_e;
-		/*-------------------------------------------------------------------------*/
+	  //CONFIG: Shutdown 
+	  typedef enum
+ 	  {
+        MCP_CONFIG_SHUTDOWN_DISABLE= 0x00,
+	    MCP_CONFIG_SHUTDOWN_ENABLE= 0x01
+      } MCP_CONFIG_SHUTDOWN_e;
+	  /*-------------------------------------------------------------------------*/
 
-	       	private:
+   	private:
+    // Device information and settings
+	typedef struct
+	{
+	  std::string elabel;
+	  uint8_t address;
+    } MCP_DEVICE_t;
 
-
-		// Device information and settings
-		    typedef struct
-		    {
-		        std::string elabel;
-		        uint8_t address;
-    		} MCP_DEVICE_t;
-
-	      /*===========================================================================
-	       *         DriverMCP9800 Functions
-	       *=========================================================================*/
-	        public:
-	        DriverMCP9800(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address);
+	/*===========================================================================
+		                 DriverMCP9800 Functions
+	=========================================================================*/
+	public:
+	  DriverMCP9800(DUNE::Tasks::Periodic* task, DUNE::Hardware::I2C* i2c, const std::string elabel, const int address);
 		
-	        MCP_STATUS_e
-    		config(MCP_CONFIG_ONESHOT_e oneshot_mode, MCP_CONFIG_ADC_e adc_mode, MCP_CONFIG_QUEQUE_e queque, MCP_CONFIG_POLARITY_e polarity, MCP_CONFIG_MODE_e mode, MCP_CONFIG_SHUTDOWN_e shutdown);
+	  MCP_STATUS_e
+      config(MCP_CONFIG_ONESHOT_e oneshot_mode, MCP_CONFIG_ADC_e adc_mode, MCP_CONFIG_QUEQUE_e queque, MCP_CONFIG_POLARITY_e polarity, MCP_CONFIG_MODE_e mode, MCP_CONFIG_SHUTDOWN_e shutdown);
 
-	    	MCP_STATUS_e
-	    	getBusTemperature(float& bus_temperature);
+	  MCP_STATUS_e
+	  getBusTemperature(float& bus_temperature);
 
-
-	    	private:
-	    	MCP_STATUS_e
-	    	write(MCP_REG_e reg_addr, uint8_t* data);
+    private:
+	  MCP_STATUS_e
+	  write(MCP_REG_e reg_addr, uint8_t* data);
 		
-	    	MCP_STATUS_e
-	    	read(MCP_REG_e reg_addr, uint8_t* data);
+	  MCP_STATUS_e
+	  read(MCP_REG_e reg_addr, uint8_t* data);
 	
-	    	//Parent task.
-	    	DUNE::Tasks::Periodic* m_task;
-	    	//I2C Port Device
-	    	DUNE::Hardware::I2C* m_i2c;
-	    	//Device information
-	    	MCP_DEVICE_t m_device;
-
-        };
-    }
+	  //Parent task.
+	  DUNE::Tasks::Periodic* m_task;
+	  //I2C Port Device
+	  DUNE::Hardware::I2C* m_i2c;
+	  //Device information
+	  MCP_DEVICE_t m_device;
+    };
+  }
 } 
-#endif /*SENSOR_DRIVER_MCP9800_HPP_INCLUDED_*/
+#endif
