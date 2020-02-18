@@ -58,12 +58,13 @@ namespace Transports
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
-      Driver(Tasks::Task* task, SerialPort* uart):
+      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N):
         HayesModem(task, uart),
         m_session_result_read(true),
         m_sbd_ring(false),
         m_queued_mt(0)
       {
+        use_9523 = use_9523N;
         setLineTrim(true);
       }
 
@@ -246,6 +247,12 @@ namespace Transports
         return m_queued_mt;
       }
 
+      std::string
+      getFirmVersionLIDB(void)
+      {
+        return readValue("V");
+      }
+
     private:
       //! Message buffer types.
       enum BufferType
@@ -266,6 +273,8 @@ namespace Transports
       bool m_sbd_ring;
       //! Number of MT messages waiting at the GSS.
       unsigned m_queued_mt;
+      //! Flag to control use of iridium module 9523N
+      bool use_9523;
 
       //! Perform ISU initialization, this function must be called
       //! before any other.
@@ -365,8 +374,12 @@ namespace Transports
       void
       setRadioActivity(bool value)
       {
-        sendAT(value ? "*R1" : "*R0");
-        expectOK();
+        if(!use_9523)
+        {
+          getTask()->debug("setRadioActivity: %s", value ? "*R1" : "*R0");
+          sendAT(value ? "*R1" : "*R0");
+          expectOK();
+        }
       }
 
       //! Enable or disable the ISU to listen for SBD Ring Alerts.
@@ -374,6 +387,7 @@ namespace Transports
       void
       setRingAlert(bool value)
       {
+        getTask()->debug("setRingAlert: %s", value ? "+SBDMTA=1" : "+SBDMTA=0");
         sendAT(value ? "+SBDMTA=1" : "+SBDMTA=0");
         expectOK();
       }
@@ -383,6 +397,7 @@ namespace Transports
       void
       setAutomaticRegistration(bool value)
       {
+        getTask()->debug("setAutomaticRegistration %d", value);
         if (value)
           sendAT("+SBDAREG=1");
         else
@@ -394,6 +409,7 @@ namespace Transports
       void
       setIndicatorEventReporting(bool value)
       {
+        getTask()->debug("setIndicatorEventReporting %s", value ? "+CIER=1,1,0" : "+CIER=0");
         sendAT(value ? "+CIER=1,1,0" : "+CIER=0");
         expectOK();
       }

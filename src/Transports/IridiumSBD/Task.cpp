@@ -60,6 +60,10 @@ namespace Transports
       unsigned max_tx_rate;
       //! Flush Iridium Queue on start
       bool flush_queue;
+      //! Flag to control use of 9523N Module
+      bool use_9523;
+      //! Serial port baud rate fot 9523N Module.
+      unsigned uart_baud_9523;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -115,6 +119,13 @@ namespace Transports
         param("Flush Iridium Queue", m_args.flush_queue)
         .defaultValue("false");
 
+        param("Use 9523N Module", m_args.use_9523)
+        .defaultValue("false");
+
+        param("Serial Port 9523 - Baud Rate", m_args.uart_baud_9523)
+        .defaultValue("115200")
+        .description("Serial port baud rate for 9523N Module");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         m_queued_mt = 0;
@@ -152,10 +163,18 @@ namespace Transports
       {
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_driver = new Driver(this, m_uart);
+          if(m_args.use_9523)
+            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
+          else
+            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_driver = new Driver(this, m_uart, m_args.use_9523);
           m_driver->initialize();
           m_driver->setTxRateMax(m_args.max_tx_rate);
+          if(m_args.use_9523)
+          {
+            inf("LIDB FW: %s", m_driver->getFirmVersionLIDB().c_str());
+            inf("Model: %s | IMEI: %s", m_driver->getModel().c_str(), m_driver->getIMEI().c_str());
+          }
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
