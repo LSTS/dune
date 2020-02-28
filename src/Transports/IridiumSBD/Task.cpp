@@ -167,7 +167,7 @@ namespace Transports
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
           else
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_driver = new Driver(this, m_uart, m_args.use_9523);
+          m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay);
           m_driver->initialize();
           m_driver->setTxRateMax(m_args.max_tx_rate);
           if(m_args.use_9523)
