@@ -137,8 +137,6 @@ namespace Power
       double vol_wup;
       //! LED names.
       std::vector<std::string> leds;
-      //! True to turn off radio underwater
-      bool radio_off;
     };
 
     struct Task: public Tasks::Task
@@ -246,10 +244,6 @@ namespace Power
           .defaultValue("false");
         }
 
-        param("Power Off Radio Underwater", m_args.radio_off)
-        .defaultValue("true")
-        .description("True to power radio off when underwater");
-
         m_pwr_op.setDestination(getSystemId());
 
         // Register handler routines.
@@ -257,7 +251,6 @@ namespace Power
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::SetLedBrightness>(this);
         bind<IMC::QueryLedBrightness>(this);
-        bind<IMC::VehicleMedium>(this);
       }
 
       ~Task(void)
@@ -736,35 +729,6 @@ namespace Power
           return;
 
         dispatchReply(*msg, m_led_bright[itr->second]);
-      }
-
-      void
-      consume(const IMC::VehicleMedium* msg)
-      {
-        if (!m_args.radio_off)
-          return;
-
-        auto radio_state = m_channels.find_by_name("Radio")->second->state;
-
-        IMC::PowerChannelControl radio_ctl;
-        radio_ctl.name = "Radio";
-
-        if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-        {
-          if (radio_state.state == IMC::PowerChannelState::PCS_OFF)
-            return;
-
-          radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-        }
-        else
-        {
-          if (radio_state.state == IMC::PowerChannelState::PCS_ON)
-            return;
-
-          radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-        }
-
-        dispatch(radio_ctl, DF_LOOP_BACK);
       }
 
       //! Dispatch power channel state messages to bus.

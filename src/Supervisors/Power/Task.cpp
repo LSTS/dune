@@ -63,6 +63,8 @@ namespace Supervisors
       std::string cmd_pwr_down_abort;
       //! Slave systems.
       std::vector<std::string> slave_systems;
+      //! True to turn off radio underwater
+      bool radio_off;
     };
 
     struct Task: public Tasks::Task
@@ -73,10 +75,13 @@ namespace Supervisors
       int m_power_op;
       //! Task arguments.
       Arguments m_args;
+      //! Underwater flag
+      bool m_underwater;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_power_op(c_power_op_invalid)
+        m_power_op(c_power_op_invalid),
+        m_underwater(false)
       {
         // Define configuration parameters.
         param("Main Power Channel", m_args.pwr_main)
@@ -94,9 +99,14 @@ namespace Supervisors
         param("Slave System Names", m_args.slave_systems)
         .description("Name of the slave systems");
 
+        param("Power Off Radio Underwater", m_args.radio_off)
+        .defaultValue("true")
+        .description("True to power radio off when underwater");
+
         // Register listeners.
         bind<IMC::PowerOperation>(this);
         bind<IMC::PowerChannelControl>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
@@ -129,6 +139,35 @@ namespace Supervisors
           return;
 
         m_power_op = msg->op;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (!m_args.radio_off)
+          return;
+
+        IMC::PowerChannelControl radio_ctl;
+        radio_ctl.name = "Radio";
+
+        if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+        {
+          if (m_underwater)
+            return;
+
+          m_underwater = true;
+          radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        }
+        else
+        {
+          if (!m_underwater)
+            return;
+
+          m_underwater = false;
+          radio_ctl.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        }
+
+        dispatch(radio_ctl, DF_LOOP_BACK);
       }
 
       void
