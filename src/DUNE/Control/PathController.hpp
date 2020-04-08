@@ -32,7 +32,6 @@
 
 // ISO C++ 98 headers.
 #include <string>
-#include <map>
 
 // DUNE headers.
 #include <DUNE/Coordinates.hpp>
@@ -253,13 +252,13 @@ namespace DUNE
       getEta(const TrackingState& ts);
 
       float
-      getSpeed(void)
+      getSpeed(void) const
       { 
         return std::max((double)m_eta_min_speed, m_ts.speed);
       }
 
       float
-      getTimeFactor(void)
+      getTimeFactor(void) const
       {
         return m_time_factor;
       }
@@ -318,6 +317,20 @@ namespace DUNE
       void
       updateTrackingState(void);
 
+      // Helper functions for consume(const IMC::DesiredPath*)
+      bool
+      setStartPoint(double now, const IMC::DesiredPath* dpath);
+      void
+      setEndPoint(const IMC::DesiredPath* dpath);
+      void
+      setControlLoops(const IMC::DesiredPath* dpath);
+      void
+      handleLoiter(const IMC::DesiredPath* dpath);
+
+      // Helper function for consume(const IMC::EstimatedState*)
+      void
+      handleMonitors(void);
+
       //! Test if there has been a jump in navigation
       //! @param[in] new_state newly received EstimatedState
       //! @param[in] old_state newly received EstimatedState
@@ -327,7 +340,7 @@ namespace DUNE
       bool
       navigationJumped(const IMC::EstimatedState* new_state,
                        const IMC::EstimatedState* old_state,
-                       float &distance, bool change_ref);
+                       float& distance, bool change_ref);
 
       //! Monitor along track error and update variables
       void
@@ -357,7 +370,7 @@ namespace DUNE
       //! @param[out] y y coordinate relatively to path
       template <typename T>
       inline void
-      getTrackPosition(const T& coord, double* x, double* y = 0)
+      getTrackPosition(const T& coord, double* x, double* y = 0) const
       {
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
@@ -369,7 +382,7 @@ namespace DUNE
       //! Is the system performing bottom tracking ?
       //! @return true if it is bottom tracking, false otherwise.
       bool
-      isTrackingBottom(void)
+      isTrackingBottom(void) const
       {
         return m_btd.enabled && (m_btrack != NULL);
       }

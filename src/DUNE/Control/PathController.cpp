@@ -27,9 +27,6 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <iomanip>
-
 // DUNE headers.
 #include <DUNE/Control/PathController.hpp>
 #include <DUNE/Math/General.hpp>
@@ -189,8 +186,8 @@ namespace DUNE
 
       param("Maximum Track Length", m_max_track_length)
       .defaultValue("25000")
-	  .units(Units::Meter)
-	  .description("Maximum adimissible track length");
+      .units(Units::Meter)
+      .description("Maximum adimissible track length");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
@@ -303,76 +300,18 @@ namespace DUNE
         return;
       }
 
-      double now = Clock::get();
-      m_pcs.flags = 0;
-      m_pcs.path_ref = dpath->path_ref;
-      bool no_start = false;
-
-      if (dpath->flags & IMC::DesiredPath::FL_START)
-      {
-        m_pcs.start_lat = dpath->start_lat;
-        m_pcs.start_lon = dpath->start_lon;
-        m_pcs.start_z = dpath->start_z;
-        m_pcs.start_z_units = dpath->start_z_units;
-      }
-      else if ((!m_tracking && now - m_ts.end_time > 1) ||
-               (!m_ts.nearby && !m_ts.loitering) ||
-               (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
-      {
-        m_pcs.start_lat = m_estate.lat;
-        m_pcs.start_lon = m_estate.lon;
-
-        Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
-
-        m_pcs.start_z = m_estate.height - m_estate.z;
-        m_pcs.start_z_units = dpath->start_z_units;
-
-        no_start = true;
-      }
-      else
-      {
-        m_pcs.start_lat = m_pcs.end_lat;
-        m_pcs.start_lon = m_pcs.end_lon;
-        m_pcs.start_z = m_pcs.end_z;
-        m_pcs.start_z_units = m_pcs.end_z_units;
-      }
-
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.start_lat, m_pcs.start_lon, 0,
-                          &m_ts.start.x, &m_ts.start.y);
-      m_ts.start.z = m_pcs.start_z;
-
-      if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 && dpath->lradius > 0)
-      {
-        m_pcs.end_lat = m_estate.lat;
-        m_pcs.end_lon = m_estate.lon;
-
-        Coordinates::toWGS84(m_estate, m_pcs.end_lat, m_pcs.end_lon);
-        m_pcs.end_z = dpath->end_z;
-        m_pcs.end_z_units = dpath->end_z_units;
-      }
-      else
-      {
-        m_pcs.end_lat = dpath->end_lat;
-        m_pcs.end_lon = dpath->end_lon;
-        m_pcs.end_z = dpath->end_z;
-        m_pcs.end_z_units = dpath->end_z_units;
-      }
-
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.end_lat, m_pcs.end_lon, 0,
-                          &m_ts.end.x, &m_ts.end.y);
-      m_ts.end.z = m_pcs.end_z;
+      const double now = Clock::get();
+      const bool no_start = setStartPoint(now, dpath);
+      setEndPoint(dpath);
 
       Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
                                       &m_ts.track_bearing, &m_ts.track_length);
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
-    	  signalError(DTR("track length is too long"));
-    	  return;
+        signalError(DTR("track length is too long"));
+        return;
       }
-
 
       // Re-initializing tracking state values
       m_ts.start_time = now;
@@ -386,107 +325,8 @@ namespace DUNE
       if (no_start)
         m_jump_monitors = false;
 
-      // Send altitude or depth references, unless NO_Z flag is set
-      // or controller wishes to handle depth/altitude in a specific manner
-      if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
-      {
-        m_ts.z_control = true;
-        if (dpath->end_z_units == IMC::Z_ALTITUDE || dpath->end_z_units == IMC::Z_HEIGHT)
-        {
-          disableControlLoops(IMC::CL_DEPTH);
-          enableControlLoops(IMC::CL_ALTITUDE);
-        }
-        else if (dpath->end_z_units == IMC::Z_DEPTH)
-        {
-          disableControlLoops(IMC::CL_ALTITUDE);
-          enableControlLoops(IMC::CL_DEPTH);
-        }
-
-        m_zref.value = dpath->end_z;
-        m_zref.z_units = dpath->end_z_units;
-
-        if (isTrackingBottom())
-          m_btrack->onDesiredZ(&m_zref, true);
-        else
-          dispatch(m_zref);
-      }
-      else
-      {
-        m_ts.z_control = false;
-        m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
-      }
-
-      // Send speed reference
-      m_speed.value = dpath->speed;
-      m_speed.speed_units = dpath->speed_units;
-
-      enableControlLoops(IMC::CL_SPEED);
-
-      dispatch(m_speed, Tasks::DF_LOOP_BACK);
-
-      // Loiter handling
-      m_ts.loiter.radius = dpath->lradius;
-      m_ts.loiter.clockwise = (dpath->flags & IMC::DesiredPath::FL_CCLOCKW) == 0;
-
-      if (m_ts.loiter.radius > 0)
-      {
-        m_ts.loiter.center = m_ts.end;
-
-        double course_err;
-        course_err = std::fabs(Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
-        double sign;
-
-        double range = c_lkeep_distance + 1.0;
-
-        // if we're already loitering
-        if (m_ts.loitering)
-        {
-          double dummy;
-          Coordinates::getBearingAndRange(m_ts.end, m_ts.loiter.center, &dummy, &range);
-        }
-
-        // loiter's center has not changed much and vehicle is close to circle
-        if (range < c_lkeep_distance && m_ts.loitering &&
-            m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
-            m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
-        {
-          inf(DTR("keep loitering"));
-        }
-        // avoid singularities (very close to loiter center)
-        else if (m_ts.track_length < c_ldistance)
-        {
-          Coordinates::setBearingAndRange(m_ts.loiter.center, m_estate.psi,
-                                          m_ts.loiter.radius, m_ts.end);
-
-          m_ts.loitering = false;
-          m_ts.nearby = false;
-        }
-        else
-        {
-          // if inside the circle and turned inwards
-          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
-              (course_err < Math::c_half_pi))
-            sign = m_ts.loiter.clockwise ? 1.0 : -1.0;
-          else
-            sign = m_ts.loiter.clockwise ? -1.0 : 1.0;
-
-          Coordinates::setBearingAndRange(m_ts.loiter.center,
-                                          m_ts.track_bearing + sign * Math::c_half_pi,
-                                          m_ts.loiter.radius,
-                                          m_ts.end);
-
-          m_ts.loitering = false;
-          m_ts.nearby = false;
-        }
-
-        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                        &m_ts.track_bearing, &m_ts.track_length);
-      }
-      else
-      {
-        m_ts.loitering = false;
-        m_ts.nearby = false;
-      }
+      setControlLoops(dpath);
+      handleLoiter(dpath);
 
       updateTrackingState();
       reportPathControlState(true);
@@ -529,6 +369,185 @@ namespace DUNE
       onPathStartup(m_estate, m_ts);
     }
 
+    bool
+    PathController::setStartPoint(double now, const IMC::DesiredPath* dpath)
+    {
+      m_pcs.flags = 0;
+      m_pcs.path_ref = dpath->path_ref;
+
+      if (dpath->flags & IMC::DesiredPath::FL_START)
+      {
+        m_pcs.start_lat = dpath->start_lat;
+        m_pcs.start_lon = dpath->start_lon;
+        m_pcs.start_z = dpath->start_z;
+        m_pcs.start_z_units = dpath->start_z_units;
+
+        return false;
+      }
+
+      if ((!m_tracking && now - m_ts.end_time > 1) ||
+          (!m_ts.nearby && !m_ts.loitering) ||
+          (dpath->flags & IMC::DesiredPath::FL_DIRECT) != 0)
+      {
+        m_pcs.start_lat = m_estate.lat;
+        m_pcs.start_lon = m_estate.lon;
+
+        Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
+
+        m_pcs.start_z = m_estate.height - m_estate.z;
+        m_pcs.start_z_units = dpath->start_z_units;
+
+        return true;
+      }
+
+      m_pcs.start_lat = m_pcs.end_lat;
+      m_pcs.start_lon = m_pcs.end_lon;
+      m_pcs.start_z = m_pcs.end_z;
+      m_pcs.start_z_units = m_pcs.end_z_units;
+
+      return false;
+    }
+
+    void
+    PathController::setEndPoint(const IMC::DesiredPath* dpath)
+    {
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                          m_pcs.start_lat, m_pcs.start_lon, 0,
+                          &m_ts.start.x, &m_ts.start.y);
+      m_ts.start.z = m_pcs.start_z;
+
+      if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
+          dpath->lradius > 0)
+      {
+        m_pcs.end_lat = m_estate.lat;
+        m_pcs.end_lon = m_estate.lon;
+
+        Coordinates::toWGS84(m_estate, m_pcs.end_lat, m_pcs.end_lon);
+        m_pcs.end_z = dpath->end_z;
+        m_pcs.end_z_units = dpath->end_z_units;
+      }
+      else
+      {
+        m_pcs.end_lat = dpath->end_lat;
+        m_pcs.end_lon = dpath->end_lon;
+        m_pcs.end_z = dpath->end_z;
+        m_pcs.end_z_units = dpath->end_z_units;
+      }
+
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                          m_pcs.end_lat, m_pcs.end_lon, 0,
+                          &m_ts.end.x, &m_ts.end.y);
+      m_ts.end.z = m_pcs.end_z;
+    }
+
+    void
+    PathController::setControlLoops(const IMC::DesiredPath* dpath)
+    {
+      // Send altitude or depth references, unless NO_Z flag is set
+      // or controller wishes to handle depth/altitude in a specific manner
+      if (!hasSpecificZControl() && !(dpath->flags & IMC::DesiredPath::FL_NO_Z))
+      {
+        m_ts.z_control = true;
+        if (dpath->end_z_units == IMC::Z_ALTITUDE ||
+            dpath->end_z_units == IMC::Z_HEIGHT)
+        {
+          disableControlLoops(IMC::CL_DEPTH);
+          enableControlLoops(IMC::CL_ALTITUDE);
+        }
+        else if (dpath->end_z_units == IMC::Z_DEPTH)
+        {
+          disableControlLoops(IMC::CL_ALTITUDE);
+          enableControlLoops(IMC::CL_DEPTH);
+        }
+
+        m_zref.value = dpath->end_z;
+        m_zref.z_units = dpath->end_z_units;
+
+        if (isTrackingBottom())
+          m_btrack->onDesiredZ(&m_zref, true);
+        else
+          dispatch(m_zref);
+      }
+      else
+      {
+        m_ts.z_control = false;
+        m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
+      }
+
+      // Send speed reference
+      m_speed.value = dpath->speed;
+      m_speed.speed_units = dpath->speed_units;
+
+      enableControlLoops(IMC::CL_SPEED);
+
+      dispatch(m_speed, Tasks::DF_LOOP_BACK);
+    }
+
+    void
+    PathController::handleLoiter(const IMC::DesiredPath* dpath)
+    {
+      m_ts.loiter.radius = dpath->lradius;
+      m_ts.loiter.clockwise =
+          (dpath->flags & IMC::DesiredPath::FL_CCLOCKW) == 0;
+
+      if (m_ts.loiter.radius > 0)
+      {
+        m_ts.loiter.center = m_ts.end;
+
+        const double range =
+            m_ts.loitering ? Coordinates::getRange(m_ts.end, m_ts.loiter.center)
+                           : c_lkeep_distance + 1.0;
+
+        // loiter's center has not changed much and vehicle is close to circle
+        if (range < c_lkeep_distance && m_ts.loitering &&
+            m_ts.track_length >= m_ts.loiter.radius * c_lsize_factor &&
+            m_ts.track_length <= m_ts.loiter.radius * (2.0 - c_lsize_factor))
+        {
+          inf(DTR("keep loitering"));
+        }
+        // avoid singularities (very close to loiter center)
+        else if (m_ts.track_length < c_ldistance)
+        {
+          Coordinates::setBearingAndRange(
+              m_ts.loiter.center, m_estate.psi, m_ts.loiter.radius, m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
+        }
+        else
+        {
+          const double course_err = std::fabs(
+              Angles::normalizeRadian(m_estate.psi - m_ts.track_bearing));
+
+          double sign;
+
+          // if inside the circle and turned inwards
+          if ((m_ts.track_length <= m_ts.loiter.radius * c_lsize_factor) &&
+              (course_err < Math::c_half_pi))
+            sign = m_ts.loiter.clockwise ? 1.0 : -1.0;
+          else
+            sign = m_ts.loiter.clockwise ? -1.0 : 1.0;
+
+          Coordinates::setBearingAndRange(
+              m_ts.loiter.center,
+              m_ts.track_bearing + sign * Math::c_half_pi,
+              m_ts.loiter.radius,
+              m_ts.end);
+
+          m_ts.loitering = false;
+          m_ts.nearby = false;
+        }
+
+        Coordinates::getBearingAndRange(
+            m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+      }
+      else
+      {
+        m_ts.loitering = false;
+        m_ts.nearby = false;
+      }
+    }
+
     void
     PathController::consume(const IMC::NavigationUncertainty* nu)
     {
@@ -565,45 +584,13 @@ namespace DUNE
 
       if (isTrackingBottom())
       {
-        try
-        {
-          m_btrack->onEstimatedState(es);
-        }
-        catch (std::runtime_error& e)
-        {
-          // If braking then stop braking
-          if (m_braking)
-          {
-            IMC::Brake brk;
-            brk.op = IMC::Brake::OP_STOP;
-            dispatch(brk);
-
-            m_braking = false;
-          }
-
-          signalError(e.what());
-          return;
-        }
+        m_btrack->onEstimatedState(es);
       }
 
       if (m_setup)
       {
         m_setup = false;
         updateEntityState();
-      }
-
-      bool change_ref = false;
-      double lat = 0.0;
-      double lon = 0.0;
-
-      // Save different LLH reference.
-      if (es->lat != m_estate.lat ||
-          es->lon != m_estate.lon ||
-          es->height != m_estate.height)
-      {
-        change_ref = true;
-        lat = es->lat;
-        lon = es->lon;
       }
 
       // Save previous EstimatedState values
@@ -614,6 +601,10 @@ namespace DUNE
 
       if (!isActive() || m_error || !m_tracking)
         return;
+
+      const bool change_ref =
+          (m_estate.lat != prev_estate.lat || m_estate.lon != prev_estate.lon ||
+           m_estate.height != prev_estate.height);
 
       // If navigation jumped, disable path monitors for an amount time
       // proportional to the size of the navigation jump (by m_jump_factor)
@@ -626,7 +617,7 @@ namespace DUNE
           m_jump_monitors = true;
 
           // Limit the distance
-          float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
+          const float top = trimValue(dist / m_jump_factor, 0, c_max_jump_time);
           m_jump_timer.setTop(top);
 
           debug("disabling monitors, navigation jumped %.1f meters", dist);
@@ -645,6 +636,9 @@ namespace DUNE
       // Apply new LLH reference.
       if (change_ref)
       {
+        const double lat = m_estate.lat;
+        const double lon = m_estate.lon;
+
         WGS84::displacement(lat, lon, 0,
                             m_pcs.start_lat, m_pcs.start_lon, 0,
                             &m_ts.start.x, &m_ts.start.y);
@@ -653,7 +647,7 @@ namespace DUNE
                             &m_ts.end.x, &m_ts.end.y);
       }
 
-      double now = Clock::get();
+      const double now = Clock::get();
 
       if (now < m_ts.now + m_cperiod)
         return;
@@ -667,7 +661,7 @@ namespace DUNE
         return;
       }
 
-      bool prev_nearby = m_ts.nearby;
+      const bool prev_nearby = m_ts.nearby;
 
       updateTrackingState();
 
@@ -678,6 +672,20 @@ namespace DUNE
       else
         loiter(*es, m_ts);
 
+      handleMonitors();
+
+      if (!m_ts.loitering && m_ts.nearby && m_ts.loiter.radius > 0)
+      {
+        m_ts.end = m_ts.loiter.center;
+        m_ts.loitering = true;
+        m_ts.nearby = false;
+        inf(DTR("now loitering"));
+      }
+    }
+
+    void
+    PathController::handleMonitors(void)
+    {
       // If we're braking or there has been a jump in the navigation
       // filter then do not check for errors in monitoring
       if ((m_braking && !m_brake_timer.overflow()) || m_jump_monitors)
@@ -714,14 +722,6 @@ namespace DUNE
         if (m_ctm.enabled)
           monitorCrossTrackError();
       }
-
-      if (!m_ts.loitering && m_ts.nearby && m_ts.loiter.radius > 0)
-      {
-        m_ts.end = m_ts.loiter.center;
-        m_ts.loitering = true;
-        m_ts.nearby = false;
-        inf(DTR("now loitering"));
-      }
     }
 
     void
@@ -741,7 +741,7 @@ namespace DUNE
 
         m_ts.eta = getEta(m_ts);
 
-        bool was_nearby = m_ts.nearby;
+        const bool was_nearby = m_ts.nearby;
 
         if (!m_ts.nearby && m_ts.eta <= 0)
         {
@@ -761,8 +761,9 @@ namespace DUNE
         if (m_ts.loiter.clockwise)
           m_ts.track_pos.y = -m_ts.track_pos.y;
 
-        double ang_increment = (m_ts.loiter.clockwise ?
-                                Math::c_half_pi : -Math::c_half_pi);
+        const double ang_increment =
+            m_ts.loiter.clockwise ? Math::c_half_pi : -Math::c_half_pi;
+
         m_ts.course_error = m_ts.course - m_ts.los_angle + ang_increment;
         m_ts.course_error = Angles::normalizeRadian(m_ts.course_error);
         m_ts.eta = 0;
@@ -778,7 +779,7 @@ namespace DUNE
     bool
     PathController::navigationJumped(const IMC::EstimatedState* new_state,
                                      const IMC::EstimatedState* old_state,
-                                     float &distance, bool change_ref)
+                                     float& distance, bool change_ref)
     {
       if (change_ref)
       {
@@ -871,7 +872,7 @@ namespace DUNE
     void
     PathController::monitorCrossTrackError(void)
     {
-      double d = std::fabs(m_ts.track_pos.y);
+      const double d = std::fabs(m_ts.track_pos.y);
 
       if (d >= m_ctm.distance_limit + m_ctm.nav_uncertainty)
       {
@@ -910,8 +911,8 @@ namespace DUNE
       if (!(cloops->mask & IMC::CL_PATH))
         return;
 
-      bool was = isActive();
-      bool will = cloops->enable == IMC::ControlLoops::CL_ENABLE;
+      const bool was = isActive();
+      const bool will = cloops->enable == IMC::ControlLoops::CL_ENABLE;
 
       if (was != will)
       {
@@ -1053,16 +1054,15 @@ namespace DUNE
     double
     PathController::getEta(const TrackingState& ts)
     {
-      double eta;
-      float errx = std::abs(ts.track_length - ts.track_pos.x);
-      float erry = std::abs(ts.track_pos.y);
-      float time_factor = getTimeFactor();
-      float speed = getSpeed();
+      const float errx = std::abs(ts.track_length - ts.track_pos.x);
+      const float erry = std::abs(ts.track_pos.y);
+      const float time_factor = getTimeFactor();
+      const float speed = getSpeed();
 
-      if (errx <= erry && erry < c_erry_factor * time_factor * speed)
-        eta = errx / speed;
-      else
-        eta = Math::norm(errx, erry) / speed;
+      const double eta =
+          errx <= erry && erry < c_erry_factor * time_factor * speed
+              ? errx / speed
+              : Math::norm(errx, erry) / speed;
 
       return std::min(65535.0, eta - time_factor);
     }
