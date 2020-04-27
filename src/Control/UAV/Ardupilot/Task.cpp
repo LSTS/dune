@@ -120,6 +120,10 @@ namespace Control
         uint16_t UDP_listen_port;
         //! UDP Port
         uint16_t UDP_port;
+        //! USBL UDP Forward Port
+        uint16_t USBL_port;
+        //! UDP Address
+        uint16_t UBSL_local;
         //! IPv4 Address
         Address ip;
         //! Telemetry Rate
@@ -192,6 +196,8 @@ namespace Control
         Network::TCPSocket* m_TCP_sock;
         //! UDP socket
         Network::UDPSocket* m_UDP_sock;
+        //! UDP socket to send USBL Positioning
+        Network::UDPSocket* m_USBL_sock;
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -244,6 +250,7 @@ namespace Control
           Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
+		  m_USBL_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
@@ -304,6 +311,14 @@ namespace Control
           param("UDP - Port", m_args.UDP_port)
           .defaultValue("14549")
           .description("Port for connection to Ardupilot");
+
+          param("USBL - Send", m_args.USBL_port)
+          .defaultValue("27000") //25100
+          .description("UDP Port to send GPS positioning data");
+
+          param("USBL - Port", m_args.UBSL_local)
+          .defaultValue("14553")
+          .description("USBL local port to send GPS data");
 
           param("Telemetry Rate", m_args.trate)
           .defaultValue("10")
@@ -472,6 +487,7 @@ namespace Control
           bind<AutopilotMode>(this);
           bind<Takeoff>(this);
           bind<Land>(this);
+          bind<UsblFixExtended>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -483,6 +499,7 @@ namespace Control
         {
           Memory::clear(m_TCP_sock);
           Memory::clear(m_UDP_sock);
+          Memory::clear(m_USBL_sock);
         }
 
         void
@@ -542,6 +559,16 @@ namespace Control
             Memory::clear(m_TCP_sock);
             Memory::clear(m_UDP_sock);
             war(DTR("Connection failed, retrying..."));
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
+          }
+          try {
+        	  m_USBL_sock = new UDPSocket;
+        	  m_USBL_sock->bind(m_args.UBSL_local, Address::Any, true);
+          }
+          catch (std::runtime_error& e)
+          {
+            Memory::clear(m_USBL_sock);
+            war(DTR("Failed to connect to USBL GPS data receiver port %u: %s"),14550,e.what());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
         }
@@ -1518,6 +1545,52 @@ namespace Control
           (void)msg;
         }
 
+	void consume(const IMC::UsblFixExtended *fix) {
+		if (m_vehicle_type == VEHICLE_SUBMARINE) {
+			// Create MAVLink GPS_INPUT message.
+			double lat = fix->lat;
+			double lon = fix->lon;
+			float alt = fix->z;
+			WGS84::displace(0, 0, 0, &lat, &lon, &alt);
+			if (fix->z_units == ZUnits::Z_DEPTH)
+				alt = fix->z / (1e-3 * (-1)); //AGL relative to home altitude from Depth //FIXME
+			uint16_t ignore_flags = 8 | 16 | 32;
+
+			mavlink_message_t msg;
+
+			mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getMsec(), 0,
+					ignore_flags, 0, 0, 3, lat, lon, alt, fix->accuracy, fix->accuracy,
+					0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 10); //! https://www.ardusub.com/developers/gps-positioning.html
+			uint8_t buf[512];
+			uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+			//TODO uncomment to send GPS input directly to system
+			//sendData(buf, n);
+			std::string lat_nmea = latitudeToNMEA(lat);
+			std::string lon_nmea = longitudeToNMEA(lon);
+
+			//SEND NMEA String to GPSInput module running in mavproxy
+			double course = Angles::degrees(std::atan2(m_estate.vy, m_estate.vx));
+			Time::BrokenDown bdt;
+			NMEAWriter stn("GPGGA"); //! https://github.com/bluerobotics/companion/blob/master/tools/underwater-gps.py#L33
+			stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, 0)
+				<< lat_nmea
+				<< lon_nmea
+//				<< vel * DUNE::Units::c_ms_to_knot //SOG
+				<< 1 // GPS FIX
+				<< 10 //Num of satellites
+//							<< String::str("%03.2f",course) // Track angle in degrees / COG
+				<< fix->accuracy //HDOP
+				<< alt // MSL altitude
+				<< "M" // MSL altitude units
+				<< 0 //Geoid separation
+				<< "M" //Geoid separation units
+				<<String::str("%2u",0)
+				<<String::str("%4u",0);
+			std::string cmd = stn.sentence();
+			m_USBL_sock->write((uint8_t*)cmd.data(), cmd.size(), m_args.ip, m_args.USBL_port);
+			trace(DTR("Sent NMEA CMD %s to %u %s"),cmd.c_str(),m_args.USBL_port,m_args.ip);
+		}
+	}
 
         void
         sendCommandPacket(uint16_t cmd, float arg1=0, float arg2=0, float arg3=0, float arg4=0, float arg5=0, float arg6=0, float arg7=0)
