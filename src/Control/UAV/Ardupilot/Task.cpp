@@ -38,6 +38,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Utils/MAVLink.hpp>
 
 // MAVLink headers.
 #include <mavlink/ardupilotmega/mavlink.h>
@@ -61,19 +62,6 @@ namespace Control
         VEHICLE_COPTER,
         //! Submarine
         VEHICLE_SUBMARINE
-      };
-
-      //! List of Submarine Modes.
-      enum APM_submarineModes
-      {
-        SUB_MODE_STABILIZE = 0,                     // Hold level position
-        SUB_MODE_ACRO = 1,                          // Manual angular rate, throttle
-        SUB_MODE_DEPTH_HOLD = 2,                    // Hold level and depth position
-        SUB_MODE_AUTO = 3,                          // AUTO control (Waypoint)
-        SUB_MODE_GUIDED = 4,                        // AUTO control (Coordinate/Direction)
-        SUB_MODE_CIRCLE = 7,                        // AUTO control (Circling)
-        SUB_MODE_POS_HOLD = 16,                     // Hold position
-        SUB_MODE_MANUAL   =19                       // Manual
       };
 
       //! List of Arducopter Modes.
@@ -115,19 +103,6 @@ namespace Control
         PL_MODE_INITIALISING = 16
       };
 
-      //! Radio Channel structure.
-      struct RadioChannel
-      {
-        //! PWM range
-        int pwm_min;
-        int pwm_max;
-        //! Value range
-        float val_max;
-        float val_min;
-        //! Channel reverse
-        bool reverse;
-      };
-
       //! %Task arguments.
       struct Arguments
       {
@@ -140,13 +115,11 @@ namespace Control
         //! TCP Port
         uint16_t TCP_port;
         //! TCP Address
-        Address TCP_addr;
+//        Address TCP_addr;
         //! UDP Port
         uint16_t UDP_listen_port;
         //! UDP Port
         uint16_t UDP_port;
-        //! UDP Address
-        Address UDP_addr;
         //! IPv4 Address
         Address ip;
         //! Telemetry Rate
@@ -164,9 +137,9 @@ namespace Control
         //! WP Copter: Minimum wp switch radius
         float cp_wp_radius;
         //! RC setup
-        RadioChannel rc1;
-        RadioChannel rc2;
-        RadioChannel rc3;
+        MAVLink::RadioChannel rc1;
+        MAVLink::RadioChannel rc2;
+        MAVLink::RadioChannel rc3;
         //! HITL
         bool hitl;
         //! Formation Flight
@@ -320,12 +293,8 @@ namespace Control
           .defaultValue("5760")
           .description("Port for connection to Ardupilot");
 
-          param("TCP - Address", m_args.TCP_addr)
-          .defaultValue("127.0.0.1")
-          .description("Address for connection to Ardupilot");
-
           param("IPv4 - Address", m_args.ip)
-          .defaultValue("0.0.0.0")
+          .defaultValue("127.0.0.1")
           .description("Address for neptus connection to Ardupilot");
 
           param("UDP - Listen Port", m_args.UDP_listen_port)
@@ -335,10 +304,6 @@ namespace Control
           param("UDP - Port", m_args.UDP_port)
           .defaultValue("14549")
           .description("Port for connection to Ardupilot");
-
-          param("UDP - Address", m_args.UDP_addr)
-          .defaultValue("127.0.0.1")
-          .description("Address for connection to Ardupilot");
 
           param("Telemetry Rate", m_args.trate)
           .defaultValue("10")
@@ -532,6 +497,7 @@ namespace Control
           announce.service = os.str();
           announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
           dispatch(announce);
+          initializeParams();
         }
 
         void
@@ -551,13 +517,13 @@ namespace Control
             if (m_args.tcp_or_udp)
              {
                m_TCP_sock = new TCPSocket;
-               m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+               m_TCP_sock->connect(m_args.ip, m_args.TCP_port);
                m_TCP_sock->setNoDelay(true);
              }
              else
              {
                m_UDP_sock = new UDPSocket;
-               m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+               m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, true);
 
                inf(DTR("Ardupilot UDP connected."));
              }
@@ -578,6 +544,24 @@ namespace Control
             war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
+        }
+
+        void
+		initializeParams()
+        {
+        	if(m_vehicle_type ==40)
+        	{
+        		mavlink_message_t msg;
+        		mavlink_msg_param_set_pack(255, 0, &msg,
+        		                                       m_sysid, //! target_system System ID
+        		                                       0, //! target_component Component ID
+        		                                       "GPS_TYPE", //! Parameter name
+        		                                       14, //! MAV GPS Type
+													   MAV_PARAM_TYPE_UINT8); //! Parameter type
+        		uint8_t buf[512];
+        		int n = mavlink_msg_to_send_buffer(buf, &msg);
+        		sendData(buf, n);
+        	}
         }
 
         void
@@ -792,15 +776,15 @@ namespace Control
 
           //! Convert references to PWM and send all
 
-          int pwm_roll = map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
+          int pwm_roll = MAVLink::map2PWM(m_args.rc1.pwm_min, m_args.rc1.pwm_max,
                                  m_args.rc1.val_min, m_args.rc1.val_max,
                                  m_droll, m_args.rc1.reverse);
 
-          int pwm_climb = map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
+          int pwm_climb = MAVLink::map2PWM(m_args.rc2.pwm_min, m_args.rc2.pwm_max,
                                   m_args.rc2.val_min, m_args.rc2.val_max,
                                   m_dclimb, m_args.rc2.reverse);
 
-          int pwm_speed = map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
+          int pwm_speed = MAVLink::map2PWM(m_args.rc3.pwm_min, m_args.rc3.pwm_max,
                                   m_args.rc3.val_min, m_args.rc3.val_max,
                                   m_dspeed, m_args.rc3.reverse);
 
@@ -947,20 +931,6 @@ namespace Control
           m_dspeed = d_speed->value;
         }
 
-        //! Converts value in range min_value:max_value to a value_pwm in range min_pwm:max_pwm
-        int
-        map2PWM(int min_pwm, int max_pwm, float min_value, float max_value, float value, bool reverse)
-        {
-          int value_pwm;
-
-          if (reverse)
-            value_pwm = (int) max_pwm - ((max_pwm - min_pwm) * (value - min_value) / (max_value - min_value));
-          else
-            value_pwm = (int) ((max_pwm - min_pwm) * (value - min_value) / (max_value - min_value)) + min_pwm;
-
-          return trimValue(value_pwm, min_pwm, max_pwm);
-        }
-
         //! Message for GUIDED/AUTO control (using Ardupilot's controllers)
         void
         consume(const IMC::DesiredPath* path)
@@ -989,13 +959,13 @@ namespace Control
           mavlink_message_t msg;
           uint16_t n;
 
-          if (!((m_mode == CP_MODE_GUIDED) || (m_mode == PL_MODE_GUIDED) || (m_mode == SUB_MODE_GUIDED)))
+          if (!((m_mode == CP_MODE_GUIDED) || (m_mode == PL_MODE_GUIDED) || (m_mode == MAVLink::SUB_MODE_GUIDED)))
           {
             // Copters must first be set to guided as of AC 3.2
             // Planes must first be set to guided as of AP 3.3.0
             uint8_t mode;
             if(m_vehicle_type == VEHICLE_SUBMARINE)
-              mode = (uint8_t) SUB_MODE_GUIDED;
+              mode = (uint8_t) MAVLink::SUB_MODE_GUIDED;
             else
               mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
 
@@ -1394,7 +1364,7 @@ namespace Control
           }
           else
           {
-            mode = (uint8_t) SUB_MODE_POS_HOLD;
+            mode = (uint8_t) MAVLink::SUB_MODE_POS_HOLD;
 
             mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
@@ -1548,6 +1518,7 @@ namespace Control
           (void)msg;
         }
 
+
         void
         sendCommandPacket(uint16_t cmd, float arg1=0, float arg2=0, float arg3=0, float arg4=0, float arg5=0, float arg6=0, float arg7=0)
         {
@@ -1642,7 +1613,7 @@ namespace Control
           else if (m_UDP_sock)
           {
             trace("Sending something");
-            return m_UDP_sock->write(bfr, size, m_args.UDP_addr, m_args.UDP_port);
+            return m_UDP_sock->write(bfr, size, m_args.ip, m_args.UDP_port);
           }
           return 0;
         }
@@ -1657,7 +1628,7 @@ namespace Control
                if (m_TCP_sock)
                  return m_TCP_sock->read(buf, blen);
                if (m_UDP_sock)
-                 return m_UDP_sock->read(buf, blen, &m_args.UDP_addr, &m_args.UDP_listen_port);
+                 return m_UDP_sock->read(buf, blen, &m_args.ip, &m_args.UDP_listen_port);
             }
             catch (std::runtime_error& e)
             {
@@ -1669,7 +1640,7 @@ namespace Control
               if (m_args.tcp_or_udp)
               {
                 m_TCP_sock = new TCPSocket;
-                m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
+                m_TCP_sock->connect(m_args.ip, m_args.TCP_port);
                 m_TCP_sock->setNoDelay(true);
               }
               else
@@ -1863,8 +1834,9 @@ namespace Control
               m_esta_ext = false;
             }
           }
-          else
+          else{
             m_error_missing = false;
+          }
         }
 
         void
@@ -2207,37 +2179,37 @@ namespace Control
                 mode.mode = "MANUAL";
                 m_external = true;
                 break;
-              case SUB_MODE_STABILIZE:
+              case MAVLink::SUB_MODE_STABILIZE:
                 mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
                 mode.mode = "STABILIZE";
                 m_external = true;
                 break;
-              case SUB_MODE_DEPTH_HOLD:
+              case MAVLink::SUB_MODE_DEPTH_HOLD:
                 mode.autonomy = IMC::AutopilotMode::AL_ASSISTED;
                 mode.mode = "DEPTH HOLD";
                 m_external = true;
                 break;
-              case SUB_MODE_POS_HOLD:
+              case MAVLink::SUB_MODE_POS_HOLD:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "POS_HOLD";
                 m_external = false;
                 break;
-              case SUB_MODE_AUTO:
+              case MAVLink::SUB_MODE_AUTO:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "AUTO";
                 m_external = false;
                 break;
-              case SUB_MODE_CIRCLE:
+              case MAVLink::SUB_MODE_CIRCLE:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "CIRCLE";
                 m_external = false;
                 break;
-              case SUB_MODE_GUIDED:
+              case MAVLink::SUB_MODE_GUIDED:
                 mode.autonomy = IMC::AutopilotMode::AL_AUTO;
                 mode.mode = "GUIDED";
                 m_external = false;
                 break;
-              case SUB_MODE_ACRO:
+              case MAVLink::SUB_MODE_ACRO:
                 mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
                 mode.mode = "ACRO";
                 m_external = true;
@@ -2448,7 +2420,7 @@ namespace Control
           if (m_vehicle_type == VEHICLE_COPTER)
             is_valid_mode = (m_mode == CP_MODE_GUIDED || (m_mode == CP_MODE_AUTO                     )) ? true : false;
           else if (m_vehicle_type == VEHICLE_SUBMARINE)
-            is_valid_mode = (m_mode == SUB_MODE_GUIDED || (m_mode == SUB_MODE_AUTO                   )) ? true : false;
+            is_valid_mode = (m_mode == MAVLink::SUB_MODE_GUIDED || (m_mode == MAVLink::SUB_MODE_AUTO                   )) ? true : false;
           else
             is_valid_mode = (m_mode == PL_MODE_GUIDED || (m_mode == PL_MODE_AUTO && m_current_wp == 3)) ? true : false;
 
