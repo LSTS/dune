@@ -121,14 +121,12 @@ namespace Control
           //! Parsing variables
           uint8_t m_buf[512];
           mavlink_message_t m_recv_msg;
-          bool m_recv;
 
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Control::BasicRemoteOperation(name, ctx),
 			m_gain(0.20),
 			m_sysid(255),
-            m_targetid(1),
-			m_recv(false)
+            m_targetid(1)
           {
             param("Gain Step", m_args.gain_step)
             .minimumValue("10")
@@ -252,6 +250,22 @@ namespace Control
           {
           }
 
+          void
+		  openConnection(void)
+          {
+        	try{
+				m_socket = new TCPSocket;
+				m_socket->connect(m_args.addr, m_args.port);
+				m_socket->setNoDelay(true);
+			inf(DTR("Ardupilot  Teleoperation interface initialized"));
+			  }
+			  catch(std::exception& e){
+				Memory::clear(m_socket);
+				war(DTR("Connection failed: %s"),e.what());
+				setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
+			  }
+          }
+
 		  void
 		  onResourceAcquisition(void) //TODO separate connection and pwm
           {
@@ -263,29 +277,20 @@ namespace Control
               m_args.rc[i].reverse = false;
 
             }
-            //TODO Control Loops
-            //enableControlLoops(IMC::CL_VERTICAL_RATE | IMC::CL_SPEED | IMC::CL_ROLL);
-            enableControlLoops(IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_ROLL| IMC::CL_DEPTH| IMC::CL_THROTTLE);
-            //disableControlLoops(mask);
-
-            try{
-              m_socket = new TCPSocket;
-              m_socket->connect(m_args.addr, m_args.port);
-              m_socket->setNoDelay(true);
-			inf(DTR("Ardupilot  Teleoperation interface initialized"));
-            }
-            catch(std::runtime_error& e){
-              war(DTR("Connection failed: %s"),e.what());
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
-            }
+            openConnection();
           }
+		  void
+		  onResourceRelease(void)
+		  {
+			Memory::clear(m_socket);
+		  }
 
           void
           onDeactivation(void)
           {
             idle();
             disarm();
-            war("Deativating task");
+            war("Deactivating task");
           }
 
           void
@@ -297,12 +302,15 @@ namespace Control
           void
 		  consume(const IMC::Teleoperation* msg)
           {
-        	  requestParams();
-        	  changeMode(MAVLink::SUB_MODE_MANUAL);
-        	  arm();
-        	  idle();
-        	  inf(DTR("Gain is at %f percent"),(m_gain*100));
-        	  war(DTR("Started Teleoperation requested by: %s"), msg->custom.c_str()); //FIXME check src? and resolve id
+			  requestParams();
+			  changeMode(MAVLink::SUB_MODE_MANUAL);
+			  arm();
+			  idle();
+			  inf(DTR("Gain is at %f percent"),(m_gain*100));
+			  war(DTR("Started Teleoperation requested by: %s"), msg->custom.c_str()); //FIXME check src? and resolve id
+			  //Control Loops
+			  enableControlLoops(IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_ROLL| IMC::CL_DEPTH| IMC::CL_THROTTLE);
+			  //disableControlLoops(mask);
           }
 
           void
@@ -325,7 +333,7 @@ namespace Control
           {
             for(int channel=0; channel < 11; channel++)
             {
-            		rc_pwm[channel] = PWM_IDLE;
+            	rc_pwm[channel] = PWM_IDLE;
             }
                // Clear pitch/roll trim settings //TODO
 //               pitchTrim = 0;
@@ -345,7 +353,6 @@ namespace Control
             uint8_t buf[512];
             uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, len);
-            trace("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", rc_pwm[0], rc_pwm[1], rc_pwm[2], rc_pwm[3],rc_pwm[4], rc_pwm[5], rc_pwm[6]);
           }
 
           bool
@@ -358,7 +365,7 @@ namespace Control
               sendData(buffer,size);
               return true;
             }
-            catch(std::runtime_error& e) {
+            catch(std::exception& e) {
               war(DTR("Error disarming: %s"),e.what());
               return false;
             }
@@ -369,15 +376,13 @@ namespace Control
           {
             try
             {
-              //TODO change state to Teleoperation when arm is confirmed
-              //sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 1);
               uint8_t buffer[512];
               uint16_t size = MAVLink::packCmd2Buffer(MAV_CMD_COMPONENT_ARM_DISARM,m_targetid,buffer,1);
               sendData(buffer,size);
-              war(DTR("Sent Arm Command."));
+              trace(DTR("Sent Arm Command."));
               return true;
             }
-            catch (std::runtime_error& e)
+            catch (std::exception& e)
             {
               war(DTR("Error arming: %s"),e.what());
               return false;
@@ -435,15 +440,13 @@ namespace Control
             int res = 0;
 			try {
 			  res = m_socket->write((char*)buf, len);
-			  trace(DTR("Sent %d bytes of %d via UDP: %s %d"),res,len,m_args.addr.c_str(),m_args.port);
+			  debug(DTR("Sent %d bytes of %d via UDP: %s %d"),res,len,m_args.addr.c_str(),m_args.port);
 			}
-			catch (std::runtime_error& e)
+			catch (std::exception& e)
 			{
-			  res = 0;
 			  err(DTR("Unable to send data to MAVLink System: %s"),e.what());
 			}
 			return res;
-            return 0;
           }
 
           void
@@ -486,7 +489,7 @@ namespace Control
 			{
 				m_gain+= (float) m_args.gain_step/100;
 				m_gain = std::min(m_gain,GAIN_MAX);
-				war(DTR("Gain is at %d percent"),(m_gain*100));
+				war(DTR("Gain is at %f percent"),(m_gain*100));
 			}
 			else
 			{
@@ -495,7 +498,7 @@ namespace Control
 				{
 					m_gain-= (float) m_args.gain_step/100;
 					m_gain = std::max(m_gain,GAIN_MIN);
-					war(DTR("Gain is at %d percent"),(m_gain*100));
+					war(DTR("Gain is at %f percent"),(m_gain*100));
 				}
 
 			}
@@ -509,12 +512,12 @@ namespace Control
 					if(value >= m_args.rc[channel].val_neutral || !isReversible(channel)){
 						m_args.rc[channel].reverse = false;
 						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
+//						war(DTR("Value from channel %s (%d):  %f"),axis[channel].c_str(),channel,value);
 					}
 					else
 					{
 						m_args.rc[channel].reverse = true;
-						rc_pwm[channel] = MAVLink::mapRC2PWM(
-								&m_args.rc[channel], value);
+						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
 					}
 				}
 				else {
@@ -623,29 +626,31 @@ namespace Control
 
 			actuate();
             if(exit == 1)
+            {
               disarm();
+              IMC::TeleoperationDone* done;
+              dispatch(done);
+            }
           }
 
           int
 		  receiveData(uint8_t* buf, size_t blen)
 		  {
-		  try
-		  {
-			 if (m_socket){
-			   trace(DTR("Received MAVLINK data with size: %d"),blen);
-			   return m_socket->read(buf, blen);
-			 }
-		  }
-		  catch (std::runtime_error& e)
-		  {
-			err(DTR("Error Receiving data: %s"), e.what());
-			Memory::clear(m_socket);
-			m_socket = new TCPSocket;
-			m_socket->connect(m_args.addr,m_args.port);
-			m_socket->setNoDelay(true);
-
-			return 0;
-		  }
+			  try
+			  {
+				 if (m_socket){
+				   trace(DTR("Received MAVLINK data with size: %d"),blen);
+				   return m_socket->read(buf, blen);
+				 }
+			  }
+			  catch (std::exception& e)
+			  {
+				err(DTR("Error Receiving data: %s"), e.what());
+				Memory::clear(m_socket);
+				setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
+				openConnection();
+				return 0;
+			  }
 			return 0;
 		  }
 
@@ -664,7 +669,7 @@ namespace Control
             while (!stopping())
             {
             	int counter = 0;
-
+            	if(m_socket != NULL){
 				  while (poll(0.01) && counter < 100)
 				  {
 					counter++;
@@ -676,8 +681,12 @@ namespace Control
 					  break;
 					}
 					handleData(n);
-				}
-
+				  }
+            	}
+            	else {
+            		Time::Delay::wait(0.5);
+            		openConnection(); //reopen connection
+            	}
 				  // Handle IMC messages from bus
 				  consumeMessages();
 			  }
