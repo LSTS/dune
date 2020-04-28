@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -54,15 +54,15 @@ namespace Control
         const float GAIN_MAX = 1.0; //percentage
         const float GAIN_MIN = 0.1;
         //! Used in roll and pitch
-        const int TRIM_MAX  = 200;
-        const int TRIM_MIN  = -200;
+        const float TRIM_MAX  = 200.0;
+        const float TRIM_MIN  = -200.0;
         const int TRIM_STEP = 10;
         const uint16_t INVALID  = 0xffff;
         const std::string remote_actions[14]={"GainUP","GainDown","TiltUP","TiltDown",
         		"LightDimmer","LightBrighter","PitchForward","PitchBackward","RollLeft","RollRight",
 				"Stabilize","DepthHold","Manual","PositionHold"};
         const std::string axis[6] = {"Pitch","Roll","Throttle","Heading","Forward","Lateral"};
-        const std::string js_params_id[6] = {"JS_GAIN_DEFAULT","JS_GAIN_MAX","JS_GAIN_MIN",
+        const std::string js_params_id[6] = {"JS_CAM_TILT_STEP","JS_GAIN_MAX","JS_GAIN_MIN",
         		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
         int rc_pwm[11];
         //! List of ArduPlane modes.
@@ -111,6 +111,8 @@ namespace Control
           //! Gains
           float m_gain;
           float m_thr_gain;
+          //! Steps
+          int m_lights_step;
           //!Trim values
           float m_pitch_trim;
           float m_roll_trim;
@@ -125,13 +127,16 @@ namespace Control
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Control::BasicRemoteOperation(name, ctx),
 			m_gain(0.20),
+			m_lights_step(8),
+			m_pitch_trim(0.0),
+			m_roll_trim(0.0),
 			m_sysid(255),
             m_targetid(1)
           {
             param("Gain Step", m_args.gain_step)
-            .minimumValue("10")
-            .maximumValue("100")
-            .defaultValue("20")
+            .minimumValue("2")
+            .maximumValue("10")
+            .defaultValue("10")
             .units(Units::Percentage)
             .description("Gain Step increment and decrement");
 
@@ -210,7 +215,7 @@ namespace Control
 
             // Setup packet handlers
 		   // IMPORTANT: set up function to handle each type of MAVLINK packet here
-		   m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleParams;
+		   m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleJsParams;
 
             bind<Teleoperation>(this);
             bind<TeleoperationDone>(this);
@@ -240,6 +245,7 @@ namespace Control
             //! APM Modes
             addActionButton("Stabilize");
             addActionButton("DepthHold");
+            addActionButton("PositionHold");
             addActionButton("Manual");
             //! Free buttons - A, RT, LT
 
@@ -320,7 +326,7 @@ namespace Control
           }
 
           bool
-		  isReversible(int channel)
+		  isReversibleAxis(int channel)
           {
 			if (channel == RC_INPUT::Forward || channel == RC_INPUT::Lateral
 					|| channel == RC_INPUT::Throttle)
@@ -346,13 +352,12 @@ namespace Control
           actuate(void)
           {
             mavlink_message_t msg;
-            mavlink_msg_rc_channels_override_pack(m_sysid,0,&msg,m_targetid,0,rc_pwm[0],rc_pwm[1],rc_pwm[2],rc_pwm[3],rc_pwm[4],rc_pwm[5],rc_pwm[6],rc_pwm[7]);
-            for(int i=0;i<8;i++)
-            	trace(DTR("Actuating on channel %d with PWM: %d"),i+1,rc_pwm[i]); //TODO clean-up
-
+            mavlink_msg_rc_channels_override_pack(m_sysid,0,&msg,m_targetid,1,rc_pwm[0],rc_pwm[1],rc_pwm[2],rc_pwm[3],rc_pwm[4],rc_pwm[5],rc_pwm[6],rc_pwm[7]);
             uint8_t buf[512];
-            uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+            int len = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, len);
+            for(int i=0;i<8;i++)
+            	debug(DTR("Actuating on channel %d with PWM: %d"),i+1,rc_pwm[i]); //TODO clean-up
           }
 
           bool
@@ -422,25 +427,55 @@ namespace Control
       		}
       	}
 
+      	void
+      	setParamByName(char name[16], float value)
+      	{
+			mavlink_message_t msg;
+			mavlink_msg_param_set_pack(255, 0, &msg,
+					m_targetid, //! target_system System ID
+					0, //! target_component Component ID
+					name, //! Parameter name
+					value, //! MAV GPS Type
+					MAV_PARAM_TYPE_UINT8); //! Parameter type //FIXME check type
+			uint8_t buf[512];
+			int n = mavlink_msg_to_send_buffer(buf, &msg);
+			sendData(buf, n);
+			inf(DTR("Setting parameter: %s"),name);
+      	}
+
+      	/*
+      	 * Save some Joystick related parameters for PWM calculation and user defined ones.
+      	 * https://www.ardusub.com/operators-manual/full-parameter-list.html
+      	 */
           void
-		  handleParams(const mavlink_message_t* msg)
+		  handleJsParams(const mavlink_message_t* msg)
 		  {
+        	  const std::string js_params_id[6] = {"JS_GAIN_DEFAULT","JS_GAIN_MAX","JS_GAIN_MIN",
+        	          		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
 			mavlink_param_value_t param;
 			mavlink_msg_param_value_decode(msg, &param);
 			inf(DTR("Received Parameter: %s with value %f"),param.param_id,param.param_value);
-			if(std::strcmp("JS_THR_GAIN",param.param_id) == 0){
+			if(std::strcmp(js_params_id[5].c_str(),param.param_id) == 0){
 				m_thr_gain = param.param_value; //save Throttle gain
+			}
+			else if(std::strcmp(js_params_id[4].c_str(),param.param_id)==0){
+				m_lights_step = param.param_value; //save JS_Lights_Step gain
+			}
+			else if(std::strcmp(js_params_id[3].c_str(),param.param_id)==0
+					&& m_args.gain_step != param.param_value){
+				setParamByName(param.param_id, (float) m_args.gain_step);
 			}
 		  }
 
           int
-          sendData(uint8_t* buf, uint16_t len) //TODO move to Transport/MAVLink
+          sendData(uint8_t* buf, int len) //TODO move to Transport/MAVLink
           {
         	debug(DTR("Sending MAVLINK Message"));
             int res = 0;
 			try {
 			  res = m_socket->write((char*)buf, len);
 			  debug(DTR("Sent %d bytes of %d via UDP: %s %d"),res,len,m_args.addr.c_str(),m_args.port);
+			  //m_socket->flushOutput();
 			}
 			catch (std::exception& e)
 			{
@@ -509,7 +544,7 @@ namespace Control
 //				war(DTR("Value for %s on channel %f: "),axis[channel].c_str(),channel);
 				if( !isNaN(value))
 				{
-					if(value >= m_args.rc[channel].val_neutral || !isReversible(channel)){
+					if(value >= m_args.rc[channel].val_neutral || !isReversibleAxis(channel)){
 						m_args.rc[channel].reverse = false;
 						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
 //						war(DTR("Value from channel %s (%d):  %f"),axis[channel].c_str(),channel,value);
@@ -532,7 +567,7 @@ namespace Control
 			if( button == 1)
 			{
 				m_args.rc[RC_INPUT::Camera_Tilt].reverse = false;
-				rc_pwm[RC_INPUT::Camera_Tilt] = PWM_MAX;
+				rc_pwm[RC_INPUT::Camera_Tilt] += PWM_MAX;
 			}
 			else {
 				button = tl.get("TiltDown", 0);
@@ -542,7 +577,11 @@ namespace Control
 					rc_pwm[RC_INPUT::Camera_Tilt] = PWM_MIN;
 				}
 				else {
-					rc_pwm[RC_INPUT::Camera_Tilt] = PWM_IDLE;
+					button = tl.get("Center", 0);
+					if( button == 1) {
+						m_args.rc[RC_INPUT::Camera_Tilt].reverse = false;
+						rc_pwm[RC_INPUT::Camera_Tilt] = PWM_IDLE;
+					}
 				}
 			}
 
@@ -550,54 +589,51 @@ namespace Control
 			button = tl.get("LightBrighter", 0);
 			if( button == 1)
 			{
+				float newV = rc_pwm[RC_INPUT::Lights_1_Level] + m_lights_step;
+				newV = std::min(newV,(float)PWM_MAX);
 				m_args.rc[RC_INPUT::Lights_1_Level].reverse = false;
 				m_args.rc[RC_INPUT::Lights_2_Level].reverse = false;
-				rc_pwm[RC_INPUT::Lights_1_Level] = PWM_MAX;
-				rc_pwm[RC_INPUT::Lights_2_Level] = PWM_MAX;  //Same comand for both lights
+				rc_pwm[RC_INPUT::Lights_1_Level] = newV;
+				rc_pwm[RC_INPUT::Lights_2_Level] = newV;  //Same command for both lights
 			}
 			else {
 				button = tl.get("LightDimmer", 0);
 				if( button == 1)
 				{
+					float newV = rc_pwm[RC_INPUT::Lights_1_Level] - m_lights_step;
+					newV = std::max(newV,(float)PWM_MIN);
 					m_args.rc[RC_INPUT::Lights_1_Level].reverse = true;
 					m_args.rc[RC_INPUT::Lights_2_Level].reverse = true;
-					rc_pwm[RC_INPUT::Lights_1_Level] = PWM_MIN;
-					rc_pwm[RC_INPUT::Lights_2_Level] = PWM_MIN;  //Same comand for both lights
-				}
-				else {
-					button = tl.get("Center", 0);
-					if( button == 1) {
-						m_args.rc[RC_INPUT::Lights_1_Level].reverse = false;
-						m_args.rc[RC_INPUT::Lights_2_Level].reverse = false;
-						rc_pwm[RC_INPUT::Lights_1_Level] = PWM_IDLE;
-						rc_pwm[RC_INPUT::Lights_2_Level] = PWM_IDLE;
-					}
+					rc_pwm[RC_INPUT::Lights_1_Level] = newV;
+					rc_pwm[RC_INPUT::Lights_2_Level] = newV;  //Same comand for both lights
 				}
 			}
 
 			//Adjust Pitch and Roll - these values don't need to be reset after each iteraction
+			// more details in https://www.ardusub.com/operators-manual/button-functions.html
+			// and https://github.com/ArduPilot/ardupilot/blob/master/ArduSub/joystick.cpp#L332
 			button = tl.get("PitchForward", 0);
 			if(button == 1) {
-				m_args.rc[RC_INPUT::Pitch].reverse = false;
-				rc_pwm[RC_INPUT::Pitch] = m_args.rc[RC_INPUT::Pitch].pwm_max*m_gain;
+				float newV = m_pitch_trim+TRIM_STEP;
+				m_pitch_trim = std::min(m_pitch_trim,TRIM_MAX);
 			}
 
 			button = tl.get("PitchBackward", 0);
 			if(button == 1) {
-				m_args.rc[RC_INPUT::Pitch].reverse = true;
-				rc_pwm[RC_INPUT::Pitch] = m_args.rc[RC_INPUT::Pitch].pwm_min*m_gain;
-			}
-
-			button = tl.get("RollLeft", 0);
-			if(button == 1) {
-				m_args.rc[RC_INPUT::Roll].reverse = false;
-				rc_pwm[RC_INPUT::Roll] = m_args.rc[RC_INPUT::Roll].pwm_max*m_gain;
+				float newV = m_pitch_trim-TRIM_STEP;
+				m_pitch_trim = std::max(m_pitch_trim,TRIM_MIN);
 			}
 
 			button = tl.get("RollRight", 0);
 			if(button == 1) {
-				m_args.rc[RC_INPUT::Roll].reverse = true;
-				rc_pwm[RC_INPUT::Roll] = m_args.rc[RC_INPUT::Roll].pwm_min*m_gain;
+				float newV = m_roll_trim+TRIM_STEP;
+				m_roll_trim = std::min(m_roll_trim,TRIM_MAX);
+			}
+
+			button = tl.get("RollLeft", 0);
+			if(button == 1) {
+				float newV = m_roll_trim-TRIM_STEP;
+				m_roll_trim = std::max(m_roll_trim,TRIM_MIN);
 			}
 
 			button = tl.get("Stabilize", 0);
