@@ -398,7 +398,7 @@ namespace Control
 		  isReversibleAxis(int channel)
           {
 			if (channel == RC_INPUT::Forward || channel == RC_INPUT::Lateral
-					|| channel == RC_INPUT::Throttle)
+					|| channel == RC_INPUT::Throttle || channel == RC_INPUT::Heading)
 				return true;
 			return false;
           }
