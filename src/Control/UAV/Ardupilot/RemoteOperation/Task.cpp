@@ -48,21 +48,21 @@ namespace Control
       {
         using DUNE_NAMESPACES;
 
-        const uint16_t PWM_MAX  = 1900.0;
-        const uint16_t PWM_MIN  = 1100.0;
-        const uint16_t PWM_IDLE = 1500.0;
+        const float PWM_MAX  = 1900.0;
+        const float PWM_MIN  = 1100.0;
+        const float PWM_IDLE = 1500.0;
         const float GAIN_MAX = 1.0; //percentage
         const float GAIN_MIN = 0.1;
         //! Used in roll and pitch
         const float TRIM_MAX  = 200.0;
         const float TRIM_MIN  = -200.0;
         const int TRIM_STEP = 10;
-        const uint16_t INVALID  = 0xffff;
-        const std::string remote_actions[14]={"GainUP","GainDown","TiltUP","TiltDown",
+        const uint16_t NOTUSED  = 0; //0xffff;
+        const std::string remote_actions[16]={"GainUP","GainDown","TiltUP","TiltDown",
         		"LightDimmer","LightBrighter","PitchForward","PitchBackward","RollLeft","RollRight",
-				"Stabilize","DepthHold","Manual","PositionHold"};
+				"Stabilize","DepthHold","Manual","PositionHold","Arm","Disarm"}; //TODO home and SK
         const std::string axis[6] = {"Pitch","Roll","Throttle","Heading","Forward","Lateral"};
-        const std::string js_params_id[6] = {"JS_CAM_TILT_STEP","JS_GAIN_MAX","JS_GAIN_MIN",
+        const std::string js_params_id[6] = {"JS_CAM_TILT_STEPS","JS_GAIN_MAX","JS_GAIN_MIN",
         		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
         int rc_pwm[11];
         //! List of ArduPlane modes.
@@ -100,7 +100,9 @@ namespace Control
         struct Task: public DUNE::Control::BasicRemoteOperation
         {
           Arguments m_args; // Task arguments.
-          Network::TCPSocket* m_socket; //TODO move to Transport/MAVLink TCPSocket
+          Network::UDPSocket* m_socket; //TODO move to Transport/MAVLink
+          Network::TCPSocket* m_sender; //TODO move to Transport/MAVLink
+
 
           //! Type definition for Arduino packet handler.
 			typedef void (Task::* PktHandler)(const mavlink_message_t* msg);
@@ -123,6 +125,12 @@ namespace Control
           //! Parsing variables
           uint8_t m_buf[512];
           mavlink_message_t m_recv_msg;
+          //! Timer for heartbeat
+          Time::Counter<float> m_timer;
+          //! MAVLink system status
+          int m_sys_status;
+          //!Communication status
+          bool m_comms;
 
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Control::BasicRemoteOperation(name, ctx),
@@ -130,8 +138,11 @@ namespace Control
 			m_lights_step(8),
 			m_pitch_trim(0.0),
 			m_roll_trim(0.0),
-			m_sysid(255),
-            m_targetid(1)
+			m_sysid(254),
+            m_targetid(1),
+			m_timer(1.0),
+			m_sys_status(MAV_STATE_UNINIT),
+			m_comms(false)
           {
             param("Gain Step", m_args.gain_step)
             .minimumValue("2")
@@ -216,6 +227,8 @@ namespace Control
             // Setup packet handlers
 		   // IMPORTANT: set up function to handle each type of MAVLINK packet here
 		   m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleJsParams;
+		   m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSysTime;
+		   m_mlh[MAVLINK_MSG_ID_RC_CHANNELS] = &Task::handleRC;
 
             bind<Teleoperation>(this);
             bind<TeleoperationDone>(this);
@@ -260,20 +273,39 @@ namespace Control
 		  openConnection(void)
           {
         	try{
-				m_socket = new TCPSocket;
-				m_socket->connect(m_args.addr, m_args.port);
-				m_socket->setNoDelay(true);
-			inf(DTR("Ardupilot  Teleoperation interface initialized"));
+				m_socket = new UDPSocket;
+				m_sender = new TCPSocket;
+				m_sender->bind(5770, Address::Any, true);
+				m_sender->connect(m_args.addr, m_args.port);
+				m_sender->setNoDelay(true);
+				m_socket->bind(14551,Address::Any,true);
+				inf(DTR("Ardupilot  Teleoperation interface initialized"));
+				m_comms = true;
+				handshake();
 			  }
 			  catch(std::exception& e){
+				m_comms = false;
 				Memory::clear(m_socket);
+				Memory::clear(m_sender);
 				war(DTR("Connection failed: %s"),e.what());
 				setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
 			  }
           }
 
+          void
+		  handshake(void)
+          {
+        	  debug(DTR("Sending GCS configurations"));
+        	  mavlink_message_t msg;
+        	  mavlink_msg_param_request_list_pack(m_sysid, 1, &msg, m_targetid, 0);
+              uint8_t buf[512];
+              int len = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf, len);
+              setParamByName("FS_GCS_ENABLE",3.0);//Heartbeat lost 0:Disabled; 1:Warn; 2:Disarm; 3:Depth Hold; 4:Surface
+          }
+
 		  void
-		  onResourceAcquisition(void) //TODO separate connection and pwm
+		  onResourceAcquisition(void)
           {
             for(int i=0;i<11;i++)
             {
@@ -284,45 +316,82 @@ namespace Control
 
             }
             openConnection();
+            m_sys_status = MAV_STATE_BOOT;
           }
 		  void
 		  onResourceRelease(void)
 		  {
-			Memory::clear(m_socket);
+	            m_sys_status = MAV_STATE_STANDBY;
+
+			  if(isActive() && isStopping()) {
+				  m_sys_status = MAV_STATE_POWEROFF;
+				//Disable control
+				disableControl();
+				Time::Delay::wait(1.0);
+			  }
+			  Memory::clear(m_socket);
+			  Memory::clear(m_sender);
 		  }
 
           void
           onDeactivation(void)
           {
-            idle();
-            disarm();
-            war("Deactivating task");
+	        m_sys_status = MAV_STATE_STANDBY;
+            disableControl();
+            war("Deactivating Ardupilot control");
           }
 
           void
           onConnectionTimeout(void)
           {
-            idle();//FIXME doesnt make sense
+        	  //TODO
+          }
+
+          //Disabling GCS control from dune to stop expecting heartbeat msgs
+          void
+		  disableControl(void)
+          {
+        	//Set neutral control
+        	debug(DTR("Disabling GCS control"));
+         	idle();
+            mavlink_message_t msg;
+  			uint8_t buf[512];
+  			mavlink_msg_change_operator_control_pack(m_sysid, 1, &msg, m_targetid,
+  					1, //0: request control of this MAV, 1: Release control of this MAV
+					0, 0);
+
+  			int len = mavlink_msg_to_send_buffer(buf, &msg);
+  			sendData(buf, len);
+			setParamByName("SYSID_MYGCS",1);
           }
 
           void
-		  consume(const IMC::Teleoperation* msg)
+		  consume(const IMC::Teleoperation* m)
           {
+	          m_sys_status = MAV_STATE_ACTIVE;
+	          setParamByName("SYSID_MYGCS",m_sysid);
+	          mavlink_message_t msg;
+	          uint8_t buf[512];
+              mavlink_msg_change_operator_control_pack(m_sysid, 1, &msg, m_targetid,
+            		  0, //0: request control of this MAV, 1: Release control of this MAV
+            		  0, 0);
+              int len = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf, len);
 			  requestParams();
 			  changeMode(MAVLink::SUB_MODE_MANUAL);
 			  arm();
 			  idle();
 			  inf(DTR("Gain is at %f percent"),(m_gain*100));
-			  war(DTR("Started Teleoperation requested by: %s"), msg->custom.c_str()); //FIXME check src? and resolve id
+			  war(DTR("Started Teleoperation requested by: %s"), m->custom.c_str()); //FIXME check src? and resolve id
 			  //Control Loops
 			  enableControlLoops(IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_ROLL| IMC::CL_DEPTH| IMC::CL_THROTTLE);
-			  //disableControlLoops(mask);
           }
 
           void
 		  consume(const IMC::TeleoperationDone* msg)
           {
-        	  disarm();
+	         m_sys_status = MAV_STATE_STANDBY;
+        	 disableControl();
           }
 
           bool
@@ -352,11 +421,11 @@ namespace Control
           actuate(void)
           {
             mavlink_message_t msg;
-            mavlink_msg_rc_channels_override_pack(m_sysid,0,&msg,m_targetid,1,rc_pwm[0],rc_pwm[1],rc_pwm[2],rc_pwm[3],rc_pwm[4],rc_pwm[5],rc_pwm[6],rc_pwm[7]);
+            mavlink_msg_rc_channels_override_pack(m_sysid,1,&msg,m_targetid,0,rc_pwm[0],rc_pwm[1],rc_pwm[2],rc_pwm[3],rc_pwm[4],rc_pwm[5],rc_pwm[6],rc_pwm[7]);
             uint8_t buf[512];
             int len = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, len);
-            for(int i=0;i<8;i++)
+            for(int i=0;i<11;i++)
             	debug(DTR("Actuating on channel %d with PWM: %d"),i+1,rc_pwm[i]); //TODO clean-up
           }
 
@@ -395,12 +464,23 @@ namespace Control
           }
 
           void
+		  sendHeartbeat(void)
+          {
+        	uint8_t buffer[512];
+        	mavlink_message_t msg;
+        	mavlink_msg_heartbeat_pack(m_sysid, 1, &msg, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, 0, 0, m_sys_status);
+			uint16_t size = mavlink_msg_to_send_buffer(buffer, &msg);
+			sendData(buffer,size);
+			trace(DTR("Sent Heatbeat."));
+          }
+
+          void
 		  changeMode(uint8_t mode)
           {
         	  uint8_t buf[512];
 			  mavlink_message_t msg;
 
-			  mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+			  mavlink_msg_set_mode_pack(m_sysid, 1, &msg,
 										m_targetid,
 										1,
 										mode);
@@ -419,7 +499,7 @@ namespace Control
       		{
       			char param_id[16];
       			std::strcpy(param_id, js_params_id[js_param].c_str());
-				mavlink_msg_param_request_read_pack(m_sysid, 0, &msg, m_targetid, 0,
+				mavlink_msg_param_request_read_pack(m_sysid, 1, &msg, m_targetid, 0,
 						param_id, -1);
 				uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
 				sendData(buf, n);
@@ -428,19 +508,19 @@ namespace Control
       	}
 
       	void
-      	setParamByName(char name[16], float value)
+      	setParamByName(std::string param_id, float value)
       	{
 			mavlink_message_t msg;
 			mavlink_msg_param_set_pack(255, 0, &msg,
 					m_targetid, //! target_system System ID
-					0, //! target_component Component ID
-					name, //! Parameter name
+					1, //! target_component Component ID
+					param_id.c_str(), //! Parameter name
 					value, //! MAV GPS Type
 					MAV_PARAM_TYPE_UINT8); //! Parameter type //FIXME check type
 			uint8_t buf[512];
 			int n = mavlink_msg_to_send_buffer(buf, &msg);
 			sendData(buf, n);
-			inf(DTR("Setting parameter: %s"),name);
+			inf(DTR("Setting parameter: %s"),param_id.c_str());
       	}
 
       	/*
@@ -450,36 +530,63 @@ namespace Control
           void
 		  handleJsParams(const mavlink_message_t* msg)
 		  {
-        	  const std::string js_params_id[6] = {"JS_GAIN_DEFAULT","JS_GAIN_MAX","JS_GAIN_MIN",
-        	          		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
-			mavlink_param_value_t param;
-			mavlink_msg_param_value_decode(msg, &param);
-			inf(DTR("Received Parameter: %s with value %f"),param.param_id,param.param_value);
-			if(std::strcmp(js_params_id[5].c_str(),param.param_id) == 0){
-				m_thr_gain = param.param_value; //save Throttle gain
+			mavlink_param_value_t parameter;
+			mavlink_msg_param_value_decode(msg, &parameter);
+			debug(DTR("Received Parameter: %s with value %f"),parameter.param_id,parameter.param_value);
+			if(std::strcmp(js_params_id[5].c_str(),parameter.param_id) == 0){
+				m_thr_gain = parameter.param_value; //save Throttle gain
 			}
-			else if(std::strcmp(js_params_id[4].c_str(),param.param_id)==0){
-				m_lights_step = param.param_value; //save JS_Lights_Step gain
+			else if(std::strcmp(js_params_id[4].c_str(),parameter.param_id)==0){
+				m_lights_step = parameter.param_value; //save JS_Lights_Step gain
 			}
-			else if(std::strcmp(js_params_id[3].c_str(),param.param_id)==0
-					&& m_args.gain_step != param.param_value){
-				setParamByName(param.param_id, (float) m_args.gain_step);
+			else if(std::strcmp(js_params_id[3].c_str(),parameter.param_id)==0
+					&& m_args.gain_step != parameter.param_value){
+				(parameter.param_id, (float) m_args.gain_step);
 			}
 		  }
+
+          void
+		  handleSysTime(const mavlink_message_t* msg)
+          {
+        	  mavlink_system_time_t sysTime;
+        	  mavlink_msg_system_time_decode(msg, &sysTime);
+//        	  sysTime.time_boot_ms;
+          }
+
+          void
+		  handleRC(const mavlink_message_t* msg)
+          {
+        	  mavlink_rc_channels_t channels;
+        	  mavlink_msg_rc_channels_decode(msg, &channels);
+              trace(DTR("RC Channel 1 PWM %d"),channels.chan1_raw);
+              trace(DTR("RC Channel 2 PWM %d"),channels.chan2_raw);
+              trace(DTR("RC Channel 3 PWM %d"),channels.chan3_raw);
+              trace(DTR("RC Channel 4 PWM %d"),channels.chan4_raw);
+              trace(DTR("RC Channel 5 PWM %d"),channels.chan5_raw);
+              trace(DTR("RC Channel 6 PWM %d"),channels.chan6_raw);
+              trace(DTR("RC Channel 7 PWM %d"),channels.chan7_raw);
+              trace(DTR("RC Channel 8 PWM %d"),channels.chan8_raw);
+              trace(DTR("RC Channel 9 PWM %d"),channels.chan9_raw);
+              trace(DTR("RC Channel 10 PWM %d"),channels.chan10_raw);
+              trace(DTR("RC Channel 11 PWM %d"),channels.chan11_raw);
+          }
 
           int
           sendData(uint8_t* buf, int len) //TODO move to Transport/MAVLink
           {
-        	debug(DTR("Sending MAVLINK Message"));
+        	  if(!m_comms)
+        		  return 0;
+        	trace(DTR("Sending MAVLINK Message"));
             int res = 0;
 			try {
-			  res = m_socket->write((char*)buf, len);
-			  debug(DTR("Sent %d bytes of %d via UDP: %s %d"),res,len,m_args.addr.c_str(),m_args.port);
-			  //m_socket->flushOutput();
+			  res = m_sender->write((char*)buf, len);
+			  trace(DTR("Sent %d bytes of %d via UDP: %s %d"),res,len,m_args.addr.c_str(),m_args.port);
+			  m_sender->flushOutput();
 			}
 			catch (std::exception& e)
 			{
 			  err(DTR("Unable to send data to MAVLink System: %s"),e.what());
+			  openConnection();
 			}
 			return res;
           }
@@ -488,13 +595,12 @@ namespace Control
 		  handleData(int n)
           {
         	  mavlink_status_t status;
-        	  double now = Clock::get();
               for (int i = 0; i < n; i++)
               {
                 int rv = mavlink_parse_char(MAVLINK_COMM_0, m_buf[i], &m_recv_msg, &status);
                 if (status.packet_rx_drop_count)
                 	return;
-			if (rv)
+			if(rv)
 			{
 			  PktHandler h = m_mlh[m_recv_msg.msgid];
 
@@ -515,9 +621,8 @@ namespace Control
           onRemoteActions(const IMC::RemoteActions* msg)
           {
         	//mavlink_msg_manual_control_pack(system_id, component_id, msg, target, x, y, z, r, buttons);
-        	debug(DTR("Processing RemoteActions: %s"),msg->actions.c_str());
+//        	war(DTR("Processing RemoteActions: %s"),msg->actions.c_str());
             TupleList tl(msg->actions);
-            int exit  = tl.get("Exit", 0);
             int button;
 			button = tl.get("GainUP", 0);
 			if( button == 1 )
@@ -544,22 +649,27 @@ namespace Control
 //				war(DTR("Value for %s on channel %f: "),axis[channel].c_str(),channel);
 				if( !isNaN(value))
 				{
-					if(value >= m_args.rc[channel].val_neutral || !isReversibleAxis(channel)){
+					if(isReversibleAxis(channel)){
 						m_args.rc[channel].reverse = false;
 						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
 //						war(DTR("Value from channel %s (%d):  %f"),axis[channel].c_str(),channel,value);
 					}
 					else
 					{
-						m_args.rc[channel].reverse = true;
+						if(value <= m_args.rc[channel].val_neutral)
+							m_args.rc[channel].reverse = true;
+						else
+							m_args.rc[channel].reverse = false;
 						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
 					}
 				}
 				else {
+//					war("NEUTRAL CONTROL");
 					//reset channel to neutral control
 					m_args.rc[channel].reverse = false;
 					rc_pwm[channel] = PWM_IDLE;
 				}
+//				war(DTR("CHANNEL %s with value: %f"),axis[channel].c_str(),rc_pwm[channel]);
 			}
 
             //! Deal with buttons actions 1/0's
@@ -615,25 +725,25 @@ namespace Control
 			button = tl.get("PitchForward", 0);
 			if(button == 1) {
 				float newV = m_pitch_trim+TRIM_STEP;
-				m_pitch_trim = std::min(m_pitch_trim,TRIM_MAX);
+				m_pitch_trim = std::min(newV,TRIM_MAX);
 			}
 
 			button = tl.get("PitchBackward", 0);
 			if(button == 1) {
 				float newV = m_pitch_trim-TRIM_STEP;
-				m_pitch_trim = std::max(m_pitch_trim,TRIM_MIN);
+				m_pitch_trim = std::max(newV,TRIM_MIN);
 			}
 
 			button = tl.get("RollRight", 0);
 			if(button == 1) {
 				float newV = m_roll_trim+TRIM_STEP;
-				m_roll_trim = std::min(m_roll_trim,TRIM_MAX);
+				m_roll_trim = std::min(newV,TRIM_MAX);
 			}
 
 			button = tl.get("RollLeft", 0);
 			if(button == 1) {
 				float newV = m_roll_trim-TRIM_STEP;
-				m_roll_trim = std::max(m_roll_trim,TRIM_MIN);
+				m_roll_trim = std::max(newV,TRIM_MIN);
 			}
 
 			button = tl.get("Stabilize", 0);
@@ -659,14 +769,19 @@ namespace Control
 			{
 				changeMode(MAVLink::SUB_MODE_MANUAL);
 			}
+			button = tl.get("Disarm", 0);
+			if( button == 1)
+			{
+				disarm();
+			}
+
+			button = tl.get("Arm", 0);
+			if( button == 1)
+			{
+				arm();
+			}
 
 			actuate();
-            if(exit == 1)
-            {
-              disarm();
-              IMC::TeleoperationDone* done;
-              dispatch(done);
-            }
           }
 
           int
@@ -718,10 +833,13 @@ namespace Control
 					}
 					handleData(n);
 				  }
+				  if(m_timer.overflow()) // 1sec
+					  sendHeartbeat();
             	}
             	else {
             		Time::Delay::wait(0.5);
             		openConnection(); //reopen connection
+            		m_timer.reset();
             	}
 				  // Handle IMC messages from bus
 				  consumeMessages();
