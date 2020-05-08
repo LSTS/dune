@@ -62,7 +62,7 @@ namespace Control
         		"LightDimmer","LightBrighter","PitchForward","PitchBackward","RollLeft","RollRight",
 				"Stabilize","DepthHold","Manual","PositionHold","Arm","Disarm"}; //TODO home and SK
         const std::string axis[6] = {"Pitch","Roll","Throttle","Heading","Forward","Lateral"};
-        const std::string js_params_id[6] = {"JS_CAM_TILT_STEPS","JS_GAIN_MAX","JS_GAIN_MIN",
+        const std::string js_params_id[6] = {"JS_CAM_TILT_STEP","JS_GAIN_MAX","JS_GAIN_MIN",
         		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
         int rc_pwm[11];
         //! List of ArduPlane modes.
@@ -113,8 +113,9 @@ namespace Control
           //! Gains
           float m_gain;
           float m_thr_gain;
-          //! Steps
+          //! Steps - https://github.com/ArduPilot/ardupilot/blob/master/Tools/Frame_params/Sub/bluerov2-3_5.params
           int m_lights_step;
+          int m_cam_steps;
           //!Trim values
           float m_pitch_trim;
           float m_roll_trim;
@@ -131,18 +132,22 @@ namespace Control
           int m_sys_status;
           //!Communication status
           bool m_comms;
+          //! previous GCS SYSID - before Dune takes control
+          int m_gcs;
 
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Control::BasicRemoteOperation(name, ctx),
 			m_gain(0.20),
-			m_lights_step(8),
+			m_lights_step(100),
+			m_cam_steps(50),
 			m_pitch_trim(0.0),
 			m_roll_trim(0.0),
 			m_sysid(254),
             m_targetid(1),
 			m_timer(1.0),
 			m_sys_status(MAV_STATE_UNINIT),
-			m_comms(false)
+			m_comms(false),
+			m_gcs(1)
           {
             param("Gain Step", m_args.gain_step)
             .minimumValue("2")
@@ -226,7 +231,7 @@ namespace Control
 
             // Setup packet handlers
 		   // IMPORTANT: set up function to handle each type of MAVLINK packet here
-		   m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleJsParams;
+		   m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleParams;
 		   m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSysTime;
 		   m_mlh[MAVLINK_MSG_ID_RC_CHANNELS] = &Task::handleRC;
 
@@ -281,6 +286,7 @@ namespace Control
 				m_socket->bind(14551,Address::Any,true);
 				inf(DTR("Ardupilot  Teleoperation interface initialized"));
 				m_comms = true;
+				requestGCSParam();
 				handshake();
 			  }
 			  catch(std::exception& e){
@@ -321,8 +327,7 @@ namespace Control
 		  void
 		  onResourceRelease(void)
 		  {
-	            m_sys_status = MAV_STATE_STANDBY;
-
+			  m_sys_status = MAV_STATE_STANDBY;
 			  if(isActive() && isStopping()) {
 				  m_sys_status = MAV_STATE_POWEROFF;
 				//Disable control
@@ -362,7 +367,7 @@ namespace Control
 
   			int len = mavlink_msg_to_send_buffer(buf, &msg);
   			sendData(buf, len);
-			setParamByName("SYSID_MYGCS",1);
+			setParamByName("SYSID_MYGCS",m_gcs); // Reestablish old GCS control before Dune
           }
 
           void
@@ -425,8 +430,8 @@ namespace Control
             uint8_t buf[512];
             int len = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, len);
-            for(int i=0;i<11;i++)
-            	debug(DTR("Actuating on channel %d with PWM: %d"),i+1,rc_pwm[i]); //TODO clean-up
+//            for(int i=0;i<11;i++)
+//            	debug(DTR("Actuating on channel %d with PWM: %d"),i+1,rc_pwm[i]); //TODO clean-up
           }
 
           bool
@@ -495,16 +500,36 @@ namespace Control
       	{
       		uint8_t buf[512];
       		mavlink_message_t msg;
+      		uint16_t n;
+      		char param_id[16];
       		for(int js_param=0;js_param<6;js_param++)
       		{
-      			char param_id[16];
       			std::strcpy(param_id, js_params_id[js_param].c_str());
 				mavlink_msg_param_request_read_pack(m_sysid, 1, &msg, m_targetid, 0,
 						param_id, -1);
-				uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+				n = mavlink_msg_to_send_buffer(buf, &msg);
 				sendData(buf, n);
 				inf(DTR("Requesting parameter: %s"),param_id);
       		}
+      		std::strcpy(param_id, "SYSID_MYGCS");
+      		mavlink_msg_param_request_read_pack(m_sysid, 1, &msg, m_targetid, 0,
+      								param_id, -1);
+			n = mavlink_msg_to_send_buffer(buf, &msg);
+			sendData(buf, n);
+      	}
+
+      	void
+		requestGCSParam(void)
+      	{
+      		uint8_t buf[512];
+			mavlink_message_t msg;
+			uint16_t n;
+			char param_id[16];
+      		std::strcpy(param_id, "SYSID_MYGCS");
+			mavlink_msg_param_request_read_pack(m_sysid, 1, &msg, m_targetid, 0,
+									param_id, -1);
+			n = mavlink_msg_to_send_buffer(buf, &msg);
+			sendData(buf, n);
       	}
 
       	void
@@ -520,15 +545,16 @@ namespace Control
 			uint8_t buf[512];
 			int n = mavlink_msg_to_send_buffer(buf, &msg);
 			sendData(buf, n);
-			inf(DTR("Setting parameter: %s"),param_id.c_str());
+			inf(DTR("Setting parameter: %s %f"),param_id.c_str(),value);
       	}
 
       	/*
-      	 * Save some Joystick related parameters for PWM calculation and user defined ones.
+      	 * Save some GCS and Joystick related parameters for control
+      	 * and PWM calculation
       	 * https://www.ardusub.com/operators-manual/full-parameter-list.html
       	 */
           void
-		  handleJsParams(const mavlink_message_t* msg)
+		  handleParams(const mavlink_message_t* msg)
 		  {
 			mavlink_param_value_t parameter;
 			mavlink_msg_param_value_decode(msg, &parameter);
@@ -539,9 +565,19 @@ namespace Control
 			else if(std::strcmp(js_params_id[4].c_str(),parameter.param_id)==0){
 				m_lights_step = parameter.param_value; //save JS_Lights_Step gain
 			}
+			else if(std::strcmp(js_params_id[0].c_str(),parameter.param_id)==0){
+				m_cam_steps = parameter.param_value; //save JS_CAM_TILT_STEP gain
+			}
 			else if(std::strcmp(js_params_id[3].c_str(),parameter.param_id)==0
 					&& m_args.gain_step != parameter.param_value){
 				(parameter.param_id, (float) m_args.gain_step);
+			}
+			else if(std::strcmp("SYSID_MYGCS",parameter.param_id)==0
+					&& (float) m_gcs != parameter.param_value && (float) m_sysid != parameter.param_value){
+				debug("Updating GCS from %f to %f",m_gcs,parameter.param_value);
+				m_gcs = (int) parameter.param_value;
+				if(isActive())
+					war(DTR("Ardupilot Ground Control Station is not DUNE"));
 			}
 		  }
 
@@ -609,7 +645,7 @@ namespace Control
 
 			  // Call handler
 			  (this->*h)(&m_recv_msg);
-			  m_sysid = m_recv_msg.sysid;
+			  //m_targetid = m_recv_msg.sysid;
 
 			}
 		  }
@@ -649,9 +685,10 @@ namespace Control
 //				war(DTR("Value for %s on channel %f: "),axis[channel].c_str(),channel);
 				if( !isNaN(value))
 				{
+					value = value * m_gain; //Apply gain
 					if(isReversibleAxis(channel)){
 						m_args.rc[channel].reverse = false;
-						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
+						rc_pwm[channel]  = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
 //						war(DTR("Value from channel %s (%d):  %f"),axis[channel].c_str(),channel,value);
 					}
 					else
@@ -676,20 +713,22 @@ namespace Control
 			button = tl.get("TiltUP", 0);
 			if( button == 1)
 			{
-				m_args.rc[RC_INPUT::Camera_Tilt].reverse = false;
-				rc_pwm[RC_INPUT::Camera_Tilt] += PWM_MAX;
+				float newV = rc_pwm[RC_INPUT::Camera_Tilt] + m_cam_steps;
+				newV = std::min(newV,(float)PWM_MAX);
+				rc_pwm[RC_INPUT::Camera_Tilt] = newV;
+
 			}
 			else {
 				button = tl.get("TiltDown", 0);
 				if(button == 1)
 				{
-					m_args.rc[RC_INPUT::Camera_Tilt].reverse = true;
-					rc_pwm[RC_INPUT::Camera_Tilt] = PWM_MIN;
+					float newV = rc_pwm[RC_INPUT::Camera_Tilt] - m_cam_steps;
+					newV = std::max(newV,(float)PWM_MIN);
+					rc_pwm[RC_INPUT::Camera_Tilt] = newV;
 				}
 				else {
 					button = tl.get("Center", 0);
 					if( button == 1) {
-						m_args.rc[RC_INPUT::Camera_Tilt].reverse = false;
 						rc_pwm[RC_INPUT::Camera_Tilt] = PWM_IDLE;
 					}
 				}
@@ -701,8 +740,6 @@ namespace Control
 			{
 				float newV = rc_pwm[RC_INPUT::Lights_1_Level] + m_lights_step;
 				newV = std::min(newV,(float)PWM_MAX);
-				m_args.rc[RC_INPUT::Lights_1_Level].reverse = false;
-				m_args.rc[RC_INPUT::Lights_2_Level].reverse = false;
 				rc_pwm[RC_INPUT::Lights_1_Level] = newV;
 				rc_pwm[RC_INPUT::Lights_2_Level] = newV;  //Same command for both lights
 			}
@@ -712,8 +749,6 @@ namespace Control
 				{
 					float newV = rc_pwm[RC_INPUT::Lights_1_Level] - m_lights_step;
 					newV = std::max(newV,(float)PWM_MIN);
-					m_args.rc[RC_INPUT::Lights_1_Level].reverse = true;
-					m_args.rc[RC_INPUT::Lights_2_Level].reverse = true;
 					rc_pwm[RC_INPUT::Lights_1_Level] = newV;
 					rc_pwm[RC_INPUT::Lights_2_Level] = newV;  //Same comand for both lights
 				}
