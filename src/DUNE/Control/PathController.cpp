@@ -187,6 +187,8 @@ namespace DUNE
       param("Bottom Track -- Minimum Depth", m_btd.args.min_depth)
       .defaultValue("0.0")
       .units(Units::Meter)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
+      .scope(Tasks::Parameter::SCOPE_MANEUVER)
       .description("Minimum depth to maintain during bottom tracking");
 
       param("Maximum Track Length", m_max_track_length)
