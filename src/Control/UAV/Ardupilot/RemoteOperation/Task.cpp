@@ -58,7 +58,8 @@ namespace Control
         const int TRIM_MIN  = -200;
         const int TRIM_STEP = 10;
         const uint16_t NOTUSED  = 0; //0xffff;
-        const std::string remote_actions[16]={"GainUP","GainDown","TiltUP","TiltDown",
+		//! Shift functions and input hold are handled at a higher level in the (A)CCU side
+        const std::string remote_actions[17]={"GainUP","GainDown","TiltUP","TiltDown","Center",
         		"LightDimmer","LightBrighter","PitchForward","PitchBackward","RollLeft","RollRight",
 				"Stabilize","DepthHold","Manual","PositionHold","Arm","Disarm"}; //TODO home and SK
         const std::string axis[6] = {"Pitch","Roll","Throttle","Heading","Forward","Lateral"};
@@ -239,30 +240,14 @@ namespace Control
             addActionAxis("Forward"); // X
             addActionAxis("Lateral"); // Y
             addActionAxis("Up"); // Z
-            addActionAxis("Heading"); // R ?
+            addActionAxis("Heading"); // R
 
-            //! JS Buttons (16)
-            addActionButton("TiltUP"); // gimbal with mounted camera
-            addActionButton("TiltDown");
-            addActionButton("Center");
-            //addActionButton("InputHold"); //Handled at A(CCU) side
-            addActionButton("LightDimmer");
-            addActionButton("LightBrighter");
-            addActionButton("GainUP");
-            addActionButton("GainDown");
-            //addActionButton("ArmDisarm"); //TODO instead of teleoperation?
-            //! Shift functions and hold input are handled at a higher level in the (A)CCU side
-            //! Shitf Buttons
-            addActionButton("PitchForward"); //Trim pitch
-            addActionButton("PitchBackward");
-            addActionButton("RollLeft"); //Trim roll
-            addActionButton("RollRight");
-            //! APM Modes
-            addActionButton("Stabilize");
-            addActionButton("DepthHold");
-            addActionButton("PositionHold");
-            addActionButton("Manual");
-            //! Free buttons - A, RT, LT
+            //! JS Buttons (17)
+            for(int button=0;button<17;button++)
+            {
+				addActionButton(remote_actions[button]);
+				//! Free buttons - A, RT, LT
+            }
 
           }
 
@@ -657,7 +642,7 @@ namespace Control
 //        	war(DTR("Processing RemoteActions: %s"),msg->actions.c_str());
             TupleList tl(msg->actions);
             int button;
-			button = tl.get("GainUP", 0);
+			button = tl.get(remote_actions[0], 0);
 			if( button == 1 )
 			{
 				m_gain+= (float) m_args.gain_step/100;
@@ -666,7 +651,7 @@ namespace Control
 			}
 			else
 			{
-				button = tl.get("GainDown", 0);
+				button = tl.get(remote_actions[1], 0);
 				if( button == 1)
 				{
 					m_gain-= (float) m_args.gain_step/100;
@@ -721,7 +706,7 @@ namespace Control
 			}
 
             //! Deal with buttons actions 1/0's
-			button = tl.get("TiltUP", 0);
+			button = tl.get(remote_actions[2], 0);
 			if( button == 1)
 			{
 				float newV = rc_pwm[RC_INPUT::Camera_Tilt] + m_cam_steps;
@@ -730,7 +715,7 @@ namespace Control
 
 			}
 			else {
-				button = tl.get("TiltDown", 0);
+				button = tl.get(remote_actions[3], 0);
 				if(button == 1)
 				{
 					float newV = rc_pwm[RC_INPUT::Camera_Tilt] - m_cam_steps;
@@ -738,7 +723,7 @@ namespace Control
 					rc_pwm[RC_INPUT::Camera_Tilt] = newV;
 				}
 				else {
-					button = tl.get("Center", 0);
+					button = tl.get(remote_actions[4], 0);
 					if( button == 1) {
 						rc_pwm[RC_INPUT::Camera_Tilt] = PWM_IDLE;
 					}
@@ -746,7 +731,7 @@ namespace Control
 			}
 
 			//Handle Lights
-			button = tl.get("LightBrighter", 0);
+			button = tl.get(remote_actions[6], 0);
 			if( button == 1)
 			{
 				float newV = rc_pwm[RC_INPUT::Lights_1_Level] + m_lights_step;
@@ -755,7 +740,7 @@ namespace Control
 				rc_pwm[RC_INPUT::Lights_2_Level] = newV;  //Same command for both lights
 			}
 			else {
-				button = tl.get("LightDimmer", 0);
+				button = tl.get(remote_actions[5], 0);
 				if( button == 1)
 				{
 					float newV = rc_pwm[RC_INPUT::Lights_1_Level] - m_lights_step;
@@ -768,7 +753,7 @@ namespace Control
 			//Adjust Pitch and Roll - these values don't need to be reset after each iteraction
 			// more details in https://www.ardusub.com/operators-manual/button-functions.html
 			// and https://github.com/ArduPilot/ardupilot/blob/master/ArduSub/joystick.cpp#L332
-			button = tl.get("PitchForward", 0);
+			button = tl.get(remote_actions[7], 0);
 			if(button == 1) {
 				int newV = m_pitch_trim+TRIM_STEP;
 				m_pitch_trim = std::min(newV,TRIM_MAX);
@@ -776,7 +761,7 @@ namespace Control
 				war(DTR("Pitch trim is at %d"),m_pitch_trim);
 			}
 
-			button = tl.get("PitchBackward", 0);
+			button = tl.get(remote_actions[8], 0);
 			if(button == 1) {
 				int newV = m_pitch_trim-TRIM_STEP;
 				m_pitch_trim = std::max(newV,TRIM_MIN);
@@ -784,7 +769,7 @@ namespace Control
 				war(DTR("Pitch trim is at %d"),m_pitch_trim);
 			}
 
-			button = tl.get("RollRight", 0);
+			button = tl.get(remote_actions[10], 0);
 			if(button == 1) {
 				int newV = m_roll_trim+TRIM_STEP;
 				m_roll_trim = std::min(newV,TRIM_MAX);
@@ -792,7 +777,7 @@ namespace Control
 				war(DTR("Roll trim is at %d"),m_roll_trim);
 			}
 
-			button = tl.get("RollLeft", 0);
+			button = tl.get(remote_actions[9], 0);
 			if(button == 1) {
 				int newV = m_roll_trim-TRIM_STEP;
 				m_roll_trim = std::max(newV,TRIM_MIN);
@@ -800,36 +785,36 @@ namespace Control
 				war(DTR("Roll trim is at %d"),m_roll_trim);
 			}
 
-			button = tl.get("Stabilize", 0);
+			button = tl.get(remote_actions[11], 0);
 			if( button == 1)
 			{
 				changeMode(MAVLink::SUB_MODE_STABILIZE);
 
 			}
-			button = tl.get("DepthHold", 0);
+			button = tl.get(remote_actions[12], 0);
 
 			if( button == 1)
 			{
 				changeMode(MAVLink::SUB_MODE_DEPTH_HOLD);
 			}
-			button = tl.get("PositionHold", 0);
+			button = tl.get(remote_actions[14], 0);
 			if( button == 1)
 			{
 				changeMode(MAVLink::SUB_MODE_POS_HOLD);
 			}
 
-			button = tl.get("Manual", 0);
+			button = tl.get(remote_actions[13], 0);
 			if( button == 1)
 			{
 				changeMode(MAVLink::SUB_MODE_MANUAL);
 			}
-			button = tl.get("Disarm", 0);
+			button = tl.get(remote_actions[16], 0);
 			if( button == 1)
 			{
 				disarm();
 			}
 
-			button = tl.get("Arm", 0);
+			button = tl.get(remote_actions[15], 0);
 			if( button == 1)
 			{
 				arm();
