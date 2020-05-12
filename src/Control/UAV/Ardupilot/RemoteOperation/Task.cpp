@@ -54,8 +54,8 @@ namespace Control
         const float GAIN_MAX = 1.0; //percentage
         const float GAIN_MIN = 0.1;
         //! Used in roll and pitch
-        const float TRIM_MAX  = 200.0;
-        const float TRIM_MIN  = -200.0;
+        const int TRIM_MAX  = 200;
+        const int TRIM_MIN  = -200;
         const int TRIM_STEP = 10;
         const uint16_t NOTUSED  = 0; //0xffff;
         const std::string remote_actions[16]={"GainUP","GainDown","TiltUP","TiltDown",
@@ -65,11 +65,8 @@ namespace Control
         const std::string js_params_id[6] = {"JS_CAM_TILT_STEP","JS_GAIN_MAX","JS_GAIN_MIN",
         		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
         int rc_pwm[11];
+
         //! List of ArduPlane modes.
-		//! From ArduPlane/defines.h in diydrones git repo.
-		enum BUTTONS
-		{
-		};
 
 		//! see: https://www.ardusub.com/operators-manual/rc-input-and-output.html
 		enum RC_INPUT
@@ -117,8 +114,8 @@ namespace Control
           int m_lights_step;
           int m_cam_steps;
           //!Trim values
-          float m_pitch_trim;
-          float m_roll_trim;
+          int m_pitch_trim;
+          int m_roll_trim;
           //! This System ID
           uint8_t m_sysid;
           //! Target_system System ID
@@ -140,8 +137,8 @@ namespace Control
 			m_gain(0.20),
 			m_lights_step(100),
 			m_cam_steps(50),
-			m_pitch_trim(0.0),
-			m_roll_trim(0.0),
+			m_pitch_trim(0),
+			m_roll_trim(0),
 			m_sysid(254),
             m_targetid(1),
 			m_timer(1.0),
@@ -681,30 +678,44 @@ namespace Control
 
 			for(int channel=0;channel<6;channel++)
 			{
-				float value = tl.get(axis[channel], NAN);
-//				war(DTR("Value for %s on channel %f: "),axis[channel].c_str(),channel);
-				if( !isNaN(value))
-				{
-					value = value * m_gain; //Apply gain
-					if(isReversibleAxis(channel)){
-						m_args.rc[channel].reverse = false;
-						rc_pwm[channel]  = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
-//						war(DTR("Value from channel %s (%d):  %f"),axis[channel].c_str(),channel,value);
-					}
-					else
-					{
-						if(value <= m_args.rc[channel].val_neutral)
-							m_args.rc[channel].reverse = true;
-						else
-							m_args.rc[channel].reverse = false;
-						rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
-					}
+				int trimmed = PWM_IDLE;
+				//Apply trim
+				if(channel == Pitch){
+					trimmed += m_pitch_trim;
+					rc_pwm[Pitch] = trimmed;
 				}
-				else {
-//					war("NEUTRAL CONTROL");
-					//reset channel to neutral control
-					m_args.rc[channel].reverse = false;
-					rc_pwm[channel] = PWM_IDLE;
+				else if(channel == Roll){
+					trimmed+= m_roll_trim;
+					rc_pwm[Roll] = trimmed;
+				}
+				else{
+					float value = tl.get(axis[channel], NAN);
+	//				war(DTR("Value for %s on channel %f: "),axis[channel].c_str(),channel);
+					if( !isNaN(value))
+					{
+						//Apply gain
+						value = value * m_gain;
+
+						if(isReversibleAxis(channel)){
+							m_args.rc[channel].reverse = false;
+							rc_pwm[channel]  = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
+	//						war(DTR("Value from channel %s (%d):  %f"),axis[channel].c_str(),channel,value);
+						}
+						else
+						{
+							if(value <= m_args.rc[channel].val_neutral)
+								m_args.rc[channel].reverse = true;
+							else
+								m_args.rc[channel].reverse = false;
+							rc_pwm[channel] = MAVLink::mapRC2PWM(&m_args.rc[channel], value);
+						}
+					}
+					else {
+	//					war("NEUTRAL CONTROL");
+						//reset channel to neutral control
+						m_args.rc[channel].reverse = false;
+						rc_pwm[channel] = PWM_IDLE;
+					}
 				}
 //				war(DTR("CHANNEL %s with value: %f"),axis[channel].c_str(),rc_pwm[channel]);
 			}
@@ -759,26 +770,34 @@ namespace Control
 			// and https://github.com/ArduPilot/ardupilot/blob/master/ArduSub/joystick.cpp#L332
 			button = tl.get("PitchForward", 0);
 			if(button == 1) {
-				float newV = m_pitch_trim+TRIM_STEP;
+				int newV = m_pitch_trim+TRIM_STEP;
 				m_pitch_trim = std::min(newV,TRIM_MAX);
+				//Inform user saved trim values
+				war(DTR("Pitch trim is at %d"),m_pitch_trim);
 			}
 
 			button = tl.get("PitchBackward", 0);
 			if(button == 1) {
-				float newV = m_pitch_trim-TRIM_STEP;
+				int newV = m_pitch_trim-TRIM_STEP;
 				m_pitch_trim = std::max(newV,TRIM_MIN);
+				//Inform user saved trim values
+				war(DTR("Pitch trim is at %d"),m_pitch_trim);
 			}
 
 			button = tl.get("RollRight", 0);
 			if(button == 1) {
-				float newV = m_roll_trim+TRIM_STEP;
+				int newV = m_roll_trim+TRIM_STEP;
 				m_roll_trim = std::min(newV,TRIM_MAX);
+				//Inform user saved trim values
+				war(DTR("Roll trim is at %d"),m_roll_trim);
 			}
 
 			button = tl.get("RollLeft", 0);
 			if(button == 1) {
-				float newV = m_roll_trim-TRIM_STEP;
+				int newV = m_roll_trim-TRIM_STEP;
 				m_roll_trim = std::max(newV,TRIM_MIN);
+				//Inform user saved trim values
+				war(DTR("Roll trim is at %d"),m_roll_trim);
 			}
 
 			button = tl.get("Stabilize", 0);
