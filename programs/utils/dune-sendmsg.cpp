@@ -1287,7 +1287,7 @@ main(int argc, char** argv)
     IMC::Message* aux;
 
     int list_size = msg_list->size();
-    for(uint i=0; i < (uint)list_size; i++)
+    for(unsigned int i=0; i < (unsigned int)list_size; i++)
     {
 
       if(delay>0){
