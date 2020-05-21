@@ -201,6 +201,10 @@ namespace DUNE
     HDF5Reader::getAttribute<long unsigned>(std::string const&,
                                             std::string const&) const;
 
+    template std::vector<long long unsigned>
+    HDF5Reader::getAttribute<long long unsigned>(std::string const&,
+                                                 std::string const&) const;
+
     template std::vector<float>
     HDF5Reader::getAttribute<float>(std::string const&,
                                     std::string const&) const;
