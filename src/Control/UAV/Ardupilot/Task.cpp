@@ -159,6 +159,8 @@ namespace Control
         bool use_external_nav;
         //! Temperature of ESC failure (degrees)
         float esc_temp;
+        //! USBL as main GPS or blended
+        bool main_gps;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -196,8 +198,7 @@ namespace Control
         Network::TCPSocket* m_TCP_sock;
         //! UDP socket
         Network::UDPSocket* m_UDP_sock;
-        //! UDP socket to send USBL Positioning
-        Network::UDPSocket* m_USBL_sock;
+
         //! System ID
         uint8_t m_sysid;
         //! Last received position
@@ -245,12 +246,13 @@ namespace Control
         float m_gb_pan, m_gb_tilt, m_gb_retract;
         //! Flag to signal if a land maneuver occured
         bool m_land;
+        //! GPS input parameters
+        bool m_gps_send;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
-		  m_USBL_sock(NULL),
           m_sysid(1),
           m_lat(0.0),
           m_lon(0.0),
@@ -277,7 +279,8 @@ namespace Control
           m_vehicle_type(VEHICLE_UNKNOWN),
           m_service(false),
           m_last_wp(0),
-          m_land(false)
+          m_land(false),
+		  m_gps_send(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -450,6 +453,12 @@ namespace Control
           .defaultValue("70.0")
           .description("Temperature of ESC failure (degrees).");
 
+          param("USBL Main GPS", m_args.main_gps)
+			.defaultValue("false")
+			.description("Use USBL fixes as main GPS");
+
+
+
           // Setup packet handlers
           // IMPORTANT: set up function to handle each type of MAVLINK packet here
           m_mlh[MAVLINK_MSG_ID_ATTITUDE] = &Task::handleAttitudePacket;
@@ -470,6 +479,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
           //m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionRequestPacket;
           m_mlh[MAVLINK_MSG_ID_RAW_IMU] = &Task::handleImuRaw;
+          m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleParams;
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -499,7 +509,6 @@ namespace Control
         {
           Memory::clear(m_TCP_sock);
           Memory::clear(m_UDP_sock);
-          Memory::clear(m_USBL_sock);
         }
 
         void
@@ -514,7 +523,6 @@ namespace Control
           announce.service = os.str();
           announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
           dispatch(announce);
-          initializeParams();
         }
 
         void
@@ -561,34 +569,61 @@ namespace Control
             war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
-          try {
-        	  m_USBL_sock = new UDPSocket;
-        	  m_USBL_sock->bind(m_args.UBSL_local, Address::Any, true);
-          }
-          catch (std::runtime_error& e)
-          {
-            Memory::clear(m_USBL_sock);
-            war(DTR("Failed to connect to USBL GPS data receiver port %u: %s"),14550,e.what());
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
-          }
         }
 
         void
-		initializeParams()
+		sendGPSParams()
         {
-        	if(m_vehicle_type ==40)
-        	{
-        		mavlink_message_t msg;
-        		mavlink_msg_param_set_pack(255, 0, &msg,
-        		                                       m_sysid, //! target_system System ID
-        		                                       0, //! target_component Component ID
-        		                                       "GPS_TYPE", //! Parameter name
-        		                                       14, //! MAV GPS Type
-													   MAV_PARAM_TYPE_UINT8); //! Parameter type
-        		uint8_t buf[512];
-        		int n = mavlink_msg_to_send_buffer(buf, &msg);
-        		sendData(buf, n);
-        	}
+        	mavlink_message_t msg;
+			uint8_t buf[512];
+			int n;
+			//! Request param before sending
+			mavlink_msg_param_request_list_pack(255, 0, &msg, m_sysid, 0);
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            //USBL integration params
+			if(m_vehicle_type == VEHICLE_SUBMARINE)
+			{
+				mavlink_msg_param_set_pack(255, 0, &msg,
+							   m_sysid, //! target_system System ID
+							   0, //! target_component Component ID
+							   "EK2_GPS_TYPE", //! Parameter name
+							   2.0, //! 2D Position(2)
+							   MAV_PARAM_TYPE_UINT8); //! Parameter type
+				n = mavlink_msg_to_send_buffer(buf, &msg);
+				sendData(buf, n);
+
+				mavlink_msg_param_set_pack(255, 0, &msg,
+							   m_sysid, //! target_system System ID
+							   0, //! target_component Component ID
+							   "GPS_AUTO_SWITCH", //! Parameter name
+							   1.0, //! 0-disable, 1-use best lock, 2-blend, 3-use worst
+							   MAV_PARAM_TYPE_UINT8); //! Parameter type
+				n = mavlink_msg_to_send_buffer(buf, &msg);
+				sendData(buf, n);
+
+				if(m_args.main_gps){
+					mavlink_msg_param_set_pack(255, 0, &msg,
+								   m_sysid, //! target_system System ID
+								   0, //! target_component Component ID
+								   "GPS_TYPE", //! Parameter name
+								   14.0, //! MAV GPS Type
+								   MAV_PARAM_TYPE_UINT8); //! Parameter type
+					n = mavlink_msg_to_send_buffer(buf, &msg);
+				}
+				else {
+					mavlink_msg_param_set_pack(255, 0, &msg,
+								   m_sysid, //! target_system System ID
+								   0, //! target_component Component ID
+								   "GPS_TYPE2", //! Parameter name
+								   14.0, //! MAV GPS Type
+								   MAV_PARAM_TYPE_UINT8); //! Parameter type
+					n = mavlink_msg_to_send_buffer(buf, &msg);
+
+				}
+				sendData(buf, n);
+
+			}
         }
 
         void
@@ -903,7 +938,7 @@ namespace Control
             uint8_t buf[512];
 
             mavlink_msg_set_position_target_local_ned_pack(255, 0, &msg,
-                                                      Clock::getMsec(),
+                                                      Clock::getMsec(), //FIXME
                                                       m_sysid, //@param target_system System ID
                                                       0, //@param target_component Component ID
                                                       MAV_FRAME_LOCAL_NED,
@@ -1547,48 +1582,28 @@ namespace Control
 
 	void consume(const IMC::UsblFixExtended *fix) {
 		if (m_vehicle_type == VEHICLE_SUBMARINE) {
+			if(!m_gps_send){
+				sendGPSParams();
+				m_gps_send = true;
+			}
 			// Create MAVLink GPS_INPUT message.
 			double lat = fix->lat;
 			double lon = fix->lon;
-			float alt = fix->z;
-			WGS84::displace(0, 0, 0, &lat, &lon, &alt);
-			if (fix->z_units == ZUnits::Z_DEPTH)
-				alt = fix->z / (1e-3 * (-1)); //AGL relative to home altitude from Depth //FIXME
-			uint16_t ignore_flags = 8 | 16 | 32;
+			double z = fix->z;
+			WGS84::displace(0, 0, 0, &lat, &lon, &z);
+			lat = Angles::degrees(lat) * 1e7;
+			lon = Angles::degrees(lon) * 1e7;
+			uint16_t ignore_flags = 1 | 2 | 4 | 8 | 16 | 32; //https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS
 
 			mavlink_message_t msg;
-
-			mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getMsec(), 0,
-					ignore_flags, 0, 0, 3, lat, lon, alt, fix->accuracy, fix->accuracy,
-					0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 10); //! https://www.ardusub.com/developers/gps-positioning.html
 			uint8_t buf[512];
-			uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-			//TODO uncomment to send GPS input directly to system
-			//sendData(buf, n);
-			std::string lat_nmea = latitudeToNMEA(lat);
-			std::string lon_nmea = longitudeToNMEA(lon);
-
-			//SEND NMEA String to GPSInput module running in mavproxy
-			double course = Angles::degrees(std::atan2(m_estate.vy, m_estate.vx));
-			Time::BrokenDown bdt;
-			NMEAWriter stn("GPGGA"); //! https://github.com/bluerobotics/companion/blob/master/tools/underwater-gps.py#L33
-			stn << String::str("%02u%02u%02u.%02u", bdt.hour, bdt.minutes, bdt.seconds, 0)
-				<< lat_nmea
-				<< lon_nmea
-//				<< vel * DUNE::Units::c_ms_to_knot //SOG
-				<< 1 // GPS FIX
-				<< 10 //Num of satellites
-//							<< String::str("%03.2f",course) // Track angle in degrees / COG
-				<< fix->accuracy //HDOP
-				<< alt // MSL altitude
-				<< "M" // MSL altitude units
-				<< 0 //Geoid separation
-				<< "M" //Geoid separation units
-				<<String::str("%2u",0)
-				<<String::str("%4u",0);
-			std::string cmd = stn.sentence();
-			m_USBL_sock->write((uint8_t*)cmd.data(), cmd.size(), m_args.ip, m_args.USBL_port);
-			trace(DTR("Sent NMEA CMD %s to %u %s"),cmd.c_str(),m_args.USBL_port,m_args.ip);
+			int gps_id = m_args.main_gps ? 0 : 2;
+			//! Depth is handled by depth sensor
+			mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getSinceEpochMsec(), gps_id,
+					ignore_flags, 0, 0, 2, lat, lon, 0.0, 0.0, 0.0,
+					0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11); //! https://www.ardusub.com/developers/gps-positioning.htmlu
+			int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+			sendData(buf, n);
 		}
 	}
 
@@ -1678,17 +1693,20 @@ namespace Control
         int
         sendData(uint8_t* bfr, int size)
         {
+          int res = 0;
           if (m_TCP_sock)
           {
             trace("Sending something");
-            return m_TCP_sock->write((char*)bfr, size);
+            res =  m_TCP_sock->write((char*)bfr, size);
+            m_TCP_sock->flushOutput();
           }
           else if (m_UDP_sock)
           {
             trace("Sending something");
-            return m_UDP_sock->write(bfr, size, m_args.ip, m_args.UDP_port);
+            res =  m_UDP_sock->write(bfr, size, m_args.ip, m_args.UDP_port);
+            m_UDP_sock->flushOutput();
           }
-          return 0;
+          return res;
         }
 
         int
@@ -2619,6 +2637,38 @@ namespace Control
           if (!m_args.hitl)
             dispatch(m_fix);
         }
+
+        void
+		handleParams(const mavlink_message_t* msg)
+        {
+		mavlink_param_value_t parameter;
+		mavlink_msg_param_value_decode(msg, &parameter);
+		debug(DTR("Received Parameter: %s with value %f"),parameter.param_id,parameter.param_value);
+		if(m_vehicle_type == VEHICLE_SUBMARINE){
+			if(std::strcmp("GPS_TYPE",parameter.param_id) == 0 &&
+					parameter.param_value != 14.0 && m_args.main_gps ){
+				m_gps_send = false;
+				sendGPSParams();
+			}
+			else if(std::strcmp("GPS_TYPE2",parameter.param_id) == 0 &&
+					parameter.param_value != 14.0 && !m_args.main_gps ){
+				m_gps_send = false;
+				sendGPSParams();
+			}
+			else if(std::strcmp("EK2_GPS_TYPE",parameter.param_id) == 0 &&
+					parameter.param_value != 2.0){
+				m_gps_send = false;
+				sendGPSParams();
+			}
+			else if(std::strcmp("GPS_AUTO_SWITCH",parameter.param_id) == 0 &&
+					parameter.param_value != 1.0){
+				m_gps_send = false;
+				sendGPSParams();
+			}
+        }
+	  }
+
+
       };
     }
   }
