@@ -59,15 +59,13 @@ namespace Control
         const int TRIM_STEP = 10;
         const uint16_t NOTUSED  = 0; //0xffff;
 		//! Shift functions and input hold are handled at a higher level in the (A)CCU side
-        const std::string remote_actions[17]={"GainUP","GainDown","TiltUP","TiltDown","Center",
+        const std::string remote_actions[19]={"GainUP","GainDown","TiltUP","TiltDown","Center",
         		"LightDimmer","LightBrighter","PitchForward","PitchBackward","RollLeft","RollRight",
-				"Stabilize","DepthHold","Manual","PositionHold","Arm","Disarm"}; //TODO home and SK
+				"Stabilize","DepthHold","Manual","PositionHold","Arm","Disarm","EnableUSBL","DisableUSBL"}; //TODO home and SK
         const std::string axis[6] = {"Pitch","Roll","Throttle","Heading","Forward","Lateral"};
         const std::string js_params_id[6] = {"JS_CAM_TILT_STEP","JS_GAIN_MAX","JS_GAIN_MIN",
         		"JS_GAIN_STEPS","JS_LIGHTS_STEPS","JS_THR_GAIN"};
         int rc_pwm[11];
-
-        //! List of ArduPlane modes.
 
 		//! see: https://www.ardusub.com/operators-manual/rc-input-and-output.html
 		enum RC_INPUT
@@ -461,6 +459,23 @@ namespace Control
 			trace(DTR("Sent Heatbeat."));
           }
 
+          //! Enable and Disable UBLS as main GPS for navigation
+          //! uses MAVLink GPS_INPUT with best lock
+          void
+		  sendGPSParams(bool enable)
+		  {
+			if(enable){
+				setParamByName("GPS_AUTO_SWITCH",1.0);
+				setParamByName("EK2_GPS_TYPE",2.0);
+				setParamByName("GPS_TYPE",14.0);
+			}
+			else {
+				setParamByName("EK2_GPS_TYPE",0.0);
+				setParamByName("GPS_TYPE",1.0);
+
+			}
+		  }
+
           void
 		  changeMode(uint8_t mode)
           {
@@ -518,7 +533,7 @@ namespace Control
       	setParamByName(std::string param_id, float value)
       	{
 			mavlink_message_t msg;
-			mavlink_msg_param_set_pack(255, 0, &msg,
+			mavlink_msg_param_set_pack(255, 0, &msg, //FIXME change to this system id
 					m_targetid, //! target_system System ID
 					1, //! target_component Component ID
 					param_id.c_str(), //! Parameter name
@@ -818,6 +833,18 @@ namespace Control
 			if( button == 1)
 			{
 				arm();
+			}
+
+			button = tl.get(remote_actions[17], 0); //"EnableUSBL"
+			if( button == 1)
+			{
+				sendGPSParams(true);
+			}
+
+			button = tl.get(remote_actions[18], 0); //"DisableUSBL"
+			if( button == 1)
+			{
+				sendGPSParams(false);
 			}
 
 			actuate();
