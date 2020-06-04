@@ -50,9 +50,9 @@ namespace DUNE
     struct RadioChannel
     {
       //! PWM range
-      int pwm_min;
-      int pwm_max;
-      int pwm_neutral;
+      float pwm_min;
+      float pwm_max;
+      float pwm_neutral;
       //! Value range
       float val_max;
       float val_min;
@@ -97,6 +97,20 @@ namespace DUNE
                                       arg2, arg3, arg4, arg5, arg6, arg7);
 
         uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+        return n;
+      }
+
+
+      static uint16_t
+      packMsg2Buffer(uint16_t cmd, uint8_t sysid, uint8_t* buf, mavlink_message_t* msg, float arg1 = 0,
+          float arg2 = 0, float arg3 = 0, float arg4 = 0, float arg5 = 0,
+          float arg6 = 0, float arg7 = 0)
+      {
+
+        mavlink_msg_command_long_pack(255, 0, msg, sysid, 0, cmd, 0, arg1,
+                                      arg2, arg3, arg4, arg5, arg6, arg7);
+
+        uint16_t n = mavlink_msg_to_send_buffer(buf, msg);
         return n;
       }
 
