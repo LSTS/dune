@@ -1,0 +1,170 @@
+#ifndef CONTROL_PIONEER_MESSAGES_PIONEER_APP_PROTOCOL_HPP_INCLUDED_
+#define CONTROL_PIONEER_MESSAGES_PIONEER_APP_PROTOCOL_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <string>
+#include <cstddef>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+
+namespace Control
+{
+  namespace Pioneer
+  {
+    namespace Messages
+    {
+      #define PIONEER_MSG_VERSION_1 1
+      #define PIONEER_MSG_VERSION_2 2
+
+      #define PIONEER_MSG_VERSION_1_TELEMETRY 1
+      #define PIONEER_MSG_VERSION_2_TELEMETRY 1
+      #define PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION 2
+
+      #define PIONEER_MSG_VERSION_1_TELEMETRY_CODE (PIONEER_MSG_VERSION_1 << 8) + PIONEER_MSG_VERSION_1_TELEMETRY
+      #define PIONEER_MSG_VERSION_2_TELEMETRY_CODE (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_TELEMETRY
+      #define PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION
+
+      struct __attribute__((__packed__)) P2AppProtocolDataVersion1Telemetry {
+        uint8_t version = 1; // Protocol version []
+        uint8_t command_type = 1; //  []
+        uint32_t time; //  []
+        double rt_clock; //  []
+        uint64_t error_flags; //  []
+        uint64_t debug_flags; //  []
+        double user_lat; //  []
+        double user_lon; //  []
+        int64_t total_space; //  []
+        int64_t free_space; //  []
+        int16_t camera_record_time; //  []
+        int16_t temp_bottom; //  []
+        int16_t temp_water; //  []
+        int16_t temp_top; //  []
+        int16_t temp_cpu; //  []
+        uint8_t lights_upper; //  []
+        uint8_t lights_lower; //  []
+        int16_t dive_time; //  []
+        int16_t control_mode; //  []
+        uint16_t pressure_top; //  []
+        int32_t depth; //  []
+        int32_t depth_reference; //  []
+        float heading_reference; //  []
+        float roll; //  []
+        float pitch; //  []
+        float yaw; //  []
+        int16_t imucal_samples; //  []
+        uint16_t battery_temp; //  []
+        uint16_t battery_voltage; //  []
+        int32_t battery_current; //  []
+        int32_t battery_average_current; //  []
+        uint8_t battery_state_of_charge_rel; //  []
+        uint16_t battery_remaining_capacity; //  []
+        uint16_t battery_full_charge_capacity; //  []
+        uint16_t battery_run_time_to_empty; //  []
+        uint16_t battery_avg_time_to_empty; //  []
+        uint16_t battery_avg_time_to_full; //  []
+        uint16_t battery_at_rate_time_to_full; //  []
+        uint16_t battery_at_rate_time_to_empty; //  []
+        uint16_t battery_charging_current; //  []
+        uint16_t battery_charging_voltage; //  []
+        uint16_t battery_status; //  []
+        uint16_t battery_cell_voltage_1; //  []
+        uint16_t battery_cell_voltage_2; //  []
+        uint16_t battery_cell_voltage_3; //  []
+        uint16_t battery_cell_voltage_4; //  []
+        int16_t battery_cell_temperature_1; //  []
+        int16_t battery_cell_temperature_2; //  []
+        int16_t battery_cell_temperature_3; //  []
+        int16_t battery_cell_temperature_4; //  []
+        uint8_t battery_max_error; //  []
+        uint8_t battery_state_of_charge_abs; //  []
+        uint16_t battery_cycle_count; //  []
+        uint16_t battery_design_capacity; //  []
+        uint16_t battery_manufacture_date; //  []
+        uint16_t battery_serial_number; //  []
+      };
+      struct __attribute__((__packed__)) P2AppProtocolDataVersion2Telemetry {
+        uint8_t version = 2; // Protocol version []
+        uint8_t command_type = 1; // Command type []
+        uint32_t time; // Time [ms]
+        double rt_clock; // Real-time clock [s]
+        uint64_t error_flags; // Error flags (bitmask) []
+        uint64_t debug_flags; // Debug flags (bitmask) []
+        double user_lat; // Latitude [dec °]
+        double user_lon; // Longitude [dec °]
+        int64_t total_space; // Total space on data partition [bytes]
+        int64_t free_space; // Free space on data partition [bytes]
+        int16_t camera_record_time; // Record time (-1 if not recording) [s]
+        int16_t temp_bottom; // Bottom temperature [0.1°C]
+        int16_t temp_water; // Water temperature [0.1°C]
+        int16_t temp_top; // Top canister temperature [0.1°C]
+        int16_t temp_cpu; // cpu temperature [0.1°C]
+        int16_t humidity_top; // Humidity in top canister [0.1%]
+        int16_t humidity_bottom; // Humidity in bottom canister [0.1%]
+        uint8_t lights_upper; // Status upper lights (0..255) []
+        uint8_t lights_lower; // Status lower lights (0..255) []
+        int16_t dive_time; // Dive time (-1 if not diving) [s]
+        int16_t control_mode; // Control mode []
+        uint16_t pressure_top; // Pressure in top canister [mbar]
+        int32_t depth; // Depth [mm]
+        int32_t reference_depth; // Depth reference [mm]
+        float reference_heading; // Heading reference []
+        float reference_surge; // Surge reference []
+        float reference_sway; // Sway reference []
+        float reference_heave; // Heave reference []
+        float reference_yaw; // Yaw reference []
+        float control_force_surge; // Surge control force []
+        float control_force_sway; // Sway control force []
+        float control_force_heave; // Heave control force []
+        float control_force_yaw; // Yaw control force []
+        float roll; // Roll []
+        float pitch; // Pitch []
+        float yaw; // Yaw []
+        int16_t imucal_samples; // Numer of IMU calibration samples (-1 if not calibrating) []
+        uint16_t battery_temp; // Battery temperature [0.1°C]
+        uint16_t battery_voltage; // Battery voltage [mV]
+        int32_t battery_current; // Battery current [mA]
+        int32_t battery_average_current; // Battery average current [mA]
+        uint8_t battery_state_of_charge_rel; // Battery relative state of charge [%]
+        uint16_t battery_remaining_capacity; // Remaining battery capacity [mAh]
+        uint16_t battery_full_charge_capacity; // Full charge battery capacity [mAh]
+        uint16_t battery_run_time_to_empty; // Battery run time to empty [min]
+        uint16_t battery_avg_time_to_empty; // Battery average time to empty [min]
+        uint16_t battery_avg_time_to_full; // Battery average time to full [min]
+        uint16_t battery_at_rate_time_to_full; // Battery at rate time to full [min]
+        uint16_t battery_at_rate_time_to_empty; // Battery at rate time to empty [min]
+        uint16_t battery_charging_current; // Battery charging current [mA]
+        uint16_t battery_charging_voltage; // Battery charging voltage [mV]
+        uint16_t battery_status; // Battery status []
+        uint16_t battery_cell_voltage_1; // Battery cell voltage 1 [mV]
+        uint16_t battery_cell_voltage_2; // Battery cell voltage 2 [mV]
+        uint16_t battery_cell_voltage_3; // Battery cell voltage 3 [mV]
+        uint16_t battery_cell_voltage_4; // Battery cell voltage 4 [mV]
+        int16_t battery_cell_temperature_1; // Battery cell temperature 1 [0.1°C]
+        int16_t battery_cell_temperature_2; // Battery cell temperature 2 [0.1°C]
+        int16_t battery_cell_temperature_3; // Battery cell temperature 3 [0.1°C]
+        int16_t battery_cell_temperature_4; // Battery cell temperature 4 [0.1°C]
+        uint8_t battery_max_error; // Battery max error []
+        uint8_t battery_state_of_charge_abs; // Battery absolute state of charge []
+        uint16_t battery_cycle_count; // Battery cycle count []
+        uint16_t battery_design_capacity; // Battery design capacity []
+        uint32_t battery_manufacture_date; // Battery manufacture date []
+        uint16_t battery_serial_number; // Battery serial number []
+      };
+      struct __attribute__((__packed__)) P2AppProtocolDataVersion2Compasscalibration {
+        uint8_t version = 2; // Protocol version []
+        uint8_t command_type = 2; // Command type []
+        int8_t active_status; // Active Status []
+        uint8_t progress_x_up; // Progress x up []
+        uint8_t progress_x_down; // Progress x down []
+        uint8_t progress_y_up; // Progress y up []
+        uint8_t progress_y_down; // Progress y down []
+        uint8_t progress_z_up; // Progress z up []
+        uint8_t progress_z_down; // Progress z down []
+        uint8_t progress_thruster; // Progress thruster []
+      };
+    }
+  }
+}
+
+#endif
