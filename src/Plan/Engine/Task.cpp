@@ -1090,23 +1090,47 @@ namespace Plan
       }
 
       void
+      reportState(void)
+      {
+        if (m_report_timer.overflow())
+        {
+          if (m_args.progress)
+            reportProgress();
+
+          dispatch(m_pcs);
+
+          m_report_timer.reset();
+        }
+      }
+
+      void
+      handleTimeout(void)
+      {
+        m_vc_reply_deadline = -1;
+
+        changeMode(IMC::PlanControlState::PCS_READY,
+                   DTR("vehicle reply timeout"));
+
+        // Popping all requests
+        while (m_requests.size())
+          m_requests.pop();
+
+        // Increment local request id to prevent old replies from being processed
+        ++m_vreq_ctr;
+
+        err(DTR("cleared all requests"));
+      }
+
+      void
       onMain(void)
       {
         setInitialState();
 
         while (!stopping())
         {
-          if (m_report_timer.overflow())
-          {
-            if (m_args.progress)
-              reportProgress();
+          reportState();
 
-            dispatch(m_pcs);
-
-            m_report_timer.reset();
-          }
-
-          double now = Clock::get();
+          double const now = Clock::get();
 
           if ((getEntityState() == IMC::EntityState::ESTA_NORMAL) &&
               (now - m_last_vstate >= c_vs_timeout))
@@ -1122,27 +1146,16 @@ namespace Plan
             m_requests.pop();
           }
 
-          double delta = m_vc_reply_deadline < 0 ? 1 : m_vc_reply_deadline - now;
+          double const delta = m_vc_reply_deadline < 0 ? 1.0 : m_vc_reply_deadline - now;
 
-          if (delta > 0)
+          // past vehicle reply deadline
+          if (delta <= 0.0)
           {
-            waitForMessages(std::min(1.0, delta));
+            handleTimeout();
             continue;
           }
 
-          // handle reply timeout
-          m_vc_reply_deadline = -1;
-
-          changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle reply timeout"));
-
-          // Popping all requests
-          while (m_requests.size())
-            m_requests.pop();
-
-          // Increment local request id to prevent old replies from being processed
-          ++m_vreq_ctr;
-
-          err(DTR("cleared all requests"));
+          waitForMessages(std::min(1.0, delta));
         }
       }
 
