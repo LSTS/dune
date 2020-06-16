@@ -543,6 +543,15 @@ namespace Plan
                    DTR("vehicle in EXTERNAL mode"), TYPE_NONE);
       }
 
+      bool
+      nonLocalEmergencyPlan(const IMC::PlanControl* pc) const
+      {
+        return (pc->plan_id == m_args.recovery_plan)
+               && (pc->op == IMC::PlanControl::PC_START)
+               && ((pc->getSource() != getSystemId())
+                   || (pc->getSourceEntity() != m_eid_gen));
+      }
+
       void
       consume(const IMC::PlanControl* pc)
       {
@@ -551,10 +560,7 @@ namespace Plan
 
         // Emergency plan needs to be requested by
         // local plan generator.
-        if ((pc->plan_id == m_args.recovery_plan) &&
-            (pc->op == IMC::PlanControl::PC_START) &&
-            ((pc->getSource() != getSystemId()) ||
-             (pc->getSourceEntity() != m_eid_gen)))
+        if (nonLocalEmergencyPlan(pc))
           return;
 
         if (pendingReply())
