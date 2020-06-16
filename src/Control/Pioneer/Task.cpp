@@ -242,21 +242,18 @@ namespace Control
         try
         {
           const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion1Telemetry);
-          uint8_t msgBuf[sizeMsg];
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
             return 0;
           }
 
-          std::memcpy(msgBuf, buf + startIndex, sizeMsg); // verificar se a origem tem tamanho suficiente
-          Messages::P2AppProtocolDataVersion1Telemetry* telemetry =
-              reinterpret_cast<Messages::P2AppProtocolDataVersion1Telemetry*>(&msgBuf);
+          Messages::P2AppProtocolDataVersion1Telemetry msg;
+          std::memcpy(&msg, &buf[startIndex], sizeMsg);
           rb = sizeMsg;
           spew("RECEIVED MSG: V1Telemetry");
           
           // TODO something with msg
-          debug("Voltage %u",telemetry->battery_voltage);
-          
+          debug("Voltage %u", msg.battery_voltage);
         }
         catch(const std::exception& e)
         {
@@ -274,20 +271,18 @@ namespace Control
         try
         {
           const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion2Telemetry);
-          uint8_t msgBuf[sizeMsg];
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
             return 0;
           }
 
-          std::memcpy(msgBuf, buf + startIndex, sizeMsg); // verificar se a origem tem tamanho suficiente
-          Messages::P2AppProtocolDataVersion2Telemetry* telemetry =
-              reinterpret_cast<Messages::P2AppProtocolDataVersion2Telemetry*>(&msgBuf);
+          Messages::P2AppProtocolDataVersion2Telemetry msg;
+          std::memcpy(&msg, &buf[startIndex], sizeMsg);
           rb = sizeMsg;
           spew("RECEIVED MSG: V2Telemetry");
 
           // TODO something with msg
-          debug("Depth %d",telemetry->depth);
+          debug("Depth %d",msg.depth);
         }
         catch(const std::exception& e)
         {
@@ -305,21 +300,18 @@ namespace Control
         try
         {
           const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion2Compasscalibration);
-          uint8_t msgBuf[sizeMsg];
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
             return 0;
           }
 
-          std::memcpy(msgBuf, buf + startIndex, sizeMsg); // verificar se a origem tem tamanho suficiente
-          Messages::P2AppProtocolDataVersion2Compasscalibration* compassCalibration =
-              reinterpret_cast<Messages::P2AppProtocolDataVersion2Compasscalibration*>(&msgBuf);
+          Messages::P2AppProtocolDataVersion2Compasscalibration msg;
+          std::memcpy(&msg, &buf[startIndex], sizeMsg);
           rb = sizeMsg;
           spew("RECEIVED MSG: V2CompassCalibration");
 
           // TODO something with msg
-          debug("progress_thruster %u",compassCalibration->progress_thruster);
-          
+          debug("progress_thruster %u",msg.progress_thruster);
         }
         catch(const std::exception& e)
         {
