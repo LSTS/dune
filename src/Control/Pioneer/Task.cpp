@@ -200,10 +200,6 @@ namespace Control
       {
       }
 
-      // char* my_s_bytes = reinterpret_cast<char*>(&my_s);
-      // // or, if you prefer static_cast:
-      // char* my_s_bytes = static_cast<char*>(static_cast<void*>(&my_s));
-
       int
       pioneerMessageParse(uint8_t buf[], int startIndex, int length)
       {
@@ -429,7 +425,7 @@ namespace Control
       {
         if (m_TCP_sock)
         {
-          trace("Sending something");
+          trace("Sending something through TCP");
           return m_TCP_sock->write((char*)bfr, size);
         }
         return 0;
@@ -440,7 +436,7 @@ namespace Control
       {
         if (m_UDP_sock)
         {
-          trace("Sending something");
+          trace("Sending something through UDP");
           return m_UDP_sock->write(bfr, size, m_args.UDP_addr, m_args.UDP_port);
         }
         return 0;
