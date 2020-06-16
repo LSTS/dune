@@ -31,7 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Pioneer headers.
-#include "Messages/Pioneer_App_Protocol.hpp"
+#include "Messages/Pioneer_App_Protocol_Messages.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
