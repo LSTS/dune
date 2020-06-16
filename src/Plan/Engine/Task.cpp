@@ -63,6 +63,9 @@ namespace Plan
     //! DataBase statement
     static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
 
+    //! Invalid maneuver type
+    static const uint16_t c_invalid_maneuver = 0xFFFF;
+
     struct Arguments
     {
       //! Whether or not to compute plan's progress
@@ -1038,7 +1041,7 @@ namespace Plan
         else
         {
           m_pcs.man_id.clear();
-          m_pcs.man_type = 0xFFFF;
+          m_pcs.man_type = c_invalid_maneuver;
         }
 
         m_pcs.setTimeStamp(now);
@@ -1063,7 +1066,7 @@ namespace Plan
         m_pcs.state = IMC::PlanControlState::PCS_READY;
         m_pcs.plan_id.clear();
         m_pcs.man_id.clear();
-        m_pcs.man_type = 0xFFFF;
+        m_pcs.man_type = c_invalid_maneuver;
         m_pcs.plan_progress = -1.0;
         m_pcs.last_outcome = IMC::PlanControlState::LPO_NONE;
         m_last_event = DTR("initializing");
