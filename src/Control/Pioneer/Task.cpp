@@ -230,6 +230,7 @@ namespace Control
       {
       }
 
+      //! This will parse the receiving Pionner messages
       int
       pioneerMessageParse(uint8_t buf[], int startIndex, int length)
       {
@@ -261,6 +262,7 @@ namespace Control
         }
       }
 
+      //! This will handle parsing Pionner V1 Telemetry message
       int
       handlePioneerV1Telemetry(uint8_t buf[], int startIndex, int length)
       {
@@ -290,6 +292,7 @@ namespace Control
         return rb;
       }
 
+      //! This will handle parsing Pionner V2 Telemetry message
       int
       handlePioneerV2Telemetry(uint8_t buf[], int startIndex, int length)
       {
@@ -319,6 +322,7 @@ namespace Control
         return rb;
       }
 
+      //! This will handle parsing Pionner V2 Compass Calibration message
       int
       handlePioneerV2CompassCalibration(uint8_t buf[], int startIndex, int length)
       {
@@ -348,6 +352,7 @@ namespace Control
         return rb;
       }
 
+      //! This will check TCP and UDP ports for data do parse
       void
       handlePioneerData(bool tcpOrUdp)
       {
@@ -403,8 +408,8 @@ namespace Control
               int data_length_to_translate = n - i;
               std::memcpy(&m_buf_tcp, &m_buf_tcp[i], data_length_to_translate);
               m_buf_tcp_cur_free_index = data_length_to_translate;
-              debug("Waiting more data to decode msg (buffer too short) free_index:%d=%d-%d  msg_code:0x%02X%02X",
-                  m_buf_tcp_cur_free_index, n, i, m_buf_tcp[0], m_buf_tcp[1]);
+              debug("%s Waiting more data to decode msg (buffer too short) free_index:%d=%d-%d  msg_code:0x%02X%02X",
+                  tcpOrUdp ? "TCP": "UDP", m_buf_tcp_cur_free_index, n, i, m_buf_tcp[0], m_buf_tcp[1]);
             }
             else
             {
