@@ -33,6 +33,16 @@
 // Pioneer headers.
 #include "Messages/Pioneer_App_Protocol.hpp"
 
+// requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
+// expects:
+//   self.software_version = response["sw_version"]
+//   self.software_version_short = self.software_version.split("-")[0]
+//   self.serial_number = response["serial_number"]
+//    self.uuid = response["hardware_id"]
+//
+// __init__(self, ip="192.168.1.101", tcpPort=2011, autoConnect=True, slaveModeEnabled=False):
+// def __init__(self, port=2010, protocol_description=None):
+//
 namespace Control
 {
   //! Insert short task description here.
@@ -48,11 +58,11 @@ namespace Control
     {
       //! Communications timeout
       uint8_t comm_timeout;
-      //! TCP Port
+      //! TCP Port for commands and replies
       uint16_t TCP_port;
       //! TCP Address
       Address TCP_addr;
-      //! Use UDP Port
+      //! Use UDP Port for telemetry
       uint16_t UDP_listen_port;
       //! UDP Port
       uint16_t UDP_port;
@@ -245,7 +255,7 @@ namespace Control
 
       //! This will parse the receiving Pionner messages
       int
-      pioneerMessageParse(uint8_t buf[], int startIndex, int length)
+      pioneerMessagesParse(uint8_t buf[], int startIndex, int length)
       {
         int rb = 0;
         try
@@ -261,6 +271,32 @@ namespace Control
           case Messages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
             rb = handlePioneerV2CompassCalibration(buf, startIndex, length);
             break;
+          default:
+            // war("skip msg");
+            break;
+          }
+
+          return rb;
+        }
+        catch(const std::exception& e)
+        {
+          err("%s", e.what());
+          return 0;
+        }
+      }
+
+      //! This will parse the receiving Pionner messages
+      int
+      pioneerCommandRepliesParse(uint8_t buf[], int startIndex, int length)
+      {
+        int rb = 0;
+        try
+        {
+          switch (buf[startIndex])
+          {
+          // case Messages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+          //   rb = handlePioneerV1Telemetry(buf, startIndex, length);
+          //   break;
           default:
             // war("skip msg");
             break;
@@ -394,7 +430,8 @@ namespace Control
           int i;
           for (i = 0; i < n; i++)
           {
-            int rv = pioneerMessageParse(buf, i, n);
+            int rv = tcpOrUdp ? pioneerCommandRepliesParse(buf, i, n)
+                : pioneerMessagesParse(buf, i, n);
 
             // handle the parsed packet
             if (rv > 0)
