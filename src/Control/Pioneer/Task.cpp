@@ -69,7 +69,9 @@ namespace Control
       //! UDP socket
       Network::UDPSocket* m_UDP_sock;
 
-      uint8_t m_buf[2048];
+      uint8_t m_buf_tcp[2048];
+      uint8_t m_buf_tcp_cur_free_index;
+      uint8_t m_buf_udp[2048];
 
       //! Moving Home timer
       Time::Counter<float> m_timer;
@@ -85,6 +87,7 @@ namespace Control
         DUNE::Tasks::Task(name, ctx),
         m_TCP_sock(NULL),
         m_UDP_sock(NULL),
+        m_buf_tcp_cur_free_index(0),
         m_error_missing(false)
       {
           param("Communications Timeout", m_args.comm_timeout)
@@ -146,8 +149,7 @@ namespace Control
         }
         catch (...)
         {
-          Memory::clear(m_TCP_sock);
-          Memory::clear(m_UDP_sock);
+          closeConnection();
           war(DTR("Connection failed, retrying..."));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
@@ -158,6 +160,8 @@ namespace Control
       {
         try
         {
+          m_buf_tcp_cur_free_index = 0;
+
           Memory::clear(m_TCP_sock);
           Memory::clear(m_UDP_sock);
 
@@ -226,13 +230,14 @@ namespace Control
             // war("skip msg");
             break;
           }
+
+          return rb;
         }
         catch(const std::exception& e)
         {
           err("%s", e.what());
+          return 0;
         }
-        
-        return rb;
       }
 
       int
@@ -244,7 +249,7 @@ namespace Control
           const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion1Telemetry);
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
-            return 0;
+            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
           }
 
           Messages::P2AppProtocolDataVersion1Telemetry msg;
@@ -260,7 +265,7 @@ namespace Control
           err("%s", e.what());
           return 0;
         }
-        
+
         return rb;
       }
 
@@ -273,7 +278,7 @@ namespace Control
           const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion2Telemetry);
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
-            return 0;
+            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
           }
 
           Messages::P2AppProtocolDataVersion2Telemetry msg;
@@ -289,7 +294,7 @@ namespace Control
           err("%s", e.what());
           return 0;
         }
-        
+
         return rb;
       }
 
@@ -302,7 +307,7 @@ namespace Control
           const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion2Compasscalibration);
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
-            return 0;
+            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
           }
 
           Messages::P2AppProtocolDataVersion2Compasscalibration msg;
@@ -318,7 +323,7 @@ namespace Control
           err("%s", e.what());
           return 0;
         }
-        
+
         return rb;
       }
 
@@ -332,32 +337,61 @@ namespace Control
         {
           counter++;
 
-          int n = tcpOrUdp ? receiveDataTCP(m_buf, sizeof(m_buf))
-              : receiveDataUDP(m_buf, sizeof(m_buf));
+          int n = tcpOrUdp ? receiveDataTCP(m_buf_tcp, sizeof(m_buf_tcp))
+              : receiveDataUDP(m_buf_udp, sizeof(m_buf_udp));
           if (n < 0)
           {
             debug("Receive error from %s", tcpOrUdp ? "TCP": "UDP");
             break;
           }
 
+          uint8_t* buf;
+          buf = tcpOrUdp ? m_buf_tcp : m_buf_udp;
+
           // time stamp!
           now = Clock::get();
 
           // for each packet
-          for (int i = 0; i < n; i++)
+          int i;
+          for (i = 0; i < n; i++)
           {
-            int rv = pioneerMessageParse(m_buf, i, n);
+            int rv = pioneerMessageParse(buf, i, n);
 
             // handle the parsed packet
-            if (rv)
+            if (rv > 0)
             {
+              i += rv;
                m_last_pkt_time = now;
+            }
+            else if (rv < 0) // the buffer has the start of a valid msg but is too short
+            {
+              if (!tcpOrUdp) // if UDP the package os not recoverable
+                i = n;
+              break;
+            }
+            else
+            {
+              i++;
             } // end: handle the parsed packet
-            
-            i += rv;
           } // end: for each packet
-        } // end: poll for packets
 
+          if (tcpOrUdp)
+          {
+            if (i < n)
+            {
+              int data_length_to_translate = n - i;
+              std::memcpy(&m_buf_tcp, &m_buf_tcp[i], data_length_to_translate);
+              m_buf_tcp_cur_free_index = data_length_to_translate;
+              debug("Waiting more data to decode msg (buffer too short) free_index:%d=%d-%d  msg_code:0x%02X%02X",
+                  m_buf_tcp_cur_free_index, n, i, m_buf_tcp[0], m_buf_tcp[1]);
+            }
+            else
+            {
+              m_buf_tcp_cur_free_index = 0;
+            }
+          }
+          debug("end: %s cicle poll for packets %d", tcpOrUdp ? "TCP": "UDP", counter);
+        } // end: poll for packets
 
         // check for timeout
         if (now - m_last_pkt_time >= m_args.comm_timeout)
