@@ -216,6 +216,19 @@ namespace Control
       void
       onUpdateParameters(void)
       {
+        if(paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port))
+        {
+            closeConnectionTCP();
+            Time::Delay::wait(0.2);
+            openConnectionTCP();
+        }
+
+        if(paramChanged(m_args.UDP_listen_port))
+        {
+            closeConnectionUDP();
+            Time::Delay::wait(0.2);
+            openConnectionUDP();
+        }
       }
 
       //! Reserve entity identifiers.
