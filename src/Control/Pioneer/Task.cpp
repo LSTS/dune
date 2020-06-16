@@ -206,20 +206,15 @@ namespace Control
         int rb = 0;
         try
         {
-          // war("New msg %u:%u  %X  %X  %X", buf[startIndex], buf[startIndex + 1],
-          //     (buf[startIndex] << 8) + buf[startIndex + 1], buf[startIndex] << 8, buf[startIndex + 1]);
           switch ((buf[startIndex] << 8) + buf[startIndex + 1])
           {
-          // case Message::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
-          case 0x0101:
+          case Messages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
             rb = handlePioneerV1Telemetry(buf, startIndex, length);
             break;
-          // case Message::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
-          case 0x0201:
+          case Messages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
             rb = handlePioneerV2Telemetry(buf, startIndex, length);
             break;
-          // case Message::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
-          case 0x0202:
+          case Messages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
             rb = handlePioneerV2CompassCalibration(buf, startIndex, length);
             break;
           default:

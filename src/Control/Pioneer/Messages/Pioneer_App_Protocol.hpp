@@ -14,16 +14,29 @@ namespace Control
   {
     namespace Messages
     {
-      #define PIONEER_MSG_VERSION_1 1
-      #define PIONEER_MSG_VERSION_2 2
+      enum Pioneer_Msg_Version
+      {
+        PIONEER_MSG_VERSION_1 = 1,
+        PIONEER_MSG_VERSION_2 = 2,
+      };
 
-      #define PIONEER_MSG_VERSION_1_TELEMETRY 1
-      #define PIONEER_MSG_VERSION_2_TELEMETRY 1
-      #define PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION 2
+      enum Pioneer_Msg_Version_1_Msg_Code
+      {
+        PIONEER_MSG_VERSION_1_TELEMETRY = 1,
+      };
 
-      #define PIONEER_MSG_VERSION_1_TELEMETRY_CODE (PIONEER_MSG_VERSION_1 << 8) + PIONEER_MSG_VERSION_1_TELEMETRY
-      #define PIONEER_MSG_VERSION_2_TELEMETRY_CODE (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_TELEMETRY
-      #define PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION
+      enum Pioneer_Msg_Version_2_Msg_Code
+      {
+        PIONEER_MSG_VERSION_2_TELEMETRY = 1,
+        PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION  = 2,
+      };
+
+      enum Pioneer_Msg_Version_Plus_Msg_Code
+      {
+        PIONEER_MSG_VERSION_1_TELEMETRY_CODE  = (PIONEER_MSG_VERSION_1 << 8) + PIONEER_MSG_VERSION_1_TELEMETRY,
+        PIONEER_MSG_VERSION_2_TELEMETRY_CODE  = (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_TELEMETRY,
+        PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION,
+      };
 
       struct __attribute__((__packed__)) P2AppProtocolDataVersion1Telemetry {
         uint8_t version = 1; // Protocol version []
@@ -83,6 +96,7 @@ namespace Control
         uint16_t battery_manufacture_date; //  []
         uint16_t battery_serial_number; //  []
       };
+
       struct __attribute__((__packed__)) P2AppProtocolDataVersion2Telemetry {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 1; // Command type []
@@ -151,6 +165,7 @@ namespace Control
         uint32_t battery_manufacture_date; // Battery manufacture date []
         uint16_t battery_serial_number; // Battery serial number []
       };
+
       struct __attribute__((__packed__)) P2AppProtocolDataVersion2Compasscalibration {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 2; // Command type []
