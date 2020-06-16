@@ -200,26 +200,22 @@ namespace Plan
         bind<IMC::FuelLevel>(this);
       }
 
+      unsigned int
+      tryResolveEntity(std::string const& label) const
+      try
+      {
+        return resolveEntity(label);
+      }
+      catch (...)
+      {
+        return UINT_MAX;
+      }
+
       void
       onEntityResolution(void)
       {
-        try
-        {
-          m_eid_imu = resolveEntity(m_args.label_imu);
-        }
-        catch (...)
-        {
-          m_eid_imu = UINT_MAX;
-        }
-
-        try
-        {
-          m_eid_gen = resolveEntity(m_args.label_gen);
-        }
-        catch (...)
-        {
-          m_eid_gen = UINT_MAX;
-        }
+        m_eid_imu = tryResolveEntity(m_args.label_imu);
+        m_eid_gen = tryResolveEntity(m_args.label_gen);
       }
 
       void
