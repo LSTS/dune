@@ -31,7 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Pioneer headers.
-#include "Messages/Pioneer_App_Protocol_Messages.hpp"
+#include "PioneerAppProtocolMessages.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
@@ -262,13 +262,13 @@ namespace Control
         {
           switch ((buf[startIndex] << 8) + buf[startIndex + 1])
           {
-          case Messages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+          case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
             rb = handlePioneerV1Telemetry(buf, startIndex, length);
             break;
-          case Messages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
+          case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
             rb = handlePioneerV2Telemetry(buf, startIndex, length);
             break;
-          case Messages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
+          case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
             rb = handlePioneerV2CompassCalibration(buf, startIndex, length);
             break;
           default:
@@ -294,7 +294,7 @@ namespace Control
         {
           switch (buf[startIndex])
           {
-          // case Messages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+          // case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
           //   rb = handlePioneerV1Telemetry(buf, startIndex, length);
           //   break;
           default:
@@ -318,13 +318,13 @@ namespace Control
         int rb = 0;
         try
         {
-          const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion1Telemetry);
+          const int sizeMsg = sizeof(struct PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry);
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
             return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
           }
 
-          Messages::P2AppProtocolDataVersion1Telemetry msg;
+          PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msg;
           std::memcpy(&msg, &buf[startIndex], sizeMsg);
           rb = sizeMsg;
           spew("RECEIVED MSG: V1Telemetry");
@@ -348,13 +348,13 @@ namespace Control
         int rb = 0;
         try
         {
-          const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion2Telemetry);
+          const int sizeMsg = sizeof(struct PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry);
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
             return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
           }
 
-          Messages::P2AppProtocolDataVersion2Telemetry msg;
+          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msg;
           std::memcpy(&msg, &buf[startIndex], sizeMsg);
           rb = sizeMsg;
           spew("RECEIVED MSG: V2Telemetry");
@@ -378,13 +378,13 @@ namespace Control
         int rb = 0;
         try
         {
-          const int sizeMsg = sizeof(struct Messages::P2AppProtocolDataVersion2Compasscalibration);
+          const int sizeMsg = sizeof(struct PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration);
           if (length < startIndex + sizeMsg) {
             war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
             return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
           }
 
-          Messages::P2AppProtocolDataVersion2Compasscalibration msg;
+          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msg;
           std::memcpy(&msg, &buf[startIndex], sizeMsg);
           rb = sizeMsg;
           spew("RECEIVED MSG: V2CompassCalibration");

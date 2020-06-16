@@ -1,5 +1,5 @@
-#ifndef CONTROL_PIONEER_MESSAGES_PIONEER_APP_PROTOCOL_HPP_INCLUDED_
-#define CONTROL_PIONEER_MESSAGES_PIONEER_APP_PROTOCOL_HPP_INCLUDED_
+#ifndef CONTROL_PIONEER_MESSAGES_PIONEER_APP_PROTOCOL_MESSAGES_HPP_INCLUDED_
+#define CONTROL_PIONEER_MESSAGES_PIONEER_APP_PROTOCOL_MESSAGES_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -12,7 +12,7 @@ namespace Control
 {
   namespace Pioneer
   {
-    namespace Messages
+    namespace PioneerAppProtocolMessages
     {
       enum Pioneer_Msg_Version
       {
