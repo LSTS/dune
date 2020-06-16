@@ -130,11 +130,12 @@ namespace Control
       void
       onResourceAcquisition(void)
       {
-          openConnection();
+          openConnectionTCP();
+          openConnectionUDP();
       }
 
       void
-      openConnection(void)
+      openConnectionTCP(void)
       {
         try
         {
@@ -142,34 +143,63 @@ namespace Control
           m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
           m_TCP_sock->setNoDelay(true);
           
-          m_UDP_sock = new UDPSocket;
-          m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
-          
-          inf(DTR("Pioneer interface initialized"));
+          inf(DTR("Pioneer TCP interface initialized"));
         }
         catch (...)
         {
-          closeConnection();
-          war(DTR("Connection failed, retrying..."));
+          closeConnectionTCP();
+          war(DTR("Connection TCP failed, retrying..."));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
       }
 
       void
-      closeConnection(void)
+      closeConnectionTCP(void)
       {
         try
         {
           m_buf_tcp_cur_free_index = 0;
-
           Memory::clear(m_TCP_sock);
-          Memory::clear(m_UDP_sock);
 
-          inf(DTR("Pioneer interface disconnected"));
+          inf(DTR("Pioneer TCP interface disconnected"));
         }
         catch (...)
         {
-          war(DTR("Diconnection failed"));
+          war(DTR("Diconnection TCP failed"));
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
+        }
+      }
+
+      void
+      openConnectionUDP(void)
+      {
+        try
+        {
+          m_UDP_sock = new UDPSocket;
+          m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+          
+          inf(DTR("Pioneer UDP interface initialized"));
+        }
+        catch (...)
+        {
+          closeConnectionUDP();
+          war(DTR("Connection UDP failed, retrying..."));
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
+        }
+      }
+
+      void
+      closeConnectionUDP(void)
+      {
+        try
+        {
+          Memory::clear(m_UDP_sock);
+
+          inf(DTR("Pioneer UDP interface disconnected"));
+        }
+        catch (...)
+        {
+          war(DTR("Diconnection UDP failed"));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
       }
@@ -450,10 +480,9 @@ namespace Control
           catch (std::runtime_error& e)
           {
             err("%s", e.what());
-            war(DTR("Connection lost, retrying..."));
-            closeConnection();
-
-            openConnection();
+            war(DTR("Connection TCP lost, retrying..."));
+            closeConnectionTCP();
+            openConnectionTCP();
 
             return 0;
           }
@@ -474,10 +503,9 @@ namespace Control
           catch (std::runtime_error& e)
           {
             err("%s", e.what());
-            war(DTR("Connection lost, retrying..."));
-            closeConnection();
-
-            openConnection();
+            war(DTR("Connection UDP lost, retrying..."));
+            closeConnectionUDP();
+            openConnectionUDP();
 
             return 0;
           }
@@ -491,18 +519,26 @@ namespace Control
       {
         while (!stopping())
         {
-          // Handle Autopilot data
-          if (m_TCP_sock || m_UDP_sock)
+          // Handle Pioneer data TCP
+          if (m_TCP_sock)
           {
-            if (m_TCP_sock)
-              handlePioneerData(true);
-            if (m_UDP_sock)
-              handlePioneerData(false);
+            handlePioneerData(true);
           }
           else
           {
             Time::Delay::wait(0.5);
-            openConnection();
+            openConnectionTCP();
+          }
+
+          // Handle Pioneer data UDP
+          if (m_UDP_sock)
+          {
+            handlePioneerData(false);
+          }
+          else
+          {
+            Time::Delay::wait(0.5);
+            openConnectionUDP();
           }
 
           if (!m_error_missing)
