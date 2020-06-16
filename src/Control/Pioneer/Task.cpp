@@ -32,6 +32,7 @@
 
 // Pioneer headers.
 #include "PioneerAppProtocolMessages.hpp"
+#include "PioneerAppProtocolCommands.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
@@ -294,9 +295,18 @@ namespace Control
         {
           switch (buf[startIndex])
           {
-          // case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
-          //   rb = handlePioneerV1Telemetry(buf, startIndex, length);
-          //   break;
+          //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_ACK:
+          case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_ACK:
+            rb = handlePioneerV2ReplyAck(buf, startIndex, length);
+            break;
+          //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_PING:
+          case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_PING:
+            rb = handlePioneerV2ReplyPing(buf, startIndex, length);
+            break;
+          //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_GET_CAMERA:
+          case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_GET_CAMERA:
+            rb = handlePioneerV2ReplyGetCamera(buf, startIndex, length);
+            break;
           default:
             // war("skip msg");
             break;
@@ -310,6 +320,74 @@ namespace Control
           return 0;
         }
       }
+
+      int
+      handlePioneerV2ReplyAck(uint8_t buf[], int startIndex, int length)
+      {
+        int rb = 1;
+        try
+        {
+          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msg;
+          spew("RECEIVED MSG: V2 ACK");
+
+          // TODO something with msg
+        }
+        catch(const std::exception& e)
+        {
+          err("%s", e.what());
+        }
+
+        return rb;
+      }
+
+      int
+      handlePioneerV2ReplyPing(uint8_t buf[], int startIndex, int length)
+      {
+        int rb = 0;
+        try
+        {
+          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping msg;
+          spew("RECEIVED MSG: V2 PING");
+
+          // TODO something with msg
+        }
+        catch(const std::exception& e)
+        {
+          err("%s", e.what());
+        }
+
+        return rb;
+      }
+
+      int
+      handlePioneerV2ReplyGetCamera(uint8_t buf[], int startIndex, int length)
+      {
+        int rb = 0;
+        try
+        { // For now is just one msg
+          const int sizeMsg = sizeof(struct PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters);
+          if (length < startIndex + sizeMsg) {
+            war("Message PioneerV2 Reply GetCameraParameters too short to decode %d < %d", length, startIndex + sizeMsg);
+            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
+          }
+
+          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msg;
+          std::memcpy(&msg, &buf[startIndex], sizeMsg);
+          rb = sizeMsg;
+          spew("RECEIVED MSG: V2 Reply GetCameraParameters");
+
+          // TODO something with msg
+          debug("camera_bitrate %d", msg.camera_bitrate);
+        }
+        catch(const std::exception& e)
+        {
+          err("%s", e.what());
+          return 0;
+        }
+
+        return rb;
+      }
+
 
       //! This will handle parsing Pionner V1 Telemetry message
       int
