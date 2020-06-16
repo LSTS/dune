@@ -49,15 +49,17 @@ namespace Plan
     };
 
     //! Timeout for the vehicle command reply.
-    const double c_vc_reply_timeout = 2.5;
+    static const double c_vc_reply_timeout = 2.5;
     //! Timeout for the vehicle state
-    const double c_vs_timeout = 2.5;
+    static const double c_vs_timeout = 2.5;
+
     //! Plan Command operation descriptions
-    const char* c_op_desc[] = {DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
-                               DTR_RT("Load Plan"), DTR_RT("Get Plan")};
+    static const char* c_op_desc[] = { DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
+                                       DTR_RT("Load Plan"), DTR_RT("Get Plan") };
     //! Plan state descriptions
-    const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
-                                  DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
+    static const char* c_state_desc[] = { DTR_RT("BLOCKED"), DTR_RT("READY"),
+                                          DTR_RT("INITIALIZING"), DTR_RT("EXECUTING") };
+
     //! DataBase statement
     static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
 
