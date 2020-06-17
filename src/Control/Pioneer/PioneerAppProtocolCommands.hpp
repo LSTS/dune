@@ -518,7 +518,8 @@ namespace Control
       struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraFramerate
       {
         //! "expected_reply": "a",
-        uint8_t command_type = 'vf';
+        uint8_t command_type = 'v';
+        uint8_t command_subtype = 'f';
         //! "description": "valid values are 25 or 30"
         int32_t framerate_value = 0;
       };
@@ -526,7 +527,8 @@ namespace Control
       struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraResolution
       {
         //! "expected_reply": "a",
-        uint8_t command_type = 'vr';
+        uint8_t command_type = 'v';
+        uint8_t command_subtype = 'r';
         //! "description": "valid values are 480, 720 or 1080"
         int32_t resolution_value = 0;
       };
