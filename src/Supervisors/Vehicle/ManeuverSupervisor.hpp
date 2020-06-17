@@ -156,12 +156,11 @@ namespace Supervisors
 
       //! Check if the current stop request should be skipped.
       bool
-      checkStopRequest(void)
+      checkStopRequest(void) const
       {
         if (m_state != IMC::ManeuverControlState::MCS_EXECUTING)
         {
           m_task->debug("ignoring stop, no maneuver is executing");
-          clearCurrent();
           return false;
         }
 
@@ -172,8 +171,6 @@ namespace Supervisors
         if (m_reqs.front()->isStop())
         {
           m_task->debug("got two StopManeuver in a row");
-          // clear this and use next one
-          clearCurrent();
           return false;
         }
 
@@ -182,13 +179,11 @@ namespace Supervisors
 
       //! Check if the current start request should be skipped.
       bool
-      checkStartRequest(void)
+      checkStartRequest(void) const
       {
         if (m_state == IMC::ManeuverControlState::MCS_EXECUTING)
         {
           m_task->err(DTR("already executing, cannot start without stopping"));
-          // clear this one and use next one
-          clearCurrent();
           return false;
         }
 
@@ -201,21 +196,11 @@ namespace Supervisors
           case RT_START:
             m_task->debug(
             "got two or more maneuvers in a row, ignoring oldest");
-            // clear this and use next one
-            clearCurrent();
             return false;
 
           // if a stop is coming, ignore this maneuver
           case RT_STOP:
             m_task->debug("a stop comes right after, ignoring this maneuver");
-            // clear this one and pop next one
-            clearCurrent();
-
-            // free the stop
-            m_task->debug("cleared stop request");
-            Memory::clear(m_reqs.front());
-            m_reqs.pop();
-
             return false;
 
           default:
@@ -247,6 +232,7 @@ namespace Supervisors
             case RT_STOP:
               if (!checkStopRequest())
               {
+                clearCurrent();
                 processRequests();
                 return;
               }
@@ -255,6 +241,7 @@ namespace Supervisors
             case RT_START:
               if (!checkStartRequest())
               {
+                clearCurrent();
                 processRequests();
                 return;
               }
