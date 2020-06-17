@@ -58,6 +58,11 @@ namespace Supervisors
     //! Cooldown before checking control loops after change into service mode
     static const float c_loops_check_time = 2.0;
 
+    //! Invalid maneuver type.
+    static uint16_t const c_invalid_maneuver = 0xFFFF;
+    //! Invalid maneuver ETA.
+    static uint16_t const c_invalid_maneuver_eta = 0xFFFF;
+
     struct Arguments
     {
       //! Entities that set the vehicle in error regardless
@@ -170,9 +175,9 @@ namespace Supervisors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         m_vs.op_mode = IMC::VehicleState::VS_BOOT;
-        m_vs.maneuver_type = 0xFFFF;
+        m_vs.maneuver_type = c_invalid_maneuver;
         m_vs.maneuver_stime = -1;
-        m_vs.maneuver_eta = 0xFFFF;
+        m_vs.maneuver_eta = c_invalid_maneuver_eta;
         m_vs.error_ents.clear();
         m_vs.error_count = 0;
         m_vs.flags = 0;
@@ -211,9 +216,9 @@ namespace Supervisors
 
           if (!maneuverMode())
           {
-            m_vs.maneuver_type = 0xFFFF;
+            m_vs.maneuver_type = c_invalid_maneuver;
             m_vs.maneuver_stime = -1;
-            m_vs.maneuver_eta = 0xFFFF;
+            m_vs.maneuver_eta = c_invalid_maneuver_eta;
             m_vs.flags &= ~IMC::VehicleState::VFLG_MANEUVER_DONE;
           }
         }
@@ -225,7 +230,7 @@ namespace Supervisors
           m_man_sup->addStart(maneuver);
           m_vs.maneuver_stime = maneuver->getTimeStamp();
           m_vs.maneuver_type = maneuver->getId();
-          m_vs.maneuver_eta = 0xFFFF;
+          m_vs.maneuver_eta = c_invalid_maneuver_eta;
           m_vs.last_error.clear();
           m_vs.last_error_time = -1;
           m_vs.flags &= ~IMC::VehicleState::VFLG_MANEUVER_DONE;
