@@ -154,6 +154,77 @@ namespace Supervisors
         m_curr_req->issue();
       }
 
+      //! Check if the current stop request should be skipped.
+      bool
+      checkStopRequest(void)
+      {
+        if (m_state != IMC::ManeuverControlState::MCS_EXECUTING)
+        {
+          m_task->debug("ignoring stop, no maneuver is executing");
+          clearCurrent();
+          return false;
+        }
+
+        if (!m_reqs.size())
+          return true;
+
+        // Two stops in a row?
+        if (m_reqs.front()->isStop())
+        {
+          m_task->debug("got two StopManeuver in a row");
+          // clear this and use next one
+          clearCurrent();
+          return false;
+        }
+
+        return true;
+      }
+
+      //! Check if the current start request should be skipped.
+      bool
+      checkStartRequest(void)
+      {
+        if (m_state == IMC::ManeuverControlState::MCS_EXECUTING)
+        {
+          m_task->err(DTR("already executing, cannot start without stopping"));
+          // clear this one and use next one
+          clearCurrent();
+          return false;
+        }
+
+        if (!m_reqs.size())
+          return true;
+
+        switch (m_reqs.front()->getType())
+        {
+          // Two starts in a row
+          case RT_START:
+            m_task->debug(
+            "got two or more maneuvers in a row, ignoring oldest");
+            // clear this and use next one
+            clearCurrent();
+            return false;
+
+          // if a stop is coming, ignore this maneuver
+          case RT_STOP:
+            m_task->debug("a stop comes right after, ignoring this maneuver");
+            // clear this one and pop next one
+            clearCurrent();
+
+            // free the stop
+            m_task->debug("cleared stop request");
+            Memory::clear(m_reqs.front());
+            m_reqs.pop();
+
+            return false;
+
+          default:
+            m_task->err(DTR("undefined state"));
+        }
+
+        return true;
+      }
+
       //! Process requests in the queue
       void
       processRequests(void)
@@ -169,77 +240,29 @@ namespace Supervisors
 
         if (m_valid_state)
         {
-          // Two stops of two starts in a row generate error
-          if (m_curr_req->isStop())
+          //! Check if current request should be ignored, and process the next
+          //! request in that case.
+          switch (m_curr_req->getType())
           {
-            if (m_state != IMC::ManeuverControlState::MCS_EXECUTING)
-            {
-              m_task->debug("ignoring stop, no maneuver is executing");
-              clearCurrent();
-              processRequests();
-              return;
-            }
-
-            if (m_reqs.size())
-            {
-              // Two stops in a row?
-              if (m_reqs.front()->isStop())
+            case RT_STOP:
+              if (!checkStopRequest())
               {
-                m_task->debug("got two StopManeuver in a row");
-                // clear this and use next one
-                clearCurrent();
                 processRequests();
                 return;
               }
-            }
-          }
-          else if (m_curr_req->isStart())
-          {
-            if (m_state == IMC::ManeuverControlState::MCS_EXECUTING)
-            {
-              m_task->err(DTR("already executing, cannot start without stopping"));
-              // clear this one and use next one
-              clearCurrent();
-              processRequests();
-              return;
-            }
+              break;
 
-            if (m_reqs.size())
-            {
-              // Two starts in a row
-              if (m_reqs.front()->isStart())
+            case RT_START:
+              if (!checkStartRequest())
               {
-                m_task->debug("got two or more maneuvers in a row, ignoring oldest");
-                // clear this and use next one
-                clearCurrent();
                 processRequests();
                 return;
               }
-              else if (m_reqs.front()->isStop())
-              {
-                // if a stop is coming, ignore this maneuver
-                m_task->debug("a stop comes right after, ignoring this maneuver");
-                // clear this one and pop next one
-                clearCurrent();
+              break;
 
-                // free the stop
-                m_task->debug("cleared stop request");
-                Memory::clear(m_reqs.front());
-                // pop the stop
-                m_reqs.pop();
-
-                processRequests();
-                return;
-              }
-              else
-              {
-                m_task->err(DTR("undefined state"));
-              }
-            }
-          }
-          else
-          {
-            m_task->err(DTR("undefined state"));
+            default:
+              m_task->err(DTR("undefined state"));
+              break;
           }
         }
         else if (m_curr_req->isStop())
@@ -250,7 +273,8 @@ namespace Supervisors
 
         m_curr_req->issue();
         m_task->dispatch(m_curr_req->getMessage());
-        m_task->debug("dispatched %s request", m_curr_req->isStop() ? "stop" : "start");
+        m_task->debug("dispatched %s request",
+                      m_curr_req->isStop() ? "stop" : "start");
       }
 
       //! Check if a request is being processed
