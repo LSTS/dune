@@ -74,25 +74,25 @@ namespace Supervisors
       }
 
       bool
-      isStop(void)
+      isStop(void) const
       {
         return (m_type == RT_STOP);
       }
 
       bool
-      isStart(void)
+      isStart(void) const
       {
         return (m_type == RT_START);
       }
 
       double
-      getIssueTime(void)
+      getIssueTime(void) const
       {
         return m_issue_time;
       }
 
       IMC::Message*
-      getMessage(void)
+      getMessage(void) const
       {
         return m_msg;
       }
