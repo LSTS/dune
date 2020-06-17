@@ -678,7 +678,8 @@ namespace Control
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           // Handle IMC messages from bus
-          consumeMessages();        }
+          consumeMessages();
+        }
       }
     };
   }
