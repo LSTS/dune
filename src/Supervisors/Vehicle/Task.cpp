@@ -81,8 +81,6 @@ namespace Supervisors
       IMC::VehicleCommand m_vc_reply;
       //! Vehicle state message.
       IMC::VehicleState m_vs;
-      //! Stop maneuver message.
-      IMC::StopManeuver m_stop;
       //! Idle maneuver message.
       IMC::IdleManeuver m_idle;
       //! Control loops last reference
