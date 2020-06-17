@@ -38,6 +38,34 @@ namespace Control
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION,
       };
 
+      //! "dtype": "uint8_t"
+      enum Pioneer_Error_Flags_Bitmask {
+        //! "component": "pmu",
+        //! "description": "Did not receive ack from pmu"
+        PIONEER_ERROR_FLAGS_ERR_PMU_COMM_ACK = 0x00000001,
+        //! "component": "pmu",
+        //! "description": "Pmu streaming timeout"
+        PIONEER_ERROR_FLAGS_ERR_PMU_COMM_STREAM = 0x00000002,
+        //! "component": "sensor_depth",
+        //! "description": "Failed to read depth sensor"
+        PIONEER_ERROR_FLAGS_ERR_DEPTH_READ = 0x00000004,
+        //! "component": "sensor_depth",
+        //! "description": "Depth read spike detected"
+        PIONEER_ERROR_FLAGS_ERR_DEPTH_SPIKE = 0x00000008,
+        //! "component": "sensor_inner_pressure",
+        //! "description": "Failed to read inner pressure sensor"
+        PIONEER_ERROR_FLAGS_ERR_INNER_PRESSURE_READ = 0x00000010,
+        //! "component": "sensor_inner_pressure",
+        //! "description": "Inner pressure read spike detected"
+        PIONEER_ERROR_FLAGS_ERR_INNER_PRESSURE_SPIKE = 0x00000020,
+        //! "component": "compass",
+        //! "description": "Invalid compass calibration"
+        PIONEER_ERROR_FLAGS_ERR_COMPASS_CALIBRATION = 0x00000040,
+        //! "component": "tilt",
+        //! "description": "Invalid tilt calibration"
+        PIONEER_ERROR_FLAGS_ERR_TILT_CALIBRATION = 0x00000080,
+      };
+
       struct __attribute__((__packed__)) P2AppProtocolDataVersion1Telemetry {
         uint8_t version = 1; // Protocol version []
         uint8_t command_type = 1; //  []
