@@ -73,6 +73,12 @@ namespace Supervisors
         delete m_msg;
       }
 
+      RequestType
+      getType(void) const
+      {
+        return m_type;
+      }
+
       bool
       isStop(void) const
       {
