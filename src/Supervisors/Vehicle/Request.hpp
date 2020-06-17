@@ -44,35 +44,28 @@ namespace Supervisors
       //! Stop maneuver type
       RT_STOP,
       //! Start maneuver type
-      RT_START
+      RT_START,
+      //! Number of request types.
+      RT_NTYPES
     };
 
-    struct Request
+    class Request
     {
+    private:
       //! Request Type
-      int m_type;
+      RequestType m_type;
       //! Pointer to IMC Message
       IMC::Message* m_msg;
       //! Issue time
       double m_issue_time;
 
-      Request(int type, const IMC::Message* ptr)
+    public:
+      Request(RequestType type, const IMC::Message* m = NULL)
+      : m_type(type), m_msg(m ? m->clone() : new IMC::StopManeuver),
+        m_issue_time(-1)
       {
-        init(type);
-        m_msg = ptr->clone();
-      }
-
-      Request(int type)
-      {
-        init(type);
-        m_msg = new IMC::StopManeuver;
-      }
-
-      void
-      init(int type)
-      {
-        m_type = type;
-        m_issue_time = -1.0;
+        if (type >= RT_NTYPES)
+          throw std::runtime_error(DTR("Invalid request type."));
       }
 
       ~Request(void)
