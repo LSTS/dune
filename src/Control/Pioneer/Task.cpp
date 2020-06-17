@@ -33,6 +33,7 @@
 // Pioneer headers.
 #include "PioneerAppProtocolMessages.hpp"
 #include "PioneerAppProtocolCommands.hpp"
+#include "PioneerAppProtocolPack.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
@@ -365,16 +366,9 @@ namespace Control
         int rb = 0;
         try
         { // For now is just one msg
-          const int sizeMsg = sizeof(struct PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters);
-          if (length < startIndex + sizeMsg) {
-            war("Message PioneerV2 Reply GetCameraParameters too short to decode %d < %d", length, startIndex + sizeMsg);
-            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
-          }
-
           PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msg;
-          std::memcpy(&msg, &buf[startIndex], sizeMsg);
-          rb = sizeMsg;
-          spew("RECEIVED MSG: V2 Reply GetCameraParameters");
+          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
+              this, buf, startIndex, length, &msg);
 
           // TODO something with msg
           debug("camera_bitrate %d", msg.camera_bitrate);
@@ -396,16 +390,9 @@ namespace Control
         int rb = 0;
         try
         {
-          const int sizeMsg = sizeof(struct PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry);
-          if (length < startIndex + sizeMsg) {
-            war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
-            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
-          }
-
           PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msg;
-          std::memcpy(&msg, &buf[startIndex], sizeMsg);
-          rb = sizeMsg;
-          spew("RECEIVED MSG: V1Telemetry");
+          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
+              this, buf, startIndex, length, &msg);
           
           // TODO something with msg
           debug("Voltage %u", msg.battery_voltage);
@@ -426,16 +413,9 @@ namespace Control
         int rb = 0;
         try
         {
-          const int sizeMsg = sizeof(struct PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry);
-          if (length < startIndex + sizeMsg) {
-            war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
-            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
-          }
-
           PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msg;
-          std::memcpy(&msg, &buf[startIndex], sizeMsg);
-          rb = sizeMsg;
-          spew("RECEIVED MSG: V2Telemetry");
+          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
+              this, buf, startIndex, length, &msg);
 
           // TODO something with msg
           debug("Depth %d",msg.depth);
@@ -456,16 +436,9 @@ namespace Control
         int rb = 0;
         try
         {
-          const int sizeMsg = sizeof(struct PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration);
-          if (length < startIndex + sizeMsg) {
-            war("Message PioneerV2Telemetry too short to decode %d < %d", length, startIndex + sizeMsg);
-            return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
-          }
-
           PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msg;
-          std::memcpy(&msg, &buf[startIndex], sizeMsg);
-          rb = sizeMsg;
-          spew("RECEIVED MSG: V2CompassCalibration");
+          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
+              this, buf, startIndex, length, &msg);
 
           // TODO something with msg
           debug("progress_thruster %u",msg.progress_thruster);
@@ -544,7 +517,7 @@ namespace Control
               m_buf_tcp_cur_free_index = 0;
             }
           }
-          debug("end: %s cicle poll for packets %d", tcpOrUdp ? "TCP": "UDP", counter);
+          debug("end: %s cycle poll for packets %d", tcpOrUdp ? "TCP": "UDP", counter);
         } // end: poll for packets
 
         // check for timeout
