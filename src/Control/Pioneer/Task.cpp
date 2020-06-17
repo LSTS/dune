@@ -262,16 +262,29 @@ namespace Control
         int rb = 0;
         try
         {
+          PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msgV1Telm;
+          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msgV2Telm;
+          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msgV2CompassCal;
+
           switch ((buf[startIndex] << 8) + buf[startIndex + 1])
           {
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
-            rb = handlePioneerV1Telemetry(buf, startIndex, length);
+            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
+                this, buf, startIndex, length, &msgV1Telm);
+            if (rb > 0)
+              handlePioneerV1Telemetry(msgV1Telm);
             break;
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
-            rb = handlePioneerV2Telemetry(buf, startIndex, length);
+            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
+                this, buf, startIndex, length, &msgV2Telm);
+            if (rb > 0)
+              handlePioneerV2Telemetry(msgV2Telm);
             break;
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
-            rb = handlePioneerV2CompassCalibration(buf, startIndex, length);
+            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
+                this, buf, startIndex, length, &msgV2CompassCal);
+            if (rb > 0)
+              handlePioneerV2CompassCalibration(msgV2CompassCal);
             break;
           default:
             // war("skip msg");
@@ -294,19 +307,33 @@ namespace Control
         int rb = 0;
         try
         {
+          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msgAck;
+          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping msgPing;
+          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msgGetCamParams;
+
           switch (buf[startIndex])
           {
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_ACK:
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_ACK:
-            rb = handlePioneerV2ReplyAck(buf, startIndex, length);
+            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack>(
+                this, buf, startIndex, length, &msgAck);
+            if (rb > 0)
+              handlePioneerV2ReplyAck(msgAck);
             break;
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_PING:
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_PING:
-            rb = handlePioneerV2ReplyPing(buf, startIndex, length);
+            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping>(
+                this, buf, startIndex, length, &msgPing);
+            if (rb > 0)
+              handlePioneerV2ReplyPing(msgPing);
             break;
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_GET_CAMERA:
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_GET_CAMERA:
-            rb = handlePioneerV2ReplyGetCamera(buf, startIndex, length);
+            // For now is just one msg
+            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
+                this, buf, startIndex, length, &msgGetCamParams);
+            if (rb > 0)
+              handlePioneerV2ReplyGetCamera(msgGetCamParams);
             break;
           default:
             // war("skip msg");
@@ -322,134 +349,48 @@ namespace Control
         }
       }
 
-      int
-      handlePioneerV2ReplyAck(uint8_t buf[], int startIndex, int length)
+      void
+      handlePioneerV2ReplyAck(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msg)
       {
-        int rb = 1;
-        try
-        {
-          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msg;
-          spew("RECEIVED MSG: V2 ACK");
-
-          // TODO something with msg
-        }
-        catch(const std::exception& e)
-        {
-          err("%s", e.what());
-        }
-
-        return rb;
+        // TODO something with msg
       }
 
-      int
-      handlePioneerV2ReplyPing(uint8_t buf[], int startIndex, int length)
+      void
+      handlePioneerV2ReplyPing(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping msg)
       {
-        int rb = 0;
-        try
-        {
-          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping msg;
-          spew("RECEIVED MSG: V2 PING");
-
-          // TODO something with msg
-        }
-        catch(const std::exception& e)
-        {
-          err("%s", e.what());
-        }
-
-        return rb;
+        // TODO something with msg
       }
 
-      int
-      handlePioneerV2ReplyGetCamera(uint8_t buf[], int startIndex, int length)
+      void
+      handlePioneerV2ReplyGetCamera(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msg)
       {
-        int rb = 0;
-        try
-        { // For now is just one msg
-          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msg;
-          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
-              this, buf, startIndex, length, &msg);
-
-          // TODO something with msg
-          debug("camera_bitrate %d", msg.camera_bitrate);
-        }
-        catch(const std::exception& e)
-        {
-          err("%s", e.what());
-          return 0;
-        }
-
-        return rb;
+        // TODO something with msg
+        debug("camera_bitrate %d", msg.camera_bitrate);
       }
 
 
       //! This will handle parsing Pionner V1 Telemetry message
-      int
-      handlePioneerV1Telemetry(uint8_t buf[], int startIndex, int length)
+      void
+      handlePioneerV1Telemetry(PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msg)
       {
-        int rb = 0;
-        try
-        {
-          PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msg;
-          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
-              this, buf, startIndex, length, &msg);
-          
-          // TODO something with msg
-          debug("Voltage %u", msg.battery_voltage);
-        }
-        catch(const std::exception& e)
-        {
-          err("%s", e.what());
-          return 0;
-        }
-
-        return rb;
+        // TODO something with msg
+        debug("Voltage %u", msg.battery_voltage);
       }
 
       //! This will handle parsing Pionner V2 Telemetry message
-      int
-      handlePioneerV2Telemetry(uint8_t buf[], int startIndex, int length)
+      void
+      handlePioneerV2Telemetry(PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msg)
       {
-        int rb = 0;
-        try
-        {
-          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msg;
-          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
-              this, buf, startIndex, length, &msg);
-
-          // TODO something with msg
-          debug("Depth %d",msg.depth);
-        }
-        catch(const std::exception& e)
-        {
-          err("%s", e.what());
-          return 0;
-        }
-
-        return rb;
+        // TODO something with msg
+        debug("Depth %d",msg.depth);
       }
 
       //! This will handle parsing Pionner V2 Compass Calibration message
-      int
-      handlePioneerV2CompassCalibration(uint8_t buf[], int startIndex, int length)
+      void
+      handlePioneerV2CompassCalibration(PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msg)
       {
-        int rb = 0;
-        try
-        {
-          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msg;
-          rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
-              this, buf, startIndex, length, &msg);
-
-          // TODO something with msg
-          debug("progress_thruster %u",msg.progress_thruster);
-        }
-        catch(const std::exception& e)
-        {
-          err("%s", e.what());
-          return 0;
-        }
-
-        return rb;
+        // TODO something with msg
+        debug("progress_thruster %u",msg.progress_thruster);
       }
 
       //! This will check TCP and UDP ports for data do parse
