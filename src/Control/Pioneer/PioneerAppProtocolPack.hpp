@@ -22,20 +22,19 @@ namespace Control
       public:
 
         template <class MsgStruct>
-        static uint8_t*
-        pack(DUNE::Tasks::Task *task, MsgStruct *msg)
+        static int
+        pack(DUNE::Tasks::Task *task, MsgStruct *msg, uint8_t *buf)
         {
           int st;
           char *type_name = abi::__cxa_demangle(typeid(MsgStruct).name(), 0, 0, &st);
+          int rb = 0;
 
           try
           {
             const int sizeMsg = sizeof(*msg);
-            uint8_t buf[sizeMsg];
-
             std::memcpy(&buf[0], msg, sizeMsg);
             task->spew("PACKED MSG: %s", type_name);
-            return buf;
+            rb = sizeMsg;
           }
           catch(const std::exception& e)
           {
@@ -43,6 +42,7 @@ namespace Control
           }
 
           free(type_name);
+          return rb;
         }
 
         template <class MsgStruct>

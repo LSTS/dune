@@ -85,6 +85,8 @@ namespace Control
       uint8_t m_buf_tcp_cur_free_index;
       uint8_t m_buf_udp[2048];
 
+      uint8_t m_buf_send[1024];
+
       //! Moving Home timer
       Time::Counter<float> m_timer;
 
@@ -383,6 +385,12 @@ namespace Control
       {
         // TODO something with msg
         debug("Depth %d",msg.depth);
+
+        PioneerAppProtocolCommands::P2AppProtocolCmdVersion1Watchdog wdMsg;
+        wdMsg.connection_duration = (int16_t) Time::Clock::getSinceEpoch();
+        int dataLength = PioneerAppProtocolPack::Pack::pack(this, &wdMsg, m_buf_send);
+        int sd = sendDataTCP(m_buf_send, dataLength);
+        debug("Send %d", sd);
       }
 
       //! This will handle parsing Pionner V2 Compass Calibration message
