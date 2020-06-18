@@ -169,10 +169,8 @@ namespace Control
         int
         receiveData(uint8_t* buf, size_t blen)
         {
-          m_task->err("receiveData before");
           if (m_sock)
           {
-            m_task->err("receiveData");
             try
             {
               return m_sock->read(buf, blen);
