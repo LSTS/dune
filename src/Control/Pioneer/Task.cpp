@@ -27,6 +27,8 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
+#include <functional>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -34,6 +36,7 @@
 #include "PioneerAppProtocolMessages.hpp"
 #include "PioneerAppProtocolCommands.hpp"
 #include "PioneerAppProtocolPack.hpp"
+#include "PioneerComm.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
@@ -76,32 +79,23 @@ namespace Control
     {
       //! Task arguments.
       Arguments m_args;
-      //! TCP socket
-      Network::TCPSocket* m_TCP_sock;
-      //! UDP socket
-      Network::UDPSocket* m_UDP_sock;
 
-      uint8_t m_buf_tcp[2048];
-      uint8_t m_buf_tcp_cur_free_index;
-      uint8_t m_buf_udp[2048];
-
+      PioneerComm::TCPComm* m_TCP_comm;
+      PioneerComm::UDPComm* m_UDP_comm;
       uint8_t m_buf_send[1024];
 
       //! Moving Home timer
       Time::Counter<float> m_timer;
 
-      //! Mavlink Timeouts
       bool m_error_missing;
-      double m_last_pkt_time;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_TCP_sock(NULL),
-        m_UDP_sock(NULL),
-        m_buf_tcp_cur_free_index(0),
+        m_TCP_comm(NULL),
+        m_UDP_comm(NULL),
         m_error_missing(false)
       {
           param("Communications Timeout", m_args.comm_timeout)
@@ -130,8 +124,6 @@ namespace Control
           param("UDP - Address", m_args.UDP_addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to Pioneer");
-
-          m_last_pkt_time = 0; //! time of last packet from Pioneer
       }
 
       //! Initialize resources.
@@ -144,8 +136,23 @@ namespace Control
       void
       onResourceAcquisition(void)
       {
+          auto tcpDp = [this](uint8_t buf[], int startIndex, int length) -> int{ return this->pioneerCommandRepliesParse(buf, startIndex, length); };
+          auto udpDp = [this](uint8_t buf[], int startIndex, int length) -> int{ return this->pioneerMessagesParse(buf, startIndex, length); };
+          auto stf = [this](IMC::EntityState::StateEnum state, Status::Code code) { this->warnEntityState(state, code); };
+          m_TCP_comm = new PioneerComm::TCPComm(this, tcpDp, stf);
+          m_UDP_comm = new PioneerComm::UDPComm(this, udpDp, stf);
+          // m_UDP_comm = new PioneerComm::UDPComm(this,
+          //     std::bind(&Task::pioneerMessagesParse, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+          //     std::bind(&Task::warnEntityState, this, std::placeholders::_1, std::placeholders::_2));
+
           openConnectionTCP();
           openConnectionUDP();
+      }
+
+      void
+      warnEntityState(IMC::EntityState::StateEnum state, Status::Code code)
+      {
+        setEntityState(state, code);
       }
 
       void
@@ -153,9 +160,12 @@ namespace Control
       {
         try
         {
-          m_TCP_sock = new TCPSocket;
-          m_TCP_sock->connect(m_args.TCP_addr, m_args.TCP_port);
-          m_TCP_sock->setNoDelay(true);
+          m_TCP_comm->stop();
+          m_TCP_comm->disconnect();
+          m_TCP_comm->setTCPAddr(m_args.TCP_addr);
+          m_TCP_comm->setTCPPort(m_args.TCP_port);
+          m_TCP_comm->connect();
+          m_TCP_comm->start();
           
           inf(DTR("Pioneer TCP interface initialized"));
         }
@@ -172,8 +182,10 @@ namespace Control
       {
         try
         {
-          m_buf_tcp_cur_free_index = 0;
-          Memory::clear(m_TCP_sock);
+          if (m_TCP_comm)
+          {
+            m_TCP_comm->disconnect();
+          }
 
           inf(DTR("Pioneer TCP interface disconnected"));
         }
@@ -189,8 +201,11 @@ namespace Control
       {
         try
         {
-          m_UDP_sock = new UDPSocket;
-          m_UDP_sock->bind(m_args.UDP_listen_port, Address::Any, false);
+          m_UDP_comm->stop();
+          m_UDP_comm->disconnect();
+          m_UDP_comm->setUDPPort(m_args.UDP_listen_port);
+          m_UDP_comm->connect();
+          m_UDP_comm->start();
           
           inf(DTR("Pioneer UDP interface initialized"));
         }
@@ -207,7 +222,10 @@ namespace Control
       {
         try
         {
-          Memory::clear(m_UDP_sock);
+          if (m_UDP_comm)
+          {
+            m_UDP_comm->disconnect();
+          }
 
           inf(DTR("Pioneer UDP interface disconnected"));
         }
@@ -222,27 +240,26 @@ namespace Control
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_TCP_sock);
-        Memory::clear(m_UDP_sock);
+        Memory::clear(m_TCP_comm);
+        Memory::clear(m_UDP_comm);
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
-        if(paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port))
-        {
-            closeConnectionTCP();
-            Time::Delay::wait(0.2);
-            openConnectionTCP();
-        }
+        // if(paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port))
+        // {
+        //     m_TCP_comm->setTCPAddr(m_args.TCP_addr);
+        //     m_TCP_comm->setTCPPort(m_args.TCP_port);
+        //     m_TCP_comm->reconnect();
+        // }
 
-        if(paramChanged(m_args.UDP_listen_port))
-        {
-            closeConnectionUDP();
-            Time::Delay::wait(0.2);
-            openConnectionUDP();
-        }
+        // if(paramChanged(m_args.UDP_listen_port))
+        // {
+        //     m_UDP_comm->setUDPPort(m_args.UDP_listen_port);
+        //     m_UDP_comm->reconnect();
+        // }
       }
 
       //! Reserve entity identifiers.
@@ -254,6 +271,11 @@ namespace Control
       //! Resolve entity names.
       void
       onEntityResolution(void)
+      {
+      }
+
+      void
+      requestDroneInfo(void)
       {
       }
 
@@ -389,7 +411,7 @@ namespace Control
         PioneerAppProtocolCommands::P2AppProtocolCmdVersion1Watchdog wdMsg;
         wdMsg.connection_duration = (int16_t) Time::Clock::getSinceEpoch();
         int dataLength = PioneerAppProtocolPack::Pack::pack(this, &wdMsg, m_buf_send);
-        int sd = sendDataTCP(m_buf_send, dataLength);
+        int sd = m_TCP_comm->sendData(m_buf_send, dataLength);
         debug("Send %d", sd);
       }
 
@@ -401,173 +423,6 @@ namespace Control
         debug("progress_thruster %u",msg.progress_thruster);
       }
 
-      //! This will check TCP and UDP ports for data do parse
-      void
-      handlePioneerData(bool tcpOrUdp)
-      {
-        double now = Clock::get();
-        int counter = 0;
-
-        while ((tcpOrUdp ? pollTCP(0.01) : pollUDP(0.01)) && counter < 100)
-        {
-          counter++;
-
-          int n = tcpOrUdp ? receiveDataTCP(m_buf_tcp, sizeof(m_buf_tcp))
-              : receiveDataUDP(m_buf_udp, sizeof(m_buf_udp));
-          if (n < 0)
-          {
-            debug("Receive error from %s", tcpOrUdp ? "TCP": "UDP");
-            break;
-          }
-
-          uint8_t* buf;
-          buf = tcpOrUdp ? m_buf_tcp : m_buf_udp;
-
-          // time stamp!
-          now = Clock::get();
-
-          // for each packet
-          int i;
-          for (i = 0; i < n; i++)
-          {
-            int rv = tcpOrUdp ? pioneerCommandRepliesParse(buf, i, n)
-                : pioneerMessagesParse(buf, i, n);
-
-            // handle the parsed packet
-            if (rv > 0)
-            {
-              i += rv;
-               m_last_pkt_time = now;
-            }
-            else if (rv < 0) // the buffer has the start of a valid msg but is too short
-            {
-              if (!tcpOrUdp) // if UDP the package os not recoverable
-                i = n;
-              break;
-            }
-            else
-            {
-              i++;
-            } // end: handle the parsed packet
-          } // end: for each packet
-
-          if (tcpOrUdp)
-          {
-            if (i < n)
-            {
-              int data_length_to_translate = n - i;
-              std::memcpy(&m_buf_tcp, &m_buf_tcp[i], data_length_to_translate);
-              m_buf_tcp_cur_free_index = data_length_to_translate;
-              debug("%s Waiting more data to decode msg (buffer too short) free_index:%d=%d-%d  msg_code:0x%02X%02X",
-                  tcpOrUdp ? "TCP": "UDP", m_buf_tcp_cur_free_index, n, i, m_buf_tcp[0], m_buf_tcp[1]);
-            }
-            else
-            {
-              m_buf_tcp_cur_free_index = 0;
-            }
-          }
-          debug("end: %s cycle poll for packets %d", tcpOrUdp ? "TCP": "UDP", counter);
-        } // end: poll for packets
-
-        // check for timeout
-        if (now - m_last_pkt_time >= m_args.comm_timeout)
-        {
-          if (!m_error_missing)
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
-            m_error_missing = true;
-          }
-        }
-        else
-          m_error_missing = false;
-      }
-      
-      bool
-      pollTCP(double timeout)
-      {
-        if (m_TCP_sock != NULL)
-          return Poll::poll(*m_TCP_sock, timeout);
-
-        return false;
-      }
-
-      bool
-      pollUDP(double timeout)
-      {
-        if (m_UDP_sock != NULL)
-          return Poll::poll(*m_UDP_sock, timeout);
-
-        return false;
-      }
-
-      int
-      sendDataTCP(uint8_t* bfr, int size)
-      {
-        if (m_TCP_sock)
-        {
-          trace("Sending something through TCP");
-          return m_TCP_sock->write((char*)bfr, size);
-        }
-        return 0;
-      }
-
-      int
-      sendDataUDP(uint8_t* bfr, int size)
-      {
-        if (m_UDP_sock)
-        {
-          trace("Sending something through UDP");
-          return m_UDP_sock->write(bfr, size, m_args.UDP_addr, m_args.UDP_port);
-        }
-        return 0;
-      }
-
-      int
-      receiveDataTCP(uint8_t* buf, size_t blen)
-      {
-        if (m_TCP_sock)
-        {
-          try
-          {
-            if (m_TCP_sock)
-              return m_TCP_sock->read(buf, blen);
-          }
-          catch (std::runtime_error& e)
-          {
-            err("%s", e.what());
-            war(DTR("Connection TCP lost, retrying..."));
-            closeConnectionTCP();
-            openConnectionTCP();
-
-            return 0;
-          }
-        }
-        return 0;
-      }
-
-      int
-      receiveDataUDP(uint8_t* buf, size_t blen)
-      {
-        if (m_UDP_sock)
-        {
-          try
-          {
-            if (m_UDP_sock)
-              return m_UDP_sock->read(buf, blen, &m_args.UDP_addr, &m_args.UDP_listen_port);
-          }
-          catch (std::runtime_error& e)
-          {
-            err("%s", e.what());
-            war(DTR("Connection UDP lost, retrying..."));
-            closeConnectionUDP();
-            openConnectionUDP();
-
-            return 0;
-          }
-        }
-        return 0;
-      }
-
       //! Main loop.
       void
       onMain(void)
@@ -575,24 +430,14 @@ namespace Control
         while (!stopping())
         {
           // Handle Pioneer data TCP
-          if (m_TCP_sock)
+          if (!m_TCP_comm)
           {
-            handlePioneerData(true);
-          }
-          else
-          {
-            Time::Delay::wait(0.5);
             openConnectionTCP();
           }
 
           // Handle Pioneer data UDP
-          if (m_UDP_sock)
+          if (!m_UDP_comm)
           {
-            handlePioneerData(false);
-          }
-          else
-          {
-            Time::Delay::wait(0.5);
             openConnectionUDP();
           }
 
