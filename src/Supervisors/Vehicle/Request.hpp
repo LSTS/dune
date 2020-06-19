@@ -81,6 +81,22 @@ namespace Supervisors
         return m_type;
       }
 
+      char const*
+      getTypeDescription(void) const
+      {
+        switch (m_type)
+        {
+        case RT_STOP:
+          return "stop";
+        case RT_START:
+          return "start";
+        case RT_PAUSE:
+          return "pause";
+        default:
+          return "(invalid)";
+        }
+      }
+
       bool
       isStop(void) const
       {
