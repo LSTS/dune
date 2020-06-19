@@ -84,8 +84,15 @@ namespace Control
 
       //! Moving Home timer
       Time::Counter<float> m_timer;
+      //! Start time for Watchdog send
+      double m_start_time;
 
       bool m_error_missing;
+
+
+      // Pioneer commands messages
+      PioneerAppProtocolCommands::P2AppProtocolCmdVersion1Watchdog m_watchdog_msg;
+
 
       //! Constructor.
       //! @param[in] name task name.
@@ -94,6 +101,7 @@ namespace Control
         DUNE::Tasks::Task(name, ctx),
         m_TCP_comm(NULL),
         m_UDP_comm(NULL),
+        m_start_time(Time::Clock::getSinceEpoch()),
         m_error_missing(false)
       {
           param("Communications Timeout", m_args.comm_timeout)
@@ -122,6 +130,10 @@ namespace Control
           param("UDP - Address", m_args.UDP_addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to Pioneer");
+
+          // Setup processing of IMC messages
+          bind<Heartbeat>(this);
+
       }
 
       //! Update internal state with new parameter values.
@@ -411,12 +423,6 @@ namespace Control
       {
         // TODO something with msg
         debug("Depth %d",msg.depth);
-
-        PioneerAppProtocolCommands::P2AppProtocolCmdVersion1Watchdog wdMsg;
-        wdMsg.connection_duration = (int16_t) Time::Clock::getSinceEpoch();
-        int dataLength = PioneerAppProtocolPack::Pack::pack(this, &wdMsg, m_buf_send);
-        int sd = m_TCP_comm->sendData(m_buf_send, dataLength);
-        debug("Send %d", sd);
       }
 
       //! This will handle parsing Pionner V2 Compass Calibration message
@@ -425,6 +431,18 @@ namespace Control
       {
         // TODO something with msg
         debug("progress_thruster %u",msg.progress_thruster);
+      }
+
+      void
+      consume(const IMC::Heartbeat* msg)
+      { // Using own Heartbeat to send watchdog message
+        if (m_TCP_comm->isConnected() && msg->getSource() == getSystemId())
+        {
+          m_watchdog_msg.connection_duration = (int16_t) (Time::Clock::getSinceEpoch() - m_start_time);
+          int dataLength = PioneerAppProtocolPack::Pack::pack(this, &m_watchdog_msg, m_buf_send);
+          int sd = m_TCP_comm->sendData(m_buf_send, dataLength);
+          debug("Send %d", sd);
+        }
       }
 
       //! Main loop.
