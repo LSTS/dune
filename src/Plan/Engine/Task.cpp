@@ -55,10 +55,12 @@ namespace Plan
 
     //! Plan Command operation descriptions
     static const char* c_op_desc[] = { DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
-                                       DTR_RT("Load Plan"), DTR_RT("Get Plan") };
+                                       DTR_RT("Load Plan"), DTR_RT("Get Plan"),
+                                       DTR_RT("Pause Plan"), DTR_RT("Resume Plan") };
     //! Plan state descriptions
     static const char* c_state_desc[] = { DTR_RT("BLOCKED"), DTR_RT("READY"),
-                                          DTR_RT("INITIALIZING"), DTR_RT("EXECUTING") };
+                                          DTR_RT("INITIALIZING"), DTR_RT("EXECUTING"),
+                                          DTR_RT("PAUSED") };
 
     //! DataBase statement
     static const char* c_get_plan_stmt = "select data from Plan where plan_id=?";
@@ -620,6 +622,12 @@ namespace Plan
           case IMC::PlanControl::PC_GET:
             getPlan();
             break;
+          case IMC::PlanControl::PC_PAUSE:
+            pausePlan();
+            break;
+          case IMC::PlanControl::PC_RESUME:
+            resumePlan();
+            break;
           default:
             onFailure(DTR("plan control operation not supported"));
             break;
@@ -719,6 +727,48 @@ namespace Plan
         }
 
         return true;
+      }
+
+      void
+      pausePlan(void)
+      {
+        if (!execMode())
+        {
+          onFailure(DTR("no plan is running, pause request ignored"));
+          return;
+        }
+
+        debug("Pausing plan %s", m_pcs.plan_id.c_str());
+
+        vehicleRequest(IMC::VehicleCommand::VC_PAUSE_MANEUVER);
+        onSuccess();
+        changeMode(IMC::PlanControlState::PCS_PAUSED, DTR("plan paused"),
+                   TYPE_INF);
+      }
+
+      void
+      resumePlan(void)
+      {
+        if (!pauseMode())
+        {
+          onFailure(DTR("no plan is paused, resume request ignored"));
+          return;
+        }
+
+        IMC::PlanManeuver* curr_man = m_plan->getCurrentManeuver();
+
+        if (!curr_man)
+        {
+          err("Inconsistent state: no current maneuver stored.");
+          return;
+        }
+
+        debug("Resuming plan %s at maneuver %s",
+              m_pcs.plan_id.c_str(),
+              curr_man->maneuver_id.c_str());
+
+        onSuccess();
+        startManeuver(curr_man);
       }
 
       //! Parse a given plan
@@ -1215,6 +1265,12 @@ namespace Plan
       execMode(void) const
       {
         return m_pcs.state == IMC::PlanControlState::PCS_EXECUTING;
+      }
+
+      inline bool
+      pauseMode(void) const
+      {
+        return m_pcs.state == IMC::PlanControlState::PCS_PAUSED;
       }
 
       void
