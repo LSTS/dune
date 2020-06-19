@@ -221,12 +221,15 @@ namespace Control
 
           while (!isStopping())
           {
-            if (!m_sock)
+            if (m_sock == NULL)
             {
               Time::Delay::wait(0.5);
-              m_task->debug("Call reconnect");
-              reconnect();
-              continue;
+               if (m_sock == NULL)
+              {
+                m_task->debug("Call reconnect");
+                reconnect();
+                continue;
+              }
             }
 
             if (!poll(0.01))
@@ -260,8 +263,9 @@ namespace Control
               // handle the parsed packet
               if (rv > 0)
               {
-                i += rv;
+                i += rv - 1;
                 m_last_pkt_time = now;
+                m_task->spew("cycle poll rv packets rec msg rv=%d i=%d n=%d", rv, i, n);
               }
               else if (rv < 0) // the buffer has the start of a valid msg but is too short
               {
