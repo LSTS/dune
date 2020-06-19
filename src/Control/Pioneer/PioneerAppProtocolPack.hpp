@@ -87,15 +87,15 @@ namespace Control
           try
           {
             const int sizeMsg = sizeof(*msg);
-            if (length < startIndex + sizeMsg) {
-              task->war("Message too short to decode %d < %d for %s",
-                  length, startIndex + sizeMsg, type_name);
-              return -(startIndex + sizeMsg - length); // return the missing bytes for decoding
+            if (length < sizeMsg) {
+              task->war("Message too short to decode %d < %d (index %d of %d) for %s",
+                  length, sizeMsg, startIndex, startIndex + length, type_name);
+              return -length; // return the missing bytes for decoding
             }
 
             std::memcpy(msg, &buf[startIndex], sizeMsg);
             rb = sizeMsg;
-            task->spew("RECEIVED MSG: %s", type_name);
+            task->spew("RECEIVED MSG: %s %d bytes", type_name, rb);
           }
           catch(const std::exception& e)
           {

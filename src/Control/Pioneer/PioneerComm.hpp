@@ -238,6 +238,8 @@ namespace Control
 
             int n = receiveData(&m_buf[m_buf_cur_free_index],
               m_buf_capacity - m_buf_cur_free_index);
+            m_task->spew("Read %d from buffer starting at %d length %d from total %d",
+              n, m_buf_cur_free_index, m_buf_capacity - m_buf_cur_free_index, m_buf_capacity);
             if (n < 0)
             {
               m_task->debug("Receive error");
@@ -253,7 +255,7 @@ namespace Control
             int i;
             for (i = 0; i < n; i++)
             {
-              int rv = m_process_data_function(m_buf, i, n);
+              int rv = m_process_data_function(m_buf, i, n - i);
 
               // handle the parsed packet
               if (rv > 0)
@@ -265,22 +267,20 @@ namespace Control
               {
                 if (!recoverBufferIfPossible())
                   i = n;
+                m_task->spew("cycle poll buffer too short packets i=%d n=%d", i, n);
                 break;
-              }
-              else
-              {
-                i++;
               } // end: handle the parsed packet
             } // end: for each packet
 
             if (recoverBufferIfPossible())
             {
+              m_task->spew("cycle poll for packets i=%d n=%d", i, n);
               if (i < n)
               {
                 int data_length_to_translate = n - i;
-                std::memcpy(&m_buf, &m_buf[i], data_length_to_translate);
+                std::memcpy(m_buf, &m_buf[i], data_length_to_translate);
                 m_buf_cur_free_index = data_length_to_translate;
-                m_task->debug("Waiting more data to decode msg (buffer too short) free_index:%d=%d-%d  msg_code:0x%02X%02X",
+                m_task->spew("Waiting more data to decode msg (buffer too short) free_index:%d=%d-%d  msg_code:0x%02X%02X",
                     m_buf_cur_free_index, n, i, m_buf[0], m_buf[1]);
               }
               else
@@ -288,7 +288,7 @@ namespace Control
                 m_buf_cur_free_index = 0;
               }
             }
-            m_task->debug("end: cycle poll for packets");
+            m_task->spew("end: cycle poll for packets");
           } // end: poll for packets
 
           // check for timeout
