@@ -49,8 +49,9 @@ namespace Supervisors
                                          DTR_RT("ERROR"), DTR_RT("MANEUVERING"),
                                          DTR_RT("EXTERNAL CONTROL"), DTR_RT("BOOT")};
     //! Vehicle command description strings
-    static const char* c_cmd_desc[] =
-    {"maneuver start", "maneuver stop", "calibration start", "calibration stop"};
+    static const char* c_cmd_desc[] = {"maneuver start", "maneuver stop",
+                                       "calibration start", "calibration stop",
+                                       "maneuver pause"};
     //! Printing errors period
     static const float c_error_period = 2.0;
     //! Maneuver request timeout
