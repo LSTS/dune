@@ -33,6 +33,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <cstddef>
+#include <functional>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -41,23 +42,20 @@
 // Import namespaces.
 using DUNE_NAMESPACES;
 
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 namespace Control
 {
   namespace Pioneer
   {
     namespace PioneerComm
-    {//lambda []int (uint8_t *buf, int startIndex, int length)->int
-      typedef int (DataProcessorFunction)(uint8_t[], int , int);
-      typedef void (SetEntityStateFunction)(DUNE::IMC::EntityState::StateEnum state, DUNE::Status::Code code);
+    {
+      typedef std::function<bool(uint8_t[], int , int)> DataProcessorFunction;
+      typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
 
       class Comm: public Thread
       {
       public:
-        //int (&processData)(uint8_t[], int , int)
-
-        Comm(DUNE::Tasks::Task* task, std::function<bool(uint8_t[], int , int)> processData,
-          std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> setEntityState):
+        Comm(DUNE::Tasks::Task* task, DataProcessorFunction processData,
+          SetEntityStateFunction setEntityState):
         m_task(task),
         m_process_data_function(processData),
         m_set_entity_state_function(setEntityState),
@@ -76,7 +74,7 @@ namespace Control
         {
           try
           {
-            m_task->err("connect");
+            m_task->debug("Connecting");
             m_buf_cur_free_index = 0;
             openConnection();
           }
@@ -125,7 +123,7 @@ namespace Control
         }
 
       protected:
-        std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> m_set_entity_state_function;
+        SetEntityStateFunction m_set_entity_state_function;
         //! Parent task.
         DUNE::Tasks::Task* m_task;
         //! Communications timeout
@@ -143,11 +141,14 @@ namespace Control
         virtual void
         openConnection(void)
         {
-          m_task->err("openConnection iii");
+          m_task->err("openConnection empty implementation");
         }
 
         virtual void
-        closeConnection(void){}
+        closeConnection(void)
+        {
+          m_task->err("closeConnection empty implementation");
+        }
 
         bool
         recoverBufferIfPossible(void)
@@ -156,7 +157,7 @@ namespace Control
         }
 
       private:
-        std::function<bool(uint8_t[], int , int)> m_process_data_function;
+        DataProcessorFunction m_process_data_function;
 
         bool
         poll(double timeout)
@@ -197,7 +198,7 @@ namespace Control
             if (!m_sock)
             {
               Time::Delay::wait(0.5);
-              m_task->err("call reconnect");
+              m_task->debug("Call reconnect");
               reconnect();
               continue;
             }
@@ -279,8 +280,8 @@ namespace Control
       class TCPComm: public Comm
       {
       public:
-        TCPComm(DUNE::Tasks::Task* task, std::function<bool(uint8_t[], int , int)> processData,
-          std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> setEntityState):
+        TCPComm(DUNE::Tasks::Task* task, DataProcessorFunction processData,
+          SetEntityStateFunction setEntityState):
         Comm(task, processData, setEntityState)
         {
         }
@@ -330,12 +331,11 @@ namespace Control
         void
         openConnection(void)
         {
-            m_task->err("connect tcp");
-            m_TCP_sock = new TCPSocket;
-            m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
-            m_TCP_sock->setNoDelay(true);
-            m_sock = m_TCP_sock;
-            m_task->inf("Pioneer TCP interface initialized %b", m_sock ? true : false);
+          m_TCP_sock = new TCPSocket;
+          m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
+          m_TCP_sock->setNoDelay(true);
+          m_sock = m_TCP_sock;
+          m_task->inf("Comm TCP interface initialized");
         }
 
         void
@@ -343,7 +343,7 @@ namespace Control
         {
           Memory::clear(m_TCP_sock);
           m_sock = NULL;
-          m_task->inf(DTR("Pioneer TCP interface disconnected"));
+          m_task->inf(DTR("Comm TCP interface disconnected"));
         }
 
       private:
@@ -358,8 +358,8 @@ namespace Control
       class UDPComm: public Comm
       {
       public:
-        UDPComm(DUNE::Tasks::Task* task, std::function<bool(uint8_t[], int , int)> processData,
-          std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> setEntityState):
+        UDPComm(DUNE::Tasks::Task* task, DataProcessorFunction processData,
+          SetEntityStateFunction setEntityState):
         Comm(task, processData, setEntityState)
         {
         }
@@ -400,6 +400,7 @@ namespace Control
           m_UDP_sock = new UDPSocket;
           m_UDP_sock->bind(m_UDP_port, Address::Any, false);
           m_sock = m_UDP_sock;
+          m_task->inf("Comm UDP interface initialized");
         }
 
         void
@@ -407,7 +408,7 @@ namespace Control
         {
           Memory::clear(m_UDP_sock);
           m_sock = NULL;
-          m_task->inf(DTR("Pioneer UDP interface disconnected")); 
+          m_task->inf(DTR("Comm UDP interface disconnected")); 
         }
 
       private:

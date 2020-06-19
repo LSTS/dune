@@ -27,8 +27,6 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
-#include <functional>
-
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -126,27 +124,71 @@ namespace Control
           .description("Address for connection to Pioneer");
       }
 
-      //! Initialize resources.
+      //! Update internal state with new parameter values.
       void
-      onResourceInitialization(void)
+      onUpdateParameters(void)
       {
+        if(m_TCP_comm && (paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port)))
+        {
+          m_TCP_comm->setTCPAddr(m_args.TCP_addr);
+          m_TCP_comm->setTCPPort(m_args.TCP_port);
+          m_TCP_comm->reconnect();
+        }
+
+        if(m_UDP_comm && paramChanged(m_args.UDP_listen_port))
+        {
+          m_UDP_comm->setUDPPort(m_args.UDP_listen_port);
+          m_UDP_comm->reconnect();
+        }
+      }
+
+      //! Reserve entity identifiers.
+      void
+      onEntityReservation(void)
+      {
+      }
+
+      //! Resolve entity names.
+      void
+      onEntityResolution(void)
+      {
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_TCP_comm);
+        Memory::clear(m_UDP_comm);
       }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
-          auto tcpDp = [this](uint8_t buf[], int startIndex, int length) -> int{ return this->pioneerCommandRepliesParse(buf, startIndex, length); };
-          auto udpDp = [this](uint8_t buf[], int startIndex, int length) -> int{ return this->pioneerMessagesParse(buf, startIndex, length); };
-          auto stf = [this](IMC::EntityState::StateEnum state, Status::Code code) { this->warnEntityState(state, code); };
-          m_TCP_comm = new PioneerComm::TCPComm(this, tcpDp, stf);
-          m_UDP_comm = new PioneerComm::UDPComm(this, udpDp, stf);
-          // m_UDP_comm = new PioneerComm::UDPComm(this,
-          //     std::bind(&Task::pioneerMessagesParse, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-          //     std::bind(&Task::warnEntityState, this, std::placeholders::_1, std::placeholders::_2));
+        auto tcp_dataprocessor = [this](uint8_t buf[], int startIndex, int length) -> int
+          {
+            return this->pioneerCommandRepliesParse(buf, startIndex, length);
+          };
+        auto udp_dataprocessor = [this](uint8_t buf[], int startIndex, int length) -> int
+          {
+            return this->pioneerMessagesParse(buf, startIndex, length);
+          };
+        auto set_entity_state = [this](IMC::EntityState::StateEnum state, Status::Code code) -> void
+          {
+            this->warnEntityState(state, code);
+          };
+        m_TCP_comm = new PioneerComm::TCPComm(this, tcp_dataprocessor, set_entity_state);
+        m_UDP_comm = new PioneerComm::UDPComm(this, udp_dataprocessor, set_entity_state);
 
-          openConnectionTCP();
-          openConnectionUDP();
+        openConnectionTCP();
+        openConnectionUDP();
+      }
+
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      {
       }
 
       void
@@ -234,44 +276,6 @@ namespace Control
           war(DTR("Diconnection UDP failed"));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_TCP_comm);
-        Memory::clear(m_UDP_comm);
-      }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      {
-        // if(paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port))
-        // {
-        //     m_TCP_comm->setTCPAddr(m_args.TCP_addr);
-        //     m_TCP_comm->setTCPPort(m_args.TCP_port);
-        //     m_TCP_comm->reconnect();
-        // }
-
-        // if(paramChanged(m_args.UDP_listen_port))
-        // {
-        //     m_UDP_comm->setUDPPort(m_args.UDP_listen_port);
-        //     m_UDP_comm->reconnect();
-        // }
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
       }
 
       void
