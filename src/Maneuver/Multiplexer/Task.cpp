@@ -428,6 +428,12 @@ namespace Maneuver
       }
 
       void
+      onManeuverPause(void)
+      {
+        m_maneuvers[m_type]->onPause();
+      }
+
+      void
       onManeuverDeactivation(void)
       {
         setEntityId(getEntityId());
