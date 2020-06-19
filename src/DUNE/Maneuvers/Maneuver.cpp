@@ -138,18 +138,23 @@ namespace DUNE
     void
     Maneuver::consume(const IMC::StopManeuver* sm)
     {
-      (void)sm;
+      if (!isActive())
+        return;
 
-      if (isActive())
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
+      mcs.eta = 0;
+
+      if (sm->op == IMC::StopManeuver::OP_PAUSE)
       {
-        requestDeactivation();
-
-        IMC::ManeuverControlState mcs;
-        mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
-        mcs.info = "stopped";
-        mcs.eta = 0;
-        dispatch(mcs);
+        onManeuverPause();
+        mcs.info = "paused";
       }
+      else
+        mcs.info = "stopped";
+
+      requestDeactivation();
+      dispatch(mcs);
     }
 
     void

@@ -79,6 +79,11 @@ namespace DUNE
       onManeuverDeactivation(void)
       { }
 
+      //! On maneuver pause
+      virtual void
+      onManeuverPause(void)
+      { }
+
       //! On Path Control State
       virtual void
       onPathControlState(const IMC::PathControlState* pcs)
