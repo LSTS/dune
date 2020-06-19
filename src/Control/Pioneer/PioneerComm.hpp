@@ -48,18 +48,22 @@ namespace Control
   {
     namespace PioneerComm
     {
+      #define MAX_BUFFER 2018
+
       typedef std::function<bool(uint8_t[], int , int)> DataProcessorFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
-
       class Comm: public Thread
       {
       public:
-        Comm(DUNE::Tasks::Task* task, DataProcessorFunction processData,
-          SetEntityStateFunction setEntityState):
+        Comm(DUNE::Tasks::Task* task,
+          DataProcessorFunction processData,
+          SetEntityStateFunction setEntityState,
+          uint16_t bufferCapacity = MAX_BUFFER):
         m_task(task),
         m_process_data_function(processData),
         m_set_entity_state_function(setEntityState),
         m_sock(NULL),
+        m_buf(new uint8_t[bufferCapacity]),
         m_comm_timeout(-1)
         {
         }
@@ -67,8 +71,17 @@ namespace Control
         //! Destructor.
         ~Comm(void)
         {
+           delete [] m_buf;
         }
 
+        //! Check if is connected.
+        bool
+        isConnected(void)
+        {
+          return m_sock ? true : false;
+        }
+
+        //! To connect.
         void
         connect(void)
         {
@@ -88,6 +101,7 @@ namespace Control
 
         }
 
+        //! To disconnect.
         void
         disconnect(void)
         {
@@ -103,6 +117,7 @@ namespace Control
           }
         }
 
+        //! It will disconnect, wait a small delay and call connect.
         void reconnect()
         {
           disconnect();
@@ -110,12 +125,18 @@ namespace Control
           connect();
         }
 
+        //! To get the comms timeout without any messages.
+        //! Set it to "0" to disregard.
+        //! @return the timeout.
         uint8_t
         getCommTimeout(void)
         {
           return m_comm_timeout;
         }
 
+        //! To set the comms timeout without any messages.
+        //! Set it to "0" to disregard.
+        //! @param[in] the timeout in seconds.
         void
         setCommTimeout(uint8_t timeOutSecs)
         {
@@ -129,7 +150,7 @@ namespace Control
         //! Communications timeout
         uint8_t m_comm_timeout;
         IO::Handle* m_sock;
-        uint8_t m_buf[2048];
+        uint8_t* m_buf;
         uint8_t m_buf_cur_free_index;
         //! Moving Home timer
         Time::Counter<float> m_timer;
@@ -280,8 +301,10 @@ namespace Control
       class TCPComm: public Comm
       {
       public:
-        TCPComm(DUNE::Tasks::Task* task, DataProcessorFunction processData,
-          SetEntityStateFunction setEntityState):
+        TCPComm(DUNE::Tasks::Task* task,
+          DataProcessorFunction processData,
+          SetEntityStateFunction setEntityState,
+          uint16_t bufferCapacity = MAX_BUFFER):
         Comm(task, processData, setEntityState)
         {
         }
@@ -358,8 +381,10 @@ namespace Control
       class UDPComm: public Comm
       {
       public:
-        UDPComm(DUNE::Tasks::Task* task, DataProcessorFunction processData,
-          SetEntityStateFunction setEntityState):
+        UDPComm(DUNE::Tasks::Task* task,
+          DataProcessorFunction processData,
+          SetEntityStateFunction setEntityState,
+          uint16_t bufferCapacity = MAX_BUFFER):
         Comm(task, processData, setEntityState)
         {
         }
