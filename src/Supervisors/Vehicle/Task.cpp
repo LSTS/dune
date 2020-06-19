@@ -640,6 +640,26 @@ namespace Supervisors
         dispatch(&cloops, DF_LOOP_BACK);
       }
 
+      bool
+      timedOut(void)
+      {
+        double delta = Clock::get() - m_switch_time;
+
+        if (maneuverMode() && (delta > c_man_timeout))
+        {
+          inf(DTR("maneuver request timeout"));
+          return true;
+        }
+
+        if (calibrationMode() && (delta > m_calib_timeout))
+        {
+          inf(DTR("calibration timed out"));
+          return true;
+        }
+
+        return false;
+      }
+
       void
       task(void)
       {
@@ -659,22 +679,7 @@ namespace Supervisors
         if (m_switch_time < 0.0)
           return;
 
-        double delta = Clock::get() - m_switch_time;
-
-        bool timedout = false;
-
-        if (maneuverMode() && (delta > c_man_timeout))
-        {
-          inf(DTR("maneuver request timeout"));
-          timedout = true;
-        }
-        else if (calibrationMode() && (delta > m_calib_timeout))
-        {
-          inf(DTR("calibration timed out"));
-          timedout = true;
-        }
-
-        if (timedout)
+        if (timedOut())
         {
           reset();
           changeMode(IMC::VehicleState::VS_SERVICE);
