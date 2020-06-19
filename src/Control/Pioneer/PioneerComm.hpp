@@ -48,7 +48,7 @@ namespace Control
   {
     namespace PioneerComm
     {
-      #define MAX_BUFFER 2018
+      #define MAX_BUFFER 2048
 
       typedef std::function<bool(uint8_t[], int , int)> DataProcessorFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
@@ -63,6 +63,7 @@ namespace Control
         m_process_data_function(processData),
         m_set_entity_state_function(setEntityState),
         m_sock(NULL),
+        m_buf_capacity(bufferCapacity),
         m_buf(new uint8_t[bufferCapacity]),
         m_comm_timeout(-1)
         {
@@ -151,6 +152,7 @@ namespace Control
         uint8_t m_comm_timeout;
         IO::Handle* m_sock;
         uint8_t* m_buf;
+        uint16_t m_buf_capacity;
         uint8_t m_buf_cur_free_index;
         //! Moving Home timer
         Time::Counter<float> m_timer;
@@ -231,7 +233,8 @@ namespace Control
               continue;
             }
 
-            int n = receiveData(m_buf, sizeof(m_buf));
+            int n = receiveData(&m_buf[m_buf_cur_free_index],
+              m_buf_capacity - m_buf_cur_free_index);
             if (n < 0)
             {
               m_task->debug("Receive error");
@@ -241,6 +244,8 @@ namespace Control
             // time stamp!
             now = Clock::get();
 
+
+            n += m_buf_cur_free_index;
             // for each packet
             int i;
             for (i = 0; i < n; i++)
