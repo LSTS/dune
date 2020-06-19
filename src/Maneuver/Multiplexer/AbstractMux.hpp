@@ -57,6 +57,10 @@ namespace Maneuver
       virtual void
       start(const IMC::Maneuver* maneuver) = 0;
 
+      virtual void
+      onPause(void)
+      { }
+
       //! On PathControlState message
       virtual void
       onPathControlState(const IMC::PathControlState* pcs)
