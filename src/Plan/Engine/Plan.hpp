@@ -139,6 +139,16 @@ namespace Plan
       IMC::PlanManeuver*
       loadNextManeuver(void);
 
+      //! Get current maneuver message
+      IMC::PlanManeuver*
+      getCurrentManeuver(void) const
+      {
+        if (!m_curr_node)
+          return nullptr;
+
+        return m_curr_node->pman;
+      }
+
       //! Get current maneuver id
       //! @return current id string
       inline std::string
