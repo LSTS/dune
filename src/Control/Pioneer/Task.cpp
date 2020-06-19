@@ -433,18 +433,6 @@ namespace Control
       {
         while (!stopping())
         {
-          // Handle Pioneer data TCP
-          if (!m_TCP_comm)
-          {
-            openConnectionTCP();
-          }
-
-          // Handle Pioneer data UDP
-          if (!m_UDP_comm)
-          {
-            openConnectionUDP();
-          }
-
           if (!m_error_missing)
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
