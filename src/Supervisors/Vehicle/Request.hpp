@@ -45,6 +45,8 @@ namespace Supervisors
       RT_STOP,
       //! Start maneuver type
       RT_START,
+      //! Pause maneuver type.
+      RT_PAUSE,
       //! Number of request types.
       RT_NTYPES
     };
