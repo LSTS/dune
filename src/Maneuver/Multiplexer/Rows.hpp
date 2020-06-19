@@ -57,6 +57,7 @@ namespace Maneuver
       ~Rows(void)
       {
         Memory::clear(m_parser);
+        Memory::clear(m_paused_state);
       }
 
       //! Start maneuver function
@@ -86,13 +87,45 @@ namespace Maneuver
         double lat;
         double lon;
 
-        if (m_parser->getFirstPoint(&lat, &lon))
+        if (m_paused_state)
+        {
+          if (loadPausedState(&lat, &lon))
+          {
+            m_task->signalCompletion();
+            return;
+          }
+        }
+        else if (m_parser->getFirstPoint(&lat, &lon))
         {
           m_task->signalCompletion();
           return;
         }
 
         sendPath(lat, lon);
+      }
+
+      //! Load the next waypoint after resuming the maneuver and clear the
+      //! paused state.
+      bool
+      loadPausedState(double* lat, double* lon)
+      {
+        bool at_last_point = false;
+        m_task->debug("Resuming Rows from waypoint %u", m_paused_state->index);
+
+        at_last_point = m_parser->getFirstPoint(lat, lon);
+
+        // keep consuming points until we find the waypoint that was being
+        // tracked before the pause, or until we run out of points.
+        while(!at_last_point)
+        {
+          at_last_point = m_parser->getNextPoint(lat, lon);
+
+          if (m_parser->getIndex() == m_paused_state->index)
+            break;
+        }
+
+        Memory::clear(m_paused_state);
+        return at_last_point;
       }
 
       //! On PathControlState message
@@ -133,11 +166,35 @@ namespace Maneuver
         m_task->dispatch(m_path);
       }
 
+      void
+      onPause(void)
+      {
+        unsigned int const index = m_parser->getIndex();
+
+        // If we haven't reached the first waypoint, no need to save any state.
+        if (!m_parser || index <= 1)
+          return;
+
+        if (!m_paused_state)
+          m_paused_state = new PausedState;
+
+        m_paused_state->index = index;
+        m_task->debug("Pausing Rows at waypoint %u", index);
+      }
+
     private:
+      //! Data required to resume the maneuver.
+      struct PausedState
+      {
+        unsigned int index;
+      };
+
       //! Rows stages parser
       Maneuvers::RowsStages* m_parser;
       //! Desired path message
       IMC::DesiredPath m_path;
+      //! Persistent state for resuming after pause
+      PausedState* m_paused_state;
     };
   }
 }
