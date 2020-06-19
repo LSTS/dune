@@ -73,7 +73,9 @@ namespace Supervisors
       void
       addStop(void)
       {
-        Request* req = new Request(RT_STOP);
+        IMC::StopManeuver msg;
+
+        Request* req = new Request(RT_STOP, &msg);
         m_reqs.push(req);
 
         m_task->debug("added stop");
@@ -89,6 +91,21 @@ namespace Supervisors
         m_reqs.push(req);
 
         m_task->debug("added start %s", msg->getName());
+
+        processRequests();
+      }
+
+      //! Add a request for pausing a maneuver
+      void
+      addPause(void)
+      {
+        IMC::StopManeuver msg;
+        msg.op = IMC::StopManeuver::OP_PAUSE;
+
+        Request* req = new Request(RT_PAUSE, &msg);
+        m_reqs.push(req);
+
+        m_task->debug("added pause");
 
         processRequests();
       }
@@ -115,7 +132,7 @@ namespace Supervisors
               return;
             break;
           case IMC::ManeuverControlState::MCS_STOPPED:
-            if (m_curr_req->isStop())
+            if (m_curr_req->isStop() || m_curr_req->isPause())
               m_task->debug("maneuver stopped");
             else
               m_task->err(DTR("request doesn't match"));
@@ -203,6 +220,9 @@ namespace Supervisors
             m_task->debug("a stop comes right after, ignoring this maneuver");
             return false;
 
+          case RT_PAUSE:
+            return true;
+
           default:
             m_task->err(DTR("undefined state"));
         }
@@ -247,6 +267,9 @@ namespace Supervisors
               }
               break;
 
+            case RT_PAUSE:
+              break;
+
             default:
               m_task->err(DTR("undefined state"));
               break;
@@ -261,7 +284,7 @@ namespace Supervisors
         m_curr_req->issue();
         m_task->dispatch(m_curr_req->getMessage());
         m_task->debug("dispatched %s request",
-                      m_curr_req->isStop() ? "stop" : "start");
+                      m_curr_req->getTypeDescription());
       }
 
       //! Check if a request is being processed
@@ -294,7 +317,7 @@ namespace Supervisors
       {
         if (isProcessing())
         {
-          m_task->debug("cleared %s request", m_curr_req->isStop() ? "stop" : "start");
+          m_task->debug("cleared %s request", m_curr_req->getTypeDescription());
           Memory::clear(m_curr_req);
         }
       }
