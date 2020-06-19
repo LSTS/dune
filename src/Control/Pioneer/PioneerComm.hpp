@@ -50,7 +50,10 @@ namespace Control
     {
       #define MAX_BUFFER 2048
 
+      //! Function that expects a buffer with start index with length.
       typedef std::function<bool(uint8_t[], int , int)> DataProcessorFunction;
+      //! Function that expects a buffer with start index with length.
+      typedef std::function<bool(uint8_t[], int , int)> DataLoggerFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
       class Comm: public Thread
       {
