@@ -93,6 +93,12 @@ namespace Supervisors
         return (m_type == RT_START);
       }
 
+      bool
+      isPause(void) const
+      {
+        return (m_type == RT_PAUSE);
+      }
+
       double
       getIssueTime(void) const
       {
