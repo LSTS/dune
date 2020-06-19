@@ -58,12 +58,14 @@ namespace Maneuver
       StationKeeping(Maneuvers::Maneuver* task, StationKeepingArgs* args):
         MuxedManeuver<IMC::StationKeeping, StationKeepingArgs>(task, args),
         m_skeep(NULL),
-        m_end_time(-1.0)
+        m_end_time(-1.0),
+        m_paused_state(NULL)
       { }
 
       ~StationKeeping(void)
       {
         Memory::clear(m_skeep);
+        Memory::clear(m_paused_state);
       }
 
       //! Start maneuver function
@@ -71,7 +73,15 @@ namespace Maneuver
       void
       onStart(const IMC::StationKeeping* maneuver)
       {
-        m_duration = maneuver->duration;
+        if (m_paused_state)
+        {
+          m_duration = m_paused_state->time_left;
+          Memory::clear(m_paused_state);
+          m_task->debug("Resuming StationKeeping -- time left: %.2f sec",
+                        m_duration);
+        }
+        else
+          m_duration = maneuver->duration;
 
         Memory::clear(m_skeep);
         m_skeep = new Maneuvers::StationKeep(maneuver, m_task, m_args->min_radius);
@@ -135,7 +145,32 @@ namespace Maneuver
         }
       }
 
+      void
+      onPause(void)
+      {
+        // If the StationKeeping is of infinite duration or we haven't
+        // reached the safe region yet, no need to save any state.
+        if (m_duration <= 0.0f || m_end_time < 0.0f)
+          return;
+
+        if (!m_paused_state)
+          m_paused_state = new PausedState;
+
+        m_paused_state->time_left = static_cast<float>(
+            m_end_time - Clock::get());
+
+        m_task->debug("Pausing StationKeeping -- time left: %.2f sec",
+                      m_paused_state->time_left);
+      }
+
     private:
+      //! Data required to resume the maneuver.
+      struct PausedState
+      {
+        //! Time left to station keep
+        float time_left;
+      };
+
       //! Station Keeping behavior
       Maneuvers::StationKeep* m_skeep;
       //! PathControlState message
@@ -144,6 +179,8 @@ namespace Maneuver
       float m_duration;
       //! End time for the maneuver
       double m_end_time;
+      //! Persistent state for resuming after pause
+      PausedState* m_paused_state;
     };
   }
 }
