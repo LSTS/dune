@@ -99,7 +99,7 @@ namespace DUNE
       //! Get an iterator to all_distances begin()
       //! @return const iterator to m_all_distance.begin()
       std::vector<float>::const_iterator
-      getDistancesBegin(void)
+      getDistancesBegin(void) const
       {
         return m_all_distances.begin();
       };
@@ -107,7 +107,7 @@ namespace DUNE
       //! Get an iterator to all_distances begin()
       //! @return const iterator to m_all_distance.begin()
       std::vector<float>::const_iterator
-      getDistancesEnd(void)
+      getDistancesEnd(void) const
       {
         return m_all_distances.end();
       };
@@ -115,7 +115,7 @@ namespace DUNE
       //! Get current point index
       //! @return index
       unsigned
-      getIndex(void)
+      getIndex(void) const
       {
         return m_index;
       }
