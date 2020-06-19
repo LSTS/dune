@@ -102,8 +102,8 @@ namespace Maneuver
       TYPE_DROP,
       //! Type Sample
       TYPE_SAMPLE,
-	  //! Type StationKeepingExtended
-	  TYPE_SKEEPEXT,
+      //! Type StationKeepingExtended
+      TYPE_SKEEPEXT,
       //! Total number of maneuvers
       TYPE_TOTAL
     };
@@ -286,12 +286,12 @@ namespace Maneuver
         .description("Maximum commanded speed");
 
         param("Drop -- Servo Id", m_args.drop.servoId)
-          .defaultValue("2")
-          .description("Servo Id.");
+        .defaultValue("2")
+        .description("Servo Id.");
 
         param("Drop -- Servo Value", m_args.drop.servoValue)
-          .defaultValue("3.14159")
-          .description("Servo Value in radians.");
+        .defaultValue("3.14159")
+        .description("Servo Value in radians.");
 
         param("Sample -- Syringe 0 Id", m_args.sample.syringe0Id)
         .defaultValue("0")
