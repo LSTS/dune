@@ -155,9 +155,9 @@ namespace Supervisors
       }
 
       void
-      reset(void)
+      reset(bool pause = false)
       {
-        m_man_sup->addStop();
+        pause ? m_man_sup->addPause() : m_man_sup->addStop();
 
         m_ignore_errors = false;
 
@@ -584,6 +584,22 @@ namespace Supervisors
         }
       }
 
+      void pauseManeuver(IMC::VehicleCommand const* cmd)
+      {
+        if (!maneuverMode())
+        {
+          requestFailed(cmd, DTR("cannot pause: not in maneuver mode"));
+          return;
+        }
+
+        reset(true);
+
+        if (!nonOverridableLoops())
+          changeMode(IMC::VehicleState::VS_SERVICE);
+
+        requestOK(cmd, DTR("OK"));
+      }
+
       void
       consume(const IMC::VehicleCommand* cmd)
       {
@@ -607,6 +623,9 @@ namespace Supervisors
             break;
           case IMC::VehicleCommand::VC_STOP_CALIBRATION:
             stopCalibration(cmd);
+            break;
+          case IMC::VehicleCommand::VC_PAUSE_MANEUVER:
+            pauseManeuver(cmd);
             break;
         }
       }
