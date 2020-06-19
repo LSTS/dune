@@ -584,7 +584,8 @@ namespace Supervisors
         }
       }
 
-      void pauseManeuver(IMC::VehicleCommand const* cmd)
+      void
+      pauseManeuver(IMC::VehicleCommand const* cmd)
       {
         if (!maneuverMode())
         {
