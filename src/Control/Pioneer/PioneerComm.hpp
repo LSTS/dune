@@ -70,7 +70,7 @@ namespace Control
         m_sock(NULL),
         m_buf_capacity(bufferCapacity),
         m_buf(new uint8_t[bufferCapacity]),
-        m_comm_timeout(-1)
+        m_comm_timeout(0)
         {
         }
 
@@ -303,7 +303,7 @@ namespace Control
           } // end: poll for packets
 
           // check for timeout
-          if (m_comm_timeout >= 0 && now - m_last_pkt_time >= m_comm_timeout)
+          if (m_comm_timeout > 0 && now - m_last_pkt_time >= m_comm_timeout)
           {
             if (!m_error_missing)
             {
