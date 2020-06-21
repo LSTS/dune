@@ -259,7 +259,7 @@ namespace Control
           m_TCP_comm->setTCPPort(m_args.TCP_port);
           m_TCP_comm->connect();
           m_TCP_comm->start();
-          
+
           inf(DTR("Pioneer TCP interface initialized"));
         }
         catch (...)
@@ -299,7 +299,7 @@ namespace Control
           m_UDP_comm->setUDPPort(m_args.UDP_listen_port);
           m_UDP_comm->connect();
           m_UDP_comm->start();
-          
+
           inf(DTR("Pioneer UDP interface initialized"));
         }
         catch (...)
@@ -341,29 +341,34 @@ namespace Control
         int rb = 0;
         try
         {
-          PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msgV1Telm;
-          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msgV2Telm;
-          PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msgV2CompassCal;
-
           switch ((buf[startIndex] << 8) + buf[startIndex + 1])
           {
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+            PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry* msgV1Telm;
+            msgV1Telm = new PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry();
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
-                this, buf, startIndex, length, &msgV1Telm);
+                this, buf, startIndex, length, msgV1Telm);
             if (rb > 0)
-              handlePioneerV1Telemetry(msgV1Telm);
+              handlePioneerV1Telemetry(*msgV1Telm);
+            Memory::clear(msgV1Telm);
             break;
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
+            PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry* msgV2Telm;
+            msgV2Telm = new PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry();
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
-                this, buf, startIndex, length, &msgV2Telm);
+                this, buf, startIndex, length, msgV2Telm);
             if (rb > 0)
-              handlePioneerV2Telemetry(msgV2Telm);
+              handlePioneerV2Telemetry(*msgV2Telm);
+            Memory::clear(msgV2Telm);
             break;
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
+            PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration* msgV2CompassCal;
+            msgV2CompassCal = new PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration();
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
-                this, buf, startIndex, length, &msgV2CompassCal);
+                this, buf, startIndex, length, msgV2CompassCal);
             if (rb > 0)
-              handlePioneerV2CompassCalibration(msgV2CompassCal);
+              handlePioneerV2CompassCalibration(*msgV2CompassCal);
+            Memory::clear(msgV2CompassCal);
             break;
           default:
             // war("skip msg");
@@ -386,33 +391,38 @@ namespace Control
         int rb = 0;
         try
         {
-          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msgAck;
-          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping msgPing;
-          PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msgGetCamParams;
-
           switch (buf[startIndex])
           {
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_ACK:
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_ACK:
+            PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack* msgAck;
+            msgAck = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack();
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack>(
-                this, buf, startIndex, length, &msgAck);
+                this, buf, startIndex, length, msgAck);
             if (rb > 0)
-              handlePioneerV2ReplyAck(msgAck);
+              handlePioneerV2ReplyAck(*msgAck);
+            Memory::clear(msgAck);
             break;
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_PING:
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_PING:
+            PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping* msgPing;
+            msgPing = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping();
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping>(
-                this, buf, startIndex, length, &msgPing);
+                this, buf, startIndex, length, msgPing);
             if (rb > 0)
-              handlePioneerV2ReplyPing(msgPing);
+              handlePioneerV2ReplyPing(*msgPing);
+            Memory::clear(msgPing);
             break;
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_GET_CAMERA:
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_GET_CAMERA:
+            PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters* msgGetCamParams;
+            msgGetCamParams = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters();
             // For now is just one msg
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
-                this, buf, startIndex, length, &msgGetCamParams);
+                this, buf, startIndex, length, msgGetCamParams);
             if (rb > 0)
-              handlePioneerV2ReplyGetCamera(msgGetCamParams);
+              handlePioneerV2ReplyGetCamera(*msgGetCamParams);
+            Memory::clear(msgGetCamParams);
             break;
           default:
             // war("skip msg");
