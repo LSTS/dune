@@ -471,7 +471,20 @@ namespace Control
       handlePioneerV2Telemetry(PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msg)
       {
         // TODO something with msg
-        debug("Depth %d",msg.depth);
+        debug("Depth = %d", msg.depth / 1000);
+
+        // Dispatching messages to bus
+        IMC::Depth depth;
+        depth.value = (fp32_t) msg.depth / 1000;
+        dispatch(depth);
+
+        IMC::EulerAngles euler;
+        euler.time = (fp64_t) msg.rt_clock; // device time (s)
+        euler.phi = Angles::radians((fp64_t) msg.roll);
+        euler.theta = Angles::radians((fp64_t) msg.pitch);
+        euler.psi = Angles::radians((fp64_t) msg.yaw);
+        euler.psi_magnetic = Angles::radians((fp64_t) msg.yaw); //TBC if magnetic heading is not available
+        dispatch(euler);
       }
 
       //! This will handle parsing Pionner V2 Compass Calibration message
