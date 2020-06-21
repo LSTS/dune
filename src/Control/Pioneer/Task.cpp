@@ -35,6 +35,7 @@
 #include "PioneerAppProtocolCommands.hpp"
 #include "PioneerAppProtocolPack.hpp"
 #include "PioneerComm.hpp"
+#include "Logger.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
@@ -71,6 +72,15 @@ namespace Control
       uint16_t UDP_port;
       //! UDP Address
       Address UDP_addr;
+      //! Log or not Pioneer raw messages
+      bool log_pioneer_raw;
+    };
+
+    enum LoggerEnum
+    {
+      LOGGER_TELEMETRY,
+      LOGGER_COMMANDS,
+      LOGGER_REPLIES,
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -81,6 +91,9 @@ namespace Control
       PioneerComm::TCPComm* m_TCP_comm;
       PioneerComm::UDPComm* m_UDP_comm;
       uint8_t m_buf_send[1024];
+
+      typedef std::map<int, Logger::Logger*> LoggerMap;
+      LoggerMap m_loggers;
 
       //! Moving Home timer
       Time::Counter<float> m_timer;
@@ -104,36 +117,40 @@ namespace Control
         m_start_time(Time::Clock::getSinceEpoch()),
         m_error_missing(false)
       {
-          param("Communications Timeout", m_args.comm_timeout)
-          .minimumValue("1")
-          .maximumValue("60")
-          .defaultValue("10")
-          .units(Units::Second)
-          .description("Pioneer communications timeout");
+        param("Communications Timeout", m_args.comm_timeout)
+        .minimumValue("1")
+        .maximumValue("60")
+        .defaultValue("10")
+        .units(Units::Second)
+        .description("Pioneer communications timeout");
 
-          param("TCP - Port", m_args.TCP_port)
-          .defaultValue("2011")
-          .description("Port for connection to Pioneer");
+        param("TCP - Port", m_args.TCP_port)
+        .defaultValue("2011")
+        .description("Port for connection to Pioneer");
 
-          param("TCP - Address", m_args.TCP_addr)
-          .defaultValue("127.0.0.1")
-          .description("Address for connection to Pioneer");
+        param("TCP - Address", m_args.TCP_addr)
+        .defaultValue("127.0.0.1")
+        .description("Address for connection to Pioneer");
 
-          param("UDP - Listen Port", m_args.UDP_listen_port)
-          .defaultValue("2010")
-          .description("Port for connection from Pioneer");
+        param("UDP - Listen Port", m_args.UDP_listen_port)
+        .defaultValue("2010")
+        .description("Port for connection from Pioneer");
 
-          param("UDP - Port", m_args.UDP_port)
-          .defaultValue("2010")
-          .description("Port for connection to Pioneer");
+        param("UDP - Port", m_args.UDP_port)
+        .defaultValue("2010")
+        .description("Port for connection to Pioneer");
 
-          param("UDP - Address", m_args.UDP_addr)
-          .defaultValue("127.0.0.1")
-          .description("Address for connection to Pioneer");
+        param("UDP - Address", m_args.UDP_addr)
+        .defaultValue("127.0.0.1")
+        .description("Address for connection to Pioneer");
 
-          // Setup processing of IMC messages
-          bind<Heartbeat>(this);
+        param("Log Pioneer Raw Messages", m_args.log_pioneer_raw)
+        .defaultValue("true")
+        .description("Log Pioneer raw messages to file");
 
+        // Setup processing of IMC messages
+        bind<Heartbeat>(this);
+        bind<IMC::LoggingControl>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -172,26 +189,48 @@ namespace Control
       {
         Memory::clear(m_TCP_comm);
         Memory::clear(m_UDP_comm);
+
+        for (auto const& elm : m_loggers)
+        {
+          elm.second->stopLog();
+          delete elm.second;
+        }
+        m_loggers.clear();
       }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
+        // Initialize loggers
+        m_loggers[LOGGER_TELEMETRY] = new Logger::Logger(this, "PioneerTelemetry");
+        m_loggers[LOGGER_COMMANDS] = new Logger::Logger(this, "PioneerCommands");
+        m_loggers[LOGGER_REPLIES] = new Logger::Logger(this, "PioneerReplies");
+
+        // Initialize comms
         auto tcp_dataprocessor = [this](uint8_t buf[], int startIndex, int length) -> int
           {
             return this->pioneerCommandRepliesParse(buf, startIndex, length);
+            // return this->pioneerMessagesParse(buf, startIndex, length);
           };
         auto udp_dataprocessor = [this](uint8_t buf[], int startIndex, int length) -> int
           {
             return this->pioneerMessagesParse(buf, startIndex, length);
           };
+        auto tcp_logger = [this](uint8_t buf[], int startIndex, int length) -> void
+          {
+            return this->m_loggers[LOGGER_REPLIES]->write(buf, startIndex, length);
+          };
+        auto udp_logger = [this](uint8_t buf[], int startIndex, int length) -> void
+          {
+            return this->m_loggers[LOGGER_TELEMETRY]->write(buf, startIndex, length);
+          };
         auto set_entity_state = [this](IMC::EntityState::StateEnum state, Status::Code code) -> void
           {
             this->warnEntityState(state, code);
           };
-        m_TCP_comm = new PioneerComm::TCPComm(this, tcp_dataprocessor, set_entity_state);
-        m_UDP_comm = new PioneerComm::UDPComm(this, udp_dataprocessor, set_entity_state);
+        m_TCP_comm = new PioneerComm::TCPComm(this, tcp_dataprocessor, set_entity_state, tcp_logger);
+        m_UDP_comm = new PioneerComm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger);
 
         openConnectionTCP();
         openConnectionUDP();
@@ -445,12 +484,44 @@ namespace Control
         }
       }
 
+      void
+      consume(const IMC::LoggingControl* msg)
+      {
+        switch (msg->op)
+        {
+          case IMC::LoggingControl::COP_STARTED:
+            try
+            {
+              if (m_args.log_pioneer_raw)
+              {
+                Path folder = m_ctx.dir_log / msg->name;
+                for (auto const& elm : m_loggers)
+                {
+                  (elm.second->startLog(folder.c_str()));
+                }
+              }
+            }
+            catch (std::exception& e)
+            {
+              err("%s", e.what());
+            }
+            break;
+          case IMC::LoggingControl::COP_STOPPED:
+            for (auto const& elm : m_loggers)
+            {
+              (elm.second->stopLog());
+            }
+            break;
+        }
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
         while (!stopping())
         {
+          Time::Delay::waitMsec(500);
           if (!m_error_missing)
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 

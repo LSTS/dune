@@ -53,7 +53,7 @@ namespace Control
       //! Function that expects a buffer with start index with length.
       typedef std::function<int(uint8_t[], int , int)> DataProcessorFunction;
       //! Function that expects a buffer with start index with length.
-      typedef std::function<int(uint8_t[], int , int)> DataLoggerFunction;
+      typedef std::function<void(uint8_t[], int , int)> DataLoggerFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
       class Comm: public Thread
       {
@@ -61,9 +61,11 @@ namespace Control
         Comm(DUNE::Tasks::Task* task,
           DataProcessorFunction processData,
           SetEntityStateFunction setEntityState,
+          DataLoggerFunction dataLogger = NULL,
           uint16_t bufferCapacity = MAX_BUFFER):
         m_task(task),
         m_process_data_function(processData),
+        m_data_logger(dataLogger),
         m_set_entity_state_function(setEntityState),
         m_sock(NULL),
         m_buf_capacity(bufferCapacity),
@@ -184,6 +186,7 @@ namespace Control
 
       private:
         DataProcessorFunction m_process_data_function;
+        DataLoggerFunction m_data_logger;
 
         bool
         poll(double timeout)
@@ -252,6 +255,10 @@ namespace Control
             // time stamp!
             now = Clock::get();
 
+            if (m_data_logger)
+            {
+              m_data_logger(m_buf, m_buf_cur_free_index, n);
+            }
 
             n += m_buf_cur_free_index;
             // for each packet
@@ -316,8 +323,9 @@ namespace Control
         TCPComm(DUNE::Tasks::Task* task,
           DataProcessorFunction processData,
           SetEntityStateFunction setEntityState,
+          DataLoggerFunction dataLogger = NULL,
           uint16_t bufferCapacity = MAX_BUFFER):
-        Comm(task, processData, setEntityState)
+        Comm(task, processData, setEntityState, dataLogger, bufferCapacity)
         {
         }
 
@@ -396,8 +404,9 @@ namespace Control
         UDPComm(DUNE::Tasks::Task* task,
           DataProcessorFunction processData,
           SetEntityStateFunction setEntityState,
+          DataLoggerFunction dataLogger = NULL,
           uint16_t bufferCapacity = MAX_BUFFER):
-        Comm(task, processData, setEntityState)
+        Comm(task, processData, setEntityState, dataLogger, bufferCapacity)
         {
         }
 
