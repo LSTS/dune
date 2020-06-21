@@ -72,7 +72,7 @@ namespace Control
         {
           stopLog();
 
-          m_task->err("Log start %s", logFolder.c_str());
+          m_task->inf("Log start %s", logFolder.c_str());
 
           m_log_folder = logFolder;
 
@@ -90,10 +90,10 @@ namespace Control
         void
         stopLog(void)
         {
+          stop();
           if (m_log)
           {
-            stop();
-            flush();
+            m_log->flush();
             Memory::clear(m_log);
           }
         }
@@ -101,14 +101,14 @@ namespace Control
         void
         write(const uint8_t* buf, int startIndex, int length)
         {
-          m_task->err("Test log write %d bytes", length);
+          m_task->spew("Test log write %d bytes", length);
           if (!m_log || length <= 0)
             return;
 
           try
           {
             m_log->write(reinterpret_cast<const char*>(&buf[startIndex]), length);
-            m_task->err("Log write %d bytes", length);
+            m_task->spew("Log write %d bytes", length);
           }
           catch(const std::exception& e)
           {
