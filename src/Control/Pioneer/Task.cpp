@@ -230,7 +230,7 @@ namespace Control
             this->warnEntityState(state, code);
           };
         m_TCP_comm = new PioneerComm::TCPComm(this, tcp_dataprocessor, set_entity_state, tcp_logger);
-        m_UDP_comm = new PioneerComm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger);
+        m_UDP_comm = new PioneerComm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger, true);
 
         openConnectionTCP();
         openConnectionUDP();
