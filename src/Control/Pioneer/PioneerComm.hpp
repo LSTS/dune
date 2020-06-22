@@ -55,6 +55,7 @@ namespace Control
       //! Function that expects a buffer with start index with length.
       typedef std::function<void(uint8_t[], int , int)> DataLoggerFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
+
       class Comm: public Thread
       {
       public:
@@ -104,7 +105,6 @@ namespace Control
             if (m_set_entity_state_function)
               m_set_entity_state_function(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           }
-
         }
 
         //! To disconnect.
