@@ -405,9 +405,11 @@ namespace Control
           DataProcessorFunction processData,
           SetEntityStateFunction setEntityState,
           DataLoggerFunction dataLogger = NULL,
+          bool enableBroadcast = false,
           uint16_t bufferCapacity = MAX_BUFFER):
         Comm(task, processData, setEntityState, dataLogger, bufferCapacity)
         {
+          m_enable_broadcast = enableBroadcast;
         }
 
         //! Destructor.
@@ -428,6 +430,18 @@ namespace Control
           m_UDP_port = udpPort;
         }
 
+        bool
+        getEnableBroadcast(void)
+        {
+          return m_enable_broadcast;
+        }
+
+        void
+        setEnableBroadcast(bool enableBroadcast)
+        {
+          m_enable_broadcast = enableBroadcast;
+        }
+
         int
         sendData(uint8_t* bfr, int size, Address udpAddress, uint16_t udpPort)
         {
@@ -444,6 +458,7 @@ namespace Control
         openConnection(void)
         {
           m_UDP_sock = new UDPSocket;
+          m_UDP_sock->enableBroadcast(m_enable_broadcast);
           m_UDP_sock->bind(m_UDP_port, Address::Any, false);
           m_sock = m_UDP_sock;
           m_task->inf("Comm UDP interface initialized");
@@ -462,6 +477,8 @@ namespace Control
         uint16_t m_UDP_port;
         //! UDP socket
         Network::UDPSocket* m_UDP_sock;
+        //! Enable broadcast
+        bool m_enable_broadcast;
 
         bool
         recoverBufferIfPossible(void)
