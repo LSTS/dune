@@ -102,7 +102,7 @@ namespace Control
         write(const uint8_t* buf, int startIndex, int length)
         {
           m_task->spew("Test log write %d bytes", length);
-          if (!m_log || length <= 0)
+          if (m_log != NULL || length <= 0)
             return;
 
           try
@@ -156,7 +156,6 @@ namespace Control
         {
           while (!isStopping())
           {
-            Time::Delay::waitMsec(500);
             try
             {
               flush();
@@ -165,6 +164,7 @@ namespace Control
             {
               m_task->err("%s", e.what());
             }
+            Time::Delay::waitMsec(500);
           }
         }
       };
