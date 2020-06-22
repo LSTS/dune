@@ -27,8 +27,8 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
-#ifndef CONTROL_PIONEER_PIONEER_APP_PROTOCOL_COMMANDS_HPP_INCLUDED_
-#define CONTROL_PIONEER_PIONEER_APP_PROTOCOL_COMMANDS_HPP_INCLUDED_
+#ifndef CONTROL_PIONEER_PROTOCOL_COMMANDS_HPP_INCLUDED_
+#define CONTROL_PIONEER_PROTOCOL_COMMANDS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -41,7 +41,7 @@ namespace Control
 {
   namespace Pioneer
   {
-    namespace PioneerAppProtocolCommands
+    namespace ProtocolCommands
     {
       enum Pioneer_Msg_Version
       {
@@ -142,12 +142,12 @@ namespace Control
 
       // Version: 1 commands
 
-      struct __attribute__((__packed__)) P2AppProtocolReplyVersion1Ack
+      struct __attribute__((__packed__)) ReplyVersion1Ack
       {
         uint8_t command_type = 'a';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1MotionInput
+      struct __attribute__((__packed__)) CmdVersion1MotionInput
       {
         uint8_t command_type = 'j';
         //! "upper_limit": 1,
@@ -170,7 +170,7 @@ namespace Control
         float boost_input = 0.0f;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SetLights
+      struct __attribute__((__packed__)) CmdVersion1SetLights
       {
         uint8_t command_type = 'l';
         //! "upper_limit": 255,
@@ -181,44 +181,44 @@ namespace Control
         uint8_t brightness_lower = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1Ping
+      struct __attribute__((__packed__)) CmdVersion1Ping
       {
         //! "expected_reply": "P"
         uint8_t command_type = 'p';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolReplyVersion1Ping
+      struct __attribute__((__packed__)) ReplyVersion1Ping
       {
         //! "reply from": "p"
         uint8_t command_type = 'P';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1StartRecording
+      struct __attribute__((__packed__)) CmdVersion1StartRecording
       {
         uint8_t command_type = 'r';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1StopRecording
+      struct __attribute__((__packed__)) CmdVersion1StopRecording
       {
         uint8_t command_type = 'R';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1StartCompassCalibration
+      struct __attribute__((__packed__)) CmdVersion1StartCompassCalibration
       {
         uint8_t command_type = 'i';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1CancelCompassCalibration
+      struct __attribute__((__packed__)) CmdVersion1CancelCompassCalibration
       {
         uint8_t command_type = 'I';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SaveCompassCalibration
+      struct __attribute__((__packed__)) CmdVersion1SaveCompassCalibration
       {
         uint8_t command_type = 'c';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1UserGeoLocation
+      struct __attribute__((__packed__)) CmdVersion1UserGeoLocation
       {
         uint8_t command_type = 'g';
         //! "description": "longitude that is included in the log file in degrees"
@@ -227,48 +227,48 @@ namespace Control
         double latitude = 0.0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1Watchdog
+      struct __attribute__((__packed__)) CmdVersion1Watchdog
       {
         uint8_t command_type = 'w';
         //! "description": "time in seconds since connected to drone"
         int16_t connection_duration = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1AutoHeadingOn
+      struct __attribute__((__packed__)) CmdVersion1AutoHeadingOn
       {
         uint8_t command_type = 'h';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1AutoHeadingOff
+      struct __attribute__((__packed__)) CmdVersion1AutoHeadingOff
       {
         uint8_t command_type = 'H';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1AutoDepthOn
+      struct __attribute__((__packed__)) CmdVersion1AutoDepthOn
       {
         uint8_t command_type = 'd';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1AutoDepthOff
+      struct __attribute__((__packed__)) CmdVersion1AutoDepthOff
       {
         uint8_t command_type = 'D';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1AutoDepthStep
+      struct __attribute__((__packed__)) CmdVersion1AutoDepthStep
       {
         uint8_t command_type = 'a';
         //! "description": " 1 for up, -1 for down"
         int16_t direction = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1AutoHeadingStep
+      struct __attribute__((__packed__)) CmdVersion1AutoHeadingStep
       {
         uint8_t command_type = 'A';
         //! "description": "1 for up, -1 for down"
         int16_t direction = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SetSystemTime
+      struct __attribute__((__packed__)) CmdVersion1SetSystemTime
       {
         //! "description": "set the system time on the on-board computer",
         //! "expected_reply": "a",
@@ -276,7 +276,7 @@ namespace Control
         int32_t unix_timestamp = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SetCameraExposure
+      struct __attribute__((__packed__)) CmdVersion1SetCameraExposure
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -285,7 +285,7 @@ namespace Control
         int32_t exposure_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SetCameraWhitebalance
+      struct __attribute__((__packed__)) CmdVersion1SetCameraWhitebalance
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -294,7 +294,7 @@ namespace Control
         int32_t whitebalance_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SetCameraHue
+      struct __attribute__((__packed__)) CmdVersion1SetCameraHue
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -303,7 +303,7 @@ namespace Control
         int32_t hue_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1SetCameraBitrate
+      struct __attribute__((__packed__)) CmdVersion1SetCameraBitrate
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -312,13 +312,13 @@ namespace Control
         int32_t bitrate_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion1GetCameraParameters
+      struct __attribute__((__packed__)) CmdVersion1GetCameraParameters
       {
         uint8_t command_type = 'V';
         uint8_t command_subtype = 'a';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolReplyVersion1GetCameraParameters
+      struct __attribute__((__packed__)) ReplyVersion1GetCameraParameters
       {
         uint8_t command_type = 'V';
         uint8_t command_subtype = 'a';
@@ -332,12 +332,12 @@ namespace Control
 
       // Version: 2 commands
 
-      struct __attribute__((__packed__)) P2AppProtocolReplyVersion2Ack
+      struct __attribute__((__packed__)) ReplyVersion2Ack
       {
         uint8_t command_type = 'a';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2MotionInput
+      struct __attribute__((__packed__)) CmdVersion2MotionInput
       {
         uint8_t command_type = 'j';
         //! "upper_limit": 1,
@@ -360,7 +360,7 @@ namespace Control
         float boost_input = 0.0f;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2MotionInputTilt
+      struct __attribute__((__packed__)) CmdVersion2MotionInputTilt
       {
         uint8_t command_type = 'J';
         //! "upper_limit": 1,
@@ -387,7 +387,7 @@ namespace Control
         float tilt_speed_input = 0.0f;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetLights
+      struct __attribute__((__packed__)) CmdVersion2SetLights
       {
         uint8_t command_type = 'l';
         //! "upper_limit": 255,
@@ -398,44 +398,44 @@ namespace Control
         uint8_t brightness_lower = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2Ping
+      struct __attribute__((__packed__)) CmdVersion2Ping
       {
         //! "expected_reply": "P"
         uint8_t command_type = 'p';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolReplyVersion2Ping
+      struct __attribute__((__packed__)) ReplyVersion2Ping
       {
         //! "reply from": "p"
         uint8_t command_type = 'P';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2StartRecording
+      struct __attribute__((__packed__)) CmdVersion2StartRecording
       {
         uint8_t command_type = 'r';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2StopRecording
+      struct __attribute__((__packed__)) CmdVersion2StopRecording
       {
         uint8_t command_type = 'R';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2StartCompassCalibration
+      struct __attribute__((__packed__)) CmdVersion2StartCompassCalibration
       {
         uint8_t command_type = 'i';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2CancelCompassCalibration
+      struct __attribute__((__packed__)) CmdVersion2CancelCompassCalibration
       {
         uint8_t command_type = 'I';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SaveCompassCalibration
+      struct __attribute__((__packed__)) CmdVersion2SaveCompassCalibration
       {
         uint8_t command_type = 'c';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2UserGeoLocation
+      struct __attribute__((__packed__)) CmdVersion2UserGeoLocation
       {
         uint8_t command_type = 'g';
         //! "description": "longitude that is included in the log file in degrees"
@@ -444,48 +444,48 @@ namespace Control
         double latitude = 0.0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2Watchdog
+      struct __attribute__((__packed__)) CmdVersion2Watchdog
       {
         uint8_t command_type = 'w';
         //! "description": "time in seconds since connected to drone"
         int16_t connection_duration = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2AutoHeadingOn
+      struct __attribute__((__packed__)) CmdVersion2AutoHeadingOn
       {
         uint8_t command_type = 'h';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2AutoHeadingOff
+      struct __attribute__((__packed__)) CmdVersion2AutoHeadingOff
       {
         uint8_t command_type = 'H';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2AutoDepthOn
+      struct __attribute__((__packed__)) CmdVersion2AutoDepthOn
       {
         uint8_t command_type = 'd';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2AutoDepthOff
+      struct __attribute__((__packed__)) CmdVersion2AutoDepthOff
       {
         uint8_t command_type = 'D';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2AutoDepthStep
+      struct __attribute__((__packed__)) CmdVersion2AutoDepthStep
       {
         uint8_t command_type = 'a';
         //! "description": " 1 for up, -1 for down"
         int16_t direction = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2AutoHeadingStep
+      struct __attribute__((__packed__)) CmdVersion2AutoHeadingStep
       {
         uint8_t command_type = 'A';
         //! "description": "1 for up, -1 for down"
         int16_t direction = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetSystemTime
+      struct __attribute__((__packed__)) CmdVersion2SetSystemTime
       {
         //! "description": "set the system time on the on-board computer",
         //! "expected_reply": "a",
@@ -493,7 +493,7 @@ namespace Control
         int32_t unix_timestamp = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetWaterDensity
+      struct __attribute__((__packed__)) CmdVersion2SetWaterDensity
       {
         //! "description": "Set the water density for improved accuracy of the depth sensor.",
         uint8_t command_type = 'W';
@@ -502,13 +502,13 @@ namespace Control
         int16_t water_density = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2TakeStillPicture
+      struct __attribute__((__packed__)) CmdVersion2TakeStillPicture
       {
         //! "description": "Takes a still picture and stores it locally on the drone."
         uint8_t command_type = 's';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraExposure
+      struct __attribute__((__packed__)) CmdVersion2SetCameraExposure
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -517,7 +517,7 @@ namespace Control
         int32_t exposure_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraWhitebalance
+      struct __attribute__((__packed__)) CmdVersion2SetCameraWhitebalance
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -526,7 +526,7 @@ namespace Control
         int32_t whitebalance_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraHue
+      struct __attribute__((__packed__)) CmdVersion2SetCameraHue
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -535,7 +535,7 @@ namespace Control
         int32_t hue_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraBitrate
+      struct __attribute__((__packed__)) CmdVersion2SetCameraBitrate
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -544,7 +544,7 @@ namespace Control
         int32_t bitrate_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraFramerate
+      struct __attribute__((__packed__)) CmdVersion2SetCameraFramerate
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -553,7 +553,7 @@ namespace Control
         int32_t framerate_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2SetCameraResolution
+      struct __attribute__((__packed__)) CmdVersion2SetCameraResolution
       {
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
@@ -562,13 +562,13 @@ namespace Control
         int32_t resolution_value = 0;
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolCmdVersion2GetCameraParameters
+      struct __attribute__((__packed__)) CmdVersion2GetCameraParameters
       {
         uint8_t command_type = 'V';
         uint8_t command_subtype = 'a';
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolReplyVersion2GetCameraParameters
+      struct __attribute__((__packed__)) ReplyVersion2GetCameraParameters
       {
         uint8_t command_type = 'V';
         uint8_t command_subtype = 'a';

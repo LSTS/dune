@@ -38,7 +38,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#include "PioneerAppProtocolMessages.hpp"
+#include "ProtocolMessages.hpp"
 
 namespace Control
 {

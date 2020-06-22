@@ -35,8 +35,8 @@
 // Pioneer headers.
 #include "Comm.hpp"
 #include "Logger.hpp"
-#include "PioneerAppProtocolCommands.hpp"
-#include "PioneerAppProtocolMessages.hpp"
+#include "ProtocolCommands.hpp"
+#include "ProtocolMessages.hpp"
 #include "ProtocolPack.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
@@ -108,7 +108,7 @@ namespace Control
 
 
       // Pioneer commands messages
-      PioneerAppProtocolCommands::P2AppProtocolCmdVersion1Watchdog m_watchdog_msg;
+      ProtocolCommands::CmdVersion1Watchdog m_watchdog_msg;
 
 
       //! Constructor.
@@ -359,10 +359,10 @@ namespace Control
         {
           switch ((buf[startIndex] << 8) + buf[startIndex + 1])
           {
-          case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
-            PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry* msgV1Telm;
-            msgV1Telm = new PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry();
-            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
+          case ProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+            ProtocolMessages::DataVersion1Telemetry* msgV1Telm;
+            msgV1Telm = new ProtocolMessages::DataVersion1Telemetry();
+            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion1Telemetry>(
                 this, buf, startIndex, length, msgV1Telm);
             if (rb > 0)
             {
@@ -372,10 +372,10 @@ namespace Control
             }
             Memory::clear(msgV1Telm);
             break;
-          case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
-            PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry* msgV2Telm;
-            msgV2Telm = new PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry();
-            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
+          case ProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
+            ProtocolMessages::DataVersion2Telemetry* msgV2Telm;
+            msgV2Telm = new ProtocolMessages::DataVersion2Telemetry();
+            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion2Telemetry>(
                 this, buf, startIndex, length, msgV2Telm);
             if (rb > 0)
             {
@@ -385,10 +385,10 @@ namespace Control
             }
             Memory::clear(msgV2Telm);
             break;
-          case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
-            PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration* msgV2CompassCal;
-            msgV2CompassCal = new PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration();
-            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
+          case ProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
+            ProtocolMessages::DataVersion2Compasscalibration* msgV2CompassCal;
+            msgV2CompassCal = new ProtocolMessages::DataVersion2Compasscalibration();
+            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion2Compasscalibration>(
                 this, buf, startIndex, length, msgV2CompassCal);
             if (rb > 0)
             {
@@ -421,11 +421,11 @@ namespace Control
         {
           switch (buf[startIndex])
           {
-          //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_ACK:
-          case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_ACK:
-            PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack* msgAck;
-            msgAck = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack();
-            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack>(
+          //case ProtocolCommands::PIONEER_REPLY_VERSION_1_ACK:
+          case ProtocolCommands::PIONEER_REPLY_VERSION_2_ACK:
+            ProtocolCommands::ReplyVersion2Ack* msgAck;
+            msgAck = new ProtocolCommands::ReplyVersion2Ack();
+            rb = ProtocolPack::Pack::unpack<ProtocolCommands::ReplyVersion2Ack>(
                 this, buf, startIndex, length, msgAck);
             if (rb > 0)
             {
@@ -435,11 +435,11 @@ namespace Control
             }
             Memory::clear(msgAck);
             break;
-          //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_PING:
-          case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_PING:
-            PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping* msgPing;
-            msgPing = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping();
-            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping>(
+          //case ProtocolCommands::PIONEER_REPLY_VERSION_1_PING:
+          case ProtocolCommands::PIONEER_REPLY_VERSION_2_PING:
+            ProtocolCommands::ReplyVersion2Ping* msgPing;
+            msgPing = new ProtocolCommands::ReplyVersion2Ping();
+            rb = ProtocolPack::Pack::unpack<ProtocolCommands::ReplyVersion2Ping>(
                 this, buf, startIndex, length, msgPing);
             if (rb > 0)
             {
@@ -449,12 +449,12 @@ namespace Control
             }
             Memory::clear(msgPing);
             break;
-          //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_GET_CAMERA:
-          case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_GET_CAMERA:
-            PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters* msgGetCamParams;
-            msgGetCamParams = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters();
+          //case ProtocolCommands::PIONEER_REPLY_VERSION_1_GET_CAMERA:
+          case ProtocolCommands::PIONEER_REPLY_VERSION_2_GET_CAMERA:
+            ProtocolCommands::ReplyVersion2GetCameraParameters* msgGetCamParams;
+            msgGetCamParams = new ProtocolCommands::ReplyVersion2GetCameraParameters();
             // For now is just one msg
-            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
+            rb = ProtocolPack::Pack::unpack<ProtocolCommands::ReplyVersion2GetCameraParameters>(
                 this, buf, startIndex, length, msgGetCamParams);
             if (rb > 0)
             {
@@ -518,19 +518,19 @@ namespace Control
       }
 
       void
-      handlePioneerV2ReplyAck(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msg)
+      handlePioneerV2ReplyAck(ProtocolCommands::ReplyVersion2Ack msg)
       {
         // TODO something with msg
       }
 
       void
-      handlePioneerV2ReplyPing(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping msg)
+      handlePioneerV2ReplyPing(ProtocolCommands::ReplyVersion2Ping msg)
       {
         // TODO something with msg
       }
 
       void
-      handlePioneerV2ReplyGetCamera(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters msg)
+      handlePioneerV2ReplyGetCamera(ProtocolCommands::ReplyVersion2GetCameraParameters msg)
       {
         // TODO something with msg
         debug("camera_bitrate %d", msg.camera_bitrate);
@@ -539,7 +539,7 @@ namespace Control
 
       //! This will handle parsing Pionner V1 Telemetry message
       void
-      handlePioneerV1Telemetry(PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry msg)
+      handlePioneerV1Telemetry(ProtocolMessages::DataVersion1Telemetry msg)
       {
         // TODO something with msg
         debug("Voltage %u", msg.battery_voltage);
@@ -547,7 +547,7 @@ namespace Control
 
       //! This will handle parsing Pionner V2 Telemetry message
       void
-      handlePioneerV2Telemetry(PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry msg)
+      handlePioneerV2Telemetry(ProtocolMessages::DataVersion2Telemetry msg)
       {
         // TODO something with msg
         debug("Depth = %d", msg.depth / 1000);
@@ -568,7 +568,7 @@ namespace Control
 
       //! This will handle parsing Pionner V2 Compass Calibration message
       void
-      handlePioneerV2CompassCalibration(PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration msg)
+      handlePioneerV2CompassCalibration(ProtocolMessages::DataVersion2Compasscalibration msg)
       {
         // TODO something with msg
         debug("progress_thruster %u",msg.progress_thruster);

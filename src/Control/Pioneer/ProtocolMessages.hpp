@@ -27,8 +27,8 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
-#ifndef CONTROL_PIONEER_PIONEER_APP_PROTOCOL_MESSAGES_HPP_INCLUDED_
-#define CONTROL_PIONEER_PIONEER_APP_PROTOCOL_MESSAGES_HPP_INCLUDED_
+#ifndef CONTROL_PIONEER_PROTOCOL_MESSAGES_HPP_INCLUDED_
+#define CONTROL_PIONEER_PROTOCOL_MESSAGES_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -41,7 +41,7 @@ namespace Control
 {
   namespace Pioneer
   {
-    namespace PioneerAppProtocolMessages
+    namespace ProtocolMessages
     {
       enum Pioneer_Msg_Version
       {
@@ -95,7 +95,7 @@ namespace Control
         PIONEER_ERROR_FLAGS_ERR_TILT_CALIBRATION = 0x00000080,
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolDataVersion1Telemetry {
+      struct __attribute__((__packed__)) DataVersion1Telemetry {
         uint8_t version = 1; // Protocol version []
         uint8_t command_type = 1; //  []
         uint32_t time; //  []
@@ -154,7 +154,7 @@ namespace Control
         uint16_t battery_serial_number; //  []
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolDataVersion2Telemetry {
+      struct __attribute__((__packed__)) DataVersion2Telemetry {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 1; // Command type []
         uint32_t time; // Time [ms]
@@ -223,7 +223,7 @@ namespace Control
         uint16_t battery_serial_number; // Battery serial number []
       };
 
-      struct __attribute__((__packed__)) P2AppProtocolDataVersion2Compasscalibration {
+      struct __attribute__((__packed__)) DataVersion2Compasscalibration {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 2; // Command type []
         int8_t active_status; // Active Status []
