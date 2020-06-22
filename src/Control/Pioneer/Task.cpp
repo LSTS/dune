@@ -550,6 +550,10 @@ namespace Control
         euler.psi = Angles::radians((fp64_t) msg.yaw);
         euler.psi_magnetic = Angles::radians((fp64_t) msg.yaw); //TBC if magnetic heading is not available
         dispatch(euler);
+
+        IMC::Temperature temp;
+        temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
+        dispatch(temp);
       }
 
       //! This will handle parsing Pionner V2 Compass Calibration message
