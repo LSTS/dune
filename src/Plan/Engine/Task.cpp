@@ -698,12 +698,13 @@ namespace Plan
       bool
       stopPlan(bool plan_startup = false)
       {
-        if (initMode() || execMode())
+        if (initMode() || execMode() || pauseMode())
         {
           if (!plan_startup)
           {
             // stop maneuver only if we are not executing a plan afterwards
-            vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
+            if (!pauseMode())
+              vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
 
             m_reply.plan_id = m_spec.plan_id;
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
