@@ -49,7 +49,8 @@ namespace Maneuver
       //! Default constructor.
       //! @param[in] task pointer to Maneuver task
       FollowPath(Maneuvers::Maneuver* task):
-        MuxedManeuver<IMC::FollowPath, void>(task)
+        MuxedManeuver<IMC::FollowPath, void>(task),
+        m_paused(false)
       { }
 
       //! Destructor
@@ -64,14 +65,11 @@ namespace Maneuver
         m_curr = 0;
       }
 
-      //! Start maneuver function
-      //! @param[in] maneuver followpath maneuver message
       void
-      onStart(const IMC::FollowPath* maneuver)
+      readManeuverPoints(IMC::FollowPath const* maneuver)
       {
-        reset();
-
-        IMC::MessageList<IMC::PathPoint>::const_iterator itr = maneuver->points.begin();
+        IMC::MessageList<IMC::PathPoint>::const_iterator itr
+        = maneuver->points.begin();
 
         // Iterate point list
         for (; itr != maneuver->points.end(); itr++)
@@ -88,19 +86,37 @@ namespace Maneuver
 
           m_wpts.push_back(w);
         }
+      }
 
-        if (!m_wpts.size())
+      //! Start maneuver function
+      //! @param[in] maneuver followpath maneuver message
+      void
+      onStart(const IMC::FollowPath* maneuver)
+      {
+        if (!m_paused)
         {
-          m_task->signalCompletion();
-          return;
+          reset();
+          readManeuverPoints(maneuver);
+
+          if (!m_wpts.size())
+          {
+            m_task->signalCompletion();
+            return;
+          }
+
+          m_task->debug("starting path with %lu waypoints",
+                        static_cast<long unsigned int>(m_wpts.size()));
+
+          m_path.speed = maneuver->speed;
+          m_path.speed_units = maneuver->speed_units;
+        }
+        else
+        {
+          m_task->debug("Resuming FollowPath at waypoint %u", m_curr);
+          m_paused = false;
         }
 
-        m_task->debug("starting path with %lu waypoints", (long unsigned int)m_wpts.size());
-
         m_task->setControl(IMC::CL_PATH);
-
-        m_path.speed = maneuver->speed;
-        m_path.speed_units = maneuver->speed_units;
         gotoNextPoint();
       }
 
@@ -141,6 +157,16 @@ namespace Maneuver
         m_task->dispatch(m_path);
       }
 
+      void
+      onPause(void)
+      {
+        if (!m_wpts.size() || m_curr >= m_wpts.size())
+          return;
+
+        m_task->debug("Pausing FollowPath at waypoint %u", m_curr);
+        m_paused = true;
+      }
+
     private:
       //! Struct for waypoint
       struct Waypoint
@@ -157,6 +183,8 @@ namespace Maneuver
       std::vector<Waypoint> m_wpts;
       //! Current waypoint.
       unsigned int m_curr;
+      //! Indicates whether the maneuver was paused.
+      bool m_paused;
     };
   }
 }
