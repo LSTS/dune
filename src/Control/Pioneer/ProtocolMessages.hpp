@@ -68,7 +68,8 @@ namespace Control
       };
 
       //! "dtype": "uint8_t"
-      enum Pioneer_Error_Flags_Bitmask {
+      enum Pioneer_Error_Flags_Bitmask
+      {
         //! "component": "pmu",
         //! "description": "Did not receive ack from pmu"
         PIONEER_ERROR_FLAGS_ERR_PMU_COMM_ACK = 0x00000001,
@@ -95,7 +96,8 @@ namespace Control
         PIONEER_ERROR_FLAGS_ERR_TILT_CALIBRATION = 0x00000080,
       };
 
-      struct __attribute__((__packed__)) DataVersion1Telemetry {
+      struct __attribute__((__packed__)) DataVersion1Telemetry
+      {
         uint8_t version = 1; // Protocol version []
         uint8_t command_type = 1; //  []
         uint32_t time; //  []
@@ -154,7 +156,8 @@ namespace Control
         uint16_t battery_serial_number; //  []
       };
 
-      struct __attribute__((__packed__)) DataVersion2Telemetry {
+      struct __attribute__((__packed__)) DataVersion2Telemetry
+      {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 1; // Command type []
         uint32_t time; // Time [ms]
@@ -223,7 +226,8 @@ namespace Control
         uint16_t battery_serial_number; // Battery serial number []
       };
 
-      struct __attribute__((__packed__)) DataVersion2Compasscalibration {
+      struct __attribute__((__packed__)) DataVersion2Compasscalibration
+      {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 2; // Command type []
         int8_t active_status; // Active Status []
