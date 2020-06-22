@@ -227,7 +227,7 @@ namespace Control
             if (m_sock == NULL)
             {
               Time::Delay::wait(0.5);
-               if (m_sock == NULL)
+              if (m_sock == NULL)
               {
                 m_task->debug("Call reconnect");
                 reconnect();
