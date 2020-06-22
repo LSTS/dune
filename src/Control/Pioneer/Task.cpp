@@ -195,8 +195,16 @@ namespace Control
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_TCP_comm);
-        Memory::clear(m_UDP_comm);
+        if (m_TCP_comm != NULL)
+        {
+          m_TCP_comm->stopAndJoin();
+          Memory::clear(m_TCP_comm);
+        }
+        if (m_UDP_comm != NULL)
+        {
+          m_UDP_comm->stopAndJoin();
+          Memory::clear(m_UDP_comm);
+        }
 
         for (auto const& elm : m_loggers)
         {
