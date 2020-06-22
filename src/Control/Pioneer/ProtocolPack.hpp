@@ -27,8 +27,8 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
-#ifndef CONTROL_PIONEER_PIONEER_APP_PROTOCOL_PACK_HPP_INCLUDED_
-#define CONTROL_PIONEER_PIONEER_APP_PROTOCOL_PACK_HPP_INCLUDED_
+#ifndef CONTROL_PIONEER_PROTOCOL_PACK_HPP_INCLUDED_
+#define CONTROL_PIONEER_PROTOCOL_PACK_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -44,7 +44,7 @@ namespace Control
 {
   namespace Pioneer
   {
-    namespace PioneerAppProtocolPack
+    namespace ProtocolPack
     {
       class Pack
       {

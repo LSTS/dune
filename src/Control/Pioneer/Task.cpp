@@ -33,11 +33,11 @@
 #include <DUNE/DUNE.hpp>
 
 // Pioneer headers.
-#include "PioneerAppProtocolMessages.hpp"
-#include "PioneerAppProtocolCommands.hpp"
-#include "PioneerAppProtocolPack.hpp"
 #include "Comm.hpp"
 #include "Logger.hpp"
+#include "PioneerAppProtocolCommands.hpp"
+#include "PioneerAppProtocolMessages.hpp"
+#include "ProtocolPack.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
 // expects:
@@ -362,7 +362,7 @@ namespace Control
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
             PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry* msgV1Telm;
             msgV1Telm = new PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry();
-            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
+            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
                 this, buf, startIndex, length, msgV1Telm);
             if (rb > 0)
             {
@@ -375,7 +375,7 @@ namespace Control
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
             PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry* msgV2Telm;
             msgV2Telm = new PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry();
-            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
+            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
                 this, buf, startIndex, length, msgV2Telm);
             if (rb > 0)
             {
@@ -388,7 +388,7 @@ namespace Control
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
             PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration* msgV2CompassCal;
             msgV2CompassCal = new PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration();
-            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
+            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
                 this, buf, startIndex, length, msgV2CompassCal);
             if (rb > 0)
             {
@@ -425,7 +425,7 @@ namespace Control
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_ACK:
             PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack* msgAck;
             msgAck = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack();
-            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack>(
+            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack>(
                 this, buf, startIndex, length, msgAck);
             if (rb > 0)
             {
@@ -439,7 +439,7 @@ namespace Control
           case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_2_PING:
             PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping* msgPing;
             msgPing = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping();
-            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping>(
+            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping>(
                 this, buf, startIndex, length, msgPing);
             if (rb > 0)
             {
@@ -454,7 +454,7 @@ namespace Control
             PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters* msgGetCamParams;
             msgGetCamParams = new PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters();
             // For now is just one msg
-            rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
+            rb = ProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
                 this, buf, startIndex, length, msgGetCamParams);
             if (rb > 0)
             {
@@ -499,7 +499,7 @@ namespace Control
         char *type_name = abi::__cxa_demangle(typeid(MsgStruct).name(), 0, 0, &st);
         try
         {
-          int dataLength = PioneerAppProtocolPack::Pack::pack(this, msg, m_buf_send);
+          int dataLength = ProtocolPack::Pack::pack(this, msg, m_buf_send);
           sd = m_TCP_comm->sendData(m_buf_send, dataLength);
           if (sd > 0)
           {
