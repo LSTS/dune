@@ -438,6 +438,32 @@ namespace Control
         }
       }
 
+      //! To send Pioneer comands to the vehicle
+      template <class MsgStruct>
+      int
+      sendCommand(MsgStruct* msg)
+      {
+        int sd = 0;
+        int st;
+        char *type_name = abi::__cxa_demangle(typeid(MsgStruct).name(), 0, 0, &st);
+        try
+        {
+          int dataLength = PioneerAppProtocolPack::Pack::pack(this, msg, m_buf_send);
+          sd = m_TCP_comm->sendData(m_buf_send, dataLength);
+          if (sd > 0)
+          {
+            debug("Send %d bytes for msg %s", sd, type_name);
+            m_loggers[LOGGER_COMMANDS]->write(m_buf_send, 0, dataLength);
+          }
+        }
+        catch(const std::exception& e)
+        {
+          err("%s", e.what());
+        }
+        free(type_name);
+        return sd;
+      }
+
       void
       handlePioneerV2ReplyAck(PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack msg)
       {
@@ -501,9 +527,7 @@ namespace Control
         if (m_TCP_comm->isConnected() && msg->getSource() == getSystemId())
         {
           m_watchdog_msg.connection_duration = (int16_t) (Time::Clock::getSinceEpoch() - m_start_time);
-          int dataLength = PioneerAppProtocolPack::Pack::pack(this, &m_watchdog_msg, m_buf_send);
-          int sd = m_TCP_comm->sendData(m_buf_send, dataLength);
-          debug("Send %d", sd);
+          sendCommand(&m_watchdog_msg);
         }
       }
 
