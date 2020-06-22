@@ -143,6 +143,7 @@ namespace Control
         .description("Log Pioneer raw messages as IMC DevDataBinary");
 
         // Setup processing of IMC messages
+        bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
       }
@@ -562,6 +563,18 @@ namespace Control
       {
         // TODO something with msg
         debug("progress_thruster %u",msg.progress_thruster);
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      { // To set the lat/lon on the Pioneer
+        double latRad = msg->lat;
+        double lonRad = msg->lon;
+        WGS84::displace(msg->x, msg->y, &latRad, &lonRad);
+        ProtocolCommands::CmdVersion1UserGeoLocation geo;
+        geo.latitude = Angles::degrees(Angles::normalizeRadian(latRad));
+        geo.longitude = Angles::degrees(Angles::normalizeRadian(lonRad));
+        sendCommand(&geo);
       }
 
       void
