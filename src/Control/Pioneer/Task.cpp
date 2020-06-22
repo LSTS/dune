@@ -70,10 +70,6 @@ namespace Control
       Address TCP_addr;
       //! Use UDP Port for telemetry
       uint16_t UDP_listen_port;
-      //! UDP Port
-      uint16_t UDP_port;
-      //! UDP Address
-      Address UDP_addr;
       //! Log or not Pioneer raw messages
       bool log_pioneer_raw;
       //! Log raw Pioneer data as IMC DevDataBinary
@@ -137,14 +133,6 @@ namespace Control
         param("UDP - Listen Port", m_args.UDP_listen_port)
         .defaultValue("2010")
         .description("Port for connection from Pioneer");
-
-        param("UDP - Port", m_args.UDP_port)
-        .defaultValue("2010")
-        .description("Port for connection to Pioneer");
-
-        param("UDP - Address", m_args.UDP_addr)
-        .defaultValue("127.0.0.1")
-        .description("Address for connection to Pioneer");
 
         param("Log Pioneer Raw Messages", m_args.log_pioneer_raw)
         .defaultValue("true")
