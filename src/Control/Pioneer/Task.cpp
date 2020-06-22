@@ -27,6 +27,8 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
+#include <cxxabi.h>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -74,6 +76,8 @@ namespace Control
       Address UDP_addr;
       //! Log or not Pioneer raw messages
       bool log_pioneer_raw;
+      //! Log raw Pioneer data as IMC DevDataBinary
+      bool log_pioneer_imc;
     };
 
     enum LoggerEnum
@@ -147,6 +151,10 @@ namespace Control
         param("Log Pioneer Raw Messages", m_args.log_pioneer_raw)
         .defaultValue("true")
         .description("Log Pioneer raw messages to file");
+
+        param("Log Pioneer Raw Messages as IMC", m_args.log_pioneer_imc)
+        .defaultValue("false")
+        .description("Log Pioneer raw messages as IMC DevDataBinary");
 
         // Setup processing of IMC messages
         bind<Heartbeat>(this);
@@ -349,7 +357,11 @@ namespace Control
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion1Telemetry>(
                 this, buf, startIndex, length, msgV1Telm);
             if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV1Telemetry(*msgV1Telm);
+            }
             Memory::clear(msgV1Telm);
             break;
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
@@ -358,7 +370,11 @@ namespace Control
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Telemetry>(
                 this, buf, startIndex, length, msgV2Telm);
             if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV2Telemetry(*msgV2Telm);
+            }
             Memory::clear(msgV2Telm);
             break;
           case PioneerAppProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
@@ -367,7 +383,11 @@ namespace Control
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolMessages::P2AppProtocolDataVersion2Compasscalibration>(
                 this, buf, startIndex, length, msgV2CompassCal);
             if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV2CompassCalibration(*msgV2CompassCal);
+            }
             Memory::clear(msgV2CompassCal);
             break;
           default:
@@ -400,7 +420,11 @@ namespace Control
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ack>(
                 this, buf, startIndex, length, msgAck);
             if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV2ReplyAck(*msgAck);
+            }
             Memory::clear(msgAck);
             break;
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_PING:
@@ -410,7 +434,11 @@ namespace Control
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2Ping>(
                 this, buf, startIndex, length, msgPing);
             if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV2ReplyPing(*msgPing);
+            }
             Memory::clear(msgPing);
             break;
           //case PioneerAppProtocolCommands::PIONEER_REPLY_VERSION_1_GET_CAMERA:
@@ -421,7 +449,11 @@ namespace Control
             rb = PioneerAppProtocolPack::Pack::unpack<PioneerAppProtocolCommands::P2AppProtocolReplyVersion2GetCameraParameters>(
                 this, buf, startIndex, length, msgGetCamParams);
             if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV2ReplyGetCamera(*msgGetCamParams);
+            }
             Memory::clear(msgGetCamParams);
             break;
           default:
@@ -436,6 +468,17 @@ namespace Control
           err("%s", e.what());
           return 0;
         }
+      }
+
+      void
+      dispatchAsDevDataBinary(uint8_t* buf, uint16_t length)
+      {
+        if (!m_args.log_pioneer_imc)
+          return;
+        IMC::DevDataBinary data;
+        data.value.assign((const uint8_t*)buf,
+                          (const uint8_t*)buf + length);
+        dispatch(data);
       }
 
       //! To send Pioneer comands to the vehicle
@@ -454,6 +497,8 @@ namespace Control
           {
             debug("Send %d bytes for msg %s", sd, type_name);
             m_loggers[LOGGER_COMMANDS]->write(m_buf_send, 0, dataLength);
+            // Store sent command.
+            dispatchAsDevDataBinary(m_buf_send, dataLength);
           }
         }
         catch(const std::exception& e)
