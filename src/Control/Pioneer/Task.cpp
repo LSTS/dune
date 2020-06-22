@@ -106,10 +106,8 @@ namespace Control
 
       bool m_error_missing;
 
-
-      // Pioneer commands messages
+      //! Pioneer command watchdog message
       ProtocolCommands::CmdVersion1Watchdog m_watchdog_msg;
-
 
       //! Constructor.
       //! @param[in] name task name.
