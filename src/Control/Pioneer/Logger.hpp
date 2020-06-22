@@ -47,7 +47,7 @@ namespace Control
   {
     namespace Logger
     {
-      class Logger: public Thread
+      class Logger: public Concurrency::Thread
       {
         public:
         Logger(DUNE::Tasks::Task* task,

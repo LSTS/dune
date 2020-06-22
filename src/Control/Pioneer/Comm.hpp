@@ -27,8 +27,8 @@
 // Author: Paulo Dias                                                       *
 //***************************************************************************
 
-#ifndef CONTROL_PIONEER_PIONEER_COMM_HPP_INCLUDED_
-#define CONTROL_PIONEER_PIONEER_COMM_HPP_INCLUDED_
+#ifndef CONTROL_PIONEER_COMM_HPP_INCLUDED_
+#define CONTROL_PIONEER_COMM_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -46,7 +46,7 @@ namespace Control
 {
   namespace Pioneer
   {
-    namespace PioneerComm
+    namespace Comm
     {
       #define MAX_BUFFER 2048
 
@@ -56,7 +56,7 @@ namespace Control
       typedef std::function<void(uint8_t[], int , int)> DataLoggerFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
 
-      class Comm: public Thread
+      class Comm: public Concurrency::Thread
       {
       public:
         Comm(DUNE::Tasks::Task* task,

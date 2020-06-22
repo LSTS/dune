@@ -36,7 +36,7 @@
 #include "PioneerAppProtocolMessages.hpp"
 #include "PioneerAppProtocolCommands.hpp"
 #include "PioneerAppProtocolPack.hpp"
-#include "PioneerComm.hpp"
+#include "Comm.hpp"
 #include "Logger.hpp"
 
 // requests.get(f"http://{self._ip}/diagnostics/drone_info", timeout=3).json()
@@ -92,8 +92,8 @@ namespace Control
       //! Task arguments.
       Arguments m_args;
 
-      PioneerComm::TCPComm* m_TCP_comm;
-      PioneerComm::UDPComm* m_UDP_comm;
+      Comm::TCPComm* m_TCP_comm;
+      Comm::UDPComm* m_UDP_comm;
       uint8_t m_buf_send[1024];
 
       typedef std::map<int, Logger::Logger*> LoggerMap;
@@ -157,7 +157,7 @@ namespace Control
         .description("Log Pioneer raw messages as IMC DevDataBinary");
 
         // Setup processing of IMC messages
-        bind<Heartbeat>(this);
+        bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
       }
 
@@ -245,8 +245,8 @@ namespace Control
           {
             this->warnEntityState(state, code);
           };
-        m_TCP_comm = new PioneerComm::TCPComm(this, tcp_dataprocessor, set_entity_state, tcp_logger);
-        m_UDP_comm = new PioneerComm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger, true);
+        m_TCP_comm = new Comm::TCPComm(this, tcp_dataprocessor, set_entity_state, tcp_logger);
+        m_UDP_comm = new Comm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger, true);
 
         openConnectionTCP();
         openConnectionUDP();
