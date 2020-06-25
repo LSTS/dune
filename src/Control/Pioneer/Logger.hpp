@@ -64,38 +64,44 @@ namespace Control
         //! Destructor.
         ~Logger(void)
         {
-          stopLog();
+          stop();
         }
 
         void
-        startLog(std::string logFolder)
+        start(std::string logFolder)
         {
-          stopLog();
-
-          m_task->inf("Log start %s", logFolder.c_str());
+          stop();
 
           m_log_folder = logFolder;
 
           if (!m_log_folder.empty())
           {
-            Path(m_log_folder).create();
-            Path path = m_log_folder / (m_log_name_prefix + "_" + Format::getDateSafe()
-              + "_" + Format::getTimeSafe() + ".p2log.gz");
-            m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
-          }
+            try
+            {
+              Path(m_log_folder).create();
+              Path path = m_log_folder / (m_log_name_prefix + "_" + Format::getDateSafe()
+                + "_" + Format::getTimeSafe() + ".p2log.gz");
+              m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
 
-          start();
+              m_task->inf("Log start %s", logFolder.c_str());
+              Concurrency::Thread::start();
+            }
+            catch(const std::exception& e)
+            {
+              m_task->err("%s", e.what());
+            }
+          }
         }
 
         void
-        stopLog(void)
+        stop(void)
         {
-          stop();
           if (m_log)
           {
             m_log->flush();
             Memory::clear(m_log);
           }
+          Concurrency::Thread::stop();
         }
         
         void
@@ -133,6 +139,9 @@ namespace Control
         float m_flush_interval_secs;
         //! Has data written
         bool m_has_data_written;
+
+        //! Hiding base class start function in favor of the one providing the log name
+        using Concurrency::Thread::start;
 
         void
         flush(void)

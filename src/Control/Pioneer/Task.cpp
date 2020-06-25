@@ -195,7 +195,24 @@ namespace Control
 
         for (auto const& elm : m_loggers)
         {
-          elm.second->stopLog();
+          try
+          {
+            if (elm.second->isRunning() || elm.second->isStarting()
+                || elm.second->isStopping())
+            {
+              // err("JOIN");
+              elm.second->stopAndJoin();
+            }
+            else
+            {
+              // err("STOP");
+              elm.second->stop();
+            }
+          }
+          catch(const std::exception& e)
+          {
+            err("%s", e.what());
+          }
           delete elm.second;
         }
         m_loggers.clear();
@@ -600,7 +617,7 @@ namespace Control
                 Path folder = m_ctx.dir_log / msg->name;
                 for (auto const& elm : m_loggers)
                 {
-                  (elm.second->startLog(folder.c_str()));
+                  (elm.second->start(folder.c_str()));
                 }
               }
             }
@@ -612,7 +629,7 @@ namespace Control
           case IMC::LoggingControl::COP_STOPPED:
             for (auto const& elm : m_loggers)
             {
-              (elm.second->stopLog());
+              (elm.second->stop());
             }
             break;
         }
