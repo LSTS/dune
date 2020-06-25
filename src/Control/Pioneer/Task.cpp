@@ -197,17 +197,8 @@ namespace Control
         {
           try
           {
-            if (elm.second->isRunning() || elm.second->isStarting()
-                || elm.second->isStopping())
-            {
-              // err("JOIN");
-              elm.second->stopAndJoin();
-            }
-            else
-            {
-              // err("STOP");
-              elm.second->stop();
-            }
+            elm.second->stop();
+            try { elm.second->join(); } catch(...) {}
           }
           catch(const std::exception& e)
           {
