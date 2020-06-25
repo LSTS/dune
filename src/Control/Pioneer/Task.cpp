@@ -64,6 +64,8 @@ namespace Control
     {
       //! Communications timeout
       uint8_t comm_timeout;
+      //! Listen mode only
+      bool listen_mode;
       //! TCP Port for commands and replies
       uint16_t TCP_port;
       //! TCP Address
@@ -122,6 +124,10 @@ namespace Control
         .units(Units::Second)
         .description("Pioneer communications timeout");
 
+        param("Listen Mode", m_args.listen_mode)
+        .defaultValue("false")
+        .description("To not send any commands, just listen UDP data");
+
         param("TCP - Port", m_args.TCP_port)
         .defaultValue("2011")
         .description("Port for connection to Pioneer");
@@ -152,11 +158,12 @@ namespace Control
       void
       onUpdateParameters(void)
       {
-        if(m_TCP_comm && (paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port)))
+        if(m_TCP_comm && (paramChanged(m_args.TCP_addr) || paramChanged(m_args.TCP_port)
+          || paramChanged(m_args.listen_mode)))
         {
           m_TCP_comm->setTCPAddr(m_args.TCP_addr);
           m_TCP_comm->setTCPPort(m_args.TCP_port);
-          m_TCP_comm->reconnect();
+          m_args.listen_mode ? m_TCP_comm->disconnect() : m_TCP_comm->reconnect();
         }
 
         if(m_UDP_comm && paramChanged(m_args.UDP_listen_port))
@@ -184,12 +191,21 @@ namespace Control
       {
         if (m_TCP_comm != NULL)
         {
-          m_TCP_comm->stopAndJoin();
+          m_TCP_comm->stop();
+          try { m_TCP_comm->join(); } catch(...) {}
           Memory::clear(m_TCP_comm);
         }
         if (m_UDP_comm != NULL)
         {
-          m_UDP_comm->stopAndJoin();
+          try
+          {
+            m_UDP_comm->stop();
+            try { m_UDP_comm->join(); } catch(...) {}
+          }
+          catch(const std::exception& e)
+          {
+            err("%s", e.what());
+          }
           Memory::clear(m_UDP_comm);
         }
 
@@ -265,13 +281,16 @@ namespace Control
         try
         {
           m_TCP_comm->stop();
-          m_TCP_comm->disconnect();
-          m_TCP_comm->setTCPAddr(m_args.TCP_addr);
-          m_TCP_comm->setTCPPort(m_args.TCP_port);
-          m_TCP_comm->connect();
-          m_TCP_comm->start();
+          if (!m_args.listen_mode)
+          {
+            m_TCP_comm->disconnect();
+            m_TCP_comm->setTCPAddr(m_args.TCP_addr);
+            m_TCP_comm->setTCPPort(m_args.TCP_port);
+            m_TCP_comm->connect();
+            m_TCP_comm->start();
 
-          inf(DTR("Pioneer TCP interface initialized"));
+            inf(DTR("Pioneer TCP interface initialized"));
+          }
         }
         catch (...)
         {
@@ -489,6 +508,11 @@ namespace Control
       int
       sendCommand(MsgStruct* msg)
       {
+        if (m_args.listen_mode)
+        {
+          return 0;
+        }
+
         int sd = 0;
         int st;
         char *type_name = abi::__cxa_demangle(typeid(MsgStruct).name(), 0, 0, &st);
