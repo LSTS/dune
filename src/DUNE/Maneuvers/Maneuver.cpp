@@ -46,6 +46,7 @@ namespace DUNE
     {
       bind<IMC::StopManeuver>(this);
       bind<IMC::PathControlState>(this);
+      bind<IMC::ClearManeuverState>(this, true);
     }
 
     Maneuver::~Maneuver(void)
@@ -167,6 +168,12 @@ namespace DUNE
         return;
 
       onPathControlState(pcs);
+    }
+
+    void
+    Maneuver::consume(const IMC::ClearManeuverState*)
+    {
+      onClearManeuverState();
     }
 
     void

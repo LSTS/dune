@@ -84,6 +84,11 @@ namespace DUNE
       onManeuverPause(void)
       { }
 
+      //! On clear maneuver state
+      virtual void
+      onClearManeuverState(void)
+      { }
+
       //! On Path Control State
       virtual void
       onPathControlState(const IMC::PathControlState* pcs)
@@ -170,6 +175,11 @@ namespace DUNE
       //! @param pcs message to consume.
       void
       consume(const IMC::PathControlState* pcs);
+
+      //! Consumer for ClearManeuverState message.
+      //! @param cms message to consume.
+      void
+      consume(const IMC::ClearManeuverState* cms);
 
       //! Set or reconfigure control loops used by maneuver task.
       //! @param mask mask identifying controllers that should be made active.
