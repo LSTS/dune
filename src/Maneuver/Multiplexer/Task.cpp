@@ -428,6 +428,12 @@ namespace Maneuver
       }
 
       void
+      onClearManeuverState(void)
+      {
+        m_maneuvers[m_type]->onClearState();
+      }
+
+      void
       onManeuverPause(void)
       {
         m_maneuvers[m_type]->onPause();
