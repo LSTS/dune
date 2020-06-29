@@ -303,7 +303,7 @@ namespace Control
           .defaultValue("5760")
           .description("Port for connection to Ardupilot");
 
-          param("IPv4 - Address", m_args.ip)
+          param("Address", m_args.ip)
           .defaultValue("127.0.0.1")
           .description("Address for neptus connection to Ardupilot");
 
@@ -572,7 +572,7 @@ namespace Control
         }
 
         void
-		sendGPSParams()
+		sendGPSParams(bool enable)
         {
         	mavlink_message_t msg;
 			uint8_t buf[512];
@@ -584,45 +584,66 @@ namespace Control
             //USBL integration params
 			if(m_vehicle_type == VEHICLE_SUBMARINE)
 			{
-				mavlink_msg_param_set_pack(255, 0, &msg,
-							   m_sysid, //! target_system System ID
-							   0, //! target_component Component ID
-							   "EK2_GPS_TYPE", //! Parameter name
-							   2.0, //! 2D Position(2)
-							   MAV_PARAM_TYPE_UINT8); //! Parameter type
-				n = mavlink_msg_to_send_buffer(buf, &msg);
-				sendData(buf, n);
-
-				mavlink_msg_param_set_pack(255, 0, &msg,
-							   m_sysid, //! target_system System ID
-							   0, //! target_component Component ID
-							   "GPS_AUTO_SWITCH", //! Parameter name
-							   1.0, //! 0-disable, 1-use best lock, 2-blend, 3-use worst
-							   MAV_PARAM_TYPE_UINT8); //! Parameter type
-				n = mavlink_msg_to_send_buffer(buf, &msg);
-				sendData(buf, n);
-
-				if(m_args.main_gps){
+				if(enable)
+				{
 					mavlink_msg_param_set_pack(255, 0, &msg,
-								   m_sysid, //! target_system System ID
-								   0, //! target_component Component ID
-								   "GPS_TYPE", //! Parameter name
-								   14.0, //! MAV GPS Type
-								   MAV_PARAM_TYPE_UINT8); //! Parameter type
+							m_sysid, //! target_system System ID
+							0, //! target_component Component ID
+							"EK2_GPS_TYPE", //! Parameter name
+							2.0, //! 2D Position(2)
+							MAV_PARAM_TYPE_UINT8); //! Parameter type
 					n = mavlink_msg_to_send_buffer(buf, &msg);
+					sendData(buf, n);
+
+					mavlink_msg_param_set_pack(255, 0, &msg,
+							m_sysid, //! target_system System ID
+							0, //! target_component Component ID
+							"GPS_AUTO_SWITCH", //! Parameter name
+							1.0, //! 0-disable, 1-use best lock, 2-blend, 3-use worst
+							MAV_PARAM_TYPE_UINT8); //! Parameter type
+					n = mavlink_msg_to_send_buffer(buf, &msg);
+					sendData(buf, n);
+
+					if(m_args.main_gps){
+						mavlink_msg_param_set_pack(255, 0, &msg,
+								m_sysid, //! target_system System ID
+								0, //! target_component Component ID
+								"GPS_TYPE", //! Parameter name
+								14.0, //! MAV GPS Type
+								MAV_PARAM_TYPE_UINT8); //! Parameter type
+						n = mavlink_msg_to_send_buffer(buf, &msg);
+					}
+					else {
+						mavlink_msg_param_set_pack(255, 0, &msg,
+								m_sysid, //! target_system System ID
+								0, //! target_component Component ID
+								"GPS_TYPE2", //! Parameter name
+								14.0, //! MAV GPS Type
+								MAV_PARAM_TYPE_UINT8); //! Parameter type
+						n = mavlink_msg_to_send_buffer(buf, &msg);
+
+					}
+					sendData(buf, n);
 				}
 				else {
 					mavlink_msg_param_set_pack(255, 0, &msg,
-								   m_sysid, //! target_system System ID
-								   0, //! target_component Component ID
-								   "GPS_TYPE2", //! Parameter name
-								   14.0, //! MAV GPS Type
-								   MAV_PARAM_TYPE_UINT8); //! Parameter type
+							m_sysid, //! target_system System ID
+							0, //! target_component Component ID
+							"EK2_GPS_TYPE", //! Parameter name
+							0.0, //GPS 3D Vel and 2D Pos
+							MAV_PARAM_TYPE_UINT8); //! Parameter type
 					n = mavlink_msg_to_send_buffer(buf, &msg);
+					sendData(buf, n);
 
+					mavlink_msg_param_set_pack(255, 0, &msg,
+							m_sysid, //! target_system System ID
+							0, //! target_component Component ID
+							"GPS_TYPE", //! Parameter name
+							1.0, //! AUTO
+							MAV_PARAM_TYPE_UINT8); //! Parameter type
+					n = mavlink_msg_to_send_buffer(buf, &msg);
+					sendData(buf, n);
 				}
-				sendData(buf, n);
-
 			}
         }
 
@@ -1478,8 +1499,21 @@ namespace Control
           {
             if(m_estate.depth < 1)
               m_ground = true;
-            else
+            else {
               m_ground = false;
+              if(m_gps_send) {
+            	  sendGPSParams(false); //disable USBL gps at surface
+            	  m_gps_send = false;
+              }
+            }
+
+            if(vm->medium == IMC::VehicleMedium::VM_UNDERWATER) {
+            	if(!m_gps_send) {
+            		sendGPSParams(true); //enable underwater gps automatically when underwater
+            		m_gps_send = true;
+            	}
+            }
+
             return;
           }
 
@@ -1582,8 +1616,8 @@ namespace Control
 
 	void consume(const IMC::UsblFixExtended *fix) {
 		if (m_vehicle_type == VEHICLE_SUBMARINE) {
-			if(!m_gps_send){
-				sendGPSParams();
+			if(!m_gps_send || !m_ground){
+				sendGPSParams(true);
 				m_gps_send = true;
 			}
 			// Create MAVLink GPS_INPUT message.
@@ -2645,25 +2679,48 @@ namespace Control
 		mavlink_msg_param_value_decode(msg, &parameter);
 		debug(DTR("Received Parameter: %s with value %f"),parameter.param_id,parameter.param_value);
 		if(m_vehicle_type == VEHICLE_SUBMARINE){
-			if(std::strcmp("GPS_TYPE",parameter.param_id) == 0 &&
-					parameter.param_value != 14.0 && m_args.main_gps ){
-				m_gps_send = false;
-				sendGPSParams();
+			if(std::strcmp("GPS_TYPE",parameter.param_id) == 0){
+				if(!m_ground && parameter.param_value != 14.0 && m_args.main_gps ){
+					sendGPSParams(true);
+					m_gps_send = false;
+				}
+				else if(m_args.main_gps && m_ground) {
+					sendGPSParams(false);
+					m_gps_send = true;
+				}
 			}
-			else if(std::strcmp("GPS_TYPE2",parameter.param_id) == 0 &&
-					parameter.param_value != 14.0 && !m_args.main_gps ){
-				m_gps_send = false;
-				sendGPSParams();
+			else if(std::strcmp("GPS_TYPE2",parameter.param_id) == 0){
+				if(!m_ground && parameter.param_value != 14.0 && !m_args.main_gps){
+					sendGPSParams(true);
+					m_gps_send = false;
+				}
+				else if(!m_args.main_gps && m_ground) {
+					sendGPSParams(false);
+					m_gps_send = true;
+				}
 			}
-			else if(std::strcmp("EK2_GPS_TYPE",parameter.param_id) == 0 &&
-					parameter.param_value != 2.0){
-				m_gps_send = false;
-				sendGPSParams();
+			else if(std::strcmp("EK2_GPS_TYPE",parameter.param_id) == 0){
+				if(!m_ground && parameter.param_value != 2.0){ //vehicle underwater
+					sendGPSParams(true);
+					m_gps_send = false;
+
+				}
+				else if(m_ground){
+					sendGPSParams(false);
+					m_gps_send = true;
+
+				}
 			}
 			else if(std::strcmp("GPS_AUTO_SWITCH",parameter.param_id) == 0 &&
 					parameter.param_value != 1.0){
-				m_gps_send = false;
-				sendGPSParams();
+				if(!m_ground){
+					sendGPSParams(true);
+					m_gps_send = false;
+				}
+				else { //surface
+					sendGPSParams(false);// disable USBL GPS
+					m_gps_send = true;
+				}
 			}
         }
 	  }
