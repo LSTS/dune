@@ -430,7 +430,8 @@ namespace Maneuver
       void
       onClearManeuverState(void)
       {
-        m_maneuvers[m_type]->onClearState();
+        for (unsigned i = 0; i < TYPE_TOTAL; i++)
+          m_maneuvers[i]->onClearState();
       }
 
       void
