@@ -182,6 +182,12 @@ namespace Maneuver
         m_task->debug("Pausing Rows at waypoint %u", index);
       }
 
+      void
+      onClearState(void)
+      {
+        Memory::clear(m_paused_state);
+      }
+
     private:
       //! Data required to resume the maneuver.
       struct PausedState
