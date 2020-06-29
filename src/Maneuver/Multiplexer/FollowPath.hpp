@@ -167,6 +167,12 @@ namespace Maneuver
         m_paused = true;
       }
 
+      void
+      onClearState(void)
+      {
+        m_paused = false;
+      }
+
     private:
       //! Struct for waypoint
       struct Waypoint
