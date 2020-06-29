@@ -911,6 +911,9 @@ namespace Plan
 
         changeLog(plan_id);
 
+        IMC::ClearManeuverState clear_maneuvers;
+        dispatch(clear_maneuvers);
+
         // Flag the plan as starting
         if (initMode() || execMode())
         {
