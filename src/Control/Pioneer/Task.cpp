@@ -28,6 +28,7 @@
 //***************************************************************************
 
 #include <cxxabi.h>
+#include <cmath>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -78,6 +79,8 @@ namespace Control
       bool log_pioneer_raw;
       //! Log raw Pioneer data as IMC DevDataBinary
       bool log_pioneer_imc;
+      //! Set time in Pioneer
+      bool set_time_of_vehicle;
     };
 
     enum LoggerEnum
@@ -105,6 +108,8 @@ namespace Control
       double m_start_time;
 
       bool m_error_missing;
+      //! Control how often set time
+      double m_last_set_time;
 
       //! Pioneer command watchdog message
       ProtocolCommands::CmdVersion1Watchdog m_watchdog_msg;
@@ -117,7 +122,8 @@ namespace Control
         m_TCP_comm(NULL),
         m_UDP_comm(NULL),
         m_start_time(Time::Clock::getSinceEpoch()),
-        m_error_missing(false)
+        m_error_missing(false),
+        m_last_set_time(0.0)
       {
         param("Communications Timeout", m_args.comm_timeout)
         .minimumValue("1")
@@ -153,6 +159,10 @@ namespace Control
         param("Log Pioneer Raw Messages as IMC", m_args.log_pioneer_imc)
         .defaultValue("false")
         .description("Log Pioneer raw messages as IMC DevDataBinary");
+
+        param("Set Time of Vehicle", m_args.set_time_of_vehicle)
+        .defaultValue("true")
+        .description("Set time of vehicle");
 
         // Setup processing of IMC messages
         bind<IMC::EstimatedState>(this);
@@ -370,6 +380,37 @@ namespace Control
       {
       }
 
+      void
+      setPioneerTime(ProtocolMessages::DataVersion1Telemetry *msg)
+      {
+        setPioneerTime(msg->time);
+      }
+
+      void
+      setPioneerTime(ProtocolMessages::DataVersion2Telemetry *msg)
+      {
+        setPioneerTime(msg->time);
+      }
+
+      //! Set Pioneer time
+      void
+      setPioneerTime(uint32_t timeFromVehicleMsec)
+      {
+        if (!m_args.set_time_of_vehicle || m_args.listen_mode
+            || Time::Clock::getSinceEpoch() - m_last_set_time < 5.0)
+          return;
+
+        double time_sec = Time::Clock::getSinceEpoch();
+        if (std::abs(time_sec * 1E3 - timeFromVehicleMsec) > 1100)
+        {
+          ProtocolCommands::CmdVersion2SetSystemTime set_system_time;
+          set_system_time.unix_timestamp = (int32_t)Time::Clock::getSinceEpoch();
+          war(DTR("Setting time for vehicle"));
+          if (sendCommand(&set_system_time) > 0)
+            m_last_set_time = Time::Clock::getSinceEpoch();
+        }
+      }
+
       //! This will parse the receiving Pionner messages
       int
       pioneerMessagesParse(uint8_t buf[], int startIndex, int length)
@@ -386,6 +427,7 @@ namespace Control
                 this, buf, startIndex, length, msgV1Telm);
             if (rb > 0)
             {
+              setPioneerTime(msgV1Telm);
               // Store received data.
               dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV1Telemetry(*msgV1Telm);
@@ -399,6 +441,7 @@ namespace Control
                 this, buf, startIndex, length, msgV2Telm);
             if (rb > 0)
             {
+              setPioneerTime(msgV2Telm);
               // Store received data.
               dispatchAsDevDataBinary(&buf[startIndex], rb);
               handlePioneerV2Telemetry(*msgV2Telm);
