@@ -66,6 +66,8 @@ namespace Control
       uint8_t comm_timeout;
       //! Listen mode only
       bool listen_mode;
+      //! Generate EstmatedState from telemetry
+      bool generate_estimate_state_from_telemetry;
       //! TCP Port for commands and replies
       uint16_t TCP_port;
       //! TCP Address
@@ -127,6 +129,10 @@ namespace Control
         param("Listen Mode", m_args.listen_mode)
         .defaultValue("false")
         .description("To not send any commands, just listen UDP data");
+
+        param("Generate EstimatedState from Telemetry", m_args.generate_estimate_state_from_telemetry)
+        .defaultValue("false")
+        .description("Generate EstmatedState from telemetry");
 
         param("TCP - Port", m_args.TCP_port)
         .defaultValue("2011")
@@ -587,6 +593,18 @@ namespace Control
         IMC::Temperature temp;
         temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
         dispatch(temp);
+
+        if (m_args.generate_estimate_state_from_telemetry)
+        {
+          IMC::EstimatedState estate;
+          estate.lat = Angles::radians(41.18478174);
+          estate.lon = Angles::radians(-8.70657964);
+          estate.phi = Angles::radians((fp64_t) msg.roll);
+          estate.theta = Angles::radians((fp64_t) msg.pitch);
+          estate.psi = Angles::radians((fp64_t) msg.yaw);
+          estate.depth = (fp64_t) msg.depth;
+          dispatch(estate);
+        }
       }
 
       //! This will handle parsing Pionner V2 Compass Calibration message
@@ -600,6 +618,9 @@ namespace Control
       void
       consume(const IMC::EstimatedState* msg)
       { // To set the lat/lon on the Pioneer
+        if (m_args.generate_estimate_state_from_telemetry)
+          return;
+
         double latRad = msg->lat;
         double lonRad = msg->lon;
         WGS84::displace(msg->x, msg->y, &latRad, &lonRad);
