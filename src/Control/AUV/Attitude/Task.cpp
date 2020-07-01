@@ -147,6 +147,8 @@ namespace Control
         int sampling_rate_relation;
         //! Weights of the vertical reference filter.
         std::vector<float> vref_filt_weights;
+        //! Enable dedicated altitude controller.
+        bool altitude_control;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -341,6 +343,10 @@ namespace Control
           param("Altitude Control -- Filter Weights", m_args.vref_filt_weights)
           .description("Impulse response of the FIR filter used to smooth the "
                        "depth reference during altitude control.");
+
+          param("Altitude Control -- Enabled", m_args.altitude_control)
+          .defaultValue("false")
+          .description("Enable dedicated altitude controller.");
 
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
         }
@@ -659,8 +665,11 @@ namespace Control
 
                 // Positive depth rate implies negative pitch, so the PID output
                 // is inverted.
-                if (getVerticalMode() == VERTICAL_MODE_DEPTH)
+                if (getVerticalMode() == VERTICAL_MODE_DEPTH
+                    || !m_args.altitude_control)
+                {
                   cmd = -m_pid[LP_DEPTH].step(timestep, z_error, -z_rate);
+                }
                 else
                 {
                   const float ref_rate = m_vref_d.update(m_vref->get());
