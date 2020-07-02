@@ -151,9 +151,6 @@ namespace DUNE
     void
     Maneuver::consume(const IMC::StopManeuver*)
     {
-      if (!isActive())
-        return;
-
       stopManeuver("stopped");
     }
 
@@ -167,9 +164,6 @@ namespace DUNE
     void
     Maneuver::consume(const IMC::PathControlState* pcs)
     {
-      if (!isActive())
-        return;
-
       if (s_path_ref != pcs->path_ref)
         return;
 
