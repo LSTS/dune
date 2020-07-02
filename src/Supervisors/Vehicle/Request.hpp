@@ -62,12 +62,29 @@ namespace Supervisors
       double m_issue_time;
 
     public:
-      Request(RequestType type, const IMC::Message* m = NULL)
-      : m_type(type), m_msg(m ? m->clone() : new IMC::StopManeuver),
-        m_issue_time(-1)
+      Request(const IMC::Message* m)
+      : m_type(RT_START), m_msg(m->clone()), m_issue_time(-1)
       {
-        if (type >= RT_NTYPES)
-          throw std::runtime_error(DTR("Invalid request type."));
+      }
+
+      Request(RequestType type) : m_type(type), m_msg(nullptr), m_issue_time(-1)
+      {
+        switch (m_type)
+        {
+          case RT_STOP:
+            m_msg = new IMC::StopManeuver;
+            break;
+          case RT_PAUSE:
+            m_msg = new IMC::PauseManeuver;
+            break;
+          case RT_START:
+            throw std::runtime_error(
+            "Cannot create start request without a maneuver.");
+            break;
+          default:
+            throw std::runtime_error("Invalid request type.");
+            break;
+        }
       }
 
       ~Request(void)

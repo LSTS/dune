@@ -73,9 +73,7 @@ namespace Supervisors
       void
       addStop(void)
       {
-        IMC::StopManeuver msg;
-
-        Request* req = new Request(RT_STOP, &msg);
+        Request* req = new Request(RT_STOP);
         m_reqs.push(req);
 
         m_task->debug("added stop");
@@ -87,7 +85,7 @@ namespace Supervisors
       void
       addStart(const IMC::Message* msg)
       {
-        Request* req = new Request(RT_START, msg);
+        Request* req = new Request(msg);
         m_reqs.push(req);
 
         m_task->debug("added start %s", msg->getName());
@@ -99,9 +97,7 @@ namespace Supervisors
       void
       addPause(void)
       {
-        IMC::PauseManeuver msg;
-
-        Request* req = new Request(RT_PAUSE, &msg);
+        Request* req = new Request(RT_PAUSE);
         m_reqs.push(req);
 
         m_task->debug("added pause");
