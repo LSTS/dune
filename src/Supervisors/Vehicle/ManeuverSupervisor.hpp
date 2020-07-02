@@ -99,8 +99,7 @@ namespace Supervisors
       void
       addPause(void)
       {
-        IMC::StopManeuver msg;
-        msg.op = IMC::StopManeuver::OP_PAUSE;
+        IMC::PauseManeuver msg;
 
         Request* req = new Request(RT_PAUSE, &msg);
         m_reqs.push(req);
