@@ -171,6 +171,11 @@ namespace DUNE
       void
       consume(const IMC::StopManeuver* sm);
 
+      //! Consumer for PauseManeuver message.
+      //! @param pm message to consume.
+      void
+      consume(const IMC::PauseManeuver* pm);
+
       //! Consumer for PathControlState message.
       //! @param pcs message to consume.
       void
@@ -315,6 +320,11 @@ namespace DUNE
       //! @return new sequence number for the desired path
       uint32_t
       changePathRef(void);
+
+      //! Dispatch ManeuverControlState and request deactivation.
+      //! @param mcs_info info string for ManeuverControlState.
+      void
+      stopManeuver(char const* mcs_info);
 
       //! Entity to use when dispatching message
       unsigned m_eid;

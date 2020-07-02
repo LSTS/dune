@@ -45,6 +45,7 @@ namespace DUNE
       Tasks::Task(name, ctx)
     {
       bind<IMC::StopManeuver>(this);
+      bind<IMC::PauseManeuver>(this);
       bind<IMC::PathControlState>(this);
       bind<IMC::ClearManeuverState>(this, true);
     }
@@ -136,26 +137,31 @@ namespace DUNE
       }
     }
 
+    void Maneuver::stopManeuver(char const* mcs_info)
+    {
+      IMC::ManeuverControlState mcs;
+      mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
+      mcs.eta = 0;
+      mcs.info = mcs_info;
+
+      requestDeactivation();
+      dispatch(mcs);
+    }
+
     void
-    Maneuver::consume(const IMC::StopManeuver* sm)
+    Maneuver::consume(const IMC::StopManeuver*)
     {
       if (!isActive())
         return;
 
-      IMC::ManeuverControlState mcs;
-      mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
-      mcs.eta = 0;
+      stopManeuver("stopped");
+    }
 
-      if (sm->op == IMC::StopManeuver::OP_PAUSE)
-      {
-        onManeuverPause();
-        mcs.info = "paused";
-      }
-      else
-        mcs.info = "stopped";
-
-      requestDeactivation();
-      dispatch(mcs);
+    void
+    Maneuver::consume(const IMC::PauseManeuver*)
+    {
+      onManeuverPause();
+      stopManeuver("paused");
     }
 
     void
