@@ -279,11 +279,12 @@ namespace Control
             this->warnEntityState(state, code);
           };
         auto udp_package_acceptance = [this](Network::Address* address, uint16_t port) -> bool
-        {
+          {
             return !m_args.filter_udp_to_tcp_address || m_args.TCP_addr == *address ? true : false;
-        };
+          };
         m_TCP_comm = new Comm::TCPComm(this, tcp_dataprocessor, set_entity_state, tcp_logger);
-        m_UDP_comm = new Comm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger, udp_package_acceptance, true);
+        m_UDP_comm = new Comm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger,
+            udp_package_acceptance, true);
 
         openConnectionTCP();
         openConnectionUDP();

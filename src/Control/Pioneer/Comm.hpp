@@ -58,7 +58,7 @@ namespace Control
       //! Function for acceptance of UDP package
       typedef std::function<bool(DUNE::Network::Address*, uint16_t)> PackageAcceptanceFunction;
 
-          class Comm: public Concurrency::Thread
+      class Comm: public Concurrency::Thread
       {
       public:
         Comm(DUNE::Tasks::Task* task,
