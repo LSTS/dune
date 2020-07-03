@@ -568,10 +568,8 @@ namespace Control
       int
       sendCommand(MsgStruct* msg)
       {
-        if (m_args.listen_mode)
-        {
+        if (m_args.listen_mode || !m_TCP_comm->isConnected())
           return 0;
-        }
 
         int sd = 0;
         int st;
