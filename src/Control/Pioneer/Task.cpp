@@ -563,7 +563,7 @@ namespace Control
         dispatch(data);
       }
 
-      //! To send Pioneer comands to the vehicle
+      //! To send Pioneer commands to the vehicle
       template <class MsgStruct>
       int
       sendCommand(MsgStruct* msg)
