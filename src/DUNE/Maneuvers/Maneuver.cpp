@@ -137,7 +137,8 @@ namespace DUNE
       }
     }
 
-    void Maneuver::stopManeuver(char const* mcs_info)
+    void
+    Maneuver::stopManeuver(char const* mcs_info)
     {
       IMC::ManeuverControlState mcs;
       mcs.state = IMC::ManeuverControlState::MCS_STOPPED;
