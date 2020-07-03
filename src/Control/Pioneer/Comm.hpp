@@ -55,19 +55,23 @@ namespace Control
       //! Function that expects a buffer with start index with length.
       typedef std::function<void(uint8_t[], int , int)> DataLoggerFunction;
       typedef std::function<void(DUNE::IMC::EntityState::StateEnum, DUNE::Status::Code)> SetEntityStateFunction;
+      //! Function for acceptance of UDP package
+      typedef std::function<bool(DUNE::Network::Address*, uint16_t)> PackageAcceptanceFunction;
 
-      class Comm: public Concurrency::Thread
+          class Comm: public Concurrency::Thread
       {
       public:
         Comm(DUNE::Tasks::Task* task,
           DataProcessorFunction processData,
           SetEntityStateFunction setEntityState,
           DataLoggerFunction dataLogger = NULL,
+          PackageAcceptanceFunction packageAcceptanceFunction = NULL,
           uint16_t bufferCapacity = MAX_BUFFER):
         m_task(task),
         m_process_data_function(processData),
         m_data_logger(dataLogger),
         m_set_entity_state_function(setEntityState),
+        m_package_acceptance_function(packageAcceptanceFunction),
         m_sock(NULL),
         m_buf_capacity(bufferCapacity),
         m_buf(new uint8_t[bufferCapacity]),
@@ -151,6 +155,7 @@ namespace Control
 
       protected:
         SetEntityStateFunction m_set_entity_state_function;
+        PackageAcceptanceFunction m_package_acceptance_function;
         //! Parent task.
         DUNE::Tasks::Task* m_task;
         //! Communications timeout
@@ -203,7 +208,21 @@ namespace Control
           {
             try
             {
-              return m_sock->read(buf, blen);
+              if (m_package_acceptance_function)
+              {
+                UDPSocket* udp_socket = dynamic_cast<UDPSocket*>(m_sock);
+                if (udp_socket)
+                {
+                  Network::Address m_con_addr;
+                  uint16_t m_con_port;
+                  int ret = udp_socket-> read(buf, blen, &m_con_addr, &m_con_port);
+                  return m_package_acceptance_function(&m_con_addr, m_con_port) ? ret : 0;
+                }
+              }
+              else
+              {
+                return m_sock->read(buf, blen);
+              }
             }
             catch (std::runtime_error& e)
             {
@@ -325,7 +344,7 @@ namespace Control
           SetEntityStateFunction setEntityState,
           DataLoggerFunction dataLogger = NULL,
           uint16_t bufferCapacity = MAX_BUFFER):
-        Comm(task, processData, setEntityState, dataLogger, bufferCapacity)
+        Comm(task, processData, setEntityState, dataLogger, NULL, bufferCapacity)
         {
         }
 
@@ -405,9 +424,10 @@ namespace Control
           DataProcessorFunction processData,
           SetEntityStateFunction setEntityState,
           DataLoggerFunction dataLogger = NULL,
+          PackageAcceptanceFunction packageAcceptanceFunction = NULL,
           bool enableBroadcast = false,
           uint16_t bufferCapacity = MAX_BUFFER):
-        Comm(task, processData, setEntityState, dataLogger, bufferCapacity)
+        Comm(task, processData, setEntityState, dataLogger, packageAcceptanceFunction, bufferCapacity)
         {
           m_enable_broadcast = enableBroadcast;
         }

@@ -67,7 +67,9 @@ namespace Control
       uint8_t comm_timeout;
       //! Listen mode only
       bool listen_mode;
-      //! Generate EstmatedState from telemetry
+      //! Filter out Telemetry not matching TCP Address
+      bool filter_udp_to_tcp_address;
+      //! Generate EstimatedState from telemetry
       bool generate_estimate_state_from_telemetry;
       //! TCP Port for commands and replies
       uint16_t TCP_port;
@@ -135,6 +137,10 @@ namespace Control
         param("Listen Mode", m_args.listen_mode)
         .defaultValue("false")
         .description("To not send any commands, just listen UDP data");
+
+        param("Filter Out UDP not from Address for TCP", m_args.filter_udp_to_tcp_address)
+        .defaultValue("false")
+        .description("Filter out Telemetry not matching TCP Address");
 
         param("Generate EstimatedState from Telemetry", m_args.generate_estimate_state_from_telemetry)
         .defaultValue("false")
@@ -272,8 +278,12 @@ namespace Control
           {
             this->warnEntityState(state, code);
           };
+        auto udp_package_acceptance = [this](Network::Address* address, uint16_t port) -> bool
+        {
+            return !m_args.filter_udp_to_tcp_address || m_args.TCP_addr == *address ? true : false;
+        };
         m_TCP_comm = new Comm::TCPComm(this, tcp_dataprocessor, set_entity_state, tcp_logger);
-        m_UDP_comm = new Comm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger, true);
+        m_UDP_comm = new Comm::UDPComm(this, udp_dataprocessor, set_entity_state, udp_logger, udp_package_acceptance, true);
 
         openConnectionTCP();
         openConnectionUDP();
