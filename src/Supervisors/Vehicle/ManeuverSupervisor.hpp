@@ -293,28 +293,21 @@ namespace Supervisors
       bool
       isExpired(void)
       {
-        if (isProcessing())
-        {
-          if (Time::Clock::get() - m_curr_req->getIssueTime() > m_timeout)
-            return true;
-          else
-            return false;
-        }
-        else
-        {
+        if (!isProcessing())
           return false;
-        }
+
+        return Time::Clock::get() - m_curr_req->getIssueTime() > m_timeout;
       }
 
       //! Clear current request
       void
       clearCurrent(void)
       {
-        if (isProcessing())
-        {
-          m_task->debug("cleared %s request", m_curr_req->getTypeDescription());
-          Memory::clear(m_curr_req);
-        }
+        if (!isProcessing())
+          return;
+
+        m_task->debug("cleared %s request", m_curr_req->getTypeDescription());
+        Memory::clear(m_curr_req);
       }
 
       //! Pointer to task
