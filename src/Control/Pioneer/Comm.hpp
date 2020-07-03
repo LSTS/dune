@@ -396,6 +396,7 @@ namespace Control
           m_TCP_sock = new TCPSocket;
           m_TCP_sock->connect(m_TCP_addr, m_TCP_port);
           m_TCP_sock->setNoDelay(true);
+          m_TCP_sock->setKeepAlive(true);
           m_sock = m_TCP_sock;
           m_task->inf("Comm TCP interface initialized");
         }
