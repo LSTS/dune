@@ -341,7 +341,7 @@ namespace Control
         }
         catch (...)
         {
-          war(DTR("Diconnection TCP failed"));
+          war(DTR("Disconnection TCP failed"));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
       }
@@ -381,7 +381,7 @@ namespace Control
         }
         catch (...)
         {
-          war(DTR("Diconnection UDP failed"));
+          war(DTR("Disconnection UDP failed"));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
       }
