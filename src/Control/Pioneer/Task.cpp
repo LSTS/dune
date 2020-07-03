@@ -422,7 +422,7 @@ namespace Control
         }
       }
 
-      //! This will parse the receiving Pionner messages
+      //! This will parse the receiving Pioneer messages
       int
       pioneerMessagesParse(uint8_t buf[], int startIndex, int length)
       {
@@ -486,7 +486,7 @@ namespace Control
         }
       }
 
-      //! This will parse the receiving Pionner messages
+      //! This will parse the receiving Pioneer messages
       int
       pioneerCommandRepliesParse(uint8_t buf[], int startIndex, int length)
       {
@@ -616,7 +616,7 @@ namespace Control
       }
 
 
-      //! This will handle parsing Pionner V1 Telemetry message
+      //! This will handle parsing Pioneer V1 Telemetry message
       void
       handlePioneerV1Telemetry(ProtocolMessages::DataVersion1Telemetry msg)
       {
@@ -624,7 +624,7 @@ namespace Control
         debug("Voltage %u", msg.battery_voltage);
       }
 
-      //! This will handle parsing Pionner V2 Telemetry message
+      //! This will handle parsing Pioneer V2 Telemetry message
       void
       handlePioneerV2Telemetry(ProtocolMessages::DataVersion2Telemetry msg)
       {
@@ -661,7 +661,7 @@ namespace Control
         }
       }
 
-      //! This will handle parsing Pionner V2 Compass Calibration message
+      //! This will handle parsing Pioneer V2 Compass Calibration message
       void
       handlePioneerV2CompassCalibration(ProtocolMessages::DataVersion2Compasscalibration msg)
       {
