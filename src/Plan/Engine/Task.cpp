@@ -846,39 +846,7 @@ namespace Plan
       parseArg(const std::string& plan_id, const IMC::Message* arg,
                std::string& info)
       {
-        if (arg)
-        {
-          if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
-          {
-            const IMC::PlanSpecification* given_plan = static_cast<const IMC::PlanSpecification*>(arg);
-
-            m_spec = *given_plan;
-            m_spec.setSourceEntity(getEntityId());
-          }
-          else
-          {
-            // Quick plan
-            IMC::PlanManeuver spec_man;
-            const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
-
-            if (man)
-            {
-              spec_man.maneuver_id = arg->getName();
-              spec_man.data.set(*man);
-              m_spec.clear();
-              m_spec.maneuvers.setParent(&m_spec);
-              m_spec.plan_id = plan_id;
-              m_spec.start_man_id = arg->getName();
-              m_spec.maneuvers.push_back(spec_man);
-            }
-            else
-            {
-              info = "undefined maneuver or plan";
-              return false;
-            }
-          }
-        }
-        else
+        if (!arg)
         {
           // Search DB
           m_spec.clear();
@@ -888,7 +856,30 @@ namespace Plan
             info = m_reply.info;
             return false;
           }
+
+          return true;
         }
+
+        if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
+        {
+          m_spec = *static_cast<const IMC::PlanSpecification*>(arg);
+          m_spec.setSourceEntity(getEntityId());
+
+          return true;
+        }
+
+        // Quick plan
+        IMC::PlanManeuver spec_man;
+        const IMC::Maneuver* man = static_cast<const IMC::Maneuver*>(arg);
+
+        spec_man.maneuver_id = arg->getName();
+        spec_man.data.set(*man);
+
+        m_spec.clear();
+        m_spec.maneuvers.setParent(&m_spec);
+        m_spec.plan_id = plan_id;
+        m_spec.start_man_id = arg->getName();
+        m_spec.maneuvers.push_back(spec_man);
 
         return true;
       }
