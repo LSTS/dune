@@ -57,6 +57,7 @@ namespace
     bool just_load = false;
     bool no_calibrate = false;
     bool load_from_db = false;
+    bool no_clear_maneuvers = false;
   };
 } // namespace
 
@@ -78,6 +79,7 @@ printArguments(Arguments const& args, std::ostream& os)
      << PRINT_BOOL(just_load)
      << PRINT_BOOL(no_calibrate)
      << PRINT_BOOL(load_from_db)
+     << PRINT_BOOL(no_clear_maneuvers)
      << std::endl;
 
 #undef PRINT_OPTION
@@ -103,7 +105,8 @@ parseCommandLine(int argc, char** argv)
   .add("-l", "--lbl-config", "Send LblConfig message before PlanControl")
   .add("-L", "--just-load", "Send PC_LOAD request (default is PC_START)")
   .add("-n", "--no-calibrate", "Don't set FLG_CALIBRATE")
-  .add("-D", "--load-from-db", "Don't send inline PlanSpecification");
+  .add("-D", "--load-from-db", "Don't send inline PlanSpecification")
+  .add("-C", "--no-clear-maneuvers", "Set FLG_NO_CLEAR_MANEUVERS");
 
   parser.parse(argc, argv);
 
@@ -166,6 +169,7 @@ parseCommandLine(int argc, char** argv)
   SET_BOOLEAN_OPT("--just-load", just_load);
   SET_BOOLEAN_OPT("--no-calibrate", no_calibrate);
   SET_BOOLEAN_OPT("--load-from-db", load_from_db);
+  SET_BOOLEAN_OPT("--no-clear-maneuvers", no_clear_maneuvers);
 
 #undef SET_BOOLEAN_OPT
 
@@ -242,6 +246,8 @@ main(int argc, char** argv)
 
   if (!args.no_calibrate)
     cmd.flags |= IMC::PlanControl::FLG_CALIBRATE;
+  if (args.no_clear_maneuvers)
+    cmd.flags |= IMC::PlanControl::FLG_NO_CLEAR_MANEUVERS;
 
   cmd.request_id = 0;
 
