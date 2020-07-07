@@ -126,7 +126,7 @@ namespace DUNE
       //! @param[in] nodes vector of plan maneuver nodes
       //! @param[in] state current estimated state
       void
-      parse(const std::vector<IMC::PlanManeuver*>& nodes, const IMC::EstimatedState* state);
+      parse(const std::vector<IMC::PlanManeuver const*>& nodes, const IMC::EstimatedState* state);
 
       //! Clear the vector
       inline void

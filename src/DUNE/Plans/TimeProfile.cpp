@@ -456,7 +456,7 @@ namespace DUNE
     }
 
     void
-    TimeProfile::parse(const std::vector<IMC::PlanManeuver*>& nodes,
+    TimeProfile::parse(const std::vector<IMC::PlanManeuver const*>& nodes,
                        const IMC::EstimatedState* state)
     {
       if (!m_valid_model)
@@ -468,14 +468,14 @@ namespace DUNE
       Position pos;
       extractPosition(state, pos);
 
-      std::vector<IMC::PlanManeuver*>::const_iterator itr = nodes.begin();
+      std::vector<IMC::PlanManeuver const*>::const_iterator itr = nodes.begin();
 
       for (; itr != nodes.end(); ++itr)
       {
         if ((*itr)->data.isNull())
           return;
 
-        IMC::Message* msg = (*itr)->data.get();
+        IMC::Message const* msg = (*itr)->data.get();
 
         float last_duration = -1.0;
         if (m_accum_dur != NULL)
@@ -495,43 +495,43 @@ namespace DUNE
         switch (msg->getId())
         {
           case DUNE_IMC_GOTO:
-            parsed = parse(static_cast<IMC::Goto*>(msg), pos);
+            parsed = parse(static_cast<IMC::Goto const*>(msg), pos);
             break;
 
           case DUNE_IMC_STATIONKEEPING:
-            parsed = parse(static_cast<IMC::StationKeeping*>(msg), pos);
+            parsed = parse(static_cast<IMC::StationKeeping const*>(msg), pos);
             break;
 
           case DUNE_IMC_LOITER:
-            parsed = parse(static_cast<IMC::Loiter*>(msg), pos);
+            parsed = parse(static_cast<IMC::Loiter const*>(msg), pos);
             break;
 
           case DUNE_IMC_FOLLOWPATH:
-            parsed = parse(static_cast<IMC::FollowPath*>(msg), pos);
+            parsed = parse(static_cast<IMC::FollowPath const*>(msg), pos);
             break;
 
           case DUNE_IMC_ROWS:
-            parsed = parse(static_cast<IMC::Rows*>(msg), pos);
+            parsed = parse(static_cast<IMC::Rows const*>(msg), pos);
             break;
 
           case DUNE_IMC_YOYO:
-            parsed = parse(static_cast<IMC::YoYo*>(msg), pos);
+            parsed = parse(static_cast<IMC::YoYo const*>(msg), pos);
             break;
 
           case DUNE_IMC_ELEVATOR:
-            parsed = parse(static_cast<IMC::Elevator*>(msg), pos);
+            parsed = parse(static_cast<IMC::Elevator const*>(msg), pos);
             break;
 
           case DUNE_IMC_POPUP:
-            parsed = parse(static_cast<IMC::PopUp*>(msg), pos);
+            parsed = parse(static_cast<IMC::PopUp const*>(msg), pos);
             break;
 
           case DUNE_IMC_COMPASSCALIBRATION:
-            parsed = parse(static_cast<IMC::CompassCalibration*>(msg), pos);
+            parsed = parse(static_cast<IMC::CompassCalibration const*>(msg), pos);
             break;
 
           case DUNE_IMC_ROWSCOVERAGE:
-            parsed = parse(static_cast<IMC::RowsCoverage*>(msg), pos);
+            parsed = parse(static_cast<IMC::RowsCoverage const*>(msg), pos);
             break;
 
           default:
