@@ -287,10 +287,6 @@ namespace Plan
                      IMC::PlanStatistics& ps, bool imu_enabled,
                      const IMC::EstimatedState* state);
 
-      //! Sequence plan nodes if possible
-      std::vector<PlanManeuver*>
-      sequenceNodes(void);
-
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
       //! @return NULL if maneuver id is invalid

@@ -412,6 +412,52 @@ namespace Plan
       return tl;
     }
 
+    static std::vector<IMC::PlanManeuver*>
+    sequenceNodes(PlanGraph const* graph, unsigned* properties)
+    {
+      std::vector<IMC::PlanManeuver*> seq_nodes;
+
+      auto const* node = graph->getStartNode();
+      std::string maneuver_id = node->pman->maneuver_id;
+
+      while (true)
+      {
+        if (!node)
+          throw Plan::PlanSequenceError(DTR("found invalid maneuver id '%s'")
+                                        + maneuver_id);
+
+        seq_nodes.push_back(node->pman);
+
+        auto const& transitions = node->transitions;
+
+        if (!transitions.size())
+          break;
+
+        std::string const& dest_man_id = transitions[0]->dest_man;
+
+        if (dest_man_id == "_done_")
+          break;
+
+        // Check if plan is cyclical
+        if (std::find_if(std::cbegin(seq_nodes), std::cend(seq_nodes),
+                         [dest_man_id](IMC::PlanManeuver* man) {
+                           return man->maneuver_id == dest_man_id;
+                         })
+            != seq_nodes.end())
+        {
+          *properties |= IMC::PlanStatistics::PRP_NONLINEAR;
+          *properties |= IMC::PlanStatistics::PRP_INFINITE;
+          *properties |= IMC::PlanStatistics::PRP_CYCLICAL;
+          return {};
+        }
+
+        maneuver_id = dest_man_id;
+        node = graph->findNode(maneuver_id);
+      }
+
+      return seq_nodes;
+    }
+
     void
     Plan::secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
                          IMC::PlanStatistics& ps, bool imu_enabled,
@@ -423,7 +469,7 @@ namespace Plan
 
       if (m_args.compute_progress)
       {
-        auto seq_nodes = sequenceNodes();
+        auto seq_nodes = sequenceNodes(m_plan_graph.get(), &m_properties);
 
         if (isLinear() && state != NULL)
         {
@@ -478,52 +524,6 @@ namespace Plan
         m_properties |= IMC::PlanStatistics::PRP_INFINITE;
 
       pre_stat.setProperties(m_properties);
-    }
-
-    std::vector<IMC::PlanManeuver*>
-    Plan::sequenceNodes(void)
-    {
-      std::vector<IMC::PlanManeuver*> seq_nodes;
-
-      auto const* node = m_plan_graph->getStartNode();
-      std::string maneuver_id = node->pman->maneuver_id;
-
-      while (true)
-      {
-        if (!node)
-          throw PlanSequenceError(DTR("found invalid maneuver id '%s'")
-                                  + maneuver_id);
-
-        seq_nodes.push_back(node->pman);
-
-        auto const& transitions = node->transitions;
-
-        if (!transitions.size())
-          break;
-
-        std::string const& dest_man_id = transitions[0]->dest_man;
-
-        if (dest_man_id == "_done_")
-          break;
-
-        // Check if plan is cyclical
-        if (std::find_if(std::cbegin(seq_nodes), std::cend(seq_nodes),
-                         [dest_man_id](IMC::PlanManeuver* man) {
-                           return man->maneuver_id == dest_man_id;
-                         })
-            != seq_nodes.end())
-        {
-          m_properties |= IMC::PlanStatistics::PRP_NONLINEAR;
-          m_properties |= IMC::PlanStatistics::PRP_INFINITE;
-          m_properties |= IMC::PlanStatistics::PRP_CYCLICAL;
-          return {};
-        }
-
-        maneuver_id = dest_man_id;
-        node = m_plan_graph->findNode(maneuver_id);
-      }
-
-      return seq_nodes;
     }
 
     IMC::PlanManeuver const*
