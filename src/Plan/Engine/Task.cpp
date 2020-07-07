@@ -95,7 +95,7 @@ namespace Plan
     struct Task: public DUNE::Tasks::Task
     {
       //! Pointer to Plan class
-      Plan* m_plan;
+      PlanRuntime* m_plan;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -229,7 +229,7 @@ namespace Plan
 
         if ((m_plan != NULL) && (paramChanged(m_args.plan_arguments.compute_progress) ||
                                  paramChanged(m_args.plan_arguments.min_cal_time)))
-          throw RestartNeeded(DTR("restarting to relaunch plan parser"), 0, false);
+          throw RestartNeeded(DTR("restarting to relaunch plan runtime manager"), 0, false);
       }
 
       void
@@ -241,7 +241,7 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(m_args.plan_arguments, this, &m_ctx.config);
+        m_plan = new PlanRuntime(m_args.plan_arguments, this, &m_ctx.config);
       }
 
       void

@@ -50,7 +50,7 @@ namespace Plan
     using namespace DUNE::Plans;
 
     // Export DLL Symbol.
-    class DUNE_DLL_SYM Plan;
+    class DUNE_DLL_SYM PlanRuntime;
 
     //! Depth margin.
     static const float c_depth_margin = 1.0f;
@@ -69,7 +69,7 @@ namespace Plan
     };
 
     //! Plan Specification parser
-    class Plan
+    class PlanRuntime
     {
     public:
       //! Exception for errors during plan sequencing
@@ -98,10 +98,10 @@ namespace Plan
       //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
-      Plan(PlanArguments const& args, Tasks::Task* task, Parsers::Config* cfg);
+      PlanRuntime(PlanArguments const& args, Tasks::Task* task, Parsers::Config* cfg);
 
       //! Destructor
-      ~Plan(void);
+      ~PlanRuntime(void);
 
       //! Reset data
       void

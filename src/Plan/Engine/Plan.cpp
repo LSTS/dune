@@ -40,8 +40,8 @@ namespace Plan
 {
   namespace Engine
   {
-    Plan::Plan(PlanArguments const& args,
-               Tasks::Task* task, Parsers::Config* cfg):
+    PlanRuntime::PlanRuntime(PlanArguments const& args, Tasks::Task* task,
+                             Parsers::Config* cfg):
       m_plan_graph(nullptr),
       m_args(args),
       m_curr_node(NULL),
@@ -83,7 +83,7 @@ namespace Plan
       m_profiles = new Plans::TimeProfile(m_speed_model);
     }
 
-    Plan::~Plan(void)
+    PlanRuntime::~PlanRuntime(void)
     {
       Memory::clear(m_profiles);
       Memory::clear(m_sched);
@@ -93,7 +93,7 @@ namespace Plan
     }
 
     void
-    Plan::clear(void)
+    PlanRuntime::clear(void)
     {
       m_plan_graph.reset();
 
@@ -113,7 +113,7 @@ namespace Plan
     }
 
     void
-    Plan::parse(const IMC::PlanSpecification& spec,
+    PlanRuntime::parse(const IMC::PlanSpecification& spec,
                 const std::set<std::uint16_t>& supported_maneuvers,
                 const std::map<std::string, IMC::EntityInfo>& cinfo,
                 IMC::PlanStatistics& ps, bool imu_enabled,
@@ -144,7 +144,7 @@ namespace Plan
     }
 
     void
-    Plan::planStarted(void)
+    PlanRuntime::planStarted(void)
     {
       // Post statistics
       m_rt_stat.clear();
@@ -161,7 +161,7 @@ namespace Plan
     }
 
     void
-    Plan::planStopped(void)
+    PlanRuntime::planStopped(void)
     {
       if (m_sched != NULL)
         m_sched->planStopped(m_affected_ents);
@@ -174,13 +174,13 @@ namespace Plan
     }
 
     void
-    Plan::calibrationStarted(void)
+    PlanRuntime::calibrationStarted(void)
     {
       m_calib.setTime(m_est_cal_time);
     }
 
     void
-    Plan::maneuverStarted(const std::string& id)
+    PlanRuntime::maneuverStarted(const std::string& id)
     {
       m_started_maneuver = true;
 
@@ -193,7 +193,7 @@ namespace Plan
     }
 
     void
-    Plan::maneuverDone(void)
+    PlanRuntime::maneuverDone(void)
     {
       if (!m_started_maneuver)
         return;
@@ -218,13 +218,13 @@ namespace Plan
     }
 
     uint16_t
-    Plan::getEstimatedCalibrationTime(void) const
+    PlanRuntime::getEstimatedCalibrationTime(void) const
     {
       return m_est_cal_time;
     }
 
     bool
-    Plan::isDone(void) const
+    PlanRuntime::isDone(void) const
     {
       // FIXME: we are only fetching a single transition and not all of them
 
@@ -239,7 +239,7 @@ namespace Plan
     }
 
     IMC::PlanManeuver const*
-    Plan::loadStartManeuver(void)
+    PlanRuntime::loadStartManeuver(void)
     {
       m_curr_node = m_plan_graph->getStartNode();
 
@@ -250,7 +250,7 @@ namespace Plan
     }
 
     IMC::PlanManeuver const*
-    Plan::loadNextManeuver(void)
+    PlanRuntime::loadNextManeuver(void)
     {
       m_last_id = m_curr_node->transitions[0]->dest_man;
 
@@ -258,7 +258,7 @@ namespace Plan
     }
 
     float
-    Plan::updateProgress(const IMC::ManeuverControlState* mcs)
+    PlanRuntime::updateProgress(const IMC::ManeuverControlState* mcs)
     {
       float prog = progress(mcs);
 
@@ -274,7 +274,7 @@ namespace Plan
     }
 
     void
-    Plan::updateCalibration(const IMC::VehicleState* vs)
+    PlanRuntime::updateCalibration(const IMC::VehicleState* vs)
     {
       if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib.notStarted())
       {
@@ -306,7 +306,7 @@ namespace Plan
     }
 
     bool
-    Plan::onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
+    PlanRuntime::onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
     {
       if (m_sched != NULL)
         return m_sched->onEntityActivationState(id, msg);
@@ -315,7 +315,7 @@ namespace Plan
     }
 
     void
-    Plan::onFuelLevel(const IMC::FuelLevel* msg)
+    PlanRuntime::onFuelLevel(const IMC::FuelLevel* msg)
     {
       if (!m_args.fpredict)
         return;
@@ -327,7 +327,7 @@ namespace Plan
     }
 
     float
-    Plan::getETA(void) const
+    PlanRuntime::getETA(void) const
     {
       if (m_progress >= 0.0)
         return getTotalDuration() * (1.0 - 0.01 * m_progress);
@@ -338,7 +338,7 @@ namespace Plan
     // Private
 
     float
-    Plan::getExecutionDuration(void) const
+    PlanRuntime::getExecutionDuration(void) const
     {
       if (!isLinear() || !m_profiles->size())
         return -1.0;
@@ -356,7 +356,7 @@ namespace Plan
     }
 
     bool
-    Plan::waitingForDevice(void)
+    PlanRuntime::waitingForDevice(void)
     {
       if (m_sched != NULL)
         return m_sched->waitingForDevice();
@@ -365,7 +365,7 @@ namespace Plan
     }
 
     float
-    Plan::scheduledTimeLeft(void) const
+    PlanRuntime::scheduledTimeLeft(void) const
     {
       if (m_sched != NULL)
         return m_sched->calibTimeLeft();
@@ -423,7 +423,7 @@ namespace Plan
       while (true)
       {
         if (!node)
-          throw Plan::PlanSequenceError(DTR("found invalid maneuver id '%s'")
+          throw PlanRuntime::PlanSequenceError(DTR("found invalid maneuver id '%s'")
                                         + maneuver_id);
 
         seq_nodes.push_back(node->pman);
@@ -459,7 +459,7 @@ namespace Plan
     }
 
     void
-    Plan::secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
+    PlanRuntime::secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
                          IMC::PlanStatistics& ps, bool imu_enabled,
                          const IMC::EstimatedState* state)
     {
@@ -527,7 +527,7 @@ namespace Plan
     }
 
     IMC::PlanManeuver const*
-    Plan::loadManeuverFromId(const std::string& id)
+    PlanRuntime::loadManeuverFromId(const std::string& id)
     {
       auto const* node = m_plan_graph->findNode(id);
 
@@ -539,7 +539,7 @@ namespace Plan
     }
 
     float
-    Plan::progress(const IMC::ManeuverControlState* mcs)
+    PlanRuntime::progress(const IMC::ManeuverControlState* mcs)
     {
       if (!m_args.compute_progress)
         return -1.0;
@@ -614,7 +614,7 @@ namespace Plan
     }
 
     bool
-    Plan::isDepthSafe(const IMC::Message* maneuver) const
+    PlanRuntime::isDepthSafe(const IMC::Message* maneuver) const
     {
       switch (maneuver->getId())
       {
