@@ -32,7 +32,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "Plan.hpp"
+#include "PlanRuntime.hpp"
 #include "Calibration.hpp"
 
 namespace Plan

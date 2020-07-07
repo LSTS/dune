@@ -31,7 +31,7 @@
 #include <algorithm>
 
 // Local headers.
-#include "Plan.hpp"
+#include "PlanRuntime.hpp"
 
 namespace Plan
 {
