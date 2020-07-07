@@ -235,7 +235,7 @@ namespace Plan
       //! @param[in] maneuver plan maneuver.
       //! @return true if depth is safe, false otherwise.
       bool
-      isDepthSafe(const IMC::Message* maneuver);
+      isDepthSafe(const IMC::Message* maneuver) const;
 
       //! Get duration of the execution phase of the plan
       //! (total of maneuver accumulated duration)
@@ -302,7 +302,7 @@ namespace Plan
 
       //! Check if depth is safe
       inline bool
-      checkDepth(IMC::ZUnits zunits, float z)
+      checkDepth(IMC::ZUnits zunits, float z) const
       {
         if (zunits == IMC::Z_DEPTH)
         {

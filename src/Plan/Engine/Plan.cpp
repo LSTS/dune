@@ -614,7 +614,7 @@ namespace Plan
     }
 
     bool
-    Plan::isDepthSafe(const IMC::Message* maneuver)
+    Plan::isDepthSafe(const IMC::Message* maneuver) const
     {
       switch (maneuver->getId())
       {
