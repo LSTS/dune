@@ -63,7 +63,7 @@ namespace Control
           { "GainUP", "GainDown", "TiltUP", "TiltDown", "Center", "LightDimmer",
               "LightBrighter", "PitchForward", "PitchBackward", "RollLeft",
               "RollRight", "Stabilize", "DepthHold", "Manual", "PositionHold",
-              "Arm", "Disarm", "EnableUSBL", "DisableUSBL" }; //TODO home and SK
+              "Arm", "Disarm","CameraPanUP","CameraPanDown"}; //TODO home and SK
         const std::string axis[6] =
           { "Pitch", "Roll", "Throttle", "Heading", "Forward", "Lateral" };
         const std::string js_params_id[6] =
@@ -80,9 +80,9 @@ namespace Control
           Heading = 3,
           Forward = 4,
           Lateral = 5,
-          Camera_Pan = 6,
+          Camera_Pan = 8,
           Camera_Tilt = 7,
-          Lights_1_Level = 8,
+          Lights_1_Level = 6,
           Lights_2_Level = 9,
           Video_Switch = 10,
         };
@@ -116,7 +116,7 @@ namespace Control
           float m_thr_gain;
           //! Steps - https://github.com/ArduPilot/ardupilot/blob/master/Tools/Frame_params/Sub/bluerov2-3_5.params
           int m_lights_step;
-          int m_cam_steps;
+          int m_cam_tilt_steps;
           //!Trim values
           int m_pitch_trim;
           int m_roll_trim;
@@ -138,7 +138,7 @@ namespace Control
 
           Task(const std::string& name, Tasks::Context& ctx) :
               DUNE::Control::BasicRemoteOperation(name, ctx), m_gain(0.20), m_lights_step(
-                  100), m_cam_steps(50), m_pitch_trim(0), m_roll_trim(0), m_sysid(
+                  100), m_cam_tilt_steps(0), m_pitch_trim(0), m_roll_trim(0), m_sysid(
                   254), m_targetid(1), m_timer(1.0), m_sys_status(
                   MAV_STATE_UNINIT), m_comms(false), m_gcs(1)
           {
@@ -283,6 +283,7 @@ namespace Control
             }
             openConnection();
             m_sys_status = MAV_STATE_BOOT;
+            setParamByName("FS_PILOT_INPUT", 1.0); //Failsafe to warning instead of disarm
           }
           void
           onResourceRelease(void)
@@ -350,10 +351,10 @@ namespace Control
             inf(DTR("Gain is at %f percent"), (m_gain * 100));
             war(DTR("Started Teleoperation requested by: %s"),
                 m->custom.c_str()); //FIXME check src? and resolve id
-            //Control Loops
-            enableControlLoops(
-                IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_ROLL | IMC::CL_DEPTH
-                    | IMC::CL_THROTTLE);
+//            //Control Loops
+//            enableControlLoops(
+//                IMC::CL_YAW_RATE | IMC::CL_PITCH | IMC::CL_ROLL | IMC::CL_DEPTH
+//                    | IMC::CL_THROTTLE);
           }
 
           void
@@ -456,22 +457,22 @@ namespace Control
 
           //! Enable and Disable UBLS as main GPS for navigation
           //! uses MAVLink GPS_INPUT with best lock
-          void
-          sendGPSParams(bool enable)
-          {
-            if (enable)
-            {
-              setParamByName("GPS_AUTO_SWITCH", 1.0);
-              setParamByName("EK2_GPS_TYPE", 2.0);
-              setParamByName("GPS_TYPE", 14.0);
-            }
-            else
-            {
-              setParamByName("EK2_GPS_TYPE", 0.0);
-              setParamByName("GPS_TYPE", 1.0);
-
-            }
-          }
+//          void
+//          sendGPSParams(bool enable)
+//          {
+//            if (enable)
+//            {
+//              setParamByName("GPS_AUTO_SWITCH", 1.0);
+//              setParamByName("EK2_GPS_TYPE", 2.0);
+//              setParamByName("GPS_TYPE", 14.0);
+//            }
+//            else
+//            {
+//              setParamByName("EK2_GPS_TYPE", 0.0);
+//              setParamByName("GPS_TYPE", 1.0);
+//
+//            }
+//          }
 
           void
           changeMode(uint8_t mode)
@@ -563,7 +564,7 @@ namespace Control
             else if (std::strcmp(js_params_id[0].c_str(), parameter.param_id)
                 == 0)
             {
-              m_cam_steps = parameter.param_value; //save JS_CAM_TILT_STEP gain
+              //TODO
             }
             else if (std::strcmp(js_params_id[3].c_str(), parameter.param_id)
                 == 0 && m_args.gain_step != parameter.param_value)
@@ -662,7 +663,7 @@ namespace Control
           onRemoteActions(const IMC::RemoteActions* msg)
           {
             //mavlink_msg_manual_control_pack(system_id, component_id, msg, target, x, y, z, r, buttons);
-            war(DTR("Processing RemoteActions: %s"), msg->actions.c_str());
+            //war(DTR("Processing RemoteActions: %s"), msg->actions.c_str());
             TupleList tl(msg->actions);
             int button;
             button = tl.get(remote_actions[0], 0);
@@ -737,50 +738,84 @@ namespace Control
 
             //! Deal with buttons actions 1/0's
             button = tl.get(remote_actions[2], 0);
+            int idle = floor(PWM_IDLE);
+            int min = floor(PWM_MIN);
+            int max = floor(PWM_MAX);
             if (button == 1)
             {
-              float newV = rc_pwm[RC_INPUT::Camera_Tilt] + m_cam_steps;
-              newV = std::min(newV, (float)PWM_MAX);
-              rc_pwm[RC_INPUT::Camera_Tilt] = newV;
-
+              m_cam_tilt_steps+= m_cam_tilt_steps < 8 ? 1: 0;
+              rc_pwm[RC_INPUT::Camera_Tilt] = max;
+//              war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
+              actuate();
+              rc_pwm[RC_INPUT::Camera_Tilt] = idle;
             }
             else
             {
               button = tl.get(remote_actions[3], 0);
               if (button == 1)
               {
-                float newV = rc_pwm[RC_INPUT::Camera_Tilt] - m_cam_steps;
-                newV = std::max(newV, (float)PWM_MIN);
-                rc_pwm[RC_INPUT::Camera_Tilt] = newV;
+                m_cam_tilt_steps-= m_cam_tilt_steps > -8 ? 1: 0;
+                rc_pwm[RC_INPUT::Camera_Tilt] = min;
+                actuate();
+                rc_pwm[RC_INPUT::Camera_Tilt] = idle;
               }
               else
               {
                 button = tl.get(remote_actions[4], 0);
                 if (button == 1)
                 {
-                  rc_pwm[RC_INPUT::Camera_Tilt] = PWM_IDLE;
+                  while(m_cam_tilt_steps < 0){ //increase tilt
+                    rc_pwm[RC_INPUT::Camera_Tilt] = max;
+                    actuate();
+                    m_cam_tilt_steps++;
+
+                  }
+                  while(m_cam_tilt_steps > 0){ //decrease tilt
+                    rc_pwm[RC_INPUT::Camera_Tilt] = min;
+                    actuate();
+                    m_cam_tilt_steps--;
+                  }
+                  if(m_cam_tilt_steps == 0)
+                    rc_pwm[RC_INPUT::Camera_Tilt] = idle;
                 }
               }
+//              war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
             }
 
             //Handle Lights
             button = tl.get(remote_actions[6], 0);
+            mavlink_message_t mc;
+            uint8_t buf[512];
+            int len = mavlink_msg_to_send_buffer(buf, &mc);
+            short buttons = 0;
+            uint16_t step = (PWM_MAX - PWM_MIN) / m_lights_step;
             if (button == 1)
             {
-              float newV = rc_pwm[RC_INPUT::Lights_1_Level] + m_lights_step;
-              newV = std::min(newV, (float)PWM_MAX);
+              int newV = rc_pwm[RC_INPUT::Lights_1_Level] + step;
+              war(DTR("newV %d"),newV);
+              int max = floor(PWM_MAX);
+              newV = std::min(newV,max);
+              war(DTR("newV %d"),newV);
               rc_pwm[RC_INPUT::Lights_1_Level] = newV;
-              rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same command for both lights
+//              rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same command for both lights
+              war(DTR("Lights RC %d PWM %d and step %d"),RC_INPUT::Lights_1_Level,rc_pwm[RC_INPUT::Lights_1_Level],step);
+              button |= 14;
+              mavlink_msg_manual_control_pack(m_sysid, 1, &mc, m_targetid, INT16_MAX, INT16_MAX, INT16_MAX, INT16_MAX, buttons);
+              sendData(buf, len);
             }
             else
             {
               button = tl.get(remote_actions[5], 0);
               if (button == 1)
               {
-                float newV = rc_pwm[RC_INPUT::Lights_1_Level] - m_lights_step;
-                newV = std::max(newV, (float)PWM_MIN);
+                int newV = rc_pwm[RC_INPUT::Lights_1_Level] - step;
+                int min = floor(PWM_MIN);
+                newV = std::max(newV,min);
                 rc_pwm[RC_INPUT::Lights_1_Level] = newV;
-                rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same comand for both lights
+//                rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same comand for both lights
+                button |= 13;
+                mavlink_msg_manual_control_pack(m_sysid, 1, &mc, m_targetid, INT16_MAX, INT16_MAX, INT16_MAX, INT16_MAX, buttons);
+                sendData(buf, len);
               }
             }
 
@@ -858,17 +893,21 @@ namespace Control
               arm();
             }
 
-            button = tl.get(remote_actions[17], 0); //"EnableUSBL"
+            button = tl.get(remote_actions[16], 0); //CameraTiltUP
             if (button == 1)
-            {
-              sendGPSParams(true);
-            }
+             {
+              float newV = rc_pwm[RC_INPUT::Camera_Pan] + m_lights_step;
+              newV = std::min(newV, (float)PWM_MAX);
+              rc_pwm[RC_INPUT::Camera_Pan] = newV;
+             }
 
-            button = tl.get(remote_actions[18], 0); //"DisableUSBL"
-            if (button == 1)
-            {
-              sendGPSParams(false);
-            }
+             button = tl.get(remote_actions[17], 0); //CameraPanDown
+             if (button == 1)
+             {
+               float newV = rc_pwm[RC_INPUT::Camera_Pan] - m_lights_step;
+              newV = std::max(newV, (float)PWM_MIN);
+              rc_pwm[RC_INPUT::Camera_Pan] = newV;
+             }
 
             actuate();
           }
