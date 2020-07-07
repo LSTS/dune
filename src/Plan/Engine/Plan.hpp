@@ -343,8 +343,6 @@ namespace Plan
       const Plans::SpeedModel* m_speed_model;
       //! Pointer to power model for power conversions and estimations
       const Power::Model* m_power_model;
-      //! Pointer to power conversion and estimation model
-      Parsers::Config* m_config;
       //! Pointer to Fuel Prediction object
       FuelPrediction* m_fpred;
       //! Pointer to task

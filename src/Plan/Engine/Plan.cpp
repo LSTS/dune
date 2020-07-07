@@ -52,7 +52,6 @@ namespace Plan
       m_sched(NULL),
       m_started_maneuver(false),
       m_calib(),
-      m_config(cfg),
       m_fpred(NULL),
       m_task(task),
       m_properties(0),
