@@ -31,17 +31,17 @@
 #define PLAN_ENGINE_PLAN_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <map>
 #include <string>
 #include <vector>
 
 // DUNE headers.
 #include <DUNE/Plans.hpp>
-#include "Calibration.hpp"
 #include "ActionSchedule.hpp"
-#include "Timeline.hpp"
+#include "Calibration.hpp"
 #include "FuelPrediction.hpp"
+#include "PlanGraph.hpp"
 #include "Statistics.hpp"
+#include "Timeline.hpp"
 
 namespace Plan
 {
@@ -72,12 +72,22 @@ namespace Plan
     class Plan
     {
     public:
-      //! Exception for plan parsing errors
-      struct ParseError: public std::runtime_error
+      //! Exception for errors during plan sequencing
+      struct PlanSequenceError : public std::runtime_error
       {
-        ParseError(const std::string& label):
-          std::runtime_error(DTR("parse error: ") + label)
-        { }
+        PlanSequenceError(const std::string& label)
+        : std::runtime_error(DTR("sequence error: ") + label)
+        {
+        }
+      };
+
+      //! Exception for invalid plan specifications
+      struct InvalidPlanSpec : public std::runtime_error
+      {
+        InvalidPlanSpec(const std::string& label)
+        : std::runtime_error(DTR("invalid plan specification: ") + label)
+        {
+        }
       };
 
       //! Default constructor.
@@ -88,8 +98,7 @@ namespace Plan
       //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
-      Plan(PlanArguments const& args, const IMC::PlanSpecification* spec,
-           Tasks::Task* task, Parsers::Config* cfg);
+      Plan(PlanArguments const& args, Tasks::Task* task, Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -105,7 +114,8 @@ namespace Plan
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       void
-      parse(const std::set<uint16_t>* supported_maneuvers,
+      parse(const IMC::PlanSpecification& spec,
+            const std::set<uint16_t>& supported_maneuvers,
             const std::map<std::string, IMC::EntityInfo>& cinfo,
             IMC::PlanStatistics& ps, bool imu_enabled = false,
             const IMC::EstimatedState* state = NULL);
@@ -143,16 +153,16 @@ namespace Plan
 
       //! Get start maneuver message
       //! @return NULL if start maneuver id is invalid
-      IMC::PlanManeuver*
+      IMC::PlanManeuver const*
       loadStartManeuver(void);
 
       //! Get next maneuver message
       //! @return NULL if maneuver id is invalid
-      IMC::PlanManeuver*
+      IMC::PlanManeuver const*
       loadNextManeuver(void);
 
       //! Get current maneuver message
-      IMC::PlanManeuver*
+      IMC::PlanManeuver const*
       getCurrentManeuver(void) const
       {
         if (!m_curr_node)
@@ -265,12 +275,6 @@ namespace Plan
       bool
       maneuverExists(const std::string id) const;
 
-      //! Build the graph that describes the plan
-      //! This represents the first and crucial part of the plan parse
-      //! @param[in] supported_maneuvers list of supported maneuvers
-      void
-      buildGraph(const std::set<uint16_t>* supported_maneuvers);
-
       //! Perform secondary parsing procedures
       //! That involve action scheduling, statistics, etc
       //! Presumes buildGraph() did not fail
@@ -284,14 +288,14 @@ namespace Plan
                      const IMC::EstimatedState* state);
 
       //! Sequence plan nodes if possible
-      void
+      std::vector<PlanManeuver*>
       sequenceNodes(void);
 
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
       //! @return NULL if maneuver id is invalid
-      IMC::PlanManeuver*
-      loadManeuverFromId(const std::string id);
+      IMC::PlanManeuver const*
+      loadManeuverFromId(std::string const& id);
 
       //! Compute current progress
       //! @param[in] pointer to ManeuverControlState message
@@ -300,9 +304,11 @@ namespace Plan
       progress(const IMC::ManeuverControlState* mcs);
 
       //! Fill in plan timeline
+      //! @param[in] seq_nodes sequenced plan nodes
       //! @param[out] tl plan timeline filled in
       void
-      fillTimeline(Timeline& tl);
+      fillTimeline(std::vector<IMC::PlanManeuver*> const& seq_nodes,
+                   Timeline& tl);
 
       //! Test if plan is linear
       inline bool
@@ -324,34 +330,18 @@ namespace Plan
         return true;
       }
 
-      //! Graph nodes (a maneuver and its outgoing transitions)
-      struct Node
-      {
-        //! Pointer to a plan maneuver
-        IMC::PlanManeuver* pman;
-        //! Vector of pointers to plan transitions
-        std::vector<IMC::PlanTransition*> trans;
-      };
-
-      //! Mapping between maneuver IDs and graph nodes
-      typedef std::map<std::string, Node> PlanMap;
-
-      //! Pointer to plan specification
-      const IMC::PlanSpecification* m_spec;
+      //! Parsed plan.
+      std::unique_ptr<PlanGraph> m_plan_graph;
       //! Arguments
       PlanArguments m_args;
-      //! Plan graph of maneuvers and transitions
-      PlanMap m_graph;
       //! Pointer to current node
-      Node* m_curr_node;
+      PlanGraph::Node const* m_curr_node;
       //! Last maneuver id
       std::string m_last_id;
       //! Current progress if any
       float m_progress;
       //! Estimated required calibration time
       uint16_t m_est_cal_time;
-      //! Vector of message pointers to cycle through (sequential) plan
-      std::vector<IMC::PlanManeuver*> m_seq_nodes;
       //! Pointer to maneuver durations
       Plans::TimeProfile* m_profiles;
       //! Flag to signal that the plan is past the last maneuver with a valid duration

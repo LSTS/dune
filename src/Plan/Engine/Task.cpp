@@ -241,7 +241,7 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(m_args.plan_arguments, &m_spec, this, &m_ctx.config);
+        m_plan = new Plan(m_args.plan_arguments, this, &m_ctx.config);
       }
 
       void
@@ -415,7 +415,7 @@ namespace Plan
             if ((vs->op_mode == IMC::VehicleState::VS_CALIBRATION) &&
                 !pendingReply())
             {
-              IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+              IMC::PlanManeuver const* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }
           }
@@ -440,7 +440,7 @@ namespace Plan
             if (!pendingReply())
             {
               m_plan->updateCalibration(vs);
-              IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+              IMC::PlanManeuver const* pman = m_plan->loadStartManeuver();
               startManeuver(pman);
             }
             break;
@@ -477,7 +477,7 @@ namespace Plan
           }
           else
           {
-            IMC::PlanManeuver* pman = m_plan->loadNextManeuver();
+            IMC::PlanManeuver const* pman = m_plan->loadNextManeuver();
             startManeuver(pman);
           }
         }
@@ -751,7 +751,7 @@ namespace Plan
           return;
         }
 
-        IMC::PlanManeuver* curr_man = m_plan->getCurrentManeuver();
+        IMC::PlanManeuver const* curr_man = m_plan->getCurrentManeuver();
 
         if (!curr_man)
         {
@@ -776,12 +776,12 @@ namespace Plan
       {
         try
         {
-          m_plan->parse(&m_supported_maneuvers, m_cinfo,
+          m_plan->parse(m_spec, m_supported_maneuvers, m_cinfo,
                         ps, m_imu_enabled, &m_state);
         }
-        catch (Plan::ParseError& pe)
+        catch (std::exception const& e)
         {
-          onFailure(pe.what());
+          onFailure(e.what());
           m_plan->clear();
           return false;
         }
@@ -922,7 +922,7 @@ namespace Plan
         }
         else
         {
-          IMC::PlanManeuver* pman = m_plan->loadStartManeuver();
+          IMC::PlanManeuver const* pman = m_plan->loadStartManeuver();
           startManeuver(pman);
 
           if (execMode())
@@ -972,7 +972,7 @@ namespace Plan
       //! Start a maneuver by name
       //! @param[in] pman pointer to plan maneuver message
       void
-      startManeuver(IMC::PlanManeuver* pman)
+      startManeuver(IMC::PlanManeuver const* pman)
       {
         if (pman == NULL)
         {

@@ -27,6 +27,9 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// C++ standard library headers.
+#include <algorithm>
+
 // DUNE headers.
 #include <DUNE/I18N.hpp>
 
@@ -37,9 +40,9 @@ namespace Plan
 {
   namespace Engine
   {
-    Plan::Plan(PlanArguments const& args, const IMC::PlanSpecification* spec,
+    Plan::Plan(PlanArguments const& args,
                Tasks::Task* task, Parsers::Config* cfg):
-      m_spec(spec),
+      m_plan_graph(nullptr),
       m_args(args),
       m_curr_node(NULL),
       m_progress(0.0),
@@ -92,11 +95,9 @@ namespace Plan
     void
     Plan::clear(void)
     {
-      // Do not clear m_spec
+      m_plan_graph.reset();
 
-      m_graph.clear();
       m_curr_node = NULL;
-      m_seq_nodes.clear();
       m_progress = -1.0;
       m_beyond_dur = false;
       m_started_maneuver = false;
@@ -112,19 +113,32 @@ namespace Plan
     }
 
     void
-    Plan::parse(const std::set<uint16_t>* supported_maneuvers,
+    Plan::parse(const IMC::PlanSpecification& spec,
+                const std::set<std::uint16_t>& supported_maneuvers,
                 const std::map<std::string, IMC::EntityInfo>& cinfo,
                 IMC::PlanStatistics& ps, bool imu_enabled,
                 const IMC::EstimatedState* state)
     {
       clear();
 
-      // Build Graph of maneuvers and transitions, if this fails, parse fails
-      buildGraph(supported_maneuvers);
+      m_plan_graph = std::make_unique<PlanGraph>(spec);
+
+      for (auto const& node : *m_plan_graph)
+      {
+        IMC::Maneuver* m = node.pman->data.get();
+
+        if (!isDepthSafe(m))
+          throw InvalidPlanSpec(node.pman->maneuver_id
+                                + DTR(": maneuver depth beyond limits"));
+
+        if (supported_maneuvers.find(m->getId()) == supported_maneuvers.end())
+          throw InvalidPlanSpec(node.pman->maneuver_id
+                                + DTR(": maneuver is not supported"));
+      }
 
       secondaryParse(cinfo, ps, imu_enabled, state);
 
-      m_last_id = m_spec->start_man_id;
+      m_last_id = m_plan_graph->getStartNode()->pman->maneuver_id;
 
       return;
     }
@@ -135,7 +149,7 @@ namespace Plan
       // Post statistics
       m_rt_stat.clear();
 
-      m_post_stat.plan_id = m_spec->plan_id;
+      m_post_stat.plan_id = m_plan_graph->getId();
       m_rt_stat.planStarted();
 
       if (m_sched == NULL)
@@ -216,26 +230,29 @@ namespace Plan
 
       if (m_curr_node == NULL)
         return false;
-      else if (!m_curr_node->trans.size())
+      else if (!m_curr_node->transitions.size())
         return true;
-      else if (m_curr_node->trans[0]->dest_man == "_done_")
+      else if (m_curr_node->transitions[0]->dest_man == "_done_")
         return true;
       else
         return false;
     }
 
-    IMC::PlanManeuver*
+    IMC::PlanManeuver const*
     Plan::loadStartManeuver(void)
     {
-      m_last_id = m_spec->start_man_id;
+      m_curr_node = m_plan_graph->getStartNode();
 
-      return loadManeuverFromId(m_last_id);
+      auto const* start_man = m_curr_node->pman;
+      m_last_id = start_man->maneuver_id;
+
+      return start_man;
     }
 
-    IMC::PlanManeuver*
+    IMC::PlanManeuver const*
     Plan::loadNextManeuver(void)
     {
-      m_last_id = m_curr_node->trans[0]->dest_man;
+      m_last_id = m_curr_node->transitions[0]->dest_man;
 
       return loadManeuverFromId(m_last_id);
     }
@@ -356,142 +373,63 @@ namespace Plan
       return -1.0;
     }
 
-    bool
-    Plan::maneuverExists(const std::string id) const
-    {
-      std::vector<IMC::PlanManeuver*>::const_iterator itr = m_seq_nodes.begin();
-
-      for (; itr != m_seq_nodes.end(); ++itr)
-        if (!(*itr)->maneuver_id.compare(id))
-          return true;
-
-      return false;
-    }
-
-    void
-    Plan::buildGraph(const std::set<uint16_t>* supported_maneuvers)
-    {
-      bool start_maneuver_ok = false;
-
-      if (!m_spec->maneuvers.size())
-        throw ParseError(m_spec->plan_id + DTR(": no maneuvers"));
-
-      IMC::MessageList<IMC::PlanManeuver>::const_iterator mitr;
-      mitr = m_spec->maneuvers.begin();
-
-      // parse maneuvers and transitions
-      do
-      {
-        if (*mitr == NULL)
-        {
-          ++mitr;
-          continue;
-        }
-
-        if ((*mitr)->data.isNull())
-          throw ParseError((*mitr)->maneuver_id + DTR(": actual maneuver not specified"));
-
-        const IMC::Message* m = (*mitr)->data.get();
-
-        if (supported_maneuvers->find(m->getId()) == supported_maneuvers->end())
-          throw ParseError((*mitr)->maneuver_id + DTR(": maneuver is not supported"));
-
-        if (!isDepthSafe(m))
-          throw ParseError((*mitr)->maneuver_id + DTR(": maneuver depth beyond limits"));
-
-        if ((*mitr)->maneuver_id == m_spec->start_man_id)
-          start_maneuver_ok = true;
-
-        Node node;
-        bool matched = false;
-
-        node.pman = (*mitr);
-
-        IMC::MessageList<IMC::PlanTransition>::const_iterator tritr;
-        tritr = m_spec->transitions.begin();
-
-        for (; tritr != m_spec->transitions.end(); ++tritr)
-        {
-          if (*tritr == NULL)
-            continue;
-
-          if ((*tritr)->dest_man == (*mitr)->maneuver_id)
-            matched = true;
-
-          if ((*tritr)->source_man == (*mitr)->maneuver_id)
-            node.trans.push_back((*tritr));
-        }
-
-        // if a match was not found and this is not the start maneuver
-        if (!matched && ((*mitr)->maneuver_id != m_spec->start_man_id))
-        {
-          std::string str = DTR(": maneuver has no incoming transition"
-                                " and it's not the initial maneuver");
-          throw ParseError((*mitr)->maneuver_id + str);
-        }
-
-        m_graph[(*mitr)->maneuver_id] = node;
-        ++mitr;
-      }
-      while (mitr != m_spec->maneuvers.end());
-
-      if (!start_maneuver_ok)
-        throw ParseError(m_spec->start_man_id + DTR(": invalid start maneuver"));
-    }
-
     void
     Plan::secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
                          IMC::PlanStatistics& ps, bool imu_enabled,
                          const IMC::EstimatedState* state)
     {
       // Pre statistics
-      ps.plan_id = m_spec->plan_id;
+      ps.plan_id = m_plan_graph->getId();
       PreStatistics pre_stat(&ps);
 
       if (m_args.compute_progress)
       {
-        sequenceNodes();
+        auto seq_nodes = sequenceNodes();
 
         if (isLinear() && state != NULL)
         {
-          m_profiles->parse(m_seq_nodes, state);
+          m_profiles->parse(seq_nodes, state);
 
           Timeline tline;
-          fillTimeline(tline);
+          fillTimeline(seq_nodes, tline);
 
           Memory::clear(m_sched);
-          m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes,
-                                       tline, cinfo);
+          m_sched = new ActionSchedule(m_task, m_plan_graph->getSpec(),
+                                       seq_nodes, tline, cinfo);
 
           // Update timeline with scheduled calibration time if any
-          tline.setPlanETA(std::max(m_sched->getEarliestSchedule(), getExecutionDuration()));
+          tline.setPlanETA(
+          std::max(m_sched->getEarliestSchedule(), getExecutionDuration()));
 
           // Fill component active time with action scheduler
-          m_sched->fillComponentActiveTime(m_seq_nodes, tline, m_cat);
+          m_sched->fillComponentActiveTime(seq_nodes, tline, m_cat);
 
           // Update duration statistics
-          pre_stat.fill(m_seq_nodes, tline);
+          pre_stat.fill(seq_nodes, tline);
 
           // Update action statistics
           pre_stat.fill(m_cat);
 
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-          m_est_cal_time = (uint16_t)std::max(0.0f, diff);
-          m_est_cal_time = (uint16_t)std::max(m_args.min_cal_time, m_est_cal_time);
+          m_est_cal_time = (uint16_t) std::max(0.0f, diff);
+          m_est_cal_time
+          = (uint16_t) std::max(m_args.min_cal_time, m_est_cal_time);
 
           if (m_args.fpredict)
           {
             Memory::clear(m_fpred);
             m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
-                                         m_speed_model, imu_enabled, tline.getPlanETA());
+                                         m_speed_model, imu_enabled,
+                                         tline.getPlanETA());
             pre_stat.fill(*m_fpred);
           }
         }
         else if (!isLinear())
         {
           Memory::clear(m_sched);
-          m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes, cinfo);
+          m_sched = new ActionSchedule(m_task, m_plan_graph->getSpec(),
+                                       seq_nodes, cinfo);
 
           m_est_cal_time = m_args.min_cal_time;
         }
@@ -503,52 +441,62 @@ namespace Plan
       pre_stat.setProperties(m_properties);
     }
 
-    void
+    std::vector<IMC::PlanManeuver*>
     Plan::sequenceNodes(void)
     {
-      std::string maneuver_id = m_spec->start_man_id;
-      PlanMap::iterator itr = m_graph.find(maneuver_id);
+      std::vector<IMC::PlanManeuver*> seq_nodes;
+
+      auto const* node = m_plan_graph->getStartNode();
+      std::string maneuver_id = node->pman->maneuver_id;
 
       while (true)
       {
-        if (itr == m_graph.end())
-          throw ParseError(String::str(DTR("invalid maneuver id '%s'"), maneuver_id.c_str()));
+        if (!node)
+          throw PlanSequenceError(DTR("found invalid maneuver id '%s'")
+                                  + maneuver_id);
 
-        m_seq_nodes.push_back(itr->second.pman);
+        seq_nodes.push_back(node->pman);
 
-        if (!itr->second.trans.size())
+        auto const& transitions = node->transitions;
+
+        if (!transitions.size())
           break;
-        else if (itr->second.trans[0]->dest_man == "_done_")
+
+        std::string const& dest_man_id = transitions[0]->dest_man;
+
+        if (dest_man_id == "_done_")
           break;
 
         // Check if plan is cyclical
-        if (maneuverExists(itr->second.trans[0]->dest_man))
+        if (std::find_if(std::cbegin(seq_nodes), std::cend(seq_nodes),
+                         [dest_man_id](IMC::PlanManeuver* man) {
+                           return man->maneuver_id == dest_man_id;
+                         })
+            != seq_nodes.end())
         {
           m_properties |= IMC::PlanStatistics::PRP_NONLINEAR;
           m_properties |= IMC::PlanStatistics::PRP_INFINITE;
           m_properties |= IMC::PlanStatistics::PRP_CYCLICAL;
-          return;
+          return {};
         }
 
-        maneuver_id = itr->second.trans[0]->dest_man;
-        itr = m_graph.find(maneuver_id);
+        maneuver_id = dest_man_id;
+        node = m_plan_graph->findNode(maneuver_id);
       }
+
+      return seq_nodes;
     }
 
-    IMC::PlanManeuver*
-    Plan::loadManeuverFromId(const std::string id)
+    IMC::PlanManeuver const*
+    Plan::loadManeuverFromId(const std::string& id)
     {
-      PlanMap::iterator itr = m_graph.find(id);
+      auto const* node = m_plan_graph->findNode(id);
 
-      if (itr == m_graph.end())
-      {
+      if (!node)
         return NULL;
-      }
-      else
-      {
-        m_curr_node = &itr->second;
-        return m_curr_node->pman;
-      }
+
+      m_curr_node = node;
+      return m_curr_node->pman;
     }
 
     float
@@ -603,7 +551,7 @@ namespace Plan
       if (!itr->second.durations.size())
         return m_progress;
 
-      IMC::Message* man = m_graph.find(getCurrentId())->second.pman->data.get();
+      IMC::Message* man = m_plan_graph->findNode(getCurrentId())->pman->data.get();
 
       // Get execution progress
       float exec_prog = Progress::compute(man, mcs, itr->second.durations, exec_duration);
@@ -717,21 +665,21 @@ namespace Plan
     }
 
     void
-    Plan::fillTimeline(Timeline& tl)
+    Plan::fillTimeline(std::vector<IMC::PlanManeuver*> const& seq_nodes, Timeline& tl)
     {
       float execution_duration = getExecutionDuration();
 
       std::vector<IMC::PlanManeuver*>::const_iterator itr;
-      itr = m_seq_nodes.begin();
+      itr = seq_nodes.begin();
 
       // Maneuver's start and end ETA
       float maneuver_start_eta = -1.0;
       float maneuver_end_eta = -1.0;
 
       // Iterate through plan maneuvers
-      for (; itr != m_seq_nodes.end(); ++itr)
+      for (; itr != seq_nodes.end(); ++itr)
       {
-        if (itr == m_seq_nodes.begin())
+        if (itr == seq_nodes.begin())
           maneuver_start_eta = execution_duration;
         else
           maneuver_start_eta = maneuver_end_eta;
