@@ -48,7 +48,7 @@ namespace Plan
       m_beyond_dur(false),
       m_sched(NULL),
       m_started_maneuver(false),
-      m_calib(NULL),
+      m_calib(),
       m_config(cfg),
       m_fpred(NULL),
       m_task(task),
@@ -77,7 +77,6 @@ namespace Plan
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
-      m_calib = new Calibration();
       m_rt_stat = new RunTimeStatistics(&m_post_stat);
     }
 
@@ -85,7 +84,6 @@ namespace Plan
     {
       Memory::clear(m_profiles);
       Memory::clear(m_sched);
-      Memory::clear(m_calib);
       Memory::clear(m_speed_model);
       Memory::clear(m_power_model);
       Memory::clear(m_fpred);
@@ -108,8 +106,7 @@ namespace Plan
       if (m_profiles != NULL)
         m_profiles->clear();
 
-      if (m_calib != NULL)
-        m_calib->clear();
+      m_calib.clear();
 
       m_cat.clear();
       m_properties = 0;
@@ -167,7 +164,7 @@ namespace Plan
     void
     Plan::calibrationStarted(void)
     {
-      m_calib->setTime(m_est_cal_time);
+      m_calib.setTime(m_est_cal_time);
     }
 
     void
@@ -264,31 +261,31 @@ namespace Plan
     void
     Plan::updateCalibration(const IMC::VehicleState* vs)
     {
-      if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib->notStarted())
+      if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib.notStarted())
       {
-        m_calib->start();
+        m_calib.start();
       }
-      else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib->inProgress())
+      else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib.inProgress())
       {
-        m_calib->stop();
+        m_calib.stop();
 
         // Fill statistics
-        m_rt_stat->fillCalib(m_calib->getElapsedTime());
+        m_rt_stat->fillCalib(m_calib.getElapsedTime());
       }
-      else if (m_calib->inProgress())
+      else if (m_calib.inProgress())
       {
         // check if some calibration time can be skipped
         if (waitingForDevice())
         {
-          m_calib->forceRemainingTime(scheduledTimeLeft());
+          m_calib.forceRemainingTime(scheduledTimeLeft());
         }
-        else if (m_calib->getElapsedTime() >= m_args.min_cal_time)
+        else if (m_calib.getElapsedTime() >= m_args.min_cal_time)
         {
           // If we're past the minimum calibration time
-          m_calib->stop();
+          m_calib.stop();
 
           // Fill statistics
-          m_rt_stat->fillCalib(m_calib->getElapsedTime());
+          m_rt_stat->fillCalib(m_calib.getElapsedTime());
         }
       }
     }
@@ -567,16 +564,16 @@ namespace Plan
         return -1.0;
 
       // If calibration has not started yet, but will later
-      if (m_calib->notStarted())
+      if (m_calib.notStarted())
         return -1.0;
 
       float total_duration = getTotalDuration();
       float exec_duration = getExecutionDuration();
 
       // Check if its calibrating
-      if (m_calib->inProgress())
+      if (m_calib.inProgress())
       {
-        float time_left = m_calib->getRemaining() + exec_duration;
+        float time_left = m_calib.getRemaining() + exec_duration;
         m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
         return m_progress;
       }

@@ -174,7 +174,7 @@ namespace Plan
       inline const std::string
       getCalibrationInfo(void) const
       {
-        return m_calib->getInfo();
+        return m_calib.getInfo();
       }
 
       //! Is calibration done
@@ -182,7 +182,7 @@ namespace Plan
       inline bool
       isCalibrationDone(void) const
       {
-        return m_calib->isDone();
+        return m_calib.isDone();
       }
 
       //! Has calibration failed
@@ -190,7 +190,7 @@ namespace Plan
       inline bool
       hasCalibrationFailed(void) const
       {
-        return m_calib->hasFailed();
+        return m_calib.hasFailed();
       }
 
       //! Get current plan progress
@@ -363,7 +363,7 @@ namespace Plan
       //! Signal that a maneuver has started
       bool m_started_maneuver;
       //! Calibration object pointer
-      Calibration* m_calib;
+      Calibration m_calib;
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
       //! Pointer to speed model for speed conversions
