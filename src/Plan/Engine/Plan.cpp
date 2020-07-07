@@ -44,48 +44,39 @@ namespace Plan
       m_curr_node(NULL),
       m_progress(0.0),
       m_est_cal_time(0),
-      m_profiles(NULL),
+      m_profiles(nullptr),
       m_beyond_dur(false),
-      m_sched(NULL),
+      m_sched(nullptr),
       m_started_maneuver(false),
       m_calib(),
-      m_fpred(NULL),
+      m_fpred(nullptr),
       m_task(task),
       m_properties(0),
       m_rt_stat()
     {
       try
       {
-        m_speed_model = new Plans::SpeedModel(cfg);
+        m_speed_model = std::make_unique<Plans::SpeedModel>(cfg);
         m_speed_model->validate();
       }
       catch (...)
       {
-        Memory::clear(m_speed_model);
+        m_speed_model.reset(nullptr);
         m_task->inf(DTR("plan: speed model invalid"));
       }
 
       try
       {
-        m_power_model = new Power::Model(cfg);
+        m_power_model = std::make_unique<Power::Model>(cfg);
         m_power_model->validate();
       }
       catch (std::exception& e)
       {
-        Memory::clear(m_power_model);
+        m_power_model.reset(nullptr);
         m_task->err(DTR("plan: power model invalid: %s"), e.what());
       }
 
-      m_profiles = new Plans::TimeProfile(m_speed_model);
-    }
-
-    PlanRuntime::~PlanRuntime(void)
-    {
-      Memory::clear(m_profiles);
-      Memory::clear(m_sched);
-      Memory::clear(m_speed_model);
-      Memory::clear(m_power_model);
-      Memory::clear(m_fpred);
+      m_profiles = std::make_unique<TimeProfile>(m_speed_model.get());
     }
 
     void
@@ -99,7 +90,7 @@ namespace Plan
       m_started_maneuver = false;
       m_est_cal_time = m_args.min_cal_time;
 
-      if (m_profiles != NULL)
+      if (m_profiles)
         m_profiles->clear();
 
       m_calib.clear();
@@ -147,7 +138,7 @@ namespace Plan
       m_rt_stat.setPlanId(m_plan_graph->getId());
       m_rt_stat.planStarted();
 
-      if (m_sched == NULL)
+      if (!m_sched)
         return;
 
       m_affected_ents.clear();
@@ -158,7 +149,7 @@ namespace Plan
     void
     PlanRuntime::planStopped(void)
     {
-      if (m_sched != NULL)
+      if (m_sched)
         m_sched->planStopped(m_affected_ents);
 
       if (m_args.fpredict && m_fpred)
@@ -182,7 +173,7 @@ namespace Plan
 
       m_rt_stat.maneuverStarted(id);
 
-      if (m_sched == NULL)
+      if (!m_sched)
         return;
 
       m_sched->maneuverStarted(id);
@@ -207,7 +198,7 @@ namespace Plan
           m_beyond_dur = true;
       }
 
-      if (m_sched == NULL)
+      if (!m_sched)
         return;
 
       m_sched->maneuverDone(m_last_id);
@@ -258,7 +249,7 @@ namespace Plan
     {
       float prog = progress(mcs);
 
-      if (prog >= 0.0 && m_sched != NULL)
+      if (prog >= 0.0 && m_sched)
       {
         if (!m_beyond_dur)
           m_sched->updateSchedule(getETA());
@@ -307,7 +298,7 @@ namespace Plan
     PlanRuntime::onEntityActivationState(const std::string& id,
                                          const IMC::EntityActivationState* msg)
     {
-      if (m_sched != NULL)
+      if (m_sched)
         return m_sched->onEntityActivationState(id, msg);
       else
         return true;
@@ -319,7 +310,7 @@ namespace Plan
       if (!m_args.fpredict)
         return;
 
-      if (m_fpred == NULL)
+      if (!m_fpred)
         return;
 
       m_fpred->onFuelLevel(msg);
@@ -357,7 +348,7 @@ namespace Plan
     bool
     PlanRuntime::waitingForDevice(void)
     {
-      if (m_sched != NULL)
+      if (m_sched)
         return m_sched->waitingForDevice();
 
       return false;
@@ -366,7 +357,7 @@ namespace Plan
     float
     PlanRuntime::scheduledTimeLeft(void) const
     {
-      if (m_sched != NULL)
+      if (m_sched)
         return m_sched->calibTimeLeft();
 
       return -1.0;
@@ -475,11 +466,11 @@ namespace Plan
           m_profiles->parse(seq_nodes, state);
 
           Timeline tline
-          = makeFilledTimeline(getExecutionDuration(), m_profiles, seq_nodes);
+          = makeFilledTimeline(getExecutionDuration(), m_profiles.get(), seq_nodes);
 
-          Memory::clear(m_sched);
-          m_sched = new ActionSchedule(m_task, m_plan_graph->getSpec(),
-                                       seq_nodes, tline, cinfo);
+          m_sched
+          = std::make_unique<ActionSchedule>(m_task, m_plan_graph->getSpec(),
+                                             seq_nodes, tline, cinfo);
 
           // Update timeline with scheduled calibration time if any
           tline.setPlanETA(
@@ -502,18 +493,19 @@ namespace Plan
 
           if (m_args.fpredict)
           {
-            Memory::clear(m_fpred);
-            m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
-                                         m_speed_model, imu_enabled,
-                                         tline.getPlanETA());
+            m_fpred
+            = std::make_unique<FuelPrediction>(m_profiles.get(), &m_cat,
+                                               m_power_model.get(),
+                                               m_speed_model.get(), imu_enabled,
+                                               tline.getPlanETA());
             pre_stat.fill(*m_fpred);
           }
         }
         else if (!isLinear())
         {
-          Memory::clear(m_sched);
-          m_sched = new ActionSchedule(m_task, m_plan_graph->getSpec(),
-                                       seq_nodes, cinfo);
+          m_sched
+          = std::make_unique<ActionSchedule>(m_task, m_plan_graph->getSpec(),
+                                             seq_nodes, cinfo);
 
           m_est_cal_time = m_args.min_cal_time;
         }

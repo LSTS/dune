@@ -31,6 +31,7 @@
 #define PLAN_ENGINE_PLAN_HPP_INCLUDED_
 
 // C++ standard library headers.
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -97,7 +98,7 @@ namespace Plan
       PlanRuntime(PlanArguments const& args, Tasks::Task* task, Parsers::Config* cfg);
 
       //! Destructor
-      ~PlanRuntime(void);
+      ~PlanRuntime(void) {}
 
       //! Reset data
       void
@@ -322,11 +323,11 @@ namespace Plan
       //! Estimated required calibration time
       uint16_t m_est_cal_time;
       //! Pointer to maneuver durations
-      Plans::TimeProfile* m_profiles;
+      std::unique_ptr<TimeProfile> m_profiles;
       //! Flag to signal that the plan is past the last maneuver with a valid duration
       bool m_beyond_dur;
       //! Schedule for actions to take during plan
-      ActionSchedule* m_sched;
+      std::unique_ptr<ActionSchedule> m_sched;
       //! Vector of entity labels to push and pop entity parameters
       std::vector<std::string> m_affected_ents;
       //! Signal that a maneuver has started
@@ -336,11 +337,11 @@ namespace Plan
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
       //! Pointer to speed model for speed conversions
-      const Plans::SpeedModel* m_speed_model;
+      std::unique_ptr<const Plans::SpeedModel> m_speed_model;
       //! Pointer to power model for power conversions and estimations
-      const Power::Model* m_power_model;
+      std::unique_ptr<const Power::Model> m_power_model;
       //! Pointer to Fuel Prediction object
-      FuelPrediction* m_fpred;
+      std::unique_ptr<FuelPrediction> m_fpred;
       //! Pointer to task
       Tasks::Task* m_task;
       //! Plan properties
