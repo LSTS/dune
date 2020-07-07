@@ -303,13 +303,6 @@ namespace Plan
       float
       progress(const IMC::ManeuverControlState* mcs);
 
-      //! Fill in plan timeline
-      //! @param[in] seq_nodes sequenced plan nodes
-      //! @param[out] tl plan timeline filled in
-      void
-      fillTimeline(std::vector<IMC::PlanManeuver*> const& seq_nodes,
-                   Timeline& tl);
-
       //! Test if plan is linear
       inline bool
       isLinear(void) const

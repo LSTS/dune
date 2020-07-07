@@ -373,6 +373,45 @@ namespace Plan
       return -1.0;
     }
 
+    static Timeline
+    makeFilledTimeline(float execution_duration, TimeProfile const* profiles,
+                       std::vector<IMC::PlanManeuver*> const& seq_nodes)
+    {
+      Timeline tl;
+
+      std::vector<IMC::PlanManeuver*>::const_iterator itr;
+      itr = seq_nodes.begin();
+
+      // Maneuver's start and end ETA
+      float maneuver_start_eta = -1.0;
+      float maneuver_end_eta = -1.0;
+
+      // Iterate through plan maneuvers
+      for (; itr != seq_nodes.end(); ++itr)
+      {
+        if (itr == seq_nodes.begin())
+          maneuver_start_eta = execution_duration;
+        else
+          maneuver_start_eta = maneuver_end_eta;
+
+        TimeProfile::const_iterator dur;
+        dur = profiles->find((*itr)->maneuver_id);
+
+        if (dur == profiles->end())
+          maneuver_end_eta = -1.0;
+        else if (dur->second.durations.size())
+          maneuver_end_eta = execution_duration - dur->second.durations.back();
+        else
+          maneuver_end_eta = -1.0;
+
+        // Fill timeline
+        tl.setManeuverETA((*itr)->maneuver_id, maneuver_start_eta,
+                          maneuver_end_eta);
+      }
+
+      return tl;
+    }
+
     void
     Plan::secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
                          IMC::PlanStatistics& ps, bool imu_enabled,
@@ -390,8 +429,8 @@ namespace Plan
         {
           m_profiles->parse(seq_nodes, state);
 
-          Timeline tline;
-          fillTimeline(seq_nodes, tline);
+          Timeline tline
+          = makeFilledTimeline(getExecutionDuration(), m_profiles, seq_nodes);
 
           Memory::clear(m_sched);
           m_sched = new ActionSchedule(m_task, m_plan_graph->getSpec(),
@@ -662,41 +701,6 @@ namespace Plan
       }
 
       return true;
-    }
-
-    void
-    Plan::fillTimeline(std::vector<IMC::PlanManeuver*> const& seq_nodes, Timeline& tl)
-    {
-      float execution_duration = getExecutionDuration();
-
-      std::vector<IMC::PlanManeuver*>::const_iterator itr;
-      itr = seq_nodes.begin();
-
-      // Maneuver's start and end ETA
-      float maneuver_start_eta = -1.0;
-      float maneuver_end_eta = -1.0;
-
-      // Iterate through plan maneuvers
-      for (; itr != seq_nodes.end(); ++itr)
-      {
-        if (itr == seq_nodes.begin())
-          maneuver_start_eta = execution_duration;
-        else
-          maneuver_start_eta = maneuver_end_eta;
-
-        TimeProfile::const_iterator dur;
-        dur = m_profiles->find((*itr)->maneuver_id);
-
-        if (dur == m_profiles->end())
-          maneuver_end_eta = -1.0;
-        else if (dur->second.durations.size())
-          maneuver_end_eta = execution_duration - dur->second.durations.back();
-        else
-          maneuver_end_eta = -1.0;
-
-        // Fill timeline
-        tl.setManeuverETA((*itr)->maneuver_id, maneuver_start_eta, maneuver_end_eta);
-      }
     }
   }
 }
