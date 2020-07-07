@@ -30,7 +30,7 @@
 #ifndef PLAN_ENGINE_PLAN_HPP_INCLUDED_
 #define PLAN_ENGINE_PLAN_HPP_INCLUDED_
 
-// ISO C++ 98 headers.
+// C++ standard library headers.
 #include <string>
 #include <vector>
 
@@ -68,7 +68,7 @@ namespace Plan
       bool fpredict;
     };
 
-    //! Plan Specification parser
+    //! Plan runtime manager
     class PlanRuntime
     {
     public:
@@ -91,12 +91,8 @@ namespace Plan
       };
 
       //! Default constructor.
-      //! @param[in] spec pointer to PlanSpecification message
-      //! @param[in] compute_progress true if progress should be computed
-      //! @param[in] fpredict true if fuel prediction should be computed
-      //! @param[in] max_depth maximum admissible depth
+      //! @param[in] args plan runtime arguments
       //! @param[in] task pointer to task
-      //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
       PlanRuntime(PlanArguments const& args, Tasks::Task* task, Parsers::Config* cfg);
 
@@ -108,11 +104,12 @@ namespace Plan
       clear(void);
 
       //! Parse a given plan
+      //! @param[in] spec plan specification
       //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[in] cinfo map of components info
-      //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
+      //! @return ps PlanStatistics message
       IMC::PlanStatistics
       parse(const IMC::PlanSpecification& spec,
             const std::set<uint16_t>& supported_maneuvers,
@@ -269,13 +266,12 @@ namespace Plan
       float
       scheduledTimeLeft(void) const;
 
-      //! Perform secondary parsing procedures
-      //! That involve action scheduling, statistics, etc
-      //! Presumes buildGraph() did not fail
+      //! Perform secondary parsing procedures that involve action scheduling,
+      //! statistics, etc
       //! @param[in] cinfo map of components info
-      //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
+      //! @return PlanStatistics message
       IMC::PlanStatistics
       secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
                      bool imu_enabled, const IMC::EstimatedState* state);

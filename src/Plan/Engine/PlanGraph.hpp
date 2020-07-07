@@ -57,11 +57,13 @@ namespace Plan
         }
       };
 
+      //! Constructor.
+      //! Parse a PlanSpecification message into a maneuver graph.
       PlanGraph(DUNE::IMC::PlanSpecification const&);
 
       ~PlanGraph(void) {}
 
-      //! Graph nodes (a maneuver and its outgoing transitions)
+      //! Graph node (a maneuver and its outgoing transitions)
       struct Node
       {
         //! Pointer to a plan maneuver
@@ -70,18 +72,21 @@ namespace Plan
         std::vector<DUNE::IMC::PlanTransition*> transitions;
       };
 
+      //! Get this plan's ID.
       std::string const&
       getId(void) const noexcept
       {
         return m_spec.plan_id;
       }
 
+      //! Get the node corresponding to the starting maneuver.
       Node const*
       getStartNode(void) const noexcept
       {
         return m_start_node;
       }
 
+      //! Find the node with a given maneuver ID.
       Node const*
       findNode(std::string const& id) const noexcept
       {
@@ -96,6 +101,8 @@ namespace Plan
         return &(*node);
       }
 
+      //! Get a pointer to the PlanSpecification message from which this plan
+      //! was parsed.
       DUNE::IMC::PlanSpecification const*
       getSpec(void) const noexcept
       {
