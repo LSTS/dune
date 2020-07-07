@@ -30,9 +30,6 @@
 // C++ standard library headers.
 #include <algorithm>
 
-// DUNE headers.
-#include <DUNE/I18N.hpp>
-
 // Local headers.
 #include "Plan.hpp"
 
