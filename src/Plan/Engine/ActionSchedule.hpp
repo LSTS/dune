@@ -67,7 +67,7 @@ namespace Plan
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task,
                      const IMC::PlanSpecification* spec,
-                     const std::vector<IMC::PlanManeuver*>& nodes,
+                     const std::vector<IMC::PlanManeuver const*>& nodes,
                      const Timeline& tline,
                      const std::map<std::string, IMC::EntityInfo>& cinfo);
 
@@ -79,7 +79,7 @@ namespace Plan
       //! @param[in] cinfo map of components info
       ActionSchedule(Tasks::Task* task,
                      const IMC::PlanSpecification* spec,
-                     const std::vector<IMC::PlanManeuver*>& nodes,
+                     const std::vector<IMC::PlanManeuver const*>& nodes,
                      const std::map<std::string, IMC::EntityInfo>& cinfo);
 
       //! Update timed actions in schedule
@@ -141,7 +141,7 @@ namespace Plan
       //! @param[in] timeline plan timeline with all ETAs
       //! @param[in] cat component active time object to fill
       void
-      fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
+      fillComponentActiveTime(const std::vector<IMC::PlanManeuver const*>& nodes,
                               const Timeline& timeline,
                               ComponentActiveTime& cat);
 

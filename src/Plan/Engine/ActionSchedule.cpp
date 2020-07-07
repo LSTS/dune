@@ -35,7 +35,7 @@ namespace Plan
   namespace Engine
   {
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
-                                   const std::vector<IMC::PlanManeuver*>& nodes,
+                                   const std::vector<IMC::PlanManeuver const*>& nodes,
                                    const Timeline& tline,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
       m_task(task),
@@ -47,7 +47,7 @@ namespace Plan
       // start by adding "start" plan actions
       parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
-      std::vector<IMC::PlanManeuver*>::const_iterator itr;
+      std::vector<IMC::PlanManeuver const*>::const_iterator itr;
       itr = nodes.begin();
 
       // Iterate through plan maneuvers
@@ -79,7 +79,7 @@ namespace Plan
     }
 
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
-                                   const std::vector<IMC::PlanManeuver*>& nodes,
+                                   const std::vector<IMC::PlanManeuver const*>& nodes,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
       m_task(task),
       m_cinfo(&cinfo)
@@ -89,7 +89,7 @@ namespace Plan
       // start by adding "start" plan actions
       parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
-      std::vector<IMC::PlanManeuver*>::const_iterator itr;
+      std::vector<IMC::PlanManeuver const*>::const_iterator itr;
       itr = nodes.begin();
 
       // Iterate through plan maneuvers
@@ -306,7 +306,7 @@ namespace Plan
     }
 
     void
-    ActionSchedule::fillComponentActiveTime(const std::vector<IMC::PlanManeuver*>& nodes,
+    ActionSchedule::fillComponentActiveTime(const std::vector<IMC::PlanManeuver const*>& nodes,
                                             const Timeline& timeline,
                                             ComponentActiveTime& cat)
     {
@@ -343,7 +343,7 @@ namespace Plan
 
       // Get the maneuver start and end actions
       // Cycle through the nodes
-      std::vector<IMC::PlanManeuver*>::const_iterator pitr;
+      std::vector<IMC::PlanManeuver const*>::const_iterator pitr;
       pitr = nodes.begin();
       for (; pitr != nodes.end(); ++pitr)
       {

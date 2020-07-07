@@ -120,7 +120,7 @@ namespace Plan
 
       for (auto const& node : *m_plan_graph)
       {
-        IMC::Maneuver* m = node.pman->data.get();
+        IMC::Maneuver const* m = node.pman->data.get();
 
         if (!isDepthSafe(m))
           throw InvalidPlanSpec(node.pman->maneuver_id
@@ -374,11 +374,11 @@ namespace Plan
 
     static Timeline
     makeFilledTimeline(float execution_duration, TimeProfile const* profiles,
-                       std::vector<IMC::PlanManeuver*> const& seq_nodes)
+                       std::vector<IMC::PlanManeuver const*> const& seq_nodes)
     {
       Timeline tl;
 
-      std::vector<IMC::PlanManeuver*>::const_iterator itr;
+      std::vector<IMC::PlanManeuver const*>::const_iterator itr;
       itr = seq_nodes.begin();
 
       // Maneuver's start and end ETA
@@ -411,10 +411,10 @@ namespace Plan
       return tl;
     }
 
-    static std::vector<IMC::PlanManeuver*>
+    static std::vector<IMC::PlanManeuver const*>
     sequenceNodes(PlanGraph const* graph, unsigned* properties)
     {
-      std::vector<IMC::PlanManeuver*> seq_nodes;
+      std::vector<IMC::PlanManeuver const*> seq_nodes;
 
       auto const* node = graph->getStartNode();
       std::string maneuver_id = node->pman->maneuver_id;
@@ -439,7 +439,7 @@ namespace Plan
 
         // Check if plan is cyclical
         if (std::find_if(std::cbegin(seq_nodes), std::cend(seq_nodes),
-                         [dest_man_id](IMC::PlanManeuver* man) {
+                         [dest_man_id](IMC::PlanManeuver const* man) {
                            return man->maneuver_id == dest_man_id;
                          })
             != seq_nodes.end())
@@ -592,7 +592,7 @@ namespace Plan
       if (!itr->second.durations.size())
         return m_progress;
 
-      IMC::Message* man
+      IMC::Message const* man
       = m_plan_graph->findNode(getCurrentId())->pman->data.get();
 
       // Get execution progress

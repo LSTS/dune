@@ -134,7 +134,7 @@ namespace Plan
       //! @param[in] nodes vector of sequenced PlanManeuver nodes
       //! @param[in] tl Timeline of the plan
       void
-      fill(const std::vector<IMC::PlanManeuver*>& nodes, const Timeline& tl)
+      fill(const std::vector<IMC::PlanManeuver const*>& nodes, const Timeline& tl)
       {
         if (tl.getPlanETA() < 0.0)
         {
@@ -147,7 +147,7 @@ namespace Plan
         addTuple(m_ps.durations, DTR("Calibration"),
                  tl.getPlanETA() - tl.getExecutionDuration());
 
-        std::vector<IMC::PlanManeuver*>::const_iterator itr;
+        std::vector<IMC::PlanManeuver const*>::const_iterator itr;
         itr = nodes.begin();
 
         for (; itr != nodes.end(); ++itr)

@@ -67,9 +67,9 @@ namespace Plan
       struct Node
       {
         //! Pointer to a plan maneuver
-        DUNE::IMC::PlanManeuver* pman;
+        DUNE::IMC::PlanManeuver const* pman;
         //! Vector of pointers to plan transitions
-        std::vector<DUNE::IMC::PlanTransition*> transitions;
+        std::vector<DUNE::IMC::PlanTransition const*> transitions;
       };
 
       //! Get this plan's ID.
