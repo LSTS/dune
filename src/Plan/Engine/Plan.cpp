@@ -623,51 +623,61 @@ namespace Plan
           const IMC::Goto* m = static_cast<const IMC::Goto*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_POPUP:
         {
           const IMC::PopUp* m = static_cast<const IMC::PopUp*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_LAUNCH:
         {
           const IMC::Launch* m = static_cast<const IMC::Launch*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_LOITER:
         {
           const IMC::Loiter* m = static_cast<const IMC::Loiter*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_ROWS:
         {
           const IMC::Rows* m = static_cast<const IMC::Rows*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_ROWSCOVERAGE:
         {
           const IMC::RowsCoverage* m = static_cast<const IMC::RowsCoverage*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_FOLLOWPATH:
         {
           const IMC::FollowPath* m = static_cast<const IMC::FollowPath*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_YOYO:
         {
           const IMC::YoYo* m = static_cast<const IMC::YoYo*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_STATIONKEEPING:
         {
           const IMC::StationKeeping* m = static_cast<const IMC::StationKeeping*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_COMPASSCALIBRATION:
         {
           const IMC::CompassCalibration* m = static_cast<const IMC::CompassCalibration*>(maneuver);
           return checkDepth((IMC::ZUnits)m->z_units, m->z);
         }
+
         case DUNE_IMC_ELEVATOR:
         {
           const IMC::Elevator* m = static_cast<const IMC::Elevator*>(maneuver);
@@ -681,7 +691,10 @@ namespace Plan
             if (m->end_z > m_args.max_depth + c_depth_margin)
               return false;
           }
+
+          break;
         }
+
         case DUNE_IMC_SCHEDULEDGOTO:
         {
           const IMC::ScheduledGoto* m = static_cast<const IMC::ScheduledGoto*>(maneuver);
@@ -695,9 +708,12 @@ namespace Plan
             if (m->travel_z > m_args.max_depth + c_depth_margin)
               return false;
           }
+
+          break;
         }
+
         default:
-          ;
+          break;
       }
 
       return true;
