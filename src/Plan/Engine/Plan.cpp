@@ -110,10 +110,9 @@ namespace Plan
 
     IMC::PlanStatistics
     PlanRuntime::parse(const IMC::PlanSpecification& spec,
-                const std::set<std::uint16_t>& supported_maneuvers,
-                const std::map<std::string, IMC::EntityInfo>& cinfo,
-                bool imu_enabled,
-                const IMC::EstimatedState* state)
+                       const std::set<std::uint16_t>& supported_maneuvers,
+                       const std::map<std::string, IMC::EntityInfo>& cinfo,
+                       bool imu_enabled, const IMC::EstimatedState* state)
     {
       clear();
 
@@ -273,11 +272,13 @@ namespace Plan
     void
     PlanRuntime::updateCalibration(const IMC::VehicleState* vs)
     {
-      if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION && m_calib.notStarted())
+      if (vs->op_mode == IMC::VehicleState::VS_CALIBRATION
+          && m_calib.notStarted())
       {
         m_calib.start();
       }
-      else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION && m_calib.inProgress())
+      else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION
+               && m_calib.inProgress())
       {
         m_calib.stop();
 
@@ -303,7 +304,8 @@ namespace Plan
     }
 
     bool
-    PlanRuntime::onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
+    PlanRuntime::onEntityActivationState(const std::string& id,
+                                         const IMC::EntityActivationState* msg)
     {
       if (m_sched != NULL)
         return m_sched->onEntityActivationState(id, msg);
@@ -420,8 +422,8 @@ namespace Plan
       while (true)
       {
         if (!node)
-          throw PlanRuntime::PlanSequenceError(DTR("found invalid maneuver id '%s'")
-                                        + maneuver_id);
+          throw PlanRuntime::PlanSequenceError(
+          DTR("found invalid maneuver id '%s'") + maneuver_id);
 
         seq_nodes.push_back(node->pman);
 
@@ -456,10 +458,9 @@ namespace Plan
     }
 
     IMC::PlanStatistics
-    PlanRuntime::secondaryParse(const std::map<std::string,
-                                IMC::EntityInfo>& cinfo,
-                                bool imu_enabled,
-                                const IMC::EstimatedState* state)
+    PlanRuntime::secondaryParse(
+    const std::map<std::string, IMC::EntityInfo>& cinfo, bool imu_enabled,
+    const IMC::EstimatedState* state)
     {
       // Pre statistics
       PreStatistics pre_stat;
@@ -559,13 +560,14 @@ namespace Plan
       if (m_calib.inProgress())
       {
         float time_left = m_calib.getRemaining() + exec_duration;
-        m_progress = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
+        m_progress
+        = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
         return m_progress;
       }
 
       // If it's not executing, do not compute
-      if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING ||
-          mcs->eta == 0)
+      if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING
+          || mcs->eta == 0)
         return m_progress;
 
       TimeProfile::const_iterator itr;
@@ -590,10 +592,12 @@ namespace Plan
       if (!itr->second.durations.size())
         return m_progress;
 
-      IMC::Message* man = m_plan_graph->findNode(getCurrentId())->pman->data.get();
+      IMC::Message* man
+      = m_plan_graph->findNode(getCurrentId())->pman->data.get();
 
       // Get execution progress
-      float exec_prog = Progress::compute(man, mcs, itr->second.durations, exec_duration);
+      float exec_prog
+      = Progress::compute(man, mcs, itr->second.durations, exec_duration);
 
       float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
 
