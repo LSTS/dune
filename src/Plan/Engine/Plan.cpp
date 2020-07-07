@@ -52,7 +52,8 @@ namespace Plan
       m_config(cfg),
       m_fpred(NULL),
       m_task(task),
-      m_properties(0)
+      m_properties(0),
+      m_rt_stat(&m_post_stat)
     {
       try
       {
@@ -77,7 +78,6 @@ namespace Plan
       }
 
       m_profiles = new Plans::TimeProfile(m_speed_model);
-      m_rt_stat = new RunTimeStatistics(&m_post_stat);
     }
 
     Plan::~Plan(void)
@@ -87,7 +87,6 @@ namespace Plan
       Memory::clear(m_speed_model);
       Memory::clear(m_power_model);
       Memory::clear(m_fpred);
-      Memory::clear(m_rt_stat);
     }
 
     void
@@ -134,11 +133,10 @@ namespace Plan
     Plan::planStarted(void)
     {
       // Post statistics
-      if (m_rt_stat != NULL)
-        m_rt_stat->clear();
+      m_rt_stat.clear();
 
       m_post_stat.plan_id = m_spec->plan_id;
-      m_rt_stat->planStarted();
+      m_rt_stat.planStarted();
 
       if (m_sched == NULL)
         return;
@@ -155,9 +153,9 @@ namespace Plan
         m_sched->planStopped(m_affected_ents);
 
       if (m_args.fpredict && m_fpred)
-        m_rt_stat->fill(*m_fpred);
+        m_rt_stat.fill(*m_fpred);
 
-      m_rt_stat->planStopped();
+      m_rt_stat.planStopped();
       m_task->dispatch(m_post_stat);
     }
 
@@ -172,7 +170,7 @@ namespace Plan
     {
       m_started_maneuver = true;
 
-      m_rt_stat->maneuverStarted(id);
+      m_rt_stat.maneuverStarted(id);
 
       if (m_sched == NULL)
         return;
@@ -189,7 +187,7 @@ namespace Plan
       if (m_curr_node == NULL)
         return;
 
-      m_rt_stat->maneuverStopped();
+      m_rt_stat.maneuverStopped();
 
       const std::string& str_last = m_profiles->lastValid();
 
@@ -270,7 +268,7 @@ namespace Plan
         m_calib.stop();
 
         // Fill statistics
-        m_rt_stat->fillCalib(m_calib.getElapsedTime());
+        m_rt_stat.fillCalib(m_calib.getElapsedTime());
       }
       else if (m_calib.inProgress())
       {
@@ -285,7 +283,7 @@ namespace Plan
           m_calib.stop();
 
           // Fill statistics
-          m_rt_stat->fillCalib(m_calib.getElapsedTime());
+          m_rt_stat.fillCalib(m_calib.getElapsedTime());
         }
       }
     }

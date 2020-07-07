@@ -380,8 +380,8 @@ namespace Plan
       unsigned m_properties;
       //! Post Plan Statistics message
       IMC::PlanStatistics m_post_stat;
-      //! Pointer to Run Time Statistics
-      RunTimeStatistics* m_rt_stat;
+      //! Run Time Statistics
+      RunTimeStatistics m_rt_stat;
     };
   }
 }
