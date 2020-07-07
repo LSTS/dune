@@ -55,6 +55,19 @@ namespace Plan
     //! Depth margin.
     static const float c_depth_margin = 1.0f;
 
+    //! PlanSpecification parser arguments
+    struct PlanArguments
+    {
+      //! Maximum allowed depth.
+      float max_depth;
+      //! Minimum calibration time
+      uint16_t min_cal_time;
+      //! Whether or not to compute plan's progress
+      bool compute_progress;
+      //! Whether or not to compute fuel prediction
+      bool fpredict;
+    };
+
     //! Plan Specification parser
     class Plan
     {
@@ -75,9 +88,8 @@ namespace Plan
       //! @param[in] task pointer to task
       //! @param[in] min_cal_time minimum calibration time in s.
       //! @param[in] cfg pointer to config object
-      Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-           bool fpredict, float max_depth, Tasks::Task* task,
-           uint16_t min_cal_time, Parsers::Config* cfg);
+      Plan(PlanArguments const& args, const IMC::PlanSpecification* spec,
+           Tasks::Task* task, Parsers::Config* cfg);
 
       //! Destructor
       ~Plan(void);
@@ -305,7 +317,7 @@ namespace Plan
       {
         if (zunits == IMC::Z_DEPTH)
         {
-          if (z > m_max_depth + c_depth_margin)
+          if (z > m_args.max_depth + c_depth_margin)
             return false;
         }
 
@@ -326,18 +338,14 @@ namespace Plan
 
       //! Pointer to plan specification
       const IMC::PlanSpecification* m_spec;
+      //! Arguments
+      PlanArguments m_args;
       //! Plan graph of maneuvers and transitions
       PlanMap m_graph;
       //! Pointer to current node
       Node* m_curr_node;
       //! Last maneuver id
       std::string m_last_id;
-      //! Whether or not to compute plan's progress
-      bool m_compute_progress;
-      //! Maximum allowed depth.
-      float m_max_depth;
-      //! Whether or not to compute fuel prediction
-      bool m_predict_fuel;
       //! Current progress if any
       float m_progress;
       //! Estimated required calibration time
@@ -356,8 +364,6 @@ namespace Plan
       bool m_started_maneuver;
       //! Calibration object pointer
       Calibration* m_calib;
-      //! Minimum calibration time
-      uint16_t m_min_cal_time;
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
       //! Pointer to speed model for speed conversions

@@ -70,14 +70,10 @@ namespace Plan
 
     struct Arguments
     {
-      //! Whether or not to compute plan's progress
-      bool progress;
-      //! Whether or not to compute fuel prediction
-      bool fpredict;
+      //! Plan arguments
+      PlanArguments plan_arguments;
       //! State report period
       float speriod;
-      //! Duration of vehicle calibration process.
-      uint16_t calibration_time;
       //! True if calibration should be performed at all
       bool do_calib;
       //! Abort when a payload fails to activate
@@ -94,8 +90,6 @@ namespace Plan
       std::string recovery_plan;
       //! Entity label of the plan generator.
       std::string label_gen;
-      //! Absolute maximum depth.
-      float max_depth;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -138,16 +132,17 @@ namespace Plan
       //! Task arguments.
       Arguments m_args;
 
+
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_plan(NULL),
         m_imu_enabled(false)
       {
-        param("Compute Progress", m_args.progress)
+        param("Compute Progress", m_args.plan_arguments.compute_progress)
         .defaultValue("false")
         .description("True if plan progress should be computed");
 
-        param("Fuel Prediction", m_args.fpredict)
+        param("Fuel Prediction", m_args.plan_arguments.fpredict)
         .defaultValue("true")
         .description("True if plan's fuel prediction should be computed");
 
@@ -156,7 +151,7 @@ namespace Plan
         .units(Units::Hertz)
         .description("Frequency of plan control state");
 
-        param("Minimum Calibration Time", m_args.calibration_time)
+        param("Minimum Calibration Time", m_args.plan_arguments.min_cal_time)
         .defaultValue("10")
         .units(Units::Second)
         .description("Duration of vehicle calibration commands");
@@ -192,7 +187,8 @@ namespace Plan
         .description("Entity label of the Plan Generator");
 
         m_ctx.config.get("General", "Recovery Plan", "dislodge", m_args.recovery_plan);
-        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_args.max_depth);
+        m_ctx.config.get("General", "Absolute Maximum Depth", "50.0",
+                         m_args.plan_arguments.max_depth);
 
         m_db_file = m_ctx.dir_db / "Plan.db";
 
@@ -231,8 +227,8 @@ namespace Plan
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
 
-        if ((m_plan != NULL) && (paramChanged(m_args.progress) ||
-                                 paramChanged(m_args.calibration_time)))
+        if ((m_plan != NULL) && (paramChanged(m_args.plan_arguments.compute_progress) ||
+                                 paramChanged(m_args.plan_arguments.min_cal_time)))
           throw RestartNeeded(DTR("restarting to relaunch plan parser"), 0, false);
       }
 
@@ -245,8 +241,7 @@ namespace Plan
       void
       onResourceAcquisition(void)
       {
-        m_plan = new Plan(&m_spec, m_args.progress, m_args.fpredict, m_args.max_depth,
-                          this, m_args.calibration_time, &m_ctx.config);
+        m_plan = new Plan(m_args.plan_arguments, &m_spec, this, &m_ctx.config);
       }
 
       void
@@ -1142,7 +1137,7 @@ namespace Plan
       {
         if (m_report_timer.overflow())
         {
-          if (m_args.progress)
+          if (m_args.plan_arguments.compute_progress)
             reportProgress();
 
           dispatch(m_pcs);

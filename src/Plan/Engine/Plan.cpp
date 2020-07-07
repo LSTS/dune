@@ -37,14 +37,11 @@ namespace Plan
 {
   namespace Engine
   {
-    Plan::Plan(const IMC::PlanSpecification* spec, bool compute_progress,
-               bool fpredict, float max_depth, Tasks::Task* task,
-               uint16_t min_cal_time, Parsers::Config* cfg):
+    Plan::Plan(PlanArguments const& args, const IMC::PlanSpecification* spec,
+               Tasks::Task* task, Parsers::Config* cfg):
       m_spec(spec),
+      m_args(args),
       m_curr_node(NULL),
-      m_compute_progress(compute_progress),
-      m_max_depth(max_depth),
-      m_predict_fuel(fpredict),
       m_progress(0.0),
       m_est_cal_time(0),
       m_profiles(NULL),
@@ -52,7 +49,6 @@ namespace Plan
       m_sched(NULL),
       m_started_maneuver(false),
       m_calib(NULL),
-      m_min_cal_time(min_cal_time),
       m_config(cfg),
       m_fpred(NULL),
       m_task(task),
@@ -107,7 +103,7 @@ namespace Plan
       m_progress = -1.0;
       m_beyond_dur = false;
       m_started_maneuver = false;
-      m_est_cal_time = m_min_cal_time;
+      m_est_cal_time = m_args.min_cal_time;
 
       if (m_profiles != NULL)
         m_profiles->clear();
@@ -161,9 +157,8 @@ namespace Plan
       if (m_sched != NULL)
         m_sched->planStopped(m_affected_ents);
 
-      if (m_predict_fuel)
-        if (m_fpred != NULL)
-          m_rt_stat->fill(*m_fpred);
+      if (m_args.fpredict && m_fpred)
+        m_rt_stat->fill(*m_fpred);
 
       m_rt_stat->planStopped();
       m_task->dispatch(m_post_stat);
@@ -287,7 +282,7 @@ namespace Plan
         {
           m_calib->forceRemainingTime(scheduledTimeLeft());
         }
-        else if (m_calib->getElapsedTime() >= m_min_cal_time)
+        else if (m_calib->getElapsedTime() >= m_args.min_cal_time)
         {
           // If we're past the minimum calibration time
           m_calib->stop();
@@ -310,7 +305,7 @@ namespace Plan
     void
     Plan::onFuelLevel(const IMC::FuelLevel* msg)
     {
-      if (!m_predict_fuel)
+      if (!m_args.fpredict)
         return;
 
       if (m_fpred == NULL)
@@ -458,7 +453,7 @@ namespace Plan
       ps.plan_id = m_spec->plan_id;
       PreStatistics pre_stat(&ps);
 
-      if (m_compute_progress)
+      if (m_args.compute_progress)
       {
         sequenceNodes();
 
@@ -488,9 +483,9 @@ namespace Plan
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
           m_est_cal_time = (uint16_t)std::max(0.0f, diff);
-          m_est_cal_time = (uint16_t)std::max(m_min_cal_time, m_est_cal_time);
+          m_est_cal_time = (uint16_t)std::max(m_args.min_cal_time, m_est_cal_time);
 
-          if (m_predict_fuel)
+          if (m_args.fpredict)
           {
             Memory::clear(m_fpred);
             m_fpred = new FuelPrediction(m_profiles, &m_cat, m_power_model,
@@ -503,7 +498,7 @@ namespace Plan
           Memory::clear(m_sched);
           m_sched = new ActionSchedule(m_task, m_spec, m_seq_nodes, cinfo);
 
-          m_est_cal_time = m_min_cal_time;
+          m_est_cal_time = m_args.min_cal_time;
         }
       }
 
@@ -564,7 +559,7 @@ namespace Plan
     float
     Plan::progress(const IMC::ManeuverControlState* mcs)
     {
-      if (!m_compute_progress)
+      if (!m_args.compute_progress)
         return -1.0;
 
       // Compute only if linear and durations exists
@@ -696,12 +691,12 @@ namespace Plan
           const IMC::Elevator* m = static_cast<const IMC::Elevator*>(maneuver);
           if (m->start_z_units == IMC::Z_DEPTH)
           {
-            if (m->start_z > m_max_depth + c_depth_margin)
+            if (m->start_z > m_args.max_depth + c_depth_margin)
               return false;
           }
           if (m->end_z_units == IMC::Z_DEPTH)
           {
-            if (m->end_z > m_max_depth + c_depth_margin)
+            if (m->end_z > m_args.max_depth + c_depth_margin)
               return false;
           }
         }
@@ -710,12 +705,12 @@ namespace Plan
           const IMC::ScheduledGoto* m = static_cast<const IMC::ScheduledGoto*>(maneuver);
           if (m->z_units == IMC::Z_DEPTH)
           {
-            if (m->z > m_max_depth + c_depth_margin)
+            if (m->z > m_args.max_depth + c_depth_margin)
               return false;
           }
           if (m->travel_z_units == IMC::Z_DEPTH)
           {
-            if (m->travel_z > m_max_depth + c_depth_margin)
+            if (m->travel_z > m_args.max_depth + c_depth_margin)
               return false;
           }
         }
