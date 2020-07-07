@@ -269,12 +269,6 @@ namespace Plan
       float
       scheduledTimeLeft(void) const;
 
-      //! Check if a maneuver exists in the sequential nodes
-      //! @param[in] id string id of the maneuver
-      //! @return true if it already exists in the seq nodes vector
-      bool
-      maneuverExists(const std::string id) const;
-
       //! Perform secondary parsing procedures
       //! That involve action scheduling, statistics, etc
       //! Presumes buildGraph() did not fail
