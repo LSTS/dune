@@ -103,7 +103,9 @@ namespace Plan
       void
       clear(void);
 
-      //! Parse a given plan
+      //! Load a PlanSpecification message
+      //! Parses the plan and initializes the runtime information (ETA
+      //! prediction, fuel prediction, ...)
       //! @param[in] spec plan specification
       //! @param[in] supported_maneuvers list of supported maneuvers
       //! @param[in] cinfo map of components info
@@ -111,11 +113,10 @@ namespace Plan
       //! @param[in] state pointer to EstimatedState message
       //! @return ps PlanStatistics message
       IMC::PlanStatistics
-      parse(const IMC::PlanSpecification& spec,
-            const std::set<uint16_t>& supported_maneuvers,
-            const std::map<std::string, IMC::EntityInfo>& cinfo,
-            bool imu_enabled = false,
-            const IMC::EstimatedState* state = NULL);
+      load(const IMC::PlanSpecification& spec,
+           const std::set<uint16_t>& supported_maneuvers,
+           const std::map<std::string, IMC::EntityInfo>& cinfo,
+           bool imu_enabled = false, const IMC::EstimatedState* state = NULL);
 
       //! Signal that the plan has started
       void
@@ -266,15 +267,15 @@ namespace Plan
       float
       scheduledTimeLeft(void) const;
 
-      //! Perform secondary parsing procedures that involve action scheduling,
-      //! statistics, etc
+      //! Initialize action scheduling, compute statistics, and other plan
+      //! runtime initialization which must be done after a new plan is loaded.
       //! @param[in] cinfo map of components info
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       //! @return PlanStatistics message
       IMC::PlanStatistics
-      secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
-                     bool imu_enabled, const IMC::EstimatedState* state);
+      initializeRuntime(const std::map<std::string, IMC::EntityInfo>& cinfo,
+                        bool imu_enabled, const IMC::EstimatedState* state);
 
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load

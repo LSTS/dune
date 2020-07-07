@@ -654,7 +654,7 @@ namespace Plan
 
         try
         {
-          IMC::PlanStatistics stats = parsePlan(plan_startup);
+          IMC::PlanStatistics stats = loadPlanRuntime(plan_startup);
 
           // reply with statistics
           m_reply.arg.set(stats);
@@ -772,16 +772,15 @@ namespace Plan
         startManeuver(curr_man);
       }
 
-      //! Parse a given plan
+      //! Load PlanSpecification into plan runtime manager
       //! @param[in] plan_startup true if the plan is starting up
-      //! @param[out] ps reference to PlanStatistics message
-      //! @return true if was able to parse the plan
+      //! @return PlanStatistics message
       IMC::PlanStatistics
-      parsePlan(bool plan_startup)
+      loadPlanRuntime(bool plan_startup)
       {
         IMC::PlanStatistics stats
-        = m_plan->parse(m_spec, m_supported_maneuvers, m_cinfo, m_imu_enabled,
-                        &m_state);
+        = m_plan->load(m_spec, m_supported_maneuvers, m_cinfo, m_imu_enabled,
+                       &m_state);
 
         // if a plan is not gonna start after this, clear plan object
         if (!plan_startup)

@@ -109,10 +109,10 @@ namespace Plan
     }
 
     IMC::PlanStatistics
-    PlanRuntime::parse(const IMC::PlanSpecification& spec,
-                       const std::set<std::uint16_t>& supported_maneuvers,
-                       const std::map<std::string, IMC::EntityInfo>& cinfo,
-                       bool imu_enabled, const IMC::EstimatedState* state)
+    PlanRuntime::load(const IMC::PlanSpecification& spec,
+                      const std::set<std::uint16_t>& supported_maneuvers,
+                      const std::map<std::string, IMC::EntityInfo>& cinfo,
+                      bool imu_enabled, const IMC::EstimatedState* state)
     {
       clear();
 
@@ -131,7 +131,7 @@ namespace Plan
                                 + DTR(": maneuver is not supported"));
       }
 
-      IMC::PlanStatistics stats = secondaryParse(cinfo, imu_enabled, state);
+      IMC::PlanStatistics stats = initializeRuntime(cinfo, imu_enabled, state);
 
       m_last_id = m_plan_graph->getStartNode()->pman->maneuver_id;
 
@@ -458,7 +458,7 @@ namespace Plan
     }
 
     IMC::PlanStatistics
-    PlanRuntime::secondaryParse(
+    PlanRuntime::initializeRuntime(
     const std::map<std::string, IMC::EntityInfo>& cinfo, bool imu_enabled,
     const IMC::EstimatedState* state)
     {
