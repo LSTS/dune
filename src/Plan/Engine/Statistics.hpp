@@ -58,16 +58,30 @@ namespace Plan
     public:
       //! Constructor
       //! @param[in] msg pointer to statistics message
-      Statistics(IMC::PlanStatistics* msg):
-        m_ps(msg)
+      Statistics(void):
+        m_ps()
       { }
+
+      //! Get message
+      IMC::PlanStatistics
+      getMessage(void)
+      {
+        return m_ps;
+      }
+
+      //! Set the plan ID of the message
+      void
+      setPlanId(std::string plan_id)
+      {
+        m_ps.plan_id = std::move(plan_id);
+      }
 
       //! Fill in properties
       //! @param[in] prop properties of the plan
       void
       setProperties(unsigned prop)
       {
-        m_ps->properties = prop & IMC::PlanStatistics::PRP_ALL;
+        m_ps.properties = prop & IMC::PlanStatistics::PRP_ALL;
       }
 
     protected:
@@ -101,8 +115,8 @@ namespace Plan
         str.append(ss.str());
       }
 
-      //! Pointer to message
-      IMC::PlanStatistics* m_ps;
+      //! PlanStatistics message
+      IMC::PlanStatistics m_ps;
     };
 
     //! Class for handling pre-computed statistics
@@ -111,10 +125,9 @@ namespace Plan
     public:
       //! Constructor
       //! @param[in] msg pointer to statistics message
-      PreStatistics(IMC::PlanStatistics* msg):
-        Statistics(msg)
+      PreStatistics(void)
       {
-        m_ps->type = IMC::PlanStatistics::TP_PREPLAN;
+        m_ps.type = IMC::PlanStatistics::TP_PREPLAN;
       }
 
       //! Fill in durations
@@ -125,13 +138,13 @@ namespace Plan
       {
         if (tl.getPlanETA() < 0.0)
         {
-          addTuple(m_ps->durations, DTR("Total"), c_invalid);
+          addTuple(m_ps.durations, DTR("Total"), c_invalid);
           return;
         }
 
-        addTuple(m_ps->durations, DTR("Total"), tl.getPlanETA());
-        addTuple(m_ps->durations, DTR("Execution"), tl.getExecutionDuration());
-        addTuple(m_ps->durations, DTR("Calibration"),
+        addTuple(m_ps.durations, DTR("Total"), tl.getPlanETA());
+        addTuple(m_ps.durations, DTR("Execution"), tl.getExecutionDuration());
+        addTuple(m_ps.durations, DTR("Calibration"),
                  tl.getPlanETA() - tl.getExecutionDuration());
 
         std::vector<IMC::PlanManeuver*>::const_iterator itr;
@@ -144,7 +157,7 @@ namespace Plan
           float end = tl.getManeuverEndETA(id);
           float diff = end >= 0.0f ? start - end : -1.0f;
 
-          addTuple(m_ps->durations, DTR("Maneuver ") + id, diff);
+          addTuple(m_ps.durations, DTR("Maneuver ") + id, diff);
         }
       }
 
@@ -157,7 +170,7 @@ namespace Plan
         itr = cat.begin();
 
         for (; itr != cat.end(); ++itr)
-          addTuple(m_ps->actions, itr->first, itr->second);
+          addTuple(m_ps.actions, itr->first, itr->second);
       }
 
       //! Fill in fuel predictions
@@ -167,15 +180,15 @@ namespace Plan
       {
         if (fpred.getTotal() < 0.0)
         {
-          addTuple(m_ps->fuel, DTR("Total"), c_invalid);
+          addTuple(m_ps.fuel, DTR("Total"), c_invalid);
           return;
         }
 
-        addTuple(m_ps->fuel, DTR("Total"), fpred.getTotal(true), 2);
-        addTuple(m_ps->fuel, DTR("Hotel"), fpred.getHotel(true), 2);
-        addTuple(m_ps->fuel, DTR("Payload"), fpred.getPayload(true), 2);
-        addTuple(m_ps->fuel, DTR("Motion"), fpred.getMotion(true), 2);
-        addTuple(m_ps->fuel, DTR("IMU"), fpred.getIMU(true), 2);
+        addTuple(m_ps.fuel, DTR("Total"), fpred.getTotal(true), 2);
+        addTuple(m_ps.fuel, DTR("Hotel"), fpred.getHotel(true), 2);
+        addTuple(m_ps.fuel, DTR("Payload"), fpred.getPayload(true), 2);
+        addTuple(m_ps.fuel, DTR("Motion"), fpred.getMotion(true), 2);
+        addTuple(m_ps.fuel, DTR("IMU"), fpred.getIMU(true), 2);
       }
     };
 
@@ -185,20 +198,19 @@ namespace Plan
     public:
       //! Constructor
       //! @param[in] msg pointer to statistics message
-      RunTimeStatistics(IMC::PlanStatistics* msg):
-        Statistics(msg),
+      RunTimeStatistics(void):
         m_plan_start(-1.0),
         m_man_start(-1.0)
       {
-        m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
+        m_ps.type = IMC::PlanStatistics::TP_POSTPLAN;
       }
 
       //! Clear the message
       void
       clear(void)
       {
-        m_ps->clear();
-        m_ps->type = IMC::PlanStatistics::TP_POSTPLAN;
+        m_ps.clear();
+        m_ps.type = IMC::PlanStatistics::TP_POSTPLAN;
       }
 
       //! Fill in with fuel info
@@ -209,7 +221,7 @@ namespace Plan
         if (!fpred.isFuelValid())
           return;
 
-        addTuple(m_ps->fuel, DTR("Prediction Error"), fpred.getPredictionError(), 2);
+        addTuple(m_ps.fuel, DTR("Prediction Error"), fpred.getPredictionError(), 2);
       }
 
       //! Fill in calibration time
@@ -217,7 +229,7 @@ namespace Plan
       void
       fillCalib(float time)
       {
-        addTuple(m_ps->durations, DTR("Calibration"), time);
+        addTuple(m_ps.durations, DTR("Calibration"), time);
       }
 
       //! Flag the plan as started
@@ -235,7 +247,7 @@ namespace Plan
           return;
 
         double plan_duration = Time::Clock::get() - m_plan_start;
-        addTuple(m_ps->durations, DTR("Total"), (float)plan_duration);
+        addTuple(m_ps.durations, DTR("Total"), (float)plan_duration);
       }
 
       //! Flag a maneuver as starting
@@ -255,7 +267,7 @@ namespace Plan
           return;
 
         double maneuver_duration = Time::Clock::get() - m_man_start;
-        addTuple(m_ps->durations, DTR("Maneuver ") + m_man_id, (float)maneuver_duration);
+        addTuple(m_ps.durations, DTR("Maneuver ") + m_man_id, (float)maneuver_duration);
       }
 
     private:

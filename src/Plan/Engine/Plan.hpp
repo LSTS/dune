@@ -348,8 +348,6 @@ namespace Plan
       Tasks::Task* m_task;
       //! Plan properties
       unsigned m_properties;
-      //! Post Plan Statistics message
-      IMC::PlanStatistics m_post_stat;
       //! Run Time Statistics
       RunTimeStatistics m_rt_stat;
     };

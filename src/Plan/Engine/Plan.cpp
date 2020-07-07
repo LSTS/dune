@@ -52,7 +52,7 @@ namespace Plan
       m_fpred(NULL),
       m_task(task),
       m_properties(0),
-      m_rt_stat(&m_post_stat)
+      m_rt_stat()
     {
       try
       {
@@ -145,7 +145,7 @@ namespace Plan
       // Post statistics
       m_rt_stat.clear();
 
-      m_post_stat.plan_id = m_plan_graph->getId();
+      m_rt_stat.setPlanId(m_plan_graph->getId());
       m_rt_stat.planStarted();
 
       if (m_sched == NULL)
@@ -166,7 +166,8 @@ namespace Plan
         m_rt_stat.fill(*m_fpred);
 
       m_rt_stat.planStopped();
-      m_task->dispatch(m_post_stat);
+      IMC::PlanStatistics ps = m_rt_stat.getMessage();
+      m_task->dispatch(ps);
     }
 
     void
@@ -461,9 +462,8 @@ namespace Plan
                                 const IMC::EstimatedState* state)
     {
       // Pre statistics
-      IMC::PlanStatistics ps;
-      ps.plan_id = m_plan_graph->getId();
-      PreStatistics pre_stat(&ps);
+      PreStatistics pre_stat;
+      pre_stat.setPlanId(m_plan_graph->getId());
 
       if (m_args.compute_progress)
       {
@@ -523,7 +523,7 @@ namespace Plan
 
       pre_stat.setProperties(m_properties);
 
-      return ps;
+      return pre_stat.getMessage();
     }
 
     IMC::PlanManeuver const*
