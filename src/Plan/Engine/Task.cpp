@@ -652,19 +652,24 @@ namespace Plan
           return false;
         }
 
-        IMC::PlanStatistics ps;
-
-        if (!parsePlan(plan_startup, ps))
+        try
         {
+          IMC::PlanStatistics stats = parsePlan(plan_startup);
+
+          // reply with statistics
+          m_reply.arg.set(stats);
+        }
+        catch (std::exception const& e)
+        {
+          onFailure(e.what());
+          m_plan->clear();
           changeMode(IMC::PlanControlState::PCS_READY,
                      DTR("plan parse failed: ") + m_reply.info);
+
           return false;
         }
 
-        // reply with statistics
-        m_reply.arg.set(ps);
         m_reply.plan_id = m_spec.plan_id;
-
         m_pcs.plan_id = m_spec.plan_id;
 
         onSuccess(DTR("plan loaded"), false);
@@ -771,26 +776,18 @@ namespace Plan
       //! @param[in] plan_startup true if the plan is starting up
       //! @param[out] ps reference to PlanStatistics message
       //! @return true if was able to parse the plan
-      inline bool
-      parsePlan(bool plan_startup, IMC::PlanStatistics& ps)
+      IMC::PlanStatistics
+      parsePlan(bool plan_startup)
       {
-        try
-        {
-          m_plan->parse(m_spec, m_supported_maneuvers, m_cinfo,
-                        ps, m_imu_enabled, &m_state);
-        }
-        catch (std::exception const& e)
-        {
-          onFailure(e.what());
-          m_plan->clear();
-          return false;
-        }
+        IMC::PlanStatistics stats
+        = m_plan->parse(m_spec, m_supported_maneuvers, m_cinfo, m_imu_enabled,
+                        &m_state);
 
         // if a plan is not gonna start after this, clear plan object
         if (!plan_startup)
           m_plan->clear();
 
-        return true;
+        return stats;
       }
 
       //! Look for a plan in the database

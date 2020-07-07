@@ -111,11 +111,11 @@ namespace Plan
       m_properties = 0;
     }
 
-    void
+    IMC::PlanStatistics
     PlanRuntime::parse(const IMC::PlanSpecification& spec,
                 const std::set<std::uint16_t>& supported_maneuvers,
                 const std::map<std::string, IMC::EntityInfo>& cinfo,
-                IMC::PlanStatistics& ps, bool imu_enabled,
+                bool imu_enabled,
                 const IMC::EstimatedState* state)
     {
       clear();
@@ -135,11 +135,11 @@ namespace Plan
                                 + DTR(": maneuver is not supported"));
       }
 
-      secondaryParse(cinfo, ps, imu_enabled, state);
+      IMC::PlanStatistics stats = secondaryParse(cinfo, imu_enabled, state);
 
       m_last_id = m_plan_graph->getStartNode()->pman->maneuver_id;
 
-      return;
+      return stats;
     }
 
     void
@@ -457,12 +457,14 @@ namespace Plan
       return seq_nodes;
     }
 
-    void
-    PlanRuntime::secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
-                         IMC::PlanStatistics& ps, bool imu_enabled,
-                         const IMC::EstimatedState* state)
+    IMC::PlanStatistics
+    PlanRuntime::secondaryParse(const std::map<std::string,
+                                IMC::EntityInfo>& cinfo,
+                                bool imu_enabled,
+                                const IMC::EstimatedState* state)
     {
       // Pre statistics
+      IMC::PlanStatistics ps;
       ps.plan_id = m_plan_graph->getId();
       PreStatistics pre_stat(&ps);
 
@@ -523,6 +525,8 @@ namespace Plan
         m_properties |= IMC::PlanStatistics::PRP_INFINITE;
 
       pre_stat.setProperties(m_properties);
+
+      return ps;
     }
 
     IMC::PlanManeuver const*

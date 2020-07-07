@@ -113,11 +113,11 @@ namespace Plan
       //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
-      void
+      IMC::PlanStatistics
       parse(const IMC::PlanSpecification& spec,
             const std::set<uint16_t>& supported_maneuvers,
             const std::map<std::string, IMC::EntityInfo>& cinfo,
-            IMC::PlanStatistics& ps, bool imu_enabled = false,
+            bool imu_enabled = false,
             const IMC::EstimatedState* state = NULL);
 
       //! Signal that the plan has started
@@ -276,10 +276,9 @@ namespace Plan
       //! @param[out] ps reference to PlanStatistics message
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
-      void
+      IMC::PlanStatistics
       secondaryParse(const std::map<std::string, IMC::EntityInfo>& cinfo,
-                     IMC::PlanStatistics& ps, bool imu_enabled,
-                     const IMC::EstimatedState* state);
+                     bool imu_enabled, const IMC::EstimatedState* state);
 
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
