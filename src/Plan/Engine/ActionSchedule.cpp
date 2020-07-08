@@ -30,6 +30,8 @@
 // Local headers
 #include "ActionSchedule.hpp"
 
+using namespace DUNE;
+
 namespace Plan
 {
   namespace Engine

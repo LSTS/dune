@@ -34,14 +34,12 @@
 #include <string>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Time/Counter.hpp>
 
 namespace Plan
 {
   namespace Engine
   {
-    using DUNE_NAMESPACES;
-
     // Export DLL Symbol.
     class DUNE_DLL_SYM Calibration;
 
@@ -201,7 +199,7 @@ namespace Plan
       //! Calibration state
       CalibrationState m_state;
       //! Timer to estimate time left in calibration
-      Time::Counter<float> m_timer;
+      DUNE::Time::Counter<float> m_timer;
       //! Information regarding the calibration state
       std::string m_info;
     };

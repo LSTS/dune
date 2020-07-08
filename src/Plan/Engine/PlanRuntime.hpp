@@ -37,6 +37,8 @@
 
 // DUNE headers.
 #include <DUNE/Plans.hpp>
+
+// Local headers.
 #include "ActionSchedule.hpp"
 #include "Calibration.hpp"
 #include "FuelPrediction.hpp"
@@ -48,21 +50,19 @@ namespace Plan
 {
   namespace Engine
   {
-    using namespace DUNE::Plans;
-
     // Export DLL Symbol.
     class DUNE_DLL_SYM PlanRuntime;
 
     //! Depth margin.
     static const float c_depth_margin = 1.0f;
 
-    //! PlanSpecification parser arguments
+    //! PlanRuntime arguments
     struct PlanArguments
     {
       //! Maximum allowed depth.
       float max_depth;
       //! Minimum calibration time
-      uint16_t min_cal_time;
+      std::uint16_t min_cal_time;
       //! Whether or not to compute plan's progress
       bool compute_progress;
       //! Whether or not to compute fuel prediction
@@ -95,7 +95,8 @@ namespace Plan
       //! @param[in] args plan runtime arguments
       //! @param[in] task pointer to task
       //! @param[in] cfg pointer to config object
-      PlanRuntime(PlanArguments const& args, Tasks::Task* task, Parsers::Config* cfg);
+      PlanRuntime(PlanArguments const& args, DUNE::Tasks::Task* task,
+                  DUNE::Parsers::Config* cfg);
 
       //! Destructor
       ~PlanRuntime(void) {}
@@ -113,11 +114,12 @@ namespace Plan
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       //! @return ps PlanStatistics message
-      IMC::PlanStatistics
-      load(const IMC::PlanSpecification& spec,
-           const std::set<uint16_t>& supported_maneuvers,
-           const std::map<std::string, IMC::EntityInfo>& cinfo,
-           bool imu_enabled = false, const IMC::EstimatedState* state = NULL);
+      DUNE::IMC::PlanStatistics
+      load(const DUNE::IMC::PlanSpecification& spec,
+           const std::set<std::uint16_t>& supported_maneuvers,
+           const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo,
+           bool imu_enabled = false,
+           const DUNE::IMC::EstimatedState* state = NULL);
 
       //! Signal that the plan has started
       void
@@ -142,7 +144,7 @@ namespace Plan
 
       //! Get necessary calibration time
       //! @return necessary calibration time
-      uint16_t
+      std::uint16_t
       getEstimatedCalibrationTime(void) const;
 
       //! Check if plan has been completed
@@ -152,16 +154,16 @@ namespace Plan
 
       //! Get start maneuver message
       //! @return NULL if start maneuver id is invalid
-      IMC::PlanManeuver const*
+      DUNE::IMC::PlanManeuver const*
       loadStartManeuver(void);
 
       //! Get next maneuver message
       //! @return NULL if maneuver id is invalid
-      IMC::PlanManeuver const*
+      DUNE::IMC::PlanManeuver const*
       loadNextManeuver(void);
 
       //! Get current maneuver message
-      IMC::PlanManeuver const*
+      DUNE::IMC::PlanManeuver const*
       getCurrentManeuver(void) const
       {
         if (!m_curr_node)
@@ -206,23 +208,24 @@ namespace Plan
       //! @param[in] mcs pointer to maneuver control state message
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      updateProgress(const IMC::ManeuverControlState* mcs);
+      updateProgress(const DUNE::IMC::ManeuverControlState* mcs);
 
       //! Update calibration process
       void
-      updateCalibration(const IMC::VehicleState* vs);
+      updateCalibration(const DUNE::IMC::VehicleState* vs);
 
       //! Pass EntityActivationState to scheduler
       //! @param[in] id entity label
       //! @param[in] msg pointer to EntityActivationState message
       //! @return false if something failed to be activated, true otherwise
       bool
-      onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg);
+      onEntityActivationState(const std::string& id,
+                              const DUNE::IMC::EntityActivationState* msg);
 
       //! Pass FuelLevel to FuelPrediction
       //! @param[in] msg FuelLevel message
       void
-      onFuelLevel(const IMC::FuelLevel* msg);
+      onFuelLevel(const DUNE::IMC::FuelLevel* msg);
 
       //! Get current estimated time of arrival
       //! @return ETA
@@ -234,7 +237,7 @@ namespace Plan
       //! @param[in] maneuver plan maneuver.
       //! @return true if depth is safe, false otherwise.
       bool
-      isDepthSafe(const IMC::Message* maneuver) const;
+      isDepthSafe(const DUNE::IMC::Message* maneuver) const;
 
       //! Get duration of the execution phase of the plan
       //! (total of maneuver accumulated duration)
@@ -274,34 +277,35 @@ namespace Plan
       //! @param[in] imu_enabled true if imu enabled, false otherwise
       //! @param[in] state pointer to EstimatedState message
       //! @return PlanStatistics message
-      IMC::PlanStatistics
-      initializeRuntime(const std::map<std::string, IMC::EntityInfo>& cinfo,
-                        bool imu_enabled, const IMC::EstimatedState* state);
+      DUNE::IMC::PlanStatistics
+      initializeRuntime(
+      const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo,
+      bool imu_enabled, const DUNE::IMC::EstimatedState* state);
 
       //! Get maneuver from id
       //! @param[in] id name of the maneuver to load
       //! @return NULL if maneuver id is invalid
-      IMC::PlanManeuver const*
+      DUNE::IMC::PlanManeuver const*
       loadManeuverFromId(std::string const& id);
 
       //! Compute current progress
       //! @param[in] pointer to ManeuverControlState message
       //! @return progress in percent (-1.0 if unable to compute)
       float
-      progress(const IMC::ManeuverControlState* mcs);
+      progress(const DUNE::IMC::ManeuverControlState* mcs);
 
       //! Test if plan is linear
       inline bool
       isLinear(void) const
       {
-        return !(m_properties & IMC::PlanStatistics::PRP_NONLINEAR);
+        return !(m_properties & DUNE::IMC::PlanStatistics::PRP_NONLINEAR);
       }
 
       //! Check if depth is safe
       inline bool
-      checkDepth(IMC::ZUnits zunits, float z) const
+      checkDepth(DUNE::IMC::ZUnits zunits, float z) const
       {
-        if (zunits == IMC::Z_DEPTH)
+        if (zunits == DUNE::IMC::Z_DEPTH)
         {
           if (z > m_args.max_depth + c_depth_margin)
             return false;
@@ -321,10 +325,11 @@ namespace Plan
       //! Current progress if any
       float m_progress;
       //! Estimated required calibration time
-      uint16_t m_est_cal_time;
+      std::uint16_t m_est_cal_time;
       //! Pointer to maneuver durations
-      std::unique_ptr<TimeProfile> m_profiles;
-      //! Flag to signal that the plan is past the last maneuver with a valid duration
+      std::unique_ptr<DUNE::Plans::TimeProfile> m_profiles;
+      //! Flag to signal that the plan is past the last maneuver with a valid
+      //! duration
       bool m_beyond_dur;
       //! Schedule for actions to take during plan
       std::unique_ptr<ActionSchedule> m_sched;
@@ -337,19 +342,19 @@ namespace Plan
       //! Component active time for fuel estimation
       ComponentActiveTime m_cat;
       //! Pointer to speed model for speed conversions
-      std::unique_ptr<const Plans::SpeedModel> m_speed_model;
+      std::unique_ptr<const DUNE::Plans::SpeedModel> m_speed_model;
       //! Pointer to power model for power conversions and estimations
-      std::unique_ptr<const Power::Model> m_power_model;
+      std::unique_ptr<const DUNE::Power::Model> m_power_model;
       //! Pointer to Fuel Prediction object
       std::unique_ptr<FuelPrediction> m_fpred;
       //! Pointer to task
-      Tasks::Task* m_task;
+      DUNE::Tasks::Task* m_task;
       //! Plan properties
       unsigned m_properties;
       //! Run Time Statistics
       RunTimeStatistics m_rt_stat;
     };
-  }
-}
+  } // namespace Engine
+} // namespace Plan
 
 #endif

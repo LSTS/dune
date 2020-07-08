@@ -34,7 +34,9 @@
 #include <string>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/IMC.hpp>
+#include <DUNE/Plans.hpp>
+#include <DUNE/Power/Model.hpp>
 
 // Local headers.
 #include "ComponentActiveTime.hpp"
@@ -44,8 +46,6 @@ namespace Plan
 {
   namespace Engine
   {
-    using DUNE_NAMESPACES;
-
     // Export DLL Symbol.
     class DUNE_DLL_SYM FuelPrediction;
 
@@ -71,10 +71,10 @@ namespace Plan
     {
     public:
       //! Constructor.
-      FuelPrediction(const Plans::TimeProfile* profiles,
+      FuelPrediction(const DUNE::Plans::TimeProfile* profiles,
                      const ComponentActiveTime* cat,
-                     const Power::Model* power_model,
-                     const Plans::SpeedModel* speed_model,
+                     const DUNE::Power::Model* power_model,
+                     const DUNE::Plans::SpeedModel* speed_model,
                      bool imu_enabled,
                      float total_duration):
 
@@ -106,7 +106,7 @@ namespace Plan
       //! Use fuel level messages to compute error in prediction
       //! @param[in] msg FuelLevel message
       void
-      onFuelLevel(const IMC::FuelLevel* msg)
+      onFuelLevel(const DUNE::IMC::FuelLevel* msg)
       {
         if (m_starting_fuel < 0.0f)
           m_starting_fuel = msg->value;
@@ -228,10 +228,10 @@ namespace Plan
       //! @param[in] profiles pointer to TimeProfiles object with speed profiles
       //! @param[in] speed_model motion model parameters of the vehicle
       void
-      computeMotionEnergy(const Plans::TimeProfile* profiles,
-                          const Plans::SpeedModel* speed_model)
+      computeMotionEnergy(const DUNE::Plans::TimeProfile* profiles,
+                          const DUNE::Plans::SpeedModel* speed_model)
       {
-        Plans::TimeProfile::const_iterator itr;
+        DUNE::Plans::TimeProfile::const_iterator itr;
 
         // object to group the speeds together in a map
         GroupSpeed gspeed(c_rpm_tolerance);
@@ -239,7 +239,7 @@ namespace Plan
         for (itr = profiles->begin(); itr != profiles->end(); ++itr)
         {
           // Pointer to vector of speed profiles
-          const std::vector<TimeProfile::SpeedProfile>* sptr = &itr->second.speeds;
+          const std::vector<DUNE::Plans::TimeProfile::SpeedProfile>* sptr = &itr->second.speeds;
 
           for (unsigned i = 0; i < sptr->size(); i++)
           {
@@ -286,7 +286,7 @@ namespace Plan
       //! Parcels of estimated fuel consumed
       float m_fuel_parcels[FP_TOTAL];
       //! Power model for the estimation
-      const Power::Model* m_pmodel;
+      const DUNE::Power::Model* m_pmodel;
       //! Starting value of fuel level
       float m_starting_fuel;
       //! Current value of fuel level

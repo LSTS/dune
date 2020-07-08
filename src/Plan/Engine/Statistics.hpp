@@ -31,6 +31,7 @@
 #define PLAN_ENGINE_STATISTICS_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
+#include <iomanip>
 #include <map>
 #include <cstring>
 #include <sstream>
@@ -48,8 +49,6 @@ namespace Plan
 {
   namespace Engine
   {
-    using DUNE_NAMESPACES;
-
     //! value for not available or invalid
     static const std::string c_invalid = "N/A";
 
@@ -63,7 +62,7 @@ namespace Plan
       { }
 
       //! Get message
-      IMC::PlanStatistics
+      DUNE::IMC::PlanStatistics
       getMessage(void)
       {
         return m_ps;
@@ -81,7 +80,7 @@ namespace Plan
       void
       setProperties(unsigned prop)
       {
-        m_ps.properties = prop & IMC::PlanStatistics::PRP_ALL;
+        m_ps.properties = prop & DUNE::IMC::PlanStatistics::PRP_ALL;
       }
 
     protected:
@@ -116,7 +115,7 @@ namespace Plan
       }
 
       //! PlanStatistics message
-      IMC::PlanStatistics m_ps;
+      DUNE::IMC::PlanStatistics m_ps;
     };
 
     //! Class for handling pre-computed statistics
@@ -127,14 +126,14 @@ namespace Plan
       //! @param[in] msg pointer to statistics message
       PreStatistics(void)
       {
-        m_ps.type = IMC::PlanStatistics::TP_PREPLAN;
+        m_ps.type = DUNE::IMC::PlanStatistics::TP_PREPLAN;
       }
 
       //! Fill in durations
       //! @param[in] nodes vector of sequenced PlanManeuver nodes
       //! @param[in] tl Timeline of the plan
       void
-      fill(const std::vector<IMC::PlanManeuver const*>& nodes, const Timeline& tl)
+      fill(const std::vector<DUNE::IMC::PlanManeuver const*>& nodes, const Timeline& tl)
       {
         if (tl.getPlanETA() < 0.0)
         {
@@ -147,7 +146,7 @@ namespace Plan
         addTuple(m_ps.durations, DTR("Calibration"),
                  tl.getPlanETA() - tl.getExecutionDuration());
 
-        std::vector<IMC::PlanManeuver const*>::const_iterator itr;
+        std::vector<DUNE::IMC::PlanManeuver const*>::const_iterator itr;
         itr = nodes.begin();
 
         for (; itr != nodes.end(); ++itr)
@@ -202,7 +201,7 @@ namespace Plan
         m_plan_start(-1.0),
         m_man_start(-1.0)
       {
-        m_ps.type = IMC::PlanStatistics::TP_POSTPLAN;
+        m_ps.type = DUNE::IMC::PlanStatistics::TP_POSTPLAN;
       }
 
       //! Clear the message
@@ -210,7 +209,7 @@ namespace Plan
       clear(void)
       {
         m_ps.clear();
-        m_ps.type = IMC::PlanStatistics::TP_POSTPLAN;
+        m_ps.type = DUNE::IMC::PlanStatistics::TP_POSTPLAN;
       }
 
       //! Fill in with fuel info
@@ -236,7 +235,7 @@ namespace Plan
       void
       planStarted(void)
       {
-        m_plan_start = Time::Clock::get();
+        m_plan_start = DUNE::Time::Clock::get();
       }
 
       //! Flag the plan as stopped
@@ -246,7 +245,7 @@ namespace Plan
         if (m_plan_start < 0.0)
           return;
 
-        double plan_duration = Time::Clock::get() - m_plan_start;
+        double plan_duration = DUNE::Time::Clock::get() - m_plan_start;
         addTuple(m_ps.durations, DTR("Total"), (float)plan_duration);
       }
 
@@ -256,7 +255,7 @@ namespace Plan
       maneuverStarted(const std::string& id)
       {
         m_man_id = id;
-        m_man_start = Time::Clock::get();
+        m_man_start = DUNE::Time::Clock::get();
       }
 
       //! Flag a maneuver as stopped
@@ -266,7 +265,7 @@ namespace Plan
         if (m_man_start < 0.0)
           return;
 
-        double maneuver_duration = Time::Clock::get() - m_man_start;
+        double maneuver_duration = DUNE::Time::Clock::get() - m_man_start;
         addTuple(m_ps.durations, DTR("Maneuver ") + m_man_id, (float)maneuver_duration);
       }
 

@@ -33,6 +33,9 @@
 // Local headers.
 #include "PlanRuntime.hpp"
 
+using namespace DUNE;
+using namespace DUNE::Plans;
+
 namespace Plan
 {
   namespace Engine
@@ -82,7 +85,7 @@ namespace Plan
     void
     PlanRuntime::clear(void)
     {
-      m_plan_graph.reset();
+      m_plan_graph.reset(nullptr);
 
       m_curr_node = NULL;
       m_progress = -1.0;
@@ -204,7 +207,7 @@ namespace Plan
       m_sched->maneuverDone(m_last_id);
     }
 
-    uint16_t
+    std::uint16_t
     PlanRuntime::getEstimatedCalibrationTime(void) const
     {
       return m_est_cal_time;
@@ -217,12 +220,14 @@ namespace Plan
 
       if (m_curr_node == NULL)
         return false;
-      else if (!m_curr_node->transitions.size())
+
+      if (!m_curr_node->transitions.size())
         return true;
-      else if (m_curr_node->transitions[0]->dest_man == "_done_")
+
+      if (m_curr_node->transitions[0]->dest_man == "_done_")
         return true;
-      else
-        return false;
+
+      return false;
     }
 
     IMC::PlanManeuver const*
@@ -267,30 +272,37 @@ namespace Plan
           && m_calib.notStarted())
       {
         m_calib.start();
+        return;
       }
-      else if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION
+
+      if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION
                && m_calib.inProgress())
       {
         m_calib.stop();
 
         // Fill statistics
         m_rt_stat.fillCalib(m_calib.getElapsedTime());
-      }
-      else if (m_calib.inProgress())
-      {
-        // check if some calibration time can be skipped
-        if (waitingForDevice())
-        {
-          m_calib.forceRemainingTime(scheduledTimeLeft());
-        }
-        else if (m_calib.getElapsedTime() >= m_args.min_cal_time)
-        {
-          // If we're past the minimum calibration time
-          m_calib.stop();
 
-          // Fill statistics
-          m_rt_stat.fillCalib(m_calib.getElapsedTime());
-        }
+        return;
+      }
+
+      if (!m_calib.inProgress())
+        return;
+
+      // check if some calibration time can be skipped
+      if (waitingForDevice())
+      {
+        m_calib.forceRemainingTime(scheduledTimeLeft());
+        return;
+      }
+
+      // If we're past the minimum calibration time
+      if (m_calib.getElapsedTime() >= m_args.min_cal_time)
+      {
+        m_calib.stop();
+
+        // Fill statistics
+        m_rt_stat.fillCalib(m_calib.getElapsedTime());
       }
     }
 
@@ -300,8 +312,8 @@ namespace Plan
     {
       if (m_sched)
         return m_sched->onEntityActivationState(id, msg);
-      else
-        return true;
+
+      return true;
     }
 
     void
@@ -321,8 +333,8 @@ namespace Plan
     {
       if (m_progress >= 0.0)
         return getTotalDuration() * (1.0 - 0.01 * m_progress);
-      else
-        return -1.0;
+
+      return -1.0;
     }
 
     // Private
@@ -338,11 +350,11 @@ namespace Plan
       if (str_last.empty())
         return -1.0;
 
-      TimeProfile::const_iterator itr = m_profiles->find(str_last);
-      if (itr == m_profiles->end())
+      auto maneuver_profile = m_profiles->find(str_last);
+      if (maneuver_profile == m_profiles->end())
         return -1.0;
 
-      return itr->second.durations.back();
+      return maneuver_profile->second.durations.back();
     }
 
     bool
@@ -369,34 +381,28 @@ namespace Plan
     {
       Timeline tl;
 
-      std::vector<IMC::PlanManeuver const*>::const_iterator itr;
-      itr = seq_nodes.begin();
-
       // Maneuver's start and end ETA
-      float maneuver_start_eta = -1.0;
+      float maneuver_start_eta = execution_duration;
       float maneuver_end_eta = -1.0;
 
       // Iterate through plan maneuvers
-      for (; itr != seq_nodes.end(); ++itr)
+      for (auto node : seq_nodes)
       {
-        if (itr == seq_nodes.begin())
-          maneuver_start_eta = execution_duration;
-        else
-          maneuver_start_eta = maneuver_end_eta;
+        auto durations = profiles->find(node->maneuver_id);
 
-        TimeProfile::const_iterator dur;
-        dur = profiles->find((*itr)->maneuver_id);
-
-        if (dur == profiles->end())
+        if (durations == profiles->end())
           maneuver_end_eta = -1.0;
-        else if (dur->second.durations.size())
-          maneuver_end_eta = execution_duration - dur->second.durations.back();
+        else if (durations->second.durations.size())
+          maneuver_end_eta
+          = execution_duration - durations->second.durations.back();
         else
           maneuver_end_eta = -1.0;
 
         // Fill timeline
-        tl.setManeuverETA((*itr)->maneuver_id, maneuver_start_eta,
+        tl.setManeuverETA(node->maneuver_id, maneuver_start_eta,
                           maneuver_end_eta);
+
+        maneuver_start_eta = maneuver_end_eta;
       }
 
       return tl;
@@ -459,7 +465,7 @@ namespace Plan
 
       if (m_args.compute_progress)
       {
-        auto seq_nodes = sequenceNodes(m_plan_graph.get(), &m_properties);
+        auto const seq_nodes = sequenceNodes(m_plan_graph.get(), &m_properties);
 
         if (isLinear() && state != NULL)
         {
@@ -487,9 +493,9 @@ namespace Plan
 
           // Estimate necessary calibration time
           float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-          m_est_cal_time = (uint16_t) std::max(0.0f, diff);
+          m_est_cal_time = (std::uint16_t) std::max(0.0f, diff);
           m_est_cal_time
-          = (uint16_t) std::max(m_args.min_cal_time, m_est_cal_time);
+          = (std::uint16_t) std::max(m_args.min_cal_time, m_est_cal_time);
 
           if (m_args.fpredict)
           {
@@ -562,49 +568,31 @@ namespace Plan
           || mcs->eta == 0)
         return m_progress;
 
-      TimeProfile::const_iterator itr;
-      itr = m_profiles->find(getCurrentId());
+      std::string const& current_id = getCurrentId();
+      auto maneuver_profile = m_profiles->find(current_id);
 
-      // If not found
-      if (itr == m_profiles->end())
-      {
-        // If beyond the last maneuver with valid duration
-        if (m_beyond_dur)
-        {
-          m_progress = 100.0;
-          return m_progress;
-        }
-        else
-        {
-          return -1.0;
-        }
-      }
+      if (maneuver_profile == m_profiles->end())
+        return m_beyond_dur ? (m_progress = 100.0) : -1.0;
 
-      // If durations vector for this maneuver is empty
-      if (!itr->second.durations.size())
+      auto const& durations = maneuver_profile->second.durations;
+
+      if (!durations.size())
         return m_progress;
 
       IMC::Message const* man
-      = m_plan_graph->findNode(getCurrentId())->pman->data.get();
+      = m_plan_graph->findNode(current_id)->pman->data.get();
 
       // Get execution progress
-      float exec_prog
-      = Progress::compute(man, mcs, itr->second.durations, exec_duration);
-
+      float exec_prog = Progress::compute(man, mcs, durations, exec_duration);
       float prog = 100.0 - getExecutionPercentage() * (1.0 - exec_prog / 100.0);
 
       // If negative, then unable to compute
       // But keep last value of progress if it is not invalid
       if (prog < 0.0)
-      {
-        if (m_progress < 0.0)
-          return -1.0;
-        else
-          return m_progress;
-      }
+        return m_progress < 0.0 ? -1.0 : m_progress;
 
       // Never output shorter than previous
-      m_progress = prog > m_progress ? prog : m_progress;
+      m_progress = std::max(prog, m_progress);
 
       return m_progress;
     }

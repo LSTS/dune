@@ -35,14 +35,12 @@
 #include <cmath>
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Config.hpp>
 
 namespace Plan
 {
   namespace Engine
   {
-    using DUNE_NAMESPACES;
-
     // Export DLL Symbol.
     class DUNE_DLL_SYM GroupSpeed;
 
