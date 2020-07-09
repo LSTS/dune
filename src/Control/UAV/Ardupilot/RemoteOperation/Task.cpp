@@ -101,7 +101,7 @@ namespace Control
         struct Task : public DUNE::Control::BasicRemoteOperation
         {
           Arguments m_args; // Task arguments.
-          Network::TCPSocket* m_socket; //TODO move to Transport/MAVLink
+          Network::UDPSocket* m_socket; //TODO move to Transport/MAVLink
 //          Network::UDPSocket* m_sender; //TODO move to Transport/MAVLink
 
           //! Type definition for Arduino packet handler.
@@ -139,7 +139,7 @@ namespace Control
           Task(const std::string& name, Tasks::Context& ctx) :
               DUNE::Control::BasicRemoteOperation(name, ctx), m_gain(0.20), m_lights_step(
                   100), m_cam_tilt_steps(0), m_pitch_trim(0), m_roll_trim(0), m_sysid(
-                  254), m_targetid(1), m_timer(1.0), m_sys_status(
+                  254), m_targetid(1), m_sys_status(
                   MAV_STATE_UNINIT), m_comms(false), m_gcs(1)
           {
             param("Gain Step", m_args.gain_step).minimumValue("2").maximumValue(
@@ -249,10 +249,10 @@ namespace Control
           {
             try
             {
-              m_socket = new TCPSocket;
+              m_socket = new UDPSocket;
               m_socket->bind(m_args.listen, Address::Any, true);
               m_socket->connect(m_args.addr, m_args.port);
-              m_socket->setNoDelay(true);
+              //m_socket->setNoDelay(true);
               //m_sender->setNoDelay(true);
               inf(DTR("Ardupilot  Teleoperation interface initialized"));
               m_comms = true;
@@ -273,6 +273,8 @@ namespace Control
           void
           onResourceAcquisition(void)
           {
+            m_timer.setTop(1.5);
+            war(DTR("Set counter top to: %f "),m_timer.getTop());
             for (int i = 0; i < 11; i++)
             {
               m_args.rc[i].pwm_max = PWM_MAX;
@@ -320,7 +322,7 @@ namespace Control
           {
             //Set neutral control
             debug(DTR("Disabling GCS control"));
-            idle();
+            idle(false);
             mavlink_message_t msg;
             uint8_t buf[512];
             mavlink_msg_change_operator_control_pack(m_sysid, 1, &msg,
@@ -347,7 +349,7 @@ namespace Control
             requestParams();
             changeMode(MAVLink::SUB_MODE_MANUAL);
             arm();
-            idle();
+            idle(true);
             inf(DTR("Gain is at %f percent"), (m_gain * 100));
             war(DTR("Started Teleoperation requested by: %s"),
                 m->custom.c_str()); //FIXME check src? and resolve id
@@ -375,11 +377,12 @@ namespace Control
           }
 
           void
-          idle()
+          idle(bool control)
           {
+            int idle = control? floor(PWM_IDLE): 0;// UINT16_MAX means no change to that channel | 0 means control released back to the RC radio
             for (int channel = 0; channel < 11; channel++)
             {
-              rc_pwm[channel] = PWM_IDLE;
+              rc_pwm[channel] = idle;
             }
             // Clear pitch/roll trim settings //TODO
 //               pitchTrim = 0;
@@ -387,10 +390,11 @@ namespace Control
             actuate();
           }
 
-          //! Send commands to ArduSub
+          //! Send rc PWM values to ArduSub
           void
           actuate(void)
           {
+            // UINT16_MAX means no change to that channel | 0 means control released back to the RC radio
             mavlink_message_t msg;
             mavlink_msg_rc_channels_override_pack(m_sysid, 1, &msg, m_targetid,
                                                   0, rc_pwm[0], rc_pwm[1],
@@ -452,7 +456,7 @@ namespace Control
                                        m_sys_status);
             uint16_t size = mavlink_msg_to_send_buffer(buffer, &msg);
             sendData(buffer, size);
-            trace(DTR("Sent Heatbeat."));
+            debug(DTR("Sent Heatbeat."));
           }
 
           //! Enable and Disable UBLS as main GPS for navigation
@@ -528,7 +532,7 @@ namespace Control
           setParamByName(std::string param_id, float value)
           {
             mavlink_message_t msg;
-            mavlink_msg_param_set_pack(255, 0, &msg, //FIXME change to this system id
+            mavlink_msg_param_set_pack(m_sysid, 0, &msg, //FIXME change to this system id
                                        m_targetid, //! target_system System ID
                                        1, //! target_component Component ID
                                        param_id.c_str(), //! Parameter name
@@ -600,11 +604,11 @@ namespace Control
             trace(DTR("RC Channel 3 PWM %d"), channels.chan3_raw);
             trace(DTR("RC Channel 4 PWM %d"), channels.chan4_raw);
             trace(DTR("RC Channel 5 PWM %d"), channels.chan5_raw);
-            trace(DTR("RC Channel 6 PWM %d"), channels.chan6_raw);
-            trace(DTR("RC Channel 7 PWM %d"), channels.chan7_raw);
-            trace(DTR("RC Channel 8 PWM %d"), channels.chan8_raw);
-            trace(DTR("RC Channel 9 PWM %d"), channels.chan9_raw);
-            trace(DTR("RC Channel 10 PWM %d"), channels.chan10_raw);
+            debug(DTR("RC Channel 6 PWM %d"), channels.chan6_raw);
+            debug(DTR("RC Channel 7 PWM %d"), channels.chan7_raw);
+            debug(DTR("RC Channel 8 PWM %d"), channels.chan8_raw);
+            debug(DTR("RC Channel 9 PWM %d"), channels.chan9_raw);
+            debug(DTR("RC Channel 10 PWM %d"), channels.chan10_raw);
             trace(DTR("RC Channel 11 PWM %d"), channels.chan11_raw);
           }
 
@@ -617,8 +621,8 @@ namespace Control
             int res = 0;
             try
             {
-              //res = m_sender->write((char*)buf, len);
-              m_socket->write((char*)buf, len);
+              //res = m_socket->write((char*)buf, len);
+              res = m_socket->write(buf, len,m_args.addr, m_args.port);
               trace(DTR("Sent %d bytes of %d: %s %d"), res, len,
                     m_args.addr.c_str(), m_args.port);
               m_socket->flushOutput();
@@ -779,7 +783,7 @@ namespace Control
                     rc_pwm[RC_INPUT::Camera_Tilt] = idle;
                 }
               }
-//              war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
+              war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
             }
 
             //Handle Lights
@@ -964,8 +968,10 @@ namespace Control
                   }
                   handleData(n);
                 }
-                if (m_timer.overflow()) // 1sec
+                if (m_timer.overflow()){ // 1.5sec
                   sendHeartbeat();
+                  m_timer.reset();
+                }
               }
               else
               {
