@@ -28,6 +28,13 @@
 // Author: Paulo Dias (plan actions addition)                               *
 //***************************************************************************
 
+// C++ standard library headers.
+#include <map>
+#include <memory>
+#include <queue>
+#include <set>
+#include <string>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -94,8 +101,10 @@ namespace Plan
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Pointer to Plan class
-      PlanRuntime* m_plan;
+      //! Plan runtime manager
+      std::unique_ptr<PlanRuntime> m_plan;
+      //! Backup of a paused plan's runtime state
+      std::unique_ptr<PlanRuntime> m_paused_plan;
       //! Plan control interface
       IMC::PlanControlState m_pcs;
       IMC::PlanControl m_reply;
@@ -135,7 +144,8 @@ namespace Plan
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_plan(NULL),
+        m_plan(nullptr),
+        m_paused_plan(nullptr),
         m_imu_enabled(false)
       {
         param("Compute Progress", m_args.plan_arguments.compute_progress)
@@ -227,21 +237,32 @@ namespace Plan
         if (paramChanged(m_args.speriod))
           m_args.speriod = 1.0 / m_args.speriod;
 
-        if ((m_plan != NULL) && (paramChanged(m_args.plan_arguments.compute_progress) ||
-                                 paramChanged(m_args.plan_arguments.min_cal_time)))
-          throw RestartNeeded(DTR("restarting to relaunch plan runtime manager"), 0, false);
+        if (m_plan
+            && (paramChanged(m_args.plan_arguments.compute_progress)
+                || paramChanged(m_args.plan_arguments.min_cal_time)))
+          throw RestartNeeded(DTR(
+                              "restarting to relaunch plan runtime manager"),
+                              0, false);
       }
 
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_plan);
+        m_plan.reset(nullptr);
+        m_paused_plan.reset(nullptr);
+      }
+
+      std::unique_ptr<PlanRuntime>
+      makePlanRuntime(void)
+      {
+        return std::make_unique<PlanRuntime>(m_args.plan_arguments, this,
+                                             &m_ctx.config);
       }
 
       void
       onResourceAcquisition(void)
       {
-        m_plan = new PlanRuntime(m_args.plan_arguments, this, &m_ctx.config);
+        m_plan = makePlanRuntime();
       }
 
       void
@@ -289,7 +310,7 @@ namespace Plan
         if (msg->getSource() != getSystemId())
           return;
 
-        if (m_plan != NULL)
+        if (m_plan)
         {
           std::string id;
 
@@ -339,7 +360,7 @@ namespace Plan
       void
       consume(const IMC::FuelLevel* msg)
       {
-        if (m_plan == NULL)
+        if (!m_plan)
           return;
 
         m_plan->onFuelLevel(msg);
@@ -406,7 +427,7 @@ namespace Plan
         }
 
         // update calibration status
-        if (m_plan != NULL && initMode())
+        if (m_plan && initMode())
         {
           m_plan->updateCalibration(vs);
 
@@ -463,28 +484,33 @@ namespace Plan
         if (!execMode() || pendingReply())
           return;
 
-        if (vs->flags & IMC::VehicleState::VFLG_MANEUVER_DONE)
-        {
-          if (m_plan->isDone())
-          {
-            vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
-
-            std::string comp = DTR("plan completed");
-            onSuccess(comp, false);
-            m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
-            m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_READY, comp, TYPE_INF);
-          }
-          else
-          {
-            IMC::PlanManeuver const* pman = m_plan->loadNextManeuver();
-            startManeuver(pman);
-          }
-        }
-        else
+        if (!(vs->flags & IMC::VehicleState::VFLG_MANEUVER_DONE))
         {
           m_pcs.man_eta = vs->maneuver_eta;
+          return;
         }
+
+        if (m_plan->isDone())
+        {
+          vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
+
+          std::string comp = DTR("plan completed");
+          onSuccess(comp, false);
+          m_pcs.last_outcome = IMC::PlanControlState::LPO_SUCCESS;
+          m_reply.plan_id = m_spec.plan_id;
+
+          // If we have a paused plan saved, go back to pause mode
+          IMC::PlanControlState::StateEnum const next_state
+          = m_paused_plan ? IMC::PlanControlState::PCS_PAUSED
+                          : IMC::PlanControlState::PCS_READY;
+
+          changeMode(next_state, comp, TYPE_INF);
+
+          return;
+        }
+
+        IMC::PlanManeuver const* pman = m_plan->loadNextManeuver();
+        startManeuver(pman);
       }
 
       void
@@ -700,31 +726,34 @@ namespace Plan
       {
         if (initMode() || execMode() || pauseMode())
         {
-          if (!plan_startup)
-          {
-            // stop maneuver only if we are not executing a plan afterwards
-            if (!pauseMode())
-              vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
-
-            m_reply.plan_id = m_spec.plan_id;
-            m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
-            onSuccess();
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("plan stopped"), TYPE_INF);
-          }
-          else
+          if (plan_startup)
           {
             m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
             debug("switching to new plan");
             return false;
           }
+
+          // If we are goind out of pause mode, restore the plan runtime state
+          if (pauseMode())
+            m_plan.reset(m_paused_plan.release());
+          else
+            vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
+
+          m_reply.plan_id = m_spec.plan_id;
+          m_pcs.last_outcome = IMC::PlanControlState::LPO_FAILURE;
+          onSuccess();
+
+          // If we have a paused plan saved, go back to pause mode
+          IMC::PlanControlState::StateEnum const next_state
+          = m_paused_plan ? IMC::PlanControlState::PCS_PAUSED
+                          : IMC::PlanControlState::PCS_READY;
+
+          changeMode(next_state, DTR("plan stopped"), TYPE_INF);
         }
-        else
+        else if (!plan_startup)
         {
-          if (!plan_startup)
-          {
-            onFailure(DTR("no plan is running, request ignored"));
-            m_reply.plan_id = "";
-          }
+          onFailure(DTR("no plan is running, request ignored"));
+          m_reply.plan_id = "";
         }
 
         return true;
@@ -739,7 +768,13 @@ namespace Plan
           return;
         }
 
-        debug("Pausing plan %s", m_pcs.plan_id.c_str());
+        if (m_paused_plan)
+          war("Discarding previously paused plan");
+
+        debug("Pausing plan %s at maneuver %s", m_pcs.plan_id.c_str(),
+              m_plan->getCurrentManeuver()->maneuver_id.c_str());
+
+        m_paused_plan.reset(m_plan.release());
 
         vehicleRequest(IMC::VehicleCommand::VC_PAUSE_MANEUVER);
         onSuccess();
@@ -755,6 +790,14 @@ namespace Plan
           onFailure(DTR("no plan is paused, resume request ignored"));
           return;
         }
+
+        if (!m_paused_plan)
+        {
+          err("Inconsistent state: no paused plan stored.");
+          return;
+        }
+
+        m_plan.reset(m_paused_plan.release());
 
         IMC::PlanManeuver const* curr_man = m_plan->getCurrentManeuver();
 
@@ -888,16 +931,24 @@ namespace Plan
         changeMode(IMC::PlanControlState::PCS_INITIALIZING,
                    DTR("plan initializing: ") + plan_id, TYPE_INF);
 
-        if (!loadPlan(plan_id, spec, true))
-          return stopped;
-
-        changeLog(plan_id);
-
         if (!(flags & IMC::PlanControl::FLG_NO_CLEAR_MANEUVERS))
         {
           IMC::ClearManeuverState clear_maneuvers;
           dispatch(clear_maneuvers);
+
+          if (m_paused_plan)
+          {
+            war("Discarding paused plan");
+            m_plan.reset(m_paused_plan.release());
+          }
         }
+        else if (!m_plan)
+          m_plan = makePlanRuntime();
+
+        if (!loadPlan(plan_id, spec, true))
+          return stopped;
+
+        changeLog(plan_id);
 
         // Flag the plan as starting
         if (initMode() || execMode())
@@ -1059,16 +1110,25 @@ namespace Plan
         {
           debug(DTR("now in %s state"), DTR(c_state_desc[s]));
 
-          bool was_in_plan = initMode() || execMode();
+          bool was_in_plan = initMode() || execMode() || pauseMode();
+          bool was_executing_while_paused
+          = (m_plan && m_paused_plan) && (initMode() || execMode());
 
           m_pcs.state = s;
 
-          bool is_in_plan = initMode() || execMode();
+          bool is_in_plan = initMode() || execMode() || pauseMode();
+          bool returning_to_pause = was_executing_while_paused && pauseMode();
 
-          if (was_in_plan && !is_in_plan)
+          if ((was_in_plan && !is_in_plan) || returning_to_pause)
           {
             m_plan->planStopped();
             changeLog("");
+          }
+
+          if (returning_to_pause)
+          {
+            debug("Returning to paused state -- freeing m_plan");
+            m_plan.reset(nullptr);
           }
         }
 
@@ -1121,7 +1181,7 @@ namespace Plan
       reportProgress(void)
       {
         // Must be executing or calibrating to be able to compute progress
-        if (m_plan == NULL || (!execMode() && !initMode()))
+        if (!m_plan || (!execMode() && !initMode()))
           return;
 
         m_pcs.plan_progress = m_plan->updateProgress(&m_mcs);
