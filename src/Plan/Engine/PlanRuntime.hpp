@@ -105,6 +105,16 @@ namespace Plan
       void
       clear(void);
 
+      //! Get the currently loaded plan's id.
+      char const*
+      getPlanId(void) const noexcept
+      {
+        if (!m_plan_graph)
+          return "";
+
+        return m_plan_graph->getId().c_str();
+      }
+
       //! Load a PlanSpecification message
       //! Parses the plan and initializes the runtime information (ETA
       //! prediction, fuel prediction, ...)
