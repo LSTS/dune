@@ -339,7 +339,7 @@ namespace Plan
                 m_reply.plan_id = m_spec.plan_id;
               }
 
-              changeMode(IMC::PlanControlState::PCS_READY, error, TYPE_NONE);
+              toReadyState(error, TYPE_NONE);
             }
             else
             {
@@ -393,7 +393,7 @@ namespace Plan
         if (initMode() || execMode())
         {
           if (error)
-            changeMode(IMC::PlanControlState::PCS_READY, vc->info, TYPE_NONE);
+            toReadyState(vc->info, TYPE_NONE);
           return;
         }
       }
@@ -444,7 +444,7 @@ namespace Plan
           {
             onFailure(m_plan->getCalibrationInfo());
             m_reply.plan_id = m_spec.plan_id;
-            changeMode(IMC::PlanControlState::PCS_READY, m_plan->getCalibrationInfo());
+            toReadyState(m_plan->getCalibrationInfo());
           }
         }
       }
@@ -455,7 +455,7 @@ namespace Plan
         switch (m_pcs.state)
         {
           case IMC::PlanControlState::PCS_BLOCKED:
-            changeMode(IMC::PlanControlState::PCS_READY, DTR("vehicle ready"), TYPE_INF);
+            toReadyState(DTR("vehicle ready"), TYPE_INF);
             break;
           case IMC::PlanControlState::PCS_INITIALIZING:
             if (!pendingReply())
@@ -470,7 +470,7 @@ namespace Plan
             {
               onFailure(vs->last_error, false);
               m_reply.plan_id = m_spec.plan_id;
-              changeMode(IMC::PlanControlState::PCS_READY, vs->last_error);
+              toReadyState(vs->last_error);
             }
             break;
           default:
@@ -500,11 +500,8 @@ namespace Plan
           m_reply.plan_id = m_spec.plan_id;
 
           // If we have a paused plan saved, go back to pause mode
-          IMC::PlanControlState::StateEnum const next_state
-          = m_paused_plan ? IMC::PlanControlState::PCS_PAUSED
-                          : IMC::PlanControlState::PCS_READY;
-
-          changeMode(next_state, comp, TYPE_INF);
+          m_paused_plan ? toPauseState(comp, TYPE_INF)
+                        : toReadyState(comp, TYPE_INF);
 
           return;
         }
@@ -536,7 +533,7 @@ namespace Plan
             m_reply.plan_id = m_spec.plan_id;
           }
 
-          changeMode(IMC::PlanControlState::PCS_BLOCKED, edesc, TYPE_NONE);
+          toBlockedState(edesc, TYPE_NONE);
         }
       }
 
@@ -549,10 +546,7 @@ namespace Plan
           return;
 
         if (!blockedMode())
-        {
-          changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                     DTR("vehicle in CALIBRATION mode"), TYPE_NONE);
-        }
+          toBlockedState(DTR("vehicle in CALIBRATION mode"), TYPE_NONE);
       }
 
       void
@@ -563,8 +557,7 @@ namespace Plan
         if (blockedMode())
           return;
 
-        changeMode(IMC::PlanControlState::PCS_BLOCKED,
-                   DTR("vehicle in EXTERNAL mode"), TYPE_NONE);
+        toBlockedState(DTR("vehicle in EXTERNAL mode"), TYPE_NONE);
       }
 
       bool
@@ -673,8 +666,7 @@ namespace Plan
         std::string info;
         if (!parseArg(plan_id, arg, info))
         {
-          changeMode(IMC::PlanControlState::PCS_READY,
-                     DTR("plan load failed: ") + info);
+          toReadyState(DTR("plan load failed: ") + info);
           return false;
         }
 
@@ -689,8 +681,7 @@ namespace Plan
         {
           onFailure(e.what());
           m_plan->clear();
-          changeMode(IMC::PlanControlState::PCS_READY,
-                     DTR("plan parse failed: ") + m_reply.info);
+          toReadyState(DTR("plan parse failed: ") + m_reply.info);
 
           return false;
         }
@@ -724,7 +715,7 @@ namespace Plan
       bool
       stopPlan(bool plan_startup = false)
       {
-        if (initMode() || execMode() || pauseMode())
+        if (isInPlan())
         {
           if (plan_startup)
           {
@@ -744,11 +735,8 @@ namespace Plan
           onSuccess();
 
           // If we have a paused plan saved, go back to pause mode
-          IMC::PlanControlState::StateEnum const next_state
-          = m_paused_plan ? IMC::PlanControlState::PCS_PAUSED
-                          : IMC::PlanControlState::PCS_READY;
-
-          changeMode(next_state, DTR("plan stopped"), TYPE_INF);
+          m_paused_plan ? toPauseState(DTR("plan stopped"), TYPE_INF)
+                        : toReadyState(DTR("plan stopped"), TYPE_INF);
         }
         else if (!plan_startup)
         {
@@ -778,8 +766,7 @@ namespace Plan
 
         vehicleRequest(IMC::VehicleCommand::VC_PAUSE_MANEUVER);
         onSuccess();
-        changeMode(IMC::PlanControlState::PCS_PAUSED, DTR("plan paused"),
-                   TYPE_INF);
+        toPauseState(DTR("plan paused"), TYPE_INF);
       }
 
       void
@@ -928,8 +915,7 @@ namespace Plan
       {
         bool stopped = stopPlan(true);
 
-        changeMode(IMC::PlanControlState::PCS_INITIALIZING,
-                   DTR("plan initializing: ") + plan_id, TYPE_INF);
+        toInitState(DTR("plan initializing: ") + plan_id, TYPE_INF);
 
         if (!(flags & IMC::PlanControl::FLG_NO_CLEAR_MANEUVERS))
         {
@@ -1023,16 +1009,14 @@ namespace Plan
       {
         if (pman == NULL)
         {
-          changeMode(IMC::PlanControlState::PCS_READY,
-                     m_plan->getCurrentId() + DTR(": invalid maneuver ID"));
+          toReadyState(m_plan->getCurrentId() + DTR(": invalid maneuver ID"));
           return;
         }
 
         vehicleRequest(IMC::VehicleCommand::VC_EXEC_MANEUVER, pman->data.get());
 
-        changeMode(IMC::PlanControlState::PCS_EXECUTING,
-                   pman->maneuver_id + DTR(": executing maneuver"),
-                   pman->maneuver_id, pman->data.get(), TYPE_INF);
+        toExecState(pman->maneuver_id + DTR(": executing maneuver"),
+                    pman->maneuver_id, pman->data.get(), TYPE_INF);
 
         m_plan->maneuverStarted(pman->maneuver_id);
       }
@@ -1087,54 +1071,81 @@ namespace Plan
         answer(IMC::PlanControl::PC_SUCCESS, msg, print);
       }
 
-      //! Change the current plan control state mode
-      //! @param[in] s plan control state to switch to
-      //! @param[in] event_desc description of the event that motivated the change
-      //! @param[in] nid id of the maneuver if any
-      //! @param[in] maneuver pointer to maneuver message
-      //! @param[in] print true if the messages should be printed to output
-      void
-      changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
-                 const std::string& nid, const IMC::Message* maneuver, OutputType print = TYPE_WAR)
+      double
+      setLastEvent(std::string const& event, OutputType print)
       {
-        double now = Clock::getSinceEpoch();
+        double const now = Clock::getSinceEpoch();
 
-        if (print == TYPE_WAR)
-          war("%s", event_desc.c_str());
-        else if (print == TYPE_INF)
-          inf("%s", event_desc.c_str());
-
-        m_last_event = event_desc;
-
-        if (s != m_pcs.state)
+        switch (print)
         {
-          debug(DTR("now in %s state"), DTR(c_state_desc[s]));
-
-          bool was_in_plan = initMode() || execMode() || pauseMode();
-          bool was_executing_while_paused
-          = (m_plan && m_paused_plan) && (initMode() || execMode());
-
-          m_pcs.state = s;
-
-          bool is_in_plan = initMode() || execMode() || pauseMode();
-          bool returning_to_pause = was_executing_while_paused && pauseMode();
-
-          if ((was_in_plan && !is_in_plan) || returning_to_pause)
-          {
-            m_plan->planStopped();
-            changeLog("");
-          }
-
-          if (returning_to_pause)
-          {
-            debug("Returning to paused state -- freeing m_plan");
-            m_plan.reset(nullptr);
-          }
+          case TYPE_INF:
+            inf("%s", event.c_str());
+            break;
+          case TYPE_WAR:
+            war("%s", event.c_str());
+            break;
+          case TYPE_NONE: // fall-through
+          default:
+            break;
         }
+
+        m_last_event = event;
+
+        return now;
+      }
+
+      bool
+      isInPlan(void) const
+      {
+        return initMode() || execMode() || pauseMode();
+      }
+
+      void
+      planStopped(void)
+      {
+        m_plan->planStopped();
+        changeLog("");
+      }
+
+      void
+      reportState(double timestamp)
+      {
+        m_pcs.setTimeStamp(timestamp);
+        dispatch(m_pcs, DF_KEEP_TIME);
+      }
+
+      void
+      toReadyState(const std::string& event_desc, OutputType print = TYPE_INF)
+      {
+        double const now = setLastEvent(event_desc, print);
+
+        if (changeMode(IMC::PlanControlState::PCS_READY))
+          planStopped();
+
+        reportState(now);
+      }
+
+      void
+      toBlockedState(const std::string& event_desc, OutputType print = TYPE_INF)
+      {
+        double const now = setLastEvent(event_desc, print);
+
+        if (changeMode(IMC::PlanControlState::PCS_BLOCKED))
+          planStopped();
+
+        reportState(now);
+      }
+
+      void
+      toExecState(const std::string& event_desc, std::string const& man_id,
+                  IMC::Message const* maneuver, OutputType print = TYPE_INF)
+      {
+        double const now = setLastEvent(event_desc, print);
+        changeMode(IMC::PlanControlState::PCS_EXECUTING);
 
         if (maneuver)
         {
-          m_pcs.man_id = nid;
+          m_pcs.man_id = man_id;
           m_pcs.man_type = maneuver->getId();
         }
         else
@@ -1143,19 +1154,50 @@ namespace Plan
           m_pcs.man_type = c_invalid_maneuver;
         }
 
-        m_pcs.setTimeStamp(now);
-        dispatch(m_pcs, DF_KEEP_TIME);
+        reportState(now);
+      }
+
+      void
+      toInitState(const std::string& event_desc, OutputType print = TYPE_INF)
+      {
+        double const now = setLastEvent(event_desc, print);
+        changeMode(IMC::PlanControlState::PCS_INITIALIZING);
+        reportState(now);
+      }
+
+      void
+      toPauseState(const std::string& event_desc, OutputType print = TYPE_INF)
+      {
+        double const now = setLastEvent(event_desc, print);
+
+        bool const two_plans_loaded = m_plan && m_paused_plan;
+        bool const was_in_plan = changeMode(IMC::PlanControlState::PCS_PAUSED);
+
+        if (was_in_plan && two_plans_loaded)
+        {
+          planStopped();
+          debug("Returning to paused state -- freeing m_plan");
+          m_plan.reset(nullptr);
+        }
+
+        reportState(now);
       }
 
       //! Change the current plan control state mode
       //! @param[in] s plan control state to switch to
-      //! @param[in] event_desc description of the event that motivated the change
-      //! @param[in] print true if the messages should be printed to output
-      void
-      changeMode(IMC::PlanControlState::StateEnum s, const std::string& event_desc,
-                 OutputType print = TYPE_WAR)
+      //! @return true if the PCS changed and the vehicle was executing a plan.
+      bool
+      changeMode(IMC::PlanControlState::StateEnum s)
       {
-        changeMode(s, event_desc, "", NULL, print);
+        if (s == m_pcs.state)
+          return false;
+
+        bool const was_in_plan = isInPlan();
+
+        m_pcs.state = s;
+        debug(DTR("now in %s state"), DTR(c_state_desc[s]));
+
+        return was_in_plan;
       }
 
       //! Set task's initial state
@@ -1207,8 +1249,7 @@ namespace Plan
       {
         m_vc_reply_deadline = -1;
 
-        changeMode(IMC::PlanControlState::PCS_READY,
-                   DTR("vehicle reply timeout"));
+        toReadyState(DTR("vehicle reply timeout"));
 
         // Popping all requests
         while (m_requests.size())
@@ -1234,7 +1275,7 @@ namespace Plan
           if ((getEntityState() == IMC::EntityState::ESTA_NORMAL) &&
               (now - m_last_vstate >= c_vs_timeout))
           {
-            changeMode(IMC::PlanControlState::PCS_BLOCKED, DTR("vehicle state timeout"));
+            toBlockedState(DTR("vehicle state timeout"));
             m_last_vstate = now;
           }
 
