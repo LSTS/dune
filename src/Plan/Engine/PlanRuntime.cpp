@@ -435,7 +435,7 @@ namespace Plan
           break;
 
         // Check if plan is cyclical
-        if (std::find_if(std::cbegin(seq_nodes), std::cend(seq_nodes),
+        if (std::find_if(std::begin(seq_nodes), std::end(seq_nodes),
                          [dest_man_id](IMC::PlanManeuver const* man) {
                            return man->maneuver_id == dest_man_id;
                          })

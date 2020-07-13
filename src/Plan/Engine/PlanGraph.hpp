@@ -90,7 +90,7 @@ namespace Plan
       Node const*
       findNode(std::string const& id) const noexcept
       {
-        auto node = std::find_if(std::cbegin(m_nodes), std::cend(m_nodes),
+        auto node = std::find_if(std::begin(m_nodes), std::end(m_nodes),
                                  [id](Node const& n) {
                                    return n.pman->maneuver_id == id;
                                  });
@@ -114,13 +114,13 @@ namespace Plan
       const_iterator
       begin(void) const noexcept
       {
-        return std::cbegin(m_nodes);
+        return std::begin(m_nodes);
       }
 
       const_iterator
       end(void) const noexcept
       {
-        return std::cend(m_nodes);
+        return std::end(m_nodes);
       }
 
     private:
