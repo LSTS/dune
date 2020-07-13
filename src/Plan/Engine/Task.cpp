@@ -795,7 +795,10 @@ namespace Plan
           return;
         }
 
-        debug("Resuming plan %s at maneuver %s", m_plan->getPlanId(),
+        m_pcs.plan_id = m_plan->getPlanId();
+        m_reply.plan_id = m_pcs.plan_id;
+
+        debug("Resuming plan %s at maneuver %s", m_pcs.plan_id.c_str(),
               curr_man->maneuver_id.c_str());
 
         onSuccess();
