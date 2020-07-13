@@ -757,9 +757,10 @@ namespace Plan
         }
 
         if (m_paused_plan)
-          war("Discarding previously paused plan");
+          war("Discarding previously paused plan %s",
+              m_paused_plan->getPlanId());
 
-        debug("Pausing plan %s at maneuver %s", m_pcs.plan_id.c_str(),
+        debug("Pausing plan %s at maneuver %s", m_plan->getPlanId(),
               m_plan->getCurrentManeuver()->maneuver_id.c_str());
 
         m_paused_plan.reset(m_plan.release());
@@ -794,8 +795,7 @@ namespace Plan
           return;
         }
 
-        debug("Resuming plan %s at maneuver %s",
-              m_pcs.plan_id.c_str(),
+        debug("Resuming plan %s at maneuver %s", m_plan->getPlanId(),
               curr_man->maneuver_id.c_str());
 
         onSuccess();
@@ -924,7 +924,7 @@ namespace Plan
 
           if (m_paused_plan)
           {
-            war("Discarding paused plan");
+            war("Discarding paused plan %s", m_paused_plan->getPlanId());
             m_plan.reset(m_paused_plan.release());
           }
         }
