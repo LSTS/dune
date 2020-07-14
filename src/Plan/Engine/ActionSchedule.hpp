@@ -61,12 +61,12 @@ namespace Plan
       //! Default constructor
       //! @param[in] task pointer to task
       //! @param[in] spec pointer to PlanSpecification message
-      //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
+      //! @param[in] plan_maneuvers vector of sequential PlanManeuvers that describe the plan
       //! @param[in] tline plan timeline with maneuvers' and plan's ETAs
       //! @param[in] cinfo map of components info
       ActionSchedule(DUNE::Tasks::Task* task,
                      const DUNE::IMC::PlanSpecification* spec,
-                     const std::vector<DUNE::IMC::PlanManeuver const*>& nodes,
+                     const std::vector<DUNE::IMC::PlanManeuver const*>& plan_maneuvers,
                      const Timeline& tline,
                      const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo);
 
@@ -74,11 +74,11 @@ namespace Plan
       //! There will be no pre-scheduling using this constructor.
       //! @param[in] task pointer to task
       //! @param[in] spec pointer to PlanSpecification message
-      //! @param[in] nodes vector of sequential PlanManeuvers that describe the plan
+      //! @param[in] plan_maneuvers vector of sequential PlanManeuvers that describe the plan
       //! @param[in] cinfo map of components info
       ActionSchedule(DUNE::Tasks::Task* task,
                      const DUNE::IMC::PlanSpecification* spec,
-                     const std::vector<DUNE::IMC::PlanManeuver const*>& nodes,
+                     const std::vector<DUNE::IMC::PlanManeuver const*>& plan_maneuvers,
                      const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo);
 
       //! Update timed actions in schedule
@@ -137,11 +137,11 @@ namespace Plan
       calibTimeLeft(void);
 
       //! Fill the object component active time
-      //! @param[in] nodes vector of sequenced plan maneuvers
+      //! @param[in] plan_maneuvers vector of sequenced plan maneuvers
       //! @param[in] timeline plan timeline with all ETAs
       //! @param[in] cat component active time object to fill
       void
-      fillComponentActiveTime(const std::vector<DUNE::IMC::PlanManeuver const*>& nodes,
+      fillComponentActiveTime(const std::vector<DUNE::IMC::PlanManeuver const*>& plan_maneuvers,
                               const Timeline& timeline,
                               ComponentActiveTime& cat);
 
@@ -188,36 +188,12 @@ namespace Plan
       //! Pair for EASMap
       typedef std::pair<std::string, uint8_t> EASPair;
 
-      //! Parse Start actions
-      //! @param[in] actions message list of actions to parse
-      //! @param[out] event_actions event based actions pointer
-      //! @param[in] eta estimated time of arrival for actions' dispatching point
-      inline void
-      parseStartActions(const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
-                        EventActions* event_actions, float eta)
-      {
-        parseActions(actions, event_actions, eta, true);
-      }
-
-      //! Parse End actions
-      //! @param[in] actions message list of actions to parse
-      //! @param[out] event_actions event based actions pointer
-      //! @param[in] eta estimated time of arrival for actions' dispatching point
-      inline void
-      parseEndActions(const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
-                      EventActions* event_actions, float eta)
-      {
-        parseActions(actions, event_actions, eta, false);
-      }
-
       //! Parse actions
       //! @param[in] actions message list of actions to parse
-      //! @param[out] event_actions event based actions pointer
       //! @param[in] eta estimated time of arrival for actions' dispatching point
-      //! @param[in] start true if these are start actions
-      void
-      parseActions(const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
-                   EventActions* event_actions, float eta, bool start);
+      //! @return list of parsed actions
+      std::vector<DUNE::IMC::SetEntityParameters*>
+      parseActions(const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions, float eta = -1.0);
 
       //! Get activation time of component
       //! @param[in] label entity label of component to look for
@@ -304,6 +280,8 @@ namespace Plan
       void
       printTimed(void);
 
+      //! Expected plan duration disregarding calibration time
+      float m_execution_duration;
       //! Map of entity labels to TimedStack's
       //! This means we'll have one stack per component
       std::map<std::string, TimedStack> m_timed;
@@ -325,8 +303,6 @@ namespace Plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
       std::map<std::string, TimedAction> m_reqs;
-      //! Expected plan duration disregarding calibration time
-      float m_execution_duration;
     };
   }
 }

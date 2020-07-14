@@ -27,6 +27,9 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// C++ standard library headers.
+#include <algorithm>
+
 // Local headers
 #include "ActionSchedule.hpp"
 
@@ -37,33 +40,32 @@ namespace Plan
   namespace Engine
   {
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
-                                   const std::vector<IMC::PlanManeuver const*>& nodes,
+                                   const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
                                    const Timeline& tline,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
+      m_execution_duration(tline.getExecutionDuration()),
       m_task(task),
-      m_cinfo(&cinfo)
+      m_cinfo(&cinfo),
+      m_earliest(0.0f)
     {
-      // Set execution duration
-      m_execution_duration = tline.getExecutionDuration();
+      m_plan_actions.start_actions = parseActions(spec->start_actions, m_execution_duration);
 
-      // start by adding "start" plan actions
-      parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
-
-      // Iterate through plan maneuvers
-      for (IMC::PlanManeuver const* maneuver : nodes)
+      for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
-        EventActions eact;
+        auto start_actions
+        = parseActions(maneuver->start_actions,
+                       tline.getManeuverStartETA(maneuver->maneuver_id));
 
-        parseStartActions(maneuver->start_actions, &eact,
-                          tline.getManeuverStartETA(maneuver->maneuver_id));
+        auto end_actions
+        = parseActions(maneuver->end_actions,
+                       tline.getManeuverEndETA(maneuver->maneuver_id));
 
-        parseEndActions(maneuver->end_actions, &eact,
-                        tline.getManeuverEndETA(maneuver->maneuver_id));
-
-        m_onevent.insert(std::pair<std::string, EventActions>(maneuver->maneuver_id, eact));
+        m_onevent.emplace(maneuver->maneuver_id,
+                          EventActions{ std::move(start_actions),
+                                        std::move(end_actions) });
       }
 
-      parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
+      m_plan_actions.end_actions = parseActions(spec->end_actions, 0.0);
 
       // Create a proper schedule from the unscheduled set of actions
       scheduleTimed();
@@ -71,37 +73,32 @@ namespace Plan
       std::map<std::string, TimedStack>::const_iterator next;
       next = nextSchedule();
 
-      if (next == m_timed.end())
-        m_earliest = 0.0;
-      else
+      if (next != m_timed.end())
         m_earliest = next->second.top().sched_time;
     }
 
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
-                                   const std::vector<IMC::PlanManeuver const*>& nodes,
+                                   const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
+      m_execution_duration(-1.0f),
       m_task(task),
-      m_cinfo(&cinfo)
+      m_cinfo(&cinfo),
+      m_earliest(0.0f)
     {
-      m_execution_duration = -1.0;
+      m_plan_actions.start_actions = parseActions(spec->start_actions);
 
-      // start by adding "start" plan actions
-      parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
-
-      // Iterate through plan maneuvers
-      for (IMC::PlanManeuver const* maneuver : nodes)
+      for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
-        EventActions eact;
+        auto start_actions = parseActions(maneuver->start_actions);
 
-        parseStartActions(maneuver->start_actions, &eact, -1.0);
-        parseEndActions(maneuver->end_actions, &eact, -1.0);
+        auto end_actions = parseActions(maneuver->end_actions);
 
-        m_onevent.insert(std::pair<std::string, EventActions>(maneuver->maneuver_id, eact));
+        m_onevent.emplace(maneuver->maneuver_id,
+                          EventActions{ std::move(start_actions),
+                                        std::move(end_actions) });
       }
 
-      parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
-
-      m_earliest = 0.0;
+      m_plan_actions.end_actions = parseActions(spec->end_actions, 0.0);
     }
 
     void
@@ -426,13 +423,14 @@ namespace Plan
 
     // Private
 
-    void
-    ActionSchedule::parseActions(const IMC::MessageList<IMC::Message>& actions,
-                                 EventActions* event_actions, float eta, bool start)
+    std::vector<IMC::SetEntityParameters*>
+    ActionSchedule::parseActions(const IMC::MessageList<IMC::Message>& actions, float eta)
     {
       // if empty exit
       if (!actions.size())
-        return;
+        return {};
+
+      std::vector<IMC::SetEntityParameters*> event_actions;
 
       for (IMC::Message* action : actions)
       {
@@ -485,21 +483,13 @@ namespace Plan
         }
 
         if (event_based)
-        {
-          if (start)
-            event_actions->start_actions.push_back(sep);
-          else
-            event_actions->end_actions.push_back(sep);
-        }
+          event_actions.push_back(sep);
         else
-        {
           // if the eta is not valid, schedule action to last valid duration (0.0 sec)
-          if (eta >= 0.0)
-            gatherUntimed(sep, type, eta);
-          else
-            gatherUntimed(sep, type, 0.0);
-        }
+          gatherUntimed(sep, type, std::max(eta, 0.0f));
       }
+
+      return event_actions;
     }
 
     IMC::MessageList<IMC::EntityParameter>::const_iterator
