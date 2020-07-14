@@ -764,6 +764,7 @@ namespace Plan
               m_plan->getCurrentManeuver()->maneuver_id.c_str());
 
         m_paused_plan.reset(m_plan.release());
+        changeLog("");
 
         vehicleRequest(IMC::VehicleCommand::VC_PAUSE_MANEUVER);
         onSuccess();
@@ -800,6 +801,8 @@ namespace Plan
 
         debug("Resuming plan %s at maneuver %s", m_pcs.plan_id.c_str(),
               curr_man->maneuver_id.c_str());
+
+        changeLog(m_pcs.plan_id + "_resume");
 
         onSuccess();
         startManeuver(curr_man);
