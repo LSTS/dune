@@ -49,21 +49,18 @@ namespace Plan
       // start by adding "start" plan actions
       parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
-      std::vector<IMC::PlanManeuver const*>::const_iterator itr;
-      itr = nodes.begin();
-
       // Iterate through plan maneuvers
-      for (; itr != nodes.end(); ++itr)
+      for (IMC::PlanManeuver const* maneuver : nodes)
       {
         EventActions eact;
 
-        parseStartActions((*itr)->start_actions, &eact,
-                          tline.getManeuverStartETA((*itr)->maneuver_id));
+        parseStartActions(maneuver->start_actions, &eact,
+                          tline.getManeuverStartETA(maneuver->maneuver_id));
 
-        parseEndActions((*itr)->end_actions, &eact,
-                        tline.getManeuverEndETA((*itr)->maneuver_id));
+        parseEndActions(maneuver->end_actions, &eact,
+                        tline.getManeuverEndETA(maneuver->maneuver_id));
 
-        m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
+        m_onevent.insert(std::pair<std::string, EventActions>(maneuver->maneuver_id, eact));
       }
 
       parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
@@ -91,18 +88,15 @@ namespace Plan
       // start by adding "start" plan actions
       parseStartActions(spec->start_actions, &m_plan_actions, m_execution_duration);
 
-      std::vector<IMC::PlanManeuver const*>::const_iterator itr;
-      itr = nodes.begin();
-
       // Iterate through plan maneuvers
-      for (; itr != nodes.end(); ++itr)
+      for (IMC::PlanManeuver const* maneuver : nodes)
       {
         EventActions eact;
 
-        parseStartActions((*itr)->start_actions, &eact, -1.0);
-        parseEndActions((*itr)->end_actions, &eact, -1.0);
+        parseStartActions(maneuver->start_actions, &eact, -1.0);
+        parseEndActions(maneuver->end_actions, &eact, -1.0);
 
-        m_onevent.insert(std::pair<std::string, EventActions>((*itr)->maneuver_id, eact));
+        m_onevent.insert(std::pair<std::string, EventActions>(maneuver->maneuver_id, eact));
       }
 
       parseEndActions(spec->end_actions, &m_plan_actions, 0.0);
@@ -173,16 +167,14 @@ namespace Plan
     ActionSchedule::planStarted(std::vector<std::string>& affected)
     {
       // Order all entities to push their parameters
-      EASMap::const_iterator itr;
-      itr = m_eas.begin();
-      for (; itr != m_eas.end(); ++itr)
+      for (auto const& entity : m_eas)
       {
         // save the set of entities in the list
-        affected.push_back(itr->first);
+        affected.push_back(entity.first);
 
         // push entity parameters, so later they'll be popped
         IMC::PushEntityParameters push;
-        push.name = itr->first;
+        push.name = entity.first;
         m_task->dispatch(push);
       }
 
@@ -194,13 +186,10 @@ namespace Plan
     {
       dispatchActions(m_plan_actions.end_actions);
 
-      // Order all entities to pop their parameters
-      std::vector<std::string>::const_iterator itr;
-      itr = affected.begin();
-      for (; itr != affected.end(); ++itr)
+      for (std::string const& entity : affected)
       {
         IMC::PopEntityParameters pop;
-        pop.name = *itr;
+        pop.name = entity;
         m_task->dispatch(pop);
       }
     }
@@ -316,22 +305,19 @@ namespace Plan
       std::set<std::string> active_entities;
 
       {
-        // Get the plan start actions first
-        std::vector<IMC::SetEntityParameters*>::const_iterator itr;
-        itr = m_plan_actions.start_actions.begin();
-        for (; itr != m_plan_actions.start_actions.end(); ++itr)
+        for (IMC::SetEntityParameters const* action : m_plan_actions.start_actions)
         {
           // Iterator to parameter active
           IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
-          act_itr = getParameterActive((*itr)->params);
+          act_itr = getParameterActive(action->params);
 
-          if (act_itr == (*itr)->params.end())
+          if (act_itr == action->params.end())
             continue;
 
           if ((*act_itr)->value == "true")
-            active_entities.insert((*itr)->name);
+            active_entities.insert(action->name);
           else
-            active_entities.erase((*itr)->name);
+            active_entities.erase(action->name);
         }
       }
 
@@ -345,11 +331,9 @@ namespace Plan
 
       // Get the maneuver start and end actions
       // Cycle through the nodes
-      std::vector<IMC::PlanManeuver const*>::const_iterator pitr;
-      pitr = nodes.begin();
-      for (; pitr != nodes.end(); ++pitr)
+      for (IMC::PlanManeuver const* maneuver : nodes)
       {
-        std::string maneuver_id = (*pitr)->maneuver_id;
+        std::string maneuver_id = maneuver->maneuver_id;
 
         EventMap::const_iterator eitr;
         eitr = m_onevent.find(maneuver_id);
@@ -365,19 +349,16 @@ namespace Plan
         // Cycle through both sets of maneuver actions
         for (unsigned i = 0; i < 2; i++)
         {
-          std::vector<IMC::SetEntityParameters*>::const_iterator itr;
-          itr = actions[i]->begin();
-
           // Cycle through maneuver's start (i == 0) or end actions (i == 1)
-          for (; itr != actions[i]->end(); ++itr)
+          for (IMC::SetEntityParameters const* action : *actions[i])
           {
-            std::string entity_id = (*itr)->name;
+            std::string entity_id = action->name;
 
             // Iterator to parameter active
             IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
-            act_itr = getParameterActive((*itr)->params);
+            act_itr = getParameterActive(action->params);
 
-            if (act_itr == (*itr)->params.end())
+            if (act_itr == action->params.end())
               continue; // cannot find parameter active
 
             // Check if it has already been activated
@@ -411,36 +392,34 @@ namespace Plan
 
       // Get timed actions into component active time
       std::map<std::string, TimedStack> clone = m_timed;
-
-      std::map<std::string, TimedStack>::iterator itr = clone.begin();
-      for (; itr != clone.end(); ++itr)
+      for (auto& timed_actions : clone)
       {
-        while (!itr->second.empty())
+        while (!timed_actions.second.empty())
         {
-          TimedAction* ta = &itr->second.top();
+          TimedAction const* ta = &timed_actions.second.top();
           // Check if it has already been activated
           std::set<std::string>::const_iterator ae_itr;
-          ae_itr = active_entities.find(itr->first);
+          ae_itr = active_entities.find(timed_actions.first);
           bool is_active = (ae_itr != active_entities.end());
 
           if (ta->type == TYPE_DEACT)
           {
             if (is_active)
             {
-              cat.subtractActiveTime(itr->first, ta->sched_time);
-              active_entities.erase(itr->first);
+              cat.subtractActiveTime(timed_actions.first, ta->sched_time);
+              active_entities.erase(timed_actions.first);
             }
           }
           else
           {
             if (!is_active)
             {
-              cat.addActiveTime(itr->first, ta->sched_time);
-              active_entities.insert(itr->first);
+              cat.addActiveTime(timed_actions.first, ta->sched_time);
+              active_entities.insert(timed_actions.first);
             }
           }
 
-          itr->second.pop();
+          timed_actions.second.pop();
         }
       }
     }
@@ -455,17 +434,13 @@ namespace Plan
       if (!actions.size())
         return;
 
-      IMC::MessageList<IMC::Message>::const_iterator itr = actions.begin();
-
-      IMC::SetEntityParameters* sep;
-
-      for (; itr != actions.end(); ++itr)
+      for (IMC::Message* action : actions)
       {
         // if it's not SetEntityParameters we ignore
-        if ((*itr)->getId() != DUNE_IMC_SETENTITYPARAMETERS)
+        if (action->getId() != DUNE_IMC_SETENTITYPARAMETERS)
           continue;
 
-        sep = static_cast<IMC::SetEntityParameters*>(*itr);
+        auto sep = static_cast<IMC::SetEntityParameters*>(action);
 
         // Check if entity label exists
         std::map<std::string, IMC::EntityInfo>::const_iterator test;
@@ -638,11 +613,9 @@ namespace Plan
       if (m_unsched.empty())
         return;
 
-      std::map<std::string, TimedStack>::iterator itr = m_unsched.begin();
-
-      for (; itr != m_unsched.end(); ++itr)
+      for (auto& unscheduled_actions : m_unsched)
       {
-        TimedStack* us = &itr->second;
+        TimedStack* us = &unscheduled_actions.second;
 
         while (!us->empty())
         {
@@ -656,7 +629,7 @@ namespace Plan
             if (us->empty())
             {
               // pre-schedule
-              addTimedAction(m_timed, itr->first, action, true);
+              addTimedAction(m_timed, unscheduled_actions.first, action, true);
             }
             else
             {
@@ -667,14 +640,14 @@ namespace Plan
                 if (prev_action.type == TYPE_DEACT)
                 {
                   // find least eta for a deactivation prior to the activation
-                  float deact_time = getDeactivationTime(itr->first);
-                  float act_time = getActivationTime(itr->first);
+                  float deact_time = getDeactivationTime(unscheduled_actions.first);
+                  float act_time = getActivationTime(unscheduled_actions.first);
                   float act_eta = deact_time + act_time + action.sched_time;
 
                   // check if the gap between 'de' and activation is big enough
                   if (prev_action.sched_time > act_eta)
                   {
-                    addTimedAction(m_timed, itr->first, action, true);
+                    addTimedAction(m_timed, unscheduled_actions.first, action, true);
                     break;
                   }
                   else // previous action deactivation is voided
@@ -683,7 +656,7 @@ namespace Plan
 
                     // if stack becomes empty, then pre-schedule
                     if (us->empty())
-                      addTimedAction(m_timed, itr->first, action, true);
+                      addTimedAction(m_timed, unscheduled_actions.first, action, true);
 
                     // proceed in inner loop to check previous action
                   }
@@ -691,7 +664,7 @@ namespace Plan
                 else // previous action is activation
                 {
                   // if previous action is activation, do not pre-schedule
-                  addTimedAction(m_timed, itr->first, action);
+                  addTimedAction(m_timed, unscheduled_actions.first, action);
                   break;
                 }
               }
@@ -699,7 +672,7 @@ namespace Plan
           }
           else // if deactivation never pre-schedule
           {
-            addTimedAction(m_timed, itr->first, action);
+            addTimedAction(m_timed, unscheduled_actions.first, action);
           }
         }
       }
@@ -733,18 +706,16 @@ namespace Plan
     ActionSchedule::printTimed(void)
     {
       std::map<std::string, TimedStack> clone = m_timed;
-
-      std::map<std::string, TimedStack>::iterator itr = clone.begin();
-      for (; itr != clone.end(); ++itr)
+      for (auto& timed_actions : clone)
       {
-        m_task->war("--- %s ---", itr->first.c_str());
-        while (!itr->second.empty())
+        m_task->war("--- %s ---", timed_actions.first.c_str());
+        while (!timed_actions.second.empty())
         {
-          m_task->war(DTR("scheduled for: %.1f"), itr->second.top().sched_time);
-          itr->second.top().list->toText(std::cerr);
-          itr->second.pop();
+          m_task->war(DTR("scheduled for: %.1f"), timed_actions.second.top().sched_time);
+          timed_actions.second.top().list->toText(std::cerr);
+          timed_actions.second.pop();
         }
-        m_task->war(DTR("END %s ---"), itr->first.c_str());
+        m_task->war(DTR("END %s ---"), timed_actions.first.c_str());
       }
     }
   }
