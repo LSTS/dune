@@ -289,7 +289,7 @@ namespace Plan
       //! Map of entity labels to unscheduled stack
       std::map<std::string, TimedStack> m_unsched;
       //! Map of event based maneuver actions
-      EventMap m_onevent;
+      EventMap m_maneuver_actions;
       //! Event based plan actions
       EventActions m_plan_actions;
       //! Pointer to map of component names to EntityInfo

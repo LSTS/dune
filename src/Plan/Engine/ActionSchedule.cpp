@@ -60,9 +60,9 @@ namespace Plan
         = parseActions(task, maneuver->end_actions,
                        tline.getManeuverEndETA(maneuver->maneuver_id));
 
-        m_onevent.emplace(maneuver->maneuver_id,
-                          EventActions{ std::move(start_actions),
-                                        std::move(end_actions) });
+        m_maneuver_actions.emplace(maneuver->maneuver_id,
+                                   EventActions{ std::move(start_actions),
+                                                 std::move(end_actions) });
       }
 
       m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
@@ -92,9 +92,9 @@ namespace Plan
 
         auto end_actions = parseActions(task, maneuver->end_actions);
 
-        m_onevent.emplace(maneuver->maneuver_id,
-                          EventActions{ std::move(start_actions),
-                                        std::move(end_actions) });
+        m_maneuver_actions.emplace(maneuver->maneuver_id,
+                                   EventActions{ std::move(start_actions),
+                                                 std::move(end_actions) });
       }
 
       m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
@@ -183,18 +183,18 @@ namespace Plan
     void
     ActionSchedule::maneuverStarted(Tasks::Task* task, const std::string& id)
     {
-      EventMap::iterator actions = m_onevent.find(id);
+      EventMap::iterator actions = m_maneuver_actions.find(id);
 
-      if (actions != m_onevent.end())
+      if (actions != m_maneuver_actions.end())
         dispatchActions(task, actions->second.start_actions);
     }
 
     void
     ActionSchedule::maneuverDone(Tasks::Task* task, const std::string& id)
     {
-      EventMap::iterator actions = m_onevent.find(id);
+      EventMap::iterator actions = m_maneuver_actions.find(id);
 
-      if (actions != m_onevent.end())
+      if (actions != m_maneuver_actions.end())
         dispatchActions(task, actions->second.end_actions);
     }
 
@@ -325,9 +325,9 @@ namespace Plan
         std::string maneuver_id = maneuver->maneuver_id;
 
         EventMap::const_iterator eitr;
-        eitr = m_onevent.find(maneuver_id);
+        eitr = m_maneuver_actions.find(maneuver_id);
 
-        if (eitr == m_onevent.end())
+        if (eitr == m_maneuver_actions.end())
           continue;
 
         const std::vector<IMC::SetEntityParameters*>* actions[2];
