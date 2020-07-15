@@ -219,35 +219,35 @@ namespace Plan
 
       TimedAction const& action = action_itr->second;
 
-      if (action.type == TYPE_ACT)
-      {
-        if (msg->state == IMC::EntityActivationState::EAS_ACT_DONE ||
-            msg->state == IMC::EntityActivationState::EAS_ACTIVE)
-        {
-          float gap = m_time_left - (action.sched_time - getActivationTime(id));
-
-          if (gap > 0)
-            task->inf(DTR("schedule: %s active on time, +%.1f seconds"),
-                        id.c_str(), gap);
-          else
-            task->war(DTR("schedule: %s activation missed deadline, %.1f seconds"),
-                        id.c_str(), gap);
-
-          m_reqs.erase(action_itr);
-        }
-        else if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
-        {
-          m_reqs.erase(action_itr);
-
-          return false;
-        }
-      }
-      else
+      if (action.type != TYPE_ACT)
       {
         if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE ||
             msg->state == IMC::EntityActivationState::EAS_INACTIVE)
           m_reqs.erase(action_itr);
+
+        return true;
       }
+
+      if (msg->state == IMC::EntityActivationState::EAS_ACT_FAIL)
+      {
+        m_reqs.erase(action_itr);
+        return false;
+      }
+
+      if (msg->state != IMC::EntityActivationState::EAS_ACT_DONE &&
+          msg->state != IMC::EntityActivationState::EAS_ACTIVE)
+        return true;
+
+      float gap = m_time_left - (action.sched_time - getActivationTime(id));
+
+      if (gap > 0)
+        task->inf(DTR("schedule: %s active on time, +%.1f seconds"), id.c_str(),
+                  gap);
+      else
+        task->war(DTR("schedule: %s activation missed deadline, %.1f seconds"),
+                  id.c_str(), gap);
+
+      m_reqs.erase(action_itr);
 
       return true;
     }
