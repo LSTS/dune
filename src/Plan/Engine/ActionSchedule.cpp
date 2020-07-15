@@ -44,20 +44,20 @@ namespace Plan
                                    const Timeline& tline,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
       m_execution_duration(tline.getExecutionDuration()),
-      m_task(task),
       m_cinfo(&cinfo),
       m_earliest(0.0f)
     {
-      m_plan_actions.start_actions = parseActions(spec->start_actions, m_execution_duration);
+      m_plan_actions.start_actions
+      = parseActions(task, spec->start_actions, m_execution_duration);
 
       for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
         auto start_actions
-        = parseActions(maneuver->start_actions,
+        = parseActions(task, maneuver->start_actions,
                        tline.getManeuverStartETA(maneuver->maneuver_id));
 
         auto end_actions
-        = parseActions(maneuver->end_actions,
+        = parseActions(task, maneuver->end_actions,
                        tline.getManeuverEndETA(maneuver->maneuver_id));
 
         m_onevent.emplace(maneuver->maneuver_id,
@@ -65,7 +65,7 @@ namespace Plan
                                         std::move(end_actions) });
       }
 
-      m_plan_actions.end_actions = parseActions(spec->end_actions, 0.0);
+      m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
 
       // Create a proper schedule from the set of unscheduled actions
       scheduleTimedActions();
@@ -81,28 +81,27 @@ namespace Plan
                                    const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
                                    const std::map<std::string, IMC::EntityInfo>& cinfo):
       m_execution_duration(-1.0f),
-      m_task(task),
       m_cinfo(&cinfo),
       m_earliest(0.0f)
     {
-      m_plan_actions.start_actions = parseActions(spec->start_actions);
+      m_plan_actions.start_actions = parseActions(task, spec->start_actions);
 
       for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
-        auto start_actions = parseActions(maneuver->start_actions);
+        auto start_actions = parseActions(task, maneuver->start_actions);
 
-        auto end_actions = parseActions(maneuver->end_actions);
+        auto end_actions = parseActions(task, maneuver->end_actions);
 
         m_onevent.emplace(maneuver->maneuver_id,
                           EventActions{ std::move(start_actions),
                                         std::move(end_actions) });
       }
 
-      m_plan_actions.end_actions = parseActions(spec->end_actions, 0.0);
+      m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
     }
 
     void
-    ActionSchedule::updateSchedule(float time_left)
+    ActionSchedule::updateSchedule(Tasks::Task* task, float time_left)
     {
       if (time_left < 0.0)
         return;
@@ -118,7 +117,7 @@ namespace Plan
         if (action_stack.top().sched_time < time_left)
           break;
 
-        dispatchActions(action_stack.top().list);
+        dispatchActions(task, action_stack.top().list);
 
         processRequest(next->first, action_stack.top());
 
@@ -130,7 +129,7 @@ namespace Plan
     }
 
     void
-    ActionSchedule::flushTimed(void)
+    ActionSchedule::flushTimed(Tasks::Task* task)
     {
       for(auto next = nextSchedule(); next != m_timed.end();
           next = nextSchedule())
@@ -139,7 +138,7 @@ namespace Plan
 
         // do not check if the time is right
 
-        dispatchActions(action_stack.top().list);
+        dispatchActions(task, action_stack.top().list);
 
         processRequest(next->first, action_stack.top());
 
@@ -151,7 +150,7 @@ namespace Plan
     }
 
     void
-    ActionSchedule::planStarted(std::vector<std::string>& affected)
+    ActionSchedule::planStarted(Tasks::Task* task, std::vector<std::string>& affected)
     {
       // Order all entities to push their parameters
       for (auto const& entity : m_eas)
@@ -162,45 +161,47 @@ namespace Plan
         // push entity parameters, so later they'll be popped
         IMC::PushEntityParameters push;
         push.name = entity.first;
-        m_task->dispatch(push);
+        task->dispatch(push);
       }
 
-      dispatchActions(m_plan_actions.start_actions);
+      dispatchActions(task, m_plan_actions.start_actions);
     }
 
     void
-    ActionSchedule::planStopped(const std::vector<std::string>& affected)
+    ActionSchedule::planStopped(Tasks::Task* task, const std::vector<std::string>& affected)
     {
-      dispatchActions(m_plan_actions.end_actions);
+      dispatchActions(task, m_plan_actions.end_actions);
 
       for (std::string const& entity : affected)
       {
         IMC::PopEntityParameters pop;
         pop.name = entity;
-        m_task->dispatch(pop);
+        task->dispatch(pop);
       }
     }
 
     void
-    ActionSchedule::maneuverStarted(const std::string& id)
+    ActionSchedule::maneuverStarted(Tasks::Task* task, const std::string& id)
     {
       EventMap::iterator actions = m_onevent.find(id);
 
       if (actions != m_onevent.end())
-        dispatchActions(actions->second.start_actions);
+        dispatchActions(task, actions->second.start_actions);
     }
 
     void
-    ActionSchedule::maneuverDone(const std::string& id)
+    ActionSchedule::maneuverDone(Tasks::Task* task, const std::string& id)
     {
       EventMap::iterator actions = m_onevent.find(id);
 
       if (actions != m_onevent.end())
-        dispatchActions(actions->second.end_actions);
+        dispatchActions(task, actions->second.end_actions);
     }
 
     bool
-    ActionSchedule::onEntityActivationState(const std::string& id, const IMC::EntityActivationState* msg)
+    ActionSchedule::onEntityActivationState(
+    Tasks::Task* task, const std::string& id,
+    const IMC::EntityActivationState* msg)
     {
       if (m_eas.empty())
         return true;
@@ -226,10 +227,10 @@ namespace Plan
           float gap = m_time_left - (action.sched_time - getActivationTime(id));
 
           if (gap > 0)
-            m_task->inf(DTR("schedule: %s active on time, +%.1f seconds"),
+            task->inf(DTR("schedule: %s active on time, +%.1f seconds"),
                         id.c_str(), gap);
           else
-            m_task->war(DTR("schedule: %s activation missed deadline, %.1f seconds"),
+            task->war(DTR("schedule: %s activation missed deadline, %.1f seconds"),
                         id.c_str(), gap);
 
           m_reqs.erase(action_itr);
@@ -414,7 +415,9 @@ namespace Plan
     // Private
 
     std::vector<IMC::SetEntityParameters*>
-    ActionSchedule::parseActions(const IMC::MessageList<IMC::Message>& actions, float eta)
+    ActionSchedule::parseActions(Tasks::Task* task,
+                                 const IMC::MessageList<IMC::Message>& actions,
+                                 float eta)
     {
       // if empty exit
       if (!actions.size())
@@ -434,7 +437,7 @@ namespace Plan
         test = m_cinfo->find(sep->name);
         if (test == m_cinfo->end())
         {
-          m_task->war(DTR("schedule: entity label %s not found"), sep->name.c_str());
+          task->war(DTR("schedule: entity label %s not found"), sep->name.c_str());
           continue;
         }
 

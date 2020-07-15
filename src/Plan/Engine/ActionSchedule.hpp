@@ -82,33 +82,39 @@ namespace Plan
                      const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo);
 
       //! Update timed actions in schedule
+      //! @param[in] task task which will dispatch the actions
       //! @param[in] time_left estimated time left to finish the plan
       void
-      updateSchedule(float time_left);
+      updateSchedule(DUNE::Tasks::Task* task, float time_left);
 
       //! Flush all remaining timed actions in the schedule
+      //! @param[in] task task which will dispatch the actions
       void
-      flushTimed(void);
+      flushTimed(DUNE::Tasks::Task* task);
 
       //! The plan has started
+      //! @param[in] task task which will dispatch the actions
       //! @param[out] affected vector of entities that will be (de)activated during the plan
       void
-      planStarted(std::vector<std::string>& affected);
+      planStarted(DUNE::Tasks::Task* task, std::vector<std::string>& affected);
 
       //! The plan has stopped/ended
+      //! @param[in] task task which will dispatch the actions
       //! @param[in] affected vector of entities that were (de)activated during last executed plan
       void
-      planStopped(const std::vector<std::string>& affected);
+      planStopped(DUNE::Tasks::Task* task, const std::vector<std::string>& affected);
 
       //! Maneuver has started
+      //! @param[in] task task which will dispatch the actions
       //! @param[in] id name of the started maneuver
       void
-      maneuverStarted(const std::string& id);
+      maneuverStarted(DUNE::Tasks::Task* task, const std::string& id);
 
       //! Maneuver has stopped
+      //! @param[in] task task which will dispatch the actions
       //! @param[in] id name of the done maneuver
       void
-      maneuverDone(const std::string& id);
+      maneuverDone(DUNE::Tasks::Task* task, const std::string& id);
 
       //! Get the time of the earliest scheduled action
       //! @return time of the earliest scheduled action
@@ -119,11 +125,12 @@ namespace Plan
       }
 
       //! Check if the activation and deactivation requests are being complied
+      //! @param[in] task task to print information to the console
       //! @param[in] id entity label
       //! @param[in] msg pointer to EntityActivationState message
       //! @return false if something failed to be activated, true otherwise
       bool
-      onEntityActivationState(const std::string& id,
+      onEntityActivationState(DUNE::Tasks::Task* task, const std::string& id,
                               const DUNE::IMC::EntityActivationState* msg);
 
       //! Check if we are still waiting for a device in calibration process
@@ -190,11 +197,14 @@ namespace Plan
       typedef std::pair<std::string, uint8_t> EASPair;
 
       //! Parse actions
+      //! @param[in] task task to print information to the console
       //! @param[in] actions message list of actions to parse
       //! @param[in] eta estimated time of arrival for actions' dispatching point
       //! @return list of parsed actions
       std::vector<DUNE::IMC::SetEntityParameters*>
-      parseActions(const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions, float eta = -1.0);
+      parseActions(DUNE::Tasks::Task* task,
+                   const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
+                   float eta = -1.0);
 
       //! Get activation time of component
       //! @param[in] label entity label of component to look for
@@ -246,20 +256,24 @@ namespace Plan
       scheduleTimedActions(void);
 
       //! Dispatch actions
+      //! @param[in] task task that will dispatch the actions
       //! @param[in] msg SetEntityParameters to dispatch
-      void
-      dispatchActions(DUNE::IMC::SetEntityParameters* msg)
+      static void
+      dispatchActions(DUNE::Tasks::Task* task,
+                      DUNE::IMC::SetEntityParameters* msg)
       {
-        m_task->dispatch(*msg);
+        task->dispatch(*msg);
       }
 
       //! Dispatch actions
+      //! @param[in] task task that will dispatch the actions
       //! @param[in] actions vector of SetEntityParameters to dispatch
-      void
-      dispatchActions(std::vector<DUNE::IMC::SetEntityParameters*>& actions)
+      static void
+      dispatchActions(DUNE::Tasks::Task* task,
+                      std::vector<DUNE::IMC::SetEntityParameters*>& actions)
       {
         for (unsigned i = 0; i < actions.size(); ++i)
-          m_task->dispatch(actions[i]);
+          task->dispatch(actions[i]);
       }
 
       //! Find the stack with the next scheduled action
@@ -278,8 +292,6 @@ namespace Plan
       EventMap m_onevent;
       //! Event based plan actions
       EventActions m_plan_actions;
-      //! Pointer to task for dispatching messages
-      DUNE::Tasks::Task* m_task;
       //! Pointer to map of component names to EntityInfo
       const std::map<std::string, DUNE::IMC::EntityInfo>* m_cinfo;
       //! Time of earliest scheduled actions

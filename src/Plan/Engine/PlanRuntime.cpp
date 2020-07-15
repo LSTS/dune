@@ -146,14 +146,14 @@ namespace Plan
 
       m_affected_ents.clear();
 
-      m_sched->planStarted(m_affected_ents);
+      m_sched->planStarted(m_task, m_affected_ents);
     }
 
     void
     PlanRuntime::planStopped(void)
     {
       if (m_sched)
-        m_sched->planStopped(m_affected_ents);
+        m_sched->planStopped(m_task, m_affected_ents);
 
       if (m_args.fpredict && m_fpred)
         m_rt_stat.fill(*m_fpred);
@@ -179,7 +179,7 @@ namespace Plan
       if (!m_sched)
         return;
 
-      m_sched->maneuverStarted(id);
+      m_sched->maneuverStarted(m_task, id);
     }
 
     void
@@ -204,7 +204,7 @@ namespace Plan
       if (!m_sched)
         return;
 
-      m_sched->maneuverDone(m_last_id);
+      m_sched->maneuverDone(m_task, m_last_id);
     }
 
     std::uint16_t
@@ -257,9 +257,9 @@ namespace Plan
       if (prog >= 0.0 && m_sched)
       {
         if (!m_beyond_dur)
-          m_sched->updateSchedule(getETA());
+          m_sched->updateSchedule(m_task, getETA());
         else // if we're beyond computed durations, flush all timed actions
-          m_sched->flushTimed();
+          m_sched->flushTimed(m_task);
       }
 
       return prog;
@@ -311,7 +311,7 @@ namespace Plan
                                          const IMC::EntityActivationState* msg)
     {
       if (m_sched)
-        return m_sched->onEntityActivationState(id, msg);
+        return m_sched->onEntityActivationState(m_task, id, msg);
 
       return true;
     }
