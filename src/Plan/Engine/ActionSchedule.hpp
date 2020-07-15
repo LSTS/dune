@@ -145,7 +145,6 @@ namespace Plan
                               const Timeline& timeline,
                               ComponentActiveTime& cat);
 
-    private:
       //! Enumeration for type of timed action
       enum ActionType
       {
@@ -170,6 +169,8 @@ namespace Plan
 
       //! Stack of timed actions
       typedef std::stack<TimedAction> TimedStack;
+
+    private:
 
       //! Actions that should be fired on plan and maneuver start or end
       struct EventActions
@@ -227,16 +228,6 @@ namespace Plan
       void
       updateEAS(const std::string& id, const DUNE::IMC::EntityActivationState* msg);
 
-      //! Add action to map
-      //! @param[in] action_map map of actions to which the action will be added
-      //! @param[in] name name of the entity
-      //! @param[in] action action that will be added
-      //! @param[in] preschedule true if scheduled time should take activation into account
-      void
-      addTimedAction(std::map<std::string, TimedStack>& action_map,
-                     const std::string& name, const TimedAction& action,
-                     bool preschedule = false);
-
       //! Add action request
       //! @param[in] name entity name
       //! @param[in] action TimedAction to add to requests
@@ -248,11 +239,11 @@ namespace Plan
       //! @param[in] type action type to schedule
       //! @param[in] eta estimated time of arrival of action
       void
-      gatherUntimed(DUNE::IMC::SetEntityParameters* sep, ActionType type, float eta);
+      gatherUnscheduled(DUNE::IMC::SetEntityParameters* sep, ActionType type, float eta);
 
       //! Schedule timed actions
       void
-      scheduleTimed(void);
+      scheduleTimedActions(void);
 
       //! Dispatch actions
       //! @param[in] msg SetEntityParameters to dispatch
@@ -275,10 +266,6 @@ namespace Plan
       //! @return iterator to the stack with the next scheduled action
       std::map<std::string, TimedStack>::iterator
       nextSchedule(void);
-
-      //! Printed timed actions
-      void
-      printTimed(void);
 
       //! Expected plan duration disregarding calibration time
       float m_execution_duration;
