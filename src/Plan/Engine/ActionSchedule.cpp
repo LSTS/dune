@@ -309,130 +309,123 @@ namespace Plan
                           });
     }
 
-    void
-    ActionSchedule::fillComponentActiveTime(const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
-                                            const Timeline& timeline,
-                                            ComponentActiveTime& cat)
+    static void
+    getManeuverActionsActiveTime(
+    std::vector<IMC::SetEntityParameters*> const& actions, float eta,
+    ComponentActiveTime* cat, std::set<std::string>* active_entities)
+    {
+      for (IMC::SetEntityParameters const* action : actions)
+      {
+        std::string const& entity_id = action->name;
+
+        auto param_active = getParameterActive(action->params);
+        if (param_active == action->params.end())
+          continue;
+
+        // Check if the entity is active at this point.
+        bool const is_active
+        = (active_entities->find(entity_id) != active_entities->end());
+
+        // Check if the entity will be activated at this point.
+        // If the value is anything other than "true" assume it will be
+        // deactivated.
+        bool const will_activate = (*param_active)->value == "true";
+
+        if (will_activate && !is_active)
+        {
+          cat->addActiveTime(entity_id, eta);
+          active_entities->insert(entity_id);
+        }
+
+        if (!will_activate && is_active)
+        {
+          cat->subtractActiveTime(entity_id, eta);
+          active_entities->erase(entity_id);
+        }
+      }
+    }
+
+    static void
+    getTimedActionsActiveTime(
+    std::map<std::string, ActionSchedule::TimedStack> timed_actions,
+    ComponentActiveTime* cat, std::set<std::string>* active_entities)
+    {
+      for (auto& actions : timed_actions)
+      {
+        while (!actions.second.empty())
+        {
+          ActionSchedule::TimedAction const* action = &actions.second.top();
+          std::string const& entity = actions.first;
+
+          // Check if the entity is active at this point.
+          bool const is_active
+          = (active_entities->find(entity) != active_entities->end());
+
+          // Check whether action will activate or deactivate the entity.
+          bool const will_activate = action->type == ActionSchedule::TYPE_ACT;
+
+          if (will_activate && !is_active)
+          {
+            cat->addActiveTime(entity, action->sched_time);
+            active_entities->insert(entity);
+          }
+
+          if (!will_activate && is_active)
+          {
+            cat->subtractActiveTime(entity, action->sched_time);
+            active_entities->erase(entity);
+          }
+
+          actions.second.pop();
+        }
+      }
+    }
+
+    void ActionSchedule::fillComponentActiveTime(
+    const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
+    const Timeline& timeline, ComponentActiveTime& cat)
     {
       cat.clear();
       std::set<std::string> active_entities;
 
+      // Check which entities will be activated when plan execution begins.
+      for (IMC::SetEntityParameters const* action : m_plan_actions.start_actions)
       {
-        for (IMC::SetEntityParameters const* action : m_plan_actions.start_actions)
-        {
-          // Iterator to parameter active
-          IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
-          act_itr = getParameterActive(action->params);
+        auto param_active = getParameterActive(action->params);
 
-          if (act_itr == action->params.end())
-            continue;
-
-          if ((*act_itr)->value == "true")
-            active_entities.insert(action->name);
-          else
-            active_entities.erase(action->name);
-        }
-      }
-
-      // Update ComponentActiveTime
-      {
-        std::set<std::string>::const_iterator cat_itr;
-        cat_itr = active_entities.begin();
-        for (; cat_itr != active_entities.end(); ++cat_itr)
-          cat.addActiveTime(*cat_itr, timeline.getPlanETA());
-      }
-
-      // Get the maneuver start and end actions
-      for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
-      {
-        std::string maneuver_id = maneuver->maneuver_id;
-
-        EventMap::const_iterator eitr;
-        eitr = m_maneuver_actions.find(maneuver_id);
-
-        if (eitr == m_maneuver_actions.end())
+        if (param_active == action->params.end())
           continue;
 
-        const std::vector<IMC::SetEntityParameters*>* actions[2];
-        actions[0] = &eitr->second.start_actions;
-        actions[1] = &eitr->second.end_actions;
-
-        // Cycle through both sets of maneuver actions
-        for (unsigned i = 0; i < 2; i++)
-        {
-          // Cycle through maneuver's start (i == 0) or end actions (i == 1)
-          for (IMC::SetEntityParameters const* action : *actions[i])
-          {
-            std::string entity_id = action->name;
-
-            // Iterator to parameter active
-            IMC::MessageList<IMC::EntityParameter>::const_iterator act_itr;
-            act_itr = getParameterActive(action->params);
-
-            if (act_itr == action->params.end())
-              continue; // cannot find parameter active
-
-            // Check if it has already been activated
-            std::set<std::string>::const_iterator ae_itr;
-            ae_itr = active_entities.find(entity_id);
-            bool is_active = (ae_itr != active_entities.end());
-
-            // Get the eta for these actions we're parsing right now
-            float eta;
-            if (i == 0)
-              eta = timeline.getManeuverStartETA(maneuver_id);
-            else
-              eta = timeline.getManeuverEndETA(maneuver_id);
-
-            if ((*act_itr)->value == "true")
-            {
-              if (!is_active)
-              {
-                cat.addActiveTime(entity_id, eta);
-                active_entities.insert(entity_id);
-              }
-            }
-            else if (is_active)
-            {
-              cat.subtractActiveTime(entity_id, eta);
-              active_entities.erase(entity_id);
-            }
-          }
-        }
+        if ((*param_active)->value == "true")
+          active_entities.insert(action->name);
+        else
+          active_entities.erase(action->name);
       }
 
-      // Get timed actions into component active time
-      std::map<std::string, TimedStack> clone = m_timed;
-      for (auto& timed_actions : clone)
+      // Add the entities active when the plan begins.
+      for (auto const& entity : active_entities)
+        cat.addActiveTime(entity, timeline.getPlanETA());
+
+      // Add activations/deactivations on maneuver start/end.
+      for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
-        while (!timed_actions.second.empty())
-        {
-          TimedAction const* ta = &timed_actions.second.top();
-          // Check if it has already been activated
-          std::set<std::string>::const_iterator ae_itr;
-          ae_itr = active_entities.find(timed_actions.first);
-          bool is_active = (ae_itr != active_entities.end());
+        std::string const& maneuver_id = maneuver->maneuver_id;
+        auto actions = m_maneuver_actions.find(maneuver_id);
 
-          if (ta->type == TYPE_DEACT)
-          {
-            if (is_active)
-            {
-              cat.subtractActiveTime(timed_actions.first, ta->sched_time);
-              active_entities.erase(timed_actions.first);
-            }
-          }
-          else
-          {
-            if (!is_active)
-            {
-              cat.addActiveTime(timed_actions.first, ta->sched_time);
-              active_entities.insert(timed_actions.first);
-            }
-          }
+        if (actions == m_maneuver_actions.end())
+          continue;
 
-          timed_actions.second.pop();
-        }
+        getManeuverActionsActiveTime(actions->second.start_actions,
+                                     timeline.getManeuverStartETA(maneuver_id),
+                                     &cat, &active_entities);
+
+        getManeuverActionsActiveTime(actions->second.end_actions,
+                                     timeline.getManeuverEndETA(maneuver_id),
+                                     &cat, &active_entities);
       }
+
+      // Add timed activations/deactivations
+      getTimedActionsActiveTime(m_timed, &cat, &active_entities);
     }
 
     // Private
