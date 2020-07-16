@@ -226,12 +226,6 @@ namespace Plan
         return itr->second.deact_time;
       }
 
-      //! Check if it has parameter named "Active"
-      //! @param[in] params message list of entity parameters to search in
-      //! @return iterator to parameter named "Active"
-      DUNE::IMC::MessageList<DUNE::IMC::EntityParameter>::const_iterator
-      getParameterActive(const DUNE::IMC::MessageList<DUNE::IMC::EntityParameter>& params) const;
-
       //! Update entity activation states
       //! @param[in] id name of the entity
       //! @param[in] eas pointer to entity activation state
@@ -276,10 +270,6 @@ namespace Plan
           task->dispatch(actions[i]);
       }
 
-      //! Find the stack with the next scheduled action
-      //! @return iterator to the stack with the next scheduled action
-      std::map<std::string, TimedStack>::iterator
-      nextSchedule(void);
 
       //! Expected plan duration disregarding calibration time
       float m_execution_duration;

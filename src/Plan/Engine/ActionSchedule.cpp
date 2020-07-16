@@ -39,6 +39,19 @@ namespace Plan
 {
   namespace Engine
   {
+    //! Find the stack with the next scheduled action
+    static std::map<std::string, ActionSchedule::TimedStack>::iterator
+    nextSchedule(std::map<std::string, ActionSchedule::TimedStack>* action_stacks)
+    {
+      // find the component whose next timed action has the greatest value of
+      // sched_time (earliest scheduled time)
+      return std::max_element(std::begin(*action_stacks), std::end(*action_stacks),
+                              [](auto const& t1, auto const& t2) {
+                                return t1.second.top().sched_time
+                                       < t2.second.top().sched_time;
+                              });
+    }
+
     ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
                                    const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
                                    const Timeline& tline,
@@ -71,7 +84,7 @@ namespace Plan
       scheduleTimedActions();
 
       std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule();
+      next = nextSchedule(&m_timed);
 
       if (next != m_timed.end())
         m_earliest = next->second.top().sched_time;
@@ -108,8 +121,8 @@ namespace Plan
 
       m_time_left = time_left;
 
-      for (auto next = nextSchedule(); next != m_timed.end();
-           next = nextSchedule())
+      for (auto next = nextSchedule(&m_timed); next != m_timed.end();
+           next = nextSchedule(&m_timed))
       {
         TimedStack& action_stack = next->second;
 
@@ -131,8 +144,8 @@ namespace Plan
     void
     ActionSchedule::flushTimed(Tasks::Task* task)
     {
-      for(auto next = nextSchedule(); next != m_timed.end();
-          next = nextSchedule())
+      for(auto next = nextSchedule(&m_timed); next != m_timed.end();
+          next = nextSchedule(&m_timed))
       {
         TimedStack& action_stack = next->second;
 
@@ -260,7 +273,7 @@ namespace Plan
         return true;
 
       std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule();
+      next = nextSchedule(&m_timed);
 
       if (next != m_timed.end())
       {
@@ -278,12 +291,22 @@ namespace Plan
         return -1.0;
 
       std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule();
+      next = nextSchedule(&m_timed);
 
       if (next != m_timed.end())
         return next->second.top().sched_time - m_execution_duration;
 
       return -1.0;
+    }
+
+    //! Check if a list of parameters has parameter named "Active"
+    static IMC::MessageList<IMC::EntityParameter>::const_iterator
+    getParameterActive(const IMC::MessageList<IMC::EntityParameter>& params) noexcept
+    {
+      return std::find_if(std::begin(params), std::end(params),
+                          [](IMC::EntityParameter const* params_) {
+                            return params_->name == "Active";
+                          });
     }
 
     void
@@ -484,15 +507,6 @@ namespace Plan
       return event_actions;
     }
 
-    IMC::MessageList<IMC::EntityParameter>::const_iterator
-    ActionSchedule::getParameterActive(const IMC::MessageList<IMC::EntityParameter>& params) const
-    {
-      return std::find_if(std::begin(params), std::end(params),
-                          [](IMC::EntityParameter const* params_) {
-                            return params_->name == "Active";
-                          });
-    }
-
     void
     ActionSchedule::updateEAS(const std::string& id, const IMC::EntityActivationState* msg)
     {
@@ -661,16 +675,5 @@ namespace Plan
       }
     }
 
-    std::map<std::string, ActionSchedule::TimedStack>::iterator
-    ActionSchedule::nextSchedule(void)
-    {
-      // find the component whose next timed action has the greatest value of
-      // sched_time (earliest scheduled time)
-      return std::max_element(std::begin(m_timed), std::end(m_timed),
-                              [](auto const& t1, auto const& t2) {
-                                return t1.second.top().sched_time
-                                       < t2.second.top().sched_time;
-                              });
-    }
   }
 }
