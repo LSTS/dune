@@ -597,76 +597,69 @@ namespace Plan
       if (m_unsched.empty())
         return;
 
-      for (auto& unscheduled_actions : m_unsched)
+      for (auto& entity : m_unsched)
       {
-        TimedStack& us = unscheduled_actions.second;
+        std::string const& elabel = entity.first;
+        TimedStack& actions = entity.second;
 
-        while (!us.empty())
+        // Iterate through this entity's actions backwards in time, starting
+        // from the action closest to the end of the plan
+        while (!actions.empty())
         {
-          TimedAction action = us.top();
+          TimedAction action = actions.top();
+          actions.pop();
 
-          us.pop();
-
-          // If activation
-          if (action.type == TYPE_ACT)
+          if (action.type != TYPE_ACT)
           {
-            if (us.empty())
-            {
-              // pre-schedule
-              addTimedAction(&m_timed, unscheduled_actions.first, action,
-                             getActivationTime(unscheduled_actions.first));
-            }
-            else
-            {
-              while (!us.empty())
-              {
-                TimedAction prev_action = us.top();
-
-                if (prev_action.type == TYPE_DEACT)
-                {
-                  // find least eta for a deactivation prior to the activation
-                  float deact_time = getDeactivationTime(unscheduled_actions.first);
-                  float act_time = getActivationTime(unscheduled_actions.first);
-                  float act_eta = deact_time + act_time + action.sched_time;
-
-                  // check if the gap between 'de' and activation is big enough
-                  if (prev_action.sched_time > act_eta)
-                  {
-                    addTimedAction(&m_timed, unscheduled_actions.first, action,
-                                   getActivationTime(
-                                   unscheduled_actions.first));
-                    break;
-                  }
-                  else // previous action deactivation is voided
-                  {
-                    us.pop();
-
-                    // if stack becomes empty, then pre-schedule
-                    if (us.empty())
-                      addTimedAction(&m_timed, unscheduled_actions.first,
-                                     action,
-                                     getActivationTime(
-                                     unscheduled_actions.first));
-
-                    // proceed in inner loop to check previous action
-                  }
-                }
-                else // previous action is activation
-                {
-                  // if previous action is activation, do not pre-schedule
-                  addTimedAction(&m_timed, unscheduled_actions.first, action);
-                  break;
-                }
-              }
-            }
+            // deactivations are never pre-scheduled.
+            addTimedAction(&m_timed, elabel, action);
+            continue;
           }
-          else // if deactivation never pre-schedule
+
+          if (actions.empty())
           {
-            addTimedAction(&m_timed, unscheduled_actions.first, action);
+            addTimedAction(&m_timed, elabel, action, getActivationTime(elabel));
+            continue;
+          }
+
+          // Check previous actions to remove deactivations that would occur too
+          // close to the scheduled time for this action. Stop once the previous
+          // action is an activation, a valid deactivation or when all previous
+          // actions have been removed.
+          while (!actions.empty())
+          {
+            TimedAction const& prev_action = actions.top();
+
+            if (prev_action.type == TYPE_ACT)
+            {
+              // if previous action is activation, do not pre-schedule
+              addTimedAction(&m_timed, elabel, action);
+              break;
+            }
+
+            float const deact_time = getDeactivationTime(elabel);
+            float const act_time = getActivationTime(elabel);
+
+            float const min_deactivation_eta
+            = deact_time + act_time + action.sched_time;
+
+            // check if the gap between deactivation and and activation is big
+            // enough
+            if (prev_action.sched_time > min_deactivation_eta)
+            {
+              addTimedAction(&m_timed, elabel, action, act_time);
+              break;
+            }
+
+            // the deactivation would happen too close to the activation
+            actions.pop();
+
+            // if stack becomes empty, pre-schedule
+            if (actions.empty())
+              addTimedAction(&m_timed, elabel, action, act_time);
           }
         }
       }
     }
-
   }
 }
