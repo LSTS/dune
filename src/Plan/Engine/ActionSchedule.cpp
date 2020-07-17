@@ -60,17 +60,20 @@ namespace Plan
       m_cinfo(&cinfo),
       m_earliest(0.0f)
     {
+      std::map<std::string, TimedStack> unscheduled_actions;
+
       m_plan_actions.start_actions
-      = parseActions(task, spec->start_actions, m_execution_duration);
+      = parseActions(task, spec->start_actions, &unscheduled_actions,
+                     m_execution_duration);
 
       for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
         auto start_actions
-        = parseActions(task, maneuver->start_actions,
+        = parseActions(task, maneuver->start_actions, &unscheduled_actions,
                        tline.getManeuverStartETA(maneuver->maneuver_id));
 
         auto end_actions
-        = parseActions(task, maneuver->end_actions,
+        = parseActions(task, maneuver->end_actions, &unscheduled_actions,
                        tline.getManeuverEndETA(maneuver->maneuver_id));
 
         m_maneuver_actions.emplace(maneuver->maneuver_id,
@@ -78,10 +81,12 @@ namespace Plan
                                                  std::move(end_actions) });
       }
 
-      m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
+      m_plan_actions.end_actions
+      = parseActions(task, spec->end_actions, &unscheduled_actions, 0.0);
 
       // Create a proper schedule from the set of unscheduled actions
-      scheduleTimedActions();
+      if (!unscheduled_actions.empty())
+        scheduleTimedActions(std::move(unscheduled_actions));
 
       std::map<std::string, TimedStack>::const_iterator next;
       next = nextSchedule(&m_timed);
@@ -110,7 +115,8 @@ namespace Plan
                                                  std::move(end_actions) });
       }
 
-      m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
+      m_plan_actions.end_actions
+      = parseActions(task, spec->end_actions, nullptr, 0.0);
     }
 
     void
@@ -430,9 +436,54 @@ namespace Plan
 
     // Private
 
+    static void
+    addTimedAction(std::map<std::string, ActionSchedule::TimedStack>* action_map,
+                   const std::string& name, ActionSchedule::TimedAction action,
+                   int act_time = -1) noexcept
+    {
+      auto const action_stack = action_map->find(name);
+
+      if (act_time > 0)
+      {
+        action.sched_time += act_time;
+        action.prescheduled = true;
+      }
+      else
+      {
+        action.prescheduled = false;
+      }
+
+      if (action_stack != action_map->end())
+      {
+        action_stack->second.push(action);
+        return;
+      }
+
+      ActionSchedule::TimedStack q;
+      q.push(action);
+      action_map->emplace(name, q);
+    }
+
+    static void
+    addUnscheduledAction(
+    std::map<std::string, ActionSchedule::TimedStack>* action_map,
+    IMC::SetEntityParameters* sep, ActionSchedule::ActionType type, float eta)
+    {
+      if (eta < 0)
+        return;
+
+      ActionSchedule::TimedAction action;
+      action.type = type;
+      action.list = sep;
+      action.sched_time = eta;
+
+      addTimedAction(action_map, sep->name, action);
+    }
+
     std::vector<IMC::SetEntityParameters*>
     ActionSchedule::parseActions(Tasks::Task* task,
                                  const IMC::MessageList<IMC::Message>& actions,
+                                 std::map<std::string, TimedStack>* unscheduled_actions,
                                  float eta)
     {
       // if empty exit
@@ -492,9 +543,9 @@ namespace Plan
 
         if (event_based)
           event_actions.push_back(sep);
-        else
+        else if (unscheduled_actions)
           // if the eta is not valid, schedule action to last valid duration (0.0 sec)
-          gatherUnscheduled(sep, type, std::max(eta, 0.0f));
+          addUnscheduledAction(unscheduled_actions, sep, type, std::max(eta, 0.0f));
       }
 
       return event_actions;
@@ -509,37 +560,6 @@ namespace Plan
         return;
 
       entity->second = msg->state;
-    }
-
-    static void
-    addTimedAction(std::map<std::string, ActionSchedule::TimedStack>* action_map,
-                   const std::string& name, ActionSchedule::TimedAction action,
-                   int act_time = -1) noexcept
-    {
-      auto const action_stack = action_map->find(name);
-
-      // If we need to preschedule, add activation time
-      if (act_time > 0)
-      {
-        action.sched_time += act_time;
-        action.prescheduled = true;
-      }
-      else
-      {
-        action.prescheduled = false;
-      }
-
-      // Adding action to stack
-      if (action_stack != action_map->end())
-      {
-        action_stack->second.push(action);
-      }
-      else
-      {
-        ActionSchedule::TimedStack q;
-        q.push(action);
-        action_map->emplace(name, q);
-      }
     }
 
     void
@@ -578,26 +598,10 @@ namespace Plan
     }
 
     void
-    ActionSchedule::gatherUnscheduled(IMC::SetEntityParameters* sep, ActionType type, float eta)
+    ActionSchedule::scheduleTimedActions(
+    std::map<std::string, TimedStack> unscheduled_actions)
     {
-      if (eta < 0)
-        return;
-
-      TimedAction action;
-      action.type = type;
-      action.list = sep;
-      action.sched_time = eta;
-
-      addTimedAction(&m_unsched, sep->name, action);
-    }
-
-    void
-    ActionSchedule::scheduleTimedActions(void)
-    {
-      if (m_unsched.empty())
-        return;
-
-      for (auto& entity : m_unsched)
+      for (auto& entity : unscheduled_actions)
       {
         std::string const& elabel = entity.first;
         TimedStack& actions = entity.second;

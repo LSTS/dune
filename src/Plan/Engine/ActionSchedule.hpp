@@ -204,6 +204,7 @@ namespace Plan
       std::vector<DUNE::IMC::SetEntityParameters*>
       parseActions(DUNE::Tasks::Task* task,
                    const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
+                   std::map<std::string, TimedStack>* unscheduled_actions = nullptr,
                    float eta = -1.0);
 
       //! Get activation time of component
@@ -238,16 +239,10 @@ namespace Plan
       void
       processRequest(const std::string& id, const TimedAction& action);
 
-      //! Simply gather untimed actions in untimed stacks
-      //! @param[in] sep pointer to SetEntityParameters to schedule
-      //! @param[in] type action type to schedule
-      //! @param[in] eta estimated time of arrival of action
-      void
-      gatherUnscheduled(DUNE::IMC::SetEntityParameters* sep, ActionType type, float eta);
-
       //! Schedule timed actions
       void
-      scheduleTimedActions(void);
+      scheduleTimedActions(
+      std::map<std::string, TimedStack> unscheduled_actions);
 
       //! Dispatch actions
       //! @param[in] task task that will dispatch the actions
@@ -276,8 +271,6 @@ namespace Plan
       //! Map of entity labels to TimedStack's
       //! This means we'll have one stack per component
       std::map<std::string, TimedStack> m_timed;
-      //! Map of entity labels to unscheduled stack
-      std::map<std::string, TimedStack> m_unsched;
       //! Map of event based maneuver actions
       EventMap m_maneuver_actions;
       //! Event based plan actions
