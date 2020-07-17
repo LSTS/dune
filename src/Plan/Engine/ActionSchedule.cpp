@@ -41,23 +41,24 @@ namespace Plan
   {
     //! Find the stack with the next scheduled action
     static std::map<std::string, ActionSchedule::TimedStack>::iterator
-    nextSchedule(std::map<std::string, ActionSchedule::TimedStack>* action_stacks)
+    nextSchedule(
+    std::map<std::string, ActionSchedule::TimedStack>* action_stacks)
     {
       // find the component whose next timed action has the greatest value of
       // sched_time (earliest scheduled time)
-      return std::max_element(std::begin(*action_stacks), std::end(*action_stacks),
+      return std::max_element(std::begin(*action_stacks),
+                              std::end(*action_stacks),
                               [](auto const& t1, auto const& t2) {
                                 return t1.second.top().sched_time
                                        < t2.second.top().sched_time;
                               });
     }
 
-    ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
-                                   const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
-                                   const Timeline& tline,
-                                   const std::map<std::string, IMC::EntityInfo>& cinfo):
-      m_execution_duration(tline.getExecutionDuration()),
-      m_cinfo(&cinfo),
+    ActionSchedule::ActionSchedule(
+    Tasks::Task* task, const IMC::PlanSpecification* spec,
+    const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
+    const Timeline& tline, const std::map<std::string, IMC::EntityInfo>& cinfo)
+    : m_execution_duration(tline.getExecutionDuration()), m_cinfo(&cinfo),
       m_earliest(0.0f)
     {
       std::map<std::string, TimedStack> unscheduled_actions;
@@ -86,21 +87,20 @@ namespace Plan
 
       // Create a proper schedule from the set of unscheduled actions
       if (!unscheduled_actions.empty())
-        m_timed = scheduleTimedActions(std::move(unscheduled_actions));
+        m_timed_actions = scheduleTimedActions(std::move(unscheduled_actions));
 
       std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule(&m_timed);
+      next = nextSchedule(&m_timed_actions);
 
-      if (next != m_timed.end())
+      if (next != m_timed_actions.end())
         m_earliest = next->second.top().sched_time;
     }
 
-    ActionSchedule::ActionSchedule(Tasks::Task* task, const IMC::PlanSpecification* spec,
-                                   const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
-                                   const std::map<std::string, IMC::EntityInfo>& cinfo):
-      m_execution_duration(-1.0f),
-      m_cinfo(&cinfo),
-      m_earliest(0.0f)
+    ActionSchedule::ActionSchedule(
+    Tasks::Task* task, const IMC::PlanSpecification* spec,
+    const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
+    const std::map<std::string, IMC::EntityInfo>& cinfo)
+    : m_execution_duration(-1.0f), m_cinfo(&cinfo), m_earliest(0.0f)
     {
       m_plan_actions.start_actions = parseActions(task, spec->start_actions);
 
@@ -127,12 +127,11 @@ namespace Plan
 
       m_time_left = time_left;
 
-      for (auto next = nextSchedule(&m_timed); next != m_timed.end();
-           next = nextSchedule(&m_timed))
+      for (auto next = nextSchedule(&m_timed_actions);
+           next != m_timed_actions.end(); next = nextSchedule(&m_timed_actions))
       {
         TimedStack& action_stack = next->second;
 
-        // Check if the time is right
         if (action_stack.top().sched_time < time_left)
           break;
 
@@ -143,19 +142,17 @@ namespace Plan
         action_stack.pop();
 
         if (action_stack.empty())
-          m_timed.erase(next);
+          m_timed_actions.erase(next);
       }
     }
 
     void
     ActionSchedule::flushTimed(Tasks::Task* task)
     {
-      for(auto next = nextSchedule(&m_timed); next != m_timed.end();
-          next = nextSchedule(&m_timed))
+      for (auto next = nextSchedule(&m_timed_actions);
+           next != m_timed_actions.end(); next = nextSchedule(&m_timed_actions))
       {
         TimedStack& action_stack = next->second;
-
-        // do not check if the time is right
 
         dispatchActions(task, action_stack.top().list);
 
@@ -164,12 +161,13 @@ namespace Plan
         action_stack.pop();
 
         if (action_stack.empty())
-          m_timed.erase(next);
+          m_timed_actions.erase(next);
       }
     }
 
     void
-    ActionSchedule::planStarted(Tasks::Task* task, std::vector<std::string>& affected)
+    ActionSchedule::planStarted(Tasks::Task* task,
+                                std::vector<std::string>& affected)
     {
       // Order all entities to push their parameters
       for (auto const& entity : m_eas)
@@ -187,7 +185,8 @@ namespace Plan
     }
 
     void
-    ActionSchedule::planStopped(Tasks::Task* task, const std::vector<std::string>& affected)
+    ActionSchedule::planStopped(Tasks::Task* task,
+                                const std::vector<std::string>& affected)
     {
       dispatchActions(task, m_plan_actions.end_actions);
 
@@ -240,8 +239,8 @@ namespace Plan
 
       if (action.type != TYPE_ACT)
       {
-        if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE ||
-            msg->state == IMC::EntityActivationState::EAS_INACTIVE)
+        if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE
+            || msg->state == IMC::EntityActivationState::EAS_INACTIVE)
           m_reqs.erase(action_itr);
 
         return true;
@@ -253,8 +252,8 @@ namespace Plan
         return false;
       }
 
-      if (msg->state != IMC::EntityActivationState::EAS_ACT_DONE &&
-          msg->state != IMC::EntityActivationState::EAS_ACTIVE)
+      if (msg->state != IMC::EntityActivationState::EAS_ACT_DONE
+          && msg->state != IMC::EntityActivationState::EAS_ACTIVE)
         return true;
 
       float gap = m_time_left - (action.sched_time - getActivationTime(id));
@@ -279,9 +278,9 @@ namespace Plan
         return true;
 
       std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule(&m_timed);
+      next = nextSchedule(&m_timed_actions);
 
-      if (next != m_timed.end())
+      if (next != m_timed_actions.end())
       {
         if (next->second.top().sched_time >= m_execution_duration)
           return true;
@@ -297,9 +296,9 @@ namespace Plan
         return -1.0;
 
       std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule(&m_timed);
+      next = nextSchedule(&m_timed_actions);
 
-      if (next != m_timed.end())
+      if (next != m_timed_actions.end())
         return next->second.top().sched_time - m_execution_duration;
 
       return -1.0;
@@ -307,7 +306,8 @@ namespace Plan
 
     //! Check if a list of parameters has parameter named "Active"
     static IMC::MessageList<IMC::EntityParameter>::const_iterator
-    getParameterActive(const IMC::MessageList<IMC::EntityParameter>& params) noexcept
+    getParameterActive(
+    const IMC::MessageList<IMC::EntityParameter>& params) noexcept
     {
       return std::find_if(std::begin(params), std::end(params),
                           [](IMC::EntityParameter const* params_) {
@@ -387,7 +387,8 @@ namespace Plan
       }
     }
 
-    void ActionSchedule::fillComponentActiveTime(
+    void
+    ActionSchedule::fillComponentActiveTime(
     const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
     const Timeline& timeline, ComponentActiveTime& cat)
     {
@@ -395,7 +396,8 @@ namespace Plan
       std::set<std::string> active_entities;
 
       // Check which entities will be activated when plan execution begins.
-      for (IMC::SetEntityParameters const* action : m_plan_actions.start_actions)
+      for (IMC::SetEntityParameters const* action :
+           m_plan_actions.start_actions)
       {
         auto param_active = getParameterActive(action->params);
 
@@ -431,15 +433,16 @@ namespace Plan
       }
 
       // Add timed activations/deactivations
-      getTimedActionsActiveTime(m_timed, &cat, &active_entities);
+      getTimedActionsActiveTime(m_timed_actions, &cat, &active_entities);
     }
 
     // Private
 
     static void
-    addTimedAction(std::map<std::string, ActionSchedule::TimedStack>* action_map,
-                   const std::string& name, ActionSchedule::TimedAction action,
-                   int act_time = -1) noexcept
+    addTimedAction(
+    std::map<std::string, ActionSchedule::TimedStack>* action_map,
+    const std::string& name, ActionSchedule::TimedAction action,
+    int act_time = -1) noexcept
     {
       auto const action_stack = action_map->find(name);
 
@@ -481,10 +484,9 @@ namespace Plan
     }
 
     std::vector<IMC::SetEntityParameters*>
-    ActionSchedule::parseActions(Tasks::Task* task,
-                                 const IMC::MessageList<IMC::Message>& actions,
-                                 std::map<std::string, TimedStack>* unscheduled_actions,
-                                 float eta)
+    ActionSchedule::parseActions(
+    Tasks::Task* task, const IMC::MessageList<IMC::Message>& actions,
+    std::map<std::string, TimedStack>* unscheduled_actions, float eta)
     {
       // if empty exit
       if (!actions.size())
@@ -504,7 +506,8 @@ namespace Plan
         test = m_cinfo->find(sep->name);
         if (test == m_cinfo->end())
         {
-          task->war(DTR("schedule: entity label %s not found"), sep->name.c_str());
+          task->war(DTR("schedule: entity label %s not found"),
+                    sep->name.c_str());
           continue;
         }
 
@@ -544,17 +547,20 @@ namespace Plan
         if (event_based)
           event_actions.push_back(sep);
         else if (unscheduled_actions)
-          // if the eta is not valid, schedule action to last valid duration (0.0 sec)
-          addUnscheduledAction(unscheduled_actions, sep, type, std::max(eta, 0.0f));
+          // if the eta is not valid, schedule action to last valid duration
+          // (0.0 sec)
+          addUnscheduledAction(unscheduled_actions, sep, type,
+                               std::max(eta, 0.0f));
       }
 
       return event_actions;
     }
 
     void
-    ActionSchedule::updateEAS(const std::string& id, const IMC::EntityActivationState* msg)
+    ActionSchedule::updateEAS(const std::string& id,
+                              const IMC::EntityActivationState* msg)
     {
-      EASMap::iterator entity = m_eas.find(id);
+      auto entity = m_eas.find(id);
 
       if (entity == m_eas.end())
         return;
@@ -563,7 +569,8 @@ namespace Plan
     }
 
     void
-    ActionSchedule::processRequest(const std::string& id, const TimedAction& action)
+    ActionSchedule::processRequest(const std::string& id,
+                                   const TimedAction& action)
     {
       uint8_t const state = m_eas.find(id)->second;
 
@@ -571,30 +578,28 @@ namespace Plan
 
       if (action.type == TYPE_ACT)
       {
-        bool active = (state == IMC::EntityActivationState::EAS_ACTIVE ||
-                       state == IMC::EntityActivationState::EAS_ACT_DONE);
+        bool active = (state == IMC::EntityActivationState::EAS_ACTIVE
+                       || state == IMC::EntityActivationState::EAS_ACT_DONE);
 
         // do not add request if device is already active
         add_req = !active && action.prescheduled;
       }
       else
       {
-        bool inactive = (state == IMC::EntityActivationState::EAS_INACTIVE ||
-                         state == IMC::EntityActivationState::EAS_DEACT_DONE);
-
         // do not add request if device is already inactive
-        add_req = !inactive;
+        add_req = !(state == IMC::EntityActivationState::EAS_INACTIVE
+                    || state == IMC::EntityActivationState::EAS_DEACT_DONE);
       }
 
-      if (add_req)
-      {
-        auto request = m_reqs.find(id);
+      if (!add_req)
+        return;
 
-        if (request != m_reqs.end())
-          m_reqs.erase(request);
+      auto request = m_reqs.find(id);
 
-        m_reqs.emplace(id, action);
-      }
+      if (request != m_reqs.end())
+        m_reqs.erase(request);
+
+      m_reqs.emplace(id, action);
     }
 
     std::map<std::string, ActionSchedule::TimedStack>
@@ -670,5 +675,5 @@ namespace Plan
 
       return timed_actions;
     }
-  }
-}
+  } // namespace Engine
+} // namespace Plan
