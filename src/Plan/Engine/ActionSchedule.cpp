@@ -86,7 +86,7 @@ namespace Plan
 
       // Create a proper schedule from the set of unscheduled actions
       if (!unscheduled_actions.empty())
-        scheduleTimedActions(std::move(unscheduled_actions));
+        m_timed = scheduleTimedActions(std::move(unscheduled_actions));
 
       std::map<std::string, TimedStack>::const_iterator next;
       next = nextSchedule(&m_timed);
@@ -597,10 +597,12 @@ namespace Plan
       }
     }
 
-    void
+    std::map<std::string, ActionSchedule::TimedStack>
     ActionSchedule::scheduleTimedActions(
-    std::map<std::string, TimedStack> unscheduled_actions)
+    std::map<std::string, TimedStack> unscheduled_actions) const
     {
+      std::map<std::string, TimedStack> timed_actions;
+
       for (auto& entity : unscheduled_actions)
       {
         std::string const& elabel = entity.first;
@@ -616,13 +618,14 @@ namespace Plan
           if (action.type != TYPE_ACT)
           {
             // deactivations are never pre-scheduled.
-            addTimedAction(&m_timed, elabel, action);
+            addTimedAction(&timed_actions, elabel, action);
             continue;
           }
 
           if (actions.empty())
           {
-            addTimedAction(&m_timed, elabel, action, getActivationTime(elabel));
+            addTimedAction(&timed_actions, elabel, action,
+                           getActivationTime(elabel));
             continue;
           }
 
@@ -637,7 +640,7 @@ namespace Plan
             if (prev_action.type == TYPE_ACT)
             {
               // if previous action is activation, do not pre-schedule
-              addTimedAction(&m_timed, elabel, action);
+              addTimedAction(&timed_actions, elabel, action);
               break;
             }
 
@@ -651,7 +654,7 @@ namespace Plan
             // enough
             if (prev_action.sched_time > min_deactivation_eta)
             {
-              addTimedAction(&m_timed, elabel, action, act_time);
+              addTimedAction(&timed_actions, elabel, action, act_time);
               break;
             }
 
@@ -660,10 +663,12 @@ namespace Plan
 
             // if stack becomes empty, pre-schedule
             if (actions.empty())
-              addTimedAction(&m_timed, elabel, action, act_time);
+              addTimedAction(&timed_actions, elabel, action, act_time);
           }
         }
       }
+
+      return timed_actions;
     }
   }
 }

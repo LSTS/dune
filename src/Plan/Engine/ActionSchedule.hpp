@@ -240,9 +240,9 @@ namespace Plan
       processRequest(const std::string& id, const TimedAction& action);
 
       //! Schedule timed actions
-      void
+      std::map<std::string, TimedStack>
       scheduleTimedActions(
-      std::map<std::string, TimedStack> unscheduled_actions);
+      std::map<std::string, TimedStack> unscheduled_actions) const;
 
       //! Dispatch actions
       //! @param[in] task task that will dispatch the actions
