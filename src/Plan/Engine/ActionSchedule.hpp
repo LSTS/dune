@@ -201,17 +201,17 @@ namespace Plan
       //! Parse actions
       //! @param[in] task task to print information to the console
       //! @param[in] actions message list of actions to parse
-      //! @param[in] unscheduled_actions map where the unscheduled actions will
-      //!            be stored
       //! @param[in] eta estimated time of arrival for actions' dispatching
       //!            point
+      //! @param[in] unscheduled_actions map where the unscheduled actions will
+      //!            be stored
       //! @return list of parsed actions
       std::vector<DUNE::IMC::SetEntityParameters*>
       parseActions(DUNE::Tasks::Task* task,
                    const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
+                   float eta = -1.0,
                    std::map<std::string, TimedStack>* unscheduled_actions
-                   = nullptr,
-                   float eta = -1.0);
+                   = nullptr);
 
       //! Get activation time of component
       //! @param[in] label entity label of component to look for

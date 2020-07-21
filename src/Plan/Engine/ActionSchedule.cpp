@@ -64,18 +64,20 @@ namespace Plan
       std::map<std::string, TimedStack> unscheduled_actions;
 
       m_plan_actions.start_actions
-      = parseActions(task, spec->start_actions, &unscheduled_actions,
-                     m_execution_duration);
+      = parseActions(task, spec->start_actions, m_execution_duration,
+                     &unscheduled_actions);
 
       for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
         auto start_actions
-        = parseActions(task, maneuver->start_actions, &unscheduled_actions,
-                       tline.getManeuverStartETA(maneuver->maneuver_id));
+        = parseActions(task, maneuver->start_actions,
+                       tline.getManeuverStartETA(maneuver->maneuver_id),
+                       &unscheduled_actions);
 
         auto end_actions
-        = parseActions(task, maneuver->end_actions, &unscheduled_actions,
-                       tline.getManeuverEndETA(maneuver->maneuver_id));
+        = parseActions(task, maneuver->end_actions,
+                       tline.getManeuverEndETA(maneuver->maneuver_id),
+                       &unscheduled_actions);
 
         m_maneuver_actions.emplace(maneuver->maneuver_id,
                                    EventActions{ std::move(start_actions),
@@ -83,7 +85,7 @@ namespace Plan
       }
 
       m_plan_actions.end_actions
-      = parseActions(task, spec->end_actions, &unscheduled_actions, 0.0);
+      = parseActions(task, spec->end_actions, 0.0, &unscheduled_actions);
 
       // Create a proper schedule from the set of unscheduled actions
       if (!unscheduled_actions.empty())
@@ -115,8 +117,7 @@ namespace Plan
                                                  std::move(end_actions) });
       }
 
-      m_plan_actions.end_actions
-      = parseActions(task, spec->end_actions, nullptr, 0.0);
+      m_plan_actions.end_actions = parseActions(task, spec->end_actions, 0.0);
     }
 
     void
@@ -485,8 +486,8 @@ namespace Plan
 
     std::vector<IMC::SetEntityParameters*>
     ActionSchedule::parseActions(
-    Tasks::Task* task, const IMC::MessageList<IMC::Message>& actions,
-    std::map<std::string, TimedStack>* unscheduled_actions, float eta)
+    Tasks::Task* task, const IMC::MessageList<IMC::Message>& actions, float eta,
+    std::map<std::string, TimedStack>* unscheduled_actions)
     {
       // if empty exit
       if (!actions.size())
