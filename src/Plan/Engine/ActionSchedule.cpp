@@ -473,9 +473,6 @@ namespace Plan
     std::map<std::string, ActionSchedule::TimedStack>* action_map,
     IMC::SetEntityParameters* sep, ActionSchedule::ActionType type, float eta)
     {
-      if (eta < 0)
-        return;
-
       ActionSchedule::TimedAction action;
       action.type = type;
       action.list = sep;
@@ -489,8 +486,7 @@ namespace Plan
     Tasks::Task* task, const IMC::MessageList<IMC::Message>& actions, float eta,
     std::map<std::string, TimedStack>* unscheduled_actions)
     {
-      // if empty exit
-      if (!actions.size())
+      if (actions.empty())
         return {};
 
       std::vector<IMC::SetEntityParameters*> event_actions;
@@ -502,56 +498,41 @@ namespace Plan
 
         auto sep = static_cast<IMC::SetEntityParameters*>(action);
 
-        // Check if entity label exists
-        std::map<std::string, IMC::EntityInfo>::const_iterator test;
-        test = m_cinfo->find(sep->name);
-        if (test == m_cinfo->end())
+        if (!sep->params.size())
+          continue;
+
+        // Check if we have an EntityInfo message for this entity
+        auto entity = m_cinfo->find(sep->name);
+        if (entity == m_cinfo->end())
         {
           task->war(DTR("schedule: entity label %s not found"),
                     sep->name.c_str());
           continue;
         }
 
-        // If no parameters then skip
-        if (!sep->params.size())
-          continue;
-
-        // Fill entities set
         m_eas.emplace(sep->name, IMC::EntityActivationState::EAS_INACTIVE);
 
-        // true if event based, false if time based
-        bool event_based = true;
-        // action type
-        ActionType type;
+        auto param_active = getParameterActive(sep->params);
 
-        IMC::MessageList<IMC::EntityParameter>::const_iterator par;
-        par = getParameterActive(sep->params);
+        std::uint16_t const act_time = entity->second.act_time;
+        std::uint16_t const deact_time = entity->second.deact_time;
 
-        // has entity parameter "Active", then get (de)activation time
-        if (par != sep->params.end())
+        if (m_execution_duration >= 0.0 && unscheduled_actions
+            && param_active != sep->params.end()
+            && (act_time > 0 || deact_time > 0))
         {
-          // activation and deactivation times
-          uint16_t act_time = getActivationTime(sep->name);
-          uint16_t deact_time = getDeactivationTime(sep->name);
+          // Schedule a time-based action (dispatched according to plan
+          // progress) so that we can compensate for de/activation time.
+          ActionType type
+          = ((*param_active)->value == "true") ? TYPE_ACT : TYPE_DEACT;
 
-          if ((act_time > 0 || deact_time > 0) && (m_execution_duration >= 0.0))
-          {
-            event_based = false;
-
-            if ((*par)->value == "true")
-              type = TYPE_ACT;
-            else
-              type = TYPE_DEACT;
-          }
-        }
-
-        if (event_based)
-          event_actions.push_back(sep);
-        else if (unscheduled_actions)
-          // if the eta is not valid, schedule action to last valid duration
-          // (0.0 sec)
+          // if the eta is not valid, schedule action to the end of the plan
           addUnscheduledAction(unscheduled_actions, sep, type,
                                std::max(eta, 0.0f));
+          continue;
+        }
+
+        event_actions.push_back(sep);
       }
 
       return event_actions;
