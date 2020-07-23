@@ -62,12 +62,18 @@ namespace Control
           {
             const int sizeMsg = sizeof(*msg);
             std::memcpy(&buf[0], msg, sizeMsg);
-            task->spew("PACKED MSG: %s", type_name);
+            if (task != NULL)
+              task->spew("PACKED MSG: %s", type_name);
+            else
+              std::printf("PACKED MSG: %s\n", type_name);
             rb = sizeMsg;
           }
           catch(const std::exception& e)
           {
-            task->err("%s", e.what());
+            if (task != NULL)
+              task->err("%s", e.what());
+            else
+              std::printf("%s\n", e.what());
           }
 
           free(type_name);
@@ -87,19 +93,30 @@ namespace Control
           try
           {
             const int sizeMsg = sizeof(*msg);
-            if (length < sizeMsg) {
-              task->war("Message too short to decode %d < %d (index %d of %d) for %s",
-                  length, sizeMsg, startIndex, startIndex + length, type_name);
+            if (length < sizeMsg)
+            {
+                if (task != NULL)
+                  task->war("Message too short to decode %d < %d (index %d of %d) for %s",
+                    length, sizeMsg, startIndex, startIndex + length, type_name);
+                else
+                  std::printf("Message too short to decode %d < %d (index %d of %d) for %s\n",
+                      length, sizeMsg, startIndex, startIndex + length, type_name);
               return -length; // return the missing bytes for decoding
             }
 
             std::memcpy(msg, &buf[startIndex], sizeMsg);
             rb = sizeMsg;
-            task->spew("RECEIVED MSG: %s %d bytes", type_name, rb);
+            if (task != NULL)
+              task->spew("RECEIVED MSG: %s %d bytes", type_name, rb);
+            else
+              std::printf("RECEIVED MSG: %s %d bytes\n", type_name, rb);
           }
           catch(const std::exception& e)
           {
-            task->err("%s", e.what());
+            if (task != NULL)
+              task->err("%s", e.what());
+            else
+              std::printf("%s", e.what());
             rb = 0;
           }
 
