@@ -58,10 +58,13 @@ namespace Transports
         Arguments m_args;
         //! Discover target node
         bool m_discovered;
+        //! Req id for Transmission Request to Send USBL data over WIFI
+        uint16_t m_req_id;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
-		  m_discovered(false)
+		  m_discovered(false),
+		  m_req_id(666)
         {
           param("Timeout", m_args.timeout)
           .defaultValue("3.0")
@@ -127,7 +130,18 @@ namespace Transports
         void
 		consume(const IMC::UsblFixExtended* msg)
         {
-        	//TODO
+        	IMC::TransmissionRequest tr;
+        	tr.setSource(getSystemId());
+        	tr.setSourceEntity(getEntityId());
+        	tr.setDestination(getSystemId());
+        	tr.destination = m_args.target;
+        	tr.comm_mean   = IMC::TransmissionRequest::CMEAN_WIFI;
+        	tr.data_mode   = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        	tr.deadline    = Time::Clock::getSinceEpoch() + 60;
+        	tr.msg_data.set(*msg);
+        	tr.req_id = m_req_id;
+        	dispatch(tr);
+        	m_req_id++;
         }
 
         void
