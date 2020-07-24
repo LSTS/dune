@@ -41,8 +41,6 @@ static double time_origin_ms = -1;
 static double
 timeAndPaceProgress(uint32_t msg_ts_ms, double speed)
 {
-  std::cerr << "Time ms: " << msg_ts_ms << std::endl;
-
   if (time_origin_ms < 0)
   {
     time_origin_ms = msg_ts_ms;
@@ -216,10 +214,14 @@ main(int argc, char** argv)
       DUNE::Time::Delay::wait(timehold_sec);
   }
 
-  while (!ifs->eof() && (max_count <= 0 || cur_count++ < max_count ))
+  data.resize(512);
+  while (!ifs->eof() && (max_count <= 0 || cur_count < max_count ))
   {
+      cur_count++;
+      std::cout << std::endl << "________________________________________" << std::endl;
+      std::cout << "_____ Message " << cur_count << std::endl;
+
     // Get the message header.
-    data.resize(512);
     ifs->read(&data[0], 2);
 
     if (ifs->eof())
