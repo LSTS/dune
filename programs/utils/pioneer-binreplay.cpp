@@ -92,7 +92,9 @@ main(int argc, char** argv)
       .add("-c", "--count",
            "Replay only c messages (default to all). Use 0 for dump all", "COUNT")
       .add("-t", "--timestart",
-           "To start at next matching sec on the next minute upon start", "TIME_START");
+           "To start at next matching sec on the next minute upon start", "TIME_START")
+      .add("-x", "--timehold",
+           "Extra decimal seconds to hold before start", "TIME_HOLD");
 
   // Parse command line arguments.
   if (!options.parse(argc, argv))
@@ -162,6 +164,18 @@ main(int argc, char** argv)
   uint16_t hold_start_for_next_sec = 0;
   DUNE::castLexical(options.value("--timestart"), hold_start_for_next_sec);
 
+  double timehold_sec = 0;
+  if (options.value("--timehold") != "" && !DUNE::castLexical(options.value("--timehold"), timehold_sec))
+  {
+    std::cerr << "ERROR: invalid option for timehold." << std::endl;
+    return 1;
+  }
+  if (timehold_sec < 0)
+  {
+    std::cerr << "ERROR: invalid option for timehold (should be >= 0.0." << std::endl;
+    return 1;
+  }
+
   DUNE::FileSystem::Path file(bin_file_path);
   std::istream* ifs;
 
@@ -181,18 +195,25 @@ main(int argc, char** argv)
 
   std::vector<char> data;
 
+  printf("Extra hold of %f s\n", timehold_sec);
+
   if (hold_start_for_next_sec > 0)
   {
     double ht = DUNE::Time::Clock::getSinceEpoch();
     printf("Hold  %d %f ", hold_start_for_next_sec, ht);
     ht = DUNE::Math::round(ht);
-    printf("%f %d", ht, (long)ht % 60);
+    printf("%f %d", ht, (int)((long)ht % 60));
     int r = (long)ht % 60;
     ht += r > hold_start_for_next_sec ? 60 - r + hold_start_for_next_sec : hold_start_for_next_sec - r;
-    printf("  %f \n", ht);
-    double delay = ht - DUNE::Time::Clock::getSinceEpoch();
+    printf("  %f + %f s\n", ht, timehold_sec);
+    double delay = ht - DUNE::Time::Clock::getSinceEpoch() + timehold_sec;
     if (delay > 0)
       DUNE::Time::Delay::wait(delay);
+  }
+  else
+  {
+    if (timehold_sec > 0)
+      DUNE::Time::Delay::wait(timehold_sec);
   }
 
   while (!ifs->eof() && (max_count <= 0 || cur_count++ < max_count ))
