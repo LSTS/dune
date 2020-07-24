@@ -96,20 +96,20 @@ main(int argc, char** argv)
 
   // Parse command line arguments.
   if (!options.parse(argc, argv))
-    {
-      if (options.bad())
-        std::cerr << "ERROR: " << options.error() << std::endl;
-      options.usage();
-      return 1;
-    }
+  {
+    if (options.bad())
+      std::cerr << "ERROR: " << options.error() << std::endl;
+    options.usage();
+    return 1;
+  }
 
   // Get Pioneer bin file.
   std::string bin_file_path = options.value("--file");
   if (bin_file_path.empty())
-    {
-      std::cerr << "ERROR: you must specify one bin file." << std::endl;
-      return 1;
-    }
+  {
+    std::cerr << "ERROR: you must specify one bin file." << std::endl;
+    return 1;
+  }
 
   // Get specified dest IP.
   DUNE::Network::Address dest;
@@ -217,9 +217,9 @@ main(int argc, char** argv)
   data.resize(512);
   while (!ifs->eof() && (max_count <= 0 || cur_count < max_count ))
   {
-      cur_count++;
-      std::cout << std::endl << "________________________________________" << std::endl;
-      std::cout << "_____ Message " << cur_count << std::endl;
+    cur_count++;
+    std::cout << std::endl << "________________________________________" << std::endl;
+    std::cout << "_____ Message " << cur_count << std::endl;
 
     // Get the message header.
     ifs->read(&data[0], 2);
@@ -229,81 +229,81 @@ main(int argc, char** argv)
 
     uint8_t* buf = (uint8_t*)&data[0];
     switch ((buf[0] << 8) + buf[1])
-      {
-        case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+    {
+      case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_1_TELEMETRY_CODE:
+        {
+          Control::Pioneer::ProtocolMessages::DataVersion1Telemetry* msgV1Telm;
+          msgV1Telm = new Control::Pioneer::ProtocolMessages::DataVersion1Telemetry();
+          const int sizeMsg = sizeof(*msgV1Telm);
+          //data.resize(sizeMsg);
+          ifs->read(&data[2], sizeMsg - 2);
+          if (ifs->gcount() < sizeMsg - 2)
+            throw DUNE::IMC::BufferTooShort();
+          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion1Telemetry>(
+              NULL, buf, 0, sizeMsg, msgV1Telm);
+          if (rb > 0)
           {
-            Control::Pioneer::ProtocolMessages::DataVersion1Telemetry* msgV1Telm;
-            msgV1Telm = new Control::Pioneer::ProtocolMessages::DataVersion1Telemetry();
-            const int sizeMsg = sizeof(*msgV1Telm);
-            //data.resize(sizeMsg);
-            ifs->read(&data[2], sizeMsg - 2);
-            if (ifs->gcount() < sizeMsg - 2)
-              throw DUNE::IMC::BufferTooShort();
-            int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion1Telemetry>(
-                NULL, buf, 0, sizeMsg, msgV1Telm);
-            if (rb > 0)
-            {
-              uint32_t  ms_time = msgV1Telm->time;
-              double new_time_sec = timeAndPaceProgress(ms_time, speed);
-              printf("Time(ms) %d   TimeRT(s) %f", msgV1Telm->time, msgV1Telm->rt_clock);
-              msgV1Telm->rt_clock = new_time_sec;
-              msgV1Telm->time = (uint32_t)((new_time_sec - start_time_sec) * 1E3);
-              printf(" => Time(ms) %d   TimeRT(s) %f\n", msgV1Telm->time, msgV1Telm->rt_clock);
-              int dataLength = Control::Pioneer::ProtocolPack::Pack::pack(NULL, msgV1Telm, buf);
-              size_t st = sock.write(buf, dataLength, dest, port);
-              std::cout << "sent " << st << " bytes of " << dataLength << "" << std::endl;
-            }
-            DUNE::Memory::clear(msgV1Telm);
+            uint32_t  ms_time = msgV1Telm->time;
+            double new_time_sec = timeAndPaceProgress(ms_time, speed);
+            printf("Time(ms) %d   TimeRT(s) %f", msgV1Telm->time, msgV1Telm->rt_clock);
+            msgV1Telm->rt_clock = new_time_sec;
+            msgV1Telm->time = (uint32_t)((new_time_sec - start_time_sec) * 1E3);
+            printf(" => Time(ms) %d   TimeRT(s) %f\n", msgV1Telm->time, msgV1Telm->rt_clock);
+            int dataLength = Control::Pioneer::ProtocolPack::Pack::pack(NULL, msgV1Telm, buf);
+            size_t st = sock.write(buf, dataLength, dest, port);
+            std::cout << "sent " << st << " bytes of " << dataLength << "" << std::endl;
           }
-          break;
-        case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
+          DUNE::Memory::clear(msgV1Telm);
+        }
+        break;
+      case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_TELEMETRY_CODE:
+        {
+          Control::Pioneer::ProtocolMessages::DataVersion2Telemetry* msgV2Telm;
+          msgV2Telm = new Control::Pioneer::ProtocolMessages::DataVersion2Telemetry();
+          const int sizeMsg = sizeof(*msgV2Telm);
+          //data.resize(sizeMsg);
+          ifs->read(&data[2], sizeMsg - 2);
+          if (ifs->gcount() < sizeMsg - 2)
+            throw DUNE::IMC::BufferTooShort();
+          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2Telemetry>(
+              NULL, buf, 0, sizeMsg, msgV2Telm);
+          if (rb > 0)
           {
-            Control::Pioneer::ProtocolMessages::DataVersion2Telemetry* msgV2Telm;
-            msgV2Telm = new Control::Pioneer::ProtocolMessages::DataVersion2Telemetry();
-            const int sizeMsg = sizeof(*msgV2Telm);
-            //data.resize(sizeMsg);
-            ifs->read(&data[2], sizeMsg - 2);
-            if (ifs->gcount() < sizeMsg - 2)
-              throw DUNE::IMC::BufferTooShort();
-            int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2Telemetry>(
-                NULL, buf, 0, sizeMsg, msgV2Telm);
-            if (rb > 0)
-            {
-              uint32_t  ms_time = msgV2Telm->time;
-              double new_time_sec = timeAndPaceProgress(ms_time, speed);
-              printf("Time(ms) %d   TimeRT(s) %f", msgV2Telm->time, msgV2Telm->rt_clock);
-              msgV2Telm->rt_clock = new_time_sec;
-              msgV2Telm->time = (uint32_t)((new_time_sec - start_time_sec) * 1E3);
-              printf(" => Time(ms) %d   TimeRT(s) %f\n", msgV2Telm->time, msgV2Telm->rt_clock);
-              int dataLength = Control::Pioneer::ProtocolPack::Pack::pack(NULL, msgV2Telm, buf);
-              size_t st = sock.write(buf, dataLength, dest, port);
-              std::cout << "sent " << st << " bytes of " << dataLength << "" << std::endl;
-            }
-            DUNE::Memory::clear(msgV2Telm);
+            uint32_t  ms_time = msgV2Telm->time;
+            double new_time_sec = timeAndPaceProgress(ms_time, speed);
+            printf("Time(ms) %d   TimeRT(s) %f", msgV2Telm->time, msgV2Telm->rt_clock);
+            msgV2Telm->rt_clock = new_time_sec;
+            msgV2Telm->time = (uint32_t)((new_time_sec - start_time_sec) * 1E3);
+            printf(" => Time(ms) %d   TimeRT(s) %f\n", msgV2Telm->time, msgV2Telm->rt_clock);
+            int dataLength = Control::Pioneer::ProtocolPack::Pack::pack(NULL, msgV2Telm, buf);
+            size_t st = sock.write(buf, dataLength, dest, port);
+            std::cout << "sent " << st << " bytes of " << dataLength << "" << std::endl;
           }
-          break;
-        case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
+          DUNE::Memory::clear(msgV2Telm);
+        }
+        break;
+      case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
+        {
+          Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration* msgV2CompassCal;
+          msgV2CompassCal = new Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration();
+          const int sizeMsg = sizeof(*msgV2CompassCal);
+          //data.resize(sizeMsg);
+          ifs->read(&data[2], sizeMsg - 2);
+          if (ifs->gcount() < sizeMsg - 2)
+            throw DUNE::IMC::BufferTooShort();
+          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration>(
+              NULL, buf, 0, sizeMsg, msgV2CompassCal);
+          if (rb > 0)
           {
-            Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration* msgV2CompassCal;
-            msgV2CompassCal = new Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration();
-            const int sizeMsg = sizeof(*msgV2CompassCal);
-            //data.resize(sizeMsg);
-            ifs->read(&data[2], sizeMsg - 2);
-            if (ifs->gcount() < sizeMsg - 2)
-              throw DUNE::IMC::BufferTooShort();
-            int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration>(
-                NULL, buf, 0, sizeMsg, msgV2CompassCal);
-            if (rb > 0)
-            {
-              sock.write(buf, sizeMsg, dest, port);
-            }
-            DUNE::Memory::clear(msgV2CompassCal);
+            sock.write(buf, sizeMsg, dest, port);
           }
-          break;
-        default:
-          std::cout << "skip msg\n";
-          break;
-      }
+          DUNE::Memory::clear(msgV2CompassCal);
+        }
+        break;
+      default:
+        std::cout << "skip msg\n";
+        break;
+    }
 
     if (ifs->gcount() < 2)
       throw DUNE::IMC::BufferTooShort();
