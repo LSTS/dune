@@ -248,14 +248,15 @@ main(int argc, char** argv)
         &field_compass_x, &field_compass_y, &field_compass_z,
         &field_temperature);
 
-    std::cout << "_____ Line " << line << "  " << rv <<std::endl;
+    std::cout << "_____ Line " << line << std::endl;
+    std::cout << "_____ Read " << rv << " elements" << std::endl;
 
     if (rv != 11)
     {
       continue;
     }
 
-    printf("_____ Read | time(ns)= %ld | accel_x=%lf | accel_y=%lf | accel_z=%lf | gyro_x=%lf | gyro_y=%lf | gyro_z=%lf | compass_x=%lf | compass_y=%lf | compass_z=%lf | temp=%lf\r\n",
+    printf("_____ time(ns)= %ld | accel_x=%lf | accel_y=%lf | accel_z=%lf | gyro_x=%lf | gyro_y=%lf | gyro_z=%lf | compass_x=%lf | compass_y=%lf | compass_z=%lf | temp=%lf\r\n",
              time_nanos, field_accelerometer_x, field_accelerometer_y, field_accelerometer_z,
              field_gyro_x, field_gyro_y, field_gyro_z,
              field_compass_x, field_compass_y, field_compass_z,
