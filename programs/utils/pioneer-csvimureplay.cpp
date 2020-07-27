@@ -36,10 +36,10 @@
 static double start_time_sec = DUNE::Time::Clock::getSinceEpoch();
 static double now_sec = start_time_sec;
 
-static double time_origin_nano = -1;
+static long time_origin_nano = -1;
 
 static double
-timeAndPaceProgress(double msg_ts_nano, double speed)
+timeAndPaceProgress(long msg_ts_nano, double speed)
 {
   if (time_origin_nano < 0)
   {
@@ -218,18 +218,18 @@ main(int argc, char** argv)
   std::string line = "";
   while (!ifs->eof() && (max_count <= 0 || cur_count < max_count ))
   {
-    cur_count++;
-    std::cout << std::endl << "________________________________________" << std::endl;
-    std::cout << "_____ Message " << cur_count << std::endl;
-
     std::getline(*ifs, line);
 
     if (line.c_str()[0] == '%')
       continue;
 
+    cur_count++;
+    std::cout << std::endl << "________________________________________" << std::endl;
+    std::cout << "_____ Message " << cur_count << std::endl;
+
     uint8_t* buf = (uint8_t*)&data[0];
 
-    double time_nanos;
+    long time_nanos;
     double field_accelerometer_x;
     double field_accelerometer_y;
     double field_accelerometer_z;
@@ -242,7 +242,7 @@ main(int argc, char** argv)
     double field_temperature;
 
     // %time,field.accelerometer.x,field.accelerometer.y,field.accelerometer.z,field.gyro.x,field.gyro.y,field.gyro.z,field.compass.x,field.compass.y,field.compass.z,field.temperature
-    int rv = std::sscanf(line.c_str(),"%*f,%*f,%*f,%*f,%*f,%*f,%*f,%*f,%*f,%*f,%*f\r\n",
+    int rv = std::sscanf(line.c_str(),"%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
         &time_nanos, &field_accelerometer_x, &field_accelerometer_y, &field_accelerometer_z,
         &field_gyro_x, &field_gyro_y, &field_gyro_z,
         &field_compass_x, &field_compass_y, &field_compass_z,
@@ -250,17 +250,19 @@ main(int argc, char** argv)
 
     std::cout << "_____ Line " << line << "  " << rv <<std::endl;
 
-    double new_time_sec = timeAndPaceProgress(time_nanos, speed);
     if (rv != 11)
     {
       continue;
     }
 
-    printf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",
+    printf("_____ Read | time(ns)= %ld | accel_x=%lf | accel_y=%lf | accel_z=%lf | gyro_x=%lf | gyro_y=%lf | gyro_z=%lf | compass_x=%lf | compass_y=%lf | compass_z=%lf | temp=%lf\r\n",
              time_nanos, field_accelerometer_x, field_accelerometer_y, field_accelerometer_z,
              field_gyro_x, field_gyro_y, field_gyro_z,
              field_compass_x, field_compass_y, field_compass_z,
              field_temperature);
+
+    double new_time_sec = timeAndPaceProgress(time_nanos, speed);
+
   }
 
   return 0;
