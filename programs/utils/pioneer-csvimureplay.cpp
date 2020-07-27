@@ -262,7 +262,7 @@ main(int argc, char** argv)
              field_temperature);
 
     double new_time_sec = timeAndPaceProgress(time_nanos, speed);
-
+    printf("Timestamp(sec) %lf s for sent messages.\n", new_time_sec);
   }
 
   return 0;
