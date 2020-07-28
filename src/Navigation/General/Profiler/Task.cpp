@@ -549,24 +549,33 @@ namespace Navigation
 
           double phi = Angles::normalizeRadian(getEuler(AXIS_X));
           double theta = Angles::normalizeRadian(getEuler(AXIS_Y));
-
-          A(STATE_PSI, STATE_R) = 1.0;
-
-          double yaw = m_kal.getState(STATE_PSI);
+          double yaw = Angles::normalizeRadian(getEuler(AXIS_Z));
 
           if (m_time_without_dvl.overflow() && m_time_without_gps.overflow())
           {
-            A(STATE_X, STATE_K) = m_rpm * std::cos(yaw) * std::cos(theta);
-            A(STATE_Y, STATE_K) = m_rpm * std::sin(yaw) * std::cos(theta);
+            A(STATE_X, STATE_K) = m_rpm * (std::cos(yaw) * std::cos(phi) * std::sin(theta)
+                                            + std::sin(yaw) * std::sin(phi));
+            A(STATE_Y, STATE_K) = m_rpm * (std::sin(yaw) * std::cos(phi) * std::sin(theta)
+                                            - std::cos(yaw) * std::sin(phi));
+            A(STATE_Z, STATE_K) = m_rpm * std::cos(theta) * std::cos(phi);
           }
           else
           {
             A(STATE_X, STATE_U) = std::cos(yaw) * std::cos(theta);
             A(STATE_X, STATE_V) = (std::cos(yaw) * std::sin(theta) * std::sin(phi)
                                    - std::sin(yaw) * std::cos(phi));
+            A(STATE_X, STATE_W) = (std::cos(yaw) * std::cos(phi) * std::sin(theta)
+                                   + std::sin(yaw) * std::sin(phi));
+
             A(STATE_Y, STATE_U) = std::sin(yaw) * std::cos(theta);
             A(STATE_Y, STATE_V) = (std::sin(yaw) * std::sin(theta) * std::sin(phi)
                                    + std::cos(yaw) * std::cos(phi));
+            A(STATE_Y, STATE_W) = (std::sin(yaw) * std::cos(phi) * std::sin(theta)
+                                   - std::cos(yaw) * std::sin(phi));
+
+            A(STATE_Z, STATE_U) = - std::sin(theta);
+            A(STATE_Z, STATE_V) = std::cos(theta) * std::sin(phi);
+            A(STATE_Z, STATE_W) = std::cos(theta) * std::cos(phi);
           }
         }
 
