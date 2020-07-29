@@ -548,6 +548,8 @@ namespace DUNE
       IMC::GroundVelocity m_gvel;
       //! Current velocity relative to the water message.
       IMC::WaterVelocity m_wvel;
+      //! Time without Acceleration readings deadline.
+      Time::Counter<double> m_time_without_accel;
       //! Time without GPS sensor readings deadline.
       Time::Counter<double> m_time_without_gps;
       //! Time without DVL sensor readings deadline.
@@ -712,6 +714,7 @@ namespace DUNE
       bool m_declination_defined;
       bool m_use_declination;
       //! Sensors timeout.
+      float m_without_accel_timeout;
       float m_without_gps_timeout;
       float m_without_dvl_timeout;
       float m_without_alt_timeout;

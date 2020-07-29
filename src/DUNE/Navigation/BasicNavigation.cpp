@@ -78,6 +78,12 @@ namespace DUNE
       param("Disable GPS for debug", m_gps_disable)
       .defaultValue("false")
       .description("Disable GPS for debug");
+      
+      param("Acceleration timeout", m_without_accel_timeout)
+      .units(Units::Second)
+      .defaultValue("3.0")
+      .minimumValue("1.5")
+      .description("No Acceleration readings timeout");
 
       param("GPS timeout", m_without_gps_timeout)
       .units(Units::Second)
@@ -271,6 +277,7 @@ namespace DUNE
     BasicNavigation::onUpdateParameters(void)
     {
       // Initialize timers.
+      m_time_without_accel.setTop(m_without_accel_timeout);
       m_time_without_gps.setTop(m_without_gps_timeout);
       m_time_without_dvl.setTop(m_without_dvl_timeout);
       m_time_without_alt.setTop(m_without_alt_timeout);
@@ -368,6 +375,8 @@ namespace DUNE
       m_accel_bfr[AXIS_Y] += msg->y;
       m_accel_bfr[AXIS_Z] += msg->z;
       ++m_accel_readings;
+
+      m_time_without_accel.reset();
     }
 
     void
