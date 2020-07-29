@@ -63,13 +63,12 @@ namespace Plan
 
       ~PlanGraph(void) {}
 
-      //! Graph node (a maneuver and its outgoing transitions)
       struct Node
       {
         //! Pointer to a plan maneuver
         DUNE::IMC::PlanManeuver const* pman;
-        //! Vector of pointers to plan transitions
-        std::vector<DUNE::IMC::PlanTransition const*> transitions;
+        //! Id of next maneuver
+        std::string next;
       };
 
       //! Get this plan's ID.

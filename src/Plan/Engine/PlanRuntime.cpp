@@ -216,15 +216,10 @@ namespace Plan
     bool
     PlanRuntime::isDone(void) const
     {
-      // FIXME: we are only fetching a single transition and not all of them
-
       if (m_curr_node == NULL)
         return false;
 
-      if (!m_curr_node->transitions.size())
-        return true;
-
-      if (m_curr_node->transitions[0]->dest_man == "_done_")
+      if (m_curr_node->next == "_done_")
         return true;
 
       return false;
@@ -244,7 +239,7 @@ namespace Plan
     IMC::PlanManeuver const*
     PlanRuntime::loadNextManeuver(void)
     {
-      m_last_id = m_curr_node->transitions[0]->dest_man;
+      m_last_id = m_curr_node->next;
 
       return loadManeuverFromId(m_last_id);
     }
@@ -424,12 +419,7 @@ namespace Plan
 
         seq_nodes.push_back(node->pman);
 
-        auto const& transitions = node->transitions;
-
-        if (!transitions.size())
-          break;
-
-        std::string const& dest_man_id = transitions[0]->dest_man;
+        std::string const& dest_man_id = node->next;
 
         if (dest_man_id == "_done_")
           break;

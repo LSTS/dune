@@ -56,10 +56,8 @@ namespace Plan
           throw PlanParseError(plan_maneuver->maneuver_id
                                + DTR(": actual maneuver not m_specified"));
 
-        Node node;
-        bool matched = false;
-
-        node.pman = plan_maneuver;
+        Node node{ plan_maneuver, "_done_" };
+        bool has_parent = false;
 
         for (auto transition : m_spec.transitions)
         {
@@ -67,21 +65,18 @@ namespace Plan
             continue;
 
           if (transition->dest_man == plan_maneuver->maneuver_id)
-            matched = true;
+            has_parent = true;
 
           if (transition->source_man == plan_maneuver->maneuver_id)
-            node.transitions.push_back(transition);
+            node.next = transition->dest_man;
         }
 
-        // if a match was not found and this is not the start maneuver
-        if (!matched && (plan_maneuver->maneuver_id != m_spec.start_man_id))
-        {
-          std::string str = DTR(": maneuver has no incoming transition"
-                                " and it's not the initial maneuver");
-          throw PlanParseError(plan_maneuver->maneuver_id + str);
-        }
+        if (!has_parent && (plan_maneuver->maneuver_id != m_spec.start_man_id))
+          throw PlanParseError(plan_maneuver->maneuver_id
+                               + DTR(": maneuver has no incoming transition"
+                                     " and it's not the initial maneuver"));
 
-        m_nodes.push_back(node);
+        m_nodes.push_back(std::move(node));
 
         if (plan_maneuver->maneuver_id == m_spec.start_man_id)
         {
