@@ -450,45 +450,54 @@ namespace Navigation
           }
 
           // Speed innovation matrix.
-          if (m_valid_gv || m_valid_wv)
+          if (!m_time_without_accel.overflow())
           {
-            runKalmanDVL();
+            // Innovation could be set simply by integrating the acceleration
+            // Output is only set for consistency
+            m_kal.setOutput(OUT_U, m_kal.getState(STATE_U) + getAcceleration(AXIS_X) * tstep);
+            m_kal.setOutput(OUT_V, m_kal.getState(STATE_V) + getAcceleration(AXIS_Y) * tstep);
+            m_kal.setOutput(OUT_W, m_kal.getState(STATE_W) + getAcceleration(AXIS_Z) * tstep);
+
             m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
             m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
+            m_kal.setInnovation(OUT_W, m_kal.getOutput(OUT_W) - m_kal.getState(STATE_W));
           }
-          else if (m_time_without_gps.overflow() && m_time_without_dvl.overflow())
+          else if (m_time_without_gps.overflow())
           {
-            double u = 0.0;
+            double w = 0.0;
             double speed_m  = getRpmToMs(m_rpm);
             if(m_args.rpm_estimation)
             {
-              u = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
+              w = m_rpm * m_kal.getState(STATE_K) * std::cos(getEuler(AXIS_Y));
               if(m_args.speed_relation_Limit)
               {
-                double speedR = (std::abs(u) - std::abs(speed_m))/ std::abs(speed_m) * 100;
+                double speedR = (std::abs(w) - std::abs(speed_m))/ std::abs(speed_m) * 100;
                 if (speedR > m_args.speed_relation_limit_value)
-                  u = speed_m;
+                  w = speed_m;
               }
             }
             else
             {
-              u = speed_m;
+              w = speed_m;
             }
-            m_kal.setInnovation(OUT_U, u - m_kal.getState(STATE_U));
+            m_kal.setInnovation(OUT_U, 0 - m_kal.getState(STATE_U));
             m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
+            m_kal.setInnovation(OUT_W, w - m_kal.getState(STATE_W));
           }
           else
           {
             // Use GPS speed over ground.
-            if (m_gps_reading && m_time_without_dvl.overflow())
+            if (m_gps_reading)
             {
               m_kal.setInnovation(OUT_U, m_gps_sog - m_kal.getState(STATE_U));
               m_kal.setInnovation(OUT_V, 0 - m_kal.getState(STATE_V));
+              m_kal.setObservation(OUT_W, STATE_W, 0.0);
             }
             else
             {
               m_kal.setObservation(OUT_U, STATE_U, 0.0);
               m_kal.setObservation(OUT_V, STATE_V, 0.0);
+              m_kal.setObservation(OUT_W, STATE_W, 0.0);
             }
           }
 
@@ -511,8 +520,6 @@ namespace Navigation
           updateBuffers(c_wma_filter);
           m_gps_reading = false;
           m_usbl_reading = false;
-          m_valid_gv = false;
-          m_valid_wv = false;
           resetKalman();
         }
 
@@ -551,7 +558,7 @@ namespace Navigation
           double theta = Angles::normalizeRadian(getEuler(AXIS_Y));
           double yaw = Angles::normalizeRadian(getEuler(AXIS_Z));
 
-          if (m_time_without_dvl.overflow() && m_time_without_gps.overflow())
+          if (m_time_without_accel.overflow() && m_time_without_gps.overflow())
           {
             A(STATE_X, STATE_K) = m_rpm * (std::cos(yaw) * std::cos(phi) * std::sin(theta)
                                             + std::sin(yaw) * std::sin(phi));
