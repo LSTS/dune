@@ -38,6 +38,13 @@ static double now_sec = start_time_sec;
 
 static double time_origin_ms = -1;
 
+static bool start_hold_delay_already_ran = false;
+
+static uint64_t jump_msg_number_before = 0;
+
+static uint16_t hold_start_for_next_sec = 0;
+static double timehold_sec = 0;
+
 static double
 timeAndPaceProgress(uint32_t msg_ts_ms, double speed)
 {
@@ -67,6 +74,50 @@ timeAndPaceProgress(uint32_t msg_ts_ms, double speed)
   return now_sec;
 }
 
+static void
+startHoldDelay(uint16_t hold_start_for_next_sec, double timehold_sec)
+{
+  if (start_hold_delay_already_ran)
+    return;
+
+  start_hold_delay_already_ran = true;
+
+  printf("Extra hold of %f s\n", timehold_sec);
+
+  if (hold_start_for_next_sec > 0)
+  {
+    double ht = DUNE::Time::Clock::getSinceEpoch();
+    printf("Hold  %d %f ", hold_start_for_next_sec, ht);
+    ht = DUNE::Math::round(ht);
+    printf("%f %d", ht, (int)((long)ht % 60));
+    int r = (long)ht % 60;
+    ht += r > hold_start_for_next_sec ? 60 - r + hold_start_for_next_sec : hold_start_for_next_sec - r;
+    printf("  %f + %f s\n", ht, timehold_sec);
+    double delay = ht - DUNE::Time::Clock::getSinceEpoch() + timehold_sec;
+    if (delay > 0)
+      DUNE::Time::Delay::wait(delay);
+  }
+  else
+  {
+    if (timehold_sec > 0)
+      DUNE::Time::Delay::wait(timehold_sec);
+  }
+}
+
+static bool
+skipOrProcess(uint64_t cur_count)
+{
+  if (jump_msg_number_before == 0 || cur_count >= jump_msg_number_before)
+  {
+    startHoldDelay(hold_start_for_next_sec, timehold_sec);
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
 int
 main(int argc, char** argv)
 {
@@ -85,14 +136,16 @@ main(int argc, char** argv)
            "Destination UDP port (defaults to 2010)", "DEST_PORT")
       .add("-s", "--speed",
            "Replay with realtime spacing (default, =1.0). Use 0 for dump all", "SPEED")
-      .add("-f", "--file",
-           "Telemetry file (can be zipped, bz2 or gzip)", "TELEMETRY_FILE")
       .add("-c", "--count",
            "Replay only c messages (default to all). Use 0 for dump all", "COUNT")
       .add("-t", "--timestart",
            "To start at next matching sec on the next minute upon start", "TIME_START")
       .add("-x", "--timehold",
-           "Extra decimal seconds to hold before start", "TIME_HOLD");
+           "Extra decimal seconds to hold before start", "TIME_HOLD")
+      .add("-j", "--jumpmsg",
+           "Ignore until message number N", "MGS_NUMBER")
+      .add("-f", "--file",
+           "Telemetry file (can be zipped, bz2 or gzip)", "TELEMETRY_FILE");
 
   // Parse command line arguments.
   if (!options.parse(argc, argv))
@@ -159,10 +212,8 @@ main(int argc, char** argv)
   uint64_t cur_count = 0;
   DUNE::castLexical(options.value("--count"), max_count);
 
-  uint16_t hold_start_for_next_sec = 0;
   DUNE::castLexical(options.value("--timestart"), hold_start_for_next_sec);
 
-  double timehold_sec = 0;
   if (options.value("--timehold") != "" && !DUNE::castLexical(options.value("--timehold"), timehold_sec))
   {
     std::cerr << "ERROR: invalid option for timehold." << std::endl;
@@ -173,6 +224,9 @@ main(int argc, char** argv)
     std::cerr << "ERROR: invalid option for timehold (should be >= 0.0." << std::endl;
     return 1;
   }
+
+  // Get first msg number to process.
+  DUNE::castLexical(options.value("--jumpmsg"), jump_msg_number_before);
 
   DUNE::FileSystem::Path file(bin_file_path);
   std::istream* ifs;
@@ -193,33 +247,18 @@ main(int argc, char** argv)
 
   std::vector<char> data;
 
-  printf("Extra hold of %f s\n", timehold_sec);
-
-  if (hold_start_for_next_sec > 0)
-  {
-    double ht = DUNE::Time::Clock::getSinceEpoch();
-    printf("Hold  %d %f ", hold_start_for_next_sec, ht);
-    ht = DUNE::Math::round(ht);
-    printf("%f %d", ht, (int)((long)ht % 60));
-    int r = (long)ht % 60;
-    ht += r > hold_start_for_next_sec ? 60 - r + hold_start_for_next_sec : hold_start_for_next_sec - r;
-    printf("  %f + %f s\n", ht, timehold_sec);
-    double delay = ht - DUNE::Time::Clock::getSinceEpoch() + timehold_sec;
-    if (delay > 0)
-      DUNE::Time::Delay::wait(delay);
-  }
-  else
-  {
-    if (timehold_sec > 0)
-      DUNE::Time::Delay::wait(timehold_sec);
-  }
+  //startHoldDelay(hold_start_for_next_sec, timehold_sec);
 
   data.resize(512);
   while (!ifs->eof() && (max_count <= 0 || cur_count < max_count ))
   {
     cur_count++;
-    std::cout << std::endl << "________________________________________" << std::endl;
-    std::cout << "_____ Message " << cur_count << std::endl;
+
+    if (jump_msg_number_before == 0 || cur_count >= jump_msg_number_before)
+    {
+      std::cout << std::endl << "________________________________________" << std::endl;
+      std::cout << "_____ Message " << cur_count << std::endl;
+    }
 
     // Get the message header.
     ifs->read(&data[0], 2);
@@ -243,6 +282,9 @@ main(int argc, char** argv)
               NULL, buf, 0, sizeMsg, msgV1Telm);
           if (rb > 0)
           {
+            if (skipOrProcess(cur_count))
+              continue;
+
             uint32_t  ms_time = msgV1Telm->time;
             double new_time_sec = timeAndPaceProgress(ms_time, speed);
             printf("Time(ms) %d   TimeRT(s) %f", msgV1Telm->time, msgV1Telm->rt_clock);
@@ -269,6 +311,9 @@ main(int argc, char** argv)
               NULL, buf, 0, sizeMsg, msgV2Telm);
           if (rb > 0)
           {
+            if (skipOrProcess(cur_count))
+              continue;
+
             uint32_t  ms_time = msgV2Telm->time;
             double new_time_sec = timeAndPaceProgress(ms_time, speed);
             printf("Time(ms) %d   TimeRT(s) %f", msgV2Telm->time, msgV2Telm->rt_clock);
@@ -295,12 +340,17 @@ main(int argc, char** argv)
               NULL, buf, 0, sizeMsg, msgV2CompassCal);
           if (rb > 0)
           {
+            if (skipOrProcess(cur_count))
+              continue;
+
             sock.write(buf, sizeMsg, dest, port);
           }
           DUNE::Memory::clear(msgV2CompassCal);
         }
         break;
       default:
+        if (skipOrProcess(cur_count))
+          continue;
         std::cout << "skip msg\n";
         break;
     }
