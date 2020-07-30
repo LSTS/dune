@@ -40,7 +40,6 @@
 
 // Local headers.
 #include "PlanRuntime.hpp"
-#include "Calibration.hpp"
 
 namespace Plan
 {
@@ -433,6 +432,8 @@ namespace Plan
 
           if (m_plan->isCalibrationDone())
           {
+            debug("Calibration done");
+
             if ((vs->op_mode == IMC::VehicleState::VS_CALIBRATION) &&
                 !pendingReply())
             {
@@ -640,7 +641,7 @@ namespace Plan
             pausePlan();
             break;
           case IMC::PlanControl::PC_RESUME:
-            resumePlan();
+            resumePlan(pc->flags);
             break;
           default:
             onFailure(DTR("plan control operation not supported"));
@@ -763,6 +764,8 @@ namespace Plan
         debug("Pausing plan %s at maneuver %s", m_plan->getPlanId(),
               m_plan->getCurrentManeuver()->maneuver_id.c_str());
 
+        m_plan->planPaused();
+
         m_paused_plan.reset(m_plan.release());
         changeLog("");
 
@@ -772,7 +775,7 @@ namespace Plan
       }
 
       void
-      resumePlan(void)
+      resumePlan(uint16_t flags)
       {
         if (!pauseMode())
         {
@@ -787,6 +790,17 @@ namespace Plan
         }
 
         m_plan.reset(m_paused_plan.release());
+        m_plan->planResumed();
+
+        toInitState(DTR("plan initializing: ")
+                    + std::string(m_plan->getPlanId()),
+                    TYPE_INF);
+
+        if (flags & IMC::PlanControl::FLG_CALIBRATE)
+        {
+          startCalibration();
+          return;
+        }
 
         IMC::PlanManeuver const* curr_man = m_plan->getCurrentManeuver();
 
@@ -804,8 +818,9 @@ namespace Plan
 
         changeLog(m_pcs.plan_id + "_resume");
 
-        onSuccess();
         startManeuver(curr_man);
+
+        execMode() ? onSuccess(m_last_event) : onFailure(m_last_event);
       }
 
       //! Load PlanSpecification into plan runtime manager
@@ -1319,7 +1334,8 @@ namespace Plan
         if (command == IMC::VehicleCommand::VC_START_CALIBRATION)
         {
           m_plan->calibrationStarted();
-          m_vc.calib_time = (uint16_t)m_plan->getEstimatedCalibrationTime();
+          m_vc.calib_time = m_plan->getEstimatedCalibrationTime();
+          debug("Calibrating for %u seconds", m_vc.calib_time);
         }
         else
         {

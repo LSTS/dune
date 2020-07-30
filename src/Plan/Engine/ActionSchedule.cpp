@@ -39,70 +39,58 @@ namespace Plan
 {
   namespace Engine
   {
-    //! Find the stack with the next scheduled action
-    static std::map<std::string, ActionSchedule::TimedStack>::iterator
-    nextSchedule(
-    std::map<std::string, ActionSchedule::TimedStack>* action_stacks)
-    {
-      // find the component whose next timed action has the greatest value of
-      // sched_time (earliest scheduled time)
-      return std::max_element(std::begin(*action_stacks),
-                              std::end(*action_stacks),
-                              [](auto const& t1, auto const& t2) {
-                                return t1.second.top().sched_time
-                                       < t2.second.top().sched_time;
-                              });
-    }
-
     ActionSchedule::ActionSchedule(
     Tasks::Task* task, const IMC::PlanSpecification* spec,
     const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
-    const Timeline& tline, const std::map<std::string, IMC::EntityInfo>& cinfo)
-    : m_execution_duration(tline.getExecutionDuration()), m_cinfo(&cinfo),
-      m_earliest(0.0f)
+    std::unique_ptr<Timeline> tl,
+    const std::map<std::string, IMC::EntityInfo>& cinfo,
+    ComponentActiveTime* cat)
+    : m_execution_duration(tl->getExecutionDuration()), m_cinfo(&cinfo),
+      m_timed_action_schedule(nullptr), m_time_left(m_execution_duration),
+      m_timeline(std::move(tl))
     {
       std::map<std::string, TimedStack> unscheduled_actions;
 
       m_plan_actions.start_actions
       = parseActions(task, spec->start_actions, m_execution_duration,
-                     &unscheduled_actions);
+                     &unscheduled_actions, true);
 
       for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
       {
-        auto start_actions
-        = parseActions(task, maneuver->start_actions,
-                       tline.getManeuverStartETA(maneuver->maneuver_id),
-                       &unscheduled_actions);
+        std::string const& id = maneuver->maneuver_id;
 
-        auto end_actions
-        = parseActions(task, maneuver->end_actions,
-                       tline.getManeuverEndETA(maneuver->maneuver_id),
-                       &unscheduled_actions);
+        auto start_actions = parseActions(task, maneuver->start_actions,
+                                          m_timeline->getManeuverStartETA(id),
+                                          &unscheduled_actions, true, id);
 
-        m_maneuver_actions.emplace(maneuver->maneuver_id,
-                                   EventActions{ std::move(start_actions),
-                                                 std::move(end_actions) });
+        auto end_actions = parseActions(task, maneuver->end_actions,
+                                        m_timeline->getManeuverEndETA(id),
+                                        &unscheduled_actions, false, id);
+
+        m_maneuver_actions.emplace(id, EventActions{ std::move(start_actions),
+                                                     std::move(end_actions) });
       }
 
       m_plan_actions.end_actions
-      = parseActions(task, spec->end_actions, 0.0, &unscheduled_actions);
+      = parseActions(task, spec->end_actions, 0.0, &unscheduled_actions, false);
 
       // Create a proper schedule from the set of unscheduled actions
       if (!unscheduled_actions.empty())
-        m_timed_actions = scheduleTimedActions(std::move(unscheduled_actions));
+        m_timed_action_schedule
+        = scheduleTimedActions(std::move(unscheduled_actions), plan_maneuvers,
+                               cat);
 
-      std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule(&m_timed_actions);
-
-      if (next != m_timed_actions.end())
-        m_earliest = next->second.top().sched_time;
+      // Update timeline with scheduled calibration time if any
+      m_timeline->setPlanETA(m_timed_action_schedule->calibrationTime()
+                             + m_execution_duration);
     }
 
     ActionSchedule::ActionSchedule(
     Tasks::Task* task, const IMC::PlanSpecification* spec,
     const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
     const std::map<std::string, IMC::EntityInfo>& cinfo)
-    : m_execution_duration(-1.0f), m_cinfo(&cinfo), m_earliest(0.0f)
+    : m_execution_duration(-1.0f), m_cinfo(&cinfo),
+      m_timed_action_schedule(nullptr), m_time_left(-1.0), m_timeline(nullptr)
     {
       m_plan_actions.start_actions = parseActions(task, spec->start_actions);
 
@@ -123,47 +111,22 @@ namespace Plan
     void
     ActionSchedule::updateSchedule(Tasks::Task* task, float time_left)
     {
-      if (time_left < 0.0)
+      if (time_left < 0.0f)
         return;
 
       m_time_left = time_left;
 
-      for (auto next = nextSchedule(&m_timed_actions);
-           next != m_timed_actions.end(); next = nextSchedule(&m_timed_actions))
-      {
-        TimedStack& action_stack = next->second;
+      if (!m_timed_action_schedule)
+        return;
 
-        if (action_stack.top().sched_time < time_left)
-          break;
-
-        dispatchActions(task, action_stack.top().list);
-
-        processRequest(next->first, action_stack.top());
-
-        action_stack.pop();
-
-        if (action_stack.empty())
-          m_timed_actions.erase(next);
-      }
+      m_timed_action_schedule->onProgress(time_left, task, &m_reqs);
     }
 
     void
     ActionSchedule::flushTimed(Tasks::Task* task)
     {
-      for (auto next = nextSchedule(&m_timed_actions);
-           next != m_timed_actions.end(); next = nextSchedule(&m_timed_actions))
-      {
-        TimedStack& action_stack = next->second;
-
-        dispatchActions(task, action_stack.top().list);
-
-        processRequest(next->first, action_stack.top());
-
-        action_stack.pop();
-
-        if (action_stack.empty())
-          m_timed_actions.erase(next);
-      }
+      if (m_timed_action_schedule)
+        m_timed_action_schedule->flush(task);
     }
 
     void
@@ -185,6 +148,20 @@ namespace Plan
       dispatchActions(task, m_plan_actions.start_actions);
     }
 
+    float
+    ActionSchedule::planResumed(std::string const& maneuver_id,
+                                Tasks::Task* task,
+                                std::vector<std::string>& affected)
+    {
+      planStarted(task, affected);
+
+      if (!m_timed_action_schedule)
+        return -1.0;
+
+      return m_timed_action_schedule->calibrationTime(
+      m_timeline->getManeuverStartETA(maneuver_id));
+    }
+
     void
     ActionSchedule::planStopped(Tasks::Task* task,
                                 const std::vector<std::string>& affected)
@@ -197,6 +174,17 @@ namespace Plan
         pop.name = entity;
         task->dispatch(pop);
       }
+    }
+
+    void
+    ActionSchedule::planPaused(std::string const& maneuver_id,
+                               Tasks::Task* task,
+                               const std::vector<std::string>& affected)
+    {
+      planStopped(task, affected);
+
+      if (m_timed_action_schedule)
+        m_timed_action_schedule->planPaused(maneuver_id, task);
     }
 
     void
@@ -215,6 +203,9 @@ namespace Plan
 
       if (actions != m_maneuver_actions.end())
         dispatchActions(task, actions->second.end_actions);
+
+      if (m_timed_action_schedule)
+        m_timed_action_schedule->maneuverDone(id);
     }
 
     bool
@@ -230,15 +221,14 @@ namespace Plan
       if (m_reqs.empty())
         return true;
 
-      std::map<std::string, TimedAction>::const_iterator action_itr;
-      action_itr = m_reqs.find(id);
+      auto action_itr = m_reqs.find(id);
 
       if (action_itr == m_reqs.end())
         return true;
 
-      TimedAction const& action = action_itr->second;
+      Action const& action = action_itr->second;
 
-      if (action.type != TYPE_ACT)
+      if (!action.activation)
       {
         if (msg->state == IMC::EntityActivationState::EAS_DEACT_DONE
             || msg->state == IMC::EntityActivationState::EAS_INACTIVE)
@@ -257,7 +247,7 @@ namespace Plan
           && msg->state != IMC::EntityActivationState::EAS_ACTIVE)
         return true;
 
-      float gap = m_time_left - (action.sched_time - getActivationTime(id));
+      float gap = m_time_left - (action.scheduled_time - getActivationTime(id));
 
       if (gap > 0)
         task->inf(DTR("schedule: %s active on time, +%.1f seconds"), id.c_str(),
@@ -278,16 +268,10 @@ namespace Plan
       if (!m_reqs.empty())
         return true;
 
-      std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule(&m_timed_actions);
+      if (!m_timed_action_schedule)
+        return false;
 
-      if (next != m_timed_actions.end())
-      {
-        if (next->second.top().sched_time >= m_execution_duration)
-          return true;
-      }
-
-      return false;
+      return m_timed_action_schedule->waiting(m_time_left);
     }
 
     float
@@ -296,13 +280,10 @@ namespace Plan
       if (!m_reqs.empty())
         return -1.0;
 
-      std::map<std::string, TimedStack>::const_iterator next;
-      next = nextSchedule(&m_timed_actions);
+      if (!m_timed_action_schedule)
+        return -1.0;
 
-      if (next != m_timed_actions.end())
-        return next->second.top().sched_time - m_execution_duration;
-
-      return -1.0;
+      return m_timed_action_schedule->calibrationTime();
     }
 
     //! Check if a list of parameters has parameter named "Active"
@@ -353,15 +334,15 @@ namespace Plan
     }
 
     static void
-    getTimedActionsActiveTime(
-    std::map<std::string, ActionSchedule::TimedStack> timed_actions,
-    ComponentActiveTime* cat, std::set<std::string>* active_entities)
+    getTimedActionsActiveTime(std::map<std::string, TimedStack> timed_actions,
+                              ComponentActiveTime* cat,
+                              std::set<std::string>* active_entities)
     {
       for (auto& actions : timed_actions)
       {
         while (!actions.second.empty())
         {
-          ActionSchedule::TimedAction const* action = &actions.second.top();
+          TimedAction const* action = &actions.second.back();
           std::string const& entity = actions.first;
 
           // Check if the entity is active at this point.
@@ -369,7 +350,7 @@ namespace Plan
           = (active_entities->find(entity) != active_entities->end());
 
           // Check whether action will activate or deactivate the entity.
-          bool const will_activate = action->type == ActionSchedule::TYPE_ACT;
+          bool const will_activate = action->activation;
 
           if (will_activate && !is_active)
           {
@@ -383,7 +364,7 @@ namespace Plan
             active_entities->erase(entity);
           }
 
-          actions.second.pop();
+          actions.second.pop_back();
         }
       }
     }
@@ -391,9 +372,10 @@ namespace Plan
     void
     ActionSchedule::fillComponentActiveTime(
     const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
-    const Timeline& timeline, ComponentActiveTime& cat)
+    std::map<std::string, TimedStack> const& timed_actions,
+    ComponentActiveTime* cat) const
     {
-      cat.clear();
+      cat->clear();
       std::set<std::string> active_entities;
 
       // Check which entities will be activated when plan execution begins.
@@ -413,7 +395,7 @@ namespace Plan
 
       // Add the entities active when the plan begins.
       for (auto const& entity : active_entities)
-        cat.addActiveTime(entity, timeline.getPlanETA());
+        cat->addActiveTime(entity, m_timeline->getPlanETA());
 
       // Add activations/deactivations on maneuver start/end.
       for (IMC::PlanManeuver const* maneuver : plan_maneuvers)
@@ -425,25 +407,24 @@ namespace Plan
           continue;
 
         getManeuverActionsActiveTime(actions->second.start_actions,
-                                     timeline.getManeuverStartETA(maneuver_id),
-                                     &cat, &active_entities);
+                                     m_timeline->getManeuverStartETA(
+                                     maneuver_id),
+                                     cat, &active_entities);
 
         getManeuverActionsActiveTime(actions->second.end_actions,
-                                     timeline.getManeuverEndETA(maneuver_id),
-                                     &cat, &active_entities);
+                                     m_timeline->getManeuverEndETA(maneuver_id),
+                                     cat, &active_entities);
       }
 
       // Add timed activations/deactivations
-      getTimedActionsActiveTime(m_timed_actions, &cat, &active_entities);
+      getTimedActionsActiveTime(std::move(timed_actions), cat,
+                                &active_entities);
     }
 
-    // Private
-
     static void
-    addTimedAction(
-    std::map<std::string, ActionSchedule::TimedStack>* action_map,
-    const std::string& name, ActionSchedule::TimedAction action,
-    int act_time = -1) noexcept
+    addTimedAction(std::map<std::string, TimedStack>* action_map,
+                   const std::string& name, TimedAction action,
+                   int act_time = -1) noexcept
     {
       auto const action_stack = action_map->find(name);
 
@@ -459,24 +440,29 @@ namespace Plan
 
       if (action_stack != action_map->end())
       {
-        action_stack->second.push(action);
+        action_stack->second.push_back(action);
         return;
       }
 
-      ActionSchedule::TimedStack q;
-      q.push(action);
+      TimedStack q;
+      q.push_back(action);
       action_map->emplace(name, q);
     }
 
     static void
-    addUnscheduledAction(
-    std::map<std::string, ActionSchedule::TimedStack>* action_map,
-    IMC::SetEntityParameters* sep, ActionSchedule::ActionType type, float eta)
+    addUnscheduledAction(std::map<std::string, TimedStack>* action_map,
+                         std::string const& id, bool start,
+                         IMC::SetEntityParameters* sep, bool activation,
+                         float eta)
     {
-      ActionSchedule::TimedAction action;
-      action.type = type;
+      TimedAction action;
+      action.id = id;
+      action.start = start;
+      action.activation = activation;
       action.list = sep;
       action.sched_time = eta;
+      action.ignore = false;
+      action.prescheduled = false;
 
       addTimedAction(action_map, sep->name, action);
     }
@@ -484,7 +470,8 @@ namespace Plan
     std::vector<IMC::SetEntityParameters*>
     ActionSchedule::parseActions(
     Tasks::Task* task, const IMC::MessageList<IMC::Message>& actions, float eta,
-    std::map<std::string, TimedStack>* unscheduled_actions)
+    std::map<std::string, TimedStack>* unscheduled_actions, bool start,
+    std::string const& id)
     {
       if (actions.empty())
         return {};
@@ -523,11 +510,10 @@ namespace Plan
         {
           // Schedule a time-based action (dispatched according to plan
           // progress) so that we can compensate for de/activation time.
-          ActionType type
-          = ((*param_active)->value == "true") ? TYPE_ACT : TYPE_DEACT;
+          bool activation = ((*param_active)->value == "true");
 
           // if the eta is not valid, schedule action to the end of the plan
-          addUnscheduledAction(unscheduled_actions, sep, type,
+          addUnscheduledAction(unscheduled_actions, id, start, sep, activation,
                                std::max(eta, 0.0f));
           continue;
         }
@@ -551,14 +537,13 @@ namespace Plan
     }
 
     void
-    ActionSchedule::processRequest(const std::string& id,
-                                   const TimedAction& action)
+    ActionSchedule::processRequest(const std::string& id, const Action& action)
     {
       uint8_t const state = m_eas.find(id)->second;
 
       bool add_req = false;
 
-      if (action.type == TYPE_ACT)
+      if (action.activation)
       {
         bool active = (state == IMC::EntityActivationState::EAS_ACTIVE
                        || state == IMC::EntityActivationState::EAS_ACT_DONE);
@@ -584,9 +569,11 @@ namespace Plan
       m_reqs.emplace(id, action);
     }
 
-    std::map<std::string, ActionSchedule::TimedStack>
+    std::unique_ptr<TimedActionSchedule>
     ActionSchedule::scheduleTimedActions(
-    std::map<std::string, TimedStack> unscheduled_actions) const
+    std::map<std::string, TimedStack> unscheduled_actions,
+    std::vector<DUNE::IMC::PlanManeuver const*> const& plan_maneuvers,
+    ComponentActiveTime* cat) const
     {
       std::map<std::string, TimedStack> timed_actions;
 
@@ -595,14 +582,17 @@ namespace Plan
         std::string const& elabel = entity.first;
         TimedStack& actions = entity.second;
 
+        float const act_time = getActivationTime(elabel);
+        float const deact_time = getDeactivationTime(elabel);
+
         // Iterate through this entity's actions backwards in time, starting
         // from the action closest to the end of the plan
         while (!actions.empty())
         {
-          TimedAction action = actions.top();
-          actions.pop();
+          TimedAction action = actions.back();
+          actions.pop_back();
 
-          if (action.type != TYPE_ACT)
+          if (!action.activation)
           {
             // deactivations are never pre-scheduled.
             addTimedAction(&timed_actions, elabel, action);
@@ -611,51 +601,50 @@ namespace Plan
 
           if (actions.empty())
           {
-            addTimedAction(&timed_actions, elabel, action,
-                           getActivationTime(elabel));
+            addTimedAction(&timed_actions, elabel, action, act_time);
             continue;
           }
+
+          auto prev_action = actions.begin();
 
           // Check previous actions to remove deactivations that would occur too
           // close to the scheduled time for this action. Stop once the previous
           // action is an activation, a valid deactivation or when all previous
           // actions have been removed.
-          while (!actions.empty())
+          for (; prev_action != actions.end(); ++prev_action)
           {
-            TimedAction const& prev_action = actions.top();
-
-            if (prev_action.type == TYPE_ACT)
+            if (prev_action->activation)
             {
               // if previous action is activation, do not pre-schedule
               addTimedAction(&timed_actions, elabel, action);
               break;
             }
 
-            float const deact_time = getDeactivationTime(elabel);
-            float const act_time = getActivationTime(elabel);
-
             float const min_deactivation_eta
             = deact_time + act_time + action.sched_time;
 
             // check if the gap between deactivation and and activation is big
             // enough
-            if (prev_action.sched_time > min_deactivation_eta)
+            if (prev_action->sched_time > min_deactivation_eta)
             {
               addTimedAction(&timed_actions, elabel, action, act_time);
               break;
             }
 
             // the deactivation would happen too close to the activation
-            actions.pop();
-
-            // if stack becomes empty, pre-schedule
-            if (actions.empty())
-              addTimedAction(&timed_actions, elabel, action, act_time);
+            prev_action->ignore = true;
           }
+
+          // all previous actions were ignored
+          if (prev_action == actions.end())
+            addTimedAction(&timed_actions, elabel, action, act_time);
         }
       }
 
-      return timed_actions;
+      fillComponentActiveTime(plan_maneuvers, timed_actions, cat);
+
+      return std::make_unique<TimedActionSchedule>(m_execution_duration,
+                                                   std::move(timed_actions));
     }
   } // namespace Engine
 } // namespace Plan

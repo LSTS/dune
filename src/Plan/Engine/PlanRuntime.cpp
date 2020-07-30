@@ -46,6 +46,7 @@ namespace Plan
       m_args(args),
       m_curr_node(NULL),
       m_progress(0.0),
+      m_remaining(-1.0),
       m_est_cal_time(0),
       m_profiles(nullptr),
       m_beyond_dur(false),
@@ -150,6 +151,24 @@ namespace Plan
     }
 
     void
+    PlanRuntime::planResumed(void)
+    {
+      if (!m_sched)
+      {
+        m_est_cal_time = m_args.min_cal_time;
+        return;
+      }
+
+      m_affected_ents.clear();
+
+      float const cal_time
+      = m_sched->planResumed(m_last_id, m_task, m_affected_ents);
+
+      m_est_cal_time = static_cast<std::uint16_t>(std::max(0.0f, cal_time));
+      m_est_cal_time = std::max(m_args.min_cal_time, m_est_cal_time);
+    }
+
+    void
     PlanRuntime::planStopped(void)
     {
       if (m_sched)
@@ -161,6 +180,17 @@ namespace Plan
       m_rt_stat.planStopped();
       IMC::PlanStatistics ps = m_rt_stat.getMessage();
       m_task->dispatch(ps);
+    }
+
+    void
+    PlanRuntime::planPaused(void)
+    {
+      m_remaining = getETA();
+
+      if (!m_sched)
+        return;
+
+      m_sched->planPaused(m_last_id, m_task, m_affected_ents);
     }
 
     void
@@ -228,6 +258,9 @@ namespace Plan
     IMC::PlanManeuver const*
     PlanRuntime::loadStartManeuver(void)
     {
+      if (m_curr_node)
+        return getCurrentManeuver();
+
       m_curr_node = m_plan_graph->getStartNode();
 
       auto const* start_man = m_curr_node->pman;
@@ -273,6 +306,7 @@ namespace Plan
       if (vs->op_mode != IMC::VehicleState::VS_CALIBRATION
                && m_calib.inProgress())
       {
+        m_task->war("Stopping calibration -- vehicle not in calibration mode");
         m_calib.stop();
 
         // Fill statistics
@@ -294,6 +328,7 @@ namespace Plan
       // If we're past the minimum calibration time
       if (m_calib.getElapsedTime() >= m_args.min_cal_time)
       {
+        m_task->debug("Stopping calibration -- past minimum calibration time");
         m_calib.stop();
 
         // Fill statistics
@@ -370,11 +405,11 @@ namespace Plan
       return -1.0;
     }
 
-    static Timeline
-    makeFilledTimeline(float execution_duration, TimeProfile const* profiles,
+    static std::unique_ptr<Timeline>
+    makeFilledTimeline(float execution_duration, TimeProfile const& profiles,
                        std::vector<IMC::PlanManeuver const*> const& seq_nodes)
     {
-      Timeline tl;
+      auto tl = std::make_unique<Timeline>();
 
       // Maneuver's start and end ETA
       float maneuver_start_eta = execution_duration;
@@ -383,9 +418,9 @@ namespace Plan
       // Iterate through plan maneuvers
       for (auto node : seq_nodes)
       {
-        auto durations = profiles->find(node->maneuver_id);
+        auto durations = profiles.find(node->maneuver_id);
 
-        if (durations == profiles->end())
+        if (durations == profiles.end())
           maneuver_end_eta = -1.0;
         else if (durations->second.durations.size())
           maneuver_end_eta
@@ -394,8 +429,8 @@ namespace Plan
           maneuver_end_eta = -1.0;
 
         // Fill timeline
-        tl.setManeuverETA(node->maneuver_id, maneuver_start_eta,
-                          maneuver_end_eta);
+        tl->setManeuverETA(node->maneuver_id, maneuver_start_eta,
+                           maneuver_end_eta);
 
         maneuver_start_eta = maneuver_end_eta;
       }
@@ -461,39 +496,30 @@ namespace Plan
         {
           m_profiles->parse(seq_nodes, state);
 
-          Timeline tline
-          = makeFilledTimeline(getExecutionDuration(), m_profiles.get(), seq_nodes);
+          m_remaining = getExecutionDuration();
 
-          m_sched
-          = std::make_unique<ActionSchedule>(m_task, m_plan_graph->getSpec(),
-                                             seq_nodes, tline, cinfo);
-
-          // Update timeline with scheduled calibration time if any
-          tline.setPlanETA(
-          std::max(m_sched->getEarliestSchedule(), getExecutionDuration()));
-
-          // Fill component active time with action scheduler
-          m_sched->fillComponentActiveTime(seq_nodes, tline, m_cat);
+          m_sched = std::make_unique<ActionSchedule>(
+          m_task, m_plan_graph->getSpec(), seq_nodes,
+          makeFilledTimeline(m_remaining, *m_profiles.get(), seq_nodes), cinfo,
+          &m_cat);
 
           // Update duration statistics
-          pre_stat.fill(seq_nodes, tline);
+          pre_stat.fill(seq_nodes, *m_sched->getTimeline());
 
           // Update action statistics
           pre_stat.fill(m_cat);
 
           // Estimate necessary calibration time
-          float diff = m_sched->getEarliestSchedule() - getExecutionDuration();
-          m_est_cal_time = (std::uint16_t) std::max(0.0f, diff);
-          m_est_cal_time
-          = (std::uint16_t) std::max(m_args.min_cal_time, m_est_cal_time);
+          m_est_cal_time = static_cast<std::uint16_t>(
+          std::max(0.0f, m_sched->getCalibrationTime()));
+          m_est_cal_time = std::max(m_args.min_cal_time, m_est_cal_time);
 
           if (m_args.fpredict)
           {
-            m_fpred
-            = std::make_unique<FuelPrediction>(m_profiles.get(), &m_cat,
-                                               m_power_model.get(),
-                                               m_speed_model.get(), imu_enabled,
-                                               tline.getPlanETA());
+            m_fpred = std::make_unique<FuelPrediction>(
+            m_profiles.get(), &m_cat, m_power_model.get(), m_speed_model.get(),
+            imu_enabled, m_sched->getTimeline()->getPlanETA());
+
             pre_stat.fill(*m_fpred);
           }
         }
@@ -533,27 +559,24 @@ namespace Plan
       if (!m_args.compute_progress)
         return -1.0;
 
-      // Compute only if linear and durations exists
-      if (!isLinear() || !m_profiles->size())
+      // Compute only if linear and we know the time profile of the plan
+      if (!isLinear() || !m_profiles || !m_profiles->size())
         return -1.0;
 
-      // If calibration has not started yet, but will later
+      // If calibration has not started yet
       if (m_calib.notStarted())
         return -1.0;
 
       float total_duration = getTotalDuration();
-      float exec_duration = getExecutionDuration();
-
-      // Check if its calibrating
       if (m_calib.inProgress())
       {
-        float time_left = m_calib.getRemaining() + exec_duration;
+        float time_left = m_calib.getRemaining() + m_remaining;
         m_progress
         = 100.0 * trimValue(1.0 - time_left / total_duration, 0.0, 1.0);
         return m_progress;
       }
 
-      // If it's not executing, do not compute
+      // If it's not calibrating or executing, do not compute
       if (mcs->state != IMC::ManeuverControlState::MCS_EXECUTING
           || mcs->eta == 0)
         return m_progress;
@@ -571,6 +594,8 @@ namespace Plan
 
       IMC::Message const* man
       = m_plan_graph->findNode(current_id)->pman->data.get();
+
+      float exec_duration = getExecutionDuration();
 
       // Get execution progress
       float exec_prog = Progress::compute(man, mcs, durations, exec_duration);

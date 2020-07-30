@@ -135,9 +135,17 @@ namespace Plan
       void
       planStarted(void);
 
+      //! Signal that the plan has resumed
+      void
+      planResumed(void);
+
       //! Signal that the plan has stopped
       void
       planStopped(void);
+
+      //! Signal that the plan has paused
+      void
+      planPaused(void);
 
       //! Signal that calibration has started
       void
@@ -334,6 +342,9 @@ namespace Plan
       std::string m_last_id;
       //! Current progress if any
       float m_progress;
+      //! Remaining execution time.
+      //! Updated every time the plan is paused.
+      float m_remaining;
       //! Estimated required calibration time
       std::uint16_t m_est_cal_time;
       //! Pointer to maneuver durations

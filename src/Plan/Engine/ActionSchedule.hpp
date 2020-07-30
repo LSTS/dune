@@ -34,9 +34,8 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <memory>
 #include <map>
-#include <set>
-#include <utility>
 
 // DUNE headers.
 #include <DUNE/Plans.hpp>
@@ -46,6 +45,7 @@
 #include "Calibration.hpp"
 #include "Timeline.hpp"
 #include "ComponentActiveTime.hpp"
+#include "TimedActionSchedule.hpp"
 
 namespace Plan
 {
@@ -53,6 +53,29 @@ namespace Plan
   {
     // Export DLL Symbol.
     class DUNE_DLL_SYM ActionSchedule;
+
+    //! Represents an action which is dispatched according to the plan progress.
+    struct TimedAction
+    {
+      //! Time relative to Plan's eta to fire action
+      float sched_time;
+      //! Message to dispatch
+      DUNE::IMC::SetEntityParameters* list;
+      //! Id of the maneuver this action is associated with.
+      //! (empty if the action is a plan action)
+      std::string id;
+      //! Whether this is a start or end action.
+      bool start;
+      //! True if the scheduled time accounts for the entity activation time.
+      bool prescheduled;
+      //! True if the action is an activation.
+      bool activation;
+      //! Whether the action should be ignored.
+      bool ignore;
+    };
+
+    //! Stack of timed actions
+    using TimedStack = std::vector<TimedAction>;
 
     //! Scheduler for plan and maneuver actions
     class ActionSchedule
@@ -68,8 +91,9 @@ namespace Plan
       ActionSchedule(
       DUNE::Tasks::Task* task, const DUNE::IMC::PlanSpecification* spec,
       const std::vector<DUNE::IMC::PlanManeuver const*>& plan_maneuvers,
-      const Timeline& tline,
-      const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo);
+      std::unique_ptr<Timeline> tline,
+      const std::map<std::string, DUNE::IMC::EntityInfo>& cinfo,
+      ComponentActiveTime* cat);
 
       //! Alternative constructor for when plan is not sequential.
       //! There will be no pre-scheduling using this constructor.
@@ -101,6 +125,14 @@ namespace Plan
       void
       planStarted(DUNE::Tasks::Task* task, std::vector<std::string>& affected);
 
+      //! The plan has resumed execution
+      //! @param[in] task task which will dispatch the actions
+      //! @param[out] affected vector of entities that will be (de)activated
+      //!             during the plan
+      float
+      planResumed(std::string const& maneuver_id, DUNE::Tasks::Task* task,
+                  std::vector<std::string>& affected);
+
       //! The plan has stopped/ended
       //! @param[in] task task which will dispatch the actions
       //! @param[in] affected list of entities that were (de)activated during
@@ -108,6 +140,13 @@ namespace Plan
       void
       planStopped(DUNE::Tasks::Task* task,
                   const std::vector<std::string>& affected);
+
+      //! @param[in] task task which will dispatch the actions
+      //! @param[in] affected list of entities that were (de)activated during
+      //!            the plan
+      void
+      planPaused(std::string const& maneuver_id, DUNE::Tasks::Task* task,
+                 const std::vector<std::string>& affected);
 
       //! Maneuver has started
       //! @param[in] task task which will dispatch the actions
@@ -123,10 +162,13 @@ namespace Plan
 
       //! Get the time of the earliest scheduled action
       //! @return time of the earliest scheduled action
-      inline float
-      getEarliestSchedule(void) const
+      float
+      getCalibrationTime(void) const
       {
-        return m_earliest;
+        if (!m_timed_action_schedule)
+          return 0.0f;
+
+        return m_timed_action_schedule->calibrationTime();
       }
 
       //! Check if the activation and deactivation requests are being complied
@@ -148,39 +190,11 @@ namespace Plan
       float
       calibTimeLeft(void);
 
-      //! Fill the object component active time
-      //! @param[in] plan_maneuvers vector of sequenced plan maneuvers
-      //! @param[in] timeline plan timeline with all ETAs
-      //! @param[in] cat component active time object to fill
-      void
-      fillComponentActiveTime(
-      const std::vector<DUNE::IMC::PlanManeuver const*>& plan_maneuvers,
-      const Timeline& timeline, ComponentActiveTime& cat);
-
-      //! Enumeration for type of timed action
-      enum ActionType
+      Timeline const*
+      getTimeline(void) const
       {
-        //! Deactivation
-        TYPE_DEACT,
-        //! Activation
-        TYPE_ACT
-      };
-
-      //! Struct for actions set on a timed reference
-      struct TimedAction
-      {
-        //! Type (true activation or deactivation)
-        ActionType type;
-        //! Time relative to Plan's eta to fire action
-        float sched_time;
-        //! Set Entity parameters to dispatch
-        DUNE::IMC::SetEntityParameters* list;
-        //! Flag to signal that this action was pre-scheduled
-        bool prescheduled;
-      };
-
-      //! Stack of timed actions
-      typedef std::stack<TimedAction> TimedStack;
+        return m_timeline.get();
+      }
 
     private:
       //! Actions that should be fired on plan and maneuver start or end
@@ -198,6 +212,16 @@ namespace Plan
       //! Map of entity names to entity activation states
       typedef std::map<std::string, uint8_t> EASMap;
 
+      //! Fill the object component active time
+      //! @param[in] plan_maneuvers vector of sequenced plan maneuvers
+      //! @param[in] timeline plan timeline with all ETAs
+      //! @param[in] cat component active time object to fill
+      void
+      fillComponentActiveTime(
+      const std::vector<DUNE::IMC::PlanManeuver const*>& plan_maneuvers,
+      std::map<std::string, TimedStack> const& timed_actions,
+      ComponentActiveTime* cat) const;
+
       //! Parse actions
       //! @param[in] task task to print information to the console
       //! @param[in] actions message list of actions to parse
@@ -211,7 +235,8 @@ namespace Plan
                    const DUNE::IMC::MessageList<DUNE::IMC::Message>& actions,
                    float eta = -1.0,
                    std::map<std::string, TimedStack>* unscheduled_actions
-                   = nullptr);
+                   = nullptr,
+                   bool start = true, std::string const& id = "");
 
       //! Get activation time of component
       //! @param[in] label entity label of component to look for
@@ -244,14 +269,16 @@ namespace Plan
       //! @param[in] name entity name
       //! @param[in] action TimedAction to add to requests
       void
-      processRequest(const std::string& id, const TimedAction& action);
+      processRequest(const std::string& id, const Action& action);
 
       //! Schedule timed actions
       //! @param[in] unscheduled actions map mapping each entity's label to its
       //!            set of unscheduled actions
-      std::map<std::string, TimedStack>
+      std::unique_ptr<TimedActionSchedule>
       scheduleTimedActions(
-      std::map<std::string, TimedStack> unscheduled_actions) const;
+      std::map<std::string, TimedStack> unscheduled_actions,
+      std::vector<DUNE::IMC::PlanManeuver const*> const& plan_maneuvers,
+      ComponentActiveTime* cat) const;
 
       //! Dispatch actions
       //! @param[in] task task that will dispatch the actions
@@ -277,23 +304,23 @@ namespace Plan
 
       //! Expected plan duration excluding calibration time
       float m_execution_duration;
-      //! Map of entity labels to timed actions stacks
-      std::map<std::string, TimedStack> m_timed_actions;
       //! Event based maneuver actions
       EventMap m_maneuver_actions;
       //! Event based plan actions
       EventActions m_plan_actions;
       //! Maps entity labels to their EntityInfo messages
       const std::map<std::string, DUNE::IMC::EntityInfo>* m_cinfo;
-      //! Time of earliest scheduled action
-      float m_earliest;
       //! Set of entities that will be changed during the plan and their
       //! activation state
       std::map<std::string, uint8_t> m_eas;
       //! Estimated time left to finish plan
       float m_time_left;
       //! Set of activation requests yet to be confirmed
-      std::map<std::string, TimedAction> m_reqs;
+      std::map<std::string, Action> m_reqs;
+      //! Handles actions dispatched on plan progress
+      std::unique_ptr<TimedActionSchedule> m_timed_action_schedule;
+      //! Plan Timeline
+      std::unique_ptr<Timeline> m_timeline;
     };
   } // namespace Engine
 } // namespace Plan
