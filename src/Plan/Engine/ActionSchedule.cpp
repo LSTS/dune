@@ -46,7 +46,7 @@ namespace Plan
     const std::map<std::string, IMC::EntityInfo>& cinfo,
     ComponentActiveTime* cat)
     : m_execution_duration(tl->getExecutionDuration()), m_cinfo(&cinfo),
-      m_timed_action_schedule(nullptr), m_time_left(m_execution_duration),
+      m_time_left(m_execution_duration), m_timed_action_schedule(nullptr),
       m_timeline(std::move(tl))
     {
       std::map<std::string, TimedStack> unscheduled_actions;
@@ -89,7 +89,7 @@ namespace Plan
     const std::vector<IMC::PlanManeuver const*>& plan_maneuvers,
     const std::map<std::string, IMC::EntityInfo>& cinfo)
     : m_execution_duration(-1.0f), m_cinfo(&cinfo),
-      m_timed_action_schedule(nullptr), m_time_left(-1.0), m_timeline(nullptr)
+      m_time_left(-1.0), m_timed_action_schedule(nullptr), m_timeline(nullptr)
     {
       m_plan_actions.start_actions = parseActions(task, spec->start_actions);
 
