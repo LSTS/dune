@@ -81,8 +81,7 @@ namespace Plan
                                cat);
 
       // Update timeline with scheduled calibration time if any
-      m_timeline->setPlanETA(m_timed_action_schedule->calibrationTime()
-                             + m_execution_duration);
+      m_timeline->setPlanETA(getCalibrationTime() + m_execution_duration);
     }
 
     ActionSchedule::ActionSchedule(
