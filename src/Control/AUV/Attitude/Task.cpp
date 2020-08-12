@@ -704,8 +704,9 @@ namespace Control
           const float pitch_rate
           = msg->q * cos(msg->phi) - msg->r * sin(msg->phi);
 
-          cmd
-          = m_pid[LP_PITCH].step(timestep, pitch_err, ref_rate - pitch_rate);
+          cmd = m_args.altitude_control ?
+                m_pid[LP_PITCH].step(timestep, pitch_err, ref_rate - pitch_rate) :
+                m_pid[LP_PITCH].step(timestep, pitch_err, -pitch_rate);
 
           return cmd;
         }
