@@ -472,7 +472,7 @@ namespace DUNE
             (z_ref > m_args->min_depth + c_depth_hyst &&
              m_estate.depth > m_args->min_depth - c_depth_hyst))))
       {
-        debug("limit depth: depth is no longer near the limit -> tracking");
+        info("limit depth: depth is no longer near the limit -> tracking");
 
         m_forced = FC_NONE;
         m_mstate = SM_TRACKING;
