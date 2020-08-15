@@ -51,9 +51,13 @@ static const float c_depth_hyst = 0.5;
 static const float c_alt_hyst = 0.2;
 
 //! State to string for debug messages
-static const std::string c_str_states[] = {DTR_RT("Idle"), DTR_RT("Tracking"),
-                                           DTR_RT("Depth"), DTR_RT("LimitDepth"),
-                                           DTR_RT("Unsafe"), DTR_RT("Avoiding")};
+static const std::string c_str_states[] = {DTR_RT("Idle"),
+                                           DTR_RT("Tracking"),
+                                           DTR_RT("Depth"),
+                                           DTR_RT("LimitDepthMax"),
+                                           DTR_RT("LimitDepthMin"),
+                                           DTR_RT("Unsafe"),
+                                           DTR_RT("Avoiding")};
 
 //! Bottom tracker name
 static const std::string c_bt_name = DTR_RT("BottomTrack");
@@ -255,7 +259,8 @@ namespace DUNE
           else
             onIdle();
           break;
-        case SM_LIMITDEPTH:
+        case SM_LIMITDEPTH_MAX: // fall-through
+        case SM_LIMITDEPTH_MIN:
           onLimitDepth();
           break;
         case SM_UNSAFE:
@@ -377,8 +382,20 @@ namespace DUNE
       {
         info(DTR("depth is reaching unacceptable values, forcing depth control"));
         m_forced = FC_DEPTH;
-        dispatchLimitDepth();
-        m_mstate = SM_LIMITDEPTH;
+        dispatchLimitDepth(true);
+        m_mstate = SM_LIMITDEPTH_MAX;
+        return;
+      }
+
+      // altitude reference below minimum depth
+      // not enforced when forcing altitude control.
+      if (m_forced != FC_ALTITUDE && z_ref <= m_args->min_depth)
+      {
+        info(String::str("depth is too low: %.2f, forcing depth control.",
+                         z_ref));
+        m_forced = FC_DEPTH;
+        dispatchLimitDepth(false);
+        m_mstate = SM_LIMITDEPTH_MIN;
         return;
       }
     }
@@ -444,9 +461,16 @@ namespace DUNE
         return;
       }
 
+      float const z_ref = getReverseZ();
+
       // can we switch back ?
-      if (isAltitudeValid() && getReverseZ() < m_args->depth_limit &&
-          m_estate.depth < m_args->depth_limit + c_depth_hyst)
+      if (isAltitudeValid() &&
+          (((m_mstate == SM_LIMITDEPTH_MAX) &&
+            (z_ref < m_args->depth_limit &&
+             m_estate.depth < m_args->depth_limit + c_depth_hyst)) ||
+           (m_mstate == SM_LIMITDEPTH_MIN &&
+            (z_ref > m_args->min_depth + c_depth_hyst &&
+             m_estate.depth > m_args->min_depth - c_depth_hyst))))
       {
         debug("limit depth: depth is no longer near the limit -> tracking");
 
@@ -616,10 +640,10 @@ namespace DUNE
     }
 
     void
-    BottomTracker::dispatchLimitDepth(void) const
+    BottomTracker::dispatchLimitDepth(bool max_depth) const
     {
       IMC::DesiredZ limit_depth;
-      limit_depth.value = m_args->depth_limit;
+      limit_depth.value = max_depth ? m_args->depth_limit : m_args->min_depth;
       limit_depth.z_units = IMC::Z_DEPTH;
       m_args->entity->dispatch(limit_depth);
       debug(String::str("dispatching limit depth: %.2f", limit_depth.value));
