@@ -41,7 +41,7 @@
 #include <DUNE/Utils/MAVLink.hpp>
 
 // MAVLink headers.
-#include <mavlink_v1/ardupilotmega/mavlink.h>
+#include <mavlink_v2/ardupilotmega/mavlink.h>
 
 namespace Control
 {
@@ -248,7 +248,7 @@ namespace Control
         bool m_gps_send;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          Tasks::Task(name, ctx),
+          DUNE::Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
           m_UDP_sock(NULL),
           m_sysid(1),
@@ -468,6 +468,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
           m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
           m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM_INT] = &Task::handleMissionItemIntPacket;
           m_mlh[MAVLINK_MSG_ID_SYS_STATUS] = &Task::handleSystemStatusPacket;
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
@@ -552,7 +553,7 @@ namespace Control
             inf(DTR("Ardupilot interface initialized"));
 
             // Clear previous mission on autopilot
-            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0);
+            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0,MAV_MISSION_TYPE_ALL);
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
             debug("Cleared mission in ardupilot.");
@@ -785,7 +786,17 @@ namespace Control
                                                     0, //! RC Channel 5 (not used)
                                                     0, //! RC Channel 6 (not used)
                                                     0, //! RC Channel 7 (not used)
-                                                    0);//! RC Channel 8 (mode)
+                                                    0, //! RC Channel 8 (mode)
+													0, //! RC Channel 9 (not used)
+													0, //! RC Channel 10 (not used)
+													0, //! RC Channel 11 (not used)
+													0, //! RC Channel 12 (not used)
+													0, //! RC Channel 13 (not used)
+													0, //! RC Channel 14 (not used)
+													0, //! RC Channel 15 (not used)
+													0, //! RC Channel 16 (not used)
+													0, //! RC Channel 17 (not used)
+													0); //! RC Channel 18 (not used)
               uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
               sendData(buf, n);
             }
@@ -875,7 +886,17 @@ namespace Control
                                                 0, //! RC Channel 5 (not used)
                                                 0, //! RC Channel 6 (not used)
                                                 0, //! RC Channel 7 (not used)
-                                                0);//! RC Channel 8 (mode - do not override)
+												0, //! RC Channel 8 (mode - do not override)
+												0, //! RC Channel 9 (not used)
+												0, //! RC Channel 10 (not used)
+												0, //! RC Channel 11 (not used)
+												0, //! RC Channel 12 (not used)
+												0, //! RC Channel 13 (not used)
+												0, //! RC Channel 14 (not used)
+												0, //! RC Channel 15 (not used)
+												0, //! RC Channel 16 (not used)
+												0, //! RC Channel 17 (not used)
+												0); //! RC Channel 18 (not used)
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
         }
@@ -1097,7 +1118,7 @@ namespace Control
           //! Destination
           if (m_vehicle_type == VEHICLE_COPTER)
           {
-            mavlink_msg_mission_item_pack(255, 0, &msg,
+            mavlink_msg_mission_item_int_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1111,11 +1132,12 @@ namespace Control
                                           0, //! Not used
                                           (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                          altitude ? path->end_z : path->end_z - m_hae_offset); //! z PARAM7 / z position: global: altitude
+                                          altitude ? path->end_z : path->end_z - m_hae_offset, //! z PARAM7 / z position: global: altitude
+                                          MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
           }
           else if (m_vehicle_type == VEHICLE_SUBMARINE)
           {
-            mavlink_msg_mission_item_pack(255, 0, &msg,
+            mavlink_msg_mission_item_int_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1129,12 +1151,13 @@ namespace Control
                                           0, //! Not used
                                           (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                          -path->end_z); //! z PARAM7 / z position: global: -altitude (depth)
+                                          -path->end_z, //! z PARAM7 / z position: global: -altitude (depth)
+										  MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
           }
           else
           {
             //! Because this is a GUIDED waypoint, MISSION_COUNT and WRITE_PARTIAL_LIST messages should not be sent
-            mavlink_msg_mission_item_pack(255, 0, &msg,
+            mavlink_msg_mission_item_int_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           0, //! seq Sequence
@@ -1148,7 +1171,8 @@ namespace Control
                                           0, //! Not used
                                           (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                          alt - m_hae_offset);//! z PARAM7 / z position: global: altitude
+                                          alt - m_hae_offset, //! z PARAM7 / z position: global: altitude
+										  MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
           }
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -1219,7 +1243,7 @@ namespace Control
           mavlink_message_t msg;
 
           // Clear previous mission on autopilot
-          mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0);
+          mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_ALL); //! Mission Type 255 - Only used in MISSION_CLEAR_ALL to clear all mission type
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
           debug("Cleared mission in ardupilot.");
@@ -1248,17 +1272,17 @@ namespace Control
           else
           {
             // Send Mission Count
-            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 2);
+            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 2, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Write Partial List
-            mavlink_msg_mission_write_partial_list_pack(255, 0, &msg, m_sysid, 0, 1, 1);
+            mavlink_msg_mission_write_partial_list_pack(255, 0, &msg, m_sysid, 0, 1, 1, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Set Home as current position
-            mavlink_msg_mission_item_pack(255, 0, &msg,
+            mavlink_msg_mission_item_int_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           0, //! seq Sequence
@@ -1272,12 +1296,13 @@ namespace Control
                                           0, //! Not used
                                           0, //! Latitude
                                           0, //! Longitude
-                                          0);//! z PARAM7 / z position: global: altitude
+                                          0, //! z PARAM7 / z position: global: altitude
+										  MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Mission Item
-            mavlink_msg_mission_item_pack(255, 0, &msg,
+            mavlink_msg_mission_item_int_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1291,7 +1316,8 @@ namespace Control
                                           0, //! Not used
                                           (float)Angles::degrees(dpath->end_lat), //! Latitude
                                           (float)Angles::degrees(dpath->end_lon), //! Longitude
-                                          dpath->end_z - m_hae_offset);//! z PARAM7 / z position: global: altitude
+                                          dpath->end_z - m_hae_offset, //! z PARAM7 / z position: global: altitude
+										  MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
@@ -1361,17 +1387,17 @@ namespace Control
           else
           {
             // Send Mission Count
-            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 2);
+            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 2, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Write Partial List
-            mavlink_msg_mission_write_partial_list_pack(255, 0, &msg, m_sysid, 0, 1, 1);
+            mavlink_msg_mission_write_partial_list_pack(255, 0, &msg, m_sysid, 0, 1, 1, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Mission Item
-            mavlink_msg_mission_item_pack(255, 0, &msg,
+            mavlink_msg_mission_item_int_pack(255, 0, &msg,
                                           m_sysid,          //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1385,7 +1411,8 @@ namespace Control
                                           0, //! Not used
                                           (float)Angles::degrees(land->lat), //! Touchdown Latitude
                                           (float)Angles::degrees(land->lon), //! Touchdown Longitude
-                                          land->z - m_hae_offset);           //! z PARAM7 / z position: global: altitude
+                                          land->z - m_hae_offset,           //! z PARAM7 / z position: global: altitude
+										  MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
@@ -1513,7 +1540,7 @@ namespace Control
           if (m_ground && m_land && m_external)
           {
             // Clear previous mission on autopilot
-            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0);
+            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0, MAV_MISSION_TYPE_ALL);
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
             debug("Cleared mission in ardupilot.");
@@ -1621,10 +1648,12 @@ namespace Control
 			uint8_t buf[512];
 			int gps_id = m_args.main_gps ? 0 : 2;
 			//! Depth is handled by depth sensor
+			//! https://www.ardusub.com/developers/gps-positioning.htmlu
 			mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getSinceEpochMsec(), gps_id,
 					ignore_flags, 0, 0, 2, lat, lon, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11); //! https://www.ardusub.com/developers/gps-positioning.htmlu
+					0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11,m_estate.psi); //! YAW
 			int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+                        war("Sent USBL position to ArduSub");
 			sendData(buf, n);
 		}
 	}
@@ -1811,8 +1840,11 @@ namespace Control
                   case MAVLINK_PARSE_STATE_GOT_COMPID:
                     spew("failed at state GOT_COMPID");
                     break;
-                  case MAVLINK_PARSE_STATE_GOT_MSGID:
-                    spew("failed at state GOT_MSGID");
+                  case MAVLINK_PARSE_STATE_GOT_MSGID1:
+                    spew("failed at state GOT_MSGID1");
+                    break;
+                  case MAVLINK_PARSE_STATE_GOT_MSGID2:
+                    spew("failed at state GOT_MSGID2");
                     break;
                   case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
                     spew("failed at state GOT_PAYLOAD");
@@ -1866,6 +1898,9 @@ namespace Control
                     break;
                   case MAVLINK_MSG_ID_MISSION_ITEM:
                     trace("MISSION_ITEM");
+                    break;
+                  case MAVLINK_MSG_ID_MISSION_ITEM_INT:
+                    trace("MISSION_ITEM_INT");
                     break;
                   case MAVLINK_MSG_ID_MISSION_REQUEST:
                     trace("MISSION_REQUEST");
@@ -2602,6 +2637,27 @@ namespace Control
         {
           mavlink_mission_item_t miss_item;
           mavlink_msg_mission_item_decode(msg, &miss_item);
+          trace("Mission type: %d", miss_item.command);
+
+          switch(miss_item.command)
+          {
+            default:
+              m_critical = false;
+              break;
+            case MAV_CMD_NAV_TAKEOFF:
+              m_critical = true;
+              break;
+            case MAV_CMD_NAV_LAND:
+              m_critical = true;
+              break;
+          }
+        }
+
+        void
+        handleMissionItemIntPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_item_int_t miss_item;
+          mavlink_msg_mission_item_int_decode(msg, &miss_item);
           trace("Mission type: %d", miss_item.command);
 
           switch(miss_item.command)

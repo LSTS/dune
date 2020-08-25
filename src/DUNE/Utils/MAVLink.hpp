@@ -36,7 +36,7 @@
 #include <DUNE/Math/General.hpp>
 
 // MAVLink headers.
-#include <mavlink_v1/ardupilotmega/mavlink.h>
+#include <mavlink_v2/ardupilotmega/mavlink.h>
 
 namespace DUNE
 {

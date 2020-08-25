@@ -35,9 +35,6 @@
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Utils/MAVLink.hpp>
 
-// MAVLink headers.
-#include <mavlink_v1/ardupilotmega/mavlink.h>
-
 namespace Control
 {
   namespace UAV
@@ -80,9 +77,9 @@ namespace Control
           Heading = 3,
           Forward = 4,
           Lateral = 5,
-          Camera_Pan = 8,
+          Camera_Pan = 6,
           Camera_Tilt = 7,
-          Lights_1_Level = 6,
+          Lights_1_Level = 8,
           Lights_2_Level = 9,
           Video_Switch = 10,
         };
@@ -136,11 +133,18 @@ namespace Control
           //! previous GCS SYSID - before Dune takes control
           int m_gcs;
 
-          Task(const std::string& name, Tasks::Context& ctx) :
-              DUNE::Control::BasicRemoteOperation(name, ctx), m_gain(0.20), m_lights_step(
-                  100), m_cam_tilt_steps(0), m_pitch_trim(0), m_roll_trim(0), m_sysid(
-                  254), m_targetid(1), m_sys_status(
-                  MAV_STATE_UNINIT), m_comms(false), m_gcs(1)
+          Task(const std::string& name, Tasks::Context& ctx):
+              DUNE::Control::BasicRemoteOperation(name, ctx),
+			  m_gain(0.20), m_lights_step(
+                  100),
+				  m_cam_tilt_steps(0),
+				  m_pitch_trim(0),
+				  m_roll_trim(0),
+				  m_sysid(254),
+				  m_targetid(1),
+				  m_sys_status(MAV_STATE_UNINIT),
+				  m_comms(false),
+				  m_gcs(1)
           {
             param("Gain Step", m_args.gain_step).minimumValue("2").maximumValue(
                 "10").defaultValue("10").units(Units::Percentage).description(
@@ -258,7 +262,7 @@ namespace Control
               m_comms = true;
               requestGCSParam();
               debug(DTR("Sending GCS configurations"));
-              setParamByName("FS_GCS_ENABLE", 3.0); //Heartbeat lost 0:Disabled; 1:Warn; 2:Disarm; 3:Depth Hold; 4:Surface
+              setParamByName("FS_GCS_ENABLE", 0.0); //Heartbeat lost 0:Disabled; 1:Warn; 2:Disarm; 3:Depth Hold; 4:Surface
             }
             catch (std::exception& e)
             {
@@ -400,7 +404,8 @@ namespace Control
                                                   0, rc_pwm[0], rc_pwm[1],
                                                   rc_pwm[2], rc_pwm[3],
                                                   rc_pwm[4], rc_pwm[5],
-                                                  rc_pwm[6], rc_pwm[7]);
+                                                  rc_pwm[6], rc_pwm[7], rc_pwm[8],rc_pwm[9],rc_pwm[10],
+												  NOTUSED,NOTUSED,NOTUSED,NOTUSED,NOTUSED,NOTUSED,NOTUSED); // Not used Channels
             uint8_t buf[512];
             int len = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, len);
@@ -573,13 +578,13 @@ namespace Control
             else if (std::strcmp(js_params_id[3].c_str(), parameter.param_id)
                 == 0 && m_args.gain_step != parameter.param_value)
             {
-              (parameter.param_id, (float)m_args.gain_step);
+              parameter.param_id, (float)m_args.gain_step;
             }
             else if (std::strcmp("SYSID_MYGCS", parameter.param_id) == 0
                 && (float)m_gcs != parameter.param_value
                 && (float)m_sysid != parameter.param_value)
             {
-              debug("Updating GCS from %f to %f", m_gcs, parameter.param_value);
+              debug("Updating GCS from %d to %f", m_gcs, parameter.param_value);
               m_gcs = (int)parameter.param_value;
               if (isActive())
                 war(DTR("Ardupilot Ground Control Station is not DUNE"));
@@ -599,16 +604,18 @@ namespace Control
           {
             mavlink_rc_channels_t channels;
             mavlink_msg_rc_channels_decode(msg, &channels);
+            //TODO verify camera tilt
             trace(DTR("RC Channel 1 PWM %d"), channels.chan1_raw);
             trace(DTR("RC Channel 2 PWM %d"), channels.chan2_raw);
             trace(DTR("RC Channel 3 PWM %d"), channels.chan3_raw);
             trace(DTR("RC Channel 4 PWM %d"), channels.chan4_raw);
             trace(DTR("RC Channel 5 PWM %d"), channels.chan5_raw);
-            debug(DTR("RC Channel 6 PWM %d"), channels.chan6_raw);
-            debug(DTR("RC Channel 7 PWM %d"), channels.chan7_raw);
-            debug(DTR("RC Channel 8 PWM %d"), channels.chan8_raw);
-            debug(DTR("RC Channel 9 PWM %d"), channels.chan9_raw);
-            debug(DTR("RC Channel 10 PWM %d"), channels.chan10_raw);
+            trace(DTR("RC Channel 6 PWM %d"), channels.chan6_raw);
+            trace(DTR("RC Channel 7 PWM %d"), channels.chan7_raw);
+            //debug(DTR("RC Channel 8 PWM %d"), channels.chan8_raw);
+
+            //debug(DTR("RC Channel 9 PWM %d"), channels.chan9_raw);
+            trace(DTR("RC Channel 10 PWM %d"), channels.chan10_raw);
             trace(DTR("RC Channel 11 PWM %d"), channels.chan11_raw);
           }
 
@@ -779,8 +786,10 @@ namespace Control
                     actuate();
                     m_cam_tilt_steps--;
                   }
-                  if(m_cam_tilt_steps == 0)
+                  if(m_cam_tilt_steps == 0){
                     rc_pwm[RC_INPUT::Camera_Tilt] = idle;
+                    actuate();
+                  }
                 }
               }
               war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
@@ -797,7 +806,6 @@ namespace Control
             {
               int newV = rc_pwm[RC_INPUT::Lights_1_Level] + step;
               war(DTR("newV %d"),newV);
-              int max = floor(PWM_MAX);
               newV = std::min(newV,max);
               war(DTR("newV %d"),newV);
               rc_pwm[RC_INPUT::Lights_1_Level] = newV;
@@ -813,7 +821,6 @@ namespace Control
               if (button == 1)
               {
                 int newV = rc_pwm[RC_INPUT::Lights_1_Level] - step;
-                int min = floor(PWM_MIN);
                 newV = std::max(newV,min);
                 rc_pwm[RC_INPUT::Lights_1_Level] = newV;
 //                rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same comand for both lights
