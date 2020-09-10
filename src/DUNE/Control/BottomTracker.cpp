@@ -389,7 +389,7 @@ namespace DUNE
 
       // altitude reference below minimum depth
       // not enforced when forcing altitude control.
-      if (m_forced != FC_ALTITUDE && z_ref <= m_args->min_depth)
+      if (m_args->min_depth > 0 && m_forced != FC_ALTITUDE && z_ref <= m_args->min_depth)
       {
         info(String::str("depth is too low: %.2f, forcing depth control.",
                          z_ref));
