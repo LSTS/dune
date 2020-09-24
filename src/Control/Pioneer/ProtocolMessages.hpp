@@ -58,6 +58,7 @@ namespace Control
       {
         PIONEER_MSG_VERSION_2_TELEMETRY = 1,
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION  = 2,
+        PIONEER_MSG_VERSION_2_CUSTOM_IMU  = 9,
       };
 
       enum Pioneer_Msg_Version_Plus_Msg_Code
@@ -65,6 +66,7 @@ namespace Control
         PIONEER_MSG_VERSION_1_TELEMETRY_CODE  = (PIONEER_MSG_VERSION_1 << 8) + PIONEER_MSG_VERSION_1_TELEMETRY,
         PIONEER_MSG_VERSION_2_TELEMETRY_CODE  = (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_TELEMETRY,
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION,
+        PIONEER_MSG_VERSION_2_CUSTOM_IMU_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_CUSTOM_IMU,
       };
 
       //! "dtype": "uint8_t"
@@ -238,6 +240,22 @@ namespace Control
         uint8_t progress_z_up; // Progress z up []
         uint8_t progress_z_down; // Progress z down []
         uint8_t progress_thruster; // Progress thruster []
+      };
+
+      struct __attribute__((__packed__)) DataVersion2CustomImu
+      {
+        uint8_t version = 2; // Protocol version []
+        uint8_t command_type = 9; // Command type []
+        uint8_t id; // The id of the IMU
+        double accelerometer_x;
+        double accelerometer_y;
+        double accelerometer_z;
+        double gyro_x;
+        double gyro_y;
+        double gyro_z;
+        double compass_x;
+        double compass_y;
+        double compass_z;
       };
     }
   }

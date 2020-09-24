@@ -472,6 +472,19 @@ namespace Control
             }
             Memory::clear(msgV2CompassCal);
             break;
+          case ProtocolMessages::PIONEER_MSG_VERSION_2_CUSTOM_IMU_CODE:
+            ProtocolMessages::DataVersion2CustomImu* msgV2CustomImu;
+            msgV2CustomImu = new ProtocolMessages::DataVersion2CustomImu();
+            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion2CustomImu>(
+                this, buf, startIndex, length, msgV2CustomImu);
+            if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
+              handlePioneerV2CustomImu(*msgV2CustomImu);
+            }
+            Memory::clear(msgV2CustomImu);
+            break;
           default:
             // war("skip msg");
             break;
@@ -665,6 +678,14 @@ namespace Control
       {
         // TODO something with msg
         debug("progress_thruster %u",msg.progress_thruster);
+      }
+
+      //! This will handle parsing Pioneer V2 Custom IMU message
+      void
+      handlePioneerV2CustomImu(ProtocolMessages::DataVersion2CustomImu msg)
+      {
+        // TODO something with msg
+        debug("IMU %u %f", msg.id, msg.accelerometer_x);
       }
 
       void
