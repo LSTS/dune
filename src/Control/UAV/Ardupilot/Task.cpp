@@ -1512,9 +1512,9 @@ namespace Control
         {
           if(m_vehicle_type == VEHICLE_SUBMARINE)
           {
-            if(m_estate.depth < 1)
+            if(m_estate.depth == 0.0)
               m_ground = true;
-            else {
+            else if (m_estate.depth > 0) { //VM::Water
               m_ground = false;
               if(m_gps_send) {
             	  sendGPSParams(false); //disable USBL gps at surface
@@ -2548,7 +2548,7 @@ namespace Control
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
           d_z.value = getHeight() + nav_out.alt_error;
-          d_z.z_units = (m_vehicle_type == VEHICLE_SUBMARINE) ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
+          d_z.z_units = (m_vehicle_type == VEHICLE_SUBMARINE) ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT; //FIXME
 
           dispatch(d_roll);
           dispatch(d_pitch);
