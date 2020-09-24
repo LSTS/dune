@@ -685,7 +685,7 @@ namespace Control
       handlePioneerV2CustomImu(ProtocolMessages::DataVersion2CustomImu msg)
       {
         // TODO something with msg
-        debug("IMU %u %f", msg.id, msg.accelerometer_x);
+        war("IMU %u %lf %lf", msg.id, msg.accelerometer_x, msg.accelerometer_y);
       }
 
       void
