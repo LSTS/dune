@@ -1655,6 +1655,10 @@ namespace Control
 			int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
                         war("Sent USBL position to ArduSub");
 			sendData(buf, n);
+			m_estate.lat = fix->lat;
+			m_estate.lon = fix->lon;
+			//m_estate.z = fix->z;
+			m_estate.depth = fix->z;
 		}
 	}
 
