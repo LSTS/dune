@@ -62,7 +62,7 @@ namespace Control
               "RollRight", "Stabilize", "DepthHold", "Manual", "PositionHold",
               "Arm", "Disarm","CameraPanUP","CameraPanDown"}; //TODO home and SK
         const std::string axis[6] =
-          { "Pitch", "Roll", "Throttle", "Heading", "Forward", "Lateral" };
+          { "Pitch", "Roll", "Vertical", "Heading", "Forward", "Lateral" };
         const std::string js_params_id[6] =
           { "MNT_RC_IN_TILT", "JS_GAIN_MAX", "JS_GAIN_MIN", "JS_GAIN_STEPS",
               "JS_LIGHTS_STEPS", "JS_THR_GAIN" };
@@ -73,7 +73,7 @@ namespace Control
         {
           Pitch = 0,
           Roll = 1,
-          Throttle = 2,
+          Vertical = 2,
           Heading = 3,
           Forward = 4,
           Lateral = 5,
@@ -179,13 +179,13 @@ namespace Control
                 "0").description(
                 "Neutral value - associated to the joystick/ccu/accu input.");
 
-            param("RC 3 MAX", m_args.rc[RC_INPUT::Throttle].val_max).defaultValue(
+            param("RC 3 MAX", m_args.rc[RC_INPUT::Vertical].val_max).defaultValue(
                 "1000").description(
                 "Maximum manual control normalized value - associated to the joystick/ccu/accu input.");
-            param("RC 3 MIN", m_args.rc[RC_INPUT::Throttle].val_min).defaultValue(
+            param("RC 3 MIN", m_args.rc[RC_INPUT::Vertical].val_min).defaultValue(
                 "-1000").description(
                 "Minimum manual control normalized value - associated to the joystick/ccu/accu input.");
-            param("RC 3 Neutral", m_args.rc[RC_INPUT::Throttle].val_neutral).defaultValue(
+            param("RC 3 Neutral", m_args.rc[RC_INPUT::Vertical].val_neutral).defaultValue(
                 "0").description(
                 "Neutral value - associated to the joystick/ccu/accu input.");
 
@@ -229,7 +229,7 @@ namespace Control
             bind<TeleoperationDone>(this);
 
             // Add remote actions.
-            addActionAxis(axis[Throttle]); // X
+            addActionAxis(axis[Vertical]); // X
             addActionAxis(axis[Heading]); // Y
             addActionAxis(axis[Forward]); // Z
             addActionAxis(axis[Lateral]); // R
@@ -275,7 +275,7 @@ namespace Control
           }
 
           void
-          onResourceAcquisition(void)
+          onResourceAcquisition()
           {
             m_timer.setTop(1.5);
             war(DTR("Set counter top to: %f "),m_timer.getTop());
@@ -374,7 +374,7 @@ namespace Control
           isReversibleAxis(int channel)
           {
             if (channel == RC_INPUT::Forward || channel == RC_INPUT::Lateral
-                || channel == RC_INPUT::Throttle
+                || channel == RC_INPUT::Vertical
                 || channel == RC_INPUT::Heading)
               return true;
             return false;
@@ -563,7 +563,7 @@ namespace Control
                   parameter.param_id, parameter.param_value);
             if (std::strcmp(js_params_id[5].c_str(), parameter.param_id) == 0)
             {
-              m_thr_gain = parameter.param_value; //save Throttle gain
+              m_thr_gain = parameter.param_value; //save Vertical gain
             }
             else if (std::strcmp(js_params_id[4].c_str(), parameter.param_id)
                 == 0)
@@ -769,28 +769,6 @@ namespace Control
                 rc_pwm[RC_INPUT::Camera_Tilt] = min;
                 actuate();
                 rc_pwm[RC_INPUT::Camera_Tilt] = idle;
-              }
-              else
-              {
-                button = tl.get(remote_actions[4], 0);
-                if (button == 1)
-                {
-                  while(m_cam_tilt_steps < 0){ //increase tilt
-                    rc_pwm[RC_INPUT::Camera_Tilt] = max;
-                    actuate();
-                    m_cam_tilt_steps++;
-
-                  }
-                  while(m_cam_tilt_steps > 0){ //decrease tilt
-                    rc_pwm[RC_INPUT::Camera_Tilt] = min;
-                    actuate();
-                    m_cam_tilt_steps--;
-                  }
-                  if(m_cam_tilt_steps == 0){
-                    rc_pwm[RC_INPUT::Camera_Tilt] = idle;
-                    actuate();
-                  }
-                }
               }
               war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
             }
