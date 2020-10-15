@@ -239,7 +239,7 @@ namespace DUNE
       //! Get heading rate value.
       //! @return heading rate.
       inline double
-      getHeadingRate(void)
+      getHeadingRate(bool use_imu)
       {
         double pitch = getEuler(AXIS_Y);
 
@@ -250,7 +250,7 @@ namespace DUNE
         double roll = getEuler(AXIS_X);
         double p, q, r;
 
-        if (m_dead_reckoning)
+        if (use_imu)
         {
           if (!m_edelta_readings)
             return 0.0;
@@ -579,6 +579,8 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
+      //! Heading value of IMU (rad).
+      double m_heading_imu;
       //! Received LBL fix.
       bool m_lbl_reading;
       //! Derivative for heave.

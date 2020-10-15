@@ -76,15 +76,19 @@ namespace Navigation
         //! DVL Transversal Speed (m/s).
         OUT_V = 1,
         //! Heading Angle (rad).
-        OUT_PSI = 2,
+        OUT_PSI_AHRS = 2,
         //! Heading Rate (rad/s).
-        OUT_R = 3,
+        OUT_R_AHRS = 3,
+        //! Heading Angle (rad).
+        OUT_PSI_IMU = 4,
+        //! Heading Rate (rad/s).
+        OUT_R_IMU = 5,
         //! GPS x (m).
-        OUT_GPS_X = 4,
+        OUT_GPS_X = 6,
         //! GPS y (m).
-        OUT_GPS_Y = 5,
+        OUT_GPS_Y = 7,
         //! Number of Outputs (without LBL).
-        NUM_OUT = 6
+        NUM_OUT
       };
 
       //! Process Noise parameters.
@@ -103,9 +107,12 @@ namespace Navigation
       {
         MN_U = 0,
         MN_V = 1,
-        MN_PSI = 2,
-        MN_YAWRATE = 3,
-        MN_LBL = 4
+        MN_PSI_AHRS = 2,
+        MN_PSI_IMU = 3,
+        MN_YAWRATE_AHRS = 4,
+        MN_YAWRATE_IMU = 5,
+        MN_LBL = 6,
+        NUM_MN
       };
 
       //! State Covariance parameters.
@@ -187,6 +194,8 @@ namespace Navigation
         int m_heading_buffer;
         //! Pointer to speed model for speed conversions
         const Plans::SpeedModel* m_speed_model;
+        //! Measurement noise of AHRS when IMU is active
+        std::vector<double> m_ahrs_mn_wimu;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Navigation::BasicNavigation(name, ctx),
@@ -220,8 +229,13 @@ namespace Navigation
 
           param("Measure Noise Covariance", m_measure_noise)
           .defaultValue("")
-          .size(5)
+          .size(NUM_MN)
           .description("Kalman Filter measurement noise covariance values");
+
+          param("AHRS Noise With IMU", m_ahrs_mn_wimu)
+          .defaultValue("")
+          .size(2)
+          .description("Measurement noise of AHRS when IMU is active");
 
           param("State Covariance Initial State", m_state_cov)
           .defaultValue("")
@@ -316,8 +330,7 @@ namespace Navigation
 
           m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
           m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
-          m_kal.setMeasurementNoise(OUT_PSI, m_measure_noise[MN_PSI]);
-          m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE]);
+          setAngularMN();
           m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_GOOD_IX]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_GOOD_IX]);
 
@@ -413,6 +426,8 @@ namespace Navigation
             m_kal.setProcessNoise(STATE_Y, m_args.pos_noise);
             m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
 
+            m_heading_imu = m_heading;
+
             // LBL noise.
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise);
@@ -440,6 +455,8 @@ namespace Navigation
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
               m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
           }
+
+          setAngularMN();
         }
 
         bool
@@ -471,6 +488,24 @@ namespace Navigation
           BasicNavigation::reset();
           m_gps_reading = false;
           m_usbl_reading = false;
+        }
+
+        void
+        setAngularMN()
+        {
+          if (m_dead_reckoning)
+          {
+            m_kal.setMeasurementNoise(OUT_PSI_AHRS, m_ahrs_mn_wimu[0]);
+            m_kal.setMeasurementNoise(OUT_R_AHRS, m_ahrs_mn_wimu[1]);
+          }
+          else
+          {
+            m_kal.setMeasurementNoise(OUT_PSI_AHRS, m_measure_noise[MN_PSI_AHRS]);
+            m_kal.setMeasurementNoise(OUT_R_AHRS, m_measure_noise[MN_YAWRATE_AHRS]);
+          }
+
+          m_kal.setMeasurementNoise(OUT_PSI_IMU, m_measure_noise[MN_PSI_IMU]);
+          m_kal.setMeasurementNoise(OUT_R_IMU, m_measure_noise[MN_YAWRATE_IMU]);
         }
 
         double
@@ -587,20 +622,29 @@ namespace Navigation
           m_kal.predict();
 
           // Euler Angles update modes.
-          double hrate = getHeadingRate();
-          m_kal.setOutput(OUT_R, hrate);
-
-          if (m_dead_reckoning)
-            m_heading += tstep * hrate;
-          else
-            m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
-
-          // Update heading in Kalman filter.
-          m_kal.setOutput(OUT_PSI, m_heading);
-          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getBiasedHeading());
-
+          //AHRS
+          //R
+          double hrate = getHeadingRate(false);
+          m_kal.setOutput(OUT_R_AHRS, hrate);
           double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
-          m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
+          m_kal.setInnovation(OUT_R_AHRS,  m_kal.getOutput(OUT_R_AHRS) - r);
+          //PSI
+          m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
+          m_kal.setOutput(OUT_PSI_AHRS, m_heading);
+          m_kal.setInnovation(OUT_PSI_AHRS, m_kal.getOutput(OUT_PSI_AHRS) - getBiasedHeading());
+
+          //IMU
+          if (m_dead_reckoning)
+          {
+            hrate = getHeadingRate(true);
+            m_kal.setOutput(OUT_R_IMU, hrate);
+            r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
+            m_kal.setInnovation(OUT_R_IMU,  m_kal.getOutput(OUT_R_IMU) - r);
+            //PSI
+            m_heading_imu += tstep * hrate;
+            m_kal.setOutput(OUT_PSI_IMU, m_heading);
+            m_kal.setInnovation(OUT_PSI_IMU, m_kal.getOutput(OUT_PSI_IMU) - getBiasedHeading());            
+          }
 
           // GPS innovation matrix.
           if (m_gps_reading || m_usbl_reading)
@@ -798,12 +842,28 @@ namespace Navigation
           m_kal.resetOutputs();
           m_kal.setObservation(OUT_U, STATE_U, 1.0);
           m_kal.setObservation(OUT_V, STATE_V, 1.0);
-          m_kal.setObservation(OUT_PSI, STATE_PSI, 1.0);
-          m_kal.setObservation(OUT_PSI, STATE_PSI_BIAS, 1.0);
-          m_kal.setObservation(OUT_R, STATE_R, 1.0);
-          m_kal.setObservation(OUT_R, STATE_R_BIAS, 0.0);
+
+
+          m_kal.setObservation(OUT_PSI_AHRS, STATE_PSI, 1.0);
+          m_kal.setObservation(OUT_PSI_AHRS, STATE_PSI_BIAS, 1.0);
+          m_kal.setObservation(OUT_R_AHRS, STATE_R, 1.0);
+          m_kal.setObservation(OUT_R_AHRS, STATE_R_BIAS, 0.0);
+
+          m_kal.setObservation(OUT_PSI_IMU, STATE_PSI, 0.0);
+          m_kal.setObservation(OUT_PSI_IMU, STATE_PSI_BIAS, 0.0);
+          m_kal.setObservation(OUT_R_IMU, STATE_R, 0.0);
+          m_kal.setObservation(OUT_R_IMU, STATE_R_BIAS, 0.0);
+          
+          
           m_kal.setObservation(OUT_GPS_X, STATE_X, 1.0);
           m_kal.setObservation(OUT_GPS_Y, STATE_Y, 1.0);
+
+          if (m_dead_reckoning)
+          {
+            m_kal.setObservation(OUT_PSI_IMU, STATE_PSI, 1.0);
+            m_kal.setObservation(OUT_PSI_IMU, STATE_PSI_BIAS, 1.0);
+            m_kal.setObservation(OUT_R_IMU, STATE_R, 1.0);
+          }
         }
 
         void
