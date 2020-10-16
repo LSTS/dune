@@ -1024,7 +1024,7 @@ namespace DUNE
 
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
-      m_navdata.cyaw = m_heading;
+      m_navdata.cyaw = Math::Angles::normalizeRadian(m_heading);
     }
 
     bool
