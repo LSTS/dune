@@ -207,6 +207,10 @@ namespace Control
         float m_hae_offset;
         //! Flag indicating task is booting.
         bool m_reboot;
+        //! Flag for calculating boot time
+        bool m_has_boot_time;
+        //! Ardupilot System Boot Time in useconds
+        uint64_t m_boot_usec;
         //! Flag indicating MSL-WGS84 offset has already been calculated.
         bool m_offset_st;
         //! WGS84 height on ground
@@ -278,7 +282,9 @@ namespace Control
           m_service(false),
           m_last_wp(0),
           m_land(false),
-		  m_gps_send(false)
+          m_gps_send(false),
+          m_has_boot_time(false),
+          m_boot_usec(0.0)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -448,8 +454,8 @@ namespace Control
           .description("Temperature of ESC failure (degrees).");
 
           param("USBL Main GPS", m_args.main_gps)
-			.defaultValue("false")
-			.description("Use USBL fixes as main GPS");
+            .defaultValue("false")
+            .description("Use USBL fixes as main GPS");
 
 
 
@@ -502,8 +508,12 @@ namespace Control
         void
         onResourceRelease(void)
         {
+          if(m_vehicle_type == VEHICLE_SUBMARINE)
+              sendGPSParams(false); // disable USBL GPS
+          //TODO clean SYSID_MYGCS to previous values
           Memory::clear(m_TCP_sock);
           Memory::clear(m_UDP_sock);
+
         }
 
         void
@@ -777,26 +787,26 @@ namespace Control
 
               //! Sending value 0 disables RC override for that channel
               mavlink_msg_rc_channels_override_pack(255, 0, &msg,
-                                                    1,
-                                                    1,
-                                                    0, //! RC Channel 1 (roll)
-                                                    0, //! RC Channel 2 (vertical rate)
-                                                    0, //! RC Channel 3 (speed)
-                                                    0, //! RC Channel 4 (rudder)
-                                                    0, //! RC Channel 5 (not used)
-                                                    0, //! RC Channel 6 (not used)
-                                                    0, //! RC Channel 7 (not used)
-                                                    0, //! RC Channel 8 (mode)
-													0, //! RC Channel 9 (not used)
-													0, //! RC Channel 10 (not used)
-													0, //! RC Channel 11 (not used)
-													0, //! RC Channel 12 (not used)
-													0, //! RC Channel 13 (not used)
-													0, //! RC Channel 14 (not used)
-													0, //! RC Channel 15 (not used)
-													0, //! RC Channel 16 (not used)
-													0, //! RC Channel 17 (not used)
-													0); //! RC Channel 18 (not used)
+               1,
+               1,
+               0, //! RC Channel 1 (roll)
+               0, //! RC Channel 2 (vertical rate)
+               0, //! RC Channel 3 (speed)
+               0, //! RC Channel 4 (rudder)
+               0, //! RC Channel 5 (not used)
+               0, //! RC Channel 6 (not used)
+               0, //! RC Channel 7 (not used)
+               0, //! RC Channel 8 (mode)
+               0, //! RC Channel 9 (not used)
+               0, //! RC Channel 10 (not used)
+               0, //! RC Channel 11 (not used)
+               0, //! RC Channel 12 (not used)
+               0, //! RC Channel 13 (not used)
+               0, //! RC Channel 14 (not used)
+               0, //! RC Channel 15 (not used)
+               0, //! RC Channel 16 (not used)
+               0, //! RC Channel 17 (not used)
+               0); //! RC Channel 18 (not used)
               uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
               sendData(buf, n);
             }
@@ -886,17 +896,17 @@ namespace Control
                                                 0, //! RC Channel 5 (not used)
                                                 0, //! RC Channel 6 (not used)
                                                 0, //! RC Channel 7 (not used)
-												0, //! RC Channel 8 (mode - do not override)
-												0, //! RC Channel 9 (not used)
-												0, //! RC Channel 10 (not used)
-												0, //! RC Channel 11 (not used)
-												0, //! RC Channel 12 (not used)
-												0, //! RC Channel 13 (not used)
-												0, //! RC Channel 14 (not used)
-												0, //! RC Channel 15 (not used)
-												0, //! RC Channel 16 (not used)
-												0, //! RC Channel 17 (not used)
-												0); //! RC Channel 18 (not used)
+                                                0, //! RC Channel 8 (mode - do not override)
+                                                0, //! RC Channel 9 (not used)
+                                                0, //! RC Channel 10 (not used)
+                                                0, //! RC Channel 11 (not used)
+                                                0, //! RC Channel 12 (not used)
+                                                0, //! RC Channel 13 (not used)
+                                                0, //! RC Channel 14 (not used)
+                                                0, //! RC Channel 15 (not used)
+                                                0, //! RC Channel 16 (not used)
+                                                0, //! RC Channel 17 (not used)
+                                                0); //! RC Channel 18 (not used)
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
         }
@@ -1152,7 +1162,7 @@ namespace Control
                                           (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
                                           -path->end_z, //! z PARAM7 / z position: global: -altitude (depth)
-										  MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
+                                          MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
           }
           else
           {
@@ -1172,7 +1182,7 @@ namespace Control
                                           (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
                                           alt - m_hae_offset, //! z PARAM7 / z position: global: altitude
-										  MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
+                                          MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
           }
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -1181,11 +1191,15 @@ namespace Control
 
           m_pcs.start_lat = m_lat;
           m_pcs.start_lon = m_lon;
-          m_pcs.start_z = altitude ? m_estate.alt : getHeight();
-          if (m_vehicle_type == VEHICLE_SUBMARINE)
-            m_pcs.start_z_units = IMC::Z_DEPTH;
-          else
-            m_pcs.start_z_units = altitude ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
+          if (m_vehicle_type == VEHICLE_SUBMARINE) {
+              m_pcs.start_z = m_estate.depth;
+              m_pcs.start_z_units = IMC::Z_DEPTH;
+          }
+          else {
+              m_pcs.start_z = altitude ? m_estate.alt : getHeight();
+              m_pcs.start_z_units = altitude ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT;
+          }
+
           m_pcs.end_lat = path->end_lat;
           m_pcs.end_lon = path->end_lon;
           m_pcs.end_z = path->end_z_units;;
@@ -1297,7 +1311,7 @@ namespace Control
                                           0, //! Latitude
                                           0, //! Longitude
                                           0, //! z PARAM7 / z position: global: altitude
-										  MAV_MISSION_TYPE_MISSION);
+                                          MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
@@ -1317,7 +1331,7 @@ namespace Control
                                           (float)Angles::degrees(dpath->end_lat), //! Latitude
                                           (float)Angles::degrees(dpath->end_lon), //! Longitude
                                           dpath->end_z - m_hae_offset, //! z PARAM7 / z position: global: altitude
-										  MAV_MISSION_TYPE_MISSION);
+                                          MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
@@ -1412,7 +1426,7 @@ namespace Control
                                           (float)Angles::degrees(land->lat), //! Touchdown Latitude
                                           (float)Angles::degrees(land->lon), //! Touchdown Longitude
                                           land->z - m_hae_offset,           //! z PARAM7 / z position: global: altitude
-										  MAV_MISSION_TYPE_MISSION);
+                                          MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
@@ -1517,16 +1531,16 @@ namespace Control
             else if (m_estate.depth > 0) { //VM::Water
               m_ground = false;
               if(m_gps_send) {
-            	  sendGPSParams(false); //disable USBL gps at surface
-            	  m_gps_send = false;
+                  sendGPSParams(false); //disable USBL gps at surface
+                  m_gps_send = false;
               }
             }
 
             if(vm->medium == IMC::VehicleMedium::VM_UNDERWATER) {
-            	if(!m_gps_send) {
-            		sendGPSParams(true); //enable underwater gps automatically when underwater
-            		m_gps_send = true;
-            	}
+                if(!m_gps_send) {
+                    sendGPSParams(true); //enable underwater gps automatically when underwater
+                    m_gps_send = true;
+                }
             }
 
             return;
@@ -1629,38 +1643,44 @@ namespace Control
           (void)msg;
         }
 
-	void consume(const IMC::UsblFixExtended *fix) {
-		if (m_vehicle_type == VEHICLE_SUBMARINE) {
-			if(!m_gps_send || !m_ground){
-				sendGPSParams(true); // Enable USBL GPS
-				m_gps_send = true;
-			}
-			// Create MAVLink GPS_INPUT message.
-			double lat = fix->lat;
-			double lon = fix->lon;
-			double z = fix->z;
-			WGS84::displace(0, 0, 0, &lat, &lon, &z);
-			lat = Angles::degrees(lat) * 1e7;
-			lon = Angles::degrees(lon) * 1e7;
-			uint16_t ignore_flags = 1 | 2 | 4 | 8 | 16 | 32; //https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS
+        void
+        consume(const IMC::UsblFixExtended *fix) {
+          if (m_vehicle_type == VEHICLE_SUBMARINE) {
+            debug(DTR("Received Remote Position from %d"),fix->getSource());
+            if(!m_gps_send || !m_ground){
+                sendGPSParams(true); // Enable USBL GPS
+                m_gps_send = true;
+                debug(DTR("Sending Ardupilot GPS Parameters"));
+            }
+            // Create MAVLink GPS_INPUT message.
+            double lat = fix->lat;
+            double lon = fix->lon;
+            double z = fix->z;
+            WGS84::displace(0, 0, 0, &lat, &lon, &z);
+            lat = Angles::degrees(lat) * 1e7;
+            lon = Angles::degrees(lon) * 1e7;
+            uint16_t ignore_flags = 1 | 2 | 4 | 8 | 16 | 32; //https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS
 
-			mavlink_message_t msg;
-			uint8_t buf[512];
-			int gps_id = m_args.main_gps ? 0 : 2;
-			//! Depth is handled by depth sensor
-			//! https://www.ardusub.com/developers/gps-positioning.htmlu
-			mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getSinceEpochMsec(), gps_id,
-					ignore_flags, 0, 0, 2, lat, lon, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11,m_estate.psi); //! YAW
-			int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-                        war("Sent USBL position to ArduSub");
-			sendData(buf, n);
-			m_estate.lat = fix->lat;
-			m_estate.lon = fix->lon;
-			//m_estate.z = fix->z;
-			m_estate.depth = fix->z;
-		}
-	}
+            mavlink_message_t msg;
+            uint8_t buf[512];
+            int gps_id = m_args.main_gps ? 0 : 2;
+            //! Depth is handled by depth sensor
+            //! https://www.ardusub.com/developers/gps-positioning.htmlu
+            mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getSinceEpochUsec(), gps_id,
+                    ignore_flags, 0, 0, 2, lat, lon, 0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11,m_estate.psi); //! YAW
+            int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
+                        trace(DTR("Sent USBL position to ArduSub"));
+            sendData(buf, n);
+            mavlink_msg_set_gps_global_origin_pack(255,0,&msg,m_sysid,lat,lon,0.0,Clock::getSinceEpochUsec());
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            m_estate.lat = fix->lat;
+            m_estate.lon = fix->lon;
+            m_estate.depth = fix->z;
+            dispatch(m_estate);
+          }
+        }
 
         void
         sendCommandPacket(uint16_t cmd, float arg1=0, float arg2=0, float arg3=0, float arg4=0, float arg5=0, float arg6=0, float arg7=0)
@@ -1719,6 +1739,8 @@ namespace Control
                 {
                   setEntityState(IMC::EntityState::ESTA_NORMAL, "External Control");
                   m_esta_ext = true;
+                  m_has_boot_time = false; //in case of reboot force calculation
+
                 }
               }
               else// if (getEntityState() != IMC::EntityState::ESTA_NORMAL)
@@ -2215,6 +2237,36 @@ namespace Control
             m_fix.validity |= IMC::GpsFix::GFV_VALID_VDOP;
             m_fix.vdop = 5;
           }
+
+          if(getTimeStamp(gps_raw.time_usec) && !m_args.hitl)
+            dispatch(m_fix);
+        }
+
+        bool getTimeStamp(uint64_t time_usec) {
+          time_t t = time_usec / 1000000;
+          struct tm* utc;
+          utc = gmtime(&t);
+          // verifies magnitude of timestamp in case is unix timestamp
+          if((utc->tm_year+1900) > 2014) {
+            m_fix.utc_time = utc->tm_hour * 3600 + utc->tm_min * 60 + utc->tm_sec + (time_usec % 1000000) * 1e-6;
+            m_fix.utc_year = utc->tm_year + 1900;
+            m_fix.utc_month = utc->tm_mon + 1;
+            m_fix.utc_day = utc->tm_mday;
+            m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
+            return true;
+          }
+          // Calculate unix timestamp from boot time
+          else if(m_has_boot_time){
+            t = (m_boot_usec+time_usec)/ 1000000;
+            utc = gmtime(&t);
+            m_fix.utc_time = utc->tm_hour * 3600 + utc->tm_min * 60 + utc->tm_sec + (time_usec % 1000000) * 1e-6;
+            m_fix.utc_year = utc->tm_year + 1900;
+            m_fix.utc_month = utc->tm_mon + 1;
+            m_fix.utc_day = utc->tm_mday;
+            m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
+            return true;
+          }
+          return false;
         }
 
         void
@@ -2552,7 +2604,7 @@ namespace Control
           d_pitch.value = Angles::radians(nav_out.nav_pitch);
           d_head.value = Angles::radians(nav_out.nav_bearing);
           d_z.value = getHeight() + nav_out.alt_error;
-          d_z.z_units = (m_vehicle_type == VEHICLE_SUBMARINE) ? IMC::Z_ALTITUDE : IMC::Z_HEIGHT; //FIXME
+          d_z.z_units = (m_vehicle_type == VEHICLE_SUBMARINE) ? IMC::Z_DEPTH : IMC::Z_HEIGHT;
 
           dispatch(d_roll);
           dispatch(d_pitch);
@@ -2701,9 +2753,11 @@ namespace Control
         void
         handleSystemTimePacket(const mavlink_message_t* msg)
         {
+          // If the boot timestamp was calculated there we are able to dispatch GPSFix when the msg is received
+          if(m_has_boot_time)
+            return;
           mavlink_system_time_t sys_time;
           mavlink_msg_system_time_decode(msg, &sys_time);
-
           time_t t = sys_time.time_unix_usec / 1000000;
           struct tm* utc;
           utc = gmtime(&t);
@@ -2716,6 +2770,15 @@ namespace Control
           if (m_fix.utc_year>2014)
             m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
 
+          m_boot_usec = sys_time.time_unix_usec - sys_time.time_boot_ms*1000;
+          m_has_boot_time = true;
+          t = m_boot_usec / 1000000;
+          utc = gmtime(&t);
+          war(DTR("Ardupilot boot time defined: %d:%d:%d %d/%d/%d"),utc->tm_hour,utc->tm_min,utc->tm_sec,utc->tm_mday,(utc->tm_mon+1),(utc->tm_year+1900));
+          //GPSFix data will interfere with VehicleMedium Logic - only dispatched when Mavlink msg is received
+          if(m_vehicle_type == VEHICLE_SUBMARINE){
+            return;
+          }
           if (!m_args.hitl)
             dispatch(m_fix);
         }
