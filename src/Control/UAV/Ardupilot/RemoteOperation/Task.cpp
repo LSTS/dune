@@ -56,10 +56,9 @@ namespace Control
         const int TRIM_STEP = 10;
         const uint16_t NOTUSED = 0; //0xffff;
         //! Shift functions and input hold are handled at a higher level in the (A)CCU side
-        const std::string remote_actions[17] =
-          { "GainUP", "GainDown", "TiltUP", "TiltDown", "Center", "LightDimmer",
-              "LightBrighter", "PitchForward", "PitchBackward", "RollLeft",
-              "RollRight", "Stabilize", "DepthHold", "Manual", "PositionHold",
+        const std::string remote_actions[12] =
+          { "GainUP", "GainDown", "TiltUP", "TiltDown", "LightDimmer",
+              "LightBrighter", "Stabilize", "DepthHold", "Manual", "PositionHold",
               "Arm", "Disarm"}; //TODO home and SK
         const std::string axis[6] =
           { "Pitch", "Roll", "Vertical", "Heading", "Forward", "Lateral" };
@@ -67,7 +66,7 @@ namespace Control
           { "MNT_RC_IN_TILT", "JS_GAIN_MAX", "JS_GAIN_MIN", "JS_GAIN_STEPS",
               "JS_LIGHTS_STEPS", "JS_THR_GAIN" };
         //! To ensure compatibility with ACCU APPS
-        const std::string accu_actions[3] = {"Accelerate","Decelerate","Stop"};
+        const std::string accu_actions[3] = {"Accelerate","Decelerate","Stop"};// Heading already implemented
         int rc_pwm[11];
 
         //! see: https://www.ardusub.com/operators-manual/rc-input-and-output.html
@@ -759,7 +758,7 @@ namespace Control
             }
 
             //Handle Lights
-            button = tl.get(remote_actions[6], 0);
+            button = tl.get(remote_actions[5], 0);
             mavlink_message_t mc;
             uint8_t buf[512];
             int len = mavlink_msg_to_send_buffer(buf, &mc);
@@ -780,7 +779,7 @@ namespace Control
             }
             else
             {
-              button = tl.get(remote_actions[5], 0);
+              button = tl.get(remote_actions[4], 0);
               if (button == 1)
               {
                 int newV = rc_pwm[RC_INPUT::Lights_1_Level] - step;
@@ -793,75 +792,36 @@ namespace Control
               }
             }
 
-            //Adjust Pitch and Roll - these values don't need to be reset after each iteraction
-            // more details in https://www.ardusub.com/operators-manual/button-functions.html
-            // and https://github.com/ArduPilot/ardupilot/blob/master/ArduSub/joystick.cpp#L332
-            button = tl.get(remote_actions[7], 0);
-            if (button == 1)
-            {
-              int newV = m_pitch_trim + TRIM_STEP;
-              m_pitch_trim = std::min(newV, TRIM_MAX);
-              //Inform user saved trim values
-              war(DTR("Pitch trim is at %d"), m_pitch_trim);
-            }
-
-            button = tl.get(remote_actions[8], 0);
-            if (button == 1)
-            {
-              int newV = m_pitch_trim - TRIM_STEP;
-              m_pitch_trim = std::max(newV, TRIM_MIN);
-              //Inform user saved trim values
-              war(DTR("Pitch trim is at %d"), m_pitch_trim);
-            }
-
-            button = tl.get(remote_actions[10], 0);
-            if (button == 1)
-            {
-              int newV = m_roll_trim + TRIM_STEP;
-              m_roll_trim = std::min(newV, TRIM_MAX);
-              //Inform user saved trim values
-              war(DTR("Roll trim is at %d"), m_roll_trim);
-            }
-
-            button = tl.get(remote_actions[9], 0);
-            if (button == 1)
-            {
-              int newV = m_roll_trim - TRIM_STEP;
-              m_roll_trim = std::max(newV, TRIM_MIN);
-              //Inform user saved trim values
-              war(DTR("Roll trim is at %d"), m_roll_trim);
-            }
-
-            button = tl.get(remote_actions[11], 0);
+            button = tl.get(remote_actions[6], 0);
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_STABILIZE);
 
             }
-            button = tl.get(remote_actions[12], 0);
+            button = tl.get(remote_actions[7], 0);
 
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_DEPTH_HOLD);
             }
-            button = tl.get(remote_actions[14], 0);
+            button = tl.get(remote_actions[9], 0);
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_POS_HOLD);
             }
 
-            button = tl.get(remote_actions[13], 0);
+            button = tl.get(remote_actions[8], 0);
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_MANUAL);
             }
-            button = tl.get(remote_actions[16], 0);
+            button = tl.get(remote_actions[11], 0);
             if (button == 1)
             {
               disarm();
             }
 
-            button = tl.get(remote_actions[15], 0);
+            button = tl.get(remote_actions[10], 0);
             if (button == 1)
             {
               arm();
