@@ -56,11 +56,11 @@ namespace Control
         const int TRIM_STEP = 10;
         const uint16_t NOTUSED = 0; //0xffff;
         //! Shift functions and input hold are handled at a higher level in the (A)CCU side
-        const std::string remote_actions[19] =
+        const std::string remote_actions[17] =
           { "GainUP", "GainDown", "TiltUP", "TiltDown", "Center", "LightDimmer",
               "LightBrighter", "PitchForward", "PitchBackward", "RollLeft",
               "RollRight", "Stabilize", "DepthHold", "Manual", "PositionHold",
-              "Arm", "Disarm","CameraPanUP","CameraPanDown"}; //TODO home and SK
+              "Arm", "Disarm"}; //TODO home and SK
         const std::string axis[6] =
           { "Pitch", "Roll", "Vertical", "Heading", "Forward", "Lateral" };
         const std::string js_params_id[6] =
@@ -419,6 +419,7 @@ namespace Control
             try
             {
               uint8_t buffer[512];
+              idle(false); //clean RC PWM input to neutral values
               //sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 0);
               uint16_t size = MAVLink::packCmd2Buffer(
                   MAV_CMD_COMPONENT_ARM_DISARM, m_targetid, buffer, 0);
@@ -463,25 +464,6 @@ namespace Control
             sendData(buffer, size);
             debug(DTR("Sent Heatbeat."));
           }
-
-          //! Enable and Disable UBLS as main GPS for navigation
-          //! uses MAVLink GPS_INPUT with best lock
-//          void
-//          sendGPSParams(bool enable)
-//          {
-//            if (enable)
-//            {
-//              setParamByName("GPS_AUTO_SWITCH", 1.0);
-//              setParamByName("EK2_GPS_TYPE", 2.0);
-//              setParamByName("GPS_TYPE", 14.0);
-//            }
-//            else
-//            {
-//              setParamByName("EK2_GPS_TYPE", 0.0);
-//              setParamByName("GPS_TYPE", 1.0);
-//
-//            }
-//          }
 
           void
           changeMode(uint8_t mode)
@@ -770,7 +752,7 @@ namespace Control
                 actuate();
                 rc_pwm[RC_INPUT::Camera_Tilt] = idle;
               }
-              war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
+             // war(DTR("Tilt RC %d PWM %d and step %d"),RC_INPUT::Camera_Tilt,rc_pwm[RC_INPUT::Camera_Tilt],m_cam_tilt_steps);
             }
 
             //Handle Lights
@@ -881,22 +863,6 @@ namespace Control
             {
               arm();
             }
-
-            button = tl.get(remote_actions[16], 0); //CameraTiltUP
-            if (button == 1)
-             {
-              float newV = rc_pwm[RC_INPUT::Camera_Pan] + m_lights_step;
-              newV = std::min(newV, (float)PWM_MAX);
-              rc_pwm[RC_INPUT::Camera_Pan] = newV;
-             }
-
-             button = tl.get(remote_actions[17], 0); //CameraPanDown
-             if (button == 1)
-             {
-               float newV = rc_pwm[RC_INPUT::Camera_Pan] - m_lights_step;
-              newV = std::max(newV, (float)PWM_MIN);
-              rc_pwm[RC_INPUT::Camera_Pan] = newV;
-             }
 
             actuate();
           }
