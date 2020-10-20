@@ -159,6 +159,10 @@ namespace Control
         float esc_temp;
         //! USBL as main GPS or blended
         bool main_gps;
+        //! Satellite number to accept GPSFix from Ardupilot
+        int n_sat;
+        //! Depth threshold to be considered surface.
+        float depth_lm;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -456,6 +460,11 @@ namespace Control
           param("USBL Main GPS", m_args.main_gps)
             .defaultValue("false")
             .description("Use USBL fixes as main GPS");
+          param("Number of Satellites", m_args.n_sat)
+            .defaultValue("8")
+            .description("Minimal Number of Satellites to accept GPS Fix");
+
+          m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_lm);
 
 
 
@@ -1526,10 +1535,12 @@ namespace Control
         {
           if(m_vehicle_type == VEHICLE_SUBMARINE)
           {
-            if(m_estate.depth == 0.0)
+            if(m_estate.depth <= 0.0 || m_estate.height >= 0.0)
               m_ground = true;
-            else if (m_estate.depth > 0) { //VM::Water
+            else if (m_estate.depth > 0.0 && m_estate.depth <= m_args.depth_lm) { //VM::Water
               m_ground = false;
+              debug(DTR("Vehicle in water"));
+              setEntityState(IMC::EntityState::ESTA_NORMAL,DTR("water"));
               if(m_gps_send) {
                   sendGPSParams(false); //disable USBL gps at surface
                   m_gps_send = false;
@@ -1659,7 +1670,7 @@ namespace Control
             WGS84::displace(0, 0, 0, &lat, &lon, &z);
             lat = Angles::degrees(lat) * 1e7;
             lon = Angles::degrees(lon) * 1e7;
-            uint16_t ignore_flags = 1 | 2 | 4 | 8 | 16 | 32; //https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS
+            uint16_t ignore_flags = 1 | 8 | 16 | 32; //https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS
 
             mavlink_message_t msg;
             uint8_t buf[512];
@@ -1667,12 +1678,12 @@ namespace Control
             //! Depth is handled by depth sensor
             //! https://www.ardusub.com/developers/gps-positioning.htmlu
             mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getSinceEpochUsec(), gps_id,
-                    ignore_flags, 0, 0, 2, lat, lon, 0.0, 0.0, 0.0,
+                    ignore_flags, 0, 0, 2, lat, lon, 0.0, fix->accuracy, fix->accuracy,
                     0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11,m_estate.psi); //! YAW
             int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
                         trace(DTR("Sent USBL position to ArduSub"));
             sendData(buf, n);
-            mavlink_msg_set_gps_global_origin_pack(255,0,&msg,m_sysid,lat,lon,0.0,Clock::getSinceEpochUsec());
+            mavlink_msg_set_gps_global_origin_pack(m_sysid,0,&msg,m_sysid,lat,lon,-1*m_estate.depth,Clock::getSinceEpochUsec());
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
             m_estate.lat = fix->lat;
@@ -2213,6 +2224,9 @@ namespace Control
           mavlink_gps_raw_int_t gps_raw;
 
           mavlink_msg_gps_raw_int_decode(msg, &gps_raw);
+          //Not a valid GPS position
+          if(gps_raw.satellites_visible < m_args.n_sat)
+            return;
 
           m_fix.cog = Angles::radians((double)gps_raw.cog * 0.01);
           m_fix.sog = (float)gps_raw.vel * 0.01;
