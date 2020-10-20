@@ -66,6 +66,8 @@ namespace Control
         const std::string js_params_id[6] =
           { "MNT_RC_IN_TILT", "JS_GAIN_MAX", "JS_GAIN_MIN", "JS_GAIN_STEPS",
               "JS_LIGHTS_STEPS", "JS_THR_GAIN" };
+        //! To ensure compatibility with ACCU APPS
+        const std::string accu_actions[3] = {"Accelerate","Decelerate","Stop"};
         int rc_pwm[11];
 
         //! see: https://www.ardusub.com/operators-manual/rc-input-and-output.html
@@ -117,6 +119,8 @@ namespace Control
           //!Trim values
           int m_pitch_trim;
           int m_roll_trim;
+          //! ACCU Remote Action Step
+          int m_accu_step;
           //! This System ID
           uint8_t m_sysid;
           //! Target_system System ID
@@ -140,6 +144,7 @@ namespace Control
 				  m_cam_tilt_steps(0),
 				  m_pitch_trim(0),
 				  m_roll_trim(0),
+				  m_accu_step(100),
 				  m_sysid(254),
 				  m_targetid(1),
 				  m_sys_status(MAV_STATE_UNINIT),
@@ -655,8 +660,6 @@ namespace Control
           void
           onRemoteActions(const IMC::RemoteActions* msg)
           {
-            //mavlink_msg_manual_control_pack(system_id, component_id, msg, target, x, y, z, r, buttons);
-            //war(DTR("Processing RemoteActions: %s"), msg->actions.c_str());
             TupleList tl(msg->actions);
             int button;
             button = tl.get(remote_actions[0], 0);
@@ -863,6 +866,32 @@ namespace Control
             {
               arm();
             }
+
+            int btn;
+            float value;
+            if(btn = tl.get(accu_actions[2], 0) != 0) { //STOP
+              m_args.rc[RC_INPUT::Forward].reverse = false;
+              rc_pwm[RC_INPUT::Forward] = PWM_IDLE;
+            }
+            if (btn = tl.get(accu_actions[1], 0) != 0) {
+              value = std::max((int)PWM_MIN,rc_pwm[RC_INPUT::Forward]-m_accu_step);
+              m_args.rc[RC_INPUT::Forward].reverse = true;
+              rc_pwm[RC_INPUT::Forward] = value;
+            }
+            else if (btn = tl.get(accu_actions[0], 0) != 0) {
+              war("ACCELERATING");
+              value = std::min((int)PWM_MAX,rc_pwm[RC_INPUT::Forward]+m_accu_step);
+              m_args.rc[RC_INPUT::Forward].reverse = false;
+              rc_pwm[RC_INPUT::Forward] = value;
+            }
+
+            /*float thrust = tl.get(accu_actions[0], NAN);
+            if (!isNaN(thrust))
+            {
+              // The user is inputing throuth the analog axis
+              bool reversed = thrust <= m_args.rc[RC_INPUT::Forward].val_neutral;
+              rc_pwm[RC_INPUT::Forward] = MAVLink::map2PWM(PWM_MAX,PWM_MIN,127.0,127.0,thrust,reversed);
+            }*/
 
             actuate();
           }
