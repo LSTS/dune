@@ -247,6 +247,7 @@ namespace Control
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 9; // Command type []
         uint8_t id; // The id of the IMU
+        double rt_clock; // Real-time clock [s]
         double accelerometer_x;
         double accelerometer_y;
         double accelerometer_z;
@@ -256,6 +257,7 @@ namespace Control
         double compass_x;
         double compass_y;
         double compass_z;
+        double temperature;
       };
     }
   }
