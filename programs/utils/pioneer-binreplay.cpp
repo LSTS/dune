@@ -348,6 +348,27 @@ main(int argc, char** argv)
           DUNE::Memory::clear(msgV2CompassCal);
         }
         break;
+      case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_CUSTOM_IMU:
+        {
+          Control::Pioneer::ProtocolMessages::DataVersion2CustomImu* msgV2Imu;
+          msgV2Imu = new Control::Pioneer::ProtocolMessages::DataVersion2CustomImu();
+          const int sizeMsg = sizeof(*msgV2Imu);
+          //data.resize(sizeMsg);
+          ifs->read(&data[2], sizeMsg - 2);
+          if (ifs->gcount() < sizeMsg - 2)
+            throw DUNE::IMC::BufferTooShort();
+          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2CustomImu>(
+              NULL, buf, 0, sizeMsg, msgV2Imu);
+          if (rb > 0)
+          {
+            if (skipOrProcess(cur_count))
+              continue;
+
+            sock.write(buf, sizeMsg, dest, port);
+          }
+          DUNE::Memory::clear(msgV2Imu);
+        }
+        break;
       default:
         if (skipOrProcess(cur_count))
           continue;
