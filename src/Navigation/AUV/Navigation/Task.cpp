@@ -163,6 +163,8 @@ namespace Navigation
         float rpm_max;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
+        //! Heading bias cov margin
+        double alignment_threshold;
         //! Heading alignment sensor diff threshold
         double alignment_diff;
         //! Diff threshold - buffer of values for threshold validation
@@ -265,6 +267,12 @@ namespace Navigation
           .description("Abort if position uncertainty is exceeded");
 
           param("Heading Bias Alignment Index", m_args.alignment_index)
+          .defaultValue("1e-5")
+          .minimumValue("1e-6")
+          .maximumValue("1e-4")
+          .description("Heading bias uncertainty alignment threshold");
+
+          param("Alignment Index Threshold", m_args.alignment_threshold)
           .defaultValue("1e-5")
           .minimumValue("1e-6")
           .maximumValue("1e-4")
@@ -738,10 +746,12 @@ namespace Navigation
             if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index &&
                 diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
             {
-                m_aligned = true;
-                m_heading_buffer=0;
+              m_aligned = true;
+              m_heading_buffer=0;
             }
-            else
+
+            if (m_kal.getCovariance(STATE_PSI_BIAS) > m_args.alignment_index + m_args.alignment_threshold ||
+                diff_psi > Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
             {
               if (m_aligned)
               {
