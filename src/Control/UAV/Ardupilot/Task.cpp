@@ -2767,9 +2767,6 @@ namespace Control
         void
         handleSystemTimePacket(const mavlink_message_t* msg)
         {
-          // If the boot timestamp was calculated there we are able to dispatch GPSFix when the msg is received
-          if(m_has_boot_time)
-            return;
           mavlink_system_time_t sys_time;
           mavlink_msg_system_time_decode(msg, &sys_time);
           time_t t = sys_time.time_unix_usec / 1000000;
@@ -2784,11 +2781,16 @@ namespace Control
           if (m_fix.utc_year>2014)
             m_fix.validity |= (IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE);
 
-          m_boot_usec = sys_time.time_unix_usec - sys_time.time_boot_ms*1000;
-          m_has_boot_time = true;
-          t = m_boot_usec / 1000000;
-          utc = gmtime(&t);
-          war(DTR("Ardupilot boot time defined: %d:%d:%d %d/%d/%d"),utc->tm_hour,utc->tm_min,utc->tm_sec,utc->tm_mday,(utc->tm_mon+1),(utc->tm_year+1900));
+          uint64_t boot_usec = sys_time.time_unix_usec - sys_time.time_boot_ms*1000;
+          // If the boot timestamp was calculated there we are able to dispatch GPSFix when the msg is received
+           if(!m_has_boot_time || boot_usec != m_boot_usec) {
+             m_boot_usec = boot_usec;
+             m_has_boot_time = true;
+             t = m_boot_usec / 1000000;
+             utc = gmtime(&t);
+             war(DTR("Ardupilot boot time defined: %d:%d:%d %d/%d/%d"),utc->tm_hour,utc->tm_min,utc->tm_sec,utc->tm_mday,(utc->tm_mon+1),(utc->tm_year+1900));
+
+           }
           //GPSFix data will interfere with VehicleMedium Logic - only dispatched when Mavlink msg is received
           if(m_vehicle_type == VEHICLE_SUBMARINE){
             return;
