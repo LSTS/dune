@@ -56,10 +56,10 @@ namespace Control
         const int TRIM_STEP = 10;
         const uint16_t NOTUSED = 0; //0xffff;
         //! Shift functions and input hold are handled at a higher level in the (A)CCU side
-        const std::string remote_actions[12] =
+        const std::string remote_actions[13] =
           { "GainUP", "GainDown", "TiltUP", "TiltDown", "LightDimmer",
               "LightBrighter", "Stabilize", "DepthHold", "Manual", "PositionHold",
-              "Arm", "Disarm"}; //TODO home and SK
+              "Arm", "Disarm","Guided"}; //TODO home and SK
         const std::string axis[6] =
           { "Pitch", "Roll", "Vertical", "Heading", "Forward", "Lateral" };
         const std::string js_params_id[6] =
@@ -814,6 +814,11 @@ namespace Control
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_MANUAL);
+            }
+            button = tl.get(remote_actions[12], 0);
+            if (button == 1)
+            {
+              changeMode(MAVLink::SUB_MODE_GUIDED);
             }
             button = tl.get(remote_actions[11], 0);
             if (button == 1)
