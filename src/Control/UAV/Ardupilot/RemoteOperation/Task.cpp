@@ -238,8 +238,8 @@ namespace Control
             addActionAxis(axis[Forward]); // Z
             addActionAxis(axis[Lateral]); // R
 
-            //! JS Buttons (17)
-            for (int button = 0; button < 17; button++)
+            //! JS Buttons (13)
+            for (int button = 0; button < 13; button++)
             {
               addActionButton(remote_actions[button]);
               //! Free buttons - A, RT, LT
