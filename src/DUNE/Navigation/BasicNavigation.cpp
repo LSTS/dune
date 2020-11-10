@@ -217,6 +217,10 @@ namespace DUNE
       .defaultValue("1.0")
       .description("Exponential moving average filter gain used in altitude");
 
+      param("IMU initialization time", m_imu_wait_time)
+      .defaultValue("20.0")
+      .description("Time navigation waits before using IMU data, in seconds");
+
       // Do not use the declination offset when simulating.
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
@@ -226,6 +230,7 @@ namespace DUNE
       m_edelta_ts = 0.1;
       m_rpm = 0;
       m_lbl_reading = false;
+      m_imu_state = IN_OFF;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
