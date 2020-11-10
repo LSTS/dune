@@ -421,48 +421,62 @@ namespace Navigation
             if (m_dead_reckoning)
               return;
 
-            // Dead reckoning mode.
-            m_dead_reckoning = true;
-            debug("start navigation alignment");
-
-            // Reinitialize state covariance matrix value.
-            m_kal.resetCovariance(STATE_PSI_BIAS);
-            m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
-
-            // Position process noise covariance value if IMU is available.
-            m_kal.setProcessNoise(STATE_X, m_args.pos_noise);
-            m_kal.setProcessNoise(STATE_Y, m_args.pos_noise);
-            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
-
-            m_heading_imu = m_heading;
-
-            // LBL noise.
-            for (unsigned i = 0; i < m_ranging.getSize(); i++)
-              m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise);
+            activateIMU();
           }
           else
           {
             if (!m_dead_reckoning)
               return;
 
-            // Stop integrate heading rates and use AHRS data.
-            m_dead_reckoning = false;
-            m_aligned = false;
-            debug("navigation not aligned");
-
-            m_kal.setState(STATE_PSI_BIAS, 0.0);
-
-            // No heading offset estimation without IMU.
-            m_kal.resetCovariance(STATE_PSI_BIAS);
-
-            // Reinitialize EKF variances.
-            m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
-            m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
-            m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
-
-            for (unsigned i = 0; i < m_ranging.getSize(); i++)
-              m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
+            deactivateIMU();
           }
+        }
+
+        void
+        activateIMU()
+        {
+          // Dead reckoning mode.
+          m_dead_reckoning = true;
+          debug("start navigation alignment");
+
+          // Reinitialize state covariance matrix value.
+          m_kal.resetCovariance(STATE_PSI_BIAS);
+          m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
+
+          // Position process noise covariance value if IMU is available.
+          m_kal.setProcessNoise(STATE_X, m_args.pos_noise);
+          m_kal.setProcessNoise(STATE_Y, m_args.pos_noise);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+
+          m_heading_imu = m_heading;
+
+          // LBL noise.
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
+            m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise);
+
+          setAngularMN();
+        }
+
+        void
+        deactivateIMU()
+        {
+          // Stop integrate heading rates and use AHRS data.
+          m_dead_reckoning = false;
+          m_aligned = false;
+          debug("navigation not aligned");
+
+          m_kal.setState(STATE_PSI_BIAS, 0.0);
+
+          // No heading offset estimation without IMU.
+          m_kal.resetCovariance(STATE_PSI_BIAS);
+
+          // Reinitialize EKF variances.
+          m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
+
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
+            m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
 
           setAngularMN();
         }
