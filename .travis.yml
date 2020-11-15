@@ -17,3 +17,4 @@ env:
 
 os:
 - linux
+- osx
