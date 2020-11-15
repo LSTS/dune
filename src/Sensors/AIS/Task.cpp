@@ -196,7 +196,10 @@ namespace Sensors
 
           // We are able to send a message with ship information.
           IMC::RemoteSensorInfo rsi;
-          rsi.id = static_cast<std::ostringstream*>(&(std::ostringstream() << msg.mmsi))->str();
+          std::ostringstream oss; 
+          oss << msg.mmsi;
+          
+          rsi.id = static_cast<std::ostringstream*>(&oss)->str();
 
           // Find ship type.
           std::map<int, std::string>::iterator itr = m_systems.find(msg.mmsi);
