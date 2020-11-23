@@ -218,7 +218,7 @@ namespace DUNE
       .description("Exponential moving average filter gain used in altitude");
 
       param("IMU initialization time", m_imu_wait_time)
-      .defaultValue("20.0")
+      .defaultValue("0.0")
       .description("Time navigation waits before using IMU data, in seconds");
 
       // Do not use the declination offset when simulating.
@@ -492,6 +492,15 @@ namespace DUNE
       {
         war(DTR("received euler angles delta beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
+        return;
+      }
+
+      // // IMU initialization
+      if (m_imu_state == IN_OFF)
+      {
+        m_imu_state = IN_INITIALIZING;
+        m_imu_timer.setTop(m_imu_wait_time);
+      
         return;
       }
 
