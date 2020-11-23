@@ -83,6 +83,8 @@ namespace Control
       bool log_pioneer_imc;
       //! Set time in Pioneer
       bool set_time_of_vehicle;
+      //! Initial position (degrees)
+      std::vector<double> position;
     };
 
     enum LoggerEnum
@@ -96,6 +98,8 @@ namespace Control
     {
       //! Task arguments.
       Arguments m_args;
+      //! Initial position.
+      IMC::GpsFix m_position;
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
@@ -170,6 +174,11 @@ namespace Control
         .defaultValue("true")
         .description("Set time of vehicle");
 
+        param("Initial Position", m_args.position)
+        .units(Units::Degree)
+        .size(2)
+        .description("Initial position of the vehicle");
+
         // Setup processing of IMC messages
         bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
@@ -193,6 +202,9 @@ namespace Control
           m_UDP_comm->setUDPPort(m_args.UDP_listen_port);
           m_UDP_comm->reconnect();
         }
+
+        if(paramChanged(m_args.position))
+          sendGpsFix();
       }
 
       //! Reserve entity identifiers.
@@ -294,6 +306,7 @@ namespace Control
       void
       onResourceInitialization(void)
       {
+        sendGpsFix();
       }
 
       void
@@ -640,7 +653,14 @@ namespace Control
       handlePioneerV2Telemetry(ProtocolMessages::DataVersion2Telemetry msg)
       {
         // TODO something with msg
-        debug("Depth = %d", msg.depth / 1000);
+        inf("Battery = %d min", msg.battery_run_time_to_empty);
+
+        // TEMPORARY - ACTUATION TESTING
+        war("Surge = %f (ref) | %f (control)", msg.reference_surge, msg.control_force_surge);
+        war("Sway = %f (ref) | %f (control)", msg.reference_sway, msg.control_force_sway);
+        war("Heave = %f (ref) | %f (control)", msg.reference_heave, msg.control_force_heave);
+        war("Yaw = %f (ref) | %f (control)", msg.reference_yaw, msg.control_force_yaw);
+        inf("Ref Heading = %f | Ref Depth = %f", msg.reference_heading, msg.reference_yaw);
 
         // Dispatching messages to bus
         IMC::Depth depth;
@@ -659,6 +679,29 @@ namespace Control
         temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
         dispatch(temp);
 
+        // TEMPORARY WHILE NO DVL INTEGRATED (for testing purposes)
+        // Considering linear relation between commanded force (up to max reported N) and "measured" speeds (m/s) in water tank.
+        IMC::DesiredControl dcontrol;
+        dcontrol.x = msg.control_force_surge;
+        dcontrol.y = msg.control_force_sway;
+        dcontrol.z = msg.control_force_heave;
+        dcontrol.n = msg.control_force_yaw;
+        dcontrol.flags = IMC::DesiredControl::FL_X | IMC::DesiredControl::FL_Y |
+                         IMC::DesiredControl::FL_Z | IMC::DesiredControl::FL_N;
+        dispatch(dcontrol);
+
+        bool boost = (!msg.reference_depth) ? false : true;
+        float factor_x, factor_y;
+        factor_x = boost ? 0.02 : 0.035;
+        factor_y = boost ? 0.009 : 0.0145;
+
+        IMC::WaterVelocity wvel;
+        wvel.x = dcontrol.x * factor_x;
+        wvel.y = dcontrol.y * factor_y;
+        wvel.z = dcontrol.z * factor_y;
+        wvel.validity = IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y | IMC::WaterVelocity::VAL_VEL_Z;
+        dispatch(wvel);
+
         if (m_args.generate_estimate_state_from_telemetry)
         {
           IMC::EstimatedState estate;
@@ -667,7 +710,7 @@ namespace Control
           estate.phi = Angles::radians((fp64_t) msg.roll);
           estate.theta = Angles::radians((fp64_t) msg.pitch);
           estate.psi = Angles::radians((fp64_t) msg.yaw);
-          estate.depth = (fp64_t) msg.depth;
+          estate.depth = (fp64_t) msg.depth / 1000;
           dispatch(estate);
         }
       }
@@ -685,7 +728,30 @@ namespace Control
       handlePioneerV2CustomImu(ProtocolMessages::DataVersion2CustomImu msg)
       {
         // TODO something with msg
-        war("IMU %u %lf %lf", msg.id, msg.accelerometer_x, msg.accelerometer_y);
+        if(msg.id != 1)
+          return;
+
+        // Dispatching IMU data to IMC bus
+        IMC::AngularVelocity angvel;
+        angvel.time = (fp64_t) msg.rt_clock; // device time
+        angvel.x = msg.gyro_x; // rad/s
+        angvel.y = msg.gyro_y; // rad/s
+        angvel.z = msg.gyro_z; // rad/s
+        dispatch(angvel);
+
+        IMC::Acceleration accel;
+        accel.time = (fp64_t) msg.rt_clock;
+        accel.x = msg.accelerometer_x * Math::c_gravity; // convert from G to m/s^2
+        accel.y = msg.accelerometer_y * Math::c_gravity; // convert from G to m/s^2
+        accel.z = msg.accelerometer_z * Math::c_gravity; // convert from G to m/s^2
+        dispatch(accel);
+
+        IMC::MagneticField mag;
+        mag.time = (fp64_t) msg.rt_clock;
+        mag.x = msg.compass_x * 0.000001; // convert to G
+        mag.y = msg.compass_y * 0.000001; // convert to G
+        mag.z = msg.compass_z * 0.000001; // convert to G
+        dispatch(mag);
       }
 
       void
@@ -742,6 +808,17 @@ namespace Control
             }
             break;
         }
+      }
+
+      //! Sends GpsFix defined in configurations
+      void
+      sendGpsFix(void)
+      {
+        m_position.lat = Math::Angles::radians(m_args.position[0]);
+        m_position.lon = Math::Angles::radians(m_args.position[1]);
+        m_position.type = IMC::GpsFix::GFT_STANDALONE;
+        m_position.validity = 0xffff;
+        dispatch(m_position);
       }
 
       //! Main loop.
