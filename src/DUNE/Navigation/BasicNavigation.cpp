@@ -224,7 +224,6 @@ namespace DUNE
       // Do not use the declination offset when simulating.
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
-      m_dead_reckoning = false;
       m_alt_sanity = true;
       m_aligned = false;
       m_edelta_ts = 0.1;
@@ -1181,7 +1180,7 @@ namespace DUNE
               return;
             }
 
-            if (m_dead_reckoning)
+            if (m_imu_state >= IN_ALIGNING)
             {
               if (m_aligned)
                 setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNED);

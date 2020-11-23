@@ -345,7 +345,7 @@ namespace Navigation
           for (unsigned i = 0; i < m_ranging.getSize(); i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
 
-          if (m_dead_reckoning)
+          if (m_imu_state >= IN_ALIGNING)
           {
             // Position process noise covariance value if IMU is available.
             m_kal.setProcessNoise(STATE_X, m_args.pos_noise);
@@ -414,18 +414,10 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if ((msg->state == IMC::EntityActivationState::EAS_ACTIVE ||
+          if (!(msg->state == IMC::EntityActivationState::EAS_ACTIVE ||
                msg->state == IMC::EntityActivationState::EAS_ACT_DONE))
           {
-            // IMU already activated.
-            if (m_dead_reckoning)
-              return;
-
-            activateIMU();
-          }
-          else
-          {
-            if (!m_dead_reckoning)
+            if (m_imu_state == IN_OFF)
               return;
 
             deactivateIMU();
@@ -436,8 +428,6 @@ namespace Navigation
         activateIMU()
         {
           // Dead reckoning mode.
-          m_dead_reckoning = true;
-          debug("start navigation alignment");
 
           // Reinitialize state covariance matrix value.
           m_kal.resetCovariance(STATE_PSI_BIAS);
@@ -461,7 +451,7 @@ namespace Navigation
         deactivateIMU()
         {
           // Stop integrate heading rates and use AHRS data.
-          m_dead_reckoning = false;
+          m_imu_state = IN_OFF;
           m_aligned = false;
           debug("navigation not aligned");
 
@@ -515,7 +505,7 @@ namespace Navigation
         void
         setAngularMN()
         {
-          if (m_dead_reckoning)
+          if (m_imu_state >= IN_ALIGNING)
           {
             m_kal.setMeasurementNoise(OUT_PSI_AHRS, m_ahrs_mn_wimu[0]);
             m_kal.setMeasurementNoise(OUT_R_AHRS, m_ahrs_mn_wimu[1]);
@@ -656,7 +646,7 @@ namespace Navigation
           m_kal.setInnovation(OUT_PSI_AHRS, m_kal.getOutput(OUT_PSI_AHRS) - getBiasedHeading());
 
           //IMU
-          if (m_dead_reckoning)
+          if (m_imu_state >= IN_ALIGNING)
           {
             hrate = getHeadingRate(true);
             m_kal.setOutput(OUT_R_IMU, hrate);
@@ -750,37 +740,7 @@ namespace Navigation
 
           m_kal.setState(STATE_K, k_lim);
 
-          // Check alignment threshold index.
-          double diff_psi = std::abs(Angles::normalizeRadian(Angles::normalizeRadian(m_kal.getState(STATE_PSI))
-                                                             - Angles::normalizeRadian(getEuler(AXIS_Z)) ) );
-
-
-          if (m_dead_reckoning)
-          {
-            if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index &&
-                diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
-            {
-              m_aligned = true;
-              m_heading_buffer=0;
-            }
-
-            if (m_kal.getCovariance(STATE_PSI_BIAS) > m_args.alignment_index + m_args.alignment_threshold ||
-                diff_psi > Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
-            {
-              if (m_aligned)
-              {
-                m_heading_buffer++;
-                if(m_heading_buffer > m_args.heading_buffer_value)
-                {
-                  sendDeActiveIMU();
-                  war(DTR("navigation not aligned - Automatic IMU poweroff"));
-                  m_aligned  = false;
-                  m_heading_buffer=0;
-                }
-              }
-            }
-          }
-
+          imuStateMachine();
           checkUncertainty(m_args.abort);
 
           logData();
@@ -805,6 +765,72 @@ namespace Navigation
           msg.name = m_args.elabel_imu ;
           msg.params.push_back(p);
           dispatch(msg);
+        }
+
+        void
+        imuStateMachine()
+        {
+          switch(m_imu_state)
+          {
+            case IN_OFF:
+              break;
+
+            case IN_INITIALIZING:
+              spew("Initializing");
+              if (m_imu_timer.overflow())
+              {
+                debug("start navigation alignment");
+                m_imu_state = IN_ALIGNING;
+                activateIMU();
+              }
+              break;
+
+            case IN_ALIGNING:
+              spew("Alignment");
+              if (checkAlignment(m_args.alignment_index))
+              {
+                m_aligned = true;
+                m_imu_state = IN_ON;
+                m_heading_buffer=0;
+              }
+              break;
+
+            case IN_ON:
+              spew("Dead Reck");
+              if (checkAlignment(m_args.alignment_index + m_args.alignment_threshold))
+              {
+                m_aligned = true;
+                m_heading_buffer=0;
+              }
+              else
+              {
+                m_heading_buffer++;
+                if(m_heading_buffer > m_args.heading_buffer_value)
+                {
+                  sendDeActiveIMU();
+                  war(DTR("navigation not aligned - Automatic IMU poweroff"));
+                  m_aligned = false;
+                  m_heading_buffer=0;
+                }
+              }
+              
+              break;
+
+            default:
+              // Restart
+              m_imu_state = IN_OFF;
+              break;
+          }
+        }
+
+        bool
+        checkAlignment(double alignment_index)
+        {
+          double diff_psi = std::abs(Angles::normalizeRadian(Angles::normalizeRadian(m_kal.getState(STATE_PSI))
+                            - Angles::normalizeRadian(getEuler(AXIS_Z)) ) );
+
+          return m_kal.getCovariance(STATE_PSI_BIAS) < alignment_index &&
+                  diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff));
         }
 
         void
@@ -882,7 +908,7 @@ namespace Navigation
           m_kal.setObservation(OUT_GPS_X, STATE_X, 1.0);
           m_kal.setObservation(OUT_GPS_Y, STATE_Y, 1.0);
 
-          if (m_dead_reckoning)
+          if (m_imu_state >= IN_ALIGNING)
           {
             m_kal.setObservation(OUT_PSI_IMU, STATE_PSI, 1.0);
             m_kal.setObservation(OUT_PSI_IMU, STATE_PSI_BIAS, 1.0);

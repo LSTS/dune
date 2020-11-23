@@ -578,8 +578,6 @@ namespace DUNE
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
       double m_last_z;
-      //! Dead reckoning mode.
-      bool m_dead_reckoning;
       //! IMU Navigation state.
       IMUNavigationStates m_imu_state;
       //! Vehicle is aligned.
