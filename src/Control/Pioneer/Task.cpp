@@ -660,7 +660,7 @@ namespace Control
         war("Sway = %f (ref) | %f (control)", msg.reference_sway, msg.control_force_sway);
         war("Heave = %f (ref) | %f (control)", msg.reference_heave, msg.control_force_heave);
         war("Yaw = %f (ref) | %f (control)", msg.reference_yaw, msg.control_force_yaw);
-        inf("Ref Heading = %f | Ref Depth = %f", msg.reference_heading, msg.reference_yaw);
+        inf("Ref Heading = %f | Ref Depth = %d", msg.reference_heading, msg.reference_depth);
 
         // Dispatching messages to bus
         IMC::Depth depth;
@@ -690,7 +690,7 @@ namespace Control
                          IMC::DesiredControl::FL_Z | IMC::DesiredControl::FL_N;
         dispatch(dcontrol);
 
-        bool boost = (!msg.reference_depth) ? false : true;
+        bool boost = (msg.control_force_surge > 20 || msg.control_force_sway > 15) ? true : false;
         float factor_x, factor_y;
         factor_x = boost ? 0.02 : 0.035;
         factor_y = boost ? 0.009 : 0.0145;
