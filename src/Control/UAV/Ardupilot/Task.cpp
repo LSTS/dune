@@ -28,7 +28,8 @@
 // Author: Eduardo Marques                                                  *
 // Author: Ricardo Martins                                                  *
 // Author: Joao Fortuna                                                     *
-// Author: Maria Costa                                                      *
+// Author: Maria Costa
+// Author: Keila Lima
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -227,6 +228,8 @@ namespace Control
         bool m_critical;
         //! Bitfield of enabled control loops.
         uint32_t m_cloops;
+        //! Mission Item count
+        uint8_t m_mission_int;
         //! Parser Variables
         mavlink_message_t m_msg;
         int m_desired_radius;
@@ -252,9 +255,13 @@ namespace Control
         float m_gb_pan, m_gb_tilt, m_gb_retract;
         //! Flag to signal if a land maneuver occured
         bool m_land;
-        //! GPS input parameters
-        bool m_gps_send;
+        //! Timeout for Mission Service Transactions
+        Time::Counter<float> m_mission_timeout;
+        int m_mission_send_tries,m_mission_count_retries;
+        bool m_mission,m_send_wp;
 
+        //! \param name
+        //! \param ctx
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
           m_TCP_sock(NULL),
@@ -286,9 +293,14 @@ namespace Control
           m_service(false),
           m_last_wp(0),
           m_land(false),
-          m_gps_send(false),
           m_has_boot_time(false),
-          m_boot_usec(0.0)
+          m_boot_usec(0.0),
+          m_mission_int(0),
+          m_mission_timeout(1.5), //default 1500 ms | Mission Item 250 ms | reties 5
+          m_mission_send_tries(0),
+          m_mission_count_retries(0),
+          m_mission(false),
+          m_send_wp(false)
         {
           param("Communications Timeout", m_args.comm_timeout)
           .minimumValue("1")
@@ -490,6 +502,10 @@ namespace Control
           //m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionRequestPacket;
           m_mlh[MAVLINK_MSG_ID_RAW_IMU] = &Task::handleImuRaw;
           m_mlh[MAVLINK_MSG_ID_PARAM_VALUE] = &Task::handleParams;
+          m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST] = &Task::handleMissionReqPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_REQUEST_INT] = &Task::handleMissionReqIntPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM_REACHED] = &Task::handleMissionReachedPacket;
+
 
           // Setup processing of IMC messages
           bind<DesiredPath>(this);
@@ -508,6 +524,7 @@ namespace Control
           bind<Takeoff>(this);
           bind<Land>(this);
           bind<UsblFixExtended>(this);
+          bind<PlanControl>(this);
 
           //! Misc. initialization
           m_last_pkt_time = 0; //! time of last packet from Ardupilot
@@ -517,8 +534,6 @@ namespace Control
         void
         onResourceRelease(void)
         {
-          if(m_vehicle_type == VEHICLE_SUBMARINE)
-              sendGPSParams(false); // disable USBL GPS
           //TODO clean SYSID_MYGCS to previous values
           Memory::clear(m_TCP_sock);
           Memory::clear(m_UDP_sock);
@@ -572,7 +587,7 @@ namespace Control
             inf(DTR("Ardupilot interface initialized"));
 
             // Clear previous mission on autopilot
-            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0,MAV_MISSION_TYPE_ALL);
+            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0,MAV_MISSION_TYPE_MISSION);
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
             debug("Cleared mission in ardupilot.");
@@ -583,75 +598,6 @@ namespace Control
             Memory::clear(m_UDP_sock);
             war(DTR("Connection failed, retrying..."));
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
-          }
-        }
-
-        void
-        sendGPSParams(bool enable)
-        {
-          mavlink_message_t msg;
-          uint8_t buf[512];
-          int n;
-          //USBL integration params
-          if (m_vehicle_type == VEHICLE_SUBMARINE)
-          {
-            if (enable)
-            {
-              mavlink_msg_param_set_pack(255, 0, &msg, m_sysid, //! target_system System ID
-                                         0, //! target_component Component ID
-                                         "EK2_GPS_TYPE", //! Parameter name
-                                         2.0, //! 2D Position(2)
-                                         MAV_PARAM_TYPE_UINT8); //! Parameter type
-              n = mavlink_msg_to_send_buffer(buf, &msg);
-              sendData(buf, n);
-
-              mavlink_msg_param_set_pack(255, 0, &msg, m_sysid, //! target_system System ID
-                                         0, //! target_component Component ID
-                                         "GPS_AUTO_SWITCH", //! Parameter name
-                                         1.0, //! 0-disable, 1-use best lock, 2-blend, 3-use worst
-                                         MAV_PARAM_TYPE_UINT8); //! Parameter type
-              n = mavlink_msg_to_send_buffer(buf, &msg);
-              sendData(buf, n);
-
-              if (m_args.main_gps)
-              {
-                mavlink_msg_param_set_pack(255, 0, &msg, m_sysid, //! target_system System ID
-                                           0, //! target_component Component ID
-                                           "GPS_TYPE", //! Parameter name
-                                           14.0, //! MAV GPS Type
-                                           MAV_PARAM_TYPE_UINT8); //! Parameter type
-                n = mavlink_msg_to_send_buffer(buf, &msg);
-              }
-              else
-              {
-                mavlink_msg_param_set_pack(255, 0, &msg, m_sysid, //! target_system System ID
-                                           0, //! target_component Component ID
-                                           "GPS_TYPE2", //! Parameter name
-                                           14.0, //! MAV GPS Type
-                                           MAV_PARAM_TYPE_UINT8); //! Parameter type
-                n = mavlink_msg_to_send_buffer(buf, &msg);
-
-              }
-              sendData(buf, n);
-            }
-            else
-            {
-              mavlink_msg_param_set_pack(255, 0, &msg, m_sysid, //! target_system System ID
-                                         0, //! target_component Component ID
-                                         "EK2_GPS_TYPE", //! Parameter name
-                                         0.0, //GPS 3D Vel and 2D Pos
-                                         MAV_PARAM_TYPE_UINT8); //! Parameter type
-              n = mavlink_msg_to_send_buffer(buf, &msg);
-              sendData(buf, n);
-
-              mavlink_msg_param_set_pack(255, 0, &msg, m_sysid, //! target_system System ID
-                                         0, //! target_component Component ID
-                                         "GPS_TYPE", //! Parameter name
-                                         1.0, //! AUTO
-                                         MAV_PARAM_TYPE_UINT8); //! Parameter type
-              n = mavlink_msg_to_send_buffer(buf, &msg);
-              sendData(buf, n);
-            }
           }
         }
 
@@ -763,7 +709,7 @@ namespace Control
         void
         consume(const IMC::ControlLoops* cloops)
         {
-          if (m_external && cloops->enable)
+          if (m_external && cloops->enable && m_vehicle_type != VEHICLE_SUBMARINE)
           {
             m_controllps = *cloops;
             inf(DTR("ArduPilot is in Manual mode, saving control loops."));
@@ -1046,7 +992,8 @@ namespace Control
         void
         consume(const IMC::DesiredPath* path)
         {
-          if (m_external)
+          war("Received DesiredPath");
+          if (m_external && (m_vehicle_type != VEHICLE_SUBMARINE))
           {
             m_dpath = *path;
             inf(DTR("ArduPilot is in Manual mode, saving desired path."));
@@ -1076,8 +1023,8 @@ namespace Control
             // Planes must first be set to guided as of AP 3.3.0
             uint8_t mode;
             if(m_vehicle_type == VEHICLE_SUBMARINE)
-              mode = (uint8_t) MAVLink::SUB_MODE_GUIDED;
-            else
+              mode = (uint8_t) MAVLink::SUB_MODE_AUTO;
+            else //FIXME
               mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
 
             mavlink_msg_set_mode_pack(255, 0, &msg,
@@ -1086,7 +1033,7 @@ namespace Control
                                       mode);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
-            debug("Guided MODE on ardupilot is set.");
+            debug("Auto MODE on ardupilot is set.");
           }
 
           //! Setting airspeed parameter
@@ -1156,22 +1103,30 @@ namespace Control
           }
           else if (m_vehicle_type == VEHICLE_SUBMARINE)
           {
+            err(DTR("Init Mission Logic"));
+            // Send Mission Count
+            sendMissionCount(); //TODO clear first?
+            //Send AUTO MODE
+            m_mission_count_retries = 0;
+            m_mission_timeout.reset();
             mavlink_msg_mission_item_int_pack(255, 0, &msg,
-                                          m_sysid, //! target_system System ID
-                                          0, //! target_component Component ID
-                                          1, //! seq Sequence
-                                          MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
-                                          MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
-                                          2, //! current false:0, true:1, guided mode:2
-                                          0, //! autocontinue to next wp
-                                          0, //! p1 - Radius of acceptance? Think not used.
-                                          0, //! Not used
-                                          0, // direction does not matter for copter.
-                                          0, //! Not used
-                                          (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position, global: latitude
-                                          (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
-                                          -path->end_z, //! z PARAM7 / z position: global: -altitude (depth)
-                                          MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
+                                            m_sysid, //! target_system System ID
+                                            0, //! target_component Component ID
+                                            1, //! seq Sequence (count-1)
+                                            MAV_FRAME_GLOBAL_RELATIVE_ALT, //! frame The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h
+                                            MAV_CMD_NAV_WAYPOINT, //! command The scheduled action for the MISSION. see MAV_CMD in ardupilotmega.h
+                                            0, //! current mission item false:0, true:1 |  guided mode:2??
+                                            1, //! autocontinue to next wp
+                                            0, //! Hold time in seconds
+                                            0, //! Radius of acceptance in meters
+                                            0, //
+                                            NAN, //! YAW - direction does not matter - NaN use current heading
+                                            (float)Angles::degrees(path->end_lat), //! x PARAM5 / local: x position * 1e4, global: latitude *10^7
+                                            (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
+                                            (-1)*path->end_z, //! z PARAM7 / z position: global Z-up: -altitude (depth)
+                                            MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
+            m_mission_items.push(msg);
+            war(DTR("Setting Lat:%f Lon:%f Z:%f"),(float)Angles::degrees(path->end_lat),(float)Angles::degrees(path->end_lon),(-1)*path->end_z);
           }
           else
           {
@@ -1192,9 +1147,9 @@ namespace Control
                                           (float)Angles::degrees(path->end_lon), //! y PARAM6 / y position: global: longitude
                                           alt - m_hae_offset, //! z PARAM7 / z position: global: altitude
                                           MAV_MISSION_TYPE_MISSION); //! Mission Type 0 - Items are mission commands for main mission
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
           }
-          n = mavlink_msg_to_send_buffer(buf, &msg);
-          sendData(buf, n);
 
           m_changing_wp = true;
 
@@ -1266,7 +1221,7 @@ namespace Control
           mavlink_message_t msg;
 
           // Clear previous mission on autopilot
-          mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_ALL); //! Mission Type 255 - Only used in MISSION_CLEAR_ALL to clear all mission type
+          mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_MISSION); //! Mission Type 255 - Only used in MISSION_CLEAR_ALL to clear all mission type
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
           debug("Cleared mission in ardupilot.");
@@ -1485,7 +1440,8 @@ namespace Control
           }
           else
           {
-            mode = (uint8_t) MAVLink::SUB_MODE_POS_HOLD;
+              //! Do nothing on Idle
+            /*mode = (uint8_t) MAVLink::SUB_MODE_POS_HOLD;
 
             mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
@@ -1493,7 +1449,7 @@ namespace Control
                                       mode);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
-            debug("Changed to POS_HOLD mode.");
+            debug("Changed to POS_HOLD mode.");*/
           }
 
           m_pcs.start_lat = m_fix.lat;
@@ -1541,17 +1497,6 @@ namespace Control
               m_ground = false;
               debug(DTR("Vehicle in water"));
               setEntityState(IMC::EntityState::ESTA_NORMAL,DTR("water"));
-              if(m_gps_send) {
-                  sendGPSParams(false); //disable USBL gps at surface
-                  m_gps_send = false;
-              }
-            }
-
-            if(vm->medium == IMC::VehicleMedium::VM_UNDERWATER) {
-                if(!m_gps_send) {
-                    sendGPSParams(true); //enable underwater gps automatically when underwater
-                    m_gps_send = true;
-                }
             }
 
             return;
@@ -1565,7 +1510,7 @@ namespace Control
           if (m_ground && m_land && m_external)
           {
             // Clear previous mission on autopilot
-            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0, MAV_MISSION_TYPE_ALL);
+            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0, MAV_MISSION_TYPE_MISSION);
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
             debug("Cleared mission in ardupilot.");
@@ -1658,11 +1603,6 @@ namespace Control
         consume(const IMC::UsblFixExtended *fix) {
           if (m_vehicle_type == VEHICLE_SUBMARINE) {
             debug(DTR("Received Remote Position from %d"),fix->getSource());
-            if(!m_gps_send || !m_ground){
-                sendGPSParams(true); // Enable USBL GPS
-                m_gps_send = true;
-                debug(DTR("Sending Ardupilot GPS Parameters"));
-            }
             // Create MAVLink GPS_INPUT message.
             double lat = fix->lat;
             double lon = fix->lon;
@@ -1670,26 +1610,56 @@ namespace Control
             WGS84::displace(0, 0, 0, &lat, &lon, &z);
             lat = Angles::degrees(lat) * 1e7;
             lon = Angles::degrees(lon) * 1e7;
-            uint16_t ignore_flags = 1 | 8 | 16 | 32; //https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS
+            uint16_t ignore_flags =  GPS_INPUT_IGNORE_FLAG_HDOP | GPS_INPUT_IGNORE_FLAG_VDOP | GPS_INPUT_IGNORE_FLAG_VEL_HORIZ
+                                      | GPS_INPUT_IGNORE_FLAG_VEL_VERT | GPS_INPUT_IGNORE_FLAG_SPEED_ACCURACY; // GPS_INPUT_IGNORE_FLAG_ALT https://mavlink.io/en/messages/common.html#GPS_INPUT_IGNORE_FLAGS 1 | 8 | 16 | 32
 
             mavlink_message_t msg;
             uint8_t buf[512];
-            int gps_id = m_args.main_gps ? 0 : 2;
-            //! Depth is handled by depth sensor
+            int gps_id = m_args.main_gps ? 0 : 1;
             //! https://www.ardusub.com/developers/gps-positioning.htmlu
             mavlink_msg_gps_input_pack(m_sysid, 0, &msg, Clock::getSinceEpochUsec(), gps_id,
-                    ignore_flags, 0, 0, 2, lat, lon, 0.0, fix->accuracy, fix->accuracy,
-                    0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 11,m_estate.psi); //! YAW
+                    ignore_flags, 0, 0, 2, lat, lon, -1*z, fix->accuracy, fix->accuracy, //-1*z
+                    0.0, 0.0, 0.0, 0.0, fix->accuracy, fix->accuracy, 10,m_estate.psi); //! YAW
+            //mavlink_msg_gps_raw_int_pack(m_sysid,0,&msg,Clock::getSinceEpochUsec(),2,lat,lon,z,UINT16_MAX,UINT16_MAX,m_gnd_speed,UINT16_MAX,11,0,fix->accuracy,0,0,0,m_estate.psi);
             int16_t n = mavlink_msg_to_send_buffer(buf, &msg);
-                        trace(DTR("Sent USBL position to ArduSub"));
+            trace(DTR("Sent USBL position to ArduSub"));
             sendData(buf, n);
-            mavlink_msg_set_gps_global_origin_pack(m_sysid,0,&msg,m_sysid,lat,lon,-1*m_estate.depth,Clock::getSinceEpochUsec());
+            /*mavlink_msg_set_gps_global_origin_pack(m_sysid,0,&msg,m_sysid,lat,lon,-1*z,Clock::getSinceEpochUsec());
             n = mavlink_msg_to_send_buffer(buf, &msg);
-            sendData(buf, n);
+            sendData(buf, n);*/ //FIXME
+            m_lat = fix->lat;
+            m_lon = fix->lon;
             m_estate.lat = fix->lat;
             m_estate.lon = fix->lon;
             m_estate.depth = fix->z;
             dispatch(m_estate);
+          }
+        }
+
+        void
+        consume(const PlanControl* pc)
+        {
+          if(pc->op == IMC::PlanControl::PC_START && pc->type == IMC::PlanControl::PC_REQUEST)
+          {
+              err("Sending initial config");
+              //! Clear previous mission/replace
+              uint16_t n;
+              mavlink_message_t msg;
+              uint8_t buf[512];
+              // Cleanup the Queue of WP Items
+              while(!m_mission_items.empty())
+                m_mission_items.pop();
+              m_send_wp = false;
+              //! Send a mission to allow entering in AUTO_MODE
+              //mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_MISSION); //! Mission Type 255 - Only used in MISSION_CLEAR_ALL to clear all mission type
+              //n = mavlink_msg_to_send_buffer(buf, &msg);
+              //sendData(buf, n);
+
+          }
+          else if(pc->op == IMC::PlanControl::PC_STOP && pc->type == IMC::PlanControl::PC_REQUEST) //|| pc->type == IMC::PlanControl::PC_FAILURE
+          {
+            debug(DTR("Cancelling Mission"));
+            cancelMission();
           }
         }
 
@@ -1714,16 +1684,64 @@ namespace Control
           if (next && !m_mission_items.empty())
             m_mission_items.pop();
 
+          if(m_mission_send_tries >= 5)
+          {
+            err(DTR("Exceeded Mission Item sending retries."));
+            while(!m_mission_items.empty())
+              m_mission_items.pop();
+            return;
+          }
           if (m_mission_items.empty())
           {
             debug("Mission Item queue is empty.");
             return;
           }
-
+          war("Sending Mission Item");
           uint8_t buf[512];
-
           uint16_t n = mavlink_msg_to_send_buffer(buf, &m_mission_items.front());
           sendData(buf, n);
+          m_mission_send_tries++;
+        }
+
+        //! Sent previous to Mission Item (DesiredPath) sending. If count is zero previous missions are cleared
+        void
+        sendMissionCount()
+        {
+          err("Sending Mission Count");
+          uint16_t n;
+          mavlink_message_t msg;
+          uint8_t buf[512];
+          if(m_mission_count_retries >= 5)
+          {
+            err(DTR("Ardupilot exceeded max mission count send tries"));
+            mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_MISSION); //! Mission Type 255 - Only used in MISSION_CLEAR_ALL to clear all mission type
+            n = mavlink_msg_to_send_buffer(buf, &msg);
+            sendData(buf, n);
+            while(!m_mission_items.empty())
+              m_mission_items.pop();
+            return;
+          }
+          mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 1, MAV_MISSION_TYPE_MISSION);
+          n = mavlink_msg_to_send_buffer(buf, &msg);
+          sendData(buf, n);
+          m_mission = true;
+          m_mission_count_retries++;
+        }
+
+        void
+        clearAllMission()
+        {
+          mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0,MAV_MISSION_TYPE_MISSION);
+          uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
+          sendData(m_buf, n);
+        }
+
+        void
+        cancelMission()
+        {
+          mavlink_msg_mission_ack_pack(255, 0, &m_msg, m_sysid, 0,MAV_MISSION_OPERATION_CANCELLED,MAV_MISSION_TYPE_MISSION);
+          uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
+          sendData(m_buf, n);
         }
 
         void
@@ -1758,6 +1776,14 @@ namespace Control
               {
                 setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
                 m_esta_ext = false;
+                if(m_mission_count_retries > 0 && m_mission_timeout.overflow() && !m_external)
+                {
+                  war(DTR("Mission Item Timeout"));
+                  //TODO resend Mission Count to restart mission upload logic
+                  if(m_mission_count_retries < 5)
+                    sendMissionCount();
+                  //TODO clean queue
+                }
               }
             }
 
@@ -1784,13 +1810,11 @@ namespace Control
           int res = 0;
           if (m_TCP_sock)
           {
-            trace("Sending something");
             res =  m_TCP_sock->write((char*)bfr, size);
             m_TCP_sock->flushOutput();
           }
           else if (m_UDP_sock)
           {
-            trace("Sending something");
             res =  m_UDP_sock->write(bfr, size, m_args.ip, m_args.UDP_port);
             m_UDP_sock->flushOutput();
           }
@@ -2316,12 +2340,97 @@ namespace Control
           mavlink_mission_ack_t miss_ack;
 
           mavlink_msg_mission_ack_decode(msg, &miss_ack);
-          debug("Mission was received, result is %d", miss_ack.type);
+          //debug("Mission was received, result is %d", miss_ack.type);
           m_changing_wp = false;
           m_last_wp = 0;
+
+          if(m_vehicle_type == APM_Vehicle::VEHICLE_SUBMARINE) {
+              if (miss_ack.type == MAV_MISSION_ACCEPTED && miss_ack.mission_type == MAV_MISSION_TYPE_MISSION && m_mission && m_send_wp) {
+                  startMission();
+              } else if (miss_ack.type == MAV_MISSION_ERROR && miss_ack.mission_type == MAV_MISSION_TYPE_MISSION && m_mission && m_send_wp) {
+                  //Resend mission Item - MAX 5 Retries
+                  m_mission_send_tries < 5 ? sendMissionItem(false) : sendMissionItem(true);
+              }
+          }
+          switch(miss_ack.type) {
+              case MAV_MISSION_ACCEPTED:
+                  inf(DTR("MISSION ACCEPTED"));
+                  break;
+              case MAV_MISSION_ERROR:
+              case MAV_MISSION_UNSUPPORTED_FRAME:
+              case MAV_MISSION_UNSUPPORTED:
+              case MAV_MISSION_DENIED:
+              case MAV_MISSION_INVALID:
+                  war(DTR("Ardupilot MISSION ERROR %d"),miss_ack.type);
+                  break;
+              case MAV_MISSION_NO_SPACE:
+                  clearAllMission();
+                  break;
+              case MAV_MISSION_INVALID_PARAM1:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #1"));
+                  break;
+              case MAV_MISSION_INVALID_PARAM2:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #2"));
+                  break;
+              case MAV_MISSION_INVALID_PARAM3:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #3"));
+                  break;
+              case MAV_MISSION_INVALID_PARAM4:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #4"));
+                  break;
+              case MAV_MISSION_INVALID_PARAM5_X:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #5 - Latitude/X"));
+                  break;
+              case MAV_MISSION_INVALID_PARAM6_Y:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #5 - Longitude/Y"));
+                  break;
+              case MAV_MISSION_INVALID_PARAM7:
+                  war(DTR("Ardupilot MISSION ERROR: Invalid Param #5 - Z"));
+                  break;
+              case MAV_MISSION_OPERATION_CANCELLED:
+                  war(DTR("Ardupilot MISSION CANCELLED"));
+                  break;
+              case MAV_MISSION_INVALID_SEQUENCE:
+                  war(DTR("Ardupilot INVALID SEQUENCE"));
+                  break;
+              default:
+                  debug("Mission RESULT %d", miss_ack.type);
+          }
         }
 
-        void
+          void startMission() {
+              m_mission_send_tries = 0;
+              mavlink_message_t msg;
+              uint8_t buf[512];
+              uint16_t n;
+
+              //! Set vehicle in GUIDED MODE
+              war(DTR("SENDING GUIDED MODE %d"), MAVLink::SUB_MODE_GUIDED);
+              mavlink_msg_set_mode_pack(255, 0, &msg,
+                                        m_sysid,
+                                        1,
+                                        MAVLink::SUB_MODE_GUIDED);
+              n = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf, n);
+              //! ARM
+              sendCommandPacket(MAV_CMD_COMPONENT_ARM_DISARM, 1);
+              //! Mission Start
+              sendCommandPacket(MAV_CMD_MISSION_START, 0, 1);
+              //! AUTO MODE
+              war(DTR("SENDING AUTO MODE %d"), MAVLink::SUB_MODE_AUTO);
+              mavlink_msg_set_mode_pack(255, 0, &msg,
+                                        m_sysid,
+                                        1,
+                                        MAVLink::SUB_MODE_AUTO);
+              n = mavlink_msg_to_send_buffer(buf, &msg);
+              sendData(buf, n);
+              //! Cleanup mission items
+              while(!m_mission_items.empty())
+                  m_mission_items.pop();
+              m_mission = false;
+          }
+
+          void
         handleStatusTextPacket(const mavlink_message_t* msg)
         {
           mavlink_statustext_t stat_tex;
@@ -2560,7 +2669,7 @@ namespace Control
         {
           mavlink_nav_controller_output_t nav_out;
           mavlink_msg_nav_controller_output_decode(msg, &nav_out);
-          trace("WP Dist: %d", nav_out.wp_dist);
+          //war("WP Dist: %d", nav_out.wp_dist);
           IMC::DesiredRoll d_roll;
           IMC::DesiredPitch d_pitch;
           IMC::DesiredHeading d_head;
@@ -2571,7 +2680,7 @@ namespace Control
           // to be accepted at the "same" time), we calculate distance manually.
           float wp_distance = 0;
 
-          if (m_vehicle_type == VEHICLE_COPTER)
+          if (m_vehicle_type == VEHICLE_COPTER || m_vehicle_type == VEHICLE_SUBMARINE)
           {
             // As of AC 3.2, wp_dest is not updated in guided mode.
             // Calc distance between desired location and current location
@@ -2581,11 +2690,20 @@ namespace Control
             current_pos(1) = m_estate.y;
             current_pos(2) = m_estate.z;
 
-            float alt = (m_dpath.end_z_units & IMC::Z_NONE) ? m_args.alt : (float)m_dpath.end_z;
+            float z;
+            if(m_vehicle_type == VEHICLE_COPTER) {
+                z = (m_dpath.end_z_units & IMC::Z_NONE) ? m_args.alt : (float) m_dpath.end_z;
+                WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
+                                    m_dpath.end_lat, m_dpath.end_lon, z,
+                                    &destination(0), &destination(1), &destination(2));
+            }
+            else if(m_vehicle_type == VEHICLE_SUBMARINE) {
+                z = m_dpath.end_z;
+                WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.depth,
+                                    m_dpath.end_lat, m_dpath.end_lon, z,
+                                    &destination(0), &destination(1), &destination(2));
+            }
 
-            WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
-                                m_dpath.end_lat, m_dpath.end_lon, alt,
-                                &destination(0), &destination(1), &destination(2));
 
             wp_distance = (destination - current_pos).norm_2();
           }
@@ -2606,8 +2724,8 @@ namespace Control
 
             wp_distance = (destination - current_pos).norm_2();
 
-            if(m_vehicle_type == VEHICLE_SUBMARINE)
-              wp_distance = nav_out.wp_dist;
+            //if(m_vehicle_type == VEHICLE_SUBMARINE)
+            //  wp_distance = nav_out.wp_dist;
           }
 
           // Store mavlink distance.
@@ -2684,7 +2802,7 @@ namespace Control
 
           if (is_near)
           {
-            spew("Is near! dist: %f, rad: %d, gs: %d",wp_distance, m_desired_radius,m_gnd_speed);
+            war("Is near! dist: %f, rad: %d, gs: %d",wp_distance, m_desired_radius,m_gnd_speed);
             m_pcs.flags |= PathControlState::FL_NEAR;
           }
 
@@ -2707,7 +2825,7 @@ namespace Control
         {
           mavlink_mission_item_t miss_item;
           mavlink_msg_mission_item_decode(msg, &miss_item);
-          trace("Mission type: %d", miss_item.command);
+          war("Mission CMD: %d Mission type: %d Current:%d Seq: %d", miss_item.command,miss_item.mission_type,miss_item.current,miss_item.seq);
 
           switch(miss_item.command)
           {
@@ -2728,8 +2846,7 @@ namespace Control
         {
           mavlink_mission_item_int_t miss_item;
           mavlink_msg_mission_item_int_decode(msg, &miss_item);
-          trace("Mission type: %d", miss_item.command);
-
+          war("Mission CMD: %d Mission type: %d Current:%d Seq: %d", miss_item.command,miss_item.mission_type,miss_item.current,miss_item.seq);
           switch(miss_item.command)
           {
             default:
@@ -2742,6 +2859,57 @@ namespace Control
               m_critical = true;
               break;
           }
+        }
+
+        void
+        handleMissionReqPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_request_t miss_req;
+          mavlink_msg_mission_request_decode(msg, &miss_req);
+          war("Mission type: %d and Seq: %d", miss_req.mission_type, miss_req.seq);
+
+          if (!m_mission_timeout.overflow() && m_mission) {
+            sendMissionItem(false);
+            m_mission_count_retries = 0;
+            m_mission_timeout.reset();
+          }
+          else if(m_mission_timeout.overflow()) {
+              err("Mission Timer Transaction Overflow");
+          }
+          else if(m_mission){
+            if(m_mission_items.empty())
+              receive(&m_dpath);
+          }
+        }
+
+        void
+        handleMissionReqIntPacket(const mavlink_message_t* msg)
+        {
+          mavlink_mission_request_t miss_req;
+          mavlink_msg_mission_request_decode(msg, &miss_req);
+          war("Mission type: %d and Seq: %d", miss_req.mission_type, miss_req.seq);
+          if (!m_mission_timeout.overflow() && m_mission) {
+            sendMissionItem(false);
+            m_mission_count_retries = 0;
+            m_mission_timeout.reset();
+          }
+          else if(m_mission_timeout.overflow()) {
+              war("Mission Timer Transaction Overflow");
+              if(m_mission_items.empty() && m_mission)
+                  receive(&m_dpath);
+          }
+          else if(!m_mission){
+              cancelMission();
+          }
+        }
+
+        void
+        handleMissionReachedPacket(const mavlink_message_t* msg)
+        {
+            mavlink_mission_item_reached_t  miss_reached;
+            mavlink_msg_mission_item_reached_decode(msg, &miss_reached);
+
+            inf(DTR("Reached Mission Item #%d "),miss_reached.seq); //TODO debug
         }
 
         void
@@ -2786,9 +2954,9 @@ namespace Control
           t = boot_usec / 1000000;
           utc = gmtime(&t);
           time_t t1 = m_boot_usec / 1000000;
-
+          double epsilon = 0.00000001; //tolerance for FP comparison
           //! Checks if boot time didnt change (e.g. ardupilot reboot)
-          if(!m_has_boot_time || !iszero(difftime(t,t1)) ) {
+          if(!m_has_boot_time || difftime(t,t1) > epsilon) {
              m_boot_usec = boot_usec;
              m_has_boot_time = true;
              war(DTR("Ardupilot boot time defined: %s"),asctime(utc));
@@ -2810,61 +2978,31 @@ namespace Control
                 parameter.param_value);
           if (m_vehicle_type == VEHICLE_SUBMARINE)
           {
+            if(std::strcmp("MIS_TOTAL", parameter.param_id) == 0)
+            {
+              war("Received MIS_TOTAL m_mission:%d ",m_mission);
+              if (m_mission && parameter.param_value == 1.0 )
+              {
+                  m_send_wp = true;
+                  startMission();
+              }
+
+            }
             if (std::strcmp("GPS_TYPE", parameter.param_id) == 0)
             {
-              if (!m_ground && parameter.param_value != 14.0 && m_args.main_gps)
-              {
-                sendGPSParams(true);
-                m_gps_send = false;
-              }
-              else if (m_args.main_gps && m_ground)
-              {
-                sendGPSParams(false);
-                m_gps_send = true;
-              }
+              debug(DTR("First GPS TYPE: %f"),parameter.param_value);
             }
             else if (std::strcmp("GPS_TYPE2", parameter.param_id) == 0)
             {
-              if (!m_ground && parameter.param_value != 14.0
-                  && !m_args.main_gps)
-              {
-                sendGPSParams(true);
-                m_gps_send = false;
-              }
-              else if (!m_args.main_gps && m_ground)
-              {
-                sendGPSParams(false);
-                m_gps_send = true;
-              }
+               debug(DTR("Second GPS TYPE: %f"),parameter.param_value);
             }
             else if (std::strcmp("EK2_GPS_TYPE", parameter.param_id) == 0)
             {
-              if (!m_ground && parameter.param_value != 2.0)
-              { //vehicle underwater
-                sendGPSParams(true);
-                m_gps_send = false;
-
-              }
-              else if (m_ground)
-              {
-                sendGPSParams(false);
-                m_gps_send = true;
-
-              }
+              debug(DTR("EKF2 GPS TYPE: %f"),parameter.param_value);
             }
-            else if (std::strcmp("GPS_AUTO_SWITCH", parameter.param_id) == 0
-                && parameter.param_value != 1.0)
+            else if (std::strcmp("GPS_AUTO_SWITCH", parameter.param_id) == 0)
             {
-              if (!m_ground)
-              {
-                sendGPSParams(true);
-                m_gps_send = false;
-              }
-              else
-              { //surface
-                sendGPSParams(false); // disable USBL GPS
-                m_gps_send = true;
-              }
+              debug(DTR("GPS AUTO SWITCH: %f"),parameter.param_value);
             }
           }
         }
