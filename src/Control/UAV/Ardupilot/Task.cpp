@@ -323,7 +323,7 @@ namespace Control
           .defaultValue("5760")
           .description("Port for connection to Ardupilot");
 
-          param("IPv4 - Address", m_args.ip)
+          param("IPv4 Address", m_args.ip)
           .defaultValue("127.0.0.1")
           .description("Address for neptus connection to Ardupilot");
 
@@ -544,14 +544,15 @@ namespace Control
         onResourceAcquisition(void)
         {
           openConnection();
+          if(!m_args.tcp_or_udp) {
+              std::stringstream os;
+              os << "mavlink+tcp://" << m_args.ip << ":" << m_args.TCP_port << "/";
 
-          std::stringstream os;
-          os << "mavlink+tcp://" << m_args.ip << ":" << m_args.TCP_port << "/";
-
-          IMC::AnnounceService announce;
-          announce.service = os.str();
-          announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-          dispatch(announce);
+              IMC::AnnounceService announce;
+              announce.service = os.str();
+              announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+              dispatch(announce);
+          }
         }
 
         void
@@ -1639,9 +1640,13 @@ namespace Control
         void
         consume(const PlanControl* pc)
         {
+          if(pc->plan_id.rfind("teleop")==0){
+            debug(DTR("Ignoring Teleoperation plan"));
+            return;
+          }
           if(pc->op == IMC::PlanControl::PC_START && pc->type == IMC::PlanControl::PC_REQUEST)
           {
-              err("Sending initial config");
+              debug(DTR("Sending mission initial config"));
               //! Clear previous mission/replace
               uint16_t n;
               mavlink_message_t msg;
@@ -1707,7 +1712,7 @@ namespace Control
         void
         sendMissionCount()
         {
-          err("Sending Mission Count");
+          debug(DTR("Sending Mission Count"));
           uint16_t n;
           mavlink_message_t msg;
           uint8_t buf[512];
