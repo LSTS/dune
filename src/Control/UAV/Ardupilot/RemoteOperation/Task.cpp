@@ -58,8 +58,8 @@ namespace Control
         //! Shift functions and input hold are handled at a higher level in the (A)CCU side
         const std::string remote_actions[13] =
           { "GainUP", "GainDown", "TiltUP", "TiltDown", "LightDimmer",
-              "LightBrighter", "Stabilize", "DepthHold", "Manual", "PositionHold",
-              "Arm", "Disarm","Guided"}; //TODO home and SK
+              "LightBrighter", "Stabilize", "DepthHold", "Manual", "PositionHold", "Guided",// Guided mode not supported
+              "Arm", "Disarm"}; //TODO home and SK
         const std::string axis[6] =
           { "Pitch", "Roll", "Vertical", "Heading", "Forward", "Lateral" };
         const std::string js_params_id[6] =
@@ -154,7 +154,7 @@ namespace Control
                 "10").defaultValue("10").units(Units::Percentage).description(
                 "Gain Step increment and decrement");
 
-            param("IPv4 - Address", m_args.addr).defaultValue("127.0.0.1").description(
+            param("IPv4 Address", m_args.addr).defaultValue("127.0.0.1").description(
                 "ArduSub Address, can be via MAVProxy");
 
             param("Port", m_args.port).defaultValue("5760").description(
@@ -466,7 +466,7 @@ namespace Control
                                        m_sys_status);
             uint16_t size = mavlink_msg_to_send_buffer(buffer, &msg);
             sendData(buffer, size);
-            debug(DTR("Sent Heatbeat."));
+            debug(DTR("Sent Heartbeat."));
           }
 
           void
@@ -814,19 +814,20 @@ namespace Control
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_MANUAL);
+              err("Sending %d",SUB_MODE_MANUAL);
             }
-            button = tl.get(remote_actions[12], 0);
+            button = tl.get(remote_actions[10], 0);
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_GUIDED);
             }
-            button = tl.get(remote_actions[11], 0);
+            button = tl.get(remote_actions[12], 0);
             if (button == 1)
             {
               disarm();
             }
 
-            button = tl.get(remote_actions[10], 0);
+            button = tl.get(remote_actions[11], 0);
             if (button == 1)
             {
               arm();
