@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
+// IMC XML MD5: 5563261871977bdb0b45e3d1e53b575b                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -241,6 +241,7 @@ MESSAGE(493, AutonomousSection)
 MESSAGE(494, FollowPoint)
 MESSAGE(495, Alignment)
 MESSAGE(496, StationKeepingExtended)
+MESSAGE(497, ManeuverDone)
 MESSAGE(499, Magnetometer)
 MESSAGE(500, VehicleState)
 MESSAGE(501, VehicleCommand)
@@ -315,6 +316,7 @@ MESSAGE(814, UamTxFrame)
 MESSAGE(815, UamRxFrame)
 MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
+MESSAGE(818, UamTxRange)
 MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
 MESSAGE(822, FormationControlParams)
