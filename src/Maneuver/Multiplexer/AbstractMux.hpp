@@ -104,6 +104,13 @@ namespace Maneuver
         (void)msg;
       }
 
+      //! On ManeuverDone message
+      virtual void
+      onManeuverDone(const IMC::ManeuverDone* msg)
+      {
+        (void)msg;
+      }
+
     protected:
       //! Pointer to task
       Maneuvers::Maneuver* m_task;
