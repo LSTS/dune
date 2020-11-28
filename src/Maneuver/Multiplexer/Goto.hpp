@@ -76,9 +76,18 @@ namespace Maneuver
       onPathControlState(const IMC::PathControlState* pcs)
       {
         if (pcs->flags & IMC::PathControlState::FL_NEAR)
-          m_task->signalCompletion();
+          m_task->setControl(IMC::CL_NONE); // Waits for ManeuverDone for completion.
         else
           m_task->signalProgress(pcs->eta);
+      }
+
+      //! On ManeuverDone message
+      //! @param[in] pcs pointer to ManeuverDone message
+      void
+      onManeuverDone(const IMC::ManeuverDone* msg)
+      {
+        (void)msg;
+        m_task->signalCompletion();
       }
 
       ~Goto(void)
