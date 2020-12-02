@@ -266,7 +266,7 @@ namespace Control
               m_comms = true;
               requestGCSParam();
               debug(DTR("Sending GCS configurations"));
-              setParamByName("FS_GCS_ENABLE", 0.0); //Heartbeat lost 0:Disabled; 1:Warn; 2:Disarm; 3:Depth Hold; 4:Surface
+              setParamByName("FS_GCS_ENABLE", 1.0); //Heartbeat lost 0:Disabled; 1:Warn; 2:Disarm; 3:Depth Hold; 4:Surface
             }
             catch (std::exception& e)
             {
@@ -392,9 +392,6 @@ namespace Control
             {
               rc_pwm[channel] = idle;
             }
-            // Clear pitch/roll trim settings //TODO
-//               pitchTrim = 0;
-//               rollTrim  = 0;
             actuate();
           }
 
@@ -773,9 +770,6 @@ namespace Control
               rc_pwm[RC_INPUT::Lights_1_Level] = newV;
 //              rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same command for both lights
               war(DTR("Lights RC %d PWM %d and step %d"),RC_INPUT::Lights_1_Level,rc_pwm[RC_INPUT::Lights_1_Level],step);
-              button |= 14;
-              mavlink_msg_manual_control_pack(m_sysid, 1, &mc, m_targetid, INT16_MAX, INT16_MAX, INT16_MAX, INT16_MAX, buttons);
-              sendData(buf, len);
             }
             else
             {
@@ -786,9 +780,6 @@ namespace Control
                 newV = std::max(newV,min);
                 rc_pwm[RC_INPUT::Lights_1_Level] = newV;
 //                rc_pwm[RC_INPUT::Lights_2_Level] = newV; //Same comand for both lights
-                button |= 13;
-                mavlink_msg_manual_control_pack(m_sysid, 1, &mc, m_targetid, INT16_MAX, INT16_MAX, INT16_MAX, INT16_MAX, buttons);
-                sendData(buf, len);
               }
             }
 
