@@ -654,7 +654,7 @@ namespace Navigation
             m_kal.setInnovation(OUT_R_IMU,  m_kal.getOutput(OUT_R_IMU) - r);
             //PSI
             m_heading_imu += tstep * hrate;
-            m_kal.setOutput(OUT_PSI_IMU, m_heading);
+            m_kal.setOutput(OUT_PSI_IMU, m_heading_imu);
             m_kal.setInnovation(OUT_PSI_IMU, m_kal.getOutput(OUT_PSI_IMU) - getBiasedHeading());            
           }
 
