@@ -526,6 +526,12 @@ namespace Navigation
           return m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
         }
 
+        double
+        getBiasedHeadingRate(void)
+        {
+          return m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
+        }
+
         void
         onConsumeLblConfig(void)
         {
@@ -634,28 +640,30 @@ namespace Navigation
           m_kal.predict();
 
           // Euler Angles update modes.
+          double biased_heading = getBiasedHeading();
+          double biased_heading_rate = getBiasedHeadingRate();
+
           //AHRS
           //R
           double hrate = getHeadingRate(false);
           m_kal.setOutput(OUT_R_AHRS, hrate);
-          double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
-          m_kal.setInnovation(OUT_R_AHRS,  m_kal.getOutput(OUT_R_AHRS) - r);
+          m_kal.setInnovation(OUT_R_AHRS,  m_kal.getOutput(OUT_R_AHRS) - biased_heading_rate);
           //PSI
           m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
           m_kal.setOutput(OUT_PSI_AHRS, m_heading);
-          m_kal.setInnovation(OUT_PSI_AHRS, m_kal.getOutput(OUT_PSI_AHRS) - getBiasedHeading());
+          m_kal.setInnovation(OUT_PSI_AHRS, m_kal.getOutput(OUT_PSI_AHRS) - biased_heading);
 
           //IMU
           if (m_imu_state >= IN_ALIGNING)
           {
+            //R
             hrate = getHeadingRate(true);
             m_kal.setOutput(OUT_R_IMU, hrate);
-            r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
-            m_kal.setInnovation(OUT_R_IMU,  m_kal.getOutput(OUT_R_IMU) - r);
+            m_kal.setInnovation(OUT_R_IMU,  m_kal.getOutput(OUT_R_IMU) - biased_heading_rate);
             //PSI
             m_heading_imu += tstep * hrate;
             m_kal.setOutput(OUT_PSI_IMU, m_heading_imu);
-            m_kal.setInnovation(OUT_PSI_IMU, m_kal.getOutput(OUT_PSI_IMU) - getBiasedHeading());            
+            m_kal.setInnovation(OUT_PSI_IMU, m_kal.getOutput(OUT_PSI_IMU) - biased_heading);            
           }
 
           // GPS innovation matrix.
