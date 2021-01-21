@@ -35,9 +35,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local Headers.
-#include "Parser.hpp"
-
 namespace Sensors
 {
   //! This task reads data from the Davis Instruments Vantage Pro2 Weather Station.
@@ -62,7 +59,7 @@ namespace Sensors
     };
 
     //! Definition of Davis LOOP data packet
-    typedef struct LOOPData
+    struct LOOPData
     {
         uint8_t   yACK;           // -1 ACK from stream                          
         char      cL;             // 0  character "L"                            
