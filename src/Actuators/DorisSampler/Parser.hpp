@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Pedro Gonçalves                                                  *
+// Author: Joao Costa                                                       *
 //***************************************************************************
 
 #ifndef ACTUATORS_DORISSAMPLER_PARSER_HPP_INCLUDED_
@@ -85,9 +85,9 @@ namespace Actuators
         PS_CS
       };
 
-      Parser(DUNE::Tasks::Task* task) : 
-      m_task(task),
-      m_parser_state(Parser::PS_PREAMBLE)
+      Parser(DUNE::Tasks::Task* task): 
+        m_task(task),
+        m_parser_state(Parser::PS_PREAMBLE)
       {
       }
 
@@ -174,7 +174,8 @@ namespace Actuators
         return false;
       }
 
-      void clear_flags(void)
+      void 
+      clear_flags(void)
       {
         m_dorisState.Bottles->newData = 0;
       }

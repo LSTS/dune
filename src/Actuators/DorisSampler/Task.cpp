@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -158,15 +158,16 @@ namespace Actuators
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string &name, Tasks::Context &ctx) : DUNE::Tasks::Task(name, ctx),
-                                                           m_uart(NULL),
-                                                           //update_cmd_FL(false),
-                                                           m_FULL_FL(false),
-                                                           m_sm_state(SM_STOP)
+      Task(const std::string &name, Tasks::Context &ctx): 
+        DUNE::Tasks::Task(name, ctx),
+        m_uart(NULL),
+        //update_cmd_FL(false),
+        m_FULL_FL(false),
+        m_sm_state(SM_STOP)
       {
         param("Serial Port - Device", m_args.uart_dev)
             .defaultValue("/dev/ttyUSB0")
-            .description("Serial port device used to communicate with the firmware");
+            .description("Serial port used to communicate with the firmware");
 
         param("Serial Port - Baud Rate", m_args.uart_baud)
             .defaultValue("115200")
@@ -373,9 +374,11 @@ namespace Actuators
         double lon = Angles::degrees(m_estate.lon);
 
         IMC::LogBookEntry log_entry;
-
+        // log book entry's type
         log_entry.type = IMC::LogBookEntry::LBET_INFO;
-
+        // log book entry's htime
+        log_entry.htime = Time::Clock::getSinceEpoch();
+        // log book entry's context
         std::ostringstream log_context;
         log_context << "Bottle " << bottleNum << "info.";
         log_entry.context = log_context.str();
@@ -391,6 +394,7 @@ namespace Actuators
           log_sampleType << "Deep";
         }
 
+        // log book entry's text
         std::ostringstream log_text;
         log_text << "Status: " << log_bottleStatus << "\nType of Sample: " << log_sampleType.str() << "\nLatitude: " << lat << "\nLongitude: " << lon << "\nWater Temperature: " << m_parse->m_dorisState.Bottles->temp << "\nWindSpeed Consumed Davis: " << 12.3 << "\nWindDir Consumed Davis: " << 45.6;
         log_entry.text = log_text.str();
