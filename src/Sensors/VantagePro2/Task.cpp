@@ -117,7 +117,7 @@ namespace Sensors
         uint16_t  WCRC;           // 97 CRC check bytes (CCITT-16 standard)      
     };
 
-    struct Task: public DUNE::Tasks::Periodic
+    struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
       SerialPort *m_uart;
@@ -151,7 +151,7 @@ namespace Sensors
       //! @param [in] name task name.
       //! @param [in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Periodic(name, ctx)
+        DUNE::Tasks::Task(name, ctx)
       {
         param("Serial Port - Device", m_args.uart_dev)
             .defaultValue("/dev/ttyUSB0")
