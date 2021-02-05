@@ -184,6 +184,14 @@ namespace Transports
         expectOK();
       }
 
+      //! Set modem driver timeout
+      //! @param[in] timeout time to wait (seconds).
+      void
+      setDriverTimeout(double timeout)
+      {
+        setTimeout(timeout);
+      }
+
       //! Retrieve the firmware version string.
       //! @return firmware version.
       std::string
