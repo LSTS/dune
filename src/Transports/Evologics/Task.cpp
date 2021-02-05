@@ -43,6 +43,9 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Simulator command timeout.
+    static const double c_sim_timeout = 6.0;
+
     struct Arguments
     {
       //! IP address.
@@ -303,7 +306,10 @@ namespace Transports
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
         m_driver->setLineTermOut("\n");
+        m_driver->initialize();
 
+        if (m_ctx.profiles.isSelected("Simulation"))
+          m_driver->setDriverTimeout(c_sim_timeout);
       }
 
       void
