@@ -110,7 +110,7 @@ namespace DUNE
         // Section name.
         if (std::sscanf(line, "[%[^]]] ", section) == 1)
         {
-          String::rtrim(section);
+          String::rightTrimInPlace(section);
 
           if (std::strncmp(section, "Include ", 8) == 0)
           {
@@ -138,8 +138,8 @@ namespace DUNE
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
 
-          String::rtrim(option);
-          String::rtrim(arg);
+          String::rightTrimInPlace(option);
+          String::rightTrimInPlace(arg);
 
           bool append = false;
           if (String::endsWith(String::str(option), "+"))
@@ -183,7 +183,7 @@ namespace DUNE
           if (String::endsWith(String::str(option), "+"))
             String::resize(option, -1);
 
-          String::rtrim(arg);
+          String::rightTrimInPlace(arg);
           m_data[section][tmp] += " ";
           m_data[section][tmp] += arg;
         }
