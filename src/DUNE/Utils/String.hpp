@@ -31,12 +31,12 @@
 #define DUNE_UTILS_STRING_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
+#include <cstdarg>
+#include <cstdio>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iostream>
-#include <cstdio>
-#include <cstdarg>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -94,12 +94,6 @@ namespace DUNE
       //! @return string without trailing whitespaces.
       static std::string
       rtrim(const std::string& str);
-
-      //! Strip whitespace from the end of a string, modifying the
-      //! original string.
-      //! @param str object string.
-      static void
-      rtrim(char* str);
 
       //! Resize string by replacing any extra characters with '\0'.
       //! If size is greater than current size, the string is untouched.
@@ -187,6 +181,9 @@ namespace DUNE
 
       static std::string
       toHex(int nr);
+
+      static std::vector<uint8_t>
+      hexToBytes(const std::string& hex);
 
       static std::string
       fromHex(const std::string& str);
