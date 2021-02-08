@@ -67,6 +67,41 @@ namespace DUNE
       consume(const IMC::PowerChannelState* msg);
 
     protected:
+      //! Create an I/O handle given an URI.
+      //!
+      //! @param[in] uri URI.
+      //!
+      //! @return I/O handle.
+      IO::Handle*
+      openDeviceHandle(const std::string& uri);
+
+      //! Create an I/O handle given a serial port URI.
+      //!
+      //! @param[in] uri URI of the form: uart://DEVICE:BAUD
+      //!
+      //! @return I/O handle.
+      IO::Handle*
+      openUART(const std::string& uri);
+
+      //! Create an I/O handle given a TCP port URI.
+      //!
+      //! @param[in] uri URI of the form: tcp://HOST:PORT
+      //!
+      //! @return I/O handle.
+      IO::Handle*
+      openSocketTCP(const std::string& uri);
+
+      //! Set the amount of time to wait before powering up the device.
+      //! @param[in] value delay in second.
+      void
+      setPowerOnDelay(double value)
+      {
+        if (value < 0)
+          value = 0;
+
+        m_power_on_delay = value;
+      }
+
       //! Set the amount of time to wait before powering down the device.
       //! @param[in] value delay in second.
       void
@@ -98,8 +133,13 @@ namespace DUNE
       void
       addPowerChannelName(const std::string& name)
       {
-        m_power_channels.insert(std::make_pair(name, false));
+        if (!name.empty())
+          m_power_channels.insert(std::make_pair(name, false));
       }
+
+      virtual void
+      onIdle(void)
+      { }
 
       virtual bool
       onConnect(void) = 0;
@@ -131,8 +171,24 @@ namespace DUNE
       virtual void
       onCloseLog(void);
 
+      FileSystem::Path
+      getUnusedLogPath(const FileSystem::Path& path, const std::string& extension);
+
       virtual void
       onInitializeDevice(void) = 0;
+
+      virtual void
+      onActivationFailed(void)
+      { }
+
+      //! Test if the estimated state message should be discarded.
+      //! @param[in] msg estimated state message.
+      //! @return true to discard message, false otherwise.
+      virtual bool
+      discardEstimatedState(const IMC::EstimatedState* msg)
+      {
+        return msg->getSource() != getSystemId();
+      }
 
       void
       clearFaultCount(void)
@@ -146,6 +202,19 @@ namespace DUNE
         m_timeout_count = 0;
       }
 
+      //! Suspend execution for a given amount of time while only consume
+      //! messages.
+      //!
+      //! @param[in] duration amount of time to wait in second.
+      void
+      wait(double duration);
+
+      void
+      setRestartDelay(double seconds)
+      {
+        m_restart_delay = seconds;
+      }
+
     private:
       //! Finite state machine states.
       enum StateMachineStates
@@ -154,6 +223,8 @@ namespace DUNE
         SM_IDLE,
         //! Start activation sequence.
         SM_ACT_BEGIN,
+        //! Delay before turning power on.
+        SM_ACT_POWER_ON_DELAY,
         //! Turn power on.
         SM_ACT_POWER_ON,
         //! Wait for power to be turned on.
@@ -179,7 +250,9 @@ namespace DUNE
         //! Wait for power to be turned off.
         SM_DEACT_POWER_WAIT,
         //! Deactivation sequence is complete.
-        SM_DEACT_DONE
+        SM_DEACT_DONE,
+        //! Wait for restart delay.
+        SM_RESTART_WAIT
       };
 
       //! Watchdog timer.
@@ -200,18 +273,26 @@ namespace DUNE
       double m_post_power_on_delay;
       //! Power-off timer.
       DUNE::Time::Counter<double> m_power_off_timer;
+      //! Power-on delay.
+      double m_power_on_delay;
       //! Power-off delay.
       double m_power_off_delay;
       //! Fault count.
       unsigned m_fault_count;
       //! Timeout count.
       unsigned m_timeout_count;
+      //! True to restart activation when idle.
+      bool m_restart;
+      //! Restart delay in seconds.
+      double m_restart_delay;
+      //! Restart timer.
+      DUNE::Time::Counter<double> m_restart_timer;
 
       void
-      onResourceRelease(void);
+      onResourceRelease(void) override;
 
       void
-      onResourceInitialization(void);
+      onResourceInitialization(void) override;
 
       //! Push a new state to the state queue.
       //! @param[in] state state machine state.
@@ -234,10 +315,16 @@ namespace DUNE
       dequeueState(void);
 
       void
+      idle(void)
+      {
+        onIdle();
+      }
+
+      void
       initializeDevice(void);
 
       void
-      onRequestActivation(void);
+      onRequestActivation(void) override;
 
       bool
       connect(void);
@@ -246,16 +333,16 @@ namespace DUNE
       failActivation(const std::string& message);
 
       void
-      onRequestDeactivation(void);
+      onRequestDeactivation(void) override;
 
       void
       disconnect(void);
 
       void
-      onDeactivation(void);
+      onDeactivation(void) override;
 
       void
-      onActivation(void);
+      onActivation(void) override;
 
       //! Request the name of the current log file.
       void
@@ -297,7 +384,10 @@ namespace DUNE
       updateStateMachine(void);
 
       void
-      onMain(void);
+      step(void);
+
+      void
+      onMain(void) override;
     };
   }
 }
