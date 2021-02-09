@@ -177,16 +177,16 @@ namespace Simulators
       double m_linear_velocity[3];
       //! Object angular velocity (body-fixed reference frame).
       double m_angular_velocity[3];
+      //! Quadratic drag coeficients.
+      double m_quad_drag_coef[10];
+      //! Linear drag coeficients.
+      double m_linear_drag_coef[10];
 
     private:
       //! Object id.
       int m_body_id;
       //! Object type.
       Type m_obj_type;
-      //! Quadratic drag coeficients.
-      double m_quad_drag_coef[10];
-      //! Linear drag coeficients.
-      double m_linear_drag_coef[10];
       //! Forces acting on the vehicle. (body-fixed reference frame)
       double m_forces[6];
       //! Velocity Integration Method (true = regular)

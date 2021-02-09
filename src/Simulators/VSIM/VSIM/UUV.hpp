@@ -101,6 +101,7 @@ namespace Simulators
       virtual void
       applyBodyLiftForce(void);
 
+    protected:
       //! Applies vehicle specific force (buoyancy).
       void
       applyRestoringForcesMoments(void);
