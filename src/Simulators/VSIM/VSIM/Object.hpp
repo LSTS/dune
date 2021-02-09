@@ -138,7 +138,7 @@ namespace Simulators
       }
 
       //! Applies drag forces actuacting on the object.
-      void
+      virtual void
       applyDragForces(void);
 
       //! Apply all object's forces.
