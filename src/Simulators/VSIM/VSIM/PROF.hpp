@@ -24,29 +24,43 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Bruno Terra                                                      *
-// Author: José Braga                                                       *
+// Author: Luís Venâncio                                                      *
 //***************************************************************************
 
-#ifndef SIMULATORS_VSIM_VSIM_VSIM_HPP_INCLUDED_
-#define SIMULATORS_VSIM_VSIM_VSIM_HPP_INCLUDED_
+#ifndef SIMULATORS_VSIM_VSIM_PROF_HPP_INCLUDED_
+#define SIMULATORS_VSIM_VSIM_PROF_HPP_INCLUDED_
+
+// VSIM headers.
+#include <VSIM/UUV.hpp>
 
 namespace Simulators
 {
-  //! Multiple vehicle simulator routines and classes.
   namespace VSIM
-  { }
-}
+  {
+    //! Unmanned Underwater Vehicle class.
+    class PROF: public UUV
+    {
+    public:
+      //! Default Constructor.
+      PROF(void);
 
-#include <VSIM/ASV.hpp>
-#include <VSIM/Engine.hpp>
-#include <VSIM/Fin.hpp>
-#include <VSIM/Force.hpp>
-#include <VSIM/Object.hpp>
-#include <VSIM/UUV.hpp>
-#include <VSIM/PROF.hpp>
-#include <VSIM/Vehicle.hpp>
-#include <VSIM/Volume.hpp>
-#include <VSIM/World.hpp>
+      //! Constructor.
+      //! @param[in] position buoyancy position.
+      //! @param[in] dimensions volume dimensions.
+      PROF(double position[3], double dimensions[3]);
+
+      //! Copy Constructor.
+      PROF(const UUV*);
+
+      //! Applies drag forces actuacting on the profiler.
+      virtual void
+      applyDragForces(void);
+
+      //! Apply Body Lift to the UUV
+      virtual void
+      applyBodyLiftForce(void);
+    };
+  }
+}
 
 #endif

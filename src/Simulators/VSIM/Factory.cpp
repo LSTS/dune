@@ -83,9 +83,12 @@ namespace Simulators
       // Get vehicle type and create vehicle's object.p
       std::string type;
       cfg.get(section, "Type", "UUV", type);
-      if (type == "UUV" || type == "ROV")
+      if (type == "UUV" || type == "ROV" || type == "PROF")
       {
-        vehicle = new Simulators::VSIM::UUV(buoyancy, volume);
+        if (type == "PROF")
+          vehicle = new Simulators::VSIM::PROF(buoyancy, volume);
+        else
+          vehicle = new Simulators::VSIM::UUV(buoyancy, volume);
 
         // Retrieve added mass coefficient.
         double addedmass[6];
