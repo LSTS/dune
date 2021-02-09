@@ -97,7 +97,10 @@ namespace Simulators
       void
       applyCoriolisForce(void);
 
-    private:
+      //! Apply Body Lift to the UUV
+      virtual void
+      applyBodyLiftForce(void);
+
       //! Applies vehicle specific force (buoyancy).
       void
       applyRestoringForcesMoments(void);

@@ -170,18 +170,22 @@ namespace Simulators
                    +(m_inertia[0] - m_added_mass_coef[3]) * m_angular_velocity[0] * m_angular_velocity[1]);
 
       addForces(xf, yf, zf, pf, qf, rf);
+    }
 
-      xf = 0;
-      yf = (m_body_lift_coef[0] * m_linear_velocity[1] +
-            m_body_lift_coef[1] * m_angular_velocity[2]) * m_linear_velocity[0];
-      zf = (m_body_lift_coef[2] * m_linear_velocity[2] +
-            m_body_lift_coef[3] * m_angular_velocity[1]) * m_linear_velocity[0];
+    void
+    UUV::applyBodyLiftForce(void)
+    {
+      double xf = 0;
+      double yf = (m_body_lift_coef[0] * m_linear_velocity[1] +
+                  m_body_lift_coef[1] * m_angular_velocity[2]) * m_linear_velocity[0];
+      double zf = (m_body_lift_coef[2] * m_linear_velocity[2] +
+                  m_body_lift_coef[3] * m_angular_velocity[1]) * m_linear_velocity[0];
 
-      pf = 0;
-      qf = (m_body_lift_coef[4] * m_linear_velocity[2] +
-            m_body_lift_coef[5] * m_angular_velocity[1]) * m_linear_velocity[0];
-      rf = (m_body_lift_coef[6] * m_linear_velocity[1] +
-            m_body_lift_coef[7] * m_angular_velocity[2]) * m_linear_velocity[0];
+      double pf = 0;
+      double qf = (m_body_lift_coef[4] * m_linear_velocity[2] +
+                  m_body_lift_coef[5] * m_angular_velocity[1]) * m_linear_velocity[0];
+      double rf = (m_body_lift_coef[6] * m_linear_velocity[1] +
+                  m_body_lift_coef[7] * m_angular_velocity[2]) * m_linear_velocity[0];
 
       addForces(xf, yf, zf, pf, qf, rf);
     }
@@ -193,6 +197,7 @@ namespace Simulators
       applyControlForces();
       applyRestoringForcesMoments();
       applyCoriolisForce();
+      applyBodyLiftForce();
     }
   }
 }
