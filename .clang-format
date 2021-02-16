@@ -1,38 +1,21 @@
 ---
-Language: Cpp
-AccessModifierOffset: -2
-AlignEscapedNewlinesLeft: false
-AlwaysBreakAfterDefinitionReturnType: All
+BasedOnStyle:  LLVM
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakAfterReturnType: AllDefinitions
 BinPackArguments: true
 BinPackParameters: true
-BraceWrapping:
-  AfterClass: true
-  AfterControlStatement: true
-  AfterEnum: true
-  AfterFunction: true
-  AfterNamespace: true
-  AfterObjCDeclaration: true
-  AfterStruct: true
-  AfterUnion: true
-  BeforeCatch: true
-  BeforeElse: true
-  IndentBraces: false
-BreakBeforeBinaryOperators: All
-BreakBeforeBraces: Custom
-BreakBeforeTernaryOperators: true
-ColumnLimit: 80
-ConstructorInitializerIndentWidth: 0
-ContinuationIndentWidth: 0
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Allman
+BreakConstructorInitializers: AfterColon
+ColumnLimit: 100
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 2
+Cpp11BracedListStyle: false
 IndentCaseLabels: true
 NamespaceIndentation: All
-PenaltyBreakBeforeFirstCallParameter: 100
 PointerAlignment: Left
-SortIncludes: false
-SpaceAfterCStyleCast: true
-SpaceBeforeParens: ControlStatements
-SpacesBeforeTrailingComments: 1
-UseTab: Never
-AlignAfterOpenBracket: Align
-Cpp11BracedListStyle: false
-AlignConsecutiveAssignments: false
+SpacesBeforeTrailingComments: 2
+SpaceAfterTemplateKeyword: false
+AlignEscapedNewlines: Left
+FixNamespaceComments: false
 ...
