@@ -442,24 +442,24 @@ if(NOT CLANG_FORMAT_EXECUTABLE)
   message(STATUS "clang-format not found.")
 else()
   message(STATUS "clang-format found: ${CLANG_FORMAT_EXECUTABLE}")
-  set(DO_CLANG_FORMAT "${CLANG_FORMAT_EXECUTABLE}" "-i -style=file")
+  set(DO_CLANG_FORMAT "${CLANG_FORMAT_EXECUTABLE}" -i -style=file)
 endif()
 
 if(CLANG_FORMAT_EXECUTABLE)
   add_custom_target(
     clang-format-core-sources
-    COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${DUNE_CORE_HEADERS} ${DUNE_CORE_SOURCES}
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${DUNE_CORE_HEADERS} ${DUNE_CORE_SOURCES}
   )
   add_custom_target(
     clang-format-programs
-    COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${programs}
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${programs}
   )
   add_custom_target(
     clang-format-tests
-    COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${DUNE_TESTS_SOURCES}
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${DUNE_TESTS_SOURCES}
   )
   add_custom_target(
     clang-format-tasks
-    COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${ALL_TASK_SOURCES} ${ALL_TASK_HEADERS}
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${ALL_TASK_SOURCES} ${ALL_TASK_HEADERS}
   )
 endif()
