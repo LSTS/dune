@@ -127,7 +127,7 @@ namespace DUNE
       //! @param databits number of data bits.
       //! @param block false enable non-blocking I/O.
       //! @throw SerialPortError.
-      SerialPort(const std::string& device, int baudrate = 38400, Parity parity = SP_PARITY_NONE, StopBits stopbits = SP_STOPBITS_1, DataBits databits = SP_DATABITS_8, bool block = false);
+      SerialPort(const std::string& device, int baudrate = 38400, Parity parity = SP_PARITY_NONE, StopBits stopbits = SP_STOPBITS_1, DataBits databits = SP_DATABITS_8, bool block = false, bool readonly = false);
 
       //! Serial port destructor.
       ~SerialPort(void);
