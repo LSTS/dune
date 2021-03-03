@@ -166,8 +166,8 @@ file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
 file(GLOB_RECURSE DUNE_CORE_DEFS    "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
 string(REPLACE ";" " " DUNE_CORE_HEADERS_STRING "${DUNE_CORE_HEADERS}")
 
-file(GLOB_RECURSE USER_CORE_SOURCES "${PROJECT_SOURCE_DIR}/user/src/USER/*.cpp")
-file(GLOB_RECURSE USER_CORE_HEADERS "${PROJECT_SOURCE_DIR}/user/src/USER/*.hpp")
+file(GLOB_RECURSE USER_CORE_SOURCES "${PROJECT_SOURCE_DIR}/user*/src/USER/*.cpp")
+file(GLOB_RECURSE USER_CORE_HEADERS "${PROJECT_SOURCE_DIR}/user*/src/USER/*.hpp")
 string(REPLACE ";" " " USER_CORE_HEADERS_STRING "${USER_CORE_HEADERS}")
 
 configure_file(${PROJECT_SOURCE_DIR}/src/DUNE/Config.hpp.in
@@ -203,17 +203,18 @@ foreach(extlib ${extlibs})
 endforeach(extlib ${extlibs})
 
 # Private Libraries.
-file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/vendor/libraries/*/Library.cmake)
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private*/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
 # User Libraries.
-file(GLOB extlibs ${PROJECT_SOURCE_DIR}/user/vendor/libraries/*/Library.cmake)
+file(GLOB extlibs ${PROJECT_SOURCE_DIR}/user*/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
+# Fix to multi user and private folders
 include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/user/src ${DUNE_VENDOR_INCS_DIR})
 link_directories(${DUNE_VENDOR_LIBS_DIR})
 set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
@@ -342,6 +343,7 @@ install(DIRECTORY www DESTINATION .)
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
 
+# FIX this for multi user and private folders
 if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   # Install user configuration files.
   install(DIRECTORY user/etc DESTINATION ./user/)
