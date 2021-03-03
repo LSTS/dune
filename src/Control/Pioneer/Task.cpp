@@ -679,8 +679,6 @@ namespace Control
         temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
         dispatch(temp);
 
-        // TEMPORARY WHILE NO DVL INTEGRATED (for testing purposes)
-        // Considering linear relation between commanded force (up to max reported N) and "measured" speeds (m/s) in water tank.
         IMC::DesiredControl dcontrol;
         dcontrol.x = msg.control_force_surge;
         dcontrol.y = msg.control_force_sway;
@@ -689,18 +687,6 @@ namespace Control
         dcontrol.flags = IMC::DesiredControl::FL_X | IMC::DesiredControl::FL_Y |
                          IMC::DesiredControl::FL_Z | IMC::DesiredControl::FL_N;
         dispatch(dcontrol);
-
-        bool boost = (msg.control_force_surge > 20 || msg.control_force_sway > 15) ? true : false;
-        float factor_x, factor_y;
-        factor_x = boost ? 0.02 : 0.035;
-        factor_y = boost ? 0.009 : 0.0145;
-
-        IMC::WaterVelocity wvel;
-        wvel.x = dcontrol.x * factor_x;
-        wvel.y = dcontrol.y * factor_y;
-        wvel.z = dcontrol.z * factor_y;
-        wvel.validity = IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y | IMC::WaterVelocity::VAL_VEL_Z;
-        dispatch(wvel);
 
         if (m_args.generate_estimate_state_from_telemetry)
         {
