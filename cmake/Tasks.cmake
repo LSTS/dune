@@ -171,8 +171,16 @@ if(TASK_FILE)
   endif()
 else(TASK_FILE)
   dune_add_tasks(${PROJECT_SOURCE_DIR}/src)
-  dune_add_tasks(${PROJECT_SOURCE_DIR}/private/src)
-  dune_add_tasks(${PROJECT_SOURCE_DIR}/user/src)
+  # Adding private folders.
+  file(GLOB privdir ${PROJECT_SOURCE_DIR}/private*/)
+  foreach(privdir ${privdir})
+    dune_add_tasks(${privdir}/src)
+  endforeach(privdir ${privdir})
+  # Adding user folders.
+  file(GLOB userdir ${PROJECT_SOURCE_DIR}/user*/)
+  foreach(userdir ${userdir})
+    dune_add_tasks(${userdir}/src)
+  endforeach(userdir ${userdir})
 endif(TASK_FILE)
 
 list(SORT DUNE_TASKS_ENABLED)
