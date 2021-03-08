@@ -233,63 +233,71 @@ namespace Sensors
       void
       parseTCP(char* data)
       {
-        // Interpret received data
-        auto msg = json::parse(data);
+        try {
+          // Interpret received data
+          auto msg = json::parse(data);
 
-        // Status
-        uint8_t status = msg["status"];
-        if(status)
-        {
-          err("DVL high temperature warning!!!");
-          setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_INTERNAL_ERROR);
+          // Status
+          uint8_t status = msg["status"];
+          if (status) {
+            err("DVL high temperature warning!!!");
+            setEntityState(IMC::EntityState::ESTA_FAULT,
+                           Status::CODE_INTERNAL_ERROR);
+          }
+
+          // Water Velocity
+          uint8_t validity = msg["velocity_valid"];
+          if (validity) {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+            m_wvel.x = (fp64_t)msg["vx"];
+            m_wvel.y = (fp64_t)msg["vy"];
+            m_wvel.z = (fp64_t)msg["vz"];
+            m_wvel.validity =
+                (IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y |
+                 IMC::WaterVelocity::VAL_VEL_Z);
+
+          } else {
+            setEntityState(IMC::EntityState::ESTA_NORMAL,
+                           Status::CODE_NO_BOTTOM_LOCK);
+            m_wvel.clear();
+          }
+          m_wvel.setTimeStamp(m_timestamp);
+          dispatch(m_wvel, DF_KEEP_TIME);
+
+          // Bottom Ranges
+          uint8_t beam_valid;
+          float distance;
+          for (unsigned i = 0; i < c_beams; ++i) {
+            beam_valid = msg["transducers"][i]["beam_valid"];
+            distance = (float)msg["transducers"][i]["distance"];
+
+            (beam_valid && distance > 0)
+                ? m_filter->setValidity(i, IMC::Distance::DV_VALID)
+                : m_filter->setValidity(i, IMC::Distance::DV_INVALID);
+            m_filter->update(i, distance);
+          }
+          m_filter->dispatch(m_timestamp);
+
+          // Altitude from DVL
+          m_alt_dvl.value = (fp32_t)msg["altitude"];
+          m_alt_dvl.validity = validity;
+          m_alt_dvl.setTimeStamp(m_timestamp);
+          dispatch(m_alt_dvl, DF_KEEP_TIME);
+
+          // Filtered Altitude
+          m_alt_flt.value = m_filter->get();
+          m_alt_flt.validity =
+              (m_alt_flt.value > 0.0 ? IMC::Distance::DV_VALID
+                                     : IMC::Distance::DV_INVALID);
+          m_alt_flt.setTimeStamp(m_timestamp);
+          dispatch(m_alt_flt, DF_KEEP_TIME);
         }
-
-        // Water Velocity
-        uint8_t validity = msg["velocity_valid"];
-        if(validity)
+        catch (Exception e)
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-          m_wvel.x = (fp64_t) msg["vx"];
-          m_wvel.y = (fp64_t) msg["vy"];
-          m_wvel.z = (fp64_t) msg["vz"];
-          m_wvel.validity = (IMC::WaterVelocity::VAL_VEL_X
-                             | IMC::WaterVelocity::VAL_VEL_Y
-                             | IMC::WaterVelocity::VAL_VEL_Z);
-
+          debug("TCP driver parsing problem '%s'.", e.what());
+          spew("\ntcp problematic parsed data = >>%s<<", Streams::sanitize(data).c_str());
         }
-        else
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_BOTTOM_LOCK);
-          m_wvel.clear();
-        }
-        m_wvel.setTimeStamp(m_timestamp);
-        dispatch(m_wvel, DF_KEEP_TIME);
-
-        // Bottom Ranges
-        uint8_t beam_valid;
-        float distance;
-        for (unsigned i = 0; i < c_beams; ++i)
-        {
-          beam_valid = msg["transducers"][i]["beam_valid"];
-          distance = (float)msg["transducers"][i]["distance"];
-
-          (beam_valid && distance>0) ? m_filter->setValidity(i, IMC::Distance::DV_VALID) : m_filter->setValidity(i, IMC::Distance::DV_INVALID);
-          m_filter->update(i, distance);
-        }
-        m_filter->dispatch(m_timestamp);
-
-        // Altitude from DVL
-        m_alt_dvl.value = (fp32_t) msg["altitude"];
-        m_alt_dvl.validity = validity;
-        m_alt_dvl.setTimeStamp(m_timestamp);
-        dispatch(m_alt_dvl, DF_KEEP_TIME);
-
-        // Filtered Altitude
-        m_alt_flt.value = m_filter->get();
-        m_alt_flt.validity = (m_alt_flt.value > 0.0 ? IMC::Distance::DV_VALID : IMC::Distance::DV_INVALID);
-        m_alt_flt.setTimeStamp(m_timestamp);
-        dispatch(m_alt_flt, DF_KEEP_TIME);
       }
 
       //! Parser to interpret incoming data through serial connection.
@@ -297,7 +305,7 @@ namespace Sensors
       parseSerial(char* data)
       {
         war("Serial driver not supported yet.");
-        spew("\nserial data = %s", Streams::sanitize(data).c_str());
+        spew("\nserial data = >>%s<<", Streams::sanitize(data).c_str());
       }
 
       //! Read data from sensor.
