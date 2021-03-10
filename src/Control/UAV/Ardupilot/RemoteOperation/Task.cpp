@@ -805,7 +805,6 @@ namespace Control
             if (button == 1)
             {
               changeMode(MAVLink::SUB_MODE_MANUAL);
-              err("Sending %d",SUB_MODE_MANUAL);
             }
             button = tl.get(remote_actions[10], 0);
             if (button == 1)
