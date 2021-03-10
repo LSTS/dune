@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -136,7 +136,7 @@ namespace Transports
         msg.setDestinationEntity(req->getSourceEntity());
         m_parent->dispatch(msg);
 
-        m_parent->inf("Status of transmission message(%d) changed to: %s",
+        m_parent->inf("Status of transmission message (%d) changed to: %s",
                       req->req_id, info.c_str());
       }
 
@@ -179,8 +179,9 @@ namespace Transports
         {
           if (it->second->deadline <= time)
           {
+           m_parent->inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
             answer(it->second, "Transmission timed out.",
-                   IMC::TransmissionStatus::TSTAT_INPUT_FAILURE);
+                   IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             Memory::clear(it->second);
             m_transmission_requests.erase(it++);
           }

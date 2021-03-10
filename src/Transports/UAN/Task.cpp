@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -72,6 +72,8 @@ namespace Transports
       float usbl_max_wait;
       //! USBL Modem Announce service.
       bool usbl_announce;
+      //! Section where to read modem addresses
+      std::string addr_section;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -181,6 +183,10 @@ namespace Transports
             " This value establishes the maximum amount of time that the modem"
             " waits for the target system's reply");
 
+        param("Address Section", m_args.addr_section)
+        .defaultValue("")
+        .description("Name of the configuration section with modem addresses");
+
         bind<IMC::AcousticRequest>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
@@ -192,6 +198,7 @@ namespace Transports
         bind<IMC::UsblPositionExtended>(this);
         bind<IMC::UsblAnglesExtended>(this);
         bind<IMC::UsblConfig>(this);
+        bind<IMC::AcousticSystemsQuery>(this);
 
         m_msg_send_timer.setTop(2);
       }
@@ -232,6 +239,21 @@ namespace Transports
         Memory::clear(m_reporter);
         Memory::clear(m_usbl_node);
         Memory::clear(m_usbl_modem);
+      }
+
+      void
+      consume(const IMC::AcousticSystemsQuery* msg)
+      {
+        if (m_args.addr_section.empty())
+        {
+          war("Modem address section was not properly set.");
+          return;
+        }
+        AcousticSystems reply;
+        std::vector<std::string> options = m_ctx.config.options(m_args.addr_section);
+        options.erase(std::remove(options.begin(), options.end(), m_ctx.resolver.name()), options.end());
+        reply.list = String::join(options.begin(), options.end(), ",");
+        dispatchReply(*msg, reply);
       }
 
       void
@@ -691,17 +713,19 @@ namespace Transports
         std::vector<uint8_t> data;
         data.push_back(CODE_RAW);
 
+        inf("Send message of type %s, with serialization size %d.", msg->getName(), msg->getSerializationSize());
+
         // leave 1 byte for CODE_RAW and another for CRC8
-        uint8_t buf[1022];
+        uint8_t buf[2500];
 
         // start with message id
         uint16_t id2 = msg->getId();
         std::memcpy(&buf[0], &id2, sizeof(uint16_t));
 
         // followed by all message fields
-        uint8_t* end = msg->serializeFields(&buf[2]);
+        msg->serializeFields(&buf[2]);
 
-        int length = end - buf;
+        int length = msg->getSerializationSize() + 2;
         data.insert(data.end(), buf, buf + length);
         sendFrame(sys, id, data, true);
       }
@@ -808,6 +832,16 @@ namespace Transports
           m->setDestination(imc_dst);
           m->setTimeStamp(msg->getTimeStamp());
           m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
+
+          // mark the message's origin as acoustic if it is an acoustic command
+          if (m->getId() == IMC::TextMessage::getIdStatic())
+          {
+        	IMC::TextMessage* txtmsg = static_cast<IMC::TextMessage*>(m);
+        	std::stringstream ss;
+        	ss << "acoustic/" << msg->sys_src;
+        	txtmsg->origin = ss.str();
+          }
+
           dispatch(m, DF_KEEP_TIME | DF_LOOP_BACK);
           debug("Acoustic message successfully parsed as '%s'.", m->getName());
         }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -173,6 +173,8 @@ namespace Transports
           sensorInfo.lat = p.lat;
           sensorInfo.lon = p.lon;
           sensorInfo.heading = 0;
+
+          war("  System %X is at (%.5f, %.5f).", p.id, Angles::degrees(p.lat), Angles::degrees(p.lon));
 
           std::string name = resolveSystemId(p.id);
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -83,6 +83,8 @@ namespace UserInterfaces
       std::vector<std::string> sys_addr_sections;
       //! Set of excluded systems.
       std::vector<std::string> sys_exclude;
+      //! Reply to AcousticSystemsQuery requests
+      bool reply_asq;
     };
 
     struct Task: public Tasks::Task
@@ -166,6 +168,9 @@ namespace UserInterfaces
         param("Exclude System Names", m_args.sys_exclude)
         .defaultValue("broadcast")
         .description("List of excluded systems");
+
+        param("Reply to System Queries", m_args.reply_asq)
+        .defaultValue("false");
 
         // Register listeners.
         bind<IMC::ButtonEvent>(this);
@@ -300,7 +305,8 @@ namespace UserInterfaces
       void
       consume(const IMC::AcousticSystemsQuery* msg)
       {
-        dispatchReply(*msg, m_acoustic_systems);
+        if (m_args.reply_asq)
+          dispatchReply(*msg, m_acoustic_systems);
       }
 
       void

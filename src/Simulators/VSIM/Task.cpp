@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -32,6 +32,7 @@
 // ISO C++ 98 headers.
 #include <cmath>
 #include <algorithm>
+#include <string>
 #include <vector>
 #include <stdexcept>
 #include <cstdlib>
@@ -60,10 +61,8 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
-      //! Stream speed North parameter (m/s).
-      double wx;
-      //! Stream speed East parameter (m/s).
-      double wy;
+      //! Entity label of the stream velocity source.
+      std::string svlabel;
       //! Simulation time multiplier
       double time_multiplier;
     };
@@ -79,31 +78,27 @@ namespace Simulators
       IMC::SimulatedState m_sstate;
       //! Task arguments.
       Arguments m_args;
+      //! Stream velocity.
+      double m_svel[3];
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
         m_vehicle(NULL),
         m_world(NULL)
       {
-        // Retrieve configuration values.
-        param("Stream Speed North", m_args.wx)
-        .units(Units::MeterPerSecond)
-        .defaultValue("0.0")
-        .description("Water current speed along the North in the NED frame");
-
-        param("Stream Speed East", m_args.wy)
-        .units(Units::MeterPerSecond)
-        .defaultValue("0.0")
-        .description("Water current speed along the East in the NED frame");
-
         param("Time Multiplier", m_args.time_multiplier)
         .defaultValue("1.0")
         .description("Simulation time multiplier");
+
+        param("Entity Label - Stream Velocity Source", m_args.svlabel)
+            .defaultValue("Stream Velocity Simulator")
+            .description("Entity label of the stream velocity source.");
 
         // Register handler routines.
         bind<IMC::GpsFix>(this);
         bind<IMC::ServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::EstimatedStreamVelocity>(this);
       }
 
       void
@@ -139,6 +134,10 @@ namespace Simulators
 
         m_world->addVehicle(m_vehicle);
         m_world->setTimeStep(1.0 / getFrequency());
+
+        m_svel[0] = 0.0;
+        m_svel[1] = 0.0;
+        m_svel[2] = 0.0;
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
@@ -181,6 +180,24 @@ namespace Simulators
       }
 
       void
+      consume(const IMC::EstimatedStreamVelocity* msg)
+      {
+        // Filter valid messages.
+        if (msg->getSource() != getSystemId() ||
+            resolveEntity(msg->getSourceEntity()) != m_args.svlabel)
+          return;
+
+        m_svel[0] = msg->x;
+        m_svel[1] = msg->y;
+        m_svel[2] = msg->z;
+
+        debug(DTR("Setting stream velocity: %f m/s N : %f m/s E : %f m/s D"),
+              m_svel[0],
+              m_svel[1],
+              m_svel[2]);
+      }
+
+      void
       task(void)
       {
         if (!isActive())
@@ -194,9 +211,10 @@ namespace Simulators
         // TODO
         // This is a temporary fix and this operation should probably be done
         // inside the Vehicle class.
-        // Add stream speed.
-        position[0] += m_world->getTimeStep() * m_args.wx;
-        position[1] += m_world->getTimeStep() * m_args.wy;
+        // Add stream velocity.
+        position[0] += m_world->getTimeStep() * m_svel[0];
+        position[1] += m_world->getTimeStep() * m_svel[1];
+        position[2] += m_world->getTimeStep() * m_svel[2];
 
         m_sstate.x = position[0];
         m_sstate.y = position[1];
@@ -221,9 +239,9 @@ namespace Simulators
         m_sstate.w = lv[2];
 
         // Fill stream velocity.
-        m_sstate.svx = m_args.wx;
-        m_sstate.svy = m_args.wy;
-        m_sstate.svz = 0;
+        m_sstate.svx = m_svel[0];
+        m_sstate.svy = m_svel[1];
+        m_sstate.svz = m_svel[2];
 
         dispatch(m_sstate);
       }

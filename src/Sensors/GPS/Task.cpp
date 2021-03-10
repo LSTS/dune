@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -428,7 +428,17 @@ namespace Sensors
         // Validate checksum.
         unsigned rcsum = 0;
         if (std::sscanf(&line[0] + eidx + 1, "%02X", &rcsum) != 1)
+        {
+          trace("No checksum found, will not parse sentence.");
           return;
+        }
+
+        if (ccsum != rcsum)
+        {
+          trace("Checksum field does not match computed checksum, will not "
+                "parse sentence.");
+          return;
+        }
 
         // Split sentence
         std::vector<std::string> parts;

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -326,6 +326,22 @@ namespace Autonomy
           req.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
           req.destination = "";
           inf("Replying via Iridium: '%s'", req.txt_data.c_str());
+          dispatch(req);
+        }
+        else if (String::startsWith(origin, "acoustic/"))
+        {
+          if (origin.length() < 10)
+          {
+          	war("Bad acoustic origin: %s", origin.c_str());
+          	return;
+          }
+          IMC::TextMessage inner;
+          inner.text = text;
+          req.comm_mean = TransmissionRequest::CMEAN_ACOUSTIC;
+          req.data_mode = TransmissionRequest::DMODE_INLINEMSG;
+          req.txt_data = "";
+          req.msg_data.set(&inner);
+          req.destination = origin.substr(9);
           dispatch(req);
         }
         else

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
+// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -91,6 +91,7 @@ MESSAGE(200, LblRange)
 MESSAGE(202, LblBeacon)
 MESSAGE(203, LblConfig)
 MESSAGE(206, AcousticMessage)
+MESSAGE(207, SimAcousticMessage)
 MESSAGE(211, AcousticOperation)
 MESSAGE(212, AcousticSystemsQuery)
 MESSAGE(213, AcousticSystems)
@@ -345,4 +346,5 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(2006, TotalMagIntensity)
+MESSAGE(909, HomePosition)
 #undef MESSAGE

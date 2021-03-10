@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -272,10 +272,15 @@ namespace Monitors
       void
       consume(const IMC::Voltage* msg)
       {
-        if(msg->getSourceEntity() != resolveEntity("Batteries"))
-          return;
-
-        m_bat_voltage = msg->value * 10;
+        try
+        {
+          if(msg->getSourceEntity() != resolveEntity("Batteries"))
+            return;
+          m_bat_voltage = msg->value * 10;
+        }
+        catch (std::runtime_error& e) {
+          spew("Batteries entity is not present.");
+        }
       }
 
       void

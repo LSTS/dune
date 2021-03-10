@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 009a5046be102f40bfccc623630722a7                            *
+// IMC XML MD5: c49b27aa4bcdc6ad012fe602fbe29bb8                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -4874,6 +4874,104 @@ namespace DUNE
       setDestinationEntityNested(uint8_t value__);
     };
 
+    //! Simulated Acoustic Message.
+    class SimAcousticMessage: public Message
+    {
+    public:
+      //! Flags.
+      enum FlagsBits
+      {
+        //! Acknowledgement.
+        SAM_ACK = 0x01,
+        //! Delayed.
+        SAM_DELAYED = 0x02,
+        //! Reply.
+        SAM_REPLY = 0x03
+      };
+
+      //! Latitude.
+      fp64_t lat;
+      //! Longitude.
+      fp64_t lon;
+      //! Depth.
+      fp32_t depth;
+      //! Sentence.
+      std::string sentence;
+      //! Transmission Time.
+      fp64_t txtime;
+      //! Modem Type.
+      std::string modem_type;
+      //! Source system.
+      std::string sys_src;
+      //! Sequence Id.
+      uint16_t seq;
+      //! Destination System.
+      std::string sys_dst;
+      //! Flags.
+      uint8_t flags;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 207;
+      }
+
+      SimAcousticMessage(void);
+
+      SimAcousticMessage*
+      clone(void) const
+      {
+        return new SimAcousticMessage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SimAcousticMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SimAcousticMessage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 31;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(sentence) + IMC::getSerializationSize(modem_type) + IMC::getSerializationSize(sys_src) + IMC::getSerializationSize(sys_dst) + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Acoustic Operation.
     class AcousticOperation: public Message
     {
@@ -5333,6 +5431,8 @@ namespace DUNE
         STATUS_SENT = 2,
         //! Range Received.
         STATUS_RANGE_RECEIVED = 3,
+        //! Delivered.
+        STATUS_DELIVERED = 4,
         //! Busy.
         STATUS_BUSY = 100,
         //! Input Error.
@@ -22883,7 +22983,11 @@ namespace DUNE
         //! Unsupported operation.
         UTS_UNSUPPORTED = 6,
         //! Invalid transmission size.
-        UTS_INV_SIZE = 7
+        UTS_INV_SIZE = 7,
+        //! Message has been sent.
+        UTS_SENT = 8,
+        //! Message has been acknowledged by the destination.
+        UTS_DELIVERED = 9
       };
 
       //! Sequence Id.
@@ -25443,6 +25547,86 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Home Position.
+    class HomePosition: public Message
+    {
+    public:
+      //! Action on the vehicle home position.
+      enum ActiononthevehiclehomepositionEnum
+      {
+        //! Set.
+        OP_SET = 1,
+        //! Report.
+        OP_REPORT = 2
+      };
+
+      //! Action on the vehicle home position.
+      uint8_t op;
+      //! Latitude (WGS-84).
+      fp64_t lat;
+      //! Longitude (WGS-84).
+      fp64_t lon;
+      //! Height (WGS-84).
+      fp32_t height;
+      //! Depth.
+      fp32_t depth;
+      //! Altitude.
+      fp32_t alt;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 909;
+      }
+
+      HomePosition(void);
+
+      HomePosition*
+      clone(void) const
+      {
+        return new HomePosition(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HomePosition::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HomePosition";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 29;
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
