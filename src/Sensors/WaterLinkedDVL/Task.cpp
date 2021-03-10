@@ -250,8 +250,8 @@ namespace Sensors
           if (validity) {
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-            m_wvel.x = (fp64_t)msg["vx"];
-            m_wvel.y = (fp64_t)msg["vy"];
+            m_wvel.x = (-1)*(fp64_t)msg["vx"];
+            m_wvel.y = (-1)*(fp64_t)msg["vy"];
             m_wvel.z = (fp64_t)msg["vz"];
             m_wvel.validity =
                 (IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y |
