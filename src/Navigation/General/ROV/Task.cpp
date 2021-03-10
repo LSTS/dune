@@ -96,12 +96,17 @@ namespace Navigation
       {
         //! Periodic GPS fix reading check.
         bool m_gps_reading;
+        //! USBL fix reading check.
+        bool m_usbl_reading;
+        //! USBL measurement noise covariance value.
+        double m_usbl_noise;
 
         //! Constructor.
         //! @param[in] name task name.
         //! @param[in] ctx context.
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Navigation::BasicNavigation(name, ctx)
+          DUNE::Navigation::BasicNavigation(name, ctx),
+          m_usbl_noise(100.0)
         {
           param("Process Noise Covariance", m_process_noise)
           .defaultValue("")
@@ -174,6 +179,23 @@ namespace Navigation
           m_kal.setOutput(OUT_GPS_Y, y);
         }
 
+        void
+        runKalmanUSBL(double x, double y)
+        {
+          // if there's gps, ignore usbl.
+          if (!m_time_without_gps.overflow())
+            return;
+
+          m_usbl_reading = true;
+
+          // set kalman.
+          m_kal.setMeasurementNoise(OUT_GPS_X, m_usbl_noise);
+          m_kal.setMeasurementNoise(OUT_GPS_Y, m_usbl_noise);
+
+          m_kal.setOutput(OUT_GPS_X, x);
+          m_kal.setOutput(OUT_GPS_Y, y);
+        }
+
         unsigned
         getNumberOutputs(void)
         {
@@ -205,6 +227,7 @@ namespace Navigation
         {
           BasicNavigation::reset();
           m_gps_reading = false;
+          m_usbl_reading = false;
         }
 
         // Reinitialize Extended Kalman Filter transition matrix function.
@@ -287,10 +310,12 @@ namespace Navigation
           m_kal.predict();
 
           // GPS innovation matrix.
-          if (m_gps_reading)
+          if (m_gps_reading || m_usbl_reading)
           {
             // Reset GPS counter.
-            m_time_without_gps.reset();
+            if (m_gps_reading)
+              m_time_without_gps.reset();
+
             m_kal.setInnovation(OUT_GPS_X, m_kal.getOutput(OUT_GPS_X) - m_kal.getState(STATE_X));
             m_kal.setInnovation(OUT_GPS_Y, m_kal.getOutput(OUT_GPS_Y) - m_kal.getState(STATE_Y));
           }
@@ -333,6 +358,7 @@ namespace Navigation
           // Reset variables.
           updateBuffers(c_wma_filter);
           m_gps_reading = false;
+          m_usbl_reading = false;
           m_valid_gv = false;
           m_valid_wv = false;
           resetKalman();
