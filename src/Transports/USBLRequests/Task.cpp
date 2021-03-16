@@ -135,7 +135,7 @@ namespace Transports
         	tr.setSourceEntity(getEntityId());
         	tr.setDestination(getSystemId());
         	tr.destination = m_args.target;
-        	tr.comm_mean   = IMC::TransmissionRequest::CMEAN_WIFI;
+        	tr.comm_mean   = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         	tr.data_mode   = IMC::TransmissionRequest::DMODE_INLINEMSG;
         	tr.deadline    = Time::Clock::getSinceEpoch() + 60;
         	tr.msg_data.set(*msg);
