@@ -84,8 +84,8 @@ namespace Sensors
       std::string init_rpls[c_max_init_cmds];
       //! Power channels.
       std::vector<std::string> pwr_channels;
-      //! Enable novatel features.
-      bool novatel;
+      //! Enable novatel sbas mode.
+      bool novatelSbas;
     };
 
     struct Task: public Tasks::Task
@@ -154,9 +154,9 @@ namespace Sensors
           .defaultValue("");
         }
 
-        param("Novatel", m_args.novatel)
+        param("Novatel SBAS", m_args.novatelSbas)
         .defaultValue("false")
-        .description("Enable novatel features");
+        .description("Enable novatel sbas mode");
 
         // Initialize messages.
         clearMessages();
@@ -228,9 +228,12 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        if (m_args.novatel)
+        if (m_args.novatelSbas)
         {
-          trace(DTR("enabling NOVATEL mode."));
+          trace(DTR("enabling NOVATEL SBAS mode."));
+
+          std::string cmd = String::unescape("SBASCONTROL ENABLE AUTO\r\n");
+          m_handle->writeString(cmd.c_str());
         }
 
         for (unsigned i = 0; i < c_max_init_cmds; ++i)
@@ -592,7 +595,7 @@ namespace Sensors
           m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
         }
 
-        if (m_args.novatel)
+        if (m_args.novatelSbas)
         {
           static bool sbas_alert = false;
 
