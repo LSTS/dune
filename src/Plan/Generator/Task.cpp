@@ -130,7 +130,7 @@ namespace Plan
       void
       consume(const IMC::Announce* msg)
       {
-        m_last_announces[msg->getSource()] = *msg;
+        m_last_announces.insert(std::pair<unsigned int, Announce>(msg->getSource(),*msg));
       }
 
       //! Stores the last received EstimatedState message.
