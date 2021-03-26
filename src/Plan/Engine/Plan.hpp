@@ -139,6 +139,11 @@ namespace Plan
       IMC::PlanManeuver*
       loadNextManeuver(void);
 
+      //! Peek next maneuver message
+      //! @return NULL if maneuver id is invalid
+      IMC::PlanManeuver*
+      peekNextManeuver(void);
+
       //! Get current maneuver id
       //! @return current id string
       inline std::string

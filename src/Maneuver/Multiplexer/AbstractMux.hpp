@@ -104,6 +104,12 @@ namespace Maneuver
         (void)msg;
       }
 
+      virtual void
+      onPeekManeuver(const IMC::PeekManeuver* pman)
+      {
+        (void)pman;
+      }
+
     protected:
       //! Pointer to task
       Maneuvers::Maneuver* m_task;

@@ -936,6 +936,14 @@ namespace Plan
         changeMode(IMC::PlanControlState::PCS_EXECUTING,
                    pman->maneuver_id + DTR(": executing maneuver"),
                    pman->maneuver_id, pman->data.get(), TYPE_INF);
+        IMC::PlanManeuver* next_man = m_plan->peekNextManeuver();
+        if(next_man != NULL)
+        {
+          IMC::PeekManeuver peek_man;
+          peek_man.man.set(*next_man);
+          dispatch(peek_man);
+          debug("Dispatching peek maneuver!");
+        }
 
         m_plan->maneuverStarted(pman->maneuver_id);
       }
