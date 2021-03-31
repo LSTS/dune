@@ -126,8 +126,6 @@ namespace Navigation
         double usbl_noise;
         //! IMU entity label.
         std::string elabel_imu;
-        //! Number of samples to average forward speed.
-        unsigned navg_speed;
         //! Revolutions to speed factor.
         float rpm_ini;
         //! Maximum revolutions to speed variation.
@@ -151,16 +149,13 @@ namespace Navigation
         bool m_gps_reading;
         //! USBL fix reading check.
         bool m_usbl_reading;
-        //! Moving average for vehicle forward speed.
-        MovingAverage<double>* m_avg_speed;
         //! Task arguments.
         Arguments m_args;
         //! Pointer to speed model for speed conversions
         const Plans::SpeedModel* m_speed_model;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Navigation::BasicNavigation(name, ctx),
-          m_avg_speed(NULL)
+          DUNE::Navigation::BasicNavigation(name, ctx)
         {
           param("Process Noise Covariance", m_process_noise)
           .defaultValue("")
@@ -186,12 +181,6 @@ namespace Navigation
           .defaultValue("")
           .size(5)
           .description("Kalman Filter State Covariance initial values");
-
-          param("Speed Moving Average Samples", m_args.navg_speed)
-          .defaultValue("10")
-          .minimumValue("5")
-          .maximumValue("20")
-          .description("Number of moving average samples to smooth forward speed");
 
           param("Revolutions to speed factor", m_args.rpm_ini)
           .defaultValue("1.2e-3")
@@ -264,7 +253,6 @@ namespace Navigation
         onResourceInitialization(void)
         {
           BasicNavigation::onResourceInitialization();
-          m_avg_speed = new MovingAverage<double>(m_args.navg_speed);
           startSpeedModel(&m_ctx.config);
         }
 
@@ -272,7 +260,6 @@ namespace Navigation
         onResourceRelease(void)
         {
           BasicNavigation::onResourceRelease();
-          Memory::clear(m_avg_speed);
           Memory::clear(m_speed_model);
         }
 
@@ -548,7 +535,6 @@ namespace Navigation
         }
 
         // Reinitialize Extended Kalman Filter transition matrix function.
-        // TODO: Add STATE_Z equations
         void
         setTransition(Matrix& A)
         {
@@ -605,10 +591,11 @@ namespace Navigation
           m_estate.r = Angles::normalizeRadian(getAngularVelocity(AXIS_Z));
           onDispatchNavigation();
 
-          m_estate.u = m_avg_speed->update(m_kal.getState(STATE_U));
+          m_estate.u = m_kal.getState(STATE_U);
           m_estate.v = m_kal.getState(STATE_V);
           m_estate.depth = getDepth() - m_estate.theta * m_args.distance_depth_sensor;
           m_estate.z = m_last_z - m_estate.depth;
+          m_estate.w = m_kal.getState(STATE_W);
 
           // Log Navigation Uncertainty.
           m_uncertainty.u = m_kal.getCovariance(STATE_U);
