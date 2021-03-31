@@ -69,18 +69,18 @@ namespace Navigation
         //! Downward Speed (m/s).
         OUT_W = 2,
         //! GPS x (m).
-        OUT_GPS_X = 4,
+        OUT_GPS_X = 3,
         //! GPS y (m).
-        OUT_GPS_Y = 5,
+        OUT_GPS_Y = 4,
         //! Number of Outputs (without LBL).
-        NUM_OUT = 6
+        NUM_OUT = 5
       };
 
       //! Process Noise parameters.
       enum ProcessNoiseIndexes
       {
         PN_POSITION = 0,
-        PN_SPEED = 1,
+        PN_SPEED = 1
       };
 
       //! Measure Noise parameters.
@@ -159,7 +159,7 @@ namespace Navigation
         {
           param("Process Noise Covariance", m_process_noise)
           .defaultValue("")
-          .size(6)
+          .size(2)
           .description("Kalman Filter process noise covariance values");
 
           param("GPS Noise Covariance", m_args.gps_noise)
@@ -174,12 +174,12 @@ namespace Navigation
 
           param("Measure Noise Covariance", m_measure_noise)
           .defaultValue("")
-          .size(5)
+          .size(4)
           .description("Kalman Filter measurement noise covariance values");
 
           param("State Covariance Initial State", m_state_cov)
           .defaultValue("")
-          .size(5)
+          .size(3)
           .description("Kalman Filter State Covariance initial values");
 
           param("Revolutions to speed factor", m_args.rpm_ini)
