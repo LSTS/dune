@@ -151,6 +151,8 @@ namespace Navigation
         bool m_usbl_reading;
         //! Task arguments.
         Arguments m_args;
+        //! Integrated velocity
+        double integrated_velocity[3];
         //! Pointer to speed model for speed conversions
         const Plans::SpeedModel* m_speed_model;
 
@@ -310,6 +312,10 @@ namespace Navigation
           m_kal.setCovariance(STATE_W, m_state_cov[SC_SPEED]);
           m_kal.setCovariance(STATE_K, m_state_cov[SC_RPM]);
 
+          integrated_velocity[AXIS_X] = 0;
+          integrated_velocity[AXIS_Y] = 0;
+          integrated_velocity[AXIS_Z] = 0;
+
           return true;
         }
 
@@ -319,6 +325,10 @@ namespace Navigation
           BasicNavigation::reset();
           m_gps_reading = false;
           m_usbl_reading = false;
+
+          integrated_velocity[AXIS_X] = 0;
+          integrated_velocity[AXIS_Y] = 0;
+          integrated_velocity[AXIS_Z] = 0;
         }
 
         void
@@ -441,9 +451,14 @@ namespace Navigation
           {
             // Innovation could be set simply by integrating the acceleration
             // Output is only set for consistency
-            m_kal.setOutput(OUT_U, m_kal.getState(STATE_U) + getAcceleration(AXIS_X) * tstep);
-            m_kal.setOutput(OUT_V, m_kal.getState(STATE_V) + getAcceleration(AXIS_Y) * tstep);
-            m_kal.setOutput(OUT_W, m_kal.getState(STATE_W) + getAcceleration(AXIS_Z) * tstep);
+
+            integrated_velocity[AXIS_X] += getAcceleration(AXIS_X) * tstep;
+            integrated_velocity[AXIS_Y] += getAcceleration(AXIS_Y) * tstep;
+            integrated_velocity[AXIS_Z] += getAcceleration(AXIS_Z) * tstep;
+
+            m_kal.setOutput(OUT_U, integrated_velocity[AXIS_X]);
+            m_kal.setOutput(OUT_V, integrated_velocity[AXIS_Y]);
+            m_kal.setOutput(OUT_W, integrated_velocity[AXIS_Z]);
 
             m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
             m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
