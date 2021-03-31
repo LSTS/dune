@@ -154,20 +154,20 @@ namespace Simulators
                    -(m - m_added_mass_coef[2]) * m_linear_velocity[2] * m_linear_velocity[1] +
                    -(m * zg * m_angular_velocity[0] - (m - m_added_mass_coef[1])
                      * m_linear_velocity[1]) * m_linear_velocity[2] +
-                   -(m_inertia[2] - m_added_mass_coef[5]) * m_angular_velocity[2] * m_angular_velocity[1] +
-                   +(m_inertia[1] - m_added_mass_coef[4]) * m_angular_velocity[1] * m_angular_velocity[2]);
+                   -m_inertia[5] * m_angular_velocity[2] * m_angular_velocity[1] +
+                   +m_inertia[4] * m_angular_velocity[1] * m_angular_velocity[2]);
 
       double qf = ((m - m_added_mass_coef[2]) * m_linear_velocity[2] * m_linear_velocity[0] +
                    +m * zg * m_angular_velocity[2] * m_linear_velocity[1] +
                    -(m * zg * m_angular_velocity[1] + (m - m_added_mass_coef[0])
                      * m_linear_velocity[0]) * m_linear_velocity[2] +
-                   +(m_inertia[2] - m_added_mass_coef[5]) * m_angular_velocity[2] * m_angular_velocity[0] +
-                   -(m_inertia[0] - m_added_mass_coef[3]) * m_angular_velocity[0] * m_angular_velocity[2]);
+                   +m_inertia[5] * m_angular_velocity[2] * m_angular_velocity[0] +
+                   -m_inertia[3] * m_angular_velocity[0] * m_angular_velocity[2]);
 
       double rf = (-(m - m_added_mass_coef[1]) * m_linear_velocity[1] * m_linear_velocity[0] +
                    +(m - m_added_mass_coef[0]) * m_linear_velocity[0] * m_linear_velocity[1] +
-                   -(m_inertia[1] - m_added_mass_coef[4]) * m_angular_velocity[1] * m_angular_velocity[0] +
-                   +(m_inertia[0] - m_added_mass_coef[3]) * m_angular_velocity[0] * m_angular_velocity[1]);
+                   -m_inertia[4] * m_angular_velocity[1] * m_angular_velocity[0] +
+                   +m_inertia[3] * m_angular_velocity[0] * m_angular_velocity[1]);
 
       addForces(xf, yf, zf, pf, qf, rf);
     }
