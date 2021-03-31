@@ -150,12 +150,12 @@ namespace DUNE
       .description("Distance between LBL receiver and GPS in the vehicle");
 
       param("DVL absolute thresholds", m_dvl_abs_thresh)
-      .defaultValue("")
+      .defaultValue("5.0, 1.5")
       .size(2)
       .description("DVL absolute thresholds");
 
       param("DVL relative thresholds", m_dvl_rel_thresh)
-      .defaultValue("")
+      .defaultValue("1.5, 0.6")
       .size(2)
       .description("DVL relative thresholds");
 
