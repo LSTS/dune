@@ -306,10 +306,6 @@ namespace Transports
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
         m_driver->setLineTermOut("\n");
-        m_driver->initialize();
-
-        if (m_ctx.profiles.isSelected("Simulation"))
-          m_driver->setDriverTimeout(c_sim_timeout);
       }
 
       void
@@ -329,7 +325,6 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-
         try{
           m_driver->initialize();
         }
@@ -339,6 +334,9 @@ namespace Transports
           requestDeactivation();
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
         }
+
+        if (m_ctx.profiles.isSelected("Simulation"))
+          m_driver->setDriverTimeout(c_sim_timeout);
 
         if (!isActive())
           requestActivation();
