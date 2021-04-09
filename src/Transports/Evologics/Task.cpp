@@ -296,7 +296,6 @@ namespace Transports
 
           m_sock = new TCPSocket;
           m_sock->connect(m_args.address, m_args.port);
-
         }
         catch (std::runtime_error& e)
         {
@@ -325,10 +324,11 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        try{
+        try
+        {
           m_driver->initialize();
         }
-        catch(std::runtime_error& e)
+        catch (std::runtime_error &e)
         {
           war(DTR("Evologics Task desactivation: %s"), e.what());
           requestDeactivation();
