@@ -350,8 +350,7 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        try
-        {
+        try{
           m_driver->initialize();
         }
         catch (std::runtime_error &e)
@@ -361,7 +360,8 @@ namespace Transports
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
         }
 
-        if (m_simulating)
+
+        if (m_ctx.profiles.isSelected("Simulation"))
           m_driver->setDriverTimeout(c_sim_timeout);
 
         if (!isActive())
