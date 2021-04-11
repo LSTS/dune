@@ -45,6 +45,8 @@ namespace Transports
 
     //! Simulator command timeout.
     static const double c_sim_timeout = 6.0;
+    //! Default port.
+    static const int c_default_port = 9200;
 
     struct Arguments
     {
@@ -133,7 +135,7 @@ namespace Transports
         .description("IPv4 address");
 
         param("TCP Port", m_args.port)
-        .defaultValue("9200")
+        .defaultValue(std::to_string(c_default_port))
         .description("TCP port");
 
         param("Low Gain", m_args.low_gain)
