@@ -72,6 +72,8 @@ namespace Transports
       double sound_speed_def;
       //! Entity label of sound speed provider.
       std::string sound_speed_elabel;
+      //! Entity label of modem simulator.
+      std::string simulator_elabel;
       //! Keep-alive timeout.
       double kalive_tout;
       //! Highest address.
@@ -117,6 +119,8 @@ namespace Transports
       Counter<double> m_kalive_counter;
       //! Medium.
       IMC::VehicleMedium m_medium;
+      //! Simulator flag
+      bool m_simulating;
       //! Task arguments.
       Arguments m_args;
 
@@ -191,6 +195,10 @@ namespace Transports
         param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
         .description("Entity label of sound speed provider");
 
+        param("Simulator - Entity Label", m_args.simulator_elabel)
+        .defaultValue("Evologics Interface")
+        .description("Entity label of Evologics simulator");
+
         param("Keep Alive - Timeout", m_args.kalive_tout)
         .defaultValue("5.0")
         .units(Units::Second)
@@ -257,6 +265,19 @@ namespace Transports
           m_sound_speed = m_args.sound_speed_def;
           m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
         }
+
+        try
+        {
+          resolveEntity(m_args.simulator_elabel);
+          m_simulating = m_ctx.profiles.isSelected("Simulation");
+          debug("Simulator detected");
+        }
+        catch(const std::exception& e)
+        {
+          m_simulating = false;
+          debug("No simulator detected: %s", e.what());
+        }
+        
       }
 
       void
@@ -284,8 +305,11 @@ namespace Transports
         }
 
         // Change port for simulation purposes
-        if (m_ctx.profiles.isSelected("Simulation") && m_args.port == 9200)
+        if (m_simulating && m_args.port == c_default_port)
+        {
           m_args.port += m_address;
+          m_args.address = Address(Address::Loopback);
+        }
 
         try
         {
