@@ -530,7 +530,8 @@ namespace Transports
       void
       sendInitialization(void)
       {
-
+        // Flush
+        readLine();
         // Get mode
         sendAT("?MODE");
         m_mode = readLine();
