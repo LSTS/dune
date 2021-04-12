@@ -361,7 +361,7 @@ namespace Transports
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
         }
 
-        if (m_ctx.profiles.isSelected("Simulation"))
+        if (m_simulating)
           m_driver->setDriverTimeout(c_sim_timeout);
 
         if (!isActive())
