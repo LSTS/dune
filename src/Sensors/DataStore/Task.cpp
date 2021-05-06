@@ -43,35 +43,53 @@ namespace Sensors
       fp32_t telemetry_period;
       fp32_t sss_period;
       bool log_events;
+      bool compressed;
       std::string ctd_label;
+      // Rate limits.
+      std::vector<std::string> msgs_rates;
+      //! Entities to take into account when collecting the messages
+      std::vector<std::string> filtered_entities;
+      // Serialized Size
+      unsigned int size;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       Arguments m_args;
 
-      IMC::EstimatedState m_state;
+      IMC::EstimatedState* m_state;
       IMC::HistoricCTD m_ctd;
       IMC::HistoricSonarData m_sonar;
+      IMC::HistoricData m_data;
+      IMC::CompressedHistory m_comp;
+
       Time::Counter<fp64_t> m_ctd_counter;
       Time::Counter<fp64_t> m_sss_counter;
       Time::Counter<fp64_t> m_tel_counter;
       int m_ctd_entity;
-      bool m_got_ctd;
+      bool m_got_ctd, m_change_log;
+      //! Message Filter
+      MessageFilter m_filter;
+      GzipCompressor m_compressor;
+      std::vector<std::string> m_registred_msgs;
+      // Counter for dispatched time-series messages dispatched
+      unsigned int m_data_counter;
 
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
         m_ctd_entity(-1),
-        m_got_ctd(false)
+        m_got_ctd(false),
+        m_change_log(true),
+        m_data_counter(0)
       {
         param("CTD Sample Period", m_args.ctd_period)
         .defaultValue("-1")
         .description("Time, in seconds, between CTD samples. Values lower than 0 will disable these samples.")
         .scope(Parameter::SCOPE_GLOBAL);
-
+        
         param("CTD Entity Name", m_args.ctd_label)
         .defaultValue("CTD")
-        .description("Entity to use for getting temperature and conductivity.");
+        .description("Entity to use for getting temperature and conductivity. If defined will generate a separated log messages.");
 
         param("Telemetry Sample Period", m_args.telemetry_period)
         .defaultValue("-1")
@@ -88,6 +106,25 @@ namespace Sensors
         .description("Whether to log historic events")
         .scope(Parameter::SCOPE_GLOBAL);
 
+        param("Compress Data", m_args.compressed)
+        .defaultValue("false")
+        .description("Compress logged data.")
+        .scope(Parameter::SCOPE_GLOBAL);
+
+        param("Messages Rate", m_args.msgs_rates)
+        .defaultValue("")
+        .description("List of <Message>:<Frequency>. Messages to use when creating time-series and their associated rate.");
+
+        param("Discarded Entities", m_args.filtered_entities)
+        .defaultValue("")
+        .description("List of <Message>:<Entity>+<Entity> that define the source entities to avoid log.");
+
+        param("Max Size", m_args.size)
+        .defaultValue("172")
+        .minimumValue("32")
+        .units(Units::Byte)
+        .description("Maximum size (in bytes) of each Time-series message created.");
+
         bind<const IMC::EstimatedState>(this);
         bind<const IMC::Temperature>(this);
         bind<const IMC::Conductivity>(this);
@@ -103,6 +140,27 @@ namespace Sensors
         m_tel_counter.setTop(m_args.telemetry_period);
         m_sss_counter.setTop(m_args.sss_period);
 
+        if (paramChanged(m_args.filtered_entities))
+          m_filter.setupEntities(m_args.filtered_entities, this);
+
+        if(paramChanged(m_args.msgs_rates))
+        {
+          m_filter.setupRates(m_args.msgs_rates);
+
+          for(std::vector<std::string>::iterator it = m_args.msgs_rates.begin(); it != m_args.msgs_rates.end(); ++it) {
+              std::vector<std::string> parts;
+              parts.clear();
+              Utils::String::split(it->c_str(), ":", parts);
+              if (parts.size() == 2)
+              {
+                m_registred_msgs.push_back(parts[0]);
+                trace(DTR("Registering Message: %s"),parts[0].c_str());
+              }
+              else
+                throw std::runtime_error(Utils::String::str(DTR("invalid format: %s"), it->c_str()));
+          }
+        }
+
         bool active = false;
         if (m_args.ctd_period > 0)
           active = true;
@@ -112,6 +170,8 @@ namespace Sensors
           active = true;
         if (m_args.log_events)
           active = true;
+        if(!m_args.msgs_rates.empty())
+            active = true;
 
         if (active)
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -122,6 +182,8 @@ namespace Sensors
       void
       onEntityResolution(void)
       {
+          if(m_args.ctd_period < 0)
+            return;
     	  try
     	  {
             m_ctd_entity = m_ctx.entities.resolve(m_args.ctd_label);
@@ -141,14 +203,81 @@ namespace Sensors
       }
 
       void
+      onResourceAcquisition(void)
+      {
+        // Register requested messages to create time-series
+        if(!m_registred_msgs.empty())
+          bind(this, m_registred_msgs);
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        if(stopping()){
+          sendHistoricMessages(); // send out last recorded messages //FIXME - send upon HistoricDataRequest
+        }
+        trace(DTR("Dispatched %d Messages"),m_data_counter);
+      }
+
+      void
+      verifySize(unsigned int size)
+      {
+        if(!m_args.compressed){
+          if((m_data.getSerializationSize()+size) > m_args.size)
+          {
+            trace(DTR("Samples limit of %d, creating new time-series message."),m_args.size);
+            m_change_log = true;
+            fillBaselines(m_state->getTimeStamp(),m_state->lat,m_state->lon);
+            sendHistoricMessages();
+          }
+        }
+        else {
+          if((m_comp.getSerializationSize()+size) > m_args.size)
+          {
+            trace(DTR("Samples limit of %d, creating new time-series message."),m_args.size);
+            m_change_log = true;
+            fillBaselines(m_state->getTimeStamp(),m_state->lat,m_state->lon);
+            sendHistoricMessages();
+          }
+        }
+
+      }
+
+      void
+      fillBaselines(double base_timestamp, uint32_t base_lat, uint32_t base_lon)
+      {
+          if(!m_args.compressed) {
+            m_data.base_lat  = Angles::degrees(base_lat); //degrees
+            m_data.base_lon  = Angles::degrees(base_lon); //degrees
+            m_data.base_time = base_timestamp; //seconds
+          }
+          else {
+            m_comp.base_lat  = Angles::degrees(base_lat); //degrees
+            m_comp.base_lon  = Angles::degrees(base_lon); //degrees
+            m_comp.base_time = base_timestamp; //seconds
+          }
+          m_change_log = false;
+      }
+
+        void
       consume(const IMC::EstimatedState* msg)
       {
-        m_state = *msg;
+        uint32_t lat= msg->lat ,lon =msg->lon;
+        WGS84::displace(msg->x, msg->y, &lat, &lon);
+        if(m_change_log) {
+          fillBaselines(msg->getTimeStamp(), lat, lon);
+        }
+        m_state = msg->clone();
       }
 
       void
       consume(const IMC::Temperature* msg)
       {
+        auto search = std::find(m_registred_msgs.begin(),m_registred_msgs.end(),msg->getName());
+        if(search != m_registred_msgs.end() && !m_filter.filter(msg)) { //found and not filtered (entity and rate)
+          addSample(msg);
+        }
+
         if (msg->getSourceEntity() != m_ctd_entity)
           return;
 
@@ -161,7 +290,10 @@ namespace Sensors
       {
         if (msg->getSourceEntity() != m_ctd_entity)
           return;
-
+        auto search = std::find(m_registred_msgs.begin(),m_registred_msgs.end(),msg->getName());
+        if(search != m_registred_msgs.end() && !m_filter.filter(msg)) { //found and not filtered (entity and rate)
+          addSample(msg);
+        }
         m_ctd.conductivity = msg->value;
         m_got_ctd = true;
       }
@@ -187,6 +319,10 @@ namespace Sensors
       {
         if (!m_args.log_events)
           return;
+        auto search = std::find(m_registred_msgs.begin(),m_registred_msgs.end(),msg->getName());
+        if(search != m_registred_msgs.end() && !m_filter.filter(msg)) { //found and not filtered (entity and rate)
+          addSample(msg);
+        }
 
         IMC::HistoricEvent event;
         event.type = IMC::HistoricEvent::EVTYPE_INFO;
@@ -225,17 +361,84 @@ namespace Sensors
       {
         if (m_args.sss_period < 0)
           return;
+        auto search = std::find(m_registred_msgs.begin(),m_registred_msgs.end(),msg->getName());
+        if(search != m_registred_msgs.end() && !m_filter.filter(msg)) { //found and not filtered (entity and rate)
+          addSample(msg);
+        }
 
         // TODO
         (void)msg;
       }
 
       void
+      addSample(const Message *msg)
+      {
+        trace(DTR("Adding sample of type: %s"), msg->getName());
+        HistoricSample* sample = new HistoricSample();
+        uint32_t x,y, lat = Angles::radians(m_data.base_lat), lon = Angles::radians(m_data.base_lon);
+        WGS84::displace(m_state->x, m_state->y, &m_state->lat, &m_state->lon);
+        WGS84::displacement(lat, lon, 0.0f, m_state->lat, m_state->lon, 0, &x, &y);
+        sample->x = (uint16_t) x;
+        sample->y = (uint16_t) y;
+        sample->z = m_state->depth != -1 ? -10 * m_state->depth : m_state->alt * 10; //units: dm (why?)
+        sample->t = msg->getTimeStamp() - m_data.base_time;
+        sample->sample.set(*msg);
+        sample->sys_id = getSystemId();
+
+        if(m_args.compressed)
+          {
+            ByteBuffer buff;
+            sample->t = msg->getTimeStamp() - m_comp.base_time;
+            Packet::serialize(sample, buff);
+            char* data = m_compressor.compress(buff).getBufferSigned();
+              //verifySize(m_compressor.compress(buff).getBufferSigned().); //TODO
+            m_comp.data.push_back(*data);
+            trace(DTR("Current Size: %d/%d"), m_comp.getSerializationSize(),m_args.size);
+            Memory::clear(sample);
+          }
+          else
+          {
+            verifySize(sample->getPayloadSerializationSize()); //TODO verify this
+            m_data.data.push_back(sample);
+            trace(DTR("Current Size: %d/%d"), m_data.getSerializationSize(),m_args.size);
+          }
+      }
+
+      void
+      consume(const IMC::Message* msg)
+      {
+        if(m_filter.filter(msg))
+          return; //filter entities and rate
+
+        if(msg->getSource() != getSystemId())
+          return;
+
+        if(m_state == NULL) {
+          (DTR("Discarding Sample due to missing navigation data."));
+          return;
+        }
+        addSample(msg);
+      }
+
+      void
       sendHistoricMessages()
       {
+        if(!m_data.data.empty())
+        {
+          dispatch(m_data.clone());
+          m_data_counter++;
+          m_data.data.clear();
+        }
+        else if(!m_comp.data.empty())
+        {
+          dispatch(m_comp.clone());
+          m_data_counter++;
+          m_comp.data.clear();
+        }
+
         if (m_args.ctd_period > 0 && m_got_ctd && m_ctd_counter.overflow())
         {
-          m_ctd.depth = m_state.depth;
+          m_ctd.depth = m_state->depth;
           debug("Generated new HistoricCTD.");
           dispatch(m_ctd);
           m_ctd_counter.reset();
@@ -245,12 +448,12 @@ namespace Sensors
         if (m_args.telemetry_period > 0 && m_tel_counter.overflow())
         {
           IMC::HistoricTelemetry msg;
-          msg.altitude = m_state.alt;
-          msg.speed = Math::norm(m_state.u, m_state.v) * 10;
+          msg.altitude = m_state->alt;
+          msg.speed = Math::norm(m_state->u, m_state->v) * 10;
           double attitude[3];
-          attitude[0] = Angles::normalizeRadian(m_state.phi);
-          attitude[1] = Angles::normalizeRadian(m_state.theta);
-          attitude[2] = Angles::normalizeRadian(m_state.psi);
+          attitude[0] = Angles::normalizeRadian(m_state->phi);
+          attitude[1] = Angles::normalizeRadian(m_state->theta);
+          attitude[2] = Angles::normalizeRadian(m_state->psi);
           for (int i = 0; i < 3; i++)
           {
             if (attitude[i] < 0)
@@ -279,7 +482,6 @@ namespace Sensors
         while (!stopping())
         {
           waitForMessages(1.0);
-          sendHistoricMessages();
         }
       }
     };
