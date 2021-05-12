@@ -659,6 +659,8 @@ namespace DUNE
       std::string m_elabel_dvl;
       //! GPS disable for debug
       bool m_gps_disable;
+      //! USBL disable for debug
+      bool m_usbl_disable;
       //! Altitude entity label hardware.
       std::string m_elabel_alt_hard;
       //! Altitude entity label simulation.

@@ -79,6 +79,10 @@ namespace DUNE
       .defaultValue("false")
       .description("Disable GPS for debug");
 
+      param("Disable USBL for debug", m_usbl_disable)
+      .defaultValue("false")
+      .description("Disable USBL for debug");
+
       param("GPS timeout", m_without_gps_timeout)
       .units(Units::Second)
       .defaultValue("3.0")
@@ -760,6 +764,9 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::UsblFixExtended* msg)
     {
+      if (m_usbl_disable)
+        return;
+
       if (msg->target != getSystemName())
         return;
 
