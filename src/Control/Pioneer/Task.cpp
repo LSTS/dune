@@ -614,7 +614,7 @@ namespace Control
           sd = m_TCP_comm->sendData(m_buf_send, dataLength);
           if (sd > 0)
           {
-            debug("Send %d bytes for msg %s", sd, type_name);
+            spew("Send %d bytes for msg %s", sd, type_name);
             m_loggers[LOGGER_COMMANDS]->write(m_buf_send, 0, dataLength);
             // Store sent command.
             dispatchAsDevDataBinary(m_buf_send, dataLength);
