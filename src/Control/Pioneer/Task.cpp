@@ -817,7 +817,6 @@ namespace Control
       consume(const IMC::SetThrusterActuation* msg)
       {
         ProtocolCommands::CmdVersion2MotionInput cmd;
-        cmd.command_type = 'J';
         cmd.boost_input = 0;
         cmd.slow_input = 1;
         cmd.surge_motion_input = 0;
@@ -833,7 +832,7 @@ namespace Control
             if(msg->value == m_last_act[1].value)
               cmd.surge_motion_input = 0.5;
             else if(msg->value == (-1)*m_last_act[1].value)
-              cmd.yaw_motion_input = 0.5;
+              cmd.yaw_motion_input = -0.5;
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 0");
             break;
@@ -841,7 +840,7 @@ namespace Control
             if(msg->value == m_last_act[0].value)
               cmd.surge_motion_input = 0.5;
             else if(msg->value == (-1)*m_last_act[0].value)
-              cmd.yaw_motion_input = 0.5;
+              cmd.yaw_motion_input = -0.5;
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 1");
             break;
