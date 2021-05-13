@@ -828,7 +828,7 @@ namespace Control
         // Send actuation commands to pioneer [ToDo: account for direction & use values accordingly]
         switch(msg->id)
         {
-          case '0':
+          case 0:
             if(msg->value == m_last_act[1].value)
               cmd.surge_motion_input = 0.5;
             else if(msg->value == (-1)*m_last_act[1].value)
@@ -841,7 +841,7 @@ namespace Control
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 0");
             break;
-          case '1':
+          case 1:
             if(msg->value == m_last_act[0].value)
               cmd.surge_motion_input = 0.5;
             else if(msg->value == (-1)*m_last_act[0].value)
@@ -854,12 +854,12 @@ namespace Control
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 1");
             break;
-          case '2':
+          case 2:
             (err_yaw > 0) ? cmd.sway_motion_input = 0.5 : cmd.sway_motion_input = -0.5;
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 2");
             break;
-          case '3':
+          case 3:
             (msg->value > 0) ? cmd.heave_motion_input = 0.5 : cmd.heave_motion_input = -0.5;
             trace("Received SetThrusterActuation for motor 3");
             break;
