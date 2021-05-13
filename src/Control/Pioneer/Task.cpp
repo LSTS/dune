@@ -833,6 +833,11 @@ namespace Control
               cmd.surge_motion_input = 0.5;
             else if(msg->value == (-1)*m_last_act[1].value)
               cmd.yaw_motion_input = -0.5;
+            else if((msg->value > 0 && m_last_act[1].value > 0) || (msg->value < 0 && m_last_act[1].value < 0))
+            {
+              cmd.surge_motion_input = msg->value/2;
+              cmd.yaw_motion_input = msg->value/2;
+            }
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 0");
             break;
@@ -841,6 +846,11 @@ namespace Control
               cmd.surge_motion_input = 0.5;
             else if(msg->value == (-1)*m_last_act[0].value)
               cmd.yaw_motion_input = -0.5;
+            else if((msg->value > 0 && m_last_act[0].value > 0) || (msg->value < 0 && m_last_act[0].value < 0))
+            {
+              cmd.surge_motion_input = msg->value/2;
+              cmd.yaw_motion_input = msg->value/2;
+            }
             sendCommand(&cmd);
             trace("Received SetThrusterActuation for motor 1");
             break;
