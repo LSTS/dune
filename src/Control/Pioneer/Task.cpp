@@ -100,6 +100,12 @@ namespace Control
       Arguments m_args;
       //! Initial position.
       IMC::GpsFix m_position;
+      //! Last motor actuation.
+      IMC::SetThrusterActuation m_last_act[4];
+      //! Desired Heading
+      IMC::DesiredHeading m_desired_heading;
+      //! Estimated State
+      IMC::EstimatedState m_estate;
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
@@ -180,9 +186,11 @@ namespace Control
         .description("Initial position of the vehicle");
 
         // Setup processing of IMC messages
+        bind<IMC::DesiredHeading>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
+        bind<IMC::SetThrusterActuation>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -741,8 +749,17 @@ namespace Control
       }
 
       void
+      consume(const IMC::DesiredHeading* msg)
+      {
+        m_desired_heading = *msg;
+      }
+
+      void
       consume(const IMC::EstimatedState* msg)
-      { // To set the lat/lon on the Pioneer
+      {
+        m_estate = *msg;
+
+        // To set the lat/lon on the Pioneer
         if (m_args.generate_estimate_state_from_telemetry)
           return;
 
@@ -794,6 +811,56 @@ namespace Control
             }
             break;
         }
+      }
+
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        ProtocolCommands::CmdVersion2MotionInput cmd;
+        cmd.command_type = 'J';
+        cmd.boost_input = 0;
+        cmd.slow_input = 1;
+        cmd.surge_motion_input = 0;
+        cmd.sway_motion_input = 0;
+        cmd.yaw_motion_input = 0;
+        cmd.heave_motion_input = 0;
+        float err_yaw = Angles::normalizeRadian(m_desired_heading.value - m_estate.psi);
+
+        // Send actuation commands to pioneer [ToDo: account for direction & use values accordingly]
+        switch(msg->id)
+        {
+          case '0':
+            if(msg->value == m_last_act[1].value)
+              cmd.surge_motion_input = 0.5;
+            else if(msg->value == (-1)*m_last_act[1].value)
+              cmd.yaw_motion_input = 0.5;
+            sendCommand(&cmd);
+            trace("Received SetThrusterActuation for motor 0");
+            break;
+          case '1':
+            if(msg->value == m_last_act[0].value)
+              cmd.surge_motion_input = 0.5;
+            else if(msg->value == (-1)*m_last_act[0].value)
+              cmd.yaw_motion_input = 0.5;
+            sendCommand(&cmd);
+            trace("Received SetThrusterActuation for motor 1");
+            break;
+          case '2':
+            (err_yaw > 0) ? cmd.sway_motion_input = 0.5 : cmd.sway_motion_input = -0.5;
+            sendCommand(&cmd);
+            trace("Received SetThrusterActuation for motor 2");
+            break;
+          case '3':
+            (msg->value > 0) ? cmd.heave_motion_input = 0.5 : cmd.heave_motion_input = -0.5;
+            trace("Received SetThrusterActuation for motor 3");
+            break;
+          default:
+            war("Motor ID on SetThrusterActuation msg doesn't match!");
+            break;
+        }
+
+        m_last_act[msg->id].value = msg->value;
+        m_last_act[msg->id].id = msg->id;
       }
 
       //! Sends GpsFix defined in configurations
