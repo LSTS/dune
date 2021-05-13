@@ -818,7 +818,7 @@ namespace Control
       {
         ProtocolCommands::CmdVersion2MotionInput cmd;
         cmd.boost_input = 0;
-        cmd.slow_input = 1;
+        cmd.slow_input = 0;
         cmd.surge_motion_input = 0;
         cmd.sway_motion_input = 0;
         cmd.yaw_motion_input = 0;
