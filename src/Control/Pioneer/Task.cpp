@@ -85,6 +85,12 @@ namespace Control
       bool set_time_of_vehicle;
       //! Initial position (degrees)
       std::vector<double> position;
+      //! Depth Hold
+      bool depth_hold;
+      //! Heading Hold
+      bool heading_hold;
+      //! Send Motion Command
+      std::vector<float> motion_input;
     };
 
     enum LoggerEnum
@@ -125,6 +131,14 @@ namespace Control
 
       //! Pioneer command watchdog message
       ProtocolCommands::CmdVersion1Watchdog m_watchdog_msg;
+      //! Pioneer command depth hold ON message;
+      ProtocolCommands::CmdVersion2AutoDepthOn m_depth_on;
+      //! Pioneer command depth hold OFF message;
+      ProtocolCommands::CmdVersion2AutoDepthOff m_depth_off;
+      //! Pioneer command heading hold ON message;
+      ProtocolCommands::CmdVersion1AutoHeadingOn m_heading_on;
+      //! Pioneer command heading hold OFF message;
+      ProtocolCommands::CmdVersion2AutoHeadingOff m_heading_off;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -185,6 +199,19 @@ namespace Control
         .size(2)
         .description("Initial position of the vehicle");
 
+        param("Depth Hold", m_args.depth_hold)
+        .defaultValue("false")
+        .description("Enable/Disable depth hold mode.");
+
+        param("Heading Hold", m_args.heading_hold)
+        .defaultValue("false")
+        .description("Enable/Disable heading hold mode.");
+
+        param("Send Motion Command", m_args.motion_input)
+        .size(4)
+        .defaultValue("0.0, 0.0, 0.0, 0.0")
+        .description("Send motion input V2 command to Pioneer [surge, sway, heave, yaw]");
+
         // Setup processing of IMC messages
         bind<IMC::DesiredHeading>(this);
         bind<IMC::EstimatedState>(this);
@@ -213,6 +240,24 @@ namespace Control
 
         if(paramChanged(m_args.position))
           sendGpsFix();
+
+        if(paramChanged(m_args.depth_hold))
+          m_args.depth_hold ? sendCommand(&m_depth_on) : sendCommand(&m_depth_off);
+
+        if(paramChanged(m_args.heading_hold))
+          m_args.heading_hold ? sendCommand(&m_heading_on) : sendCommand(&m_heading_off);
+
+        if(paramChanged(m_args.motion_input))
+        {
+          ProtocolCommands::CmdVersion2MotionInput cmd;
+          cmd.surge_motion_input = m_args.motion_input[0];
+          cmd.sway_motion_input = m_args.motion_input[1];
+          cmd.heave_motion_input = m_args.motion_input[2];
+          cmd.yaw_motion_input = m_args.motion_input[3];
+          sendCommand(&cmd);
+          debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+                cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+        }
       }
 
       //! Reserve entity identifiers.
@@ -839,6 +884,8 @@ namespace Control
               cmd.yaw_motion_input = msg->value/2;
             }
             sendCommand(&cmd);
+            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
             trace("Received SetThrusterActuation for motor 0");
             break;
           case 1:
@@ -852,15 +899,21 @@ namespace Control
               cmd.yaw_motion_input = msg->value/2;
             }
             sendCommand(&cmd);
+            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
             trace("Received SetThrusterActuation for motor 1");
             break;
           case 2:
             (err_yaw > 0) ? cmd.sway_motion_input = 0.5 : cmd.sway_motion_input = -0.5;
             sendCommand(&cmd);
+            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
             trace("Received SetThrusterActuation for motor 2");
             break;
           case 3:
             (msg->value > 0) ? cmd.heave_motion_input = 0.5 : cmd.heave_motion_input = -0.5;
+            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
             trace("Received SetThrusterActuation for motor 3");
             break;
           default:
