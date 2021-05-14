@@ -213,6 +213,7 @@ namespace Control
         .description("Send motion input V2 command to Pioneer [surge, sway, heave, yaw]");
 
         // Setup processing of IMC messages
+        bind<IMC::Abort>(this);
         bind<IMC::DesiredHeading>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
@@ -482,7 +483,7 @@ namespace Control
         {
           ProtocolCommands::CmdVersion2SetSystemTime set_system_time;
           set_system_time.unix_timestamp = (int32_t)Time::Clock::getSinceEpoch();
-          war(DTR("Setting time for vehicle"));
+          inf(DTR("Setting time for vehicle"));
           if (sendCommand(&set_system_time) > 0)
             m_last_set_time = Time::Clock::getSinceEpoch();
         }
@@ -689,7 +690,7 @@ namespace Control
       handlePioneerV2ReplyGetCamera(ProtocolCommands::ReplyVersion2GetCameraParameters msg)
       {
         // TODO something with msg
-        debug("camera_bitrate %d", msg.camera_bitrate);
+        trace("camera_bitrate %d", msg.camera_bitrate);
       }
 
 
@@ -759,7 +760,7 @@ namespace Control
       handlePioneerV2CompassCalibration(ProtocolMessages::DataVersion2Compasscalibration msg)
       {
         // TODO something with msg
-        debug("progress_thruster %u",msg.progress_thruster);
+        trace("progress_thruster %u",msg.progress_thruster);
       }
 
       //! This will handle parsing Pioneer V2 Custom IMU message
@@ -791,6 +792,20 @@ namespace Control
         mag.y = msg.compass_y * 0.000001; // convert to G
         mag.z = msg.compass_z * 0.000001; // convert to G
         dispatch(mag);
+      }
+
+      void
+      consume(const IMC::Abort* msg)
+      {
+        (void)msg;
+        ProtocolCommands::CmdVersion2MotionInput cmd;
+
+        if(!m_args.listen_mode)
+        {
+          sendCommand(&cmd);
+          sendCommand(&m_depth_off);
+          sendCommand(&m_heading_off);
+        }
       }
 
       void
