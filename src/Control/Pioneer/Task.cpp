@@ -266,13 +266,13 @@ namespace Control
         if(paramChanged(m_args.position))
           sendGpsFix();
 
-        if(paramChanged(m_args.depth_hold))
+        if(m_TCP_comm && paramChanged(m_args.depth_hold))
           m_args.depth_hold ? sendCommand(&m_depth_on) : sendCommand(&m_depth_off);
 
-        if(paramChanged(m_args.heading_hold))
+        if(m_TCP_comm && paramChanged(m_args.heading_hold))
           m_args.heading_hold ? sendCommand(&m_heading_on) : sendCommand(&m_heading_off);
 
-        if(paramChanged(m_args.motion_input))
+        if(m_TCP_comm && paramChanged(m_args.motion_input))
         {
           ProtocolCommands::CmdVersion2MotionInput cmd;
           cmd.surge_motion_input = m_args.motion_input[0];
@@ -682,7 +682,7 @@ namespace Control
       int
       sendCommand(MsgStruct* msg)
       {
-        if (m_args.listen_mode || !m_TCP_comm->isConnected())
+        if (m_args.listen_mode || !m_TCP_comm || !m_TCP_comm->isConnected())
           return 0;
 
         int sd = 0;
