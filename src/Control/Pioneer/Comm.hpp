@@ -153,6 +153,13 @@ namespace Control
           m_comm_timeout = timeOutSecs;
         }
 
+        //! To check if is in error.
+        bool
+        hasSomeError()
+        {
+          return m_error_missing;
+        }
+
       protected:
         SetEntityStateFunction m_set_entity_state_function;
         PackageAcceptanceFunction m_package_acceptance_function;

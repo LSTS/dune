@@ -91,6 +91,8 @@ namespace Control
       bool heading_hold;
       //! Send Motion Command
       std::vector<float> motion_input;
+      //! Ping Replay timeout in seconds.
+      float ping_tout;
     };
 
     enum LoggerEnum
@@ -120,6 +122,9 @@ namespace Control
       typedef std::map<int, Logger::Logger*> LoggerMap;
       LoggerMap m_loggers;
 
+      //! Ping reply watchdog.
+      Time::Counter<float> m_wdog;
+
       //! Moving Home timer
       Time::Counter<float> m_timer;
       //! Start time for Watchdog send
@@ -131,6 +136,8 @@ namespace Control
 
       //! Pioneer command watchdog message
       ProtocolCommands::CmdVersion2Watchdog m_watchdog_msg;
+      //! Pioneer command ping message
+      ProtocolCommands::CmdVersion2Ping m_ping_msg;
       //! Pioneer command depth hold ON message;
       ProtocolCommands::CmdVersion2AutoDepthOn m_depth_on;
       //! Pioneer command depth hold OFF message;
@@ -212,6 +219,12 @@ namespace Control
         .defaultValue("0.0, 0.0, 0.0, 0.0")
         .description("Send motion input V2 command to Pioneer [surge, sway, heave, yaw]");
 
+        param("Ping Replay Timeout", m_args.ping_tout)
+        .units(Units::Second)
+        .defaultValue("5.0")
+        .minimumValue("2.0")
+        .description("Ping reply timeout");
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::DesiredHeading>(this);
@@ -231,6 +244,17 @@ namespace Control
           m_TCP_comm->setTCPAddr(m_args.TCP_addr);
           m_TCP_comm->setTCPPort(m_args.TCP_port);
           m_args.listen_mode ? m_TCP_comm->disconnect() : m_TCP_comm->reconnect();
+        }
+
+        if (paramChanged(m_args.ping_tout))
+        {
+          m_wdog.setTop(m_args.ping_tout);
+          m_wdog.reset();
+        }
+
+        if(paramChanged(m_args.listen_mode))
+        {
+          m_wdog.reset();
         }
 
         if(m_UDP_comm && paramChanged(m_args.UDP_listen_port))
@@ -361,6 +385,9 @@ namespace Control
       onResourceInitialization(void)
       {
         sendGpsFix();
+
+        // Setup ping reply
+        m_wdog.setTop(m_args.ping_tout);
       }
 
       void
@@ -451,6 +478,13 @@ namespace Control
           war(DTR("Disconnection UDP failed"));
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
         }
+      }
+
+      bool
+      hasSomeError()
+      {
+        return m_error_missing && m_TCP_comm->hasSomeError() &&
+               m_UDP_comm->hasSomeError();
       }
 
       void
@@ -683,7 +717,7 @@ namespace Control
       void
       handlePioneerV2ReplyPing(ProtocolCommands::ReplyVersion2Ping msg)
       {
-        // TODO something with msg
+        m_wdog.reset();
       }
 
       void
@@ -839,6 +873,8 @@ namespace Control
         {
           m_watchdog_msg.connection_duration = (int16_t) (Time::Clock::getSinceEpoch() - m_start_time);
           sendCommand(&m_watchdog_msg);
+          // sending ping
+          sendCommand(&m_ping_msg);
         }
       }
 
@@ -957,11 +993,22 @@ namespace Control
       {
         while (!stopping())
         {
-          if (!m_error_missing)
+          if (!hasSomeError())
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           // Handle IMC messages from bus
           consumeMessages();
+
+          if (m_wdog.overflow())
+          {
+            if (!m_args.listen_mode) {
+              m_error_missing = true;
+              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_COM_ERROR);
+              if (m_TCP_comm)
+                m_TCP_comm->reconnect();
+              m_error_missing = false;
+            }
+          }
 
           Time::Delay::waitMsec(500);
         }
