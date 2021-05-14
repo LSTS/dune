@@ -130,13 +130,13 @@ namespace Control
       double m_last_set_time;
 
       //! Pioneer command watchdog message
-      ProtocolCommands::CmdVersion1Watchdog m_watchdog_msg;
+      ProtocolCommands::CmdVersion2Watchdog m_watchdog_msg;
       //! Pioneer command depth hold ON message;
       ProtocolCommands::CmdVersion2AutoDepthOn m_depth_on;
       //! Pioneer command depth hold OFF message;
       ProtocolCommands::CmdVersion2AutoDepthOff m_depth_off;
       //! Pioneer command heading hold ON message;
-      ProtocolCommands::CmdVersion1AutoHeadingOn m_heading_on;
+      ProtocolCommands::CmdVersion2AutoHeadingOn m_heading_on;
       //! Pioneer command heading hold OFF message;
       ProtocolCommands::CmdVersion2AutoHeadingOff m_heading_off;
 
@@ -826,7 +826,7 @@ namespace Control
         double latRad = msg->lat;
         double lonRad = msg->lon;
         WGS84::displace(msg->x, msg->y, &latRad, &lonRad);
-        ProtocolCommands::CmdVersion1UserGeoLocation geo;
+        ProtocolCommands::CmdVersion2UserGeoLocation geo;
         geo.latitude = Angles::degrees(Angles::normalizeRadian(latRad));
         geo.longitude = Angles::degrees(Angles::normalizeRadian(lonRad));
         sendCommand(&geo);
