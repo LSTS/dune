@@ -222,8 +222,8 @@ namespace Control
         param("Ping Replay Timeout", m_args.ping_tout)
         .units(Units::Second)
         .defaultValue("5.0")
-        .minimumValue("2.0")
-        .description("Ping reply timeout");
+        .minimumValue("0.0")
+        .description("Ping reply timeout. Use value 0.0 (any value less or equal than 1.0 will have the same effect) to ignore timeout");
 
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
@@ -999,7 +999,7 @@ namespace Control
           // Handle IMC messages from bus
           consumeMessages();
 
-          if (m_wdog.overflow())
+          if (m_wdog.overflow() && m_args.ping_tout > 1.0)
           {
             if (!m_args.listen_mode) {
               m_error_missing = true;
