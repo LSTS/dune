@@ -110,10 +110,6 @@ namespace Control
       IMC::GpsFix m_position;
       //! Last motor actuation.
       IMC::SetThrusterActuation m_last_act[4];
-      //! Desired Heading
-      IMC::DesiredHeading m_desired_heading;
-      //! Estimated State
-      IMC::EstimatedState m_estate;
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
@@ -227,7 +223,6 @@ namespace Control
 
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
-        bind<IMC::DesiredHeading>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
@@ -843,16 +838,8 @@ namespace Control
       }
 
       void
-      consume(const IMC::DesiredHeading* msg)
-      {
-        m_desired_heading = *msg;
-      }
-
-      void
       consume(const IMC::EstimatedState* msg)
       {
-        m_estate = *msg;
-
         // To set the lat/lon on the Pioneer
         if (m_args.generate_estimate_state_from_telemetry)
           return;
@@ -915,24 +902,37 @@ namespace Control
         ProtocolCommands::CmdVersion2MotionInput cmd;
         cmd.boost_input = 0;
         cmd.slow_input = 0;
-        cmd.surge_motion_input = 0;
-        cmd.sway_motion_input = 0;
-        cmd.yaw_motion_input = 0;
-        cmd.heave_motion_input = 0;
-        float err_yaw = Angles::normalizeRadian(m_desired_heading.value - m_estate.psi);
+        cmd.surge_motion_input = m_last_act[0].value;
+        cmd.sway_motion_input = m_last_act[1].value;
+        cmd.yaw_motion_input = m_last_act[2].value;
+        cmd.heave_motion_input = m_last_act[3].value;
 
-        // Send actuation commands to pioneer [ToDo: account for direction & use values accordingly]
+        // Send actuation commands to pioneer
         switch(msg->id)
         {
           case 0:
             if(msg->value == m_last_act[1].value)
-              cmd.surge_motion_input = 0.5;
-            else if(msg->value == (-1)*m_last_act[1].value)
-              cmd.yaw_motion_input = -0.5;
-            else if((msg->value > 0 && m_last_act[1].value > 0) || (msg->value < 0 && m_last_act[1].value < 0))
             {
-              cmd.surge_motion_input = msg->value/2;
-              cmd.yaw_motion_input = msg->value/2;
+              cmd.surge_motion_input = msg->value;
+              cmd.yaw_motion_input = 0;
+            }
+            else if(msg->value == (-1)*m_last_act[1].value)
+            {
+              cmd.yaw_motion_input = msg->value;
+              cmd.surge_motion_input = 0;
+            }
+            else
+            {
+              if(std::fabs(msg->value) > std::fabs(m_last_act[1].value))
+              {
+                cmd.surge_motion_input = msg->value;
+                cmd.yaw_motion_input = 1 - m_last_act[1].value;
+              }
+              else
+              {
+                cmd.surge_motion_input = m_last_act[1].value;
+                cmd.yaw_motion_input = (-1)-msg->value;
+              }
             }
             sendCommand(&cmd);
             debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
@@ -941,13 +941,27 @@ namespace Control
             break;
           case 1:
             if(msg->value == m_last_act[0].value)
-              cmd.surge_motion_input = 0.5;
-            else if(msg->value == (-1)*m_last_act[0].value)
-              cmd.yaw_motion_input = -0.5;
-            else if((msg->value > 0 && m_last_act[0].value > 0) || (msg->value < 0 && m_last_act[0].value < 0))
             {
-              cmd.surge_motion_input = msg->value/2;
-              cmd.yaw_motion_input = msg->value/2;
+              cmd.surge_motion_input = msg->value;
+              cmd.yaw_motion_input = 0;
+            }
+            else if(msg->value == (-1)*m_last_act[0].value)
+            {
+              cmd.yaw_motion_input = msg->value;
+              cmd.surge_motion_input = 0;
+            }
+            else
+            {
+              if (std::fabs(msg->value) > std::fabs(m_last_act[0].value))
+              {
+                cmd.surge_motion_input = msg->value;
+                cmd.yaw_motion_input = 1 - m_last_act[0].value;
+              }
+              else
+              {
+                cmd.surge_motion_input = m_last_act[0].value;
+                cmd.yaw_motion_input = (-1) - msg->value;
+              }
             }
             sendCommand(&cmd);
             debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
@@ -955,14 +969,14 @@ namespace Control
             trace("Received SetThrusterActuation for motor 1");
             break;
           case 2:
-            (err_yaw > 0) ? cmd.sway_motion_input = 0.5 : cmd.sway_motion_input = -0.5;
+            cmd.sway_motion_input = msg->value;
             sendCommand(&cmd);
             debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
                   cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
             trace("Received SetThrusterActuation for motor 2");
             break;
           case 3:
-            (msg->value > 0) ? cmd.heave_motion_input = 0.5 : cmd.heave_motion_input = -0.5;
+            cmd.heave_motion_input = msg->value;
             debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
                   cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
             trace("Received SetThrusterActuation for motor 3");
