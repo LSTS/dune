@@ -416,6 +416,7 @@ namespace Control
             float rpm = (m_rpm[0].value + m_rpm[1].value) / 2;
             m_sway ? err_yaw = Angles::normalizeRadian(m_dyaw_sway - msg->psi)
                    : err_yaw = Angles::normalizeRadian(m_desired_yaw - msg->psi);
+            debug("err_yaw = %fº", Angles::degrees(err_yaw));
 
             // Yaw controller.
             float thrust_diff = m_yaw_pid.step(tstep, err_yaw);
@@ -440,17 +441,17 @@ namespace Control
               }
 
               // Limit differential when thrusting forward.
-              if(m_common)
-                thrust_diff = Math::trimValue(thrust_diff,
-                                              - m_args.act_diff_max,
-                                              m_args.act_diff_max);
+              thrust_diff = Math::trimValue(thrust_diff,
+                                            - m_args.act_diff_max,
+                                            m_args.act_diff_max);
             }
 
             if(m_sway)
             {
               m_act[0].value = 0;
               m_act[1].value = 0;
-              m_act[2].value = thrust_com;
+              (Angles::normalizeRadian(m_desired_yaw - msg->psi)) > 0 ? m_act[2].value = thrust_com :
+                                                                           m_act[2].value = (-1)*thrust_com;
             }
             else
             {
@@ -459,7 +460,7 @@ namespace Control
               m_act[2].value = 0;
             }
 
-            debug("m1 = %f | m2 = %f | m3 = %f", m_act[0].value, m_act[1].value, m_act[2].value); //TEMP
+            trace("m1 = %f | m2 = %f | m3 = %f", m_act[0].value, m_act[1].value, m_act[2].value);   
 
             shareSaturation();
 
@@ -611,7 +612,7 @@ namespace Control
           bool
           thrustForward(float yaw_err)
           {
-            debug("yaw_err = %fº", Angles::degrees(yaw_err)); //TEMP
+            debug("yaw_err = %fº", Angles::degrees(yaw_err));
             // Check if we can thrust.
             if (m_common)
             {
