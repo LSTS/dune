@@ -93,6 +93,8 @@ namespace Control
       std::vector<float> motion_input;
       //! Ping Replay timeout in seconds.
       float ping_tout;
+      //! Run routine
+      std::string routine;
     };
 
     enum LoggerEnum
@@ -223,6 +225,13 @@ namespace Control
         .minimumValue("0.0")
         .description("Ping reply timeout. Use value 0.0 (any value less or equal than 1.0 will have the same effect) to ignore timeout");
 
+        param("Run Routine", m_args.routine)
+        .values("Right, Left, Down, Up, None")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .defaultValue("None")
+        .description("Run pre-programmed routine");
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::EstimatedState>(this);
@@ -279,6 +288,20 @@ namespace Control
           sendCommand(&cmd);
           debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
                 cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+        }
+
+        if(m_TCP_comm && paramChanged(m_args.routine))
+        {
+          ProtocolCommands::CmdVersion2MotionInput cmd;
+          if(m_args.routine == "Right")
+            cmd.sway_motion_input = 0.5;
+          else if(m_args.routine == "Left")
+            cmd.sway_motion_input = -0.5;
+          else if(m_args.routine == "Down")
+            cmd.heave_motion_input = 0.3;
+          else if(m_args.routine == "Up")
+            cmd.heave_motion_input = -0.3;
+          sendCommand(&cmd);
         }
       }
 
@@ -908,6 +931,9 @@ namespace Control
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
+        if(m_args.routine != "None")
+          return;
+
         ProtocolCommands::CmdVersion2MotionInput cmd;
         cmd.boost_input = 0;
         cmd.slow_input = 0;
