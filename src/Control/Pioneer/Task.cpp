@@ -1060,8 +1060,9 @@ namespace Control
           if (m_wdog.overflow() && m_args.ping_tout > 1.0)
           {
             if (!m_args.listen_mode) {
+              if (!m_error_missing)
+                setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_COM_ERROR);
               m_error_missing = true;
-              setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_COM_ERROR);
               if (m_TCP_comm)
                 m_TCP_comm->reconnect();
               m_error_missing = false;
