@@ -238,6 +238,7 @@ namespace Control
         bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::StopManeuver>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -926,6 +927,14 @@ namespace Control
             }
             break;
         }
+      }
+
+      void
+      consume(const IMC::StopManeuver* msg)
+      {
+        (void)msg;
+        ProtocolCommands::CmdVersion2MotionInput cmd;
+        sendCommand(&cmd);
       }
 
       void
