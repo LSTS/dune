@@ -273,11 +273,9 @@ namespace Control
         if(paramChanged(m_args.position))
           sendGpsFix();
 
-        if(m_TCP_comm && paramChanged(m_args.depth_hold))
-          m_args.depth_hold ? sendCommand(&m_depth_on) : sendCommand(&m_depth_off);
+        m_args.depth_hold ? sendCommand(&m_depth_on) : sendCommand(&m_depth_off);
 
-        if(m_TCP_comm && paramChanged(m_args.heading_hold))
-          m_args.heading_hold ? sendCommand(&m_heading_on) : sendCommand(&m_heading_off);
+        m_args.heading_hold ? sendCommand(&m_heading_on) : sendCommand(&m_heading_off);
 
         if(m_TCP_comm && paramChanged(m_args.motion_input))
         {
@@ -990,7 +988,7 @@ namespace Control
             }
             else if(msg->value == (-1)*m_last_act[0].value)
             {
-              cmd.yaw_motion_input = msg->value;
+              cmd.yaw_motion_input = (-1)*msg->value;
               cmd.surge_motion_input = 0;
             }
             else
