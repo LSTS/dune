@@ -95,6 +95,8 @@ namespace Control
       float ping_tout;
       //! Run routine
       std::string routine;
+      //! Depth Hold Step
+      std::string depth_step;
     };
 
     enum LoggerEnum
@@ -146,6 +148,8 @@ namespace Control
       ProtocolCommands::CmdVersion2AutoHeadingOn m_heading_on;
       //! Pioneer command heading hold OFF message;
       ProtocolCommands::CmdVersion2AutoHeadingOff m_heading_off;
+      //! Pioneer command depth hold STEP message;
+      ProtocolCommands::CmdVersion1AutoDepthStep m_depth_step;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -232,6 +236,11 @@ namespace Control
         .defaultValue("None")
         .description("Run pre-programmed routine");
 
+        param("Depth Hold Step", m_args.depth_step)
+        .values("Up, Down, None")
+        .defaultValue("None")
+        .description("Depth hold step.");
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::EstimatedState>(this);
@@ -301,6 +310,17 @@ namespace Control
           else if(m_args.routine == "Up")
             cmd.heave_motion_input = -0.3;
           sendCommand(&cmd);
+        }
+
+        if(paramChanged(m_args.depth_step))
+        {
+          if (m_args.depth_step == "Up")
+            m_depth_step.direction = 1;
+          else if (m_args.depth_step == "Down")
+            m_depth_step.direction = -1;
+          else
+            m_depth_step.direction = 0;
+          sendCommand(&m_depth_step);
         }
       }
 
