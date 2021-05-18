@@ -654,6 +654,7 @@ namespace Control
             break;
           }
 
+          m_wdog.reset();
           return rb;
         }
         catch(const std::exception& e)
