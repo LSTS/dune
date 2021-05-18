@@ -385,6 +385,12 @@ namespace Control
 
         // Setup ping reply
         m_wdog.setTop(m_args.ping_tout);
+
+        for(int i=0; i<3; i++)
+        {
+          m_motion[i] = 0;
+          m_last_act[i].value = 0;
+        }
       }
 
       void
