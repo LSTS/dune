@@ -110,6 +110,8 @@ namespace Control
       IMC::GpsFix m_position;
       //! Last motor actuation.
       IMC::SetThrusterActuation m_last_act[4];
+      //! Motion input command.
+      std::vector<float> m_motion;
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
@@ -902,10 +904,10 @@ namespace Control
         ProtocolCommands::CmdVersion2MotionInput cmd;
         cmd.boost_input = 0;
         cmd.slow_input = 0;
-        cmd.surge_motion_input = m_last_act[0].value;
-        cmd.sway_motion_input = m_last_act[1].value;
-        cmd.yaw_motion_input = m_last_act[2].value;
-        cmd.heave_motion_input = m_last_act[3].value;
+        cmd.surge_motion_input = m_motion[0];
+        cmd.sway_motion_input = m_motion[1];
+        cmd.heave_motion_input = m_motion[2];
+        cmd.yaw_motion_input = m_motion[3];
 
         // Send actuation commands to pioneer
         switch(msg->id)
@@ -934,9 +936,8 @@ namespace Control
                 cmd.yaw_motion_input = (-1)-msg->value;
               }
             }
-            sendCommand(&cmd);
-            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
-                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+            m_motion[0] = cmd.surge_motion_input;
+            m_motion[3] = cmd.yaw_motion_input;
             trace("Received SetThrusterActuation for motor 0");
             break;
           case 1:
@@ -963,9 +964,8 @@ namespace Control
                 cmd.yaw_motion_input = (-1) - msg->value;
               }
             }
-            sendCommand(&cmd);
-            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
-                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+            m_motion[0] = cmd.surge_motion_input;
+            m_motion[3] = cmd.yaw_motion_input;
             trace("Received SetThrusterActuation for motor 1");
             break;
           case 2:
@@ -973,12 +973,12 @@ namespace Control
             sendCommand(&cmd);
             debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
                   cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+            m_motion[1] = cmd.sway_motion_input;
             trace("Received SetThrusterActuation for motor 2");
             break;
           case 3:
             cmd.heave_motion_input = msg->value;
-            debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
-                  cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+            m_motion[2] = cmd.heave_motion_input;
             trace("Received SetThrusterActuation for motor 3");
             break;
           default:
@@ -988,6 +988,8 @@ namespace Control
 
         m_last_act[msg->id].value = msg->value;
         m_last_act[msg->id].id = msg->id;
+        debug("m_last_act = %f, %f, %f, %f", m_last_act[0].value, m_last_act[1].value,
+                                                    m_last_act[2].value, m_last_act[3].value);
       }
 
       //! Sends GpsFix defined in configurations
