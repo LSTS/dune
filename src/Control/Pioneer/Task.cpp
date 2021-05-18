@@ -111,7 +111,7 @@ namespace Control
       //! Last motor actuation.
       IMC::SetThrusterActuation m_last_act[4];
       //! Motion input command.
-      std::vector<float> m_motion;
+      float m_motion[4];
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
