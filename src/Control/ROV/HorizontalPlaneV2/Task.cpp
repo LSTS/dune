@@ -448,8 +448,8 @@ namespace Control
 
             if(m_sway)
             {
-              m_act[0].value = thrust_diff;
-              m_act[1].value = (-1)*thrust_diff;
+              m_act[0].value = 0; //thrust_diff;
+              m_act[1].value = 0; //(-1)*thrust_diff;
               (Angles::normalizeRadian(m_desired_yaw - msg->psi)) > 0 ? m_act[2].value = thrust_com :
                                                                            m_act[2].value = (-1)*thrust_com;
             }
