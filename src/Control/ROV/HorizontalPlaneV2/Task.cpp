@@ -448,8 +448,8 @@ namespace Control
 
             if(m_sway)
             {
-              m_act[0].value = 0;
-              m_act[1].value = 0;
+              m_act[0].value = thrust_diff;
+              m_act[1].value = (-1)*thrust_diff;
               (Angles::normalizeRadian(m_desired_yaw - msg->psi)) > 0 ? m_act[2].value = thrust_com :
                                                                            m_act[2].value = (-1)*thrust_com;
             }
@@ -460,7 +460,7 @@ namespace Control
               m_act[2].value = 0;
             }
 
-            trace("m1 = %f | m2 = %f | m3 = %f", m_act[0].value, m_act[1].value, m_act[2].value);   
+            trace("m1 = %f | m2 = %f | m3 = %f", m_act[0].value, m_act[1].value, m_act[2].value);
 
             shareSaturation();
 
@@ -612,7 +612,6 @@ namespace Control
           bool
           thrustForward(float yaw_err)
           {
-            debug("yaw_err = %fº", Angles::degrees(yaw_err));
             // Check if we can thrust.
             if (m_common)
             {
