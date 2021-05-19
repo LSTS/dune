@@ -312,16 +312,13 @@ namespace Control
           sendCommand(&cmd);
         }
 
-        if(paramChanged(m_args.depth_step))
-        {
-          if (m_args.depth_step == "Up")
-            m_depth_step.direction = 1;
-          else if (m_args.depth_step == "Down")
-            m_depth_step.direction = -1;
-          else
-            m_depth_step.direction = 0;
-          sendCommand(&m_depth_step);
-        }
+        if (m_args.depth_step == "Up")
+          m_depth_step.direction = 1;
+        else if (m_args.depth_step == "Down")
+          m_depth_step.direction = -1;
+        else
+          m_depth_step.direction = 0;
+        sendCommand(&m_depth_step);
       }
 
       //! Reserve entity identifiers.
