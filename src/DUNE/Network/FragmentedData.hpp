@@ -24,27 +24,53 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Keila Lima                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NETWORK_HPP_INCLUDED_
-#define DUNE_NETWORK_HPP_INCLUDED_
+#ifndef DUNE_NETWORK_FRAGMENTEDDATA_HPP_INCLUDED_
+#define DUNE_NETWORK_FRAGMENTEDDATA_HPP_INCLUDED_
 
-namespace DUNE
-{
-  //! Networking routines and classes.
-  namespace Network
-  { }
-}
-
-#include <DUNE/Network/Initializer.hpp>
-#include <DUNE/Network/URL.hpp>
-#include <DUNE/Network/Address.hpp>
-#include <DUNE/Network/Exceptions.hpp>
-#include <DUNE/Network/UDPSocket.hpp>
-#include <DUNE/Network/TCPSocket.hpp>
-#include <DUNE/Network/Interface.hpp>
-#include <DUNE/Network/TDMA.hpp>
+// DUNE headers.
+#include <DUNE/Tasks.hpp>
 #include <DUNE/Network/FragmentedData.hpp>
 
+namespace DUNE {
+  namespace Network {
+      template <typename T,typename A>
+      class FragmentedData {
+    public:
+      FragmentedData();
+
+        virtual double
+        getAge();
+
+        virtual int
+        getFragmentsMissing();
+
+        void
+        setParentTask(Tasks::Task* parent)
+        {
+          m_parent = parent;
+        }
+
+        bool
+        isCompleted()
+        {
+          return (getFragmentsMissing() == 0);
+        }
+
+        virtual void
+        setFragment(A part);
+
+        virtual T
+        getData();
+
+    protected:
+        DUNE::Tasks::Task* m_parent;
+        int m_src;
+        double m_creation_time;
+        int m_num_frags;
+    };
+  }
+}
 #endif

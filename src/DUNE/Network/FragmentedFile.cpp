@@ -28,47 +28,80 @@
 //***************************************************************************
 
 // DUNE headers.
-#include <DUNE/Network/FragmentedMessage.hpp>
+#include <DUNE/Network/FragmentedFile.hpp>
 
 namespace DUNE
 {
   namespace Network
   {
-    FragmentedMessage::FragmentedMessage()
+      FragmentedFile::FragmentedFile(void)
     {
       m_parent = NULL;
-      m_src = m_uid = m_creation_time = m_num_frags = -1;
+      m_src = m_creation_time = m_num_frags = -1;
+      m_name = nullptr;
     }
 
     void
-    FragmentedMessage::setFragment(IMC::MessagePart* part)
+    FragmentedFile::setFragment(IMC::FileFragment* part)
     {
       // is this the first fragment?
       if (m_num_frags < 0)
       {
         m_num_frags = part->num_frags;
-        m_uid = part->uid;
+        m_name = part->name;
         m_src = part->getSource();
         m_creation_time = Time::Clock::get();
       }
 
       // Check if this is a valid fragment
-      if (part->uid != m_uid || part->getSource() != m_src ||
+      if (std::strcmp(part->name.c_str(),m_name.c_str()) != 0 || part->getSource() != m_src ||
           part->frag_number >= m_num_frags)
       {
         if (m_parent == NULL)
-          DUNE_ERR("FragmentedMessage", "Invalid fragment received and it won't be processed.");
+          DUNE_ERR("FragmentedFile", "Invalid fragment received and it won't be processed.");
         else
           m_parent->err(DTR("Invalid fragment received and it won't be processed."));
 
       }
 
-      m_fragments.insert(std::pair<unsigned int, IMC::MessagePart>(part->frag_number,*part));
+      m_fragments.insert(std::make_pair(part->frag_number,*part));
 
     }
 
+    int
+    FragmentedFile::getFragmentsMissing(void)
+    {
+      return m_num_frags - m_fragments.size();
+    }
+
+    Compression::FileOutput*
+    FragmentedFile::getData()
+    {
+      // Data is complete. Let's reassemble and return it.
+      if (isCompleted())
+      {
+        int i;
+        int total_length = 0;
+        // concatenate all parts into a single array
+        DUNE:FileSystem::Path output_file(m_fragments[0].name);
+        DUNE::FileSystem::Path log = getPath() / output_file;
+        DUNE::Compression::FileOutput* fo = new Compression::FileOutput(log.c_str(), Compression::METHOD_GZIP);
+        for (i = 0; i < m_num_frags; i++)
+        {
+            total_length += m_fragments[i].data.size();
+            fo->write(m_fragments[i].data.data(),strlen(m_fragments[i].data.data()));
+        }
+        fo->flush();
+        return fo;
+      }
+      else
+      {
+        return nullptr;
+      }
+    }
+
     double
-    FragmentedMessage::getAge()
+    FragmentedFile::getAge(void)
     {
       if (m_creation_time < 0)
         return 0;
@@ -76,37 +109,7 @@ namespace DUNE
       return Time::Clock::get() - m_creation_time;
     }
 
-    int
-    FragmentedMessage::getFragmentsMissing()
-    {
-      return m_num_frags - m_fragments.size();
-    }
-
-    IMC::Message*
-    FragmentedMessage::getData() {
-      // Message is complete. Let's reassemble and return it.
-      if (isCompleted())
-      {
-        int i;
-        int total_length = 0;
-        // concatenate all parts into a single array
-        std::vector<char> data;
-        for (i = 0; i < m_num_frags; i++)
-        {
-          total_length += m_fragments[i].data.size();
-          data.insert(data.end(), m_fragments[i].data.begin(),
-                      m_fragments[i].data.end());
-        }
-
-        return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
-      }
-      else
-      {
-        return NULL;
-      }
-    }
-
-    FragmentedMessage::~FragmentedMessage()
+      FragmentedFile::~FragmentedFile()
     {
       m_fragments.clear();
     }

@@ -24,27 +24,67 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Keila Lima                                                       *
 //***************************************************************************
 
-#ifndef DUNE_NETWORK_HPP_INCLUDED_
-#define DUNE_NETWORK_HPP_INCLUDED_
+#ifndef DUNE_NETWORK_FRAGMENTED_FILE_HPP_INCLUDED_
+#define DUNE_NETWORK_FRAGMENTED_FILE_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/Network/FragmentedData.hpp>
+#include <DUNE/FileSystem/Path.hpp>
+#include <DUNE/Compression/FileOutput.hpp>
 
 namespace DUNE
 {
-  //! Networking routines and classes.
   namespace Network
-  { }
+  {
+  class FragmentedFile: public FragmentedData<Compression::FileOutput*,IMC::FileFragment*>
+    {
+      public:
+        FragmentedFile(void);
+
+      double
+      getAge() override;
+
+      int
+      getFragmentsMissing() override;
+
+      void
+      setFragment(IMC::FileFragment* part) override;
+
+      Compression::FileOutput*
+      getData() override;
+
+      ~FragmentedFile();
+
+      const std::string&
+      getPath(void)
+      {
+        FileSystem::Path path = m_dir / m_name.c_str();
+        return path.str();
+      }
+
+      void
+      setDir(std::string dir)
+      {
+        FileSystem::Path m_dir(dir);
+      }
+
+      std::string
+      getName()
+      {
+        return m_name;
+      }
+
+    private:
+      std::string m_name;
+      FileSystem::Path m_dir;
+      std::map<uint16_t, IMC::FileFragment> m_fragments;
+
+    };
+  }
 }
 
-#include <DUNE/Network/Initializer.hpp>
-#include <DUNE/Network/URL.hpp>
-#include <DUNE/Network/Address.hpp>
-#include <DUNE/Network/Exceptions.hpp>
-#include <DUNE/Network/UDPSocket.hpp>
-#include <DUNE/Network/TCPSocket.hpp>
-#include <DUNE/Network/Interface.hpp>
-#include <DUNE/Network/TDMA.hpp>
-#include <DUNE/Network/FragmentedData.hpp>
-
 #endif
+

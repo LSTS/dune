@@ -34,37 +34,34 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Tasks.hpp>
 #include <DUNE/Time.hpp>
+#include <DUNE/Network/FragmentedData.hpp>
 
 namespace DUNE
 {
   namespace Network
   {
-    class FragmentedMessage
+  class FragmentedMessage: public FragmentedData<IMC::Message*,IMC::MessagePart*>
     {
     public:
-      FragmentedMessage(void);
+      FragmentedMessage();
 
       double
-      getAge(void);
+      getAge() override;
 
       int
-      getFragmentsMissing(void);
-
-      IMC::Message*
-      setFragment(const IMC::MessagePart* part);
+      getFragmentsMissing() override;
 
       void
-      setParentTask(Tasks::Task* parent);
+      setFragment(IMC::MessagePart* part) override;
 
-      ~FragmentedMessage(void);
+      IMC::Message*
+      getData() override;
+
+      ~FragmentedMessage();
 
     private:
-      int m_src;
-      int m_uid;
-      int m_num_frags;
-      double m_creation_time;
-      DUNE::Tasks::Task* m_parent;
-      std::map<unsigned int, IMC::MessagePart> m_fragments;
+        int m_uid;
+        std::map<unsigned int, IMC::MessagePart> m_fragments;
     };
   }
 }

@@ -82,9 +82,10 @@ namespace Transports
         debug("Incoming message fragment (%d still missing)",
               m_incoming[hash].getFragmentsMissing());
 
-        IMC::Message * res = m_incoming[hash].setFragment(msg);
-        if (res != NULL)
+        m_incoming[hash].setFragment(msg->clone());
+        if (m_incoming[hash].isCompleted())
         {
+          IMC::Message * res = m_incoming[hash].getData();
           dispatch(res);
           m_incoming.erase(hash);
         }
