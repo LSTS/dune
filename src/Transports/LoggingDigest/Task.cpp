@@ -48,6 +48,8 @@ namespace Transports
       std::string lsf_name;
       //! Log file folder.
       std::string log_folder;
+      //! Entities to take into account when collecting the messages
+      std::vector<std::string> filtered_entities;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -64,6 +66,8 @@ namespace Transports
       ByteBuffer m_buffer;
       //! Task arguments.
       Arguments m_args;
+      //! Message Filter
+      MessageFilter m_filter;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -91,6 +95,10 @@ namespace Transports
 
         param("Transports", m_args.messages)
         .defaultValue("");
+
+      param("Entities", m_args.filtered_entities)
+      .defaultValue("")
+      .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type");
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityInfo>(this);
@@ -123,6 +131,9 @@ namespace Transports
 
         if (paramChanged(m_args.flush_interval))
           m_flush_timer.setTop(m_args.flush_interval);
+
+        if (paramChanged(m_args.filtered_entities))
+          m_filter.setupEntities(m_args.filtered_entities, this);
 
         bind(this, m_args.messages);
       }
@@ -244,7 +255,9 @@ namespace Transports
         std::map<uint32_t, IMC::Message*>::iterator itr = m_messages.begin();
         for (; itr != m_messages.end(); ++itr)
         {
-          logMessage(itr->second);
+          if(!m_filter.filter(itr->second)) {
+              logMessage(itr->second);
+          }
           delete itr->second;
         }
 
