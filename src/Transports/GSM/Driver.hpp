@@ -370,30 +370,30 @@ namespace Transports
 
         if(Algorithms::Base64::validBase64(incoming_data))
         {
-        	text_mode = false;
-        	Utils::ByteBuffer bfr;
-			    bfr.setSize(incoming_data.length());
-			    std::string decoded = Algorithms::Base64::decode(incoming_data);
-			    std::copy(decoded.begin(),decoded.end(),bfr.getBuffer());
-			    uint16_t length = decoded.size();
-			    try
-			    {
-				    IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), length);
-				    getTask()->inf(DTR("received IMC message of type %s via SMS"),msg_d->getName());
-				    getTask()->dispatch(msg_d);
-			    }
-			    catch(...) //InvalidSync || InvalidMessageId || InvalidCrc
-			    {
-				    getTask()->war(DTR("Parsing unrecognized Base64 message as text"));
-				    text.assign(incoming_data);
-				    text_mode = true;
-				    return true;
-			    }
+          text_mode = false;
+          Utils::ByteBuffer bfr;
+          bfr.setSize(incoming_data.length());
+          std::string decoded = Algorithms::Base64::decode(incoming_data);
+          std::copy(decoded.begin(),decoded.end(),bfr.getBuffer());
+          uint16_t length = decoded.size();
+          try
+          {
+            IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), length);
+            getTask()->inf(DTR("received IMC message of type %s via SMS"),msg_d->getName());
+            getTask()->dispatch(msg_d);
+          }
+          catch(...) //InvalidSync || InvalidMessageId || InvalidCrc
+          {
+            getTask()->war(DTR("Parsing unrecognized Base64 message as text"));
+            text.assign(incoming_data);
+            text_mode = true;
+            return true;
+          }
         }
         else
         {
-        	text.assign(incoming_data);
-        	text_mode = true;
+          text.assign(incoming_data);
+          text_mode = true;
         }
         return true;
       }
