@@ -32,26 +32,25 @@
 
 // DUNE headers.
 #include <DUNE/Tasks.hpp>
-#include <DUNE/Network/FragmentedData.hpp>
 
-namespace DUNE {
-  namespace Network {
+
+namespace DUNE
+{
+  namespace Network
+  {
       template <typename T,typename A>
-      class FragmentedData {
+      class FragmentedData
+      {
     public:
-      FragmentedData();
+      FragmentedData(Tasks::Task* parent) {
+        m_parent = parent;
+      }
 
         virtual double
         getAge();
 
         virtual int
         getFragmentsMissing();
-
-        void
-        setParentTask(Tasks::Task* parent)
-        {
-          m_parent = parent;
-        }
 
         bool
         isCompleted()

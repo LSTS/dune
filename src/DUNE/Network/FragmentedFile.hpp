@@ -42,7 +42,7 @@ namespace DUNE
   class FragmentedFile: public FragmentedData<Compression::FileOutput*,IMC::FileFragment*>
     {
       public:
-        FragmentedFile(void);
+        FragmentedFile(Tasks::Task* parent);
 
       double
       getAge() override;

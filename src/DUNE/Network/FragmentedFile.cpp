@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Jose Pinto                                                       *
+// Author: Keila Lima                                                       *
 //***************************************************************************
 
 // DUNE headers.
@@ -34,9 +34,9 @@ namespace DUNE
 {
   namespace Network
   {
-      FragmentedFile::FragmentedFile(void)
+      FragmentedFile::FragmentedFile(Tasks::Task* parent):
+      FragmentedData<Compression::FileOutput *, IMC::FileFragment *>(parent)
     {
-      m_parent = NULL;
       m_src = m_creation_time = m_num_frags = -1;
       m_name = nullptr;
     }
