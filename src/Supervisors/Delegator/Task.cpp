@@ -59,6 +59,8 @@ namespace Supervisors
       std::string entity_name;
       //! Surrogate task name.
       std::string task_name;
+      //! Surrogate config section.
+      std::string config_section;
     };
 
     struct Task: public Tasks::Task
@@ -90,6 +92,9 @@ namespace Supervisors
         param("Surrogate Task", m_args.task_name)
         .description("Name of the slave task");
 
+        param("Surrogate Section", m_args.config_section)
+        .description("Name of the surrogate configuration section");
+
         // Register handler routines.
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
@@ -103,9 +108,12 @@ namespace Supervisors
         if (m_args.task_name.empty())
           return false;
 
-        Tasks::Task* task = Tasks::Factory::produce(m_args.task_name, "Surrogate", m_ctx);
-        if (task == NULL)
+        Tasks::Task* task = Tasks::Factory::produce(m_args.task_name, m_args.config_section, m_ctx);
+        if (task == nullptr)
           throw std::invalid_argument(Utils::String::str(DTR("invalid task name '%s'"), m_args.task_name.c_str()));
+
+        Path cfg_path = (m_ctx.dir_cfg / m_args.system_name + ".ini");
+        m_ctx.config.parseFile(cfg_path.c_str());
 
         try
         {
