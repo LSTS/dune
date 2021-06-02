@@ -167,7 +167,7 @@ namespace Sensors
 
         m_parse = new Parser(this);
 
-        m_timer.setTop(5);
+        m_timer.setTop(2);
 
         // Wake up console
         //m_uart->writeString("\n\r");
@@ -272,18 +272,18 @@ namespace Sensors
                 if (m_LOOP_sent)
                 {
                   IMC::Temperature m_temp;
-                  m_temp.value = (m_parse->m_LOOPData.OutsideTemp * 1.8) + 32; //convert Fahrenheit To Celsius
-                  //err("temperature = %.2f", (m_parse->m_LOOPData.OutsideTemp * 1.8) + 32);
+                  m_temp.value = ((float)m_parse->m_LOOPData.OutsideTemp / 10 - 32) * 5/9;
+                  debug("temperature = %.2f", m_temp.value);
                   
                   IMC::WindSpeed m_windSpd;
                   m_windSpd.speed = m_parse->m_LOOPData.WindSpeed;
                   m_windSpd.direction = Angles::radians(m_parse->m_LOOPData.WindDir);
-                  //inf("wind speed = %d", m_parse->m_LOOPData.WindSpeed);
-                  //inf("wind direction = %f", Angles::radians(m_parse->m_LOOPData.WindDir));
+                  debug("wind speed = %.2f", m_windSpd.speed);
+                  debug("wind direction = %.2f", m_windSpd.direction);
                   
                   IMC::RelativeHumidity m_humidity;
                   m_humidity.value = m_parse->m_LOOPData.OutsideHum;
-                  //inf("outside humidity = %d", m_parse->m_LOOPData.OutsideHum);
+                  debug("outside humidity = %.2f", m_humidity.value);
 
                   Delay::wait(0.2);
 
