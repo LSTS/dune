@@ -45,5 +45,6 @@ namespace DUNE
 #include <DUNE/Network/TCPSocket.hpp>
 #include <DUNE/Network/Interface.hpp>
 #include <DUNE/Network/TDMA.hpp>
+#include <DUNE/Network/UpstreamTCPServer.hpp>
 
 #endif
