@@ -68,7 +68,7 @@ namespace DUNE
       void
       setDir(std::string dir)
       {
-        FileSystem::Path m_dir(dir);
+        m_dir = FileSystem::Path(dir);
       }
 
       std::string
