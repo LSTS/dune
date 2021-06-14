@@ -45,7 +45,6 @@ namespace DUNE
 #include <DUNE/Network/TCPSocket.hpp>
 #include <DUNE/Network/Interface.hpp>
 #include <DUNE/Network/TDMA.hpp>
-#include <DUNE/Network/FragmentedData.hpp>
 #include <DUNE/Network/FragmentedFile.hpp>
 #include <DUNE/Network/FragmentedMessage.hpp>
 
