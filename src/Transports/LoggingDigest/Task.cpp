@@ -50,6 +50,8 @@ namespace Transports
       std::string log_folder;
       //! Entities to take into account when collecting the messages
       std::vector<std::string> filtered_entities;
+      //! Add LogControl Messages ?
+      bool log_control;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -99,6 +101,10 @@ namespace Transports
       param("Entities", m_args.filtered_entities)
       .defaultValue("")
       .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type");
+
+      param("Log Control", m_args.log_control)
+      .defaultValue("true")
+      .description("Add log control messages to logged data");
 
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityInfo>(this);
@@ -209,7 +215,7 @@ namespace Transports
               throw RestartNeeded(e.what(), 5);
             }
 
-            if (m_log != NULL)
+            if (m_log != NULL && m_args.log_control)
               logMessage(msg);
             break;
           case IMC::LoggingControl::COP_STOPPED:
