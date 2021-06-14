@@ -31,7 +31,7 @@
 #define DUNE_NETWORK_FRAGMENTED_MESSAGE_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/DUNE.hpp>
+#include <DUNE/Network/FragmentedData.hpp>
 
 
 namespace DUNE
@@ -44,16 +44,16 @@ namespace DUNE
       FragmentedMessage(Tasks::Task* parent);
 
       double
-      getAge() override;
+      getAge();
 
       int
-      getFragmentsMissing() override;
+      getFragmentsMissing();
 
       void
-      setFragment(IMC::MessagePart* part) override;
+      setFragment(IMC::MessagePart* part);
 
       IMC::Message*
-      getData() override;
+      getData();
 
       ~FragmentedMessage();
 

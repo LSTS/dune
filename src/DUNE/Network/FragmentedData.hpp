@@ -44,25 +44,26 @@ namespace DUNE
     public:
       FragmentedData(Tasks::Task* parent) {
         m_parent = parent;
+        m_src = m_creation_time = m_num_frags = -1;
       }
 
         virtual double
-        getAge();
+        getAge() {}
 
         virtual int
-        getFragmentsMissing();
+        getFragmentsMissing() {}
 
-        bool
+        virtual bool
         isCompleted()
         {
           return (getFragmentsMissing() == 0);
         }
 
         virtual void
-        setFragment(A part);
+        setFragment(A part) {}
 
         virtual T
-        getData();
+        getData() {}
 
     protected:
         DUNE::Tasks::Task* m_parent;

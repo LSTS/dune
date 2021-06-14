@@ -37,7 +37,6 @@ namespace DUNE
     FragmentedMessage::FragmentedMessage(Tasks::Task* parent):
       FragmentedData<IMC::Message *, IMC::MessagePart *>(parent)
     {
-      m_src = m_uid = m_creation_time = m_num_frags = -1;
     }
 
     void

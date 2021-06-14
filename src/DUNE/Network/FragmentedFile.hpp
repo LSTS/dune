@@ -42,33 +42,27 @@ namespace DUNE
   class FragmentedFile: public FragmentedData<Compression::FileOutput*,IMC::FileFragment*>
     {
       public:
-        FragmentedFile(Tasks::Task* parent);
+        FragmentedFile(Tasks::Task* parent, FileSystem::Path dir);
 
       double
-      getAge() override;
+      getAge();
 
       int
-      getFragmentsMissing() override;
+      getFragmentsMissing();
 
       void
-      setFragment(IMC::FileFragment* part) override;
+      setFragment(IMC::FileFragment* part);
 
       Compression::FileOutput*
-      getData() override;
+      getData();
 
       ~FragmentedFile();
 
       const std::string&
-      getPath(void)
+      getPath()
       {
         FileSystem::Path path = m_dir / m_name.c_str();
         return path.str();
-      }
-
-      void
-      setDir(std::string dir)
-      {
-        m_dir = FileSystem::Path(dir);
       }
 
       std::string

@@ -34,10 +34,9 @@ namespace DUNE
 {
   namespace Network
   {
-      FragmentedFile::FragmentedFile(Tasks::Task* parent):
+      FragmentedFile::FragmentedFile(Tasks::Task* parent, FileSystem::Path log_dir):
       FragmentedData<Compression::FileOutput *, IMC::FileFragment *>(parent)
     {
-      m_src = m_creation_time = m_num_frags = -1;
       m_name = nullptr;
     }
 
@@ -83,13 +82,14 @@ namespace DUNE
         int i;
         int total_length = 0;
         // concatenate all parts into a single array
-        DUNE:FileSystem::Path output_file(m_fragments[0].name);
-        DUNE::FileSystem::Path log = getPath() / output_file;
-        DUNE::Compression::FileOutput* fo = new Compression::FileOutput(log.c_str(), Compression::METHOD_GZIP);
+        FileSystem::Path output_file(m_name);
+        FileSystem::Path log = getPath() / output_file; //Fixme check if is a file
+        m_parent->debug(DTR("Writing file fragments to disk in file: %s"),log.c_str());
+        Compression::FileOutput* fo = new Compression::FileOutput(log.c_str(), Compression::METHOD_GZIP);
         for (i = 0; i < m_num_frags; i++)
         {
-            total_length += m_fragments[i].data.size();
-            fo->write(m_fragments[i].data.data(),strlen(m_fragments[i].data.data()));
+          total_length += m_fragments[i].data.size();
+          fo->write(m_fragments[i].data.data(),strlen(m_fragments[i].data.data()));
         }
         fo->flush();
         return fo;
