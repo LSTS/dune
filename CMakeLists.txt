@@ -342,6 +342,11 @@ install(DIRECTORY www DESTINATION .)
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
 
+if(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
+  # Install private configuration files.
+  install(DIRECTORY private/etc DESTINATION ./private/)
+endif(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
+
 if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   # Install user configuration files.
   install(DIRECTORY user/etc DESTINATION ./user/)
