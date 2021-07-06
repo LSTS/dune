@@ -592,8 +592,6 @@ namespace DUNE
       bool m_valid_gv;
       //! Received valid water velocity message.
       bool m_valid_wv;
-      //! Heading value of IMU (rad).
-      double m_heading_imu;
       //! Received LBL fix.
       bool m_lbl_reading;
       //! Derivative for heave.
