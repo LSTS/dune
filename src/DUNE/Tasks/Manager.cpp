@@ -72,7 +72,17 @@ namespace DUNE
       {
         // If this section is not a task continue.
         if (!Factory::exists(getTaskName(vec[i])))
+        {
+          // If not configured as non-task display warning
+          std::string s = m_ctx.config.get("Non-Task Sections", "Sections");
+          if (s.find(getTaskName(vec[i])) == std::string::npos)
+          {
+            std::string invalid = "Invalid task name: " + getTaskName(vec[i]);
+            DUNE_WRN("Manager", DTR(invalid.c_str()));
+          }
+
           continue;
+        }
 
         // Check if the task is enabled acording to the currently
         // selected profiles.
