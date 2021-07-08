@@ -35,7 +35,7 @@ namespace DUNE
   namespace Network
   {
     FragmentedMessage::FragmentedMessage(Tasks::Task* parent):
-      FragmentedData<IMC::Message *, IMC::MessagePart *>(parent)
+        AbstractFragmentedData<IMC::Message *, IMC::MessagePart *>(parent)
     {
     }
 

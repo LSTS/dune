@@ -31,14 +31,14 @@
 #define DUNE_NETWORK_FRAGMENTED_MESSAGE_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Network/FragmentedData.hpp>
+#include <DUNE/Network/AbstractFragmentedData.hpp>
 
 
 namespace DUNE
 {
   namespace Network
   {
-  class FragmentedMessage: public FragmentedData<IMC::Message*,IMC::MessagePart*>
+  class FragmentedMessage: public AbstractFragmentedData<IMC::Message*,IMC::MessagePart*>
     {
     public:
       FragmentedMessage(Tasks::Task* parent);
