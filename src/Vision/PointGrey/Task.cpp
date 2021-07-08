@@ -68,8 +68,8 @@ namespace Vision
     static const float c_time_to_release_camera = 3.0;
     static const float c_time_to_update_cnt_info = 10.0;
     static const std::string c_log_path = "/opt/lsts/dune/log/";
-    static const std::string c_camera_log_folder = "camera_log/";
-    static const float c_timeout_reading = 3.0;
+    static const std::string c_camera_log_folder = "CameraLog/";
+    static const float c_timeout_reading = 5.0;
 
     //! %Task arguments.
     struct Arguments
@@ -209,8 +209,6 @@ namespace Vision
       Time::Counter<float> m_timeout_heartbeat_cam;
       //! Flag to control state of camera in master
       bool m_is_camera_active;
-      //! Flag to control internal error in cam system.
-      bool m_internal_error;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -300,6 +298,7 @@ namespace Vision
         bind<IMC::LoggingControl>(this);
         #else
         bind<IMC::Heartbeat>(this);
+        bind<IMC::EntityState>(this);
         #endif
       }
 
@@ -357,8 +356,6 @@ namespace Vision
       {
         m_slave_entities = new Lumenera::EntityActivationMaster(this);
         updateSlaveEntities();
-        if(m_args.is_master_mode)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -369,7 +366,6 @@ namespace Vision
           m_isStartTask = false;
           m_isCapturing = false;
           m_is_camera_active = false;
-          m_internal_error = false;
           set_cpu_governor();
           init_gpio_driver();
           init_gpio_strobe();
@@ -419,7 +415,7 @@ namespace Vision
           m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
           m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+          setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
           m_isStartTask = true;
         }
       }
@@ -476,6 +472,22 @@ namespace Vision
       }
 
       void
+      consume(const IMC::EntityState* msg)
+      {
+        if (m_args.is_master_mode)
+        {
+          std::string sysNameMsg = resolveSystemId(msg->getSource());
+          if(m_args.slave_name == sysNameMsg)
+          {
+            if(msg->state == DUNE::IMC::EntityState::StateEnum::ESTA_BOOT)
+              setEntityState(DUNE::IMC::EntityState::StateEnum::ESTA_NORMAL, msg->description);
+            else if(msg->state == DUNE::IMC::EntityState::StateEnum::ESTA_ERROR)
+              setEntityState(DUNE::IMC::EntityState::StateEnum::ESTA_ERROR, msg->description);
+          }
+        }
+      }
+
+      void
       consume(const IMC::LoggingControl* msg)
       {
         if (!m_args.is_master_mode)
@@ -507,11 +519,9 @@ namespace Vision
               m_log_name = msg->name;
             }
           }
-          else
-          {
-            std::string m_base_path = m_ctx.dir_log.c_str();
-            m_back_path_log = m_base_path + "/" + msg->name;
-          }
+
+          std::string m_base_path = m_ctx.dir_log.c_str();
+          m_back_path_log = m_base_path + "/" + msg->name;
         }
       }
 
@@ -567,7 +577,7 @@ namespace Vision
             if(!setUpCamera())
               throw RestartNeeded("Cannot detect camera", 10);
 
-            setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode - "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
+            setEntityState(IMC::EntityState::ESTA_BOOT, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
             set_shutter_value(m_args.shutter_value);
             m_thread_cnt = 0;
             m_cnt_fps.reset();
@@ -583,7 +593,6 @@ namespace Vision
         {
           m_timeout_heartbeat_cam.setTop(c_timeout_reading);
           m_is_camera_active = true;
-          m_internal_error = false;
         }
       }
 
@@ -604,7 +613,7 @@ namespace Vision
           #endif
 
           moveLogFiles();
-          setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+          setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
         }
         else
         {
@@ -619,22 +628,22 @@ namespace Vision
         int result = std::system(system_comand.c_str());
 
         std::string file_name_old = m_back_path_log + "/Output.txt ";
-        std::string file_name_new = m_back_path_main_log + "/camera_log/camera_Output.txt";
+        std::string file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Output.txt";
         system_comand = "mv " + file_name_old + file_name_new;
         result = std::system(system_comand.c_str());
 
         file_name_old = m_back_path_log + "/Config.ini ";
-        file_name_new = m_back_path_main_log + "/camera_log/camera_Config.ini";
+        file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Config.ini";
         system_comand = "mv " + file_name_old + file_name_new;
         result = std::system(system_comand.c_str());
 
         file_name_old = m_back_path_log + "/Data.lsf.gz ";
-        file_name_new = m_back_path_main_log + "/camera_log/camera_Data.lsf.gz";
+        file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Data.lsf.gz";
         system_comand = "mv " + file_name_old + file_name_new;
         result = std::system(system_comand.c_str());
 
         file_name_old = m_back_path_log + "/IMC.xml.gz ";
-        file_name_new = m_back_path_main_log + "/camera_log/camera_IMC.xml.gz";
+        file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_IMC.xml.gz";
         system_comand = "mv " + file_name_old + file_name_new;
         result = std::system(system_comand.c_str());
 
@@ -845,12 +854,12 @@ namespace Vision
         m_is_strobe = false;
         m_is_on = false;
         init_gpio_strobe();
-        if (m_args.led_type == "Strobe")
+        if (m_args.led_type == "Strobe" || m_args.led_type == "STROBE")
         {
           war("enabling strobe output");
           m_is_strobe = true;
         }
-        else if (m_args.led_type == "On")
+        else if (m_args.led_type == "On" || m_args.led_type == "ON")
         {
           setGpio(GPIO_HIGH, m_args.gpio_strobe);
           m_is_on = true;
@@ -1239,13 +1248,14 @@ namespace Vision
               else if(m_update_cnt_frames.overflow())
               {
                 m_update_cnt_frames.reset();
-                setEntityState(IMC::EntityState::ESTA_NORMAL, m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
+                setEntityState(IMC::EntityState::ESTA_BOOT, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
               }
             }
             else
             {
               waitForMessages(1.0);
               setGpio(GPIO_LOW, m_args.gpio_strobe);
+              setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
             }
           }
           else
@@ -1254,17 +1264,9 @@ namespace Vision
 
             if(m_timeout_heartbeat_cam.overflow() && m_is_camera_active)
             {
-              err("cam system stop - internal error");
-              m_internal_error = true;
+              err("Camera system stop - internal error");
               m_is_camera_active = false;
             }
-
-            if(m_internal_error)
-              setEntityState(IMC::EntityState::ESTA_ERROR, "cam system stop - internal error");
-            else if(isActive())
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            else
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           }
         }
       }
