@@ -31,7 +31,7 @@
 #define DUNE_NETWORK_FRAGMENTED_FILE_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Network/FragmentedData.hpp>
+#include <DUNE/Network/AbstractFragmentedData.hpp>
 #include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/Compression/FileOutput.hpp>
 
@@ -39,10 +39,10 @@ namespace DUNE
 {
   namespace Network
   {
-  class FragmentedFile: public FragmentedData<Compression::FileOutput*,IMC::FileFragment*>
+  class FragmentedFile: public AbstractFragmentedData<std::ofstream*,IMC::FileFragment*>
     {
       public:
-        FragmentedFile(Tasks::Task* parent, FileSystem::Path dir);
+        FragmentedFile(Tasks::Task* parent, FileSystem::Path& dir);
 
       double
       getAge();
@@ -53,30 +53,30 @@ namespace DUNE
       void
       setFragment(IMC::FileFragment* part);
 
-      Compression::FileOutput*
+      std::ofstream*
       getData();
 
       ~FragmentedFile();
 
-      const std::string&
-      getPath()
-      {
-        FileSystem::Path path = m_dir / m_name.c_str();
-        return path.str();
-      }
+      void clear();
 
+      inline
       std::string
-      getName()
+      getFileName()
       {
-        return m_name;
+        return m_dir.str();
       }
 
     private:
-      std::string m_name;
+      std::string m_frag_id;
       FileSystem::Path m_dir;
-      std::map<uint16_t, IMC::FileFragment> m_fragments;
+      //! ordered list of fragments to write in the right order to disk
+      std::map<uint16_t,IMC::FileFragment*> m_fragments;
+      unsigned int m_saved_fragments;
 
-    };
+      uint16_t nextFragToSave() const;
+      void writeToDisk(IMC::FileFragment *pFragment);
+  };
   }
 }
 

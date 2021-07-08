@@ -29,15 +29,18 @@
 
 // DUNE headers.
 #include <DUNE/Network/FragmentedFile.hpp>
+#include <utility>
 
 namespace DUNE
 {
   namespace Network
   {
-      FragmentedFile::FragmentedFile(Tasks::Task* parent, FileSystem::Path log_dir):
-      FragmentedData<Compression::FileOutput *, IMC::FileFragment *>(parent)
+      FragmentedFile::FragmentedFile(Tasks::Task* parent, FileSystem::Path& log_dir):
+          AbstractFragmentedData<std::ofstream*, IMC::FileFragment *>(parent)
     {
-      m_name = nullptr;
+      m_frag_id = "";
+      m_saved_fragments = 0;
+      m_dir = log_dir;
     }
 
     void
@@ -46,62 +49,55 @@ namespace DUNE
       // is this the first fragment?
       if (m_num_frags < 0)
       {
+        m_frag_id = part->id;
         m_num_frags = part->num_frags;
-        m_name = part->name;
         m_src = part->getSource();
         m_creation_time = Time::Clock::get();
       }
 
       // Check if this is a valid fragment
-      if (std::strcmp(part->name.c_str(),m_name.c_str()) != 0 || part->getSource() != m_src ||
+      if (std::strcmp(part->id.c_str(), m_frag_id.c_str()) != 0 || part->getSource() != m_src ||
           part->frag_number >= m_num_frags)
       {
-        if (m_parent == NULL)
+        if (m_parent == nullptr)
           DUNE_ERR("FragmentedFile", "Invalid fragment received and it won't be processed.");
         else
           m_parent->err(DTR("Invalid fragment received and it won't be processed."));
 
       }
 
-      m_fragments.insert(std::make_pair(part->frag_number,*part));
-
+      if(part->frag_number == nextFragToSave()){
+          writeToDisk(part);
+      }
+      else if(part->frag_number > nextFragToSave()) {
+        m_fragments.insert(std::pair<uint16_t,IMC::FileFragment*>(part->frag_number,part));
+      }
     }
 
     int
-    FragmentedFile::getFragmentsMissing(void)
+    FragmentedFile::getFragmentsMissing()
     {
-      return m_num_frags - m_fragments.size();
+        if(m_num_frags < 0)
+          return m_num_frags;
+      return (unsigned int) m_num_frags - m_saved_fragments - m_fragments.size();
     }
 
-    Compression::FileOutput*
+    std::ofstream*
     FragmentedFile::getData()
     {
       // Data is complete. Let's reassemble and return it.
       if (isCompleted())
       {
-        int i;
-        int total_length = 0;
-        // concatenate all parts into a single array
-        FileSystem::Path output_file(m_name);
-        FileSystem::Path log = getPath() / output_file; //Fixme check if is a file
-        m_parent->debug(DTR("Writing file fragments to disk in file: %s"),log.c_str());
-        Compression::FileOutput* fo = new Compression::FileOutput(log.c_str(), Compression::METHOD_GZIP);
-        for (i = 0; i < m_num_frags; i++)
-        {
-          total_length += m_fragments[i].data.size();
-          fo->write(m_fragments[i].data.data(),strlen(m_fragments[i].data.data()));
+        if(m_dir.exists() && m_dir.isFile()) {
+          std::ofstream *fo = new std::ofstream(m_dir.c_str());
+          return fo;
         }
-        fo->flush();
-        return fo;
       }
-      else
-      {
-        return nullptr;
-      }
+      return nullptr;
     }
 
     double
-    FragmentedFile::getAge(void)
+    FragmentedFile::getAge()
     {
       if (m_creation_time < 0)
         return 0;
@@ -111,7 +107,66 @@ namespace DUNE
 
       FragmentedFile::~FragmentedFile()
     {
-      m_fragments.clear();
+      if(!m_fragments.empty()){
+        auto it = m_fragments.begin();
+        while(it != m_fragments.end()) {
+          it->second->data.clear();
+          m_fragments.erase(it);
+        }
+      }
     }
+
+    void
+    FragmentedFile::clear()
+    {
+      if(!m_fragments.empty()){
+        auto it = m_fragments.begin();
+        while(it != m_fragments.end()) {
+          it->second->data.clear();
+          m_fragments.erase(it);
+        }
+      }
+    }
+
+      uint16_t
+      FragmentedFile::nextFragToSave() const {
+        return (m_saved_fragments+1);
+      }
+
+      void
+      FragmentedFile::writeToDisk(IMC::FileFragment *pFragment) {
+        std::ofstream outfile = std::ofstream(getFileName(), std::ofstream::app | std::ios::binary);
+        outfile.tellp();
+        outfile << pFragment->data.data();
+        if(outfile.is_open()) {
+          m_parent->debug(DTR("Writing file fragment %d/%d to disk in file: %s"),pFragment->frag_number,
+                          pFragment->num_frags,getFileName().c_str());
+          size_t size = sizeof(pFragment->data.data());  //  / sizeof(char)) = 1 byte
+          outfile.write(pFragment->data.data(),size);
+          if(!outfile.bad())
+            m_saved_fragments++;
+          auto it = m_fragments.find(nextFragToSave());
+          //! Save previously received chunks
+          while(!m_fragments.empty() && it != m_fragments.end()) {
+            m_parent->debug(DTR("Writing file fragment %d/%d to disk in file: %s"),pFragment->frag_number,
+                            pFragment->num_frags,getFileName().c_str());
+            size = sizeof(it->second->data.data());
+            outfile.write(it->second->data.data(),size);
+            if(!outfile.bad()) {
+              m_saved_fragments++;
+              it->second->data.clear();
+              m_fragments.erase(it);
+              it = m_fragments.find(nextFragToSave());
+            }
+            else {
+              m_parent->war(DTR("Error writing file chunk %d of %d into the file %s"),it->second->frag_number,
+                            it->second->num_frags,getFileName().c_str());
+              break;
+            }
+          }
+          outfile.flush();
+          outfile.close();
+        }
+      }
   }
 }
