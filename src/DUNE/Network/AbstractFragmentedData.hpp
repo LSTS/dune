@@ -39,19 +39,19 @@ namespace DUNE
   namespace Network
   {
       template <typename T,typename A>
-      class FragmentedData
+      class AbstractFragmentedData
       {
     public:
-      FragmentedData(Tasks::Task* parent) {
+      AbstractFragmentedData(Tasks::Task* parent) {
         m_parent = parent;
         m_src = m_creation_time = m_num_frags = -1;
       }
 
         virtual double
-        getAge() {}
+        getAge() = 0;
 
         virtual int
-        getFragmentsMissing() {}
+        getFragmentsMissing() = 0;
 
         virtual bool
         isCompleted()
