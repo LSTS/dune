@@ -42,6 +42,7 @@ namespace Sensors
       fp32_t ctd_period;
       fp32_t telemetry_period;
       fp32_t sss_period;
+      fp32_t dispatch_period;
       bool log_events;
       bool compressed;
       std::string ctd_label;
@@ -49,8 +50,6 @@ namespace Sensors
       std::vector<std::string> msgs_rates;
       //! Entities to take into account when collecting the messages
       std::vector<std::string> filtered_entities;
-      // Serialized Size
-      unsigned int size;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -63,24 +62,22 @@ namespace Sensors
       IMC::HistoricData m_data;
       IMC::CompressedHistory m_comp;
 
+      Time::Counter<fp64_t> m_dispatch_counter;
       Time::Counter<fp64_t> m_ctd_counter;
       Time::Counter<fp64_t> m_sss_counter;
       Time::Counter<fp64_t> m_tel_counter;
       int m_ctd_entity;
-      bool m_got_ctd, m_change_log;
+      bool m_got_ctd;
       //! Message Filter
       MessageFilter m_filter;
       GzipCompressor m_compressor;
       std::vector<std::string> m_registred_msgs;
-      // Counter for dispatched time-series messages dispatched
-      unsigned int m_data_counter;
 
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
+        m_state(nullptr),
         m_ctd_entity(-1),
-        m_got_ctd(false),
-        m_change_log(true),
-        m_data_counter(0)
+        m_got_ctd(false)
       {
         param("CTD Sample Period", m_args.ctd_period)
         .defaultValue("-1")
@@ -101,6 +98,11 @@ namespace Sensors
         .description("Time, in seconds, between sidescan sonar samples. Values lower than 0 will disable these samples.")
         .scope(Parameter::SCOPE_GLOBAL);
 
+        param("Dispatch Period", m_args.dispatch_period)
+        .defaultValue("60")
+        .description("Time period, in seconds, between stored historic samples dissemination.")
+        .scope(Parameter::SCOPE_GLOBAL);
+
         param("Log Events", m_args.log_events)
         .defaultValue("false")
         .description("Whether to log historic events")
@@ -119,12 +121,6 @@ namespace Sensors
         .defaultValue("")
         .description("List of <Message>:<Entity>+<Entity> that define the source entities to avoid log.");
 
-        param("Max Size", m_args.size)
-        .defaultValue("172")
-        .minimumValue("32")
-        .units(Units::Byte)
-        .description("Maximum size (in bytes) of each Time-series message created.");
-
         bind<const IMC::EstimatedState>(this);
         bind<const IMC::Temperature>(this);
         bind<const IMC::Conductivity>(this);
@@ -136,9 +132,17 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        m_ctd_counter.setTop(m_args.ctd_period);
-        m_tel_counter.setTop(m_args.telemetry_period);
-        m_sss_counter.setTop(m_args.sss_period);
+        if(paramChanged(m_args.ctd_period))
+          m_ctd_counter.setTop(m_args.ctd_period);
+
+        if(paramChanged(m_args.telemetry_period))
+          m_tel_counter.setTop(m_args.telemetry_period);
+
+        if(paramChanged(m_args.sss_period))
+          m_sss_counter.setTop(m_args.sss_period);
+
+        if(paramChanged(m_args.dispatch_period))
+          m_dispatch_counter.setTop(m_args.dispatch_period);
 
         if (paramChanged(m_args.filtered_entities))
           m_filter.setupEntities(m_args.filtered_entities, this);
@@ -146,18 +150,20 @@ namespace Sensors
         if(paramChanged(m_args.msgs_rates))
         {
           m_filter.setupRates(m_args.msgs_rates);
-
-          for(std::vector<std::string>::iterator it = m_args.msgs_rates.begin(); it != m_args.msgs_rates.end(); ++it) {
+          std::vector<std::string>::iterator it = m_args.msgs_rates.begin();
+          while( it != m_args.msgs_rates.end()) {
               std::vector<std::string> parts;
               parts.clear();
               Utils::String::split(it->c_str(), ":", parts);
               if (parts.size() == 2)
               {
                 m_registred_msgs.push_back(parts[0]);
-                trace(DTR("Registering Message: %s"),parts[0].c_str());
+                trace(DTR("Registering Message: %s to DataStore"),parts[0].c_str());
               }
-              else
+              else {
                 throw std::runtime_error(Utils::String::str(DTR("invalid format: %s"), it->c_str()));
+              }
+            ++it;
           }
         }
 
@@ -167,6 +173,8 @@ namespace Sensors
         if (m_args.telemetry_period > 0)
           active = true;
         if (m_args.sss_period > 0)
+          active = true;
+        if (m_args.dispatch_period > 0)
           active = true;
         if (m_args.log_events)
           active = true;
@@ -214,33 +222,8 @@ namespace Sensors
       onResourceRelease(void)
       {
         if(stopping()){
-          sendHistoricMessages(); // send out last recorded messages //FIXME - send upon HistoricDataRequest
+          sendHistoricMessages(); // send out last recorded messages
         }
-        trace(DTR("Dispatched %d Messages"),m_data_counter);
-      }
-
-      void
-      verifySize(unsigned int size)
-      {
-        if(!m_args.compressed){
-          if((m_data.getSerializationSize()+size) > m_args.size)
-          {
-            trace(DTR("Samples limit of %d, creating new time-series message."),m_args.size);
-            m_change_log = true;
-            fillBaselines(m_state->getTimeStamp(),m_state->lat,m_state->lon);
-            sendHistoricMessages();
-          }
-        }
-        else {
-          if((m_comp.getSerializationSize()+size) > m_args.size)
-          {
-            trace(DTR("Samples limit of %d, creating new time-series message."),m_args.size);
-            m_change_log = true;
-            fillBaselines(m_state->getTimeStamp(),m_state->lat,m_state->lon);
-            sendHistoricMessages();
-          }
-        }
-
       }
 
       void
@@ -256,17 +239,11 @@ namespace Sensors
             m_comp.base_lon  = Angles::degrees(base_lon); //degrees
             m_comp.base_time = base_timestamp; //seconds
           }
-          m_change_log = false;
       }
 
-        void
+      void
       consume(const IMC::EstimatedState* msg)
       {
-        uint32_t lat= msg->lat ,lon =msg->lon;
-        WGS84::displace(msg->x, msg->y, &lat, &lon);
-        if(m_change_log) {
-          fillBaselines(msg->getTimeStamp(), lat, lon);
-        }
         m_state = msg->clone();
       }
 
@@ -373,7 +350,9 @@ namespace Sensors
       void
       addSample(const Message *msg)
       {
-        trace(DTR("Adding sample of type: %s"), msg->getName());
+        if(m_state == nullptr)
+          return;
+
         HistoricSample* sample = new HistoricSample();
         uint32_t x,y, lat = Angles::radians(m_data.base_lat), lon = Angles::radians(m_data.base_lon);
         WGS84::displace(m_state->x, m_state->y, &m_state->lat, &m_state->lon);
@@ -393,15 +372,12 @@ namespace Sensors
             char* data = m_compressor.compress(buff).getBufferSigned();
               //verifySize(m_compressor.compress(buff).getBufferSigned().); //TODO
             m_comp.data.push_back(*data);
-            trace(DTR("Current Size: %d/%d"), m_comp.getSerializationSize(),m_args.size);
             Memory::clear(sample);
           }
-          else
-          {
-            verifySize(sample->getPayloadSerializationSize()); //TODO verify this
-            m_data.data.push_back(sample);
-            trace(DTR("Current Size: %d/%d"), m_data.getSerializationSize(),m_args.size);
-          }
+        else
+        {
+          m_data.data.push_back(sample);
+        }
       }
 
       void
@@ -413,8 +389,8 @@ namespace Sensors
         if(msg->getSource() != getSystemId())
           return;
 
-        if(m_state == NULL) {
-          (DTR("Discarding Sample due to missing navigation data."));
+        if(m_state == nullptr) {
+          trace(DTR("Discarding Sample due to missing navigation data."));
           return;
         }
         addSample(msg);
@@ -423,27 +399,32 @@ namespace Sensors
       void
       sendHistoricMessages()
       {
-        if(!m_data.data.empty())
-        {
-          dispatch(m_data.clone());
-          m_data_counter++;
-          m_data.data.clear();
-        }
-        else if(!m_comp.data.empty())
-        {
-          dispatch(m_comp.clone());
-          m_data_counter++;
-          m_comp.data.clear();
+        if(m_state == nullptr)
+          return;
+
+        if(m_dispatch_counter.overflow()) {
+          //The sample rate of specific IMC Messages is filtered before
+          if (!m_data.data.empty() && !m_args.compressed) {
+            dispatch(m_data.clone());
+            trace(DTR("Dispatching Historic Samples with %d messages"),m_data.data.size());
+            m_data.data.clear();
+          } else if (!m_comp.data.empty() && m_args.compressed) {
+            dispatch(m_comp.clone());
+            m_comp.data.clear();
+          }
+          uint32_t lat = m_state->lat, lon = m_state->lon;
+          WGS84::displace(m_state->x, m_state->y, &lat, &lon);
+          fillBaselines(m_state->getTimeStamp(), lat, lon); //update base lat and lon
+          m_dispatch_counter.reset();
         }
 
-        if (m_args.ctd_period > 0 && m_got_ctd && m_ctd_counter.overflow())
-        {
-          m_ctd.depth = m_state->depth;
-          debug("Generated new HistoricCTD.");
-          dispatch(m_ctd);
-          m_ctd_counter.reset();
-          m_got_ctd = false;
-        }
+          if (m_args.ctd_period > 0 && m_got_ctd && m_ctd_counter.overflow()) {
+            m_ctd.depth = m_state->depth;
+            debug("Generated new HistoricCTD.");
+            dispatch(m_ctd);
+            m_ctd_counter.reset();
+            m_got_ctd = false;
+          }
 
         if (m_args.telemetry_period > 0 && m_tel_counter.overflow())
         {
@@ -471,7 +452,7 @@ namespace Sensors
 
         if (m_args.sss_period > 0 && m_sss_counter.overflow())
         {
-          // TODO
+          //TODO
           m_sss_counter.reset();
         }
       }
@@ -481,6 +462,7 @@ namespace Sensors
       {
         while (!stopping())
         {
+          sendHistoricMessages();
           waitForMessages(1.0);
         }
       }
