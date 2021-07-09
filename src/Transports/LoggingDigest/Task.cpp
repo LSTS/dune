@@ -76,7 +76,7 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_log(NULL)
+        m_log(nullptr)
       {
         param("Sample Interval", m_args.sample_interval)
         .defaultValue("1.0")
@@ -106,8 +106,8 @@ namespace Transports
       .defaultValue("true")
       .description("Add log control messages to logged data");
 
-        bind<IMC::LoggingControl>(this);
-        bind<IMC::EntityInfo>(this);
+      bind<IMC::LoggingControl>(this);
+      bind<IMC::EntityInfo>(this);
       }
 
       ~Task(void)
@@ -144,7 +144,7 @@ namespace Transports
         bind(this, m_args.messages);
       }
 
-      uint32_t
+      static uint32_t
       getKey(const IMC::Message* msg)
       {
         return (msg->getId() << 16) + (msg->getSourceEntity() << 8) + (msg->getSubId() & 0xff);
@@ -215,7 +215,7 @@ namespace Transports
               throw RestartNeeded(e.what(), 5);
             }
 
-            if (m_log != NULL && m_args.log_control)
+            if (m_log != nullptr && m_args.log_control)
               logMessage(msg);
             break;
           case IMC::LoggingControl::COP_STOPPED:
@@ -252,7 +252,7 @@ namespace Transports
       void
       writeSample(void)
       {
-        if (m_log == NULL)
+        if (m_log == nullptr)
           return;
 
         if (!m_sample_timer.overflow())
@@ -274,7 +274,7 @@ namespace Transports
       void
       flush(void)
       {
-        if (m_log == NULL)
+        if (m_log == nullptr)
           return;
 
         if (!m_flush_timer.overflow())
@@ -287,9 +287,10 @@ namespace Transports
       void
       logMessage(const IMC::Message* msg)
       {
-        if (m_log == NULL)
+        if (m_log == nullptr)
           return;
 
+        war(DTR("Logging Message %s"), msg->getName());
         IMC::Packet::serialize(msg, m_buffer);
         m_log->write(m_buffer.getBufferSigned(), m_buffer.getSize());
       }
