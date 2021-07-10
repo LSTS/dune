@@ -59,7 +59,7 @@ class Message:
 
     def fill_header_field(self, func, field_name):
         field = self._root.find("header/field[@abbrev='%s']" % field_name)
-        value = self.make_number(field)
+        value = self.make_number(field.get('type'))
         self._fd.append('{0}.{1}({2});'.format(self._var, func, value))
 
     def fill_header(self):
@@ -86,22 +86,26 @@ class Message:
         self._fd.append('Utils::ByteBuffer bfr;')
         self._fd.append('IMC::Packet::serialize(&%s, bfr);' % self._var)
         self._fd.append('IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());')
-        self._fd.append('test.boolean("{0} #{2}", {1} == *msg_d);'.format(self._abbrev, self._var, self._test_nr));
+        self._fd.append('test.boolean("{0} #{2}", {1} == *msg_d);'.format(self._abbrev, self._var, self._test_nr))
         self._fd.append('delete msg_d;')
+        self._fd.append('msg.toJSON(std::cout);')
         self._fd.append('}\ncatch (IMC::InvalidMessageSize& e)\n{\n(void)e;')
         self._fd.append('test.boolean("{0} #{1}", {0}.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);'.format(self._var, self._test_nr))
         self._fd.append('}')
 
-    def make_number(self, field):
-        type = field.get('type')
-        if type.startswith('int'):
-            width = int(type.replace('int', '').replace('_t', '')) - 1
+    def make_number(self, field_type):
+        if field_type.startswith('int'):
+            width = int(field_type.replace('int', '').replace('_t', '')) - 1
             return str(random.randrange(-2 ** width, 2 ** width - 1))
-        if type.startswith('uint'):
-            width = int(type.replace('uint', '').replace('_t', ''))
+        elif field_type.startswith('uint'):
+            width = int(field_type.replace('uint', '').replace('_t', ''))
             return str(random.randrange(0, 2 ** width - 1)) + 'U'
-        if type == 'fp32_t' or type == 'fp64_t':
+        elif field_type == 'fp32_t' or field_type == 'fp64_t':
             return str(random.random())
+
+    def make_vector(self, vector_type):
+        max_size = random.randrange(0, 10)
+        return ','.join([self.make_number(vector_type) for _ in range(max_size)])
 
     def make_array(self):
         max_size = random.randrange(10, 255)
@@ -148,6 +152,8 @@ class Message:
             tname = self.make_temp()
             self._fd.append('const char %s[] = {%s};' % (tname, self.make_array()))
             self._fd.append('{0}.{1}.assign({2}, {2} + sizeof({2}));'.format(self._var, name, tname))
+        elif type == 'vector':
+            self._fd.append('{0}.{1} = {{{2}}};'.format(self._var, name, self.make_vector(field.get('vector-type'))))
         elif type == 'message':
             self.set_message(name, field)
         elif type == 'message-list':
@@ -155,7 +161,7 @@ class Message:
             for x in range(0, imsgs):
                 self.push_message(name, field)
         else:
-            value = self.make_number(field)
+            value = self.make_number(field.get('type'))
             self._fd.append('%s.%s = %s;' % (self._var, name, value))
 
 # Parse command line arguments.
