@@ -52,6 +52,8 @@ namespace Transports
       std::vector<std::string> filtered_entities;
       //! Add LogControl Messages ?
       bool log_control;
+      //! Change file when achieved the size limit
+      int  max_size;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -70,13 +72,16 @@ namespace Transports
       Arguments m_args;
       //! Message Filter
       MessageFilter m_filter;
+      //! File Saved Counter
+      uint16_t m_files;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_log(nullptr)
+        m_log(nullptr),
+        m_files(0)
       {
         param("Sample Interval", m_args.sample_interval)
         .defaultValue("1.0")
@@ -105,6 +110,11 @@ namespace Transports
       param("Log Control", m_args.log_control)
       .defaultValue("true")
       .description("Add log control messages to logged data");
+
+      param("Max Size", m_args.max_size)
+      .defaultValue("-1")
+      .units(Units::Byte)
+      .description("Digest maximum size per saved file.");
 
       bind<IMC::LoggingControl>(this);
       bind<IMC::EntityInfo>(this);
@@ -144,6 +154,14 @@ namespace Transports
         bind(this, m_args.messages);
       }
 
+        void
+        onResourceRelease(void)
+        {
+        if(isStopping())
+          if(m_log!= nullptr)
+            m_log->flush();
+        }
+
       static uint32_t
       getKey(const IMC::Message* msg)
       {
@@ -155,6 +173,7 @@ namespace Transports
       {
         stopLog();
 
+        std::string index = m_files <= 0 ? "" : std::to_string(m_files);
         if (!m_args.log_folder.empty())
         {
           std::string flat_name(name);
@@ -163,14 +182,13 @@ namespace Transports
             if (flat_name[i] == '/')
               flat_name[i] = '_';
           }
-
           Path(m_args.log_folder).create();
-          Path path = m_args.log_folder / (flat_name + ".lsf.gz");
+          Path path = m_args.log_folder / (flat_name + index + ".lsf.gz");
           m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
         }
         else
         {
-          Path path = m_ctx.dir_log / name / (m_args.lsf_name + ".lsf.gz");
+          Path path = m_ctx.dir_log / name / (m_args.lsf_name + index + ".lsf.gz");
           m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
         }
 
@@ -195,6 +213,7 @@ namespace Transports
       void
       stopLog(void)
       {
+        flush();
         Memory::clear(m_log);
       }
 
@@ -261,7 +280,7 @@ namespace Transports
         std::map<uint32_t, IMC::Message*>::iterator itr = m_messages.begin();
         for (; itr != m_messages.end(); ++itr)
         {
-          if(!m_filter.filter(itr->second)) {
+          if(!m_filter.filter(itr->second) && verifySize(itr->second->getSerializationSize())) {
               logMessage(itr->second);
           }
           delete itr->second;
@@ -277,11 +296,16 @@ namespace Transports
         if (m_log == nullptr)
           return;
 
-        if (!m_flush_timer.overflow())
+        if (!m_flush_timer.overflow()) //flush only by timer
           return;
 
         m_flush_timer.reset();
         m_log->flush();
+      }
+
+      bool
+      verifySize(unsigned int size){
+        return m_args.max_size > 0 && (m_log->rdbuf()->in_avail()) <= m_args.max_size;
       }
 
       void
@@ -290,7 +314,6 @@ namespace Transports
         if (m_log == nullptr)
           return;
 
-        war(DTR("Logging Message %s"), msg->getName());
         IMC::Packet::serialize(msg, m_buffer);
         m_log->write(m_buffer.getBufferSigned(), m_buffer.getSize());
       }
