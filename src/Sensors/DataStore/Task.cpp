@@ -244,6 +244,11 @@ namespace Sensors
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if(m_state == nullptr){
+          uint32_t lat = msg->lat, lon = msg->lon;
+          WGS84::displace(msg->x, msg->y, &lat, &lon);
+          fillBaselines(msg->getTimeStamp(), lat, lon); //update base lat and lon
+        }
         m_state = msg->clone();
       }
 
