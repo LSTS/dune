@@ -101,7 +101,7 @@ namespace DUNE
       }
       else
       {
-        return NULL;
+        return nullptr;
       }
     }
 

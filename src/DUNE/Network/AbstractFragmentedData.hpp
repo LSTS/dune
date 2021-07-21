@@ -56,14 +56,14 @@ namespace DUNE
         virtual bool
         isCompleted()
         {
-          return (getFragmentsMissing() == 0);
+          return getFragmentsMissing() == 0;
         }
 
         virtual void
-        setFragment(A part) {}
+        setFragment(A part) {};
 
         virtual T
-        getData() {}
+        getData() {};
 
     protected:
         DUNE::Tasks::Task* m_parent;

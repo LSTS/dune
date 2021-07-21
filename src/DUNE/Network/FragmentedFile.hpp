@@ -44,17 +44,20 @@ namespace DUNE
       public:
         FragmentedFile(Tasks::Task* parent, FileSystem::Path& dir);
 
-      double
+      virtual double
       getAge();
 
-      int
+      virtual int
       getFragmentsMissing();
 
-      void
+      virtual void
       setFragment(IMC::FileFragment* part);
 
-      std::ofstream*
+      virtual std::ofstream*
       getData();
+
+      std::ofstream*
+      getOutFile();
 
       ~FragmentedFile();
 

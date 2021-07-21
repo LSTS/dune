@@ -43,16 +43,16 @@ namespace DUNE
     public:
       FragmentedMessage(Tasks::Task* parent);
 
-      double
+      virtual double
       getAge();
 
-      int
+      virtual int
       getFragmentsMissing();
 
-      void
+      virtual void
       setFragment(IMC::MessagePart* part);
 
-      IMC::Message*
+      virtual IMC::Message*
       getData();
 
       ~FragmentedMessage();

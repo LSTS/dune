@@ -60,10 +60,7 @@ namespace DUNE
           part->frag_number >= m_num_frags)
       {
         if (m_parent == nullptr)
-          DUNE_ERR("FragmentedFile", "Invalid fragment received and it won't be processed.");
-        else
-          m_parent->err(DTR("Invalid fragment received and it won't be processed."));
-
+          m_parent->err("FragmentedFile", "Invalid fragment received and it won't be processed.");
       }
 
       if(part->frag_number == nextFragToSave()){
@@ -89,12 +86,18 @@ namespace DUNE
       if (isCompleted())
       {
         if(m_dir.exists() && m_dir.isFile()) {
-          std::ofstream *fo = new std::ofstream(m_dir.c_str());
-          return fo;
+          return getOutFile();
         }
       }
       return nullptr;
     }
+
+      std::ofstream*
+      FragmentedFile::getOutFile()
+      {
+        std::ofstream *fo = new std::ofstream(m_dir.c_str());
+        return fo;
+      }
 
     double
     FragmentedFile::getAge()
@@ -123,7 +126,8 @@ namespace DUNE
         auto it = m_fragments.begin();
         while(it != m_fragments.end()) {
           it->second->data.clear();
-          m_fragments.erase(it);
+          it->second->clear();
+          //m_fragments.erase(it);
         }
       }
     }
