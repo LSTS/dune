@@ -114,8 +114,9 @@ namespace DUNE
         auto it = m_fragments.begin();
         while(it != m_fragments.end()) {
           it->second->data.clear();
-          m_fragments.erase(it);
+          ++it;
         }
+        m_fragments.clear();
       }
     }
 
@@ -127,7 +128,6 @@ namespace DUNE
         while(it != m_fragments.end()) {
           it->second->data.clear();
           it->second->clear();
-          //m_fragments.erase(it);
         }
       }
     }
@@ -145,7 +145,7 @@ namespace DUNE
         if(outfile.is_open()) {
           m_parent->debug(DTR("Writing file fragment %d/%d to disk in file: %s"),pFragment->frag_number,
                           pFragment->num_frags,getFileName().c_str());
-          size_t size = sizeof(pFragment->data.data());  //  / sizeof(char)) = 1 byte
+          size_t size = pFragment->data.size();  //  / sizeof(char)) = 1 byte
           outfile.write(pFragment->data.data(),size);
           if(!outfile.bad())
             m_saved_fragments++;
