@@ -75,7 +75,15 @@ namespace DUNE
 
       uint8_t* p = m_buf.getBuffer();
 
-      IMC::Packet::serialize(msg, p, n);
+      try
+      {
+        IMC::Packet::serialize(msg, p, n);
+      }
+      catch(const std::exception& e)
+      {
+        err(DTR("failed to serialize message %s: %s"), msg->getName(), e.what());
+        return;
+      }
 
       if (m_gargs.trace_out)
         inf(DTR("outgoing: %s"), msg->getName());
