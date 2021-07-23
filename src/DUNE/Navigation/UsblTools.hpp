@@ -928,11 +928,12 @@ namespace DUNE
         }
 
         //! Parse incoming frame.
+        //! @param[in] imc_src IMC id of message source.
         //! @param[in] msg received acoustic frame.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        parse(const IMC::UamRxFrame* msg, std::vector<uint8_t>& data)
+        parse(uint16_t imc_src, const IMC::UamRxFrame* msg, std::vector<uint8_t>& data)
         {
           if ((uint8_t)msg->data[c_code] == CODE_REQ)
           {
@@ -967,6 +968,20 @@ namespace DUNE
             std::memcpy(&data[0], &msg->data[1], c_fsize_req);
             data[c_code - 1] = CODE_RPL;
             return true;
+          }
+          else if ((uint8_t)msg->data[c_code] == CODE_ORG)
+          {
+            // Check if we are targeting this system
+            if (msg->sys_src != m_system)
+              return false;
+
+            // Get absolute origin of message
+            IMC::GpsFix origin;
+            origin.setSource(imc_src);
+            Gps::decode(origin, msg->data);
+
+            if (!Modem::consume(&origin))
+              return false;
           }
 
           return false;
