@@ -916,7 +916,14 @@ namespace Transports
         // Trigger target.
         std::string sys;
         if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
-          sendRange(sys,createInternalId());
+        {
+          std::vector<uint8_t> data;
+          data.push_back(CODE_USBL);
+          if (m_usbl_modem->isInverted(sys, data))
+            sendFrame(sys, createInternalId(), data, true);
+          else
+            sendRange(sys,createInternalId());
+        }
       }
 
       //! Main loop of USBL node.
