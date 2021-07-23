@@ -548,7 +548,7 @@ namespace DUNE
         }
 
         //! Consume a USBL configuration message.
-        //! param[in] msg The UsblConfig message with a list of UsblModem messages.
+        //! @param[in] msg The UsblConfig message with a list of UsblModem messages.
         void
         consume(const IMC::UsblConfig* msg)
         {
@@ -999,6 +999,9 @@ namespace DUNE
           return false;
         }
 
+        //! Set target's relative position.
+        //! @param[in] msg UsblPositionExtended message of target's position.
+        //! @return true if position set, false otherwise.
         bool
         consume(const IMC::UsblPositionExtended* msg)
         {
@@ -1017,6 +1020,9 @@ namespace DUNE
           return false;
         }
 
+        //! Set target's absolute position.
+        //! @param[in] msg GpsFix message of target's position.
+        //! @return true if position set, false otherwise.
         bool
         consume(const IMC::GpsFix* msg)
         {
