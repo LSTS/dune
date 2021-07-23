@@ -564,11 +564,12 @@ namespace DUNE
         //! @param[in] name target's name.
         //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
-        Target(std::string name, bool fix, uint16_t period):
+        Target(std::string name, bool fix, bool inverted, uint16_t period):
           m_comm_errors(0)
         {
           m_name = name;
           m_fix = fix;
+          m_inverted = inverted;
           m_period = period;
           m_target_timer.setTop(m_period);
         }
@@ -603,9 +604,10 @@ namespace DUNE
         //! @param[in] return absolute fixes or relative position.
         //! @param[in] period desired periodicity.
         void
-        reset(bool fix, uint16_t period)
+        reset(bool fix, bool inverted, uint16_t period)
         {
           m_fix = fix;
+          m_inverted = inverted;
           m_period = period;
           m_target_timer.setTop(m_period);
           resetErrors();
@@ -626,6 +628,15 @@ namespace DUNE
         wantsFix(void)
         {
           return m_fix;
+        }
+
+        //! Check if target is for inverted mode.
+        //! @return true if target is set as inverted,
+        //! false otherwise.
+        bool
+        isInverted(void)
+        {
+          return m_inverted;
         }
 
         //! Check if the target node has failed.
@@ -651,6 +662,8 @@ namespace DUNE
         std::string m_name;
         //! Absolute or relative fix.
         bool m_fix;
+        //! Inverted mode.
+        bool m_inverted;
         //! Periodicity.
         uint16_t m_period;
         //! Number of communication errors
@@ -766,7 +779,8 @@ namespace DUNE
               }
 
               bool fix = msg->data[REQ_START] & c_mask_fix;
-              add(msg->sys_src, fix, period);
+              bool inverted = msg->data[REQ_START] & c_mask_inverted;
+              add(msg->sys_src, fix, inverted, period);
             }
             else
             {
@@ -876,7 +890,7 @@ namespace DUNE
         //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
         void
-        add(std::string name, bool fix, uint16_t period)
+        add(std::string name, bool fix, bool inverted, uint16_t period)
         {
           // Iterate through list and add if necessary.
           std::vector<Target>::iterator itr = m_list.begin();
@@ -885,12 +899,12 @@ namespace DUNE
             // Same target
             if (itr->compare(name))
             {
-              itr->reset(fix, period);
+              itr->reset(fix, inverted, period);
               return;
             }
           }
 
-          m_list.push_back(Target(name, fix, period));
+          m_list.push_back(Target(name, fix, inverted, period));
         }
 
         //! Remove target.
