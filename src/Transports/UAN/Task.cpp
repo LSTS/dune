@@ -512,6 +512,10 @@ namespace Transports
         if(m_usbl_modem->isInverted(msg->target, data))
         {
           m_usbl_modem->consume(msg);
+
+          if (m_usbl_modem->invertedFix(msg->target, fix))
+            dispatch(fix);
+
           return;
         }
 
