@@ -485,6 +485,17 @@ namespace DUNE
           }
         }
 
+        //! Consume a GpsFix message and save system position.
+        //! @param[in] msg GpsFix message.
+        void
+        consume(const IMC::GpsFix* msg)
+        {
+          if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
+            return;
+
+          m_origin = *msg;
+        }
+
       private:
         //! Encode a request to be transmitted by node.
         //! @param[out] data frame to be send.
@@ -563,6 +574,8 @@ namespace DUNE
         const Arguments* m_args;
         //! Pointer to task.
         Tasks::Task* m_task;
+        //! Local position
+        IMC::GpsFix m_origin;
       };
 
       //! USBL tools handler ticket.
