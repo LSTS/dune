@@ -550,6 +550,10 @@ namespace Transports
 
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
+        
+        if(m_usbl_modem->isInverted(msg->target, data))
+          return;
+
         if (m_usbl_modem->encode(msg, data))
           sendFrame(msg->target, createInternalId(), data, false);
       }
