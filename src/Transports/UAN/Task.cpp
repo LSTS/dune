@@ -508,6 +508,13 @@ namespace Transports
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
 
+        // Inverted mode
+        if(m_usbl_modem->isInverted(msg->target, data))
+        {
+          m_usbl_modem->consume(msg);
+          return;
+        }
+
         // The target wants an absolute fix?
         if (m_usbl_modem->wantsFix(msg->target))
         {
