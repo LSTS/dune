@@ -318,23 +318,26 @@ namespace DUNE
       }
 
       static IMC::UsblFixExtended
-      toFix(const IMC::UsblPositionExtended& usbl, const IMC::GpsFix& gps)
+      toFix(const IMC::UsblPositionExtended& usbl, const IMC::GpsFix& gps, bool inverted = false)
       {
-        return toFix(usbl, gps.lat, gps.lon, gps.height, IMC::Z_HEIGHT);
+        return toFix(usbl, gps.lat, gps.lon, gps.height, IMC::Z_HEIGHT, inverted);
       }
 
       static IMC::UsblFixExtended
-      toFix(const IMC::UsblPositionExtended& usbl, const IMC::EstimatedState& state)
+      toFix(const IMC::UsblPositionExtended& usbl, const IMC::EstimatedState& state, bool inverted = false)
       {
         double lat, lon;
         Coordinates::toWGS84(state, lat, lon);
-        return toFix(usbl, lat, lon, state.depth, IMC::Z_DEPTH);
+        return toFix(usbl, lat, lon, state.depth, IMC::Z_DEPTH, inverted);
       }
 
       static IMC::UsblFixExtended
-      toFix(const IMC::UsblPositionExtended& usbl, double lat, double lon, float z, IMC::ZUnits z_units)
+      toFix(const IMC::UsblPositionExtended& usbl, double lat, double lon, float z, IMC::ZUnits z_units, bool inverted = false)
       {
-        Coordinates::WGS84::displace(usbl.n, usbl.e, &lat, &lon);
+        if (!inverted)
+          Coordinates::WGS84::displace(usbl.n, usbl.e, &lat, &lon);
+        else
+          Coordinates::WGS84::displace(-usbl.n, -usbl.e, &lat, &lon);
 
         IMC::UsblFixExtended fix;
         fix.target = usbl.target;
