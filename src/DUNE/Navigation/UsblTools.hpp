@@ -64,6 +64,8 @@ namespace DUNE
       static const uint16_t c_requests_interval = 30;
       //! Number of communication timeouts before considering that a system has failed.
       static const uint8_t c_max_comm_timeout = 5;
+      //! Origin validity timeout.
+      static const uint8_t c_origin_timeout = 5;
 
       enum Codes
       {
@@ -754,6 +756,50 @@ namespace DUNE
         {
           m_comm_errors = 0;
         }
+        
+        //! Set target's absolute position.
+        //! @param[in] msg GpsFix message of target's position.
+        void
+        setOrigin(const IMC::GpsFix* msg)
+        {
+          m_origin = *msg;
+          m_origin_timer.setTop(c_origin_timeout);
+        }
+
+        //! Get target's absolute position.
+        //! @param[out] msg GpsFix message of target's position.
+        //! @return true if message is valid and has been filled, false otherwise.
+        bool
+        getOrigin(IMC::GpsFix& msg)
+        {
+          if (m_origin_timer.overflow())
+            return false;
+
+          msg = m_origin;
+          return true;
+        }
+
+        //! Set target's relative position.
+        //! @param[in] msg UsblPositionExtended message of target's position.
+        void
+        setRelativePosition(const IMC::UsblPositionExtended* msg)
+        {
+          m_rpos = *msg;
+          m_rpos_timer.setTop(c_origin_timeout);
+        }
+
+        //! Get target's relative position.
+        //! @param[out] msg UsblPositionExtended message of target's position.
+        //! @return true if message is valid and has been filled, false otherwise.
+        bool
+        getRelativePosition(IMC::UsblPositionExtended& msg)
+        {
+          if (m_rpos_timer.overflow())
+            return false;
+
+          msg = m_rpos;
+          return true;
+        }
 
       private:
         //! Target name.
@@ -768,6 +814,14 @@ namespace DUNE
         uint8_t m_comm_errors;
         //! Target's desired period timer.
         Time::Counter<double> m_target_timer;
+        //! Target's absolute position timer.
+        Time::Counter<double> m_origin_timer;
+        //! Target's absolute position.
+        IMC::GpsFix m_origin;
+        //! Target's relative position timer.
+        Time::Counter<double> m_rpos_timer;
+        //! Target's relative position.
+        IMC::UsblPositionExtended m_rpos;
       };
 
       //! USBL tools handler.
