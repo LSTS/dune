@@ -832,7 +832,8 @@ namespace DUNE
       {
       public:
         //! Constructor.
-        Modem(void)
+        Modem(Tasks::Task* task):
+          m_task(task)
         { }
 
         //! This function verifies if we are waiting for the target's reply.
@@ -1206,6 +1207,8 @@ namespace DUNE
         std::string m_system;
         //! Maximum amount of time waiting for system's reply.
         Time::Counter<double> m_modem_wdog;
+        //! Pointer to task.
+        Tasks::Task* m_task;
       };
     };
   }
