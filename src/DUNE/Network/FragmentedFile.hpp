@@ -59,8 +59,6 @@ namespace DUNE
       std::ofstream*
       getOutFile();
 
-      ~FragmentedFile();
-
       void clear();
 
       inline

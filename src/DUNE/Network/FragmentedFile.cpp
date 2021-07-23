@@ -108,18 +108,6 @@ namespace DUNE
       return Time::Clock::get() - m_creation_time;
     }
 
-      FragmentedFile::~FragmentedFile()
-    {
-      if(!m_fragments.empty()){
-        auto it = m_fragments.begin();
-        while(it != m_fragments.end()) {
-          it->second->data.clear();
-          ++it;
-        }
-        m_fragments.clear();
-      }
-    }
-
     void
     FragmentedFile::clear()
     {
@@ -128,7 +116,9 @@ namespace DUNE
         while(it != m_fragments.end()) {
           it->second->data.clear();
           it->second->clear();
+          m_fragments.erase(it);
         }
+        m_fragments.clear();
       }
     }
 
@@ -140,21 +130,21 @@ namespace DUNE
       void
       FragmentedFile::writeToDisk(IMC::FileFragment *pFragment) {
         std::ofstream outfile = std::ofstream(getFileName(), std::ofstream::app | std::ios::binary);
-        outfile.tellp();
-        outfile << pFragment->data.data();
+
         if(outfile.is_open()) {
-          m_parent->debug(DTR("Writing file fragment %d/%d to disk in file: %s"),pFragment->frag_number,
-                          pFragment->num_frags,getFileName().c_str());
           size_t size = pFragment->data.size();  //  / sizeof(char)) = 1 byte
           outfile.write(pFragment->data.data(),size);
-          if(!outfile.bad())
+          if(!outfile.bad()) {
             m_saved_fragments++;
+            m_parent->debug(DTR("Writing %lu bytes in file fragment %d/%d to disk in file: %s"),size,pFragment->frag_number,
+                            pFragment->num_frags,getFileName().c_str());
+          }
           auto it = m_fragments.find(nextFragToSave());
           //! Save previously received chunks
           while(!m_fragments.empty() && it != m_fragments.end()) {
-            m_parent->debug(DTR("Writing file fragment %d/%d to disk in file: %s"),pFragment->frag_number,
-                            pFragment->num_frags,getFileName().c_str());
-            size = sizeof(it->second->data.data());
+            m_parent->debug(DTR("Writing saved chunks file fragment %d/%d to disk in file: %s - %lu bytes"),pFragment->frag_number,
+                            pFragment->num_frags,getFileName().c_str(), size);
+            size = it->second->data.size();
             outfile.write(it->second->data.data(),size);
             if(!outfile.bad()) {
               m_saved_fragments++;
