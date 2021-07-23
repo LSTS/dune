@@ -52,6 +52,8 @@ namespace DUNE
       static const uint8_t c_mask_start = 0x10;
       //! Request frame: absolute fix mask.
       static const uint8_t c_mask_fix = 0x01;
+      //! Request frame: inverted mode.
+      static const uint8_t c_mask_inverted = 0x02;
       //! Request frame: size of frame.Size of frame: request.
       static const uint8_t c_fsize_req = 5;
       //! Node or modem destination identifier mask.
@@ -69,7 +71,9 @@ namespace DUNE
         CODE_RPL = c_target_mask,
         CODE_FIX = c_target_mask | 0x01,
         CODE_POS = c_target_mask | 0x02,
-        CODE_ANG = c_target_mask | 0x03
+        CODE_ANG = c_target_mask | 0x03,
+        CODE_INV = c_target_mask | 0x04,
+        CODE_ORG = 0x05
       };
 
       enum RequestIndexes
