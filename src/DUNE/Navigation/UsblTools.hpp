@@ -305,6 +305,8 @@ namespace DUNE
           bool fix;
           //! Quick mode, without range.
           bool no_range;
+          //! Inverted mode.
+          bool inverted;
         };
 
         //! Constructor.
@@ -316,6 +318,7 @@ namespace DUNE
         {
           m_period = m_args->period;
           m_fix = m_args->fix;
+          m_inverted = m_args->inverted;
 
           // in quick mode, we actively ping the modem
           if (m_args->no_range)
@@ -384,6 +387,7 @@ namespace DUNE
                 {
                   std::memcpy(&m_period, &msg->data[REQ_PERIOD], sizeof(uint16_t));
                   m_fix = msg->data[REQ_START] & c_mask_fix;
+                  m_inverted = msg->data[REQ_START] & c_mask_inverted;
                   m_usbl_alive = true;
                   m_comm_timeout_timer.setTop(c_max_comm_timeout * m_period);
                 }
@@ -501,6 +505,9 @@ namespace DUNE
           if (m_args->fix)
             data[REQ_START - 1] |= c_mask_fix;
 
+          if (m_args->inverted)
+            data[REQ_START - 1] |= c_mask_inverted;
+
           if (m_args->enabled)
             data[REQ_START - 1] |= c_mask_start;
 
@@ -542,6 +549,8 @@ namespace DUNE
         std::string m_usbl_name;
         //! Absolute fix or request relative position.
         bool m_fix;
+        //! Inverted mode flag.
+        bool m_inverted;
         //! Periodicity.
         uint16_t m_period;
         //! USBL configuration.
