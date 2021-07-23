@@ -497,7 +497,7 @@ namespace Transports
         if (m_usbl_modem == NULL)
         {
           announceUSBL();
-          m_usbl_modem = new UsblTools::Modem();
+          m_usbl_modem = new UsblTools::Modem(this);
           return;
         }
 
@@ -536,7 +536,7 @@ namespace Transports
         if (m_usbl_modem == NULL)
         {
           announceUSBL();
-          m_usbl_modem = new UsblTools::Modem();
+          m_usbl_modem = new UsblTools::Modem(this);
           return;
         }
 
