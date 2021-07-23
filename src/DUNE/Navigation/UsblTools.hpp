@@ -432,8 +432,11 @@ namespace DUNE
 
         //! Parse incoming frame.
         //! @param[in] msg received acoustic frame.
-        void
-        parse(uint16_t imc_src, const IMC::UamRxFrame* msg)
+        //! @param[in] imc_src IMC id of message source.
+        //! @param[out] data frame to be send.
+        //! @return true if there's data to be sent, false otherwise.
+        bool
+        parse(uint16_t imc_src, const IMC::UamRxFrame* msg, std::vector<uint8_t>& data)
         {
           switch ((uint8_t)msg->data[c_code])
           {
@@ -522,7 +525,21 @@ namespace DUNE
               m_task->dispatch(ang);
               break;
             }
+
+            case CODE_INV:
+            {
+              UsblTools::Gps gps;
+              gps.lat = m_origin.lat;
+              gps.lon = m_origin.lon;
+              gps.z = m_origin.height;
+
+              Gps::encode(gps, data);
+
+              return true;
+            }
           }
+
+          return false;
         }
 
         //! Consume a USBL configuration message.

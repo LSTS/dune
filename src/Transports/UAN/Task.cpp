@@ -383,18 +383,21 @@ namespace Transports
             break;
 
           case CODE_USBL:
+            std::vector<uint8_t> data;
+            data.push_back(CODE_USBL);
             if (UsblTools::toNode(msg->data[2]))
             {
               if (m_usbl_node != NULL)
-                m_usbl_node->parse(imc_addr_src, msg);
+              {
+                if (m_usbl_node->parse(imc_addr_src, msg, data))
+                  sendFrame(msg->sys_src,createInternalId(), data, false);
+              }
             }
             else
             {
               // handle request to USBL modem.
               if (m_usbl_modem != NULL)
               {
-                std::vector<uint8_t> data;
-                data.push_back(CODE_USBL);
                 if (m_usbl_modem->parse(msg, data))
                   sendFrame(msg->sys_src,createInternalId(), data, false);
               }
