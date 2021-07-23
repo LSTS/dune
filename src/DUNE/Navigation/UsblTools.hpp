@@ -986,6 +986,14 @@ namespace DUNE
 
             if (!Modem::consume(&origin))
               return false;
+
+            IMC::UsblFixExtended fix;
+            if (invertedFix(m_system, fix))
+              m_task->dispatch(fix);
+
+            // Target replyed to ping
+            targetReplied(m_system);
+            m_system.clear();
           }
 
           return false;
