@@ -134,6 +134,65 @@ namespace DUNE
         }
       };
 
+      struct Gps
+      {
+        fp64_t lat;
+        fp64_t lon;
+        fp32_t z;
+
+        //! Decode an incoming data frame into a gps message.
+        //! @param[out] frame gps structure.
+        //! @param[in] data incoming frame.
+        static void
+        decode(Gps& frame, const std::vector<char>& data)
+        {
+          uint8_t* ptr = (uint8_t*)&data[c_code + 1];
+
+          uint16_t length = (uint16_t)Gps::size();
+          ptr += IMC::deserialize(frame.lat, ptr, length);
+          ptr += IMC::deserialize(frame.lon, ptr, length);
+          ptr += IMC::deserialize(frame.z, ptr, length);
+        }
+
+        //! Encode a fix message into a data frame.
+        //! @param[in] frame fix structure.
+        //! @param[out] data data frame.
+        static void
+        encode(Gps& frame, std::vector<uint8_t>& data)
+        {
+          data.resize(Gps::size() + 2);
+          data[c_code - 1] = CODE_ORG;
+
+          uint8_t* ptr = (uint8_t*)&data[c_code];
+
+          ptr += IMC::serialize(frame.lat, ptr);
+          ptr += IMC::serialize(frame.lon, ptr);
+          ptr += IMC::serialize(frame.z, ptr);
+        }
+
+        //! Decode an incoming data frame into a gps message.
+        //! @param[out] frame gps structure.
+        //! @param[in] data incoming frame.
+        static void
+        decode(IMC::GpsFix& msg, const std::vector<char>& data)
+        {
+          uint8_t* ptr = (uint8_t*)&data[c_code + 1];
+
+          uint16_t length = (uint16_t)Gps::size();
+          ptr += IMC::deserialize(msg.lat, ptr, length);
+          ptr += IMC::deserialize(msg.lon, ptr, length);
+          ptr += IMC::deserialize(msg.height, ptr, length);
+        }
+
+        //! Get size of frame.
+        //! @return size of fix structure.
+        static size_t
+        size(void)
+        {
+          return 2 * sizeof(fp64_t) + sizeof(fp32_t);
+        }
+      };
+
       //! Position data structure.
       struct Position
       {
