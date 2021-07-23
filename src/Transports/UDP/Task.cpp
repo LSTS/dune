@@ -339,7 +339,16 @@ namespace Transports
         if (m_args.trace_out)
           msg->toText(std::cerr);
 
-        uint16_t rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
+        uint16_t rv;
+        try
+        {
+          rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
+        }
+        catch(const std::exception& e)
+        {
+          war(DTR("failed to serialize message %s to send to %u: %s"), msg->getName(), m_args.port, e.what());
+          return;
+        }
 
         // Send to static nodes.
         std::set<NodeAddress>::iterator itr = m_static_dsts.begin();
