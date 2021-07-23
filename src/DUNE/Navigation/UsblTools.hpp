@@ -1026,6 +1026,36 @@ namespace DUNE
 
           return false;
         }
+        
+        //! Compute absolute fix of system from absolute and relative positions of target
+        //! @param[in] target Target's name.
+        //! @param[out] fix self fix message.
+        //! @return true if able to compute fix and fill message, false otherwise.
+        bool
+        invertedFix(std::string target, IMC::UsblFixExtended& fix)
+        {
+          // Iterate through list and add if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(target))
+            {
+              IMC::GpsFix gps;
+              IMC::UsblPositionExtended rpos;
+
+              //! Check timeout
+              if (!itr->getOrigin(gps) || !itr->getRelativePosition(rpos))
+                return false;
+
+              fix = UsblTools::toFix(rpos, gps, true);
+              fix.target = m_task->getSystemName();
+              return true;
+            }
+          }
+
+          return false;
+        }
 
         //! Encode USBL fix message to be transmitted.
         //! @param[in] msg pointer to message.
