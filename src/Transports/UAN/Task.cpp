@@ -195,6 +195,7 @@ namespace Transports
         bind<IMC::AcousticRequest>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
+        bind<IMC::GpsFix>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::ReportControl>(this);
         bind<IMC::UamRxFrame>(this);
@@ -268,6 +269,15 @@ namespace Transports
           return;
 
         m_estate = *msg;
+      }
+
+      void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_usbl_node->consume(msg);
       }
 
       void
