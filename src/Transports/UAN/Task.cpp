@@ -160,6 +160,11 @@ namespace Transports
             " is relative to the origin of a system where the center of the"
             " reference frame is the USBL modem");
 
+        param("USBL Node -- Inverted", m_node_args.inverted)
+        .defaultValue("false")
+        .description("If this argument is enabled, USBL node anounces itself"
+            " for inverted positioning by USBL modems.");
+
         param("USBL Node -- Quick, No Range", m_node_args.no_range)
         .defaultValue("false")
         .description("In this mode, the USBL node does not request ranging information."
