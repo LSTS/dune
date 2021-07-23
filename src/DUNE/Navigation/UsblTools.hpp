@@ -762,6 +762,28 @@ namespace DUNE
           return false;
         }
 
+        //! Get if target's is set for inverted mode.
+        //! @return true if target wants an absolute fix,
+        //! false if it wants a relative position.
+        bool
+        isInverted(std::string name, std::vector<uint8_t>& data)
+        {
+          // Iterate through list.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(name) && itr->isInverted())
+            {
+              data.push_back(CODE_INV);
+              return true;
+            }
+          }
+
+          // default is non inverted.
+          return false;
+        }
+
         //! Parse incoming frame.
         //! @param[in] msg received acoustic frame.
         //! @param[out] data frame to be send.
