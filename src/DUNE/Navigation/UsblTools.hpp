@@ -972,6 +972,42 @@ namespace DUNE
           return false;
         }
 
+        bool
+        consume(const IMC::UsblPositionExtended* msg)
+        {
+          // Iterate through list and add if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(msg->target))
+            {
+              itr->setRelativePosition(msg);
+              return true;
+            }
+          }
+
+          return false;
+        }
+
+        bool
+        consume(const IMC::GpsFix* msg)
+        {
+          // Iterate through list and add if necessary.
+          std::vector<Target>::iterator itr = m_list.begin();
+          for (; itr != m_list.end(); ++itr)
+          {
+            // Same target
+            if (itr->compare(m_system))
+            {
+              itr->setOrigin(msg);
+              return true;
+            }
+          }
+
+          return false;
+        }
+
         //! Encode USBL fix message to be transmitted.
         //! @param[in] msg pointer to message.
         //! @param[out] data frame to be send.
