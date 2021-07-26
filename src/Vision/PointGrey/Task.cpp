@@ -69,7 +69,7 @@ namespace Vision
     static const float c_time_to_update_cnt_info = 10.0;
     static const std::string c_log_path = "/opt/lsts/dune/log/";
     static const std::string c_camera_log_folder = "CameraLog/";
-    static const float c_timeout_reading = 5.0;
+    static const float c_timeout_reading = 15.0;
 
     //! %Task arguments.
     struct Arguments
@@ -209,6 +209,8 @@ namespace Vision
       Time::Counter<float> m_timeout_heartbeat_cam;
       //! Flag to control state of camera in master
       bool m_is_camera_active;
+      //! Flag to control reading of used storage
+      bool m_read_storage;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -363,6 +365,7 @@ namespace Vision
       {
         if(!m_args.is_master_mode)
         {
+          m_read_storage = true;
           m_isStartTask = false;
           m_isCapturing = false;
           m_is_camera_active = false;
@@ -660,7 +663,8 @@ namespace Vision
         if (!pipe)
         {
           war("timeout - erro reading storage usage");
-          m_storage = '0';
+          m_read_storage = true;
+          m_storage = "0";
         }
         else
         {
@@ -679,13 +683,15 @@ namespace Vision
             {
               pclose(pipe);
               war("timeout - erro reading storage usage");
-              return 0;
+              m_read_storage = true;
+              return "0";
             }
           }
           catch (...)
           {
             pclose(pipe);
-            return 0;
+            m_read_storage = true;
+            return "0";
           }
           pclose(pipe);
           try
@@ -699,10 +705,10 @@ namespace Vision
           }
           catch (...)
           {
-            return 0;
+            m_read_storage = true;
+            return "0";
           }
         }
-
         return m_storage;
       }
 
@@ -1255,7 +1261,11 @@ namespace Vision
             {
               waitForMessages(1.0);
               setGpio(GPIO_LOW, m_args.gpio_strobe);
-              setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
+              if(m_read_storage)
+              {
+                m_read_storage = false;
+                setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
+              }
             }
           }
           else
