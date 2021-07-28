@@ -42,7 +42,7 @@ namespace DUNE
   class FragmentedFile: public AbstractFragmentedData<std::ofstream*,IMC::FileFragment*>
     {
       public:
-        FragmentedFile(Tasks::Task* parent, FileSystem::Path& dir);
+        FragmentedFile(Tasks::Task* parent, FileSystem::Path& dir, std::string id);
 
       virtual double
       getAge();
@@ -66,6 +66,11 @@ namespace DUNE
       getFileName()
       {
         return m_dir.str();
+      }
+
+      std::string&
+      getFragId(){
+        return m_frag_id;
       }
 
     private:

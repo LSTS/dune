@@ -35,10 +35,10 @@ namespace DUNE
 {
   namespace Network
   {
-      FragmentedFile::FragmentedFile(Tasks::Task* parent, FileSystem::Path& log_dir):
+      FragmentedFile::FragmentedFile(Tasks::Task* parent, FileSystem::Path& log_dir,std::string id):
           AbstractFragmentedData<std::ofstream*, IMC::FileFragment *>(parent)
     {
-      m_frag_id = "";
+      m_frag_id = id;
       m_saved_fragments = 0;
       m_dir = log_dir;
     }
@@ -76,7 +76,7 @@ namespace DUNE
     {
         if(m_num_frags < 0)
           return m_num_frags;
-      return (unsigned int) m_num_frags - m_saved_fragments - m_fragments.size();
+      return m_num_frags - m_saved_fragments - m_fragments.size();
     }
 
     std::ofstream*
@@ -117,6 +117,7 @@ namespace DUNE
           it->second->data.clear();
           it->second->clear();
           m_fragments.erase(it);
+          ++it;
         }
         m_fragments.clear();
       }
