@@ -50,6 +50,7 @@
 #include <DUNE/Math/EigenMatrix.hpp>
 // #include <DUNE/Math/General.hpp>
 // #include <DUNE/Parsers/Config.hpp>
+// #include "eigen/Dense"
 
 // #define ALLOCD(count) (double*)std::malloc(sizeof(double) * (count))
 // #define ALLOCI(count) (int*)std::malloc(sizeof(int) * (count))
@@ -64,99 +65,58 @@ namespace DUNE
     EigenMatrix::EigenMatrix(void)
     { }
 
-    // EigenMatrix::EigenMatrix(size_t r, size_t c)
-    // {
-    //   if (!r || !c)
-    //     throw Error("Invalid dimension!");
+    EigenMatrix::EigenMatrix(size_t r, size_t c)
+    {
+      if (!r || !c)
+        throw Error("Invalid dimension!");
 
-    //   m_data.resize(r, c);
+      m_data.resize(r, c);
+    }
 
-    //   m_counter = m_data + sizeof(m_data);
-    //   *m_counter = 1;
-    // }
+    EigenMatrix::EigenMatrix(size_t r, size_t c, double value):
+    EigenMatrix(r, c)
+    {
+      fill(value);
+    }
 
-    // EigenMatrix::EigenMatrix(size_t r, size_t c, double value)
-    // {
-    //   EigenMatrix(r, c);
-    //   fill(value);
-    // }
+    EigenMatrix::EigenMatrix(const EigenMatrix& m)
+    {
+      m_data = m.m_data;
+    }
 
-    // EigenMatrix::EigenMatrix(const EigenMatrix& m)
-    // {
-    //   m_nrows = m.m_nrows;
-    //   m_ncols = m.m_ncols;
-    //   m_size = m.m_size;
+    EigenMatrix::EigenMatrix(double* data, size_t r, size_t c)
+    {
+      if (!r || !c)
+        throw Error("Invalid dimension!");
 
-    //   if (m_size)
-    //   {
-    //     m_data = m.m_data;
-    //     m_counter = m.m_counter;
-    //     ++(*m_counter);
-    //   }
-    //   else
-    //   {
-    //     m_data = NULL;
-    //     m_counter = NULL;
-    //   }
-    // }
-
-    // EigenMatrix::EigenMatrix(const double* data, size_t r, size_t c)
-    // {
-    //   if (!r || !c)
-    //     throw Error("Invalid dimension!");
-
-    //   m_nrows = r;
-    //   m_ncols = c;
-    //   m_size = r * c;
-    //   m_data = ALLOCD(m_size + 1);
-
-    //   m_counter = m_data + m_size;
-    //   *m_counter = 1;
-
-    //   std::memcpy(m_data, data, m_size * sizeof(double));
-    // }
+      m_data = Eigen::Map<RowMajorMatrix>(data, r, c);
+    }
 
 
-    // EigenMatrix::EigenMatrix(size_t n)
-    // {
-    //   if (!n)
-    //     throw Error("Invalid dimension!");
+    EigenMatrix::EigenMatrix(size_t n):
+    EigenMatrix(n, n)
+    {
+      if (!n)
+        throw Error("Invalid dimension!");
 
-    //   m_nrows = n;
-    //   m_ncols = n;
-    //   m_size = n * n;
-    //   m_data = ALLOCD(m_size + 1);
+      identity();
+    }
 
-    //   m_counter = m_data + m_size;
-    //   *m_counter = 1;
-
-    //   identity();
-    // }
-
-    // EigenMatrix::EigenMatrix(const double* diag, size_t n)
-    // {
-    //   m_nrows = n;
-    //   m_ncols = n;
-    //   m_size = n * n;
-    //   m_data = ALLOCD(m_size + 1);
-    //   m_counter = m_data + m_size;
-    //   *m_counter = 1;
-
-    //   fill(0);
-
-    //   for (size_t i = 0; i < n; i++)
-    //     m_data[i * (n + 1)] = diag[i];
-    // }
+    EigenMatrix::EigenMatrix(double* diag, size_t n):
+    EigenMatrix(n, n)
+    {
+      m_data = Eigen::Map<RowMajorMatrix>(diag, n, 1).asDiagonal();
+    }
 
     EigenMatrix::~EigenMatrix(void)
     {
     }
 
-    // double*
-    // EigenMatrix::begin(void)
-    // {
-    //   return m_data;
-    // }
+    double*
+    EigenMatrix::begin(void)
+    {
+      return &m_data(0);
+    }
 
     // double*
     // EigenMatrix::end(void)
@@ -200,17 +160,17 @@ namespace DUNE
     //   return m_ncols;
     // }
 
-    // int
-    // EigenMatrix::size(void) const
-    // {
-    //   return m_size;
-    // }
+    int
+    EigenMatrix::size(void) const
+    {
+      return m_data.size();
+    }
 
-    // bool
-    // EigenMatrix::isSquare(void) const
-    // {
-    //   return m_nrows == m_ncols;
-    // }
+    bool
+    EigenMatrix::isSquare(void) const
+    {
+      return m_data.cols() == m_data.rows();
+    }
 
     // bool
     // EigenMatrix::isVector(void) const
@@ -242,11 +202,11 @@ namespace DUNE
     //   return m_ncols == 1 && m_nrows == r;
     // }
 
-    // bool
-    // EigenMatrix::isEmpty(void) const
-    // {
-    //   return m_data.size() == 0;
-    // }
+    bool
+    EigenMatrix::isEmpty(void) const
+    {
+      return m_data.size() == 0;
+    }
 
     // void
     // EigenMatrix::fill(size_t r, size_t c, const double* data)
@@ -255,34 +215,26 @@ namespace DUNE
     //   m_data = Map<MatrixXd>(data, r, c);
     // }
 
-    // void
-    // EigenMatrix::fill(double x)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    void
+    EigenMatrix::fill(double x)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   split();
+      m_data.fill(x);
+    }
 
-    //   double* p = m_data;
+    void
+    EigenMatrix::identity(void)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p++) = x;
-    // }
+      if (!isSquare())
+        throw Error("Matrix is not square!");
 
-    // void
-    // EigenMatrix::identity(void)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
-
-    //   if (m_nrows != m_ncols)
-    //     throw Error("Matrix is not square!");
-
-    //   fill(0);
-
-    //   for (size_t i = 0; i < m_nrows; i++)
-    //     m_data[i * (m_nrows + 1)] = 1;
-    // }
+      m_data = Eigen::MatrixXd::Identity(m_data.rows(), m_data.cols());
+    }
 
     // void
     // EigenMatrix::maxLimitValues(double max)

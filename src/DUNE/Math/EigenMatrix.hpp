@@ -69,53 +69,53 @@ namespace DUNE
       //! Construct a zero sized matrix.
       EigenMatrix(void);
 
-      // //! Constructor.
-      // //! Create a Matrix of the same dimension of another Matrix. It
-      // //! simply sets the new data pointer to the old data and
-      // //! increases the copy counter.
-      // //! @param[in] m reference to matrix
-      // EigenMatrix(const EigenMatrix& m);
+      //! Constructor.
+      //! Create a Matrix of the same dimension of another Matrix. It
+      //! simply sets the new data pointer to the old data and
+      //! increases the copy counter.
+      //! @param[in] m reference to matrix
+      EigenMatrix(const EigenMatrix& m);
 
-      // //! Constructor.
-      // //! Create a Matrix of dimension (rows * columns)
-      // //! and fills it with the data pointed by 'data'.
-      // //! @param[in] data pointer to data to be copied to new matrix
-      // //! @param[in] r number of rows of new matrix
-      // //! @param[in] c number of columns of new matrix
-      // EigenMatrix(const double* data, size_t r, size_t c);
+      //! Constructor.
+      //! Create a Matrix of dimension (rows * columns)
+      //! and fills it with the data pointed by 'data'.
+      //! @param[in] data pointer to data to be copied to new matrix
+      //! @param[in] r number of rows of new matrix
+      //! @param[in] c number of columns of new matrix
+      EigenMatrix(double* data, size_t r, size_t c);
 
-      // //! Constructor.
-      // //! Construct a matrix of size rows*columns.
-      // //! @param[in] r number of rows of new matrix
-      // //! @param[in] c number of columns of new matrix
-      // EigenMatrix(size_t r, size_t c);
+      //! Constructor.
+      //! Construct a matrix of size rows*columns.
+      //! @param[in] r number of rows of new matrix
+      //! @param[in] c number of columns of new matrix
+      EigenMatrix(size_t r, size_t c);
 
-      // //! Constructor.
-      // //! Construct a matrix of size rows * columns filled with constant value.
-      // //! @param[in] r number of rows of new matrix
-      // //! @param[in] c number of rows of new matrix
-      // //! @param[in] v value used to initialize cells.
-      // EigenMatrix(size_t r, size_t c, double v);
+      //! Constructor.
+      //! Construct a matrix of size rows * columns filled with constant value.
+      //! @param[in] r number of rows of new matrix
+      //! @param[in] c number of rows of new matrix
+      //! @param[in] v value used to initialize cells.
+      EigenMatrix(size_t r, size_t c, double v);
 
-      // //! Constructor.
-      // //! Construct a square identity matrix of size n
-      // //! param[in] n size of new matrix (n * n)
-      // explicit EigenMatrix(size_t n);
+      //! Constructor.
+      //! Construct a square identity matrix of size n
+      //! param[in] n size of new matrix (n * n)
+      explicit EigenMatrix(size_t n);
 
-      // //! Constructor.
-      // //! Construct a diagonal matrix using the values in data
-      // //! param[in] diag pointer to data to be copied to diagonal matrix
-      // //! param[in] n size of new matrix (n * n)
-      // EigenMatrix(const double* diag, size_t n);
+      //! Constructor.
+      //! Construct a diagonal matrix using the values in data
+      //! param[in] diag pointer to data to be copied to diagonal matrix
+      //! param[in] n size of new matrix (n * n)
+      EigenMatrix(double* diag, size_t n);
 
       //! Destructor.
       //! Decrement the number of copies of a Matrix and frees the
       //! allocated memory if this number reaches zero.
       ~EigenMatrix(void);
 
-    //   //! Pointer to first element.
-    //   double*
-    //   begin(void);
+      //! Pointer to first element.
+      double*
+      begin(void);
 
     //   //! Pointer to element after last element.
     //   double*
@@ -147,21 +147,21 @@ namespace DUNE
     //   int
     //   columns(void) const;
 
-    //   //! Retrieve the size of the matrix
-    //   //! @return size of the matrix.
-    //   int
-    //   size(void) const;
+      //! Retrieve the size of the matrix
+      //! @return size of the matrix.
+      int
+      size(void) const;
 
-      // //! Return true for empty matrices.
-      // //! @return return true for empty matrices, false
-      // //! otherwise.
-      // bool
-      // isEmpty(void) const;
+      //! Return true for empty matrices.
+      //! @return return true for empty matrices, false
+      //! otherwise.
+      bool
+      isEmpty(void) const;
 
-      // //! Fill the Matrix with a constant value.
-      // //! @param[in] value constant value to fill matrix with
-      // void
-      // fill(double value);
+      //! Fill the Matrix with a constant value.
+      //! @param[in] value constant value to fill matrix with
+      void
+      fill(double value);
 
       // //! Resize matrix and fill with new values.
       // //! @param[in] r number of rows of resized matrix
@@ -170,9 +170,9 @@ namespace DUNE
       // void
       // fill(size_t r, size_t c, const double* data = 0);
 
-      // //! Turns the Matrix into an identity matrix if it is squared.
-      // void
-      // identity(void);
+      //! Turns the Matrix into an identity matrix if it is squared.
+      void
+      identity(void);
 
     //   //! Limit the maximum Matrix elements values
     //   //! @param[in] max maximum value
@@ -583,10 +583,10 @@ namespace DUNE
     //   bool
     //   isInvertible(void) const;
 
-    //   //! This routine checks if matrix is square.
-    //   //! @return true if it is squared, false otherwise
-    //   bool
-    //   isSquare(void) const;
+      //! This routine checks if matrix is square.
+      //! @return true if it is squared, false otherwise
+      bool
+      isSquare(void) const;
 
     //   //! This routine checks if matrix is a vector.
     //   //! @return true if it is a vector, false otherwise
@@ -854,8 +854,11 @@ namespace DUNE
 
     private:
       static double precision;
-
-      Eigen::MatrixXd m_data;
+      typedef Eigen::Matrix<double, 
+                            Eigen::Dynamic, 
+                            Eigen::Dynamic, 
+                            Eigen::RowMajor> RowMajorMatrix;
+      RowMajorMatrix m_data;
     };
 
     // //! This function returns a 3x3 skew symmetrical
