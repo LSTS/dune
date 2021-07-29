@@ -40,6 +40,23 @@ using DUNE_NAMESPACES;
 // Local headers.
 #include "Test.hpp"
 
+// Options
+#define DEBUG
+
+// Test matrices
+double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+// Auxiliary functions
+template<typename Mat>
+void
+printMatrix(Mat& m)
+{
+  std::stringstream ss;
+  ss << m;
+  std::cout << "Size: " << m.size() << "\n";
+  std::cout << "Matrix:\n" << ss.str() << "\n"; 
+}
+
 int
 main(void)
 {
@@ -52,12 +69,105 @@ main(void)
   {
     EigenMatrix eig_mat;
     passed = true;
+
+#ifdef DEBUG
+    printMatrix(eig_mat);
+#endif
   }
   catch (std::runtime_error& e)
   {
     std::cerr << e.what() << std::endl;
   }
   test.boolean("EigenMatrix::EigenMatrix()", passed);
+
+  passed = false;
+  try
+  {
+    EigenMatrix eig_mat(3, 3);
+    passed = true;
+
+#ifdef DEBUG
+    printMatrix(eig_mat);
+#endif
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  test.boolean("EigenMatrix::EigenMatrix(double r, double c)", passed);
+
+  passed = false;
+  try
+  {
+    EigenMatrix eig_mat(test_data, 3, 3);
+    Matrix std_mat(test_data, 3, 3);
+    passed = memcmp(eig_mat.begin(), std_mat.begin(), 9) == 0;
+
+#ifdef DEBUG
+    printMatrix(eig_mat);
+    printMatrix(std_mat);
+#endif
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  test.boolean("EigenMatrix::EigenMatrix(double* data, double r, double c)", passed);
+
+  passed = false;
+  try
+  {
+    Matrix std_mat(test_data, 3, 3);
+    EigenMatrix input_mat(test_data, 3, 3);
+    EigenMatrix out_mat(input_mat);
+    passed = memcmp(out_mat.begin(), std_mat.begin(), 9) == 0;
+
+#ifdef DEBUG
+    printMatrix(input_mat);
+    printMatrix(out_mat);
+#endif
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  test.boolean("EigenMatrix::EigenMatrix(const EigenMatrix& m)", passed);
+
+  passed = false;
+  try
+  {
+    Matrix std_mat(3);
+    EigenMatrix eig_mat(3);
+    passed = memcmp(eig_mat.begin(), std_mat.begin(), 9) == 0;
+
+#ifdef DEBUG
+    printMatrix(std_mat);
+    printMatrix(eig_mat);
+#endif
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  test.boolean("EigenMatrix::EigenMatrix(size_t n)", passed);
+
+  passed = false;
+  try
+  {
+    Matrix std_mat(test_data, 9);
+    EigenMatrix eig_mat(test_data, 9);
+    passed = memcmp(eig_mat.begin(), std_mat.begin(), 9) == 0;
+
+#ifdef DEBUG
+    printMatrix(std_mat);
+    printMatrix(eig_mat);
+#endif
+  }
+  catch (std::runtime_error& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  test.boolean("EigenMatrix::EigenMatrix(double* diag, size_t n)", passed);
 
   return 0;
 }
