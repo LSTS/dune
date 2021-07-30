@@ -139,6 +139,8 @@ namespace Security
       onMain(void)
       {
 
+      while (!stopping())
+      {
         int ret, len;
         mbedtls_net_context server_fd;
         uint32_t flags;
@@ -170,7 +172,7 @@ namespace Security
                                   (const unsigned char *) pers,
                                   strlen( pers ) ) ) != 0 )
         {
-            inf( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret );
+            err(" failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret );
             goto exit;
         }
 
@@ -185,7 +187,7 @@ namespace Security
         if( ( ret = mbedtls_net_connect( &server_fd, SERVER_ADDR,
                                             SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
         {
-            inf( " failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
+            err(" failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
             goto exit;
         }
 
@@ -202,7 +204,7 @@ namespace Security
                         MBEDTLS_SSL_TRANSPORT_DATAGRAM,
                         MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
         {
-            inf( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
+            err(" failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
             goto exit;
         }
 
@@ -217,13 +219,13 @@ namespace Security
 
         if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
         {
-            inf( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
+            err(" failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
             goto exit;
         }
 
         if( ( ret = mbedtls_ssl_set_hostname( &ssl, SERVER_NAME ) ) != 0 )
         {
-            inf( " failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
+            err(" failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
             goto exit;
         }
 
@@ -247,7 +249,7 @@ namespace Security
 
         if( ret != 0 )
         {
-            inf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
+            err(" failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
             goto exit;
         }
 
@@ -267,7 +269,8 @@ namespace Security
             char vrfy_buf[512];
     #endif
 
-            inf( " failed\n" );
+            err( " failed\n" );
+            err("flags = %x", flags);
 
     #if !defined(MBEDTLS_X509_REMOVE_INFO)
             mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
@@ -293,7 +296,7 @@ send_request:
 
         if( ret < 0 )
         {
-            inf( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+            err(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
             goto exit;
         }
 
@@ -379,9 +382,9 @@ exit:
             fflush( stdout ); getchar();
         #endif
 
-        while (!stopping())
-        {
-          waitForMessages(5.0);
+        
+          waitForMessages(1.0);
+          Delay::wait(10);
           war("heyooo");
         }
       }
