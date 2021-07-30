@@ -202,6 +202,8 @@ foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
+add_subdirectory(vendor/libraries/mbedtls/include)
+
 # Private Libraries.
 file(GLOB extlibs ${PROJECT_SOURCE_DIR}/private/vendor/libraries/*/Library.cmake)
 foreach(extlib ${extlibs})
