@@ -69,7 +69,7 @@
 #define READ_TIMEOUT_MS 1000
 #define MAX_RETRY       5
 
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 5
 
 namespace Security
 {
@@ -89,7 +89,7 @@ namespace Security
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
-        bind<IMC::Temperature>(this);
+        // bind<IMC::Temperature>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -154,6 +154,10 @@ namespace Security
         mbedtls_ssl_config conf;
         mbedtls_x509_crt cacert;
         mbedtls_timing_delay_context timer;
+
+        #if defined(MBEDTLS_DEBUG_C)
+          mbedtls_debug_set_threshold( DEBUG_LEVEL );
+        #endif
 
         /*
         * 0. Initialize the RNG and the session data
@@ -265,18 +269,18 @@ namespace Security
         * MBEDTLS_SSL_VERIFY_OPTIONAL, we would bail out here if ret != 0 */
         if( ( flags = mbedtls_ssl_get_verify_result( &ssl ) ) != 0 )
         {
-    #if !defined(MBEDTLS_X509_REMOVE_INFO)
-            char vrfy_buf[512];
-    #endif
+          #if !defined(MBEDTLS_X509_REMOVE_INFO)
+                  char vrfy_buf[512];
+          #endif
 
-            err( " failed\n" );
-            err("flags = %x", flags);
+                  err( " failed\n" );
+                  err("flags = %x", flags);
 
-    #if !defined(MBEDTLS_X509_REMOVE_INFO)
-            mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
+          #if !defined(MBEDTLS_X509_REMOVE_INFO)
+                  mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
 
-            inf( "%s\n", vrfy_buf );
-    #endif
+                  inf( "%s\n", vrfy_buf );
+          #endif
         }
         else
             inf( " ok\n" );
@@ -385,7 +389,7 @@ exit:
         
           waitForMessages(1.0);
           Delay::wait(10);
-          war("heyooo");
+          //war("heyooo");
         }
       }
     };
