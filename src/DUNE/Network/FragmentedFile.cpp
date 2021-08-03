@@ -69,6 +69,9 @@ namespace DUNE
       else if(part->frag_number > nextFragToSave()) {
         m_fragments.insert(std::pair<uint16_t,IMC::FileFragment*>(part->frag_number,part));
       }
+      else if(part->frag_number <= nextFragToSave()){
+        m_parent->war(DTR("Received duplicated fragment %d from %s"),part->frag_number,part->id.c_str());
+      }
     }
 
     int
