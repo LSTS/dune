@@ -51,12 +51,17 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/error.h"
 #include "mbedtls/timing.h"
-#include "test/certs.h"
+#include "certs_lsts.h"
+
+/* LSTS certificates */
+
+
 
 #define FORCE_IPV4
 
 #define SERVER_PORT "4433"
-#define SERVER_NAME "localhost"
+/* this name needs to match the Common Name in the server certificate*/
+#define SERVER_NAME "server"
 
 #ifdef FORCE_IPV4
 #define SERVER_ADDR "127.0.0.1"     /* Forces IPv4 */
@@ -139,8 +144,6 @@ namespace Security
       onMain(void)
       {
 
-      while (!stopping())
-      {
         int ret, len;
         mbedtls_net_context server_fd;
         uint32_t flags;
@@ -154,10 +157,15 @@ namespace Security
         mbedtls_ssl_config conf;
         mbedtls_x509_crt cacert;
         mbedtls_timing_delay_context timer;
+        mbedtls_x509_crt clicert;
+        mbedtls_pk_context pkey;
 
         #if defined(MBEDTLS_DEBUG_C)
           mbedtls_debug_set_threshold( DEBUG_LEVEL );
         #endif
+
+        while (!stopping())
+        {
 
         /*
         * 0. Initialize the RNG and the session data
@@ -167,6 +175,8 @@ namespace Security
         mbedtls_ssl_config_init( &conf );
         mbedtls_x509_crt_init( &cacert );
         mbedtls_ctr_drbg_init( &ctr_drbg );
+        mbedtls_x509_crt_init( &clicert );
+        mbedtls_pk_init( &pkey );
 
         inf( "\n  . Seeding the random number generator..." );
         fflush( stdout );
@@ -183,6 +193,45 @@ namespace Security
         inf( " ok\n" );
 
         /*
+        * 0. Load certificates
+        */
+        inf( "  . Loading the CA root certificate ..." );
+        fflush( stdout );
+
+        ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) lsts_client_certificate,
+                              lsts_client_certificate_len );
+        if( ret < 0 )
+        {
+            err( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
+            goto exit;
+        }
+
+        ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) lsts_ca_chain,
+                              lsts_ca_chain_len );
+        if( ret < 0 )
+        {
+            err( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
+            goto exit;
+        }
+
+        ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) lsts_client_private_key,
+                            lsts_client_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
+        if( ret != 0 )
+        {
+            err( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
+            goto exit;
+        }
+
+        ret = mbedtls_ssl_conf_own_cert( &conf, &clicert, &pkey );
+        if( ret < 0 )
+        {
+            err( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
+            goto exit;
+        }
+
+        inf( " ok\n" );
+
+        /*
         * 1. Start the connection
         */
         inf( "  . Connecting to udp/%s/%s...", SERVER_NAME, SERVER_PORT );
@@ -191,11 +240,9 @@ namespace Security
         if( ( ret = mbedtls_net_connect( &server_fd, SERVER_ADDR,
                                             SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
         {
-            err(" failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
+            err( " failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
             goto exit;
         }
-
-        inf( " ok\n" );
 
         /*
           * 2. Setup stuff
@@ -215,8 +262,8 @@ namespace Security
         /* OPTIONAL is usually a bad choice for security, but makes interop easier
           * in this simplified example, in which the ca chain is hardcoded.
           * Production code should set a proper ca chain and use REQUIRED. */
-        mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
-        mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+        mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
+        mbedtls_ssl_conf_ca_chain( &conf, clicert.MBEDTLS_PRIVATE(next), NULL );
         mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
         // mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
         mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
@@ -380,13 +427,16 @@ exit:
             mbedtls_ssl_config_free( &conf );
             mbedtls_ctr_drbg_free( &ctr_drbg );
             mbedtls_entropy_free( &entropy );
+            mbedtls_x509_crt_free( &clicert );
+            mbedtls_pk_free( &pkey );
 
-        #if defined(_WIN32)
-            inf( "  + Press Enter to exit this program.\n" );
-            fflush( stdout ); getchar();
-        #endif
 
-        
+          #if defined(_WIN32)
+              inf( "  + Press Enter to exit this program.\n" );
+              fflush( stdout ); getchar();
+          #endif
+
+          
           waitForMessages(1.0);
           Delay::wait(10);
           //war("heyooo");

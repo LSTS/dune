@@ -3,7 +3,8 @@
 aux_source_directory(vendor/libraries/mbedtls/library/ DUNE_MBEDTLS_FILES)
 include_directories(vendor/libraries/mbedtls/include
                     vendor/libraries/mbedtls/tests/include
-                    vendor/libraries/mbedtls/library)
+                    vendor/libraries/mbedtls/library
+                    ../)
 
 # debug option needs to be set specifically for mbedtls library, otherwhise you can not step into mbedtls functions, only dune
 set(CMAKE_BUILD_TYPE "Debug")
