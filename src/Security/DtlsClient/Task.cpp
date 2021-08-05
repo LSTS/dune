@@ -38,12 +38,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// // Local headers.
-// #include "NodeAddress.hpp"
-// #include "NodeTable.hpp"
-// #include "Listener.hpp"
-// #include "LimitedComms.hpp"
-
+// mbedtls headers.
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/ssl.h"
@@ -52,9 +47,6 @@
 #include "mbedtls/error.h"
 #include "mbedtls/timing.h"
 #include "certs_lsts.h"
-
-/* LSTS certificates */
-
 
 
 #define FORCE_IPV4
@@ -429,12 +421,6 @@ exit:
             mbedtls_entropy_free( &entropy );
             mbedtls_x509_crt_free( &clicert );
             mbedtls_pk_free( &pkey );
-
-
-          #if defined(_WIN32)
-              inf( "  + Press Enter to exit this program.\n" );
-              fflush( stdout ); getchar();
-          #endif
 
           
           waitForMessages(1.0);
