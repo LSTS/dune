@@ -65,6 +65,10 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! Failure servo test.
+      bool failure;
+      //! Faulty servo information.
+      std::vector<int> servo_fault;
     };
 
     //! %Servos simulator task
@@ -124,6 +128,14 @@ namespace Simulators
         param("PRNG Seed", m_args.prng_seed)
         .defaultValue("-1");
 
+        param("Failure Servo Test", m_args.failure)
+        .defaultValue("false")
+        .description("Enable failure servo test. Use with 'Faulty Servo Information' parameter.");
+
+        param("Faulty Servo Information", m_args.servo_fault)
+        .defaultValue("0,0")
+        .description("Defines which servo will 'fail' and at what angle [id,angle]. Eg: servo 2 stuck at -15º would be defined as '2,-15'.");
+
         // Register consumers.
         bind<IMC::SetServoPosition>(this);
         bind<IMC::SimulatedState>(this);
@@ -173,9 +185,14 @@ namespace Simulators
       void
       consume(const IMC::SetServoPosition* msg)
       {
+        // Failure Servo Test
+        fp32_t value = msg->value;
+        if (m_args.failure && (msg->id == m_args.servo_fault[0]))
+          value = Angles::radians(m_args.servo_fault[1]);
+
         if (!m_args.limit_rate)
         {
-          m_positions[msg->id].value = trimValue(msg->value,
+          m_positions[msg->id].value = trimValue(value,
                                                  -m_args.max_angle,
                                                  m_args.max_angle);
           dispatch(m_positions[msg->id]);
@@ -184,7 +201,7 @@ namespace Simulators
         {
           m_last_time = Clock::get();
 
-          m_commands[msg->id].value = trimValue(msg->value,
+          m_commands[msg->id].value = trimValue(value,
                                                 -m_args.max_angle,
                                                 m_args.max_angle);
         }
