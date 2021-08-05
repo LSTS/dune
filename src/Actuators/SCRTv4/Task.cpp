@@ -84,6 +84,10 @@ namespace Actuators
       std::string uart_dev;
       //! Servo directions.
       std::vector<double> servo_dirs;
+      //! Failure servo test.
+      bool failure;
+      //! Faulty servo information.
+      std::vector<int> servo_fault;
     };
 
     struct Task: public Tasks::Task
@@ -128,6 +132,14 @@ namespace Actuators
         .defaultValue("-1, 1, -1, 1")
         .size(c_servo_count)
         .description("Direction of the servos");
+
+        param("Failure Servo Test", m_args.failure)
+        .defaultValue("false")
+        .description("Enable failure servo test. Use with 'Faulty Servo Information' parameter.");
+
+        param("Faulty Servo Information", m_args.servo_fault)
+        .defaultValue("0, 0")
+        .description("Defines which servo will 'fail' and at what angle [id,angle]. Eg: servo 2 stuck at -15º would be defined as '2,-15'.");
 
         // Register handler routines.
         bind<IMC::SetServoPosition>(this);
@@ -210,7 +222,11 @@ namespace Actuators
         if (msg->id >= c_servo_count)
           return;
 
-        setServoPosition(msg->id, msg->value);
+        // Failure Servo Test
+        if (m_args.failure && (msg->id == m_args.servo_fault[0]))
+          setServoPosition(msg->id, Angles::radians(m_args.servo_fault[1]));
+        else
+          setServoPosition(msg->id, msg->value);
       }
 
       bool
