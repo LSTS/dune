@@ -203,5 +203,19 @@ main(void)
     test.boolean("EigenMatrix::element()(size_t i)", eig_mat.element(6) == 7);
   }
 
+  //==========================================
+  // Test operators
+  //==========================================
+  {
+    EigenMatrix eig_mat_A(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat_B(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat_C(mat_3x3[NEG_INT], 3, 3);
+    test.boolean("EigenMatrix::operator==(const EigenMatrix& m) const", eig_mat_A == eig_mat_B && !(eig_mat_A == eig_mat_C));
+
+    EigenMatrix eig_mat_A_cpy;
+    eig_mat_A_cpy = eig_mat_A;
+    test.boolean("EigenMatrix::operator=(const EigenMatrix& m)", eig_mat_A == eig_mat_A_cpy);
+  }
+
   return 0;
 }

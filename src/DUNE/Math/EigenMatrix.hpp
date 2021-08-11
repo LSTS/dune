@@ -409,18 +409,18 @@ namespace DUNE
     //   EigenMatrix
     //   multiply(const EigenMatrix& m);
 
-    //   //! Compare matrices for equality.
-    //   //! @param[in] m matrix to compare.
-    //   //! @return true if matrices are equal, false otherwise.
-    //   bool
-    //   operator==(const EigenMatrix& m) const;
+      //! Compare matrices for equality.
+      //! @param[in] m matrix to compare.
+      //! @return true if matrices are equal, false otherwise.
+      bool
+      operator==(const EigenMatrix& m) const;
 
-    //   //! This method assigns a Matrix with another Matrix.
-    //   //! The silly assignement 'a = a' is handled correctly (nothing is done!).
-    //   //! @param[in] m reference to matrix to be assigned
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator=(const EigenMatrix& m);
+      //! This method assigns a Matrix with another Matrix.
+      //! The silly assignement 'a = a' is handled correctly (nothing is done!).
+      //! @param[in] m reference to matrix to be assigned
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator=(const EigenMatrix& m);
 
     //   //! This methods adds to a Matrix the contents of another Matrix.
     //   //! @param[in] m reference to matrix to be added

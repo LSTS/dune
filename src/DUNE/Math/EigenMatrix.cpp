@@ -646,59 +646,37 @@ namespace DUNE
     //   m_nrows = m_size;
     // }
 
-    // bool
-    // EigenMatrix::operator==(const EigenMatrix& m) const
-    // {
-    //   if (m_size != m.m_size)
-    //     return false;
+    bool
+    EigenMatrix::operator==(const EigenMatrix& m) const
+    {
+      if (m_data.size() != m.m_data.size())
+        return false;
 
-    //   if (m_nrows != m.m_nrows)
-    //     return false;
+      if (m_data.rows() != m.m_data.rows())
+        return false;
 
-    //   if (m_ncols != m.m_ncols)
-    //     return false;
+      if (m_data.cols() != m.m_data.cols())
+        return false;
 
-    //   if (m_data == NULL)
-    //   {
-    //     if (m.m_data == NULL)
-    //       return true;
-    //     else
-    //       return false;
-    //   }
-    //   else if (m.m_data == NULL)
-    //     return false;
+      if (&m_data(0) == NULL)
+      {
+        if (&m.m_data(0) == NULL)
+          return true;
+        else
+          return false;
+      }
+      else if (&m.m_data(0) == NULL)
+        return false;
 
-    //   return std::memcmp(m_data, m.m_data, m_size * sizeof(double)) == 0;
-    // }
+      return std::memcmp(&m_data(0), &m.m_data(0), m_data.size() * sizeof(double)) == 0;
+    }
 
-    // EigenMatrix&
-    // EigenMatrix::operator=(const EigenMatrix& m)
-    // {
-    //   if (m.m_size) // 'b' is valid
-    //   {
-    //     // 'a' is valid and data is already shared: there is nothing to do
-    //     if (m_size && (m_data == m.m_data))
-    //       return *this;
-
-    //     // 'a' is invalid or data is not shared: "delete" 'a' and increase counter
-    //     erase();
-
-    //     m_nrows = m.m_nrows;
-    //     m_ncols = m.m_ncols;
-    //     m_size = m.m_size;
-    //     m_data = m.m_data;
-    //     m_counter = m.m_counter;
-    //     (*m_counter)++;
-
-    //     return *this;
-    //   }
-    //   else  // 'b' is invalid: "delete" 'a' and mark it invalid
-    //   {
-    //     erase();
-    //     m_nrows = m_ncols = m_size = 0;
-    //     return *this;
-    //   }
-    // }
+    EigenMatrix&
+    EigenMatrix::operator=(const EigenMatrix& m)
+    {
+      m_data = m.m_data;
+      return *this;
+    }
 
     // EigenMatrix&
     // EigenMatrix::operator+=(const EigenMatrix& m)
