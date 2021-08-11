@@ -89,7 +89,7 @@ namespace DUNE
       if (!r || !c)
         throw Error("Invalid dimension!");
 
-      m_data = Eigen::Map<RowMajorMatrix>(data, r, c);
+      fill(r, c, data);
     }
 
 
@@ -208,12 +208,12 @@ namespace DUNE
       return m_data.size() == 0;
     }
 
-    // void
-    // EigenMatrix::fill(size_t r, size_t c, const double* data)
-    // {
-    //   resize(r, c);
-    //   m_data = Map<MatrixXd>(data, r, c);
-    // }
+    void
+    EigenMatrix::fill(size_t r, size_t c, double* data)
+    {
+      resize(r, c);
+      m_data = Eigen::Map<RowMajorMatrix>(data, r, c);
+    }
 
     void
     EigenMatrix::fill(double x)
