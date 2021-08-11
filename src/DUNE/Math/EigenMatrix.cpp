@@ -550,81 +550,77 @@ namespace DUNE
       resize(m.m_data.rows(), m.m_data.cols());
     }
 
-    // double&
-    // EigenMatrix::operator()(size_t i, size_t j)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double&
+    EigenMatrix::operator()(unsigned i, unsigned j)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (i >= m_nrows || j >= m_ncols)
-    //     throw Error("Invalid index!");
+      if (i >= m_data.rows() || j >= m_data.cols())
+        throw Error("Invalid index!");
 
-    //   split();
+      return m_data(i, j);
+    }
 
-    //   return m_data[i * m_ncols + j];
-    // }
+    double
+    EigenMatrix::operator()(unsigned i, unsigned j) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    // double
-    // EigenMatrix::operator()(size_t i, size_t j) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      if (i >= m_data.rows() || j >= m_data.cols())
+        throw Error("Invalid index!");
 
-    //   if (i >= m_nrows || j >= m_ncols)
-    //     throw Error("Invalid index!");
+      return m_data(i, j);
+    }
 
-    //   return m_data[i * m_ncols + j];
-    // }
+    double&
+    EigenMatrix::operator()(unsigned i)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    // double&
-    // EigenMatrix::operator()(size_t i)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      if (i >= m_data.size())
+        throw Error("Invalid index!");
 
-    //   if (i >= m_size)
-    //     throw Error("Invalid index!");
+      return m_data(i);
+    }
 
-    //   split();
+    double
+    EigenMatrix::operator()(unsigned i) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   return m_data[i];
-    // }
+      if (i >= m_data.size())
+        throw Error("Invalid index!");
 
-    // double
-    // EigenMatrix::operator()(size_t i) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      return m_data(i);
+    }
 
-    //   if (i >= m_size)
-    //     throw Error("Invalid index!");
+    double
+    EigenMatrix::element(unsigned i, unsigned j) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   return m_data[i];
-    // }
+      if (i >= m_data.rows() || j >= m_data.cols())
+        throw Error("Invalid index!");
 
-    // double
-    // EigenMatrix::element(size_t i, size_t j) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      return m_data(i, j);
+    }
 
-    //   if (i >= m_nrows || j >= m_ncols)
-    //     throw Error("Invalid index!");
+    double
+    EigenMatrix::element(unsigned i)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   return m_data[i * m_ncols + j];
-    // }
+      if (i >= m_data.size())
+        throw Error("Invalid index!");
 
-    // double
-    // EigenMatrix::element(size_t i)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
-
-    //   if (i >= m_size)
-    //     throw Error("Invalid index!");
-
-    //   return m_data[i];
-    // }
+      return m_data(i);
+    }
 
     // void
     // EigenMatrix::to_row(void)

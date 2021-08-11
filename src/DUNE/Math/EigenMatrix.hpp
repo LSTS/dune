@@ -330,68 +330,68 @@ namespace DUNE
     //   void
     //   resizeAndFill(size_t r, size_t c, double value);
 
-    //   //! This operator returns a reference to a given entry of a Matrix.
-    //   //!
-    //   //! As this methods makes possible to change the entries of a Matrix
-    //   //! a spliting is necessary to avoid corrupting other matrices sharing
-    //   //! the same data.
-    //   //!
-    //   //! Note: As this method returns a reference it is very powerful, and it can
-    //   //!       be used to gain access to the pointer to the Matrix entries. This
-    //   //!       use can be dangerous because the data of a given matrix can move
-    //   //!       from place to place due to splitting.
-    //   //!
-    //   //! @param[in] i row index
-    //   //! @param[in] j column index
-    //   //! @return reference to entry of a matrix
-    //   double&
-    //   operator()(size_t i, size_t j);
+      //! This operator returns a reference to a given entry of a Matrix.
+      //!
+      //! As this methods makes possible to change the entries of a Matrix
+      //! a spliting is necessary to avoid corrupting other matrices sharing
+      //! the same data.
+      //!
+      //! Note: As this method returns a reference it is very powerful, and it can
+      //!       be used to gain access to the pointer to the Matrix entries. This
+      //!       use can be dangerous because the data of a given matrix can move
+      //!       from place to place due to splitting.
+      //!
+      //! @param[in] i row index
+      //! @param[in] j column index
+      //! @return reference to entry of a matrix
+      double&
+      operator()(unsigned i, unsigned j);
 
-    //   //! This routine returns a value of the matrix.
-    //   //! @param[in] i row index
-    //   //! @param[in] j column index
-    //   //! @return value of matrix
-    //   double
-    //   operator()(size_t i, size_t j) const;
+      //! This routine returns a value of the matrix.
+      //! @param[in] i row index
+      //! @param[in] j column index
+      //! @return value of matrix
+      double
+      operator()(unsigned i, unsigned j) const;
 
-    //   //! This operator returns a reference to a given entry of a Matrix.
-    //   //!
-    //   //! As this methods makes possible to change the entries of a Matrix
-    //   //! a spliting is necessary to avoid corrupting other matrices sharing
-    //   //! the same data.
-    //   //!
-    //   //! Note: As this method returns a reference it is very powerful, and it can
-    //   //!       be used to gain access to the pointer to the Matrix entries. This
-    //   //!       use can be dangerous because the data of a given matrix can move
-    //   //!       from place to place due to splitting.
-    //   //!
-    //   //! @param[in] i matrix index
-    //   //! @return reference to entry of a matrix
-    //   double&
-    //   operator()(size_t i);
+      //! This operator returns a reference to a given entry of a Matrix.
+      //!
+      //! As this methods makes possible to change the entries of a Matrix
+      //! a spliting is necessary to avoid corrupting other matrices sharing
+      //! the same data.
+      //!
+      //! Note: As this method returns a reference it is very powerful, and it can
+      //!       be used to gain access to the pointer to the Matrix entries. This
+      //!       use can be dangerous because the data of a given matrix can move
+      //!       from place to place due to splitting.
+      //!
+      //! @param[in] i matrix index
+      //! @return reference to entry of a matrix
+      double&
+      operator()(unsigned i);
 
-    //   //! This routine returns a value of the matrix.
-    //   //! @param[in] i matrix index
-    //   //! @return value of matrix
-    //   double
-    //   operator()(size_t i) const;
+      //! This routine returns a value of the matrix.
+      //! @param[in] i matrix index
+      //! @return value of matrix
+      double
+      operator()(unsigned i) const;
 
-    //   //! This method returns the value of an entry of a Matrix.
-    //   //! As this is a reading method it does not care if the data is shared by
-    //   //! other matrices.
-    //   //! @param[in] i row index
-    //   //! @param[in] j column index
-    //   //! @return value of matrix
-    //   double
-    //   element(size_t i, size_t j) const;
+      //! This method returns the value of an entry of a Matrix.
+      //! As this is a reading method it does not care if the data is shared by
+      //! other matrices.
+      //! @param[in] i row index
+      //! @param[in] j column index
+      //! @return value of matrix
+      double
+      element(unsigned i, unsigned j) const;
 
-    //   //! This method returns the value of an entry of a Matrix.
-    //   //! As this is a reading method it does not care if the data is shared by
-    //   //! other matrices.
-    //   //! @param[in] i matrix index
-    //   //! @return value of matrix
-    //   double
-    //   element(size_t i);
+      //! This method returns the value of an entry of a Matrix.
+      //! As this is a reading method it does not care if the data is shared by
+      //! other matrices.
+      //! @param[in] i matrix index
+      //! @return value of matrix
+      double
+      element(unsigned i);
 
     //   //! This method changes the dimensions of a Matrix to a one row Matrix.
     //   //! The elements are not changed.

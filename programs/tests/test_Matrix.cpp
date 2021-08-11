@@ -190,5 +190,18 @@ main(void)
     test.boolean("EigenMatrix::size()", eig_mat.size() == 12);
   }
 
+  //==========================================
+  // Test element access
+  //==========================================
+  {
+    EigenMatrix eig_mat(mat_3x3[POS_INT], 3, 3);
+
+    test.boolean("EigenMatrix::operator()(size_t i, size_t j) const", eig_mat(2, 0) == 7);
+    test.boolean("EigenMatrix::operator()(size_t i)", eig_mat(6) == 7);
+
+    test.boolean("EigenMatrix::element()(size_t i, size_t j) const", eig_mat.element(2, 0) == 7);
+    test.boolean("EigenMatrix::element()(size_t i)", eig_mat.element(6) == 7);
+  }
+
   return 0;
 }
