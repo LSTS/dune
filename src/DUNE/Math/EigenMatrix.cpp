@@ -118,35 +118,35 @@ namespace DUNE
       return &m_data(0);
     }
 
-    // double*
-    // EigenMatrix::end(void)
-    // {
-    //   return m_data + m_size;
-    // }
+    double*
+    EigenMatrix::end(void)
+    {
+      return &m_data(m_data.size()-1);
+    }
 
-    // const double*
-    // EigenMatrix::begin(void) const
-    // {
-    //   return m_data;
-    // }
+    const double*
+    EigenMatrix::begin(void) const
+    {
+      return &m_data(0);
+    }
 
-    // const double*
-    // EigenMatrix::end(void) const
-    // {
-    //   return m_data + m_size;
-    // }
+    const double*
+    EigenMatrix::end(void) const
+    {
+      return &m_data(m_data.size()-1);
+    }
 
-    // const double*
-    // EigenMatrix::cbegin(void) const
-    // {
-    //   return m_data;
-    // }
+    const double*
+    EigenMatrix::cbegin(void) const
+    {
+      return &m_data(0);
+    }
 
-    // const double*
-    // EigenMatrix::cend(void) const
-    // {
-    //   return m_data + m_size;
-    // }
+    const double*
+    EigenMatrix::cend(void) const
+    {
+      return &m_data(m_data.size()-1);
+    }
 
     // int
     // EigenMatrix::rows(void) const

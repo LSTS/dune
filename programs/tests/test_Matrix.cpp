@@ -154,5 +154,30 @@ main(void)
     test.boolean("EigenMatrix::EigenMatrix(double* diag, size_t n)", passed);
   }
 
+  //==========================================
+  // Test pointer access
+  //==========================================
+  {
+    EigenMatrix eig_mat(mat_3x3[POS_INT], 3, 3);
+
+    double* p;
+    p = eig_mat.begin();
+    test.boolean("EigenMatrix::begin()", *p == 1);
+    p = eig_mat.end();
+    test.boolean("EigenMatrix::end()", *p == 9);
+
+    // Const pointer
+    const double* begin_pointer = eig_mat.begin();
+    test.boolean("EigenMatrix::begin()", *begin_pointer == 1);
+    const double* end_pointer = eig_mat.end();
+    test.boolean("EigenMatrix::end()", *end_pointer == 9);
+
+    // Const pointer
+    const double* begin_pointer2 = eig_mat.cbegin();
+    test.boolean("EigenMatrix::cbegin()", *begin_pointer2 == 1);
+    const double* end_pointer2 = eig_mat.cend();
+    test.boolean("EigenMatrix::cend()", *end_pointer2 == 9);
+  }
+
   return 0;
 }
