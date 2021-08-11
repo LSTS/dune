@@ -38,9 +38,9 @@
 // #include <cmath>
 // #include <cstring>
 // #include <string>
-// #include <vector>
+#include <vector>
 // #include <iostream>
-// #include <fstream>
+#include <fstream>
 // #include <cctype>
 // #include <algorithm>
 
@@ -391,21 +391,21 @@ namespace DUNE
     //   return *this;
     // }
 
-    // void
-    // EigenMatrix::toFile(const char* path)
-    // {
-    //   std::ofstream ofs(path);
-    //   ofs << *this;
-    //   ofs.close();
-    // }
+    void
+    EigenMatrix::toFile(const char* path)
+    {
+      std::ofstream ofs(path);
+      ofs << *this;
+      ofs.close();
+    }
 
-    // void
-    // EigenMatrix::fromFile(const char* path)
-    // {
-    //   std::ifstream ifs(path);
-    //   ifs >> *this;
-    //   ifs.close();
-    // }
+    void
+    EigenMatrix::fromFile(const char* path)
+    {
+      std::ifstream ifs(path);
+      ifs >> *this;
+      ifs.close();
+    }
 
     // EigenMatrix
     // EigenMatrix::row(size_t i) const
@@ -1488,49 +1488,49 @@ namespace DUNE
       return os;
     }
 
-    // std::istream&
-    // operator>>(std::istream& is, EigenMatrix& a)
-    // {
-    //   std::vector<double> elements;
+    std::istream&
+    operator>>(std::istream& is, EigenMatrix& a)
+    {
+      std::vector<double> elements;
 
-    //   while (!is.eof())
-    //   {
-    //     char b;
-    //     b = is.peek();
+      while (!is.eof())
+      {
+        char b;
+        b = is.peek();
 
-    //     if (b == ',')
-    //     {
-    //       is >> b;
+        if (b == ',')
+        {
+          is >> b;
 
-    //       if (elements.size())
-    //       {
-    //         a.vertCat(EigenMatrix(&elements[0], 1, elements.size()));
-    //         elements.clear();
-    //       }
-    //     }
-    //     else if (std::isspace(b))
-    //     {
-    //       // dump character
-    //       char s[1];
-    //       is.read(s, 1);
-    //     }
-    //     else
-    //     {
-    //       double d;
-    //       is >> d;
+          if (elements.size())
+          {
+            a.vertCat(EigenMatrix(&elements[0], 1, elements.size()));
+            elements.clear();
+          }
+        }
+        else if (std::isspace(b))
+        {
+          // dump character
+          char s[1];
+          is.read(s, 1);
+        }
+        else
+        {
+          double d;
+          is >> d;
 
-    //       elements.push_back(d);
+          elements.push_back(d);
 
-    //       if (is.eof())
-    //         break;
-    //     }
-    //   }
+          if (is.eof())
+            break;
+        }
+      }
 
-    //   if (elements.size())
-    //     a.vertCat(EigenMatrix(&elements[0], 1, elements.size()));
+      if (elements.size())
+        a.vertCat(EigenMatrix(&elements[0], 1, elements.size()));
 
-    //   return is;
-    // }
+      return is;
+    }
 
     // EigenMatrix
     // transpose(const EigenMatrix& a)

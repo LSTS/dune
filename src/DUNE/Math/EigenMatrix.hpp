@@ -35,7 +35,7 @@
 #define DUNE_MATH_EIGENMATRIX_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-// #include <iostream>
+#include <iostream>
 #include <stdexcept>
 // #include <string>
 // #include <vector>
@@ -244,16 +244,16 @@ namespace DUNE
     //   EigenMatrix&
     //   pow(unsigned int n);
 
-    //   //! Saves matrix to text file.
-    //   //! @param[in] path file path string (eg: "E:\dir/x.txt").
-    //   void
-    //   toFile(const char* path);
+      //! Saves matrix to text file.
+      //! @param[in] path file path string (eg: "E:\dir/x.txt").
+      void
+      toFile(const char* path);
 
-    //   //! Loads a matrix from text file (must initialize matrix
-    //   //! dimensions first).
-    //   //! @param[in] path file path string (eg: "E:\dir/x.txt").
-    //   void
-    //   fromFile(const char* path);
+      //! Loads a matrix from text file (must initialize matrix
+      //! dimensions first).
+      //! @param[in] path file path string (eg: "E:\dir/x.txt").
+      void
+      fromFile(const char* path);
 
     //   //! Read a matrix from a vector of strings
     //   //! The matrix dimensions must be defined a priori.
@@ -702,13 +702,13 @@ namespace DUNE
       friend DUNE_DLL_SYM std::ostream&
       operator<<(std::ostream& os, const EigenMatrix& a);
 
-    //   //! This method reads a Matrix from an 'istream'.
-    //   //! The Matrix is filled row by row.
-    //   //! @param[in] is input stream.
-    //   //! @param[in] a matrix to be filled.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM std::istream&
-    //   operator>>(std::istream& is, EigenMatrix& a);
+      //! This method reads a Matrix from an 'istream'.
+      //! The Matrix is filled row by row.
+      //! @param[in] is input stream.
+      //! @param[in] a matrix to be filled.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM std::istream&
+      operator>>(std::istream& is, EigenMatrix& a);
 
     //   //! This method returns the transpose of a Matrix.
     //   //! @param[in] a to be transposed.
