@@ -284,5 +284,59 @@ main(void)
     test.boolean("EigenMatrix::trimValues(double lim)", passed);
   }
 
+  //==========================================
+  // Test block operations
+  //==========================================
+  {
+    EigenMatrix eig_mat(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix block(2, 2);
+    block = eig_mat.get(1, 2, 1, 2);
+
+    double input_mat[] = {5, 6, 8, 9};
+    EigenMatrix compare_mat(input_mat, 2, 2);
+    test.boolean("EigenMatrix::get(size_t i1, size_t i2, size_t j1, size_t j2) const", block == compare_mat);
+
+    eig_mat.set(0, 1, 0, 1, compare_mat);
+    double input_mat2[] = {5, 6, 3, 8, 9, 6, 7, 8, 9};
+    EigenMatrix compare_mat2(input_mat2, 3, 3);
+    test.boolean("EigenMatrix::set(size_t i1, size_t i2, size_t j1, size_t j2, const EigenMatrix& m)", eig_mat == compare_mat2);
+
+
+    EigenMatrix eig_mat_A(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat_B(mat_3x3[NEG_INT], 3, 3);
+    EigenMatrix eig_mat_res = eig_mat_A.blkDiag(eig_mat_B);
+    double input_mat3[] = {1, 2, 3, 0, 0, 0, 
+                           4, 5, 6, 0, 0, 0,
+                           7, 8, 9, 0, 0, 0,
+                           0, 0, 0, -4, -3, -2,
+                           0, 0, 0, -1, 0, 1,
+                           0, 0, 0, 2, 3, 4};
+    EigenMatrix compare_mat3(input_mat3, 6, 6);
+    test.boolean("EigenMatrix::blkDiag(const EigenMatrix& mx_in)", eig_mat_res == compare_mat3);
+
+    EigenMatrix eig_mat_C(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat_D(mat_3x3[NEG_INT], 3, 3);
+    EigenMatrix eig_mat_res2 = eig_mat_C.vertCat(eig_mat_D);
+    double input_mat4[] = {1, 2, 3, 
+                           4, 5, 6,
+                           7, 8, 9,
+                          -4, -3, -2,
+                          -1, 0, 1,
+                           2, 3, 4};
+    EigenMatrix compare_mat4(input_mat4, 6, 3);
+    test.boolean("EigenMatrix::vertCat(const EigenMatrix& mx_in)", eig_mat_res2 == compare_mat4);
+
+    EigenMatrix eig_mat_E(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat_F(mat_3x3[NEG_INT], 3, 3);
+    EigenMatrix eig_mat_res3 = eig_mat_E.horzCat(eig_mat_F);
+    double input_mat5[] = {1, 2, 3, -4, -3, -2,
+                           4, 5, 6, -1, 0, 1,
+                           7, 8, 9, 2, 3, 4};                          
+                          
+                           
+    EigenMatrix compare_mat5(input_mat5, 3, 6);
+    test.boolean("EigenMatrix::horzCat(const EigenMatrix& mx_in)", eig_mat_res3 == compare_mat5);
+  }
+
   return 0;
 }

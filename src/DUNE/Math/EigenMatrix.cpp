@@ -276,127 +276,98 @@ namespace DUNE
       minLimitValues(- lim);
     }
 
-    //   double* p = m_data;
+    EigenMatrix
+    EigenMatrix::get(unsigned i1, unsigned i2, unsigned j1, unsigned j2) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //   {
-    //     if (*p <= min)
-    //       *p = min;
-    //     p++;
-    //   }
-    // }
+      if (i1 > i2 || j1 > j2)
+        throw Error("Invalid index!");
 
-    // void
-    // EigenMatrix::trimValues(double min, double max)
-    // {
-    //   maxLimitValues(max);
-    //   minLimitValues(min);
-    // }
+      if (i2 >= m_data.rows() || j2 >= m_data.cols())
+        throw Error("Invalid index!");
 
-    // void
-    // EigenMatrix::trimValues(double lim)
-    // {
-    //   maxLimitValues(lim);
-    //   minLimitValues(- lim);
-    // }
+      int r = i2 - i1 + 1;
+      int c = j2 - j1 + 1;
 
-    // EigenMatrix
-    // EigenMatrix::get(size_t i1, size_t i2, size_t j1, size_t j2) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      EigenMatrix s;
+      s.m_data = m_data.block(i1, j1, r, c);
 
-    //   if (i1 > i2 || j1 > j2)
-    //     throw Error("Invalid index!");
+      return s;
+    }
 
-    //   if (i2 >= m_nrows || j2 >= m_ncols)
-    //     throw Error("Invalid index!");
+    EigenMatrix&
+    EigenMatrix::set(unsigned i1, unsigned i2, unsigned j1, unsigned j2, const EigenMatrix& m)
+    {
+      if (isEmpty() || m.isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   int r = i2 - i1 + 1;
-    //   int c = j2 - j1 + 1;
+      if (i1 > i2 || j1 > j2)
+        throw Error("Invalid index!");
 
-    //   EigenMatrix s(r, c);
+      if (i2 >= m_data.rows() || j2 >= m_data.cols())
+        throw Error("Invalid index!");
 
-    //   for (int i = 0; i < r; i++)
-    //     for (int j = 0; j < c; j++)
-    //       s.m_data[i * c + j] = m_data[(i1 + i) * m_ncols + j1 + j];
+      // If data is already shared: there is nothing to do
+      if (m_data == m.m_data)
+        return *this;
 
-    //   return s;
-    // }
+      unsigned int r = i2 - i1 + 1;
+      unsigned int c = j2 - j1 + 1;
 
-    // EigenMatrix&
-    // EigenMatrix::set(size_t i1, size_t i2, size_t j1, size_t j2, const EigenMatrix& m)
-    // {
-    //   if (isEmpty() || m.isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      m_data.block(i1, j1, r, c) = m.m_data;
 
-    //   if (i1 > i2 || j1 > j2)
-    //     throw Error("Invalid index!");
+      return *this;
+    }
 
-    //   if (i2 >= m_nrows || j2 >= m_ncols)
-    //     throw Error("Invalid index!");
+    EigenMatrix&
+    EigenMatrix::blkDiag(const EigenMatrix& mx_in)
+    {
+      EigenMatrix old = *this;
+      EigenMatrix mx_in_ = mx_in;
+      resizeAndFill(m_data.rows() + mx_in_.rows(), m_data.cols() + mx_in_.columns(), 0);
 
-    //   // If data is already shared: there is nothing to do
-    //   if (m_data == m.m_data)
-    //     return *this;
+      if (!old.isEmpty())
+        set(0, old.rows() - 1, 0, old.columns() - 1, old);
+      set(old.rows(), old.rows() + mx_in_.rows() - 1, old.columns(), old.columns() + mx_in_.columns() - 1, mx_in_);
 
-    //   unsigned int r = i2 - i1 + 1;
-    //   unsigned int c = j2 - j1 + 1;
+      return *this;
+    }
 
-    //   for (unsigned int i = 0; i < r; i++)
-    //     for (unsigned int j = 0; j < c; j++)
-    //       (*this)(i1 + i, j1 + j) = m.element(i, j);
+    EigenMatrix&
+    EigenMatrix::vertCat(const EigenMatrix& mx_in)
+    {
+      if (m_data.cols() != mx_in.m_data.cols() && !isEmpty())
+        throw Error("Invalid index!");
 
-    //   return *this;
-    // }
+      EigenMatrix old = *this;
+      EigenMatrix mx_in_ = mx_in;
+      resizeAndFill(old.rows() + mx_in_.rows(), mx_in_.columns(), 0);
 
-    // EigenMatrix&
-    // EigenMatrix::blkDiag(const EigenMatrix& mx_in)
-    // {
-    //   EigenMatrix old = *this;
-    //   EigenMatrix mx_in_ = mx_in;
-    //   resizeAndFill(m_nrows + mx_in_.rows(), m_ncols + mx_in_.columns(), 0);
+      if (!old.isEmpty())
+        set(0, old.rows() - 1, 0, old.columns() - 1, old);
+      set(old.rows(), old.rows() + mx_in_.rows() - 1, 0, mx_in_.columns() - 1, mx_in_);
 
-    //   if (!old.isEmpty())
-    //     set(0, old.rows() - 1, 0, old.columns() - 1, old);
-    //   set(old.rows(), old.rows() + mx_in_.rows() - 1, old.columns(), old.columns() + mx_in_.columns() - 1, mx_in_);
+      return *this;
+    }
 
-    //   return *this;
-    // }
+    EigenMatrix&
+    EigenMatrix::horzCat(const EigenMatrix& mx_in)
+    {
+      if (m_data.rows() != mx_in.m_data.rows() && !isEmpty())
+        throw Error("Invalid index!");
 
-    // EigenMatrix&
-    // EigenMatrix::vertCat(const EigenMatrix& mx_in)
-    // {
-    //   if (m_ncols != mx_in.m_ncols && !isEmpty())
-    //     throw Error("Invalid index!");
+      EigenMatrix old = *this; //  <=> Matrix old(*this);
+      EigenMatrix mx_in_ = mx_in;
+      resizeAndFill(mx_in_.rows(), m_data.cols() + mx_in.columns(), 0);
 
-    //   EigenMatrix old = *this;
-    //   EigenMatrix mx_in_ = mx_in;
-    //   resizeAndFill(old.rows() + mx_in_.rows(), mx_in_.columns(), 0);
+      if (!old.isEmpty())
+        set(0, old.rows() - 1, 0, old.columns() - 1, old);
+      set(0, mx_in_.rows() - 1, old.columns(), old.columns() + mx_in_.columns() - 1, mx_in_);
 
-    //   if (!old.isEmpty())
-    //     set(0, old.rows() - 1, 0, old.columns() - 1, old);
-    //   set(old.rows(), old.rows() + mx_in_.rows() - 1, 0, mx_in_.columns() - 1, mx_in_);
-
-    //   return *this;
-    // }
-
-    // EigenMatrix&
-    // EigenMatrix::horzCat(const EigenMatrix& mx_in)
-    // {
-    //   if (m_nrows != mx_in.m_nrows && !isEmpty())
-    //     throw Error("Invalid index!");
-
-    //   EigenMatrix old = *this; //  <=> Matrix old(*this);
-    //   EigenMatrix mx_in_ = mx_in;
-    //   resizeAndFill(mx_in_.rows(), m_ncols + mx_in.columns(), 0);
-
-    //   if (!old.isEmpty())
-    //     set(0, old.rows() - 1, 0, old.columns() - 1, old);
-    //   set(0, mx_in_.rows() - 1, old.columns(), old.columns() + mx_in_.columns() - 1, mx_in_);
-
-    //   return *this;
-    // }
+      return *this;
+    }
 
     // EigenMatrix&
     // EigenMatrix::pow(unsigned int n)
@@ -551,12 +522,12 @@ namespace DUNE
     //   }
     // }
 
-    // void
-    // EigenMatrix::resizeAndFill(size_t r, size_t c, double value)
-    // {
-    //   resize(r, c);
-    //   fill(value);
-    // }
+    void
+    EigenMatrix::resizeAndFill(size_t r, size_t c, double value)
+    {
+      resize(r, c);
+      fill(value);
+    }
 
     void
     EigenMatrix::resize(const EigenMatrix& m)

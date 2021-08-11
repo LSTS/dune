@@ -195,48 +195,48 @@ namespace DUNE
       void
       trimValues(double lim);
 
-    //   //! Retrieve a submatrix.
-    //   //! @param[in] i1 initial row
-    //   //! @param[in] i2 final row
-    //   //! @param[in] j1 initial column
-    //   //! @param[in] j2 final column
-    //   //! @return submatrix
-    //   EigenMatrix
-    //   get(size_t i1, size_t i2, size_t j1, size_t j2) const;
+      //! Retrieve a submatrix.
+      //! @param[in] i1 initial row
+      //! @param[in] i2 final row
+      //! @param[in] j1 initial column
+      //! @param[in] j2 final column
+      //! @return submatrix
+      EigenMatrix
+      get(unsigned i1, unsigned i2, unsigned j1, unsigned j2) const;
 
-    //   //! Set a submatrix.
-    //   //! @param[in] i1 initial row
-    //   //! @param[in] i2 final row
-    //   //! @param[in] j1 initial column
-    //   //! @param[in] j2 final column
-    //   //! @param[in] m_in reference to matrix to be copied into submatrix
-    //   //! @return reference matrix
-    //   EigenMatrix&
-    //   set(size_t i1, size_t i2, size_t j1, size_t j2, const EigenMatrix& m_in);
+      //! Set a submatrix.
+      //! @param[in] i1 initial row
+      //! @param[in] i2 final row
+      //! @param[in] j1 initial column
+      //! @param[in] j2 final column
+      //! @param[in] m_in reference to matrix to be copied into submatrix
+      //! @return reference matrix
+      EigenMatrix&
+      set(unsigned i1, unsigned i2, unsigned j1, unsigned j2, const EigenMatrix& m_in);
 
-    //   //! Returns the diagonal concatenation of a matrix
-    //   //! Return a matrix of size (nrows + rows(m_in)) x (ncolumns +columns(m_in))
-    //   //! and fills the remaining elements with zeros.
-    //   //! @param[in] m_in reference to matrix
-    //   //! @return reference to diagonal concatenation of matrix
-    //   EigenMatrix&
-    //   blkDiag(const EigenMatrix& m_in);
+      //! Returns the diagonal concatenation of a matrix
+      //! Return a matrix of size (nrows + rows(m_in)) x (ncolumns +columns(m_in))
+      //! and fills the remaining elements with zeros.
+      //! @param[in] m_in reference to matrix
+      //! @return reference to diagonal concatenation of matrix
+      EigenMatrix&
+      blkDiag(const EigenMatrix& m_in);
 
-    //   //! Returns the vertical concatenation of a matrix
-    //   //! Return a matrix of size (nrows + rows(m_in)) x (ncolumns)
-    //   //! and fills the remaining elements with zeros.
-    //   //! @param[in] m_in reference to matrix
-    //   //! @return reference to vertical concatenation of matrix
-    //   EigenMatrix&
-    //   vertCat(const EigenMatrix& m_in);
+      //! Returns the vertical concatenation of a matrix
+      //! Return a matrix of size (nrows + rows(m_in)) x (ncolumns)
+      //! and fills the remaining elements with zeros.
+      //! @param[in] m_in reference to matrix
+      //! @return reference to vertical concatenation of matrix
+      EigenMatrix&
+      vertCat(const EigenMatrix& m_in);
 
-    //   //! Returns the horizontal concatenation of a matrix
-    //   //! Return a matrix of size (nrows x (ncolumns + columns(m_in)) )
-    //   //! and fills the remaining elements with zeros.
-    //   //! @param[in] m_in reference to matrix
-    //   //! @return reference to vertical concatenation of matrix
-    //   EigenMatrix&
-    //   horzCat(const EigenMatrix& m_in);
+      //! Returns the horizontal concatenation of a matrix
+      //! Return a matrix of size (nrows x (ncolumns + columns(m_in)) )
+      //! and fills the remaining elements with zeros.
+      //! @param[in] m_in reference to matrix
+      //! @return reference to vertical concatenation of matrix
+      EigenMatrix&
+      horzCat(const EigenMatrix& m_in);
 
     //   //! Returns the power matrix X^n.
     //   //! @param[in] n positive integer exponent to raise the matrix to
@@ -322,13 +322,13 @@ namespace DUNE
     //   void
     //   resizeAndKeep(size_t r, size_t c);
 
-    //   //! This method resizes a Matrix to the dimensions of (r * c)
-    //   //! and fills the matrix with constant value
-    //   //! @param[in] r number of rows
-    //   //! @param[in] c number of columns
-    //   //! @param[in] value constant value to fill matrix with
-    //   void
-    //   resizeAndFill(size_t r, size_t c, double value);
+      //! This method resizes a Matrix to the dimensions of (r * c)
+      //! and fills the matrix with constant value
+      //! @param[in] r number of rows
+      //! @param[in] c number of columns
+      //! @param[in] value constant value to fill matrix with
+      void
+      resizeAndFill(size_t r, size_t c, double value);
 
       //! This operator returns a reference to a given entry of a Matrix.
       //!
