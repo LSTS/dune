@@ -174,26 +174,26 @@ namespace DUNE
       void
       identity(void);
 
-    //   //! Limit the maximum Matrix elements values
-    //   //! @param[in] max maximum value
-    //   void
-    //   maxLimitValues(double max);
+      //! Limit the maximum Matrix elements values
+      //! @param[in] max maximum value
+      void
+      maxLimitValues(double max);
 
-    //   //! Limit the minimum Matrix elements values
-    //   //! @param[in] min minimum value
-    //   void
-    //   minLimitValues(double min);
+      //! Limit the minimum Matrix elements values
+      //! @param[in] min minimum value
+      void
+      minLimitValues(double min);
 
-    //   //! Limit the minimum and maximum Matrix elements' values
-    //   //! @param[in] min minimum value
-    //   //! @param[in] max maximum value
-    //   void
-    //   trimValues(double min, double max);
+      //! Limit the minimum and maximum Matrix elements' values
+      //! @param[in] min minimum value
+      //! @param[in] max maximum value
+      void
+      trimValues(double min, double max);
 
-    //   //! Limit the minimum and maximum Matrix elements' values
-    //   //! @param[in] lim absolute limit value
-    //   void
-    //   trimValues(double lim);
+      //! Limit the minimum and maximum Matrix elements' values
+      //! @param[in] lim absolute limit value
+      void
+      trimValues(double lim);
 
     //   //! Retrieve a submatrix.
     //   //! @param[in] i1 initial row

@@ -235,5 +235,54 @@ main(void)
     test.boolean("EigenMatrix::isEmpty()", eig_empty_mat.isEmpty());
   }
 
+  //==========================================
+  // Test limit values
+  //==========================================
+  {
+    EigenMatrix eig_mat(mat_3x3[POS_INT], 3, 3);
+    bool passed = true;
+
+    double min_limit = 2;
+    double max_limit = 6;
+
+    eig_mat.maxLimitValues(max_limit);
+    for(size_t i = 0; i < eig_mat.size(); i++)
+    {
+      if (eig_mat(i) > max_limit)
+        passed = false;
+    }
+    test.boolean("EigenMatrix::maxLimitValues(double max)", passed);
+
+    passed = true;
+    eig_mat.fill(3, 3, mat_3x3[POS_INT]);
+    eig_mat.minLimitValues(min_limit);
+    for(size_t i = 0; i < eig_mat.size(); i++)
+    {
+      if (eig_mat(i) < min_limit)
+        passed = false;
+    }
+    test.boolean("EigenMatrix::minLimitValues(double min)", passed);
+    
+    passed = true;
+    eig_mat.fill(3, 3, mat_3x3[POS_INT]);
+    eig_mat.trimValues(min_limit, max_limit);
+    for(size_t i = 0; i < eig_mat.size(); i++)
+    {
+      if (eig_mat(i) < min_limit || eig_mat(i) > max_limit)
+        passed = false;
+    }
+    test.boolean("EigenMatrix::trimValues(double min, double max)", passed);
+    
+    passed = true;
+    eig_mat.fill(3, 3, mat_3x3[NEG_INT]);
+    eig_mat.trimValues(min_limit);
+    for(size_t i = 0; i < eig_mat.size(); i++)
+    {
+      if (eig_mat(i) < -min_limit || eig_mat(i) > min_limit)
+        passed = false;
+    }
+    test.boolean("EigenMatrix::trimValues(double lim)", passed);
+  }
+
   return 0;
 }

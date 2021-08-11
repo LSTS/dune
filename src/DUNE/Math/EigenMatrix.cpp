@@ -236,31 +236,45 @@ namespace DUNE
       m_data = Eigen::MatrixXd::Identity(m_data.rows(), m_data.cols());
     }
 
-    // void
-    // EigenMatrix::maxLimitValues(double max)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    void
+    EigenMatrix::maxLimitValues(double max)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   split();
+      for (unsigned i = 0; i < m_data.size(); i++)
+      {
+        if (m_data(i) >= max)
+          m_data(i) = max;
+      }
+    }
 
-    //   double* p = m_data;
+    void
+    EigenMatrix::minLimitValues(double min)
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //   {
-    //     if (*p >= max)
-    //       *p = max;
-    //     p++;
-    //   }
-    // }
+      for (unsigned i = 0; i < m_data.size(); i++)
+      {
+        if (m_data(i) <= min)
+          m_data(i) = min;
+      }
+    }
 
-    // void
-    // EigenMatrix::minLimitValues(double min)
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    void
+    EigenMatrix::trimValues(double min, double max)
+    {
+      maxLimitValues(max);
+      minLimitValues(min);
+    }
 
-    //   split();
+    void
+    EigenMatrix::trimValues(double lim)
+    {
+      maxLimitValues(lim);
+      minLimitValues(- lim);
+    }
 
     //   double* p = m_data;
 
