@@ -172,35 +172,35 @@ namespace DUNE
       return m_data.cols() == m_data.rows();
     }
 
-    // bool
-    // EigenMatrix::isVector(void) const
-    // {
-    //   return m_nrows == 1 || m_ncols == 1;
-    // }
+    bool
+    EigenMatrix::isVector(void) const
+    {
+      return m_data.rows() == 1 || m_data.cols() == 1;
+    }
 
-    // bool
-    // EigenMatrix::isRowVector(void) const
-    // {
-    //   return m_nrows == 1;
-    // }
+    bool
+    EigenMatrix::isRowVector(void) const
+    {
+      return m_data.rows() == 1;
+    }
 
-    // bool
-    // EigenMatrix::isRowVector(size_t c) const
-    // {
-    //   return m_nrows == 1 && m_ncols == c;
-    // }
+    bool
+    EigenMatrix::isRowVector(size_t c) const
+    {
+      return m_data.rows() == 1 && (size_t)m_data.cols() == c;
+    }
 
-    // bool
-    // EigenMatrix::isColumnVector(void) const
-    // {
-    //   return m_ncols == 1;
-    // }
+    bool
+    EigenMatrix::isColumnVector(void) const
+    {
+      return m_data.cols() == 1;
+    }
 
-    // bool
-    // EigenMatrix::isColumnVector(size_t r) const
-    // {
-    //   return m_ncols == 1 && m_nrows == r;
-    // }
+    bool
+    EigenMatrix::isColumnVector(size_t r) const
+    {
+      return m_data.cols() == 1 && (size_t)m_data.rows() == r;
+    }
 
     bool
     EigenMatrix::isEmpty(void) const

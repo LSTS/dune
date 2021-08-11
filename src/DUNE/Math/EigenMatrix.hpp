@@ -588,32 +588,32 @@ namespace DUNE
       bool
       isSquare(void) const;
 
-    //   //! This routine checks if matrix is a vector.
-    //   //! @return true if it is a vector, false otherwise
-    //   bool
-    //   isVector(void) const;
+      //! This routine checks if matrix is a vector.
+      //! @return true if it is a vector, false otherwise
+      bool
+      isVector(void) const;
 
-    //   //! This routine checks if matrix is a column vector.
-    //   //! @return true if it is a column vector, false otherwise
-    //   bool
-    //   isColumnVector(void) const;
+      //! This routine checks if matrix is a column vector.
+      //! @return true if it is a column vector, false otherwise
+      bool
+      isColumnVector(void) const;
 
-    //   //! This routine checks if matrix is a column vector with certain size.
-    //   //! @param[in] rows size of the vector
-    //   //! @return true if it is a column vector, false otherwise
-    //   bool
-    //   isColumnVector(size_t rows) const;
+      //! This routine checks if matrix is a column vector with certain size.
+      //! @param[in] rows size of the vector
+      //! @return true if it is a column vector, false otherwise
+      bool
+      isColumnVector(size_t rows) const;
 
-    //   //! This routine checks if matrix is a row vector.
-    //   //! @return true if it is a row vector, false otherwise
-    //   bool
-    //   isRowVector(void) const;
+      //! This routine checks if matrix is a row vector.
+      //! @return true if it is a row vector, false otherwise
+      bool
+      isRowVector(void) const;
 
-    //   //! This routine checks if matrix is a row vector with certain size.
-    //   //! @param[in] columns size of the vector
-    //   //! @return true if it is a row vector, false otherwise
-    //   bool
-    //   isRowVector(size_t columns) const;
+      //! This routine checks if matrix is a row vector with certain size.
+      //! @param[in] columns size of the vector
+      //! @return true if it is a row vector, false otherwise
+      bool
+      isRowVector(size_t columns) const;
 
     //   //! Calculate dot product.
     //   //! Arguments must be equally sized column or row vectors.

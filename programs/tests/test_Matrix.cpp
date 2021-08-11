@@ -217,5 +217,23 @@ main(void)
     test.boolean("EigenMatrix::operator=(const EigenMatrix& m)", eig_mat_A == eig_mat_A_cpy);
   }
 
+  //==========================================
+  // Test matrix types
+  //==========================================
+  {
+    EigenMatrix eig_square_mat(3, 3, 7);
+    EigenMatrix eig_row_vec(1, 3, 7);
+    EigenMatrix eig_col_vec(3, 1, 7);
+    EigenMatrix eig_empty_mat;
+
+    test.boolean("EigenMatrix::isSquare()", eig_square_mat.isSquare());
+    test.boolean("EigenMatrix::isVector()", eig_row_vec.isVector() && eig_col_vec.isVector());
+    test.boolean("EigenMatrix::isRowVector()", eig_row_vec.isRowVector());
+    test.boolean("EigenMatrix::isRowVector(size_t c)", eig_row_vec.isRowVector(3));
+    test.boolean("EigenMatrix::isColumnVector()", eig_col_vec.isColumnVector());
+    test.boolean("EigenMatrix::isColumnVector(size_t c)", eig_col_vec.isColumnVector(3));
+    test.boolean("EigenMatrix::isEmpty()", eig_empty_mat.isEmpty());
+  }
+
   return 0;
 }
