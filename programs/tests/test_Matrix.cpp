@@ -179,5 +179,16 @@ main(void)
     test.boolean("EigenMatrix::cend()", *end_pointer2 == 9);
   }
 
+  //==========================================
+  // Test sizes
+  //==========================================
+  {
+    EigenMatrix eig_mat(rect_mat, 4, 3);
+
+    test.boolean("EigenMatrix::rows()", eig_mat.rows() == 4);
+    test.boolean("EigenMatrix::columns()", eig_mat.columns() == 3);
+    test.boolean("EigenMatrix::size()", eig_mat.size() == 12);
+  }
+
   return 0;
 }

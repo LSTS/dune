@@ -148,17 +148,17 @@ namespace DUNE
       return &m_data(m_data.size()-1);
     }
 
-    // int
-    // EigenMatrix::rows(void) const
-    // {
-    //   return m_nrows;
-    // }
+    int
+    EigenMatrix::rows(void) const
+    {
+      return m_data.rows();
+    }
 
-    // int
-    // EigenMatrix::columns(void) const
-    // {
-    //   return m_ncols;
-    // }
+    int
+    EigenMatrix::columns(void) const
+    {
+      return m_data.cols();
+    }
 
     int
     EigenMatrix::size(void) const

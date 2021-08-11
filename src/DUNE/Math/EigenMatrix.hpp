@@ -137,15 +137,15 @@ namespace DUNE
       const double*
       cend(void) const;
 
-    //   //! Retrieve the number of rows of the matrix.
-    //   //! @return number of rows of the matrix.
-    //   int
-    //   rows(void) const;
+      //! Retrieve the number of rows of the matrix.
+      //! @return number of rows of the matrix.
+      int
+      rows(void) const;
 
-    //   //! Retrieve the number of columns of the matrix.
-    //   //! @return number of columns of the matrix.
-    //   int
-    //   columns(void) const;
+      //! Retrieve the number of columns of the matrix.
+      //! @return number of columns of the matrix.
+      int
+      columns(void) const;
 
       //! Retrieve the size of the matrix
       //! @return size of the matrix.
