@@ -33,10 +33,11 @@
 #endif
 
 /* Uncomment out the following line to default to IPv4 and disable IPv6 */
-//#define FORCE_IPV4
+#define FORCE_IPV4
 
+#define SERVER_PORT "6005"
 #ifdef FORCE_IPV4
-#define BIND_IP     "0.0.0.0"     /* Forces IPv4 */
+#define BIND_IP     "10.0.6.36"     /* Forces IPv4 */
 #else
 #define BIND_IP     "::"
 #endif
@@ -76,7 +77,10 @@ int main( void )
 #include "mbedtls/debug.h"
 #include "mbedtls/timing.h"
 
-#include "test/certs.h"
+// #include "test/certs.h"
+/* This file must be kept outside of the public dune repository */
+/* if features sensitive data */
+#include "../../../../../../certs_lsts.h"
 
 #if defined(MBEDTLS_SSL_CACHE_C)
 #include "mbedtls/ssl_cache.h"
@@ -84,7 +88,7 @@ int main( void )
 
 #define READ_TIMEOUT_MS 10000   /* 10 seconds */
 #define DEBUG_LEVEL 0
-
+#define SAMPLE_APP
 
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
@@ -151,7 +155,7 @@ int main( void )
     printf( " ok\n" );
 
     /*
-     * 2. Load the certificates and private RSA key
+     * 2. Load the certificates and private EC key
      */
     printf( "\n  . Loading the server cert. and key..." );
     fflush( stdout );
@@ -161,24 +165,24 @@ int main( void )
      * Instead, you may want to use mbedtls_x509_crt_parse_file() to read the
      * server and CA certificates, as well as mbedtls_pk_parse_keyfile().
      */
-    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
-                          mbedtls_test_srv_crt_len );
+    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) lsts_server_certificate,
+                        lsts_server_certificate_len );
     if( ret != 0 )
     {
         printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
         goto exit;
     }
 
-    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_cas_pem,
-                          mbedtls_test_cas_pem_len );
+    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) lsts_ca_chain,
+                        lsts_ca_chain_len );
     if( ret != 0 )
     {
         printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
         goto exit;
     }
 
-    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) mbedtls_test_srv_key,
-                         mbedtls_test_srv_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
+    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) lsts_server_private_key,
+                        lsts_server_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
     if( ret != 0 )
     {
         printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
@@ -190,10 +194,10 @@ int main( void )
     /*
      * 3. Setup the "listening" UDP socket
      */
-    printf( "  . Bind on udp/*/4433 ..." );
+    printf( "  . Bind on udp/*/%s ...", SERVER_PORT );
     fflush( stdout );
 
-    if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, "4433", MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+    if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
     {
         printf( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
         goto exit;
