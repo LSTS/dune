@@ -39,6 +39,9 @@ else()
     project("mbed TLS" C)
 endif()
 
+set(CMAKE_BUILD_TYPE "Debug")
+add_definitions(-DDEBUG)
+
 # Set the project root directory.
 set(MBEDTLS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 

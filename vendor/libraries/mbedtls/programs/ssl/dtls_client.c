@@ -188,6 +188,20 @@ int main( int argc, char *argv[] )
     mbedtls_printf( " ok\n" );
 
     /*
+    * 0.5 Setup the "listening" UDP socket
+    */
+    printf( "  . Bind on udp/*/%s ...", CLIENT_PORT );
+    fflush( stdout );
+
+    if( ( ret = mbedtls_net_bind( &server_fd, SERVER_ADDR, CLIENT_PORT , MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+    {
+        printf( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
+        goto exit;
+    }
+
+    printf( " ok\n" );
+
+    /*
      * 1. Start the connection
      */
     mbedtls_printf( "  . Connecting to udp/%s/%s...", SERVER_NAME, SERVER_PORT );
@@ -245,20 +259,6 @@ int main( int argc, char *argv[] )
                                             mbedtls_timing_get_delay );
 
     mbedtls_printf( " ok\n" );
-
-    /*
-     * 3. Setup the "listening" UDP socket
-     */
-    printf( "  . Bind on udp/*/%s ...", CLIENT_PORT );
-    fflush( stdout );
-
-    if( ( ret = mbedtls_net_bind( &listen_fd, SERVER_ADDR, CLIENT_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
-    {
-        printf( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
-        goto exit;
-    }
-
-    printf( " ok\n" );
 
     /*
      * 4. Handshake
