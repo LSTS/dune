@@ -51,12 +51,12 @@
 
 #define FORCE_IPV4
 
-#define SERVER_PORT "4433"
+#define SERVER_PORT "6005"
 /* this name needs to match the Common Name in the server certificate*/
 #define SERVER_NAME "server"
 
 #ifdef FORCE_IPV4
-#define SERVER_ADDR "127.0.0.1"     /* Forces IPv4 */
+#define SERVER_ADDR "10.0.6.36"     /* Forces IPv4 */
 #else
 #define SERVER_ADDR "::1"
 #endif

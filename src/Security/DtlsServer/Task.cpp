@@ -76,8 +76,9 @@
 /* Uncomment out the following line to default to IPv4 and disable IPv6 */
 #define FORCE_IPV4
 
+#define SERVER_PORT "6005"
 #ifdef FORCE_IPV4
-#define BIND_IP     "0.0.0.0"     /* Forces IPv4 */
+#define BIND_IP     "10.0.6.36"     /* Forces IPv4 */
 #else
 #define BIND_IP     "::"
 #endif
@@ -208,7 +209,7 @@ namespace Security
           inf( " ok\n" );
 
           /*
-          * 2. Load the certificates and private RSA key
+          * 2. Load the certificates and private EC key
           */
           inf( "\n  . Loading the server cert. and key..." );
           fflush( stdout );
@@ -247,10 +248,10 @@ namespace Security
           /*
           * 3. Setup the "listening" UDP socket
           */
-          inf( "  . Bind on udp/*/4433 ..." );
+          inf( "  . Bind on udp/*/%s ...", SERVER_PORT );
           fflush( stdout );
 
-          if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, "4433", MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+          if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
           {
               err( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
               goto exit;
