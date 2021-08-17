@@ -162,7 +162,7 @@ int main( int argc, char *argv[] )
         goto exit;
     }
 
-    ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) lsts_ca_chain,
+    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) lsts_ca_chain,
                             lsts_ca_chain_len );
     if( ret < 0 )
     {
@@ -235,10 +235,12 @@ int main( int argc, char *argv[] )
      * in this simplified example, in which the ca chain is hardcoded.
      * Production code should set a proper ca chain and use REQUIRED. */
     mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
-    mbedtls_ssl_conf_ca_chain( &conf, clicert.MBEDTLS_PRIVATE(next), NULL );
+    mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
     mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
+    /*disable sending multiple records in one datagram*/
+    mbedtls_ssl_set_datagram_packing( &ssl, 0 );
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
