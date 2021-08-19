@@ -39,6 +39,7 @@
 #include <DUNE/DUNE.hpp>
 
 // mbedtls headers.
+#include "mbedtls/build_info.h"
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/ssl.h"
@@ -84,7 +85,7 @@
 #endif
 
 #define READ_TIMEOUT_MS 10000   /* 10 seconds */
-#define DEBUG_LEVEL 1
+#define DEBUG_LEVEL 5
 
 namespace Security
 {
@@ -164,7 +165,7 @@ namespace Security
         mbedtls_ctr_drbg_context ctr_drbg;
         mbedtls_ssl_context ssl;
         mbedtls_ssl_config conf;
-        mbedtls_x509_crt srvcert;
+        mbedtls_x509_crt srvcert, cacert;
         mbedtls_pk_context pkey;
         mbedtls_timing_delay_context timer;
       #if defined(MBEDTLS_SSL_CACHE_C)
@@ -187,6 +188,7 @@ namespace Security
           mbedtls_ssl_cache_init( &cache );
         #endif
           mbedtls_x509_crt_init( &srvcert );
+          mbedtls_x509_crt_init( &cacert );
           mbedtls_pk_init( &pkey );
           mbedtls_entropy_init( &entropy );
           mbedtls_ctr_drbg_init( &ctr_drbg );
@@ -227,7 +229,7 @@ namespace Security
               goto exit;
           }
 
-          ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) lsts_ca_chain,
+          ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) lsts_ca_chain,
                                 lsts_ca_chain_len );
           if( ret != 0 )
           {
@@ -278,6 +280,8 @@ namespace Security
           mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
           //mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
           mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
+          /*disable sending multiple records in one datagram*/
+          mbedtls_ssl_set_datagram_packing( &ssl, 0 );
 
       #if defined(MBEDTLS_SSL_CACHE_C)
           mbedtls_ssl_conf_session_cache( &conf, &cache,
@@ -285,7 +289,7 @@ namespace Security
                                         mbedtls_ssl_cache_set );
       #endif
 
-          mbedtls_ssl_conf_ca_chain( &conf, srvcert.MBEDTLS_PRIVATE(next), NULL );
+          mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
         if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
           {
               err( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
@@ -466,6 +470,7 @@ exit:
           mbedtls_net_free( &listen_fd );
 
           mbedtls_x509_crt_free( &srvcert );
+          mbedtls_x509_crt_free( &cacert );
           mbedtls_pk_free( &pkey );
           mbedtls_ssl_free( &ssl );
           mbedtls_ssl_config_free( &conf );
