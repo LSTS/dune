@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5563261871977bdb0b45e3d1e53b575b                            *
+// IMC XML MD5: 4d99b55d10626ecd861a267ba61d4731                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -27256,6 +27256,62 @@ namespace DUNE
       IMC::toJSON(os__, "height", height, nindent__);
       IMC::toJSON(os__, "depth", depth, nindent__);
       IMC::toJSON(os__, "alt", alt, nindent__);
+    }
+
+    DtlsMessage::DtlsMessage(void)
+    {
+      m_header.mgid = 5001;
+      clear();
+    }
+
+    void
+    DtlsMessage::clear(void)
+    {
+      fielda = 0;
+    }
+
+    bool
+    DtlsMessage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::DtlsMessage& other__ = static_cast<const DtlsMessage&>(msg__);
+      if (fielda != other__.fielda) return false;
+      return true;
+    }
+
+    int
+    DtlsMessage::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    DtlsMessage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(fielda, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    DtlsMessage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(fielda, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    DtlsMessage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(fielda, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    DtlsMessage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "fielda", fielda, nindent__);
     }
   }
 }

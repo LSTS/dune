@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5563261871977bdb0b45e3d1e53b575b                            *
+// IMC XML MD5: 4d99b55d10626ecd861a267ba61d4731                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -25750,6 +25750,67 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 29;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Encrypted Message.
+    class DtlsMessage: public Message
+    {
+    public:
+      //! Field a.
+      fp64_t fielda;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 5001;
+      }
+
+      DtlsMessage(void);
+
+      DtlsMessage*
+      clone(void) const
+      {
+        return new DtlsMessage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return DtlsMessage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "DtlsMessage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 8;
       }
 
       void
