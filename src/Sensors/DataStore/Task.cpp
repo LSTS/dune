@@ -161,6 +161,7 @@ namespace Sensors
                 trace(DTR("Registering Message: %s to DataStore"),parts[0].c_str());
               }
               else {
+                setEntityState(IMC::EntityState::ESTA_FAILURE, Status::CODE_INTERNAL_ERROR);
                 throw std::runtime_error(Utils::String::str(DTR("invalid format: %s"), it->c_str()));
               }
             ++it;
@@ -226,8 +227,14 @@ namespace Sensors
         }
       }
 
+      /**
+       *
+       * @param base_timestamp in seconds
+       * @param base_lat latitude in radians
+       * @param base_lon longitude in radians
+       */
       void
-      fillBaselines(double base_timestamp, uint32_t base_lat, uint32_t base_lon)
+      fillBaselines(fp32_t base_timestamp, fp64_t base_lat, fp64_t base_lon)
       {
           if(!m_args.compressed) {
             m_data.base_lat  = Angles::degrees(base_lat); //degrees
@@ -245,7 +252,8 @@ namespace Sensors
       consume(const IMC::EstimatedState* msg)
       {
         if(m_state == nullptr){
-          uint32_t lat = msg->lat, lon = msg->lon;
+          err(DTR("Lat:%f\tLon:%f\tZ:%f\tX:%f\nY:%f "),msg->lat,msg->lon,msg->z,msg->x,msg->y);
+          fp64_t lat = msg->lat, lon = msg->lon;
           WGS84::displace(msg->x, msg->y, &lat, &lon);
           fillBaselines(msg->getTimeStamp(), lat, lon); //update base lat and lon
         }
@@ -359,12 +367,14 @@ namespace Sensors
           return;
 
         HistoricSample* sample = new HistoricSample();
-        uint32_t x,y, lat = Angles::radians(m_data.base_lat), lon = Angles::radians(m_data.base_lon);
-        WGS84::displace(m_state->x, m_state->y, &m_state->lat, &m_state->lon);
-        WGS84::displacement(lat, lon, 0.0f, m_state->lat, m_state->lon, 0, &x, &y);
-        sample->x = (uint16_t) x;
-        sample->y = (uint16_t) y;
-        sample->z = m_state->depth != -1 ? -10 * m_state->depth : m_state->alt * 10; //units: dm (why?)
+        int16_t x,y;
+        fp64_t lat = Angles::radians(m_data.base_lat), lon = Angles::radians(m_data.base_lon), lat_src = m_state->lat,
+        lon_src = m_state->lon;
+        WGS84::displace(m_state->x, m_state->y, &lat_src, &lon_src);
+        WGS84::displacement(lat, lon, 0.0f, lat_src, lon_src, 0, &x, &y);
+        sample->x = x;
+        sample->y = y;
+        sample->z = m_state->depth != -1 ? -10 * m_state->depth : m_state->alt * 10; //units: dm
         sample->t = msg->getTimeStamp() - m_data.base_time;
         sample->sample.set(*msg);
         sample->sys_id = getSystemId();
@@ -388,8 +398,10 @@ namespace Sensors
       void
       consume(const IMC::Message* msg)
       {
-        if(m_filter.filter(msg))
+        if(m_filter.filter(msg)) {
+          trace(DTR("Filtering message %s with entity %s"),msg->getName(),resolveEntity(msg->getSourceEntity()).c_str());
           return; //filter entities and rate
+        }
 
         if(msg->getSource() != getSystemId())
           return;
@@ -417,7 +429,7 @@ namespace Sensors
             dispatch(m_comp.clone());
             m_comp.data.clear();
           }
-          uint32_t lat = m_state->lat, lon = m_state->lon;
+          fp64_t lat = m_state->lat, lon = m_state->lon;
           WGS84::displace(m_state->x, m_state->y, &lat, &lon);
           fillBaselines(m_state->getTimeStamp(), lat, lon); //update base lat and lon
           m_dispatch_counter.reset();
