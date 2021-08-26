@@ -113,6 +113,8 @@ namespace UserInterfaces
       uint16_t m_reqid;
       //! Progress bar.
       unsigned m_prog_bar;
+      //! Supported umodem system names.
+      std::set<std::string> m_addrs_umodem;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -192,11 +194,21 @@ namespace UserInterfaces
             {
               std::vector<std::string> addrs = m_ctx.config.options(m_args.sys_addr_sections[i]);
               m_sys.insert(addrs.begin(), addrs.end());
+
+              if(!strcmp(m_args.sys_addr_sections[i].c_str(), "Micromodem Addresses") ||
+                 !strcmp(m_args.sys_addr_sections[i].c_str(), "Micromodem Addresses - DMSMW"))
+                m_addrs_umodem.insert(addrs.begin(), addrs.end());
             }
+
           }
           else
           {
             m_sys.insert(m_args.systems.begin(), m_args.systems.end());
+
+            std::vector<std::string> addrs = m_ctx.config.options("Micromodem Addresses");
+            m_addrs_umodem.insert(addrs.begin(), addrs.end());
+            std::vector<std::string> addrs_dmsmw = m_ctx.config.options("Micromodem Addresses - DMSMW");
+            m_addrs_umodem.insert(addrs_dmsmw.begin(), addrs_dmsmw.end());
           }
 
           // Remove our name from the list.
@@ -259,15 +271,37 @@ namespace UserInterfaces
       void
       requestAbort(const std::string& sys)
       {
-        sendMessage(sys, IMC::TransmissionRequest::DMODE_ABORT);
-        abortSystem(sys);
+        if(m_addrs_umodem.find(sys) != m_addrs_umodem.end())
+        {
+          IMC::AcousticOperation acop;
+          acop.setDestination(getSystemId());
+          acop.system = sys;
+          acop.op = IMC::AcousticOperation::AOP_ABORT;
+          dispatch(&acop, DF_LOOP_BACK);
+        }
+        else
+        {
+          sendMessage(sys, IMC::TransmissionRequest::DMODE_ABORT);
+          abortSystem(sys);
+        }
       }
 
       void
       requestPing(const std::string& sys)
       {
-        sendMessage(sys, IMC::TransmissionRequest::DMODE_RANGE);
-        pingSystem(sys);
+        if(m_addrs_umodem.find(sys) != m_addrs_umodem.end())
+        {
+          IMC::AcousticOperation acop;
+          acop.setDestination(getSystemId());
+          acop.system = sys;
+          acop.op = IMC::AcousticOperation::AOP_RANGE;
+          dispatch(&acop, DF_LOOP_BACK);
+        }
+        else
+        {
+          sendMessage(sys, IMC::TransmissionRequest::DMODE_RANGE);
+          pingSystem(sys);
+        }
       }
 
       void
