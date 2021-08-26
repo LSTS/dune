@@ -129,10 +129,14 @@ namespace Simulators
         .defaultValue("-1");
 
         param("Failure Servo Test", m_args.failure)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .defaultValue("false")
         .description("Enable failure servo test. Use with 'Faulty Servo Information' parameter.");
 
         param("Faulty Servo Information", m_args.servo_fault)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .defaultValue("0,0")
         .description("Defines which servo will 'fail' and at what angle [id,angle]. Eg: servo 2 stuck at -15º would be defined as '2,-15'.");
 
