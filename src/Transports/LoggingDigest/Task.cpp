@@ -51,9 +51,7 @@ namespace Transports
       //! Entities to take into account when collecting the messages
       std::vector<std::string> filtered_entities;
       //! Add LogControl Messages ?
-      bool log_control;
-      //! Change file when achieved the size limit
-      int  max_size;
+      bool log_control, log_errors;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -72,16 +70,14 @@ namespace Transports
       Arguments m_args;
       //! Message Filter
       MessageFilter m_filter;
-      //! File Saved Counter
-      uint16_t m_files;
+
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_log(nullptr),
-        m_files(0)
+        m_log(nullptr)
       {
         param("Sample Interval", m_args.sample_interval)
         .defaultValue("1.0")
@@ -111,13 +107,14 @@ namespace Transports
       .defaultValue("true")
       .description("Add log control messages to logged data");
 
-      param("Max Size", m_args.max_size)
-      .defaultValue("-1")
-      .units(Units::Byte)
-      .description("Digest maximum size per saved file.");
+      param("Log Errors",m_args.log_errors)
+      .defaultValue("false")
+      .description("Log Errors reported in VehicleState.");
 
       bind<IMC::LoggingControl>(this);
       bind<IMC::EntityInfo>(this);
+      bind<IMC::VehicleState>(this);
+
       }
 
       ~Task(void)
@@ -172,8 +169,6 @@ namespace Transports
       startLog(const std::string& name)
       {
         stopLog();
-
-        std::string index = m_files <= 0 ? "" : std::to_string(m_files);
         if (!m_args.log_folder.empty())
         {
           std::string flat_name(name);
@@ -183,15 +178,14 @@ namespace Transports
               flat_name[i] = '_';
           }
           Path(m_args.log_folder).create();
-          Path path = m_args.log_folder / (flat_name + index + ".lsf.gz");
+          Path path = m_args.log_folder / (flat_name + ".lsf.gz");
           m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
         }
         else
         {
-          Path path = m_ctx.dir_log / name / (m_args.lsf_name + index + ".lsf.gz");
+          Path path = m_ctx.dir_log / name / (m_args.lsf_name + ".lsf.gz");
           m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
         }
-
         // Log entities.
         double time_ref = Clock::getSinceEpoch();
         std::vector<Entities::EntityDataBase::Entity*> devs;
@@ -213,7 +207,8 @@ namespace Transports
       void
       stopLog(void)
       {
-        flush();
+        if(m_log != nullptr)
+          m_log->flush();
         Memory::clear(m_log);
       }
 
@@ -240,6 +235,16 @@ namespace Transports
           case IMC::LoggingControl::COP_STOPPED:
             stopLog();
             break;
+        }
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        if(!m_args.log_errors)
+          return;
+        if(msg->error_count > 0){
+          logMessage(msg);
         }
       }
 
@@ -280,8 +285,8 @@ namespace Transports
         std::map<uint32_t, IMC::Message*>::iterator itr = m_messages.begin();
         for (; itr != m_messages.end(); ++itr)
         {
-          if(!m_filter.filter(itr->second) && verifySize(itr->second->getSerializationSize())) {
-              logMessage(itr->second);
+          if(!m_filter.filter(itr->second)) {
+            logMessage(itr->second);
           }
           delete itr->second;
         }
@@ -291,7 +296,7 @@ namespace Transports
       }
 
       void
-      flush(void)
+      flush()
       {
         if (m_log == nullptr)
           return;
@@ -301,11 +306,6 @@ namespace Transports
 
         m_flush_timer.reset();
         m_log->flush();
-      }
-
-      bool
-      verifySize(unsigned int size){
-        return m_args.max_size > 0 && (m_log->rdbuf()->in_avail()) <= m_args.max_size;
       }
 
       void
