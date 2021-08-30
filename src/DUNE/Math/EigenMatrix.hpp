@@ -315,12 +315,12 @@ namespace DUNE
       void
       resize(size_t r, size_t c);
 
-    //   //! This method resizes a Matrix to the dimensions of (r * c)
-    //   //! and keeps previous matrix values if/when possible.
-    //   //! @param[in] r number of rows
-    //   //! @param[in] c number of columns
-    //   void
-    //   resizeAndKeep(size_t r, size_t c);
+      //! This method resizes a Matrix to the dimensions of (r * c)
+      //! and keeps previous matrix values if/when possible.
+      //! @param[in] r number of rows
+      //! @param[in] c number of columns
+      void
+      resizeAndKeep(unsigned r, unsigned c);
 
       //! This method resizes a Matrix to the dimensions of (r * c)
       //! and fills the matrix with constant value

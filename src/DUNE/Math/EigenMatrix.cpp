@@ -471,58 +471,24 @@ namespace DUNE
       m_data.resize(r, c);
     }
 
-    // void
-    // EigenMatrix::resizeAndKeep(size_t r, size_t c)
-    // {
-    //   if (r == m_nrows && c == m_ncols)
-    //     return;
+    void
+    EigenMatrix::resizeAndKeep(unsigned r, unsigned c)
+    {
+      if (r == m_data.rows() && c == m_data.cols())
+        return;
 
-    //   if (!isEmpty())
-    //   {
-    //     if ((!r && c) || (r && !c))
-    //       throw Error("Invalid dimension!");
+      if (!isEmpty())
+      {
+        if ((!r && c) || (r && !c))
+          throw Error("Invalid dimension!");
 
-    //     // Row and Column values that will be kept.
-    //     int nrows = std::min(m_nrows, r);
-    //     int ncols = std::min(m_ncols, c);
-
-    //     // Column difference.
-    //     int clm_diff = c - m_ncols;
-
-    //     // Matrix copy.
-    //     double* newdata =  ALLOCD(m_size + 1);
-    //     std::memcpy(newdata, m_data, m_size * sizeof(double));
-
-    //     erase();
-
-    //     m_nrows = r;
-    //     m_ncols = c;
-    //     m_size = r * c;
-    //     m_data = ALLOCD(m_size + 1);
-
-    //     m_counter = m_data + m_size;
-    //     *m_counter = 1;
-
-    //     fill(0);
-
-    //     int itr = 0, icr = 0;
-    //     for (int i = 0; i < nrows; ++i)
-    //     {
-    //       for (int j = 0; j < ncols; ++j)
-    //       {
-    //         m_data[(i * ncols + j) + icr] = newdata[itr];
-    //         ++itr;
-    //       }
-    //       clm_diff > 0 ? icr += clm_diff : itr -= clm_diff;
-    //     }
-
-    //     std::free(newdata);
-    //   }
-    //   else
-    //   {
-    //     resize(r, c);
-    //   }
-    // }
+        m_data.conservativeResize(r, c);
+      }
+      else
+      {
+        resize(r, c);
+      }
+    }
 
     void
     EigenMatrix::resizeAndFill(size_t r, size_t c, double value)

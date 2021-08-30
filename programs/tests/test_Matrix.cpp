@@ -66,6 +66,16 @@ printMatrix(Mat& m)
 #endif
 }
 
+template<typename MatA, typename MatB>
+bool
+compareElements(MatA& mat_a, MatB& mat_b)
+{
+  if (mat_a.size() != mat_b.size())
+    return 0;
+  
+  return memcmp(mat_a.begin(), mat_b.begin(), mat_a.size()) == 0;
+}
+
 int
 main(void)
 {
@@ -336,6 +346,36 @@ main(void)
                            
     EigenMatrix compare_mat5(input_mat5, 3, 6);
     test.boolean("EigenMatrix::horzCat(const EigenMatrix& mx_in)", eig_mat_res3 == compare_mat5);
+  }
+
+  //==========================================
+  // Test resize
+  //==========================================
+  {
+    Matrix std_mat(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat(mat_3x3[POS_INT], 3, 3);
+    bool passed = false;
+
+    std_mat.resizeAndKeep(2,2);
+    eig_mat.resizeAndKeep(2,2);
+    passed = compareElements(std_mat, eig_mat);
+
+    std_mat.resizeAndKeep(4,4);
+    eig_mat.resizeAndKeep(4,4);
+    passed &= compareElements(std_mat, eig_mat);
+    test.boolean("EigenMatrix::resizeAndKeep(size_t r, size_t c)", passed);
+
+    eig_mat.resizeAndFill(2, 5, 7);
+    std_mat.resizeAndFill(2, 5, 7);
+    passed = eig_mat.rows() == 2;
+    passed &= eig_mat.columns() == 5;
+    passed &= compareElements(std_mat, eig_mat);
+    test.boolean("EigenMatrix::resizeAndFill(size_t r, size_t c, double value)", passed);
+
+    eig_mat.resize(7, 4);
+    passed = eig_mat.rows() == 7;
+    passed &= eig_mat.columns() == 4;
+    test.boolean("EigenMatrix::resize(size_t r, size_t c)", passed);
   }
 
   //==========================================
