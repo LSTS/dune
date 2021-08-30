@@ -89,6 +89,19 @@ namespace DUNE
       STATE_Y = 1
     };
 
+    //! IMU Navigation states.
+    enum IMUNavigationStates
+    {
+      //! IMU navigation off.
+      IN_OFF = 0,
+      //! IMU navigation in initialization procedures.
+      IN_INITIALIZING = 1,
+      //! IMU navigation in alignment procedures.
+      IN_ALIGNING = 2,
+      //! IMU navigation on.
+      IN_ON = 3
+    };
+
     //! Device axes.
     enum Axes
     {
@@ -239,7 +252,7 @@ namespace DUNE
       //! Get heading rate value.
       //! @return heading rate.
       inline double
-      getHeadingRate(void)
+      getHeadingRate(bool use_imu)
       {
         double pitch = getEuler(AXIS_Y);
 
@@ -250,7 +263,7 @@ namespace DUNE
         double roll = getEuler(AXIS_X);
         double p, q, r;
 
-        if (m_dead_reckoning)
+        if (use_imu)
         {
           if (!m_edelta_readings)
             return 0.0;
@@ -565,8 +578,8 @@ namespace DUNE
       double m_gps_sog;
       //! Vertical displacement in the NED frame to the origin height above ellipsoid
       double m_last_z;
-      //! Dead reckoning mode.
-      bool m_dead_reckoning;
+      //! IMU Navigation state.
+      IMUNavigationStates m_imu_state;
       //! Vehicle is aligned.
       bool m_aligned;
       //! IMU entity id.
@@ -583,6 +596,10 @@ namespace DUNE
       bool m_lbl_reading;
       //! Derivative for heave.
       Math::Derivative<double> m_deriv_heave;
+      //! Timer for IMU initialization
+      Time::Counter<double> m_imu_timer;
+      //! Time for IMU initialization
+      double m_imu_wait_time;
 
     private:
       //! Routine to filter earth rotation effect from angular velocity values.

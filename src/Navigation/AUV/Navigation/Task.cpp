@@ -84,7 +84,7 @@ namespace Navigation
         //! GPS y (m).
         OUT_GPS_Y = 5,
         //! Number of Outputs (without LBL).
-        NUM_OUT = 6
+        NUM_OUT
       };
 
       //! Process Noise parameters.
@@ -105,7 +105,8 @@ namespace Navigation
         MN_V = 1,
         MN_PSI = 2,
         MN_YAWRATE = 3,
-        MN_LBL = 4
+        MN_LBL = 4,
+        NUM_MN
       };
 
       //! State Covariance parameters.
@@ -156,6 +157,8 @@ namespace Navigation
         float rpm_max;
         //! Heading bias uncertainty alignment threshold.
         double alignment_index;
+        //! Heading bias cov margin
+        double alignment_threshold;
         //! Heading alignment sensor diff threshold
         double alignment_diff;
         //! Diff threshold - buffer of values for threshold validation
@@ -187,6 +190,8 @@ namespace Navigation
         int m_heading_buffer;
         //! Pointer to speed model for speed conversions
         const Plans::SpeedModel* m_speed_model;
+        //! Measurement noise of AHRS when IMU is active
+        std::vector<double> m_angular_noise;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Navigation::BasicNavigation(name, ctx),
@@ -220,8 +225,13 @@ namespace Navigation
 
           param("Measure Noise Covariance", m_measure_noise)
           .defaultValue("")
-          .size(5)
+          .size(NUM_MN)
           .description("Kalman Filter measurement noise covariance values");
+
+          param("Angular noise with IMU", m_angular_noise)
+          .defaultValue("")
+          .size(2)
+          .description("Measurement noise for Psi (AHRS) and R (IMU) when IMU is active");
 
           param("State Covariance Initial State", m_state_cov)
           .defaultValue("")
@@ -251,6 +261,12 @@ namespace Navigation
           .description("Abort if position uncertainty is exceeded");
 
           param("Heading Bias Alignment Index", m_args.alignment_index)
+          .defaultValue("1e-5")
+          .minimumValue("1e-6")
+          .maximumValue("1e-4")
+          .description("Heading bias uncertainty alignment threshold");
+
+          param("Alignment Index Threshold", m_args.alignment_threshold)
           .defaultValue("1e-5")
           .minimumValue("1e-6")
           .maximumValue("1e-4")
@@ -311,25 +327,24 @@ namespace Navigation
           m_kal.setProcessNoise(STATE_R, m_process_noise[PN_YAWRATE]);
           m_kal.setProcessNoise(STATE_U, m_process_noise[PN_SPEED]);
           m_kal.setProcessNoise(STATE_V, m_process_noise[PN_SPEED]);
-          m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
-          m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
+          m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+          m_kal.setProcessNoise(STATE_R_BIAS, 0.0);
 
           m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
           m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
-          m_kal.setMeasurementNoise(OUT_PSI, m_measure_noise[MN_PSI]);
-          m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE]);
+          setAngularMN();
           m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_GOOD_IX]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_GOOD_IX]);
 
           for (unsigned i = 0; i < m_ranging.getSize(); i++)
             m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
 
-          if (m_dead_reckoning)
+          if (m_imu_state >= IN_ALIGNING)
           {
             // Position process noise covariance value if IMU is available.
             m_kal.setProcessNoise(STATE_X, m_args.pos_noise);
             m_kal.setProcessNoise(STATE_Y, m_args.pos_noise);
-            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
+            m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
 
             // LBL noise.
             for (unsigned i = 0; i < m_ranging.getSize(); i++)
@@ -393,53 +408,59 @@ namespace Navigation
           if (msg->getSourceEntity() != m_imu_eid)
             return;
 
-          if ((msg->state == IMC::EntityActivationState::EAS_ACTIVE ||
+          if (!(msg->state == IMC::EntityActivationState::EAS_ACTIVE ||
                msg->state == IMC::EntityActivationState::EAS_ACT_DONE))
           {
-            // IMU already activated.
-            if (m_dead_reckoning)
+            if (m_imu_state == IN_OFF)
               return;
 
-            // Dead reckoning mode.
-            m_dead_reckoning = true;
-            debug("start navigation alignment");
-
-            // Reinitialize state covariance matrix value.
-            m_kal.resetCovariance(STATE_PSI_BIAS);
-            m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
-
-            // Position process noise covariance value if IMU is available.
-            m_kal.setProcessNoise(STATE_X, m_args.pos_noise);
-            m_kal.setProcessNoise(STATE_Y, m_args.pos_noise);
-            m_kal.setProcessNoise(STATE_PSI_BIAS, m_process_noise[PN_PSI_BIAS]);
-
-            // LBL noise.
-            for (unsigned i = 0; i < m_ranging.getSize(); i++)
-              m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise);
+            deactivateIMU();
           }
-          else
-          {
-            if (!m_dead_reckoning)
-              return;
+        }
 
-            // Stop integrate heading rates and use AHRS data.
-            m_dead_reckoning = false;
-            m_aligned = false;
-            debug("navigation not aligned");
+        void
+        activateIMU()
+        {
+          // Dead reckoning mode.
 
-            m_kal.setState(STATE_PSI_BIAS, 0.0);
+          // Reinitialize state covariance matrix value.
+          m_kal.resetCovariance(STATE_R_BIAS);
+          m_kal.setCovariance(STATE_R_BIAS, m_state_cov[SC_BIASES]);
 
-            // No heading offset estimation without IMU.
-            m_kal.resetCovariance(STATE_PSI_BIAS);
+          // Position process noise covariance value if IMU is available.
+          m_kal.setProcessNoise(STATE_X, m_args.pos_noise);
+          m_kal.setProcessNoise(STATE_Y, m_args.pos_noise);
+          m_kal.setProcessNoise(STATE_R_BIAS, m_process_noise[PN_YRATE_BIAS]);
 
-            // Reinitialize EKF variances.
-            m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
-            m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
-            m_kal.setProcessNoise(STATE_PSI_BIAS, 0.0);
+          // LBL noise.
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
+            m_kal.setMeasurementNoise(NUM_OUT + i, m_args.lbl_noise);
 
-            for (unsigned i = 0; i < m_ranging.getSize(); i++)
-              m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
-          }
+          setAngularMN();
+        }
+
+        void
+        deactivateIMU()
+        {
+          // Stop integrate heading rates and use AHRS data.
+          m_imu_state = IN_OFF;
+          m_aligned = false;
+          debug("navigation not aligned");
+
+          m_kal.setState(STATE_R_BIAS, 0.0);
+
+          // No heading offset estimation without IMU.
+          m_kal.resetCovariance(STATE_R_BIAS);
+
+          // Reinitialize EKF variances.
+          m_kal.setProcessNoise(STATE_X, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_Y, m_process_noise[PN_POSITION]);
+          m_kal.setProcessNoise(STATE_R_BIAS, 0.0);
+
+          for (unsigned i = 0; i < m_ranging.getSize(); i++)
+            m_kal.setMeasurementNoise(NUM_OUT + i, m_measure_noise[MN_LBL]);
+
+          setAngularMN();
         }
 
         bool
@@ -456,11 +477,11 @@ namespace Navigation
           m_kal.setCovariance(STATE_R, m_state_cov[SC_ANGLES]);
           m_kal.setCovariance(STATE_U, m_state_cov[SC_SPEED]);
           m_kal.setCovariance(STATE_V, m_state_cov[SC_SPEED]);
-          m_kal.setCovariance(STATE_R_BIAS, m_state_cov[SC_BIASES]);
           m_kal.setCovariance(STATE_K, m_state_cov[SC_RPM]);
+          m_kal.setCovariance(STATE_PSI_BIAS, m_state_cov[SC_BIASES]);
 
           // No heading bias estimation without IMU.
-          m_kal.setCovariance(STATE_PSI_BIAS, 0.0);
+          m_kal.setCovariance(STATE_R_BIAS, 0.0);
 
           return true;
         }
@@ -473,10 +494,31 @@ namespace Navigation
           m_usbl_reading = false;
         }
 
+        void
+        setAngularMN()
+        {
+          if (m_imu_state >= IN_ALIGNING)
+          {
+            m_kal.setMeasurementNoise(OUT_PSI, m_angular_noise[0]);
+            m_kal.setMeasurementNoise(OUT_R, m_angular_noise[1]);
+          }
+          else
+          {
+            m_kal.setMeasurementNoise(OUT_PSI, m_measure_noise[MN_PSI]);
+            m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE]);
+          }
+        }
+
         double
         getBiasedHeading(void)
         {
           return m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
+        }
+
+        double
+        getBiasedHeadingRate(void)
+        {
+          return m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
         }
 
         void
@@ -587,20 +629,20 @@ namespace Navigation
           m_kal.predict();
 
           // Euler Angles update modes.
-          double hrate = getHeadingRate();
-          m_kal.setOutput(OUT_R, hrate);
+          double biased_heading = getBiasedHeading();
+          double biased_heading_rate = getBiasedHeadingRate();
 
-          if (m_dead_reckoning)
-            m_heading += tstep * hrate;
-          else
-            m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
-
-          // Update heading in Kalman filter.
+          //PSI
+          //AHRS
+          m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
           m_kal.setOutput(OUT_PSI, m_heading);
-          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getBiasedHeading());
-
-          double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
-          m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
+          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - biased_heading);
+            
+          //R
+          //AHRS or IMU
+          double hrate = getHeadingRate(m_imu_state >= IN_ALIGNING);
+          m_kal.setOutput(OUT_R, hrate);
+          m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - biased_heading_rate);
 
           // GPS innovation matrix.
           if (m_gps_reading || m_usbl_reading)
@@ -663,9 +705,13 @@ namespace Navigation
 
 
           // Do not estimate bias using LBL fixes.
-          double bias = m_kal.getCovariance(STATE_PSI_BIAS);
+          double psi_bias = m_kal.getCovariance(STATE_PSI_BIAS);
+          double r_bias = m_kal.getCovariance(STATE_R_BIAS);
           if (m_lbl_reading)
+          {
             m_kal.resetCovariance(STATE_PSI_BIAS);
+            m_kal.resetCovariance(STATE_R_BIAS);
+          }
 
           // Extended Kalman Filter update with no threshold defined.
           m_kal.update(0.0);
@@ -673,7 +719,8 @@ namespace Navigation
           // Restore bias estimation.
           if (m_lbl_reading)
           {
-            m_kal.setCovariance(STATE_PSI_BIAS, bias + m_process_noise[PN_PSI_BIAS]);
+            m_kal.setCovariance(STATE_PSI_BIAS, psi_bias + m_process_noise[PN_PSI_BIAS]);
+            m_kal.setCovariance(STATE_R_BIAS, r_bias + m_process_noise[PN_YRATE_BIAS]);
             m_lbl_reading = false;
           }
 
@@ -684,35 +731,7 @@ namespace Navigation
 
           m_kal.setState(STATE_K, k_lim);
 
-          // Check alignment threshold index.
-          double diff_psi = std::abs(Angles::normalizeRadian(Angles::normalizeRadian(m_kal.getState(STATE_PSI))
-                                                             - Angles::normalizeRadian(getEuler(AXIS_Z)) ) );
-
-
-          if (m_dead_reckoning)
-          {
-            if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index &&
-                diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
-            {
-                m_aligned = true;
-                m_heading_buffer=0;
-            }
-            else
-            {
-              if (m_aligned)
-              {
-                m_heading_buffer++;
-                if(m_heading_buffer > m_args.heading_buffer_value)
-                {
-                  sendDeActiveIMU();
-                  war(DTR("navigation not aligned - Automatic IMU poweroff"));
-                  m_aligned  = false;
-                  m_heading_buffer=0;
-                }
-              }
-            }
-          }
-
+          imuStateMachine();
           checkUncertainty(m_args.abort);
 
           logData();
@@ -737,6 +756,72 @@ namespace Navigation
           msg.name = m_args.elabel_imu ;
           msg.params.push_back(p);
           dispatch(msg);
+        }
+
+        void
+        imuStateMachine()
+        {
+          switch(m_imu_state)
+          {
+            case IN_OFF:
+              break;
+
+            case IN_INITIALIZING:
+              spew("Initializing");
+              if (m_imu_timer.overflow())
+              {
+                debug("start navigation alignment");
+                m_imu_state = IN_ALIGNING;
+                activateIMU();
+              }
+              break;
+
+            case IN_ALIGNING:
+              spew("Alignment");
+              if (checkAlignment(m_args.alignment_index))
+              {
+                m_aligned = true;
+                m_imu_state = IN_ON;
+                m_heading_buffer=0;
+              }
+              break;
+
+            case IN_ON:
+              spew("Dead Reck");
+              if (checkAlignment(m_args.alignment_index + m_args.alignment_threshold))
+              {
+                m_aligned = true;
+                m_heading_buffer=0;
+              }
+              else
+              {
+                m_heading_buffer++;
+                if(m_heading_buffer > m_args.heading_buffer_value)
+                {
+                  sendDeActiveIMU();
+                  war(DTR("navigation not aligned - Automatic IMU poweroff"));
+                  m_aligned = false;
+                  m_heading_buffer=0;
+                }
+              }
+              
+              break;
+
+            default:
+              // Restart
+              m_imu_state = IN_OFF;
+              break;
+          }
+        }
+
+        bool
+        checkAlignment(double alignment_index)
+        {
+          double diff_psi = std::abs(Angles::normalizeRadian(Angles::normalizeRadian(m_kal.getState(STATE_PSI))
+                            - Angles::normalizeRadian(getEuler(AXIS_Z)) ) );
+
+          return m_kal.getCovariance(STATE_PSI_BIAS) < alignment_index &&
+                  diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff));
         }
 
         void
@@ -798,12 +883,20 @@ namespace Navigation
           m_kal.resetOutputs();
           m_kal.setObservation(OUT_U, STATE_U, 1.0);
           m_kal.setObservation(OUT_V, STATE_V, 1.0);
+
           m_kal.setObservation(OUT_PSI, STATE_PSI, 1.0);
           m_kal.setObservation(OUT_PSI, STATE_PSI_BIAS, 1.0);
           m_kal.setObservation(OUT_R, STATE_R, 1.0);
           m_kal.setObservation(OUT_R, STATE_R_BIAS, 0.0);
+          
+          
           m_kal.setObservation(OUT_GPS_X, STATE_X, 1.0);
           m_kal.setObservation(OUT_GPS_Y, STATE_Y, 1.0);
+
+          if (m_imu_state >= IN_ALIGNING)
+          {
+            m_kal.setObservation(OUT_R, STATE_R_BIAS, 1.0);
+          }
         }
 
         void
@@ -836,8 +929,7 @@ namespace Navigation
                                           m_kal.getInnovation(OUT_GPS_Y));
           m_navdata.custom_y = m_kal.getState(STATE_K);
 
-          double ang = m_estate.psi - Angles::normalizeRadian(getEuler(AXIS_Z));
-          m_navdata.custom_z = Angles::degrees(Angles::normalizeRadian(ang));
+          m_navdata.custom_z = Angles::degrees(Angles::normalizeRadian(m_heading));
         }
       };
     }

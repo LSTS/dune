@@ -217,15 +217,19 @@ namespace DUNE
       .defaultValue("1.0")
       .description("Exponential moving average filter gain used in altitude");
 
+      param("IMU initialization time", m_imu_wait_time)
+      .defaultValue("0.0")
+      .description("Time navigation waits before using IMU data, in seconds");
+
       // Do not use the declination offset when simulating.
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
-      m_dead_reckoning = false;
       m_alt_sanity = true;
       m_aligned = false;
       m_edelta_ts = 0.1;
       m_rpm = 0;
       m_lbl_reading = false;
+      m_imu_state = IN_OFF;
 
       m_gvel_val_bits = IMC::GroundVelocity::VAL_VEL_X
                         | IMC::GroundVelocity::VAL_VEL_Y
@@ -488,6 +492,15 @@ namespace DUNE
       {
         war(DTR("received euler angles delta beyond range: %f, %f, %f"),
             msg->x, msg->y, msg->z);
+        return;
+      }
+
+      // // IMU initialization
+      if (m_imu_state == IN_OFF)
+      {
+        m_imu_state = IN_INITIALIZING;
+        m_imu_timer.setTop(m_imu_wait_time);
+      
         return;
       }
 
@@ -1011,7 +1024,7 @@ namespace DUNE
 
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
-      m_navdata.cyaw = m_heading;
+      m_navdata.cyaw = Math::Angles::normalizeRadian(m_heading);
     }
 
     bool
@@ -1176,7 +1189,7 @@ namespace DUNE
               return;
             }
 
-            if (m_dead_reckoning)
+            if (m_imu_state >= IN_ALIGNING)
             {
               if (m_aligned)
                 setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ALIGNED);
