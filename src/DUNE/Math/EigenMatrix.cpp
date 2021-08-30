@@ -625,108 +625,75 @@ namespace DUNE
       return *this;
     }
 
-    // EigenMatrix&
-    // EigenMatrix::operator+=(const EigenMatrix& m)
-    // {
-    //   if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
-    //     throw Error("Incompatible dimensions!");
+    EigenMatrix&
+    EigenMatrix::operator+=(const EigenMatrix& m)
+    {
+      if (rows() != m.rows() || columns() != m.columns())
+        throw Error("Incompatible dimensions!");
 
-    //   split();
+      m_data += m.m_data;
 
-    //   double* p1 = m_data;
-    //   double* p2 = m.m_data;
+      return *this;
+    }
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p1++) += *(p2++);
+    EigenMatrix&
+    EigenMatrix::operator-=(const EigenMatrix& m)
+    {
+      if (rows() != m.rows() || columns() != m.columns())
+        throw Error("Incompatible dimensions!");
 
-    //   return *this;
-    // }
+      m_data -= m.m_data;
 
-    // EigenMatrix&
-    // EigenMatrix::operator-=(const EigenMatrix& m)
-    // {
-    //   if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
-    //     throw Error("Incompatible dimensions!");
-    //   split();
+      return *this;
+    }
 
-    //   double* p1 = m_data;
-    //   double* p2 = m.m_data;
+    EigenMatrix&
+    EigenMatrix::operator&=(const EigenMatrix& m)
+    {
+      if (rows() != m.rows() || columns() != m.columns())
+        throw Error("Incompatible dimensions!");
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p1++) -= *(p2++);
+      m_data = m_data.array() * m.m_data.array();
 
-    //   return *this;
-    // }
+      return *this;
+    }
 
-    // EigenMatrix&
-    // EigenMatrix::operator&=(const EigenMatrix& m)
-    // {
-    //   if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
-    //     throw Error("Incompatible dimensions!");
+    EigenMatrix&
+    EigenMatrix::operator/=(const EigenMatrix& m)
+    {
+      if (rows() != m.rows() || columns() != m.columns())
+        throw Error("Incompatible dimensions!");
 
-    //   split();
+      m_data = m_data.array() / m.m_data.array();
 
-    //   double* p1 = m_data;
-    //   double* p2 = m.m_data;
+      return *this;
+    }
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p1++) *= *(p2++);
+    EigenMatrix
+    EigenMatrix::operator-(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   return *this;
-    // }
+      EigenMatrix tmp = -1 * *this;
+      return tmp;
+    }
 
-    // EigenMatrix&
-    // EigenMatrix::operator/=(const EigenMatrix& m)
-    // {
-    //   if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
-    //     throw Error("Incompatible dimensions!");
+    EigenMatrix&
+    EigenMatrix::operator*=(double x)
+    {
+      m_data *= x;
 
-    //   split();
+      return *this;
+    }
 
-    //   double* p1 = m_data;
-    //   double* p2 = m.m_data;
+    EigenMatrix&
+    EigenMatrix::operator/=(double x)
+    {
+      m_data /= x;
 
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p1++) /= *(p2++);
-
-    //   return *this;
-    // }
-
-    // EigenMatrix
-    // EigenMatrix::operator-(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
-
-    //   EigenMatrix tmp = -1 * *this;
-    //   return tmp;
-    // }
-
-    // EigenMatrix&
-    // EigenMatrix::operator*=(double x)
-    // {
-    //   split();
-
-    //   double* p = m_data;
-
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p++) *= x;
-
-    //   return *this;
-    // }
-
-    // EigenMatrix&
-    // EigenMatrix::operator/=(double x)
-    // {
-    //   split();
-
-    //   double* p = m_data;
-
-    //   for (size_t i = 0; i < m_size; i++)
-    //     *(p++) /= x;
-
-    //   return *this;
-    // }
+      return *this;
+    }
 
     // void
     // EigenMatrix::put(size_t i, size_t j, const EigenMatrix& a)
@@ -1286,161 +1253,110 @@ namespace DUNE
     //   return s;
     // }
 
-    // EigenMatrix
-    // operator+(const EigenMatrix& m1, const EigenMatrix& m2)
-    // {
-    //   if (m1.isEmpty() || m2.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    operator+(const EigenMatrix& m1, const EigenMatrix& m2)
+    {
+      if (m1.isEmpty() || m2.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+      if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //   EigenMatrix s(m1.m_nrows, m1.m_ncols);
+      EigenMatrix s;
+      s.m_data = m1.m_data + m2.m_data;
 
-    //   int size = s.m_size;
-    //   double* p = s.m_data;
-    //   double* p1 = m1.m_data;
-    //   double* p2 = m2.m_data;
+      return s;
+    }
 
-    //   for (int i = 0; i < size; i++)
-    //     *(p++) = *(p1++) + *(p2++);
+    EigenMatrix
+    operator-(const EigenMatrix& m1, const EigenMatrix& m2)
+    {
+      if (m1.isEmpty() || m2.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   return s;
-    // }
+      if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    // EigenMatrix
-    // operator-(const EigenMatrix& m1, const EigenMatrix& m2)
-    // {
-    //   if (m1.isEmpty() || m2.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+      EigenMatrix s;
+      s.m_data = m1.m_data - m2.m_data;
 
-    //   if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+      return s;
+    }
 
-    //   EigenMatrix s(m1.m_nrows, m1.m_ncols);
+    EigenMatrix
+    operator*(const EigenMatrix& m1, const EigenMatrix& m2)
+    {
+      if (m1.isEmpty() || m2.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   int size = s.m_size;
-    //   double* p = s.m_data;
-    //   double* p1 = m1.m_data;
-    //   double* p2 = m2.m_data;
+      if (m1.columns() != m2.rows())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //   for (int i = 0; i < size; i++)
-    //     *(p++) = *(p1++) - *(p2++);
+      EigenMatrix s;
+      s.m_data = m1.m_data * m2.m_data;
 
-    //   return s;
-    // }
+      return s;
+    }
 
-    // EigenMatrix
-    // operator*(const EigenMatrix& m1, const EigenMatrix& m2)
-    // {
-    //   if (m1.isEmpty() || m2.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    operator&(const EigenMatrix& m1, const EigenMatrix& m2)
+    {
+      if (m1.isEmpty() || m2.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (m1.m_ncols != m2.m_nrows)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+      if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //   EigenMatrix s(m1.m_nrows, m2.m_ncols);
+      EigenMatrix s(m1.rows(), m1.columns());
+      s.m_data = m1.m_data.array() * m2.m_data.array();
 
-    //   int n = m1.m_nrows;
-    //   int m = m1.m_ncols;
-    //   int r = m2.m_ncols;
+      return s;
+    }
 
-    //   double* m1_p = m1.m_data;
+    EigenMatrix
+    operator/(const EigenMatrix& a, const EigenMatrix& b)
+    {
+      if (a.isEmpty() || b.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int k = 0; k < m; k++)
-    //     {
-    //       double v = *m1_p++; // <-> v = m1(i,k)
-    //       double* m2_p = m2.m_data + k * r;
-    //       double* s_p = s.m_data + i * r;
+      if (a.rows() != b.rows() || a.columns() != b.columns())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //       for (int j = 0; j < r; j++)
-    //       {
-    //         if (!k)
-    //           *s_p = 0;
-    //         *s_p += v * (*m2_p); // <-> s(i,j) += m1(i,k) * m2(k,j)
-    //         s_p++;
-    //         m2_p++;
-    //       }
-    //     }
-    //   }
-    //   return s;
-    // }
+      EigenMatrix s(a.rows(), a.columns());
+      s.m_data = a.m_data.array() / b.m_data.array();
 
-    // EigenMatrix
-    // operator&(const EigenMatrix& m1, const EigenMatrix& m2)
-    // {
-    //   if (m1.isEmpty() || m2.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+      return s;
+    }
 
-    //   if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+    EigenMatrix
+    operator*(double x, const EigenMatrix& a)
+    {
+      EigenMatrix s(a);
 
-    //   EigenMatrix s(m1.m_nrows, m1.m_ncols);
+      s.m_data *= x;
 
-    //   int size = s.m_size;
-    //   double* p = s.m_data;
-    //   double* p1 = m1.m_data;
-    //   double* p2 = m2.m_data;
+      return s;
+    }
 
-    //   for (int i = 0; i < size; i++)
-    //     *(p++) = *(p1++) * *(p2++);
+    EigenMatrix
+    operator*(const EigenMatrix& a, double x)
+    {
+      EigenMatrix s(a);
 
-    //   return s;
-    // }
+      s.m_data *= x;
 
-    // EigenMatrix
-    // operator/(const EigenMatrix& a, const EigenMatrix& b)
-    // {
-    //   if (a.isEmpty() || b.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+      return s;
+    }
 
-    //   if (a.m_nrows != b.m_nrows || a.m_ncols != b.m_ncols)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+    EigenMatrix
+    operator/(const EigenMatrix& a, double x)
+    {
+      EigenMatrix s(a);
 
-    //   EigenMatrix s(a.m_nrows, a.m_ncols);
+      s.m_data /= x;
 
-    //   int size = s.m_size;
-    //   double* p = s.m_data;
-    //   double* p1 = a.m_data;
-    //   double* p2 = b.m_data;
-
-    //   for (int i = 0; i < size; i++)
-    //     *(p++) = *(p1++) / *(p2++);
-
-    //   return s;
-    // }
-
-    // EigenMatrix
-    // operator*(double x, const EigenMatrix& a)
-    // {
-    //   EigenMatrix s(a);
-
-    //   s *= x;
-
-    //   return s;
-    // }
-
-    // EigenMatrix
-    // operator*(const EigenMatrix& a, double x)
-    // {
-    //   EigenMatrix s(a);
-
-    //   s *= x;
-
-    //   return s;
-    // }
-
-    // EigenMatrix
-    // operator/(const EigenMatrix& a, double x)
-    // {
-    //   EigenMatrix s(a);
-
-    //   s /= x;
-
-    //   return s;
-    // }
+      return s;
+    }
 
     std::ostream&
     operator<<(std::ostream& os, const EigenMatrix& a)

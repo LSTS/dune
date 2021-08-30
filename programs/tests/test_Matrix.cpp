@@ -225,6 +225,41 @@ main(void)
     EigenMatrix eig_mat_A_cpy;
     eig_mat_A_cpy = eig_mat_A;
     test.boolean("EigenMatrix::operator=(const EigenMatrix& m)", eig_mat_A == eig_mat_A_cpy);
+
+    EigenMatrix eig_mat_D;
+    eig_mat_D = eig_mat_A + eig_mat_B;
+    double test_input_a[] = {2, 4, 6, 8, 10, 12, 14, 16, 18};
+    EigenMatrix eig_test_a(test_input_a, 3, 3);
+    test.boolean("EigenMatrix::operator+(const EigenMatrix& m1, const EigenMatrix& m2)", eig_mat_D == eig_test_a);
+
+    eig_mat_D = eig_mat_A - eig_mat_B;
+    EigenMatrix eig_test_b(3, 3, 0);
+    test.boolean("EigenMatrix::operator-(const EigenMatrix& m1, const EigenMatrix& m2)", eig_mat_D == eig_test_b);
+
+    eig_mat_D = eig_mat_A * eig_mat_B;
+    double test_input_c[] = {30, 36, 42, 66, 81, 96, 102, 126, 150};
+    EigenMatrix eig_test_c(test_input_c, 3, 3);
+    test.boolean("EigenMatrix::operator*(const EigenMatrix& m1, const EigenMatrix& m2)", eig_mat_D == eig_test_c);
+
+    eig_mat_D = eig_mat_A & eig_mat_B;
+    double test_input_d[] = {1, 4, 9, 16, 25, 36, 49, 64, 81};
+    EigenMatrix eig_test_d(test_input_d, 3, 3);
+    test.boolean("EigenMatrix::operator&(const EigenMatrix& m1, const EigenMatrix& m2)", eig_mat_D == eig_test_d);
+
+    eig_mat_D = eig_mat_A / eig_mat_B;
+    double test_input_e[] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+    EigenMatrix eig_test_e(test_input_e, 3, 3);
+    test.boolean("EigenMatrix::operator/(const EigenMatrix& a, const EigenMatrix& b)", eig_mat_D == eig_test_e);
+
+    eig_mat_D = eig_mat_A * 7;
+    double test_input_f[] = {7, 14, 21, 28, 35, 42, 49, 56, 63};
+    EigenMatrix eig_test_f(test_input_f, 3, 3);
+    test.boolean("EigenMatrix::operator*(double x, const EigenMatrix& a)", eig_mat_A * 7 == 7 * eig_mat_A && eig_mat_D == eig_test_f);
+
+    eig_mat_D = eig_mat_A / 2;
+    double test_input_g[] = {0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5};
+    EigenMatrix eig_test_g(test_input_g, 3, 3);
+    test.boolean("EigenMatrix::operator/(const EigenMatrix& a, double x)", eig_mat_D == eig_test_g);
   }
 
   //==========================================

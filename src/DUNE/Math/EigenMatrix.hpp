@@ -422,49 +422,49 @@ namespace DUNE
       EigenMatrix&
       operator=(const EigenMatrix& m);
 
-    //   //! This methods adds to a Matrix the contents of another Matrix.
-    //   //! @param[in] m reference to matrix to be added
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator+=(const EigenMatrix& m);
+      //! This methods adds to a Matrix the contents of another Matrix.
+      //! @param[in] m reference to matrix to be added
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator+=(const EigenMatrix& m);
 
-    //   //! This methods subtracts from a Matrix the contents of another Matrix.
-    //   //! @param[in] m reference to matrix to be subtracted
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator-=(const EigenMatrix& m);
+      //! This methods subtracts from a Matrix the contents of another Matrix.
+      //! @param[in] m reference to matrix to be subtracted
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator-=(const EigenMatrix& m);
 
-    //   //! This methods multiplies each entry of a Matrix by
-    //   //! the corresponding entry of another Matrix.
-    //   //! @param[in] m reference to matrix to be multiplied
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator&=(const EigenMatrix& m);
+      //! This methods multiplies each entry of a Matrix by
+      //! the corresponding entry of another Matrix.
+      //! @param[in] m reference to matrix to be multiplied
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator&=(const EigenMatrix& m);
 
-    //   //! This methods divides each entry of Matrix by the
-    //   //! correspondig entry of another Matrix.
-    //   //! @param[in] m reference to matrix to be divided
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator/=(const EigenMatrix& m);
+      //! This methods divides each entry of Matrix by the
+      //! correspondig entry of another Matrix.
+      //! @param[in] m reference to matrix to be divided
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator/=(const EigenMatrix& m);
 
-    //   //! This method implements the unary minus operator.
-    //   //! @return resultant matrix
-    //   EigenMatrix
-    //   operator-(void) const;
+      //! This method implements the unary minus operator.
+      //! @return resultant matrix
+      EigenMatrix
+      operator-(void) const;
 
-    //   //! This method multiplies a Matrix by a real number.
-    //   //! @param[in] x real number
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator*=(double x);
+      //! This method multiplies a Matrix by a real number.
+      //! @param[in] x real number
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator*=(double x);
 
-    //   //! This method divides a Matrix by a real number.
-    //   //! Care must be taken to avoid divisions by zero.
-    //   //! @param[in] x real number
-    //   //! @return reference to resultant matrix
-    //   EigenMatrix&
-    //   operator/=(double x);
+      //! This method divides a Matrix by a real number.
+      //! Care must be taken to avoid divisions by zero.
+      //! @param[in] x real number
+      //! @return reference to resultant matrix
+      EigenMatrix&
+      operator/=(double x);
 
     //   //! This method fills a submatrix of a given Matrix.
     //   //! @param[in] i row index
@@ -631,69 +631,69 @@ namespace DUNE
     //   static EigenMatrix
     //   cross(const EigenMatrix& a, const EigenMatrix& b);
 
-    //   //! This method returns the sum of two matrices.
-    //   //! @param[in] m1 matrix to be summed.
-    //   //! @param[in] m2 matrix to be summed.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator+(const EigenMatrix& m1, const EigenMatrix& m2);
+      //! This method returns the sum of two matrices.
+      //! @param[in] m1 matrix to be summed.
+      //! @param[in] m2 matrix to be summed.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator+(const EigenMatrix& m1, const EigenMatrix& m2);
 
-    //   //! This method returns the difference of two matrices.
-    //   //! @param[in] m1 matrix to be subtracted.
-    //   //! @param[in] m2 matrix to subtract.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator-(const EigenMatrix& m1, const EigenMatrix& m2);
+      //! This method returns the difference of two matrices.
+      //! @param[in] m1 matrix to be subtracted.
+      //! @param[in] m2 matrix to subtract.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator-(const EigenMatrix& m1, const EigenMatrix& m2);
 
-    //   //! This method returns the product of two matrices.
-    //   //! Note on optimization by Eduardo Marques - Sep 8 2010
-    //   //! ====================================================
-    //   //! Applied loop interchange to achieve memory stride 1
-    //   //! (better data locality) in iterations of the innermost loop,
-    //   //! This makes for better cache behavior (i.e. less cache misses),
-    //   //! particularly as matrix dimensions increase.
-    //   //! For those interested, see papers or books by M J Wolfe.
-    //   //!
-    //   //! @param[in] m1 matrix to be summed.
-    //   //! @param[in] m2 matrix to be summed.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator*(const EigenMatrix& m1, const EigenMatrix& m2);
+      //! This method returns the product of two matrices.
+      //! Note on optimization by Eduardo Marques - Sep 8 2010
+      //! ====================================================
+      //! Applied loop interchange to achieve memory stride 1
+      //! (better data locality) in iterations of the innermost loop,
+      //! This makes for better cache behavior (i.e. less cache misses),
+      //! particularly as matrix dimensions increase.
+      //! For those interested, see papers or books by M J Wolfe.
+      //!
+      //! @param[in] m1 matrix to be summed.
+      //! @param[in] m2 matrix to be summed.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator*(const EigenMatrix& m1, const EigenMatrix& m2);
 
-    //   //! This method returns the element-element product of two matrices.
-    //   //! @param[in] m1 matrix to be multiplied (element-element).
-    //   //! @param[in] m2 matrix to be multiplied (element-element).
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator&(const EigenMatrix& m1, const EigenMatrix& m2);
+      //! This method returns the element-element product of two matrices.
+      //! @param[in] m1 matrix to be multiplied (element-element).
+      //! @param[in] m2 matrix to be multiplied (element-element).
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator&(const EigenMatrix& m1, const EigenMatrix& m2);
 
-    //   //! This method returns the element-element quocient of two matrices.
-    //   //! @param[in] a matrix for element-element quocient.
-    //   //! @param[in] b matrix for element-element quocient.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator/(const EigenMatrix& a, const EigenMatrix& b);
+      //! This method returns the element-element quocient of two matrices.
+      //! @param[in] a matrix for element-element quocient.
+      //! @param[in] b matrix for element-element quocient.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator/(const EigenMatrix& a, const EigenMatrix& b);
 
-    //   //! This function multiplies a Matrix by a real number.
-    //   //! @param[in] x real number.
-    //   //! @param[in] a matrix to be multiplied.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator*(double x, const EigenMatrix& a);
+      //! This function multiplies a Matrix by a real number.
+      //! @param[in] x real number.
+      //! @param[in] a matrix to be multiplied.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator*(double x, const EigenMatrix& a);
 
-    //   //! This function multiplies a Matrix by a real number.
-    //   //! @param[in] a matrix to be multiplied.
-    //   //! @param[in] x real number.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator*(const EigenMatrix& a, double x);
+      //! This function multiplies a Matrix by a real number.
+      //! @param[in] a matrix to be multiplied.
+      //! @param[in] x real number.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator*(const EigenMatrix& a, double x);
 
-    //   //! This function divides a Matrix by a real number.
-    //   //! @param[in] a matrix to be divided.
-    //   //! @param[in] x real number.
-    //   //! @return resultant matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   operator/(const EigenMatrix& a, double x);
+      //! This function divides a Matrix by a real number.
+      //! @param[in] a matrix to be divided.
+      //! @param[in] x real number.
+      //! @return resultant matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      operator/(const EigenMatrix& a, double x);
 
       //! This method sends a Matrix to an 'ostream'.
       //! Each row of the Matrix is put on a different line.
