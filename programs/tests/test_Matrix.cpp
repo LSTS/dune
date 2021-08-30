@@ -338,5 +338,44 @@ main(void)
     test.boolean("EigenMatrix::horzCat(const EigenMatrix& mx_in)", eig_mat_res3 == compare_mat5);
   }
 
+  //==========================================
+  // Test row/column operations
+  //==========================================
+  {
+    EigenMatrix eig_mat(mat_3x3[POS_INT], 3, 3);
+    
+    double test_input_a[] = {4, 5, 6};
+    EigenMatrix eig_test_a(test_input_a, 1, 3);
+    test.boolean("EigenMatrix::row(size_t i) const", eig_mat.row(1) == eig_test_a);
+
+    double test_input_b[] = {2, 5, 8};
+    EigenMatrix eig_test_b(test_input_b, 3, 1);
+    test.boolean("EigenMatrix::column(size_t j) const", eig_mat.column(1) == eig_test_b);
+    
+    double test_input_c[] = {3, 2, 1, 6, 5, 4, 9, 8, 7};
+    EigenMatrix eig_test_c(test_input_c, 3, 3);
+    eig_mat.swapColumns(0, 2);
+    test.boolean("EigenMatrix::swapColumns(size_t i, size_t j)", eig_mat == eig_test_c);
+
+    double test_input_d[] = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+    EigenMatrix eig_test_d(test_input_d, 3, 3);
+    eig_mat.swapRows(0, 2);
+    test.boolean("EigenMatrix::swapRows(size_t i, size_t j)", eig_mat == eig_test_d);
+
+    eig_mat.fill(3, 3, mat_3x3[POS_INT]);
+    eig_mat.to_row();
+    bool passed = eig_mat.rows() == 1;
+    passed &= eig_mat.columns() == 9;
+    passed &= memcmp(mat_3x3[POS_INT], eig_mat.begin(), 9) == 0;
+    test.boolean("EigenMatrix::to_row(void)", passed);
+
+    eig_mat.fill(3, 3, mat_3x3[POS_INT]);
+    eig_mat.to_column();
+    passed = eig_mat.rows() == 9;
+    passed &= eig_mat.columns() == 1;
+    passed &= memcmp(mat_3x3[POS_INT], eig_mat.begin(), 9) == 0;
+    test.boolean("EigenMatrix::to_column(void)", passed);
+  }
+
   return 0;
 }

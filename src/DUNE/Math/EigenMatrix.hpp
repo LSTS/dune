@@ -269,29 +269,29 @@ namespace DUNE
     //   void
     //   readFromConfig(DUNE::Parsers::Config& cfg, const std::string& section, const std::string& param);
 
-    //   //! This method returns a row of the Matrix.
-    //   //! @param[in] i row to be retrieved
-    //   //! @return matrix of the returned row
-    //   EigenMatrix
-    //   row(size_t i) const;
+      //! This method returns a row of the Matrix.
+      //! @param[in] i row to be retrieved
+      //! @return matrix of the returned row
+      EigenMatrix
+      row(size_t i) const;
 
-    //   //! This method returns a column of the Matrix.
-    //   //! @param[in] j column to be retrieved
-    //   //! @return matrix of the returned column
-    //   EigenMatrix
-    //   column(size_t j) const;
+      //! This method returns a column of the Matrix.
+      //! @param[in] j column to be retrieved
+      //! @return matrix of the returned column
+      EigenMatrix
+      column(size_t j) const;
 
-    //   //! This method swaps two columns.
-    //   //! @param[in] i index of column
-    //   //! @param[in] j index of column
-    //   void
-    //   swapColumns(size_t i, size_t j);
+      //! This method swaps two columns.
+      //! @param[in] i index of column
+      //! @param[in] j index of column
+      void
+      swapColumns(unsigned i, unsigned j);
 
-    //   //! This method swaps two rows.
-    //   //! @param[in] i index of row
-    //   //! @param[in] j index of row
-    //   void
-    //   swapRows(size_t i, size_t j);
+      //! This method swaps two rows.
+      //! @param[in] i index of row
+      //! @param[in] j index of row
+      void
+      swapRows(unsigned i, unsigned j);
 
     //   //! This method sets the precision used when inverting a Matrix.
     //   //! @param[in] p value of the precision to be used when inverting
@@ -393,15 +393,15 @@ namespace DUNE
       double
       element(unsigned i);
 
-    //   //! This method changes the dimensions of a Matrix to a one row Matrix.
-    //   //! The elements are not changed.
-    //   void
-    //   to_row(void);
+      //! This method changes the dimensions of a Matrix to a one row Matrix.
+      //! The elements are not changed.
+      void
+      to_row(void);
 
-    //   //! This method changes the dimensions of a Matrix to a one column Matrix.
-    //   //! The elements are not changed.
-    //   void
-    //   to_column(void);
+      //! This method changes the dimensions of a Matrix to a one column Matrix.
+      //! The elements are not changed.
+      void
+      to_column(void);
 
     //   //! Right-multiply a matrix with given matrix.
     //   //! @param[in] m matrix to be multiplied

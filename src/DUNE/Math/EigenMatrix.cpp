@@ -407,45 +407,47 @@ namespace DUNE
       ifs.close();
     }
 
-    // EigenMatrix
-    // EigenMatrix::row(size_t i) const
-    // {
-    //   return get(i, i, 0, m_ncols - 1);
-    // }
+    EigenMatrix
+    EigenMatrix::row(size_t i) const
+    {
+      EigenMatrix r;
+      r.m_data = m_data.row(i);
 
-    // EigenMatrix
-    // EigenMatrix::column(size_t j) const
-    // {
-    //   return get(0, m_nrows - 1, j, j);
-    // }
+      return r;
+    }
 
-    // void
-    // EigenMatrix::swapColumns(size_t i, size_t j)
-    // {
-    //   if (i >= m_ncols || j >= m_ncols)
-    //     throw Error("Invalid index!");
+    EigenMatrix
+    EigenMatrix::column(size_t j) const
+    {
+      EigenMatrix c;
+      c.m_data = m_data.col(j);
+      
+      return c;
+    }
 
-    //   if (i == j)
-    //     return;
+    void
+    EigenMatrix::swapColumns(unsigned i, unsigned j)
+    {
+      if (i >= m_data.cols() || j >= m_data.cols())
+        throw Error("Invalid index!");
 
-    //   EigenMatrix tmp = this->column(i);
-    //   this->put(0, i, this->column(j));
-    //   this->put(0, j, tmp);
-    // }
+      if (i == j)
+        return;
 
-    // void
-    // EigenMatrix::swapRows(size_t i, size_t j)
-    // {
-    //   if (i >= m_nrows || j >= m_nrows)
-    //     throw Error("Invalid index!");
+      m_data.col(i).swap(m_data.col(j));
+    }
 
-    //   if (i == j)
-    //     return;
+    void
+    EigenMatrix::swapRows(unsigned i, unsigned j)
+    {
+      if (i >= m_data.rows() || j >= m_data.rows())
+        throw Error("Invalid index!");
 
-    //   EigenMatrix tmp = this->row(i);
-    //   this->put(i, 0, this->row(j));
-    //   this->put(j, 0, tmp);
-    // }
+      if (i == j)
+        return;
+
+      m_data.row(i).swap(m_data.row(j));
+    }
 
     // void
     // EigenMatrix::set_precision(double p)
@@ -607,29 +609,23 @@ namespace DUNE
       return m_data(i);
     }
 
-    // void
-    // EigenMatrix::to_row(void)
-    // {
-    //   if (!m_size)
-    //     return;
+    void
+    EigenMatrix::to_row(void)
+    {
+      if (!m_data.size())
+        return;
 
-    //   split();
+      fill(1, m_data.size(), m_data.data());
+    }
 
-    //   m_nrows = 1;
-    //   m_ncols = m_size;
-    // }
+    void
+    EigenMatrix::to_column(void)
+    {
+      if (!m_data.size())
+        return;
 
-    // void
-    // EigenMatrix::to_column(void)
-    // {
-    //   if (!m_size)
-    //     return;
-
-    //   split();
-
-    //   m_ncols = 1;
-    //   m_nrows = m_size;
-    // }
+      fill(m_data.size(), 1, m_data.data());
+    }
 
     bool
     EigenMatrix::operator==(const EigenMatrix& m) const
