@@ -228,7 +228,7 @@ namespace Navigation
           .size(NUM_MN)
           .description("Kalman Filter measurement noise covariance values");
 
-          param("Angular noise with IMU", m_angular_noise)
+          param("Angular Noise with IMU", m_angular_noise)
           .defaultValue("")
           .size(2)
           .description("Measurement noise for Psi (AHRS) and R (IMU) when IMU is active");
