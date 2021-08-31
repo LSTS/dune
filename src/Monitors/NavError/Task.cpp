@@ -80,9 +80,12 @@ namespace Monitors
               .description("Ignore start maneuver for DistTotal calculations.")
               .defaultValue("true");
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
         bind<IMC::DesiredPath>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::VehicleState>(this);
       }
 
       //! Reserve entity identifiers.
@@ -106,6 +109,13 @@ namespace Monitors
           m_medium = false;
 
         m_last_medium = *msg;
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        if(msg->op_mode == IMC::VehicleState::VS_CALIBRATION)
+          m_distTotal.value = 0;
       }
 
       void
@@ -164,7 +174,7 @@ namespace Monitors
         // Check if we have valid Horizontal Accuracy index.
         if (msg->validity & IMC::GpsFix::GFV_VALID_HACC && msg->hacc > 20)
           return;
-        else if (msg->hdop > 4)
+        else if (msg->hdop > 2.5)
           return;
 
         if(m_init)
