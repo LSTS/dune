@@ -28,8 +28,8 @@
 // Author: Eduardo Marques                                                  *
 // Author: Ricardo Martins                                                  *
 // Author: Joao Fortuna                                                     *
-// Author: Maria Costa
-// Author: Keila Lima
+// Author: Maria Costa                                                      *
+// Author: Keila Lima                                                       *
 //***************************************************************************
 
 // ISO C++ 98 headers.
