@@ -144,7 +144,7 @@ namespace Control
 				  m_pitch_trim(0),
 				  m_roll_trim(0),
 				  m_accu_step(100),
-				  m_sysid(254),
+				  m_sysid(255),
 				  m_targetid(1),
 				  m_sys_status(MAV_STATE_UNINIT),
 				  m_comms(false),
@@ -260,8 +260,6 @@ namespace Control
               m_socket = new UDPSocket;
               m_socket->bind(m_args.listen, Address::Any, true);
               m_socket->connect(m_args.addr, m_args.port);
-              //m_socket->setNoDelay(true);
-              //m_sender->setNoDelay(true);
               inf(DTR("Ardupilot  Teleoperation interface initialized"));
               m_comms = true;
               requestGCSParam();
@@ -303,19 +301,18 @@ namespace Control
             {
               m_sys_status = MAV_STATE_POWEROFF;
               //Disable control
-              disableControl();
+              disableControl(true);
               Time::Delay::wait(1.0);
             }
             Memory::clear(m_socket);
-//			  Memory::clear(m_sender);
           }
 
           void
           onDeactivation(void)
           {
             m_sys_status = MAV_STATE_STANDBY;
-            disableControl();
-            war("Deactivating Ardupilot control");
+            disableControl(false);
+            war("Deactivating Ardupilot Rremote Control");
           }
 
           void
@@ -326,7 +323,7 @@ namespace Control
 
           //Disabling GCS control from dune to stop expecting heartbeat msgs
           void
-          disableControl(void)
+          disableControl(bool remove_control_sys)
           {
             //Set neutral control
             debug(DTR("Disabling GCS control"));
@@ -339,7 +336,8 @@ namespace Control
 
             int len = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, len);
-            setParamByName("SYSID_MYGCS", m_gcs); // Reestablish old GCS control before Dune
+            if(remove_control_sys)
+              setParamByName("SYSID_MYGCS", m_gcs); // Reestablish old GCS control before Dune
           }
 
           void
@@ -371,7 +369,7 @@ namespace Control
           consume(const IMC::TeleoperationDone* msg)
           {
             m_sys_status = MAV_STATE_STANDBY;
-            disableControl();
+            disableControl(false);
           }
 
           bool
