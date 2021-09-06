@@ -553,6 +553,15 @@ namespace Control
               announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
               dispatch(announce);
           }
+          else{
+            std::stringstream os;
+            os << "mavlink+udp://" << m_args.ip << ":" << m_args.UDP_port << "/";
+
+            IMC::AnnounceService announce;
+            announce.service = os.str();
+            announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+            dispatch(announce);
+          }
         }
 
         void
