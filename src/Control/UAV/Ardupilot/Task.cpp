@@ -482,7 +482,7 @@ namespace Control
           m_mlh[MAVLINK_MSG_ID_STATUSTEXT] = &Task::handleStatusTextPacket;
           m_mlh[MAVLINK_MSG_ID_HEARTBEAT] = &Task::handleHeartbeatPacket;
           m_mlh[MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT] = &Task::handleNavControllerPacket;
-          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM] = &Task::handleMissionItemPacket;
+          m_mlh[MAVLINK_MSG_ID_MISSION_ITEM_INT] = &Task::handleMissionItemPacket;
           m_mlh[MAVLINK_MSG_ID_SYS_STATUS] = &Task::handleSystemStatusPacket;
           m_mlh[MAVLINK_MSG_ID_VFR_HUD] = &Task::handleHUDPacket;
           m_mlh[MAVLINK_MSG_ID_SYSTEM_TIME] = &Task::handleSystemTimePacket;
@@ -580,7 +580,7 @@ namespace Control
             inf(DTR("Ardupilot interface initialized"));
 
             // Clear previous mission on autopilot
-            mavlink_msg_mission_clear_all_pack(m_sysid, 0, &m_msg, m_sysid, 0,MAV_MISSION_TYPE_ALL);
+            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0,MAV_MISSION_TYPE_ALL);
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
             debug("Cleared mission in ardupilot.");
@@ -601,7 +601,7 @@ namespace Control
           mavlink_message_t msg;
 
           //! ATTITUDE and SIMSTATE messages
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_EXTRA1,
@@ -613,7 +613,7 @@ namespace Control
           spew("ATTITUDE Stream setup to %d Hertz", rate);
 
           //! VFR_HUD message
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_EXTRA2,
@@ -625,7 +625,7 @@ namespace Control
           spew("VFR Stream setup to %d Hertz", rate);
 
           //! GLOBAL_POSITION_INT message
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_POSITION,
@@ -638,7 +638,7 @@ namespace Control
 
           //! SYS_STATUS, POWER_STATUS, MEMINFO, MISSION_CURRENT,
           //! GPS_RAW_INT, NAV_CONTROLLER_OUTPUT and FENCE_STATUS messages
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_EXTENDED_STATUS,
@@ -650,7 +650,7 @@ namespace Control
           spew("STATUS Stream setup to %d Hertz", (int)(rate/5));
 
           //! AHRS, HWSTATUS, WIND, RANGEFINDER and SYSTEM_TIME messages
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_EXTRA3,
@@ -662,7 +662,7 @@ namespace Control
           spew("AHRS-HWSTATUS-WIND Stream setup to 1 Hertz");
 
           //! RAW_IMU, SCALED_PRESSURE and SENSOR_OFFSETS messages
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_RAW_SENSORS,
@@ -674,7 +674,7 @@ namespace Control
           spew("SENSORS Stream setup to 1 Hertz");
 
           //! RC_CHANNELS_RAW and SERVO_OUTPUT_RAW messages
-          mavlink_msg_request_data_stream_pack(m_sysid, 0, &msg,
+          mavlink_msg_request_data_stream_pack(255, 0, &msg,
                                                m_sysid,
                                                0,
                                                MAV_DATA_STREAM_RC_CHANNELS,
@@ -702,7 +702,7 @@ namespace Control
         void
         consume(const IMC::ControlLoops* cloops)
         {
-          if (m_external && cloops->enable && m_vehicle_type != VEHICLE_SUBMARINE)
+          if (m_external && cloops->enable)
           {
             m_controllps = *cloops;
             inf(DTR("ArduPilot is in Manual mode, saving control loops."));
@@ -734,7 +734,7 @@ namespace Control
               uint8_t buf[512];
 
               //! Sending value 0 disables RC override for that channel
-              mavlink_msg_rc_channels_override_pack(m_sysid, 0, &msg,
+              mavlink_msg_rc_channels_override_pack(255, 0, &msg,
                1,
                1,
                0, //! RC Channel 1 (roll)
@@ -777,7 +777,7 @@ namespace Control
             uint8_t buf[512];
             mavlink_message_t msg;
 
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       6); //! FBWB is mode 6
@@ -834,7 +834,7 @@ namespace Control
           uint8_t buf[512];
 
           mavlink_message_t msg;
-          mavlink_msg_rc_channels_override_pack(m_sysid, 0, &msg,
+          mavlink_msg_rc_channels_override_pack(255, 0, &msg,
                                                 1,
                                                 1,
                                                 pwm_roll, //! RC Channel 1 (roll)
@@ -888,7 +888,7 @@ namespace Control
             uint8_t buf[512];
             mavlink_message_t msg;
 
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       CP_MODE_GUIDED);
@@ -925,7 +925,7 @@ namespace Control
             mavlink_message_t msg;
             uint8_t buf[512];
 
-            mavlink_msg_set_position_target_local_ned_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_position_target_local_ned_pack(255, 0, &msg,
                                                       Clock::getMsec(), //FIXME
                                                       m_sysid, //@param target_system System ID
                                                       0, //@param target_component Component ID
@@ -1020,7 +1020,7 @@ namespace Control
             else
               mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
 
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       mode);
@@ -1032,7 +1032,7 @@ namespace Control
           //! Setting airspeed parameter
           if (m_vehicle_type == VEHICLE_COPTER)
           {
-            mavlink_msg_param_set_pack(m_sysid, 0, &msg,
+            mavlink_msg_param_set_pack(255, 0, &msg,
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "WPNAV_SPEED", //! Parameter name
@@ -1041,7 +1041,7 @@ namespace Control
           }
           else
           {
-            mavlink_msg_param_set_pack(m_sysid, 0, &msg,
+            mavlink_msg_param_set_pack(255, 0, &msg,
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "TRIM_ARSPD_CM", //! Parameter name
@@ -1057,7 +1057,7 @@ namespace Control
           //! Setting loiter radius parameter
           if ((m_vehicle_type != VEHICLE_COPTER) && (m_vehicle_type != VEHICLE_SUBMARINE))
           {
-            mavlink_msg_param_set_pack(m_sysid, 0, &msg,
+            mavlink_msg_param_set_pack(255, 0, &msg,
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "WP_LOITER_RAD", //! Parameter name
@@ -1077,7 +1077,7 @@ namespace Control
           //! Destination
           if (m_vehicle_type == VEHICLE_COPTER)
           {
-            mavlink_msg_mission_item_pack(m_sysid, 0, &msg,
+            mavlink_msg_mission_item_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1096,7 +1096,7 @@ namespace Control
           }
           else if (m_vehicle_type == VEHICLE_SUBMARINE)
           {
-            mavlink_msg_mission_item_pack(m_sysid, 0, &msg,
+            mavlink_msg_mission_item_pack(255, 0, &msg,
                                             m_sysid, //! target_system System ID
                                             0, //! target_component Component ID
                                             1, //! seq Sequence (count-1)
@@ -1117,7 +1117,7 @@ namespace Control
           else
           {
             //! Because this is a GUIDED waypoint, MISSION_COUNT and WRITE_PARTIAL_LIST messages should not be sent
-            mavlink_msg_mission_item_pack(m_sysid, 0, &msg,
+            mavlink_msg_mission_item_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           0, //! seq Sequence
@@ -1207,7 +1207,7 @@ namespace Control
           mavlink_message_t msg;
 
           // Clear previous mission on autopilot
-          mavlink_msg_mission_clear_all_pack(m_sysid, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_ALL); //! Mission Type m_sysid - Only used in MISSION_CLEAR_ALL to clear all mission type
+          mavlink_msg_mission_clear_all_pack(255, 0, &msg, m_sysid, 0, MAV_MISSION_TYPE_ALL); //! Mission Type 255 - Only used in MISSION_CLEAR_ALL to clear all mission type
           n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
           debug("Cleared mission in ardupilot.");
@@ -1222,7 +1222,7 @@ namespace Control
 
           // Set mode GUIDED.
           mode = (m_vehicle_type == VEHICLE_COPTER) ? (uint8_t)CP_MODE_GUIDED : (uint8_t)PL_MODE_GUIDED;
-          mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+          mavlink_msg_set_mode_pack(255, 0, &msg,
                                     m_sysid,
                                     1,
                                     mode);
@@ -1236,17 +1236,17 @@ namespace Control
           else
           {
             // Send Mission Count
-            mavlink_msg_mission_count_pack(m_sysid, 0, &msg, m_sysid, 0, 2, MAV_MISSION_TYPE_MISSION);
+            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 2, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Write Partial List
-            mavlink_msg_mission_write_partial_list_pack(m_sysid, 0, &msg, m_sysid, 0, 1, 1, MAV_MISSION_TYPE_MISSION);
+            mavlink_msg_mission_write_partial_list_pack(255, 0, &msg, m_sysid, 0, 1, 1, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Set Home as current position
-            mavlink_msg_mission_item_pack(m_sysid, 0, &msg,
+            mavlink_msg_mission_item_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           0, //! seq Sequence
@@ -1266,7 +1266,7 @@ namespace Control
             sendData(buf, n);
 
             // Send Mission Item
-            mavlink_msg_mission_item_pack(m_sysid, 0, &msg,
+            mavlink_msg_mission_item_pack(255, 0, &msg,
                                           m_sysid, //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1286,7 +1286,7 @@ namespace Control
             sendData(buf, n);
 
             // Set AUTO mode
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                                 m_sysid,
                                                 1,
                                                 PL_MODE_AUTO);
@@ -1337,7 +1337,7 @@ namespace Control
           {
             // Set LAND mode.
             mode = (uint8_t)CP_MODE_LAND;
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       mode);
@@ -1351,17 +1351,17 @@ namespace Control
           else
           {
             // Send Mission Count
-            mavlink_msg_mission_count_pack(m_sysid, 0, &msg, m_sysid, 0, 2, MAV_MISSION_TYPE_MISSION);
+            mavlink_msg_mission_count_pack(255, 0, &msg, m_sysid, 0, 2, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Write Partial List
-            mavlink_msg_mission_write_partial_list_pack(m_sysid, 0, &msg, m_sysid, 0, 1, 1, MAV_MISSION_TYPE_MISSION);
+            mavlink_msg_mission_write_partial_list_pack(255, 0, &msg, m_sysid, 0, 1, 1, MAV_MISSION_TYPE_MISSION);
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
 
             // Send Mission Item
-            mavlink_msg_mission_item_pack(m_sysid, 0, &msg,
+            mavlink_msg_mission_item_pack(255, 0, &msg,
                                           m_sysid,          //! target_system System ID
                                           0, //! target_component Component ID
                                           1, //! seq Sequence
@@ -1382,7 +1382,7 @@ namespace Control
 
             // Set AUTO mode.
             mode = (uint8_t)PL_MODE_AUTO;
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       mode);
@@ -1410,7 +1410,7 @@ namespace Control
 
           if(m_vehicle_type != VEHICLE_SUBMARINE)
           {
-            mavlink_msg_param_set_pack(m_sysid, 0, &msg,
+            mavlink_msg_param_set_pack(255, 0, &msg,
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "WP_LOITER_RAD", //! Parameter name
@@ -1428,7 +1428,7 @@ namespace Control
           {
             mode = (uint8_t) MAVLink::SUB_MODE_POS_HOLD;
 
-            mavlink_msg_set_mode_pack(m_sysid, 0, &msg,
+            mavlink_msg_set_mode_pack(255, 0, &msg,
                                       m_sysid,
                                       1,
                                       mode);
@@ -1495,7 +1495,7 @@ namespace Control
           if (m_ground && m_land && m_external)
           {
             // Clear previous mission on autopilot
-            mavlink_msg_mission_clear_all_pack(m_sysid, 0, &m_msg, m_sysid, 0, MAV_MISSION_TYPE_ALL);
+            mavlink_msg_mission_clear_all_pack(255, 0, &m_msg, m_sysid, 0, MAV_MISSION_TYPE_ALL);
             uint16_t n = mavlink_msg_to_send_buffer(m_buf, &m_msg);
             sendData(m_buf, n);
             debug("Cleared mission in ardupilot.");
@@ -1539,7 +1539,7 @@ namespace Control
               sim_state->u, sim_state->v, sim_state->w,
               &vx, &vy, &vz);
 
-          mavlink_msg_hil_state_pack(m_sysid, 0, &msg,
+          mavlink_msg_hil_state_pack(255, 0, &msg,
                                      (unsigned long int) (Clock::getSinceEpochNsec() / 1000), //! Timestamp (microseconds since UNIX epoch or microseconds since system boot)
                                      sim_state->phi, //! Roll angle (rad)
                                      sim_state->theta, //! Pitch angle (rad)
@@ -1630,7 +1630,7 @@ namespace Control
 
           trace("%0.2f %0.2f %0.2f %0.2f %0.2f %0.2f %0.2f", arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
-          mavlink_msg_command_long_pack(m_sysid, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+          mavlink_msg_command_long_pack(255, 0, &msg, m_sysid, 0, cmd, 0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 
           uint16_t n = mavlink_msg_to_send_buffer(buf, &msg);
           sendData(buf, n);
@@ -2536,8 +2536,8 @@ namespace Control
           IMC::DesiredHeading d_head;
           IMC::DesiredZ d_z;
 
-          // As wp_dist is an integer, and to avoid timing problems with the wp_dist 
-          // not being updated directly after a WP is accepted (sometimes causing two WPs 
+          // As wp_dist is an integer, and to avoid timing problems with the wp_dist
+          // not being updated directly after a WP is accepted (sometimes causing two WPs
           // to be accepted at the "same" time), we calculate distance manually.
           float wp_distance = 0;
 
@@ -2791,19 +2791,19 @@ namespace Control
             else if(std::strcmp("SYSID_MYGCS", parameter.param_id) == 0)
               {
                 spew("Received SYSID_MYGCS %d ");
-                if(parameter.param_value != m_sysid)
+                if(parameter.param_value != 255)
                 {
                   mavlink_message_t msg;
                   mavlink_msg_param_set_pack(m_sysid, 0, &msg,
                                              1, //! target_system System ID
                                              1, //! target_component Component ID
                                              "SYSID_MYGCS", //! Parameter name
-                                             m_sysid, //! MAV GPS Type
+                                             255,
                                              MAV_PARAM_TYPE_UINT8);
                   uint8_t buf[512];
                   int n = mavlink_msg_to_send_buffer(buf, &msg);
                   sendData(buf, n);
-                  inf(DTR("Setting parameter: %s %f"), "SYSID_MYGCS", m_sysid);
+                  inf(DTR("Setting parameter: %s %f"), "SYSID_MYGCS", 255);
                 }
               }
           }
