@@ -381,6 +381,14 @@ main(void)
                            
     EigenMatrix compare_mat5(input_mat5, 3, 6);
     test.boolean("EigenMatrix::horzCat(const EigenMatrix& mx_in)", eig_mat_res3 == compare_mat5);
+
+    EigenMatrix eig_mat_G(mat_3x3[POS_INT], 3, 3);
+    double input_mat6[] = {1, 2, 3, 4, 0, 1, 7, 2, 3};
+    EigenMatrix eig_mat_H(input_mat5, 2, 2);
+    eig_mat_G.put(1, 1, eig_mat_H);
+    double input_mat7[] = {1, 2, 3, 4, 0, 1, 7, 2, 3};
+    EigenMatrix compare_mat7(input_mat7, 3, 3);
+    test.boolean("EigenMatrix::put(size_t i, size_t j, const EigenMatrix& a)", eig_mat == compare_mat2);
   }
 
   //==========================================

@@ -466,12 +466,12 @@ namespace DUNE
       EigenMatrix&
       operator/=(double x);
 
-    //   //! This method fills a submatrix of a given Matrix.
-    //   //! @param[in] i row index
-    //   //! @param[in] j column index
-    //   //! @param[in] a submatrix
-    //   void
-    //   put(size_t i, size_t j, const EigenMatrix& a);
+      //! This method fills a submatrix of a given Matrix.
+      //! @param[in] i row index
+      //! @param[in] j column index
+      //! @param[in] a submatrix
+      void
+      put(size_t i, size_t j, const EigenMatrix& a);
 
     //   //! This routine returns the (i, j) minor Matrix.
     //   //! @param[in] i row index

@@ -695,31 +695,25 @@ namespace DUNE
       return *this;
     }
 
-    // void
-    // EigenMatrix::put(size_t i, size_t j, const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     return;
+    void
+    EigenMatrix::put(size_t i, size_t j, const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        return;
 
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   split();
+      size_t r = i + a.rows();
+      size_t c = j + a.columns();
 
-    //   size_t r = i + a.m_nrows;
-    //   size_t c = j + a.m_ncols;
+      if (r > m_data.rows() || c > m_data.cols())
+        throw Error("Invalid dimensions!");
 
-    //   if (r > m_nrows || c > m_ncols)
-    //     throw Error("Invalid dimensions!");
+      m_data.block(i, j, a.rows(), a.columns()) = a.m_data;
 
-    //   double* p = a.m_data;
-
-    //   for (size_t ii = i; ii < r; ii++)
-    //     for (size_t jj = j; jj < c; jj++)
-    //       m_data[ii * m_ncols + jj] = *(p++);
-
-    //   return;
-    // }
+      return;
+    }
 
     // EigenMatrix
     // EigenMatrix::mminor(size_t i, size_t j) const
