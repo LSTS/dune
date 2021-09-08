@@ -567,16 +567,16 @@ namespace DUNE
     //   double
     //   norm_inf(void) const;
 
-    //   //! Compute the median value of the ordered data of the matrix.
-    //   //! (does not assume the data is already ordered)
-    //   //! @return median of the matrix
-    //   double
-    //   median(void) const;
+      //! Compute the median value of the ordered data of the matrix.
+      //! (does not assume the data is already ordered)
+      //! @return median of the matrix
+      double
+      median(void) const;
 
-    //   //! Compute matrix trace (sum of diagonal elements for a square matrix).
-    //   //! @return trace of matrix
-    //   double
-    //   trace(void) const;
+      //! Compute matrix trace (sum of diagonal elements for a square matrix).
+      //! @return trace of matrix
+      double
+      trace(void) const;
 
     //   //! This routine checks if matrix is invertible.
     //   //! @return true if it is invertible, false otherwise
@@ -784,37 +784,37 @@ namespace DUNE
     //   friend EigenMatrix
     //   inverse_lup(const EigenMatrix& a);
 
-    //   //! This function returns a Matrix with the absolute
-    //   //! values of the entries of a given Matrix.
-    //   //! @param[in] a matrix
-    //   //! @return matrix with absolute values
-    //   friend EigenMatrix
-    //   abs(const EigenMatrix& a);
+      //! This function returns a Matrix with the absolute
+      //! values of the entries of a given Matrix.
+      //! @param[in] a matrix
+      //! @return matrix with absolute values
+      friend EigenMatrix
+      abs(const EigenMatrix& a);
 
-    //   //! This function returns the maximum value of a Matrix.
-    //   //! @param[in] a matrix
-    //   //! @return maximum value of matrix
-    //   friend double
-    //   max(const EigenMatrix& a);
+      //! This function returns the maximum value of a Matrix.
+      //! @param[in] a matrix
+      //! @return maximum value of matrix
+      friend double
+      max(const EigenMatrix& a);
 
-    //   //! This function returns the minimum value of a Matrix.
-    //   //! @param[in] a matrix
-    //   //! @return minimum value of matrix
-    //   friend double
-    //   min(const EigenMatrix& a);
+      //! This function returns the minimum value of a Matrix.
+      //! @param[in] a matrix
+      //! @return minimum value of matrix
+      friend double
+      min(const EigenMatrix& a);
 
-    //   //! This function returns the sum of the elements of a given Matrix.
-    //   //! @param[in] a matrix
-    //   //! @return sum of the elements of matrix
-    //   friend double
-    //   sum(const EigenMatrix& a);
+      //! This function returns the sum of the elements of a given Matrix.
+      //! @param[in] a matrix
+      //! @return sum of the elements of matrix
+      friend double
+      sum(const EigenMatrix& a);
 
-    //   //! This function returns the sum of the squares
-    //   //! of the elements of a given Matrix.
-    //   //! @param[in] a matrix
-    //   //! @return squared sum of the elements of matrix
-    //   friend double
-    //   squaresum(const EigenMatrix& a);
+      //! This function returns the sum of the squares
+      //! of the elements of a given Matrix.
+      //! @param[in] a matrix
+      //! @return squared sum of the elements of matrix
+      friend double
+      squaresum(const EigenMatrix& a);
 
     //   //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
     //   //! Matrix using Gauss elimination with partial pivoting.

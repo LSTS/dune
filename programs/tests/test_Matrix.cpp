@@ -460,5 +460,25 @@ main(void)
     test.boolean("EigenMatrix::to_column(void)", passed);
   }
 
+  //==========================================
+  // Test reductions
+  //==========================================
+  {
+    EigenMatrix eig_mat_a(mat_3x3[NEG_INT], 3, 3);
+    double test_input_a[] = {4, 3, 2, 1, 0, 1, 2, 3, 4};
+    EigenMatrix eig_test_a(test_input_a, 3, 3);
+    test.boolean("EigenMatrix::abs(const EigenMatrix& a)", eig_test_a == eig_test_a);
+
+    EigenMatrix eig_mat_b(mat_3x3[POS_INT], 3, 3);
+    test.boolean("EigenMatrix::max(const EigenMatrix& a)", max(eig_mat_b) == 9);
+    test.boolean("EigenMatrix::min(const EigenMatrix& a)", min(eig_mat_b) == 1);
+    test.boolean("EigenMatrix::sum(const EigenMatrix& a)", sum(eig_mat_b) == 45);
+    test.boolean("EigenMatrix::squaresum(const EigenMatrix& a)", squaresum(eig_mat_b) == 285);
+
+    Matrix mat_b(mat_3x3[POS_INT], 3, 3);
+    test.boolean("EigenMatrix::median(void) const", eig_mat_b.median() == mat_b.median());
+    test.boolean("EigenMatrix::trace(void) const", eig_mat_b.trace() == 15);
+  }
+
   return 0;
 }

@@ -48,11 +48,11 @@
 // #include <DUNE/Utils/String.hpp>
 // #include <DUNE/Math/Constants.hpp>
 #include <DUNE/Math/EigenMatrix.hpp>
-// #include <DUNE/Math/General.hpp>
+#include <DUNE/Math/General.hpp>
 // #include <DUNE/Parsers/Config.hpp>
 // #include "eigen/Dense"
 
-// #define ALLOCD(count) (double*)std::malloc(sizeof(double) * (count))
+#define ALLOCD(count) (double*)std::malloc(sizeof(double) * (count))
 // #define ALLOCI(count) (int*)std::malloc(sizeof(int) * (count))
 
 namespace DUNE
@@ -1171,33 +1171,29 @@ namespace DUNE
     //   return m;
     // }
 
-    // double
-    // EigenMatrix::median(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::median(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   double* p = m_data;
-    //   return DUNE::Math::median(p, m_size);
-    // }
+      double* p = ALLOCD(m_data.size());
+      Eigen::Map<RowMajorMatrix>(p, m_data.rows(), m_data.cols()) = m_data;
 
-    // double
-    // EigenMatrix::trace(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      return DUNE::Math::median(p, m_data.size());
+    }
 
-    //   if (!isSquare())
-    //     throw Error("not a square matrix!");
+    double
+    EigenMatrix::trace(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   double v = 0;
-    //   for (size_t i = 0; i < m_nrows; i++)
-    //     v += m_data[i * (m_nrows + 1)];
-    //   return v;
-    // }
+      if (!isSquare())
+        throw Error("not a square matrix!");
 
-    // EigenMatrix
-    // EigenMatrix::multiply(const EigenMatrix& m2)
+      return m_data.trace();
+    }
     // {
     //   if (isEmpty() || m2.isEmpty())
     //     throw Error("Trying to access an empty matrix!");
@@ -1767,95 +1763,56 @@ namespace DUNE
     //   return Minv;
     // }
 
-    // EigenMatrix
-    // abs(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    abs(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   EigenMatrix s(a.m_nrows, a.m_ncols);
+      EigenMatrix s(a);
 
-    //   for (size_t i = 0; i < a.m_size; i++)
-    //   {
-    //     s.m_data[i] = std::fabs(a.m_data[i]);
-    //   }
+      s.m_data.cwiseAbs();
 
-    //   return s;
-    // }
+      return s;
+    }
 
-    // double
-    // max(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    double
+    max(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   double* p = a.m_data;
-    //   double m = *(p++);
-    //   int size = a.m_size;
+      return a.m_data.maxCoeff();
+    }
 
-    //   for (int i = 1; i < size; i++)
-    //   {
-    //     double m1;
-    //     if ((m1 = *(p++)) > m)
-    //       m = m1;
-    //   }
+    double
+    min(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   return m;
-    // }
+      return a.m_data.minCoeff();
+    }
 
-    // double
-    // min(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    double
+    sum(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   double* p = a.m_data;
-    //   double m = *(p++);
-    //   int size = a.m_size;
+      return a.m_data.sum();
+    }
 
-    //   for (int i = 1; i < size; i++)
-    //   {
-    //     double m1;
-    //     if ((m1 = *(p++)) < m)
-    //       m = m1;
-    //   }
+    double
+    squaresum(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   return m;
-    // }
+      EigenMatrix s(a);
 
-    // double
-    // sum(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
-
-    //   double* p = a.m_data;
-    //   double s = 0;
-    //   int size = a.m_size;
-
-    //   for (int i = 0; i < size; i++)
-    //     s += *(p++);
-
-    //   return s;
-    // }
-
-    // double
-    // squaresum(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
-
-    //   double* p = a.m_data;
-    //   double ss = 0;
-    //   int size = a.m_size;
-
-    //   for (int i = 0; i < size; i++)
-    //   {
-    //     double s = *(p++); ss += s * s;
-    //   }
-
-    //   return ss;
-    // }
+      return s.m_data.array().square().sum();
+    }
 
     // int
     // EigenMatrix::upper_triangular_pp(double* M, int n, int m, double tolerance)
