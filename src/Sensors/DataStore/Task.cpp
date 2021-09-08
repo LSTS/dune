@@ -252,7 +252,6 @@ namespace Sensors
       consume(const IMC::EstimatedState* msg)
       {
         if(m_state == nullptr){
-          err(DTR("Lat:%f\tLon:%f\tZ:%f\tX:%f\nY:%f "),msg->lat,msg->lon,msg->z,msg->x,msg->y);
           fp64_t lat = msg->lat, lon = msg->lon;
           WGS84::displace(msg->x, msg->y, &lat, &lon);
           fillBaselines(msg->getTimeStamp(), lat, lon); //update base lat and lon
