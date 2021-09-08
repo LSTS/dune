@@ -52,6 +52,16 @@ enum
 double mat_3x3[2][9]={{1, 2, 3, 4, 5, 6, 7, 8, 9},
                       {-4, -3, -2, -1, 0, 1, 2, 3, 4}};
 double rect_mat[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+double vec_3[2][3] = {{1, 2, 3}, {4, 5, 6}};
+double mat_9x9[] = {1, 2, 3, 4, 5, 6, 7, 8, 9,
+                    10, 11, 12, 13, 14, 15, 16, 17, 18,
+                    19, 20, 21, 22, 23, 24, 25, 26, 27,
+                    28, 29, 30, 31, 32, 33, 34, 35, 36,
+                    37, 38, 39, 40, 41, 42, 43, 44, 45,
+                    46, 47, 48, 49, 50, 51, 52, 53, 54,
+                    55, 56, 57, 58, 59, 60, 61, 62, 63,
+                    64, 65, 66, 67, 68, 69, 70, 71, 72,
+                    73, 74, 75, 76, 77, 78, 79, 80, 81};
 
 // Auxiliary functions
 template<typename Mat>
@@ -484,6 +494,33 @@ main(void)
     Matrix mat_b(mat_3x3[POS_INT], 3, 3);
     test.boolean("EigenMatrix::median(void) const", eig_mat_b.median() == mat_b.median());
     test.boolean("EigenMatrix::trace(void) const", eig_mat_b.trace() == 15);
+  }
+
+  //==========================================
+  // Test matrix operations
+  //==========================================
+  {
+    EigenMatrix eig_mat_A(mat_3x3[POS_INT], 3, 3);
+    Matrix mat_A(mat_3x3[POS_INT], 3, 3);
+
+    EigenMatrix eig_test_A = eig_mat_A.pow(3);
+    Matrix test_A = mat_A.pow(3);
+    test.boolean("EigenMatrix::pow(unsigned int n)", compareElements(eig_test_A, test_A));
+
+    EigenMatrix eig_vec_A(vec_3[0], 3, 1);
+    EigenMatrix eig_vec_B(vec_3[1], 3, 1);
+    Matrix vec_A(vec_3[0], 3, 1);
+    Matrix vec_B(vec_3[1], 3, 1);
+
+    test.boolean("EigenMatrix::dot(const EigenMatrix& a, const EigenMatrix& b)", EigenMatrix::dot(eig_vec_A, eig_vec_B) == Matrix::dot(vec_A, vec_B));
+
+    EigenMatrix eig_test_B = EigenMatrix::cross(eig_vec_A, eig_vec_B);
+    Matrix test_B = Matrix::cross(vec_A, vec_B);
+    test.boolean("EigenMatrix::cross(const EigenMatrix& a, const EigenMatrix& b)", compareElements(eig_test_B, test_B));
+
+    EigenMatrix eig_mat_B(mat_9x9, 9, 9);
+    Matrix mat_B(mat_9x9, 9, 9);
+    test.boolean("EigenMatrix::det(void) const", eig_mat_A.det() == mat_A.det());
   }
 
   return 0;

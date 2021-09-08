@@ -60,7 +60,7 @@ namespace DUNE
   namespace Math
   {
     //! The value used to test for zero in matrix inversion
-    double EigenMatrix::precision = 1e-10;
+    double EigenMatrix::precision = 1e-9;
 
     EigenMatrix::EigenMatrix(void)
     { }
@@ -369,27 +369,27 @@ namespace DUNE
       return *this;
     }
 
-    // EigenMatrix&
-    // EigenMatrix::pow(unsigned int n)
-    // {
-    //   if (m_nrows != m_ncols)
-    //     throw Error("Matrix is not square!");
+    EigenMatrix&
+    EigenMatrix::pow(unsigned int n)
+    {
+      if (m_data.rows() != m_data.cols())
+        throw Error("Matrix is not square!");
 
-    //   EigenMatrix power(m_nrows);
+      EigenMatrix power(m_data.rows());
 
-    //   if (n == 0)
-    //   {
-    //     *this = power;
-    //   }
-    //   else if (n > 1)
-    //   {
-    //     for (unsigned int i = 0; i < n; i++)
-    //       power = power * (*this);
-    //     *this = power;
-    //   }
+      if (n == 0)
+      {
+        *this = power;
+      }
+      else if (n > 1)
+      {
+        for (unsigned int i = 0; i < n; i++)
+          power = power * (*this);
+        *this = power;
+      }
 
-    //   return *this;
-    // }
+      return *this;
+    }
 
     void
     EigenMatrix::toFile(const char* path)
@@ -449,18 +449,18 @@ namespace DUNE
       m_data.row(i).swap(m_data.row(j));
     }
 
-    // void
-    // EigenMatrix::set_precision(double p)
-    // {
-    //   if (p > 0)
-    //     precision = p;
-    // }
+    void
+    EigenMatrix::set_precision(double p)
+    {
+      if (p > 0)
+        precision = p;
+    }
 
-    // double
-    // EigenMatrix::get_precision(void)
-    // {
-    //   return precision;
-    // }
+    double
+    EigenMatrix::get_precision(void)
+    {
+      return precision;
+    }
 
     void
     EigenMatrix::resize(size_t r, size_t c)
@@ -861,14 +861,14 @@ namespace DUNE
     //   if (isEmpty())
     //     throw Error("Trying to access an empty matrix!");
 
-    //   if (m_nrows != m_ncols)
+    //   if (!isSquare())
     //     throw Error("Matrix is not square!");
 
-    //   if (m_nrows == 1)
+    //   if (m_data.rows() == 1)
     //     return this->element(0, 0);
-    //   else if (m_nrows == 2)
+    //   else if (m_data.rows() == 2)
     //     return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
-    //   else if (m_nrows == 3)
+    //   else if (m_data.rows() == 3)
     //     return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
     //             + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
     //             + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
@@ -878,7 +878,7 @@ namespace DUNE
     //   else
     //   {
     //     double d = 0;
-    //     for (size_t j = 0; j < m_ncols; j++)
+    //     for (size_t j = 0; j < m_data.cols(); j++)
     //     {
     //       d += element(0, j) * std::pow(-1.0, (double)j) * (mminor(0, j)).detr();
     //     }
@@ -886,40 +886,17 @@ namespace DUNE
     //   }
     // }
 
-    // double
-    // EigenMatrix::det(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::det(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (m_nrows != m_ncols)
-    //     throw Error("Matrix is not square!");
+      if (!isSquare())
+        throw Error("Matrix is not square!");
 
-    //   if (m_nrows == 1)
-    //     return this->element(0, 0);
-    //   else if (m_nrows == 2)
-    //     return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
-    //   else if (m_nrows == 3)
-    //     return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
-    //             + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
-    //             + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
-    //             - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
-    //             - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
-    //             - this->element(2, 2) * this->element(1, 0) * this->element(0, 1));
-    //   else
-    //   {
-    //     EigenMatrix L(m_nrows), U(m_nrows), P(m_nrows);
-    //     unsigned int exp = this->lup(L, U, P);
-    //     double dl = 1, du = 1;
-    //     for (size_t i = 0; i < m_nrows; i++)
-    //     {
-    //       // if LUP is implemented using Doolittle's algorithm, dl = 1.
-    //       dl = dl * L(i, i);
-    //       du = du * U(i, i);
-    //     }
-    //     return std::pow(-1.0, (double)exp) * dl * du;
-    //   }
-    // }
+      return m_data.determinant() < precision ? 0 : m_data.determinant();
+    }
 
     // bool
     // EigenMatrix::Sylvester(void) const
@@ -1879,51 +1856,44 @@ namespace DUNE
     //   return 0;
     // }
 
-    // double
-    // EigenMatrix::dot(const EigenMatrix& a, const EigenMatrix& b)
-    // {
-    //   if (a.isEmpty() || a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::dot(const EigenMatrix& a, const EigenMatrix& b)
+    {
+      if (a.isEmpty() || b.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   // Check if a and b are both column vectors or row vectors
-    //   if (!a.isVector() || a.m_nrows != b.m_nrows || a.m_ncols != b.m_ncols)
-    //     throw Error("Invalid arguments for dot product!");
+      // Check if a and b are both column vectors or row vectors
+      if (!a.isVector() || a.rows() != b.rows() || a.columns() != b.columns())
+        throw Error("Invalid arguments for dot product!");
 
-    //   double v = 0;
-    //   double* pa = a.m_data, * pb = b.m_data, * end = pa + a.m_size;
+      Eigen::VectorXd a_vec = toEigenVector(a.m_data);
+      Eigen::VectorXd b_vec = toEigenVector(b.m_data);
 
-    //   while (pa != end)
-    //   {
-    //     v += (*pa) * (*pb);
-    //     ++pa;
-    //     ++pb;
-    //   }
+      return a_vec.dot(b_vec);
+    }
 
-    //   return v;
-    // }
+    EigenMatrix
+    EigenMatrix::cross(const EigenMatrix& a, const EigenMatrix& b)
+    {
+      if (a.isEmpty() || a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    // EigenMatrix
-    // EigenMatrix::cross(const EigenMatrix& a, const EigenMatrix& b)
-    // {
-    //   if (a.isEmpty() || a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+      // Check if a and b are both column vectors or row vectors
+      if (!a.isVector() || !b.isVector())
+        throw Error("unable cross product matrices that are not vectors!");
 
-    //   // Check if a and b are both column vectors or row vectors
-    //   if (!a.isVector() || !b.isVector())
-    //     throw Error("unable cross product matrices that are not vectors!");
+      if (a.size() != 3 || b.size() != 3)
+        throw Error("vectors are not 3D!");
 
-    //   if (a.size() != 3 || b.size() != 3)
-    //     throw Error("vectors are not 3D!");
+      Eigen::Vector3d a_vec(a(0), a(1), a(2));
+      Eigen::Vector3d b_vec(b(0), b(1), b(2));
 
-    //   EigenMatrix v;
-    //   v.resizeAndFill(a.rows(), a.columns(), 0.0);
+      Eigen::VectorXd v = a_vec.cross(b_vec);
 
-    //   v(0) = a(1) * b(2) - a(2) * b(1);
-    //   v(1) = a(2) * b(0) - a(0) * b(2);
-    //   v(2) = a(0) * b(1) - a(1) * b(0);
-
-    //   return v;
-    // }
+      EigenMatrix m;
+      m.m_data = toEigenMatrix(v);
+      return m;
+    }
 
     // void
     // EigenMatrix::readFromLines(const std::vector<std::string>& clines)
@@ -1961,5 +1931,25 @@ namespace DUNE
 
     //   this->readFromLines(clines);
     // }
+
+    Eigen::VectorXd 
+    EigenMatrix::toEigenVector(const RowMajorMatrix &m)
+    {
+      double* p = ALLOCD(m.size());
+      Eigen::Map<RowMajorMatrix>(p, m.rows(), m.cols()) = m;
+      Eigen::VectorXd v(Eigen::Map<Eigen::VectorXd>(p, m.cols()*m.rows()));
+
+      return v;
+    }
+
+    EigenMatrix::RowMajorMatrix
+    EigenMatrix::toEigenMatrix(const Eigen::VectorXd &v)
+    {
+      double* p = ALLOCD(v.size());
+      Eigen::Map<Eigen::VectorXd>(p, v.size()) = v;
+      RowMajorMatrix m(Eigen::Map<RowMajorMatrix>(p, 1, v.size()));
+
+      return m;
+    }
   }
 }

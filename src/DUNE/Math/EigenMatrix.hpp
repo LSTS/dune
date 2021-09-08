@@ -238,11 +238,11 @@ namespace DUNE
       EigenMatrix&
       horzCat(const EigenMatrix& m_in);
 
-    //   //! Returns the power matrix X^n.
-    //   //! @param[in] n positive integer exponent to raise the matrix to
-    //   //! @return reference to the power of the matrix
-    //   EigenMatrix&
-    //   pow(unsigned int n);
+      //! Returns the power matrix X^n.
+      //! @param[in] n positive integer exponent to raise the matrix to
+      //! @return reference to the power of the matrix
+      EigenMatrix&
+      pow(unsigned int n);
 
       //! Saves matrix to text file.
       //! @param[in] path file path string (eg: "E:\dir/x.txt").
@@ -293,15 +293,15 @@ namespace DUNE
       void
       swapRows(unsigned i, unsigned j);
 
-    //   //! This method sets the precision used when inverting a Matrix.
-    //   //! @param[in] p value of the precision to be used when inverting
-    //   static void
-    //   set_precision(double p);
+      //! This method sets the precision used when inverting a Matrix.
+      //! @param[in] p value of the precision to be used when inverting
+      static void
+      set_precision(double p);
 
-    //   //! This method returns the precision currently in use.
-    //   //! @return value of the precision in use
-    //   static double
-    //   get_precision(void);
+      //! This method returns the precision currently in use.
+      //! @return value of the precision in use
+      static double
+      get_precision(void);
 
       //! This method resizes a Matrix to the same dimensions of other matrix.
       //! Note that no data copy is performed.
@@ -496,17 +496,17 @@ namespace DUNE
     //   void
     //   lu(EigenMatrix& L, EigenMatrix& U) const;
 
-    //   //! Matrix determinant through Laplace expansion
-    //   //! Recursive technique O(n!).
-    //   //! @return matrix determinant
-    //   double
-    //   detr(void) const;
+      // //! Matrix determinant through Laplace expansion
+      // //! Recursive technique O(n!).
+      // //! @return matrix determinant
+      // double
+      // detr(void) const;
 
-    //   //! Matrix determinant through LUP decomposition
-    //   //! Iterative technique O(n^3).
-    //   //! @return matrix determinant
-    //   double
-    //   det(void) const;
+      //! Matrix determinant through LUP decomposition
+      //! Iterative technique O(n^3).
+      //! @return matrix determinant
+      double
+      det(void) const;
 
     //   //! Sylvester's criterion implementation
     //   //! @return true if success, false otherwise
@@ -615,21 +615,21 @@ namespace DUNE
       bool
       isRowVector(size_t columns) const;
 
-    //   //! Calculate dot product.
-    //   //! Arguments must be equally sized column or row vectors.
-    //   //! @param[in] a matrix.
-    //   //! @param[in] b matrix.
-    //   //! @return resultant matrix of dot product
-    //   static double
-    //   dot(const EigenMatrix& a, const EigenMatrix& b);
+      //! Calculate dot product.
+      //! Arguments must be equally sized column or row vectors.
+      //! @param[in] a matrix.
+      //! @param[in] b matrix.
+      //! @return resultant matrix of dot product
+      static double
+      dot(const EigenMatrix& a, const EigenMatrix& b);
 
-    //   //! Calculate cross product.
-    //   //! Arguments must be 3D column or row vectors.
-    //   //! @param[in] a matrix.
-    //   //! @param[in] b matrix.
-    //   //! @return resultant matrix of cross product
-    //   static EigenMatrix
-    //   cross(const EigenMatrix& a, const EigenMatrix& b);
+      //! Calculate cross product.
+      //! Arguments must be 3D column or row vectors.
+      //! @param[in] a matrix.
+      //! @param[in] b matrix.
+      //! @return resultant matrix of cross product
+      static EigenMatrix
+      cross(const EigenMatrix& a, const EigenMatrix& b);
 
       //! This method returns the sum of two matrices.
       //! @param[in] m1 matrix to be summed.
@@ -859,6 +859,12 @@ namespace DUNE
                             Eigen::Dynamic, 
                             Eigen::RowMajor> RowMajorMatrix;
       RowMajorMatrix m_data;
+
+      static Eigen::VectorXd
+      toEigenVector(const RowMajorMatrix &m);
+
+      static RowMajorMatrix
+      toEigenMatrix(const Eigen::VectorXd &v);
     };
 
     // //! This function returns a 3x3 skew symmetrical
