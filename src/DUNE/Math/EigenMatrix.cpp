@@ -715,59 +715,59 @@ namespace DUNE
       return;
     }
 
-    // EigenMatrix
-    // EigenMatrix::mminor(size_t i, size_t j) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    EigenMatrix
+    EigenMatrix::mminor(size_t i, size_t j) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (m_nrows != m_ncols)
-    //     throw Error("Matrix is not square!");
+      if (m_data.rows() != m_data.cols())
+        throw Error("Matrix is not square!");
 
-    //   if (i >= m_nrows || j >= m_ncols)
-    //     throw Error("Invalid dimensions!");
+      if (i >= m_data.rows() || j >= m_data.cols())
+        throw Error("Invalid dimensions!");
 
-    //   EigenMatrix mi;
-    //   size_t n = m_nrows - 1;
-    //   mi.resizeAndFill(n, n, 0.0);
-    //   if (0 == i && 0 == j)
-    //     mi = this->get(1, n, 1, n);
-    //   else if (n == i && n == j)
-    //     mi = this->get(0, n - 1, 0, n - 1);
-    //   else if (0 == i && n == j)
-    //     mi = this->get(1, n, 0, n - 1);
-    //   else if (n == i && 0 == j)
-    //     mi = this->get(0, n - 1, 1, n);
-    //   else if (0 == i)
-    //   {
-    //     mi.put(0, 0, this->get(1, n, 0, j - 1));
-    //     mi.put(0, j, this->get(1, n, j + 1, n));
-    //   }
-    //   else if (0 == j)
-    //   {
-    //     mi.put(0, 0, this->get(0, i - 1, 1, n));
-    //     mi.put(i, 0, this->get(i + 1, n, 1, n));
-    //   }
-    //   else if (n == i)
-    //   {
-    //     mi.put(0, 0, this->get(0, n - 1, 0, j - 1));
-    //     mi.put(0, j, this->get(0, n - 1, j + 1, n));
-    //   }
-    //   else if (n == j)
-    //   {
-    //     mi.put(0, 0, this->get(0, i - 1, 0, n - 1));
-    //     mi.put(i, 0, this->get(i + 1, n, 0, n - 1));
-    //   }
-    //   else
-    //   {
-    //     mi.put(0, 0, this->get(0, i - 1, 0, j - 1));
-    //     mi.put(i, 0, this->get(i + 1, n, 0, j - 1));
-    //     mi.put(0, j, this->get(0, i - 1, j + 1, n));
-    //     mi.put(i, j, this->get(i + 1, n, j + 1, n));
-    //   }
+      EigenMatrix mi;
+      size_t n = m_data.rows() - 1;
+      mi.resizeAndFill(n, n, 0.0);
+      if (0 == i && 0 == j)
+        mi = this->get(1, n, 1, n);
+      else if (n == i && n == j)
+        mi = this->get(0, n - 1, 0, n - 1);
+      else if (0 == i && n == j)
+        mi = this->get(1, n, 0, n - 1);
+      else if (n == i && 0 == j)
+        mi = this->get(0, n - 1, 1, n);
+      else if (0 == i)
+      {
+        mi.put(0, 0, this->get(1, n, 0, j - 1));
+        mi.put(0, j, this->get(1, n, j + 1, n));
+      }
+      else if (0 == j)
+      {
+        mi.put(0, 0, this->get(0, i - 1, 1, n));
+        mi.put(i, 0, this->get(i + 1, n, 1, n));
+      }
+      else if (n == i)
+      {
+        mi.put(0, 0, this->get(0, n - 1, 0, j - 1));
+        mi.put(0, j, this->get(0, n - 1, j + 1, n));
+      }
+      else if (n == j)
+      {
+        mi.put(0, 0, this->get(0, i - 1, 0, n - 1));
+        mi.put(i, 0, this->get(i + 1, n, 0, n - 1));
+      }
+      else
+      {
+        mi.put(0, 0, this->get(0, i - 1, 0, j - 1));
+        mi.put(i, 0, this->get(i + 1, n, 0, j - 1));
+        mi.put(0, j, this->get(0, i - 1, j + 1, n));
+        mi.put(i, j, this->get(i + 1, n, j + 1, n));
+      }
 
-    //   return mi;
-    // }
+      return mi;
+    }
 
     // void
     // EigenMatrix::lu(EigenMatrix& L, EigenMatrix& U) const

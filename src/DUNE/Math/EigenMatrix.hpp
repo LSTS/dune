@@ -473,12 +473,12 @@ namespace DUNE
       void
       put(size_t i, size_t j, const EigenMatrix& a);
 
-    //   //! This routine returns the (i, j) minor Matrix.
-    //   //! @param[in] i row index
-    //   //! @param[in] j column index
-    //   //! @return matrix
-    //   EigenMatrix
-    //   mminor(size_t i, size_t j) const;
+      //! This routine returns the (i, j) minor Matrix.
+      //! @param[in] i row index
+      //! @param[in] j column index
+      //! @return matrix
+      EigenMatrix
+      mminor(size_t i, size_t j) const;
 
     //   //! LUP decomposition (P * A = L * U).
     //   //! This method returns the number of permutations.
