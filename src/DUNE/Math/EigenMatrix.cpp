@@ -1194,54 +1194,21 @@ namespace DUNE
 
       return m_data.trace();
     }
-    // {
-    //   if (isEmpty() || m2.isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
 
-    //   if (m_ncols != m2.m_nrows)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+    EigenMatrix
+    EigenMatrix::multiply(const EigenMatrix& m2)
+    {
+      if (isEmpty() || m2.isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   EigenMatrix s(m_nrows, m2.m_ncols);
+      if (m_data.cols() != m2.m_data.cols())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //   int n = m_nrows;
-    //   int m = m_ncols;
-    //   int r = m2.m_ncols;
-
-    //   double* m1_p = m_data;
-
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int k = 0; k < m; k++)
-    //     {
-    //       double v = *m1_p++; // <-> v = m1(i,k)
-    //       double* m2_p = m2.m_data + k * r;
-    //       double* s_p = s.m_data + i * r;
-
-    //       // not pretty, but hopefully faster
-    //       if (std::fabs(v) <= precision)
-    //       {
-    //         if (!k)
-    //         {
-    //           for (int j = 0; j < r; j++)
-    //           {
-    //             *s_p = 0;
-    //             s_p++;
-    //           }
-    //         }
-    //       }
-    //       else
-    //         for (int j = 0; j < r; j++)
-    //         {
-    //           if (!k)
-    //             *s_p = 0;
-    //           *s_p += v * (*m2_p); // <-> s(i,j) += m1(i,k) * m2(k,j)
-    //           s_p++;
-    //           m2_p++;
-    //         }
-    //     }
-    //   }
-    //   return s;
-    // }
+      EigenMatrix s(m_data.rows(), m2.m_data.cols());
+      s.m_data = m_data * m2.m_data;
+      
+      return s;
+    }
 
     EigenMatrix
     operator+(const EigenMatrix& m1, const EigenMatrix& m2)

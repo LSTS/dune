@@ -403,11 +403,11 @@ namespace DUNE
       void
       to_column(void);
 
-    //   //! Right-multiply a matrix with given matrix.
-    //   //! @param[in] m matrix to be multiplied
-    //   //! @return multiplied matrix
-    //   EigenMatrix
-    //   multiply(const EigenMatrix& m);
+      //! Right-multiply a matrix with given matrix.
+      //! @param[in] m matrix to be multiplied
+      //! @return multiplied matrix
+      EigenMatrix
+      multiply(const EigenMatrix& m);
 
       //! Compare matrices for equality.
       //! @param[in] m matrix to compare.

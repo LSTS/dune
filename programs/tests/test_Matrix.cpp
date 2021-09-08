@@ -260,6 +260,12 @@ main(void)
     double test_input_g[] = {0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5};
     EigenMatrix eig_test_g(test_input_g, 3, 3);
     test.boolean("EigenMatrix::operator/(const EigenMatrix& a, double x)", eig_mat_D == eig_test_g);
+
+    Matrix mat_A(mat_3x3[POS_INT], 3, 3);
+    Matrix mat_C(mat_3x3[NEG_INT], 3, 3);
+    EigenMatrix eig_test_h = eig_mat_A*eig_mat_C;
+    Matrix test_h = mat_A*mat_C;
+    test.boolean("EigenMatrix::multiply(const EigenMatrix& m2)", compareElements(eig_test_h, test_h));
   }
 
   //==========================================
