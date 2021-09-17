@@ -95,8 +95,7 @@ namespace Transports
     {
       //! Serialization buffer.
       uint8_t* m_bfr;
-      //! UDP Socket.
-      UDPSocket m_sock;
+
       //! Set of static nodes.
       std::set<NodeAddress> m_static_dsts;
       //! Set of destination nodes.
@@ -197,6 +196,11 @@ namespace Transports
           delete[] m_bfr;
       }
 
+      /**
+       * @brief Initialise static nodes
+       * 
+       * 
+       */
       void
       onUpdateParameters(void)
       {
@@ -231,6 +235,12 @@ namespace Transports
         }
       }
 
+      /**
+       * @brief Bind the UDPSocket to the port specified in the .ini file 
+       * Initialise and dispatch announce service.
+       * Start listener on UDP port.
+       * 
+       */
       void
       onResourceAcquisition(void)
       {
@@ -243,6 +253,7 @@ namespace Transports
         {
           try
           {
+            ////////////////////////////////////////////////////////////ziml//////
             m_sock.bind(m_args.port, Address::Any, false);
             break;
           }
@@ -297,6 +308,7 @@ namespace Transports
         m_lcomms->setActive(m_comm_limitations);
         m_node_table.setLimitedComms(m_lcomms);
 
+        ////////////////////////////////////////////////////////////ziml//////
         // Start listener thread.
         m_listener = new Listener(*this, m_sock, m_lcomms,
                                   m_args.contact_timeout, m_args.trace_in);
@@ -305,6 +317,10 @@ namespace Transports
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
+      /**
+       * @brief Stop listening on UDP connection/reset listener
+       * 
+       */
       void
       onResourceRelease(void)
       {
@@ -318,6 +334,20 @@ namespace Transports
         Memory::clear(m_lcomms);
       }
 
+            //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      {
+        inf("onResourceInitialisation called");
+      }
+
+      /**
+       * @brief Consume any other IMC message than the Announce message, serialise it
+       * and write it to all static (m_static_dst) and dynamic (m_node_table) 
+       * nodes over UDP.
+       * 
+       * @param msg IMC message to be sent
+       */
       void
       consume(const IMC::Message* msg)
       {
@@ -354,9 +384,11 @@ namespace Transports
         std::set<NodeAddress>::iterator itr = m_static_dsts.begin();
         for (; itr != m_static_dsts.end(); ++itr)
         {
+          war("hello from STATIC node");
           try
           {
             m_sock.write(m_bfr, rv, itr->getAddress(), itr->getPort());
+            
           }
           catch (...)
           { }
@@ -365,10 +397,18 @@ namespace Transports
         if (m_args.dynamic_nodes)
         {
           // Send to dynamic nodes.
+          ////////////////////////////////////////////////////////////ziml//////
           m_node_table.send(m_sock, m_bfr, rv, msg->getId());
+          war("hello from DYNAMIC node");
         }
       }
 
+      /**
+       * @brief Update @m_node_table of dynamic nodes with the new node 
+       * that sent the Announce message
+       * 
+       * @param msg Announce message from peer
+       */
       void
       consume(const IMC::Announce* msg)
       {
@@ -385,6 +425,11 @@ namespace Transports
         m_lcomms->setAnnounce(msg);
       }
 
+      /**
+       * @brief Verify which nodes are still active and activate transmission 
+       * to those nodes
+       * 
+       */
       void
       refreshContacts(void)
       {
