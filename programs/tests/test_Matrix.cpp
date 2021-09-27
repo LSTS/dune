@@ -523,5 +523,24 @@ main(void)
     test.boolean("EigenMatrix::det(void) const", eig_mat_A.det() == mat_A.det());
   }
 
+  //==========================================
+  // Test norms
+  //==========================================
+  {
+    EigenMatrix eig_vec_A(vec_3[0], 3, 1);
+    Matrix vec_A(vec_3[0], 3, 1);
+
+    EigenMatrix eig_mat_A(mat_3x3[POS_INT], 3, 3);
+    Matrix mat_A(mat_3x3[POS_INT], 3, 3);
+
+    bool passed = true;
+    passed &= eig_vec_A.norm_p(1) == vec_A.norm_p(1);
+    passed &= eig_vec_A.norm_p(2) == vec_A.norm_p(2);
+    passed &= eig_mat_A.norm_p(2) == mat_A.norm_p(2);
+    test.boolean("EigenMatrix::norm_p(double p) const", passed);
+    test.boolean("EigenMatrix::norm_2(void) const", eig_vec_A.norm_2() == vec_A.norm_2() && eig_mat_A.norm_2() == mat_A.norm_2());
+    test.boolean("EigenMatrix::norm_inf(void) const", eig_vec_A.norm_inf() == vec_A.norm_inf() && eig_mat_A.norm_inf() == mat_A.norm_inf());
+  }
+
   return 0;
 }

@@ -1108,45 +1108,38 @@ namespace DUNE
     //   return eA;
     // }
 
-    // double
-    // EigenMatrix::norm_p(double p) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::norm_p(double p) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (p < 1)
-    //     throw Error("Incompatible value for p!");
+      if (p < 1)
+        throw Error("Incompatible value for p!");
 
-    //   double n = 0;
-    //   for (unsigned int i = 0; i < m_size; i++)
-    //     n += std::pow(std::abs(m_data[i]), p);
-    //   return std::pow(n, 1 / p);
-    // }
+      if (p == 1)
+        return m_data.lpNorm<1>();
+      if (p == 2)
+        return m_data.lpNorm<2>();
+    }
 
-    // double
-    // EigenMatrix::norm_2(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::norm_2(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   double n = 0;
-    //   for (unsigned int i = 0; i < m_size; i++)
-    //     n += m_data[i] * m_data[i];
-    //   return std::sqrt(n);
-    // }
+      return m_data.lpNorm<2>();
+    }
 
-    // double
-    // EigenMatrix::norm_inf(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::norm_inf(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   double m = 0;
-    //   for (unsigned int i = 0; i < m_size; i++)
-    //     m = std::max(std::abs(m_data[i]), m);
-
-    //   return m;
-    // }
+      return m_data.lpNorm<Eigen::Infinity>();
+    }
 
     double
     EigenMatrix::median(void) const

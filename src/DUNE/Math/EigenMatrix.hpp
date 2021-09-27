@@ -541,31 +541,31 @@ namespace DUNE
     //   EigenMatrix
     //   expmts(double tol = 1e-05) const;
 
-    //   //! This method implements the p-norm for both matrices and vectors.
-    //   //!
-    //   //! The following values of p yield particular cases:
-    //   //! Vectors:
-    //   //! p = 1: Manhattan/taxicab norm;
-    //   //! p = 2: Euclidean norm;
-    //   //! very large values of p: infinity/maximum norm;
-    //   //! Matrices:
-    //   //! p = 2: Froebnius norm;
-    //   //! very large values of p: maximum norm;
-    //   //! @param[in] p norm value
-    //   //! @result resultant norm
-    //   double
-    //   norm_p(double p) const;
+      //! This method implements the p-norm for both matrices and vectors.
+      //!
+      //! The following values of p yield particular cases:
+      //! Vectors:
+      //! p = 1: Manhattan/taxicab norm;
+      //! p = 2: Euclidean norm;
+      //! very large values of p: infinity/maximum norm;
+      //! Matrices:
+      //! p = 2: Froebnius norm;
+      //! very large values of p: maximum norm;
+      //! @param[in] p norm value
+      //! @result resultant norm
+      double
+      norm_p(double p) const;
 
-    //   //! This implements the (element-wise) 2-norm, corresponding to the Euclidean norm
-    //   //! for vectors and Froebnius norm for matrices.
-    //   //! @return resultant norm
-    //   double
-    //   norm_2(void) const;
+      //! This implements the (element-wise) 2-norm, corresponding to the Euclidean norm
+      //! for vectors and Froebnius norm for matrices.
+      //! @return resultant norm
+      double
+      norm_2(void) const;
 
-    //   //! This implements the infinity-norm.
-    //   //! @return resultant norm
-    //   double
-    //   norm_inf(void) const;
+      //! This implements the infinity-norm.
+      //! @return resultant norm
+      double
+      norm_inf(void) const;
 
       //! Compute the median value of the ordered data of the matrix.
       //! (does not assume the data is already ordered)
