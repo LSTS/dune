@@ -62,6 +62,7 @@ double mat_9x9[] = {1, 2, 3, 4, 5, 6, 7, 8, 9,
                     55, 56, 57, 58, 59, 60, 61, 62, 63,
                     64, 65, 66, 67, 68, 69, 70, 71, 72,
                     73, 74, 75, 76, 77, 78, 79, 80, 81};
+double invertable_3x3[] = {1, 2, 3, 3, 2, 1, 2, 1, 3};
 
 // Auxiliary functions
 template<typename Mat>
@@ -521,6 +522,15 @@ main(void)
     EigenMatrix eig_mat_B(mat_9x9, 9, 9);
     Matrix mat_B(mat_9x9, 9, 9);
     test.boolean("EigenMatrix::det(void) const", eig_mat_A.det() == mat_A.det());
+
+    EigenMatrix eig_mat_C(rect_mat, 4, 3);
+    double test_input_c[] = {1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12};
+    EigenMatrix eig_test_C(test_input_c, 3, 4);
+    test.boolean("EigenMatrix::transpose(const EigenMatrix& a)", transpose(eig_mat_C) == eig_test_C);
+
+    EigenMatrix eig_mat_D(mat_3x3[POS_INT], 3, 3);
+    EigenMatrix eig_mat_E(invertable_3x3, 3, 3);
+    test.boolean("EigenMatrix::isInvertible(void) const", !eig_mat_D.isInvertible() && eig_mat_E.isInvertible());
   }
 
   //==========================================

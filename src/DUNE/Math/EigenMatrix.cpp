@@ -855,36 +855,36 @@ namespace DUNE
     //   return permutations;
     // }
 
-    // double
-    // EigenMatrix::detr(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    double
+    EigenMatrix::detr(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (!isSquare())
-    //     throw Error("Matrix is not square!");
+      if (!isSquare())
+        throw Error("Matrix is not square!");
 
-    //   if (m_data.rows() == 1)
-    //     return this->element(0, 0);
-    //   else if (m_data.rows() == 2)
-    //     return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
-    //   else if (m_data.rows() == 3)
-    //     return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
-    //             + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
-    //             + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
-    //             - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
-    //             - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
-    //             - this->element(2, 2) * this->element(1, 0) * this->element(0, 1));
-    //   else
-    //   {
-    //     double d = 0;
-    //     for (size_t j = 0; j < m_data.cols(); j++)
-    //     {
-    //       d += element(0, j) * std::pow(-1.0, (double)j) * (mminor(0, j)).detr();
-    //     }
-    //     return d;
-    //   }
-    // }
+      if (m_data.rows() == 1)
+        return this->element(0, 0);
+      else if (m_data.rows() == 2)
+        return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
+      else if (m_data.rows() == 3)
+        return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
+                + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
+                + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
+                - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
+                - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
+                - this->element(2, 2) * this->element(1, 0) * this->element(0, 1));
+      else
+      {
+        double d = 0;
+        for (size_t j = 0; j < m_data.cols(); j++)
+        {
+          d += element(0, j) * std::pow(-1.0, (double)j) * (mminor(0, j)).detr();
+        }
+        return d;
+      }
+    }
 
     double
     EigenMatrix::det(void) const
@@ -898,30 +898,30 @@ namespace DUNE
       return m_data.determinant() < precision ? 0 : m_data.determinant();
     }
 
-    // bool
-    // EigenMatrix::Sylvester(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    bool
+    EigenMatrix::Sylvester(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (m_nrows != m_ncols)
-    //     throw Error("Matrix is not square!");
+      if (!isSquare())
+        throw Error("Matrix is not square!");
 
-    //   if (m_nrows < 1)
-    //     throw Error("Invalid dimensions!");
+      if (m_data.rows() < 1)
+        throw Error("Invalid dimensions!");
 
-    //   EigenMatrix m = *this;
+      EigenMatrix m = *this;
 
-    //   for (size_t i = m_nrows - 1; i > 0; i--)
-    //   {
-    //     if (m.det() <= 0)
-    //       return false;
-    //     else
-    //       m = m.mminor(i, i);
-    //   }
+      for (size_t i = m_data.rows() - 1; i > 0; i--)
+      {
+        if (m.det() <= 0)
+          return false;
+        else
+          m = m.mminor(i, i);
+      }
 
-    //   return true;
-    // }
+      return true;
+    }
 
     // EigenMatrix
     // EigenMatrix::toDCM(void) const
@@ -1337,57 +1337,29 @@ namespace DUNE
       return is;
     }
 
-    // EigenMatrix
-    // transpose(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    transpose(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   int n = a.m_nrows;
-    //   int m = a.m_ncols;
+      EigenMatrix t(a.columns(), a.rows());
+      t.m_data = a.m_data.transpose();
 
-    //   EigenMatrix t(m, n);
+      return t;
+    }
 
-    //   for (int i = 0; i < n; i++)
-    //     for (int j = 0; j < m; j++)
-    //       (t.m_data + j * n)[i] = (a.m_data + i * m)[j];
+    bool
+    EigenMatrix::isInvertible(void) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   return t;
-    // }
+      if (rows() != columns())
+        throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
 
-    // bool
-    // EigenMatrix::isInvertible(void) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
-
-    //   if (m_nrows != m_ncols)
-    //     throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
-
-    //   int n = m_nrows;
-    //   double* M = ALLOCD(2 * n * n);
-    //   double* p1 = M;
-    //   double* p2 = m_data;
-
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int j = 0; j < n; j++)
-    //     {
-    //       *p1 = *p2;
-    //       *(p1 + n) = (i == j) ? 1 : 0;
-    //       p1++;
-    //       p2++;
-    //     }
-
-    //     p1 += n;
-    //   }
-
-    //   int rv = upper_triangular_pp(M, n, n + n, EigenMatrix::precision);
-
-    //   std::free(M);
-
-    //   return rv == 0;
-    // }
+      return m_data.fullPivLu().isInvertible();
+    }
 
     // EigenMatrix
     // inverse_pp(const EigenMatrix& a)

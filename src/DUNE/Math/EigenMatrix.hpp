@@ -496,11 +496,11 @@ namespace DUNE
     //   void
     //   lu(EigenMatrix& L, EigenMatrix& U) const;
 
-      // //! Matrix determinant through Laplace expansion
-      // //! Recursive technique O(n!).
-      // //! @return matrix determinant
-      // double
-      // detr(void) const;
+      //! Matrix determinant through Laplace expansion
+      //! Recursive technique O(n!).
+      //! @return matrix determinant
+      double
+      detr(void) const;
 
       //! Matrix determinant through LUP decomposition
       //! Iterative technique O(n^3).
@@ -508,10 +508,10 @@ namespace DUNE
       double
       det(void) const;
 
-    //   //! Sylvester's criterion implementation
-    //   //! @return true if success, false otherwise
-    //   bool
-    //   Sylvester(void) const;
+      //! Sylvester's criterion implementation
+      //! @return true if success, false otherwise
+      bool
+      Sylvester(void) const;
 
     //   //! Convert from Euler angles or quaternions to
     //   //! Direction Cosines Matrix attitude representation.
@@ -578,10 +578,10 @@ namespace DUNE
       double
       trace(void) const;
 
-    //   //! This routine checks if matrix is invertible.
-    //   //! @return true if it is invertible, false otherwise
-    //   bool
-    //   isInvertible(void) const;
+      //! This routine checks if matrix is invertible.
+      //! @return true if it is invertible, false otherwise
+      bool
+      isInvertible(void) const;
 
       //! This routine checks if matrix is square.
       //! @return true if it is squared, false otherwise
@@ -710,11 +710,11 @@ namespace DUNE
       friend DUNE_DLL_SYM std::istream&
       operator>>(std::istream& is, EigenMatrix& a);
 
-    //   //! This method returns the transpose of a Matrix.
-    //   //! @param[in] a to be transposed.
-    //   //! @return transposed matrix.
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   transpose(const EigenMatrix& a);
+      //! This method returns the transpose of a Matrix.
+      //! @param[in] a to be transposed.
+      //! @return transposed matrix.
+      friend DUNE_DLL_SYM EigenMatrix
+      transpose(const EigenMatrix& a);
 
     //   //! This methods calculates the inverse of a Matrix.
     //   //! The inverse is calculated using Gauss elimination with total
