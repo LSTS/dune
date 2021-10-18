@@ -1308,115 +1308,115 @@ namespace DUNE
       return m_data.fullPivLu().isInvertible();
     }
 
-    // EigenMatrix
-    // inverse_pp(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    inverse_pp(EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (a.m_nrows != a.m_ncols)
-    //     throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
+      if (a.rows() != a.columns())
+        throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
 
-    //   int n = a.m_nrows;
-    //   double* M = ALLOCD(2 * n * n);
-    //   double* p1 = M;
-    //   double* p2 = a.m_data;
+      int n = a.rows();
+      double* M = ALLOCD(2 * n * n);
+      double* p1 = M;
+      double* p2 = a.begin();
 
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int j = 0; j < n; j++)
-    //     {
-    //       *p1 = *p2;
-    //       *(p1 + n) = (i == j) ? 1 : 0;
-    //       p1++;
-    //       p2++;
-    //     }
-    //     p1 += n;
-    //   }
+      for (int i = 0; i < n; i++)
+      {
+        for (int j = 0; j < n; j++)
+        {
+          *p1 = *p2;
+          *(p1 + n) = (i == j) ? 1 : 0;
+          p1++;
+          p2++;
+        }
+        p1 += n;
+      }
 
-    //   int result = Math::EigenMatrix::upper_triangular_pp(M, n, n + n, EigenMatrix::precision);
+      int result = Math::EigenMatrix::upper_triangular_pp(M, n, n + n, EigenMatrix::get_precision());
 
-    //   EigenMatrix s(n, n);
+      EigenMatrix s(n, n);
 
-    //   if (result)  // singular Matrix
-    //   {
-    //     std::free(M);
-    //     throw EigenMatrix::Error("Inversion error!");
-    //   }
+      if (result)  // singular Matrix
+      {
+        std::free(M);
+        throw EigenMatrix::Error("Inversion error!");
+      }
 
-    //   p1 = s.m_data;
-    //   p2 = M;
-    //   int n2 = n + n;
+      p1 = s.begin();
+      p2 = M;
+      int n2 = n + n;
 
-    //   for (int j = 0; j < n; j++)
-    //     for (int i = n - 1; i >= 0; i--)
-    //     {
-    //       double* p = p1 + n * i + j;
-    //       *p = p2[i * n2 + n + j];
-    //       for (int ii = i + 1; ii < n; ii++)
-    //         *p -= p2[n2 * i + ii] * p1[n * ii + j];
-    //       *p /= p2[n2 * i + i];
-    //     }
+      for (int j = 0; j < n; j++)
+        for (int i = n - 1; i >= 0; i--)
+        {
+          double* p = p1 + n * i + j;
+          *p = p2[i * n2 + n + j];
+          for (int ii = i + 1; ii < n; ii++)
+            *p -= p2[n2 * i + ii] * p1[n * ii + j];
+          *p /= p2[n2 * i + i];
+        }
 
-    //   std::free(M);
-    //   return s;
-    // }
+      std::free(M);
+      return s;
+    }
 
-    // EigenMatrix
-    // inverse_pp(const EigenMatrix& a, const EigenMatrix& b)
-    // {
-    //   if (a.isEmpty() || b.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    inverse_pp(EigenMatrix& a, EigenMatrix& b)
+    {
+      if (a.isEmpty() || b.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (a.m_nrows != a.m_ncols)
-    //     throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
+      if (a.rows() != a.columns())
+        throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
 
-    //   if (a.m_nrows != b.m_nrows)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+      if (a.rows() != b.rows())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //   int n = a.m_nrows;
-    //   int m = b.m_ncols;
-    //   double* M = ALLOCD(n * (n + m));
+      int n = a.rows();
+      int m = b.columns();
+      double* M = ALLOCD(n * (n + m));
 
-    //   double* p1 = M;
-    //   double* p2 = a.m_data;
-    //   double* p3 = b.m_data;
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int j = 0; j < n; j++)
-    //       *(p1++) = *(p2++);
+      double* p1 = M;
+      double* p2 = a.begin();
+      double* p3 = b.begin();
+      for (int i = 0; i < n; i++)
+      {
+        for (int j = 0; j < n; j++)
+          *(p1++) = *(p2++);
 
-    //     for (int j = 0; j < m; j++)
-    //       *(p1++) = *(p3++);
-    //   }
+        for (int j = 0; j < m; j++)
+          *(p1++) = *(p3++);
+      }
 
-    //   int result = Math::EigenMatrix::upper_triangular_pp(M, n, n + m, EigenMatrix::precision);
+      int result = Math::EigenMatrix::upper_triangular_pp(M, n, n + m, EigenMatrix::get_precision());
 
-    //   EigenMatrix s(n, m);
+      EigenMatrix s(n, m);
 
-    //   if (result)  // singular Matrix
-    //   {
-    //     std::free(M);
-    //     throw EigenMatrix::Error("Inversion error!");
-    //   }
+      if (result)  // singular Matrix
+      {
+        std::free(M);
+        throw EigenMatrix::Error("Inversion error!");
+      }
 
-    //   p1 = s.m_data;
-    //   p2 = M;
-    //   int n2 = n + m;
+      p1 = s.begin();
+      p2 = M;
+      int n2 = n + m;
 
-    //   for (int j = 0; j < m; j++)
-    //     for (int i = n - 1; i >= 0; i--)
-    //     {
-    //       double* p = p1 + m * i + j;
-    //       *p = p2[i * n2 + n + j];
-    //       for (int ii = i + 1; ii < n; ii++)
-    //         *p -= p2[n2 * i + ii] * p1[m * ii + j];
-    //       *p /= p2[n2 * i + i];
-    //     }
+      for (int j = 0; j < m; j++)
+        for (int i = n - 1; i >= 0; i--)
+        {
+          double* p = p1 + m * i + j;
+          *p = p2[i * n2 + n + j];
+          for (int ii = i + 1; ii < n; ii++)
+            *p -= p2[n2 * i + ii] * p1[m * ii + j];
+          *p /= p2[n2 * i + i];
+        }
 
-    //   std::free(M);
-    //   return s;
-    // }
+      std::free(M);
+      return s;
+    }
 
     EigenMatrix
     inverse(EigenMatrix& a)
@@ -1477,64 +1477,64 @@ namespace DUNE
       return s;
     }
 
-    // EigenMatrix
-    // inverse(const EigenMatrix& a, const EigenMatrix& b)
-    // {
-    //   if (a.isEmpty() || b.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    inverse(EigenMatrix& a, EigenMatrix& b)
+    {
+      if (a.isEmpty() || b.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (a.m_nrows != a.m_ncols)
-    //     throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
+      if (a.rows() != a.columns())
+        throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
 
-    //   if (a.m_nrows != b.m_nrows)
-    //     throw EigenMatrix::Error("Incompatible dimensions!");
+      if (a.rows() != b.rows())
+        throw EigenMatrix::Error("Incompatible dimensions!");
 
-    //   int n = a.m_nrows;
-    //   int m = b.m_ncols;
-    //   double* M = ALLOCD(n * (n + m));
-    //   int* index = ALLOCI(n);
+      int n = a.rows();
+      int m = b.columns();
+      double* M = ALLOCD(n * (n + m));
+      int* index = ALLOCI(n);
 
-    //   double* p1 = M;
-    //   double* p2 = a.m_data;
-    //   double* p3 = b.m_data;
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int j = 0; j < n; j++)
-    //       *(p1++) = *(p2++);
-    //     for (int j = 0; j < m; j++)
-    //       *(p1++) = *(p3++);
-    //     index[i] = i;
-    //   }
+      double* p1 = M;
+      double* p2 = a.begin();
+      double* p3 = b.begin();
+      for (int i = 0; i < n; i++)
+      {
+        for (int j = 0; j < n; j++)
+          *(p1++) = *(p2++);
+        for (int j = 0; j < m; j++)
+          *(p1++) = *(p3++);
+        index[i] = i;
+      }
 
-    //   int result = Math::EigenMatrix::upper_triangular_tp(M, index, n, n + m, EigenMatrix::precision);
+      int result = Math::EigenMatrix::upper_triangular_tp(M, index, n, n + m, EigenMatrix::get_precision());
 
-    //   EigenMatrix s(n, m);
+      EigenMatrix s(n, m);
 
-    //   if (result)  // singular Matrix
-    //   {
-    //     std::free(index);
-    //     std::free(M);
-    //     throw EigenMatrix::Error("Inversion error!");
-    //   }
+      if (result)  // singular Matrix
+      {
+        std::free(index);
+        std::free(M);
+        throw EigenMatrix::Error("Inversion error!");
+      }
 
-    //   p1 = s.m_data;
-    //   p2 = M;
-    //   int n2 = n + m;
+      p1 = s.begin();
+      p2 = M;
+      int n2 = n + m;
 
-    //   for (int j = 0; j < m; j++)
-    //     for (int i = n - 1; i >= 0; i--)
-    //     {
-    //       double* p = p1 + m * index[i] + j;
-    //       *p = p2[i * n2 + n + j];
-    //       for (int ii = i + 1; ii < n; ii++)
-    //         *p -= p2[n2 * i + ii] * p1[m * index[ii] + j];
-    //       *p /= p2[n2 * i + i];
-    //     }
+      for (int j = 0; j < m; j++)
+        for (int i = n - 1; i >= 0; i--)
+        {
+          double* p = p1 + m * index[i] + j;
+          *p = p2[i * n2 + n + j];
+          for (int ii = i + 1; ii < n; ii++)
+            *p -= p2[n2 * i + ii] * p1[m * index[ii] + j];
+          *p /= p2[n2 * i + i];
+        }
 
-    //   std::free(index);
-    //   std::free(M);
-    //   return s;
-    // }
+      std::free(index);
+      std::free(M);
+      return s;
+    }
 
     // EigenMatrix
     // skew(const double data[3])
@@ -1607,7 +1607,7 @@ namespace DUNE
     //       for (int i = j + 1; i < n; i++)
     //         m[j * n + k] -= u[j * n + i] * m[i * n + k];
 
-    //       if (EigenMatrix::precision >= std::fabs(u[j * n + j]))
+    //       if (get_precision() >= std::fabs(u[j * n + j]))
     //         throw EigenMatrix::Error("Matrix is not invertible!");
     //       else
     //         m[j * n + k] /= u[j * n + j];
@@ -1670,46 +1670,46 @@ namespace DUNE
       return s.m_data.array().square().sum();
     }
 
-    // int
-    // EigenMatrix::upper_triangular_pp(double* M, int n, int m, double tolerance)
-    // {
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     int ii = i;
-    //     double p = std::fabs(M[i * m + i]);
+    int
+    EigenMatrix::upper_triangular_pp(double* M, int n, int m, double tolerance)
+    {
+      for (int i = 0; i < n; i++)
+      {
+        int ii = i;
+        double p = std::fabs(M[i * m + i]);
 
-    //     for (int j = i + 1; j < n; j++)
-    //     {
-    //       double t;
+        for (int j = i + 1; j < n; j++)
+        {
+          double t;
 
-    //       if ((t = std::fabs(M[j * m + i])) > p)
-    //       {
-    //         p = t;
-    //         ii = j;
-    //       }
-    //     }
+          if ((t = std::fabs(M[j * m + i])) > p)
+          {
+            p = t;
+            ii = j;
+          }
+        }
 
-    //     if (p <= tolerance)
-    //       return -1;
+        if (p <= tolerance)
+          return -1;
 
-    //     if (i != ii)
-    //       for (int j = i; j < m; j++)
-    //       {
-    //         double t = M[i * m + j];
-    //         M[i * m + j] = M[ii * m + j];
-    //         M[ii * m + j] = t;
-    //       }
+        if (i != ii)
+          for (int j = i; j < m; j++)
+          {
+            double t = M[i * m + j];
+            M[i * m + j] = M[ii * m + j];
+            M[ii * m + j] = t;
+          }
 
-    //     for (ii = i + 1; ii < n; ii++)
-    //     {
-    //       double f = M[ii * m + i] / M[i * m + i];
-    //       for (int j = i + 1; j < m; j++)
-    //         M[ii * m + j] -= f * M[i * m + j];
-    //     }
-    //   }
+        for (ii = i + 1; ii < n; ii++)
+        {
+          double f = M[ii * m + i] / M[i * m + i];
+          for (int j = i + 1; j < m; j++)
+            M[ii * m + j] -= f * M[i * m + j];
+        }
+      }
 
-    //   return 0;
-    // }
+      return 0;
+    }
 
     int
     EigenMatrix::upper_triangular_tp(double* M, int* index, int n, int m, double tolerance)

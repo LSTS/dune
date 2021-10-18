@@ -730,51 +730,51 @@ namespace DUNE
       friend DUNE_DLL_SYM EigenMatrix
       inverse(EigenMatrix& a);
 
-    //   //! This methods calculates the Matrix 'x' that solves
-    //   //! the linear system of equations 'a.x=b'.
-    //   //!
-    //   //! The system is solved using Gauss elimination with total pivoting.
-    //   //!
-    //   //! If Matrix 'a' is singular (with current precision) a zero Matrix with
-    //   //! the same dimension of 'b' is returned and the variable
-    //   //! 'dMatrix::inversionerror' is set to 1. Otherwise it is set to 0.
-    //   //! @param[in] a matrix
-    //   //! @param[in] b matrix
-    //   //! @return resultant matrix
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   inverse(const EigenMatrix& a, const EigenMatrix& b);
+      //! This methods calculates the Matrix 'x' that solves
+      //! the linear system of equations 'a.x=b'.
+      //!
+      //! The system is solved using Gauss elimination with total pivoting.
+      //!
+      //! If Matrix 'a' is singular (with current precision) a zero Matrix with
+      //! the same dimension of 'b' is returned and the variable
+      //! 'dMatrix::inversionerror' is set to 1. Otherwise it is set to 0.
+      //! @param[in] a matrix
+      //! @param[in] b matrix
+      //! @return resultant matrix
+      friend DUNE_DLL_SYM EigenMatrix
+      inverse(EigenMatrix& a, EigenMatrix& b);
 
-    //   //! This function returns a 3x3 skew symmetrical
-    //   //! matrix using a matrix (3x1 or 1x3)
-    //   //! @param[in] a row or column vector with 3 elements
-    //   //! @return skewed matrix
-    //   friend EigenMatrix
-    //   skew(const EigenMatrix& a);
+      // //! This function returns a 3x3 skew symmetrical
+      // //! matrix using a matrix (3x1 or 1x3)
+      // //! @param[in] a row or column vector with 3 elements
+      // //! @return skewed matrix
+      // friend EigenMatrix
+      // skew(const EigenMatrix& a);
 
-    //   //! This methods calculates the inverse of a Matrix.
-    //   //! The inverse is calculated using Gauss elimination with partial pivoting.
-    //   //!
-    //   //! If Matrix is singular (with current precision) a zero Matrix with
-    //   //! the same dimension is returned and the variable.
-    //   //! 'dMatrix::inversionerror' is set to 1. Otherwise is is set to 0.
-    //   //! @param[in] a reference to matrix to be inverted
-    //   //! @return inverted matrix
-    //   friend EigenMatrix
-    //   inverse_pp(const EigenMatrix& a);
+      //! This methods calculates the inverse of a Matrix.
+      //! The inverse is calculated using Gauss elimination with partial pivoting.
+      //!
+      //! If Matrix is singular (with current precision) a zero Matrix with
+      //! the same dimension is returned and the variable.
+      //! 'dMatrix::inversionerror' is set to 1. Otherwise is is set to 0.
+      //! @param[in] a reference to matrix to be inverted
+      //! @return inverted matrix
+      friend EigenMatrix
+      inverse_pp(EigenMatrix& a);
 
-    //   //! This methods calculates the Matrix 'x' that solves
-    //   //! the linear system of equations 'a.x=b'.
-    //   //!
-    //   //! The system is solved using Gauss elimination with partial pivoting.
-    //   //!
-    //   //! If Matrix 'a' is singular (with current precision) a zero Matrix with
-    //   //! the same dimension of 'b' is returned and the variable.
-    //   //! 'dMatrix::inversionerror' is set to 1. Otherwise it is set to 0.
-    //   //! @param[in] a matrix
-    //   //! @param[in] b matrix
-    //   //! @return resultant matrix
-    //   friend EigenMatrix
-    //   inverse_pp(const EigenMatrix&, const EigenMatrix&);
+      //! This methods calculates the Matrix 'x' that solves
+      //! the linear system of equations 'a.x=b'.
+      //!
+      //! The system is solved using Gauss elimination with partial pivoting.
+      //!
+      //! If Matrix 'a' is singular (with current precision) a zero Matrix with
+      //! the same dimension of 'b' is returned and the variable.
+      //! 'dMatrix::inversionerror' is set to 1. Otherwise it is set to 0.
+      //! @param[in] a matrix
+      //! @param[in] b matrix
+      //! @return resultant matrix
+      friend EigenMatrix
+      inverse_pp(EigenMatrix&, EigenMatrix&);
 
     //   //! This function computes the Matrix inverse
     //   //! using LU or LUP decomposition.
@@ -815,20 +815,20 @@ namespace DUNE
       friend double
       squaresum(const EigenMatrix& a);
 
-      // //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
-      // //! Matrix using Gauss elimination with partial pivoting.
-      // //!
-      // //! 'm' should be >= 'n'.
-      // //!
-      // //! @param[out] M matrix to be transformed
-      // //! @param[in] m number of columns
-      // //! @param[in] n number of rows
-      // //! @param[in] tolerance small positive constant used to test for
-      // //! zero entries in 'M'
-      // //! @return 0 if elimination done successfully,
-      // //! -1 if Matrix M is not full rank (elimination impossible)
-      // static int
-      // upper_triangular_pp(double* M, int n, int m, double tolerance);
+      //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
+      //! Matrix using Gauss elimination with partial pivoting.
+      //!
+      //! 'm' should be >= 'n'.
+      //!
+      //! @param[out] M matrix to be transformed
+      //! @param[in] m number of columns
+      //! @param[in] n number of rows
+      //! @param[in] tolerance small positive constant used to test for
+      //! zero entries in 'M'
+      //! @return 0 if elimination done successfully,
+      //! -1 if Matrix M is not full rank (elimination impossible)
+      static int
+      upper_triangular_pp(double* M, int n, int m, double tolerance);
 
       //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
       //! Matrix using Gauss elimination with total pivoting.
