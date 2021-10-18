@@ -716,20 +716,20 @@ namespace DUNE
       friend DUNE_DLL_SYM EigenMatrix
       transpose(const EigenMatrix& a);
 
-    //   //! This methods calculates the inverse of a Matrix.
-    //   //! The inverse is calculated using Gauss elimination with total
-    //   //! pivoting.
-    //   //!
-    //   //! If Matrix 'a' is singular (with current precision) a zero
-    //   //! Matrix with the same dimension of 'a' is returned and the
-    //   //! variable 'dMatrix::inversionerror' is set to 1. Otherwise it
-    //   //! is set to 0.
-    //   //!
-    //   //! @param[in] a matrix to be inverted.
-    //   //!
-    //   //! @return inverted matrix
-    //   friend DUNE_DLL_SYM EigenMatrix
-    //   inverse(const EigenMatrix& a);
+      //! This methods calculates the inverse of a Matrix.
+      //! The inverse is calculated using Gauss elimination with total
+      //! pivoting.
+      //!
+      //! If Matrix 'a' is singular (with current precision) a zero
+      //! Matrix with the same dimension of 'a' is returned and the
+      //! variable 'dMatrix::inversionerror' is set to 1. Otherwise it
+      //! is set to 0.
+      //!
+      //! @param[in] a matrix to be inverted.
+      //!
+      //! @return inverted matrix
+      friend DUNE_DLL_SYM EigenMatrix
+      inverse(EigenMatrix& a);
 
     //   //! This methods calculates the Matrix 'x' that solves
     //   //! the linear system of equations 'a.x=b'.
@@ -816,41 +816,41 @@ namespace DUNE
       friend double
       squaresum(const EigenMatrix& a);
 
-    //   //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
-    //   //! Matrix using Gauss elimination with partial pivoting.
-    //   //!
-    //   //! 'm' should be >= 'n'.
-    //   //!
-    //   //! @param[out] M matrix to be transformed
-    //   //! @param[in] m number of columns
-    //   //! @param[in] n number of rows
-    //   //! @param[in] tolerance small positive constant used to test for
-    //   //! zero entries in 'M'
-    //   //! @return 0 if elimination done successfully,
-    //   //! -1 if Matrix M is not full rank (elimination impossible)
-    //   static int
-    //   upper_triangular_pp(double* M, int n, int m, double tolerance);
+      // //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
+      // //! Matrix using Gauss elimination with partial pivoting.
+      // //!
+      // //! 'm' should be >= 'n'.
+      // //!
+      // //! @param[out] M matrix to be transformed
+      // //! @param[in] m number of columns
+      // //! @param[in] n number of rows
+      // //! @param[in] tolerance small positive constant used to test for
+      // //! zero entries in 'M'
+      // //! @return 0 if elimination done successfully,
+      // //! -1 if Matrix M is not full rank (elimination impossible)
+      // static int
+      // upper_triangular_pp(double* M, int n, int m, double tolerance);
 
-    //   //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
-    //   //! Matrix using Gauss elimination with total pivoting.
-    //   //!
-    //   //! 'm' should be >= 'n'.
-    //   //!
-    //   //! The parameter 'index' is a pointer to an array of 'n' integers that
-    //   //! indicates the permutations that are done during total pivotation.
-    //   //! When this function is called the 'index' array must be properly
-    //   //! initialized, i.e. ind[0]=0, ind[1]=1, ..., ind[n-1]=n-1.
-    //   //!
-    //   //! @param[out] M matrix to be transformed
-    //   //! @param[out] index pointer to array that indicates permutations
-    //   //! @param[in] m number of columns
-    //   //! @param[in] n number of rows
-    //   //! @param[in] tolerance small positive constant used to test for
-    //   //! zero entries in 'M'
-    //   //! @return 0 if elimination done successfully,
-    //   //! -1 if matrix is not full rank (elimination impossible)
-    //   static int
-    //   upper_triangular_tp(double* M, int* index, int n, int m, double tolerance);
+      //! This function tranforms a Matrix 'M' (n*m) into an upper triangular
+      //! Matrix using Gauss elimination with total pivoting.
+      //!
+      //! 'm' should be >= 'n'.
+      //!
+      //! The parameter 'index' is a pointer to an array of 'n' integers that
+      //! indicates the permutations that are done during total pivotation.
+      //! When this function is called the 'index' array must be properly
+      //! initialized, i.e. ind[0]=0, ind[1]=1, ..., ind[n-1]=n-1.
+      //!
+      //! @param[out] M matrix to be transformed
+      //! @param[out] index pointer to array that indicates permutations
+      //! @param[in] m number of columns
+      //! @param[in] n number of rows
+      //! @param[in] tolerance small positive constant used to test for
+      //! zero entries in 'M'
+      //! @return 0 if elimination done successfully,
+      //! -1 if matrix is not full rank (elimination impossible)
+      static int
+      upper_triangular_tp(double* M, int* index, int n, int m, double tolerance);
 
     private:
       static double precision;

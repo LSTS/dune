@@ -53,7 +53,7 @@
 // #include "eigen/Dense"
 
 #define ALLOCD(count) (double*)std::malloc(sizeof(double) * (count))
-// #define ALLOCI(count) (int*)std::malloc(sizeof(int) * (count))
+#define ALLOCI(count) (int*)std::malloc(sizeof(int) * (count))
 
 namespace DUNE
 {
@@ -1471,64 +1471,64 @@ namespace DUNE
     //   return s;
     // }
 
-    // EigenMatrix
-    // inverse(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    inverse(EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (a.m_nrows != a.m_ncols)
-    //     throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
+      if (a.rows() != a.columns())
+        throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
 
-    //   int n = a.m_nrows;
-    //   double* M = ALLOCD(2 * n * n);
-    //   int* index = ALLOCI(n);
+      int n = a.rows();
+      double* M = ALLOCD(2 * n * n);
+      int* index = ALLOCI(n);
 
-    //   double* p1 = M;
-    //   double* p2 = a.m_data;
+      double* p1 = M;
+      double* p2 = a.begin();
 
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     for (int j = 0; j < n; j++)
-    //     {
-    //       *p1 = *p2;
-    //       *(p1 + n) = (i == j) ? 1 : 0;
-    //       p1++;
-    //       p2++;
-    //     }
-    //     p1 += n;
-    //     index[i] = i;
-    //   }
+      for (int i = 0; i < n; i++)
+      {
+        for (int j = 0; j < n; j++)
+        {
+          *p1 = *p2;
+          *(p1 + n) = (i == j) ? 1 : 0;
+          p1++;
+          p2++;
+        }
+        p1 += n;
+        index[i] = i;
+      }
 
-    //   int result = Math::EigenMatrix::upper_triangular_tp(M, index, n, n + n, EigenMatrix::precision);
+      int result = Math::EigenMatrix::upper_triangular_tp(M, index, n, n + n, EigenMatrix::get_precision());
 
-    //   EigenMatrix s(n, n);
+      EigenMatrix s(n, n);
 
-    //   if (result)  // singular Matrix
-    //   {
-    //     std::free(index);
-    //     std::free(M);
-    //     throw EigenMatrix::Error("Inversion error!");
-    //   }
+      if (result)  // singular Matrix
+      {
+        std::free(index);
+        std::free(M);
+        throw EigenMatrix::Error("Inversion error!");
+      }
 
-    //   p1 = s.m_data;
-    //   p2 = M;
-    //   int n2 = n + n;
+      p1 = s.begin();
+      p2 = M;
+      int n2 = n + n;
 
-    //   for (int j = 0; j < n; j++)
-    //     for (int i = n - 1; i >= 0; i--)
-    //     {
-    //       double* p = p1 + n * index[i] + j;
-    //       *p = p2[i * n2 + n + j];
-    //       for (int ii = i + 1; ii < n; ii++)
-    //         *p -= p2[n2 * i + ii] * p1[n * index[ii] + j];
-    //       *p /= p2[n2 * i + i];
-    //     }
+      for (int j = 0; j < n; j++)
+        for (int i = n - 1; i >= 0; i--)
+        {
+          double* p = p1 + n * index[i] + j;
+          *p = p2[i * n2 + n + j];
+          for (int ii = i + 1; ii < n; ii++)
+            *p -= p2[n2 * i + ii] * p1[n * index[ii] + j];
+          *p /= p2[n2 * i + i];
+        }
 
-    //   std::free(index);
-    //   std::free(M);
-    //   return s;
-    // }
+      std::free(index);
+      std::free(M);
+      return s;
+    }
 
     // EigenMatrix
     // inverse(const EigenMatrix& a, const EigenMatrix& b)
@@ -1764,62 +1764,62 @@ namespace DUNE
     //   return 0;
     // }
 
-    // int
-    // EigenMatrix::upper_triangular_tp(double* M, int* index, int n, int m, double tolerance)
-    // {
-    //   for (int i = 0; i < n; i++)
-    //   {
-    //     int ii = i;
-    //     int jj = i;
-    //     double p = std::fabs(M[i * m + i]);
+    int
+    EigenMatrix::upper_triangular_tp(double* M, int* index, int n, int m, double tolerance)
+    {
+      for (int i = 0; i < n; i++)
+      {
+        int ii = i;
+        int jj = i;
+        double p = std::fabs(M[i * m + i]);
 
-    //     for (int k = i; k < n; k++)
-    //       for (int j = i; j < n; j++)
-    //       {
-    //         double t;
-    //         if ((t = std::fabs(M[k * m + j])) > p)
-    //         {
-    //           p = t;
-    //           ii = k;
-    //           jj = j;
-    //         }
-    //       }
+        for (int k = i; k < n; k++)
+          for (int j = i; j < n; j++)
+          {
+            double t;
+            if ((t = std::fabs(M[k * m + j])) > p)
+            {
+              p = t;
+              ii = k;
+              jj = j;
+            }
+          }
 
-    //     if (p <= tolerance)
-    //       return -1;
+        if (p <= tolerance)
+          return -1;
 
-    //     if (i != ii)
-    //       for (int j = i; j < m; j++)
-    //       {
-    //         double t = M[i * m + j];
-    //         M[i * m + j] = M[ii * m + j];
-    //         M[ii * m + j] = t;
-    //       }
+        if (i != ii)
+          for (int j = i; j < m; j++)
+          {
+            double t = M[i * m + j];
+            M[i * m + j] = M[ii * m + j];
+            M[ii * m + j] = t;
+          }
 
-    //     if (i != jj)
-    //     {
-    //       for (int k = 0; k < n; k++)
-    //       {
-    //         double t = M[k * m + i];
-    //         M[k * m + i] = M[k * m + jj];
-    //         M[k * m + jj] = t;
-    //       }
+        if (i != jj)
+        {
+          for (int k = 0; k < n; k++)
+          {
+            double t = M[k * m + i];
+            M[k * m + i] = M[k * m + jj];
+            M[k * m + jj] = t;
+          }
 
-    //       int k = index[i];
-    //       index[i] = index[jj];
-    //       index[jj] = k;
-    //     }
+          int k = index[i];
+          index[i] = index[jj];
+          index[jj] = k;
+        }
 
-    //     for (ii = i + 1; ii < n; ii++)
-    //     {
-    //       double f = M[ii * m + i] / M[i * m + i];
-    //       for (int j = i + 1; j < m; j++)
-    //         M[ii * m + j] -= f * M[i * m + j];
-    //     }
-    //   }
+        for (ii = i + 1; ii < n; ii++)
+        {
+          double f = M[ii * m + i] / M[i * m + i];
+          for (int j = i + 1; j < m; j++)
+            M[ii * m + j] -= f * M[i * m + j];
+        }
+      }
 
-    //   return 0;
-    // }
+      return 0;
+    }
 
     double
     EigenMatrix::dot(const EigenMatrix& a, const EigenMatrix& b)
