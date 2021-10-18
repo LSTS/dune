@@ -480,21 +480,20 @@ namespace DUNE
       EigenMatrix
       mminor(size_t i, size_t j) const;
 
-    //   //! LUP decomposition (P * A = L * U).
-    //   //! This method returns the number of permutations.
-    //   //! @param[in] L lower triangular matrix
-    //   //! @param[in] U upper triangular matrix
-    //   //! @param[in] P permutation matrix
-    //   //! @return number of permutations
-    //   unsigned int
-    //   lup(EigenMatrix& L, EigenMatrix& U, EigenMatrix& P) const;
+      //! LUP decomposition (P * A = L * U).
+      //! This method returns the number of permutations.
+      //! @param[in] L lower triangular matrix
+      //! @param[in] U upper triangular matrix
+      //! @param[in] P permutation matrix
+      void
+      lup(EigenMatrix& L, EigenMatrix& U, EigenMatrix& P) const;
 
-    //   // LU decomposition (Doolittle Decomposition of a Matrix).
-    //   // NOTE: A(i,i) == 0 isn't handled
-    //   //! @param[in] L lower triangular matrix
-    //   //! @param[in] U upper triangular matrix
-    //   void
-    //   lu(EigenMatrix& L, EigenMatrix& U) const;
+      // LU decomposition (Doolittle Decomposition of a Matrix).
+      // NOTE: A(i,i) == 0 isn't handled
+      //! @param[in] L lower triangular matrix
+      //! @param[in] U upper triangular matrix
+      void
+      lu(EigenMatrix& L, EigenMatrix& U) const;
 
       //! Matrix determinant through Laplace expansion
       //! Recursive technique O(n!).

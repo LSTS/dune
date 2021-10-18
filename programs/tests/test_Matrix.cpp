@@ -512,7 +512,6 @@ main(void)
     EigenMatrix eig_vec_B(vec_3[1], 3, 1);
     Matrix vec_A(vec_3[0], 3, 1);
     Matrix vec_B(vec_3[1], 3, 1);
-
     test.boolean("EigenMatrix::dot(const EigenMatrix& a, const EigenMatrix& b)", EigenMatrix::dot(eig_vec_A, eig_vec_B) == Matrix::dot(vec_A, vec_B));
 
     EigenMatrix eig_test_B = EigenMatrix::cross(eig_vec_A, eig_vec_B);
@@ -531,6 +530,30 @@ main(void)
     EigenMatrix eig_mat_D(mat_3x3[POS_INT], 3, 3);
     EigenMatrix eig_mat_E(invertable_3x3, 3, 3);
     test.boolean("EigenMatrix::isInvertible(void) const", !eig_mat_D.isInvertible() && eig_mat_E.isInvertible());
+  }
+
+  //==========================================
+  // Test matrix decompositions
+  //==========================================
+  {
+    EigenMatrix eig_mat_A(invertable_3x3, 3, 3);
+    Matrix mat_A(invertable_3x3, 3, 3);
+
+    EigenMatrix eig_L(3, 3);
+    EigenMatrix eig_U(3, 3);
+    EigenMatrix eig_P(3, 3);
+
+    Matrix mat_L(3, 3);
+    Matrix mat_U(3, 3);
+    Matrix mat_P(3, 3);
+
+    eig_mat_A.lup(eig_L, eig_U, eig_P);
+    mat_A.lup(mat_L, mat_U, mat_P);
+
+    Matrix result = inverse(mat_P)*mat_L*mat_U;
+    EigenMatrix eig_result = inverse(eig_P)*eig_L*eig_U;
+
+    test.boolean("EigenMatrix::lup(EigenMatrix& L, EigenMatrix& U, EigenMatrix& P) const", compareElements(result, eig_result));
   }
 
   //==========================================

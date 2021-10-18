@@ -769,91 +769,38 @@ namespace DUNE
       return mi;
     }
 
-    // void
-    // EigenMatrix::lu(EigenMatrix& L, EigenMatrix& U) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+    void
+    EigenMatrix::lu(EigenMatrix& L, EigenMatrix& U) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   if (m_nrows != m_ncols)
-    //     throw Error(" matrix is not square!");
+      if (rows() != columns())
+        throw Error(" matrix is not square!");
 
-    //   EigenMatrix A = *this;
-    //   EigenMatrix Lf(m_nrows), dI(m_nrows), P(m_nrows);
-    //   dI = dI + dI;
+      L.m_data.Identity(m_data.rows(), m_data.cols());
+      U.m_data.Zero(m_data.rows(), m_data.cols());
 
-    //   for (size_t i = 0; i < m_nrows - 1; i++)
-    //   {
-    //     /*
-    //     // check if pivot == 0
-    //     // if so, try to find a valid pivot
-    //     // if no valid pivot found, matrix isn't invertible (quit)
-    //     // update permutation matrix
-    //     //
-    //     */
-    //     EigenMatrix Lt(m_nrows);
-    //     for (size_t j = i + 1; j < m_nrows; j++)
-    //       Lt(j, i) = -A(j, i) / A(i, i);
+      L.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::UnitLower>();
+      U.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::Upper>();
+    }
 
-    //     A = Lt * A;
-    //     Lf = Lf * (dI - Lt);
-    //   }
+    void
+    EigenMatrix::lup(EigenMatrix& L, EigenMatrix& U, EigenMatrix& P) const
+    {
+      if (isEmpty())
+        throw Error("Trying to access an empty matrix!");
 
-    //   U = A;
-    //   L = Lf;
-    // }
+      if (rows() != columns())
+        throw Error(" matrix is not square!");
 
-    // unsigned int
-    // EigenMatrix::lup(EigenMatrix& L, EigenMatrix& U, EigenMatrix& P) const
-    // {
-    //   if (isEmpty())
-    //     throw Error("Trying to access an empty matrix!");
+      L.m_data.Identity(m_data.rows(), m_data.cols());
+      U.m_data.Zero(m_data.rows(), m_data.cols());
 
-    //   if (m_nrows != m_ncols)
-    //     throw Error(" matrix is not square!");
-
-    //   unsigned int permutations = 0;
-    //   EigenMatrix A = *this;
-    //   EigenMatrix Lf(m_nrows), dI(m_nrows), Per(m_nrows);
-    //   dI = dI + dI;
-
-    //   for (size_t i = 0; i < m_nrows - 1; i++)
-    //   {
-    //     if (EigenMatrix::precision >= std::fabs(A(i, i)))
-    //     {
-    //       bool p = 0;
-    //       for (size_t k = i + 1; k < m_nrows; k++)
-    //         if (EigenMatrix::precision >= std::fabs(A(k, i)))
-    //         {
-    //           A.swapRows(i, k);
-    //           Per.swapRows(i, k);
-    //           p = true;
-    //           break;
-    //         }
-    //       if (!p)
-    //         throw Error("Matrix is not invertible!");
-    //       else
-    //         permutations++;
-    //     }
-
-    //     EigenMatrix Lt(m_nrows); // gaussian matrix
-    //     for (size_t j = i + 1; j < m_nrows; j++)
-    //       Lt(j, i) = -A(j, i) / A(i, i);
-
-    //     /*
-    //       A = Lt * A;
-    //       Lf = Lf * (dI - Lt);
-    //     */
-    //     A = Lt.multiply(A);
-    //     Lf = Lf.multiply((dI - Lt)); // dI-Lt is the inverse of Lt (gaussian matrix)
-    //   }
-
-    //   P = Per;
-    //   U = A;
-    //   L = Lf;
-
-    //   return permutations;
-    // }
+      L.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::UnitLower>();
+      U.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::Upper>();
+      P.m_data = m_data.fullPivLu().permutationP();
+    }
 
     double
     EigenMatrix::detr(void) const
