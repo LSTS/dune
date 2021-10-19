@@ -776,12 +776,12 @@ namespace DUNE
       friend EigenMatrix
       inverse_pp(EigenMatrix&, EigenMatrix&);
 
-    //   //! This function computes the Matrix inverse
-    //   //! using LU or LUP decomposition.
-    //   //! @param[in] a reference to matrix to be inverted
-    //   //! @return inverted matrix
-    //   friend EigenMatrix
-    //   inverse_lup(const EigenMatrix& a);
+      //! This function computes the Matrix inverse
+      //! using LU or LUP decomposition.
+      //! @param[in] a reference to matrix to be inverted
+      //! @return inverted matrix
+      friend EigenMatrix
+      inverse_lup(const EigenMatrix& a);
 
       //! This function returns a Matrix with the absolute
       //! values of the entries of a given Matrix.

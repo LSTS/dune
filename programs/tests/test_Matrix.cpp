@@ -537,6 +537,12 @@ main(void)
     EigenMatrix eig_mat_D(mat_3x3[POS_INT], 3, 3);
     EigenMatrix eig_mat_E(invertable_3x3, 3, 3);
     test.boolean("EigenMatrix::isInvertible(void) const", !eig_mat_D.isInvertible() && eig_mat_E.isInvertible());
+
+    Matrix mat_F(invertable_3x3, 3, 3);
+    EigenMatrix eig_mat_G(invertable_3x3, 3, 3);
+    Matrix test_mat_F = inverse_lup(mat_F);
+    EigenMatrix test_eig_G = inverse_lup(eig_mat_G);
+    test.boolean("EigenMatrix::inverse_lup(const EigenMatrix& a)", compareElements(test_mat_F, test_eig_G));
   }
 
   //==========================================

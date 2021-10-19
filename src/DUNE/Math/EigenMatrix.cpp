@@ -1564,60 +1564,20 @@ namespace DUNE
     //   return skew(data);
     // }
 
-    // EigenMatrix
-    // inverse_lup(const EigenMatrix& a)
-    // {
-    //   if (a.isEmpty())
-    //     throw EigenMatrix::Error("Trying to access an empty matrix!");
+    EigenMatrix
+    inverse_lup(const EigenMatrix& a)
+    {
+      if (a.isEmpty())
+        throw EigenMatrix::Error("Trying to access an empty matrix!");
 
-    //   if (a.m_nrows != a.m_ncols)
-    //     throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
+      if (a.rows() != a.columns())
+        throw EigenMatrix::Error("Inversion of a nonsquare Matrix!");
 
-    //   int n = a.m_nrows;
+      EigenMatrix Minv = a;
+      Minv.m_data = Minv.m_data.fullPivLu().inverse();
 
-    //   EigenMatrix L(n);
-    //   EigenMatrix U(n);
-    //   EigenMatrix P(n);
-
-    //   a.lup(L, U, P);
-
-    //   double* y = ALLOCD(n);
-    //   double* l = L.m_data;
-    //   double* u = U.m_data;
-    //   double* p = P.m_data;
-
-    //   EigenMatrix Minv(n, n);
-    //   double* m = Minv.m_data;
-
-    //   for (int k = 0; k < n; k++)
-    //   {
-    //     for (int j = 0; j < n; j++)
-    //     {
-    //       y[j] = p[j * n + k];
-
-    //       for (int i = 0; i < j; i++)
-    //         y[j] -= l[j * n + i] * y[i];
-
-    //       y[j] /= l[j * n + j];
-    //     }
-
-    //     for (int j = n - 1; j >= 0; j--)
-    //     {
-    //       m[j * n + k] = y[j];
-    //       for (int i = j + 1; i < n; i++)
-    //         m[j * n + k] -= u[j * n + i] * m[i * n + k];
-
-    //       if (get_precision() >= std::fabs(u[j * n + j]))
-    //         throw EigenMatrix::Error("Matrix is not invertible!");
-    //       else
-    //         m[j * n + k] /= u[j * n + j];
-    //     }
-    //   }
-
-    //   std::free(y);
-
-    //   return Minv;
-    // }
+      return Minv;
+    }
 
     EigenMatrix
     abs(const EigenMatrix& a)
