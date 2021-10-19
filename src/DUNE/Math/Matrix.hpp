@@ -42,6 +42,7 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <eigen/Dense>
 
 namespace DUNE
 {
@@ -81,7 +82,7 @@ namespace DUNE
       //! @param[in] data pointer to data to be copied to new matrix
       //! @param[in] r number of rows of new matrix
       //! @param[in] c number of columns of new matrix
-      Matrix(const double* data, size_t r, size_t c);
+      Matrix(double* data, size_t r, size_t c);
 
       //! Constructor.
       //! Construct a matrix of size rows*columns.
@@ -105,7 +106,7 @@ namespace DUNE
       //! Construct a diagonal matrix using the values in data
       //! param[in] diag pointer to data to be copied to diagonal matrix
       //! param[in] n size of new matrix (n * n)
-      Matrix(const double* diag, size_t n);
+      Matrix(double* diag, size_t n);
 
       //! Destructor.
       //! Decrement the number of copies of a Matrix and frees the
@@ -167,7 +168,7 @@ namespace DUNE
       //! @param[in] c number of columns of resized matrix
       //! @param[in] data pointer to data to be copied to resized matrix
       void
-      fill(size_t r, size_t c, const double* data = 0);
+      fill(size_t r, size_t c, double* data = 0);
 
       //! Turns the Matrix into an identity matrix if it is squared.
       void
@@ -201,7 +202,7 @@ namespace DUNE
       //! @param[in] j2 final column
       //! @return submatrix
       Matrix
-      get(size_t i1, size_t i2, size_t j1, size_t j2) const;
+      get(unsigned i1, unsigned i2, unsigned j1, unsigned j2) const;
 
       //! Set a submatrix.
       //! @param[in] i1 initial row
@@ -211,7 +212,7 @@ namespace DUNE
       //! @param[in] m_in reference to matrix to be copied into submatrix
       //! @return reference matrix
       Matrix&
-      set(size_t i1, size_t i2, size_t j1, size_t j2, const Matrix& m_in);
+      set(unsigned i1, unsigned i2, unsigned j1, unsigned j2, const Matrix& m_in);
 
       //! Returns the diagonal concatenation of a matrix
       //! Return a matrix of size (nrows + rows(m_in)) x (ncolumns +columns(m_in))
@@ -284,13 +285,13 @@ namespace DUNE
       //! @param[in] i index of column
       //! @param[in] j index of column
       void
-      swapColumns(size_t i, size_t j);
+      swapColumns(unsigned i, unsigned j);
 
       //! This method swaps two rows.
       //! @param[in] i index of row
       //! @param[in] j index of row
       void
-      swapRows(size_t i, size_t j);
+      swapRows(unsigned i, unsigned j);
 
       //! This method sets the precision used when inverting a Matrix.
       //! @param[in] p value of the precision to be used when inverting
@@ -319,7 +320,7 @@ namespace DUNE
       //! @param[in] r number of rows
       //! @param[in] c number of columns
       void
-      resizeAndKeep(size_t r, size_t c);
+      resizeAndKeep(unsigned r, unsigned c);
 
       //! This method resizes a Matrix to the dimensions of (r * c)
       //! and fills the matrix with constant value
@@ -344,14 +345,14 @@ namespace DUNE
       //! @param[in] j column index
       //! @return reference to entry of a matrix
       double&
-      operator()(size_t i, size_t j);
+      operator()(unsigned i, unsigned j);
 
       //! This routine returns a value of the matrix.
       //! @param[in] i row index
       //! @param[in] j column index
       //! @return value of matrix
       double
-      operator()(size_t i, size_t j) const;
+      operator()(unsigned i, unsigned j) const;
 
       //! This operator returns a reference to a given entry of a Matrix.
       //!
@@ -367,13 +368,13 @@ namespace DUNE
       //! @param[in] i matrix index
       //! @return reference to entry of a matrix
       double&
-      operator()(size_t i);
+      operator()(unsigned i);
 
       //! This routine returns a value of the matrix.
       //! @param[in] i matrix index
       //! @return value of matrix
       double
-      operator()(size_t i) const;
+      operator()(unsigned i) const;
 
       //! This method returns the value of an entry of a Matrix.
       //! As this is a reading method it does not care if the data is shared by
@@ -382,7 +383,7 @@ namespace DUNE
       //! @param[in] j column index
       //! @return value of matrix
       double
-      element(size_t i, size_t j) const;
+      element(unsigned i, unsigned j) const;
 
       //! This method returns the value of an entry of a Matrix.
       //! As this is a reading method it does not care if the data is shared by
@@ -390,7 +391,7 @@ namespace DUNE
       //! @param[in] i matrix index
       //! @return value of matrix
       double
-      element(size_t i);
+      element(unsigned i);
 
       //! This method changes the dimensions of a Matrix to a one row Matrix.
       //! The elements are not changed.
@@ -484,8 +485,7 @@ namespace DUNE
       //! @param[in] L lower triangular matrix
       //! @param[in] U upper triangular matrix
       //! @param[in] P permutation matrix
-      //! @return number of permutations
-      unsigned int
+      void
       lup(Matrix& L, Matrix& U, Matrix& P) const;
 
       // LU decomposition (Doolittle Decomposition of a Matrix).
@@ -728,7 +728,7 @@ namespace DUNE
       //!
       //! @return inverted matrix
       friend DUNE_DLL_SYM Matrix
-      inverse(const Matrix& a);
+      inverse(Matrix& a);
 
       //! This methods calculates the Matrix 'x' that solves
       //! the linear system of equations 'a.x=b'.
@@ -742,7 +742,7 @@ namespace DUNE
       //! @param[in] b matrix
       //! @return resultant matrix
       friend DUNE_DLL_SYM Matrix
-      inverse(const Matrix& a, const Matrix& b);
+      inverse(Matrix& a, Matrix& b);
 
       //! This function returns a 3x3 skew symmetrical
       //! matrix using a matrix (3x1 or 1x3)
@@ -760,7 +760,7 @@ namespace DUNE
       //! @param[in] a reference to matrix to be inverted
       //! @return inverted matrix
       friend Matrix
-      inverse_pp(const Matrix& a);
+      inverse_pp(Matrix& a);
 
       //! This methods calculates the Matrix 'x' that solves
       //! the linear system of equations 'a.x=b'.
@@ -774,7 +774,7 @@ namespace DUNE
       //! @param[in] b matrix
       //! @return resultant matrix
       friend Matrix
-      inverse_pp(const Matrix&, const Matrix&);
+      inverse_pp(Matrix&, Matrix&);
 
       //! This function computes the Matrix inverse
       //! using LU or LUP decomposition.
@@ -853,20 +853,17 @@ namespace DUNE
 
     private:
       static double precision;
+      typedef Eigen::Matrix<double, 
+                            Eigen::Dynamic, 
+                            Eigen::Dynamic, 
+                            Eigen::RowMajor> RowMajorMatrix;
+      RowMajorMatrix m_data;
 
-      size_t m_nrows;
-      size_t m_ncols;
-      size_t m_size;
-      double* m_data;
-      double* m_counter;
+      static Eigen::VectorXd
+      toEigenVector(const RowMajorMatrix &m);
 
-      //! This method acts as destructor.
-      void
-      erase(void);
-
-      //! This method creates a unique copy of the data of a Matrix.
-      void
-      split(void);
+      static RowMajorMatrix
+      toMatrix(const Eigen::VectorXd &v);
     };
 
     //! This function returns a 3x3 skew symmetrical

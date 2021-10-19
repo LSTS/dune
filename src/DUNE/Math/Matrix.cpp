@@ -34,15 +34,8 @@
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <cstdlib>
-#include <cmath>
-#include <cstring>
-#include <string>
 #include <vector>
-#include <iostream>
 #include <fstream>
-#include <cctype>
-#include <algorithm>
 
 // DUNE headers.
 #include <DUNE/Utils/String.hpp>
@@ -59,14 +52,9 @@ namespace DUNE
   namespace Math
   {
     //! The value used to test for zero in matrix inversion
-    double Matrix::precision = 1e-10;
+    double Matrix::precision = 1e-9;
 
-    Matrix::Matrix(void):
-      m_nrows(0),
-      m_ncols(0),
-      m_size(0),
-      m_data(NULL),
-      m_counter(NULL)
+    Matrix::Matrix(void)
     { }
 
     Matrix::Matrix(size_t r, size_t c)
@@ -74,240 +62,149 @@ namespace DUNE
       if (!r || !c)
         throw Error("Invalid dimension!");
 
-      m_nrows = r;
-      m_ncols = c;
-      m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data.resize(r, c);
     }
 
-    Matrix::Matrix(size_t r, size_t c, double value)
+    Matrix::Matrix(size_t r, size_t c, double value):
+    Matrix(r, c)
     {
-      if (!r || !c)
-        throw Error("Invalid dimension!");
-
-      m_nrows = r;
-      m_ncols = c;
-      m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
-
       fill(value);
     }
 
     Matrix::Matrix(const Matrix& m)
     {
-      m_nrows = m.m_nrows;
-      m_ncols = m.m_ncols;
-      m_size = m.m_size;
-
-      if (m_size)
-      {
-        m_data = m.m_data;
-        m_counter = m.m_counter;
-        ++(*m_counter);
-      }
-      else
-      {
-        m_data = NULL;
-        m_counter = NULL;
-      }
+      m_data = m.m_data;
     }
 
-    Matrix::Matrix(const double* data, size_t r, size_t c)
+    Matrix::Matrix(double* data, size_t r, size_t c)
     {
       if (!r || !c)
         throw Error("Invalid dimension!");
 
-      m_nrows = r;
-      m_ncols = c;
-      m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
-
-      std::memcpy(m_data, data, m_size * sizeof(double));
+      fill(r, c, data);
     }
 
 
-    Matrix::Matrix(size_t n)
+    Matrix::Matrix(size_t n):
+    Matrix(n, n)
     {
       if (!n)
         throw Error("Invalid dimension!");
 
-      m_nrows = n;
-      m_ncols = n;
-      m_size = n * n;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
-
       identity();
     }
 
-    Matrix::Matrix(const double* diag, size_t n)
+    Matrix::Matrix(double* diag, size_t n):
+    Matrix(n, n)
     {
-      m_nrows = n;
-      m_ncols = n;
-      m_size = n * n;
-      m_data = ALLOCD(m_size + 1);
-      m_counter = m_data + m_size;
-      *m_counter = 1;
-
-      fill(0);
-
-      for (size_t i = 0; i < n; i++)
-        m_data[i * (n + 1)] = diag[i];
+      m_data = Eigen::Map<RowMajorMatrix>(diag, n, 1).asDiagonal();
     }
 
     Matrix::~Matrix(void)
     {
-      erase();
-    }
-
-    void
-    Matrix::erase(void)
-    {
-      if (m_size != 0 && m_counter != NULL)
-      {
-        if (--(*m_counter) == 0)
-        {
-          std::free(m_data);
-          m_data = NULL;
-          m_counter = NULL;
-          m_nrows = 0;
-          m_ncols = 0;
-          m_size = 0;
-        }
-      }
-    }
-
-    void
-    Matrix::split(void)
-    {
-      if (!m_size)
-        return;
-
-      if ((*m_counter) == 1)
-        return;
-
-      (*m_counter)--;
-
-      double* newdata = ALLOCD(m_size + 1);
-      std::memcpy(newdata, m_data, m_size * sizeof(double));
-      m_data = newdata;
-      m_counter = m_data + m_size;
-      *m_counter = 1;
     }
 
     double*
     Matrix::begin(void)
     {
-      return m_data;
+      return &m_data(0);
     }
 
     double*
     Matrix::end(void)
     {
-      return m_data + m_size;
+      return &m_data(m_data.size()-1);
     }
 
     const double*
     Matrix::begin(void) const
     {
-      return m_data;
+      return &m_data(0);
     }
 
     const double*
     Matrix::end(void) const
     {
-      return m_data + m_size;
+      return &m_data(m_data.size()-1);
     }
 
     const double*
     Matrix::cbegin(void) const
     {
-      return m_data;
+      return &m_data(0);
     }
 
     const double*
     Matrix::cend(void) const
     {
-      return m_data + m_size;
+      return &m_data(m_data.size()-1);
     }
 
     int
     Matrix::rows(void) const
     {
-      return m_nrows;
+      return m_data.rows();
     }
 
     int
     Matrix::columns(void) const
     {
-      return m_ncols;
+      return m_data.cols();
     }
 
     int
     Matrix::size(void) const
     {
-      return m_size;
+      return m_data.size();
     }
 
     bool
     Matrix::isSquare(void) const
     {
-      return m_nrows == m_ncols;
+      return m_data.cols() == m_data.rows();
     }
 
     bool
     Matrix::isVector(void) const
     {
-      return m_nrows == 1 || m_ncols == 1;
+      return m_data.rows() == 1 || m_data.cols() == 1;
     }
 
     bool
     Matrix::isRowVector(void) const
     {
-      return m_nrows == 1;
+      return m_data.rows() == 1;
     }
 
     bool
     Matrix::isRowVector(size_t c) const
     {
-      return m_nrows == 1 && m_ncols == c;
+      return m_data.rows() == 1 && (size_t)m_data.cols() == c;
     }
 
     bool
     Matrix::isColumnVector(void) const
     {
-      return m_ncols == 1;
+      return m_data.cols() == 1;
     }
 
     bool
     Matrix::isColumnVector(size_t r) const
     {
-      return m_ncols == 1 && m_nrows == r;
+      return m_data.cols() == 1 && (size_t)m_data.rows() == r;
     }
 
     bool
     Matrix::isEmpty(void) const
     {
-      return m_size == 0;
+      return m_data.size() == 0;
     }
 
     void
-    Matrix::fill(size_t r, size_t c, const double* data)
+    Matrix::fill(size_t r, size_t c, double* data)
     {
-      erase();
       resize(r, c);
-      std::memcpy(m_data, data, m_size * sizeof(double));
+      m_data = Eigen::Map<RowMajorMatrix>(data, r, c);
     }
 
     void
@@ -316,12 +213,7 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      split();
-
-      double* p = m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p++) = x;
+      m_data.fill(x);
     }
 
     void
@@ -330,13 +222,10 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (!isSquare())
         throw Error("Matrix is not square!");
 
-      fill(0);
-
-      for (size_t i = 0; i < m_nrows; i++)
-        m_data[i * (m_nrows + 1)] = 1;
+      m_data = Eigen::MatrixXd::Identity(m_data.rows(), m_data.cols());
     }
 
     void
@@ -345,15 +234,10 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      split();
-
-      double* p = m_data;
-
-      for (size_t i = 0; i < m_size; i++)
+      for (unsigned i = 0; i < m_data.size(); i++)
       {
-        if (*p >= max)
-          *p = max;
-        p++;
+        if (m_data(i) >= max)
+          m_data(i) = max;
       }
     }
 
@@ -363,15 +247,10 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      split();
-
-      double* p = m_data;
-
-      for (size_t i = 0; i < m_size; i++)
+      for (unsigned i = 0; i < m_data.size(); i++)
       {
-        if (*p <= min)
-          *p = min;
-        p++;
+        if (m_data(i) <= min)
+          m_data(i) = min;
       }
     }
 
@@ -390,7 +269,7 @@ namespace DUNE
     }
 
     Matrix
-    Matrix::get(size_t i1, size_t i2, size_t j1, size_t j2) const
+    Matrix::get(unsigned i1, unsigned i2, unsigned j1, unsigned j2) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
@@ -398,23 +277,20 @@ namespace DUNE
       if (i1 > i2 || j1 > j2)
         throw Error("Invalid index!");
 
-      if (i2 >= m_nrows || j2 >= m_ncols)
+      if (i2 >= m_data.rows() || j2 >= m_data.cols())
         throw Error("Invalid index!");
 
       int r = i2 - i1 + 1;
       int c = j2 - j1 + 1;
 
-      Matrix s(r, c);
-
-      for (int i = 0; i < r; i++)
-        for (int j = 0; j < c; j++)
-          s.m_data[i * c + j] = m_data[(i1 + i) * m_ncols + j1 + j];
+      Matrix s;
+      s.m_data = m_data.block(i1, j1, r, c);
 
       return s;
     }
 
     Matrix&
-    Matrix::set(size_t i1, size_t i2, size_t j1, size_t j2, const Matrix& m)
+    Matrix::set(unsigned i1, unsigned i2, unsigned j1, unsigned j2, const Matrix& m)
     {
       if (isEmpty() || m.isEmpty())
         throw Error("Trying to access an empty matrix!");
@@ -422,7 +298,7 @@ namespace DUNE
       if (i1 > i2 || j1 > j2)
         throw Error("Invalid index!");
 
-      if (i2 >= m_nrows || j2 >= m_ncols)
+      if (i2 >= m_data.rows() || j2 >= m_data.cols())
         throw Error("Invalid index!");
 
       // If data is already shared: there is nothing to do
@@ -432,9 +308,7 @@ namespace DUNE
       unsigned int r = i2 - i1 + 1;
       unsigned int c = j2 - j1 + 1;
 
-      for (unsigned int i = 0; i < r; i++)
-        for (unsigned int j = 0; j < c; j++)
-          (*this)(i1 + i, j1 + j) = m.element(i, j);
+      m_data.block(i1, j1, r, c) = m.m_data;
 
       return *this;
     }
@@ -444,7 +318,7 @@ namespace DUNE
     {
       Matrix old = *this;
       Matrix mx_in_ = mx_in;
-      resizeAndFill(m_nrows + mx_in_.rows(), m_ncols + mx_in_.columns(), 0);
+      resizeAndFill(m_data.rows() + mx_in_.rows(), m_data.cols() + mx_in_.columns(), 0);
 
       if (!old.isEmpty())
         set(0, old.rows() - 1, 0, old.columns() - 1, old);
@@ -456,7 +330,7 @@ namespace DUNE
     Matrix&
     Matrix::vertCat(const Matrix& mx_in)
     {
-      if (m_ncols != mx_in.m_ncols && !isEmpty())
+      if (m_data.cols() != mx_in.m_data.cols() && !isEmpty())
         throw Error("Invalid index!");
 
       Matrix old = *this;
@@ -473,12 +347,12 @@ namespace DUNE
     Matrix&
     Matrix::horzCat(const Matrix& mx_in)
     {
-      if (m_nrows != mx_in.m_nrows && !isEmpty())
+      if (m_data.rows() != mx_in.m_data.rows() && !isEmpty())
         throw Error("Invalid index!");
 
       Matrix old = *this; //  <=> Matrix old(*this);
       Matrix mx_in_ = mx_in;
-      resizeAndFill(mx_in_.rows(), m_ncols + mx_in.columns(), 0);
+      resizeAndFill(mx_in_.rows(), m_data.cols() + mx_in.columns(), 0);
 
       if (!old.isEmpty())
         set(0, old.rows() - 1, 0, old.columns() - 1, old);
@@ -490,10 +364,10 @@ namespace DUNE
     Matrix&
     Matrix::pow(unsigned int n)
     {
-      if (m_nrows != m_ncols)
+      if (m_data.rows() != m_data.cols())
         throw Error("Matrix is not square!");
 
-      Matrix power(m_nrows);
+      Matrix power(m_data.rows());
 
       if (n == 0)
       {
@@ -528,41 +402,43 @@ namespace DUNE
     Matrix
     Matrix::row(size_t i) const
     {
-      return get(i, i, 0, m_ncols - 1);
+      Matrix r;
+      r.m_data = m_data.row(i);
+
+      return r;
     }
 
     Matrix
     Matrix::column(size_t j) const
     {
-      return get(0, m_nrows - 1, j, j);
+      Matrix c;
+      c.m_data = m_data.col(j);
+      
+      return c;
     }
 
     void
-    Matrix::swapColumns(size_t i, size_t j)
+    Matrix::swapColumns(unsigned i, unsigned j)
     {
-      if (i >= m_ncols || j >= m_ncols)
+      if (i >= m_data.cols() || j >= m_data.cols())
         throw Error("Invalid index!");
 
       if (i == j)
         return;
 
-      Matrix tmp = this->column(i);
-      this->put(0, i, this->column(j));
-      this->put(0, j, tmp);
+      m_data.col(i).swap(m_data.col(j));
     }
 
     void
-    Matrix::swapRows(size_t i, size_t j)
+    Matrix::swapRows(unsigned i, unsigned j)
     {
-      if (i >= m_nrows || j >= m_nrows)
+      if (i >= m_data.rows() || j >= m_data.rows())
         throw Error("Invalid index!");
 
       if (i == j)
         return;
 
-      Matrix tmp = this->row(i);
-      this->put(i, 0, this->row(j));
-      this->put(j, 0, tmp);
+      m_data.row(i).swap(m_data.row(j));
     }
 
     void
@@ -581,24 +457,16 @@ namespace DUNE
     void
     Matrix::resize(size_t r, size_t c)
     {
-      erase();
-
       if ((!r && c) || (r && !c))
         throw Error("Invalid dimension!");
 
-      m_nrows = r;
-      m_ncols = c;
-      m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data.resize(r, c);
     }
 
     void
-    Matrix::resizeAndKeep(size_t r, size_t c)
+    Matrix::resizeAndKeep(unsigned r, unsigned c)
     {
-      if (r == m_nrows && c == m_ncols)
+      if (r == m_data.rows() && c == m_data.cols())
         return;
 
       if (!isEmpty())
@@ -606,41 +474,7 @@ namespace DUNE
         if ((!r && c) || (r && !c))
           throw Error("Invalid dimension!");
 
-        // Row and Column values that will be kept.
-        int nrows = std::min(m_nrows, r);
-        int ncols = std::min(m_ncols, c);
-
-        // Column difference.
-        int clm_diff = c - m_ncols;
-
-        // Matrix copy.
-        double* newdata =  ALLOCD(m_size + 1);
-        std::memcpy(newdata, m_data, m_size * sizeof(double));
-
-        erase();
-
-        m_nrows = r;
-        m_ncols = c;
-        m_size = r * c;
-        m_data = ALLOCD(m_size + 1);
-
-        m_counter = m_data + m_size;
-        *m_counter = 1;
-
-        fill(0);
-
-        int itr = 0, icr = 0;
-        for (int i = 0; i < nrows; ++i)
-        {
-          for (int j = 0; j < ncols; ++j)
-          {
-            m_data[(i * ncols + j) + icr] = newdata[itr];
-            ++itr;
-          }
-          clm_diff > 0 ? icr += clm_diff : itr -= clm_diff;
-        }
-
-        std::free(newdata);
+        m_data.conservativeResize(r, c);
       }
       else
       {
@@ -658,176 +492,138 @@ namespace DUNE
     void
     Matrix::resize(const Matrix& m)
     {
-      resize(m.m_nrows, m.m_ncols);
+      resize(m.m_data.rows(), m.m_data.cols());
     }
 
     double&
-    Matrix::operator()(size_t i, size_t j)
+    Matrix::operator()(unsigned i, unsigned j)
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (i >= m_nrows || j >= m_ncols)
+      if (i >= m_data.rows() || j >= m_data.cols())
         throw Error("Invalid index!");
 
-      split();
-
-      return m_data[i * m_ncols + j];
+      return m_data(i, j);
     }
 
     double
-    Matrix::operator()(size_t i, size_t j) const
+    Matrix::operator()(unsigned i, unsigned j) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (i >= m_nrows || j >= m_ncols)
+      if (i >= m_data.rows() || j >= m_data.cols())
         throw Error("Invalid index!");
 
-      return m_data[i * m_ncols + j];
+      return m_data(i, j);
     }
 
     double&
-    Matrix::operator()(size_t i)
+    Matrix::operator()(unsigned i)
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (i >= m_size)
+      if (i >= m_data.size())
         throw Error("Invalid index!");
 
-      split();
-
-      return m_data[i];
+      return m_data(i);
     }
 
     double
-    Matrix::operator()(size_t i) const
+    Matrix::operator()(unsigned i) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (i >= m_size)
+      if (i >= m_data.size())
         throw Error("Invalid index!");
 
-      return m_data[i];
+      return m_data(i);
     }
 
     double
-    Matrix::element(size_t i, size_t j) const
+    Matrix::element(unsigned i, unsigned j) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (i >= m_nrows || j >= m_ncols)
+      if (i >= m_data.rows() || j >= m_data.cols())
         throw Error("Invalid index!");
 
-      return m_data[i * m_ncols + j];
+      return m_data(i, j);
     }
 
     double
-    Matrix::element(size_t i)
+    Matrix::element(unsigned i)
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (i >= m_size)
+      if (i >= m_data.size())
         throw Error("Invalid index!");
 
-      return m_data[i];
+      return m_data(i);
     }
 
     void
     Matrix::to_row(void)
     {
-      if (!m_size)
+      if (!m_data.size())
         return;
 
-      split();
-
-      m_nrows = 1;
-      m_ncols = m_size;
+      fill(1, m_data.size(), m_data.data());
     }
 
     void
     Matrix::to_column(void)
     {
-      if (!m_size)
+      if (!m_data.size())
         return;
 
-      split();
-
-      m_ncols = 1;
-      m_nrows = m_size;
+      fill(m_data.size(), 1, m_data.data());
     }
 
     bool
     Matrix::operator==(const Matrix& m) const
     {
-      if (m_size != m.m_size)
+      if (m_data.size() != m.m_data.size())
         return false;
 
-      if (m_nrows != m.m_nrows)
+      if (m_data.rows() != m.m_data.rows())
         return false;
 
-      if (m_ncols != m.m_ncols)
+      if (m_data.cols() != m.m_data.cols())
         return false;
 
-      if (m_data == NULL)
+      if (&m_data(0) == NULL)
       {
-        if (m.m_data == NULL)
+        if (&m.m_data(0) == NULL)
           return true;
         else
           return false;
       }
-      else if (m.m_data == NULL)
+      else if (&m.m_data(0) == NULL)
         return false;
 
-      return std::memcmp(m_data, m.m_data, m_size * sizeof(double)) == 0;
+      return std::memcmp(&m_data(0), &m.m_data(0), m_data.size() * sizeof(double)) == 0;
     }
 
     Matrix&
     Matrix::operator=(const Matrix& m)
     {
-      if (m.m_size) // 'b' is valid
-      {
-        // 'a' is valid and data is already shared: there is nothing to do
-        if (m_size && (m_data == m.m_data))
-          return *this;
-
-        // 'a' is invalid or data is not shared: "delete" 'a' and increase counter
-        erase();
-
-        m_nrows = m.m_nrows;
-        m_ncols = m.m_ncols;
-        m_size = m.m_size;
-        m_data = m.m_data;
-        m_counter = m.m_counter;
-        (*m_counter)++;
-
-        return *this;
-      }
-      else  // 'b' is invalid: "delete" 'a' and mark it invalid
-      {
-        erase();
-        m_nrows = m_ncols = m_size = 0;
-        return *this;
-      }
+      m_data = m.m_data;
+      return *this;
     }
 
     Matrix&
     Matrix::operator+=(const Matrix& m)
     {
-      if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
+      if (rows() != m.rows() || columns() != m.columns())
         throw Error("Incompatible dimensions!");
 
-      split();
-
-      double* p1 = m_data;
-      double* p2 = m.m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p1++) += *(p2++);
+      m_data += m.m_data;
 
       return *this;
     }
@@ -835,15 +631,10 @@ namespace DUNE
     Matrix&
     Matrix::operator-=(const Matrix& m)
     {
-      if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
+      if (rows() != m.rows() || columns() != m.columns())
         throw Error("Incompatible dimensions!");
-      split();
 
-      double* p1 = m_data;
-      double* p2 = m.m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p1++) -= *(p2++);
+      m_data -= m.m_data;
 
       return *this;
     }
@@ -851,16 +642,10 @@ namespace DUNE
     Matrix&
     Matrix::operator&=(const Matrix& m)
     {
-      if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
+      if (rows() != m.rows() || columns() != m.columns())
         throw Error("Incompatible dimensions!");
 
-      split();
-
-      double* p1 = m_data;
-      double* p2 = m.m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p1++) *= *(p2++);
+      m_data = m_data.array() * m.m_data.array();
 
       return *this;
     }
@@ -868,16 +653,10 @@ namespace DUNE
     Matrix&
     Matrix::operator/=(const Matrix& m)
     {
-      if (m_nrows != m.m_nrows || m_ncols != m.m_ncols)
+      if (rows() != m.rows() || columns() != m.columns())
         throw Error("Incompatible dimensions!");
 
-      split();
-
-      double* p1 = m_data;
-      double* p2 = m.m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p1++) /= *(p2++);
+      m_data = m_data.array() / m.m_data.array();
 
       return *this;
     }
@@ -895,12 +674,7 @@ namespace DUNE
     Matrix&
     Matrix::operator*=(double x)
     {
-      split();
-
-      double* p = m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p++) *= x;
+      m_data *= x;
 
       return *this;
     }
@@ -908,12 +682,7 @@ namespace DUNE
     Matrix&
     Matrix::operator/=(double x)
     {
-      split();
-
-      double* p = m_data;
-
-      for (size_t i = 0; i < m_size; i++)
-        *(p++) /= x;
+      m_data /= x;
 
       return *this;
     }
@@ -927,19 +696,13 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      split();
+      size_t r = i + a.rows();
+      size_t c = j + a.columns();
 
-      size_t r = i + a.m_nrows;
-      size_t c = j + a.m_ncols;
-
-      if (r > m_nrows || c > m_ncols)
+      if (r > m_data.rows() || c > m_data.cols())
         throw Error("Invalid dimensions!");
 
-      double* p = a.m_data;
-
-      for (size_t ii = i; ii < r; ii++)
-        for (size_t jj = j; jj < c; jj++)
-          m_data[ii * m_ncols + jj] = *(p++);
+      m_data.block(i, j, a.rows(), a.columns()) = a.m_data;
 
       return;
     }
@@ -950,14 +713,14 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (m_data.rows() != m_data.cols())
         throw Error("Matrix is not square!");
 
-      if (i >= m_nrows || j >= m_ncols)
+      if (i >= m_data.rows() || j >= m_data.cols())
         throw Error("Invalid dimensions!");
 
       Matrix mi;
-      size_t n = m_nrows - 1;
+      size_t n = m_data.rows() - 1;
       mi.resizeAndFill(n, n, 0.0);
       if (0 == i && 0 == j)
         mi = this->get(1, n, 1, n);
@@ -1004,84 +767,31 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (rows() != columns())
         throw Error(" matrix is not square!");
 
-      Matrix A = *this;
-      Matrix Lf(m_nrows), dI(m_nrows), P(m_nrows);
-      dI = dI + dI;
+      L.m_data.Identity(m_data.rows(), m_data.cols());
+      U.m_data.Zero(m_data.rows(), m_data.cols());
 
-      for (size_t i = 0; i < m_nrows - 1; i++)
-      {
-        /*
-        // check if pivot == 0
-        // if so, try to find a valid pivot
-        // if no valid pivot found, matrix isn't invertible (quit)
-        // update permutation matrix
-        //
-        */
-        Matrix Lt(m_nrows);
-        for (size_t j = i + 1; j < m_nrows; j++)
-          Lt(j, i) = -A(j, i) / A(i, i);
-
-        A = Lt * A;
-        Lf = Lf * (dI - Lt);
-      }
-
-      U = A;
-      L = Lf;
+      L.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::UnitLower>();
+      U.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::Upper>();
     }
 
-    unsigned int
+    void
     Matrix::lup(Matrix& L, Matrix& U, Matrix& P) const
     {
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (rows() != columns())
         throw Error(" matrix is not square!");
 
-      unsigned int permutations = 0;
-      Matrix A = *this;
-      Matrix Lf(m_nrows), dI(m_nrows), Per(m_nrows);
-      dI = dI + dI;
+      L.m_data.Identity(m_data.rows(), m_data.cols());
+      U.m_data.Zero(m_data.rows(), m_data.cols());
 
-      for (size_t i = 0; i < m_nrows - 1; i++)
-      {
-        if (Matrix::precision >= std::fabs(A(i, i)))
-        {
-          bool p = 0;
-          for (size_t k = i + 1; k < m_nrows; k++)
-            if (Matrix::precision >= std::fabs(A(k, i)))
-            {
-              A.swapRows(i, k);
-              Per.swapRows(i, k);
-              p = true;
-              break;
-            }
-          if (!p)
-            throw Error("Matrix is not invertible!");
-          else
-            permutations++;
-        }
-
-        Matrix Lt(m_nrows); // gaussian matrix
-        for (size_t j = i + 1; j < m_nrows; j++)
-          Lt(j, i) = -A(j, i) / A(i, i);
-
-        /*
-          A = Lt * A;
-          Lf = Lf * (dI - Lt);
-        */
-        A = Lt.multiply(A);
-        Lf = Lf.multiply((dI - Lt)); // dI-Lt is the inverse of Lt (gaussian matrix)
-      }
-
-      P = Per;
-      U = A;
-      L = Lf;
-
-      return permutations;
+      L.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::UnitLower>();
+      U.m_data = m_data.fullPivLu().matrixLU().triangularView<Eigen::Upper>();
+      P.m_data = m_data.fullPivLu().permutationP();
     }
 
     double
@@ -1090,14 +800,14 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (!isSquare())
         throw Error("Matrix is not square!");
 
-      if (m_nrows == 1)
+      if (m_data.rows() == 1)
         return this->element(0, 0);
-      else if (m_nrows == 2)
+      else if (m_data.rows() == 2)
         return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
-      else if (m_nrows == 3)
+      else if (m_data.rows() == 3)
         return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
                 + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
                 + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
@@ -1107,7 +817,7 @@ namespace DUNE
       else
       {
         double d = 0;
-        for (size_t j = 0; j < m_ncols; j++)
+        for (size_t j = 0; j < m_data.cols(); j++)
         {
           d += element(0, j) * std::pow(-1.0, (double)j) * (mminor(0, j)).detr();
         }
@@ -1121,33 +831,10 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (!isSquare())
         throw Error("Matrix is not square!");
 
-      if (m_nrows == 1)
-        return this->element(0, 0);
-      else if (m_nrows == 2)
-        return this->element(0, 0) * this->element(1, 1) - this->element(1, 0) * this->element(0, 1);
-      else if (m_nrows == 3)
-        return (this->element(0, 0) * this->element(1, 1) * this->element(2, 2)
-                + this->element(0, 1) * this->element(1, 2) * this->element(2, 0)
-                + this->element(0, 2) * this->element(1, 0) * this->element(2, 1)
-                - this->element(2, 0) * this->element(1, 1) * this->element(0, 2)
-                - this->element(2, 1) * this->element(1, 2) * this->element(0, 0)
-                - this->element(2, 2) * this->element(1, 0) * this->element(0, 1));
-      else
-      {
-        Matrix L(m_nrows), U(m_nrows), P(m_nrows);
-        unsigned int exp = this->lup(L, U, P);
-        double dl = 1, du = 1;
-        for (size_t i = 0; i < m_nrows; i++)
-        {
-          // if LUP is implemented using Doolittle's algorithm, dl = 1.
-          dl = dl * L(i, i);
-          du = du * U(i, i);
-        }
-        return std::pow(-1.0, (double)exp) * dl * du;
-      }
+      return m_data.determinant() < precision ? 0 : m_data.determinant();
     }
 
     bool
@@ -1156,15 +843,15 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (!isSquare())
         throw Error("Matrix is not square!");
 
-      if (m_nrows < 1)
+      if (m_data.rows() < 1)
         throw Error("Invalid dimensions!");
 
       Matrix m = *this;
 
-      for (size_t i = m_nrows - 1; i > 0; i--)
+      for (size_t i = m_data.rows() - 1; i > 0; i--)
       {
         if (m.det() <= 0)
           return false;
@@ -1182,7 +869,7 @@ namespace DUNE
         throw Error("Trying to access an empty matrix!");
 
       // quaternion form to DCM
-      if (m_nrows == 4 && m_ncols == 1)
+      if (rows() == 4 && columns() == 1)
       {
         double vals[4] = {element(0, 0), element(1, 0), element(2, 0), element(3, 0)};
         double v[9] =
@@ -1202,7 +889,7 @@ namespace DUNE
       }
 
       // Euler angles to DCM
-      if (m_nrows == 3 && m_ncols == 1)
+      if (rows() == 3 && columns() == 1)
       {
         double vals[3] = {element(0, 0), element(1, 0), element(2, 0)};
         double cr = std::cos(vals[0]);
@@ -1229,7 +916,7 @@ namespace DUNE
         throw Error("Trying to access an empty matrix!");
 
       // Euler angles to quaternion
-      if (3 == m_nrows && 1 == m_ncols)
+      if (3 == rows() && 1 == columns())
       {
         double ea[3] = {element(0, 0), element(1, 0), element(2, 0)};
 
@@ -1249,7 +936,7 @@ namespace DUNE
       }
 
       // DCM to quaternion
-      if (3 == m_nrows && 3 == m_ncols)
+      if (3 == rows() && 3 == columns())
       {
         double q4 = 0.5 * std::sqrt(1 + element(0, 0) + element(1, 1) + element(2, 2));
         double k = 1 / (4 * q4);
@@ -1274,7 +961,7 @@ namespace DUNE
         throw Error("Trying to access an empty matrix!");
 
       // DCM to Euler angles
-      if (m_nrows == 3 && m_ncols == 3)
+      if (rows() == 3 && columns() == 3)
       {
         double k = element(2, 0);
 
@@ -1289,7 +976,7 @@ namespace DUNE
       }
 
       // Quaternion to Euler angles
-      if (m_nrows == 4 && m_ncols == 1)
+      if (rows() == 4 && columns() == 1)
       {
         double norm = norm_p(2);
         double q[4] = {element(0, 0) / norm,
@@ -1321,7 +1008,7 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (rows() != columns())
         throw Error("source matrix is not square!");
 
       double n2 = norm_p(2);
@@ -1339,8 +1026,8 @@ namespace DUNE
         return eA;
       }
 
-      Matrix eA(m_nrows);
-      Matrix A(m_nrows);
+      Matrix eA(rows());
+      Matrix A(rows());
       n2 = 1;
       double inv_f = 1;
       int i = 0;
@@ -1369,10 +1056,10 @@ namespace DUNE
       if (p < 1)
         throw Error("Incompatible value for p!");
 
-      double n = 0;
-      for (unsigned int i = 0; i < m_size; i++)
-        n += std::pow(std::abs(m_data[i]), p);
-      return std::pow(n, 1 / p);
+      if (p == 1)
+        return m_data.lpNorm<1>();
+      if (p == 2)
+        return m_data.lpNorm<2>();
     }
 
     double
@@ -1381,10 +1068,7 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      double n = 0;
-      for (unsigned int i = 0; i < m_size; i++)
-        n += m_data[i] * m_data[i];
-      return std::sqrt(n);
+      return m_data.lpNorm<2>();
     }
 
     double
@@ -1393,11 +1077,7 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      double m = 0;
-      for (unsigned int i = 0; i < m_size; i++)
-        m = std::max(std::abs(m_data[i]), m);
-
-      return m;
+      return m_data.lpNorm<Eigen::Infinity>();
     }
 
     double
@@ -1406,8 +1086,10 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      double* p = m_data;
-      return DUNE::Math::median(p, m_size);
+      double* p = ALLOCD(m_data.size());
+      Eigen::Map<RowMajorMatrix>(p, m_data.rows(), m_data.cols()) = m_data;
+
+      return DUNE::Math::median(p, m_data.size());
     }
 
     double
@@ -1419,10 +1101,7 @@ namespace DUNE
       if (!isSquare())
         throw Error("not a square matrix!");
 
-      double v = 0;
-      for (size_t i = 0; i < m_nrows; i++)
-        v += m_data[i * (m_nrows + 1)];
-      return v;
+      return m_data.trace();
     }
 
     Matrix
@@ -1431,48 +1110,12 @@ namespace DUNE
       if (isEmpty() || m2.isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_ncols != m2.m_nrows)
+      if (m_data.cols() != m2.m_data.cols())
         throw Matrix::Error("Incompatible dimensions!");
 
-      Matrix s(m_nrows, m2.m_ncols);
-
-      int n = m_nrows;
-      int m = m_ncols;
-      int r = m2.m_ncols;
-
-      double* m1_p = m_data;
-
-      for (int i = 0; i < n; i++)
-      {
-        for (int k = 0; k < m; k++)
-        {
-          double v = *m1_p++; // <-> v = m1(i,k)
-          double* m2_p = m2.m_data + k * r;
-          double* s_p = s.m_data + i * r;
-
-          // not pretty, but hopefully faster
-          if (std::fabs(v) <= precision)
-          {
-            if (!k)
-            {
-              for (int j = 0; j < r; j++)
-              {
-                *s_p = 0;
-                s_p++;
-              }
-            }
-          }
-          else
-            for (int j = 0; j < r; j++)
-            {
-              if (!k)
-                *s_p = 0;
-              *s_p += v * (*m2_p); // <-> s(i,j) += m1(i,k) * m2(k,j)
-              s_p++;
-              m2_p++;
-            }
-        }
-      }
+      Matrix s(m_data.rows(), m2.m_data.cols());
+      s.m_data = m_data * m2.m_data;
+      
       return s;
     }
 
@@ -1482,18 +1125,11 @@ namespace DUNE
       if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
+      if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
         throw Matrix::Error("Incompatible dimensions!");
 
-      Matrix s(m1.m_nrows, m1.m_ncols);
-
-      int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = m1.m_data;
-      double* p2 = m2.m_data;
-
-      for (int i = 0; i < size; i++)
-        *(p++) = *(p1++) + *(p2++);
+      Matrix s;
+      s.m_data = m1.m_data + m2.m_data;
 
       return s;
     }
@@ -1504,18 +1140,11 @@ namespace DUNE
       if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
+      if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
         throw Matrix::Error("Incompatible dimensions!");
 
-      Matrix s(m1.m_nrows, m1.m_ncols);
-
-      int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = m1.m_data;
-      double* p2 = m2.m_data;
-
-      for (int i = 0; i < size; i++)
-        *(p++) = *(p1++) - *(p2++);
+      Matrix s;
+      s.m_data = m1.m_data - m2.m_data;
 
       return s;
     }
@@ -1526,35 +1155,12 @@ namespace DUNE
       if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (m1.m_ncols != m2.m_nrows)
+      if (m1.columns() != m2.rows())
         throw Matrix::Error("Incompatible dimensions!");
 
-      Matrix s(m1.m_nrows, m2.m_ncols);
+      Matrix s;
+      s.m_data = m1.m_data * m2.m_data;
 
-      int n = m1.m_nrows;
-      int m = m1.m_ncols;
-      int r = m2.m_ncols;
-
-      double* m1_p = m1.m_data;
-
-      for (int i = 0; i < n; i++)
-      {
-        for (int k = 0; k < m; k++)
-        {
-          double v = *m1_p++; // <-> v = m1(i,k)
-          double* m2_p = m2.m_data + k * r;
-          double* s_p = s.m_data + i * r;
-
-          for (int j = 0; j < r; j++)
-          {
-            if (!k)
-              *s_p = 0;
-            *s_p += v * (*m2_p); // <-> s(i,j) += m1(i,k) * m2(k,j)
-            s_p++;
-            m2_p++;
-          }
-        }
-      }
       return s;
     }
 
@@ -1564,18 +1170,11 @@ namespace DUNE
       if (m1.isEmpty() || m2.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (m1.m_nrows != m2.m_nrows || m1.m_ncols != m2.m_ncols)
+      if (m1.rows() != m2.rows() || m1.columns() != m2.columns())
         throw Matrix::Error("Incompatible dimensions!");
 
-      Matrix s(m1.m_nrows, m1.m_ncols);
-
-      int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = m1.m_data;
-      double* p2 = m2.m_data;
-
-      for (int i = 0; i < size; i++)
-        *(p++) = *(p1++) * *(p2++);
+      Matrix s(m1.rows(), m1.columns());
+      s.m_data = m1.m_data.array() * m2.m_data.array();
 
       return s;
     }
@@ -1586,18 +1185,11 @@ namespace DUNE
       if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (a.m_nrows != b.m_nrows || a.m_ncols != b.m_ncols)
+      if (a.rows() != b.rows() || a.columns() != b.columns())
         throw Matrix::Error("Incompatible dimensions!");
 
-      Matrix s(a.m_nrows, a.m_ncols);
-
-      int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = a.m_data;
-      double* p2 = b.m_data;
-
-      for (int i = 0; i < size; i++)
-        *(p++) = *(p1++) / *(p2++);
+      Matrix s(a.rows(), a.columns());
+      s.m_data = a.m_data.array() / b.m_data.array();
 
       return s;
     }
@@ -1607,7 +1199,7 @@ namespace DUNE
     {
       Matrix s(a);
 
-      s *= x;
+      s.m_data *= x;
 
       return s;
     }
@@ -1617,7 +1209,7 @@ namespace DUNE
     {
       Matrix s(a);
 
-      s *= x;
+      s.m_data *= x;
 
       return s;
     }
@@ -1627,7 +1219,7 @@ namespace DUNE
     {
       Matrix s(a);
 
-      s /= x;
+      s.m_data /= x;
 
       return s;
     }
@@ -1635,16 +1227,7 @@ namespace DUNE
     std::ostream&
     operator<<(std::ostream& os, const Matrix& a)
     {
-      int n = a.m_nrows;
-      int m = a.m_ncols;
-      double* p = a.m_data;
-
-      for (int i = 0; i < n; i++)
-      {
-        for (int j = 0; j < m; j++)
-          os << *(p++) << " ";
-        os << std::endl;
-      }
+      os << a.m_data;
 
       return os;
     }
@@ -1699,14 +1282,8 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      int n = a.m_nrows;
-      int m = a.m_ncols;
-
-      Matrix t(m, n);
-
-      for (int i = 0; i < n; i++)
-        for (int j = 0; j < m; j++)
-          (t.m_data + j * n)[i] = (a.m_data + i * m)[j];
+      Matrix t(a.columns(), a.rows());
+      t.m_data = a.m_data.transpose();
 
       return t;
     }
@@ -1717,47 +1294,25 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      if (m_nrows != m_ncols)
+      if (rows() != columns())
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
-      int n = m_nrows;
-      double* M = ALLOCD(2 * n * n);
-      double* p1 = M;
-      double* p2 = m_data;
-
-      for (int i = 0; i < n; i++)
-      {
-        for (int j = 0; j < n; j++)
-        {
-          *p1 = *p2;
-          *(p1 + n) = (i == j) ? 1 : 0;
-          p1++;
-          p2++;
-        }
-
-        p1 += n;
-      }
-
-      int rv = upper_triangular_pp(M, n, n + n, Matrix::precision);
-
-      std::free(M);
-
-      return rv == 0;
+      return m_data.fullPivLu().isInvertible();
     }
 
     Matrix
-    inverse_pp(const Matrix& a)
+    inverse_pp(Matrix& a)
     {
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (a.m_nrows != a.m_ncols)
+      if (a.rows() != a.columns())
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
-      int n = a.m_nrows;
+      int n = a.rows();
       double* M = ALLOCD(2 * n * n);
       double* p1 = M;
-      double* p2 = a.m_data;
+      double* p2 = a.begin();
 
       for (int i = 0; i < n; i++)
       {
@@ -1771,7 +1326,7 @@ namespace DUNE
         p1 += n;
       }
 
-      int result = Math::Matrix::upper_triangular_pp(M, n, n + n, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_pp(M, n, n + n, Matrix::get_precision());
 
       Matrix s(n, n);
 
@@ -1781,7 +1336,7 @@ namespace DUNE
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
+      p1 = s.begin();
       p2 = M;
       int n2 = n + n;
 
@@ -1800,24 +1355,24 @@ namespace DUNE
     }
 
     Matrix
-    inverse_pp(const Matrix& a, const Matrix& b)
+    inverse_pp(Matrix& a, Matrix& b)
     {
       if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (a.m_nrows != a.m_ncols)
+      if (a.rows() != a.columns())
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
-      if (a.m_nrows != b.m_nrows)
+      if (a.rows() != b.rows())
         throw Matrix::Error("Incompatible dimensions!");
 
-      int n = a.m_nrows;
-      int m = b.m_ncols;
+      int n = a.rows();
+      int m = b.columns();
       double* M = ALLOCD(n * (n + m));
 
       double* p1 = M;
-      double* p2 = a.m_data;
-      double* p3 = b.m_data;
+      double* p2 = a.begin();
+      double* p3 = b.begin();
       for (int i = 0; i < n; i++)
       {
         for (int j = 0; j < n; j++)
@@ -1827,7 +1382,7 @@ namespace DUNE
           *(p1++) = *(p3++);
       }
 
-      int result = Math::Matrix::upper_triangular_pp(M, n, n + m, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_pp(M, n, n + m, Matrix::get_precision());
 
       Matrix s(n, m);
 
@@ -1837,7 +1392,7 @@ namespace DUNE
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
+      p1 = s.begin();
       p2 = M;
       int n2 = n + m;
 
@@ -1856,20 +1411,20 @@ namespace DUNE
     }
 
     Matrix
-    inverse(const Matrix& a)
+    inverse(Matrix& a)
     {
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (a.m_nrows != a.m_ncols)
+      if (a.rows() != a.columns())
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
-      int n = a.m_nrows;
+      int n = a.rows();
       double* M = ALLOCD(2 * n * n);
       int* index = ALLOCI(n);
 
       double* p1 = M;
-      double* p2 = a.m_data;
+      double* p2 = a.begin();
 
       for (int i = 0; i < n; i++)
       {
@@ -1884,7 +1439,7 @@ namespace DUNE
         index[i] = i;
       }
 
-      int result = Math::Matrix::upper_triangular_tp(M, index, n, n + n, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_tp(M, index, n, n + n, Matrix::get_precision());
 
       Matrix s(n, n);
 
@@ -1895,7 +1450,7 @@ namespace DUNE
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
+      p1 = s.begin();
       p2 = M;
       int n2 = n + n;
 
@@ -1915,25 +1470,25 @@ namespace DUNE
     }
 
     Matrix
-    inverse(const Matrix& a, const Matrix& b)
+    inverse(Matrix& a, Matrix& b)
     {
       if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (a.m_nrows != a.m_ncols)
+      if (a.rows() != a.columns())
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
-      if (a.m_nrows != b.m_nrows)
+      if (a.rows() != b.rows())
         throw Matrix::Error("Incompatible dimensions!");
 
-      int n = a.m_nrows;
-      int m = b.m_ncols;
+      int n = a.rows();
+      int m = b.columns();
       double* M = ALLOCD(n * (n + m));
       int* index = ALLOCI(n);
 
       double* p1 = M;
-      double* p2 = a.m_data;
-      double* p3 = b.m_data;
+      double* p2 = a.begin();
+      double* p3 = b.begin();
       for (int i = 0; i < n; i++)
       {
         for (int j = 0; j < n; j++)
@@ -1943,7 +1498,7 @@ namespace DUNE
         index[i] = i;
       }
 
-      int result = Math::Matrix::upper_triangular_tp(M, index, n, n + m, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_tp(M, index, n, n + m, Matrix::get_precision());
 
       Matrix s(n, m);
 
@@ -1954,7 +1509,7 @@ namespace DUNE
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
+      p1 = s.begin();
       p2 = M;
       int n2 = n + m;
 
@@ -1993,7 +1548,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (!((a.m_nrows == 1 && a.m_ncols == 3) || (a.m_nrows == 3 && a.m_ncols == 1)))
+      if (!((a.rows() == 1 && a.columns() == 3) || (a.rows() == 3 && a.columns() == 1)))
         throw Matrix::Error("Matrix must be 3x1 or 1x3 to create a skew symmetrical!");
 
       double data[3] = {a(0), a(1), a(2)};
@@ -2007,51 +1562,11 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      if (a.m_nrows != a.m_ncols)
+      if (a.rows() != a.columns())
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
-      int n = a.m_nrows;
-
-      Matrix L(n);
-      Matrix U(n);
-      Matrix P(n);
-
-      a.lup(L, U, P);
-
-      double* y = ALLOCD(n);
-      double* l = L.m_data;
-      double* u = U.m_data;
-      double* p = P.m_data;
-
-      Matrix Minv(n, n);
-      double* m = Minv.m_data;
-
-      for (int k = 0; k < n; k++)
-      {
-        for (int j = 0; j < n; j++)
-        {
-          y[j] = p[j * n + k];
-
-          for (int i = 0; i < j; i++)
-            y[j] -= l[j * n + i] * y[i];
-
-          y[j] /= l[j * n + j];
-        }
-
-        for (int j = n - 1; j >= 0; j--)
-        {
-          m[j * n + k] = y[j];
-          for (int i = j + 1; i < n; i++)
-            m[j * n + k] -= u[j * n + i] * m[i * n + k];
-
-          if (Matrix::precision >= std::fabs(u[j * n + j]))
-            throw Matrix::Error("Matrix is not invertible!");
-          else
-            m[j * n + k] /= u[j * n + j];
-        }
-      }
-
-      std::free(y);
+      Matrix Minv = a;
+      Minv.m_data = Minv.m_data.fullPivLu().inverse();
 
       return Minv;
     }
@@ -2062,12 +1577,9 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      Matrix s(a.m_nrows, a.m_ncols);
+      Matrix s(a);
 
-      for (size_t i = 0; i < a.m_size; i++)
-      {
-        s.m_data[i] = std::fabs(a.m_data[i]);
-      }
+      s.m_data.cwiseAbs();
 
       return s;
     }
@@ -2078,18 +1590,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
-      double m = *(p++);
-      int size = a.m_size;
-
-      for (int i = 1; i < size; i++)
-      {
-        double m1;
-        if ((m1 = *(p++)) > m)
-          m = m1;
-      }
-
-      return m;
+      return a.m_data.maxCoeff();
     }
 
     double
@@ -2098,18 +1599,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
-      double m = *(p++);
-      int size = a.m_size;
-
-      for (int i = 1; i < size; i++)
-      {
-        double m1;
-        if ((m1 = *(p++)) < m)
-          m = m1;
-      }
-
-      return m;
+      return a.m_data.minCoeff();
     }
 
     double
@@ -2118,14 +1608,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
-      double s = 0;
-      int size = a.m_size;
-
-      for (int i = 0; i < size; i++)
-        s += *(p++);
-
-      return s;
+      return a.m_data.sum();
     }
 
     double
@@ -2134,16 +1617,9 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
-      double ss = 0;
-      int size = a.m_size;
+      Matrix s(a);
 
-      for (int i = 0; i < size; i++)
-      {
-        double s = *(p++); ss += s * s;
-      }
-
-      return ss;
+      return s.m_data.array().square().sum();
     }
 
     int
@@ -2247,24 +1723,17 @@ namespace DUNE
     double
     Matrix::dot(const Matrix& a, const Matrix& b)
     {
-      if (a.isEmpty() || a.isEmpty())
+      if (a.isEmpty() || b.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
       // Check if a and b are both column vectors or row vectors
-      if (!a.isVector() || a.m_nrows != b.m_nrows || a.m_ncols != b.m_ncols)
+      if (!a.isVector() || a.rows() != b.rows() || a.columns() != b.columns())
         throw Error("Invalid arguments for dot product!");
 
-      double v = 0;
-      double* pa = a.m_data, * pb = b.m_data, * end = pa + a.m_size;
+      Eigen::VectorXd a_vec = toEigenVector(a.m_data);
+      Eigen::VectorXd b_vec = toEigenVector(b.m_data);
 
-      while (pa != end)
-      {
-        v += (*pa) * (*pb);
-        ++pa;
-        ++pb;
-      }
-
-      return v;
+      return a_vec.dot(b_vec);
     }
 
     Matrix
@@ -2280,14 +1749,14 @@ namespace DUNE
       if (a.size() != 3 || b.size() != 3)
         throw Error("vectors are not 3D!");
 
-      Matrix v;
-      v.resizeAndFill(a.rows(), a.columns(), 0.0);
+      Eigen::Vector3d a_vec(a(0), a(1), a(2));
+      Eigen::Vector3d b_vec(b(0), b(1), b(2));
 
-      v(0) = a(1) * b(2) - a(2) * b(1);
-      v(1) = a(2) * b(0) - a(0) * b(2);
-      v(2) = a(0) * b(1) - a(1) * b(0);
+      Eigen::VectorXd v = a_vec.cross(b_vec);
 
-      return v;
+      Matrix m;
+      m.m_data = toMatrix(v);
+      return m;
     }
 
     void
@@ -2296,22 +1765,22 @@ namespace DUNE
       if (isEmpty())
         throw Error("dimensions of the matrix must be defined first!");
 
-      if (clines.size() != m_nrows)
+      if (clines.size() != rows())
         throw Error("Invalid number of rows in configuration!");
 
       std::vector<double> rvalues;
 
-      double* p = m_data;
+      double* p = begin();
 
       for (size_t r = 0; r < clines.size(); ++r)
       {
         // Parse row in configuration line
         DUNE::Utils::String::split(clines[r], " ", rvalues);
 
-        if (rvalues.size() != m_ncols)
+        if (rvalues.size() != columns())
           throw Error(Utils::String::str("Invalid number of columns in configuration - row: %d", r));
 
-        for (size_t c = 0; c < m_ncols; ++c)
+        for (size_t c = 0; c < columns(); ++c)
           *p++ = rvalues[c];
         rvalues.clear();
       }
@@ -2325,6 +1794,26 @@ namespace DUNE
       cfg.get(section, param, "", clines);
 
       this->readFromLines(clines);
+    }
+
+    Eigen::VectorXd 
+    Matrix::toEigenVector(const RowMajorMatrix &m)
+    {
+      double* p = ALLOCD(m.size());
+      Eigen::Map<RowMajorMatrix>(p, m.rows(), m.cols()) = m;
+      Eigen::VectorXd v(Eigen::Map<Eigen::VectorXd>(p, m.cols()*m.rows()));
+
+      return v;
+    }
+
+    Matrix::RowMajorMatrix
+    Matrix::toMatrix(const Eigen::VectorXd &v)
+    {
+      double* p = ALLOCD(v.size());
+      Eigen::Map<Eigen::VectorXd>(p, v.size()) = v;
+      RowMajorMatrix m(Eigen::Map<RowMajorMatrix>(p, 1, v.size()));
+
+      return m;
     }
   }
 }

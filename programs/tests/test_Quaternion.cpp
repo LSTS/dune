@@ -34,14 +34,14 @@ int main()
   {
     // Test default constructor.
     const Quaternion quat;
-    const double data[] = {1, 0, 0, 0};
+    double data[] = {1, 0, 0, 0};
     const Matrix matrix(data, 4, 1);
     test.boolean("Quaternion()", quat.matrix() == matrix);
   }
 
   {
     // Test std::vector constructor.
-    const double data[] = {-1, 2, -3, 4};
+    double data[] = {-1, 2, -3, 4};
     const std::vector<double> vector(data, data + sizeof(data) / sizeof(double));
     const Quaternion quat(vector);
     const Matrix matrix(data, 4, 1);
@@ -50,7 +50,7 @@ int main()
 
   {
     // Test std::vector constructor (bad vector length).
-    const double data[] = {1, 2, 3, 4, 5};
+    double data[] = {1, 2, 3, 4, 5};
     const std::vector<double> vector(data, data + sizeof(data) / sizeof(double));
     std::string error_message("");
     try
@@ -67,7 +67,7 @@ int main()
 
   {
     // Test Matrix constructor.
-    const double data[] = {1, 2, 3, 4};
+    double data[] = {1, 2, 3, 4};
     const Matrix matrix(data, 4, 1);
     const Quaternion quat(matrix);
     test.boolean("Quaternion(Matrix)", quat.matrix() == matrix);
@@ -90,7 +90,7 @@ int main()
 
   {
     // Test w, x, y z constructor and getters.
-    const double data[] = {-1, 2, -3, 4};
+    double data[] = {-1, 2, -3, 4};
     const std::vector<double> vector(data, data + sizeof(data) / sizeof(double));
     const Quaternion quat(vector);
     const Matrix matrix(data, 4, 1);
@@ -103,7 +103,7 @@ int main()
 
   {
     // Test vec() getter.
-    const double data[] = {2, -3, 4};
+    double data[] = {2, -3, 4};
     const Quaternion quat(-1, data[0], data[1], data[2]);
     const Matrix vec(data, 3, 1);
     test.boolean("vec()", quat.vec() == vec);
@@ -182,7 +182,7 @@ int main()
   {
     // Test rotationMatrix().
     const Quaternion quat(1, 2, -3, -4);
-    const double data[] = {
+    double data[] = {
       -.6667, -.1333, -.7333,
       -.6667, -.3333,  .6667,
       -.3333,  .9333,  .1333,
@@ -195,7 +195,7 @@ int main()
   {
     // Test angVelTransform().
     const Quaternion quat(2, 4, 6, 8);
-    const double data[] = {
+    double data[] = {
       -2, -3, -4,
        1, -4,  3,
        4,  1, -2,
@@ -236,9 +236,9 @@ int main()
   {
     // Test operator*(Quaternion, Matrix).
     const Quaternion factor1(-1, 2, -3, 4);
-    const double data1[] = {-5, 6, -7, 8};
+    double data1[] = {-5, 6, -7, 8};
     const Matrix factor2(data1, 1, 4);
-    const double data2[] = {
+    double data2[] = {
         5,  -6,   7,  -8,
       -10,  12, -14,  16,
        15, -18,  21, -24,
@@ -250,7 +250,7 @@ int main()
 
   {
     // Test operator*(Matrix, Quaternion).
-    const double data1[] = {
+    double data1[] = {
        1,  2,  3,  4,
        5,  6,  7,  8,
        9, 10, 11, 12,
@@ -258,7 +258,7 @@ int main()
     };
     const Matrix factor1(data1, 4, 4);
     const Quaternion factor2(1, -2, 3, -4);
-    const double data2[] = {-10, -18, -26, -34};
+    double data2[] = {-10, -18, -26, -34};
     const Matrix product(data2, 4, 1);
     test.boolean("operator*(Matrix, Quaternion)", factor1 * factor2 == product);
   }

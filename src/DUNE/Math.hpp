@@ -41,8 +41,8 @@ namespace DUNE
 #include <DUNE/Math/Derivative.hpp>
 #include <DUNE/Math/EulerAnglesZyx.hpp>
 #include <DUNE/Math/General.hpp>
+#include <DUNE/Math/OldMatrix.hpp>
 #include <DUNE/Math/Matrix.hpp>
-#include <DUNE/Math/EigenMatrix.hpp>
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Math/Random.hpp>
 #include <DUNE/Math/Optimization.hpp>
