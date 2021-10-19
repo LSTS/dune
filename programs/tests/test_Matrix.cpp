@@ -84,7 +84,14 @@ compareElements(MatA& mat_a, MatB& mat_b)
   if (mat_a.size() != mat_b.size())
     return 0;
   
-  return memcmp(mat_a.begin(), mat_b.begin(), mat_a.size()) == 0;
+  for (size_t i = 0; i < mat_a.size(); i++)
+    if (mat_a(i) != mat_b(i))
+    {
+      std::cout << "Number failed: " << i << " | " << mat_a(i) << "!=" << mat_b(i) << "\n";
+      return false;
+    }
+  
+  return true;
 }
 
 int
