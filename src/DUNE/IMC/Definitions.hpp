@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4d99b55d10626ecd861a267ba61d4731                            *
+// IMC XML MD5: f5318f0e21fa63bcaf932ef6568a522a                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -25756,12 +25756,14 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Encrypted Message.
+    //! DTLS socket info.
     class DtlsMessage: public Message
     {
     public:
-      //! Field a.
-      fp64_t fielda;
+      //! IP Address.
+      uint32_t ipaddr;
+      //! Port.
+      uint16_t port;
 
       static uint16_t
       getIdStatic(void)
@@ -25810,7 +25812,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 8;
+        return 6;
       }
 
       void

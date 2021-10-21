@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4d99b55d10626ecd861a267ba61d4731                            *
+// IMC XML MD5: f5318f0e21fa63bcaf932ef6568a522a                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -27267,14 +27267,16 @@ namespace DUNE
     void
     DtlsMessage::clear(void)
     {
-      fielda = 0;
+      ipaddr = 0;
+      port = 0;
     }
 
     bool
     DtlsMessage::fieldsEqual(const Message& msg__) const
     {
       const IMC::DtlsMessage& other__ = static_cast<const DtlsMessage&>(msg__);
-      if (fielda != other__.fielda) return false;
+      if (ipaddr != other__.ipaddr) return false;
+      if (port != other__.port) return false;
       return true;
     }
 
@@ -27288,7 +27290,8 @@ namespace DUNE
     DtlsMessage::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(fielda, ptr__);
+      ptr__ += IMC::serialize(ipaddr, ptr__);
+      ptr__ += IMC::serialize(port, ptr__);
       return ptr__;
     }
 
@@ -27296,7 +27299,8 @@ namespace DUNE
     DtlsMessage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(fielda, bfr__, size__);
+      bfr__ += IMC::deserialize(ipaddr, bfr__, size__);
+      bfr__ += IMC::deserialize(port, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -27304,14 +27308,16 @@ namespace DUNE
     DtlsMessage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(fielda, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(ipaddr, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(port, bfr__, size__);
       return bfr__ - start__;
     }
 
     void
     DtlsMessage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "fielda", fielda, nindent__);
+      IMC::toJSON(os__, "ipaddr", ipaddr, nindent__);
+      IMC::toJSON(os__, "port", port, nindent__);
     }
   }
 }
