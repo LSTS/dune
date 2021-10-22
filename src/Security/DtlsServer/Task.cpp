@@ -313,8 +313,6 @@ namespace Security
       consume(const IMC::Announce* msg)
       {
         war("hello from consume(IMC Announce)");
-
-        war("node with\nID = %x  and \nname = %s \n has sent announce msg", msg->getSource(), (msg->sys_name).c_str());
         
         m_node_table.addNode(this, m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
 

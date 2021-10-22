@@ -56,12 +56,15 @@ namespace Security
     NodeTable::addNode(Security::DtlsServer::Task* task, unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services)
     {
 
-      if ( m_table.find(id) == m_table.end() ) {
+      if (id == task->getSystemId())
+      return;
+
+      // if ( m_table.find(id) == m_table.end() ) {
           m_table.insert(std::pair<unsigned, Node>(id, Node(task, port, c_port_retries, name, services)));
-      } else {
-        task->war("node with\nID = %x  and \nname = %s \nalready in active list", id, name.c_str());
-        return;
-      }
+      // } else {
+      //   task->war("node with\nID = %x  and \nname = %s \nalready in active list", id, name.c_str());
+      //   return;
+      // }
      
     }
 

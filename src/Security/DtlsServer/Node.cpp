@@ -75,7 +75,6 @@ namespace Security
       int ret;
       std::vector<Interface> itfs = Interface::get();
       std::set<Address> addrs;
-      const char *ipAddress[15];
       IMC::DtlsMessage connectionParameters;
       uint16_t req_id = 0;
 
@@ -156,13 +155,15 @@ namespace Security
         // get available ip and port.
         // Todo: find better way to determin which one is the "main" address
         // this might cause problems on the hardware
+        const char *ipAddress;
+
         for (unsigned i = 0; i < itfs.size(); ++i)
         {
           Address addr = itfs[i].address();
           if (addrs.find(addr) != addrs.end())
             continue;
 
-          *ipAddress = addr.c_str();
+          ipAddress = addr.c_str();
           connectionParameters.ipaddr = addr.toInteger();
 
           task->inf("ipaddr = %s\n", addr.c_str());
@@ -180,13 +181,13 @@ namespace Security
 
           
 
-          if( ( ret = mbedtls_net_bind( &listen_fd, *ipAddress, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+          if( ( ret = mbedtls_net_bind( &listen_fd, ipAddress, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
           {
               task->err( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
               ++port;
           }else
           {
-            task->inf( " listening on %s:%s\n", *ipAddress, charPort );
+            task->inf( " listening on %s:%s\n", ipAddress, charPort );
 
             // Search for IMC + UDP services.
             std::vector<std::string> list;
@@ -205,19 +206,24 @@ namespace Security
                 m_addrs.insert(std::pair<Address, unsigned>(address, peerPort));
               }
             }
-            //Todo: dispatch DtlsMessage with address and port to connect to. send to peer.
-            // create ip and port member.
-            connectionParameters.port = port;
 
-            IMC::TransmissionRequest tr;
-            tr.data_mode     = IMC::TransmissionRequest::DMODE_INLINEMSG;
-            tr.comm_mean     = IMC::TransmissionRequest::CMEAN_WIFI;
-            tr.req_id        = req_id++;
-            tr.msg_data.set(connectionParameters);
-            tr.destination = name;
+          // Initialize and dispatch AnnounceService with DTLS addr:port
+          std::vector<Interface> itfs = Interface::get();
+          for (unsigned i = 0; i < itfs.size(); ++i)
+          {
+            std::stringstream os;
+            std::string service = "dtls";
 
+            os << service << "://" << ipAddress << ":" << charPort
+               << "/";
 
-            task->dispatch(tr);
+            IMC::AnnounceService announce;
+            announce.service = os.str();
+
+            announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+
+            task->dispatch(announce);
+          }
 
             break;
           }            
