@@ -59,12 +59,23 @@ namespace Security
       if (id == task->getSystemId())
       return;
 
+      //todo: add depending on active list
+      if (NULL == strstr(name.c_str(), "lauv-xplore-4"))
+      {
+        return;
+      }else
+      {
+        task->war("setting up dtls server for %s", name.c_str());
+
       // if ( m_table.find(id) == m_table.end() ) {
           m_table.insert(std::pair<unsigned, Node>(id, Node(task, port, c_port_retries, name, services)));
       // } else {
       //   task->war("node with\nID = %x  and \nname = %s \nalready in active list", id, name.c_str());
       //   return;
       // }
+      }
+
+      
      
     }
 

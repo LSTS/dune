@@ -39,6 +39,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// local headers
+#include "Listener.hpp"
+
 // mbedtls headers.
 #include "mbedtls/entropy.h"
 #include "mbedtls/build_info.h"
@@ -62,6 +65,8 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
+    class Listener;
+
     class Node
     {
     public:
@@ -73,6 +78,12 @@ namespace Security
       //! @return node name.
       const std::string&
       getName(void) const;
+
+      Security::DtlsServer::Task*
+      getParentTask(void);
+
+      mbedtls_ssl_context*
+      getSslContext(void);
 
       //! Check if address and port are on this node's
       //! list of services.
@@ -113,6 +124,8 @@ namespace Security
       std::map<Address, unsigned>::iterator m_active;
       //! Pointer to task
       Security::DtlsServer::Task* m_task;
+      //! Listener thread.
+      Listener* m_listener;
 
       mbedtls_net_context listen_fd, client_fd;
       unsigned char buf[1024];

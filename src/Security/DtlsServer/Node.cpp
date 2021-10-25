@@ -32,6 +32,11 @@
 #include <vector>
 #include <cstdio>
 #include <map>
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -40,6 +45,7 @@
 
 // Local headers
 #include "Node.hpp"
+#include "Listener.hpp"
 
 // mbedtls headers.
 #include "mbedtls/build_info.h"
@@ -67,16 +73,15 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
+    // class Listener;
+
     Node::Node(Security::DtlsServer::Task* task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services):
       m_name(name),
-      m_active(m_addrs.end())
+      m_active(m_addrs.end()),
+      m_listener(NULL)
     {
 
       int ret;
-      std::vector<Interface> itfs = Interface::get();
-      std::set<Address> addrs;
-      IMC::DtlsMessage connectionParameters;
-      uint16_t req_id = 0;
 
       mbedtls_net_init( &listen_fd );
       mbedtls_net_init( &client_fd );
@@ -155,19 +160,26 @@ namespace Security
         // get available ip and port.
         // Todo: find better way to determin which one is the "main" address
         // this might cause problems on the hardware
-        const char *ipAddress;
-
-        for (unsigned i = 0; i < itfs.size(); ++i)
-        {
-          Address addr = itfs[i].address();
-          if (addrs.find(addr) != addrs.end())
-            continue;
-
-          ipAddress = addr.c_str();
-          connectionParameters.ipaddr = addr.toInteger();
-
-          task->inf("ipaddr = %s\n", addr.c_str());
-        }
+        
+        struct hostent *host_entry;
+        char hostbuffer[256];
+        char *IPbuffer;
+        
+        /* I dont know why this is needed but without it there is a segmentation fault*/
+        int hostname;
+        // To retrieve hostname
+        hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+        // checkHostName(hostname);
+        /*----------------------------------------------------------------------------*/
+      
+        // To retrieve host information
+        host_entry = gethostbyname(hostbuffer);
+        // checkHostEntry(host_entry);
+      
+        // To convert an Internet network
+        // address into ASCII string
+        IPbuffer = inet_ntoa(*((struct in_addr*)
+                              host_entry->h_addr_list[0]));
 
         // Find a free port.
         unsigned portLimit = port + c_port_retries;
@@ -176,18 +188,18 @@ namespace Security
           std::string s = std::to_string(port);
           char const *charPort = s.c_str();
 
-          task->inf( "  Try to bind on udp/*/%s", charPort);
+          task->inf( "  Try to bind on udp/*/%s:%s", IPbuffer, charPort);
           fflush( stdout );
 
           
 
-          if( ( ret = mbedtls_net_bind( &listen_fd, ipAddress, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+          if( ( ret = mbedtls_net_bind( &listen_fd, IPbuffer, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
           {
               task->err( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
               ++port;
           }else
           {
-            task->inf( " listening on %s:%s\n", ipAddress, charPort );
+            task->inf( " listening on %s:%s\n", IPbuffer, charPort );
 
             // Search for IMC + UDP services.
             std::vector<std::string> list;
@@ -208,13 +220,13 @@ namespace Security
             }
 
           // Initialize and dispatch AnnounceService with DTLS addr:port
-          std::vector<Interface> itfs = Interface::get();
-          for (unsigned i = 0; i < itfs.size(); ++i)
+          std::vector<Interface> vector = Interface::get();
+          for (unsigned i = 0; i < vector.size(); ++i)
           {
             std::stringstream os;
             std::string service = "dtls";
 
-            os << service << "://" << ipAddress << ":" << charPort
+            os << service << "://" << IPbuffer << ":" << charPort
                << "/";
 
             IMC::AnnounceService announce;
@@ -304,6 +316,8 @@ namespace Security
         }
     #endif
 
+reset:
+
         mbedtls_net_free( &client_fd );        
 
         mbedtls_ssl_session_reset( &ssl );
@@ -311,56 +325,68 @@ namespace Security
         /*
         * 4.2. Wait until a client connects
         */
-        // task->inf( "  . Waiting for a remote connection ..." );
-        // fflush( stdout );
+        task->inf( "  . Waiting for a remote connection ..." );
+        fflush( stdout );
+        ret = 1;
 
-        // if( ( ret = mbedtls_net_accept( &listen_fd, &client_fd,
-        //                 client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
-        // {
-        //     task->err( " failed\n  ! mbedtls_net_accept returned %d\n\n", ret );
-        //     // exit_task();
-        //     return;
-        // }
+        while(ret != 0){
+          if( ( ret = mbedtls_net_accept( &listen_fd, &client_fd,
+                          client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
+          {
+              task->err( " failed\n  ! mbedtls_net_accept returned %d\n\n", ret );
+              // exit_task();
+              return;
+          }
+        }
 
-        // /* For HelloVerifyRequest cookies */
-        // if( ( ret = mbedtls_ssl_set_client_transport_id( &ssl,
-        //                 client_ip, cliip_len ) ) != 0 )
-        // {
-        //     task->err( " failed\n  ! "
-        //             "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -ret );
-        //     // exit_task();
-        //     return;
-        // }
+        /* For HelloVerifyRequest cookies */
+        if( ( ret = mbedtls_ssl_set_client_transport_id( &ssl,
+                        client_ip, cliip_len ) ) != 0 )
+        {
+            task->err( " failed\n  ! "
+                    "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -ret );
+            // exit_task();
+            return;
+        }
 
-        // mbedtls_ssl_set_bio( &ssl, &client_fd,
-        //                     mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
+        mbedtls_ssl_set_bio( &ssl, &client_fd,
+                            mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
 
-        // task->inf( " ok\n" );
+        task->inf( " ok\n" );
 
-        // /*
-        // * 5. Handshake
-        // */
-        // task->inf( "  . Performing the DTLS handshake..." );
-        // fflush( stdout );
+        /*
+        * 5. Handshake
+        */
+        task->inf( "  . Performing the DTLS handshake..." );
+        fflush( stdout );
 
-        // do ret = mbedtls_ssl_handshake( &ssl );
-        // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-        //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+        do ret = mbedtls_ssl_handshake( &ssl );
+        while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+              ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-        // if( ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
-        // {
-        //     task->inf( " hello verification requested\n" );
-        //     ret = 0;
-        //     // reset_mbedtls();
-        // }
-        // else if( ret != 0 )
-        // {
-        //     task->err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
-        //     // reset_mbedtls();
-        //     return;
-        // }
+        if( ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
+        {
+            task->inf( " hello verification requested\n" );
+            // todo: dont use goto
+            goto reset;
+        }
+        else if( ret != 0 )
+        {
+            task->err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
+            // reset_mbedtls();
+            return;
+        }
 
-        // task->inf( " ok\n" );
+        task->inf( " ok\n" );
+
+
+        /* setup listener */
+        // Start listener thread.
+        // todo: get variables from m_args
+        // bool boolean = true;
+        m_listener = new Listener(this,  100, false);
+        m_listener->start();
+
 
     }
 
@@ -381,6 +407,18 @@ namespace Security
     Node::getName(void) const
     {
       return m_name;
+    }
+
+    Security::DtlsServer::Task*
+    Node::getParentTask(void)
+    {
+      return m_task;
+    }
+
+    mbedtls_ssl_context*
+    Node::getSslContext(void)
+    {
+      return &ssl;
     }
 
     //! Check if address and port are on this node's

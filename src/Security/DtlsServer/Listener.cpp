@@ -27,8 +27,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef TRANSPORTS_DTLS_LISTENER_HPP_INCLUDED_
-#define TRANSPORTS_DTLS_LISTENER_HPP_INCLUDED_
+#ifndef TRANSPORTS_DTLS_LISTENER_CPP_INCLUDED_
+#define TRANSPORTS_DTLS_LISTENER_CPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <map>
@@ -41,6 +41,7 @@
 #include "ContactTable.hpp"
 #include "LimitedComms.hpp"
 #include "Node.hpp"
+#include "Listener.hpp"
 
 //mbedtls headers.
 #include "mbedtls/entropy.h"
@@ -64,40 +65,112 @@ namespace Security
     using DUNE_NAMESPACES;
 
     //forward declaration of class Node
-    class Node;
+    // class Node;
 
-    class Listener: public Concurrency::Thread
+    Listener::Listener(Security::DtlsServer::Node *node,
+              float contact_timeout, bool trace):
+      m_node(node),
+      m_trace(trace),
+      m_contacts(contact_timeout)
+    {  }
+
+    void
+    Listener::getContacts(std::vector<Contact>& list)
     {
-    public:
-      Listener(Security::DtlsServer::Node *node,
-               float contact_timeout, bool trace = false);
+      m_contacts.getContacts(list);
+    }
 
-      void
-      getContacts(std::vector<Contact>& list);
+    void
+    Listener::lockContacts(void)
+    {
+      m_contacts_lock.lockRead();
+    }
 
-      void
-      lockContacts(void);
+    void
+    Listener::unlockContacts(void)
+    {
+      m_contacts_lock.unlock();
+    }
 
-      void
-      unlockContacts(void);
+    void
+    Listener::run(void)
+    {
+      Address addr;
+      uint8_t* bfr = new uint8_t[c_bfr_size];
+      // double poll_tout = c_poll_tout / 1000.0;
+      int ret, len;
 
-    private:
-      // Buffer capacity.
-      static const int c_bfr_size = 65535;
-      // Poll timeout in milliseconds.
-      static const int c_poll_tout = 1000;
-      // Parent task.
-      Security::DtlsServer::Node *m_node;
-      // True to print incoming messages.
-      bool m_trace;
-      // Table of contacts.
-      ContactTable m_contacts;
-      // Lock to serialize access to m_contacts.
-      RWLock m_contacts_lock;
+      //todo: maybe keep the original poll
 
-      void
-      run(void);
-    };
+
+      while (!isStopping())
+      {
+        try
+        {
+          Delay::wait(5);
+
+          //todo: poll
+          /*
+          * 6. Read the echo Request
+          */
+          printf( "  < Read from client:" );
+          fflush( stdout );
+
+          len = sizeof( bfr ) - 1;
+          memset( bfr, 0, sizeof( bfr ) );
+
+          do ret = mbedtls_ssl_read( m_node->getSslContext(), bfr, len );
+          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+          if( ret <= 0 )
+          {
+              switch( ret )
+              {
+                  case MBEDTLS_ERR_SSL_TIMEOUT:
+                      printf( " timeout\n\n" );
+                      // goto reset;
+
+                  case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+                      printf( " connection was closed gracefully\n" );
+                      ret = 0;
+                      // goto close_notify;
+
+                  default:
+                      printf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
+                      // goto reset;
+              }
+          }
+
+          len = ret;
+          printf( " %d bytes read\n\n%s\n\n", len, bfr );
+
+
+          IMC::Message* msg = IMC::Packet::deserialize(bfr, ret);
+
+          m_contacts_lock.lockWrite();
+          m_contacts.update(msg->getSource(), addr);
+          m_contacts_lock.unlock();
+
+          Security::DtlsServer::Task *task = m_node->getParentTask();
+
+          task->dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+
+          if (m_trace)
+            msg->toText(std::cerr);
+
+          delete msg;
+        }
+        catch (std::exception & e)
+        {
+          printf("error while unpacking message: %s",e.what());
+        }
+      }
+
+      
+
+      delete [] bfr;
+    }
   }
 }
 
