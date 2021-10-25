@@ -1572,6 +1572,21 @@ namespace DUNE
     }
 
     Matrix
+    inverse_lup(Matrix& a, Matrix& b)
+    {
+      if (a.isEmpty())
+        throw Matrix::Error("Trying to access an empty matrix!");
+
+      if (a.rows() != a.columns())
+        throw Matrix::Error("Inversion of a nonsquare Matrix!");
+
+      Matrix Minv;
+      Minv.m_data = a.m_data.fullPivLu().solve(b.m_data);
+
+      return Minv;
+    }
+
+    Matrix
     abs(const Matrix& a)
     {
       if (a.isEmpty())

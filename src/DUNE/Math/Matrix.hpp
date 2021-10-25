@@ -777,11 +777,20 @@ namespace DUNE
       inverse_pp(Matrix&, Matrix&);
 
       //! This function computes the Matrix inverse
-      //! using LU or LUP decomposition.
+      //! The system is solved using LUP decomposition.
       //! @param[in] a reference to matrix to be inverted
       //! @return inverted matrix
       friend Matrix
       inverse_lup(const Matrix& a);
+
+      //! This methods calculates the Matrix 'x' that solves
+      //! the linear system of equations 'a.x=b'.
+      //!
+      //! The system is solved using LUP decomposition.
+      //! @param[in] a reference to matrix to be inverted
+      //! @return inverted matrix
+      friend Matrix
+      inverse_lup(Matrix& a, Matrix& b);
 
       //! This function returns a Matrix with the absolute
       //! values of the entries of a given Matrix.

@@ -543,6 +543,18 @@ main(void)
     OldMatrix test_mat_F = inverse_lup(mat_F);
     Matrix test_eig_G = inverse_lup(eig_mat_G);
     test.boolean("Matrix::inverse_lup(const Matrix& a)", compareElements(test_mat_F, test_eig_G));
+
+    Matrix eig_mat_H(invertable_3x3, 3, 3);
+    double eig_data_I[] = {14, 10, 13};
+    Matrix eig_mat_I(eig_data_I, 3, 1);
+    Matrix test_eig_J = inverse_lup(eig_mat_H, eig_mat_I);
+    double eig_data_K[] = {1, 2, 3};
+    Matrix result_eig_K(eig_data_K ,3, 1);
+
+    printMatrix(test_eig_J);
+    printMatrix(result_eig_K);
+
+    test.boolean("Matrix::inverse_lup(Matrix& a, Matrix& b)", compareElements(test_eig_J, result_eig_K));
   }
 
   //==========================================
