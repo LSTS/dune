@@ -312,190 +312,80 @@ namespace Security
       void
       consume(const IMC::Announce* msg)
       {
-        war("hello from consume(IMC Announce)");
-        
+        // war("hello from consume(IMC Announce)");
+
+
+        //todo: if successful, bind to remaining messages
         m_node_table.addNode(this, m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
 
-        // struct in_addr ip_addr;
-        // ip_addr.s_addr = (uint32_t) msg->getSource();
-        // printf("The IP address is %s\n", inet_ntoa(ip_addr)); 
+        bind(this, m_args.messages);
+
+      }
+
+      void
+      consume(const IMC::Message* msg)
+      {
+        war("hello from consume(IMC Message)");
+
+        if (msg->getSource() != this->getSystemId())
+        return;
+
+        size_t rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
+
+        m_node_table.send((const unsigned char*) m_bfr, rv);
+
+        inf("sending:");
+        msg->toText(std::cerr);
 
 
-        // init resources for socket creation
-    //     initSocket();
+        // if (msg->getSource() != this->getSystemId())
+        //   return;
 
+        // inf( "  < Read from client:" );
 
+        // if( ssl.private_conf == NULL )
+        // {
+        //   init_socket();
+        //   if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
+        //   {
+        //       err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
+        //       reset_mbedtls();
+        //       return;
+        //   }
+        // }
+        //   // fflush( stdout );
 
-    //     if( ssl.private_conf == NULL )
-    //     {
-    //       initSocket();
-    //       if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
-    //       {
-    //         err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
-    //         reset_mbedtls();
-    //         return;
-    //       }
-    //     }
-
-    //     /*
-    //     * 4.1.  Setup stuff
-    //     */
-    //     inf( "  . Setting up the DTLS data..." );
-    //     fflush( stdout );
-
-    //     if( ( ret = mbedtls_ssl_config_defaults( &conf,
-    //                     MBEDTLS_SSL_IS_SERVER,
-    //                     MBEDTLS_SSL_TRANSPORT_DATAGRAM,
-    //                     MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
-    //     {
-    //         err( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
-    //         reset_mbedtls();
-    //         return;
-    //     }
-
-    //     mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
-    //     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
-    //     //mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
-    //     mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
-    //     /*disable sending multiple records in one datagram*/
-    //     mbedtls_ssl_set_datagram_packing( &ssl, 0 );
-
-    // #if defined(MBEDTLS_SSL_CACHE_C)
-    //     mbedtls_ssl_conf_session_cache( &conf, &cache,
-    //                                   mbedtls_ssl_cache_get,
-    //                                   mbedtls_ssl_cache_set );
-    // #endif
-
-    //     mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
-    //   if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
-    //     {
-    //         err( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
-    //         exit_task();
-    //         return;
-    //     }
-
-    //     if( ( ret = mbedtls_ssl_cookie_setup( &cookie_ctx,
-    //                                   mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
-    //     {
-    //         err( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", ret );
-    //         exit_task();
-    //         return;
-    //     }
-
-    //     mbedtls_ssl_conf_dtls_cookies( &conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
-    //                               &cookie_ctx );
-
-      
-
-    //     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
-    //     {
-    //         err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
-    //         exit_task();
-    //         return;
-    //     }
-
-    //     mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
-    //                                             mbedtls_timing_get_delay );
-
-    //     inf( " ok\n" );
-
-    //   /*
-    //     * 3. Setup the "listening" UDP socket
-    //     */
-    //     inf( "  . Bind on udp/*/%s ...", SERVER_PORT );
-    //     fflush( stdout );
-
-    //     if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
-    //     {
-    //         err( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
-    //         exit_task();
-    //         return;
-    //   }
-
-    //   reset_mbedtls();
-
-    //   /*
-    //   * 5. Handshake
-    //   */
-    //   inf( "  . Performing the DTLS handshake..." );
-    //   fflush( stdout );
-
-    //   do ret = mbedtls_ssl_handshake( &ssl );
-    //   while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-    //         ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-    //   if( ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
-    //   {
-    //       inf( " hello verification requested\n" );
-    //       ret = 0;
-    //       reset_mbedtls();
-    //   }
-    //   else if( ret != 0 )
-    //   {
-    //       err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
-    //       reset_mbedtls();
-    //   }
-
-    //   inf( " ok\n" );
-
-    //   if(!m_listener->isRunning())
-    //   {
-    //     m_listener = new Listener(*this, &ssl, m_lcomms,
-    //                           m_args.contact_timeout, m_args.trace_in);
-        // m_listener->start();
-    //   }
-    }
-
-      // void
-      // consume(const IMC::Temperature* msg)
-      // {
-      //   war("hello from consume(IMC Temperature)");
-
-      //   inf( "  < Read from client:" );
-
-      //   if( ssl.private_conf == NULL )
-      //   {
-      //     init_socket();
-      //     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
-      //     {
-      //         err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
-      //         reset_mbedtls();
-      //         return;
-      //     }
-      //   }
-      //     // fflush( stdout );
-
-      //     if(!m_listener->isRunning())
-      //     {
-      //       m_listener = new Listener(*this, &ssl, m_lcomms,
-      //                             m_args.contact_timeout, m_args.trace_in);
-      //     m_listener->start();
-      //     }
+        //   if(!m_listener->isRunning())
+        //   {
+        //     m_listener = new Listener(*this, &ssl, m_lcomms,
+        //                           m_args.contact_timeout, m_args.trace_in);
+        //   m_listener->start();
+        //   }
           
 
-      //     len = ret;
-      //     inf( " %d bytes read\n\n%s\n\n", len, buf );
+        //   len = ret;
+        //   inf( " %d bytes read\n\n%s\n\n", len, buf );
 
-      //     /*
-      //     * 7. Write the 200 Response
-      //     */
-      //     inf( "  > Write to client:" );
-      //     fflush( stdout );
+        //   /*
+        //   * 7. Write the 200 Response
+        //   */
+        //   inf( "  > Write to client:" );
+        //   fflush( stdout );
 
-      //     do ret = mbedtls_ssl_write( &ssl, buf, len );
-      //     while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-      //           ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+        //   do ret = mbedtls_ssl_write( &ssl, buf, len );
+        //   while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+        //         ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-      //     if( ret < 0 )
-      //     {
-      //         err( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
-      //         exit_task();
-      //         return;
-      //     }
+        //   if( ret < 0 )
+        //   {
+        //       err( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+        //       exit_task();
+        //       return;
+        //   }
 
-      //     len = ret;
-      //     inf( " %d bytes written\n\n%s\n\n", len, buf );
-      // }
+        //   len = ret;
+        //   inf( " %d bytes written\n\n%s\n\n", len, buf );
+      }
 
       //! Release resources.
       void
@@ -503,213 +393,8 @@ namespace Security
       {
         war("hello from onResourceRelease");
 
-        // close_notify();
-
-        // exit_task();
-
       }
 
-      /**
-       * @brief Seed the mbedtls RNG
-       * 
-       */
-      void seedRandomNumberGenerator(void)
-      {
-        // inf( "  . Seeding the random number generator..." );
-        // fflush( stdout );
-
-        // if( ( ret = mbedtls_ctr_drbg_seed( &mbed_ctx.ctr_drbg, mbedtls_entropy_func, &mbed_ctx.entropy,
-        //                           (const unsigned char *) pers,
-        //                           strlen( pers ) ) ) != 0 )
-        // {
-        //   err( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret );
-        //   exit_task();
-        //   return;
-        // }
-
-        // inf( " ok\n" );
-      }
-
-      /**
-       * @brief Store the server certificate, certificate authority chain certificates and the server private key.
-       * 
-       */
-      void storeKeysAndCertificates(void)
-      {
-        //         inf( "\n  . Loading the server cert. and key..." );
-        // fflush( stdout );
-
-        // /*
-        // * This demonstration program uses embedded test certificates.
-        // * Instead, you may want to use mbedtls_x509_crt_parse_file() to read the
-        // * server and CA certificates, as well as mbedtls_pk_parse_keyfile().
-        // */
-        // ret = mbedtls_x509_crt_parse( &mbed_ctx.srvcert, (const unsigned char *) lsts_server_certificate,
-        //                       lsts_server_certificate_len );
-        // if( ret != 0 )
-        // {
-        //     err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
-        //     exit_task();
-        //     return;
-        // }
-
-        // ret = mbedtls_x509_crt_parse( &mbed_ctx.cacert, (const unsigned char *) lsts_ca_chain,
-        //                       lsts_ca_chain_len );
-        // if( ret != 0 )
-        // {
-        //     err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
-        //     exit_task();
-        //     return;
-        // }
-
-        // ret =  mbedtls_pk_parse_key( &mbed_ctx.pkey, (const unsigned char *) lsts_server_private_key,
-        //                     lsts_server_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &mbed_ctx.ctr_drbg );
-        // if( ret != 0 )
-        // {
-        //     err( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
-        //     exit_task();
-        //     return;
-        // }
-
-        // inf( " ok\n" );
-      }
-
-      void close_notify(void)
-      {
-          // sleep(3);
-          // inf( "  . Closing the connection..." );
-
-          // /* No error checking, the connection might be closed already */
-          // do ret = mbedtls_ssl_close_notify( &ssl );
-          // while( ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-          // ret = 0;
-
-          // inf( " done\n" );
-
-          // reset_mbedtls();
-      }
-
-      void
-      exit_task(void)
-      {
-      //     #ifdef MBEDTLS_ERROR_C
-      //     if( ret != 0 )
-      //     {
-      //         char error_buf[100];
-      //         mbedtls_strerror( ret, error_buf, 100 );
-      //         err( "Last error was: %d - %s\n\n", ret, error_buf );
-      //     }
-      // #endif
-
-      //     mbedtls_net_free( &client_fd );
-      //     mbedtls_net_free( &listen_fd );
-
-      //     mbedtls_x509_crt_free( &mbed_ctx.srvcert );
-      //     mbedtls_x509_crt_free( &mbed_ctx.cacert );
-      //     mbedtls_pk_free( &mbed_ctx.pkey );
-      //     // mbedtls_ssl_free( &ssl );
-      //     mbedtls_ssl_config_free( &conf );
-      //     mbedtls_ssl_cookie_free( &cookie_ctx );
-      // #if defined(MBEDTLS_SSL_CACHE_C)
-      //     mbedtls_ssl_cache_free( &cache );
-      // #endif
-      //     mbedtls_ctr_drbg_free( &mbed_ctx.ctr_drbg );
-      //     mbedtls_entropy_free( &mbed_ctx.entropy );
-
-      //         /* Shell can not handle large exit numbers -> 1 for errors */
-      //       if( ret < 0 )
-      //           ret = 1;
-
-            // mbedtls_exit( ret ); 
-      }
-
-      void
-      initResources(void)
-      {
-        // mbedtls_x509_crt_init( &mbed_ctx.srvcert );
-        // mbedtls_x509_crt_init( &mbed_ctx.cacert );
-        // mbedtls_pk_init( &mbed_ctx.pkey );
-        // mbedtls_entropy_init( &mbed_ctx.entropy );
-        // mbedtls_ctr_drbg_init( &mbed_ctx.ctr_drbg );
-      }
-
-      void
-      initSocket(void)
-      {
-      //   mbedtls_net_init( &listen_fd );
-      //   mbedtls_net_init( &client_fd );
-      //   mbedtls_ssl_init( &ssl );
-      //   mbedtls_ssl_config_init( &conf );
-      //   mbedtls_ssl_cookie_init( &cookie_ctx );
-      // #if defined(MBEDTLS_SSL_CACHE_C)
-      //   mbedtls_ssl_cache_init( &cache );
-      // #endif
-      }
-
-      void
-      reset_mbedtls(void)
-      {
-
-      //   war("hello from reset_mbedtls0");
-
-      //   if( ssl.private_conf == NULL )
-      //   {
-      //     initSocket();
-      //             if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
-      //     {
-      //         err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
-      //         exit_task();
-      //         return;
-      //     }
-      //   }
-      // #ifdef MBEDTLS_ERROR_C
-      //     if( ret != 0 )
-      //     {
-      //         char error_buf[100];
-      //         mbedtls_strerror( ret, error_buf, 100 );
-      //         err("Last error was: %d - %s\n\n", ret, error_buf );
-      //     }
-      // #endif
-
-      //     mbedtls_net_free( &client_fd );
-
-      // if(ssl.private_conf->private_transport != 0)
-      // {
-      //    mbedtls_ssl_session_reset( &ssl );
-      
-
-      //     // mbedtls_ssl_session_reset( &ssl );
-
-      //     /*
-      //     * 4.2. Wait until a client connects
-      //     */
-      //     inf( "  . Waiting for a remote connection ..." );
-      //     fflush( stdout );
-
-      //     if( ( ret = mbedtls_net_accept( &listen_fd, &client_fd,
-      //                     client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
-      //     {
-      //         err( " failed\n  ! mbedtls_net_accept returned %d\n\n", ret );
-      //         exit_task();
-      //         return;
-      //     }
-
-      //     /* For HelloVerifyRequest cookies */
-      //     if( ( ret = mbedtls_ssl_set_client_transport_id( &ssl,
-      //                     client_ip, cliip_len ) ) != 0 )
-      //     {
-      //         err( " failed\n  ! "
-      //                 "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -ret );
-      //         exit_task();
-      //         return;
-      //     }
-
-      //     mbedtls_ssl_set_bio( &ssl, &client_fd,
-      //                         mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
-
-      //     inf( " ok\n" );
-      //    }
-      }
 
       //! Main loop.
       void

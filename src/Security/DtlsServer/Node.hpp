@@ -74,6 +74,9 @@ namespace Security
 
       Node(const Node& node);
 
+      void
+      freeNode(void);
+
       //! Get node name.
       //! @return node name.
       const std::string&
@@ -113,7 +116,7 @@ namespace Security
       //! @param[in] data data to be transmitted.
       //! @param[in] data_len length of data to be transmitted.
       void
-      send(UDPSocket& sock, const uint8_t* data, unsigned data_len);
+      send(const unsigned char* data, size_t data_len);
 
     private:
       // Node name.

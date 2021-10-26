@@ -63,20 +63,17 @@ namespace Security
       if (NULL == strstr(name.c_str(), "lauv-xplore-4"))
       {
         return;
-      }else
-      {
-        task->war("setting up dtls server for %s", name.c_str());
-
-      // if ( m_table.find(id) == m_table.end() ) {
-          m_table.insert(std::pair<unsigned, Node>(id, Node(task, port, c_port_retries, name, services)));
-      // } else {
-      //   task->war("node with\nID = %x  and \nname = %s \nalready in active list", id, name.c_str());
-      //   return;
-      // }
       }
+        
 
-      
-     
+      if ( m_table.find(id) == m_table.end()) 
+      {
+          task->war("setting up dtls server for %s", name.c_str());
+          m_table.insert(std::pair<unsigned, Node>(id, Node((Security::DtlsServer::Task*) task, port, c_port_retries, name, services)));
+      } else {
+        // task->war("node with\nID = %x  and \nname = %s \nalready in active list", id, name.c_str());
+        return;
+      }    
     }
 
     bool
@@ -114,24 +111,10 @@ namespace Security
     }
 
     void
-    NodeTable::send(UDPSocket& sock, const uint8_t* data, unsigned data_len, unsigned msgid)
+    NodeTable::send(const unsigned char* data, size_t data_len)
     {
-      if (m_lcomms != NULL)
-      {
-        if (m_lcomms->isActive())
-        {
-          for (Table::iterator itr = m_table.begin(); itr != m_table.end(); ++itr)
-          {
-            if (m_lcomms->isNodeWithinRange(itr->first, msgid))
-              itr->second.send(sock, data, data_len);
-          }
-
-          return;
-        }
-      }
-
       for (Table::iterator itr = m_table.begin(); itr != m_table.end(); ++itr)
-        itr->second.send(sock, data, data_len);
+        itr->second.send(data, data_len);
     }
 
     void

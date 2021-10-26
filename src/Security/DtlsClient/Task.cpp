@@ -117,12 +117,16 @@ namespace Security
     struct Task: public DUNE::Tasks::Task
     {
 
-        int ret, len;
+        int ret;
         mbedtls_net_context server_fd;
         uint32_t flags;
         unsigned char buf[1024];
         const char *pers = "dtls_client";
         int retry_left = MAX_RETRY;
+        uint16_t bfr_size = 1024;
+        uint8_t m_bfr[1024];
+        //replace handshakeOk with activelist and make send function part of node
+        uint8_t handshakeOk = 0;
 
         mbedtls_entropy_context entropy;
         mbedtls_ctr_drbg_context ctr_drbg;
@@ -161,7 +165,7 @@ namespace Security
 
         // bind<IMC::Temperature>(this);
         bind<IMC::Announce>(this);
-        bind<IMC::DtlsMessage>(this);
+        // bind<IMC::Message>(this);
 
         param("Transports", m_args.messages)
         .defaultValue("")
@@ -181,7 +185,7 @@ namespace Security
       {
         war("hello from onResourceAcquisition)");
 
-        bind(this, m_args.messages);
+        // bind(this, m_args.messages);
 
         inf( "\n  . Seeding the random number generator..." );
         fflush( stdout );
@@ -315,12 +319,12 @@ namespace Security
           //   continue;
 
           unsigned port = 0;
-          const char address[128] = {0};
+          char address[128] = {0};
 
           if (std::sscanf(list[i].c_str(), "dtls://%[^:]:%u", address, &port) == 2)
           {
 
-            const char *ch;
+            char *ch;
             memcpy(&ch, (char*)&port, 2);
 
             /*
@@ -427,201 +431,111 @@ namespace Security
               #endif
             }
             else
-                inf( " ok\n" );
+            {
+              inf( " ok\n" );
+              // start sending msg
+              handshakeOk = 1;
+            }
+                
           
 
-            inf( "  > Write to server:" );
-            fflush( stdout );
+            // inf( "  > Write to server:" );
+            // fflush( stdout );
 
-            len = sizeof( MESSAGE ) - 1;
+            // len = sizeof( MESSAGE ) - 1;
 
-            do ret = mbedtls_ssl_write( &ssl, (unsigned char *) MESSAGE, len );
-            while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-                  ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+            // do ret = mbedtls_ssl_write( &ssl, (unsigned char *) MESSAGE, len );
+            // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+            //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-            if( ret < 0 )
-            {
-                err(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
-                exit_task();
-                return;
-            }
+            // if( ret < 0 )
+            // {
+            //     err(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+            //     exit_task();
+            //     return;
+            // }
 
-            len = ret;
-            inf( " %d bytes written\n\n%s\n\n", len, MESSAGE );
+            // len = ret;
+            // inf( " %d bytes written\n\n%s\n\n", len, MESSAGE );
+
+            /*
+            * 7. Read the echo response
+            */
+            // inf( "  < Read from server:" );
+            // fflush( stdout );
+
+            // len = sizeof( buf ) - 1;
+            // memset( buf, 0, sizeof( buf ) );
+
+            // do ret = mbedtls_ssl_read( &ssl, buf, len );
+            // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+            //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+            // if( ret <= 0 )
+            // {
+            //     switch( ret )
+            //     {
+            //         case MBEDTLS_ERR_SSL_TIMEOUT:
+            //             err( " timeout\n\n" );
+            //             if( retry_left-- > 0 )
+            //             return;
+
+            //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+            //             inf( " connection was closed gracefully\n" );
+            //             ret = 0;
+            //             return;
+
+            //         default:
+            //             inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
+            //             return;
+            //     }
+            // }
+
+            // len = ret;
+            // inf( " %d bytes read\n\n%s\n\n", len, buf );
+
 
           }
             // m_addrs.insert(std::pair<Address, unsigned>(address, port));
         }
-      }
 
-      void
-      consume(const IMC::DtlsMessage* msg)
-      {
-        war("hello from dtls client consume DtlsMessage");
+        bind(this, m_args.messages);
 
-        std::string s = std::to_string(msg->port);
-        char const *charPort = s.c_str();
-
-        war("%s\n",inet_ntoa(*(struct in_addr *)&msg->ipaddr));
-
-
-
-        inf( "  Try to connect on udp/*/%s", charPort);
-
-         /*
-        * 1. Start the connection
-        */
-        inf( "  . Connecting to udp/%s/%s...", SERVER_NAME, charPort );
-        fflush( stdout );
-
-        if( ( ret = mbedtls_net_connect( &server_fd, inet_ntoa(*(struct in_addr *)&msg->ipaddr),
-                                            charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
-        {
-            err( " failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
-            exit_task();
-            return;
-        }
-
-        /*
-          * 2. Setup stuff
-          */
-        inf( "  . Setting up the DTLS structure..." );
-        fflush( stdout );
-
-        if( ( ret = mbedtls_ssl_config_defaults( &conf,
-                        MBEDTLS_SSL_IS_CLIENT,
-                        MBEDTLS_SSL_TRANSPORT_DATAGRAM,
-                        MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
-        {
-            err(" failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", ret );
-            exit_task();
-            return;
-        }
-
-        /* OPTIONAL is usually a bad choice for security, but makes interop easier
-          * in this simplified example, in which the ca chain is hardcoded.
-          * Production code should set a proper ca chain and use REQUIRED. */
-        mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
-        mbedtls_ssl_conf_ca_chain( &conf, clicert.MBEDTLS_PRIVATE(next), NULL );
-        mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
-        // mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
-        mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
-
-        if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
-        {
-            err(" failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
-            exit_task();
-            return;
-        }
-
-        if( ( ret = mbedtls_ssl_set_hostname( &ssl, SERVER_NAME ) ) != 0 )
-        {
-            err(" failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret );
-            exit_task();
-            return;
-        }
-
-        mbedtls_ssl_set_bio( &ssl, &server_fd,
-                              mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
-
-        mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
-                                                mbedtls_timing_get_delay );
-
-        inf( " ok\n" );
-
-        /*
-        * 4. Handshake
-        */
-        inf( "  . Performing the DTLS handshake..." );
-        fflush( stdout );
-
-        do ret = mbedtls_ssl_handshake( &ssl );
-        while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-              ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-        if( ret != 0 )
-        {
-            err(" failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
-            exit_task();
-            return;
-        }
-
-        inf( " ok\n" );
-
-        /*
-        * 5. Verify the server certificate
-        */
-        inf( "  . Verifying peer X.509 certificate..." );
-
-        /* In real life, we would have used MBEDTLS_SSL_VERIFY_REQUIRED so that the
-        * handshake would not succeed if the peer's cert is bad.  Even if we used
-        * MBEDTLS_SSL_VERIFY_OPTIONAL, we would bail out here if ret != 0 */
-        if( ( flags = mbedtls_ssl_get_verify_result( &ssl ) ) != 0 )
-        {
-          #if !defined(MBEDTLS_X509_REMOVE_INFO)
-                  char vrfy_buf[512];
-          #endif
-
-                  err( " failed\n" );
-                  err("flags = %x", flags);
-
-          #if !defined(MBEDTLS_X509_REMOVE_INFO)
-                  mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
-
-                  inf( "%s\n", vrfy_buf );
-          #endif
-        }
-        else
-            inf( " ok\n" );
       }
 
       void
       consume(const IMC::Message* msg)
       {
-        //inf("temperature is %f", msg->value);
+        if (handshakeOk)
+        {
 
-        //dtls
-        
-        // /*
-        // * 7. Read the echo response
-        // */
-        // inf( "  < Read from server:" );
-        // fflush( stdout );
+          if (msg->getSource() != this->getSystemId())
+          return;
 
-        // len = sizeof( buf ) - 1;
-        // memset( buf, 0, sizeof( buf ) );
+          inf( "  > Write to server:" );
+          fflush( stdout );
 
-        // do ret = mbedtls_ssl_read( &ssl, buf, len );
-        // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-        //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+          //only send messages originated from this system
+          uint16_t len = IMC::Packet::serialize(msg, m_bfr, bfr_size);
 
-        // if( ret <= 0 )
-        // {
-        //     switch( ret )
-        //     {
-        //         case MBEDTLS_ERR_SSL_TIMEOUT:
-        //             inf( " timeout\n\n" );
-        //             if( retry_left-- > 0 )
-        //                 return;
-        //                 //goto send_request;
-        //             exit_task();
-        //     return;
+          // len = bfr_size - 1;
 
-        //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-        //             inf( " connection was closed gracefully\n" );
-        //             ret = 0;
-        //             close_notify();
-        //             return;
+          do ret = mbedtls_ssl_write( &ssl, m_bfr, len );
+          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-        //         default:
-        //             inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
-        //             exit_task();
-        //     return;
-        //     }
-        // }
+          if( ret < 0 )
+          {
+              err(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+              exit_task();
+              return;
+          }
 
-        // len = ret;
-        // inf( " %d bytes read\n\n%s\n\n", len, buf );
+          len = ret;
+          inf( " %d bytes written\n\n%s%x\n\n", len, &m_bfr, m_bfr );
+          msg->toText(std::cerr);
+        }
+
       }
 
       //! Main loop.

@@ -76,7 +76,7 @@ namespace Security
       getActiveCount(void);
 
       void
-      send(UDPSocket& sock, const uint8_t* data, unsigned data_len, unsigned msgid);
+      send(const unsigned char* data, size_t data_len);
 
       void
       setLimitedComms(LimitedComms* lcomms);

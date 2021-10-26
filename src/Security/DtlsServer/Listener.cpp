@@ -96,7 +96,8 @@ namespace Security
     Listener::run(void)
     {
       Address addr;
-      uint8_t* bfr = new uint8_t[c_bfr_size];
+      //todo: define variable for buffer size
+      unsigned char bfr[1024];
       // double poll_tout = c_poll_tout / 1000.0;
       int ret, len;
 
@@ -105,9 +106,9 @@ namespace Security
 
       while (!isStopping())
       {
-        try
-        {
-          Delay::wait(5);
+        // try
+        // {
+          
 
           //todo: poll
           /*
@@ -119,9 +120,11 @@ namespace Security
           len = sizeof( bfr ) - 1;
           memset( bfr, 0, sizeof( bfr ) );
 
+          
           do ret = mbedtls_ssl_read( m_node->getSslContext(), bfr, len );
           while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
                 ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+          // Delay::wait(1);
 
           if( ret <= 0 )
           {
@@ -143,10 +146,14 @@ namespace Security
           }
 
           len = ret;
+
+          
           printf( " %d bytes read\n\n%s\n\n", len, bfr );
 
 
           IMC::Message* msg = IMC::Packet::deserialize(bfr, ret);
+
+          msg->toText(std::cerr);
 
           m_contacts_lock.lockWrite();
           m_contacts.update(msg->getSource(), addr);
@@ -160,11 +167,11 @@ namespace Security
             msg->toText(std::cerr);
 
           delete msg;
-        }
-        catch (std::exception & e)
-        {
-          printf("error while unpacking message: %s",e.what());
-        }
+        // }
+        // catch (std::exception & e)
+        // {
+        //   printf("error while unpacking message: %s",e.what());
+        // }
       }
 
       
