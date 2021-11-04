@@ -324,17 +324,19 @@ namespace Security
           if (std::sscanf(list[i].c_str(), "dtls://%[^:]:%u", address, &port) == 2)
           {
 
-            char *ch;
-            memcpy(&ch, (char*)&port, 2);
+            std::string s = std::to_string(port);
 
             /*
             * 1. Start the connection
             */
-            inf( "  . Connecting to udp/%s/%s...", SERVER_ADDR, SERVER_PORT);
+            inf( "  . Connecting to udp/%s/%s...", SERVER_ADDR, s);
             fflush( stdout );
 
+            
+            char const *pchar = s.c_str();  //use char const* as target type
+
             if( ( ret = mbedtls_net_connect( &server_fd, SERVER_ADDR,
-                                                SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+                                                pchar, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
             {
                 err( " failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
                 exit_task();

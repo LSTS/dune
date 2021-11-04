@@ -115,7 +115,7 @@ namespace Security
       //! Set of static nodes.
       std::set<NodeAddress> m_static_dsts;
       //! Set of destination nodes.
-      NodeTable m_node_table;
+      NodeTable *m_node_table = new NodeTable(*this);
       //! Task arguments.
       Arguments m_args;
       //! Simulate communication limitations
@@ -255,39 +255,12 @@ namespace Security
       {
         war("hello from onResourceAcquisition)");
 
-        // replace with bind(this, m_args.messages); later
-        //bind<IMC::Temperature>(this);
-
-        // Register normal messages.
-        // bind(this, m_args.messages);
-
-        // Find a free port.
-        // unsigned port_limit = m_args.port + c_port_retries;
-        // while (m_args.port != port_limit)
-        // {
-        //   try
-        //   {
-        //     m_sock.bind(m_args.port, Address::Any, false);
-        //     break;
-        //   }
-        //   catch (std::runtime_error& e)
-        //   {
-        //     war(DTR("failed to bind to port %u: %s"), m_args.port, e.what());
-        //     ++m_args.port;
-        //   }
-        // }
-
-        // if (m_args.port == port_limit)
-        // {
-        //   throw std::runtime_error(DTR("failed to find one available port"));
-        // }
-
-        // inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), m_args.port);
+        bind(this, m_args.messages);
 
         // Initialize limited comms object
         m_lcomms = new LimitedComms(m_args.comm_range, getSystemId());
         m_lcomms->setActive(m_comm_limitations);
-        m_node_table.setLimitedComms(m_lcomms);
+        m_node_table->setLimitedComms(m_lcomms);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
@@ -314,11 +287,16 @@ namespace Security
       {
         // war("hello from consume(IMC Announce)");
 
+        //todo: add depending on active list
+        if (0 == strcmp(msg->sys_name.c_str(), "lauv-xplore-4"))
+        {
+          m_node_table->addNode(m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
+          //todo: if successful, bind to remaining messages
 
-        //todo: if successful, bind to remaining messages
-        m_node_table.addNode(this, m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
-
-        bind(this, m_args.messages);
+          
+        }
+        
+        
 
       }
 
@@ -330,12 +308,13 @@ namespace Security
         if (msg->getSource() != this->getSystemId())
         return;
 
-        size_t rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
+        uint8_t m_bfr[1024];
 
-        m_node_table.send((const unsigned char*) m_bfr, rv);
+        int rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
 
-        inf("sending:");
-        msg->toText(std::cerr);
+
+
+        m_node_table->send((const unsigned char*) m_bfr, rv);
 
 
         // if (msg->getSource() != this->getSystemId())

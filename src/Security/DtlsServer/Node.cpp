@@ -56,6 +56,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/error.h"
 #include "mbedtls/timing.h"
+// #include "../../library/ssl_misc.h"
 #include "certs_lsts.h"
 
 #if defined(MBEDTLS_SSL_CACHE_C)
@@ -75,19 +76,20 @@ namespace Security
 
     // class Listener;
      int nodeState;
+     mbedtls_ssl_context ssl_context;
 
-    Node::Node(Security::DtlsServer::Task* task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services):
+
+    Node::Node(Tasks::Task& task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services):
       m_task(task),
       m_name(name),
       m_active(m_addrs.end()),
       m_listener(NULL)
     {
 
-     
 
       mbedtls_net_init( &listen_fd );
       mbedtls_net_init( &client_fd );
-      mbedtls_ssl_init( &ssl );
+      mbedtls_ssl_init( &ssl_context );
       mbedtls_ssl_config_init( &conf );
       mbedtls_ssl_cookie_init( &cookie_ctx );
   #if defined(MBEDTLS_SSL_CACHE_C)
@@ -104,23 +106,23 @@ namespace Security
   #endif
 
         // 1. seed rng
-        m_task->inf( "  . Seeding the random number generator..." );
+        m_task.inf( "  . Seeding the random number generator..." );
         fflush( stdout );
 
         if( ( nodeState = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
                                   (const unsigned char *) pers,
                                   strlen( pers ) ) ) != 0 )
         {
-          m_task->err( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", nodeState );
+          m_task.err( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", nodeState );
           freeNode();
           return;
         }
 
-        m_task->inf( " ok\n" );
+        m_task.inf( " ok\n" );
 
 
         // 2. load server certificates and keys
-        m_task->inf( "\n  . Loading the server cert. and key..." );
+        m_task.inf( "\n  . Loading the server cert. and key..." );
         fflush( stdout );
 
         /*
@@ -132,7 +134,7 @@ namespace Security
                               lsts_server_certificate_len );
         if( nodeState != 0 )
         {
-            m_task->err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", nodeState );
+            m_task.err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", nodeState );
             freeNode();
             return;
         }
@@ -141,7 +143,7 @@ namespace Security
                               lsts_ca_chain_len );
         if( nodeState != 0 )
         {
-            m_task->err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", nodeState );
+            m_task.err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", nodeState );
             freeNode();
             return;
         }
@@ -150,12 +152,12 @@ namespace Security
                             lsts_server_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
         if( nodeState != 0 )
         {
-            m_task->err( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", nodeState );
+            m_task.err( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", nodeState );
             freeNode();
             return;
         }
 
-        m_task->inf( " ok\n" );
+        m_task.inf( " ok\n" );
 
         // 3. Setup listening socket
 
@@ -181,18 +183,18 @@ namespace Security
           std::string s = std::to_string(port);
           char const *charPort = s.c_str();
 
-          m_task->inf( "  Try to bind on udp/*/%s:%s", IPbuffer, charPort);
+          m_task.inf( "  Try to bind on udp/*/%s:%s", IPbuffer, charPort);
           fflush( stdout );
 
           
 
           if( ( nodeState = mbedtls_net_bind( &listen_fd, IPbuffer, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
           {
-              m_task->err( " failed\n  ! mbedtls_net_bind returned %d\n\n", nodeState );
+              m_task.war( " failed\n  ! mbedtls_net_bind returned %d\n\n", nodeState );
               ++port;
           }else
           {
-            m_task->inf( " listening on %s:%s\n", IPbuffer, charPort );
+            m_task.inf( " listening on %s:%s\n", IPbuffer, charPort );
 
             // Search for IMC + UDP services.
             std::vector<std::string> list;
@@ -227,7 +229,7 @@ namespace Security
 
             announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
 
-            m_task->dispatch(announce);
+            m_task.dispatch(announce);
           }
 
             break;
@@ -237,7 +239,7 @@ namespace Security
         /*
         * 4.1.  Setup stuff
         */
-        m_task->inf("  . Setting up the DTLS data..." );
+        m_task.inf("  . Setting up the DTLS data..." );
         fflush( stdout );
 
         if( ( nodeState = mbedtls_ssl_config_defaults( &conf,
@@ -245,7 +247,7 @@ namespace Security
                         MBEDTLS_SSL_TRANSPORT_DATAGRAM,
                         MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
         {
-            m_task->err( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", nodeState );
+            m_task.err( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", nodeState );
             //goto exit;
             // reset_mbedtls();
             return;
@@ -256,7 +258,7 @@ namespace Security
         //mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
         mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
         /*disable sending multiple records in one datagram*/
-        mbedtls_ssl_set_datagram_packing( &ssl, 0 );
+        mbedtls_ssl_set_datagram_packing( &ssl_context, 0 );
 
     #if defined(MBEDTLS_SSL_CACHE_C)
         mbedtls_ssl_conf_session_cache( &conf, &cache,
@@ -267,7 +269,7 @@ namespace Security
         mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
       if( ( nodeState = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
         {
-            m_task->err( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", nodeState );
+            m_task.err( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", nodeState );
             freeNode();
             return;
         }
@@ -275,7 +277,7 @@ namespace Security
         if( ( nodeState = mbedtls_ssl_cookie_setup( &cookie_ctx,
                                       mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
         {
-            m_task->err( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", nodeState );
+            m_task.err( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", nodeState );
             freeNode();
             return;
         }
@@ -283,17 +285,17 @@ namespace Security
         mbedtls_ssl_conf_dtls_cookies( &conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
                                   &cookie_ctx );
 
-        if( ( nodeState = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
+        if( ( nodeState = mbedtls_ssl_setup( &ssl_context, &conf ) ) != 0 )
         {
-            m_task->err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", nodeState );
+            m_task.err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", nodeState );
             freeNode();
             return;
         }
 
-        mbedtls_ssl_set_timer_cb( &ssl, &timer, mbedtls_timing_set_delay,
+        mbedtls_ssl_set_timer_cb( &ssl_context, &timer, mbedtls_timing_set_delay,
                                                 mbedtls_timing_get_delay );
 
-        m_task->inf(" ok\n" );
+        m_task.inf(" ok\n" );
 
         //-------------------------------------------------------------------------------------------------------------------------
 
@@ -302,17 +304,17 @@ namespace Security
         {
             char error_buf[100];
             mbedtls_strerror( nodeState, error_buf, 100 );
-            m_task->err("Last error was: %d - %s\n\n", nodeState, error_buf );
+            m_task.err("Last error was: %d - %s\n\n", nodeState, error_buf );
         }
     #endif
 
-// reset:
+        // reset();
         nodeState = 1;
         while(nodeState != 0 )
         {
           mbedtls_net_free( &client_fd );        
 
-          mbedtls_ssl_session_reset( &ssl );
+          mbedtls_ssl_session_reset( &ssl_context );
 
           // declaring character array
           char char_name[20];
@@ -324,7 +326,7 @@ namespace Security
           /*
           * 4.2. Wait until a client connects
           */
-          m_task->inf( "  . Waiting for a remote connection from %s ......", char_name );
+          m_task.inf( "  . Waiting for a remote connection from %s ......", char_name );
           fflush( stdout );
           nodeState = 1;
 
@@ -333,110 +335,224 @@ namespace Security
             if( ( nodeState = mbedtls_net_accept( &listen_fd, &client_fd,
                             client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
             {
-              m_task->err( " failed\n  ! mbedtls_net_accept returned %d\n\n", nodeState );
+              m_task.err( " failed\n  ! mbedtls_net_accept returned %d\n\n", nodeState );
               // exit_task();
               return;
             }
           }
 
           /* For HelloVerifyRequest cookies */
-          if( ( nodeState = mbedtls_ssl_set_client_transport_id( &ssl,
+          if( ( nodeState = mbedtls_ssl_set_client_transport_id( &ssl_context,
                           client_ip, cliip_len ) ) != 0 )
           {
-              m_task->err( " failed\n  ! "
+              m_task.err( " failed\n  ! "
                       "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -nodeState );
               // exit_task();
               return;
           }
 
-          mbedtls_ssl_set_bio( &ssl, &client_fd,
+          mbedtls_ssl_set_bio( &ssl_context, &client_fd,
                               mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
 
-          m_task->inf( " ok\n" );
+          m_task.inf( " ok\n" );
 
           /*
           * 5. Handshake
           */
-          m_task->inf( "  . Performing the DTLS handshake..." );
+          m_task.inf( "  . Performing the DTLS handshake..." );
           fflush( stdout );
 
-          Delay::wait(3);
-          do nodeState = mbedtls_ssl_handshake( &ssl );
+          do nodeState = mbedtls_ssl_handshake( &ssl_context );
           while( nodeState == MBEDTLS_ERR_SSL_WANT_READ ||
                 nodeState == MBEDTLS_ERR_SSL_WANT_WRITE );
 
           if( nodeState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
           {
-              m_task->inf( " hello verification requested\n" );
+              m_task.inf( " hello verification requested\n" );
               // todo: dont use goto
               // goto reset;
               // return;
           }
           else if( nodeState != 0 )
           {
-              m_task->err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -nodeState );
+              m_task.err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -nodeState );
               // reset_mbedtls();
               // return;
           }else if(nodeState == 0)
           {
+            m_task.inf( " ok\n" );
             break;
           }
 
-          m_task->inf( " ok\n" );
+          
         }
 
-        // Start listener thread.
-        // todo: get variables from m_args
-        m_listener = new Listener(this,  100, false);
-        m_listener->start();
+        int ret;
+        unsigned char buffer[1024];
 
+        ret = sizeof( buffer ) - 1;
+        memset( buffer, 0, sizeof( buffer ) );
+
+         //! I/O Multiplexer.
+          Poll m_poll;
+
+        // while(1)
+        // {
+
+          Delay::waitUsec(10);
+
+          ret = 1023;
+          memset( buffer, 0, 1024);
+
+          do ret = mbedtls_ssl_read( &ssl_context, buffer, ret );
+            while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                  ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+        printf( " %d bytes read\n\n%s\n\n",ret, buffer );
+
+        do ret = mbedtls_ssl_write( &ssl_context, buffer, ret);
+          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+          if( ret < 0 )
+          {
+              printf(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
+              //todo: what to do when sending message fails?
+              // exit_task();  
+          }
+
+        // }      
 
     }
+
+
+    void
+    Node::reset(void)
+    {
+      nodeState = 1;
+        while(nodeState != 0 )
+        {
+          mbedtls_net_free( &client_fd );        
+
+          mbedtls_ssl_session_reset( &ssl_context );
+
+          // declaring character array
+          char char_name[20];
+      
+          // copying the contents of the
+          // string to char array
+          strcpy(char_name, m_name.c_str());
+
+          /*
+          * 4.2. Wait until a client connects
+          */
+          m_task.inf( "  . Waiting for a remote connection from %s ......", char_name );
+          fflush( stdout );
+
+          // while(nodeState != 0)
+          // {
+            if( ( nodeState = mbedtls_net_accept( &listen_fd, &client_fd,
+                            client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
+            {
+              m_task.err( " failed\n  ! mbedtls_net_accept returned %d\n\n", nodeState );
+              // exit_task();
+              return;
+            }
+          // }
+
+          /* For HelloVerifyRequest cookies */
+          if( ( nodeState = mbedtls_ssl_set_client_transport_id( &ssl_context,
+                          client_ip, cliip_len ) ) != 0 )
+          {
+              m_task.err( " failed\n  ! "
+                      "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -nodeState );
+              // exit_task();
+              return;
+          }
+
+          mbedtls_ssl_set_bio( &ssl_context, &client_fd,
+                              mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
+
+          m_task.inf( " ok\n" );
+
+          /*
+          * 5. Handshake
+          */
+          m_task.inf( "  . Performing the DTLS handshake..." );
+          fflush( stdout );
+
+          do nodeState = mbedtls_ssl_handshake( &ssl_context );
+          while( nodeState == MBEDTLS_ERR_SSL_WANT_READ ||
+                nodeState == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+
+          if( nodeState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
+          {
+              m_task.inf( " hello verification requested\n" );
+              // todo: dont use goto
+              // goto reset;
+              // return;
+          }
+          else if( nodeState != 0 )
+          {
+              m_task.err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -nodeState );
+              // reset_mbedtls();
+              // return;
+          }else if(nodeState == 0)
+          {
+            m_task.err( " HANDSHAKE OK\n" );
+            break;
+          }
+
+          
+        }
+    }
+
 
     void
     Node::freeNode(void)
     {
-      #ifdef MBEDTLS_ERROR_C
-          if( nodeState != 0 )
-          {
-              char error_buf[100];
-              mbedtls_strerror( nodeState , error_buf, 100 );
-              m_task->err( "Last error was: %d - %s\n\n", nodeState , error_buf );
-          }
-      #endif
+      // #ifdef MBEDTLS_ERROR_C
+      //     if( nodeState != 0 )
+      //     {
+      //         char error_buf[100];
+      //         mbedtls_strerror( nodeState , error_buf, 100 );
+      //         m_task.err( "Last error was: %d - %s\n\n", nodeState , error_buf );
+      //     }
+      // #endif
 
-          mbedtls_net_free( &client_fd );
-          mbedtls_net_free( &listen_fd );
+      //     mbedtls_net_free( &client_fd );
+      //     mbedtls_net_free( &listen_fd );
 
-          mbedtls_x509_crt_free( &srvcert );
-          mbedtls_x509_crt_free( &cacert );
-          mbedtls_pk_free( &pkey );
-          // mbedtls_ssl_free( &ssl );
-          mbedtls_ssl_config_free( &conf );
-          mbedtls_ssl_cookie_free( &cookie_ctx );
-      #if defined(MBEDTLS_SSL_CACHE_C)
-          mbedtls_ssl_cache_free( &cache );
-      #endif
-          mbedtls_ctr_drbg_free( &ctr_drbg );
-          mbedtls_entropy_free( &entropy );
+      //     mbedtls_x509_crt_free( &srvcert );
+      //     mbedtls_x509_crt_free( &cacert );
+      //     mbedtls_pk_free( &pkey );
+      //     mbedtls_ssl_free( ssl );
+      //     mbedtls_ssl_config_free( &conf );
+      //     mbedtls_ssl_cookie_free( &cookie_ctx );
+      // #if defined(MBEDTLS_SSL_CACHE_C)
+      //     mbedtls_ssl_cache_free( &cache );
+      // #endif
+      //     mbedtls_ctr_drbg_free( &ctr_drbg );
+      //     mbedtls_entropy_free( &entropy );
 
-              /* Shell can not handle large exit numbers -> 1 for errors */
-            if( nodeState < 0 )
-                nodeState = 1;
+      //         /* Shell can not handle large exit numbers -> 1 for errors */
+      //       if( nodeState < 0 )
+      //           nodeState = 1;
 
       // mbedtls_exit( nodeState ); 
     }
 
-    Node::Node(const Node& node)
-    {
-      m_name = node.m_name;
-      m_addrs = node.m_addrs;
+    // Node::Node(const Node& node)
+    // {
+    //   m_name = node.m_name;
+    //   m_addrs = node.m_addrs;
 
-      if (node.m_active == node.m_addrs.end())
-        m_active = m_addrs.end();
-      else
-        m_active = m_addrs.find(node.m_active->first);
-    }
+    //   if (node.m_active == node.m_addrs.end())
+    //     m_active = m_addrs.end();
+    //   else
+    //     m_active = m_addrs.find(node.m_active->first);
+    // }
 
     //! Get node name.
     //! @return node name.
@@ -446,7 +562,7 @@ namespace Security
       return m_name;
     }
 
-    Security::DtlsServer::Task*
+    Security::DtlsServer::Task&
     Node::getParentTask(void)
     {
       return m_task;
@@ -455,7 +571,7 @@ namespace Security
     mbedtls_ssl_context*
     Node::getSslContext(void)
     {
-      return &ssl;
+      return &ssl_context;
     }
 
     //! Check if address and port are on this node's
@@ -507,26 +623,63 @@ namespace Security
       return true;
     }
 
+    void*
+    read(void *ssl)
+    {
+      int ret;
+      unsigned char buffer[1024];
+
+      ret = sizeof( buffer ) - 1;
+      memset( buffer, 0, sizeof( buffer ) );
+
+      // while(1){
+
+      //   do ret = mbedtls_ssl_read( (mbedtls_ssl_context *) ssl, buffer, ret );
+      //     while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+      //           ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+      // printf( " %d bytes read\n\n%s\n\n",ret, buffer );
+
+      // }
+
+      
+      // return ret;
+    }
+
     //! Send data to node.
     //! @param[in] sock UDP destination socket.
     //! @param[in] data data to be transmitted.
     //! @param[in] data_len length of data to be transmitted.
     void
-    Node::send(const unsigned char* data, size_t data_len)
+    Node::send(const unsigned char* data, int data_len)
     {
 
       int ret = 0;
-      do ret = mbedtls_ssl_write( &ssl, data, data_len -1);
+      if (ssl_context.private_session_out != 0)
+      {
+          
+          printf("data_len = %d", data_len);
+          fflush( stdout );
+
+          
+          do ret = mbedtls_ssl_write( &ssl_context, data, data_len);
           while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
                 ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
           if( ret < 0 )
           {
-              m_task->err(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
+              m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
               //todo: what to do when sending message fails?
               // exit_task();
               return;
+          }else if (ret > 0)
+          {
+            m_task.inf("successfully wrote %d bytes", ret );
           }
+
+
+      }
+
           
     }
   }

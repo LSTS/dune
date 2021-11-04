@@ -13,5 +13,4 @@ build/
 .settings/
 /.vscode
 /.idea
-**/Makefile
 

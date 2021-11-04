@@ -51,7 +51,7 @@ namespace Security
     class NodeTable
     {
     public:
-      NodeTable(void);
+      NodeTable(Tasks::Task& task);
 
       /**
        * @brief Verify if node with ID = id is already in NodeTable, if not, add it to NodeTable, if yes, skip
@@ -64,33 +64,35 @@ namespace Security
        * @param services                  Advertised communication services by the Node.
        */
       void
-      addNode(Security::DtlsServer::Task* task, unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services);
+      addNode(unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services);
 
-      bool
-      activate(unsigned id, const Address& addr);
+      // bool
+      // activate(unsigned id, const Address& addr);
 
-      bool
-      deactivate(unsigned id, const Address& addr);
+      // bool
+      // deactivate(unsigned id, const Address& addr);
 
-      unsigned
-      getActiveCount(void);
+      // unsigned
+      // getActiveCount(void);
 
       void
-      send(const unsigned char* data, size_t data_len);
+      send(const unsigned char* data, int data_len);
 
       void
       setLimitedComms(LimitedComms* lcomms);
 
-    private:
-      typedef std::map<unsigned, Node> Table;
+    // private:
+       //! Pointer to task
+      Tasks::Task& m_task;
+      typedef std::map<unsigned, Node*> Table;
       // Number of active nodes.
       unsigned m_active_count;
-      // Node table.
-      Table m_table;
       // Limited Comms object
       LimitedComms* m_lcomms;
-      //! Pointer to task
-      Tasks::Task* m_task;
+      // Node table.
+      Table m_table;
+      
+      
     };
   }
 }

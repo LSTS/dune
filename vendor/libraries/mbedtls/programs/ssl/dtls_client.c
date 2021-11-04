@@ -56,27 +56,19 @@ int main( void )
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/error.h"
 #include "mbedtls/timing.h"
-// #include "test/certs.h"
-
-/* This file must be kept outside of the public dune repository */
-/* if features sensitive data*/
-#include "../../../../../../certs_lsts.h"
+#include "test/certs.h"
 
 /* Uncomment out the following line to default to IPv4 and disable IPv6 */
-#define FORCE_IPV4
+//#define FORCE_IPV4
 
-#define SERVER_PORT "6005"
-#define CLIENT_PORT "6004"
-/* this name needs to match the Common Name in the server certificate*/
-#define SERVER_NAME "server"
+#define SERVER_PORT "4433"
+#define SERVER_NAME "localhost"
 
 #ifdef FORCE_IPV4
-#define SERVER_ADDR "10.0.6.36"     /* Forces IPv4 */
+#define SERVER_ADDR "127.0.0.1"     /* Forces IPv4 */
 #else
 #define SERVER_ADDR "::1"
 #endif
-
-
 
 #define MESSAGE     "Echo this"
 
@@ -84,7 +76,6 @@ int main( void )
 #define MAX_RETRY       5
 
 #define DEBUG_LEVEL 0
-#define SAMPLE_APP
 
 
 static void my_debug( void *ctx, int level,
@@ -100,7 +91,7 @@ static void my_debug( void *ctx, int level,
 int main( int argc, char *argv[] )
 {
     int ret, len;
-    mbedtls_net_context listen_fd, server_fd;
+    mbedtls_net_context server_fd;
     uint32_t flags;
     unsigned char buf[1024];
     const char *pers = "dtls_client";
@@ -112,8 +103,6 @@ int main( int argc, char *argv[] )
     mbedtls_ssl_config conf;
     mbedtls_x509_crt cacert;
     mbedtls_timing_delay_context timer;
-    mbedtls_x509_crt clicert;
-    mbedtls_pk_context pkey;
 
     ((void) argc);
     ((void) argv);
@@ -125,14 +114,11 @@ int main( int argc, char *argv[] )
     /*
      * 0. Initialize the RNG and the session data
      */
-    mbedtls_net_init( &listen_fd );
     mbedtls_net_init( &server_fd );
     mbedtls_ssl_init( &ssl );
     mbedtls_ssl_config_init( &conf );
     mbedtls_x509_crt_init( &cacert );
     mbedtls_ctr_drbg_init( &ctr_drbg );
-    mbedtls_x509_crt_init( &clicert );
-    mbedtls_pk_init( &pkey );
 
     mbedtls_printf( "\n  . Seeding the random number generator..." );
     fflush( stdout );
@@ -154,52 +140,15 @@ int main( int argc, char *argv[] )
     mbedtls_printf( "  . Loading the CA root certificate ..." );
     fflush( stdout );
 
-    ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) lsts_client_certificate,
-                            lsts_client_certificate_len );
+    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_cas_pem,
+                          mbedtls_test_cas_pem_len );
     if( ret < 0 )
     {
         mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
         goto exit;
     }
 
-    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) lsts_ca_chain,
-                            lsts_ca_chain_len );
-    if( ret < 0 )
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
-        goto exit;
-    }
-
-    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) lsts_client_private_key,
-                        lsts_client_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
-    if( ret != 0 )
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
-        goto exit;
-    }
-
-    ret = mbedtls_ssl_conf_own_cert( &conf, &clicert, &pkey );
-    if( ret < 0 )
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
-        goto exit;
-    }
-
-    mbedtls_printf( " ok\n" );
-
-    /*
-    * 0.5 Setup the "listening" UDP socket
-    */
-    printf( "  . Bind on udp/*/%s ...", CLIENT_PORT );
-    fflush( stdout );
-
-    if( ( ret = mbedtls_net_bind( &server_fd, SERVER_ADDR, CLIENT_PORT , MBEDTLS_NET_PROTO_UDP ) ) != 0 )
-    {
-        printf( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
-        goto exit;
-    }
-
-    printf( " ok\n" );
+    mbedtls_printf( " ok (%d skipped)\n", ret );
 
     /*
      * 1. Start the connection
@@ -234,13 +183,11 @@ int main( int argc, char *argv[] )
     /* OPTIONAL is usually a bad choice for security, but makes interop easier
      * in this simplified example, in which the ca chain is hardcoded.
      * Production code should set a proper ca chain and use REQUIRED. */
-    mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
+    mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
     mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
     mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
-    /*disable sending multiple records in one datagram*/
-    mbedtls_ssl_set_datagram_packing( &ssl, 0 );
 
     if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
     {
@@ -398,8 +345,6 @@ exit:
     mbedtls_ssl_config_free( &conf );
     mbedtls_ctr_drbg_free( &ctr_drbg );
     mbedtls_entropy_free( &entropy );
-    mbedtls_x509_crt_free( &clicert );
-    mbedtls_pk_free( &pkey );
 
 #if defined(_WIN32)
     mbedtls_printf( "  + Press Enter to exit this program.\n" );

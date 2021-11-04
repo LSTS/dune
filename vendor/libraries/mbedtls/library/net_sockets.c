@@ -193,16 +193,12 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host,
     ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
     for( cur = addr_list; cur != NULL; cur = cur->ai_next )
     {
-        /* do not overwrite already initialised socket, */
-        /* e.g. when mbedtls_net_bind was called before */
-        if (ctx->fd == -1){
-            ctx->fd = (int) socket( cur->ai_family, cur->ai_socktype,
-                                cur->ai_protocol );
-            if( ctx->fd < 0 )
-            {
-                ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
-                continue;
-            }
+        ctx->fd = (int) socket( cur->ai_family, cur->ai_socktype,
+                            cur->ai_protocol );
+        if( ctx->fd < 0 )
+        {
+            ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
+            continue;
         }
 
         if( connect( ctx->fd, cur->ai_addr, MSVC_INT_CAST cur->ai_addrlen ) == 0 )

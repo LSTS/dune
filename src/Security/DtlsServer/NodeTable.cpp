@@ -39,6 +39,7 @@
 #include "Node.hpp"
 #include "LimitedComms.hpp"
 #include "NodeTable.hpp"
+#include "Listener.hpp"
 
 
 namespace Security
@@ -47,16 +48,20 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
-    NodeTable::NodeTable(void):
+    NodeTable::NodeTable(Tasks::Task& task):
+      m_task(task),
       m_active_count(0),
-      m_lcomms(NULL)
-    { }
+      m_lcomms(NULL),
+      m_table()
+    { 
+      // m_table = *(new Table);
+    }
 
     void
-    NodeTable::addNode(Security::DtlsServer::Task* task, unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services)
+    NodeTable::addNode(unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services)
     {
 
-      if (id == task->getSystemId())
+      if (id == m_task.getSystemId())
       return;
 
       //todo: add depending on active list
@@ -65,56 +70,69 @@ namespace Security
         return;
       }
         
-
+      // *m_table = new Table;
       if ( m_table.find(id) == m_table.end()) 
       {
-          task->war("setting up dtls server for %s", name.c_str());
-          m_table.insert(std::pair<unsigned, Node>(id, Node((Security::DtlsServer::Task*) task, port, c_port_retries, name, services)));
-      } else {
-        // task->war("node with\nID = %x  and \nname = %s \nalready in active list", id, name.c_str());
-        return;
-      }    
+        m_task.war("setting up dtls server for %s", name.c_str());
+        Security::DtlsServer::Node new_node =  Node(m_task, port, c_port_retries, name, services);
+        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = m_table.insert(std::pair<unsigned, Security::DtlsServer::Node*>(id, &new_node));
+
+        if (rv.second)
+        {
+          printf("node inserted successfully\n");
+        }
+      }  
     }
 
-    bool
-    NodeTable::activate(unsigned id, const Address& addr)
-    {
-      Table::iterator itr = m_table.find(id);
-      if (itr == m_table.end())
-        return false;
+      // bool
+      // activate(unsigned id, const Address& addr)
+      // {
+      //   Table::iterator itr = m_table.find(id);
+      //   if (itr == m_table.end())
+      //     return false;
 
-      if (!itr->second.activate(addr))
-        return false;
+      //   if (!itr->second.activate(addr))
+      //     return false;
 
-      ++m_active_count;
-      return true;
-    }
+      //   ++m_active_count;
+      //   return true;
+      // }
 
-    bool
-    NodeTable::deactivate(unsigned id, const Address& addr)
-    {
-      Table::iterator itr = m_table.find(id);
-      if (itr == m_table.end())
-        return false;
+      // bool
+      // deactivate(unsigned id, const Address& addr)
+      // {
+      //   Table::iterator itr = m_table.find(id);
+      //   if (itr == m_table.end())
+      //     return false;
 
-      if (!itr->second.deactivate(addr))
-        return false;
+      //   if (!itr->second.deactivate(addr))
+      //     return false;
 
-      --m_active_count;
-      return true;
-    }
+      //   --m_active_count;
+      //   return true;
+      // }
 
-    unsigned
-    NodeTable::getActiveCount(void)
-    {
-      return m_active_count;
-    }
+      // unsigned
+      // getActiveCount(void)
+      // {
+      //   return m_active_count;
+      // }
 
     void
-    NodeTable::send(const unsigned char* data, size_t data_len)
+    NodeTable::send(const unsigned char* data, int data_len)
     {
+
+      
+
       for (Table::iterator itr = m_table.begin(); itr != m_table.end(); ++itr)
-        itr->second.send(data, data_len);
+      {
+        itr->second->send(data, data_len);
+        // IMC::Message* msg = IMC::Packet::deserialize(data, data_len);
+        // msg->toText(std::cerr);
+      }
+
+
+        
     }
 
     void
@@ -122,5 +140,6 @@ namespace Security
     {
       m_lcomms = lcomms;
     }
+
   }
 }

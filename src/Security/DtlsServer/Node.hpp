@@ -70,19 +70,22 @@ namespace Security
     class Node
     {
     public:
-      Node(Security::DtlsServer::Task* task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services);
+      Node(Tasks::Task& task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services);
 
-      Node(const Node& node);
+      // Node(const Node& node);
 
       void
       freeNode(void);
+
+      void
+      reset(void);
 
       //! Get node name.
       //! @return node name.
       const std::string&
       getName(void) const;
 
-      Security::DtlsServer::Task*
+      Security::DtlsServer::Task&
       getParentTask(void);
 
       mbedtls_ssl_context*
@@ -111,22 +114,26 @@ namespace Security
       bool
       deactivate(const Address& addr);
 
+      // void*
+      // read(void*);
+
       //! Send data to node.
       //! @param[in] sock UDP destination socket.
       //! @param[in] data data to be transmitted.
       //! @param[in] data_len length of data to be transmitted.
       void
-      send(const unsigned char* data, size_t data_len);
+      send(const unsigned char* data, int data_len);
 
     private:
+      //! Pointer to task
+      Tasks::Task& m_task;
       // Node name.
       std::string m_name;
       // Addresses
       std::map<Address, unsigned> m_addrs;
       // Active address.
       std::map<Address, unsigned>::iterator m_active;
-      //! Pointer to task
-      Security::DtlsServer::Task* m_task;
+      
       //! Listener thread.
       Listener* m_listener;
 
@@ -139,7 +146,7 @@ namespace Security
 
       mbedtls_entropy_context entropy;
       mbedtls_ctr_drbg_context ctr_drbg;
-      mbedtls_ssl_context ssl;
+      // mbedtls_ssl_context ssl_context;
       mbedtls_ssl_config conf;
       mbedtls_x509_crt srvcert, cacert;
       mbedtls_pk_context pkey;

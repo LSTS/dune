@@ -67,8 +67,9 @@ namespace Security
     //forward declaration of class Node
     // class Node;
 
-    Listener::Listener(Security::DtlsServer::Node *node,
+    Listener::Listener(Tasks::Task& task, Security::DtlsServer::Node& node,
               float contact_timeout, bool trace):
+      m_task(task),
       m_node(node),
       m_trace(trace),
       m_contacts(contact_timeout)
@@ -117,56 +118,63 @@ namespace Security
           printf( "  < Read from client:" );
           fflush( stdout );
 
-          len = sizeof( bfr ) - 1;
-          memset( bfr, 0, sizeof( bfr ) );
-
+          // len = sizeof( bfr ) - 1;
+          // memset( bfr, 0, sizeof( bfr ) );
+          ret = 0;
           
-          do ret = mbedtls_ssl_read( m_node->getSslContext(), bfr, len );
-          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+          
+          // ret = m_node.read(bfr, 512);
+          
+          // do ret = mbedtls_ssl_read( m_ssl, bfr, len );
+          // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+          //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
           // Delay::wait(1);
+         
 
           if( ret <= 0 )
           {
               switch( ret )
               {
                   case MBEDTLS_ERR_SSL_TIMEOUT:
-                      printf( " timeout\n\n" );
-                      // goto reset;
+                      m_task.err( " timeout\n\n" );
+                      nodeState == 1;
+                    //  m_node.reset();
+                      break;
 
                   case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-                      printf( " connection was closed gracefully\n" );
-                      ret = 0;
-                      // goto close_notify;
+                      m_task.war( " connection was closed gracefully\n" );
+                      nodeState = 2;
+                      // stop();
+                      break;
 
                   default:
-                      printf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
+                      m_task.err( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
                       // goto reset;
+                      nodeState == 1;
+                      // m_node.reset();
+                      break;
               }
           }
 
           len = ret;
 
           
-          printf( " %d bytes read\n\n%s\n\n", len, bfr );
+          printf( " %d bytes read in listener\n\n%s\n\n", len, bfr );
 
 
-          IMC::Message* msg = IMC::Packet::deserialize(bfr, ret);
+          // if (ret > 0)
+          // {
+          //   IMC::Message* msg = IMC::Packet::deserialize(bfr, ret);
+  
+          //   m_contacts_lock.lockWrite();
+          //   m_contacts.update(msg->getSource(), addr);
+          //   m_contacts_lock.unlock();
 
-          msg->toText(std::cerr);
+          //   m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
-          m_contacts_lock.lockWrite();
-          m_contacts.update(msg->getSource(), addr);
-          m_contacts_lock.unlock();
+          //   delete msg;
 
-          Security::DtlsServer::Task *task = m_node->getParentTask();
-
-          task->dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
-
-          if (m_trace)
-            msg->toText(std::cerr);
-
-          delete msg;
+          // }
         // }
         // catch (std::exception & e)
         // {
@@ -175,8 +183,6 @@ namespace Security
       }
 
       
-
-      delete [] bfr;
     }
   }
 }

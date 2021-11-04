@@ -32,14 +32,11 @@
 #define MBEDTLS_EXIT_FAILURE    EXIT_FAILURE
 #endif
 
-#include <unistd.h>
-
 /* Uncomment out the following line to default to IPv4 and disable IPv6 */
-#define FORCE_IPV4
+//#define FORCE_IPV4
 
-#define SERVER_PORT "6005"
 #ifdef FORCE_IPV4
-#define BIND_IP     "10.0.6.36"     /* Forces IPv4 */
+#define BIND_IP     "0.0.0.0"     /* Forces IPv4 */
 #else
 #define BIND_IP     "::"
 #endif
@@ -79,18 +76,15 @@ int main( void )
 #include "mbedtls/debug.h"
 #include "mbedtls/timing.h"
 
-// #include "test/certs.h"
-/* This file must be kept outside of the public dune repository */
-/* if features sensitive data */
-#include "../../../../../../certs_lsts.h"
+#include "test/certs.h"
 
 #if defined(MBEDTLS_SSL_CACHE_C)
 #include "mbedtls/ssl_cache.h"
 #endif
 
 #define READ_TIMEOUT_MS 10000   /* 10 seconds */
-#define DEBUG_LEVEL 3
-#define SAMPLE_APP
+#define DEBUG_LEVEL 0
+
 
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
@@ -116,7 +110,7 @@ int main( void )
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_ssl_context ssl;
     mbedtls_ssl_config conf;
-    mbedtls_x509_crt srvcert, cacert;
+    mbedtls_x509_crt srvcert;
     mbedtls_pk_context pkey;
     mbedtls_timing_delay_context timer;
 #if defined(MBEDTLS_SSL_CACHE_C)
@@ -132,7 +126,6 @@ int main( void )
     mbedtls_ssl_cache_init( &cache );
 #endif
     mbedtls_x509_crt_init( &srvcert );
-    mbedtls_x509_crt_init( &cacert );
     mbedtls_pk_init( &pkey );
     mbedtls_entropy_init( &entropy );
     mbedtls_ctr_drbg_init( &ctr_drbg );
@@ -158,7 +151,7 @@ int main( void )
     printf( " ok\n" );
 
     /*
-     * 2. Load the certificates and private EC key
+     * 2. Load the certificates and private RSA key
      */
     printf( "\n  . Loading the server cert. and key..." );
     fflush( stdout );
@@ -168,24 +161,24 @@ int main( void )
      * Instead, you may want to use mbedtls_x509_crt_parse_file() to read the
      * server and CA certificates, as well as mbedtls_pk_parse_keyfile().
      */
-    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) lsts_server_certificate,
-                        lsts_server_certificate_len );
+    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_srv_crt,
+                          mbedtls_test_srv_crt_len );
     if( ret != 0 )
     {
         printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
         goto exit;
     }
 
-    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) lsts_ca_chain,
-                        lsts_ca_chain_len );
+    ret = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) mbedtls_test_cas_pem,
+                          mbedtls_test_cas_pem_len );
     if( ret != 0 )
     {
         printf( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", ret );
         goto exit;
     }
 
-    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) lsts_server_private_key,
-                        lsts_server_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
+    ret =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) mbedtls_test_srv_key,
+                         mbedtls_test_srv_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
     if( ret != 0 )
     {
         printf( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", ret );
@@ -197,10 +190,10 @@ int main( void )
     /*
      * 3. Setup the "listening" UDP socket
      */
-    printf( "  . Bind on udp/*/%s ...", SERVER_PORT );
+    printf( "  . Bind on udp/*/4433 ..." );
     fflush( stdout );
 
-    if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, SERVER_PORT, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+    if( ( ret = mbedtls_net_bind( &listen_fd, BIND_IP, "4433", MBEDTLS_NET_PROTO_UDP ) ) != 0 )
     {
         printf( " failed\n  ! mbedtls_net_bind returned %d\n\n", ret );
         goto exit;
@@ -223,12 +216,9 @@ int main( void )
         goto exit;
     }
 
-    mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
     mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
     mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
     mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
-    /*disable sending multiple records in one datagram*/
-    mbedtls_ssl_set_datagram_packing( &ssl, 0 );
 
 #if defined(MBEDTLS_SSL_CACHE_C)
     mbedtls_ssl_conf_session_cache( &conf, &cache,
@@ -236,7 +226,7 @@ int main( void )
                                    mbedtls_ssl_cache_set );
 #endif
 
-    mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+    mbedtls_ssl_conf_ca_chain( &conf, srvcert.MBEDTLS_PRIVATE(next), NULL );
    if( ( ret = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
     {
         printf( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", ret );
@@ -387,7 +377,6 @@ reset:
      * 8. Done, cleanly close the connection
      */
 close_notify:
-    sleep(3);
     printf( "  . Closing the connection..." );
 
     /* No error checking, the connection might be closed already */
@@ -417,7 +406,6 @@ exit:
     mbedtls_net_free( &listen_fd );
 
     mbedtls_x509_crt_free( &srvcert );
-    mbedtls_x509_crt_free( &cacert );
     mbedtls_pk_free( &pkey );
     mbedtls_ssl_free( &ssl );
     mbedtls_ssl_config_free( &conf );
