@@ -6,8 +6,8 @@
 *.vcxproj
 
 # Generated source files
-/psa/psa_constant_names_generated.c
-/test/query_config.c
+# /psa/psa_constant_names_generated.c
+# /test/query_config.c
 
 *.o
 *.exe
