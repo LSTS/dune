@@ -76,7 +76,34 @@ namespace Security
 
     // class Listener;
      int nodeState;
-     mbedtls_ssl_context ssl_context;
+           mbedtls_net_context listen_fd, client_fd;
+      unsigned char buf[1024];
+      const char *pers = "dtls_server";
+      unsigned char client_ip[16] = { 0 };
+      size_t cliip_len;
+      mbedtls_ssl_cookie_ctx cookie_ctx;
+
+      mbedtls_entropy_context entropy;
+      mbedtls_ctr_drbg_context ctr_drbg;
+      mbedtls_ssl_context ssl_context;
+      mbedtls_ssl_config conf;
+      mbedtls_x509_crt srvcert, cacert;
+      mbedtls_pk_context pkey;
+      mbedtls_timing_delay_context timer;
+    #if defined(MBEDTLS_SSL_CACHE_C)
+      mbedtls_ssl_cache_context cache;
+    #endif
+
+
+         static void my_debug( void *ctx, int level,
+                              const char *file, int line,
+                              const char *str )
+        {
+            ((void) level);
+
+            fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
+            fflush(  (FILE *) ctx  );
+        }
 
 
     Node::Node(Tasks::Task& task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services):
@@ -85,6 +112,7 @@ namespace Security
       m_active(m_addrs.end()),
       m_listener(NULL)
     {
+      
 
 
       mbedtls_net_init( &listen_fd );
@@ -255,7 +283,7 @@ namespace Security
 
         mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
         mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
-        //mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
+        mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
         mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
         /*disable sending multiple records in one datagram*/
         mbedtls_ssl_set_datagram_packing( &ssl_context, 0 );
@@ -668,13 +696,13 @@ namespace Security
 
           if( ret < 0 )
           {
-              m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
+              // m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
               //todo: what to do when sending message fails?
               // exit_task();
               return;
           }else if (ret > 0)
           {
-            m_task.inf("successfully wrote %d bytes", ret );
+            // m_task.inf("successfully wrote %d bytes", ret );
           }
 
 
