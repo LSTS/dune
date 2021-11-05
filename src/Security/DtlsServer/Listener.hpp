@@ -70,7 +70,7 @@ namespace Security
     {
     public:
       Listener(Tasks::Task& task, Security::DtlsServer::Node& node,
-               float contact_timeout, bool trace);
+               bool trace);
 
       void
       getContacts(std::vector<Contact>& list);
@@ -93,10 +93,10 @@ namespace Security
       Security::DtlsServer::Node& m_node;
       // True to print incoming messages.
       bool m_trace;
-      // Table of contacts.
-      ContactTable m_contacts;
-      // Lock to serialize access to m_contacts.
-      RWLock m_contacts_lock;
+      // // Table of contacts.
+      // ContactTable m_contacts;
+      // // Lock to serialize access to m_contacts.
+      // RWLock m_contacts_lock;
       
       // ssl context reference
       // mbedtls_ssl_context* m_ssl;

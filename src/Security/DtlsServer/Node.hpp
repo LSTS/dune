@@ -65,8 +65,6 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
-    class Listener;
-
     class Node
     {
     public:
@@ -114,8 +112,8 @@ namespace Security
       bool
       deactivate(const Address& addr);
 
-      // void*
-      // read(void*);
+      int
+      read(unsigned char *bfr, size_t len);
 
       //! Send data to node.
       //! @param[in] sock UDP destination socket.
@@ -137,23 +135,22 @@ namespace Security
       //! Listener thread.
       Listener* m_listener;
 
-    //   mbedtls_net_context listen_fd, client_fd;
-    //   unsigned char buf[1024];
-    //   const char *pers = "dtls_server";
-    //   unsigned char client_ip[16] = { 0 };
-    //   size_t cliip_len;
-    //   mbedtls_ssl_cookie_ctx cookie_ctx;
-
-    //   mbedtls_entropy_context entropy;
-    //   mbedtls_ctr_drbg_context ctr_drbg;
-    //   // mbedtls_ssl_context ssl_context;
-    //   // mbedtls_ssl_config conf;
-    //   mbedtls_x509_crt srvcert, cacert;
-    //   mbedtls_pk_context pkey;
-    //   mbedtls_timing_delay_context timer;
-    // #if defined(MBEDTLS_SSL_CACHE_C)
-    //   mbedtls_ssl_cache_context cache;
-    // #endif
+      mbedtls_net_context listen_fd, client_fd;
+      unsigned char buf[1024];
+      const char *pers = "dtls_server";
+      unsigned char client_ip[16] = { 0 };
+      size_t cliip_len;
+      mbedtls_ssl_cookie_ctx cookie_ctx;
+      mbedtls_entropy_context entropy;
+      mbedtls_ctr_drbg_context ctr_drbg;
+      mbedtls_ssl_context ssl_context;
+      mbedtls_ssl_config conf;
+      mbedtls_x509_crt srvcert, cacert;
+      mbedtls_pk_context pkey;
+      mbedtls_timing_delay_context timer;
+    #if defined(MBEDTLS_SSL_CACHE_C)
+      mbedtls_ssl_cache_context cache;
+    #endif
     };
   }
 }

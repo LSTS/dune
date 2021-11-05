@@ -64,7 +64,7 @@
 #endif
 
 // Todo: replace with dune debug level
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 5
 
 using namespace DUNE::Utils;
 
@@ -76,23 +76,23 @@ namespace Security
 
     // class Listener;
      int nodeState;
-           mbedtls_net_context listen_fd, client_fd;
-      unsigned char buf[1024];
-      const char *pers = "dtls_server";
-      unsigned char client_ip[16] = { 0 };
-      size_t cliip_len;
-      mbedtls_ssl_cookie_ctx cookie_ctx;
+    //        mbedtls_net_context listen_fd, client_fd;
+    //   unsigned char buf[1024];
+    //   const char *pers = "dtls_server";
+    //   unsigned char client_ip[16] = { 0 };
+    //   size_t cliip_len;
+    //   mbedtls_ssl_cookie_ctx cookie_ctx;
 
-      mbedtls_entropy_context entropy;
-      mbedtls_ctr_drbg_context ctr_drbg;
-      mbedtls_ssl_context ssl_context;
-      mbedtls_ssl_config conf;
-      mbedtls_x509_crt srvcert, cacert;
-      mbedtls_pk_context pkey;
-      mbedtls_timing_delay_context timer;
-    #if defined(MBEDTLS_SSL_CACHE_C)
-      mbedtls_ssl_cache_context cache;
-    #endif
+    //   mbedtls_entropy_context entropy;
+    //   mbedtls_ctr_drbg_context ctr_drbg;
+    //   mbedtls_ssl_context ssl_context;
+    //   mbedtls_ssl_config conf;
+    //   mbedtls_x509_crt srvcert, cacert;
+    //   mbedtls_pk_context pkey;
+    //   mbedtls_timing_delay_context timer;
+    // #if defined(MBEDTLS_SSL_CACHE_C)
+    //   mbedtls_ssl_cache_context cache;
+    // #endif
 
 
          static void my_debug( void *ctx, int level,
@@ -415,39 +415,28 @@ namespace Security
           
         }
 
-        int ret;
-        unsigned char buffer[1024];
+        m_listener = new Listener(task, *this, true);
+        m_listener->start();
+        // int ret;
+        // unsigned char buffer[1024];
 
-        ret = sizeof( buffer ) - 1;
-        memset( buffer, 0, sizeof( buffer ) );
+        // ret = sizeof( buffer ) - 1;
+        // memset( buffer, 0, sizeof( buffer ) );
 
-         //! I/O Multiplexer.
-          Poll m_poll;
+        //  //! I/O Multiplexer.
+        //   Poll m_poll;
 
-        // while(1)
-        // {
+        // // while(1)
+        // // {
 
-          Delay::waitUsec(10);
+        //   ret = 1023;
+        //   memset( buffer, 0, 1024);
 
-          ret = 1023;
-          memset( buffer, 0, 1024);
+        //   do ret = mbedtls_ssl_read( &ssl_context, buffer, ret );
+        //     while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+        //           ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-          do ret = mbedtls_ssl_read( &ssl_context, buffer, ret );
-            while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-                  ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-        printf( " %d bytes read\n\n%s\n\n",ret, buffer );
-
-        do ret = mbedtls_ssl_write( &ssl_context, buffer, ret);
-          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-          if( ret < 0 )
-          {
-              printf(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
-              //todo: what to do when sending message fails?
-              // exit_task();  
-          }
+        // printf( " %d bytes read\n\n%s\n\n",ret, buffer );
 
         // }      
 
@@ -651,27 +640,16 @@ namespace Security
       return true;
     }
 
-    void*
-    read(void *ssl)
+    int
+    Node::read(unsigned char *bfr, size_t len)
     {
       int ret;
-      unsigned char buffer[1024];
 
-      ret = sizeof( buffer ) - 1;
-      memset( buffer, 0, sizeof( buffer ) );
+      do ret = mbedtls_ssl_read(&ssl_context, bfr, len );
+        while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+              ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-      // while(1){
-
-      //   do ret = mbedtls_ssl_read( (mbedtls_ssl_context *) ssl, buffer, ret );
-      //     while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-      //           ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-      // printf( " %d bytes read\n\n%s\n\n",ret, buffer );
-
-      // }
-
-      
-      // return ret;
+      return ret;
     }
 
     //! Send data to node.
@@ -686,7 +664,6 @@ namespace Security
       if (ssl_context.private_session_out != 0)
       {
           
-          printf("data_len = %d", data_len);
           fflush( stdout );
 
           
@@ -696,13 +673,13 @@ namespace Security
 
           if( ret < 0 )
           {
-              // m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
+              m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
               //todo: what to do when sending message fails?
               // exit_task();
               return;
           }else if (ret > 0)
           {
-            // m_task.inf("successfully wrote %d bytes", ret );
+            m_task.inf("successfully wrote %d bytes\n", ret );
           }
 
 

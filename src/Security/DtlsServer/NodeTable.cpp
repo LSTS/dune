@@ -75,7 +75,7 @@ namespace Security
       {
         m_task.war("setting up dtls server for %s", name.c_str());
         Security::DtlsServer::Node new_node =  Node(m_task, port, c_port_retries, name, services);
-        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = m_table.insert(std::pair<unsigned, Security::DtlsServer::Node*>(id, &new_node));
+        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = m_table.insert(std::pair<unsigned, Security::DtlsServer::Node>(id, new_node));
 
         if (rv.second)
         {
@@ -126,7 +126,7 @@ namespace Security
 
       for (Table::iterator itr = m_table.begin(); itr != m_table.end(); ++itr)
       {
-        itr->second->send(data, data_len);
+        itr->second.send(data, data_len);
         // IMC::Message* msg = IMC::Packet::deserialize(data, data_len);
         // msg->toText(std::cerr);
       }

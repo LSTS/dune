@@ -68,120 +68,86 @@ namespace Security
     // class Node;
 
     Listener::Listener(Tasks::Task& task, Security::DtlsServer::Node& node,
-              float contact_timeout, bool trace):
+              bool trace):
       m_task(task),
       m_node(node),
-      m_trace(trace),
-      m_contacts(contact_timeout)
+      m_trace(trace)
     {  }
 
     void
     Listener::getContacts(std::vector<Contact>& list)
     {
-      m_contacts.getContacts(list);
+      // m_contacts.getContacts(list);
     }
 
     void
     Listener::lockContacts(void)
     {
-      m_contacts_lock.lockRead();
+      // m_contacts_lock.lockRead();
     }
 
     void
     Listener::unlockContacts(void)
     {
-      m_contacts_lock.unlock();
+      // m_contacts_lock.unlock();
     }
 
     void
     Listener::run(void)
     {
-      Address addr;
-      //todo: define variable for buffer size
-      unsigned char bfr[1024];
-      // double poll_tout = c_poll_tout / 1000.0;
-      int ret, len;
-
-      //todo: maybe keep the original poll
-
+      uint8_t* bfr = new uint8_t[c_bfr_size];
+      int rv;
+      size_t len;
+      // int retry_left = MAX_RETRY;
 
       while (!isStopping())
       {
-        // try
-        // {
-          
 
-          //todo: poll
-          /*
-          * 6. Read the echo Request
-          */
-          printf( "  < Read from client:" );
-          fflush( stdout );
+        fflush( stdout );
+        len = 1023;
+        memset( bfr, 0, sizeof( bfr ) );
 
-          // len = sizeof( bfr ) - 1;
-          // memset( bfr, 0, sizeof( bfr ) );
-          ret = 0;
-          
-          
-          // ret = m_node.read(bfr, 512);
-          
-          // do ret = mbedtls_ssl_read( m_ssl, bfr, len );
-          // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-          //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-          // Delay::wait(1);
-         
+        rv = m_node.read(bfr, len);
 
-          if( ret <= 0 )
+        if( rv <= 0 )
+        {
+          switch( rv )
           {
-              switch( ret )
-              {
-                  case MBEDTLS_ERR_SSL_TIMEOUT:
-                      m_task.err( " timeout\n\n" );
-                      nodeState == 1;
-                    //  m_node.reset();
-                      break;
+            case MBEDTLS_ERR_SSL_TIMEOUT:
+              m_task.err( " timeout\n\n" );
+              nodeState == 1;
+            //  m_node.reset();
+              break;
 
-                  case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-                      m_task.war( " connection was closed gracefully\n" );
-                      nodeState = 2;
-                      // stop();
-                      break;
+            case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+              m_task.war( " connection was closed gracefully\n" );
+              nodeState = 2;
+              // stop();
+              break;
 
-                  default:
-                      m_task.err( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
-                      // goto reset;
-                      nodeState == 1;
-                      // m_node.reset();
-                      break;
-              }
+            default:
+              m_task.err( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -rv );
+              // goto reset;
+              nodeState == 1;
+              // m_node.reset();
+              break;
           }
+        }else{
+          m_task.inf( "successfully read %d bytes\n", rv );
 
-          len = ret;
+          IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
 
-          
-          printf( " %d bytes read in listener\n\n%s\n\n", len, bfr );
+          m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
+          if (m_trace)
+            msg->toText(std::cerr);
 
-          // if (ret > 0)
-          // {
-          //   IMC::Message* msg = IMC::Packet::deserialize(bfr, ret);
-  
-          //   m_contacts_lock.lockWrite();
-          //   m_contacts.update(msg->getSource(), addr);
-          //   m_contacts_lock.unlock();
-
-          //   m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
-
-          //   delete msg;
-
-          // }
-        // }
-        // catch (std::exception & e)
-        // {
-        //   printf("error while unpacking message: %s",e.what());
-        // }
+          delete msg;
+        }
+        
       }
 
+      delete [] bfr;
       
     }
   }

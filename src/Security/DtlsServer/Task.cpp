@@ -308,62 +308,14 @@ namespace Security
         if (msg->getSource() != this->getSystemId())
         return;
 
-        uint8_t m_bfr[1024];
+        uint8_t bfr[1024];
 
-        int rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
-
-
-
-        m_node_table->send((const unsigned char*) m_bfr, rv);
+        int rv = IMC::Packet::serialize(msg, bfr, c_bfr_size);
 
 
-        // if (msg->getSource() != this->getSystemId())
-        //   return;
 
-        // inf( "  < Read from client:" );
+        m_node_table->send((const unsigned char*) bfr, rv);
 
-        // if( ssl.private_conf == NULL )
-        // {
-        //   init_socket();
-        //   if( ( ret = mbedtls_ssl_setup( &ssl, &conf ) ) != 0 )
-        //   {
-        //       err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", ret );
-        //       reset_mbedtls();
-        //       return;
-        //   }
-        // }
-        //   // fflush( stdout );
-
-        //   if(!m_listener->isRunning())
-        //   {
-        //     m_listener = new Listener(*this, &ssl, m_lcomms,
-        //                           m_args.contact_timeout, m_args.trace_in);
-        //   m_listener->start();
-        //   }
-          
-
-        //   len = ret;
-        //   inf( " %d bytes read\n\n%s\n\n", len, buf );
-
-        //   /*
-        //   * 7. Write the 200 Response
-        //   */
-        //   inf( "  > Write to client:" );
-        //   fflush( stdout );
-
-        //   do ret = mbedtls_ssl_write( &ssl, buf, len );
-        //   while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-        //         ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-        //   if( ret < 0 )
-        //   {
-        //       err( " failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
-        //       exit_task();
-        //       return;
-        //   }
-
-        //   len = ret;
-        //   inf( " %d bytes written\n\n%s\n\n", len, buf );
       }
 
       //! Release resources.

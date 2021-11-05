@@ -84,7 +84,7 @@ namespace Security
     // private:
        //! Pointer to task
       Tasks::Task& m_task;
-      typedef std::map<unsigned, Node*> Table;
+      typedef std::map<unsigned, Node> Table;
       // Number of active nodes.
       unsigned m_active_count;
       // Limited Comms object

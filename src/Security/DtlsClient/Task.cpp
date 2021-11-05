@@ -555,46 +555,48 @@ namespace Security
       onMain(void)
       {
 
+        int len;
+
         while (!stopping())
         {
           waitForMessages(1.0);
           Delay::wait(10);
 
           /*
-            * 7. Read the echo response
-            */
-            // inf( "  < Read from server:" );
-            // fflush( stdout );
+          * 7. Read the echo response
+          */
+          // inf( "  < Read from server:" );
+          // fflush( stdout );
 
-            // len = sizeof( buf ) - 1;
-            // memset( buf, 0, sizeof( buf ) );
+          // len = sizeof( buf ) - 1;
+          // memset( buf, 0, sizeof( buf ) );
 
-            // do ret = mbedtls_ssl_read( &ssl, buf, len );
-            // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-            //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+          // do ret = mbedtls_ssl_read( &ssl, buf, len );
+          // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+          //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-            // if( ret <= 0 )
-            // {
-            //     switch( ret )
-            //     {
-            //         case MBEDTLS_ERR_SSL_TIMEOUT:
-            //             err( " timeout\n\n" );
-            //             if( retry_left-- > 0 )
-            //             return;
+          // if( ret <= 0 )
+          // {
+          //     switch( ret )
+          //     {
+          //         case MBEDTLS_ERR_SSL_TIMEOUT:
+          //             err( " timeout\n\n" );
+          //             if( retry_left-- > 0 )
+          //             return;
 
-            //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-            //             inf( " connection was closed gracefully\n" );
-            //             ret = 0;
-            //             return;
+          //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+          //             inf( " connection was closed gracefully\n" );
+          //             ret = 0;
+          //             return;
 
-            //         default:
-            //             inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
-            //             return;
-            //     }
-            // }
+          //         default:
+          //             inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
+          //             return;
+          //     }
+          // }
 
-            // len = ret;
-            // inf( " %d bytes read\n\n%s\n\n", len, buf );
+          // len = ret;
+          // inf( " %d bytes read\n\n%s\n\n", len, buf );
 
         }
       }
