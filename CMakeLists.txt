@@ -236,6 +236,8 @@ else(DUNE_SHARED)
       set_target_properties(dune-core PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
     endif(DUNE_CPU_32B)
   endif(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
+
+  set_property(TARGET dune-core PROPERTY C_STANDARD 99)
 endif(DUNE_SHARED)
 
 add_dependencies(dune-core dune-version)
