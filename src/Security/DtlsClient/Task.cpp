@@ -56,7 +56,7 @@
 #define SERVER_NAME "server"
 
 #ifdef FORCE_IPV4
-#define SERVER_ADDR "10.0.6.36"     /* Forces IPv4 */
+#define SERVER_ADDR "10.0.10.60"     /* Forces IPv4 */
 #else
 #define SERVER_ADDR "::1"
 #endif
@@ -312,7 +312,7 @@ namespace Security
       {
         war("hello from dtls client consume announce");
 
-        if (NULL == strstr(msg->sys_name.c_str(), "lauv-xplore-3"))
+        if (NULL == strstr(msg->sys_name.c_str(), "lauv-nemo-1"))
         {
           return;
         }
@@ -339,7 +339,7 @@ namespace Security
             /*
             * 1. Start the connection
             */
-            inf( "  . Connecting to udp/%s/%s...", SERVER_ADDR, s);
+            // inf( "  . Connecting to udp/%s/%s...", SERVER_ADDR, s);
             fflush( stdout );
 
             
