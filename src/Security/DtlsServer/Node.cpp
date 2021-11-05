@@ -74,26 +74,7 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
-    // class Listener;
      int nodeState;
-    //        mbedtls_net_context listen_fd, client_fd;
-    //   unsigned char buf[1024];
-    //   const char *pers = "dtls_server";
-    //   unsigned char client_ip[16] = { 0 };
-    //   size_t cliip_len;
-    //   mbedtls_ssl_cookie_ctx cookie_ctx;
-
-    //   mbedtls_entropy_context entropy;
-    //   mbedtls_ctr_drbg_context ctr_drbg;
-    //   mbedtls_ssl_context ssl_context;
-    //   mbedtls_ssl_config conf;
-    //   mbedtls_x509_crt srvcert, cacert;
-    //   mbedtls_pk_context pkey;
-    //   mbedtls_timing_delay_context timer;
-    // #if defined(MBEDTLS_SSL_CACHE_C)
-    //   mbedtls_ssl_cache_context cache;
-    // #endif
-
 
          static void my_debug( void *ctx, int level,
                               const char *file, int line,
@@ -417,30 +398,7 @@ namespace Security
 
         m_listener = new Listener(task, *this, true);
         m_listener->start();
-        // int ret;
-        // unsigned char buffer[1024];
-
-        // ret = sizeof( buffer ) - 1;
-        // memset( buffer, 0, sizeof( buffer ) );
-
-        //  //! I/O Multiplexer.
-        //   Poll m_poll;
-
-        // // while(1)
-        // // {
-
-        //   ret = 1023;
-        //   memset( buffer, 0, 1024);
-
-        //   do ret = mbedtls_ssl_read( &ssl_context, buffer, ret );
-        //     while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-        //           ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-        // printf( " %d bytes read\n\n%s\n\n",ret, buffer );
-
-        // }      
-
-    }
+     }
 
 
     void
