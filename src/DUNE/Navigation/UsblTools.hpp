@@ -54,6 +54,8 @@ namespace DUNE
       static const uint8_t c_mask_fix = 0x01;
       //! Request frame: size of frame.Size of frame: request.
       static const uint8_t c_fsize_req = 5;
+      //! Size of position request frame.
+      static const uint8_t c_fsize_p_req = 2;
       //! Node or modem destination identifier mask.
       static const uint8_t c_target_mask = 0x80;
       //! Code placement in received frame messages.
@@ -69,7 +71,8 @@ namespace DUNE
         CODE_RPL = c_target_mask,
         CODE_FIX = c_target_mask | 0x01,
         CODE_POS = c_target_mask | 0x02,
-        CODE_ANG = c_target_mask | 0x03
+        CODE_ANG = c_target_mask | 0x03,
+        CODE_P_REQ = 0x04
       };
 
       enum RequestIndexes
@@ -301,6 +304,8 @@ namespace DUNE
           bool fix;
           //! Quick mode, without range.
           bool no_range;
+          //! Request mode.
+          bool on_request;
         };
 
         //! Constructor.
@@ -314,7 +319,7 @@ namespace DUNE
           m_fix = m_args->fix;
 
           // in quick mode, we actively ping the modem
-          if (m_args->no_range)
+          if (m_args->no_range && !m_args->on_request)
           {
             m_node_timer.setTop(m_period);
           }
@@ -331,6 +336,9 @@ namespace DUNE
         bool
         run(std::vector<uint8_t>& data)
         {
+          if (m_args->on_request)
+            return false;
+
           // Quick reply mode.
           if (m_args->enabled && m_args->no_range)
           {
@@ -477,13 +485,28 @@ namespace DUNE
           }
         }
 
+        //! Send request message.
+        bool
+        requestPosition(std::vector<uint8_t>& data)
+        {
+          return encode(data);
+        }
+
       private:
         //! Encode a request to be transmitted by node.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
-        encode(std::vector<uint8_t>& data, uint16_t period)
+        encode(std::vector<uint8_t>& data, uint16_t period = 0)
         {
+          // If node is in request mode.
+          if (m_args->on_request)
+          {
+            data.resize(c_fsize_p_req);
+            data[c_code - 1] = CODE_P_REQ;
+            return true;
+          }
+
           // Do not flood the channel with requests.
           if (!m_node_timer.overflow())
             return false;
