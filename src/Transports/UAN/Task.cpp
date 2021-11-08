@@ -140,6 +140,12 @@ namespace Transports
             " Any system can be configured to request USBL information"
             " including modems with built-in USBL capabilities");
 
+        param("USBL Node -- On Request", m_node_args.on_request)
+        .defaultValue("false")
+        .description("In this mode, the USBL node sends a request for ranging"
+            " information. In this mode the node does not check if modem is alive."
+            " With this mode \"Enabled\" argument is ignored");
+
         param("USBL Node -- Period", m_node_args.period)
         .defaultValue("60.0")
         .minimumValue("2.0")
