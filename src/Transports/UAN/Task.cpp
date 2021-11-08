@@ -924,6 +924,16 @@ namespace Transports
           sendFrame("broadcast", createInternalId(), data, false);
       }
 
+      //! Start USBL positioning, when on request.
+      void
+      sendUsblPositionRequest(void)
+      {
+        std::vector<uint8_t> data;
+        data.push_back(CODE_USBL);
+        if (m_usbl_node->requestPosition(data))
+          sendFrame("broadcast", createInternalId(), data, false);
+      }
+
       void
       clearTimeouts()
       {
