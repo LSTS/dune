@@ -72,6 +72,8 @@ namespace Transports
       float usbl_max_wait;
       //! USBL Modem Announce service.
       bool usbl_announce;
+      //! USBL Modem "on request" mode.
+      bool usbl_on_request;
       //! Section where to read modem addresses
       std::string addr_section;
     };
@@ -188,6 +190,12 @@ namespace Transports
         .description("This argument only concerns systems with USBL modems installed."
             " This value establishes the maximum amount of time that the modem"
             " waits for the target system's reply");
+
+        param("USBL Modem -- On Request", m_args.usbl_on_request)
+        .defaultValue("false")
+        .description("This argument only concerns systems with USBL modems installed."
+            " This parameter sets the modem to \"on request\" mode, meaning it allows"
+            " response to lone requests (no set target).");
 
         param("Address Section", m_args.addr_section)
         .defaultValue("")
@@ -387,7 +395,12 @@ namespace Transports
                 std::vector<uint8_t> data;
                 data.push_back(CODE_USBL);
                 if (m_usbl_modem->parse(msg, data))
-                  sendFrame(msg->sys_src,createInternalId(), data, false);
+                {
+                  if (data.empty())
+                    sendRange(msg->sys_src,createInternalId());
+                  else
+                    sendFrame(msg->sys_src,createInternalId(), data, false);
+                }
               }
             }
             break;
@@ -497,7 +510,7 @@ namespace Transports
         data.push_back(CODE_USBL);
 
         // The target wants an absolute fix?
-        if (m_usbl_modem->wantsFix(msg->target))
+        if (m_usbl_modem->wantsFix(msg->target) || m_args.usbl_on_request)
         {
           if (m_usbl_modem->encode(&fix, data))
             sendFrame(msg->target, createInternalId(), data, false);
