@@ -799,6 +799,13 @@ namespace DUNE
             data[c_code - 1] = CODE_RPL;
             return true;
           }
+          else if ((uint8_t)msg->data[c_code] == CODE_P_REQ)
+          {
+            data.clear();
+            m_system = msg->sys_src;
+            // TODO: Change wait time to be configurable!!!
+            m_modem_wdog.setTop(10);
+          }
 
           return false;
         }
