@@ -86,9 +86,8 @@ namespace DUNE
       {
         fp64_t lat;
         fp64_t lon;
-        fp32_t z;
-        uint8_t z_units;
         fp32_t accuracy;
+        fp64_t timestamp;
 
         //! Decode an incoming data frame into a fix message.
         //! @param[out] frame fix structure.
@@ -101,9 +100,8 @@ namespace DUNE
           uint16_t length = (uint16_t)Fix::size();
           ptr += IMC::deserialize(frame.lat, ptr, length);
           ptr += IMC::deserialize(frame.lon, ptr, length);
-          ptr += IMC::deserialize(frame.z, ptr, length);
-          ptr += IMC::deserialize(frame.z_units, ptr, length);
           ptr += IMC::deserialize(frame.accuracy, ptr, length);
+          ptr += IMC::deserialize(frame.timestamp, ptr, length);
         }
 
         //! Encode a fix message into a data frame.
@@ -119,9 +117,8 @@ namespace DUNE
 
           ptr += IMC::serialize(frame.lat, ptr);
           ptr += IMC::serialize(frame.lon, ptr);
-          ptr += IMC::serialize(frame.z, ptr);
-          ptr += IMC::serialize(frame.z_units, ptr);
           ptr += IMC::serialize(frame.accuracy, ptr);
+          ptr += IMC::serialize(frame.timestamp, ptr);
         }
 
         //! Get size of frame.
@@ -129,7 +126,7 @@ namespace DUNE
         static size_t
         size(void)
         {
-          return 2 * (sizeof(fp64_t) + sizeof(fp32_t)) + sizeof(uint8_t);
+          return 3 * sizeof(fp64_t) + sizeof(fp32_t);
         }
       };
 
@@ -410,10 +407,11 @@ namespace DUNE
               fix.target = msg->sys_dst;
               fix.lat = fs.lat;
               fix.lon = fs.lon;
-              fix.z = fs.z;
-              fix.z_units = fs.z_units;
+              fix.z = -1;
+              fix.z_units = -1;
               fix.accuracy = fs.accuracy;
-              m_task->dispatch(fix);
+              fix.setTimeStamp(fs.timestamp);
+              m_task->dispatch(fix, 1);
 
               // this message was addressed to this system.
               if (msg->sys_dst == m_task->getSystemName())
@@ -826,9 +824,8 @@ namespace DUNE
           UsblTools::Fix fix;
           fix.lat = msg->lat;
           fix.lon = msg->lon;
-          fix.z = msg->z;
-          fix.z_units = msg->z_units;
           fix.accuracy = msg->accuracy;
+          fix.timestamp = msg->getTimeStamp();
 
           Fix::encode(fix, data);
           targetReplied(m_system);
