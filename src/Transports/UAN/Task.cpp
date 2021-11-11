@@ -304,6 +304,7 @@ namespace Transports
           case (IMC::AcousticRequest::TYPE_ABORT):
           case (IMC::AcousticRequest::TYPE_RANGE):
           case (IMC::AcousticRequest::TYPE_RAW):
+          case (IMC::AcousticRequest::TYPE_P_REQUEST):
           addToQueue((const IMC::AcousticRequest*)msg->clone());
           processQueue();
           break;
@@ -945,12 +946,12 @@ namespace Transports
 
       //! Start USBL positioning, when on request.
       void
-      sendUsblPositionRequest(void)
+      sendUsblPositionRequest(const std::string &sys)
       {
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
         if (m_usbl_node->requestPosition(data))
-          sendFrame("broadcast", createInternalId(), data, false);
+          sendFrame(sys, createInternalId(), data, false);
       }
 
       void
@@ -998,6 +999,10 @@ namespace Transports
 
             case (IMC::AcousticRequest::TYPE_RAW):
               sendRaw(*req, req->destination, id, req->msg);
+              break;
+
+            case (IMC::AcousticRequest::TYPE_P_REQUEST):
+              sendUsblPositionRequest(req->destination);
               break;
 
             default:
