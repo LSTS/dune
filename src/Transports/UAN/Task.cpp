@@ -304,7 +304,7 @@ namespace Transports
           case (IMC::AcousticRequest::TYPE_ABORT):
           case (IMC::AcousticRequest::TYPE_RANGE):
           case (IMC::AcousticRequest::TYPE_RAW):
-          case (IMC::AcousticRequest::TYPE_P_REQUEST):
+          case (IMC::AcousticRequest::TYPE_POSITION_REQUEST):
           addToQueue((const IMC::AcousticRequest*)msg->clone());
           processQueue();
           break;
@@ -1001,7 +1001,7 @@ namespace Transports
               sendRaw(*req, req->destination, id, req->msg);
               break;
 
-            case (IMC::AcousticRequest::TYPE_P_REQUEST):
+            case (IMC::AcousticRequest::TYPE_POSITION_REQUEST):
               sendUsblPositionRequest(req->destination);
               break;
 
