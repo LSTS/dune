@@ -536,7 +536,7 @@ namespace Transports
         }
 
         // check if we are waiting for this system.
-        if (!m_usbl_modem->waitingForSystem(msg->target))
+        if (!m_usbl_modem->waitingForSystem(msg->target) || m_args.usbl_on_request)
           return;
 
         std::vector<uint8_t> data;
