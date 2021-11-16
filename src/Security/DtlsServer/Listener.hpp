@@ -69,8 +69,7 @@ namespace Security
     class Listener: public Concurrency::Thread
     {
     public:
-      Listener(Tasks::Task& task, Security::DtlsServer::Node& node,
-               bool trace);
+      Listener(Tasks::Task& task, Security::DtlsServer::Node& node, mbedtls_net_context& listen, bool trace);
 
       void
       getContacts(std::vector<Contact>& list);
@@ -91,6 +90,8 @@ namespace Security
       static const int c_poll_tout = 1000;
       // Parent task.
       Security::DtlsServer::Node& m_node;
+      //mbedtls listener
+      mbedtls_net_context& m_listen;
       // True to print incoming messages.
       bool m_trace;
       // // Table of contacts.

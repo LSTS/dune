@@ -303,7 +303,7 @@ namespace Security
       void
       consume(const IMC::Message* msg)
       {
-        war("hello from consume(IMC Message)");
+        // war("hello from consume(IMC Message)");
 
         if (msg->getSource() != this->getSystemId())
         return;
@@ -311,8 +311,6 @@ namespace Security
         uint8_t bfr[1024];
 
         int rv = IMC::Packet::serialize(msg, bfr, c_bfr_size);
-
-
 
         m_node_table->send((const unsigned char*) bfr, rv);
 

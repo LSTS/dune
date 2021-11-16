@@ -78,6 +78,9 @@ namespace Security
       void
       reset(void);
 
+      void
+      closeNotify(void);
+
       //! Get node name.
       //! @return node name.
       const std::string&

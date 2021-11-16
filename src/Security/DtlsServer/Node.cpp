@@ -63,8 +63,11 @@
 #include "mbedtls/ssl_cache.h"
 #endif
 
+#define SERVER_ADDR "10.0.6.36"     /* Forces IPv4 */
+// #define SERVER_ADDR "10.0.10.60"     /* Forces IPv4 */
+
 // Todo: replace with dune debug level
-#define DEBUG_LEVEL 5
+#define DEBUG_LEVEL 3
 
 using namespace DUNE::Utils;
 
@@ -174,16 +177,16 @@ namespace Security
         // Todo: find better way to determin which one is the "main" address
         // this might cause problems on the hardware
         
-        struct hostent *host_entry;
-        char hostname[256];
-        char *IPbuffer;
-        // To retrieve hostname
-        nodeState = gethostname(hostname, sizeof(hostname));     
-        host_entry = gethostbyname(hostname);      
-        // To convert an Internet network
-        // address into ASCII string
-        IPbuffer = inet_ntoa(*((struct in_addr*)
-                              host_entry->h_addr_list[0]));
+        // struct hostent *host_entry;
+        // char hostname[256];
+        // char *IPbuffer;
+        // // To retrieve hostname
+        // nodeState = gethostname(hostname, sizeof(hostname));     
+        // host_entry = gethostbyname(hostname);      
+        // // To convert an Internet network
+        // // address into ASCII string
+        // IPbuffer = inet_ntoa(*((struct in_addr*)
+        //                       host_entry->h_addr_list[0]));
 
         // Find a free port.
         unsigned portLimit = port + c_port_retries;
@@ -192,18 +195,18 @@ namespace Security
           std::string s = std::to_string(port);
           char const *charPort = s.c_str();
 
-          m_task.inf( "  Try to bind on udp/*/%s:%s", IPbuffer, charPort);
+          m_task.inf( "  Try to bind on udp/*/%s:%s", SERVER_ADDR, charPort);
           fflush( stdout );
 
           
 
-          if( ( nodeState = mbedtls_net_bind( &listen_fd, IPbuffer, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+          if( ( nodeState = mbedtls_net_bind( &listen_fd, SERVER_ADDR, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
           {
               m_task.war( " failed\n  ! mbedtls_net_bind returned %d\n\n", nodeState );
               ++port;
           }else
           {
-            m_task.inf( " listening on %s:%s\n", IPbuffer, charPort );
+            m_task.inf( " listening on %s:%s\n", SERVER_ADDR, charPort );
 
             // Search for IMC + UDP services.
             std::vector<std::string> list;
@@ -230,7 +233,7 @@ namespace Security
             std::stringstream os;
             std::string service = "dtls";
 
-            os << service << "://" << IPbuffer << ":" << charPort
+            os << service << "://" << SERVER_ADDR << ":" << charPort
                << "/";
 
             IMC::AnnounceService announce;
@@ -317,90 +320,75 @@ namespace Security
         }
     #endif
 
-        // reset();
-        nodeState = 1;
-        while(nodeState != 0 )
-        {
-          mbedtls_net_free( &client_fd );        
+        reset();
 
-          mbedtls_ssl_session_reset( &ssl_context );
-
-          // declaring character array
-          char char_name[20];
-      
-          // copying the contents of the
-          // string to char array
-          strcpy(char_name, name.c_str());
-
-          /*
-          * 4.2. Wait until a client connects
-          */
-          m_task.inf( "  . Waiting for a remote connection from %s ......", char_name );
-          fflush( stdout );
-          nodeState = 1;
-
-          while(nodeState != 0)
-          {
-            if( ( nodeState = mbedtls_net_accept( &listen_fd, &client_fd,
-                            client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
-            {
-              m_task.err( " failed\n  ! mbedtls_net_accept returned %d\n\n", nodeState );
-              // exit_task();
-              return;
-            }
-          }
-
-          /* For HelloVerifyRequest cookies */
-          if( ( nodeState = mbedtls_ssl_set_client_transport_id( &ssl_context,
-                          client_ip, cliip_len ) ) != 0 )
-          {
-              m_task.err( " failed\n  ! "
-                      "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -nodeState );
-              // exit_task();
-              return;
-          }
-
-          mbedtls_ssl_set_bio( &ssl_context, &client_fd,
-                              mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
-
-          m_task.inf( " ok\n" );
-
-          /*
-          * 5. Handshake
-          */
-          m_task.inf( "  . Performing the DTLS handshake..." );
-          fflush( stdout );
-
-          do nodeState = mbedtls_ssl_handshake( &ssl_context );
-          while( nodeState == MBEDTLS_ERR_SSL_WANT_READ ||
-                nodeState == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-          if( nodeState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
-          {
-              m_task.inf( " hello verification requested\n" );
-              // todo: dont use goto
-              // goto reset;
-              // return;
-          }
-          else if( nodeState != 0 )
-          {
-              m_task.err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -nodeState );
-              // reset_mbedtls();
-              // return;
-          }else if(nodeState == 0)
-          {
-            m_task.inf( " ok\n" );
-            break;
-          }
-
-          
-        }
-
-        m_listener = new Listener(task, *this, true);
+        m_listener = new Listener(task, *this, listen_fd, true);
         m_listener->start();
+
+      // uint8_t bfr[512];
+      // int rv;
+      // size_t len;
+
+      // while (1)
+      // {
+
+      //   fflush( stdout );
+      //   len = 512;
+      //   memset( &bfr, 0, sizeof( bfr ) );
+
+      //   rv = mbedtls_net_poll(&listen_fd, MBEDTLS_NET_POLL_READ, 0);
+      //   if(rv == MBEDTLS_NET_POLL_READ)
+      //   {
+      //       m_task.war("socket READY to read");
+      //       rv = read(bfr, len);
+
+      //     if( rv <= 0 )
+      //     {
+      //       switch( rv )
+      //       {
+      //         case MBEDTLS_ERR_SSL_TIMEOUT:
+      //           m_task.err( " timeout\n\n" );
+      //           nodeState == 1;
+      //           // reset();
+      //           break;
+
+      //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+      //           m_task.war( " connection was closed gracefully\n" );
+      //           nodeState = 2;
+      //           // stop();
+      //           break;
+
+      //         default:
+      //           m_task.err( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -rv );
+      //           // goto reset;
+      //           nodeState == 1;
+      //           // m_node.reset();
+      //           break;
+      //       }
+      //     }else{
+      //       m_task.inf( "successfully read %d bytes\n", rv );
+
+      //       IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
+
+      //       m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+
+      //       msg->toText(std::cerr);
+
+
+      //       delete msg;
+      //     }
+
+      //   }else{
+      //     // m_task.war("socket not ready to read");
+      //   }
+      //   Delay::waitUsec(1000);
+      // }
      }
 
-
+    /**
+     * @brief reset the connection by executing the handshake and creating a new session.
+     * 
+     */
     void
     Node::reset(void)
     {
@@ -424,8 +412,6 @@ namespace Security
           m_task.inf( "  . Waiting for a remote connection from %s ......", char_name );
           fflush( stdout );
 
-          // while(nodeState != 0)
-          // {
             if( ( nodeState = mbedtls_net_accept( &listen_fd, &client_fd,
                             client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
             {
@@ -433,7 +419,12 @@ namespace Security
               // exit_task();
               return;
             }
-          // }
+
+            nodeState = mbedtls_net_set_block(&client_fd);
+            if (nodeState){
+              m_task.err("could not set socket non-blocking");
+              return;
+            }
 
           /* For HelloVerifyRequest cookies */
           if( ( nodeState = mbedtls_ssl_set_client_transport_id( &ssl_context,
@@ -475,12 +466,28 @@ namespace Security
               // return;
           }else if(nodeState == 0)
           {
-            m_task.err( " HANDSHAKE OK\n" );
+            m_task.inf( " HANDSHAKE OK\n" );
             break;
           }
 
           
         }
+    }
+
+    void
+    Node::closeNotify(void)
+    {
+      
+      m_task.war( "  . Closing the connection..." );
+
+      /* No error checking, the connection might be closed already */
+      do nodeState = mbedtls_ssl_close_notify( &ssl_context );
+      while( nodeState == MBEDTLS_ERR_SSL_WANT_WRITE );
+      nodeState = 0;
+
+      reset();
+
+      printf( " done\n" );
     }
 
 
@@ -603,6 +610,9 @@ namespace Security
     {
       int ret;
 
+      m_task.inf("max len to read = %ld", len);
+      m_task.inf("sizeof(bfr) = %ld", sizeof(bfr));
+
       do ret = mbedtls_ssl_read(&ssl_context, bfr, len );
         while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
               ret == MBEDTLS_ERR_SSL_WANT_WRITE );
@@ -624,7 +634,6 @@ namespace Security
           
           fflush( stdout );
 
-          
           do ret = mbedtls_ssl_write( &ssl_context, data, data_len);
           while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
                 ret == MBEDTLS_ERR_SSL_WANT_WRITE );
@@ -638,6 +647,9 @@ namespace Security
           }else if (ret > 0)
           {
             m_task.inf("successfully wrote %d bytes\n", ret );
+
+
+
           }
 
 
