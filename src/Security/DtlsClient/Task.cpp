@@ -51,22 +51,15 @@
 
 #define FORCE_IPV4
 
-#define SERVER_PORT "6004"
 /* this name needs to match the Common Name in the server certificate*/
 #define SERVER_NAME "server"
-
-#ifdef FORCE_IPV4
-#define SERVER_ADDR "10.0.10.60"     /* Forces IPv4 */
-#else
-#define SERVER_ADDR "::1"
-#endif
 
 #define MESSAGE     "Echo this"
 
 #define READ_TIMEOUT_MS 1000
 #define MAX_RETRY       5
 
-#define DEBUG_LEVEL 5
+#define DEBUG_LEVEL 3
 
 namespace Security
 {
@@ -312,7 +305,7 @@ namespace Security
       {
         war("hello from dtls client consume announce");
 
-        if (NULL == strstr(msg->sys_name.c_str(), "lauv-nemo-1"))
+        if (NULL == strstr(msg->sys_name.c_str(), "lauv-nemo-1") && NULL == strstr(msg->sys_name.c_str(), "lauv-xplore-3") && NULL == strstr(msg->sys_name.c_str(), "lauv-xplore-2"))
         {
           return;
         }
@@ -323,7 +316,9 @@ namespace Security
         std::vector<std::string> list;
         String::split(msg->services, ";", list);
 
-        for (unsigned i = 0; i < list.size(); ++i)
+        if(!handshakeOk){
+          
+          for (unsigned i = 0; i < list.size(); ++i)
         {
           // if (list[i].compare(0, 10, "dtls://", 10) != 0)
           //   continue;
@@ -339,13 +334,13 @@ namespace Security
             /*
             * 1. Start the connection
             */
-            // inf( "  . Connecting to udp/%s/%s...", SERVER_ADDR, s);
+
+           char const *pchar = s.c_str();  //use char const* as target type
+
+            inf( "Connecting to udp/%s/%s", address, pchar);
             fflush( stdout );
 
-            
-            char const *pchar = s.c_str();  //use char const* as target type
-
-            if( ( ret = mbedtls_net_connect( &server_fd, SERVER_ADDR,
+            if( ( ret = mbedtls_net_connect( &server_fd, address,
                                                 pchar, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
             {
                 err( " failed\n  ! mbedtls_net_connect returned %d\n\n", ret );
@@ -449,69 +444,16 @@ namespace Security
               handshakeOk = 1;
             }
                 
-          
-
-            // inf( "  > Write to server:" );
-            // fflush( stdout );
-
-            // len = sizeof( MESSAGE ) - 1;
-
-            // do ret = mbedtls_ssl_write( &ssl, (unsigned char *) MESSAGE, len );
-            // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-            //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-            // if( ret < 0 )
-            // {
-            //     err(" failed\n  ! mbedtls_ssl_write returned %d\n\n", ret );
-            //     exit_task();
-            //     return;
-            // }
-
-            // len = ret;
-            // inf( " %d bytes written\n\n%s\n\n", len, MESSAGE );
-
-            /*
-            * 7. Read the echo response
-            */
-            // inf( "  < Read from server:" );
-            // fflush( stdout );
-
-            // len = sizeof( buf ) - 1;
-            // memset( buf, 0, sizeof( buf ) );
-
-            // do ret = mbedtls_ssl_read( &ssl, buf, len );
-            // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-            //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
-            // if( ret <= 0 )
-            // {
-            //     switch( ret )
-            //     {
-            //         case MBEDTLS_ERR_SSL_TIMEOUT:
-            //             err( " timeout\n\n" );
-            //             if( retry_left-- > 0 )
-            //             return;
-
-            //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-            //             inf( " connection was closed gracefully\n" );
-            //             ret = 0;
-            //             return;
-
-            //         default:
-            //             inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
-            //             return;
-            //     }
-            // }
-
-            // len = ret;
-            // inf( " %d bytes read\n\n%s\n\n", len, buf );
-
 
           }
             // m_addrs.insert(std::pair<Address, unsigned>(address, port));
         }
 
         bind(this, m_args.messages);
+
+        }
+
+        
 
       }
 
@@ -555,48 +497,49 @@ namespace Security
       onMain(void)
       {
 
-        int len;
+        size_t len;
 
         while (!stopping())
         {
           waitForMessages(1.0);
-          Delay::wait(10);
 
           /*
           * 7. Read the echo response
           */
-          // inf( "  < Read from server:" );
-          // fflush( stdout );
+          inf( "  < Read from server:" );
+          fflush( stdout );
 
-          // len = sizeof( buf ) - 1;
-          // memset( buf, 0, sizeof( buf ) );
+          len = 1023;
+          memset( buf, 0, len );
 
-          // do ret = mbedtls_ssl_read( &ssl, buf, len );
-          // while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-          //       ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+          do ret = mbedtls_ssl_read( &ssl, buf, len );
+          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-          // if( ret <= 0 )
-          // {
-          //     switch( ret )
-          //     {
-          //         case MBEDTLS_ERR_SSL_TIMEOUT:
-          //             err( " timeout\n\n" );
-          //             if( retry_left-- > 0 )
-          //             return;
+          if( ret <= 0 )
+          {
+              switch( ret )
+              {
+                  case MBEDTLS_ERR_SSL_TIMEOUT:
+                      err( " timeout\n\n" );
+                      if( retry_left-- > 0 )
+                      break;
 
-          //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-          //             inf( " connection was closed gracefully\n" );
-          //             ret = 0;
-          //             return;
+                  case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+                      err( " connection was closed gracefully\n" );
+                      
+                      break;
 
-          //         default:
-          //             inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
-          //             return;
-          //     }
-          // }
+                  default:
+                      inf( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
+                      break;
+              }
+          }else{
 
-          // len = ret;
-          // inf( " %d bytes read\n\n%s\n\n", len, buf );
+          len = ret;
+          inf( " %d bytes read\n\n%s\n\n", len, buf );
+
+          }
 
         }
       }
