@@ -753,7 +753,7 @@ namespace Transports
         tx.setSource(getSystemId());
         tx.setSourceEntity(getEntityId());
 
-        tx.timeout = Clock::getSinceEpoch() + 10;
+        tx.timeout = 10;
 
         tx.range = msg->range;
 
