@@ -40,6 +40,8 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
+    const uint8_t c_code_range = 0x01;
+
     struct Arguments
     {
       // List of ports to listen for advertisements.
@@ -141,6 +143,26 @@ namespace Simulators
       consume(const IMC::UamTxFrame* msg)
       {
         transmitData(msg);
+
+        // Respond if it is range request
+        if (msg->data[1] == c_code_range)
+        {
+          IMC::UamRxRange range;
+          range.seq = msg->seq;
+          range.sys = msg->sys_dst;
+          range.value = 20;
+
+          dispatch(range);
+        }
+
+        // Send transmission status
+        IMC::UamTxStatus status;
+        status.setDestination(msg->getSource());
+        status.setDestinationEntity(msg->getSourceEntity());
+        status.seq = msg->seq;
+        status.value = UamTxStatus::UTS_DONE;
+        status.error = "";
+        dispatch(status);
       }
 
       void
