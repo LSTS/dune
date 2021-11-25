@@ -76,7 +76,7 @@ namespace Security
       // getActiveCount(void);
 
       void
-      send(const unsigned char* data, int data_len);
+      send(const unsigned char* data, size_t data_len);
 
       void
       setLimitedComms(LimitedComms* lcomms);

@@ -78,16 +78,17 @@ namespace Security
     using DUNE_NAMESPACES;
 
      int nodeState;
+     int ret;
 
-         static void my_debug( void *ctx, int level,
-                              const char *file, int line,
-                              const char *str )
-        {
-            ((void) level);
+      static void my_debug( void *ctx, int level,
+                            const char *file, int line,
+                            const char *str )
+      {
+          ((void) level);
 
-            fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
-            fflush(  (FILE *) ctx  );
-        }
+          fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
+          fflush(  (FILE *) ctx  );
+      }
 
 
     Node::Node(Tasks::Task& task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services):
@@ -325,64 +326,6 @@ namespace Security
         m_listener = new Listener(task, *this, listen_fd, true);
         m_listener->start();
 
-      // uint8_t bfr[512];
-      // int rv;
-      // size_t len;
-
-      // while (1)
-      // {
-
-      //   fflush( stdout );
-      //   len = 512;
-      //   memset( &bfr, 0, sizeof( bfr ) );
-
-      //   rv = mbedtls_net_poll(&listen_fd, MBEDTLS_NET_POLL_READ, 0);
-      //   if(rv == MBEDTLS_NET_POLL_READ)
-      //   {
-      //       m_task.war("socket READY to read");
-      //       rv = read(bfr, len);
-
-      //     if( rv <= 0 )
-      //     {
-      //       switch( rv )
-      //       {
-      //         case MBEDTLS_ERR_SSL_TIMEOUT:
-      //           m_task.err( " timeout\n\n" );
-      //           nodeState == 1;
-      //           // reset();
-      //           break;
-
-      //         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
-      //           m_task.war( " connection was closed gracefully\n" );
-      //           nodeState = 2;
-      //           // stop();
-      //           break;
-
-      //         default:
-      //           m_task.err( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -rv );
-      //           // goto reset;
-      //           nodeState == 1;
-      //           // m_node.reset();
-      //           break;
-      //       }
-      //     }else{
-      //       m_task.inf( "successfully read %d bytes\n", rv );
-
-      //       IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
-
-      //       m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
-
-      //       msg->toText(std::cerr);
-
-
-      //       delete msg;
-      //     }
-
-      //   }else{
-      //     // m_task.war("socket not ready to read");
-      //   }
-      //   Delay::waitUsec(1000);
-      // }
      }
 
     /**
@@ -422,7 +365,7 @@ namespace Security
 
             nodeState = mbedtls_net_set_block(&client_fd);
             if (nodeState){
-              m_task.err("could not set socket non-blocking");
+              m_task.err("could not set socket blocking");
               return;
             }
 
@@ -608,15 +551,10 @@ namespace Security
     int
     Node::read(unsigned char *bfr, size_t len)
     {
-      int ret;
-
-      m_task.inf("max len to read = %ld", len);
-      m_task.inf("sizeof(bfr) = %ld", sizeof(bfr));
-
       do ret = mbedtls_ssl_read(&ssl_context, bfr, len );
         while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
               ret == MBEDTLS_ERR_SSL_WANT_WRITE );
-
+      
       return ret;
     }
 
@@ -624,38 +562,29 @@ namespace Security
     //! @param[in] sock UDP destination socket.
     //! @param[in] data data to be transmitted.
     //! @param[in] data_len length of data to be transmitted.
-    void
-    Node::send(const unsigned char* data, int data_len)
+    int
+    Node::send(const unsigned char* data, size_t data_len)
     {
-
-      int ret = 0;
       if (ssl_context.private_session_out != 0)
-      {
-          
-          fflush( stdout );
+      {  
+        fflush( stdout );
 
-          do ret = mbedtls_ssl_write( &ssl_context, data, data_len);
-          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
-                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+        do ret = mbedtls_ssl_write( &ssl_context, data, data_len);
+        while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+              ret == MBEDTLS_ERR_SSL_WANT_WRITE );
 
-          if( ret < 0 )
-          {
-              m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
-              //todo: what to do when sending message fails?
-              // exit_task();
-              return;
-          }else if (ret > 0)
-          {
-            m_task.inf("successfully wrote %d bytes\n", ret );
+        if( ret < 0 )
+        {
+            m_task.err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
+            //todo: what to do when sending message fails?
+            // exit_task();
+        }else if (ret >= 0)
+        {
+          m_task.inf("successfully wrote %d bytes\n", ret );
+        }
+      } 
 
-
-
-          }
-
-
-      }
-
-          
+      return ret;   
     }
   }
 }

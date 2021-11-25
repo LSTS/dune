@@ -92,17 +92,19 @@ namespace Security
     void
     Listener::run(void)
     {
-      uint8_t* bfr = new uint8_t[1024];
+      // uint8_t* bfr = new uint8_t[1024];
+       unsigned char *bfr;
+       bfr = (unsigned char *)calloc(1024, sizeof(unsigned char));
       int rv;
-      size_t len;
+      size_t len = 1024;
       // int retry_left = MAX_RETRY;
 
       while (!isStopping())
       {
 
         fflush( stdout );
-        len = 1024 -1;
-        memset( bfr, 0, len );
+        memset( bfr, 0x0, len );
+
 
           m_task.war("socket READY to read");
           rv = m_node.read(bfr, len);
@@ -139,9 +141,12 @@ namespace Security
 
             delete msg;
           }
+
+      
+          
       }
 
-      delete [] bfr;
+      free(bfr);
       
     }
   }

@@ -119,7 +119,7 @@ namespace Security
       // }
 
     void
-    NodeTable::send(const unsigned char* data, int data_len)
+    NodeTable::send(const unsigned char* data, size_t data_len)
     {
 
       

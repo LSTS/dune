@@ -122,8 +122,8 @@ namespace Security
       //! @param[in] sock UDP destination socket.
       //! @param[in] data data to be transmitted.
       //! @param[in] data_len length of data to be transmitted.
-      void
-      send(const unsigned char* data, int data_len);
+      int
+      send(const unsigned char* data, size_t data_len);
 
     private:
       //! Pointer to task
