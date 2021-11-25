@@ -99,6 +99,7 @@ namespace Security
         std::string custom_service;
       };
 
+    
     // Internal buffer size.
     static const int c_bfr_size = 1024;
     // Port bind retries.
@@ -108,8 +109,9 @@ namespace Security
     struct Task: public DUNE::Tasks::Task
     {
 
+      int rv;
       //! Serialization buffer.
-      uint8_t* m_bfr;
+      uint8_t m_bfr[c_bfr_size];
       //! UDP Socket.
       UDPSocket m_sock;
       //! Set of static nodes.
@@ -202,7 +204,7 @@ namespace Security
         .description("Optional custom service type (imc+udp+<Custom Service Type>), empty entry gives default service (imc+udp)");
 
         // Allocate space for internal buffer.
-        m_bfr = new uint8_t[c_bfr_size];
+        // m_bfr = new uint8_t[c_bfr_size];
 
         bind<IMC::Announce>(this);
       }
@@ -308,11 +310,12 @@ namespace Security
         if (msg->getSource() != this->getSystemId())
         return;
 
-        uint8_t bfr[1024];
+        rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
 
-        int rv = IMC::Packet::serialize(msg, bfr, c_bfr_size);
+        m_node_table->send((const unsigned char*) m_bfr, rv);
 
-        m_node_table->send((const unsigned char*) bfr, rv);
+        memset(m_bfr, 0x00, c_bfr_size);
+
 
       }
 
