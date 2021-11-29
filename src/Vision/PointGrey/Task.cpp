@@ -407,7 +407,7 @@ namespace Vision
             m_cnt_photos_by_folder = 0;
             m_folder_number = 0;
             std::string m_path = c_log_path + m_args.system_name;
-            //debug("Camera log stored in %s", m_path.c_str());
+            debug("Camera log stored in %s", m_path.c_str());
             m_back_path_main_log = m_path + "/" + msg->name;
 
             if(m_args.split_photos)
