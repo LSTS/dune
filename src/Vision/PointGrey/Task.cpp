@@ -45,7 +45,6 @@
 //Local header
 #include "SaveImage.hpp"
 #endif
-#include "Vision/Lumenera/EntityActivationMaster.hpp"
 
 namespace Vision
 {
@@ -75,11 +74,7 @@ namespace Vision
     struct Arguments
     {
       //! Master Name.
-      std::string master_name;
-      //! Slave Cam Name.
-      std::string slave_name;
-      //! Load task in mode master
-      bool is_master_mode;
+      std::string system_name;
       //! Power channel of strobe
       std::string channel_strobe;
       //! LED scheme.
@@ -106,8 +101,6 @@ namespace Vision
       int delay_capture;
       //! shutter value for image
       float shutter_value;
-      //! Slave entities
-      std::vector<std::string> slave_entities;
     };
 
     //! Device driver task.
@@ -193,8 +186,6 @@ namespace Vision
       float m_strobe_delay;
       //! Flag to control init state
       bool m_isStartTask;
-      //! Slave entities
-      Lumenera::EntityActivationMaster* m_slave_entities;
       //! Control state of capture
       bool m_isCapturing;
       //! buffer for path to get storage usage of logs
@@ -205,17 +196,12 @@ namespace Vision
       Time::Counter<float> m_timeout_reading;
       //! string for result output
       std::string m_result;
-      //! Timer to control heartbeat of cam system
-      Time::Counter<float> m_timeout_heartbeat_cam;
-      //! Flag to control state of camera in master
-      bool m_is_camera_active;
       //! Flag to control reading of used storage
       bool m_read_storage;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_log_dir(ctx.dir_log),
-        m_slave_entities(NULL)
+        m_log_dir(ctx.dir_log)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -223,14 +209,8 @@ namespace Vision
         param("Power Channel - Strobe", m_args.channel_strobe)
         .description("Power Channel of Strobe.");
 
-        param("Master Name", m_args.master_name)
-        .description("Master Name.");
-
-        param("Master Mode", m_args.is_master_mode)
-        .description("Load task in master mode.");
-
-        param("Slave Name", m_args.slave_name)
-        .description("Slave Name.");
+        param("System Name", m_args.system_name)
+        .description("Main system name.");
 
         param("Led Mode", m_args.led_type)
     	  .description("Led type mode.");
@@ -291,261 +271,175 @@ namespace Vision
         .maximumValue("300")
         .description("Shutter Value time in ms.");
 
-        param("Slave Entities", m_args.slave_entities)
-        .defaultValue("")
-        .description("Slave entities to activate/deactivate");
-
-        #if defined(DUNE_CPU_ARMV7)
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
-        #else
-        bind<IMC::Heartbeat>(this);
-        bind<IMC::EntityState>(this);
-        #endif
-      }
-
-      void
-      updateSlaveEntities(void)
-      {
-        if (m_slave_entities == NULL)
-          return;
-
-        m_slave_entities->clear();
-
-        std::size_t sep;
-        std::vector<std::string>::const_iterator itr = m_args.slave_entities.begin();
-        for (; itr != m_args.slave_entities.end(); ++itr)
-        {
-          sep = itr->find_first_of(':');
-
-          if (sep == std::string::npos)
-            // Local entity
-            m_slave_entities->addEntity(*itr);
-          else
-            // Remote entity
-            m_slave_entities->addEntity(itr->substr(sep + 1), itr->substr(0, sep));
-        }
       }
 
       void
       onUpdateParameters(void)
       {
-        updateSlaveEntities();
-
         if (paramChanged(m_args.shutter_value) && m_isStartTask)
           inf("shutter: %f", m_args.shutter_value);
 
         if (paramChanged(m_args.delay_capture) && m_isStartTask)
           inf("strobe delay: %d", m_args.delay_capture);
 
-        if (paramChanged(m_args.number_fs) && !m_isCapturing && !m_args.is_master_mode)
+        if (paramChanged(m_args.number_fs) && !m_isCapturing)
         {
           inf("Fps: %d", m_args.number_fs);
           m_cnt_fps.setTop((1.0/m_args.number_fs));
         }
-        else if (m_args.is_master_mode)
-        {
-          inf(DTR("Updating state of camera"));
-        }
-        else if (paramChanged(m_args.number_fs) && m_isCapturing && !m_args.is_master_mode)
+        else if (paramChanged(m_args.number_fs) && m_isCapturing)
         {
           inf("Cannot change frames in capturing mode");
         }
       }
 
       void
-      onResourceAcquisition(void)
-      {
-        m_slave_entities = new Lumenera::EntityActivationMaster(this);
-        updateSlaveEntities();
-      }
-
-      void
       onResourceInitialization(void)
       {
-        if(!m_args.is_master_mode)
+        m_read_storage = true;
+        m_isStartTask = false;
+        m_isCapturing = false;
+        set_cpu_governor();
+        init_gpio_driver();
+        init_gpio_strobe();
+
+        if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
         {
-          m_read_storage = true;
-          m_isStartTask = false;
-          m_isCapturing = false;
-          m_is_camera_active = false;
-          set_cpu_governor();
-          init_gpio_driver();
-          init_gpio_strobe();
-
-          if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
-          {
-            m_cnt_fps.setTop((1.0/m_args.number_fs));
-          }
-          else
-          {
-            war("Number of frames are wrong (1 <> 5)");
-            war("Setting number of frames to default (4)");
-            m_cnt_fps.setTop(0.25);
-          }
-
-          if(m_args.number_photos < 500 && m_args.split_photos)
-          {
-            war("Number of photos by folder is to small (mim: 500)");
-            war("Setting Number of photos by folder to default (1000)");
-            m_args.number_photos = 1000;
-          }
-          else if(m_args.number_photos > 3000 && m_args.split_photos)
-          {
-            war("Number of photos by folder is to high (max: 3000)");
-            war("Setting Number of photos by folder to default (1000)");
-            m_args.number_photos = 1000;
-          }
-
-          m_thread_cnt = 0;
-          m_frame_cnt = 0;
-          m_frame_lost_cnt = 0;
-          m_cnt_photos_by_folder = 0;
-          m_folder_number = 0;
-          m_is_to_capture = false;
-          m_strobe_delay = m_args.delay_capture;
-
-          char text[8];
-          for(int i = 0; i < c_number_max_thread; i++)
-          {
-            sprintf(text, "thr%d", i);
-            #if defined(DUNE_CPU_ARMV7)
-            m_save[i] = new SaveImage(this, text);
-            m_save[i]->start();
-            #endif
-          }
-
-          m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
-          m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
-
-          setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
-          m_isStartTask = true;
+          m_cnt_fps.setTop((1.0/m_args.number_fs));
         }
+        else
+        {
+          war("Number of frames are wrong (1 <> 5)");
+          war("Setting number of frames to default (4)");
+          m_cnt_fps.setTop(0.25);
+        }
+
+        if(m_args.number_photos < 500 && m_args.split_photos)
+        {
+          war("Number of photos by folder is to small (mim: 500)");
+          war("Setting Number of photos by folder to default (1000)");
+          m_args.number_photos = 1000;
+        }
+        else if(m_args.number_photos > 3000 && m_args.split_photos)
+        {
+          war("Number of photos by folder is to high (max: 3000)");
+          war("Setting Number of photos by folder to default (1000)");
+          m_args.number_photos = 1000;
+        }
+
+        m_thread_cnt = 0;
+        m_frame_cnt = 0;
+        m_frame_lost_cnt = 0;
+        m_cnt_photos_by_folder = 0;
+        m_folder_number = 0;
+        m_is_to_capture = false;
+        m_strobe_delay = m_args.delay_capture;
+
+        char text[8];
+        for(int i = 0; i < c_number_max_thread; i++)
+        {
+          sprintf(text, "thr%d", i);
+          #if defined(DUNE_CPU_ARMV7)
+          m_save[i] = new SaveImage(this, text);
+          m_save[i]->start();
+          #endif
+        }
+
+        m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
+        m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
+
+        setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
+        m_isStartTask = true;
       }
 
       #if defined(DUNE_CPU_ARMV7)
       void
       onResourceRelease(void)
       {
-        if (!m_args.is_master_mode)
+        m_is_to_capture = false;
+        if(m_isStartTask)
         {
-          m_is_to_capture = false;
-          if(m_isStartTask)
+          Delay::wait(c_time_to_release_camera);
+          setGpio(GPIO_LOW, m_args.gpio_strobe);
+          setGpio(GPIO_LOW, m_args.gpio_drive_power);
+
+          for(int i = 0; i < c_number_max_thread; i++)
           {
-            Delay::wait(c_time_to_release_camera);
-            setGpio(GPIO_LOW, m_args.gpio_strobe);
-            setGpio(GPIO_LOW, m_args.gpio_drive_power);
-
-            for(int i = 0; i < c_number_max_thread; i++)
+            if (m_save[i] != NULL)
             {
-              if (m_save[i] != NULL)
-              {
-                m_save[i]->stopAndJoin();
-                delete m_save[i];
-                m_save[i] = NULL;
-              }
+              m_save[i]->stopAndJoin();
+              delete m_save[i];
+              m_save[i] = NULL;
             }
+          }
 
-            if(m_camera.IsConnected())
-            {
-              m_error = m_camera.StopCapture();
-              if ( m_error != FlyCapture2::PGRERROR_OK )
-                inf("Erro stopping camera capture: %s , already stop?", m_save[m_thread_cnt]->getNameError(m_error).c_str());
+          if(m_camera.IsConnected())
+          {
+            m_error = m_camera.StopCapture();
+            if ( m_error != FlyCapture2::PGRERROR_OK )
+              inf("Error stopping camera capture: %s , already stop?", m_save[m_thread_cnt]->getNameError(m_error).c_str());
 
-              m_error = m_camera.Disconnect();
-              if ( m_error != FlyCapture2::PGRERROR_OK )
-                inf("Erro disconnecting camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-            }
+            m_error = m_camera.Disconnect();
+            if ( m_error != FlyCapture2::PGRERROR_OK )
+              inf("Error disconnecting camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
           }
         }
       }
       #endif
 
       void
-      consume(const IMC::Heartbeat* msg)
-      {
-        if (m_args.is_master_mode && m_is_camera_active)
-        {
-          std::string sysNameMsg = resolveSystemId(msg->getSource());
-          if(m_args.slave_name.compare(sysNameMsg) == 0)
-          {
-            m_timeout_heartbeat_cam.reset();
-          }
-        }
-      }
-
-      void
-      consume(const IMC::EntityState* msg)
-      {
-        if (m_args.is_master_mode)
-        {
-          std::string sysNameMsg = resolveSystemId(msg->getSource());
-          if(m_args.slave_name == sysNameMsg)
-          {
-            if(msg->state == DUNE::IMC::EntityState::StateEnum::ESTA_BOOT)
-              setEntityState(DUNE::IMC::EntityState::StateEnum::ESTA_NORMAL, msg->description);
-            else if(msg->state == DUNE::IMC::EntityState::StateEnum::ESTA_ERROR)
-              setEntityState(DUNE::IMC::EntityState::StateEnum::ESTA_ERROR, msg->description);
-          }
-        }
-      }
-
-      void
       consume(const IMC::LoggingControl* msg)
       {
-        if (!m_args.is_master_mode)
+        std::string sysNameMsg = resolveSystemId(msg->getSource());
+        std::string sysLocalName = getSystemName();
+
+        if(sysNameMsg != m_args.system_name && sysNameMsg != sysLocalName)
+          return;
+
+        if(sysNameMsg != sysLocalName)
         {
-          std::string sysNameMsg = resolveSystemId(msg->getSource());
-          std::string sysLocalName = getSystemName();
-
-          if(sysNameMsg != m_args.master_name && sysNameMsg != sysLocalName)
-            return;
-
-          if(sysNameMsg != sysLocalName)
+          if (msg->op == IMC::LoggingControl::COP_STARTED)
           {
-            if (msg->op == IMC::LoggingControl::COP_STARTED)
-            {
-              m_frame_cnt = 0;
-              m_frame_lost_cnt = 0;
-              m_cnt_photos_by_folder = 0;
-              m_folder_number = 0;
-              std::string m_path = c_log_path + m_args.master_name;
-              m_back_path_main_log = m_path + "/" + msg->name;
+            m_frame_cnt = 0;
+            m_frame_lost_cnt = 0;
+            m_cnt_photos_by_folder = 0;
+            m_folder_number = 0;
+            std::string m_path = c_log_path + m_args.system_name;
+            //debug("Camera log stored in %s", m_path.c_str());
+            m_back_path_main_log = m_path + "/" + msg->name;
 
-              if(m_args.split_photos)
-                m_log_dir = m_path / msg->name / m_args.save_image_dir / String::str("%06u", m_folder_number);
-              else
-                m_log_dir = m_path / msg->name / m_args.save_image_dir;
+            if(m_args.split_photos)
+              m_log_dir = m_path / msg->name / m_args.save_image_dir / String::str("%06u", m_folder_number);
+            else
+              m_log_dir = m_path / msg->name / m_args.save_image_dir;
 
-              m_back_path_image = m_log_dir.c_str();
-              m_log_dir.create();
-              m_log_name = msg->name;
-            }
+            m_back_path_image = m_log_dir.c_str();
+            m_log_dir.create();
+            m_log_name = msg->name;
           }
-
-          std::string m_base_path = m_ctx.dir_log.c_str();
-          m_back_path_log = m_base_path + "/" + msg->name;
         }
+
+        std::string m_base_path = m_ctx.dir_log.c_str();
+        m_back_path_log = m_base_path + "/" + msg->name;
       }
 
       void
       consume(const IMC::EstimatedState* msg)
       {
-        if (!m_args.is_master_mode)
-        {
-          std::string sysName = resolveSystemId(msg->getSource());
-          if(sysName != m_args.master_name)
-            return;
+        std::string sysName = resolveSystemId(msg->getSource());
+        if(sysName != m_args.system_name)
+          return;
 
-          Angles::convertDecimalToDMS(Angles::degrees(msg->lat), m_lat_deg, m_lat_min, m_lat_sec);
-          Angles::convertDecimalToDMS(Angles::degrees(msg->lon), m_lon_deg, m_lon_min, m_lon_sec);
-          m_note_comment = "Depth: "+to_string(msg->depth)+" m # Altitude: "+to_string(msg->alt)+" m";
+        Angles::convertDecimalToDMS(Angles::degrees(msg->lat), m_lat_deg, m_lat_min, m_lat_sec);
+        Angles::convertDecimalToDMS(Angles::degrees(msg->lon), m_lon_deg, m_lon_min, m_lon_sec);
+        m_note_comment = "Depth: "+to_string(msg->depth)+" m # Altitude: "+to_string(msg->alt)+" m";
 
-          IMC::GpsFix pos;
-          pos.lat = msg->lat;
-          pos.lon = msg->lon;
-          dispatch(pos);
-        }
+        IMC::GpsFix pos;
+        pos.lat = msg->lat;
+        pos.lon = msg->lon;
+        dispatch(pos);
       }
 
       void
@@ -565,90 +459,75 @@ namespace Vision
       void
       onActivation(void)
       {
-        if (!m_args.is_master_mode)
+        inf("on Activation");
+        m_isCapturing = true;
+        m_frame_cnt = 0;
+        m_frame_lost_cnt = 0;
+        m_cnt_photos_by_folder = 0;
+        m_folder_number = 0;
+        releaseRamCached();
+        updateStrobe();
+        try
         {
-          inf("on Activation");
-          m_isCapturing = true;
-          m_frame_cnt = 0;
-          m_frame_lost_cnt = 0;
-          m_cnt_photos_by_folder = 0;
-          m_folder_number = 0;
-          releaseRamCached();
-          updateStrobe();
-          try
-          {
-            if(!setUpCamera())
-              throw RestartNeeded("Cannot detect camera", 10);
+          if(!setUpCamera())
+            throw RestartNeeded("Cannot detect camera", 10);
 
-            setEntityState(IMC::EntityState::ESTA_BOOT, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
-            set_shutter_value(m_args.shutter_value);
-            m_thread_cnt = 0;
-            m_cnt_fps.reset();
-          }
-          catch(...)
-          {
-            throw RestartNeeded("Erro Flycapture API", 10);
-          }
-          m_is_to_capture = true;
-          inf("Starting Capture.");
+          setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
+          set_shutter_value(m_args.shutter_value);
+          m_thread_cnt = 0;
+          m_cnt_fps.reset();
         }
-        else
+        catch(...)
         {
-          m_timeout_heartbeat_cam.setTop(c_timeout_reading);
-          m_is_camera_active = true;
+          throw RestartNeeded("Error Flycapture API", 10);
         }
+        m_is_to_capture = true;
+        inf("Starting Capture.");
       }
 
       void
       onDeactivation(void)
       {
-        if (!m_args.is_master_mode)
-        {
-          inf("on Deactivation");
-          m_is_to_capture = false;
-          m_isCapturing = false;
-          #if defined(DUNE_CPU_ARMV7)
-          m_error = m_camera.StopCapture();
-          if ( m_error != FlyCapture2::PGRERROR_OK )
-            war("Erro stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
+        inf("on Deactivation");
+        m_is_to_capture = false;
+        m_isCapturing = false;
+        #if defined(DUNE_CPU_ARMV7)
+        m_error = m_camera.StopCapture();
+        if ( m_error != FlyCapture2::PGRERROR_OK )
+          war("Error stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
 
-          setGpio(GPIO_LOW, m_args.gpio_strobe);
-          #endif
+        setGpio(GPIO_LOW, m_args.gpio_strobe);
+        #endif
 
-          moveLogFiles();
-          setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
-        }
-        else
-        {
-          m_is_camera_active = false;
-        }
+        moveLogFiles();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
       }
 
       int
       moveLogFiles(void)
       {
-        std::string system_comand = "mkdir " + m_back_path_main_log + "/" + c_camera_log_folder;
-        int result = std::system(system_comand.c_str());
+        std::string system_command = "mkdir " + m_back_path_main_log + "/" + c_camera_log_folder;
+        int result = std::system(system_command.c_str());
 
         std::string file_name_old = m_back_path_log + "/Output.txt ";
         std::string file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Output.txt";
-        system_comand = "mv " + file_name_old + file_name_new;
-        result = std::system(system_comand.c_str());
+        system_command = "mv " + file_name_old + file_name_new;
+        result = std::system(system_command.c_str());
 
         file_name_old = m_back_path_log + "/Config.ini ";
         file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Config.ini";
-        system_comand = "mv " + file_name_old + file_name_new;
-        result = std::system(system_comand.c_str());
+        system_command = "mv " + file_name_old + file_name_new;
+        result = std::system(system_command.c_str());
 
         file_name_old = m_back_path_log + "/Data.lsf.gz ";
         file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Data.lsf.gz";
-        system_comand = "mv " + file_name_old + file_name_new;
-        result = std::system(system_comand.c_str());
+        system_command = "mv " + file_name_old + file_name_new;
+        result = std::system(system_command.c_str());
 
         file_name_old = m_back_path_log + "/IMC.xml.gz ";
         file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_IMC.xml.gz";
-        system_comand = "mv " + file_name_old + file_name_new;
-        result = std::system(system_comand.c_str());
+        system_command = "mv " + file_name_old + file_name_new;
+        result = std::system(system_command.c_str());
 
         return result;
       }
@@ -662,7 +541,7 @@ namespace Vision
         FILE* pipe = popen(m_buffer, "r");
         if (!pipe)
         {
-          war("timeout - erro reading storage usage");
+          war("timeout - error reading storage usage");
           m_read_storage = true;
           m_storage = "0";
         }
@@ -682,7 +561,7 @@ namespace Vision
             if(m_timeout_reading.overflow())
             {
               pclose(pipe);
-              war("timeout - erro reading storage usage");
+              war("timeout - error reading storage usage");
               m_read_storage = true;
               return "0";
             }
@@ -1037,7 +916,7 @@ namespace Vision
         }
         catch (...)
         {
-          war("erro RetrieveBuffer");
+          war("error RetrieveBuffer");
           return false;
         }
 
@@ -1061,7 +940,7 @@ namespace Vision
         }
         catch(...)
         {
-          war("erro Convert");
+          war("error Convert");
           return false;
         }
 
@@ -1109,7 +988,7 @@ namespace Vision
           }
           catch(...)
           {
-            war("erro thread");
+            war("error thread");
           }
 
           if(result_thread)
@@ -1129,7 +1008,7 @@ namespace Vision
             if(cnt_thread == pointer_cnt_thread)
             {
               pointer_cnt_thread++;
-              inf("Erro saving image, all thread working");
+              inf("Error saving image, all thread working");
               m_frame_lost_cnt++;
               jump_over = true;
               return pointer_cnt_thread;
@@ -1190,7 +1069,7 @@ namespace Vision
       }
 
       void
-      trigerFrame(void)
+      triggerFrame(void)
       {
         #if defined(DUNE_CPU_ARMV7)
         if(!getImage() && m_is_to_capture)
@@ -1200,11 +1079,11 @@ namespace Vision
           {
             m_error = m_camera.StopCapture();
             if ( m_error != FlyCapture2::PGRERROR_OK )
-              war("Erro stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
+              war("Error stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
 
             m_error = m_camera.Disconnect();
             if ( m_error != FlyCapture2::PGRERROR_OK )
-              war("Erro disconnecting camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
+              war("Error disconnecting camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
           }
           if (isActive())
             setUpCamera();
@@ -1216,7 +1095,7 @@ namespace Vision
             m_cnt_photos_by_folder++;
             if(m_cnt_photos_by_folder >= m_args.number_photos)
             {
-              std::string m_path = c_log_path + m_args.master_name;
+              std::string m_path = c_log_path + m_args.system_name;
               m_cnt_photos_by_folder = 0;
               m_folder_number++;
               m_log_dir = m_path / m_log_name / m_args.save_image_dir / String::str("%06u", m_folder_number);
@@ -1235,47 +1114,33 @@ namespace Vision
       {
         while (!stopping())
         {
-          if (!m_args.is_master_mode)
+          if (isActive())
           {
-            if (isActive())
+            consumeMessages();
+            if(m_cnt_fps.overflow())
             {
-              consumeMessages();
-              if(m_cnt_fps.overflow())
-              {
-                m_cnt_fps.reset();
-                trigerFrame();
-
-              }
-              else if(m_clean_cached_ram.overflow())
-              {
-                m_clean_cached_ram.reset();
-                releaseRamCached();
-              }
-              else if(m_update_cnt_frames.overflow())
-              {
-                m_update_cnt_frames.reset();
-                setEntityState(IMC::EntityState::ESTA_BOOT, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
-              }
+              m_cnt_fps.reset();
+              triggerFrame();
             }
-            else
+            else if(m_clean_cached_ram.overflow())
             {
-              waitForMessages(1.0);
-              setGpio(GPIO_LOW, m_args.gpio_strobe);
-              if(m_read_storage)
-              {
-                m_read_storage = false;
-                setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
-              }
+              m_clean_cached_ram.reset();
+              releaseRamCached();
+            }
+            else if(m_update_cnt_frames.overflow())
+            {
+              m_update_cnt_frames.reset();
+              setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
             }
           }
           else
           {
-            waitForMessages(0.2);
-
-            if(m_timeout_heartbeat_cam.overflow() && m_is_camera_active)
+            waitForMessages(1.0);
+            setGpio(GPIO_LOW, m_args.gpio_strobe);
+            if(m_read_storage)
             {
-              err("Camera system stop - internal error");
-              m_is_camera_active = false;
+              m_read_storage = false;
+              setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
             }
           }
         }
