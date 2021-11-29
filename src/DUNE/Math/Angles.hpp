@@ -84,7 +84,8 @@ namespace DUNE
       inline static fp64_t
       convertDMSToDecimal(int degrees, int minutes, int seconds)
       {
-        return degrees + (minutes / 60.0) + (seconds / 3600.0);
+        fp64_t result = std::abs(degrees) + (std::abs(minutes) / 60.0) + (std::abs(seconds) / 3600.0);
+        return (degrees < 0) ? -result : result;
       }
 
       //! Convert Degrees, Minutes to Decimal Format.
@@ -94,7 +95,8 @@ namespace DUNE
       inline static fp64_t
       convertDMSToDecimal(int degrees, double minutes)
       {
-        return degrees + (minutes / 60.0);
+        fp64_t result = std::abs(degrees) + (std::fabs(minutes) / 60.0);
+        return (degrees < 0) ? -result : result;
       }
 
       //! Convert decimal degrees to Degrees, Minutes, Seconds.
@@ -123,11 +125,11 @@ namespace DUNE
       }
 
       //! XY Coordinate conversion considering a rotation angle.
-      //! (Eduardo Marques)
-      //! @param angle angle
-      //! @param clockwise clockwise rotation or not
-      //! @param x original x value on entry, rotated x value on exit.
-      //! @param y original y value on entry, rotated y value on exit.
+      //! @param[in] angle angle in radian.
+      //! @param[in] clockwise true for a clockwise rotation, false for counterclockwise.
+      //! @param[in,out] x original x value on entry, rotated x value on exit.
+      //! @param[in,out] y original y value on entry, rotated y value on exit.
+      //! @author Eduardo Marques
       inline static void
       rotate(double angle, bool clockwise, double& x, double& y)
       {
