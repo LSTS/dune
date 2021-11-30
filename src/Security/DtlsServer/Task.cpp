@@ -101,7 +101,7 @@ namespace Security
 
     
     // Internal buffer size.
-    static const int c_bfr_size = 1024;
+    static const int c_bfr_size = 65535;
     // Port bind retries.
     // Todo: where to define this instead of hardcoding here?
     static const int c_port_retries = 5;
