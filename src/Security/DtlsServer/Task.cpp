@@ -218,32 +218,11 @@ namespace Security
         if (paramChanged(m_args.contact_refresh_per))
           m_contacts_refresh_counter.setTop(m_args.contact_refresh_per);
 
-        // Initialize set of static destinations.
-        m_static_dsts.clear();
-        for (unsigned int i = 0; i < m_args.destinations.size(); ++i)
-          m_static_dsts.insert(NodeAddress(m_args.destinations[i]));
-
         // Process rate limiters.
         m_filter.setupRates(m_args.rate_lims);
         // Process filtered entities.
         m_filter.setupEntities(m_args.entities_flt, this);
 
-        m_underwater_comms = m_args.underwater_comms;
-
-        // Initialize communication limitations parameters.
-        if (m_ctx.profiles.isSelected("Simulation") && m_args.comm_range > 0)
-        {
-          debug("simulating limited radio communications with maximum communication range of %f m",
-                m_args.comm_range);
-          debug("underwater communications are %s",
-                m_underwater_comms ? "active" : "inactive");
-          m_comm_limitations = true;
-        }
-        else
-        {
-          debug("limited communications simulation is not active");
-          m_comm_limitations = false;
-        }
       }
 
 
@@ -256,13 +235,6 @@ namespace Security
       onResourceAcquisition(void)
       {
         war("hello from onResourceAcquisition)");
-
-        bind(this, m_args.messages);
-
-        // Initialize limited comms object
-        m_lcomms = new LimitedComms(m_args.comm_range, getSystemId());
-        m_lcomms->setActive(m_comm_limitations);
-        m_node_table->setLimitedComms(m_lcomms);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
@@ -294,7 +266,7 @@ namespace Security
         {
           m_node_table->addNode(m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
           //todo: if successful, bind to remaining messages
-
+          bind(this, m_args.messages);
           
         }
         
