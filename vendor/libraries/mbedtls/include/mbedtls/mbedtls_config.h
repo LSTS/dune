@@ -85,7 +85,7 @@
  * example, if double-width division is implemented in software, disabling
  * it can reduce code size in some embedded targets.
  */
-// #define MBEDTLS_NO_UDBL_DIVISION
+#define MBEDTLS_NO_UDBL_DIVISION
 
 /**
  * \def MBEDTLS_NO_64BIT_MULTIPLICATION
@@ -107,7 +107,7 @@
  * Note that depending on the compiler, this may decrease performance compared
  * to using the library function provided by the toolchain.
  */
-//#define MBEDTLS_NO_64BIT_MULTIPLICATION
+#define MBEDTLS_NO_64BIT_MULTIPLICATION
 
 /**
  * \def MBEDTLS_HAVE_SSE2

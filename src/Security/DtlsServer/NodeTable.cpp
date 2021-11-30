@@ -74,11 +74,13 @@ namespace Security
       {
         task->war("setting up dtls server for %s", name.c_str());
         // Security::DtlsServer::Node new_node =  Node(m_task, port, c_port_retries, name, services);
-        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = m_table.insert(std::pair<unsigned, Security::DtlsServer::Node>(id, Node(task, port, c_port_retries, name, services)));
+        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = 
+        m_table.insert(std::pair<unsigned, Security::DtlsServer::Node>(id, Node(task, port, c_port_retries, name, services)));
 
         if (rv.second)
         {
           printf("node inserted successfully\n");
+          Delay::wait(5);
         }
       }  
     }

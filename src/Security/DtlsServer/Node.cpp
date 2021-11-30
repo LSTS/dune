@@ -67,7 +67,7 @@
 // #define SERVER_ADDR "10.0.10.60"     /* Forces IPv4 */
 
 // Todo: replace with dune debug level
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 0
 
 using namespace DUNE::Utils;
 
@@ -78,6 +78,7 @@ namespace Security
     using DUNE_NAMESPACES;
 
      int nodeState;
+     int resetState;
      size_t len;
      static const int c_bfr_size = 16384;
      uint8_t m_bfr[c_bfr_size];
@@ -173,23 +174,6 @@ namespace Security
         }
 
         m_task->inf( " ok\n" );
-
-        // 3. Setup listening socket
-
-        // get available ip and port.
-        // Todo: find better way to determin which one is the "main" address
-        // this might cause problems on the hardware
-        
-        // struct hostent *host_entry;
-        // char hostname[256];
-        // char *IPbuffer;
-        // // To retrieve hostname
-        // nodeState = gethostname(hostname, sizeof(hostname));     
-        // host_entry = gethostbyname(hostname);      
-        // // To convert an Internet network
-        // // address into ASCII string
-        // IPbuffer = inet_ntoa(*((struct in_addr*)
-        //                       host_entry->h_addr_list[0]));
 
         // Find a free port.
         unsigned portLimit = port + c_port_retries;
@@ -325,7 +309,7 @@ namespace Security
 
         reset();
 
-        m_listener = new Listener(task, this, listen_fd, true);
+        m_listener = new Listener(this);
         m_listener->start();
 
      }
@@ -337,8 +321,9 @@ namespace Security
     void
     Node::reset(void)
     {
-      nodeState = 1;
-        while(nodeState != 0 )
+      resetState = 1;
+      
+        while(resetState != 0 )
         {
           mbedtls_net_free( &client_fd );        
 
@@ -357,26 +342,26 @@ namespace Security
           m_task->inf( "  . Waiting for a remote connection from %s ......", char_name );
           fflush( stdout );
 
-            if( ( nodeState = mbedtls_net_accept( &listen_fd, &client_fd,
+            if( ( resetState = mbedtls_net_accept( &listen_fd, &client_fd,
                             client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
             {
-              m_task->err( " failed\n  ! mbedtls_net_accept returned %d\n\n", nodeState );
+              m_task->err( " failed\n  ! mbedtls_net_accept returned %d\n\n", resetState );
               // exit_task();
               return;
             }
 
-            nodeState = mbedtls_net_set_block(&client_fd);
-            if (nodeState){
+            resetState = mbedtls_net_set_block(&client_fd);
+            if (resetState){
               m_task->err("could not set socket blocking");
               return;
             }
 
           /* For HelloVerifyRequest cookies */
-          if( ( nodeState = mbedtls_ssl_set_client_transport_id( &ssl_context,
+          if( ( resetState = mbedtls_ssl_set_client_transport_id( &ssl_context,
                           client_ip, cliip_len ) ) != 0 )
           {
               m_task->err( " failed\n  ! "
-                      "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -nodeState );
+                      "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -resetState );
               // exit_task();
               return;
           }
@@ -392,31 +377,31 @@ namespace Security
           m_task->inf( "  . Performing the DTLS handshake..." );
           fflush( stdout );
 
-          do nodeState = mbedtls_ssl_handshake( &ssl_context );
-          while( nodeState == MBEDTLS_ERR_SSL_WANT_READ ||
-                nodeState == MBEDTLS_ERR_SSL_WANT_WRITE );
+          do resetState = mbedtls_ssl_handshake( &ssl_context );
+          while( resetState == MBEDTLS_ERR_SSL_WANT_READ ||
+                resetState == MBEDTLS_ERR_SSL_WANT_WRITE );
 
 
-          if( nodeState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
+          if( resetState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
           {
               m_task->inf( " hello verification requested\n" );
               // todo: dont use goto
               // goto reset;
               // return;
           }
-          else if( nodeState != 0 )
+          else if( resetState != 0 )
           {
-              m_task->err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -nodeState );
+              m_task->err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -resetState );
               // reset_mbedtls();
               // return;
-          }else if(nodeState == 0)
+          }else if(resetState == 0)
           {
             m_task->inf( " HANDSHAKE OK\n" );
             break;
           }
 
           
-        }
+        } 
     }
 
     void
@@ -555,9 +540,9 @@ namespace Security
     {
 
       int ret = MBEDTLS_ERR_ERROR_GENERIC_ERROR;
-      len = sizeof(m_bfr) -1;
-      memset( m_bfr, 0x0, sizeof(buf) );
 
+      memset( m_bfr, 0x0, sizeof(m_bfr) );
+      len = c_bfr_size - 1;
       do ret = mbedtls_ssl_read(&ssl_context, m_bfr, len );
         while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
               ret == MBEDTLS_ERR_SSL_WANT_WRITE );
@@ -600,7 +585,7 @@ namespace Security
     //! @param[in] data_len length of data to be transmitted.
     int
     Node::send(const unsigned char* data, size_t data_len)
-    {
+    { 
       int ret = MBEDTLS_ERR_ERROR_GENERIC_ERROR;
 
       if (ssl_context.private_session_out != 0)

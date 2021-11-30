@@ -69,7 +69,7 @@ namespace Security
     class Listener: public Concurrency::Thread
     {
     public:
-      Listener(Tasks::Task* task, Security::DtlsServer::Node* node, mbedtls_net_context& listen, bool trace);
+      Listener(Security::DtlsServer::Node* node);
 
       void
       getContacts(std::vector<Contact>& list);

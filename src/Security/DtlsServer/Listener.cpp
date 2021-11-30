@@ -64,7 +64,7 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
-    Listener::Listener(Tasks::Task* task, Security::DtlsServer::Node* node, mbedtls_net_context& listen, bool trace):
+    Listener::Listener(Security::DtlsServer::Node* node):
       m_node(node)
     {  }
 
