@@ -48,8 +48,7 @@ namespace Security
   {
     using DUNE_NAMESPACES;
 
-    NodeTable::NodeTable(Tasks::Task& task):
-      m_task(task),
+    NodeTable::NodeTable(void):
       m_active_count(0),
       m_lcomms(NULL),
       m_table()
@@ -58,10 +57,10 @@ namespace Security
     }
 
     void
-    NodeTable::addNode(unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services)
+    NodeTable::addNode(Tasks::Task* task, unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services)
     {
 
-      if (id == m_task.getSystemId())
+      if (id == task->getSystemId())
       return;
 
       //todo: add depending on active list
@@ -73,9 +72,9 @@ namespace Security
       // *m_table = new Table;
       if ( m_table.find(id) == m_table.end()) 
       {
-        m_task.war("setting up dtls server for %s", name.c_str());
+        task->war("setting up dtls server for %s", name.c_str());
         // Security::DtlsServer::Node new_node =  Node(m_task, port, c_port_retries, name, services);
-        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = m_table.insert(std::pair<unsigned, Security::DtlsServer::Node>(id, Node(m_task, port, c_port_retries, name, services)));
+        std::pair<Security::DtlsServer::NodeTable::Table::iterator, bool > rv = m_table.insert(std::pair<unsigned, Security::DtlsServer::Node>(id, Node(task, port, c_port_retries, name, services)));
 
         if (rv.second)
         {

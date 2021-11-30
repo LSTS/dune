@@ -117,7 +117,7 @@ namespace Security
       //! Set of static nodes.
       std::set<NodeAddress> m_static_dsts;
       //! Set of destination nodes.
-      NodeTable *m_node_table = new NodeTable(*this);
+      NodeTable m_node_table;
       //! Task arguments.
       Arguments m_args;
       //! Simulate communication limitations
@@ -264,7 +264,7 @@ namespace Security
         //todo: add depending on active list
         if (0 == strcmp(msg->sys_name.c_str(), "lauv-xplore-4"))
         {
-          m_node_table->addNode(m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
+          m_node_table.addNode(this, m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
           //todo: if successful, bind to remaining messages
           bind(this, m_args.messages);
           
@@ -284,7 +284,7 @@ namespace Security
 
         rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
 
-        m_node_table->send((const unsigned char*) m_bfr, rv);
+        m_node_table.send((const unsigned char*) m_bfr, rv);
 
         memset(m_bfr, 0x00, c_bfr_size);
 

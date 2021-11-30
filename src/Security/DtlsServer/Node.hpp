@@ -68,7 +68,7 @@ namespace Security
     class Node
     {
     public:
-      Node(Tasks::Task& task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services);
+      Node(Tasks::Task* task, unsigned int port, const int c_port_retries, const std::string& name, const std::string& services);
 
       // Node(const Node& node);
 
@@ -86,7 +86,7 @@ namespace Security
       const std::string&
       getName(void) const;
 
-      Security::DtlsServer::Task&
+      Security::DtlsServer::Task*
       getParentTask(void);
 
       mbedtls_ssl_context*
@@ -115,8 +115,8 @@ namespace Security
       bool
       deactivate(const Address& addr);
 
-      int
-      read(unsigned char *bfr, size_t len);
+      void
+      read(void);
 
       //! Send data to node.
       //! @param[in] sock UDP destination socket.
@@ -126,8 +126,8 @@ namespace Security
       send(const unsigned char* data, size_t data_len);
 
     private:
-      //! Pointer to task
-      Tasks::Task& m_task;
+      //! Parent task.
+      Tasks::Task* m_task;
       // Node name.
       std::string m_name;
       // Addresses

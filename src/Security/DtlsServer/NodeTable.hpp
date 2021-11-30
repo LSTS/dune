@@ -51,7 +51,7 @@ namespace Security
     class NodeTable
     {
     public:
-      NodeTable(Tasks::Task& task);
+      NodeTable(void);
 
       /**
        * @brief Verify if node with ID = id is already in NodeTable, if not, add it to NodeTable, if yes, skip
@@ -64,7 +64,7 @@ namespace Security
        * @param services                  Advertised communication services by the Node.
        */
       void
-      addNode(unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services);
+      addNode(Tasks::Task* task, unsigned int port, const int c_port_retries, unsigned id, const std::string& name, const std::string& services);
 
       // bool
       // activate(unsigned id, const Address& addr);
@@ -82,8 +82,6 @@ namespace Security
       setLimitedComms(LimitedComms* lcomms);
 
     // private:
-       //! Pointer to task
-      Tasks::Task& m_task;
       typedef std::map<unsigned, Node> Table;
       // Number of active nodes.
       unsigned m_active_count;

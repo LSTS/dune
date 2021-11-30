@@ -69,7 +69,7 @@ namespace Security
     class Listener: public Concurrency::Thread
     {
     public:
-      Listener(Tasks::Task& task, Security::DtlsServer::Node& node, mbedtls_net_context& listen, bool trace);
+      Listener(Tasks::Task* task, Security::DtlsServer::Node* node, mbedtls_net_context& listen, bool trace);
 
       void
       getContacts(std::vector<Contact>& list);
@@ -81,28 +81,7 @@ namespace Security
       unlockContacts(void);
 
     // private:
-
-      //! Pointer to task
-      Tasks::Task& m_task;
-      // Buffer capacity.
-      static const int c_bfr_size = 65535;
-      // Poll timeout in milliseconds.
-      static const int c_poll_tout = 1000;
-      // Parent task.
-      Security::DtlsServer::Node& m_node;
-      //mbedtls listener
-      mbedtls_net_context& m_listen;
-      // True to print incoming messages.
-      bool m_trace;
-      // // Table of contacts.
-      // ContactTable m_contacts;
-      // // Lock to serialize access to m_contacts.
-      // RWLock m_contacts_lock;
-      
-      // ssl context reference
-      // mbedtls_ssl_context* m_ssl;
-
-      int nodeState;
+      Security::DtlsServer::Node* m_node;
 
       void
       run(void);
