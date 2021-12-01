@@ -34,23 +34,41 @@
 #include <algorithm>
 #include <cstddef>
 #include <string.h>
+#include <pthread.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers.
-#include "NodeAddress.hpp"
-#include "NodeTable.hpp"
-#include "Listener.hpp"
-#include "LimitedComms.hpp"
-
 #include <unistd.h>
-
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <arpa/inet.h>
+
+// mbedtls headers.
+#include "mbedtls/build_info.h"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/debug.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/ssl_cookie.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/error.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/timing.h"
+// #include "../../library/ssl_misc.h"
+#include "certs_lsts.h"
+
+#if defined(MBEDTLS_SSL_CACHE_C)
+#include "mbedtls/ssl_cache.h"
+#endif
+
+// #define SERVER_ADDR "10.0.6.36"     /* Forces IPv4 */
+#define SERVER_ADDR "10.0.10.60"     /* Forces IPv4 */
+
+// Todo: replace with dune debug level
+#define DEBUG_LEVEL 0
+
+#define READ_TIMEOUT_MS 10000   /* 10 seconds */
 
 
 namespace Security
@@ -99,39 +117,59 @@ namespace Security
         std::string custom_service;
       };
 
+      static void my_debug( void *ctx, int level,
+                            const char *file, int line,
+                            const char *str )
+      {
+          ((void) level);
+
+          fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
+          fflush(  (FILE *) ctx  );
+      }
+
     
-    // Internal buffer size.
-    static const int c_bfr_size = 65535;
-    // Port bind retries.
-    // Todo: where to define this instead of hardcoding here?
-    static const int c_port_retries = 5;
+
 
     struct Task: public DUNE::Tasks::Task
     {
 
       int rv;
-      //! Serialization buffer.
-      uint8_t m_bfr[c_bfr_size];
-      //! UDP Socket.
-      UDPSocket m_sock;
-      //! Set of static nodes.
-      std::set<NodeAddress> m_static_dsts;
-      //! Set of destination nodes.
-      NodeTable m_node_table;
+      int len;
+      int nodeState;
+      int resetState;
+      unsigned int port;
+      int setUp = 0;
       //! Task arguments.
       Arguments m_args;
-      //! Simulate communication limitations
-      bool m_comm_limitations;
-      //! Allow underwater communications when simulating limited comms
-      bool m_underwater_comms;
-      //! Listener thread.
-      Listener* m_listener;
       //! Contact refresh counter.
       Time::Counter<float> m_contacts_refresh_counter;
-      //! LimitedComms object
-      LimitedComms* m_lcomms;
       //! Message Filter
       MessageFilter m_filter;
+      // Internal buffer size.
+      static const int c_bfr_size = 4069;
+      //! Serialization buffer.
+      uint8_t m_bfr[c_bfr_size];
+      // Port bind retries.
+      // Todo: where to define this instead of hardcoding here?
+      static const int c_port_retries = 5;
+      // read thread
+      pthread_t readThread;
+      // mbedtls 
+      mbedtls_net_context listen_fd, client_fd;
+      const char *pers = "dtls_server";
+      unsigned char client_ip[16] = { 0 };
+      size_t cliip_len;
+      mbedtls_ssl_cookie_ctx cookie_ctx;
+      mbedtls_entropy_context entropy;
+      mbedtls_ctr_drbg_context ctr_drbg;
+      mbedtls_ssl_context ssl_context;
+      mbedtls_ssl_config conf;
+      mbedtls_x509_crt srvcert, cacert;
+      mbedtls_pk_context pkey;
+      mbedtls_timing_delay_context timer;
+    #if defined(MBEDTLS_SSL_CACHE_C)
+      mbedtls_ssl_cache_context cache;
+    #endif
 
 
       //! Constructor.
@@ -203,9 +241,6 @@ namespace Security
         .defaultValue("")
         .description("Optional custom service type (imc+udp+<Custom Service Type>), empty entry gives default service (imc+udp)");
 
-        // Allocate space for internal buffer.
-        // m_bfr = new uint8_t[c_bfr_size];
-
         bind<IMC::Announce>(this);
       }
 
@@ -246,6 +281,146 @@ namespace Security
 
       }
 
+    static void 
+    *read(void *taskPointer)
+    {
+      int len;
+      int ret = MBEDTLS_ERR_ERROR_GENERIC_ERROR;
+      uint8_t m_node_bfr[c_bfr_size];
+      Security::DtlsServer::Task *m_task = (Security::DtlsServer::Task*) taskPointer;
+      
+      while(1)
+      {
+        memset( m_node_bfr, 0x0, c_bfr_size );
+        len = c_bfr_size - 1;
+        do ret = mbedtls_ssl_read(&m_task->ssl_context, m_node_bfr, len );
+          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+        
+        if( ret <= 0 )
+        {
+          switch( ret )
+          {
+            case MBEDTLS_ERR_SSL_TIMEOUT:
+              m_task->err( " timeout\n\n" );
+              // m_node.closeNotify();
+              break;
+
+            case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+              m_task->war( " connection was closed gracefully\n" );
+              // stop();
+              break;
+
+            default:
+              m_task->err( " mbedtls_ssl_read returned -0x%x\n\n", (unsigned int) -ret );
+              // goto reset;
+              // m_node.reset();
+              break;
+          }
+        }else{
+          m_task->inf( "successfully read %d bytes\n", ret );
+
+          IMC::Message* msg = IMC::Packet::deserialize(m_node_bfr, ret);
+
+          m_task->dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+
+          // if (m_trace)
+            // msg->toText(std::cerr);
+        }
+      }
+    }
+
+
+    /**
+     * @brief reset the connection by executing the handshake and creating a new session.
+     * 
+     */
+    void
+    reset(void)
+    {
+      resetState = 1;
+      
+        while(resetState != 0 )
+        {
+          mbedtls_net_free( &client_fd );        
+
+          mbedtls_ssl_session_reset( &ssl_context );
+
+          // // declaring character array
+          // char char_name[20];
+      
+          // // copying the contents of the
+          // // string to char array
+          // strcpy(char_name, msg->sys_name.c_str());
+
+          // /*
+          // * 4.2. Wait until a client connects
+          // */
+          // inf( "  . Waiting for a remote connection from %s ......", char_name );
+          fflush( stdout );
+
+            if( ( resetState = mbedtls_net_accept( &listen_fd, &client_fd,
+                            client_ip, sizeof( client_ip ), &cliip_len ) ) != 0 )
+            {
+              err( " failed\n  ! mbedtls_net_accept returned %d\n\n", resetState );
+              // exit_task();
+              return;
+            }
+
+            resetState = mbedtls_net_set_block(&client_fd);
+            if (resetState){
+              err("could not set socket blocking");
+              return;
+            }
+
+          /* For HelloVerifyRequest cookies */
+          if( ( resetState = mbedtls_ssl_set_client_transport_id( &ssl_context,
+                          client_ip, cliip_len ) ) != 0 )
+          {
+              err( " failed\n  ! "
+                      "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -resetState );
+              // exit_task();
+              return;
+          }
+
+          mbedtls_ssl_set_bio( &ssl_context, &client_fd,
+                              mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
+
+          inf( " ok\n" );
+
+          /*
+          * 5. Handshake
+          */
+          inf( "  . Performing the DTLS handshake..." );
+          fflush( stdout );
+
+          do resetState = mbedtls_ssl_handshake( &ssl_context );
+          while( resetState == MBEDTLS_ERR_SSL_WANT_READ ||
+                resetState == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+
+          if( resetState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
+          {
+              inf( " hello verification requested\n" );
+              // todo: dont use goto
+              // goto reset;
+              // return;
+          }
+          else if( resetState != 0 )
+          {
+              err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -resetState );
+              // reset_mbedtls();
+              // return;
+          }else if(resetState == 0)
+          {
+            inf( " HANDSHAKE OK\n" );
+            break;
+          }
+
+          
+        } 
+    }
+
 
       /**
        * @brief Read IMC Announce message and verify if the source is already in the Node list.
@@ -262,13 +437,221 @@ namespace Security
         // war("hello from consume(IMC Announce)");
 
         //todo: add depending on active list
-        if (0 == strcmp(msg->sys_name.c_str(), "lauv-xplore-4"))
+        if (0 == strcmp(msg->sys_name.c_str(), "lauv-xplore-4") && setUp == 0)
         {
-          m_node_table.addNode(this, m_args.port, c_port_retries, msg->getSource(), msg->sys_name, msg->services);
-          //todo: if successful, bind to remaining messages
-          bind(this, m_args.messages);
-          
-        }
+          setUp = 1;
+
+          mbedtls_net_init( &listen_fd );
+          mbedtls_net_init( &client_fd );
+          mbedtls_ssl_init( &ssl_context );
+          mbedtls_ssl_config_init( &conf );
+          mbedtls_ssl_cookie_init( &cookie_ctx );
+      #if defined(MBEDTLS_SSL_CACHE_C)
+          mbedtls_ssl_cache_init( &cache );
+      #endif
+          mbedtls_x509_crt_init( &srvcert );
+          mbedtls_x509_crt_init( &cacert );
+          mbedtls_pk_init( &pkey );
+          mbedtls_entropy_init( &entropy );
+          mbedtls_ctr_drbg_init( &ctr_drbg );
+
+      #if defined(MBEDTLS_DEBUG_C)
+          mbedtls_debug_set_threshold( DEBUG_LEVEL );
+      #endif
+
+            // 1. seed rng
+            inf( "  . Seeding the random number generator..." );
+            fflush( stdout );
+
+            if( ( nodeState = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
+                                      (const unsigned char *) pers,
+                                      strlen( pers ) ) ) != 0 )
+            {
+              err( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", nodeState );
+              // freeNode();
+              return;
+            }
+
+            inf( " ok\n" );
+
+
+            // 2. load server certificates and keys
+            inf( "\n  . Loading the server cert. and key..." );
+            fflush( stdout );
+
+            /*
+            * This demonstration program uses embedded test certificates.
+            * Instead, you may want to use mbedtls_x509_crt_parse_file() to read the
+            * server and CA certificates, as well as mbedtls_pk_parse_keyfile().
+            */
+            nodeState = mbedtls_x509_crt_parse( &srvcert, (const unsigned char *) lsts_server_certificate,
+                                  lsts_server_certificate_len );
+            if( nodeState != 0 )
+            {
+                err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", nodeState );
+                // freeNode();
+                return;
+            }
+
+            nodeState = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) lsts_ca_chain,
+                                  lsts_ca_chain_len );
+            if( nodeState != 0 )
+            {
+                err( " failed\n  !  mbedtls_x509_crt_parse returned %d\n\n", nodeState );
+                // freeNode();
+                return;
+            }
+
+            nodeState =  mbedtls_pk_parse_key( &pkey, (const unsigned char *) lsts_server_private_key,
+                                lsts_server_private_key_len, NULL, 0, mbedtls_ctr_drbg_random, &ctr_drbg );
+            if( nodeState != 0 )
+            {
+                err( " failed\n  !  mbedtls_pk_parse_key returned %d\n\n", nodeState );
+                // freeNode();
+                return;
+            }
+
+            inf( " ok\n" );
+
+            // Find a free port.
+            unsigned portLimit = m_args.port + c_port_retries;
+            while (m_args.port != portLimit)
+            {
+              std::string s = std::to_string(m_args.port);
+              char const *charPort = s.c_str();
+
+              inf( "  Try to bind on udp/*/%s:%s", SERVER_ADDR, charPort);
+              fflush( stdout );
+
+              
+
+              if( ( nodeState = mbedtls_net_bind( &listen_fd, SERVER_ADDR, charPort, MBEDTLS_NET_PROTO_UDP ) ) != 0 )
+              {
+                  war( " failed\n  ! mbedtls_net_bind returned %d\n\n", nodeState );
+                  ++m_args.port;
+              }else
+              {
+                inf( " listening on %s:%s\n", SERVER_ADDR, charPort );
+
+                // Search for IMC + UDP services.
+                std::vector<std::string> list;
+                String::split(msg->services, ";", list);
+
+                for (unsigned i = 0; i < list.size(); ++i)
+                {
+                  if (list[i].compare(0, 10, "imc+udp://", 10) != 0)
+                    continue;
+
+                  unsigned peerPort = 0;
+                  char address[128] = {0};
+
+                  // if (std::sscanf(list[i].c_str(), "%*[^:]://%127[^:]:%u", address, &peerPort) == 2)
+                  // {
+                  //   m_addrs.insert(std::pair<Address, unsigned>(address, peerPort));
+                  // }
+                }
+
+              // Initialize and dispatch AnnounceService with DTLS addr:port
+              std::vector<Interface> vector = Interface::get();
+              for (unsigned i = 0; i < vector.size(); ++i)
+              {
+                std::stringstream os;
+                std::string service = "dtls";
+
+                os << service << "://" << SERVER_ADDR << ":" << charPort
+                  << "/";
+
+                IMC::AnnounceService announce;
+                announce.service = os.str();
+
+                announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+
+                dispatch(announce);
+              }
+
+                break;
+              }            
+            }
+
+            /*
+            * 4.1.  Setup stuff
+            */
+            inf("  . Setting up the DTLS data..." );
+            fflush( stdout );
+
+            if( ( nodeState = mbedtls_ssl_config_defaults( &conf,
+                            MBEDTLS_SSL_IS_SERVER,
+                            MBEDTLS_SSL_TRANSPORT_DATAGRAM,
+                            MBEDTLS_SSL_PRESET_DEFAULT ) ) != 0 )
+            {
+                err( " failed\n  ! mbedtls_ssl_config_defaults returned %d\n\n", nodeState );
+                //goto exit;
+                // reset_mbedtls();
+                return;
+            }
+
+            mbedtls_ssl_conf_authmode( &conf, MBEDTLS_SSL_VERIFY_REQUIRED );
+            mbedtls_ssl_conf_rng( &conf, mbedtls_ctr_drbg_random, &ctr_drbg );
+            mbedtls_ssl_conf_dbg( &conf, my_debug, stdout );
+            mbedtls_ssl_conf_read_timeout( &conf, READ_TIMEOUT_MS );
+            /*disable sending multiple records in one datagram*/
+            mbedtls_ssl_set_datagram_packing( &ssl_context, 0 );
+
+        #if defined(MBEDTLS_SSL_CACHE_C)
+            mbedtls_ssl_conf_session_cache( &conf, &cache,
+                                          mbedtls_ssl_cache_get,
+                                          mbedtls_ssl_cache_set );
+        #endif
+
+            mbedtls_ssl_conf_ca_chain( &conf, &cacert, NULL );
+          if( ( nodeState = mbedtls_ssl_conf_own_cert( &conf, &srvcert, &pkey ) ) != 0 )
+            {
+                err( " failed\n  ! mbedtls_ssl_conf_own_cert returned %d\n\n", nodeState );
+                // freeNode();
+                return;
+            }
+
+            if( ( nodeState = mbedtls_ssl_cookie_setup( &cookie_ctx,
+                                          mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+            {
+                err( " failed\n  ! mbedtls_ssl_cookie_setup returned %d\n\n", nodeState );
+                // freeNode();
+                return;
+            }
+
+            mbedtls_ssl_conf_dtls_cookies( &conf, mbedtls_ssl_cookie_write, mbedtls_ssl_cookie_check,
+                                      &cookie_ctx );
+
+            if( ( nodeState = mbedtls_ssl_setup( &ssl_context, &conf ) ) != 0 )
+            {
+                err( " failed\n  ! mbedtls_ssl_setup returned %d\n\n", nodeState );
+                // freeNode();
+                return;
+            }
+
+            mbedtls_ssl_set_timer_cb( &ssl_context, &timer, mbedtls_timing_set_delay,
+                                                    mbedtls_timing_get_delay );
+
+            inf(" ok\n" );
+
+            //-------------------------------------------------------------------------------------------------------------------------
+
+        #ifdef MBEDTLS_ERROR_C
+            if( nodeState != 0 )
+            {
+                char error_buf[100];
+                mbedtls_strerror( nodeState, error_buf, 100 );
+                err("Last error was: %d - %s\n\n", nodeState, error_buf );
+            }
+        #endif
+
+            reset();
+
+              nodeState = pthread_create(&readThread, NULL, Security::DtlsServer::Task::read, this);
+              //todo: if successful, bind to remaining messages
+              bind(this, m_args.messages);
+              
+            }
         
         
 
@@ -278,17 +661,31 @@ namespace Security
       consume(const IMC::Message* msg)
       {
         // war("hello from consume(IMC Message)");
-
+        int ret = MBEDTLS_ERR_ERROR_GENERIC_ERROR;
         if (msg->getSource() != this->getSystemId())
         return;
 
         rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
 
-        m_node_table.send((const unsigned char*) m_bfr, rv);
+        if (ssl_context.private_session_out != 0)
+        {  
+          fflush( stdout );
 
+          do ret = mbedtls_ssl_write( &ssl_context, m_bfr, rv);
+          while( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+                ret == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+          if( ret < 0 )
+          {
+              err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
+              //todo: what to do when sending message fails?
+              // exit_task();
+          }else if (ret >= 0)
+          {
+            inf("successfully wrote %d bytes\n", ret );
+          }
+        } 
         memset(m_bfr, 0x00, c_bfr_size);
-
-
       }
 
       //! Release resources.

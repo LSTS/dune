@@ -59,7 +59,7 @@
 #define READ_TIMEOUT_MS 1000
 #define MAX_RETRY       5
 
-#define DEBUG_LEVEL 3
+#define DEBUG_LEVEL 0
 
 namespace Security
 {
