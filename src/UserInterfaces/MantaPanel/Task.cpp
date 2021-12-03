@@ -299,6 +299,9 @@ namespace UserInterfaces
       void
       consume(const IMC::Abort* msg)
       {
+        if (msg->getDestination() == getSystemId())
+          return;
+        
         requestAbort(resolveSystemId(msg->getDestination()));
       }
 
@@ -362,7 +365,11 @@ namespace UserInterfaces
         switch (msg->status)
         {
           case IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE:
-            m_lcd.text = fill("Timeout");
+            
+            if (m_mode == MODE_SYS_PING || m_mode == MODE_SYS_ABORT)
+              return;
+            
+            m_lcd.text = fill("Temp. Failure");
             reset();
             break;
 
@@ -372,17 +379,24 @@ namespace UserInterfaces
             break;
 
           case IMC::TransmissionStatus::TSTAT_SENT:
-            m_lcd.text = fill("Aborted!");
-            reset();
+            if (m_mode == MODE_SYS_ABORT)
+            {
+              m_lcd.text = fill("Aborted!");
+              reset();
+            }
+            else if (m_mode == MODE_SYS_PING)
+            {
+              m_lcd.text = fill("Pinged...");
+            }
             break;
 
           case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
-            m_lcd.text = fill("Not Supported");
+            m_lcd.text = fill("Timeout/Failure");
             reset();
             break;
 
           case IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE:
-            m_lcd.text = fill("No Transducer");
+            m_lcd.text = fill("Permanent Failure");
             reset();
             break;
 
