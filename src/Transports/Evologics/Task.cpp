@@ -478,7 +478,7 @@ namespace Transports
         else if (String::startsWith(msg->value, "FAILEDIM"))
           handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "BUSY"))
-          handleMessageFailed(msg->value);
+          handleMessageBusy(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))
@@ -620,6 +620,14 @@ namespace Transports
         (void)str;
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
+      }
+
+      void
+      handleMessageBusy(const std::string& str)
+      {
+        (void)str;
+        m_driver->setBusy(false);
+        clearTicket(IMC::UamTxStatus::UTS_BUSY, "Modem replied busy");
       }
 
       void
