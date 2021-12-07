@@ -53,8 +53,20 @@ namespace Navigation
         STATE_V = 4,
         //! Velocity z (m/s).
         STATE_W = 5,
+        //! Acceleration x (m/s^2).
+        STATE_AX = 6,
+        //! Acceleration y (m/s^2).
+        STATE_AY = 7,
+        //! Acceleration z (m/s^2).
+        STATE_AZ = 8,
+        //! Acceleration x bias (m/s^2).
+        STATE_AX_BIAS = 9,
+        //! Acceleration y bias (m/s^2).
+        STATE_AY_BIAS = 10,
+        //! Acceleration z bias (m/s^2).
+        STATE_AZ_BIAS = 11,
         //! Revolutions to speed factor.
-        STATE_K = 6,
+        STATE_K = 12,
         //! Number of States.
         NUM_STATE
       };
@@ -68,19 +80,27 @@ namespace Navigation
         OUT_V = 1,
         //! Downward Speed (m/s).
         OUT_W = 2,
+        //! Forward Acceleration (m/s^2).
+        OUT_AX = 3,
+        //! Transversal Acceleration (m/s^2).
+        OUT_AY = 4,
+        //! Downward Acceleration (m/s^2).
+        OUT_AZ = 5,
         //! GPS x (m).
-        OUT_GPS_X = 3,
+        OUT_GPS_X = 6,
         //! GPS y (m).
-        OUT_GPS_Y = 4,
+        OUT_GPS_Y = 7,
         //! Number of Outputs (without LBL).
-        NUM_OUT = 5
+        NUM_OUT = 8
       };
 
       //! Process Noise parameters.
       enum ProcessNoiseIndexes
       {
         PN_POSITION = 0,
-        PN_SPEED = 1
+        PN_SPEED = 1,
+        PN_ACCELERATION = 2,
+        PN_A_BIAS = 3
       };
 
       //! Measure Noise parameters.
@@ -89,7 +109,10 @@ namespace Navigation
         MN_U = 0,
         MN_V = 1,
         MN_W = 2,
-        MN_LBL = 3
+        MN_AX = 3,
+        MN_AY = 4,
+        MN_AZ = 5,
+        MN_LBL = 6
       };
 
       //! State Covariance parameters.
@@ -97,7 +120,9 @@ namespace Navigation
       {
         SC_POSITION = 0,
         SC_SPEED = 1,
-        SC_RPM = 2
+        SC_ACCELERATION = 2,
+        SC_A_BIAS = 3,
+        SC_RPM = 4
       };
 
       //! GPS accuracy indexes.
@@ -161,7 +186,7 @@ namespace Navigation
         {
           param("Process Noise Covariance", m_process_noise)
           .defaultValue("")
-          .size(2)
+          .size(4)
           .description("Kalman Filter process noise covariance values");
 
           param("GPS Noise Covariance", m_args.gps_noise)
@@ -176,12 +201,12 @@ namespace Navigation
 
           param("Measure Noise Covariance", m_measure_noise)
           .defaultValue("")
-          .size(4)
+          .size(7)
           .description("Kalman Filter measurement noise covariance values");
 
           param("State Covariance Initial State", m_state_cov)
           .defaultValue("")
-          .size(3)
+          .size(5)
           .description("Kalman Filter State Covariance initial values");
 
           param("Revolutions to speed factor", m_args.rpm_ini)
@@ -241,9 +266,20 @@ namespace Navigation
           m_kal.setProcessNoise(STATE_V, m_process_noise[PN_SPEED]);
           m_kal.setProcessNoise(STATE_W, m_process_noise[PN_SPEED]);
 
+          //Acceleration
+          m_kal.setProcessNoise(STATE_AX, m_process_noise[PN_ACCELERATION]);
+          m_kal.setProcessNoise(STATE_AY, m_process_noise[PN_ACCELERATION]);
+          m_kal.setProcessNoise(STATE_AZ, m_process_noise[PN_ACCELERATION]);
+          m_kal.setProcessNoise(STATE_AX_BIAS, m_process_noise[PN_A_BIAS]);
+          m_kal.setProcessNoise(STATE_AY_BIAS, m_process_noise[PN_A_BIAS]);
+          m_kal.setProcessNoise(STATE_AZ_BIAS, m_process_noise[PN_A_BIAS]);
+
           m_kal.setMeasurementNoise(OUT_U, m_measure_noise[MN_U]);
           m_kal.setMeasurementNoise(OUT_V, m_measure_noise[MN_V]);
           m_kal.setMeasurementNoise(OUT_W, m_measure_noise[MN_W]);
+          m_kal.setMeasurementNoise(OUT_AX, m_measure_noise[MN_AX]);
+          m_kal.setMeasurementNoise(OUT_AY, m_measure_noise[MN_AY]);
+          m_kal.setMeasurementNoise(OUT_AZ, m_measure_noise[MN_AZ]);
           m_kal.setMeasurementNoise(OUT_GPS_X, m_args.gps_noise[GPS_GOOD_IX]);
           m_kal.setMeasurementNoise(OUT_GPS_Y, m_args.gps_noise[GPS_GOOD_IX]);
 
@@ -310,6 +346,15 @@ namespace Navigation
           m_kal.setCovariance(STATE_U, m_state_cov[SC_SPEED]);
           m_kal.setCovariance(STATE_V, m_state_cov[SC_SPEED]);
           m_kal.setCovariance(STATE_W, m_state_cov[SC_SPEED]);
+
+          // Acceleration
+          m_kal.setCovariance(STATE_AX, m_state_cov[SC_ACCELERATION]);
+          m_kal.setCovariance(STATE_AY, m_state_cov[SC_ACCELERATION]);
+          m_kal.setCovariance(STATE_AZ, m_state_cov[SC_ACCELERATION]);
+          m_kal.setCovariance(STATE_AX_BIAS, m_state_cov[SC_A_BIAS]);
+          m_kal.setCovariance(STATE_AY_BIAS, m_state_cov[SC_A_BIAS]);
+          m_kal.setCovariance(STATE_AZ_BIAS, m_state_cov[SC_A_BIAS]);
+
           m_kal.setCovariance(STATE_K, m_state_cov[SC_RPM]);
 
           integrated_velocity[AXIS_X] = 0;
@@ -394,14 +439,20 @@ namespace Navigation
         void
         getSpeedOutputStates(unsigned* u, unsigned* v)
         {
-          *u = OUT_U;
-          *v = OUT_V;
+          // *u = OUT_U;
+          // *v = OUT_V;
         }
 
         unsigned
         getNumberOutputs(void)
         {
           return NUM_OUT;
+        }
+
+        double
+        getBiasedAcceleration(uint8_t axis)
+        {
+          return m_kal.getState(STATE_AX + axis) + m_kal.getState(STATE_AX_BIAS + axis);
         }
 
         void
@@ -449,23 +500,20 @@ namespace Navigation
           // Speed innovation matrix.
           if (!m_time_without_accel.overflow())
           {
-            // Innovation could be set simply by integrating the acceleration
-            // Output is only set for consistency
+            setAccelerationObservation();
+            
+            m_kal.setOutput(OUT_AX, getAcceleration(AXIS_X));
+            m_kal.setOutput(OUT_AY, getAcceleration(AXIS_Y));
+            m_kal.setOutput(OUT_AZ, getAcceleration(AXIS_Z));
 
-            integrated_velocity[AXIS_X] += getAcceleration(AXIS_X) * tstep;
-            integrated_velocity[AXIS_Y] += getAcceleration(AXIS_Y) * tstep;
-            integrated_velocity[AXIS_Z] += getAcceleration(AXIS_Z) * tstep;
-
-            m_kal.setOutput(OUT_U, integrated_velocity[AXIS_X]);
-            m_kal.setOutput(OUT_V, integrated_velocity[AXIS_Y]);
-            m_kal.setOutput(OUT_W, integrated_velocity[AXIS_Z]);
-
-            m_kal.setInnovation(OUT_U, m_kal.getOutput(OUT_U) - m_kal.getState(STATE_U));
-            m_kal.setInnovation(OUT_V, m_kal.getOutput(OUT_V) - m_kal.getState(STATE_V));
-            m_kal.setInnovation(OUT_W, m_kal.getOutput(OUT_W) - m_kal.getState(STATE_W));
+            m_kal.setInnovation(OUT_AX, m_kal.getOutput(OUT_AX) - getBiasedAcceleration(AXIS_X));
+            m_kal.setInnovation(OUT_AY, m_kal.getOutput(OUT_AY) - getBiasedAcceleration(AXIS_Y));
+            m_kal.setInnovation(OUT_AZ, m_kal.getOutput(OUT_AZ) - getBiasedAcceleration(AXIS_Z));
           }
           else if (m_time_without_gps.overflow())
           {
+            setVelocityObservation();
+
             double w = 0.0;
             double speed_m  = getRpmToMs(m_rpm);
             if(m_args.rpm_estimation)
@@ -488,6 +536,8 @@ namespace Navigation
           }
           else
           {
+            setVelocityObservation();
+
             // Use GPS speed over ground.
             if (m_gps_reading)
             {
@@ -585,6 +635,10 @@ namespace Navigation
             A(STATE_Z, STATE_V) = std::cos(theta) * std::sin(phi);
             A(STATE_Z, STATE_W) = std::cos(theta) * std::cos(phi);
           }
+
+          A(STATE_U, STATE_AX) = 1;
+          A(STATE_V, STATE_AY) = 1;
+          A(STATE_W, STATE_AZ) = 1;
         }
 
         // Reinitialize Extended Kalman Filter output matrix function.
@@ -592,11 +646,40 @@ namespace Navigation
         resetKalman(void)
         {
           m_kal.resetOutputs();
+          m_kal.setObservation(OUT_GPS_X, STATE_X, 1.0);
+          m_kal.setObservation(OUT_GPS_Y, STATE_Y, 1.0);
+
+          setAccelerationObservation();
+        }
+
+        void
+        setVelocityObservation()
+        {
+          m_kal.setObservation(OUT_AX, STATE_AX, 0.0);
+          m_kal.setObservation(OUT_AY, STATE_AY, 0.0);
+          m_kal.setObservation(OUT_AZ, STATE_AZ, 0.0);
+          m_kal.setObservation(OUT_AX, STATE_AX_BIAS, 0.0);
+          m_kal.setObservation(OUT_AY, STATE_AY_BIAS, 0.0);
+          m_kal.setObservation(OUT_AZ, STATE_AZ_BIAS, 0.0);
+
           m_kal.setObservation(OUT_U, STATE_U, 1.0);
           m_kal.setObservation(OUT_V, STATE_V, 1.0);
           m_kal.setObservation(OUT_W, STATE_W, 1.0);
-          m_kal.setObservation(OUT_GPS_X, STATE_X, 1.0);
-          m_kal.setObservation(OUT_GPS_Y, STATE_Y, 1.0);
+        }
+
+        void
+        setAccelerationObservation()
+        {
+          m_kal.setObservation(OUT_AX, STATE_AX, 1.0);
+          m_kal.setObservation(OUT_AY, STATE_AY, 1.0);
+          m_kal.setObservation(OUT_AZ, STATE_AZ, 1.0);
+          m_kal.setObservation(OUT_AX, STATE_AX_BIAS, 1.0);
+          m_kal.setObservation(OUT_AY, STATE_AY_BIAS, 1.0);
+          m_kal.setObservation(OUT_AZ, STATE_AZ_BIAS, 1.0);
+
+          m_kal.setObservation(OUT_U, STATE_U, 0.0);
+          m_kal.setObservation(OUT_V, STATE_V, 0.0);
+          m_kal.setObservation(OUT_W, STATE_W, 0.0);
         }
 
         void
@@ -615,15 +698,16 @@ namespace Navigation
           // Log Navigation Uncertainty.
           m_uncertainty.u = m_kal.getCovariance(STATE_U);
           m_uncertainty.v = m_kal.getCovariance(STATE_V);
+          m_uncertainty.w = m_kal.getCovariance(STATE_W);
 
           // Log Navigation Data.
           m_navdata.cog = (std::abs(m_kal.getState(STATE_U)) > 0.2 ?
                            std::atan2(m_estate.vy, m_estate.vx) : 0);
 
           // Navigation error.
-          m_navdata.custom_x = Math::norm(m_kal.getInnovation(OUT_GPS_X),
-                                          m_kal.getInnovation(OUT_GPS_Y));
-          m_navdata.custom_y = m_kal.getState(STATE_K);
+          m_navdata.custom_x = m_kal.getState(STATE_AZ);
+          m_navdata.custom_y = m_kal.getState(STATE_AZ_BIAS);
+          m_navdata.custom_z = m_kal.getCovariance(STATE_AZ_BIAS);
         }
       };
     }
