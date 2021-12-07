@@ -66,7 +66,7 @@ import xml.etree.ElementTree as ET
 tree = ET.parse(args.xml)
 
 # Remove 'description' tags.
-for parent in tree.getiterator():
+for parent in tree.iter():
     for child in parent:
         if child.tag == 'description':
             parent.remove(child)
