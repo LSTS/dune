@@ -90,7 +90,11 @@ namespace Sensors
         try
         {
           if (!openSocket())
-            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          {
+              m_handle = new SerialPort (m_args.uart_dev, m_args.uart_baud);
+              ((SerialPort*)m_handle)->setCanonicalInput (true);
+              m_handle->flush();
+          }
         }
         catch (std::runtime_error& e)
         {
