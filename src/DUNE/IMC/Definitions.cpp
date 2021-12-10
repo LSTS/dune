@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5563261871977bdb0b45e3d1e53b575b                            *
+// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -27102,74 +27102,6 @@ namespace DUNE
       IMC::toJSON(os__, "ch16", ch16, nindent__);
     }
 
-    TotalMagIntensity::TotalMagIntensity(void)
-    {
-      m_header.mgid = 2006;
-      clear();
-    }
-
-    void
-    TotalMagIntensity::clear(void)
-    {
-      value = 0;
-    }
-
-    bool
-    TotalMagIntensity::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::TotalMagIntensity& other__ = static_cast<const TotalMagIntensity&>(msg__);
-      if (value != other__.value) return false;
-      return true;
-    }
-
-    int
-    TotalMagIntensity::validate(void) const
-    {
-      return true;
-    }
-
-    uint8_t*
-    TotalMagIntensity::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(value, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    TotalMagIntensity::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(value, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    TotalMagIntensity::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    fp64_t
-    TotalMagIntensity::getValueFP(void) const
-    {
-      return static_cast<fp64_t>(value);
-    }
-
-    void
-    TotalMagIntensity::setValueFP(fp64_t val)
-    {
-      value = static_cast<fp64_t>(val);
-    }
-
-    void
-    TotalMagIntensity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "value", value, nindent__);
-    }
-
     HomePosition::HomePosition(void)
     {
       m_header.mgid = 909;
@@ -27256,6 +27188,74 @@ namespace DUNE
       IMC::toJSON(os__, "height", height, nindent__);
       IMC::toJSON(os__, "depth", depth, nindent__);
       IMC::toJSON(os__, "alt", alt, nindent__);
+    }
+
+    TotalMagIntensity::TotalMagIntensity(void)
+    {
+      m_header.mgid = 2006;
+      clear();
+    }
+
+    void
+    TotalMagIntensity::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    TotalMagIntensity::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TotalMagIntensity& other__ = static_cast<const TotalMagIntensity&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    TotalMagIntensity::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    TotalMagIntensity::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TotalMagIntensity::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TotalMagIntensity::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    TotalMagIntensity::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    TotalMagIntensity::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp64_t>(val);
+    }
+
+    void
+    TotalMagIntensity::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
     }
   }
 }
