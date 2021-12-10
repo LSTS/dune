@@ -82,6 +82,8 @@ namespace Supervisors
       bool m_activating;
       //! True if task is deactivating.
       bool m_deactivating;
+      //! PushEntityParameters message.
+      IMC::PushEntityParameters m_push;
       //! Task arguments.
       Arguments m_args;
 
@@ -200,10 +202,8 @@ namespace Supervisors
 
         IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
         for (; itr != msg->params.end(); ++itr)
-        {
-          if((*itr)->name == "Active")
-            ((*itr)->value == "true") ? onRequestActivation() : onRequestDeactivation();
-        }
+          if((*itr)->name == "Active" && (*itr)->value == "true")
+            onRequestActivation();
       }
 
       void
@@ -222,6 +222,7 @@ namespace Supervisors
           return;
 
         relayTo(msg);
+        m_push = *msg;
       }
 
       void
@@ -242,8 +243,7 @@ namespace Supervisors
       {
         if(m_args.power_channel != "None")
         {
-          if(m_pcs.state != IMC::PowerChannelState::PCS_ON)
-            m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
           dispatch(m_pcc);
           m_countdown.reset();
           m_activating = true;
@@ -369,6 +369,7 @@ namespace Supervisors
             if (m_pcs.state == IMC::PowerChannelControl::PCC_OP_TURN_ON && m_eid != DUNE_IMC_CONST_UNK_EID)
             {
               debug("PCC activation took %0.2f s", getActivationTime()-m_countdown.getRemaining());
+              dispatch(m_push);
               sendActiveParameter("true");
               m_activating = false;
             }
@@ -382,8 +383,7 @@ namespace Supervisors
 
           if (m_deactivating && m_countdown.overflow())
           {
-            if(m_pcs.state ==  IMC::PowerChannelControl::PCC_OP_TURN_ON)
-              m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+            m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
             dispatch(m_pcc);
             m_deactivating = false;
             m_countdown.setTop(getActivationTime());
