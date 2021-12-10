@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5563261871977bdb0b45e3d1e53b575b                            *
+// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5014,7 +5014,9 @@ namespace DUNE
         //! Send Short Message.
         AOP_MSG_SHORT = 16,
         //! Initiate Reverse Range.
-        AOP_REVERSE_RANGE = 17
+        AOP_REVERSE_RANGE = 17,
+        //! Forced Abort.
+        AOP_FORCED_ABORT = 18
       };
 
       //! Operation.
@@ -11234,7 +11236,13 @@ namespace DUNE
         //! Aligning.
         AS_ALIGNING = 3,
         //! Wrong Medium.
-        AS_WRONG_MEDIUM = 4
+        AS_WRONG_MEDIUM = 4,
+        //! Coarse Alignment.
+        AS_COARSE_ALIGNMENT = 5,
+        //! Fine Alignment.
+        AS_FINE_ALIGNMENT = 6,
+        //! System Ready.
+        AS_SYSTEM_READY = 7
       };
 
       //! State.
@@ -22860,7 +22868,9 @@ namespace DUNE
         //! Acknowledgement.
         UTF_ACK = 0x01,
         //! Delayed.
-        UTF_DELAYED = 0x02
+        UTF_DELAYED = 0x02,
+        //! Forced.
+        UTF_FORCED = 0x04
       };
 
       //! Sequence Id.
@@ -25609,73 +25619,6 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Total Magnetic Field Intensity.
-    class TotalMagIntensity: public Message
-    {
-    public:
-      //! Value.
-      fp64_t value;
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 2006;
-      }
-
-      TotalMagIntensity(void);
-
-      TotalMagIntensity*
-      clone(void) const
-      {
-        return new TotalMagIntensity(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return TotalMagIntensity::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "TotalMagIntensity";
-      }
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 8;
-      }
-
-      fp64_t
-      getValueFP(void) const;
-
-      void
-      setValueFP(fp64_t val);
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-    };
-
     //! Home Position.
     class HomePosition: public Message
     {
@@ -25751,6 +25694,73 @@ namespace DUNE
       {
         return 29;
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Total Magnetic Field Intensity.
+    class TotalMagIntensity: public Message
+    {
+    public:
+      //! Value.
+      fp64_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2006;
+      }
+
+      TotalMagIntensity(void);
+
+      TotalMagIntensity*
+      clone(void) const
+      {
+        return new TotalMagIntensity(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TotalMagIntensity::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TotalMagIntensity";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 8;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
