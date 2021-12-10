@@ -58,14 +58,17 @@ namespace Sensors
       IMC::SoundSpeed m_sspeed;
       //! Serial port handle.
       IO::Handle* m_handle;
-      //! Task arguments
+      //! Task arguments.
       Arguments m_args;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! True if IO handle is a SerialPort.
+      bool m_uart;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_handle(NULL)
+        m_handle(NULL),
+        m_uart(false)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -86,6 +89,7 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        Delay::wait(getActivationTime());
 
         try
         {
@@ -94,6 +98,7 @@ namespace Sensors
               m_handle = new SerialPort (m_args.uart_dev, m_args.uart_baud);
               ((SerialPort*)m_handle)->setCanonicalInput (true);
               m_handle->flush();
+              m_uart = true;
           }
         }
         catch (std::runtime_error& e)
@@ -147,8 +152,9 @@ namespace Sensors
         Delay::wait(1.0);
         m_handle->flush();
 
-        if (!sendCommand("\r", "\r\n"))
-          throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
+        if (m_uart)
+          if (!sendCommand("\r", "\r\n"))
+            throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
 
         if (!sendCommand("SET SAMPLE 1 s\r", ">SET SAMPLE 1 s\r\n"))
           throw RestartNeeded(DTR("failed to set sampling rate"), 5, false);
