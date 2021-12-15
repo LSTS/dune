@@ -899,6 +899,7 @@ namespace Transports
                 dispatch(msg);
                 inf("Requesting report transmission over Iridium.");
                 IMC::TransmissionRequest request;
+                request.setDestination (getSystemId());
                 request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
                 request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
                 request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
