@@ -400,7 +400,7 @@ namespace Vision
 
         if(sysNameMsg != sysLocalName)
         {
-          if (msg->op == IMC::LoggingControl::COP_STARTED)
+          if (msg->op == IMC::LoggingControl::COP_STARTED || msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
           {
             m_frame_cnt = 0;
             m_frame_lost_cnt = 0;
@@ -467,6 +467,12 @@ namespace Vision
         m_folder_number = 0;
         releaseRamCached();
         updateStrobe();
+
+        IMC::LoggingControl logcontrol;
+        logcontrol.op = IMC::LoggingControl::COP_CURRENT_NAME;
+        dispatch(logcontrol, DF_LOOP_BACK);
+        Delay::wait(0.2);
+
         try
         {
           if(!setUpCamera())
