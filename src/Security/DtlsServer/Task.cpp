@@ -146,7 +146,7 @@ namespace Security
       //! Message Filter
       MessageFilter m_filter;
       // Internal buffer size.
-      static const int c_bfr_size = 4069;
+      static const int c_bfr_size = 16384;
       //! Serialization buffer.
       uint8_t m_bfr[c_bfr_size];
       // Port bind retries.
@@ -335,7 +335,7 @@ namespace Security
      * @brief reset the connection by executing the handshake and creating a new session.
      * 
      */
-    void
+    int
     reset(void)
     {
       resetState = 1;
@@ -345,13 +345,6 @@ namespace Security
           mbedtls_net_free( &client_fd );        
 
           mbedtls_ssl_session_reset( &ssl_context );
-
-          // // declaring character array
-          // char char_name[20];
-      
-          // // copying the contents of the
-          // // string to char array
-          // strcpy(char_name, msg->sys_name.c_str());
 
           // /*
           // * 4.2. Wait until a client connects
@@ -364,13 +357,13 @@ namespace Security
             {
               err( " failed\n  ! mbedtls_net_accept returned %d\n\n", resetState );
               // exit_task();
-              return;
+              return resetState;
             }
 
             resetState = mbedtls_net_set_block(&client_fd);
             if (resetState){
               err("could not set socket blocking");
-              return;
+              return resetState;
             }
 
           /* For HelloVerifyRequest cookies */
@@ -380,13 +373,13 @@ namespace Security
               err( " failed\n  ! "
                       "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", (unsigned int) -resetState );
               // exit_task();
-              return;
+              return resetState;
           }
 
           mbedtls_ssl_set_bio( &ssl_context, &client_fd,
                               mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
 
-          inf( " ok\n" );
+          inf( " Set bio ok\n" );
 
           /*
           * 5. Handshake
@@ -410,11 +403,11 @@ namespace Security
           {
               err( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -resetState );
               // reset_mbedtls();
-              // return;
+              return resetState;
           }else if(resetState == 0)
           {
             inf( " HANDSHAKE OK\n" );
-            break;
+             return resetState;
           }
 
           
@@ -437,7 +430,7 @@ namespace Security
         // war("hello from consume(IMC Announce)");
 
         //todo: add depending on active list
-        if (0 == strcmp(msg->sys_name.c_str(), "lauv-xplore-4") && setUp == 0)
+        if (0 == strcmp(msg->sys_name.c_str(), "ccu-lea-6-36") && setUp == 0)
         {
           setUp = 1;
 
@@ -645,11 +638,14 @@ namespace Security
             }
         #endif
 
-            reset();
+            nodeState = reset();
+            if(nodeState == 0){
 
               nodeState = pthread_create(&readThread, NULL, Security::DtlsServer::Task::read, this);
-              //todo: if successful, bind to remaining messages
               bind(this, m_args.messages);
+            }
+
+              
               
             }
         
