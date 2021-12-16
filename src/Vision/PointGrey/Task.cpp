@@ -469,8 +469,8 @@ namespace Vision
         updateStrobe();
 
         IMC::LoggingControl logcontrol;
-        logcontrol.op = IMC::LoggingControl::COP_CURRENT_NAME;
-        dispatch(logcontrol, DF_LOOP_BACK);
+        logcontrol.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+        dispatch(logcontrol);
         Delay::wait(0.2);
 
         try
