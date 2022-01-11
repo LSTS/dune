@@ -318,14 +318,13 @@ namespace Security
               break;
           }
         }else{
-          m_task->inf( "successfully read %d bytes\n", ret );
 
           IMC::Message* msg = IMC::Packet::deserialize(m_node_bfr, ret);
 
           m_task->dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
-          // if (m_trace)
-            // msg->toText(std::cerr);
+          if (m_args.trace_in)
+          msg->toText(std::cerr);
         }
       }
     }
@@ -661,6 +660,12 @@ namespace Security
         if (msg->getSource() != this->getSystemId())
         return;
 
+        if (m_filter.filter(msg))
+          return;
+
+        if (m_args.trace_out)
+          msg->toText(std::cerr);
+
         rv = IMC::Packet::serialize(msg, m_bfr, c_bfr_size);
 
         if (ssl_context.private_session_out != 0)
@@ -674,11 +679,7 @@ namespace Security
           if( ret < 0 )
           {
               err(" failed\n  ! mbedtls_ssl_write returned -0x%x\n\n", (unsigned int) -ret );
-              //todo: what to do when sending message fails?
               // exit_task();
-          }else if (ret >= 0)
-          {
-            inf("successfully wrote %d bytes\n", ret );
           }
         } 
         memset(m_bfr, 0x00, c_bfr_size);
