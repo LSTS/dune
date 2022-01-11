@@ -323,7 +323,7 @@ namespace Security
 
           m_task->dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
-          if (m_args.trace_in)
+          if (m_task->m_args.trace_in)
           msg->toText(std::cerr);
         }
       }
