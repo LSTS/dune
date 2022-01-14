@@ -42,6 +42,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <thread>         
+#include <mutex>         
 
 #include <arpa/inet.h>
 
@@ -153,7 +155,7 @@ namespace Security
       // Todo: where to define this instead of hardcoding here?
       static const int c_port_retries = 5;
       // read thread
-      pthread_t readThread;
+      pthread_t readThread = NULL;
       // mbedtls 
       mbedtls_net_context listen_fd, client_fd;
       const char *pers = "dtls_server";
@@ -171,6 +173,7 @@ namespace Security
       mbedtls_ssl_cache_context cache;
     #endif
 
+    std::mutex mtx;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -244,6 +247,12 @@ namespace Security
         bind<IMC::Announce>(this);
       }
 
+      ~Task(void)
+      {
+        if (m_bfr != NULL)
+          delete[] m_bfr;
+      }
+
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
@@ -279,6 +288,15 @@ namespace Security
       onResourceInitialization(void)
       {
 
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        if (readThread != NULL)
+        {
+          pthread_cancel(readThread);
+        }
       }
 
     static void 
@@ -338,13 +356,11 @@ namespace Security
     reset(void)
     {
       resetState = 1;
-      
+
         while(resetState != 0 )
         {
-          mbedtls_net_free( &client_fd );        
-
+          mbedtls_net_free( &client_fd ); 
           mbedtls_ssl_session_reset( &ssl_context );
-
           // /*
           // * 4.2. Wait until a client connects
           // */
@@ -378,7 +394,7 @@ namespace Security
           mbedtls_ssl_set_bio( &ssl_context, &client_fd,
                               mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
 
-          inf( " Set bio ok\n" );
+          debug( " Set bio ok\n" );
 
           /*
           * 5. Handshake
@@ -386,9 +402,13 @@ namespace Security
           inf( "  . Performing the DTLS handshake..." );
           fflush( stdout );
 
+          mtx.lock();
+
           do resetState = mbedtls_ssl_handshake( &ssl_context );
           while( resetState == MBEDTLS_ERR_SSL_WANT_READ ||
                 resetState == MBEDTLS_ERR_SSL_WANT_WRITE );
+
+          mtx.unlock();
 
 
           if( resetState == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED )
@@ -638,6 +658,7 @@ namespace Security
         #endif
 
             nodeState = reset();
+
             if(nodeState == 0){
 
               nodeState = pthread_create(&readThread, NULL, Security::DtlsServer::Task::read, this);
@@ -685,14 +706,6 @@ namespace Security
         memset(m_bfr, 0x00, c_bfr_size);
       }
 
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-        war("hello from onResourceRelease");
-
-      }
-
 
       //! Main loop.
       void
@@ -704,7 +717,6 @@ namespace Security
         while (!stopping())
         {
            waitForMessages(1.0);
-           Delay::wait(1);
           ;
         }
       }
