@@ -62,6 +62,7 @@ namespace Vision
     using DUNE_NAMESPACES;
 
     static const int c_number_max_thread = 25;
+    static const int c_number_attempts_for_cam_setup = 10;
     static const int c_number_max_fps = 5;
     static const float c_time_to_release_cached_ram = 300.0;
     static const float c_time_to_release_camera = 3.0;
@@ -475,8 +476,24 @@ namespace Vision
 
         try
         {
-          if(!setUpCamera())
-            throw RestartNeeded("Cannot detect camera", 10);
+          int attempt = 1;
+          while(attempt <= c_number_attempts_for_cam_setup)
+          {
+            if(!setUpCamera())
+            {
+              war("Cannot setup camera:trying again (%d of %d)", attempt, c_number_attempts_for_cam_setup);
+              Delay::wait(5);
+              attempt++;
+            }
+            else
+            {
+              break;
+            }
+          }
+          if(attempt >= c_number_attempts_for_cam_setup)
+            throw RestartNeeded("Cannot setup camera", 10);
+          else
+            inf("Setup camera OK (%d attempts)", attempt);
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
           set_shutter_value(m_args.shutter_value);
