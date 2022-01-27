@@ -819,7 +819,7 @@ namespace Vision
 
         if (bus_attempts > c_max_number_attempts_bus)
         {
-          err("No cameras found in attempt", bus_attempts);
+          err("No cameras found in attempt %d", bus_attempts);
           return false;
         }
 
