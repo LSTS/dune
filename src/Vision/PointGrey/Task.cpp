@@ -62,8 +62,8 @@ namespace Vision
     using DUNE_NAMESPACES;
 
     static const int c_number_max_thread = 25;
-    static const int c_number_attempts_for_cam_setup = 10;
     static const int c_number_max_fps = 5;
+    static const int c_max_number_attempts_bus = 5;
     static const float c_time_to_release_cached_ram = 300.0;
     static const float c_time_to_release_camera = 3.0;
     static const float c_time_to_update_cnt_info = 10.0;
@@ -120,8 +120,6 @@ namespace Vision
       FlyCapture2::Image m_rawImage;
       //! Buffer for rgb image;
       FlyCapture2::Image m_rgbImage;
-      //! Bus Manager of connection to camera
-      FlyCapture2::BusManager m_busMgr;
       //! Identifier of camera
       FlyCapture2::PGRGuid m_guid;
       #endif
@@ -476,24 +474,8 @@ namespace Vision
 
         try
         {
-          int attempt = 1;
-          while(attempt <= c_number_attempts_for_cam_setup)
-          {
-            if(!setUpCamera())
-            {
-              war("Cannot setup camera:trying again (%d of %d)", attempt, c_number_attempts_for_cam_setup);
-              Delay::wait(5);
-              attempt++;
-            }
-            else
-            {
-              break;
-            }
-          }
-          if(attempt >= c_number_attempts_for_cam_setup)
-            throw RestartNeeded("Cannot setup camera", 10);
-          else
-            inf("Setup camera OK (%d attempts)", attempt);
+          if(!setUpCamera())
+            throw RestartNeeded("Cannot detect camera", 10);
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
           set_shutter_value(m_args.shutter_value);
@@ -799,14 +781,48 @@ namespace Vision
       setUpCamera(void)
       {
         #if defined(DUNE_CPU_ARMV7)
-        inf("Initialization of Camera");
-        // Get Flea2 camera
-        m_error = m_busMgr.GetCameraFromIndex( 0, &m_guid );
-        if ( m_error != FlyCapture2::PGRERROR_OK )
+        unsigned int nb_cameras;
+        int bus_attempts = 1;
+        while (bus_attempts <= c_max_number_attempts_bus)
         {
-          err("Failed to get camera index: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
+          FlyCapture2::BusManager m_busMgr;
+          m_error = m_busMgr.GetNumOfCameras(&nb_cameras);
+          if (m_error != FlyCapture2::PGRERROR_OK)
+          {
+            err("Failed to create bus manager (attempt: %d): %s",bus_attempts, m_save[m_thread_cnt]->getNameError(m_error).c_str());
+          }
+          else
+          {
+            if (nb_cameras < 1 && nb_cameras > 2)
+            {
+              err("No cameras found at bus manager attempt %d (%d)", bus_attempts, nb_cameras);
+            }
+            else
+            {
+              inf("Number of cameras found in bus manager attempt %d is %d", bus_attempts, nb_cameras);
+              inf("Initialization of Camera");
+              // Get Flea2 camera
+              m_error = m_busMgr.GetCameraFromIndex( 0, &m_guid );
+              if ( m_error != FlyCapture2::PGRERROR_OK )
+              {
+                err("Failed to get camera index at bus manager attempt %d: %s", bus_attempts, m_save[m_thread_cnt]->getNameError(m_error).c_str());
+              }
+              else
+              {
+                break;
+              }
+            }
+          }
+          bus_attempts++;
+          Delay::wait(2);
+        }
+
+        if (bus_attempts > c_max_number_attempts_bus)
+        {
+          err("No cameras found in attempt", bus_attempts);
           return false;
         }
+
         // Connect the camera
         m_error = m_camera.Connect( &m_guid );
         if ( m_error != FlyCapture2::PGRERROR_OK )
