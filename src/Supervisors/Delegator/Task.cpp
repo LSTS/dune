@@ -84,6 +84,8 @@ namespace Supervisors
       bool m_deactivating;
       //! PushEntityParameters message.
       IMC::PushEntityParameters m_push;
+      //! Entity Parameter message.
+      IMC::EntityState m_estate;
       //! Task arguments.
       Arguments m_args;
 
@@ -303,6 +305,7 @@ namespace Supervisors
           return;
 
         setEntityState((DUNE::IMC::EntityState::StateEnum)msg->state, msg->description);
+        m_estate = *msg;
       }
 
       void
@@ -321,6 +324,13 @@ namespace Supervisors
 
         if(m_args.power_channel != "None" && msg->state == IMC::EntityActivationState::EAS_DEACT_IP)
           onRequestDeactivation();
+
+        if(m_args.power_channel != "None" && msg->state == IMC::EntityActivationState::EAS_ACT_IP &&
+           m_estate.state == IMC::EntityState::ESTA_FAILURE)
+        {
+          activationFailed(DTR("failed activation, device reporting failure state."));
+          onRequestDeactivation();
+        }
       }
 
       void
@@ -378,6 +388,7 @@ namespace Supervisors
               activationFailed(DTR("failed to contact device"));
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
               m_activating = false;
+              onRequestDeactivation();
             }
           }
 
