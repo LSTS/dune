@@ -46,6 +46,7 @@
 #include <DUNE/Navigation/KalmanFilter.hpp>
 #include <DUNE/Navigation/Ranging.hpp>
 #include <DUNE/Navigation/StreamEstimator.hpp>
+#include <DUNE/Navigation/UsblTools.hpp>
 #include <DUNE/Time/Clock.hpp>
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Time/Delta.hpp>
@@ -722,6 +723,12 @@ namespace DUNE
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.
       uint8_t m_wvel_val_bits;
+      //! USBL position filter.
+      UsblTools::Filter* m_usbl_filter;
+      //! Number of moving average samples for USBL filter.
+      unsigned m_usbl_avg_samples;
+      //! Maximum deviation possible to issue error.
+      double m_usbl_k_std;
     };
   }
 }

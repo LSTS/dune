@@ -217,6 +217,17 @@ namespace DUNE
       .defaultValue("1.0")
       .description("Exponential moving average filter gain used in altitude");
 
+      param("USBL Filter -- Moving Average Samples", m_usbl_avg_samples)
+      .defaultValue("5")
+      .minimumValue("5")
+      .maximumValue("20")
+      .description("Number of moving average samples for USBL filter");
+
+      param("USBL Filter -- Maximum Deviation Factor", m_usbl_k_std)
+      .minimumValue("1")
+      .defaultValue("2")
+      .description("Maximum deviation possible to issue error");
+
       // Do not use the declination offset when simulating.
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
@@ -279,6 +290,7 @@ namespace DUNE
     void
     BasicNavigation::onResourceInitialization(void)
     {
+      m_usbl_filter = new UsblTools::Filter(m_usbl_avg_samples, m_usbl_k_std);
       m_avg_heave = new Math::MovingAverage<double>(m_avg_heave_samples);
       m_avg_gps = new Math::MovingAverage<double>(m_avg_gps_samples);
       reset();
@@ -762,6 +774,9 @@ namespace DUNE
     {
       if (msg->target != getSystemName())
         return;
+      
+      if (!m_usbl_filter->consume(msg))
+        return;
 
       double x = 0.0;
       double y = 0.0;
@@ -1012,6 +1027,8 @@ namespace DUNE
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
       m_navdata.cyaw = m_heading;
+
+      m_usbl_filter->consume(&m_estate);
     }
 
     bool
