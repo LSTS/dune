@@ -1254,6 +1254,65 @@ namespace DUNE
         //! Pointer to task.
         Tasks::Task* m_task;
       };
+
+      //! USBL position filter.
+      class Filter
+      {
+      public:
+        //! Constructor.
+        Filter(unsigned avg_samples, double k_std):
+          m_avg_samples(avg_samples),
+          m_k_std(k_std)
+        {
+          m_avg_range = new Math::MovingAverage<double>(m_avg_samples);
+        }
+
+        //! Destructor
+        ~Filter()
+        {
+          Memory::clear(m_avg_range);
+        }
+
+        //! Set last received state
+        void
+        consume(const IMC::EstimatedState* msg)
+        {
+          m_last_state = *msg;
+        }
+
+        //! Set last received USBL fix
+        //! @return true if position passes filter, false otherwise.
+        bool
+        consume(const IMC::UsblFixExtended* msg)
+        {
+          double lat, lon;
+          double range, bearing;
+          Coordinates::toWGS84(m_last_state, lat, lon);
+          Coordinates::WGS84::getNEBearingAndRange(lat, lon,
+                                                  msg->lat, msg->lon,
+                                                  &range, &bearing);
+
+          double mean_range = m_avg_range->update(range);
+          double std_range = m_avg_range->stdev();
+
+          double diff_to_mean = std::abs(range - mean_range);
+
+          if (diff_to_mean > m_k_std * std_range)
+            return false;
+          
+          return true;
+        }
+
+      private:
+        //! Moving average of distance between estimated state and USBL Fix
+        Math::MovingAverage<double>* m_avg_range;
+        //! Number of samples to average ranges
+        unsigned m_avg_samples;
+        //! Standard deviation multiplication factor to issue error.
+        double m_k_std;
+        //! Last received estimated state
+        IMC::EstimatedState m_last_state;
+      };
     };
   }
 }
