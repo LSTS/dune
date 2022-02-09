@@ -79,17 +79,16 @@ namespace DUNE
         STM::FirmwareUpdate firmware(m_handle, m_ibin);
         if(firmware.isFirmwareFileOpen())
         {
-          char send_text[64];
+          print(" > Waiting for the system to fully erase the flash\n");
+          char send_text[32];
           std::sprintf(send_text, "%s%ld,*", c_size_file_update, firmware.getFirmwareSize());
           sendCommand(send_text);
           if(readReply(c_timeout_reply))
           {
-            print("%s\n", m_frame_rx);
             if(std::strstr((char*)m_frame_rx, c_ack_frame.c_str()) != NULL)
               while(!firmware.finishUpdate());
             else
               print(" > Firmware Update FAIL ACK\n");
-            print(" > Finish Update\n");
           }
           else
           {
@@ -110,7 +109,6 @@ namespace DUNE
         {
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];
           uint8_t csum_calc = computeCRC(m_frame_rx, m_frame_rx_count - 1);
-          //printf("%s (%d) %d-%d\n", m_frame_rx, m_frame_rx_count, csum_rx, csum_calc);
           if(csum_rx == csum_calc)
           {
             uint8_t vector_string_size = 0;
@@ -121,10 +119,8 @@ namespace DUNE
             {
               vector_string_size++;
               if(vector_string_size == 3)
-              {
                 m_system_type = s.substr(last, next-last);
-                //printf("%d: %s\n", vector_string_size, m_system_type.c_str());
-              }
+
               last = next + 1;
             }
             if (m_system_type.find(c_valid_system_type) != std::string::npos)
@@ -150,13 +146,12 @@ namespace DUNE
       void
       Interface::checkSystemVersion(void)
       {
-        title(" Checking System Version");
+        title(" Checking System Firmware Version");
         sendCommand(c_system_version_cmd);
         if(readReply(c_timeout_reply))
         {
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];
           uint8_t csum_calc = computeCRC(m_frame_rx, m_frame_rx_count - 1);
-          //printf("%s (%d) %d-%d\n", m_frame_rx, m_frame_rx_count, csum_rx, csum_calc);
           if(csum_rx == csum_calc)
           {
             uint8_t vector_string_size = 0;
@@ -167,17 +162,15 @@ namespace DUNE
             {
               vector_string_size++;
               if(vector_string_size == 3)
-              {
                 m_system_type = s.substr(last, next-last);
-                //printf("%d: %s\n", vector_string_size, m_system_type.c_str());
-              }
+
               last = next + 1;
             }
-            printf(" > System Version: %s\n", m_system_type.c_str());
+            printf(" > Firmware Version: %s\n", m_system_type.c_str());
           }
           else
           {
-            printf(" > System Version FAIL\n");
+            printf(" > Firmware Version FAIL\n");
           }
         }
         else
@@ -213,7 +206,6 @@ namespace DUNE
         {
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];
           uint8_t csum_calc = computeCRC(m_frame_rx, m_frame_rx_count - 1);
-          //printf("%s (%d) %d-%d\n", m_frame_rx, m_frame_rx_count, csum_rx, csum_calc);
           if(csum_rx == csum_calc)
           {
             printf(" > Sync bootloader ok\n");
@@ -284,7 +276,8 @@ namespace DUNE
       void
       Interface::title(const char* str)
       {
-        print("\n%s\n", str);
+        print("\n------------------------------\n");
+        print(" # %s\n", str);
         print("------------------------------\n");
       }
 

@@ -108,6 +108,7 @@ namespace DUNE
         switch (m_state)
         {
           case FIRMWARE_READ_BLOCK:
+            Time::Delay::waitMsec(10);
             if(m_size_send < m_firmware_len)
             {
               if(m_firmware_len - m_size_send > c_block_size)
@@ -120,13 +121,8 @@ namespace DUNE
               }
 
               for(uint16_t i=0; i < m_block_len; i++)
-              {
                 m_block_frame[i] = m_buf_bin[m_size_send++];
-                //printf("%02x ", m_block_frame[i]);
-              }
-              //printf("\n");
 
-              std::printf("state size block %d ", m_block_len);
               m_state = FIRMWARE_SEND_BLOCK;
             }
             else
@@ -136,7 +132,7 @@ namespace DUNE
             break;
 
           case FIRMWARE_SEND_BLOCK:
-            std::printf("(%d of %ld [%2d])\n", m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
+            std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
             sendFrameBlock(m_block_frame, m_block_len);
             m_state = FIRMWARE_WAIT_ACK;
             break;
@@ -146,31 +142,30 @@ namespace DUNE
             {
               if(std::strstr((char*)m_buf_reply, c_ack_frame.c_str()) != NULL)
               {
-                if(m_firmware_len != m_size_send)
-                  std::printf("Received ACK, sending new block frame\n");
-                else
-                  std::printf("Received ACK, no more data to send\n");
+                if(m_firmware_len == m_size_send)
+                  std::printf("\n");
+
                 m_state = FIRMWARE_READ_BLOCK;
               }
               else if(std::strstr((char*)m_buf_reply, c_nack_frame.c_str()) != NULL)
               {
-                std::printf("Received NACK, sending the same block frame\n");
-                std::printf("(%d of %ld [%2d])\n", m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
+                std::printf("\n > Received NACK, sending the same block frame\n");
+                std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
                 sendFrameBlock(m_block_frame, m_block_len);
                 m_state = FIRMWARE_WAIT_ACK;
               }
             }
             else
             {
-              std::printf("Timeout, sending the same block frame\n");
-              std::printf("(%d of %ld [%2d])\n", m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
+              std::printf("\n > Timeout, sending the same block frame\n");
+              std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
               sendFrameBlock(m_block_frame, m_block_len);
               m_state = FIRMWARE_WAIT_ACK;
             }
             break;
 
           case FIRMWARE_IDLE:
-            std::printf("finish: %ld - %d\n", m_firmware_len, m_size_send);
+            std::printf(" > Finish Update: %ld - %d\n\n", m_firmware_len, m_size_send);
             return true;
             break;
           
@@ -209,9 +204,7 @@ namespace DUNE
         uint8_t csum[2];
         csum[0] = computeCRC(cmd_frame, cnt_frame);
         cmd_frame[cnt_frame] = csum[0];
-        //printf("t%d - s%d - c%d - %s\n", total_frame_size, size_frame, csum[0], (char*)cmd_frame);
-        printf("t%d - s%d - c%d\n", total_frame_size, size_frame, csum[0]);
-        printf("write :%ld\n", m_handle->write(cmd_frame, total_frame_size));
+        m_handle->write(cmd_frame, total_frame_size);
         delete cmd_frame;
       }
 
