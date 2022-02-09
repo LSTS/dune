@@ -92,11 +92,15 @@ main(int argc, char** argv)
   STM::Interface itf(handle, ibin);
   if(itf.syncBoot())
   {
+    Delay::wait(1);
     if(itf.checkSystemType())
     {
+      Delay::wait(1);
       itf.checkSystemVersion();
+      Delay::wait(1);
       if(itf.checkFirmwareFile())
       {
+        Delay::wait(1);
         itf.startFirmwareUpdate();
       }
       else
@@ -114,8 +118,6 @@ main(int argc, char** argv)
     std::cout << "FAIL: syncBoot" << dev_type << std::endl;
   }
   delete handle;
-
-  std::cout << "DONE" << dev_type << std::endl;
 
   return 0;
 }
