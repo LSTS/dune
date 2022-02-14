@@ -261,10 +261,7 @@ namespace Supervisors
         sendActiveParameter("false");
 
         if(m_args.power_channel != "None")
-        {
-          m_countdown.setTop(getDeactivationTime());
           m_deactivating = true;
-        }
       }
 
       bool
@@ -392,8 +389,15 @@ namespace Supervisors
             }
           }
 
-          if (m_deactivating && m_countdown.overflow())
+          if (m_deactivating)
           {
+            IMC::PowerOperation pop;
+            pop.setDestination(m_sid);
+            pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+            dispatch(pop);
+            debug("Sent PowerOperation to surrogate.");
+            Delay::wait(getDeactivationTime());
+
             m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
             dispatch(m_pcc);
             m_deactivating = false;
