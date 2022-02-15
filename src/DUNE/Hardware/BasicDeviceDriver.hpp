@@ -177,10 +177,6 @@ namespace DUNE
       virtual void
       onInitializeDevice(void) = 0;
 
-      virtual void
-      onActivationFailed(void)
-      { }
-
       //! Test if the estimated state message should be discarded.
       //! @param[in] msg estimated state message.
       //! @return true to discard message, false otherwise.

@@ -485,7 +485,6 @@ namespace DUNE
           {
             failActivation(DTR("failed to connect to device"));
             queueState(SM_IDLE);
-            onActivationFailed();
           }
           else if (m_power_on_timer.overflow())
           {
@@ -504,7 +503,6 @@ namespace DUNE
           {
             failActivation(DTR("failed to synchronize with device"));
             queueState(SM_IDLE);
-            onActivationFailed();
           }
           else
           {
@@ -524,7 +522,6 @@ namespace DUNE
           {
             failActivation(DTR("failed to request current log name"));
             queueState(SM_IDLE);
-            onActivationFailed();
           }
           else
           {
@@ -540,7 +537,6 @@ namespace DUNE
           {
             failActivation(DTR("failed to retrieve current log name"));
             queueState(SM_IDLE);
-            onActivationFailed();
           }
           else
           {
@@ -557,7 +553,18 @@ namespace DUNE
 
           // Activation procedure is complete.
         case SM_ACT_DONE:
-          activate();
+          try
+          {
+            activate();
+          }
+          catch(const std::runtime_error& e)
+          {
+            m_restart = true;
+            activationFailed(e.what()); // NOT calling failActivation to move into DEACT_BEGIN
+            queueState(SM_DEACT_BEGIN);
+            break;
+          }
+
           queueState(SM_ACT_SAMPLE);
           spew("start read sample");
           break;
@@ -569,14 +576,22 @@ namespace DUNE
 
           // Start deactivation procedure.
         case SM_DEACT_BEGIN:
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
-          m_wdog.setTop(getDeactivationTime());
-          queueState(SM_DEACT_DISCONNECT);
+          debug("Setting Entity State DEACTIVATING");
+          setEntityState( IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING );
+          m_wdog.setTop( getDeactivationTime() );
+          queueState( SM_DEACT_DISCONNECT );
           break;
 
           // Gracefully disconnect from device.
         case SM_DEACT_DISCONNECT:
-          disconnect();
+          try
+          {
+            disconnect();
+          }
+          catch(const std::runtime_error& e)
+          {
+            err("failed to disconnect: %s", e.what());
+          }
 
           if (enableLogControl())
             closeLog();
@@ -610,7 +625,15 @@ namespace DUNE
 
           // Deactivation is complete.
         case SM_DEACT_DONE:
-          deactivate();
+          try
+          {
+            deactivate();
+          }
+          catch (const std::runtime_error& e)
+          {
+            err("failed deactivation: %s", e.what());
+          }
+
           queueState(SM_IDLE);
           break;
 
