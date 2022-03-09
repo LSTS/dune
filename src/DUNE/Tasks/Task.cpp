@@ -704,6 +704,12 @@ namespace DUNE
         if (pitr->first == "Enabled")
           continue;
 
+        // Ignore Supervisors.Delegator sections
+        std::string section = getName();
+        std::string::size_type p = section.find('/');
+        if(!std::strcmp(section.substr(0,p).c_str(),"Supervisors.Delegator"))
+          continue;
+
         if (m_params.find(pitr->first) == m_params.end())
           err(DTR("invalid parameter '%s'"), pitr->first.c_str());
       }
