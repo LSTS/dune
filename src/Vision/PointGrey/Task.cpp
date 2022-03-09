@@ -212,7 +212,8 @@ namespace Vision
         .description("Main system name.");
 
         param("Led Mode", m_args.led_type)
-    	  .description("Led type mode.");
+        .values("Strobe, On, Off")
+    	.description("Led type mode.");
 
         param("Copyright", m_args.copyright)
         .description("Copyright of Image.");
