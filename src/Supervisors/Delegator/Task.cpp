@@ -168,6 +168,9 @@ namespace Supervisors
         m_pcc.name = m_args.power_channel;
         m_pcs.name = m_args.power_channel;
         m_countdown.setTop(getActivationTime());
+
+        if(m_args.power_channel != "None")
+          queryEntityInfo();
       }
 
       void
