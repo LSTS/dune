@@ -45,6 +45,8 @@ namespace Transports
 
     //! Simulator command timeout.
     static const double c_sim_timeout = 6.0;
+    //! Default port.
+    static const int c_default_port = 9200;
 
     struct Arguments
     {
