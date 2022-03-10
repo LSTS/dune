@@ -57,15 +57,18 @@ namespace Sensors
       //! Sound speed message.
       IMC::SoundSpeed m_sspeed;
       //! Serial port handle.
-      SerialPort* m_uart;
-      //! Task arguments
+      IO::Handle* m_handle;
+      //! Task arguments.
       Arguments m_args;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! True if IO handle is a SerialPort.
+      bool m_uart;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL)
+        m_handle(NULL),
+        m_uart(false)
       {
         param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
@@ -86,12 +89,17 @@ namespace Sensors
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        Delay::wait(getActivationTime());
 
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_uart->setCanonicalInput(true);
-          m_uart->flush();
+          if (!openSocket())
+          {
+              m_handle = new SerialPort (m_args.uart_dev, m_args.uart_baud);
+              ((SerialPort*)m_handle)->setCanonicalInput (true);
+              m_handle->flush();
+              m_uart = true;
+          }
         }
         catch (std::runtime_error& e)
         {
@@ -99,10 +107,25 @@ namespace Sensors
         }
       }
 
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
+      }
+
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_uart);
+        Memory::clear(m_handle);
       }
 
       bool
@@ -110,11 +133,11 @@ namespace Sensors
       {
         char bfr[128];
 
-        m_uart->writeString(cmd);
+        m_handle->writeString(cmd);
 
-        if (Poll::poll(*m_uart, 1.0))
+        if (Poll::poll(*m_handle, 1.0))
         {
-          m_uart->readString(bfr, sizeof(bfr));
+          m_handle->readString(bfr, sizeof(bfr));
           if (std::strcmp(bfr, reply) == 0)
             return true;
         }
@@ -125,12 +148,13 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
-        m_uart->writeString("\r");
+        m_handle->writeString("\r");
         Delay::wait(1.0);
-        m_uart->flush();
+        m_handle->flush();
 
-        if (!sendCommand("\r", "\r\n"))
-          throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
+        if (m_uart)
+          if (!sendCommand("\r", "\r\n"))
+            throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
 
         if (!sendCommand("SET SAMPLE 1 s\r", ">SET SAMPLE 1 s\r\n"))
           throw RestartNeeded(DTR("failed to set sampling rate"), 5, false);
@@ -156,10 +180,10 @@ namespace Sensors
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
 
-          if (!Poll::poll(*m_uart, 1.0))
+          if (!Poll::poll(*m_handle, 1.0))
             continue;
 
-          size_t rv = m_uart->readString(bfr, sizeof(bfr));
+          size_t rv = m_handle->readString(bfr, sizeof(bfr));
 
           if (rv == 0)
             throw RestartNeeded(DTR("I/O error"), 5);

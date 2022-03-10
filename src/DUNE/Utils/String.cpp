@@ -80,7 +80,7 @@ namespace DUNE
     }
 
     void
-    String::rtrim(char* str)
+    String::rightTrimInPlace(char* str)
     {
       char* r = str + std::strlen(str) - 1; // Rightmost character
 
@@ -246,6 +246,21 @@ namespace DUNE
       ss << std::hex << nr;
 
       return ss.str();
+    }
+
+    std::vector<uint8_t>
+    String::hexToBytes(const std::string& hex)
+    {
+      std::vector<uint8_t> bytes;
+
+      for (unsigned int i = 0; i < hex.length(); i += 2)
+      {
+        std::string byteString = hex.substr(i, 2);
+        uint8_t byte = (uint8_t) strtol(byteString.c_str(), NULL, 16);
+        bytes.push_back(byte);
+      }
+
+      return bytes;
     }
 
     std::string

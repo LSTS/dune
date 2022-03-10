@@ -103,5 +103,43 @@ namespace DUNE
 
       return Utils::String::str("%03d%02d.%05d,%c", std::abs(lon_deg), lon_min, lon_min_frac, (lon_deg >= 0) ? 'E' : 'W');
     }
+
+    double
+    NMEAToLatitude(const std::string& str)
+    {
+      int lat_deg = 0;
+      double lat_min = 0.0;
+      char hemisphere;
+
+      if (str[4] != '.')
+        return -1.0;
+
+      if (std::sscanf(str.c_str(), "%02d%lf,%c", &lat_deg, &lat_min, &hemisphere) != 3)
+        return -1.0;
+
+      if (hemisphere == 'S')
+        lat_deg *= -1;
+
+      return Math::Angles::normalizeRadian(Math::Angles::radians(Math::Angles::convertDMSToDecimal(lat_deg, lat_min)));
+    }
+
+    double
+    NMEAToLongitude(const std::string& str)
+    {
+      int lon_deg = 0;
+      double lon_min = 0.0;
+      char hemisphere;
+
+      if (str[5] != '.')
+        return -1.0;
+
+      if (std::sscanf(str.c_str(), "%03d%lf,%c", &lon_deg, &lon_min, &hemisphere) != 3)
+        return -1.0;
+
+      if (hemisphere == 'W')
+        lon_deg *= -1;
+
+      return Math::Angles::normalizeRadian(Math::Angles::radians(Math::Angles::convertDMSToDecimal(lon_deg, lon_min)));
+    }
   }
 }

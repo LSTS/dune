@@ -149,6 +149,7 @@ macro(dune_probe_headers)
   dune_test_header(libintl.h)
   dune_test_header(syslog.h)
   dune_test_header(float.h)
+  dune_test_header(linux/pps.h)
 
   # A few systems/libraries have non self contained headers (notably
   # OpenBSD and RTEMS), to overcome this we perform the following

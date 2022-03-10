@@ -31,12 +31,12 @@
 #define DUNE_UTILS_STRING_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
+#include <cstdarg>
+#include <cstdio>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iostream>
-#include <cstdio>
-#include <cstdarg>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -84,17 +84,16 @@ namespace DUNE
       static std::string
       ltrim(const std::string& str);
 
+      //! Strip whitespace from the end of a string in place.
+      //! @param[in,out] str string.
+      static void
+      rightTrimInPlace(char* str);
+
       //! Strip whitespace from the end of a string.
       //! @param str object string.
       //! @return string without trailing whitespaces.
       static std::string
       rtrim(const std::string& str);
-
-      //! Strip whitespace from the end of a string, modifying the
-      //! original string.
-      //! @param str object string.
-      static void
-      rtrim(char* str);
 
       //! Resize string by replacing any extra characters with '\0'.
       //! If size is greater than current size, the string is untouched.
@@ -183,6 +182,9 @@ namespace DUNE
       static std::string
       toHex(int nr);
 
+      static std::vector<uint8_t>
+      hexToBytes(const std::string& hex);
+
       static std::string
       fromHex(const std::string& str);
 
@@ -202,39 +204,43 @@ namespace DUNE
       }
 
       static std::string
-      str(const char* format, ...)
+      str(const char* fmt, ...)
+      {
+        std::va_list ap;
+        va_start(ap, fmt);
+        std::string result = strVl(fmt, ap);
+        va_end(ap);
+        return result;
+      }
+
+      static std::string
+      strVl(const char* fmt, std::va_list ap)
       {
         char bfr[1024] = {0};
-        std::va_list ap;
-        va_start(ap, format);
-
-#if defined(DUNE_SYS_HAS_VSNPRINTF)
-        vsnprintf(bfr, sizeof(bfr), format, ap);
-#elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
-        vsnprintf_s(bfr, sizeof(bfr), sizeof(bfr) - 1, format, ap);
-#else
-        std::vsprintf(bfr, format, ap);
-#endif
-        va_end(ap);
-
+        formatVl(bfr, sizeof(bfr), fmt, ap);
         return bfr;
       }
 
       static int
-      format(char* str, size_t size, const char* format, ...)
+      format(char* str, size_t size, const char* fmt, ...)
       {
         std::va_list ap;
-        va_start(ap, format);
-
-#if defined(DUNE_SYS_HAS_VSNPRINTF)
-        int rv = vsnprintf(str, size, format, ap);
-#elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
-        int rv = vsnprintf_s(str, size, size - 1, format, ap);
-#else
-        int rv = std::vsprintf(str, format, ap);
-#endif
-
+        va_start(ap, fmt);
+        int rv = formatVl(str, size, fmt, ap);
         va_end(ap);
+        return rv;
+      }
+
+      static int
+      formatVl(char* str, size_t size, const char* fmt, std::va_list ap)
+      {
+#if defined(DUNE_SYS_HAS_VSNPRINTF)
+        int rv = vsnprintf(str, size, fmt, ap);
+#elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
+        int rv = vsnprintf_s(str, size, size - 1, fmt, ap);
+#else
+        int rv = std::vsprintf(str, fmt, ap);
+#endif
         return rv;
       }
 

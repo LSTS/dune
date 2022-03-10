@@ -59,6 +59,10 @@ namespace Supervisors
       std::string entity_name;
       //! Surrogate task name.
       std::string task_name;
+      //! Surrogate config section.
+      std::string config_section;
+      //! Surrogate system power channel.
+      std::string power_channel;
     };
 
     struct Task: public Tasks::Task
@@ -68,6 +72,20 @@ namespace Supervisors
       //! Surrogate entity id.
       unsigned m_eid;
       Counter<double> m_query_info_timer;
+      //! Activation/deactivation timer.
+      Counter<double> m_countdown;
+      //! Power channel control.
+      IMC::PowerChannelControl m_pcc;
+      //! Power channel state.
+      IMC::PowerChannelState m_pcs;
+      //! True if task is activating.
+      bool m_activating;
+      //! True if task is deactivating.
+      bool m_deactivating;
+      //! PushEntityParameters message.
+      IMC::PushEntityParameters m_push;
+      //! Entity Parameter message.
+      IMC::EntityState m_estate;
       //! Task arguments.
       Arguments m_args;
 
@@ -75,7 +93,9 @@ namespace Supervisors
         Tasks::Task(name, ctx),
         m_sid(IMC::AddressResolver::invalid()),
         m_eid(DUNE_IMC_CONST_UNK_EID),
-        m_query_info_timer(5.0)
+        m_query_info_timer(5.0),
+        m_activating(false),
+        m_deactivating(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -90,11 +110,19 @@ namespace Supervisors
         param("Surrogate Task", m_args.task_name)
         .description("Name of the slave task");
 
+        param("Surrogate Section", m_args.config_section)
+        .description("Name of the surrogate configuration section");
+
+        param("Surrogate Power Channel", m_args.power_channel)
+        .defaultValue("None")
+        .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
+
         // Register handler routines.
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::EntityState>(this);
         bind<IMC::EntityParameters>(this);
+        bind<IMC::PowerChannelState>(this);
       }
 
       bool
@@ -103,9 +131,12 @@ namespace Supervisors
         if (m_args.task_name.empty())
           return false;
 
-        Tasks::Task* task = Tasks::Factory::produce(m_args.task_name, "Surrogate", m_ctx);
-        if (task == NULL)
+        Tasks::Task* task = Tasks::Factory::produce(m_args.task_name, m_args.config_section, m_ctx);
+        if (task == nullptr)
           throw std::invalid_argument(Utils::String::str(DTR("invalid task name '%s'"), m_args.task_name.c_str()));
+
+        Path cfg_path = (m_ctx.dir_cfg / m_args.system_name + ".ini");
+        m_ctx.config.parseFile(cfg_path.c_str());
 
         try
         {
@@ -133,6 +164,13 @@ namespace Supervisors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        m_pcc.name = m_args.power_channel;
+        m_pcs.name = m_args.power_channel;
+        m_countdown.setTop(getActivationTime());
+
+        if(m_args.power_channel != "None")
+          queryEntityInfo();
       }
 
       void
@@ -163,6 +201,14 @@ namespace Supervisors
           return;
 
         relayTo(msg);
+
+        if(m_args.power_channel == "None")
+          return;
+
+        IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
+        for (; itr != msg->params.end(); ++itr)
+          if((*itr)->name == "Active" && (*itr)->value == "true")
+            onRequestActivation();
       }
 
       void
@@ -181,6 +227,7 @@ namespace Supervisors
           return;
 
         relayTo(msg);
+        m_push = *msg;
       }
 
       void
@@ -199,19 +246,43 @@ namespace Supervisors
       void
       onRequestActivation(void)
       {
-        sendActiveParameter("true");
+        if(m_args.power_channel != "None")
+        {
+          m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(m_pcc);
+          m_countdown.reset();
+          m_activating = true;
+          debug("Power on surrogate PCC.");
+        }
+        else
+          sendActiveParameter("true");
       }
 
       void
       onRequestDeactivation(void)
       {
         sendActiveParameter("false");
+
+        if(m_args.power_channel != "None")
+          m_deactivating = true;
       }
 
       bool
       isFromSurrogate(const IMC::Message* msg)
       {
         return (msg->getSource() == m_sid) && (msg->getSourceEntity() == m_eid);
+      }
+
+      void
+      consume(const IMC::PowerChannelState* msg)
+      {
+        if(msg->name != m_args.power_channel)
+          return;
+
+        if(msg->state == IMC::PowerChannelState::PCS_OFF)
+          m_eid = DUNE_IMC_CONST_UNK_EID;
+
+        m_pcs = *msg;
       }
 
       void
@@ -234,6 +305,7 @@ namespace Supervisors
           return;
 
         setEntityState((DUNE::IMC::EntityState::StateEnum)msg->state, msg->description);
+        m_estate = *msg;
       }
 
       void
@@ -249,6 +321,16 @@ namespace Supervisors
           activate();
         else if (isDeactivating() && (msg->state == IMC::EntityActivationState::EAS_INACTIVE))
           deactivate();
+
+        if(m_args.power_channel != "None" && msg->state == IMC::EntityActivationState::EAS_DEACT_IP)
+          onRequestDeactivation();
+
+        if(m_args.power_channel != "None" && msg->state == IMC::EntityActivationState::EAS_ACT_IP &&
+           m_estate.state == IMC::EntityState::ESTA_FAILURE)
+        {
+          activationFailed(DTR("failed activation, device reporting failure state."));
+          onRequestDeactivation();
+        }
       }
 
       void
@@ -290,6 +372,40 @@ namespace Supervisors
           {
             m_query_info_timer.reset();
             queryEntityInfo();
+          }
+
+          if (m_activating)
+          {
+            if (m_pcs.state == IMC::PowerChannelControl::PCC_OP_TURN_ON && m_eid != DUNE_IMC_CONST_UNK_EID)
+            {
+              debug("PCC activation took %0.2f s", getActivationTime()-m_countdown.getRemaining());
+              dispatch(m_push);
+              sendActiveParameter("true");
+              m_activating = false;
+            }
+            else if (m_countdown.overflow())
+            {
+              activationFailed(DTR("failed to contact device"));
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+              m_activating = false;
+              onRequestDeactivation();
+            }
+          }
+
+          if (m_deactivating)
+          {
+            IMC::PowerOperation pop;
+            pop.setDestination(m_sid);
+            pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+            dispatch(pop);
+            debug("Sent PowerOperation to surrogate.");
+            Delay::wait(getDeactivationTime());
+
+            m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+            dispatch(m_pcc);
+            m_deactivating = false;
+            m_countdown.setTop(getActivationTime());
+            debug("Power off surrogate PCC.");
           }
         }
       }

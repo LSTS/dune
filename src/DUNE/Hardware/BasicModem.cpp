@@ -27,16 +27,19 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
+// ISO C++ headers.
+#include <cstdint>
+
 // DUNE headers.
 #include <DUNE/Config.hpp>
-#include <DUNE/Time/Delay.hpp>
-#include <DUNE/Time/Counter.hpp>
+#include <DUNE/Concurrency/ScopedMutex.hpp>
+#include <DUNE/Hardware/BasicModem.hpp>
+#include <DUNE/Hardware/Exceptions.hpp>
 #include <DUNE/IO/Poll.hpp>
 #include <DUNE/Status/Messages.hpp>
 #include <DUNE/Streams/Terminal.hpp>
-#include <DUNE/Concurrency/ScopedMutex.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
+#include <DUNE/Time/Counter.hpp>
+#include <DUNE/Time/Delay.hpp>
 
 namespace DUNE
 {
@@ -114,8 +117,6 @@ namespace DUNE
       m_line_trim = enable;
     }
 
-    //! Test if ISU is busy performing an SBD session.
-    //! @return true if ISU is busy, false otherwise.
     bool
     BasicModem::isBusy(void)
     {
@@ -127,13 +128,13 @@ namespace DUNE
     BasicModem::setBusy(bool value)
     {
       Concurrency::ScopedMutex l(m_mutex);
+      if (m_busy != value)
+        getTask()->debug("modem %s", value ? "busy" : "idle");
       m_busy = value;
       if (m_busy && (m_tx_rate_max >= 0))
         m_tx_rate_timer.reset();
     }
 
-    //! Test if ISU is cooling down.
-    //! @return true if ISU is cooling down, false otherwise.
     bool
     BasicModem::isCooling(void)
     {
@@ -172,6 +173,37 @@ namespace DUNE
     {
       Concurrency::ScopedMutex l(m_mutex);
       m_read_mode = mode;
+      if (mode == READ_MODE_LINE) {
+        if (m_bytes.size() > 0) { // if have bytes in queue, transfer to lines
+          getTask()->spew(
+                          "There are %d bytes in the queue bytes. Convert to queue of lines.",
+                          m_bytes.size());
+          while (m_bytes.size() > 0) {
+            uint8_t byte = 0;
+            m_bytes.pop(byte);
+            m_chars.push(byte);
+          }
+          std::string line = "";
+          while (!m_chars.empty()) {
+            if (!processInput(line))
+              continue;
+
+            if (line.empty())
+              continue;
+
+            if (!handleUnsolicited(line)) {
+              m_lines.push(line);
+              line = "";
+            }
+          }
+        }
+      } else {
+        if (m_lines.size()) {
+          getTask()->err(
+                         "There are %d lines in the queue. Convert to queue of bytes.",
+                         m_lines.size());
+        }
+      }
     }
 
     void
@@ -183,6 +215,11 @@ namespace DUNE
     void
     BasicModem::send(const std::string& str)
     {
+      IMC::DevDataText txt;
+      txt.value = str;
+      txt.setDestination(getTask()->getSystemId());
+      getTask()->dispatch(txt);
+
       getTask()->trace("send: %s", Streams::sanitize(str).c_str());
       sendRaw((uint8_t*)str.c_str(), str.size());
     }
@@ -221,10 +258,12 @@ namespace DUNE
     {
       unsigned bytes_read = 0;
 
-      while (!timer.overflow())
-      {
-        if (m_bytes.waitForItems(timer.getRemaining()))
-          data[bytes_read++] = m_bytes.pop();
+      while (!timer.overflow()) {
+        if (m_bytes.waitForItems(timer.getRemaining())) {
+          uint8_t byte = 0;
+          if (m_bytes.pop(byte))
+            data[bytes_read++] = byte;
+        }
 
         if (bytes_read == data_size)
           return;
@@ -243,7 +282,7 @@ namespace DUNE
         char c = m_chars.front();
         m_chars.pop();
 
-          m_line.push_back(c);
+        m_line.push_back(c);
 
         //!@fixme: concurrency hazard.
         if (c == m_line_term_in[m_line_term_idx])
@@ -255,10 +294,6 @@ namespace DUNE
             got_line = true;
             break;
           }
-        }
-        else
-        {
-
         }
       }
 
@@ -345,10 +380,8 @@ namespace DUNE
         try
         {
           rv = m_handle->read(bfr, sizeof(bfr));
-        }
-        catch (...)
-        {
-          m_task->war("%s", Status::getString(Status::CODE_IO_ERROR));
+        } catch (std::runtime_error &e) {
+          m_task->war("%s: %s", Status::getString(Status::CODE_IO_ERROR), e.what());
           break;
         }
 

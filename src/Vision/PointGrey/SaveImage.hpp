@@ -123,7 +123,7 @@ namespace Vision
           }
           catch(...)
           {
-            m_task->war("erro writing exif data to %s", image.c_str());
+            m_task->war("error writing exif data to %s", image.c_str());
             m_imageTag.release();
             return false;
           }
@@ -284,7 +284,7 @@ namespace Vision
                   }
                   catch(...)
                   {
-                    m_task->war("erro write exif data - thr: %s", m_name_thread.c_str());
+                    m_task->war("error write exif data - thr: %s", m_name_thread.c_str());
                   }
                 }
                 m_image.ReleaseBuffer();

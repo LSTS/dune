@@ -77,7 +77,26 @@ namespace DUNE
           m_queue.pop();
           return v;
         }
-        return 0;
+
+        return nullptr;
+      }
+
+      //! Retrieve the first element of the queue and removes it from
+      //! the queue.
+      //! @param[in,out] value where to store the popped value.
+      //! @return true if an element was popped, false otherwise.
+      bool
+      pop(T& value)
+      {
+        ScopedCondition l(m_cond);
+        if (m_queue.size() > 0)
+        {
+          value = m_queue.front();
+          m_queue.pop();
+          return true;
+        }
+
+        return false;
       }
 
       //! Wait for items to be available.

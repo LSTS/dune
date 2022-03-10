@@ -30,8 +30,9 @@
 #ifndef DUNE_HARDWARE_BASIC_MODEM_HPP_INCLUDED_
 #define DUNE_HARDWARE_BASIC_MODEM_HPP_INCLUDED_
 
-// ISO C++ 98 headers.
+// ISO C++ headers.
 #include <string>
+#include <cstdint>
 
 // DUNE headers.
 #include <DUNE/Concurrency/Thread.hpp>
@@ -226,7 +227,7 @@ namespace DUNE
       processInput(std::string& str);
 
       void
-      run(void);
+      run() override;
     };
   }
 }
