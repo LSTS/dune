@@ -24,90 +24,53 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Jose Pinto                                                       *
+// Author: Keila Lima                                                       *
 //***************************************************************************
 
+#ifndef DUNE_NETWORK_FRAGMENTEDDATA_HPP_INCLUDED_
+#define DUNE_NETWORK_FRAGMENTEDDATA_HPP_INCLUDED_
+
 // DUNE headers.
-#include <DUNE/Network/FragmentedMessage.hpp>
+#include <DUNE/Tasks.hpp>
+
 
 namespace DUNE
 {
   namespace Network
   {
-    FragmentedMessage::FragmentedMessage(Tasks::Task* parent):
-        AbstractFragmentedData<IMC::Message *, IMC::MessagePart *>(parent)
-    {
-    }
-
-    void
-    FragmentedMessage::setFragment(IMC::MessagePart* part)
-    {
-      // is this the first fragment?
-      if (m_num_frags < 0)
+      template <typename T,typename A>
+      class AbstractFragmentedData
       {
-        m_num_frags = part->num_frags;
-        m_uid = part->uid;
-        m_src = part->getSource();
-        m_creation_time = Time::Clock::get();
+    public:
+      AbstractFragmentedData(Tasks::Task* parent) {
+        m_parent = parent;
+        m_src = m_creation_time = m_num_frags = -1;
       }
 
-      // Check if this is a valid fragment
-      if (part->uid != m_uid || part->getSource() != m_src ||
-          part->frag_number >= m_num_frags)
-      {
-        if (m_parent == NULL)
-          DUNE_ERR("FragmentedMessage", "Invalid fragment received and it won't be processed.");
-        else
-          m_parent->err(DTR("Invalid fragment received and it won't be processed."));
+        virtual double
+        getAge() = 0;
 
-      }
+        virtual int
+        getFragmentsMissing() = 0;
 
-      m_fragments.insert(std::pair<unsigned int, IMC::MessagePart>(part->frag_number,*part));
-
-    }
-
-    double
-    FragmentedMessage::getAge()
-    {
-      if (m_creation_time < 0)
-        return 0;
-
-      return Time::Clock::get() - m_creation_time;
-    }
-
-    int
-    FragmentedMessage::getFragmentsMissing()
-    {
-      return m_num_frags - m_fragments.size();
-    }
-
-    IMC::Message*
-    FragmentedMessage::getData() {
-      // Message is complete. Let's reassemble and return it.
-      if (isCompleted())
-      {
-        int i;
-        int total_length = 0;
-        // concatenate all parts into a single array
-        std::vector<char> data;
-        for (i = 0; i < m_num_frags; i++)
+        virtual bool
+        isCompleted()
         {
-          total_length += m_fragments[i].data.size();
-          data.insert(data.end(), m_fragments[i].data.begin(),
-                      m_fragments[i].data.end());
+          return getFragmentsMissing() == 0;
         }
 
-        return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
-      }
-      else
-      {
-        return nullptr;
-      }
-    }
+        virtual void
+        setFragment(A part) {};
 
-    FragmentedMessage::~FragmentedMessage()
-    {
-      m_fragments.clear();
-    }
+        virtual T
+        getData() {};
+
+    protected:
+        DUNE::Tasks::Task* m_parent;
+        int m_src;
+        double m_creation_time;
+        int m_num_frags;
+    };
   }
 }
+#endif

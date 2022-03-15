@@ -31,40 +31,35 @@
 #define DUNE_NETWORK_FRAGMENTED_MESSAGE_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/IMC.hpp>
-#include <DUNE/Tasks.hpp>
-#include <DUNE/Time.hpp>
+#include <DUNE/Network/AbstractFragmentedData.hpp>
+
 
 namespace DUNE
 {
   namespace Network
   {
-    class FragmentedMessage
+  class FragmentedMessage: public AbstractFragmentedData<IMC::Message*,IMC::MessagePart*>
     {
     public:
-      FragmentedMessage(void);
+      FragmentedMessage(Tasks::Task* parent);
 
-      double
-      getAge(void);
+      virtual double
+      getAge();
 
-      int
-      getFragmentsMissing(void);
+      virtual int
+      getFragmentsMissing();
 
-      IMC::Message*
-      setFragment(const IMC::MessagePart* part);
+      virtual void
+      setFragment(IMC::MessagePart* part);
 
-      void
-      setParentTask(Tasks::Task* parent);
+      virtual IMC::Message*
+      getData();
 
-      ~FragmentedMessage(void);
+      ~FragmentedMessage();
 
     private:
-      int m_src;
-      int m_uid;
-      int m_num_frags;
-      double m_creation_time;
-      DUNE::Tasks::Task* m_parent;
-      std::map<unsigned int, IMC::MessagePart> m_fragments;
+        int m_uid;
+        std::map<unsigned int, IMC::MessagePart> m_fragments;
     };
   }
 }

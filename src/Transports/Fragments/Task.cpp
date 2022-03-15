@@ -68,26 +68,25 @@ namespace Transports
       }
 
       void
-      consume(const IMC::MessagePart* msg)
-      {
-        int hash = (msg->uid << 16) | msg->getSource();
+      consume(const IMC::MessagePart* msg) {
+          int hash = (msg->uid << 16) | msg->getSource();
+          std::map<uint32_t,FragmentedMessage>::iterator itr = m_incoming.find(hash);
+          if (itr == m_incoming.end()) {
+            FragmentedMessage incMsg = FragmentedMessage(this);
+            //m_incoming[hash] = incMsg;
+            m_incoming.insert(std::pair<uint32_t, FragmentedMessage>(hash, incMsg));
+          }
+        else {
+          debug("Incoming message fragment (%d still missing)",
+            itr->second.getFragmentsMissing());
 
-        if (m_incoming.find(hash) == m_incoming.end())
-        {
-          FragmentedMessage incMsg;
-          incMsg.setParentTask(this);
-          m_incoming[hash] = incMsg;
-        }
-
-        debug("Incoming message fragment (%d still missing)",
-              m_incoming[hash].getFragmentsMissing());
-
-        IMC::Message * res = m_incoming[hash].setFragment(msg);
-        if (res != NULL)
-        {
+            itr->second.setFragment(msg->clone());
+        if (itr->second.isCompleted()) {
+          IMC::Message *res = itr->second.getData();
           dispatch(res);
           m_incoming.erase(hash);
         }
+      }
       }
 
       void

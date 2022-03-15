@@ -24,90 +24,67 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Jose Pinto                                                       *
+// Author: Keila Lima                                                       *
 //***************************************************************************
 
+#ifndef DUNE_NETWORK_FRAGMENTED_FILE_HPP_INCLUDED_
+#define DUNE_NETWORK_FRAGMENTED_FILE_HPP_INCLUDED_
+
 // DUNE headers.
-#include <DUNE/Network/FragmentedMessage.hpp>
+#include <DUNE/Network/AbstractFragmentedData.hpp>
+#include <DUNE/FileSystem/Path.hpp>
+#include <DUNE/Compression/FileOutput.hpp>
 
 namespace DUNE
 {
   namespace Network
   {
-    FragmentedMessage::FragmentedMessage(Tasks::Task* parent):
-        AbstractFragmentedData<IMC::Message *, IMC::MessagePart *>(parent)
+  class FragmentedFile: public AbstractFragmentedData<std::ofstream*,IMC::FileFragment*>
     {
-    }
+      public:
+        FragmentedFile(Tasks::Task* parent, FileSystem::Path& dir, std::string id);
 
-    void
-    FragmentedMessage::setFragment(IMC::MessagePart* part)
-    {
-      // is this the first fragment?
-      if (m_num_frags < 0)
+      virtual double
+      getAge();
+
+      virtual int
+      getFragmentsMissing();
+
+      virtual void
+      setFragment(IMC::FileFragment* part);
+
+      virtual std::ofstream*
+      getData();
+
+      std::ofstream*
+      getOutFile();
+
+      void clear();
+
+      inline
+      std::string
+      getFileName()
       {
-        m_num_frags = part->num_frags;
-        m_uid = part->uid;
-        m_src = part->getSource();
-        m_creation_time = Time::Clock::get();
+        return m_dir.str();
       }
 
-      // Check if this is a valid fragment
-      if (part->uid != m_uid || part->getSource() != m_src ||
-          part->frag_number >= m_num_frags)
-      {
-        if (m_parent == NULL)
-          DUNE_ERR("FragmentedMessage", "Invalid fragment received and it won't be processed.");
-        else
-          m_parent->err(DTR("Invalid fragment received and it won't be processed."));
-
+      std::string&
+      getFragId(){
+        return m_frag_id;
       }
 
-      m_fragments.insert(std::pair<unsigned int, IMC::MessagePart>(part->frag_number,*part));
+    private:
+      std::string m_frag_id;
+      FileSystem::Path m_dir;
+      //! ordered list of fragments to write in the right order to disk
+      std::map<uint16_t,IMC::FileFragment*> m_fragments;
+      unsigned int m_saved_fragments;
 
-    }
-
-    double
-    FragmentedMessage::getAge()
-    {
-      if (m_creation_time < 0)
-        return 0;
-
-      return Time::Clock::get() - m_creation_time;
-    }
-
-    int
-    FragmentedMessage::getFragmentsMissing()
-    {
-      return m_num_frags - m_fragments.size();
-    }
-
-    IMC::Message*
-    FragmentedMessage::getData() {
-      // Message is complete. Let's reassemble and return it.
-      if (isCompleted())
-      {
-        int i;
-        int total_length = 0;
-        // concatenate all parts into a single array
-        std::vector<char> data;
-        for (i = 0; i < m_num_frags; i++)
-        {
-          total_length += m_fragments[i].data.size();
-          data.insert(data.end(), m_fragments[i].data.begin(),
-                      m_fragments[i].data.end());
-        }
-
-        return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
-      }
-      else
-      {
-        return nullptr;
-      }
-    }
-
-    FragmentedMessage::~FragmentedMessage()
-    {
-      m_fragments.clear();
-    }
+      uint16_t nextFragToSave() const;
+      void writeToDisk(IMC::FileFragment *pFragment);
+  };
   }
 }
+
+#endif
+

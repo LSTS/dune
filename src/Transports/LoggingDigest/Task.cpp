@@ -48,6 +48,10 @@ namespace Transports
       std::string lsf_name;
       //! Log file folder.
       std::string log_folder;
+      //! Entities to take into account when collecting the messages
+      std::vector<std::string> filtered_entities;
+      //! Add LogControl Messages ?
+      bool log_control, log_errors;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -64,13 +68,16 @@ namespace Transports
       ByteBuffer m_buffer;
       //! Task arguments.
       Arguments m_args;
+      //! Message Filter
+      MessageFilter m_filter;
+
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_log(NULL)
+        m_log(nullptr)
       {
         param("Sample Interval", m_args.sample_interval)
         .defaultValue("1.0")
@@ -92,8 +99,22 @@ namespace Transports
         param("Transports", m_args.messages)
         .defaultValue("");
 
-        bind<IMC::LoggingControl>(this);
-        bind<IMC::EntityInfo>(this);
+      param("Entities", m_args.filtered_entities)
+      .defaultValue("")
+      .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type");
+
+      param("Log Control", m_args.log_control)
+      .defaultValue("true")
+      .description("Add log control messages to logged data");
+
+      param("Log Errors",m_args.log_errors)
+      .defaultValue("false")
+      .description("Log Errors reported in VehicleState.");
+
+      bind<IMC::LoggingControl>(this);
+      bind<IMC::EntityInfo>(this);
+      bind<IMC::VehicleState>(this);
+
       }
 
       ~Task(void)
@@ -124,10 +145,21 @@ namespace Transports
         if (paramChanged(m_args.flush_interval))
           m_flush_timer.setTop(m_args.flush_interval);
 
+        if (paramChanged(m_args.filtered_entities))
+          m_filter.setupEntities(m_args.filtered_entities, this);
+
         bind(this, m_args.messages);
       }
 
-      uint32_t
+        void
+        onResourceRelease(void)
+        {
+        if(isStopping())
+          if(m_log!= nullptr)
+            m_log->flush();
+        }
+
+      static uint32_t
       getKey(const IMC::Message* msg)
       {
         return (msg->getId() << 16) + (msg->getSourceEntity() << 8) + (msg->getSubId() & 0xff);
@@ -137,7 +169,6 @@ namespace Transports
       startLog(const std::string& name)
       {
         stopLog();
-
         if (!m_args.log_folder.empty())
         {
           std::string flat_name(name);
@@ -146,7 +177,6 @@ namespace Transports
             if (flat_name[i] == '/')
               flat_name[i] = '_';
           }
-
           Path(m_args.log_folder).create();
           Path path = m_args.log_folder / (flat_name + ".lsf.gz");
           m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
@@ -156,7 +186,6 @@ namespace Transports
           Path path = m_ctx.dir_log / name / (m_args.lsf_name + ".lsf.gz");
           m_log = new Compression::FileOutput(path.c_str(), Compression::METHOD_GZIP);
         }
-
         // Log entities.
         double time_ref = Clock::getSinceEpoch();
         std::vector<Entities::EntityDataBase::Entity*> devs;
@@ -178,6 +207,8 @@ namespace Transports
       void
       stopLog(void)
       {
+        if(m_log != nullptr)
+          m_log->flush();
         Memory::clear(m_log);
       }
 
@@ -198,12 +229,22 @@ namespace Transports
               throw RestartNeeded(e.what(), 5);
             }
 
-            if (m_log != NULL)
+            if (m_log != nullptr && m_args.log_control)
               logMessage(msg);
             break;
           case IMC::LoggingControl::COP_STOPPED:
             stopLog();
             break;
+        }
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        if(!m_args.log_errors)
+          return;
+        if(msg->error_count > 0){
+          logMessage(msg);
         }
       }
 
@@ -235,7 +276,7 @@ namespace Transports
       void
       writeSample(void)
       {
-        if (m_log == NULL)
+        if (m_log == nullptr)
           return;
 
         if (!m_sample_timer.overflow())
@@ -244,7 +285,9 @@ namespace Transports
         std::map<uint32_t, IMC::Message*>::iterator itr = m_messages.begin();
         for (; itr != m_messages.end(); ++itr)
         {
-          logMessage(itr->second);
+          if(!m_filter.filter(itr->second)) {
+            logMessage(itr->second);
+          }
           delete itr->second;
         }
 
@@ -253,12 +296,12 @@ namespace Transports
       }
 
       void
-      flush(void)
+      flush()
       {
-        if (m_log == NULL)
+        if (m_log == nullptr)
           return;
 
-        if (!m_flush_timer.overflow())
+        if (!m_flush_timer.overflow()) //flush only by timer
           return;
 
         m_flush_timer.reset();
@@ -268,7 +311,7 @@ namespace Transports
       void
       logMessage(const IMC::Message* msg)
       {
-        if (m_log == NULL)
+        if (m_log == nullptr)
           return;
 
         IMC::Packet::serialize(msg, m_buffer);
