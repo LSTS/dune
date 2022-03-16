@@ -78,7 +78,7 @@ namespace DUNE
           return v;
         }
 
-        return nullptr;
+        return 0;
       }
 
       //! Retrieve the first element of the queue and removes it from
