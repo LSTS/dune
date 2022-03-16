@@ -60,7 +60,7 @@ namespace DUNE
           part->frag_number >= m_num_frags)
       {
         if (m_parent == nullptr)
-          m_parent->err("FragmentedFile", "Invalid fragment received and it won't be processed.");
+          m_parent->err("FragmentedFile: Invalid fragment received and it won't be processed.");
       }
 
       if(part->frag_number == nextFragToSave()){
