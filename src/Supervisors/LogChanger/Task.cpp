@@ -111,7 +111,7 @@ namespace Supervisors
             m_stopping = m_stopping ? false: m_stopping;
             break;
           case IMC::LoggingControl::COP_REQUEST_STOP: //! doesn't loopback this task requests
-            debug(DTR("Detected request to stop log."),msg->name.c_str());
+            debug(DTR("Detected request to stop log: %s"),msg->name.c_str());
             break;
           case IMC::LoggingControl::COP_STARTED: //! doesn't loopback this task requests
             debug(DTR("Started Log: %s"),msg->name.c_str());
@@ -120,11 +120,11 @@ namespace Supervisors
             else
             {
               m_log_timer.reset();
-              war(DTR("Detected request to start log, resetting timer."),msg->name.c_str());
+              war(DTR("Detected request to start log, resetting timer: %s"),msg->name.c_str());
             }
             break;
           case IMC::LoggingControl::COP_REQUEST_START: //! doesn't loopback this task requests
-            debug(DTR("Detected request to start log."),msg->name.c_str());
+            debug(DTR("Detected request to start log: %s"),msg->name.c_str());
             break;
         }
       }
