@@ -38,6 +38,7 @@
 #include <vector>
 
 // DUNE headers.
+#include <DUNE/Casts.hpp>
 #include <DUNE/Config.hpp>
 #include <DUNE/Units.hpp>
 #include <DUNE/Tasks/AbstractParameterParser.hpp>
@@ -248,6 +249,13 @@ namespace DUNE
       Parameter&
       scope(const std::string a_scope);
 
+      Parameter&
+      editable(std::string a_editable)
+      {
+        castLexical(a_editable, m_editable);
+        return *this;
+      }
+
       void
       writeXML(std::ostream& os) const;
 
@@ -310,6 +318,8 @@ namespace DUNE
       Visibility m_visibility;
       //! Parameter scope.
       Scope m_scope;
+      //! True if parameter can be editable by the operator on runtime.
+      bool m_editable;
     };
   }
 }
