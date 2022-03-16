@@ -422,7 +422,7 @@ namespace Sensors
           //The sample rate of specific IMC Messages is filtered before
           if (!m_data.data.empty() && !m_args.compressed) {
             dispatch(m_data.clone());
-            trace(DTR("Dispatching Historic Samples with %d messages"),m_data.data.size());
+            trace(DTR("Dispatching Historic Samples with %lu messages"),m_data.data.size());
             m_data.data.clear();
           } else if (!m_comp.data.empty() && m_args.compressed) {
             dispatch(m_comp.clone());
