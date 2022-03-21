@@ -47,17 +47,17 @@ namespace Sensors
     public:
       Trigger(void):
         m_active(false),
-        m_uart(NULL),
+        m_handle(NULL),
         m_switch_data(NULL),
         m_switch_data_size(0)
       {
       }
 
       void
-      setUART(SerialPort* uart)
+      setIOHandle(IO::Handle* uart)
       {
         ScopedMutex m(m_mutex);
-        m_uart = uart;
+        m_handle = uart;
       }
 
       void
@@ -85,7 +85,7 @@ namespace Sensors
         try
         {
           ScopedMutex m(m_mutex);
-          m_uart->write(m_switch_data, m_switch_data_size);
+          m_handle->write(m_switch_data, m_switch_data_size);
         }
         catch (...)
         {
@@ -124,7 +124,7 @@ namespace Sensors
 
     private:
       bool m_active;
-      SerialPort* m_uart;
+      IO::Handle* m_handle;
       const uint8_t* m_switch_data;
       unsigned m_switch_data_size;
       unsigned m_delay;

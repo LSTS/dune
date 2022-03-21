@@ -133,7 +133,7 @@ namespace Sensors
     struct Task: public Tasks::Task
     {
       //! Serial port handle.
-      SerialPort* m_uart;
+      IO::Handle* m_handle;
       //! Shot trigger.
       Trigger m_trigger;
       //! Distance message.
@@ -160,7 +160,7 @@ namespace Sensors
       //! %Task constructor.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_uart(NULL),
+        m_handle(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
         m_pfilt(NULL),
@@ -288,7 +288,7 @@ namespace Sensors
         m_switch.setDataPoints(m_args.data_points);
         m_trigger.setSampleFrequency(m_args.sample_frequency);
 
-        if (paramChanged(m_args.uart_dev) && (m_uart != NULL))
+        if (paramChanged(m_args.uart_dev) && (m_handle != NULL))
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
 
         m_sound_speed = m_args.sspeed;
@@ -319,18 +319,40 @@ namespace Sensors
         m_profile.beam_config.push_back(bc);
       }
 
+      //! Check if our IO device is a TCP socket.
+      //! @return true if IO device is a TCP socket, false otherwise.
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%127[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket *sock = new TCPSocket;
+        sock->setNoDelay(true);
+        sock->setSendTimeout(1.0);
+        sock->setReceiveTimeout(1.0);
+        sock->connect(addr, port);
+        m_handle = sock;
+
+        return true;
+      }
+
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev,
-                                  c_uart_baud,
-                                  SerialPort::SP_PARITY_NONE,
-                                  SerialPort::SP_STOPBITS_1,
-                                  SerialPort::SP_DATABITS_8,
-                                  true);
+          if (!openSocket())
+            m_handle = new SerialPort(m_args.uart_dev,
+                                    c_uart_baud,
+                                    SerialPort::SP_PARITY_NONE,
+                                    SerialPort::SP_STOPBITS_1,
+                                    SerialPort::SP_DATABITS_8,
+                                    true);
         }
         catch (std::runtime_error& e)
         {
@@ -353,7 +375,7 @@ namespace Sensors
           m_trigger.stopAndJoin();
         }
 
-        Memory::clear(m_uart);
+        Memory::clear(m_handle);
         Memory::clear(m_pfilt);
       }
 
@@ -362,7 +384,7 @@ namespace Sensors
       onResourceInitialization(void)
       {
         m_trigger.setActive(isActive());
-        m_trigger.setUART(m_uart);
+        m_trigger.setIOHandle(m_handle);
         m_trigger.setSwitchData(m_switch.data(), m_switch.size());
         m_trigger.start();
 
@@ -460,10 +482,10 @@ namespace Sensors
             err("%s", DTR(Status::getString(Status::CODE_COM_ERROR)));
           }
 
-          if (!Poll::poll(*m_uart, 1.0))
+          if (!Poll::poll(*m_handle, 1.0))
             continue;
 
-          size_t rv = m_uart->read(bfr, sizeof(bfr));
+          size_t rv = m_handle->read(bfr, sizeof(bfr));
           if (rv == 0)
             continue;
 
