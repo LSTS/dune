@@ -59,7 +59,7 @@ namespace DUNE
       if (std::strcmp(part->id.c_str(), m_frag_id.c_str()) != 0 || part->getSource() != m_src ||
           part->frag_number >= m_num_frags)
       {
-        if (m_parent == nullptr)
+        if (m_parent != nullptr)
           m_parent->err("FragmentedFile: Invalid fragment received and it won't be processed.");
       }
 
