@@ -69,7 +69,7 @@ namespace Transports
     struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
-      SerialPort* m_uart;
+      IO::Handle* m_uart;
       //! Driver handler.
       Driver* m_driver;
       //! List of transmission requests.
@@ -157,16 +157,41 @@ namespace Transports
           m_driver->setTxRateMax(m_args.max_tx_rate);
       }
 
+      //! Check if our IO device is a TCP socket.
+      //! @return true if IO device is a TCP socket, false otherwise.
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%127[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket *sock = new TCPSocket;
+        sock->setNoDelay(true);
+        sock->setSendTimeout(1.0);
+        sock->setReceiveTimeout(1.0);
+        sock->connect(addr, port);
+        m_uart = sock;
+
+        return true;
+      }
+
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
         try
         {
-          if(m_args.use_9523)
-            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
-          else
-            m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          if (!openSocket())
+          {
+            if(m_args.use_9523)
+              m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
+            else
+              m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          }
+
           m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay);
           m_driver->initialize();
           m_driver->setTxRateMax(m_args.max_tx_rate);
