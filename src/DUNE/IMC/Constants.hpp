@@ -37,7 +37,7 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.30"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2021-12-07 8be592a  (HEAD -> master, origin/master, origin/HEAD)"
+#define DUNE_IMC_CONST_GIT_INFO "2022-03-14 ada9492  (HEAD -> master, origin/master, origin/HEAD)"
 //! MD5 sum of XML specification file.
 #define DUNE_IMC_CONST_MD5 "0f425402b735f36a64d579da7bb4baf3"
 //! Synchronization number.
