@@ -89,12 +89,13 @@ namespace DUNE
     //! Computes the norm between two points.
     //! @param a first point.
     //! @param b second point.
+    //! @param c third point.
     //! @return norm between two points.
     template <typename Type>
     Type
-    norm(const Type& a, const Type& b)
+    norm(const Type& a, const Type& b, const Type& c = 0.0)
     {
-      return std::sqrt(std::pow(a, 2) + std::pow(b, 2));
+      return std::sqrt(std::pow(a, 2) + std::pow(b, 2) + std::pow(c, 2));
     }
 
     //! Insertion Sort algorithm.
