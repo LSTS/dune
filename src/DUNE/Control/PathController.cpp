@@ -744,7 +744,7 @@ namespace DUNE
                           m_ts.end, &m_ts.los_angle, &m_ts.range);
 
       // Ground course and speed
-      m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
+      m_ts.course = computeCourse(m_estate);
       m_ts.speed = m_ts.cc ? Math::norm(m_estate.vx, m_estate.vy) : m_estate.u;
 
       if (!m_ts.loitering)

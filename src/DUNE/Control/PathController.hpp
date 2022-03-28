@@ -417,6 +417,15 @@ namespace DUNE
         Coordinates::getBearingAndRange(origin, point, bearing, range);
       }
 
+      //! Overloadable method for course computation
+      //! @param[in] es current Estimated State
+      //! @return Course (in rad)
+      virtual double
+      computeCourse(const IMC::EstimatedState& es)
+      {
+        return m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
+      }
+
       //! Deactivate bottom tracker
       void
       deactivateBottomTracker(void);
