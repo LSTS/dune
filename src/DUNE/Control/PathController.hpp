@@ -400,9 +400,8 @@ namespace DUNE
       //! @param[in] coord current coordinate
       //! @param[out] x x coordinate relatively to path
       //! @param[out] y y coordinate relatively to path
-      template <typename T>
-      inline void
-      getTrackPosition(const T& coord, double* x, double* y = 0) const
+      virtual void
+      getTrackPosition(const IMC::EstimatedState& coord, double* x, double* y = 0)
       {
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
