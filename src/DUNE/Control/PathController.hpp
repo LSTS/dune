@@ -397,13 +397,24 @@ namespace DUNE
       onDeactivation(void);
 
       //! Update position relatively to track
-      //! @param[in] coord current coordinate
+      //! @param[in] coord current Estimated State
       //! @param[out] x x coordinate relatively to path
       //! @param[out] y y coordinate relatively to path
       virtual void
       getTrackPosition(const IMC::EstimatedState& coord, double* x, double* y = 0)
       {
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
+      }
+
+      //! Overloadable getBearingAndRange method
+      //! @param[in] origin Origin
+      //! @param[in] point point for which offset is to be obtained
+      //! @param[out] bearing pointer to output bearing data
+      //! @param[out] range pointer to output range data
+      virtual void
+      getBearingAndRange(const TrackingState::Coord& origin, const TrackingState::Coord& point, double* bearing, double* range)
+      {
+        Coordinates::getBearingAndRange(origin, point, bearing, range);
       }
 
       //! Deactivate bottom tracker

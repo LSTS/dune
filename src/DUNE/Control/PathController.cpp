@@ -311,8 +311,8 @@ namespace DUNE
       const bool no_start = setStartPoint(now, dpath);
       setEndPoint(dpath);
 
-      Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                      &m_ts.track_bearing, &m_ts.track_length);
+      getBearingAndRange(m_ts.start, m_ts.end, 
+                          &m_ts.track_bearing, &m_ts.track_length);
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
@@ -550,8 +550,8 @@ namespace DUNE
           m_ts.nearby = false;
         }
 
-        Coordinates::getBearingAndRange(
-            m_ts.start, m_ts.end, &m_ts.track_bearing, &m_ts.track_length);
+        getBearingAndRange(m_ts.start, m_ts.end, 
+                            &m_ts.track_bearing, &m_ts.track_length);
       }
       else
       {
@@ -740,7 +740,8 @@ namespace DUNE
     PathController::updateTrackingState(void)
     {
       // Range and LOS angle to destination
-      getBearingAndRange(m_estate, m_ts.end, &m_ts.los_angle, &m_ts.range);
+      getBearingAndRange({m_estate.x, m_estate.y, m_estate.z}, 
+                          m_ts.end, &m_ts.los_angle, &m_ts.range);
 
       // Ground course and speed
       m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
