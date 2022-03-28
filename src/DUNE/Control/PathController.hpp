@@ -423,7 +423,16 @@ namespace DUNE
       virtual double
       computeCourse(const IMC::EstimatedState& es)
       {
-        return m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
+        return m_ts.cc ? std::atan2(es.vy, es.vx) : es.psi;
+      }
+
+      //! Overloadable method for speed computation
+      //! @param[in] es current Estimated State
+      //! @return Speed (in m/s)
+      virtual double
+      computeSpeed(const IMC::EstimatedState& es)
+      {
+        return m_ts.cc ? Math::norm(es.vx, es.vy) : es.u;
       }
 
       //! Deactivate bottom tracker

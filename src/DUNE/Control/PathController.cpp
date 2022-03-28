@@ -745,7 +745,7 @@ namespace DUNE
 
       // Ground course and speed
       m_ts.course = computeCourse(m_estate);
-      m_ts.speed = m_ts.cc ? Math::norm(m_estate.vx, m_estate.vy) : m_estate.u;
+      m_ts.speed = computeSpeed(m_estate);
 
       if (!m_ts.loitering)
       {
