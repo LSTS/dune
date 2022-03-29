@@ -749,7 +749,7 @@ namespace DUNE
 
       if (!m_ts.loitering)
       {
-        getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
+        getTrackPosition(m_ts, m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
         m_ts.course_error = Angles::normalizeRadian(m_ts.course - m_ts.track_bearing);
 
         m_ts.eta = getEta(m_ts);
