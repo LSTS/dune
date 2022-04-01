@@ -50,6 +50,12 @@ namespace DUNE
         m_new_medium = false;
       }
 
+      explicit MediumHandler(IMC::VehicleMedium::MediumEnum initial)
+      {
+        m_vm.medium = initial;
+        update(&m_vm);
+      }
+
       //! Update with new info.
       //! @param[in] msg latest vehicle medium message.
       void
