@@ -44,7 +44,7 @@ namespace DUNE
   {
     // Export DLL Symbols.
     class DUNE_DLL_SYM RestartNeeded;
-    class DUNE_DLL_SYM TryAgainLater;
+    class DUNE_DLL_SYM FatalError;
 
     //! The emitting task has encountered an error that can possibly
     //! be recovered by a restart.
@@ -90,6 +90,30 @@ namespace DUNE
       unsigned m_delay;
       //! True if error.
       bool m_error;
+    };
+
+    //! The emitting task has encountered an error that can not possibly
+    //! be recovered by a restart.
+    class FatalError
+    {
+    public:
+      //! Constructor.
+      //! @param[in] msg message.
+      FatalError(const std::string& msg):
+        m_msg(msg)
+      { }
+
+      //! Retrieve error message.
+      //! @return error message.
+      const char*
+      getError()
+      {
+        return m_msg.c_str();
+      }
+
+    private:
+      //! Error message.
+      std::string m_msg;
     };
 
     //! Thrown when the name of a task is not valid.
