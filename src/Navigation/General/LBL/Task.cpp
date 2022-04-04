@@ -428,7 +428,7 @@ namespace Navigation
 
           // Initial state
           if (!m_ranging.getSize())
-            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_LBL_CFG);
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_CFG);
 
           setup();
         }

@@ -220,7 +220,7 @@ namespace Simulators
         if (checkLbl())
           reset();
         else
-          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_LBL_CFG);
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_CFG);
       }
 
       void

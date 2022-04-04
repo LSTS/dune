@@ -86,8 +86,8 @@ namespace DUNE
       CODE_NOT_SYNCHED = 20,
       //! Waiting for GPS fix.
       CODE_WAIT_GPS_FIX = 21,
-      //! Waiting for configuration of LBL beacons.
-      CODE_WAIT_LBL_CFG = 22,
+      //! Waiting for configuration.
+      CODE_WAIT_CFG = 22,
       //! Waiting for solution to converge.
       CODE_WAIT_CONVERGE = 23,
       //! Missing data.
@@ -107,7 +107,9 @@ namespace DUNE
       //! Connecting.
       CODE_CONNECTING = 31,
       //! Connected.
-      CODE_CONNECTED = 32
+      CODE_CONNECTED = 32,
+      //! Parameter Invalid
+      CODE_PARAMETER_INVALID = 33
     };
   }
 }
