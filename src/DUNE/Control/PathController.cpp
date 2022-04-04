@@ -401,7 +401,7 @@ namespace DUNE
 
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
-        m_pcs.start_z = m_estate.height - m_estate.z;
+        m_pcs.start_z = getZ(dpath->start_z_units);
         m_pcs.start_z_units = dpath->start_z_units;
 
         return true;
