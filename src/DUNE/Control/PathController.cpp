@@ -418,10 +418,8 @@ namespace DUNE
     void
     PathController::setEndPoint(const IMC::DesiredPath* dpath)
     {
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.start_lat, m_pcs.start_lon, 0,
-                          &m_ts.start.x, &m_ts.start.y);
-      m_ts.start.z = m_pcs.start_z;
+      setTrackingCoord(m_ts.start, m_pcs.start_lat, m_pcs.start_lon,
+                        m_pcs.start_z, m_pcs.start_z_units);
 
       if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
           dpath->lradius > 0)
@@ -441,10 +439,8 @@ namespace DUNE
         m_pcs.end_z_units = dpath->end_z_units;
       }
 
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.end_lat, m_pcs.end_lon, 0,
-                          &m_ts.end.x, &m_ts.end.y);
-      m_ts.end.z = m_pcs.end_z;
+      setTrackingCoord(m_ts.end, m_pcs.end_lat, m_pcs.end_lon,
+                        m_pcs.end_z, m_pcs.end_z_units);
     }
 
     void
@@ -777,7 +773,7 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_estate.z - m_ts.end.z; // vertical-track
+      m_ts.track_pos.z = m_ts.end.z - m_estate.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
