@@ -773,7 +773,7 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_ts.end.z - m_estate.z; // vertical-track
+      m_ts.track_pos.z = m_ts.start.z - m_estate.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
