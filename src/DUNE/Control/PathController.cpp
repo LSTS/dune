@@ -1073,6 +1073,99 @@ namespace DUNE
 
       return std::min(65535.0, eta - time_factor);
     }
+    
+    double
+    PathController::getZ(const uint8_t& z_unit)
+    {
+      if (z_unit & IMC::Z_DEPTH)
+        return m_estate.depth;
+      else if (z_unit & IMC::Z_ALTITUDE)
+        return m_estate.alt;
+      else if (z_unit & IMC::Z_HEIGHT)
+        return m_estate.height;
+
+      // Z_NONE returns invalid
+      return -1;
+    }
+
+    void
+    PathController::setTrackingCoord(TrackingState::Coord& coord, 
+                      const double& lat, const double& lon,
+                      const double& z, const uint8_t& z_unit)
+    {
+      // Height is converted directly
+      if (z_unit & IMC::Z_HEIGHT)
+      {
+        WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
+                            lat, lon, z,
+                            &coord.x, &coord.y, &coord.z);
+        return;
+      }
+
+      // Depth and Altitude are converted separately
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                            lat, lon, 0,
+                            &coord.x, &coord.y);
+
+      if (z_unit & IMC::Z_DEPTH)
+      {
+        if (!depthToLocal(z, coord.z))
+        {
+          war("Could not convert depth coordinate. TrackingState Z set to DEPTH.");
+          coord.z = z;
+          return;
+        }
+      }
+
+      if (z_unit & IMC::Z_ALTITUDE)
+      {
+        if (!altitudeToLocal(z, coord.z))
+        {
+          war("Could not convert altitude coordinate. TrackingState Z set to ALTITUDE.");
+          coord.z = z;
+          return;
+        }
+      }
+
+      // Z_NONE sets to itself
+      coord.z = z;
+    }
+
+    bool
+    PathController::depthToLocal(const double& depth_ref, double& z)
+    {
+      // Valid depth
+      if (m_estate.depth >= 0)
+      {
+        double last_z = m_estate.z - m_estate.depth; // last_z reference, as calculated in BasicNavigation
+        z = last_z + depth_ref;
+        return true;
+      }
+
+      return false;
+    }
+
+    bool
+    PathController::altitudeToLocal(const double& alt_ref, double& z)
+    {
+      // Valid altitude
+      if (m_estate.alt >= 0)
+      {
+        // Valid depth -> UUV
+        if (m_estate.depth >= 0)
+        {
+          double last_z = m_estate.z - m_estate.depth; // last_z reference, as calculated in BasicNavigation
+          double depth_ref = m_estate.depth + m_estate.alt - alt_ref; // Convert altitude to depth
+          z = last_z + depth_ref;
+          return true;
+        }
+
+        // No depth -> UAV
+        z = alt_ref;
+      }
+
+      return false;
+    }
 
     void
     PathController::deactivateBottomTracker(void)
