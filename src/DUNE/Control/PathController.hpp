@@ -263,6 +263,38 @@ namespace DUNE
         return m_time_factor;
       }
 
+      //! Get EstimatedState value from z units
+      //! @param[in] z_unit Unit selection
+      //! @return EstimatedState depth, altitude or height, according to z_unit. 
+      //! -1 otherwise
+      double
+      getZ(const uint8_t& z_unit);
+
+      //! Set TrackingState start/end coordinates in NED frame
+      //! @param[out] coord TrackingState start/end coordinates reference.
+      //! @param[in] lat Latitude in WGS84.
+      //! @param[in] lon Longitude in WGS84.
+      //! @param[in] z value, according to z_unit.
+      //! @param[in] z_unit unit of z value.
+      void
+      setTrackingCoord(TrackingState::Coord& coord, 
+                        const double& lat, const double& lon,
+                        const double& z, const uint8_t& z_unit);
+
+      //! Convert depth reference to NED frame z axis.
+      //! @param[in] depth_ref Depth value.
+      //! @param[out] z z in NED frame.
+      //! @return true if conversion successful. false otherwise.
+      bool
+      depthToLocal(const double& depth_ref, double& z);
+
+      //! Convert altitude reference to NED frame z axis.
+      //! @param[in] alt_ref Altitude value.
+      //! @param[out] z z in NED frame.
+      //! @return true if conversion successful. false otherwise.
+      bool
+      altitudeToLocal(const double& alt_ref, double& z);
+
       //! Signal an error.
       //! This method should be used by subclasses to signal an error condition.
       //! @param msg error message
