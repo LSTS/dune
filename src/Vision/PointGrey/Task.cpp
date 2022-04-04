@@ -102,6 +102,8 @@ namespace Vision
       int delay_capture;
       //! shutter value for image
       float shutter_value;
+      //! flag o control statistics of disk use
+      bool disk_statistics;
     };
 
     //! Device driver task.
@@ -271,6 +273,11 @@ namespace Vision
         .maximumValue("300")
         .description("Shutter Value time in ms.");
 
+        param("No Disk Statistics", m_args.disk_statistics)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("false")
+        .description("Set dispatch of Disk Statistics use.");
+
         bind<IMC::EstimatedState>(this);
         bind<IMC::LoggingControl>(this);
       }
@@ -350,7 +357,11 @@ namespace Vision
         m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
         m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
 
-        setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
+        if(m_args.disk_statistics)
+          setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
+        else
+          setEntityState(IMC::EntityState::ESTA_BOOT, "idle");
+
         m_isStartTask = true;
       }
 
@@ -506,7 +517,10 @@ namespace Vision
         #endif
 
         moveLogFiles();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+        if(m_args.disk_statistics)
+          setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, "idle");
       }
 
       int
@@ -1177,10 +1191,13 @@ namespace Vision
           {
             waitForMessages(1.0);
             setGpio(GPIO_LOW, m_args.gpio_strobe);
-            if(m_read_storage)
+            if(m_args.disk_statistics)
             {
-              m_read_storage = false;
-              setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+              if(m_read_storage)
+              {
+                m_read_storage = false;
+                setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+              }
             }
           }
         }
