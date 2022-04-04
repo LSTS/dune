@@ -39,5 +39,6 @@ namespace DUNE
 
 #include <DUNE/IO/Handle.hpp>
 #include <DUNE/IO/Poll.hpp>
+#include <DUNE/IO/LineReader.hpp>
 
 #endif
