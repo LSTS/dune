@@ -782,7 +782,7 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_ts.start.z - m_estate.z; // vertical-track
+      m_ts.track_pos.z = m_estate.z - m_ts.start.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
@@ -1099,7 +1099,7 @@ namespace DUNE
                       double z, IMC::ZUnits z_unit)
     {
       // Height is converted directly
-      if (z_unit & IMC::Z_HEIGHT)
+      if (z_unit == IMC::Z_HEIGHT)
       {
         WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
                             lat, lon, z,
@@ -1112,7 +1112,7 @@ namespace DUNE
                             lat, lon, 0,
                             &coord.x, &coord.y);
 
-      if (z_unit & IMC::Z_DEPTH)
+      if (z_unit == IMC::Z_DEPTH)
       {
         if (!depthToLocal(z, coord.z))
         {
@@ -1122,7 +1122,7 @@ namespace DUNE
         }
       }
 
-      if (z_unit & IMC::Z_ALTITUDE)
+      if (z_unit == IMC::Z_ALTITUDE)
       {
         if (!altitudeToLocal(z, coord.z))
         {
