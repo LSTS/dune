@@ -692,7 +692,7 @@ namespace Navigation
           m_estate.u = m_kal.getState(STATE_U);
           m_estate.v = m_kal.getState(STATE_V);
           m_estate.depth = getDepth() - m_estate.theta * m_args.distance_depth_sensor;
-          m_estate.z = m_last_z - m_estate.depth;
+          m_estate.z = m_last_z + m_estate.depth;
           m_estate.w = m_kal.getState(STATE_W);
 
           // Log Navigation Uncertainty.
