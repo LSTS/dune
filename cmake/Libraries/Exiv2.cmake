@@ -37,7 +37,7 @@ if(EXIV2)
     dune_add_lib(exiv2)
 
     # Check Header
-    dune_test_header(/usr/include/exiv2/exiv2.hpp)
+    dune_test_header(exiv2/exiv2.hpp)
 
   else()
     # Exiv2 not found on the system.
