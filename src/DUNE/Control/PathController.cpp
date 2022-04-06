@@ -401,7 +401,7 @@ namespace DUNE
 
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
-        m_pcs.start_z = getZ(dpath->start_z_units);
+        m_pcs.start_z = getZ(static_cast<IMC::ZUnits>(dpath->start_z_units));
         m_pcs.start_z_units = dpath->start_z_units;
 
         return true;
@@ -419,7 +419,7 @@ namespace DUNE
     PathController::setEndPoint(const IMC::DesiredPath* dpath)
     {
       setTrackingCoord(m_ts.start, m_pcs.start_lat, m_pcs.start_lon,
-                        m_pcs.start_z, m_pcs.start_z_units);
+                        m_pcs.start_z, static_cast<IMC::ZUnits>(m_pcs.start_z_units));
 
       if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
           dpath->lradius > 0)
@@ -440,7 +440,7 @@ namespace DUNE
       }
 
       setTrackingCoord(m_ts.end, m_pcs.end_lat, m_pcs.end_lon,
-                        m_pcs.end_z, m_pcs.end_z_units);
+                        m_pcs.end_z, static_cast<IMC::ZUnits>(m_pcs.end_z_units));
     }
 
     void
@@ -1071,13 +1071,13 @@ namespace DUNE
     }
     
     double
-    PathController::getZ(const uint8_t& z_unit)
+    PathController::getZ(IMC::ZUnits z_unit) const
     {
-      if (z_unit & IMC::Z_DEPTH)
+      if (z_unit == IMC::Z_DEPTH)
         return m_estate.depth;
-      else if (z_unit & IMC::Z_ALTITUDE)
+      else if (z_unit == IMC::Z_ALTITUDE)
         return m_estate.alt;
-      else if (z_unit & IMC::Z_HEIGHT)
+      else if (z_unit == IMC::Z_HEIGHT)
         return m_estate.height;
 
       // Z_NONE returns invalid
@@ -1086,8 +1086,8 @@ namespace DUNE
 
     void
     PathController::setTrackingCoord(TrackingState::Coord& coord, 
-                      const double& lat, const double& lon,
-                      const double& z, const uint8_t& z_unit)
+                      double lat, double lon,
+                      double z, IMC::ZUnits z_unit)
     {
       // Height is converted directly
       if (z_unit & IMC::Z_HEIGHT)
@@ -1128,7 +1128,7 @@ namespace DUNE
     }
 
     bool
-    PathController::depthToLocal(const double& depth_ref, double& z)
+    PathController::depthToLocal(double depth_ref, double& z)
     {
       // Valid depth
       if (m_estate.depth >= 0)
@@ -1142,7 +1142,7 @@ namespace DUNE
     }
 
     bool
-    PathController::altitudeToLocal(const double& alt_ref, double& z)
+    PathController::altitudeToLocal(double alt_ref, double& z)
     {
       // Valid altitude
       if (m_estate.alt >= 0)
