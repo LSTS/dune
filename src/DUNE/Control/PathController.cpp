@@ -401,8 +401,17 @@ namespace DUNE
 
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
-        m_pcs.start_z = getZ(static_cast<IMC::ZUnits>(dpath->start_z_units));
-        m_pcs.start_z_units = dpath->start_z_units;
+        if (dpath->start_z_units == IMC::Z_NONE)
+        {
+          m_pcs.start_z = m_estate.depth >= 0 ? m_estate.depth : m_estate.height;
+          m_pcs.start_z_units = m_estate.depth >= 0 ? IMC::Z_DEPTH : IMC::Z_HEIGHT;
+          war("Invalid units received. Switching start z to %s", m_estate.depth >= 0 ? "Depth" : "Height");
+        }
+        else
+        {
+          m_pcs.start_z = getZ(static_cast<IMC::ZUnits>(dpath->start_z_units));
+          m_pcs.start_z_units = dpath->start_z_units;
+        }
 
         return true;
       }
