@@ -106,7 +106,7 @@ namespace DUNE
       m_vmode_delta.clear();
 
       m_yaw_ref = 0;
-      m_yaw_mode = YAW_MODE_NONE;
+      m_yaw_mode = m_hrate_bypass ? YAW_MODE_BYPASS : YAW_MODE_NONE;
       m_ymode_wait = 0.0;
       m_ymode_delta.clear();
 
