@@ -398,7 +398,7 @@ namespace DUNE
         {
           m_pcs.start_z = m_estate.depth >= 0 ? m_estate.depth : m_estate.height;
           m_pcs.start_z_units = m_estate.depth >= 0 ? IMC::Z_DEPTH : IMC::Z_HEIGHT;
-          war("Invalid units received. Switching start z to %s", m_estate.depth >= 0 ? "Depth" : "Height");
+          inf("Start Z units not defined. Switching to %s units", m_estate.depth >= 0 ? "Depth" : "Height");
         }
         else
         {
