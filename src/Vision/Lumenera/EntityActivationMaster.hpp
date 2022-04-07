@@ -170,7 +170,7 @@ namespace Vision
             continue;
           }
 
-          itr->entityActivationUpdate((const IMC::EntityActivationState::StateEnum)(msg->state));
+          itr->entityActivationUpdate(static_cast<IMC::EntityActivationState::StateEnum>(msg->state));
           break;
         }
       }
