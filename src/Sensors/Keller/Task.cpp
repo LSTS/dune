@@ -423,12 +423,14 @@ namespace Sensors
                 m_parser_state = STA_CMD;
               }
               break;
+
             case STA_CMD:
               m_parser_cmd = *bfr;
               m_parser_data_crc = Algorithms::CRC16::compute(bfr, 1, m_parser_data_crc);
               m_parser_state = STA_DATA;
               m_parser_data_len = 0;
               break;
+
             case STA_DATA:
               m_parser_data[m_parser_data_len++] = *bfr;
               if ((m_parser_data_len >= c_parser_data_size) ||
@@ -440,12 +442,14 @@ namespace Sensors
                   ((m_parser_cmd == CMD_ZERO_CHANNEL) && (m_parser_data_len >= CMD_ZERO_CHANNEL_SIZE)))
                 m_parser_state = STA_CRC_MSB;
               break;
+
             case STA_CRC_MSB:
               m_parser_data_crc = Algorithms::CRC16::compute(m_parser_data, m_parser_data_len, m_parser_data_crc);
 
               m_parser_packet_crc = (*bfr << 8);
               m_parser_state = STA_CRC_LSB;
               break;
+
             case STA_CRC_LSB:
               m_parser_packet_crc |= *bfr;
               // Handle crc errors properly:
@@ -455,6 +459,8 @@ namespace Sensors
                 result = RES_EXCEPTION;
               else
                 result = RES_DONE;
+              // Falls through.
+
             default:
               m_parser_state = STA_ADDR;
               break;
