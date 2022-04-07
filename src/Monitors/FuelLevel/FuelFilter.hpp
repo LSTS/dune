@@ -529,10 +529,7 @@ namespace Monitors
                                                             m_args->models[MDL_OPT].temp,
                                                             temperature));
             }
-            else
-            {
-              // fall through
-            }
+            /* Fall through */
           default:
             return -1.0;
         }
