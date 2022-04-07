@@ -447,12 +447,12 @@ namespace Transports
               m_sm_state = SM_ACT_POWER_ON;
             else
               m_sm_state = SM_ACT_MODEM_WAIT;
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_POWER_ON:
             turnPowerOn();
             m_sm_state = SM_ACT_POWER_WAIT;
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_POWER_WAIT:
             if (isPowered())
@@ -466,7 +466,7 @@ namespace Transports
               spew("waiting for power to be on");
               break;
             }
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_MODEM_WAIT:
             if (Path(m_args.uart_dev).isDevice() || Path(m_args.uart_dev).isLink())
@@ -479,14 +479,14 @@ namespace Transports
               debug("No modem detected in %s, retrying...", m_args.uart_dev.c_str());
               break;
             }
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_CONNECT:
             connect();
             debug("connection succeeded");
             m_sm_state = SM_ACT_DONE;
             m_conn_watchdog.reset();
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_DONE:
             if (!isActive())
@@ -494,7 +494,7 @@ namespace Transports
             debug("activation complete");
 
             m_sm_state = SM_ACT_CONNECTING;
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_CONNECTING:
             if (m_conn_watchdog.overflow())
@@ -526,7 +526,7 @@ namespace Transports
           case SM_DEACT_BEGIN:
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
             m_sm_state = SM_DEACT_DISCONNECT;
-            /* no break */
+            /* Falls through */
 
           case SM_DEACT_DISCONNECT:
             disconnect();
@@ -539,7 +539,7 @@ namespace Transports
           case SM_DEACT_POWER_OFF:
             turnPowerOff();
             m_sm_state = SM_DEACT_POWER_WAIT;
-            /* no break */
+            /* Falls through */
 
           case SM_DEACT_POWER_WAIT:
             if (!isPowered())
@@ -551,7 +551,7 @@ namespace Transports
             {
               break;
             }
-            /* no break */
+            /* Falls through */
 
           case SM_DEACT_DONE:
             debug("deactivation complete");
