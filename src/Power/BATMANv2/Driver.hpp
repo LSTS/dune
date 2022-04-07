@@ -116,7 +116,9 @@ namespace Power
           bool
           initBatMan(int cellNumber, float scale)
           {
-            char textCmd[32];
+            // Smaller by 2 otherwise compiler complains of
+            // format overflow inside 'sendCommand'.
+            char textCmd[30];
             std::sprintf(textCmd, "@CELL,%d,*", cellNumber);
             if(sendCommand(textCmd, "$RSP,ACK,,*"))
             {
