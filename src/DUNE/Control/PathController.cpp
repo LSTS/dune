@@ -82,6 +82,10 @@ namespace DUNE
       .defaultValue("true")
       .description("Enable course control");
 
+      param("Track Vertically", m_vertical_track)
+      .defaultValue("false")
+      .description("Use vertical tracking (Along-track in Z axis)");
+
       param("Along-track -- Monitor", m_atm.enabled)
       .defaultValue("true")
       .description("Enable along-track error monitoring");
@@ -1022,10 +1026,20 @@ namespace DUNE
       if (m_ts.loitering)
         m_pcs.x = 0;
       else
-        m_pcs.x = m_ts.track_length - m_ts.track_pos.x;
+      {
+        if (!m_vertical_track)
+        {
+          m_pcs.x = m_ts.track_length - m_ts.track_pos.x;
+          m_pcs.z = m_ts.track_pos.z;
+        }
+        else
+        {
+          m_pcs.x = m_ts.track_pos.x;
+          m_pcs.z = m_ts.track_length - m_ts.track_pos.z;
+        }
+      }
 
       m_pcs.y = m_ts.track_pos.y;
-      m_pcs.z = m_ts.track_pos.z;
       m_pcs.vx = m_ts.track_vel.x;
       m_pcs.vy = m_ts.track_vel.y;
       m_pcs.vz = m_ts.track_vel.z;

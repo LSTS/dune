@@ -508,6 +508,8 @@ namespace DUNE
       bool m_error;
       //! True if starting up (booting)
       bool m_setup;
+      //! Track vertically
+      bool m_vertical_track;
       //! In braking procedures
       bool m_braking;
       //! Timer with amount of time ignoring monitors when braking.
