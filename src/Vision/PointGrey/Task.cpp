@@ -199,6 +199,8 @@ namespace Vision
       std::string m_result;
       //! Flag to control reading of used storage
       bool m_read_storage;
+      //! Flag to control read of path from LoggingControl
+      bool m_read_path;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -305,6 +307,7 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
+        m_read_path = true;
         m_read_storage = true;
         m_isStartTask = false;
         m_isCapturing = false;
@@ -409,16 +412,17 @@ namespace Vision
         if(sysNameMsg != m_args.system_name && sysNameMsg != sysLocalName)
           return;
 
-        if(sysNameMsg != sysLocalName)
+        if(sysNameMsg != sysLocalName && !m_read_path)
         {
           if (msg->op == IMC::LoggingControl::COP_STARTED || msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
           {
+            m_read_path = true;
             m_frame_cnt = 0;
             m_frame_lost_cnt = 0;
             m_cnt_photos_by_folder = 0;
             m_folder_number = 0;
+            debug("LoggingControl: reset count m_frame_cnt: %d", msg->op);
             std::string m_path = c_log_path + m_args.system_name;
-            debug("Camera log stored in %s", m_path.c_str());
             m_back_path_main_log = m_path + "/" + msg->name;
 
             if(m_args.split_photos)
@@ -426,9 +430,13 @@ namespace Vision
             else
               m_log_dir = m_path / msg->name / m_args.save_image_dir;
 
+            inf("Camera photos stored: %s", m_back_path_main_log.c_str());
             m_back_path_image = m_log_dir.c_str();
             m_log_dir.create();
             m_log_name = msg->name;
+            m_thread_cnt = 0;
+            m_cnt_fps.reset();
+            m_isCapturing = true;
           }
         }
 
@@ -471,11 +479,7 @@ namespace Vision
       onActivation(void)
       {
         inf("on Activation");
-        m_isCapturing = true;
-        m_frame_cnt = 0;
-        m_frame_lost_cnt = 0;
-        m_cnt_photos_by_folder = 0;
-        m_folder_number = 0;
+        m_read_path = false;
         releaseRamCached();
         updateStrobe();
 
@@ -491,8 +495,6 @@ namespace Vision
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
           set_shutter_value(m_args.shutter_value);
-          m_thread_cnt = 0;
-          m_cnt_fps.reset();
         }
         catch(...)
         {
@@ -505,6 +507,7 @@ namespace Vision
       void
       onDeactivation(void)
       {
+        m_read_path = true;
         inf("on Deactivation");
         m_is_to_capture = false;
         m_isCapturing = false;
@@ -526,26 +529,29 @@ namespace Vision
       int
       moveLogFiles(void)
       {
-        std::string system_command = "mkdir " + m_back_path_main_log + "/" + c_camera_log_folder;
+        std::string path_log_dune_cam = m_back_path_main_log + "/" + c_camera_log_folder;
+        std::string system_command = "mkdir " + path_log_dune_cam;
+        inf("Camera dune log stored: %s", m_back_path_main_log.c_str());
         int result = std::system(system_command.c_str());
+        debug("Path of dune log running in camara: %s", m_back_path_log.c_str());
 
         std::string file_name_old = m_back_path_log + "/Output.txt ";
-        std::string file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Output.txt";
+        std::string file_name_new = path_log_dune_cam + "/camera_Output.txt";
         system_command = "mv " + file_name_old + file_name_new;
         result = std::system(system_command.c_str());
 
         file_name_old = m_back_path_log + "/Config.ini ";
-        file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Config.ini";
+        file_name_new = path_log_dune_cam + "/camera_Config.ini";
         system_command = "mv " + file_name_old + file_name_new;
         result = std::system(system_command.c_str());
 
         file_name_old = m_back_path_log + "/Data.lsf.gz ";
-        file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_Data.lsf.gz";
+        file_name_new = path_log_dune_cam + "/camera_Data.lsf.gz";
         system_command = "mv " + file_name_old + file_name_new;
         result = std::system(system_command.c_str());
 
         file_name_old = m_back_path_log + "/IMC.xml.gz ";
-        file_name_new = m_back_path_main_log + "/" + c_camera_log_folder + "/camera_IMC.xml.gz";
+        file_name_new = path_log_dune_cam + "/camera_IMC.xml.gz";
         system_command = "mv " + file_name_old + file_name_new;
         result = std::system(system_command.c_str());
 
@@ -1171,20 +1177,24 @@ namespace Vision
           if (isActive())
           {
             consumeMessages();
-            if(m_cnt_fps.overflow())
+            if(m_isCapturing)
             {
-              m_cnt_fps.reset();
-              triggerFrame();
-            }
-            else if(m_clean_cached_ram.overflow())
-            {
-              m_clean_cached_ram.reset();
-              releaseRamCached();
-            }
-            else if(m_update_cnt_frames.overflow())
-            {
-              m_update_cnt_frames.reset();
-              setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
+              if(m_cnt_fps.overflow())
+              {
+                m_cnt_fps.reset();
+                triggerFrame();
+              }
+              else if(m_clean_cached_ram.overflow())
+              {
+                m_clean_cached_ram.reset();
+                releaseRamCached();
+              }
+              else if(m_update_cnt_frames.overflow())
+              {
+                debug("Count Frames: %ld", m_frame_cnt);
+                m_update_cnt_frames.reset();
+                setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
+              }
             }
           }
           else
