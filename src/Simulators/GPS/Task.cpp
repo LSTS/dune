@@ -115,7 +115,7 @@ namespace Simulators
         param("Activation Depth", m_args.act_depth)
         .units(Units::Meter)
         .minimumValue("0.0")
-        .maximumValue("1.0")
+        .maximumValue("2.0")
         .defaultValue("0.20")
         .description("Minimum depth at which the GPS is unable to produce accurate fixes");
 
