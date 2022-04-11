@@ -63,6 +63,8 @@ namespace Simulators
     {
       //! Entity label of the stream velocity source.
       std::string svlabel;
+      //! Initial position in NED frame
+      std::vector<double> initial_pos;
       //! Simulation time multiplier
       double time_multiplier;
     };
@@ -91,8 +93,13 @@ namespace Simulators
         .description("Simulation time multiplier");
 
         param("Entity Label - Stream Velocity Source", m_args.svlabel)
-            .defaultValue("Stream Velocity Simulator")
-            .description("Entity label of the stream velocity source.");
+        .defaultValue("Stream Velocity Simulator")
+        .description("Entity label of the stream velocity source.");
+
+        param("Initial Position", m_args.initial_pos)
+        .size(3)
+        .defaultValue("0, 0, 0")
+        .description("Initial position for the vehicle, in NED frame.");
 
         // Register handler routines.
         bind<IMC::GpsFix>(this);
@@ -148,8 +155,9 @@ namespace Simulators
         if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
-        // We assume vehicle starts at sea surface.
-        m_vehicle->setPosition(0, 0, 0);
+        m_vehicle->setPosition(m_args.initial_pos[0],
+                               m_args.initial_pos[1],
+                               m_args.initial_pos[2]);
         m_vehicle->setOrientation(0, 0, msg->cog);
 
         // Define vehicle origin.
