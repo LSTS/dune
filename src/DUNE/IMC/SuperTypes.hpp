@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5333e4e0128bcca236cc6af16db02bb0                            *
+// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
@@ -53,16 +53,6 @@ namespace DUNE
 
     //! Super type RemoteData.
     class RemoteData: public Message
-    {
-    };
-
-    //! Super type VehicleCapability.
-    class VehicleCapability: public Message
-    {
-    };
-
-    //! Super type TaskAdminArgs.
-    class TaskAdminArgs: public Message
     {
     };
   }
