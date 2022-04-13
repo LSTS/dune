@@ -67,6 +67,14 @@ namespace Autonomy
         .defaultValue("1.25")
         .description("Speed to be used for moving the vehicle");
 
+        param("SSS Available", m_args.has_klein)
+        .defaultValue("true")
+        .description("Whether klein sss is available on this AUV.");
+
+        param("MBS Available", m_args.has_837B)
+        .defaultValue("true")
+        .description("Whether Imagenex 873 is available on this AUV.");        
+
         bind<IMC::SynchAdmin>(this);
         bind<IMC::TaskAdim>(this);
         bind<IMC::WorldModel>(this);
@@ -205,7 +213,8 @@ namespace Autonomy
       bool
       onUnassign(const IMC::TaskAdminArgs* task)
       {
-        int id = getTaskId(task);
+        //int id = getTaskId(task);
+        (void) task;
         inf("onUnassign()");
         return true;
       }

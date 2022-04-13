@@ -256,7 +256,7 @@ namespace Autonomy
       generatePlan(const IMC::SurveyTask* task, SurveyProfile profile)
       {
         IMC::PlanSpecification plan;
-        plan.plan_id = "comap-" + getTaskId(task);
+        plan.plan_id = String::str("comap-%d", getTaskId(task));
         plan.description = "Survey of feature " + task->feature_id;
         plan.start_actions.push_back(profile.m_params);
         // TODO actually generate a coverage plan.
@@ -317,13 +317,15 @@ namespace Autonomy
       bool
       addMoveTask(const IMC::MoveTask* task)
       {
-        int tid = getTaskId(task);
+        //int tid = getTaskId(task);
+        (void) task;
         return false;
       }
 
       bool
       removeTask(int task_id)
       {
+        (void) task_id;
         return false;
       }
     };

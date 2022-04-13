@@ -132,7 +132,7 @@ namespace Autonomy
     }
 
     void
-    calculateSurveyDirection(const Math::Matrix& poly, double& diameter, double& angle)
+    calculateSurveyDirection(const Math::Matrix& poly, double& diameter, double& ang)
     {
       Math::Matrix rot_mtx, rotated_poly, northing_row, diams, curr_diam;
       double angle_min = 0.0;
@@ -171,7 +171,7 @@ namespace Autonomy
       northing_row = rotated_poly.row(1);
 
       diameter = (max(northing_row) - min(northing_row));
-      angle = angle_min;
+      ang = angle_min;
     }
 
     void
@@ -193,6 +193,7 @@ namespace Autonomy
     getCoveragePath(std::vector<std::pair<double, double>>& area, std::vector<std::pair<double, double>>& path,
                     double angle, double width)
     {
+      (void) path;
       double diam, optimal_angle;
       Math::Matrix poly = getAsMatrix(area);
       calculateSurveyDirection(poly, diam, optimal_angle);
