@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 5333e4e0128bcca236cc6af16db02bb0                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -452,10 +452,12 @@
 #define DUNE_IMC_FOLLOWPOINT 494
 //! Alignment identification number.
 #define DUNE_IMC_ALIGNMENT 495
-//! StationKeepingExtended identification number.
-#define DUNE_IMC_STATIONKEEPINGEXTENDED 496
-//! ManeuverDone identification number.
-#define DUNE_IMC_MANEUVERDONE 497
+//! FollowCommand identification number.
+#define DUNE_IMC_FOLLOWCOMMAND 496
+//! Command identification number.
+#define DUNE_IMC_COMMAND 497
+//! FollowCommandState identification number.
+#define DUNE_IMC_FOLLOWCOMMANDSTATE 498
 //! Magnetometer identification number.
 #define DUNE_IMC_MAGNETOMETER 499
 //! VehicleState identification number.
@@ -504,6 +506,8 @@
 #define DUNE_IMC_TCPREQUEST 521
 //! TCPStatus identification number.
 #define DUNE_IMC_TCPSTATUS 522
+//! AssetReport identification number.
+#define DUNE_IMC_ASSETREPORT 525
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -566,6 +570,10 @@
 #define DUNE_IMC_COMPRESSEDIMAGE 702
 //! ImageTxSettings identification number.
 #define DUNE_IMC_IMAGETXSETTINGS 703
+//! ManeuverDone identification number.
+#define DUNE_IMC_MANEUVERDONE 719
+//! StationKeepingExtended identification number.
+#define DUNE_IMC_STATIONKEEPINGEXTENDED 720
 //! RemoteState identification number.
 #define DUNE_IMC_REMOTESTATE 750
 //! Target identification number.
@@ -668,7 +676,65 @@
 #define DUNE_IMC_DMSDETECTION 908
 //! HomePosition identification number.
 #define DUNE_IMC_HOMEPOSITION 909
+//! CurrentProfile identification number.
+#define DUNE_IMC_CURRENTPROFILE 1014
+//! CurrentProfileCell identification number.
+#define DUNE_IMC_CURRENTPROFILECELL 1015
+//! ADCPBeam identification number.
+#define DUNE_IMC_ADCPBEAM 1016
+//! GpioState identification number.
+#define DUNE_IMC_GPIOSTATE 2000
+//! GpioStateGet identification number.
+#define DUNE_IMC_GPIOSTATEGET 2001
+//! GpioStateSet identification number.
+#define DUNE_IMC_GPIOSTATESET 2002
+//! ColoredDissolvedOrganicMatter identification number.
+#define DUNE_IMC_COLOREDDISSOLVEDORGANICMATTER 2003
+//! FluorescentDissolvedOrganicMatter identification number.
+#define DUNE_IMC_FLUORESCENTDISSOLVEDORGANICMATTER 2004
+//! IridiumMsgTxExtended identification number.
+#define DUNE_IMC_IRIDIUMMSGTXEXTENDED 2005
 //! TotalMagIntensity identification number.
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
+//! ValidatePlan identification number.
+#define DUNE_IMC_VALIDATEPLAN 2007
+//! TypedEntityParameter identification number.
+#define DUNE_IMC_TYPEDENTITYPARAMETER 2008
+//! TypedEntityParameters identification number.
+#define DUNE_IMC_TYPEDENTITYPARAMETERS 2009
+//! CommRestriction identification number.
+#define DUNE_IMC_COMMRESTRICTION 2010
+//! WifiStats identification number.
+#define DUNE_IMC_WIFISTATS 2011
+//! WifiNetwork identification number.
+#define DUNE_IMC_WIFINETWORK 2012
+//! SonarPulse identification number.
+#define DUNE_IMC_SONARPULSE 2013
+//! WorldModel identification number.
+#define DUNE_IMC_WORLDMODEL 3001
+//! GeoFeature identification number.
+#define DUNE_IMC_GEOFEATURE 3002
+//! CoverageState identification number.
+#define DUNE_IMC_COVERAGESTATE 3003
+//! TaskAdim identification number.
+#define DUNE_IMC_TASKADIM 3004
+//! SynchAdmin identification number.
+#define DUNE_IMC_SYNCHADMIN 3005
+//! VehicleCapabilities identification number.
+#define DUNE_IMC_VEHICLECAPABILITIES 3006
+//! CapabilityAreaSurvey identification number.
+#define DUNE_IMC_CAPABILITYAREASURVEY 3010
+//! CapabilityPointSurvey identification number.
+#define DUNE_IMC_CAPABILITYPOINTSURVEY 3011
+//! CapabilityMove identification number.
+#define DUNE_IMC_CAPABILITYMOVE 3012
+//! SurveyTask identification number.
+#define DUNE_IMC_SURVEYTASK 3101
+//! MoveTask identification number.
+#define DUNE_IMC_MOVETASK 3102
+//! TaskStatus identification number.
+#define DUNE_IMC_TASKSTATUS 3103
+//! SynchTask identification number.
+#define DUNE_IMC_SYNCHTASK 3104
 
 #endif

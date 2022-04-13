@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 5333e4e0128bcca236cc6af16db02bb0                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_ENUMERATIONS_HPP_INCLUDED_
@@ -123,6 +123,19 @@ namespace DUNE
       UAVTYPE_COPTER = 1,
       //! Vtol.
       UAVTYPE_VTOL = 2
+    };
+
+    //! Sensor Type.
+    enum SensorType
+    {
+      //! Multibeam Sonar.
+      SENSORTYPE_MULTIBEAM = 1,
+      //! Sidescan Sonar.
+      SENSORTYPE_SIDESCAN = 2,
+      //! Video Camera.
+      SENSORTYPE_CAMERA = 3,
+      //! Magnetometer.
+      SENSORTYPE_MAGNETOMETER = 4
     };
   }
 }
