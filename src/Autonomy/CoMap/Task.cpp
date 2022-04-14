@@ -229,8 +229,16 @@ namespace Autonomy
       onPublishCapabilities()
       {
         inf("Publish Capabilities");
-        IMC::VehicleCapabilities capabilities = m_mapper.generateCapabilities();
+        IMC::VehicleCapabilities capabilities = m_mapper.generateCapabilities();        
         dispatch(capabilities);
+        debugMessage("Sent capabilities", capabilities);
+      }
+
+      void debugMessage(std::string title, const IMC::Message& msg)
+      {
+        std::stringstream ss;
+        msg.toJSON(ss);
+        debug("%s: \n%s", title.c_str(), ss.str().c_str());
       }
 
       void

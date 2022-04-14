@@ -33,6 +33,50 @@ namespace Autonomy
         return -1;
     }
 
+    bool
+    getFeature(int feature_id, const IMC::WorldModel* world, std::vector<MapPoint>& feature)
+    {
+      for (const IMC::GeoFeature* f : world->geo_features)
+      {
+        if (f->feature_id == feature_id)
+        {
+          for (const IMC::MapPoint* point : f->points)
+          {
+            feature.push_back(*point);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool
+    getFeature(const IMC::TaskAdminArgs* task, const IMC::WorldModel* world, std::vector<MapPoint>& feature)
+    {
+      if (task->getId() == IMC::SurveyTask::getIdStatic())
+      {
+        int fid = ((IMC::SurveyTask*)task)->feature_id;
+        return getFeature(fid, world, feature);
+      }        
+      else if (task->getId() == IMC::MoveTask::getIdStatic())
+      {
+        IMC::MapPoint* point = ((IMC::MoveTask*)task)->destination.get();
+        feature.push_back(*point);
+        delete point;
+        return true;
+      }
+      return false;
+    }
+
+    bool
+    validateTask(const IMC::TaskAdminArgs* task)
+    {
+      if (getTaskId(task) == -1)
+        return false;
+      
+      return true;
+    }
+
     IMC::PlanSpecification
     sequentialPlan(std::string plan_id, std::vector<IMC::Maneuver*> maneuvers)
     {
