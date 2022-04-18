@@ -149,7 +149,7 @@ namespace Autonomy
             reply(msg, response);
             break;
           case IMC::TaskAdim::TAOP_UNASSIGN:
-            onUnassign(msg->arg.get());
+            onUnassign(msg->tid);
             response.op = IMC::TaskAdim::TAOP_ACCEPT;
             reply(msg, response);
             break;
@@ -212,11 +212,16 @@ namespace Autonomy
        * @return false If the task was not part of this vehicle's tasks
        */
       bool
-      onUnassign(const IMC::TaskAdminArgs* task)
+      onUnassign(int task_id)
       {
-        //int id = getTaskId(task);
-        (void) task;
         debug("onUnassign()");
+        
+        CoMapTask *task = m_mapper.getTask(task_id);
+        if (task == nullptr)
+          war("Tried to unassign an unknown task");
+        else
+          m_mapper.removeTask(task_id);
+        
         return true;
       }
 

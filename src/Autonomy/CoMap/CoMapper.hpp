@@ -328,10 +328,20 @@ namespace Autonomy
         return sequentialPlan("comap-" + getTaskId(task), { &move });
       }
 
+      CoMapTask*
+      getTask(int task_id)
+      {
+        if (m_tasks.find(task_id) == m_tasks.end())
+          return nullptr;
+        return &(m_tasks[task_id]);
+      }
+
+
       IMC::TaskStatus
       getTaskStatus(int task_id)
       {
-        if (m_tasks.find(task_id) == m_tasks.end())
+        CoMapTask* task = getTask(task_id);
+        if (task == nullptr)
         {          
           IMC::TaskStatus msg;
           msg.task_id = task_id;        
@@ -339,7 +349,7 @@ namespace Autonomy
           return msg;
         }
         else
-          return m_tasks[task_id].m_status;
+          return task->m_status;
       }
 
       SurveyProfile
@@ -427,8 +437,15 @@ namespace Autonomy
       bool
       removeTask(int task_id)
       {
-        (void) task_id;
-        return false;
+        for (auto t = m_schedule.begin(); t != m_schedule.end(); t++)
+        {
+          if (*t == task_id)
+          {
+            m_schedule.erase(t);
+            break;
+          }
+        }
+        return m_tasks.erase(task_id) > 0;
       }
     };
   }
