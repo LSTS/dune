@@ -22,7 +22,7 @@
 // language governing permissions and limitations at                        *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Jose Pinto                                      *
+// Author: Jose Pinto                                                       *
 //***************************************************************************
 
 // ISO C++ headers.
@@ -101,7 +101,7 @@ namespace Autonomy
       void
       consume(const IMC::SynchAdmin* msg)
       {
-        debug("Received SynchAdmin message.");
+        debugMessage("Received SynchAdmin", *msg);
         switch (msg->op)
         {
           case SynchAdmin::SYNCOP_HOLD:
@@ -134,6 +134,8 @@ namespace Autonomy
           return;
         }
 
+        debugMessage("Received TaskAdim", *msg);
+
         IMC::TaskAdim response;
         response.tid = msg->tid;
 
@@ -152,7 +154,7 @@ namespace Autonomy
             reply(msg, response);
             break;
           case IMC::TaskAdim::TAOP_STATUS_REQUEST:
-            onStatusRequest();
+            onStatusRequest(msg->tid);
           default:
             break;
         }
@@ -161,7 +163,7 @@ namespace Autonomy
       void
       consume(const IMC::WorldModel* msg)
       {
-        debug("Received WorldModel message.");
+        debugMessage("Received WorldModel", *msg);
         Memory::clear(m_world_model);
         m_world_model = msg->clone();
         m_mapper.setWorldModel(msg);        
@@ -191,7 +193,6 @@ namespace Autonomy
       bool
       onAssign(const IMC::TaskAdminArgs* t)
       {
-        debug("onAssign()");
         if (t->getId() == IMC::SurveyTask::getIdStatic())
           return m_mapper.addSurveyTask((IMC::SurveyTask*)t);
         else if (t->getId() == IMC::MoveTask::getIdStatic())
@@ -215,20 +216,23 @@ namespace Autonomy
       {
         //int id = getTaskId(task);
         (void) task;
-        inf("onUnassign()");
+        debug("onUnassign()");
         return true;
       }
 
       void
-      onStatusRequest()
+      onStatusRequest(int task_id)
       {
-        inf("onStatusRequest()");
+        debug("onStatusRequest()");
+        IMC::TaskStatus status = m_mapper.getTaskStatus(task_id);        
+        dispatch(status);        
+        debugMessage("Sent task status", status);
       }
 
       void
       onPublishCapabilities()
       {
-        inf("Publish Capabilities");
+        debug("Publish Capabilities");
         IMC::VehicleCapabilities capabilities = m_mapper.generateCapabilities();        
         dispatch(capabilities);
         debugMessage("Sent capabilities", capabilities);

@@ -8,7 +8,7 @@
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include "AreaCoverage.hpp"
-
+#include <Plan/Engine/Plan.hpp>
 
 namespace Autonomy
 {
@@ -115,17 +115,21 @@ namespace Autonomy
     class CoMapTask
     {
     public:
-      CoMapTask() : CoMapTask(-1, IMC::PlanSpecification()) {}
+      CoMapTask() : CoMapTask(-1, IMC::PlanSpecification(), 0) {}
 
-      CoMapTask(int tid, IMC::PlanSpecification plan)
+      CoMapTask(int tid, IMC::PlanSpecification plan, double deadline)
       {
         this->m_task_id = tid;
         this->m_plan = plan;
         this->m_status.status = TaskStatus::SSTATUS_ASSIGNED;
         this->m_status.task_id = tid;
+        this->m_finish_deadline = deadline;
+        //TODO compute time to execute plan using Plan::Engine::Plan class
+        this->m_start_deadline = deadline;
       }
 
       int m_task_id;
+      double m_finish_deadline, m_start_deadline;
       IMC::PlanSpecification m_plan;
       IMC::TaskStatus m_status;
     };
@@ -164,6 +168,7 @@ namespace Autonomy
       std::vector<SurveyProfile> m_point_survey_profiles;
       std::vector<int> m_schedule;
       std::map<int, CoMapTask> m_tasks;
+      int m_active_task;       
       double m_speed;
 
       CoMapper(double moveSpeed) { this->m_speed = moveSpeed; }
@@ -323,6 +328,20 @@ namespace Autonomy
         return sequentialPlan("comap-" + getTaskId(task), { &move });
       }
 
+      IMC::TaskStatus
+      getTaskStatus(int task_id)
+      {
+        if (m_tasks.find(task_id) == m_tasks.end())
+        {          
+          IMC::TaskStatus msg;
+          msg.task_id = task_id;        
+          msg.status = IMC::TaskStatus::SSTATUS_ERROR;
+          return msg;
+        }
+        else
+          return m_tasks[task_id].m_status;
+      }
+
       SurveyProfile
       matchingProfile(const IMC::SurveyTask* task)
       {
@@ -339,17 +358,19 @@ namespace Autonomy
       bool
       addSurveyTask(const IMC::SurveyTask* task)
       {
-        int tid = getTaskId(task);
+        if (!validateTask(task))
+          return false;
+
         try
         {
+          int tid = getTaskId(task);
           SurveyProfile profile = matchingProfile(task);
           PlanSpecification plan = generatePlan(task, profile);
-          CoMapTask new_task(tid, plan);
+          CoMapTask new_task(tid, plan, task->deadline);
           new_task.m_status.progress = 0;
           new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
-          new_task.m_task_id = tid;
-          m_tasks[tid] = new_task;
-          m_schedule.push_back(tid);
+          new_task.m_task_id = tid;          
+          scheduleTask(new_task);
         }
         catch (std::exception& e)
         {
@@ -361,9 +382,46 @@ namespace Autonomy
       bool
       addMoveTask(const IMC::MoveTask* task)
       {
-        //int tid = getTaskId(task);
-        (void) task;
-        return false;
+        if (!validateTask(task))
+          return false;
+
+        try
+        {
+          int tid = getTaskId(task);
+          PlanSpecification plan = generatePlan(task);
+          CoMapTask new_task(tid, plan, task->deadline);
+          new_task.m_status.progress = 0;
+          new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
+          new_task.m_task_id = tid;
+          scheduleTask(new_task);
+        }
+        catch (std::exception& e)
+        {
+          return false;
+        }
+        return true;
+      }
+
+      void
+      scheduleTask(CoMapTask& new_task)
+      {
+        int tid = new_task.m_task_id;
+        m_tasks[tid] = new_task;
+
+        // try to insert the new task in the current schedule
+          bool inserted = false;
+          for (auto s = m_schedule.begin(); s != m_schedule.end(); s++)
+          {
+            CoMapTask other = m_tasks[*s];
+            if (other.m_start_deadline > new_task.m_start_deadline)
+            {
+              m_schedule.insert(s, tid);
+              inserted = true;
+              break;
+            }
+          }
+          if (!inserted)
+            m_schedule.push_back(tid);
       }
 
       bool
