@@ -203,17 +203,16 @@ void calculateSurveyDirection(
  *
  * @param[in] area area coordinates
  * @param path resulting path coordinates (same units as for the area)
- * @param angle the angle to use for the transects, in radians
- * @param width swath width (space between transects)
+ * @param swath_width swath width (space between transects)
  */
 void getCoveragePath(std::vector<std::pair<double, double>> &area,
-                     std::vector<std::pair<double, double>> &path, double angle,
-                     double width) {
+                     std::vector<std::pair<double, double>> &path,
+                     double swath_width) {
   (void)path;
-  double diam, optimal_angle;
+  double diam, angle;
   Math::Matrix poly = getAsMatrix(area);
-  calculateSurveyDirection(poly, diam, optimal_angle);
-  int n_rows = (int)std::ceil(diam / width);
+  calculateSurveyDirection(poly, diam, angle);
+  int n_rows = (int)std::ceil(diam / swath_width);
   double row_width = diam / n_rows;
   double offset = row_width / 2;
   double lower_north;

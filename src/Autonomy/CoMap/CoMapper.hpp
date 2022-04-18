@@ -34,7 +34,7 @@ namespace Autonomy
     }
 
     bool
-    getFeature(int feature_id, const IMC::WorldModel* world, std::vector<MapPoint>& feature)
+    getFeature(int feature_id, const IMC::WorldModel* world, std::vector<std::pair<double, double>>& feature)
     {
       for (const IMC::GeoFeature* f : world->geo_features)
       {
@@ -42,7 +42,7 @@ namespace Autonomy
         {
           for (const IMC::MapPoint* point : f->points)
           {
-            feature.push_back(*point);
+            feature.push_back(std::make_pair(point->lat, point->lon));
           }
           return true;
         }
@@ -51,7 +51,7 @@ namespace Autonomy
     }
 
     bool
-    getFeature(const IMC::TaskAdminArgs* task, const IMC::WorldModel* world, std::vector<MapPoint>& feature)
+    getFeature(const IMC::TaskAdminArgs* task, const IMC::WorldModel* world, std::vector<std::pair<double, double>>& feature)
     {
       if (task->getId() == IMC::SurveyTask::getIdStatic())
       {
@@ -61,7 +61,7 @@ namespace Autonomy
       else if (task->getId() == IMC::MoveTask::getIdStatic())
       {
         IMC::MapPoint* point = ((IMC::MoveTask*)task)->destination.get();
-        feature.push_back(*point);
+        feature.push_back(std::make_pair(point->lat, point->lon));
         delete point;
         return true;
       }
@@ -78,7 +78,7 @@ namespace Autonomy
     }
 
     IMC::PlanSpecification
-    sequentialPlan(std::string plan_id, std::vector<IMC::Maneuver*> maneuvers)
+    sequentialPlan(std::string plan_id, std::vector<IMC::Maneuver*> maneuvers, std::vector<IMC::Message*> payload)
     {
       IMC::PlanManeuver last_man;
       unsigned i = 0;
@@ -89,6 +89,8 @@ namespace Autonomy
         IMC::PlanManeuver man_spec;
         man_spec.data.set(*m);
         man_spec.maneuver_id = String::str(i + 1);
+        for (IMC::Message* payload_msg : payload)
+          man_spec.start_actions.push_back(payload_msg);
         if (i > 0)
         {
           IMC::PlanTransition trans;
@@ -304,11 +306,47 @@ namespace Autonomy
       IMC::PlanSpecification
       generatePlan(const IMC::SurveyTask* task, SurveyProfile profile)
       {
-        IMC::PlanSpecification plan;
-        plan.plan_id = String::str("comap-%d", getTaskId(task));
-        plan.description = "Survey of feature " + task->feature_id;
-        plan.start_actions.push_back(profile.m_params);
-        // TODO actually generate a coverage plan.
+        
+        std::vector<std::pair<double, double>> area;
+        
+        if (!getFeature(task, &m_world_model, area))
+        {
+          IMC::PlanSpecification plan;
+          plan.plan_id = "comap-invalid";
+          plan.description = "Could not retrieve feature";
+          return plan;
+        }
+
+        //IMC::PlanSpecification plan;
+        //plan.plan_id = String::str("comap-%d", getTaskId(task));
+        //plan.description = "Survey of feature " + task->feature_id;
+        //plan.start_actions.push_back(profile.m_params);
+        
+        std::vector<std::pair<double, double>> coverage_path;
+        getCoveragePath(area, coverage_path, profile.m_swath_width);        
+        IMC::FollowPath path;
+        path.speed = profile.m_speed;
+        path.speed_units = profile.m_speed_units;
+        path.z = profile.m_z;
+        path.z_units = profile.m_z_units;
+        if (!coverage_path.empty())
+        {
+          double lat = coverage_path[0].first;
+          double lon = coverage_path[0].second;
+
+          for (unsigned i = 0; i < coverage_path.size(); i++) 
+          {
+            auto point = coverage_path[i];
+            IMC::PathPoint pathPoint;
+            WGS84::displacement(lat, lon, 0, point.first, point.second, 0,
+                                &pathPoint.x, &pathPoint.y, &pathPoint.z);
+            path.points.push_back(pathPoint);
+          }
+        }
+
+        IMC::PlanSpecification plan = sequentialPlan(String::str("comap-%d", getTaskId(task)), 
+                            {&path}, {&profile.m_params});
+
         return plan;
       }
 
@@ -325,7 +363,7 @@ namespace Autonomy
         move.speed = m_speed;
         move.speed_units = SpeedUnits::SUNITS_METERS_PS;
 
-        return sequentialPlan("comap-" + getTaskId(task), { &move });
+        return sequentialPlan("comap-" + getTaskId(task), { &move }, {});
       }
 
       CoMapTask*
@@ -434,6 +472,11 @@ namespace Autonomy
             m_schedule.push_back(tid);
       }
 
+      void recomputeSchedule()
+      {
+        //empty for now
+      }
+
       bool
       removeTask(int task_id)
       {
@@ -444,8 +487,11 @@ namespace Autonomy
             m_schedule.erase(t);
             break;
           }
-        }
-        return m_tasks.erase(task_id) > 0;
+        }        
+        bool existed = m_tasks.erase(task_id) > 0;
+        if (existed)
+          recomputeSchedule();
+        return existed;
       }
     };
   }
