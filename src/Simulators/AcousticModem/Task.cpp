@@ -27,7 +27,7 @@
 // Author: Luis Venancio                                                    *
 //***************************************************************************
 
-// TODO: Add support for USBL simulation 
+// TODO: Add support for USBL simulation
 // (requires modification of the USBL simulator).
 
 // DUNE headers.
@@ -39,7 +39,7 @@ namespace Simulators
 {
   //! Simulates an Acoustic Modem.
   //!
-  //! Receives UamTxFrame messages, encapsulates in SimAcousticMessages and sends over 
+  //! Receives UamTxFrame messages, encapsulates in SimAcousticMessages and sends over
   //! UDP multicast.
   //! Receives SimAcousticMessages, simulates message travel time and data loss (based
   //! on a Gaussian distribution of distance and message size) and sends
@@ -83,15 +83,15 @@ namespace Simulators
       Driver* m_driver;
       //! Simulated state.
       IMC::SimulatedState* m_sstate;
-      
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_ticket(NULL),
-        m_driver(NULL),
-        m_sstate(NULL)
+        m_ticket(nullptr),
+        m_driver(nullptr),
+        m_sstate(nullptr)
       {
         param("UDP Communications -- Multicast Address", m_args.driver_args.udp_maddr)
         .defaultValue("225.0.2.1")
@@ -146,10 +146,10 @@ namespace Simulators
         if (m_driver)
         {
           m_driver->stopAndJoin();
-          delete m_driver;
-          m_driver = NULL;
+          Memory::clear(m_driver);
         }
 
+        Memory::clear(m_sstate);
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
       }
 
@@ -159,14 +159,13 @@ namespace Simulators
       void
       clearTicket(IMC::UamTxStatus::ValueEnum reason, const std::string& error = "")
       {
-        if (m_ticket != NULL)
+        if (m_ticket != nullptr)
         {
           sendTxStatus(*m_ticket, reason, error);
-          delete m_ticket;
-          m_ticket = NULL;
+          Memory::clear(m_ticket);
         }
       }
-      
+
       //! Replace current ticket.
       //! @param[in] ticket ticket to replae current.
       //! @param[in] reason status to send.
@@ -234,10 +233,10 @@ namespace Simulators
       {
         if (amsg->getDestination() != getSystemId())
           return;
-        
+
         if (amsg->getDestinationEntity() != getEntityId())
           return;
-        
+
         if (amsg->flags == IMC::SimAcousticMessage::SAM_REPLY)
           rcvRxRange(amsg);
         else
@@ -260,7 +259,7 @@ namespace Simulators
 
           if (!m_ticket->ack)
             return;
-          
+
           clearTicket(IMC::UamTxStatus::UTS_DONE);
           debug("Ticket cleared");
         }
