@@ -131,19 +131,19 @@ namespace DUNE
 
       //! Update internal parameters.
       virtual void
-      onUpdateParameters(void);
+      onUpdateParameters(void) override;
 
       //! Resolve entities.
       virtual void
-      onEntityResolution(void);
+      onEntityResolution(void) override;
 
       //! Initialize resources.
       virtual void
-      onResourceInitialization(void);
+      onResourceInitialization(void) override;
 
       //! Release allocated resources.
       virtual void
-      onResourceRelease(void);
+      onResourceRelease(void) override;
 
       void
       consume(const IMC::Acceleration* msg);
