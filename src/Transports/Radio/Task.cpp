@@ -548,12 +548,12 @@ namespace Transports
               m_sm_state = SM_ACT_MODEM_WAIT;
               m_conn_watchdog.reset();
             }
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_POWER_ON:
             turnPowerOn();
             m_sm_state = SM_ACT_POWER_WAIT;
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_POWER_WAIT:
             if (isPowered())
@@ -567,7 +567,7 @@ namespace Transports
             {
               break;
             }
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_MODEM_WAIT:
 
@@ -610,7 +610,7 @@ namespace Transports
             m_telemetry = new Telemetry(this, (uint8_t) m_systemID, m_radio_names, m_radio_addrs, m_radio->maxDataPacket());
              m_fast_treport_counter.setTop(m_args.radio_period);
             m_sm_state = SM_ACT_DONE;
-            /* no break */
+            /* Falls through */
 
           case SM_ACT_DONE:
              break;
@@ -618,7 +618,7 @@ namespace Transports
           case SM_DEACT_BEGIN:
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
             m_sm_state = SM_DEACT_DISCONNECT;
-            /* no break */
+            /* Falls through */
 
           case SM_DEACT_DISCONNECT:
             if (m_args.power_channel.empty())
@@ -632,7 +632,7 @@ namespace Transports
           case SM_DEACT_POWER_OFF:
             turnPowerOff();
             m_sm_state = SM_DEACT_POWER_WAIT;
-            /* no break */
+            /* Falls through */
 
           case SM_DEACT_POWER_WAIT:
             if (!isPowered())
@@ -644,7 +644,7 @@ namespace Transports
             {
               break;
             }
-            /* no break */
+            /* Falls through */
 
           case SM_DEACT_DONE:
 

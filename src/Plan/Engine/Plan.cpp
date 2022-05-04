@@ -704,6 +704,9 @@ namespace Plan
             if (m->end_z > m_max_depth + c_depth_margin)
               return false;
           }
+
+          // no means to evaluate other perils.
+          return true;
         }
         case DUNE_IMC_SCHEDULEDGOTO:
         {

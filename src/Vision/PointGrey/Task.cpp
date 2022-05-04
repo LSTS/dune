@@ -32,7 +32,7 @@
 #include <iostream>
 #include <cassert>
 #include <stdexcept>
-#include <stdio.h>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -564,7 +564,7 @@ namespace Vision
         m_timeout_reading.setTop(c_timeout_reading);
         std::memset(&m_buffer, '\0', sizeof(m_buffer));
         std::sprintf(m_buffer, "du -hs /opt/lsts/dune/log");
-        FILE* pipe = popen(m_buffer, "r");
+        FILE* pipe = std::fopen(m_buffer, "r");
         if (!pipe)
         {
           war("timeout - error reading storage usage");
@@ -586,7 +586,7 @@ namespace Vision
 
             if(m_timeout_reading.overflow())
             {
-              pclose(pipe);
+              std::fclose(pipe);
               war("timeout - error reading storage usage");
               m_read_storage = true;
               return "0";
@@ -594,11 +594,11 @@ namespace Vision
           }
           catch (...)
           {
-            pclose(pipe);
+            std::fclose(pipe);
             m_read_storage = true;
             return "0";
           }
-          pclose(pipe);
+          std::fclose(pipe);
           try
           {
             std::vector<std::string> parts;
@@ -624,7 +624,7 @@ namespace Vision
         char governor[16];
         std::string result = "";
         FILE* pipe;
-        if ((pipe = popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
+        if ((pipe = std::fopen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
         {
           war("fopen() failed!");
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);

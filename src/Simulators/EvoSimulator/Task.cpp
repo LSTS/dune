@@ -34,25 +34,25 @@ namespace Simulators
 {
   //! Interface between DUNE Evologics driver and Evologics simulator.
   //!
-  //! To use this simulator first connect to Evologics' VPN by following the 
+  //! To use this simulator first connect to Evologics' VPN by following the
   //! instructions found in "dmace-74-FEUP-1-user-guide.pdf", at:
   //! https://drive.google.com/file/d/1ya361hHqA2l3uRWixb0BMUCODfzFMgxm/view?usp=sharing
   //!
   //! You must also enable a driver task that connects to this interface.
   //! Try enabling "Transports.Evologics/Simulator".
-  //! 
+  //!
   //! You must now be able to simulate all of the following vehicles:
   //! lauv-noptilus-1
   //! lauv-noptilus-2
   //! lauv-noptilus-3
-  //! lauv-xtreme-2  
-  //! manta-11       
-  //! manta-rugged   
-  //! manta-1        
-  //! manta-2        
-  //! manta-3        
-  //! lauv-nemo-1   
-  //!  
+  //! lauv-xtreme-2
+  //! manta-11
+  //! manta-rugged
+  //! manta-1
+  //! manta-2
+  //! manta-3
+  //! lauv-nemo-1
+  //!
   //! @author Luís Venâncio
   namespace EvoSimulator
   {
@@ -106,7 +106,7 @@ namespace Simulators
       port(0),
       address("0.0.0.0")
       {}
-      
+
       //! Destructor
       ~SafeTCPSocket()
       {
@@ -183,7 +183,7 @@ namespace Simulators
       {
         return new SafeTCPSocket(task, a_name, sock->accept());
       }
-      
+
       //! Poll socket for reading
       //! @param[in] timeout time it waits for socket in seconds
       //! @return true if there is something to read, false otherwise
@@ -200,11 +200,11 @@ namespace Simulators
           return false;
         }
       }
-      
+
       //! Read from socket to buffer
       //! @param[in] data buffer
       //! @param[in] length number of bytes to read
-      //! @return number of bytes read 
+      //! @return number of bytes read
       size_t
       read(uint8_t *data, size_t length)
       {
@@ -304,7 +304,7 @@ namespace Simulators
         return 0;
       }
     };
-    
+
     //! Buffer capacity.
     static const unsigned c_bfr_size = 255;
     //! Timeout for settings reply
@@ -446,7 +446,7 @@ namespace Simulators
 
         param("Exponential Stretching Factor", m_args.settings.betta)
         .defaultValue("0.4")
-        .description("Exponential stretching factor." 
+        .description("Exponential stretching factor."
                       " (Refer to manual).");
 
         param("Reference Position", m_args.ref)
@@ -512,15 +512,15 @@ namespace Simulators
         // based on evologics address
         if (m_args.auto_assign)
           autoAssign();
-        
+
         // Socket array initialization
         m_socket[LISTENER]  = new SafeTCPSocket(this, "listener");
         m_socket[MODEM]     = new SafeTCPSocket(this, "modem");
         m_socket[STATE]     = new SafeTCPSocket(this, "state");
         m_socket[SETTINGS]  = new SafeTCPSocket(this, "settings");
 
-        m_socket[LISTENER]  ->startListen(m_args.local_port, 
-                                          Address(m_args.local_address), 
+        m_socket[LISTENER]  ->startListen(m_args.local_port,
+                                          Address(m_args.local_address),
                                           false,
                                           15);
         m_socket[MODEM]     ->connect(m_args.modem_address, m_args.modem_port);
@@ -616,7 +616,7 @@ namespace Simulators
       }
 
       //! Wait for simulator reply after sending setting
-      //! @param[in] parameter name of setting to wait for 
+      //! @param[in] parameter name of setting to wait for
       void
       waitReply(std::string parameter)
       {
@@ -681,7 +681,7 @@ namespace Simulators
 
         debug(DTR("%s socket connected: %s:%d"),
               m_socket[DRIVER]->name.c_str(),
-              m_socket[DRIVER]->sock->getBoundAddress().c_str(), 
+              m_socket[DRIVER]->sock->getBoundAddress().c_str(),
               m_socket[DRIVER]->sock->getBoundPort());
       }
 
@@ -695,17 +695,18 @@ namespace Simulators
         if (!m_pos_update.overflow())
           return;
 
-        double llh[3] = {m_sstate.lat, 
-                         m_sstate.lon,
-                         m_sstate.height};
+        double ll[2] = {m_sstate.lat,
+                         m_sstate.lon};
+        float height = m_sstate.height;
+
         double ned[3] = {0.0};
         double att[3] = {m_sstate.phi,
                          m_sstate.theta,
                          m_sstate.psi};
 
-        Coordinates::toWGS84(m_sstate, llh[0], llh[1], (float&)llh[2]);
+        Coordinates::toWGS84(m_sstate, ll[0], ll[1], height);
         WGS84::displacement(m_origin.lat, m_origin.lon, m_origin.height,
-                            llh[0], llh[1], llh[2],
+                            ll[0], ll[1], height,
                             &ned[0], &ned[1], &ned[2]);
 
         // Rotate to be compatible with modem reference frame
@@ -736,13 +737,13 @@ namespace Simulators
         if (!(String::startsWith(str, "ATZ0") ||
             String::startsWith(str, "PHYOFF")))
           return;
-          
+
         debug(DTR("Reset command: %s -> Reconnecting to modem"),
               sanitize(str.substr(0, str.find('\n'))).c_str());
         Delay::wait(5.0);
         m_socket[MODEM]->connect(m_args.modem_address, m_args.modem_port);
       }
-      
+
       //! Relay incomming messages (modem to driver or driver to modem)
       //! @param[in] in identifier of incomming message socket
       //! @param[in] out identifier of outgoing message socket
@@ -766,8 +767,8 @@ namespace Simulators
           checkReset(str);
 
           // Debug
-          spew(DTR("Message [%s -> %s]: %s"), m_socket[in]->name.c_str(), 
-                                              m_socket[out]->name.c_str(), 
+          spew(DTR("Message [%s -> %s]: %s"), m_socket[in]->name.c_str(),
+                                              m_socket[out]->name.c_str(),
                                               sanitize(str).c_str());
         }
       }
@@ -782,7 +783,7 @@ namespace Simulators
 
           if (!isActive())
             continue;
-          
+
           checkSocket();
           updateState();
           transport(DRIVER, MODEM);
