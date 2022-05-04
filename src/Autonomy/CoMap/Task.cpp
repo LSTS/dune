@@ -85,12 +85,24 @@ namespace Autonomy
       void
       onUpdateParameters() override
       {
-        m_mapper.setMovingSpeed(m_args.nominal_speed);        
         m_mapper.clearSensorCapabilities();
+        debug("Cleared survey capabilities.");        
+
+        m_mapper.setMovingSpeed(m_args.nominal_speed);     
+        debug("Set moving capability.");            
+        
         if (m_args.has_837B)
+        {
           m_mapper.addDeltaTCapabilities();
+          debug("Added DeltaT (MBS) survey capability.");        
+        }
+          
         if (m_args.has_klein)
+        {
           m_mapper.addKleinCapabilities();
+          debug("Added Klein (SSS) survey capabilities.");        
+        }
+        
         
       }
 
@@ -149,11 +161,15 @@ namespace Autonomy
             else
               response.op = IMC::TaskAdim::TAOP_REJECT;
             reply(msg, response);
+            war("New Schedule:");
+            war("%s", m_mapper.getScheduleAsString().c_str());
             break;
           case IMC::TaskAdim::TAOP_UNASSIGN:
             onUnassign(msg->tid);
             response.op = IMC::TaskAdim::TAOP_ACCEPT;
             reply(msg, response);
+            war("New Schedule:");
+            war("%s", m_mapper.getScheduleAsString().c_str());
             break;
           case IMC::TaskAdim::TAOP_STATUS_REQUEST:
             onStatusRequest(msg->tid);
@@ -203,7 +219,7 @@ namespace Autonomy
         {
           war("Task type not understood: %s", t->getName());
           return false;
-        }
+        }        
       }
 
       /**

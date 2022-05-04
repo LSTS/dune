@@ -211,7 +211,7 @@ namespace Autonomy
                                             { "Low-Frequency Channel", "true" },
                                             { "Range", "50" } });
         addAreaSurveyProfile(sss_survey, 1.0, SpeedUnits::SUNITS_METERS_PS, 5.0, 100, ZUnits::Z_ALTITUDE, params);
-
+        
         p_survey.sensor = SensorType::SENSORTYPE_SIDESCAN;
         p_survey.resolution = 1200;
         p_survey.duration = 120;
@@ -471,6 +471,23 @@ namespace Autonomy
           if (!inserted)
             m_schedule.push_back(tid);
       }
+
+      std::string
+      getScheduleAsString()
+      {
+        std::stringstream ss;
+        for (int tid : m_schedule)
+        {
+          CoMapTask task = m_tasks[tid];
+
+          ss << " * " << tid << " ["
+             << Time::Format::getTimeDate(task.m_start_deadline) << " > "
+             << Time::Format::getTimeDate(task.m_finish_deadline) << "] "
+             << std::endl;
+        }
+        return ss.str();
+      }
+
 
       void recomputeSchedule()
       {
