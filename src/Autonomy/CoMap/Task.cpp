@@ -253,6 +253,11 @@ namespace Autonomy
       void
       onMain()
       {
+        war("My IMC id is 0x%2X (%d), and my IMC synch word is 0x%2X", getSystemId(), getSystemId(), DUNE_IMC_CONST_SYNC);
+        while (!stopping())
+        {
+          consumeMessages();
+        }
       }
     };
   }

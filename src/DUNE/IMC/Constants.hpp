@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 5333e4e0128bcca236cc6af16db02bb0                            *
+// IMC XML MD5: 8329ee899adddc2a2c6f267307dcd115                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -39,11 +39,11 @@
 //! Git repository information.
 #define DUNE_IMC_CONST_GIT_INFO "2022-03-15 042529b  (HEAD -> project/comap, origin/project/comap)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "5333e4e0128bcca236cc6af16db02bb0"
+#define DUNE_IMC_CONST_MD5 "8329ee899adddc2a2c6f267307dcd115"
 //! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xFE54
+#define DUNE_IMC_CONST_SYNC 0xFE55
 //! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x54FE
+#define DUNE_IMC_CONST_SYNC_REV 0x55FE
 //! Size of the header in bytes.
 #define DUNE_IMC_CONST_HEADER_SIZE 20
 //! Size of the footer in bytes.
