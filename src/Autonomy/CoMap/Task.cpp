@@ -57,6 +57,7 @@ namespace Autonomy
       CoMapper m_mapper;
       IMC::WorldModel* m_world_model;
       bool m_holding;
+      Time::Counter<double> m_capabilities_timer;
 
       Task(const std::string& name, Tasks::Context& ctx) : DUNE::Tasks::Task(name, ctx), 
       m_mapper(1.0), 
@@ -78,6 +79,7 @@ namespace Autonomy
         bind<IMC::SynchAdmin>(this);
         bind<IMC::TaskAdim>(this);
         bind<IMC::WorldModel>(this);
+        m_capabilities_timer.setTop(5);
       }
 
       void
@@ -89,8 +91,7 @@ namespace Autonomy
           m_mapper.addDeltaTCapabilities();
         if (m_args.has_klein)
           m_mapper.addKleinCapabilities();
-
-        onPublishCapabilities();       
+        
       }
 
       /**
@@ -117,6 +118,7 @@ namespace Autonomy
             war("SynchAdmin operation not implemented: %d", msg->op);
             break;
         }
+        debug("Holding execution? %d", m_holding);
       }
 
       /**
@@ -166,7 +168,7 @@ namespace Autonomy
         debugMessage("Received WorldModel", *msg);
         Memory::clear(m_world_model);
         m_world_model = msg->clone();
-        m_mapper.setWorldModel(msg);        
+        m_mapper.setWorldModel(msg);
       }
 
       /**
@@ -253,10 +255,17 @@ namespace Autonomy
       void
       onMain()
       {
-        war("My IMC id is 0x%2X (%d), and my IMC synch word is 0x%2X", getSystemId(), getSystemId(), DUNE_IMC_CONST_SYNC);
+        war("My IMC id is 0x%2X (%d), and my IMC synch word is 0x%2X",
+            getSystemId(), getSystemId(), DUNE_IMC_CONST_SYNC);
         while (!stopping())
         {
           consumeMessages();
+          
+          if (m_holding && m_capabilities_timer.overflow())
+          {
+            m_capabilities_timer.reset();
+            onPublishCapabilities();
+          }
         }
       }
     };
