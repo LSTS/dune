@@ -190,7 +190,9 @@ namespace Navigation
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Navigation::BasicNavigation(name, ctx),
-          m_avg_speed(NULL)
+          m_avg_speed(nullptr),
+          m_heading_buffer(0),
+          m_speed_model(nullptr)
         {
           // Declare configuration parameters.
           param("Position Noise Covariance with IMU", m_args.pos_noise)
@@ -293,14 +295,13 @@ namespace Navigation
           // Extended Kalman Filter initialization.
           m_kal.reset(NUM_STATE, NUM_OUT);
           resetKalman();
-          m_heading_buffer=0;
 
           // Register callbacks
           bind<IMC::EntityActivationState>(this);
         }
 
         void
-        onUpdateParameters(void)
+        onUpdateParameters(void) override
         {
           BasicNavigation::onUpdateParameters();
 
@@ -338,7 +339,7 @@ namespace Navigation
         }
 
         void
-        onResourceInitialization(void)
+        onResourceInitialization(void) override
         {
           BasicNavigation::onResourceInitialization();
           m_avg_speed = new MovingAverage<double>(m_args.navg_speed);
@@ -346,7 +347,7 @@ namespace Navigation
         }
 
         void
-        onResourceRelease(void)
+        onResourceRelease(void) override
         {
           BasicNavigation::onResourceRelease();
           Memory::clear(m_avg_speed);
@@ -354,7 +355,7 @@ namespace Navigation
         }
 
         void
-        onEntityResolution(void)
+        onEntityResolution(void) override
         {
           BasicNavigation::onEntityResolution();
           try
@@ -372,10 +373,7 @@ namespace Navigation
         {
           IMC::AlignmentState as;
 
-          if (m_aligned)
-            as.state = IMC::AlignmentState::AS_ALIGNED;
-          else
-            as.state = IMC::AlignmentState::AS_NOT_ALIGNED;
+          as.state = m_aligned ? IMC::AlignmentState::AS_ALIGNED : IMC::AlignmentState::AS_NOT_ALIGNED;
 
           // No IMU unit available.
           if (m_imu_eid == std::numeric_limits<unsigned>::max())
@@ -474,7 +472,7 @@ namespace Navigation
         }
 
         double
-        getBiasedHeading(void)
+        getBiasedHeading(void) const
         {
           return m_kal.getState(STATE_PSI) + m_kal.getState(STATE_PSI_BIAS);
         }
@@ -694,15 +692,15 @@ namespace Navigation
             if (m_kal.getCovariance(STATE_PSI_BIAS) < m_args.alignment_index &&
                 diff_psi < Angles::normalizeRadian(Angles::radians(m_args.alignment_diff)) )
             {
-                m_aligned = true;
-                m_heading_buffer=0;
+              m_aligned = true;
+              m_heading_buffer = 0;
             }
             else
             {
               if (m_aligned)
               {
                 m_heading_buffer++;
-                if(m_heading_buffer > m_args.heading_buffer_value)
+                if (m_heading_buffer > m_args.heading_buffer_value)
                 {
                   sendDeActiveIMU();
                   war(DTR("navigation not aligned - Automatic IMU poweroff"));
@@ -755,11 +753,12 @@ namespace Navigation
         }
 
         double
-        getRpmToMs(double rpm)
+        getRpmToMs(double rpm) const
         {
-          if(m_speed_model != NULL)
-          return m_speed_model->toMPS(rpm,IMC::SUNITS_RPM);
-        return m_args.rpm_ini*rpm;
+          if (m_speed_model != nullptr)
+            return m_speed_model->toMPS(rpm, IMC::SUNITS_RPM);
+
+          return m_args.rpm_ini * rpm;
         }
 
         // Reinitialize Extended Kalman Filter transition matrix function.
