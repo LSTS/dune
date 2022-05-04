@@ -100,6 +100,14 @@ namespace Autonomy
       }
 
       void
+      onResourceRelease() override
+      {
+        Memory::clear(m_pcs);
+        Memory::clear(m_vstate);
+        Memory::clear(m_last);
+      }
+
+      void
       consume(const IMC::PlanControlState * msg)
       {
         Memory::replace(m_pcs, msg->clone());
