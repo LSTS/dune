@@ -72,7 +72,11 @@ namespace Autonomy
     validateTask(const IMC::TaskAdminArgs* task)
     {
       if (getTaskId(task) == -1)
+      {
+        std::cerr << "Invalid task id: " << getTaskId(task) << std::endl;
         return false;
+      }
+        
       
       return true;
     }
@@ -323,7 +327,7 @@ namespace Autonomy
         //plan.start_actions.push_back(profile.m_params);
         
         std::vector<std::pair<double, double>> coverage_path;
-        getCoveragePath(area, coverage_path, profile.m_swath_width);        
+        //getCoveragePath(area, coverage_path, profile.m_swath_width);        
         IMC::FollowPath path;
         path.speed = profile.m_speed;
         path.speed_units = profile.m_speed_units;
@@ -408,7 +412,7 @@ namespace Autonomy
       {
         if (!validateTask(task))
           return false;
-
+        
         try
         {
           int tid = getTaskId(task);
@@ -419,9 +423,11 @@ namespace Autonomy
           new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
           new_task.m_task_id = tid;          
           scheduleTask(new_task);
+          std::cout << "new size: " << m_schedule.size() << std::endl;
         }
         catch (std::exception& e)
         {
+          std::cerr << "Exception: " << e.what() << std::endl;
           return false;
         }
         return true;
@@ -470,6 +476,8 @@ namespace Autonomy
           }
           if (!inserted)
             m_schedule.push_back(tid);
+
+          
       }
 
       std::string

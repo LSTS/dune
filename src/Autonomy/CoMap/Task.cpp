@@ -157,12 +157,18 @@ namespace Autonomy
         {
           case IMC::TaskAdim::TAOP_ASSIGN:
             if (onAssign(msg->arg.get()))
+            {
               response.op = IMC::TaskAdim::TAOP_ACCEPT;
+              war("New Schedule:");
+              war("%s", m_mapper.getScheduleAsString().c_str());
+            }              
             else
+            {
+              war("Task was rejected.");
               response.op = IMC::TaskAdim::TAOP_REJECT;
+            }              
             reply(msg, response);
-            war("New Schedule:");
-            war("%s", m_mapper.getScheduleAsString().c_str());
+            
             break;
           case IMC::TaskAdim::TAOP_UNASSIGN:
             onUnassign(msg->tid);
