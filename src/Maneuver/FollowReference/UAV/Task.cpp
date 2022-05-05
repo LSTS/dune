@@ -362,7 +362,8 @@ namespace Maneuver
             // command start corresponds to reference position
             m_desired_path.start_lat = m_cur_ref.lat;
             m_desired_path.start_lon = m_cur_ref.lon;
-            m_desired_path.start_lon = m_cur_ref.lon;
+            m_desired_path.start_z = m_cur_ref.z->value;
+            m_desired_path.start_z_units = m_cur_ref.z->z_units;
             m_desired_path.flags &= ~IMC::DesiredPath::FL_DIRECT;
           }
           else if (m_cur_ref.flags & IMC::Reference::FLAG_DIRECT)
