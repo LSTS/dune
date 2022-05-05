@@ -46,23 +46,23 @@ namespace Simulators
     static const double c_sound_speed = 1500;
     //! Absolute maximum transmission range.
     static const double c_max_range = 3000;
-    
+
     //! Structure holding transmission/reception operation
     //! parameters.
     struct Operation
     {
       Operation(const Operation &op):
-      is_tx(op.is_tx),
-      start_time(op.start_time),
-      msg(op.msg)
+        is_tx(op.is_tx),
+        start_time(op.start_time),
+        msg(op.msg)
       {}
 
-      Operation(const bool &a_is_tx, 
-                const double &a_start_time, 
-                const SimAcousticMessage &a_msg):
-      is_tx(a_is_tx),
-      start_time(a_start_time),
-      msg(a_msg)
+      Operation(bool a_is_tx,
+                double a_start_time,
+                SimAcousticMessage a_msg):
+        is_tx(std::move(a_is_tx)),
+        start_time(std::move(a_start_time)),
+        msg(std::move(a_msg))
       {}
 
       //! Transmission flag.
@@ -98,9 +98,10 @@ namespace Simulators
     public:
       //! Constructor.
       Driver(DriverArguments* a_args, IMC::SimulatedState* a_sstate, Tasks::Task* a_task):
-      m_task(a_task),
-      m_args(a_args),
-      m_sstate(a_sstate)
+        m_task(a_task),
+        m_args(a_args),
+        m_sstate(a_sstate),
+        m_current_op(nullptr)
       {
         //Initialize UDP socket in multicast
         m_sock = new DUNE::Network::UDPSocket();
@@ -121,9 +122,8 @@ namespace Simulators
 
         Memory::clear(m_prng);
 
-        OpQueue::iterator it=m_queue.begin();
-        for (; it != m_queue.end(); ++it)
-          delete *it;
+        for (auto op : m_queue)
+          delete op;
 
         Memory::clear(m_current_op);
       }
@@ -166,7 +166,7 @@ namespace Simulators
       //! Modem is busy if there is a valid current operation.
       //! @return true if modem is busy.
       bool
-      isBusy()
+      isBusy() const
       {
         return m_current_op;
       }
@@ -212,7 +212,7 @@ namespace Simulators
         int n = msg->getSerializationSize();
         IMC::Packet::serialize(msg, m_buf, n);
         m_sock->write(m_buf, n, m_args->udp_maddr, m_args->udp_port);
-        
+
         std::stringstream ss;
         msg->toText(ss);
         m_task->debug(DTR("Message sent: \n%s"), ss.str().c_str());
@@ -278,11 +278,11 @@ namespace Simulators
       bool
       parse(const IMC::SimAcousticMessage* a_msg)
       {
-        // Check destination and modem compatibility 
+        // Check destination and modem compatibility
         bool check;
         // Specific destination
         check = a_msg->sys_dst == m_task->getSystemName();
-        // or Broadcast 
+        // or Broadcast
         check |= ((a_msg->sys_dst == "broadcast") & (a_msg->sys_src != m_task->getSystemName()));
         // and modem type
         check &= a_msg->modem_type == m_args->modem_type;
@@ -300,7 +300,7 @@ namespace Simulators
         return false;
       }
 
-      //! Simulate random successful delivery 
+      //! Simulate random successful delivery
       //! based on gaussian model of distance and data size.
       //! @param[in] distance distance to source vehicle.
       //! @param[in] data_size size of message data.
@@ -322,24 +322,16 @@ namespace Simulators
 
       //! Attempt to set an operation as the current operation.
       //! @param[in] a_op candidate to current operation.
-      //! @return true if current operation is set. 
+      //! @return true if current operation is set.
       bool
       setCurrentOperation(Operation a_op)
       {
         if (!collisionLogic(a_op))
           return false;
 
-        m_current_op = new Operation(a_op);
+        Memory::replace(m_current_op, new Operation(a_op));
         m_operation_timer.setTop(a_op.msg.txtime);
         return true;
-      }
-
-      //! Reset current operation
-      void
-      resetCurrentOperation()
-      {
-        delete m_current_op;
-        m_current_op = NULL;
       }
 
       // TODO: Explain collision logic
@@ -357,10 +349,8 @@ namespace Simulators
           return true;
 
         if (!a_op.is_tx)
-        {
-          delete m_current_op;
-          m_current_op = NULL;
-        }
+          Memory::clear(m_current_op);
+
         return false;
       }
 
@@ -371,8 +361,8 @@ namespace Simulators
         if (m_queue.empty())
           return;
 
-        OpQueue::iterator it = m_queue.begin();
-        while(it != m_queue.end())
+        auto it = m_queue.begin();
+        while (it != m_queue.end())
         {
           Operation* op = (*it);
           if (op->start_time <= Clock::getSinceEpoch())
@@ -389,7 +379,7 @@ namespace Simulators
           }
         }
       }
-      
+
       //! Main.
       //! Check for valid curret operation and execute.
       void
@@ -419,7 +409,7 @@ namespace Simulators
             }
             dispatch(str);
 
-            resetCurrentOperation();
+            Memory::clear(m_current_op);
           }
           else // Reception Op
           {
@@ -429,18 +419,17 @@ namespace Simulators
             m_task->dispatch(&m_current_op->msg, DF_LOOP_BACK);
 
             IMC::SimAcousticMessage request = m_current_op->msg;
-            resetCurrentOperation();
+            Memory::clear(m_current_op);
 
             if (request.flags == IMC::SimAcousticMessage::SAM_ACK)
               sendRangeReply(&request);
           }
-          
         }
       }
 
       //! Build range request reply and send.
       //! @param[in] range_request range request message.
-      void 
+      void
       sendRangeReply(const IMC::SimAcousticMessage* range_request)
       {
         IMC::UamTxFrame msg;
