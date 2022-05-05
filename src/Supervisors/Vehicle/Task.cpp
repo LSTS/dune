@@ -243,7 +243,7 @@ namespace Supervisors
         if (msg->getDestination() != getSystemId())
           return;
 
-        m_vs.last_error = DTR("got abort request");
+        m_vs.last_error = DTR("got abort request from ") + resolveEntity(msg->getSourceEntity());
         m_vs.last_error_time = Clock::getSinceEpoch();
         err("%s", m_vs.last_error.c_str());
 
