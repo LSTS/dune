@@ -1,0 +1,21 @@
+name: linux
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Prepare
+      run: cmake -B ${{github.workspace}}/build -DDEBUG=1 -DTESTS=1
+
+    - name: Build & Test
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --target Experimental
