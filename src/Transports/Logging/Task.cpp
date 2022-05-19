@@ -127,7 +127,15 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        bind(this, m_args.messages);
+        if (m_args.messages.empty())
+        {
+          std::vector<std::string> all_abbrevs;
+          IMC::Factory::getAbbrevs(all_abbrevs);
+          bind(this, all_abbrevs);
+          inf("Logging all messages");
+        }
+        else
+          bind(this, m_args.messages);
 
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
