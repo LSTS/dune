@@ -1,0 +1,23 @@
+---
+Standard: Cpp11
+BasedOnStyle:  LLVM
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakAfterReturnType: AllDefinitions
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Allman
+BreakConstructorInitializers: AfterColon
+ColumnLimit: 120
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 2
+Cpp11BracedListStyle: false
+IndentCaseLabels: true
+NamespaceIndentation: All
+PointerAlignment: Left
+SpacesBeforeTrailingComments: 0
+SpaceAfterTemplateKeyword: false
+AlignEscapedNewlines: Left
+FixNamespaceComments: false
+UseTab: Never
+...
