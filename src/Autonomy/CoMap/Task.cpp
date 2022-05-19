@@ -49,7 +49,7 @@ namespace Autonomy
       bool has_klein;
       bool has_837B;
     };
-    
+
     struct Task : public DUNE::Tasks::Task
     {
 
@@ -59,22 +59,20 @@ namespace Autonomy
       bool m_holding;
       Time::Counter<double> m_capabilities_timer;
 
-      Task(const std::string& name, Tasks::Context& ctx) : DUNE::Tasks::Task(name, ctx), 
-      m_mapper(1.0), 
-      m_world_model(nullptr),
-      m_holding(true)
+      Task(const std::string& name, Tasks::Context& ctx) :
+        DUNE::Tasks::Task(name, ctx), m_mapper(1.0), m_world_model(nullptr), m_holding(true)
       {
         param("Nominal Speed", m_args.nominal_speed)
-        .defaultValue("1.25")
-        .description("Speed to be used for moving the vehicle");
+            .defaultValue("1.25")
+            .description("Speed to be used for moving the vehicle");
 
         param("SSS Available", m_args.has_klein)
-        .defaultValue("true")
-        .description("Whether klein sss is available on this AUV.");
+            .defaultValue("true")
+            .description("Whether klein sss is available on this AUV.");
 
         param("MBS Available", m_args.has_837B)
-        .defaultValue("true")
-        .description("Whether Imagenex 873 is available on this AUV.");        
+            .defaultValue("true")
+            .description("Whether Imagenex 873 is available on this AUV.");
 
         bind<IMC::SynchAdmin>(this);
         bind<IMC::TaskAdim>(this);
@@ -86,24 +84,22 @@ namespace Autonomy
       onUpdateParameters() override
       {
         m_mapper.clearSensorCapabilities();
-        debug("Cleared survey capabilities.");        
+        debug("Cleared survey capabilities.");
 
-        m_mapper.setMovingSpeed(m_args.nominal_speed);     
-        debug("Set moving capability.");            
-        
+        m_mapper.setMovingSpeed(m_args.nominal_speed);
+        debug("Set moving capability.");
+
         if (m_args.has_837B)
         {
           m_mapper.addDeltaTCapabilities();
-          debug("Added DeltaT (MBS) survey capability.");        
+          debug("Added DeltaT (MBS) survey capability.");
         }
-          
+
         if (m_args.has_klein)
         {
           m_mapper.addKleinCapabilities();
-          debug("Added Klein (SSS) survey capabilities.");        
+          debug("Added Klein (SSS) survey capabilities.");
         }
-        
-        
       }
 
       /**
@@ -161,14 +157,14 @@ namespace Autonomy
               response.op = IMC::TaskAdim::TAOP_ACCEPT;
               war("New Schedule:");
               war("%s", m_mapper.getScheduleAsString().c_str());
-            }              
+            }
             else
             {
               war("Task was rejected.");
               response.op = IMC::TaskAdim::TAOP_REJECT;
-            }              
+            }
             reply(msg, response);
-            
+
             break;
           case IMC::TaskAdim::TAOP_UNASSIGN:
             onUnassign(msg->tid);
@@ -225,7 +221,7 @@ namespace Autonomy
         {
           war("Task type not understood: %s", t->getName());
           return false;
-        }        
+        }
       }
 
       /**
@@ -239,13 +235,13 @@ namespace Autonomy
       onUnassign(int task_id)
       {
         debug("onUnassign()");
-        
-        CoMapTask *task = m_mapper.getTask(task_id);
+
+        CoMapTask* task = m_mapper.getTask(task_id);
         if (task == nullptr)
           war("Tried to unassign an unknown task");
         else
           m_mapper.removeTask(task_id);
-        
+
         return true;
       }
 
@@ -253,8 +249,8 @@ namespace Autonomy
       onStatusRequest(int task_id)
       {
         debug("onStatusRequest()");
-        IMC::TaskStatus status = m_mapper.getTaskStatus(task_id);        
-        dispatch(status);        
+        IMC::TaskStatus status = m_mapper.getTaskStatus(task_id);
+        dispatch(status);
         debugMessage("Sent task status", status);
       }
 
@@ -262,12 +258,13 @@ namespace Autonomy
       onPublishCapabilities()
       {
         debug("Publish Capabilities");
-        IMC::VehicleCapabilities capabilities = m_mapper.generateCapabilities();        
+        IMC::VehicleCapabilities capabilities = m_mapper.generateCapabilities();
         dispatch(capabilities);
         debugMessage("Sent capabilities", capabilities);
       }
 
-      void debugMessage(std::string title, const IMC::Message& msg)
+      void
+      debugMessage(std::string title, const IMC::Message& msg)
       {
         std::stringstream ss;
         msg.toJSON(ss);
@@ -277,12 +274,12 @@ namespace Autonomy
       void
       onMain()
       {
-        war("My IMC id is 0x%2X (%d), and my IMC synch word is 0x%2X",
-            getSystemId(), getSystemId(), DUNE_IMC_CONST_SYNC);
+        war("My IMC id is 0x%2X (%d), and my IMC synch word is 0x%2X", getSystemId(), getSystemId(),
+            DUNE_IMC_CONST_SYNC);
         while (!stopping())
         {
           consumeMessages();
-          
+
           if (m_holding && m_capabilities_timer.overflow())
           {
             m_capabilities_timer.reset();

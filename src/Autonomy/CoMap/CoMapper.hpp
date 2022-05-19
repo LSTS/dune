@@ -5,9 +5,9 @@
 #include <cstdint>
 
 // DUNE headers.
+#include "AreaCoverage.hpp"
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Math/Matrix.hpp>
-#include "AreaCoverage.hpp"
 #include <Plan/Engine/Plan.hpp>
 
 namespace Autonomy
@@ -51,13 +51,14 @@ namespace Autonomy
     }
 
     bool
-    getFeature(const IMC::TaskAdminArgs* task, const IMC::WorldModel* world, std::vector<std::pair<double, double>>& feature)
+    getFeature(const IMC::TaskAdminArgs* task, const IMC::WorldModel* world,
+               std::vector<std::pair<double, double>>& feature)
     {
       if (task->getId() == IMC::SurveyTask::getIdStatic())
       {
         int fid = ((IMC::SurveyTask*)task)->feature_id;
         return getFeature(fid, world, feature);
-      }        
+      }
       else if (task->getId() == IMC::MoveTask::getIdStatic())
       {
         IMC::MapPoint* point = ((IMC::MoveTask*)task)->destination.get();
@@ -76,8 +77,7 @@ namespace Autonomy
         std::cerr << "Invalid task id: " << getTaskId(task) << std::endl;
         return false;
       }
-        
-      
+
       return true;
     }
 
@@ -130,7 +130,7 @@ namespace Autonomy
         this->m_status.status = TaskStatus::SSTATUS_ASSIGNED;
         this->m_status.task_id = tid;
         this->m_finish_deadline = deadline;
-        //TODO compute time to execute plan using Plan::Engine::Plan class
+        // TODO compute time to execute plan using Plan::Engine::Plan class
         this->m_start_deadline = deadline;
       }
 
@@ -174,7 +174,7 @@ namespace Autonomy
       std::vector<SurveyProfile> m_point_survey_profiles;
       std::vector<int> m_schedule;
       std::map<int, CoMapTask> m_tasks;
-      int m_active_task;       
+      int m_active_task;
       double m_speed;
 
       CoMapper(double moveSpeed) { this->m_speed = moveSpeed; }
@@ -215,7 +215,7 @@ namespace Autonomy
                                             { "Low-Frequency Channel", "true" },
                                             { "Range", "50" } });
         addAreaSurveyProfile(sss_survey, 1.0, SpeedUnits::SUNITS_METERS_PS, 5.0, 100, ZUnits::Z_ALTITUDE, params);
-        
+
         p_survey.sensor = SensorType::SENSORTYPE_SIDESCAN;
         p_survey.resolution = 1200;
         p_survey.duration = 120;
@@ -310,9 +310,9 @@ namespace Autonomy
       IMC::PlanSpecification
       generatePlan(const IMC::SurveyTask* task, SurveyProfile profile)
       {
-        
+
         std::vector<std::pair<double, double>> area;
-        
+
         if (!getFeature(task, &m_world_model, area))
         {
           IMC::PlanSpecification plan;
@@ -321,13 +321,13 @@ namespace Autonomy
           return plan;
         }
 
-        //IMC::PlanSpecification plan;
-        //plan.plan_id = String::str("comap-%d", getTaskId(task));
-        //plan.description = "Survey of feature " + task->feature_id;
-        //plan.start_actions.push_back(profile.m_params);
-        
+        // IMC::PlanSpecification plan;
+        // plan.plan_id = String::str("comap-%d", getTaskId(task));
+        // plan.description = "Survey of feature " + task->feature_id;
+        // plan.start_actions.push_back(profile.m_params);
+
         std::vector<std::pair<double, double>> coverage_path;
-        //getCoveragePath(area, coverage_path, profile.m_swath_width);        
+        // getCoveragePath(area, coverage_path, profile.m_swath_width);
         IMC::FollowPath path;
         path.speed = profile.m_speed;
         path.speed_units = profile.m_speed_units;
@@ -338,18 +338,17 @@ namespace Autonomy
           double lat = coverage_path[0].first;
           double lon = coverage_path[0].second;
 
-          for (unsigned i = 0; i < coverage_path.size(); i++) 
+          for (unsigned i = 0; i < coverage_path.size(); i++)
           {
             auto point = coverage_path[i];
             IMC::PathPoint pathPoint;
-            WGS84::displacement(lat, lon, 0, point.first, point.second, 0,
-                                &pathPoint.x, &pathPoint.y, &pathPoint.z);
+            WGS84::displacement(lat, lon, 0, point.first, point.second, 0, &pathPoint.x, &pathPoint.y, &pathPoint.z);
             path.points.push_back(pathPoint);
           }
         }
 
-        IMC::PlanSpecification plan = sequentialPlan(String::str("comap-%d", getTaskId(task)), 
-                            {&path}, {&profile.m_params});
+        IMC::PlanSpecification plan =
+            sequentialPlan(String::str("comap-%d", getTaskId(task)), { &path }, { &profile.m_params });
 
         return plan;
       }
@@ -378,15 +377,14 @@ namespace Autonomy
         return &(m_tasks[task_id]);
       }
 
-
       IMC::TaskStatus
       getTaskStatus(int task_id)
       {
         CoMapTask* task = getTask(task_id);
         if (task == nullptr)
-        {          
+        {
           IMC::TaskStatus msg;
-          msg.task_id = task_id;        
+          msg.task_id = task_id;
           msg.status = IMC::TaskStatus::SSTATUS_ERROR;
           return msg;
         }
@@ -412,7 +410,7 @@ namespace Autonomy
       {
         if (!validateTask(task))
           return false;
-        
+
         try
         {
           int tid = getTaskId(task);
@@ -421,7 +419,7 @@ namespace Autonomy
           CoMapTask new_task(tid, plan, task->deadline);
           new_task.m_status.progress = 0;
           new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
-          new_task.m_task_id = tid;          
+          new_task.m_task_id = tid;
           scheduleTask(new_task);
           std::cout << "new size: " << m_schedule.size() << std::endl;
         }
@@ -463,21 +461,19 @@ namespace Autonomy
         m_tasks[tid] = new_task;
 
         // try to insert the new task in the current schedule
-          bool inserted = false;
-          for (auto s = m_schedule.begin(); s != m_schedule.end(); s++)
+        bool inserted = false;
+        for (auto s = m_schedule.begin(); s != m_schedule.end(); s++)
+        {
+          CoMapTask other = m_tasks[*s];
+          if (other.m_start_deadline > new_task.m_start_deadline)
           {
-            CoMapTask other = m_tasks[*s];
-            if (other.m_start_deadline > new_task.m_start_deadline)
-            {
-              m_schedule.insert(s, tid);
-              inserted = true;
-              break;
-            }
+            m_schedule.insert(s, tid);
+            inserted = true;
+            break;
           }
-          if (!inserted)
-            m_schedule.push_back(tid);
-
-          
+        }
+        if (!inserted)
+          m_schedule.push_back(tid);
       }
 
       std::string
@@ -488,18 +484,16 @@ namespace Autonomy
         {
           CoMapTask task = m_tasks[tid];
 
-          ss << " * " << tid << " ["
-             << Time::Format::getTimeDate(task.m_start_deadline) << " > "
-             << Time::Format::getTimeDate(task.m_finish_deadline) << "] "
-             << std::endl;
+          ss << " * " << tid << " [" << Time::Format::getTimeDate(task.m_start_deadline) << " > "
+             << Time::Format::getTimeDate(task.m_finish_deadline) << "] " << std::endl;
         }
         return ss.str();
       }
 
-
-      void recomputeSchedule()
+      void
+      recomputeSchedule()
       {
-        //empty for now
+        // empty for now
       }
 
       bool
@@ -512,7 +506,7 @@ namespace Autonomy
             m_schedule.erase(t);
             break;
           }
-        }        
+        }
         bool existed = m_tasks.erase(task_id) > 0;
         if (existed)
           recomputeSchedule();
