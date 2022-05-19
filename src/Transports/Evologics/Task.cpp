@@ -58,6 +58,8 @@ namespace Transports
       bool low_gain;
       //! Source level.
       unsigned source_level;
+      //! Carrier  waveform ID.
+      unsigned waveform_id;
       //! Connection retry count.
       unsigned con_retry_count;
       //! Connection retry timeout.
@@ -151,6 +153,12 @@ namespace Transports
         .minimumValue("0")
         .maximumValue("3")
         .description("Signal transmission source level during data exchange");
+
+        param("Waveform ID", m_args.waveform_id)
+        .defaultValue("2")
+        .minimumValue("0")
+        .maximumValue("2")
+        .description("Carrier waveform ID for Evologics modems");
 
         param("Connection Retry Count", m_args.con_retry_count)
         .defaultValue("3")
@@ -380,6 +388,7 @@ namespace Transports
           m_driver->setHighestAddress(m_args.highest_addr);
           m_driver->setPositionDataOutput(true);
           m_driver->setPromiscuous(true);
+          m_driver->setCarrierWaveformID(m_args.waveform_id);
           m_driver->setExtendedNotifications(true);
           m_kalive_counter.setTop(m_args.kalive_tout);
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
