@@ -307,6 +307,11 @@ foreach(program ${programs})
   dune_program(${program} 0)
 endforeach(program ${programs})
 
+file(GLOB programs private/programs/*.cpp)
+foreach(program ${programs})
+  dune_program(${program} 1)
+endforeach(program ${programs})
+
 ##########################################################################
 #                          Documentation                                 #
 ##########################################################################
