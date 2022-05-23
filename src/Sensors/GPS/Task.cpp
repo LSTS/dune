@@ -28,9 +28,9 @@
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <cstring>
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -84,6 +84,8 @@ namespace Sensors
       std::string init_rpls[c_max_init_cmds];
       //! Power channels.
       std::vector<std::string> pwr_channels;
+      //! Enable novatel sbas mode.
+      bool novatelSbas;
     };
 
     struct Task: public Tasks::Task
@@ -151,6 +153,10 @@ namespace Sensors
           param(rpl_label, m_args.init_rpls[i])
           .defaultValue("");
         }
+
+        param("Novatel SBAS", m_args.novatelSbas)
+        .defaultValue("false")
+        .description("Enable novatel sbas mode");
 
         // Initialize messages.
         clearMessages();
@@ -222,6 +228,14 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        if (m_args.novatelSbas)
+        {
+          trace(DTR("enabling NOVATEL SBAS mode."));
+
+          std::string cmd = String::unescape("SBASCONTROL ENABLE AUTO\r\n");
+          m_handle->writeString(cmd.c_str());
+        }
+
         for (unsigned i = 0; i < c_max_init_cmds; ++i)
         {
           if (m_args.init_cmds[i].empty())
@@ -579,6 +593,31 @@ namespace Sensors
         {
           m_fix.type = IMC::GpsFix::GFT_DIFFERENTIAL;
           m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+        }
+
+        if (m_args.novatelSbas)
+        {
+          static bool sbas_alert = false;
+
+          if (quality == 9)
+          {
+            m_fix.type = IMC::GpsFix::GFT_STANDALONE;
+            m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+
+            if (!sbas_alert)
+            {
+              sbas_alert = true;
+              inf(DTR("SBAS corrections are now being applied."));
+            }
+          }
+          else
+          {
+            if (sbas_alert)
+            {
+              sbas_alert = false;
+              war(DTR("SBAS corrections are no longer being applied."));
+            }
+          }
         }
 
         if (readLatitude(parts[2], parts[3], m_fix.lat)
