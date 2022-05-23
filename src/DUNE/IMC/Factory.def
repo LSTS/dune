@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 178dfd0b52bf8c21b369e36600d2af46                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -348,5 +348,11 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(909, HomePosition)
+MESSAGE(910, LogFilesQuery)
+MESSAGE(911, LogFilesReply)
+MESSAGE(912, FileFragment)
+MESSAGE(1014, CurrentProfile)
+MESSAGE(1015, CurrentProfileCell)
+MESSAGE(1016, ADCPBeam)
 MESSAGE(2006, TotalMagIntensity)
 #undef MESSAGE

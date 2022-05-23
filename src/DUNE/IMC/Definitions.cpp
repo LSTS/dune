@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 178dfd0b52bf8c21b369e36600d2af46                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -27188,6 +27188,535 @@ namespace DUNE
       IMC::toJSON(os__, "height", height, nindent__);
       IMC::toJSON(os__, "depth", depth, nindent__);
       IMC::toJSON(os__, "alt", alt, nindent__);
+    }
+
+    LogFilesQuery::LogFilesQuery(void)
+    {
+      m_header.mgid = 910;
+      clear();
+    }
+
+    void
+    LogFilesQuery::clear(void)
+    {
+      req_id = 0;
+      type = 0;
+      init = 0;
+      end = 0;
+    }
+
+    bool
+    LogFilesQuery::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::LogFilesQuery& other__ = static_cast<const LogFilesQuery&>(msg__);
+      if (req_id != other__.req_id) return false;
+      if (type != other__.type) return false;
+      if (init != other__.init) return false;
+      if (end != other__.end) return false;
+      return true;
+    }
+
+    int
+    LogFilesQuery::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    LogFilesQuery::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(init, ptr__);
+      ptr__ += IMC::serialize(end, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    LogFilesQuery::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(init, bfr__, size__);
+      bfr__ += IMC::deserialize(end, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    LogFilesQuery::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(init, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(end, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    LogFilesQuery::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "init", init, nindent__);
+      IMC::toJSON(os__, "end", end, nindent__);
+    }
+
+    FileFragment::FileFragment(void)
+    {
+      m_header.mgid = 912;
+      clear();
+    }
+
+    void
+    FileFragment::clear(void)
+    {
+      id.clear();
+      frag_number = 0;
+      num_frags = 0;
+      data.clear();
+    }
+
+    bool
+    FileFragment::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FileFragment& other__ = static_cast<const FileFragment&>(msg__);
+      if (id != other__.id) return false;
+      if (frag_number != other__.frag_number) return false;
+      if (num_frags != other__.num_frags) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    FileFragment::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    FileFragment::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(frag_number, ptr__);
+      ptr__ += IMC::serialize(num_frags, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FileFragment::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(frag_number, bfr__, size__);
+      bfr__ += IMC::deserialize(num_frags, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FileFragment::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(frag_number, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(num_frags, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FileFragment::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "frag_number", frag_number, nindent__);
+      IMC::toJSON(os__, "num_frags", num_frags, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    LogFilesReply::LogFilesReply(void)
+    {
+      m_header.mgid = 911;
+      clear();
+      data.setParent(this);
+    }
+
+    void
+    LogFilesReply::clear(void)
+    {
+      req_id = 0;
+      type = 0;
+      data.clear();
+    }
+
+    bool
+    LogFilesReply::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::LogFilesReply& other__ = static_cast<const LogFilesReply&>(msg__);
+      if (req_id != other__.req_id) return false;
+      if (type != other__.type) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    LogFilesReply::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    LogFilesReply::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += data.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    LogFilesReply::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += data.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    LogFilesReply::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += data.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    LogFilesReply::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      data.toJSON(os__, "data", nindent__);
+    }
+
+    void
+    LogFilesReply::setTimeStampNested(double value__)
+    {
+      if (!data.isNull())
+      {
+        data.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    LogFilesReply::setSourceNested(uint16_t value__)
+    {
+      if (!data.isNull())
+      {
+        data.get()->setSource(value__);
+      }
+    }
+
+    void
+    LogFilesReply::setSourceEntityNested(uint8_t value__)
+    {
+      if (!data.isNull())
+      {
+        data.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    LogFilesReply::setDestinationNested(uint16_t value__)
+    {
+      if (!data.isNull())
+      {
+        data.get()->setDestination(value__);
+      }
+    }
+
+    void
+    LogFilesReply::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!data.isNull())
+      {
+        data.get()->setDestinationEntity(value__);
+      }
+    }
+
+    ADCPBeam::ADCPBeam(void)
+    {
+      m_header.mgid = 1016;
+      clear();
+    }
+
+    void
+    ADCPBeam::clear(void)
+    {
+      vel = 0;
+      amp = 0;
+      cor = 0;
+    }
+
+    bool
+    ADCPBeam::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::ADCPBeam& other__ = static_cast<const ADCPBeam&>(msg__);
+      if (vel != other__.vel) return false;
+      if (amp != other__.amp) return false;
+      if (cor != other__.cor) return false;
+      return true;
+    }
+
+    int
+    ADCPBeam::validate(void) const
+    {
+      if (cor < 0 || cor > 100) return false;
+      return true;
+    }
+
+    uint8_t*
+    ADCPBeam::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(vel, ptr__);
+      ptr__ += IMC::serialize(amp, ptr__);
+      ptr__ += IMC::serialize(cor, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    ADCPBeam::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(vel, bfr__, size__);
+      bfr__ += IMC::deserialize(amp, bfr__, size__);
+      bfr__ += IMC::deserialize(cor, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    ADCPBeam::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(vel, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(amp, bfr__, size__);
+      bfr__ += IMC::deserialize(cor, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    ADCPBeam::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "vel", vel, nindent__);
+      IMC::toJSON(os__, "amp", amp, nindent__);
+      IMC::toJSON(os__, "cor", cor, nindent__);
+    }
+
+    CurrentProfileCell::CurrentProfileCell(void)
+    {
+      m_header.mgid = 1015;
+      clear();
+      beams.setParent(this);
+    }
+
+    void
+    CurrentProfileCell::clear(void)
+    {
+      cell_position = 0;
+      beams.clear();
+    }
+
+    bool
+    CurrentProfileCell::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::CurrentProfileCell& other__ = static_cast<const CurrentProfileCell&>(msg__);
+      if (cell_position != other__.cell_position) return false;
+      if (beams != other__.beams) return false;
+      return true;
+    }
+
+    int
+    CurrentProfileCell::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    CurrentProfileCell::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(cell_position, ptr__);
+      ptr__ += beams.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    CurrentProfileCell::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(cell_position, bfr__, size__);
+      bfr__ += beams.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    CurrentProfileCell::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(cell_position, bfr__, size__);
+      bfr__ += beams.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    CurrentProfileCell::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "cell_position", cell_position, nindent__);
+      beams.toJSON(os__, "beams", nindent__);
+    }
+
+    void
+    CurrentProfileCell::setTimeStampNested(double value__)
+    {
+      beams.setTimeStamp(value__);
+    }
+
+    void
+    CurrentProfileCell::setSourceNested(uint16_t value__)
+    {
+      beams.setSource(value__);
+    }
+
+    void
+    CurrentProfileCell::setSourceEntityNested(uint8_t value__)
+    {
+      beams.setSourceEntity(value__);
+    }
+
+    void
+    CurrentProfileCell::setDestinationNested(uint16_t value__)
+    {
+      beams.setDestination(value__);
+    }
+
+    void
+    CurrentProfileCell::setDestinationEntityNested(uint8_t value__)
+    {
+      beams.setDestinationEntity(value__);
+    }
+
+    CurrentProfile::CurrentProfile(void)
+    {
+      m_header.mgid = 1014;
+      clear();
+      profile.setParent(this);
+    }
+
+    void
+    CurrentProfile::clear(void)
+    {
+      nbeams = 0;
+      ncells = 0;
+      coord_sys = 0;
+      profile.clear();
+    }
+
+    bool
+    CurrentProfile::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::CurrentProfile& other__ = static_cast<const CurrentProfile&>(msg__);
+      if (nbeams != other__.nbeams) return false;
+      if (ncells != other__.ncells) return false;
+      if (coord_sys != other__.coord_sys) return false;
+      if (profile != other__.profile) return false;
+      return true;
+    }
+
+    int
+    CurrentProfile::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    CurrentProfile::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(nbeams, ptr__);
+      ptr__ += IMC::serialize(ncells, ptr__);
+      ptr__ += IMC::serialize(coord_sys, ptr__);
+      ptr__ += profile.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    CurrentProfile::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(nbeams, bfr__, size__);
+      bfr__ += IMC::deserialize(ncells, bfr__, size__);
+      bfr__ += IMC::deserialize(coord_sys, bfr__, size__);
+      bfr__ += profile.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    CurrentProfile::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(nbeams, bfr__, size__);
+      bfr__ += IMC::deserialize(ncells, bfr__, size__);
+      bfr__ += IMC::deserialize(coord_sys, bfr__, size__);
+      bfr__ += profile.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    CurrentProfile::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "nbeams", nbeams, nindent__);
+      IMC::toJSON(os__, "ncells", ncells, nindent__);
+      IMC::toJSON(os__, "coord_sys", coord_sys, nindent__);
+      profile.toJSON(os__, "profile", nindent__);
+    }
+
+    void
+    CurrentProfile::setTimeStampNested(double value__)
+    {
+      profile.setTimeStamp(value__);
+    }
+
+    void
+    CurrentProfile::setSourceNested(uint16_t value__)
+    {
+      profile.setSource(value__);
+    }
+
+    void
+    CurrentProfile::setSourceEntityNested(uint8_t value__)
+    {
+      profile.setSourceEntity(value__);
+    }
+
+    void
+    CurrentProfile::setDestinationNested(uint16_t value__)
+    {
+      profile.setDestination(value__);
+    }
+
+    void
+    CurrentProfile::setDestinationEntityNested(uint8_t value__)
+    {
+      profile.setDestinationEntity(value__);
     }
 
     TotalMagIntensity::TotalMagIntensity(void)
