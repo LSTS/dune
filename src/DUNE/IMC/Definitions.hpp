@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 8329ee899adddc2a2c6f267307dcd115                            *
+// IMC XML MD5: 9f058a9a44384ead46ff6f5d948a34c5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -27705,7 +27705,7 @@ namespace DUNE
     };
 
     //! Task Administration.
-    class TaskAdim: public Message
+    class TaskAdmin: public Message
     {
     public:
       //! Operation.
@@ -27738,12 +27738,12 @@ namespace DUNE
         return 3004;
       }
 
-      TaskAdim(void);
+      TaskAdmin(void);
 
-      TaskAdim*
+      TaskAdmin*
       clone(void) const
       {
-        return new TaskAdim(*this);
+        return new TaskAdmin(*this);
       }
 
       void
@@ -27767,13 +27767,13 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return TaskAdim::getIdStatic();
+        return TaskAdmin::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "TaskAdim";
+        return "TaskAdmin";
       }
 
       unsigned

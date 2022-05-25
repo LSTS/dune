@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 8329ee899adddc2a2c6f267307dcd115                            *
+// IMC XML MD5: 9f058a9a44384ead46ff6f5d948a34c5                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -29298,7 +29298,7 @@ namespace DUNE
       cov_states.setDestinationEntity(value__);
     }
 
-    TaskAdim::TaskAdim(void)
+    TaskAdmin::TaskAdmin(void)
     {
       m_header.mgid = 3004;
       clear();
@@ -29306,7 +29306,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::clear(void)
+    TaskAdmin::clear(void)
     {
       tid = 0;
       op = 0;
@@ -29314,9 +29314,9 @@ namespace DUNE
     }
 
     bool
-    TaskAdim::fieldsEqual(const Message& msg__) const
+    TaskAdmin::fieldsEqual(const Message& msg__) const
     {
-      const IMC::TaskAdim& other__ = static_cast<const TaskAdim&>(msg__);
+      const IMC::TaskAdmin& other__ = static_cast<const TaskAdmin&>(msg__);
       if (tid != other__.tid) return false;
       if (op != other__.op) return false;
       if (arg != other__.arg) return false;
@@ -29324,13 +29324,13 @@ namespace DUNE
     }
 
     int
-    TaskAdim::validate(void) const
+    TaskAdmin::validate(void) const
     {
       return true;
     }
 
     uint8_t*
-    TaskAdim::serializeFields(uint8_t* bfr__) const
+    TaskAdmin::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(tid, ptr__);
@@ -29340,7 +29340,7 @@ namespace DUNE
     }
 
     uint16_t
-    TaskAdim::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    TaskAdmin::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(tid, bfr__, size__);
@@ -29350,7 +29350,7 @@ namespace DUNE
     }
 
     uint16_t
-    TaskAdim::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    TaskAdmin::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(tid, bfr__, size__);
@@ -29360,7 +29360,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    TaskAdmin::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "tid", tid, nindent__);
       IMC::toJSON(os__, "op", op, nindent__);
@@ -29368,7 +29368,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::setTimeStampNested(double value__)
+    TaskAdmin::setTimeStampNested(double value__)
     {
       if (!arg.isNull())
       {
@@ -29377,7 +29377,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::setSourceNested(uint16_t value__)
+    TaskAdmin::setSourceNested(uint16_t value__)
     {
       if (!arg.isNull())
       {
@@ -29386,7 +29386,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::setSourceEntityNested(uint8_t value__)
+    TaskAdmin::setSourceEntityNested(uint8_t value__)
     {
       if (!arg.isNull())
       {
@@ -29395,7 +29395,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::setDestinationNested(uint16_t value__)
+    TaskAdmin::setDestinationNested(uint16_t value__)
     {
       if (!arg.isNull())
       {
@@ -29404,7 +29404,7 @@ namespace DUNE
     }
 
     void
-    TaskAdim::setDestinationEntityNested(uint8_t value__)
+    TaskAdmin::setDestinationEntityNested(uint8_t value__)
     {
       if (!arg.isNull())
       {

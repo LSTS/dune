@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 8329ee899adddc2a2c6f267307dcd115                            *
+// IMC XML MD5: 9f058a9a44384ead46ff6f5d948a34c5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -716,8 +716,8 @@
 #define DUNE_IMC_GEOFEATURE 3002
 //! CoverageState identification number.
 #define DUNE_IMC_COVERAGESTATE 3003
-//! TaskAdim identification number.
-#define DUNE_IMC_TASKADIM 3004
+//! TaskAdmin identification number.
+#define DUNE_IMC_TASKADMIN 3004
 //! SynchAdmin identification number.
 #define DUNE_IMC_SYNCHADMIN 3005
 //! VehicleCapabilities identification number.

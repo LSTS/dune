@@ -75,7 +75,7 @@ namespace Autonomy
             .description("Whether Imagenex 873 is available on this AUV.");
 
         bind<IMC::SynchAdmin>(this);
-        bind<IMC::TaskAdim>(this);
+        bind<IMC::TaskAdmin>(this);
         bind<IMC::WorldModel>(this);
         m_capabilities_timer.setTop(5);
       }
@@ -136,7 +136,7 @@ namespace Autonomy
        * @param msg The command sent by the C2
        */
       void
-      consume(const IMC::TaskAdim* msg)
+      consume(const IMC::TaskAdmin* msg)
       {
         if (msg->getDestination() != getSystemId())
         {
@@ -144,36 +144,36 @@ namespace Autonomy
           return;
         }
 
-        debugMessage("Received TaskAdim", *msg);
+        debugMessage("Received TaskAdmin", *msg);
 
-        IMC::TaskAdim response;
+        IMC::TaskAdmin response;
         response.tid = msg->tid;
 
         switch (msg->op)
         {
-          case IMC::TaskAdim::TAOP_ASSIGN:
+          case IMC::TaskAdmin::TAOP_ASSIGN:
             if (onAssign(msg->arg.get()))
             {
-              response.op = IMC::TaskAdim::TAOP_ACCEPT;
+              response.op = IMC::TaskAdmin::TAOP_ACCEPT;
               war("New Schedule:");
               war("%s", m_mapper.getScheduleAsString().c_str());
             }
             else
             {
               war("Task was rejected.");
-              response.op = IMC::TaskAdim::TAOP_REJECT;
+              response.op = IMC::TaskAdmin::TAOP_REJECT;
             }
             reply(msg, response);
 
             break;
-          case IMC::TaskAdim::TAOP_UNASSIGN:
+          case IMC::TaskAdmin::TAOP_UNASSIGN:
             onUnassign(msg->tid);
-            response.op = IMC::TaskAdim::TAOP_ACCEPT;
+            response.op = IMC::TaskAdmin::TAOP_ACCEPT;
             reply(msg, response);
             war("New Schedule:");
             war("%s", m_mapper.getScheduleAsString().c_str());
             break;
-          case IMC::TaskAdim::TAOP_STATUS_REQUEST:
+          case IMC::TaskAdmin::TAOP_STATUS_REQUEST:
             onStatusRequest(msg->tid);
           default:
             break;

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 8329ee899adddc2a2c6f267307dcd115                            *
+// IMC XML MD5: 9f058a9a44384ead46ff6f5d948a34c5                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -372,7 +372,7 @@ MESSAGE(2013, SonarPulse)
 MESSAGE(3001, WorldModel)
 MESSAGE(3002, GeoFeature)
 MESSAGE(3003, CoverageState)
-MESSAGE(3004, TaskAdim)
+MESSAGE(3004, TaskAdmin)
 MESSAGE(3005, SynchAdmin)
 MESSAGE(3006, VehicleCapabilities)
 MESSAGE(3010, CapabilityAreaSurvey)
