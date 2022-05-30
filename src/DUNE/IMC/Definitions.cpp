@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 178dfd0b52bf8c21b369e36600d2af46                            *
+// IMC XML MD5: 60a23518f193ba4da4de1d134d424d40                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -5393,6 +5393,62 @@ namespace DUNE
       IMC::toJSON(os__, "status", status, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
       IMC::toJSON(os__, "range", range, nindent__);
+    }
+
+    AcousticRelease::AcousticRelease(void)
+    {
+      m_header.mgid = 217;
+      clear();
+    }
+
+    void
+    AcousticRelease::clear(void)
+    {
+      system.clear();
+    }
+
+    bool
+    AcousticRelease::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AcousticRelease& other__ = static_cast<const AcousticRelease&>(msg__);
+      if (system != other__.system) return false;
+      return true;
+    }
+
+    int
+    AcousticRelease::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    AcousticRelease::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(system, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AcousticRelease::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(system, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AcousticRelease::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(system, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AcousticRelease::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "system", system, nindent__);
     }
 
     Rpm::Rpm(void)

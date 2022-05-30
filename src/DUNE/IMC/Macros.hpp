@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 178dfd0b52bf8c21b369e36600d2af46                            *
+// IMC XML MD5: 60a23518f193ba4da4de1d134d424d40                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -168,6 +168,8 @@
 #define DUNE_IMC_ACOUSTICREQUEST 215
 //! AcousticStatus identification number.
 #define DUNE_IMC_ACOUSTICSTATUS 216
+//! AcousticRelease identification number.
+#define DUNE_IMC_ACOUSTICRELEASE 217
 //! Rpm identification number.
 #define DUNE_IMC_RPM 250
 //! Voltage identification number.

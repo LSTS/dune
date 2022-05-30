@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 178dfd0b52bf8c21b369e36600d2af46                            *
+// IMC XML MD5: 60a23518f193ba4da4de1d134d424d40                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5510,6 +5510,73 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(info);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Acoustic Release Request.
+    class AcousticRelease: public Message
+    {
+    public:
+      //! System.
+      std::string system;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 217;
+      }
+
+      AcousticRelease(void);
+
+      AcousticRelease*
+      clone(void) const
+      {
+        return new AcousticRelease(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AcousticRelease::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AcousticRelease";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(system);
       }
 
       void

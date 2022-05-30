@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 178dfd0b52bf8c21b369e36600d2af46                            *
+// IMC XML MD5: 60a23518f193ba4da4de1d134d424d40                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -98,6 +98,7 @@ MESSAGE(213, AcousticSystems)
 MESSAGE(214, AcousticLink)
 MESSAGE(215, AcousticRequest)
 MESSAGE(216, AcousticStatus)
+MESSAGE(217, AcousticRelease)
 MESSAGE(250, Rpm)
 MESSAGE(251, Voltage)
 MESSAGE(252, Current)
