@@ -231,6 +231,8 @@ namespace Transports
         bind<IMC::SoundSpeed>(this);
         bind<IMC::UamTxFrame>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::AcousticRelease>(this);
+
       }
 
       ~Task(void)
@@ -638,6 +640,19 @@ namespace Transports
           debug("sending %u bytes of burst data to address %d", data_size, ticket.addr);
           m_driver->sendBurst(data, data_size, ticket.addr);
         }
+      }
+
+      void
+      consume(const IMC::AcousticRelease* msg)
+      {
+        // is it a local release?
+        if (msg->system == getSystemName())
+          m_driver->acousticRelease(0);
+        else
+        {
+          int address = lookupSystemAddress(msg->system);
+          m_driver->acousticRelease(address);
+        }        
       }
 
       void

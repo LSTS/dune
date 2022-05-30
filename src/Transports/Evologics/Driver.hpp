@@ -268,6 +268,15 @@ namespace Transports
         expectOK();
       }
 
+      //! Request the modem to open the release system locally
+      void
+      acousticRelease(int address, int times = 4)
+      {
+        std::string command = String::str("%RELEASE,%d,%d,release", address, times);
+        sendAT(command);
+        expectOK();
+      }
+
       //! Retrieve the last computed acoustic signal propagation time
       //! between communicating devices.
       //! @return propagation time (microsecond).
