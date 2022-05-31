@@ -175,9 +175,22 @@ namespace Autonomy
       std::vector<int> m_schedule;
       std::map<int, CoMapTask> m_tasks;
       int m_active_task;
+      Tasks::Task* m_parent;
+      Parsers::Config* m_config;
       double m_speed;
 
-      CoMapper(double moveSpeed) { this->m_speed = moveSpeed; }
+      CoMapper(double moveSpeed, Tasks::Task* parent, Parsers::Config* config) { 
+        this->m_speed = moveSpeed; 
+        this->m_parent = parent;
+        this->m_config = config;
+      }
+
+      double
+      planDuration(DUNE::IMC::PlanSpecification* plan)
+      {
+        Plan::Engine::Plan p(plan, false, false, 100, m_parent, 0, m_config);      
+        return p.getETA();
+      }
 
       void
       addAreaSurveyProfile(IMC::CapabilityAreaSurvey capability, double speed, SpeedUnits sunits, double z,
@@ -318,13 +331,9 @@ namespace Autonomy
           IMC::PlanSpecification plan;
           plan.plan_id = "comap-invalid";
           plan.description = "Could not retrieve feature";
+          m_parent->err("Could not retrieve feature (%d) for task %d", task->feature_id, task->task_id);
           return plan;
         }
-
-        // IMC::PlanSpecification plan;
-        // plan.plan_id = String::str("comap-%d", getTaskId(task));
-        // plan.description = "Survey of feature " + task->feature_id;
-        // plan.start_actions.push_back(profile.m_params);
 
         std::vector<std::pair<double, double>> coverage_path;
         // getCoveragePath(area, coverage_path, profile.m_swath_width);
@@ -416,8 +425,10 @@ namespace Autonomy
           int tid = getTaskId(task);
           SurveyProfile profile = matchingProfile(task);
           PlanSpecification plan = generatePlan(task, profile);
+          //double duration = planDuration(&plan);
           CoMapTask new_task(tid, plan, task->deadline);
           new_task.m_status.progress = 0;
+          
           new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
           new_task.m_task_id = tid;
           scheduleTask(new_task);

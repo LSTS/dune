@@ -60,7 +60,7 @@ namespace Autonomy
       Time::Counter<double> m_capabilities_timer;
 
       Task(const std::string& name, Tasks::Context& ctx) :
-        DUNE::Tasks::Task(name, ctx), m_mapper(1.0), m_world_model(nullptr), m_holding(true)
+        DUNE::Tasks::Task(name, ctx), m_mapper(1.0, this, &ctx.config), m_world_model(nullptr), m_holding(true)
       {
         param("Nominal Speed", m_args.nominal_speed)
             .defaultValue("1.25")
@@ -118,6 +118,7 @@ namespace Autonomy
             break;
           case SynchAdmin::SYNCOP_INTERRUPT:
             m_holding = true;
+            // FIXME also stop any ongoing tasks
             break;
           case SynchAdmin::SYNCOP_RESUME:
             m_holding = false;
@@ -269,6 +270,12 @@ namespace Autonomy
         std::stringstream ss;
         msg.toJSON(ss);
         debug("%s: \n%s", title.c_str(), ss.str().c_str());
+      }
+
+      double
+      getPlanDuration(IMC::PlanSpecification plan)
+      {
+        return m_mapper.planDuration(&plan);
       }
 
       void
