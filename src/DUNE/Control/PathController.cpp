@@ -82,10 +82,6 @@ namespace DUNE
       .defaultValue("true")
       .description("Enable course control");
 
-      param("3D Tracking", m_3d_tracking)
-      .defaultValue("false")
-      .description("Enable 3D tracking");
-
       param("Along-track -- Monitor", m_atm.enabled)
       .defaultValue("true")
       .description("Enable along-track error monitoring");
@@ -224,7 +220,6 @@ namespace DUNE
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
-      handle3D();
       m_ts.loitering = false;
       m_ts.nearby = false;
       m_ts.end_time = Clock::get();

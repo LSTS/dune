@@ -281,12 +281,6 @@ namespace DUNE
         return m_time_factor;
       }
 
-      void
-      handle3D(bool force_2d = false)
-      {
-        m_ts.tracking_3d = force_2d ? 0 : m_3d_tracking;
-      }
-
       //! Get EstimatedState value from z units
       //! @param[in] z_unit Unit selection
       //! @return EstimatedState depth, altitude or height, according to z_unit. 
@@ -502,8 +496,6 @@ namespace DUNE
       bool m_running_monitors;
       //! Enable or disable course control
       bool m_course_ctl;
-      //! Enable or disable 3D tracking
-      bool m_3d_tracking;
       //! True when already tracking path
       bool m_tracking;
       //! True if there is some error
