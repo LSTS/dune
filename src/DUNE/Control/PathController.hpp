@@ -416,10 +416,50 @@ namespace DUNE
       //! @param[out] y y coordinate relatively to path
       template <typename T>
       inline void
-      getTrackPosition(const T& coord, double* x, double* y = 0) const
+      getTrackPosition(const T& coord, double* x, double* y = 0)
       {
-        Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
+        if (m_ts.tracking_3d)
+          Coordinates::getTrackPosition3D(m_ts.start, m_ts.end, coord, x, y);
+        else
+          Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
+
+      //! Get Bearing range and elevation in 2D or 3D
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      template <typename A, typename B>
+      inline void
+      toSpherical(const A& origin, const B& target, double& b, double& r, double& p)
+      {
+        p = 0;
+        if (m_ts.tracking_3d)
+          Coordinates::cartesianToSpherical(origin, target, b, r, p);
+        else
+          Coordinates::getBearingAndRange(origin, target, &b, &r);
+      }
+
+      //! Get Bearing range and elevation in 2D or 3D
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      template <typename A>
+      inline void
+      toSpherical(const A& point, double& b, double& r, double& p)
+      {
+        p = 0;
+        if (m_ts.tracking_3d)
+          Coordinates::cartesianToSpherical(point, b, r, p);
+        else
+          Coordinates::toPolar(point, &b, &r);
+      }
+
+      //! Get speed, course and elevation angles. (2D or 3D)
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      inline void
+      setCourseSpeedAndPitch();
 
       //! Deactivate bottom tracker
       void
