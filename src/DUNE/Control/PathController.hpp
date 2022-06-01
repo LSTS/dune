@@ -160,14 +160,20 @@ namespace DUNE
 
         //! bearing from start to end.
         double track_bearing;
+        //! elevation from start to end. (3D only).
+        double track_elevation;
         //! distance from start to end.
         double track_length;
         //! range from current position to end.
         double range;
-        //! angle from current position to end (line-of-sight angle).
+        //! bearing from current position to end (line-of-sight angle).
         double los_angle;
+        //! elevation from current position to end (line-of-sight angle). (3D only).
+        double los_elevation;
         //! current ground course if course control enabled, yaw otherwise.
         double course;
+        //! current elevation if course control enabled, pitch otherwise.
+        double elevation;
         //! current ground speed if course control enabled,
         //! body-fixed frame u speed otherwise.
         double speed;
@@ -204,6 +210,8 @@ namespace DUNE
         bool nearby : 1;
         //! Set if course control is enabled.
         bool cc : 1;
+        //! Set if 3d tracking is enabled.
+        bool tracking_3d : 1;
       };
 
       //! Handler for the startup of a new path.
