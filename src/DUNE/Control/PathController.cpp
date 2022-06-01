@@ -309,12 +309,8 @@ namespace DUNE
       const bool no_start = setStartPoint(now, dpath);
       setEndPoint(dpath);
 
-      // Loiter is handled in 2D. Depth is handled seperatly.
-      handle3D(dpath->lradius > 0);
-      toSpherical(m_ts.start, m_ts.end,
-                  m_ts.track_length,
-                  m_ts.track_bearing,
-                  m_ts.track_elevation);
+      Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                      &m_ts.track_bearing, &m_ts.track_length);
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
@@ -686,7 +682,6 @@ namespace DUNE
 
       const bool prev_nearby = m_ts.nearby;
 
-      handle3D(m_ts.loitering);
       updateTrackingState();
 
       reportPathControlState(!prev_nearby && m_ts.nearby);
@@ -751,15 +746,13 @@ namespace DUNE
     void
     PathController::updateTrackingState(void)
     {
-      // Range, LOS and elevation angles to destination
-      toSpherical(m_estate, m_ts.end,
-                  m_ts.range,
-                  m_ts.los_angle,
-                  m_ts.los_elevation);
+      // Range and LOS angle to destination
+      getBearingAndRange(m_estate, m_ts.end, &m_ts.los_angle, &m_ts.range);
 
-      // Speed, Elevation and Ground Course 
-      setCourseSpeedAndPitch();
-        
+      // Ground course and speed
+      m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
+      m_ts.speed = m_ts.cc ? Math::norm(m_estate.vx, m_estate.vy) : m_estate.u;
+
       if (!m_ts.loitering)
       {
         getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
@@ -796,7 +789,7 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_ts.end.z - m_estate.z; // vertical-track
+      m_ts.track_pos.z = m_estate.z - m_ts.start.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
@@ -1184,22 +1177,6 @@ namespace DUNE
       }
 
       return false;
-    }
-
-    void
-    PathController::setCourseSpeedAndPitch()
-    {
-      if (m_ts.cc)
-      {
-        TrackingState::Coord speed = {m_estate.vx, m_estate.vy, m_estate.vz};
-        toSpherical(speed, m_ts.speed, m_ts.course, m_ts.elevation);
-      }
-      else
-      {
-        m_ts.speed = m_estate.u;
-        m_ts.course = m_estate.psi;
-        m_ts.elevation = m_estate.theta;
-      }
     }
 
     void
