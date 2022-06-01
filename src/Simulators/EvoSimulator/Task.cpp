@@ -41,17 +41,7 @@ namespace Simulators
   //! You must also enable a driver task that connects to this interface.
   //! Try enabling "Transports.Evologics/Simulator".
   //!
-  //! You must now be able to simulate all of the following vehicles:
-  //! lauv-noptilus-1
-  //! lauv-noptilus-2
-  //! lauv-noptilus-3
-  //! lauv-xtreme-2
-  //! manta-11
-  //! manta-rugged
-  //! manta-1
-  //! manta-2
-  //! manta-3
-  //! lauv-nemo-1
+  //! You must now be able to simulate all vehicles in the address section (up to 10).
   //!
   //! @author Luís Venâncio
   namespace EvoSimulator
