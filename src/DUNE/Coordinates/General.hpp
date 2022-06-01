@@ -152,52 +152,6 @@ namespace DUNE
         *y = r * std::sin(b);
     }
 
-    //! Get along and cross track positions of a 3D point for a track
-    //! defined by an origin and target positions.
-    //! @param origin origin
-    //! @param target target
-    //! @param point point for which track positions are required
-    //! @param x along-track position on exit
-    //! @param y optional cross-track position on exit
-    template <typename A, typename B>
-    void
-    getTrackPosition3D(const A& origin, const A& target, const B& point, double* x, double* y = 0)
-    {
-      // Position line vectors at the origin
-      Math::Matrix track_vector = Math::Matrix(3, 1);
-      Math::Matrix offset_vector = Math::Matrix(3, 1);
-
-      track_vector(0) = target.x - origin.x;
-      track_vector(1) = target.y - origin.y;
-      track_vector(2) = target.z - origin.z;
-
-      offset_vector(0) = point.x - origin.x;
-      offset_vector(1) = point.y - origin.y;
-      offset_vector(2) = point.z - origin.z;
-
-      // Get line lenghts and dot product
-      double track_norm = track_vector.norm_2();
-      double offset_norm = offset_vector.norm_2();
-      double dot_product = Math::Matrix::dot(track_vector, offset_vector);
-
-      // Calculate angle between vectors
-      double vector_angle = std::acos(dot_product / (track_norm * offset_norm));
-
-      // Get along and cross track positions
-      // Cross-track position is given as the perpenticular distance 
-      // between Along-track and current positions.
-      *x = std::cos(vector_angle) * offset_norm;
-      if (y)
-        *y = std::sin(vector_angle) * offset_norm;
-
-      // Get coordenate
-      Math::Matrix unit_track = track_vector/track_norm;
-      Math::Matrix along_coord = Math::Matrix(3, 1);
-      along_coord(0) = origin.x + unit_track(0) * (*x);
-      along_coord(1) = origin.y + unit_track(1) * (*x);
-      along_coord(2) = origin.z + unit_track(2) * (*x);
-    }
-
     //! Convert a three-dimensional vector from spherical coordinates
     //! (R,Az,El) to cartesian coordinates.
     //! @param r vector norm.
@@ -206,71 +160,25 @@ namespace DUNE
     inline Math::Matrix
     sphericalToCartesian(double r, double az, double el)
     {
-      double a = r * std::sin(el);
-      double rv[] = {a* std::cos(az), a * std::sin(az), r * std::cos(el)};
+      double a = r * std::cos(el);
+      double rv[] = {a* std::cos(az), a * std::sin(az), r * std::sin(el)};
 
       return Math::Matrix(rv, 3, 1);
     }
 
-    //! Convert a three-dimensional vector from cartesian coordinates
-    //! to spherical coordinates (R,Az,El).
-    //! @param x x coordenate
-    //! @param y y coordenate
-    //! @param z z coordenate
-    //! @param[out] r radius
-    //! @param[out] az azimuth angle in radians.
-    //! @param[out] el elevation angle in radians.
+    //! Convert a three-dimensional vector from spherical coordinates
+    //! (R,Az,El) to cartesian coordinates.
+    //! @param r vector norm.
+    //! @param az azimuth angle in radians.
+    //! @param el elevation angle in radians.
     inline void
-    cartesianToSpherical(double x, double y, double z, double& r, double& az, double& el)
+    sphericalToCartesian(double r, double az, double el, double* x, double* y, double* z = NULL)
     {
-      r = std::sqrt(std::pow(x, 2) + std::pow(y, 2) + std::pow(z, 2));  // Radius
-      az = std::atan2(y, x);                                            // Azimuth
-      el = std::atan2(std::sqrt(std::pow(x, 2) + std::pow(y, 2)), z);   // Elevation
-    }
-
-    //! Convert a three-dimensional vector from cartesian coordinates
-    //! to spherical coordinates (R,Az,El).
-    //! @param origin origin coordinates to convert
-    //! @param target target coordinates to convert
-    //! @param[out] r radius
-    //! @param[out] az azimuth angle in radians.
-    //! @param[out] el elevation angle in radians.
-    template <typename A, typename B>
-    inline void
-    cartesianToSpherical(const A& origin, const B& target, double& r, double& az, double& el)
-    {
-      cartesianToSpherical(target.x - origin.x, 
-                           target.y - origin.y,
-                           target.z - origin.z, 
-                           r, az, el);
-    }
-
-    //! Convert a three-dimensional vector from cartesian coordinates
-    //! to spherical coordinates (R,Az,El).
-    //! @param point coordinates to convert
-    //! @param[out] r radius
-    //! @param[out] az azimuth angle in radians.
-    //! @param[out] el elevation angle in radians.
-    template <typename A>
-    inline void
-    cartesianToSpherical(const A& point, double& r, double& az, double& el)
-    {
-      cartesianToSpherical(point.x, point.y, point.z, r, az, el);
-    }
-
-    //! Convert a three-dimensional vector from cartesian coordinates
-    //! to spherical coordinates (R,Az,El).
-    //! @param x x coordenate
-    //! @param y y coordenate
-    //! @param z z coordenate
-    //! @return Vector of spherical coordinates
-    inline Math::Matrix
-    cartesianToSpherical(double x, double y, double z)
-    {
-      double rv[3];
-      cartesianToSpherical(x, y, z, rv[0], rv[1], rv[2]);
-
-      return Math::Matrix(rv, 3, 1);
+      double a = r * std::cos(el);
+      *x = a* std::cos(az);
+      *y = a * std::sin(az);
+      if (z)
+        *z = r * std::sin(el);
     }
 
     //! Convert the position in an estimated state message to WGS84 coordinates.

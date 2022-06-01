@@ -143,7 +143,7 @@ namespace Control
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           // Velocity controller.
-          m_velocity = getVelocity(state.psi, ts.los_angle, ts.los_elevation);
+          m_velocity = getVelocity(state.psi, ts.los_angle, c_half_pi);
 
           // Dispatch velocity reference
           dispatch(m_velocity);
@@ -163,6 +163,9 @@ namespace Control
         void
         loiter(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          (void)state;
+          (void)ts;
+          
           // Dispatch heading reference
           m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
           dispatch(m_heading);
@@ -197,7 +200,7 @@ namespace Control
 
             // Get velocity components in earth fixed frame
             double vx, vy;
-            toCartesian(mps_speed, los_angle, c_half_pi, &vx, &vy);
+            sphericalToCartesian(mps_speed, los_angle, los_elevation, &vx, &vy);
 
             // Convertion to body fixed frame
             Angles::rotate(heading, true, vx, vy);
