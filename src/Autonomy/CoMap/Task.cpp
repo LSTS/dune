@@ -49,18 +49,24 @@ namespace Autonomy
       bool has_klein;
       bool has_837B;
     };
-
     struct Task : public DUNE::Tasks::Task
     {
 
       Arguments m_args;
       CoMapper m_mapper;
       IMC::WorldModel* m_world_model;
+      IMC::PlanControlState* m_pcs;
+      IMC::PlanControl* m_plan_cmd;
       bool m_holding;
       Time::Counter<double> m_capabilities_timer;
 
       Task(const std::string& name, Tasks::Context& ctx) :
-        DUNE::Tasks::Task(name, ctx), m_mapper(1.0, this, &ctx.config), m_world_model(nullptr), m_holding(true)
+        DUNE::Tasks::Task(name, ctx),
+        m_mapper(1.0, this, &ctx.config),
+        m_world_model(nullptr),
+        m_pcs(nullptr),
+        m_plan_cmd(nullptr),
+        m_holding(true)
       {
         param("Nominal Speed", m_args.nominal_speed)
             .defaultValue("1.25")
@@ -73,10 +79,17 @@ namespace Autonomy
         param("MBS Available", m_args.has_837B)
             .defaultValue("true")
             .description("Whether Imagenex 873 is available on this AUV.");
+        
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER, false);
 
         bind<IMC::SynchAdmin>(this);
         bind<IMC::TaskAdmin>(this);
         bind<IMC::WorldModel>(this);
+        bind<IMC::PlanControlState>(this);
+        bind<IMC::PlanControl>(this);
+        bind<IMC::Abort>(this);
+
         m_capabilities_timer.setTop(5);
       }
 
@@ -156,8 +169,7 @@ namespace Autonomy
             if (onAssign(msg->arg.get()))
             {
               response.op = IMC::TaskAdmin::TAOP_ACCEPT;
-              war("New Schedule:");
-              war("%s", m_mapper.getScheduleAsString().c_str());
+              war("New Schedule:\n%s", m_mapper.getScheduleAsString().c_str());
             }
             else
             {
@@ -188,6 +200,51 @@ namespace Autonomy
         Memory::clear(m_world_model);
         m_world_model = msg->clone();
         m_mapper.setWorldModel(msg);
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        Memory::replace(m_pcs, msg->clone());
+      }
+
+      void
+      consume(const IMC::PlanControl* msg)
+      {
+        if (m_plan_cmd == nullptr)
+          return;
+        
+        if (msg->plan_id != m_plan_cmd->plan_id)
+        {
+          if (m_plan_cmd != nullptr)
+          {
+            war("A different plan started executing.");            
+            m_plan_cmd = nullptr;
+          }
+          return;
+        }
+        
+        if (msg->op == PlanControl::PC_SUCCESS)
+        {
+          inf("plan completed successfully");
+          m_plan_cmd = nullptr;
+        }
+        else if (msg->op == PlanControl::PC_FAILURE)
+        {
+          inf("plan failed");
+          m_plan_cmd = nullptr;
+        }
+      }      
+
+      void
+      consume(const IMC::Abort* msg)
+      {
+        (void) msg;
+        if (isActive())
+        {
+          war("Disabling CoMapper.");
+          requestDeactivation();
+        }
       }
 
       /**
@@ -287,10 +344,34 @@ namespace Autonomy
         {
           consumeMessages();
 
+          if (!isActive())
+            continue;
+          
           if (m_holding && m_capabilities_timer.overflow())
           {
             m_capabilities_timer.reset();
             onPublishCapabilities();
+          }
+
+          if (!m_holding)
+          {
+            if (m_pcs->state == PlanControlState::PCS_READY)
+            {
+              CoMapTask* task = m_mapper.nextFeasibleTask();
+              if (task != nullptr)
+              {
+                IMC::PlanControl* cmd = new IMC::PlanControl();
+                m_mapper.setTaskStatus(task->m_task_id, TaskStatus::SSTATUS_IN_PROGRESS);
+                cmd->request_id = 0;
+                cmd->arg.set(task->m_plan);
+                cmd->plan_id = (task->m_plan).plan_id;
+                cmd->op = PlanControl::PC_START;
+                cmd->type = PlanControl::PC_REQUEST;
+                cmd->setDestination(getSystemId());
+                dispatch(cmd);                
+                Memory::replace(m_plan_cmd, cmd);                
+              }
+            }
           }
         }
       }

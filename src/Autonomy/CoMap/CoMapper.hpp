@@ -358,7 +358,7 @@ namespace Autonomy
         }
 
         IMC::PlanSpecification plan =
-            sequentialPlan(String::str("comap-%d", getTaskId(task)), { &path }, { &profile.m_params });
+            sequentialPlan(String::str("comap-survey-%d", getTaskId(task)), { &path }, { &profile.m_params });
 
         m_parent->debug("Created survey plan for surveying feature %d", task->feature_id);
         return plan;
@@ -379,7 +379,7 @@ namespace Autonomy
         move.speed_units = SpeedUnits::SUNITS_METERS_PS;
 
         m_parent->debug("Created move plan towards %.5f / %.5f", Angles::degrees(move.lat), Angles::degrees(move.lon));
-        return sequentialPlan("comap-" + getTaskId(task), { &move }, {});
+        return sequentialPlan(String::str("comap-move-%d", getTaskId(task)), { &move }, {});
       }
 
       CoMapTask*
@@ -403,6 +403,12 @@ namespace Autonomy
         }
         else
           return task->m_status;
+      }
+
+      void
+      setTaskStatus(int task_id, TaskStatus::StatusEnum status)
+      {
+        m_tasks[task_id].m_status.status = status;            
       }
 
       SurveyProfile
@@ -535,6 +541,19 @@ namespace Autonomy
         if (existed)
           recomputeSchedule();
         return existed;
+      }
+
+      
+      CoMapTask*
+      nextFeasibleTask()
+      {
+        double cur_time = Clock::getSinceEpoch();
+        for (auto t = m_tasks.begin(); t != m_tasks.end(); t++)
+        {
+          if (t->second.m_status.status == TaskStatus::SSTATUS_ASSIGNED && t->second.m_start_deadline < cur_time)
+            return &t->second;
+        }
+        return nullptr;
       }
     };
   }
