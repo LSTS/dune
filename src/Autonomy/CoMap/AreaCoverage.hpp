@@ -205,6 +205,19 @@ namespace Autonomy
     }
 
     /**
+     * FIXME Temporary 
+     */
+    void
+    getCoveragePath(std::vector<std::pair<double, double>>& area, std::vector<std::pair<double, double>>& path,
+                    double swath_width)
+    {
+      for (std::pair<double, double> pt : area)
+      {
+        path.emplace_back(pt);
+      }
+    }
+
+    /**
      * @brief Get the Coverage Path
      *
      * @param[in] area area coordinates
@@ -212,7 +225,7 @@ namespace Autonomy
      * @param swath_width swath width (space between transects)
      */
     void
-    getCoveragePath(std::vector<std::pair<double, double>>& area, std::vector<std::pair<double, double>>& path,
+    getCoveragePathAlt(std::vector<std::pair<double, double>>& area, std::vector<std::pair<double, double>>& path,
                     double swath_width)
     {
       (void)path;
@@ -234,11 +247,14 @@ namespace Autonomy
       rows = intersectSegmentPolygon(rotated_poly, lower_north + offset);
 
       for (int i = 1; i < n_rows; i++)
-        rows = rows.horzCat(intersectSegmentPolygon(rotated_poly, i * row_width + lower_north + offset));
+         rows = rows.horzCat(intersectSegmentPolygon(rotated_poly, i * row_width + lower_north + offset));
 
       double data2[] = { std::cos(angle), -std::sin(angle), std::sin(angle), std::cos(angle) };
       rotation = Matrix(data2, 2, 2);
       rows = rotation.multiply(rows);
+
+      std::cout << "ROWS " << rows << std::endl;
+      
     }
   }// namespace CoMap
 }// namespace Autonomy

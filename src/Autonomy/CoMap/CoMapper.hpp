@@ -121,21 +121,22 @@ namespace Autonomy
     class CoMapTask
     {
     public:
-      CoMapTask() : CoMapTask(-1, IMC::PlanSpecification(), 0) {}
+      CoMapTask() : CoMapTask(-1, IMC::PlanSpecification(), 0, 0) {}
 
-      CoMapTask(int tid, IMC::PlanSpecification plan, double deadline)
+      CoMapTask(int tid, IMC::PlanSpecification plan, double deadline, double duration)
       {
         this->m_task_id = tid;
         this->m_plan = plan;
-        this->m_status.status = TaskStatus::SSTATUS_ASSIGNED;
+        this->m_status.status = TaskStatus::SSTATUS_ASSIGNED;        
         this->m_status.task_id = tid;
+        this->m_duration = duration;
         this->m_finish_deadline = deadline;
         // TODO compute time to execute plan using Plan::Engine::Plan class
-        this->m_start_deadline = deadline;
+        this->m_start_deadline = Clock::getSinceEpoch();
       }
 
       int m_task_id;
-      double m_finish_deadline, m_start_deadline;
+      double m_finish_deadline, m_start_deadline, m_duration;
       IMC::PlanSpecification m_plan;
       IMC::TaskStatus m_status;
     };
@@ -336,7 +337,7 @@ namespace Autonomy
         }
 
         std::vector<std::pair<double, double>> coverage_path;
-        // getCoveragePath(area, coverage_path, profile.m_swath_width);
+        getCoveragePath(area, coverage_path, profile.m_swath_width);
         IMC::FollowPath path;
         path.speed = profile.m_speed;
         path.speed_units = profile.m_speed_units;
@@ -359,12 +360,14 @@ namespace Autonomy
         IMC::PlanSpecification plan =
             sequentialPlan(String::str("comap-%d", getTaskId(task)), { &path }, { &profile.m_params });
 
+        m_parent->debug("Created survey plan for surveying feature %d", task->feature_id);
         return plan;
       }
 
       IMC::PlanSpecification
       generatePlan(const IMC::MoveTask* task)
       {
+        
         IMC::PlanSpecification plan;
         const IMC::MapPoint* point = task->destination.get();
         IMC::Goto move;
@@ -375,6 +378,7 @@ namespace Autonomy
         move.speed = m_speed;
         move.speed_units = SpeedUnits::SUNITS_METERS_PS;
 
+        m_parent->debug("Created move plan towards %.5f / %.5f", Angles::degrees(move.lat), Angles::degrees(move.lon));
         return sequentialPlan("comap-" + getTaskId(task), { &move }, {});
       }
 
@@ -420,25 +424,18 @@ namespace Autonomy
         if (!validateTask(task))
           return false;
 
-        try
-        {
-          int tid = getTaskId(task);
-          SurveyProfile profile = matchingProfile(task);
-          PlanSpecification plan = generatePlan(task, profile);
-          //double duration = planDuration(&plan);
-          CoMapTask new_task(tid, plan, task->deadline);
-          new_task.m_status.progress = 0;
-          
-          new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
-          new_task.m_task_id = tid;
-          scheduleTask(new_task);
-          std::cout << "new size: " << m_schedule.size() << std::endl;
-        }
-        catch (std::exception& e)
-        {
-          std::cerr << "Exception: " << e.what() << std::endl;
-          return false;
-        }
+        int tid = getTaskId(task);
+        SurveyProfile profile = matchingProfile(task);
+        PlanSpecification plan = generatePlan(task, profile);
+        double duration = std::max(120.0, planDuration(&plan));
+        CoMapTask new_task(tid, plan, task->deadline, planDuration(&plan));
+        new_task.m_status.progress = 0;
+        new_task.m_start_deadline = task->deadline - duration;
+        new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
+        new_task.m_task_id = tid;
+        scheduleTask(new_task);
+        std::cout << "new size: " << m_schedule.size() << std::endl;
+
         return true;
       }
 
@@ -452,10 +449,11 @@ namespace Autonomy
         {
           int tid = getTaskId(task);
           PlanSpecification plan = generatePlan(task);
-          CoMapTask new_task(tid, plan, task->deadline);
+          CoMapTask new_task(tid, plan, task->deadline, planDuration(&plan));
           new_task.m_status.progress = 0;
           new_task.m_status.status = IMC::TaskStatus::SSTATUS_ASSIGNED;
           new_task.m_task_id = tid;
+          new_task.m_start_deadline = Clock::getSinceEpoch();
           scheduleTask(new_task);
         }
         catch (std::exception& e)
@@ -476,7 +474,7 @@ namespace Autonomy
         for (auto s = m_schedule.begin(); s != m_schedule.end(); s++)
         {
           CoMapTask other = m_tasks[*s];
-          if (other.m_start_deadline > new_task.m_start_deadline)
+          if (other.m_finish_deadline > new_task.m_finish_deadline)
           {
             m_schedule.insert(s, tid);
             inserted = true;
@@ -485,6 +483,8 @@ namespace Autonomy
         }
         if (!inserted)
           m_schedule.push_back(tid);
+        
+        recomputeSchedule();
       }
 
       std::string
@@ -504,7 +504,20 @@ namespace Autonomy
       void
       recomputeSchedule()
       {
-        // empty for now
+        m_parent->debug("recomputing schedule.");
+        double current_time = Clock::getSinceEpoch();
+        for (int tid : m_schedule)
+        {
+          CoMapTask task = m_tasks[tid];
+          if (task.m_status.status == TaskStatus::SSTATUS_IN_PROGRESS)
+            current_time = task.m_start_deadline + task.m_duration;
+          else if (task.m_status.status == TaskStatus::SSTATUS_ASSIGNED)
+          {
+            task.m_start_deadline = current_time;
+            current_time += std::max(120.0, task.m_duration);
+            m_tasks[tid] = task;
+          }
+        }
       }
 
       bool
