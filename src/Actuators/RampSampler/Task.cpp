@@ -418,10 +418,12 @@ namespace Actuators
         tr.deadline = Time::Clock::getSinceEpoch() + 120;
         tr.txt_data = message;
         tr.req_id = createInternalId();
+        tr.destination = "broadcast";
         dispatch(tr);
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
         tr.req_id = createInternalId();
+        tr.destination = "+351912297429";
         dispatch(tr);
 
         ddt.value = message;
@@ -464,10 +466,12 @@ namespace Actuators
         tr.deadline = Time::Clock::getSinceEpoch() + 120;
         tr.txt_data = message;
         tr.req_id = createInternalId();
+        tr.destination = "broadcast";
         dispatch(tr);
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
         tr.req_id = createInternalId();
+        tr.destination = "+351912297429";
         dispatch(tr);
 
         ddt.value = message;
