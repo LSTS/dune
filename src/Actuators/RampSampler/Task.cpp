@@ -109,6 +109,9 @@ namespace Actuators
       //! Current Sampling plan ID
       std::string sampling_plan_id;
 
+      //! Transmission Request message id
+      uint16_t m_reqid;
+
       //! Task arguments
       Arguments m_args;
 
@@ -125,7 +128,8 @@ namespace Actuators
                                                            m_WAIT_END_FL(false),
                                                            m_sm_state(SM_STOPPED),
                                                            last_flag_path_ref(9999),
-                                                           sampling_plan_id("")
+                                                           sampling_plan_id(""),
+                                                           m_reqid(1000)
       {
         param("Type of Sample", m_args.type_of_sample)
             .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -383,6 +387,20 @@ namespace Actuators
         trace("[VAR] : m_ON_MANEUVER_FL = false");
       }
 
+      uint16_t
+      createInternalId()
+      {
+        if (m_reqid == 0xFFFF)
+        {
+          m_reqid = 1000;
+        }
+        else
+        {
+          m_reqid++;
+        }
+        return m_reqid;
+      }
+
       void
       sendTrajectoryMessage(std::string state_of_plan)
       {
@@ -399,9 +417,11 @@ namespace Actuators
         tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
         tr.deadline = Time::Clock::getSinceEpoch() + 120;
         tr.txt_data = message;
+        tr.req_id = createInternalId();
         dispatch(tr);
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
+        tr.req_id = createInternalId();
         dispatch(tr);
 
         ddt.value = message;
@@ -443,9 +463,11 @@ namespace Actuators
         tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
         tr.deadline = Time::Clock::getSinceEpoch() + 120;
         tr.txt_data = message;
+        tr.req_id = createInternalId();
         dispatch(tr);
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
+        tr.req_id = createInternalId();
         dispatch(tr);
 
         ddt.value = message;
