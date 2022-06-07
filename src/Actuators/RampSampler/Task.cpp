@@ -308,7 +308,7 @@ namespace Actuators
             else
             {
               inf("Finished another plan!");
-              
+
               m_sm_state = SM_STOPPED;
               debug("[STATE] : m_sm_state = SM_STOPPED");
             }
@@ -321,7 +321,7 @@ namespace Actuators
             inf("Stop plan!");
             m_START_FL = false;
             trace("[VAR] : m_START_FL = false");
-            sendTrajectoryMessage("Stop");
+            sendTrajectoryMessage("Done");
           }
 
           m_sm_state = SM_STOPPED;
@@ -472,7 +472,7 @@ namespace Actuators
           }
           break;
         case SM_MOVING:
-          if (m_NEAR_FL) // Chegou ao waypoint
+          if (m_NEAR_FL) // Arrived to the waypoint
           {
             if (m_SAMPLING_PLAN_FL)
             {
@@ -481,6 +481,11 @@ namespace Actuators
                 inf("Way Point Info: Sample Type: %s.", m_type_of_sample.c_str());
 
                 sendSampleMessage(m_type_of_sample);
+
+                if (std::strcmp(m_type_of_sample.c_str(), "Dirty") == 0)
+                {
+                  sendTrajectoryMessage("Done");
+                }
 
                 m_sampling_timer.reset();
                 m_sm_state = SM_SAMPLING;
