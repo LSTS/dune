@@ -397,6 +397,7 @@ namespace Actuators
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+        tr.deadline = Time::Clock::getSinceEpoch() + 120;
         tr.txt_data = message;
         dispatch(tr);
 
@@ -440,6 +441,7 @@ namespace Actuators
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+        tr.deadline = Time::Clock::getSinceEpoch() + 120;
         tr.txt_data = message;
         dispatch(tr);
 
