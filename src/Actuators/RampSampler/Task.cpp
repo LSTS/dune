@@ -419,6 +419,7 @@ namespace Actuators
         tr.txt_data = message;
         tr.req_id = createInternalId();
         tr.destination = "broadcast";
+        tr.setDestination(getSystemId());
         dispatch(tr);
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
@@ -467,6 +468,7 @@ namespace Actuators
         tr.txt_data = message;
         tr.req_id = createInternalId();
         tr.destination = "broadcast";
+        tr.setDestination(getSystemId());
         dispatch(tr);
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
