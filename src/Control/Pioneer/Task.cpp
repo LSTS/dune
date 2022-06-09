@@ -91,6 +91,8 @@ namespace Control
       bool heading_hold;
       //! Send Motion Command
       std::vector<float> motion_input;
+      //! Set motion type input
+      unsigned motion_input_type;
       //! Ping Replay timeout in seconds.
       float ping_tout;
       //! Run routine
@@ -222,6 +224,10 @@ namespace Control
         .size(4)
         .defaultValue("0.0, 0.0, 0.0, 0.0")
         .description("Send motion input V2 command to Pioneer [surge, sway, heave, yaw]");
+
+        param("Motion input time", m_args.motion_input_type)
+        .defaultValue("1")
+        .description("Set motion input type (slow[0], normal[1], fast[2])");
 
         param("Ping Replay Timeout", m_args.ping_tout)
         .units(Units::Second)
@@ -959,8 +965,7 @@ namespace Control
           return;
 
         ProtocolCommands::CmdVersion2MotionInput cmd;
-        cmd.boost_input = 0;
-        cmd.slow_input = 0;
+        setMotionType(cmd);
         cmd.surge_motion_input = m_motion[0];
         cmd.sway_motion_input = m_motion[1];
         cmd.heave_motion_input = m_motion[2];
@@ -1047,6 +1052,32 @@ namespace Control
         m_last_act[msg->id].id = msg->id;
         debug("m_last_act = %f, %f, %f, %f", m_last_act[0].value, m_last_act[1].value,
                                                     m_last_act[2].value, m_last_act[3].value);
+      }
+
+      //! Set motion type for this command
+      void
+      setMotionType(ProtocolCommands::CmdVersion2MotionInput& cmd)
+      {
+        switch (m_args.motion_input_type)
+        {
+          case 0:
+            cmd.boost_input = 0;
+            cmd.slow_input = 1;
+            break;
+
+          case 1:
+            cmd.boost_input = 0;
+            cmd.slow_input = 0;
+            break;
+
+          case 2:
+            cmd.boost_input = 1;
+            cmd.slow_input = 0;
+            break;
+          
+          default:
+            break;
+        }
       }
 
       //! Sends GpsFix defined in configurations
