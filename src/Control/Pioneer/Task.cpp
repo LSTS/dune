@@ -99,6 +99,8 @@ namespace Control
       std::string routine;
       //! Depth Hold Step
       std::string depth_step;
+      //! Contro mode
+      std::string control_mode;
     };
 
     enum LoggerEnum
@@ -247,12 +249,19 @@ namespace Control
         .defaultValue("None")
         .description("Depth hold step.");
 
+        param("Control Mode", m_args.control_mode)
+        .values("Thrust, Force")
+        .defaultValue("Thrust")
+        .description("In Thrust mode SetThrusterActuation is used to set control."
+                     "In Force mode DesiredControl is used.");
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::DesiredControl>(this);
         bind<IMC::StopManeuver>(this);
       }
 
@@ -964,6 +973,9 @@ namespace Control
         if(m_args.routine != "None")
           return;
 
+        if(m_args.control_mode != "Thrust")
+          return;
+
         ProtocolCommands::CmdVersion2MotionInput cmd;
         setMotionType(cmd);
         cmd.surge_motion_input = m_motion[0];
@@ -1052,6 +1064,34 @@ namespace Control
         m_last_act[msg->id].id = msg->id;
         debug("m_last_act = %f, %f, %f, %f", m_last_act[0].value, m_last_act[1].value,
                                                     m_last_act[2].value, m_last_act[3].value);
+      }
+
+      void
+      consume(const IMC::DesiredControl* msg)
+      {
+        if(m_args.routine != "None")
+          return;
+
+        if(m_args.control_mode != "Force")
+          return;
+
+        ProtocolCommands::CmdVersion2MotionInput cmd;
+        setMotionType(cmd);
+
+        if (msg->flags & IMC::DesiredControl::FL_X)
+          cmd.surge_motion_input = trimValue(msg->x, -1.0, 1.0);
+
+        if (msg->flags & IMC::DesiredControl::FL_Y)
+          cmd.sway_motion_input = trimValue(msg->y, -1.0, 1.0);
+
+        if (msg->flags & IMC::DesiredControl::FL_N)
+          cmd.yaw_motion_input = trimValue(msg->n, -1.0, 1.0);
+
+        cmd.heave_motion_input = 0;
+
+        sendCommand(&cmd);
+        debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+              cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
       }
 
       //! Set motion type for this command
