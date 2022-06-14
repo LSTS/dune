@@ -528,11 +528,6 @@ namespace Actuators
                 debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
               }
             }
-            else if (m_ANOTHER_PLAN_FL)
-            {
-              m_sm_state = SM_MANEUVER_DONE;
-              debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
-            }
             m_NEAR_FL = false;
           }
           break;
