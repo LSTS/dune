@@ -447,14 +447,12 @@ namespace Actuators
             trace("[VAR] : m_START_FL = false");
             m_STOP_FL = true;
             trace("[VAR] : m_STOP_FL = true");
-            m_sm_state = SM_STOPPED;
-            debug("[STATE] : m_sm_state = SM_STOPPED");
             m_SAMPLING_PLAN_FL = false;
             trace("[VAR] : m_SAMPLING_PLAN_FL = false");
-            // m_ANOTHER_PLAN_FL = false;
-            // trace("[VAR] : m_ANOTHER_PLAN_FL = false");
-            // m_ON_MANEUVER_FL = false;
-            // trace("[VAR] : m_ON_MANEUVER_FL = false");
+            m_ANOTHER_PLAN_FL = false;
+            trace("[VAR] : m_ANOTHER_PLAN_FL = false");
+            m_sm_state = SM_STOPPED;
+            debug("[STATE] : m_sm_state = SM_STOPPED");
           }
           // Or if its starting
           else
@@ -468,48 +466,36 @@ namespace Actuators
           // Check if the plan is the one to sample
           if (msg->plan_id.find(m_args.plan_name) != std::string::npos)
           {
-            //   // And the plan started/is running.
-            //   if (m_START_FL)
-            //   {
-            //     size_t pos = 0;
-            //     if ((pos = msg->plan_id.find("Sample")) != std::string::npos)
-            //     {
-            //       m_type_of_sample = msg->plan_id.substr(0, pos);
-            //       err("LOUCURAAAA UÉÉÉ UÉÉÉ = %s", m_type_of_sample.c_str());
-            //     }
-            //     else
-            //     {
-            //       err(DTR("Unable to parse plan type!"));
-            //       // TODO: Check what to do here.
-            //     }
-
-            //     inf("Started sampling plan");
-            m_SAMPLING_PLAN_FL = true;
-            trace("[VAR] : m_SAMPLING_PLAN_FL = true");
-            //     // m_ANOTHER_PLAN_FL = false;
-            //     // trace("[VAR] : m_ANOTHER_PLAN_FL = false");
-            //   }
-            //   // Or if it just ended.
-            //   else
-            //   {
-            //     inf("Finished sampling plan");
-            //   }
+            // And the plan started/is running.
+            if (m_START_FL)
+            {
+              inf("Started sampling plan.");
+              m_SAMPLING_PLAN_FL = true;
+              trace("[VAR] : m_SAMPLING_PLAN_FL = true");
+              m_ANOTHER_PLAN_FL = false;
+              trace("[VAR] : m_ANOTHER_PLAN_FL = false");
+            }
+            // Or if it just ended.
+            else
+            {
+              inf("Finished sampling plan");
+            }
           }
           // Or if the plan is another one
           else
           {
-            // if (m_START_FL)
-            // {
-            inf("Started another plan");
-            m_SAMPLING_PLAN_FL = false;
-            trace("[VAR] : m_SAMPLING_PLAN_FL = false");
-            //   m_ANOTHER_PLAN_FL = true;
-            //   trace("[VAR] : m_ANOTHER_PLAN_FL = true");
-            // }
-            // else
-            // {
-            //   inf("Finished another plan!");
-            // }
+            if (m_START_FL)
+            {
+              inf("Started another plan.");
+              m_SAMPLING_PLAN_FL = false;
+              trace("[VAR] : m_SAMPLING_PLAN_FL = false");
+              m_ANOTHER_PLAN_FL = true;
+              trace("[VAR] : m_ANOTHER_PLAN_FL = true");
+            }
+            else
+            {
+              inf("Finished another plan.");
+            }
           }
         }
         else if (msg->type == IMC::PlanControl::PC_SUCCESS && msg->op == IMC::PlanControl::PC_STOP) // If request to stop plan was successful
