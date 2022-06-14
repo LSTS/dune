@@ -35,7 +35,7 @@
 #include <cstring>
 
 //! Sampling duration
-#define SAMPLING_DURATION 5
+#define SAMPLING_DURATION 30
 
 namespace Actuators
 {
@@ -115,6 +115,11 @@ namespace Actuators
       //! Current Sampling plan ID
       std::string sampling_plan_id;
 
+      //! Counter for message sends
+      uint8_t m_msg_cnt;
+      //! Flags when the vehicle did the samples
+      bool m_samples_done;
+
       //! Transmission Request message id
       uint16_t m_reqid;
 
@@ -135,6 +140,8 @@ namespace Actuators
                                                            m_sm_state(SM_STOPPED),
                                                            last_flag_path_ref(9999),
                                                            sampling_plan_id(""),
+                                                           m_msg_cnt(0),
+                                                           m_samples_done(false),
                                                            m_reqid(1000)
       {
         param("Type of Sample", m_args.type_of_sample)
@@ -265,14 +272,12 @@ namespace Actuators
             trace("[VAR] : m_START_FL = false");
             m_STOP_FL = true;
             trace("[VAR] : m_STOP_FL = true");
-            m_sm_state = SM_STOPPED;
-            debug("[STATE] : m_sm_state = SM_STOPPED");
             m_SAMPLING_PLAN_FL = false;
             trace("[VAR] : m_SAMPLING_PLAN_FL = false");
             m_ANOTHER_PLAN_FL = false;
             trace("[VAR] : m_ANOTHER_PLAN_FL = false");
-            // m_ON_MANEUVER_FL = false;
-            // trace("[VAR] : m_ON_MANEUVER_FL = false");
+            m_sm_state = SM_STOPPED;
+            debug("[STATE] : m_sm_state = SM_STOPPED");
           }
           // Or if its starting
           else
@@ -315,6 +320,11 @@ namespace Actuators
               inf("Finished Sampling Plan with ID %s", sampling_plan_id.c_str());
               sendTrajectoryMessage("Done");
 
+              m_SAMPLING_PLAN_FL = false;
+              trace("[VAR] : m_SAMPLING_PLAN_FL = false");
+              m_ANOTHER_PLAN_FL = false;
+              trace("[VAR] : m_ANOTHER_PLAN_FL = false");
+
               m_sm_state = SM_STOPPED;
               debug("[STATE] : m_sm_state = SM_STOPPED");
             }
@@ -334,6 +344,11 @@ namespace Actuators
             {
               inf("Finished another plan!");
 
+              m_SAMPLING_PLAN_FL = false;
+              trace("[VAR] : m_SAMPLING_PLAN_FL = false");
+              m_ANOTHER_PLAN_FL = false;
+              trace("[VAR] : m_ANOTHER_PLAN_FL = false");
+
               m_sm_state = SM_STOPPED;
               debug("[STATE] : m_sm_state = SM_STOPPED");
             }
@@ -341,13 +356,25 @@ namespace Actuators
         }
         else if (msg->type == IMC::PlanControl::PC_SUCCESS && msg->op == IMC::PlanControl::PC_STOP) // If request to stop plan was successful
         {
-          if (msg->plan_id.find(m_args.plan_name) != std::string::npos) // And the plan is the one we want
+          // if (msg->plan_id.find(m_args.plan_name) != std::string::npos) // And the plan is the one we want
+          //{
+          if (m_SAMPLING_PLAN_FL)
           {
-            inf("Stop plan!");
-            m_START_FL = false;
-            trace("[VAR] : m_START_FL = false");
             sendTrajectoryMessage("Done");
           }
+          //}
+
+          inf("Stop plan!");
+
+          m_START_FL = false;
+          trace("[VAR] : m_START_FL = false");
+          m_SAMPLING_PLAN_FL = false;
+          trace("[VAR] : m_SAMPLING_PLAN_FL = false");
+          m_ANOTHER_PLAN_FL = false;
+          trace("[VAR] : m_ANOTHER_PLAN_FL = false");
+
+          m_STOP_FL = true;
+          trace("[VAR] : m_STOP_FL = true");
 
           m_sm_state = SM_STOPPED;
           debug("[STATE] : m_sm_state = SM_STOPPED");
@@ -393,19 +420,19 @@ namespace Actuators
         if (msg->getDestination() != getSystemId())
           return;
 
-        m_sm_state = SM_STOPPED;
-        debug("[STATE] : m_sm_state = SM_STOPPED");
-
         m_NEAR_FL = false;
         trace("[VAR] : m_NEAR_FL = false");
         m_START_FL = false;
         trace("[VAR] : m_START_FL = false");
         m_SAMPLING_PLAN_FL = false;
-        trace("[VAR] : m_SMAPLING_PLAN_FL = false");
+        trace("[VAR] : m_SAMPLING_PLAN_FL = false");
         m_ANOTHER_PLAN_FL = false;
         trace("[VAR] : m_ANOTHER_PLAN_FL = false");
         m_ON_MANEUVER_FL = false;
         trace("[VAR] : m_ON_MANEUVER_FL = false");
+
+        m_sm_state = SM_STOPPED;
+        debug("[STATE] : m_sm_state = SM_STOPPED");
       }
 
       uint16_t
@@ -532,7 +559,7 @@ namespace Actuators
           if (m_START_FL && m_ON_MANEUVER_FL && (m_SAMPLING_PLAN_FL || m_ANOTHER_PLAN_FL))
           {
             m_sm_state = SM_MOVING;
-            inf("The vehicle start moving");
+            inf("The vehicle start moving.");
             debug("[STATE] : m_sm_state = SM_MOVING");
             m_START_FL = false;
             trace("[VAR] : m_START_FL = false");
@@ -540,11 +567,27 @@ namespace Actuators
             trace("[VAR] : m_NEAR_FL = false");
           }
           break;
+
         case SM_MOVING:
           if (m_NEAR_FL) // Arrived to the waypoint
           {
             if (m_SAMPLING_PLAN_FL)
             {
+              // This makes the trajectory message "Exec" be sent 3 times per plan.
+              if (m_msg_cnt < 2)
+              {
+                sendTrajectoryMessage("Exec");
+                m_msg_cnt++;
+                trace("[VAR] : m_msg_cnt++ = %d", m_msg_cnt);
+              }
+
+              // This makes the trajectory message "Done" be sent in the waypoint after the dirty sample waypoint.
+              if (m_samples_done)
+              {
+                sendTrajectoryMessage("Done");
+                m_samples_done = false;
+              }
+
               if (std::strcmp(m_type_of_sample.c_str(), "None") != 0)
               {
                 inf("Way Point Info: Sample Type: %s.", m_type_of_sample.c_str());
@@ -553,7 +596,8 @@ namespace Actuators
 
                 if (std::strcmp(m_type_of_sample.c_str(), "Dirty") == 0)
                 {
-                  sendTrajectoryMessage("Done");
+                  m_samples_done = true;
+                  // sendTrajectoryMessage("Done");
                 }
 
                 m_sampling_timer.reset();
@@ -570,6 +614,7 @@ namespace Actuators
             m_NEAR_FL = false;
           }
           break;
+
         case SM_SAMPLING:
           if (m_sampling_timer.overflow())
           {
