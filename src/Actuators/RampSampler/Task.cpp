@@ -68,6 +68,12 @@ namespace Actuators
       std::string type_of_sample;
       //! Expected name of the plan to consider sampling plan
       std::string plan_name;
+      //! Send status messages via WiFi
+      bool use_wifi;
+      //! Send status messages via GSM
+      bool use_gsm;
+      //! Send status messages via Iridium
+      bool use_iridium;
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -142,6 +148,21 @@ namespace Actuators
             .visibility(Tasks::Parameter::VISIBILITY_USER)
             .defaultValue("trajectory")
             .description(DTR("Prefix of the sampling plan's name."));
+
+        param("WiFi Enabled", m_args.use_wifi)
+            .visibility(Tasks::Parameter::VISIBILITY_USER)
+            .defaultValue("false")
+            .description(DTR("Send the status messages via WiFi."));
+
+        param("GSM Enabled", m_args.use_gsm)
+            .visibility(Tasks::Parameter::VISIBILITY_USER)
+            .defaultValue("false")
+            .description(DTR("Send the status messages via GSM."));
+
+        param("Iridium Enabled", m_args.use_iridium)
+            .visibility(Tasks::Parameter::VISIBILITY_USER)
+            .defaultValue("true")
+            .description(DTR("Send the status messages via Iridium."));
 
         bind<IMC::PathControlState>(this);
         bind<IMC::PlanControl>(this);
@@ -413,24 +434,33 @@ namespace Actuators
 
         message = "(trajectory) " + std::to_string(timestamp) + " / " + sampling_plan_id + " / " + state_of_plan;
 
-        tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-        tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
-        tr.deadline = Time::Clock::getSinceEpoch() + 120;
-        tr.txt_data = message;
-        tr.req_id = createInternalId();
-        tr.destination = "broadcast";
-        tr.setDestination(getSystemId());
-        dispatch(tr);
+        if (m_args.use_iridium)
+        {
+          tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+          tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+          tr.deadline = Time::Clock::getSinceEpoch() + 120;
+          tr.txt_data = message;
+          tr.req_id = createInternalId();
+          tr.destination = "broadcast";
+          tr.setDestination(getSystemId());
+          dispatch(tr);
+        }
 
-        tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
-        tr.req_id = createInternalId();
-        tr.destination = "+351912297429";
-        dispatch(tr);
+        if (m_args.use_gsm)
+        {
+          tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
+          tr.req_id = createInternalId();
+          tr.destination = "+351912297429";
+          dispatch(tr);
+        }
 
-        ddt.value = message;
-        dispatch(ddt);
+        if (m_args.use_wifi)
+        {
+          ddt.value = message;
+          dispatch(ddt);
+        }
 
-        inf("IRIDIUM: %s", message.c_str());
+        inf("MSG: %s", message.c_str());
       }
 
       void
@@ -462,24 +492,33 @@ namespace Actuators
 
         message = "(sample) " + std::to_string(timestamp) + " / " + message_lat + ", " + message_lon + " / " + type_of_sample;
 
-        tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-        tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
-        tr.deadline = Time::Clock::getSinceEpoch() + 120;
-        tr.txt_data = message;
-        tr.req_id = createInternalId();
-        tr.destination = "broadcast";
-        tr.setDestination(getSystemId());
-        dispatch(tr);
+        if (m_args.use_iridium)
+        {
+          tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+          tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+          tr.deadline = Time::Clock::getSinceEpoch() + 120;
+          tr.txt_data = message;
+          tr.req_id = createInternalId();
+          tr.destination = "broadcast";
+          tr.setDestination(getSystemId());
+          dispatch(tr);
+        }
 
-        tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
-        tr.req_id = createInternalId();
-        tr.destination = "+351912297429";
-        dispatch(tr);
+        if (m_args.use_gsm)
+        {
+          tr.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
+          tr.req_id = createInternalId();
+          tr.destination = "+351912297429";
+          dispatch(tr);
+        }
 
-        ddt.value = message;
-        dispatch(ddt);
+        if (m_args.use_wifi)
+        {
+          ddt.value = message;
+          dispatch(ddt);
+        }
 
-        debug("IRIDIUM: %s", message.c_str());
+        debug("MSG: %s", message.c_str());
       }
 
       //! Main State Machine
