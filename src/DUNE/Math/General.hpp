@@ -78,12 +78,12 @@ namespace DUNE
     Type
     average(Type* a, uint32_t size)
     {
-      Type t = 0;
+      double t = 0;
 
       for (uint32_t i = 0; i < size; ++i)
         t += a[i];
 
-      return (t / (Type)size);
+      return (Type) (t / size);
     }
 
     //! Computes the norm between two points.
