@@ -329,14 +329,14 @@ main(int argc, char** argv)
         break;
       case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
         {
-          Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration* msgV2CompassCal;
-          msgV2CompassCal = new Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration();
+          Control::Pioneer::ProtocolMessages::DataVersion2CompassCalibration* msgV2CompassCal;
+          msgV2CompassCal = new Control::Pioneer::ProtocolMessages::DataVersion2CompassCalibration();
           const int sizeMsg = sizeof(*msgV2CompassCal);
           //data.resize(sizeMsg);
           ifs->read(&data[2], sizeMsg - 2);
           if (ifs->gcount() < sizeMsg - 2)
             throw DUNE::IMC::BufferTooShort();
-          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2Compasscalibration>(
+          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2CompassCalibration>(
               NULL, buf, 0, sizeMsg, msgV2CompassCal);
           if (rb > 0)
           {
@@ -346,6 +346,28 @@ main(int argc, char** argv)
             sock.write(buf, sizeMsg, dest, port);
           }
           DUNE::Memory::clear(msgV2CompassCal);
+        }
+        break;
+      case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_THICKNESS_GAUGE_CODE:
+        {
+          Control::Pioneer::ProtocolMessages::DataVersion2ThicknessGauge*msgV2ThicknessGauge;
+          msgV2ThicknessGauge = new Control::Pioneer::ProtocolMessages::DataVersion2ThicknessGauge();
+          const int sizeMsg = sizeof(*msgV2ThicknessGauge);
+          //data.resize(sizeMsg);
+          ifs->read(&data[2], sizeMsg - 2);
+          if (ifs->gcount() < sizeMsg - 2)
+            throw DUNE::IMC::BufferTooShort();
+          int rb = Control::Pioneer::ProtocolPack::Pack::unpack<Control::Pioneer::ProtocolMessages::DataVersion2ThicknessGauge>(
+              NULL, buf, 0, sizeMsg,
+                                                  msgV2ThicknessGauge);
+          if (rb > 0)
+          {
+            if (skipOrProcess(cur_count))
+              continue;
+
+            sock.write(buf, sizeMsg, dest, port);
+          }
+          DUNE::Memory::clear(msgV2ThicknessGauge);
         }
         break;
       case Control::Pioneer::ProtocolMessages::PIONEER_MSG_VERSION_2_CUSTOM_IMU:

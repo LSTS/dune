@@ -41,6 +41,7 @@ namespace Control
 {
   namespace Pioneer
   {
+    //! Synch with 34af420 (https://github.com/BluEye-Robotics/ProtocolDefinitions/tree/master)
     namespace ProtocolCommands
     {
       enum Pioneer_Msg_Version
@@ -72,8 +73,8 @@ namespace Control
         PIONEER_CMD_VERSION_1_AUTO_HEADING_OFF = 'H',
         PIONEER_CMD_VERSION_1_AUTO_DEPTH_ON = 'd',
         PIONEER_CMD_VERSION_1_AUTO_DEPTH_OFF = 'D',
-        PIONEER_CMD_VERSION_1_AUTO_DEPTH_STEP = 'a',
-        PIONEER_CMD_VERSION_1_AUTO_HEADING_STEP = 'A',
+        PIONEER_CMD_VERSION_1_AUTO_DEPTH_STEP = 'a', // Removed at Fev 2021
+        PIONEER_CMD_VERSION_1_AUTO_HEADING_STEP = 'A', // Removed at Fev 2021
         PIONEER_CMD_VERSION_1_SET_SYSTEM_TIME = 't',
         PIONEER_CMD_VERSION_1_SET_CAMERA = 'v',
         PIONEER_CMD_VERSION_1_GET_CAMERA = 'V',
@@ -121,6 +122,7 @@ namespace Control
         PIONEER_CMD_VERSION_2_SET_SYSTEM_TIME = 't',
         PIONEER_CMD_VERSION_2_SET_WATER_DENSITY = 'W',
         PIONEER_CMD_VERSION_2_TAKE_STILL_PICTURE = 's',
+        PIONEER_CMD_VERSION_2_TOGGLE_TILT_STABILIZATION = 'S',
         PIONEER_CMD_VERSION_2_SET_CAMERA = 'v',
         PIONEER_CMD_VERSION_2_GET_CAMERA = 'V',
       };
@@ -254,6 +256,7 @@ namespace Control
         uint8_t command_type = 'D';
       };
 
+      //deprecated
       struct __attribute__((__packed__)) CmdVersion1AutoDepthStep
       {
         uint8_t command_type = 'a';
@@ -261,6 +264,7 @@ namespace Control
         int16_t direction = 0;
       };
 
+      //deprecated
       struct __attribute__((__packed__)) CmdVersion1AutoHeadingStep
       {
         uint8_t command_type = 'A';
@@ -420,6 +424,259 @@ namespace Control
         uint8_t command_type = 'R';
       };
 
+      // TODO Add new
+      // +            {
+      //+                "name": "set_overlay_temperature_enabled",
+      //+                "command_type": "ot",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_temperature_enabled",
+      //+                        "dtype": "<u1",
+      //+                        "description": "1 is true, 0 is false"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_depth_enabled",
+      //+                "command_type": "od",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_depth_enabled",
+      //+                        "dtype": "<u1",
+      //+                        "description": "1 is true, 0 is false"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_heading_enabled",
+      //+                "command_type": "oh",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_heading_enabled",
+      //+                        "dtype": "<u1",
+      //+                        "description": "1 is true, 0 is false"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_tilt_enabled",
+      //+                "command_type": "ol",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_tilt_enabled",
+      //+                        "dtype": "<u1",
+      //+                        "description": "1 is true, 0 is false"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_date_enabled",
+      //+                "command_type": "oa",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_date_enabled",
+      //+                        "dtype": "<u1",
+      //+                        "description": "1 is true, 0 is false"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_logo_index",
+      //+                "command_type": "oo",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_logo_index",
+      //+                        "dtype": "<i4",
+      //+                        "description": "enum { NONE = 0, DEFAULT = 1, CUSTOM = 2 }"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_depth_unit",
+      //+                "command_type": "oD",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_depth_unit",
+      //+                        "dtype": "<i4",
+      //+                        "description": "enum { METERS = 0, FEET = 1 }"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_temperature_unit",
+      //+                "command_type": "oT",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_temperature_unit",
+      //+                        "dtype": "<i4",
+      //+                        "description": "enum { CELSIUS = 0, FAHRENHEIT = 1 }"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_tz_offset",
+      //+                "command_type": "oz",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_tz_offset",
+      //+                        "dtype": "<i4",
+      //+                        "description": "time zone offset in minutes"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_margin_width",
+      //+                "command_type": "ow",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_margin_width",
+      //+                        "dtype": "<i4",
+      //+                        "description": "margin width in pixels"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_margin_height",
+      //+                "command_type": "oH",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_margin_height",
+      //+                        "dtype": "<i4",
+      //+                        "description": "margin height in pixels"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_font_size",
+      //+                "command_type": "of",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_font_size",
+      //+                        "dtype": "<i4",
+      //+                        "description": "choose from: { 15, 20, 25, 30, 35, 40 }"
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_title",
+      //+                "command_type": "oi",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_title",
+      //+                        "dtype": "<u1[64]",
+      //+                        "description": "Null terminated utf8 string padded to 64 characters. Only utf8 characters representable in latin1 will be rendered correctly."
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_subtitle",
+      //+                "command_type": "os",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_subtitle",
+      //+                        "dtype": "<u1[64]",
+      //+                        "description": "Null terminated utf8 string padded to 64 characters. Only utf8 characters representable in latin1 will be rendered correctly."
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_overlay_date_format",
+      //+                "command_type": "oA",
+      //+                "expected_reply": "a",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "overlay_date_format",
+      //+                        "dtype": "<u1[64]",
+      //+                        "description": "Null terminated utf8 string padded to 64 characters. Only utf8 characters representable in latin1 will be rendered correctly."
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "get_overlay_parameters",
+      //+                "command_type": "Oa",
+      //+                "returned_fields": [
+      //+                    {
+      //+                        "field_name": "parameter",
+      //+                        "dtype": "<u1",
+      //+                        "description": "a char describing what overlay parameters were returned, 'a' for all parameters"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "temperature_enabled",
+      //+                        "dtype": "<u1"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "depth_enabled",
+      //+                        "dtype": "<u1"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "heading_enabled",
+      //+                        "dtype": "<u1"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "tilt_enabled",
+      //+                        "dtype": "<u1"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "date_enabled",
+      //+                        "dtype": "<u1"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "logo_index",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "depth_unit",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "temperature_unit",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "tz_offset",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "margin_width",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "margin_height",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "font_size",
+      //+                        "dtype": "<i4"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "title",
+      //+                        "dtype": "<u1[64]"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "subtitle",
+      //+                        "dtype": "<u1[64]"
+      //+                    },
+      //+                    {
+      //+                        "field_name": "date_format",
+      //+                        "dtype": "<u1[64]"
+      //+                    }
+      //+                ]
+      //+            },
+
       struct __attribute__((__packed__)) CmdVersion2StartCompassCalibration
       {
         uint8_t command_type = 'i';
@@ -490,7 +747,7 @@ namespace Control
         //! "description": "set the system time on the on-board computer",
         //! "expected_reply": "a",
         uint8_t command_type = 't';
-        int32_t unix_timestamp = 0;
+        uint32_t unix_timestamp = 0; // change from int32_t
       };
 
       struct __attribute__((__packed__)) CmdVersion2SetWaterDensity
@@ -506,6 +763,12 @@ namespace Control
       {
         //! "description": "Takes a still picture and stores it locally on the drone."
         uint8_t command_type = 's';
+      };
+
+      struct __attribute__((__packed__)) CmdVersion2ToggleTiltStabilization
+      {
+        //! "description": "Toggle active tilt stabilization on or off"
+        uint8_t command_type = 'S';
       };
 
       struct __attribute__((__packed__)) CmdVersion2SetCameraExposure
@@ -558,7 +821,7 @@ namespace Control
         //! "expected_reply": "a",
         uint8_t command_type = 'v';
         uint8_t command_subtype = 'r';
-        //! "description": "valid values are 480, 720 or 1080"
+        //! "description": "valid values are 720 or 1080"
         int32_t resolution_value = 0;
       };
 
@@ -582,6 +845,38 @@ namespace Control
         int32_t camera_framerate = 0;
       };
 
+      // TODO Add new:
+      // +            {
+      //+                "name": "set_gripper_velocities",
+      //+                "command_type": "G",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "gripping_velocity",
+      //+                        "dtype": "<f4",
+      //+                        "description": "The opening/closing velocity of the gripper. Positive values for opening, negative for closing",
+      //+                        "upper_limit": 1,
+      //+                        "lower_limit": -1
+      //+                    },
+      //+                    {
+      //+                        "field_name": "rotational_velocity",
+      //+                        "dtype": "<f4",
+      //+                        "description": "The rotational velocity of the gripper. Positive values for clockwise, negative for counter-clockwise",
+      //+                        "upper_limit": 1,
+      //+                        "lower_limit": -1
+      //+                    }
+      //+                ]
+      //+            },
+      //+            {
+      //+                "name": "set_thickness_gauge_sound_veloctiy",
+      //+                "command_type": "C",
+      //+                "fields": [
+      //+                    {
+      //+                        "field_name": "sound_velocity",
+      //+                        "dtype": "<i2",
+      //+                        "description": "Sound velocity used for thickness calculation [m/s]"
+      //+                    }
+      //+                ]
+      //             }
     }
   }
 }

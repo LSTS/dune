@@ -603,9 +603,9 @@ namespace Control
             Memory::clear(msgV2Telm);
             break;
           case ProtocolMessages::PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE:
-            ProtocolMessages::DataVersion2Compasscalibration* msgV2CompassCal;
-            msgV2CompassCal = new ProtocolMessages::DataVersion2Compasscalibration();
-            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion2Compasscalibration>(
+            ProtocolMessages::DataVersion2CompassCalibration* msgV2CompassCal;
+            msgV2CompassCal = new ProtocolMessages::DataVersion2CompassCalibration();
+            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion2CompassCalibration>(
                 this, buf, startIndex, length, msgV2CompassCal);
             if (rb > 0)
             {
@@ -834,7 +834,7 @@ namespace Control
 
       //! This will handle parsing Pioneer V2 Compass Calibration message
       void
-      handlePioneerV2CompassCalibration(ProtocolMessages::DataVersion2Compasscalibration msg)
+      handlePioneerV2CompassCalibration(ProtocolMessages::DataVersion2CompassCalibration msg)
       {
         // TODO something with msg
         trace("progress_thruster %u",msg.progress_thruster);

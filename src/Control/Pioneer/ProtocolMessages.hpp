@@ -41,6 +41,7 @@ namespace Control
 {
   namespace Pioneer
   {
+    //! Synch with 34af420 (https://github.com/BluEye-Robotics/ProtocolDefinitions/tree/master)
     namespace ProtocolMessages
     {
       enum Pioneer_Msg_Version
@@ -58,7 +59,8 @@ namespace Control
       {
         PIONEER_MSG_VERSION_2_TELEMETRY = 1,
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION  = 2,
-        PIONEER_MSG_VERSION_2_CUSTOM_IMU  = 9,
+        PIONEER_MSG_VERSION_2_THICKNESS_GAUGE = 3,
+        PIONEER_MSG_VERSION_2_CUSTOM_IMU  = 9, // This is our custom message to receive IMU data
       };
 
       enum Pioneer_Msg_Version_Plus_Msg_Code
@@ -66,6 +68,7 @@ namespace Control
         PIONEER_MSG_VERSION_1_TELEMETRY_CODE  = (PIONEER_MSG_VERSION_1 << 8) + PIONEER_MSG_VERSION_1_TELEMETRY,
         PIONEER_MSG_VERSION_2_TELEMETRY_CODE  = (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_TELEMETRY,
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION,
+        PIONEER_MSG_VERSION_2_THICKNESS_GAUGE_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_THICKNESS_GAUGE,
         PIONEER_MSG_VERSION_2_CUSTOM_IMU_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_CUSTOM_IMU,
       };
 
@@ -96,6 +99,96 @@ namespace Control
         //! "component": "tilt",
         //! "description": "Invalid tilt calibration"
         PIONEER_ERROR_FLAGS_ERR_TILT_CALIBRATION = 0x00000080,
+        //! "component": "guest_port",
+        //! "description": "Guest port 1 read error"
+        PIONEER_ERROR_FLAGS_ERR_GP1_READ = 0x00000100,
+        //! "component": "guest_port",
+        //! "description": "Guest port 2 read error"
+        PIONEER_ERROR_FLAGS_ERR_GP2_READ = 0x00000200,
+        //! "component": "guest_port",
+        //! "description": "Guest port 3 read error"
+        PIONEER_ERROR_FLAGS_ERR_GP3_READ = 0x00000400,
+        //! "component": "guest_port",
+        //! "description": "Guest port 1 not flashed"
+        PIONEER_ERROR_FLAGS_ERR_GP1_NOT_FLASHED = 0x00000800,
+        //! "component": "guest_port",
+        //! "description": "Guest port 2 not flashed"
+        PIONEER_ERROR_FLAGS_ERR_GP2_NOT_FLASHED = 0x00001000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 3 not flashed"
+        PIONEER_ERROR_FLAGS_ERR_GP3_NOT_FLASHED = 0x00002000,
+        //! "component": "guest_port",
+        //! "description": "Unknown device on guest port 1"
+        PIONEER_ERROR_FLAGS_ERR_GP1_UNKNOWN_DEVICE = 0x00004000,
+        //! "component": "guest_port",
+        //! "description": "Unknown device on guest port 2"
+        PIONEER_ERROR_FLAGS_ERR_GP2_UNKNOWN_DEVICE = 0x00008000,
+        //! "component": "guest_port",
+        //! "description": "Unknown device on guest port 3"
+        PIONEER_ERROR_FLAGS_ERR_GP3_UNKNOWN_DEVICE = 0x00010000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 1 connection error"
+        PIONEER_ERROR_FLAGS_ERR_GP1_DEVICE_CONNECTION = 0x00020000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 2 connection error"
+        PIONEER_ERROR_FLAGS_ERR_GP2_DEVICE_CONNECTION = 0x00040000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 3 connection error"
+        PIONEER_ERROR_FLAGS_ERR_GP3_DEVICE_CONNECTION = 0x00080000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 1 device error"
+        PIONEER_ERROR_FLAGS_ERR_GP1_DEVICE = 0x00100000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 2 device error"
+        PIONEER_ERROR_FLAGS_ERR_GP2_DEVICE = 0x00200000,
+        //! "component": "guest_port",
+        //! "description": "Guest port 3 device error"
+        PIONEER_ERROR_FLAGS_ERR_GP3_DEVICE = 0x00400000,
+        //! "component": "drone_info",
+        //! "description": "Drone serial number not set"
+        PIONEER_ERROR_FLAGS_ERR_DRONE_SERIAL_NOT_SET = 0x00800000,
+        //! "component": "drone_info",
+        //! "description": "Drone serial number error"
+        PIONEER_ERROR_FLAGS_ERR_DRONE_SERIAL = 0x01000000,
+        //! "component": "mb_eeeprom",
+        //! "description": "MB eeprom read error"
+        PIONEER_ERROR_FLAGS_ERR_MB_EEPROM_READ = 0x02000000,
+        //! "component": "drone_info",
+        //! "description": "BB eeprom read error"
+        PIONEER_ERROR_FLAGS_ERR_BB_EEPROM_READ = 0x04000000,
+        //! "component": "drone_info",
+        //! "description": "MB eeprom not flashed"
+        PIONEER_ERROR_FLAGS_ERR_MB_EEPROM_NOT_FLASHED = 0x08000000,
+        //! "component": "drone_info",
+        //! "description": "BB eeprom not flashed"
+        PIONEER_ERROR_FLAGS_ERR_BB_EEPROM_NOT_FLASHED = 0x10000000,
+        //! "component": "main_camera",
+        //! "description": "Main camera is unreachable"
+        PIONEER_ERROR_FLAGS_ERR_MAIN_CAMERA_CONNECTION = 0x20000000,
+        //! "component": "main_camera",
+        //! "description": "Main camera has wrong firmware"
+        PIONEER_ERROR_FLAGS_ERR_MAIN_CAMERA_FIRMWARE = 0x40000000,
+        //! "component": "guestport_camera",
+        //! "description": "Guestport camera is unreachable"
+        PIONEER_ERROR_FLAGS_ERR_GUESTPORT_CAMERA_CONNECTION = 0x80000000,
+        //! "component": "guestport_camera",
+        //! "description": "Guestport camera has wrong firmware"
+        PIONEER_ERROR_FLAGS_ERR_GUESTPORT_CAMERA_FIRMWARE = 0x100000000,
+        //! "component": "drone_info",
+        //! "description": "MB serial number error"
+        PIONEER_ERROR_FLAGS_ERR_MB_SERIAL = 0x200000000,
+        //! "component": "drone_info",
+        //! "description": "BB serial number error"
+        PIONEER_ERROR_FLAGS_ERR_BB_SERIAL = 0x400000000,
+        //! "component": "drone_info",
+        //! "description": "DS serial number error"
+        PIONEER_ERROR_FLAGS_ERR_DS_SERIAL = 0x800000000,
+        //! "component": "guest_port",
+        //! "description": "Error reading GP current"
+        PIONEER_ERROR_FLAGS_ERR_GP_CURRENT_READ = 0x1000000000,
+        //! "component": "guest_port",
+        //! "description": "Max GP current exceeded"
+        PIONEER_ERROR_FLAGS_ERR_GP_CURRENT = 0x2000000000,
       };
 
       struct __attribute__((__packed__)) DataVersion1Telemetry
@@ -228,7 +321,7 @@ namespace Control
         uint16_t battery_serial_number; // Battery serial number []
       };
 
-      struct __attribute__((__packed__)) DataVersion2Compasscalibration
+      struct __attribute__((__packed__)) DataVersion2CompassCalibration
       {
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 2; // Command type []
@@ -240,6 +333,16 @@ namespace Control
         uint8_t progress_z_up; // Progress z up []
         uint8_t progress_z_down; // Progress z down []
         uint8_t progress_thruster; // Progress thruster []
+      };
+
+      struct __attribute__((__packed__)) DataVersion2ThicknessGauge
+      {
+        uint8_t version = 2; // Protocol version []
+        uint8_t command_type = 3; // Command type []
+        double thickness_measurement; // Thickness [m]
+        uint8_t echo_count; // Echo count []
+        int16_t sound_velocity; // Sound velocity [m/s]
+        uint8_t valid_measurement; // Valid measurement []
       };
 
       struct __attribute__((__packed__)) DataVersion2CustomImu
