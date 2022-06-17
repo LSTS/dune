@@ -321,6 +321,19 @@ namespace Autonomy
         this->m_speed = speed;
       }
 
+      std::string
+      coordArrayAsString(std::vector<std::pair<double, double>> coords)
+      {
+        std::stringstream ss;
+        ss << "[ ";
+        for (auto p : coords)
+        {
+          ss << "(" << p.first << ", " << p.second << ") ";
+        }
+        ss << "]";
+        return ss.str();
+      }
+
       IMC::PlanSpecification
       generatePlan(const IMC::SurveyTask* task, SurveyProfile profile)
       {
@@ -329,6 +342,7 @@ namespace Autonomy
 
         if (!getFeature(task, &m_world_model, area))
         {
+          m_parent->inf("Retrieved Area: %s", coordArrayAsString(area).c_str());
           IMC::PlanSpecification plan;
           plan.plan_id = "comap-invalid";
           plan.description = "Could not retrieve feature";
