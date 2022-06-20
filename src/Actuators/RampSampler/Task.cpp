@@ -629,6 +629,7 @@ namespace Actuators
           break;
         // Board Initialized. State machine is now, ready to operate.
         case BI_DONE:
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           break;
         }
         return m_bi_state;
@@ -691,6 +692,8 @@ namespace Actuators
               else
               {
                 inf("Way Point Info: No sampling here.");
+                m_sm_state = SM_MANEUVER_DONE;
+                debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
               }
             } 
             else // if it is not the sampling plan
@@ -698,8 +701,8 @@ namespace Actuators
               inf("Way Point Info: No sampling here.");
               m_sm_state = SM_MANEUVER_DONE;
               debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
-              m_NEAR_FL = false;
             }
+            m_NEAR_FL = false;
           }
           break;
         case SM_SAMPLE:
