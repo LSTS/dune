@@ -34,9 +34,6 @@
 #include <string>
 #include <cstring>
 
-//! Sampling duration
-#define SAMPLING_DURATION 30
-
 namespace Actuators
 {
   //! Insert short task description here.
@@ -74,6 +71,8 @@ namespace Actuators
       bool use_gsm;
       //! Send status messages via Iridium
       bool use_iridium;
+      //! Time the vehicle will remain in each station keeping with sampling procedure
+      uint8_t sampling_duration;
     };
 
     struct Task : public DUNE::Tasks::Task
@@ -171,6 +170,11 @@ namespace Actuators
             .defaultValue("true")
             .description(DTR("Send the status messages via Iridium."));
 
+        param("Sampling Duration", m_args.sampling_duration)
+            .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+            .defaultValue("60")
+            .description(DTR("Time (in seconds) that the vehicle will remain in the sampling station keeping maneuvers."));
+
         bind<IMC::PathControlState>(this);
         bind<IMC::PlanControl>(this);
         // bind<IMC::PlanControlState>(this);
@@ -226,7 +230,9 @@ namespace Actuators
       onResourceInitialization(void)
       {
         // spew("onResourceInitialization()");
-        m_sampling_timer.setTop(SAMPLING_DURATION);
+        m_sampling_timer.setTop(m_args.sampling_duration);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
