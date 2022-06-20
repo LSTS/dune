@@ -143,8 +143,6 @@ namespace Actuators
       uint8_t m_bfr[128];
       //! Parser
       Parser *m_parse;
-      // //! Scratch buffer.
-      // uint8_t m_buffer[c_max_buffer];
       //! CSUM value
       uint8_t m_csum[c_max_csum];
       //! Message used to construct the command to be sent
@@ -437,7 +435,7 @@ namespace Actuators
         trace("IMC::PlanControl");
         // spew("type: %d | operation: %d | plan: %s | source: %s", msg->type, msg->op, msg->plan_id.c_str(), resolveSystemId(msg->getSource()));
 
-        // If request to start plan was successful
+        // If request to start plan was successful (or completed)
         if (msg->type == IMC::PlanControl::PC_SUCCESS && msg->op == IMC::PlanControl::PC_START)
         {
           // Check if plan is completed
@@ -454,8 +452,7 @@ namespace Actuators
             m_sm_state = SM_STOPPED;
             debug("[STATE] : m_sm_state = SM_STOPPED");
           }
-          // Or if its starting
-          else
+          else // Or successfully initiated
           {
             m_START_FL = true;
             trace("[VAR] : m_START_FL = true");
@@ -498,21 +495,20 @@ namespace Actuators
             }
           }
         }
-        else if (msg->type == IMC::PlanControl::PC_SUCCESS && msg->op == IMC::PlanControl::PC_STOP) // If request to stop plan was successful
+        // If request to stop plan was successful
+        else if (msg->type == IMC::PlanControl::PC_SUCCESS && msg->op == IMC::PlanControl::PC_STOP)
         {
-          // if (msg->plan_id.find(m_args.plan_name) != std::string::npos) // And the plan is the one we want
-          // {
           inf("Stop plan!");
           m_START_FL = false;
           trace("[VAR] : m_START_FL = false");
-
+          m_STOP_FL = true;
+          trace("[VAR] : m_STOP_FL = true");
           m_sm_state = SM_STOPPED;
           debug("[STATE] : m_sm_state = SM_STOPPED");
 
           sendCommand(CMD_STOP);
           sendCommand(CMD_STOP);
-          spew("STOP sent to WASAB.");
-          //}
+          inf("Stop command sent to WASAB.");
         }
       }
 
@@ -561,6 +557,8 @@ namespace Actuators
         sendCommand(CMD_STOP);
         spew("STOP (Abort) sent to WASAB.");
 
+        m_STOP_FL = true;
+        trace("[VAR] : m_STOP_FL = true");
         m_sm_state = SM_STOPPED;
         debug("[STATE] : m_sm_state = SM_STOPPED");
 
@@ -568,10 +566,10 @@ namespace Actuators
         trace("[VAR] : m_NEAR_FL = false");
         m_START_FL = false;
         trace("[VAR] : m_START_FL = false");
-        // m_SAMPLING_PLAN_FL = false;
-        // trace("[VAR] : m_SMAPLING_PLAN_FL = false");
-        // m_ANOTHER_PLAN_FL = false;
-        // trace("[VAR] : m_ANOTHER_PLAN_FL = false");
+        m_SAMPLING_PLAN_FL = false;
+        trace("[VAR] : m_SAMPLING_PLAN_FL = false");
+        m_ANOTHER_PLAN_FL = false;
+        trace("[VAR] : m_ANOTHER_PLAN_FL = false");
         m_ON_MANEUVER_FL = false;
         trace("[VAR] : m_ON_MANEUVER_FL = false");
       }
@@ -589,7 +587,7 @@ namespace Actuators
           debug("[STATE] : m_bi_state = BI_ASK_VERSION");
           break;
 
-        // Ask WASAB's firminfe version
+        // Ask WASAB's fw version
         case BI_ASK_VERSION:
           sendCommand(CMD_VERSION);
           m_cmd_timer.reset();
@@ -625,7 +623,7 @@ namespace Actuators
             {
               err("WASAB not answered %d DUNE commands.", CMD_MAX_TRIES);
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-              throw RestartNeeded(DTR("WASAB don't answer DUNE"), 10);
+              throw RestartNeeded(DTR("WASAB don't answer DUNE"), 5);
             }
           }
           break;
@@ -653,10 +651,10 @@ namespace Actuators
           break;
         // Ready to operate, waiting to start
         case SM_STOPPED:
-          if (m_START_FL && m_ON_MANEUVER_FL) //&& (m_SAMPLING_PLAN_FL || m_ANOTHER_PLAN_FL))
+          if (m_START_FL && m_ON_MANEUVER_FL && !m_STOP_FL && (m_SAMPLING_PLAN_FL || m_ANOTHER_PLAN_FL))
           {
-            m_sm_state = SM_MOVING;
             inf("The vehicle start moving");
+            m_sm_state = SM_MOVING;
             debug("[STATE] : m_sm_state = SM_MOVING");
             m_START_FL = false;
             trace("[VAR] : m_START_FL = false");
@@ -665,47 +663,44 @@ namespace Actuators
           }
           break;
         case SM_MOVING:
-          if (m_SAMPLING_PLAN_FL)
+          if (m_NEAR_FL) // when the vehicle arrives to the waypoint
           {
-            // if (std::strcmp(m_type_of_sample.c_str(), "None") != 0)
-            //{
-            inf("Way Point Info: Sample Type: %s.", m_type_of_sample.c_str());
-
-            if (std::strcmp(m_type_of_sample.c_str(), "Clean") == 0)
+            if (m_SAMPLING_PLAN_FL) // if the plan is the sampling plan
             {
-              sendCommand(CMD_CLEAN_SAMPLE);
-              inf("Asked for Clean Sample.");
-            }
-            else
-            {
-              sendCommand(CMD_DIRTY_SAMPLE);
-              inf("Asked for Dirty Sample.");
-            }
-            m_sm_state = SM_SAMPLE;
-            debug("[STATE] : m_sm_state = SM_SAMPLING");
-            cmd_sent_count++;
-            trace("[VAR] : cmd_sent_count = %d", cmd_sent_count);
-            m_cmd_timer.reset();
-            //}
-            // else
-            //{
-            // if (m_NEAR_FL) // Chegou ao waypoint
-            //{
-            // inf("Way Point Info: No sampling here.");
-            // m_sm_state = SM_MANEUVER_DONE;
-            // debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
-            // m_NEAR_FL = false;
-            //}
-            //}
-          }
-          else if (m_NEAR_FL) // Chegou ao waypoint
-          {
-            inf("Way Point Info: No sampling here.");
-            m_sm_state = SM_MANEUVER_DONE;
-            debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
-            m_NEAR_FL = false;
-          }
+              if (std::strcmp(m_type_of_sample.c_str(), "None") != 0) // and there is samples to be done in here
+              {
+                inf("Way Point Info: Sample Type: %s.", m_type_of_sample.c_str());
 
+                if (std::strcmp(m_type_of_sample.c_str(), "Clean") == 0)
+                {
+                  sendCommand(CMD_CLEAN_SAMPLE);
+                  inf("Asked for Clean Sample.");
+                }
+                else
+                {
+                  sendCommand(CMD_DIRTY_SAMPLE);
+                  inf("Asked for Dirty Sample.");
+                }
+
+                m_sm_state = SM_SAMPLE;
+                debug("[STATE] : m_sm_state = SM_SAMPLING");
+                cmd_sent_count++;
+                trace("[VAR] : cmd_sent_count = %d", cmd_sent_count);
+                m_cmd_timer.reset();
+              }
+              else
+              {
+                inf("Way Point Info: No sampling here.");
+              }
+            } 
+            else // if it is not the sampling plan
+            {
+              inf("Way Point Info: No sampling here.");
+              m_sm_state = SM_MANEUVER_DONE;
+              debug("[STATE] : m_sm_state = SM_MANEUVER_DONE");
+              m_NEAR_FL = false;
+            }
+          }
           break;
         case SM_SAMPLE:
           if (m_parse->m_rampState.sampleState == SAMPLING_CLEAN || m_parse->m_rampState.sampleState == SAMPLING_DIRTY)
