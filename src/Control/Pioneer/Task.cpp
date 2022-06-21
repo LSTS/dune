@@ -99,8 +99,8 @@ namespace Control
       std::string routine;
       //! Depth Hold Step
       std::string depth_step;
-      //! Contro mode
-      std::string control_mode;
+      //! Control mode
+      bool direct_control;
     };
 
     enum LoggerEnum
@@ -227,7 +227,7 @@ namespace Control
         .defaultValue("0.0, 0.0, 0.0, 0.0")
         .description("Send motion input V2 command to Pioneer [surge, sway, heave, yaw]");
 
-        param("Motion input time", m_args.motion_input_type)
+        param("Motion Input Speed", m_args.motion_input_type)
         .defaultValue("1")
         .description("Set motion input type (slow[0], normal[1], fast[2])");
 
@@ -249,11 +249,9 @@ namespace Control
         .defaultValue("None")
         .description("Depth hold step.");
 
-        param("Control Mode", m_args.control_mode)
-        .values("Thrust, Force")
-        .defaultValue("Thrust")
-        .description("In Thrust mode SetThrusterActuation is used to set control."
-                     "In Force mode DesiredControl is used.");
+        param("Direct Control", m_args.direct_control)
+        .defaultValue("false")
+        .description("In Direct control mode DesiredControl is used instead of SetThrusterActuation.");
 
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
@@ -973,7 +971,7 @@ namespace Control
         if(m_args.routine != "None")
           return;
 
-        if(m_args.control_mode != "Thrust")
+        if(m_args.direct_control)
           return;
 
         ProtocolCommands::CmdVersion2MotionInput cmd;
@@ -1072,22 +1070,39 @@ namespace Control
         if(m_args.routine != "None")
           return;
 
-        if(m_args.control_mode != "Force")
+        if(!m_args.direct_control)
           return;
 
         ProtocolCommands::CmdVersion2MotionInput cmd;
         setMotionType(cmd);
+        cmd.surge_motion_input = m_motion[0];
+        cmd.sway_motion_input = m_motion[1];
+        cmd.heave_motion_input = m_motion[2];
+        cmd.yaw_motion_input = m_motion[3];
 
         if (msg->flags & IMC::DesiredControl::FL_X)
+        {
           cmd.surge_motion_input = trimValue(msg->x, -1.0, 1.0);
+          m_motion[0] = cmd.surge_motion_input;
+        }
 
         if (msg->flags & IMC::DesiredControl::FL_Y)
+        {
           cmd.sway_motion_input = trimValue(msg->y, -1.0, 1.0);
+          m_motion[1] = cmd.sway_motion_input;
+        }
+
+        if (msg->flags & IMC::DesiredControl::FL_Z)
+        {
+          cmd.heave_motion_input = trimValue(msg->z, -1.0, 1.0);
+          m_motion[2] = cmd.heave_motion_input;
+        }
 
         if (msg->flags & IMC::DesiredControl::FL_N)
+        {
           cmd.yaw_motion_input = trimValue(msg->n, -1.0, 1.0);
-
-        cmd.heave_motion_input = 0;
+          m_motion[3] = cmd.yaw_motion_input;
+        }
 
         sendCommand(&cmd);
         debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
