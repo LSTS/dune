@@ -47,6 +47,8 @@ namespace Control
       {
         //! Outgoing desired heading message.
         IMC::DesiredHeading m_heading;
+        //! Outgoing desired velocity message.
+        IMC::DesiredVelocity m_velocity;
         //! Task arguments.
         Arguments m_args;
 
@@ -81,6 +83,7 @@ namespace Control
         {
           // Activate heading cotroller.
           enableControlLoops(IMC::CL_YAW);
+          // enableControlLoops(IMC::CL_VELOCITY);
         }
 
         //! Execute a path control step
@@ -88,6 +91,41 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          // Velocity controller.
+          // LOS pathing is used here
+          if (m_speed.value > 0)
+          {
+            // Unit convertion to mps
+            double mps_speed = 0;
+            switch (m_speed.speed_units)
+            {
+              case IMC::SUNITS_PERCENTAGE:
+                mps_speed = (m_speed.value / 100.0);
+                break;
+              case IMC::SUNITS_METERS_PS:
+                mps_speed = m_speed.value;
+                break;
+              // case IMC::SUNITS_RPM:
+              //   thrust_com = rpmToThrust(rpm, m_desired_speed, tstep);
+              //   m_previous_rpm = m_desired_speed;
+              default:
+                break;
+            }
+
+            // Fixed frame to body fixed velocity convertion
+            TrackingState::Coord ff_vel;
+            TrackingState::Coord origin = {0, 0, 0};
+            Matrix bf_vel = sphericalToCartesian(mps_speed, ts.los_angle, ts.los_elevation);
+
+            m_velocity.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
+            m_velocity.u = bf_vel(0);
+            m_velocity.v = bf_vel(1);
+            // m_velocity.u = ff_vel.x * std::cos(state.psi) + ff_vel.y * std::sin(state.psi);
+            // m_velocity.v = -ff_vel.x * std::sin(state.psi) + ff_vel.y * std::cos(state.psi);
+          }
+          dispatch(m_velocity);
+
+
           // Dispatch heading reference
           m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
           dispatch(m_heading);
