@@ -204,6 +204,11 @@ namespace Control
             m_heave_ref.w = cmd;
             m_heave_ref.flags = IMC::DesiredVelocity::FL_HEAVE;
             dispatch(m_heave_ref);
+
+            IMC::DesiredControl heave_ctr;
+            heave_ctr.flags = IMC::DesiredControl::FL_Z;
+            heave_ctr.z = cmd;
+            dispatch(heave_ctr);
           }
 
           // Positive depth implies positive heave

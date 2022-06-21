@@ -82,6 +82,10 @@ namespace DUNE
       .defaultValue("true")
       .description("Enable course control");
 
+      param("3D Tracking", m_3d_tracking)
+      .defaultValue("false")
+      .description("Enable 3D tracking");
+
       param("Along-track -- Monitor", m_atm.enabled)
       .defaultValue("true")
       .description("Enable along-track error monitoring");
@@ -220,6 +224,7 @@ namespace DUNE
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
+      handle3D();
       m_ts.loitering = false;
       m_ts.nearby = false;
       m_ts.end_time = Clock::get();
@@ -304,8 +309,12 @@ namespace DUNE
       const bool no_start = setStartPoint(now, dpath);
       setEndPoint(dpath);
 
-      Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                      &m_ts.track_bearing, &m_ts.track_length);
+      // Loiter is handled in 2D. Depth is handled seperatly.
+      handle3D(dpath->lradius > 0);
+      toSpherical(m_ts.start, m_ts.end,
+                  m_ts.track_length,
+                  m_ts.track_bearing,
+                  m_ts.track_elevation);
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
@@ -394,8 +403,17 @@ namespace DUNE
 
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
-        m_pcs.start_z = m_estate.height - m_estate.z;
-        m_pcs.start_z_units = dpath->start_z_units;
+        if (dpath->start_z_units == IMC::Z_NONE)
+        {
+          m_pcs.start_z = m_estate.depth >= 0 ? m_estate.depth : m_estate.height;
+          m_pcs.start_z_units = m_estate.depth >= 0 ? IMC::Z_DEPTH : IMC::Z_HEIGHT;
+          inf("Start Z units not defined. Switching to %s units", m_estate.depth >= 0 ? "Depth" : "Height");
+        }
+        else
+        {
+          m_pcs.start_z = getZ(static_cast<IMC::ZUnits>(dpath->start_z_units));
+          m_pcs.start_z_units = dpath->start_z_units;
+        }
 
         return true;
       }
@@ -411,10 +429,8 @@ namespace DUNE
     void
     PathController::setEndPoint(const IMC::DesiredPath* dpath)
     {
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.start_lat, m_pcs.start_lon, 0,
-                          &m_ts.start.x, &m_ts.start.y);
-      m_ts.start.z = m_pcs.start_z;
+      setTrackingCoord(m_ts.start, m_pcs.start_lat, m_pcs.start_lon,
+                        m_pcs.start_z, static_cast<IMC::ZUnits>(m_pcs.start_z_units));
 
       if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
           dpath->lradius > 0)
@@ -434,10 +450,8 @@ namespace DUNE
         m_pcs.end_z_units = dpath->end_z_units;
       }
 
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                          m_pcs.end_lat, m_pcs.end_lon, 0,
-                          &m_ts.end.x, &m_ts.end.y);
-      m_ts.end.z = m_pcs.end_z;
+      setTrackingCoord(m_ts.end, m_pcs.end_lat, m_pcs.end_lon,
+                        m_pcs.end_z, static_cast<IMC::ZUnits>(m_pcs.end_z_units));
     }
 
     void
@@ -663,6 +677,7 @@ namespace DUNE
 
       const bool prev_nearby = m_ts.nearby;
 
+      handle3D(m_ts.loitering);
       updateTrackingState();
 
       reportPathControlState(!prev_nearby && m_ts.nearby);
@@ -727,13 +742,15 @@ namespace DUNE
     void
     PathController::updateTrackingState(void)
     {
-      // Range and LOS angle to destination
-      getBearingAndRange(m_estate, m_ts.end, &m_ts.los_angle, &m_ts.range);
+      // Range, LOS and elevation angles to destination
+      toSpherical(m_estate, m_ts.end,
+                  m_ts.range,
+                  m_ts.los_angle,
+                  m_ts.los_elevation);
 
-      // Ground course and speed
-      m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
-      m_ts.speed = m_ts.cc ? Math::norm(m_estate.vx, m_estate.vy) : m_estate.u;
-
+      // Speed, Elevation and Ground Course 
+      setCourseSpeedAndPitch();
+        
       if (!m_ts.loitering)
       {
         getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
@@ -770,7 +787,7 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_estate.z - m_ts.end.z; // vertical-track
+      m_ts.track_pos.z = m_ts.end.z - m_estate.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
@@ -1065,6 +1082,115 @@ namespace DUNE
               : Math::norm(errx, erry) / speed;
 
       return std::min(65535.0, eta - time_factor);
+    }
+    
+    double
+    PathController::getZ(IMC::ZUnits z_unit) const
+    {
+      if (z_unit == IMC::Z_DEPTH)
+        return m_estate.depth;
+      else if (z_unit == IMC::Z_ALTITUDE)
+        return m_estate.alt;
+      else if (z_unit == IMC::Z_HEIGHT)
+        return m_estate.height;
+
+      // Z_NONE returns invalid
+      return -1;
+    }
+
+    void
+    PathController::setTrackingCoord(TrackingState::Coord& coord, 
+                      double lat, double lon,
+                      double z, IMC::ZUnits z_unit)
+    {
+      // Height is converted directly
+      if (z_unit == IMC::Z_HEIGHT)
+      {
+        WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
+                            lat, lon, z,
+                            &coord.x, &coord.y, &coord.z);
+        return;
+      }
+
+      // Depth and Altitude are converted separately
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                            lat, lon, 0,
+                            &coord.x, &coord.y);
+
+      if (z_unit == IMC::Z_DEPTH)
+      {
+        if (!depthToLocal(z, coord.z))
+        {
+          war("Could not convert depth coordinate. TrackingState Z set to DEPTH.");
+          coord.z = z;
+          return;
+        }
+      }
+
+      if (z_unit == IMC::Z_ALTITUDE)
+      {
+        if (!altitudeToLocal(z, coord.z))
+        {
+          war("Could not convert altitude coordinate. TrackingState Z set to ALTITUDE.");
+          coord.z = z;
+          return;
+        }
+      }
+
+      // Z_NONE sets to itself
+      coord.z = z;
+    }
+
+    bool
+    PathController::depthToLocal(double depth_ref, double& z)
+    {
+      // Valid depth
+      if (m_estate.depth >= 0)
+      {
+        double last_z = m_estate.z - m_estate.depth; // last_z reference, as calculated in BasicNavigation
+        z = last_z + depth_ref;
+        return true;
+      }
+
+      return false;
+    }
+
+    bool
+    PathController::altitudeToLocal(double alt_ref, double& z)
+    {
+      // Valid altitude
+      if (m_estate.alt >= 0)
+      {
+        // Valid depth -> UUV
+        if (m_estate.depth >= 0)
+        {
+          double last_z = m_estate.z - m_estate.depth; // last_z reference, as calculated in BasicNavigation
+          double depth_ref = m_estate.depth + m_estate.alt - alt_ref; // Convert altitude to depth
+          z = last_z + depth_ref;
+          return true;
+        }
+
+        // No depth -> UAV
+        z = alt_ref;
+      }
+
+      return false;
+    }
+
+    void
+    PathController::setCourseSpeedAndPitch()
+    {
+      if (m_ts.cc)
+      {
+        TrackingState::Coord speed = {m_estate.vx, m_estate.vy, m_estate.vz};
+        toSpherical(speed, m_ts.speed, m_ts.course, m_ts.elevation);
+      }
+      else
+      {
+        m_ts.speed = m_estate.u;
+        m_ts.course = m_estate.psi;
+        m_ts.elevation = m_estate.theta;
+      }
     }
 
     void

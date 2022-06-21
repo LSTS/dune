@@ -160,14 +160,20 @@ namespace DUNE
 
         //! bearing from start to end.
         double track_bearing;
+        //! elevation from start to end. (3D only).
+        double track_elevation;
         //! distance from start to end.
         double track_length;
         //! range from current position to end.
         double range;
-        //! angle from current position to end (line-of-sight angle).
+        //! bearing from current position to end (line-of-sight angle).
         double los_angle;
+        //! elevation from current position to end (line-of-sight angle). (3D only).
+        double los_elevation;
         //! current ground course if course control enabled, yaw otherwise.
         double course;
+        //! current elevation if course control enabled, pitch otherwise.
+        double elevation;
         //! current ground speed if course control enabled,
         //! body-fixed frame u speed otherwise.
         double speed;
@@ -204,6 +210,8 @@ namespace DUNE
         bool nearby : 1;
         //! Set if course control is enabled.
         bool cc : 1;
+        //! Set if 3d tracking is enabled.
+        bool tracking_3d : 1;
       };
 
       //! Handler for the startup of a new path.
@@ -263,6 +271,44 @@ namespace DUNE
         return m_time_factor;
       }
 
+      void
+      handle3D(bool force_2d = false)
+      {
+        m_ts.tracking_3d = force_2d ? 0 : m_3d_tracking;
+      }
+
+      //! Get EstimatedState value from z units
+      //! @param[in] z_unit Unit selection
+      //! @return EstimatedState depth, altitude or height, according to z_unit. 
+      //! -1 otherwise
+      double
+      getZ(IMC::ZUnits z_unit) const;
+
+      //! Set TrackingState start/end coordinates in NED frame
+      //! @param[out] coord TrackingState start/end coordinates reference.
+      //! @param[in] lat Latitude in WGS84.
+      //! @param[in] lon Longitude in WGS84.
+      //! @param[in] z value, according to z_unit.
+      //! @param[in] z_unit unit of z value.
+      void
+      setTrackingCoord(TrackingState::Coord& coord, 
+                        double lat, double lon,
+                        double z, IMC::ZUnits z_unit);
+
+      //! Convert depth reference to NED frame z axis.
+      //! @param[in] depth_ref Depth value.
+      //! @param[out] z z in NED frame.
+      //! @return true if conversion successful. false otherwise.
+      bool
+      depthToLocal(double depth_ref, double& z);
+
+      //! Convert altitude reference to NED frame z axis.
+      //! @param[in] alt_ref Altitude value.
+      //! @param[out] z z in NED frame.
+      //! @return true if conversion successful. false otherwise.
+      bool
+      altitudeToLocal(double alt_ref, double& z);
+
       //! Signal an error.
       //! This method should be used by subclasses to signal an error condition.
       //! @param msg error message
@@ -301,6 +347,10 @@ namespace DUNE
       //! Task method.
       void
       onMain(void);
+
+    protected:
+      //! DesiredSpeed reference
+      IMC::DesiredSpeed m_speed;
 
     private:
       //! Update entity state
@@ -370,10 +420,50 @@ namespace DUNE
       //! @param[out] y y coordinate relatively to path
       template <typename T>
       inline void
-      getTrackPosition(const T& coord, double* x, double* y = 0) const
+      getTrackPosition(const T& coord, double* x, double* y = 0)
       {
-        Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
+        if (m_ts.tracking_3d)
+          Coordinates::getTrackPosition3D(m_ts.start, m_ts.end, coord, x, y);
+        else
+          Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
+
+      //! Get Bearing range and elevation in 2D or 3D
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      template <typename A, typename B>
+      inline void
+      toSpherical(const A& origin, const B& target, double& b, double& r, double& p)
+      {
+        p = 0;
+        if (m_ts.tracking_3d)
+          Coordinates::cartesianToSpherical(origin, target, b, r, p);
+        else
+          Coordinates::getBearingAndRange(origin, target, &b, &r);
+      }
+
+      //! Get Bearing range and elevation in 2D or 3D
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      template <typename A>
+      inline void
+      toSpherical(const A& point, double& b, double& r, double& p)
+      {
+        p = 0;
+        if (m_ts.tracking_3d)
+          Coordinates::cartesianToSpherical(point, b, r, p);
+        else
+          Coordinates::toPolar(point, &b, &r);
+      }
+
+      //! Get speed, course and elevation angles. (2D or 3D)
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      inline void
+      setCourseSpeedAndPitch();
 
       //! Deactivate bottom tracker
       void
@@ -442,6 +532,8 @@ namespace DUNE
       bool m_running_monitors;
       //! Enable or disable course control
       bool m_course_ctl;
+      //! Enable or disable 3D tracking
+      bool m_3d_tracking;
       //! True when already tracking path
       bool m_tracking;
       //! True if there is some error
@@ -486,8 +578,6 @@ namespace DUNE
       IMC::EstimatedState m_estate;
       //! DesiredZ reference
       IMC::DesiredZ m_zref;
-      //! DesiredSpeed reference
-      IMC::DesiredSpeed m_speed;
       //! Pointer to bottom tracker object
       BottomTracker* m_btrack;
       //! Control loops last reference

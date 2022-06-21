@@ -91,12 +91,16 @@ namespace Control
       bool heading_hold;
       //! Send Motion Command
       std::vector<float> motion_input;
+      //! Set motion type input
+      unsigned motion_input_type;
       //! Ping Replay timeout in seconds.
       float ping_tout;
       //! Run routine
       std::string routine;
       //! Depth Hold Step
       std::string depth_step;
+      //! Control mode
+      bool direct_control;
     };
 
     enum LoggerEnum
@@ -223,6 +227,10 @@ namespace Control
         .defaultValue("0.0, 0.0, 0.0, 0.0")
         .description("Send motion input V2 command to Pioneer [surge, sway, heave, yaw]");
 
+        param("Motion Input Speed", m_args.motion_input_type)
+        .defaultValue("1")
+        .description("Set motion input type (slow[0], normal[1], fast[2])");
+
         param("Ping Replay Timeout", m_args.ping_tout)
         .units(Units::Second)
         .defaultValue("5.0")
@@ -241,12 +249,17 @@ namespace Control
         .defaultValue("None")
         .description("Depth hold step.");
 
+        param("Direct Control", m_args.direct_control)
+        .defaultValue("false")
+        .description("In Direct control mode DesiredControl is used instead of SetThrusterActuation.");
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::Heartbeat>(this);
         bind<IMC::LoggingControl>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::DesiredControl>(this);
         bind<IMC::StopManeuver>(this);
       }
 
@@ -958,9 +971,11 @@ namespace Control
         if(m_args.routine != "None")
           return;
 
+        if(m_args.direct_control)
+          return;
+
         ProtocolCommands::CmdVersion2MotionInput cmd;
-        cmd.boost_input = 0;
-        cmd.slow_input = 0;
+        setMotionType(cmd);
         cmd.surge_motion_input = m_motion[0];
         cmd.sway_motion_input = m_motion[1];
         cmd.heave_motion_input = m_motion[2];
@@ -1047,6 +1062,77 @@ namespace Control
         m_last_act[msg->id].id = msg->id;
         debug("m_last_act = %f, %f, %f, %f", m_last_act[0].value, m_last_act[1].value,
                                                     m_last_act[2].value, m_last_act[3].value);
+      }
+
+      void
+      consume(const IMC::DesiredControl* msg)
+      {
+        if(m_args.routine != "None")
+          return;
+
+        if(!m_args.direct_control)
+          return;
+
+        ProtocolCommands::CmdVersion2MotionInput cmd;
+        setMotionType(cmd);
+        cmd.surge_motion_input = m_motion[0];
+        cmd.sway_motion_input = m_motion[1];
+        cmd.heave_motion_input = m_motion[2];
+        cmd.yaw_motion_input = m_motion[3];
+
+        if (msg->flags & IMC::DesiredControl::FL_X)
+        {
+          cmd.surge_motion_input = trimValue(msg->x, -1.0, 1.0);
+          m_motion[0] = cmd.surge_motion_input;
+        }
+
+        if (msg->flags & IMC::DesiredControl::FL_Y)
+        {
+          cmd.sway_motion_input = trimValue(msg->y, -1.0, 1.0);
+          m_motion[1] = cmd.sway_motion_input;
+        }
+
+        if (msg->flags & IMC::DesiredControl::FL_Z)
+        {
+          cmd.heave_motion_input = trimValue(msg->z, -1.0, 1.0);
+          m_motion[2] = cmd.heave_motion_input;
+        }
+
+        if (msg->flags & IMC::DesiredControl::FL_N)
+        {
+          cmd.yaw_motion_input = trimValue(msg->n, -1.0, 1.0);
+          m_motion[3] = cmd.yaw_motion_input;
+        }
+
+        sendCommand(&cmd);
+        debug("(!) Sent Motion Input Cmd: surge = %f | sway = %f | heave = %f | yaw = %f",
+              cmd.surge_motion_input, cmd.sway_motion_input, cmd.heave_motion_input, cmd.yaw_motion_input);
+      }
+
+      //! Set motion type for this command
+      void
+      setMotionType(ProtocolCommands::CmdVersion2MotionInput& cmd)
+      {
+        switch (m_args.motion_input_type)
+        {
+          case 0:
+            cmd.boost_input = 0;
+            cmd.slow_input = 1;
+            break;
+
+          case 1:
+            cmd.boost_input = 0;
+            cmd.slow_input = 0;
+            break;
+
+          case 2:
+            cmd.boost_input = 1;
+            cmd.slow_input = 0;
+            break;
+          
+          default:
+            break;
+        }
       }
 
       //! Sends GpsFix defined in configurations
