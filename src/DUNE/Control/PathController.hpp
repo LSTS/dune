@@ -315,10 +315,6 @@ namespace DUNE
       void
       onMain(void);
 
-    protected:
-      //! DesiredSpeed reference
-      IMC::DesiredSpeed m_speed;
-
     private:
       //! Update entity state
       //! @param[in] msg message text for error description
@@ -509,6 +505,8 @@ namespace DUNE
       IMC::EstimatedState m_estate;
       //! DesiredZ reference
       IMC::DesiredZ m_zref;
+      //! DesiredSpeed reference
+      IMC::DesiredSpeed m_speed;
       //! Pointer to bottom tracker object
       BottomTracker* m_btrack;
       //! Control loops last reference
