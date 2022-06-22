@@ -124,8 +124,8 @@ namespace Control
       //! Motion input command.
       float m_motion[4];
       //! Linear interpolation parameters to map speed to actuation
-      LinIntParam<double> m_lip_x;
-      LinIntParam<double> m_lip_y;
+      LinIntParam<double>* m_lip_x;
+      LinIntParam<double>* m_lip_y;
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
@@ -343,8 +343,11 @@ namespace Control
 
         if (paramChanged(m_args.speed_limit))
         {
-          m_lip_x = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
-          m_lip_y = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
+          if (m_lip_x)
+            *m_lip_x = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
+
+          if (m_lip_y)
+            *m_lip_y = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
         }
       }
 
@@ -398,6 +401,11 @@ namespace Control
           delete elm.second;
         }
         m_loggers.clear();
+
+        if (m_lip_x)
+          Memory::clear(m_lip_x);
+        if (m_lip_y)
+          Memory::clear(m_lip_y);
       }
 
       //! Acquire resources.
@@ -441,6 +449,12 @@ namespace Control
 
         openConnectionTCP();
         openConnectionUDP();
+
+        // Setup control conversion
+        if (m_lip_x)
+          m_lip_x = new LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
+        if (m_lip_y)
+          m_lip_y = new LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
       }
 
       //! Initialize resources.
@@ -457,10 +471,6 @@ namespace Control
           m_motion[i] = 0;
           m_last_act[i].value = 0;
         }
-
-        // Setup control conversion
-        m_lip_x = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
-        m_lip_y = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
       }
 
       void
@@ -1100,15 +1110,15 @@ namespace Control
 
         if (msg->flags & IMC::DesiredControl::FL_X)
         {
-          m_lip_x.t = msg->x;
-          cmd.surge_motion_input = linearInterpolation(m_lip_x);
+          m_lip_x->t = msg->x;
+          cmd.surge_motion_input = linearInterpolation(*m_lip_x);
           m_motion[0] = cmd.surge_motion_input;
         }
 
         if (msg->flags & IMC::DesiredControl::FL_Y)
         {
-          m_lip_y.t = msg->y;
-          cmd.sway_motion_input = linearInterpolation(m_lip_y);
+          m_lip_y->t = msg->y;
+          cmd.sway_motion_input = linearInterpolation(*m_lip_y);
           m_motion[1] = cmd.sway_motion_input;
         }
 
