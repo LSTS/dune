@@ -340,15 +340,6 @@ namespace Control
         else
           m_depth_step.direction = 0;
         sendCommand(&m_depth_step);
-
-        if (paramChanged(m_args.speed_limit))
-        {
-          if (m_lip_x)
-            *m_lip_x = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
-
-          if (m_lip_y)
-            *m_lip_y = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
-        }
       }
 
       //! Reserve entity identifiers.
@@ -402,10 +393,9 @@ namespace Control
         }
         m_loggers.clear();
 
-        if (m_lip_x)
-          Memory::clear(m_lip_x);
-        if (m_lip_y)
-          Memory::clear(m_lip_y);
+        // Clear linear scales
+        Memory::clear(m_lip_x);
+        Memory::clear(m_lip_y);
       }
 
       //! Acquire resources.
@@ -451,10 +441,11 @@ namespace Control
         openConnectionUDP();
 
         // Setup control conversion
-        if (m_lip_x)
+        if (!m_args.speed_limit.empty())
+        {
           m_lip_x = new LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
-        if (m_lip_y)
           m_lip_y = new LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
+        }
       }
 
       //! Initialize resources.
