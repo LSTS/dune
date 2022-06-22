@@ -66,7 +66,7 @@ namespace Control
           .units(Units::Degree)
           .description("Fixed angle ROV should look at.");
 
-          m_ctx.config.get("General", "Speed limits", "", m_args.speed_limit);
+          m_ctx.config.get("General", "Speed Limits", "", m_args.speed_limit);
         }
 
         void
@@ -167,7 +167,7 @@ namespace Control
 
           double heading = atan2(y, x);
           // Check if x is outside bounds
-          if (x < 0 ? x < m_args.speed_limit[0] : x > m_args.speed_limit[1])
+          if (x < m_args.speed_limit[0] || x > m_args.speed_limit[1])
           {
             x = x < 0 ? m_args.speed_limit[0] : m_args.speed_limit[1];
             y = x * tan(heading);
@@ -175,7 +175,7 @@ namespace Control
           }
 
           // Check if y is outside bounds
-          if (y < 0 ? y < m_args.speed_limit[2] : y > m_args.speed_limit[3])
+          if (y < m_args.speed_limit[2] || y > m_args.speed_limit[3])
           {
             y = y < 0 ? m_args.speed_limit[2] : m_args.speed_limit[3];
             x = y / tan(heading);
