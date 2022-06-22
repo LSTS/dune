@@ -101,6 +101,9 @@ namespace Control
       std::string depth_step;
       //! Control mode
       bool direct_control;
+      //! Vehicle max speed in x, y directions.
+      //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
+      std::vector<double> speed_limit;
     };
 
     enum LoggerEnum
@@ -120,6 +123,9 @@ namespace Control
       IMC::SetThrusterActuation m_last_act[4];
       //! Motion input command.
       float m_motion[4];
+      //! Linear interpolation parameters to map speed to actuation
+      LinIntParam<double> m_lip_x;
+      LinIntParam<double> m_lip_y;
 
       Comm::TCPComm* m_TCP_comm;
       Comm::UDPComm* m_UDP_comm;
@@ -253,6 +259,8 @@ namespace Control
         .defaultValue("false")
         .description("In Direct control mode DesiredControl is used instead of SetThrusterActuation.");
 
+        m_ctx.config.get("General", "Speed Limits", "", m_args.speed_limit);
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::EstimatedState>(this);
@@ -332,6 +340,12 @@ namespace Control
         else
           m_depth_step.direction = 0;
         sendCommand(&m_depth_step);
+
+        if (paramChanged(m_args.speed_limit))
+        {
+          m_lip_x = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
+          m_lip_y = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
+        }
       }
 
       //! Reserve entity identifiers.
@@ -443,6 +457,10 @@ namespace Control
           m_motion[i] = 0;
           m_last_act[i].value = 0;
         }
+
+        // Setup control conversion
+        m_lip_x = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[0], m_args.speed_limit[1], 0.0);
+        m_lip_y = LinIntParam<double>(-1.0, 1.0, m_args.speed_limit[2], m_args.speed_limit[3], 0.0);
       }
 
       void
@@ -1082,13 +1100,15 @@ namespace Control
 
         if (msg->flags & IMC::DesiredControl::FL_X)
         {
-          cmd.surge_motion_input = trimValue(msg->x, -1.0, 1.0);
+          m_lip_x.t = msg->x;
+          cmd.surge_motion_input = linearInterpolation(m_lip_x);
           m_motion[0] = cmd.surge_motion_input;
         }
 
         if (msg->flags & IMC::DesiredControl::FL_Y)
         {
-          cmd.sway_motion_input = trimValue(msg->y, -1.0, 1.0);
+          m_lip_y.t = msg->y;
+          cmd.sway_motion_input = linearInterpolation(m_lip_y);
           m_motion[1] = cmd.sway_motion_input;
         }
 
