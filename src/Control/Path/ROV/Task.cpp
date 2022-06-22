@@ -40,7 +40,11 @@ namespace Control
     {
       struct Arguments
       {
+        //! Heading ROV should maintain
         double fixed_heading;
+        //! Vehicle max speed in x, y directions.
+        //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
+        std::vector<double> speed_limit;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -61,6 +65,8 @@ namespace Control
           .defaultValue("0.0")
           .units(Units::Degree)
           .description("Fixed angle ROV should look at.");
+
+          m_ctx.config.get("General", "Speed limits", "", m_args.speed_limit);
         }
 
         void
@@ -92,6 +98,10 @@ namespace Control
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           // Velocity controller.
+
+          // Reset flags
+          m_velocity.flags = 0;
+
           // LOS pathing is used here
           if (m_speed.value > 0)
           {
@@ -112,17 +122,19 @@ namespace Control
                 break;
             }
 
-            // Fixed frame to body fixed velocity convertion
-            TrackingState::Coord ff_vel;
-            TrackingState::Coord origin = {0, 0, 0};
-            Matrix bf_vel = sphericalToCartesian(mps_speed, ts.los_angle, ts.los_elevation);
-
+            // Set flags
             m_velocity.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
-            m_velocity.u = bf_vel(0);
-            m_velocity.v = bf_vel(1);
-            // m_velocity.u = ff_vel.x * std::cos(state.psi) + ff_vel.y * std::sin(state.psi);
-            // m_velocity.v = -ff_vel.x * std::sin(state.psi) + ff_vel.y * std::cos(state.psi);
+
+            // Fixed frame to body fixed velocity convertion
+            Matrix ff_vel = sphericalToCartesian(mps_speed, ts.los_angle, ts.los_elevation);
+            m_velocity.u = ff_vel(0) * std::cos(state.psi) + ff_vel(1) * std::sin(state.psi);
+            m_velocity.v = -ff_vel(0) * std::sin(state.psi) + ff_vel(1) * std::cos(state.psi);
+
+            // Trim for max thruster speed
+            trim2D(m_velocity.u, m_velocity.v);
           }
+
+          // Dispatch velocity reference
           dispatch(m_velocity);
 
 
@@ -139,6 +151,36 @@ namespace Control
           // Dispatch heading reference
           m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
           dispatch(m_heading);
+        }
+
+        //! Trims a vector inside a 2D box defined by x,y limits.
+        //! Think of a 2D vector trapped inside a box defined by your limits.
+        //! If the vector exceeds the limits its components are trimmed to
+        //! fit the box but also keep the same direction. 
+        //! Only one solution is possible so the order does not matter in 
+        //! case both are exceeded.
+        void
+        trim2D(double &x, double &y)
+        {
+          if (m_args.speed_limit.empty())
+            return;
+
+          double heading = atan2(y, x);
+          // Check if x is outside bounds
+          if (x < 0 ? x < m_args.speed_limit[0] : x > m_args.speed_limit[1])
+          {
+            x = x < 0 ? m_args.speed_limit[0] : m_args.speed_limit[1];
+            y = x * tan(heading);
+            return;
+          }
+
+          // Check if y is outside bounds
+          if (y < 0 ? y < m_args.speed_limit[2] : y > m_args.speed_limit[3])
+          {
+            y = y < 0 ? m_args.speed_limit[2] : m_args.speed_limit[3];
+            x = y / tan(heading);
+            return;
+          }
         }
       };
     }
