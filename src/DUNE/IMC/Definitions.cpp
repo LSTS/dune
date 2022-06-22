@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 60a23518f193ba4da4de1d134d424d40                            *
+// IMC XML MD5: 76a184da55c4be90a9eee4f3c2d44e1a                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -20162,6 +20162,147 @@ namespace DUNE
       IMC::toJSON(os__, "req_id", req_id, nindent__);
       IMC::toJSON(os__, "status", status, nindent__);
       IMC::toJSON(os__, "info", info, nindent__);
+    }
+
+    AssetReport::AssetReport(void)
+    {
+      m_header.mgid = 525;
+      clear();
+      msgs.setParent(this);
+    }
+
+    void
+    AssetReport::clear(void)
+    {
+      name.clear();
+      report_time = 0;
+      medium = 0;
+      lat = 0;
+      lon = 0;
+      depth = 0;
+      alt = 0;
+      sog = 0;
+      cog = 0;
+      msgs.clear();
+    }
+
+    bool
+    AssetReport::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AssetReport& other__ = static_cast<const AssetReport&>(msg__);
+      if (name != other__.name) return false;
+      if (report_time != other__.report_time) return false;
+      if (medium != other__.medium) return false;
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (depth != other__.depth) return false;
+      if (alt != other__.alt) return false;
+      if (sog != other__.sog) return false;
+      if (cog != other__.cog) return false;
+      if (msgs != other__.msgs) return false;
+      return true;
+    }
+
+    int
+    AssetReport::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    AssetReport::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(name, ptr__);
+      ptr__ += IMC::serialize(report_time, ptr__);
+      ptr__ += IMC::serialize(medium, ptr__);
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(depth, ptr__);
+      ptr__ += IMC::serialize(alt, ptr__);
+      ptr__ += IMC::serialize(sog, ptr__);
+      ptr__ += IMC::serialize(cog, ptr__);
+      ptr__ += msgs.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AssetReport::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(name, bfr__, size__);
+      bfr__ += IMC::deserialize(report_time, bfr__, size__);
+      bfr__ += IMC::deserialize(medium, bfr__, size__);
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(depth, bfr__, size__);
+      bfr__ += IMC::deserialize(alt, bfr__, size__);
+      bfr__ += IMC::deserialize(sog, bfr__, size__);
+      bfr__ += IMC::deserialize(cog, bfr__, size__);
+      bfr__ += msgs.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AssetReport::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(name, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(report_time, bfr__, size__);
+      bfr__ += IMC::deserialize(medium, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(depth, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(alt, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sog, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(cog, bfr__, size__);
+      bfr__ += msgs.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AssetReport::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "name", name, nindent__);
+      IMC::toJSON(os__, "report_time", report_time, nindent__);
+      IMC::toJSON(os__, "medium", medium, nindent__);
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "depth", depth, nindent__);
+      IMC::toJSON(os__, "alt", alt, nindent__);
+      IMC::toJSON(os__, "sog", sog, nindent__);
+      IMC::toJSON(os__, "cog", cog, nindent__);
+      msgs.toJSON(os__, "msgs", nindent__);
+    }
+
+    void
+    AssetReport::setTimeStampNested(double value__)
+    {
+      msgs.setTimeStamp(value__);
+    }
+
+    void
+    AssetReport::setSourceNested(uint16_t value__)
+    {
+      msgs.setSource(value__);
+    }
+
+    void
+    AssetReport::setSourceEntityNested(uint8_t value__)
+    {
+      msgs.setSourceEntity(value__);
+    }
+
+    void
+    AssetReport::setDestinationNested(uint16_t value__)
+    {
+      msgs.setDestination(value__);
+    }
+
+    void
+    AssetReport::setDestinationEntityNested(uint8_t value__)
+    {
+      msgs.setDestinationEntity(value__);
     }
 
     Abort::Abort(void)
