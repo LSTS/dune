@@ -169,6 +169,12 @@ namespace Control
           m_thrust.value = depthControl(timestep, msg);
 
           dispatch(m_thrust);
+
+          // Dispatch desired control for debug
+          IMC::DesiredControl heave_ctr;
+          heave_ctr.z = m_thrust.value;
+          heave_ctr.flags = IMC::DesiredControl::FL_Z;
+          dispatch(heave_ctr);
         }
 
         //! Compute thrust to comply with heave reference
@@ -204,11 +210,6 @@ namespace Control
             m_heave_ref.w = cmd;
             m_heave_ref.flags = IMC::DesiredVelocity::FL_HEAVE;
             dispatch(m_heave_ref);
-
-            IMC::DesiredControl heave_ctr;
-            heave_ctr.flags = IMC::DesiredControl::FL_Z;
-            heave_ctr.z = cmd;
-            dispatch(heave_ctr);
           }
 
           // Positive depth implies positive heave
