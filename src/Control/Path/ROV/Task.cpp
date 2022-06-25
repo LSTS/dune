@@ -82,7 +82,12 @@ namespace Control
           .defaultValue("false")
           .description("Lock surge and sway to 0.0.");
 
-          m_ctx.config.get("General", "Speed Limits", "", m_args.speed_limits);
+          param("Speed Limits", m_args.speed_limits)
+          .units(Units::MeterPerSecond)
+          .size(4)
+          .defaultValue("")
+          .description("Limit velocity vector inside 2D range."
+                      "Defined as: x_min, x_max, y_min, y_max.");
         }
 
         void
@@ -93,7 +98,7 @@ namespace Control
           if (paramChanged(m_args.fixed_heading))
             m_args.fixed_heading = Angles::radians(m_args.fixed_heading);
 
-          if (!m_args.speed_limits.empty())
+          if (paramChanged(m_args.speed_limits))
           {
             m_quadrant_limits[0] = atan2(m_args.speed_limits[LM_MAX_Y], m_args.speed_limits[LM_MAX_X]);
             m_quadrant_limits[1] = atan2(m_args.speed_limits[LM_MAX_Y], m_args.speed_limits[LM_MIN_X]);
