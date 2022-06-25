@@ -50,6 +50,8 @@ namespace Control
       {
         //! Heading ROV should maintain
         double fixed_heading;
+        //! Heading test mode
+        bool heading_test;
         //! Vehicle max speed in x, y directions.
         //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
         std::vector<double> speed_limits;
@@ -76,7 +78,11 @@ namespace Control
           .units(Units::Degree)
           .description("Fixed angle ROV should look at.");
 
-          m_ctx.config.get("General", "Speed Limits", "", m_args.speed_limit);
+          param("Heading Test", m_args.heading_test)
+          .defaultValue("false")
+          .description("Lock surge and sway to 0.0.");
+
+          m_ctx.config.get("General", "Speed Limits", "", m_args.speed_limits);
         }
 
         void
@@ -120,6 +126,12 @@ namespace Control
 
           // Velocity controller.
           handleVelocity(state.psi, ts.los_angle, ts.los_elevation, m_velocity);
+
+          if (m_args.heading_test)
+          {
+            m_velocity.u = 0.0;
+            m_velocity.v = 0.0;
+          }
 
           // Dispatch velocity reference
           dispatch(m_velocity);
