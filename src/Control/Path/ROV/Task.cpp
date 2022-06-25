@@ -38,17 +38,27 @@ namespace Control
   {
     namespace ROV
     {
+      enum Limits
+      {
+        LM_MIN_X,
+        LM_MAX_X,
+        LM_MIN_Y,
+        LM_MAX_Y
+      };
+      
       struct Arguments
       {
         //! Heading ROV should maintain
         double fixed_heading;
         //! Vehicle max speed in x, y directions.
         //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
-        std::vector<double> speed_limit;
+        std::vector<double> speed_limits;
       };
 
       struct Task: public DUNE::Control::PathController
       {
+        //! Angle to quadrant corner
+        double m_quadrant_limits[4];
         //! Outgoing desired heading message.
         IMC::DesiredHeading m_heading;
         //! Outgoing desired velocity message.
@@ -76,6 +86,14 @@ namespace Control
 
           if (paramChanged(m_args.fixed_heading))
             m_args.fixed_heading = Angles::radians(m_args.fixed_heading);
+
+          if (!m_args.speed_limits.empty())
+          {
+            m_quadrant_limits[0] = atan2(m_args.speed_limits[LM_MAX_Y], m_args.speed_limits[LM_MAX_X]);
+            m_quadrant_limits[1] = atan2(m_args.speed_limits[LM_MAX_Y], m_args.speed_limits[LM_MIN_X]);
+            m_quadrant_limits[2] = atan2(m_args.speed_limits[LM_MIN_Y], m_args.speed_limits[LM_MIN_X]);
+            m_quadrant_limits[3] = atan2(m_args.speed_limits[LM_MIN_Y], m_args.speed_limits[LM_MAX_X]);
+          }
         }
 
         void
@@ -97,11 +115,35 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          // Velocity controller.
-
           // Reset flags
           m_velocity.flags = 0;
 
+          // Velocity controller.
+          handleVelocity(state.psi, ts.los_angle, ts.los_elevation, m_velocity);
+
+          // Dispatch velocity reference
+          dispatch(m_velocity);
+
+
+          // Dispatch heading reference
+          m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
+          dispatch(m_heading);
+        }
+
+        //! Execute a loiter control step
+        //! From base class PathController
+        void
+        loiter(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          // Dispatch heading reference
+          m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
+          dispatch(m_heading);
+        }
+
+        bool
+        handleVelocity(const double heading, const double los_angle, 
+                       const double los_elevation, IMC::DesiredVelocity& vel)
+        {
           // LOS pathing is used here
           if (m_speed.value > 0)
           {
@@ -123,63 +165,67 @@ namespace Control
             }
 
             // Set flags
-            m_velocity.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
+            vel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
 
-            // Fixed frame to body fixed velocity convertion
-            Matrix ff_vel = sphericalToCartesian(mps_speed, ts.los_angle, ts.los_elevation);
-            m_velocity.u = ff_vel(0) * std::cos(state.psi) + ff_vel(1) * std::sin(state.psi);
-            m_velocity.v = -ff_vel(0) * std::sin(state.psi) + ff_vel(1) * std::cos(state.psi);
+            // Velocity in fixed frame
+            Matrix ff_vel = sphericalToCartesian(mps_speed, los_angle, los_elevation);
+            vel.u = ff_vel(0);
+            vel.v = ff_vel(1);
+
+            // Convertion to body fixed frame 
+            Angles::rotate(heading, true, vel.u, vel.v);
 
             // Trim for max thruster speed
-            trim2D(m_velocity.u, m_velocity.v);
+            trim2D(vel.u, vel.v);
+
+            return true;
           }
 
-          // Dispatch velocity reference
-          dispatch(m_velocity);
-
-
-          // Dispatch heading reference
-          m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
-          dispatch(m_heading);
-        }
-
-        //! Execute a loiter control step
-        //! From base class PathController
-        void
-        loiter(const IMC::EstimatedState& state, const TrackingState& ts)
-        {
-          // Dispatch heading reference
-          m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
-          dispatch(m_heading);
+          return false;
         }
 
         //! Trims a vector inside a 2D box defined by x,y limits.
         //! Think of a 2D vector trapped inside a box defined by your limits.
         //! If the vector exceeds the limits its components are trimmed to
-        //! fit the box but also keep the same direction. 
-        //! Only one solution is possible so the order does not matter in 
-        //! case both are exceeded.
+        //! fit the box but also keep the same direction.
         void
         trim2D(double &x, double &y)
         {
-          if (m_args.speed_limit.empty())
+          if (m_args.speed_limits.empty())
             return;
 
-          double heading = atan2(y, x);
-          // Check if x is outside bounds
-          if (x < m_args.speed_limit[0] || x > m_args.speed_limit[1])
+          double course = atan2(y, x);
+          if (m_quadrant_limits[0] <= course && course < m_quadrant_limits[1])
           {
-            x = x < 0 ? m_args.speed_limit[0] : m_args.speed_limit[1];
-            y = x * tan(heading);
-            return;
+            if (y <= m_args.speed_limits[LM_MAX_Y])
+              return;
+
+            y = m_args.speed_limits[LM_MAX_Y];
+            x = y / tan(course);
           }
-
-          // Check if y is outside bounds
-          if (y < m_args.speed_limit[2] || y > m_args.speed_limit[3])
+          else if (m_quadrant_limits[1] <= course && course < m_quadrant_limits[2])
           {
-            y = y < 0 ? m_args.speed_limit[2] : m_args.speed_limit[3];
-            x = y / tan(heading);
-            return;
+            if (x >= m_args.speed_limits[LM_MIN_X])
+              return;
+              
+            x = m_args.speed_limits[LM_MIN_X];
+            y = x * tan(course);
+          }
+          else if (m_quadrant_limits[2] <= course && course < m_quadrant_limits[3])
+          {
+            if (y >= m_args.speed_limits[LM_MIN_Y])
+              return;
+              
+            y = m_args.speed_limits[LM_MIN_Y];
+            x = y / tan(course);
+          }
+          else
+          {
+            if (x <= m_args.speed_limits[LM_MAX_X])
+              return;
+              
+            x = m_args.speed_limits[LM_MAX_X];
+            y = x * tan(course);
           }
         }
       };
