@@ -118,7 +118,18 @@ namespace Control
         {
           // Activate heading cotroller.
           enableControlLoops(IMC::CL_YAW);
-          // enableControlLoops(IMC::CL_VELOCITY);
+          // Activate velocity cotroller.
+          enableControlLoops(IMC::CL_VELOCITY);
+        }
+
+        //! Flagging method indicating if controller wishes to handle
+        //! speed/velocity control. If not (the default) speed
+        //! reference will be fired at the start of a path.
+        //! @return false (at the base class level)
+        bool
+        hasSpecificSpeedControl(void) const
+        {
+          return true;
         }
 
         //! Execute a path control step
