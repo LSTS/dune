@@ -47,7 +47,7 @@ namespace Control
       using std::tan;
 
       //! Controllable loops
-      static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_SPEED;
+      static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_VELOCITY;
       //! Required loops
       static const uint32_t c_required = 0;
       //! Minimum speed reference
