@@ -51,7 +51,9 @@ namespace Control
         //! Heading ROV should maintain
         double fixed_heading;
         //! Heading test mode
-        bool heading_test;
+        bool direct_heading;
+        //! Supress velocity in X, Y plane
+        bool supress_mov;
         //! Vehicle max speed in x, y directions.
         //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
         std::vector<double> speed_limits;
@@ -72,13 +74,21 @@ namespace Control
           DUNE::Control::PathController(name, ctx)
         {
           param("Fixed Heading", m_args.fixed_heading)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .minimumValue("0.0")
           .maximumValue("360.0")
           .defaultValue("0.0")
           .units(Units::Degree)
           .description("Fixed angle ROV should look at.");
 
-          param("Heading Test", m_args.heading_test)
+          param("Direct Heading", m_args.direct_heading)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .defaultValue("false")
+          .description("Heading is aligned with course. Ignores fixed heading.");
+
+          param("Supress Horizontal Velocity", m_args.supress_mov)
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
@@ -99,7 +109,7 @@ namespace Control
           PathController::onUpdateParameters();
 
           if (paramChanged(m_args.fixed_heading))
-            m_args.fixed_heading = Angles::radians(m_args.fixed_heading);
+            m_args.fixed_heading = Angles::normalizeRadian(Angles::radians(m_args.fixed_heading));
 
           if (paramChanged(m_args.speed_limits))
           {
@@ -143,7 +153,7 @@ namespace Control
           // Velocity controller.
           m_velocity = getVelocity(state.psi, ts.los_angle, ts.los_elevation);
 
-          if (m_args.heading_test)
+          if (m_args.supress_mov)
           {
             m_velocity.u = 0.0;
             m_velocity.v = 0.0;
@@ -152,8 +162,13 @@ namespace Control
           // Dispatch velocity reference
           dispatch(m_velocity);
 
-          // Dispatch heading reference
-          m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
+          // Fixed heading reference
+          m_heading.value = m_args.fixed_heading;
+
+          // Direct heading ignores fixed heading value and aligns with end point 
+          if (m_args.direct_heading)
+            m_heading.value = Angles::normalizeRadian(ts.los_angle);
+          
           dispatch(m_heading);
         }
 
