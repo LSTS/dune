@@ -488,13 +488,22 @@ namespace DUNE
         m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
       }
 
-      // Send speed reference
+      // Set speed reference
       m_speed.value = dpath->speed;
       m_speed.speed_units = dpath->speed_units;
 
-      enableControlLoops(IMC::CL_SPEED);
-
-      dispatch(m_speed, Tasks::DF_LOOP_BACK);
+      if (!hasSpecificSpeedControl())
+      {
+        // Send speed reference
+        enableControlLoops(IMC::CL_SPEED);
+        dispatch(m_speed, Tasks::DF_LOOP_BACK);
+      }
+      else
+      {
+        // Pass speed reference to bottom tracker directly
+        if (isTrackingBottom())
+          m_btrack->onDesiredSpeed(&m_speed);
+      }
     }
 
     void

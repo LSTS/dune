@@ -250,6 +250,16 @@ namespace DUNE
         return false;
       }
 
+      //! Flagging method indicating if controller wishes to handle
+      //! speed/velocity control. If not (the default) speed
+      //! reference will be fired at the start of a path.
+      //! @return false (at the base class level)
+      virtual bool
+      hasSpecificSpeedControl(void) const
+      {
+        return false;
+      }
+
       //! Default implementation for calculating estimated time of arrival,
       //! that can be overridden to change how maneuver completion is signalized.
       //! @param ts the current tracking state
