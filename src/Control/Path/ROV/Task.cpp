@@ -87,7 +87,8 @@ namespace Control
           .size(4)
           .defaultValue("")
           .description("Limit velocity vector inside 2D range."
-                      "Defined as: x_min, x_max, y_min, y_max.");
+                       "Defined as: x_min, x_max, y_min, y_max."
+                       "Default is empty (no trimming).");
         }
 
         void
@@ -137,11 +138,8 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          // Reset flags
-          m_velocity.flags = 0;
-
           // Velocity controller.
-          handleVelocity(state.psi, ts.los_angle, ts.los_elevation, m_velocity);
+          m_velocity = getVelocity(state.psi, ts.los_angle, ts.los_elevation);
 
           if (m_args.heading_test)
           {
@@ -151,7 +149,6 @@ namespace Control
 
           // Dispatch velocity reference
           dispatch(m_velocity);
-
 
           // Dispatch heading reference
           m_heading.value = Angles::normalizeRadian(m_args.fixed_heading);
@@ -168,11 +165,14 @@ namespace Control
           dispatch(m_heading);
         }
 
-        bool
-        handleVelocity(const double heading, const double los_angle, 
-                       const double los_elevation, IMC::DesiredVelocity& vel)
+        IMC::DesiredVelocity
+        getVelocity(const double heading, const double los_angle, 
+                       const double los_elevation)
         {
-          // LOS pathing is used here
+          // Initialized desired velocity with no flags
+          IMC::DesiredVelocity dvel;
+
+          // Check for valid speed reference
           if (m_speed.value > 0)
           {
             // Unit convertion to mps
@@ -192,24 +192,23 @@ namespace Control
                 break;
             }
 
-            // Set flags
-            vel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
-
-            // Velocity in fixed frame
-            Matrix ff_vel = sphericalToCartesian(mps_speed, los_angle, los_elevation);
-            vel.u = ff_vel(0);
-            vel.v = ff_vel(1);
+            // Get velocity components in earth fixed frame
+            Matrix vel_xy = sphericalToCartesian(mps_speed, los_angle, los_elevation);
 
             // Convertion to body fixed frame 
-            Angles::rotate(heading, true, vel.u, vel.v);
+            Angles::rotate(heading, true, vel_xy(0), vel_xy(1));
 
             // Trim for max thruster speed
-            trim2D(vel.u, vel.v);
+            trim2D(vel_xy(0), vel_xy(1));
 
-            return true;
+            dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
+            dvel.u = vel_xy(0);
+            dvel.v = vel_xy(1);
+
+            return dvel;
           }
 
-          return false;
+          return dvel;
         }
 
         //! Trims a vector inside a 2D box defined by x,y limits.
