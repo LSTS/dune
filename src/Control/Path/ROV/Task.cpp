@@ -79,6 +79,8 @@ namespace Control
           .description("Fixed angle ROV should look at.");
 
           param("Heading Test", m_args.heading_test)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
           .description("Lock surge and sway to 0.0.");
 
@@ -214,7 +216,7 @@ namespace Control
         //! Trims a vector inside a 2D box defined by x,y limits.
         //! Think of a 2D vector trapped inside a box defined by your limits.
         //! If the vector exceeds the limits its components are trimmed to
-        //! fit the box but also keep the same direction.
+        //! fit the box while keeping the same direction.
         void
         trim2D(double &x, double &y)
         {
