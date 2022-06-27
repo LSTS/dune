@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 76a184da55c4be90a9eee4f3c2d44e1a                            *
+// IMC XML MD5: e79dff565382f2cf6d4b8b619b710976                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -37,9 +37,9 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.30"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2022-06-22 034813c  (HEAD -> project/oceantech, origin/project/oceantech)"
+#define DUNE_IMC_CONST_GIT_INFO "2022-06-27 b72efb7  (HEAD -> project/oceantech, origin/project/oceantech)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "76a184da55c4be90a9eee4f3c2d44e1a"
+#define DUNE_IMC_CONST_MD5 "e79dff565382f2cf6d4b8b619b710976"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 76a184da55c4be90a9eee4f3c2d44e1a                            *
+// IMC XML MD5: e79dff565382f2cf6d4b8b619b710976                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5587,8 +5587,19 @@ namespace DUNE
     class Rpm: public Message
     {
     public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Open.
+        AROP_OPEN = 0,
+        //! Close.
+        AROP_CLOSE = 1
+      };
+
       //! Value.
       int16_t value;
+      //! Operation.
+      uint8_t op;
 
       static uint16_t
       getIdStatic(void)
@@ -5637,7 +5648,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 2;
+        return 3;
       }
 
       fp64_t
