@@ -82,7 +82,7 @@ namespace DUNE
       .defaultValue("true")
       .description("Enable course control");
 
-      param("3D Tracking", m_3d_tracking)
+      param("Enable 3D Tracking", m_3d_tracking)
       .defaultValue("false")
       .description("Enable 3D tracking");
 
@@ -224,7 +224,7 @@ namespace DUNE
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
-      handle3D();
+      m_ts.tracking_3d = m_3d_tracking;
       m_ts.loitering = false;
       m_ts.nearby = false;
       m_ts.end_time = Clock::get();
@@ -308,13 +308,7 @@ namespace DUNE
       const double now = Clock::get();
       const bool no_start = setStartPoint(now, dpath);
       setEndPoint(dpath);
-
-      // Loiter is handled in 2D. Depth is handled seperatly.
-      handle3D(dpath->lradius > 0);
-      toSpherical(m_ts.start, m_ts.end,
-                  m_ts.track_length,
-                  m_ts.track_bearing,
-                  m_ts.track_elevation);
+      updateTrackAttitude(dpath);
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
@@ -452,6 +446,28 @@ namespace DUNE
 
       setTrackingCoord(m_ts.end, m_pcs.end_lat, m_pcs.end_lon,
                         m_pcs.end_z, static_cast<IMC::ZUnits>(m_pcs.end_z_units));
+    }
+
+    void
+    PathController::updateTrackAttitude(const IMC::DesiredPath* dpath)
+    {
+      // Loitering forces 2D tracking. Depth is handled seperatly.
+      m_ts.tracking_3d = dpath->lradius > 0 ? true : m_3d_tracking;
+
+      if (m_ts.tracking_3d)
+      {
+        Coordinates::getRangeBearingAndPitch(m_ts.start, m_ts.end,
+                                             m_ts.track_length,
+                                             m_ts.track_bearing,
+                                             m_ts.track_elevation);
+      }
+      else
+      {
+        Coordinates::getBearingAndRange(m_ts.start, m_ts.end, 
+                                        &m_ts.track_bearing,
+                                        &m_ts.track_length);
+        m_ts.track_elevation = 0;                                        
+      }
     }
 
     void
@@ -686,7 +702,6 @@ namespace DUNE
 
       const bool prev_nearby = m_ts.nearby;
 
-      handle3D(m_ts.loitering);
       updateTrackingState();
 
       reportPathControlState(!prev_nearby && m_ts.nearby);
@@ -752,10 +767,7 @@ namespace DUNE
     PathController::updateTrackingState(void)
     {
       // Range, LOS and elevation angles to destination
-      toSpherical(m_estate, m_ts.end,
-                  m_ts.range,
-                  m_ts.los_angle,
-                  m_ts.los_elevation);
+      updateLOSAttitude();
 
       // Speed, Elevation and Ground Course 
       setCourseSpeedAndPitch();
@@ -800,6 +812,24 @@ namespace DUNE
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
+    }
+
+    void inline
+    PathController::updateLOSAttitude(void)
+    {
+      if (m_ts.tracking_3d)
+      {
+        Coordinates::getRangeBearingAndPitch(m_estate, m_ts.end, 
+                                             m_ts.range, 
+                                             m_ts.los_angle, 
+                                             m_ts.los_elevation);
+      }
+      else
+      {
+        Coordinates::getBearingAndRange(m_estate, m_ts.end, 
+                                        &m_ts.los_angle, &m_ts.range);
+        m_ts.los_elevation = 0;
+      }
     }
 
     bool
@@ -1192,7 +1222,10 @@ namespace DUNE
       if (m_ts.cc)
       {
         TrackingState::Coord speed = {m_estate.vx, m_estate.vy, m_estate.vz};
-        toSpherical(speed, m_ts.speed, m_ts.course, m_ts.elevation);
+        if (m_ts.tracking_3d)
+          Coordinates::toSpherical(speed, m_ts.speed, m_ts.course, m_ts.elevation);
+        else
+          Coordinates::toPolar(speed, &m_ts.speed, &m_ts.course);
       }
       else
       {
@@ -1200,6 +1233,15 @@ namespace DUNE
         m_ts.course = m_estate.psi;
         m_ts.elevation = m_estate.theta;
       }
+    }
+
+    inline void
+    PathController::getTrackPosition(const IMC::EstimatedState& coord, double* x, double* y)
+    {
+      if (m_ts.tracking_3d)
+        Coordinates::getTrackPosition3D(m_ts.start, m_ts.end, coord, x, y);
+      else
+        Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
     }
 
     void

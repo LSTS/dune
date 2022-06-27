@@ -236,11 +236,39 @@ namespace DUNE
     //! @param[out] az azimuth angle in radians.
     //! @param[out] el elevation angle in radians.
     inline void
-    cartesianToSpherical(double x, double y, double z, double& r, double& az, double& el)
+    toSpherical(double x, double y, double z, double& r, double& az, double& el)
     {
       r = std::sqrt(std::pow(x, 2) + std::pow(y, 2) + std::pow(z, 2));  // Radius
       az = std::atan2(y, x);                                            // Azimuth
       el = std::atan2(std::sqrt(std::pow(x, 2) + std::pow(y, 2)), z);   // Elevation
+    }
+
+    //! Convert a three-dimensional vector from cartesian coordinates
+    //! to spherical coordinates (R,Az,El).
+    //! @param point coordinates to convert
+    //! @param[out] r radius
+    //! @param[out] az azimuth angle in radians.
+    //! @param[out] el elevation angle in radians.
+    template <typename A>
+    inline void
+    toSpherical(const A& point, double& r, double& az, double& el)
+    {
+      toSpherical(point.x, point.y, point.z, r, az, el);
+    }
+
+    //! Convert a three-dimensional vector from cartesian coordinates
+    //! to spherical coordinates (R,Az,El).
+    //! @param x x coordenate
+    //! @param y y coordenate
+    //! @param z z coordenate
+    //! @return Vector of spherical coordinates
+    inline Math::Matrix
+    toSpherical(double x, double y, double z)
+    {
+      double rv[3];
+      toSpherical(x, y, z, rv[0], rv[1], rv[2]);
+
+      return Math::Matrix(rv, 3, 1);
     }
 
     //! Convert a three-dimensional vector from cartesian coordinates
@@ -252,40 +280,12 @@ namespace DUNE
     //! @param[out] el elevation angle in radians.
     template <typename A, typename B>
     inline void
-    cartesianToSpherical(const A& origin, const B& target, double& r, double& az, double& el)
+    getRangeBearingAndPitch(const A& origin, const B& target, double& r, double& az, double& el)
     {
-      cartesianToSpherical(target.x - origin.x, 
-                           target.y - origin.y,
-                           target.z - origin.z, 
-                           r, az, el);
-    }
-
-    //! Convert a three-dimensional vector from cartesian coordinates
-    //! to spherical coordinates (R,Az,El).
-    //! @param point coordinates to convert
-    //! @param[out] r radius
-    //! @param[out] az azimuth angle in radians.
-    //! @param[out] el elevation angle in radians.
-    template <typename A>
-    inline void
-    cartesianToSpherical(const A& point, double& r, double& az, double& el)
-    {
-      cartesianToSpherical(point.x, point.y, point.z, r, az, el);
-    }
-
-    //! Convert a three-dimensional vector from cartesian coordinates
-    //! to spherical coordinates (R,Az,El).
-    //! @param x x coordenate
-    //! @param y y coordenate
-    //! @param z z coordenate
-    //! @return Vector of spherical coordinates
-    inline Math::Matrix
-    cartesianToSpherical(double x, double y, double z)
-    {
-      double rv[3];
-      cartesianToSpherical(x, y, z, rv[0], rv[1], rv[2]);
-
-      return Math::Matrix(rv, 3, 1);
+      toSpherical(target.x - origin.x, 
+                  target.y - origin.y,
+                  target.z - origin.z, 
+                  r, az, el);
     }
 
     //! Convert the position in an estimated state message to WGS84 coordinates.
