@@ -203,11 +203,26 @@ namespace DUNE
     //! @param r vector norm.
     //! @param az azimuth angle in radians.
     //! @param el elevation angle in radians.
-    inline Math::Matrix
-    sphericalToCartesian(double r, double az, double el)
+    inline void
+    toCartesian(double r, double az, double el, double* x, double* y, double* z = 0)
     {
       double a = r * std::sin(el);
-      double rv[] = {a* std::cos(az), a * std::sin(az), r * std::cos(el)};
+      *x = a * std::cos(az);
+      *y = a * std::sin(az);
+      if (z)
+        *z = r * std::cos(el);
+    }
+
+    //! Convert a three-dimensional vector from spherical coordinates
+    //! (R,Az,El) to cartesian coordinates.
+    //! @param r vector norm.
+    //! @param az azimuth angle in radians.
+    //! @param el elevation angle in radians.
+    inline Math::Matrix
+    toCartesian(double r, double az, double el)
+    {
+      double rv[3];
+      toCartesian(r, az, el, &rv[0], &rv[1], &rv[2]);
 
       return Math::Matrix(rv, 3, 1);
     }
