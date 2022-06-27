@@ -210,17 +210,18 @@ namespace Control
             }
 
             // Get velocity components in earth fixed frame
-            Matrix vel_xy = sphericalToCartesian(mps_speed, los_angle, los_elevation);
+            double vx, vy;
+            toCartesian(mps_speed, los_angle, los_elevation, &vx, &vy);
 
-            // Convertion to body fixed frame 
-            Angles::rotate(heading, true, vel_xy(0), vel_xy(1));
+            // Convertion to body fixed frame
+            Angles::rotate(heading, true, vx, vy);
 
             // Trim for max thruster speed
-            trim2D(vel_xy(0), vel_xy(1));
+            trim2D(vx, vy);
 
             dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
-            dvel.u = vel_xy(0);
-            dvel.v = vel_xy(1);
+            dvel.u = vx;
+            dvel.v = vy;
 
             return dvel;
           }
