@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: e79dff565382f2cf6d4b8b619b710976                            *
+// IMC XML MD5: 27ab9b0df28ae9ab959cdcdd74c17c62                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -356,5 +356,10 @@ MESSAGE(912, FileFragment)
 MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
+MESSAGE(2000, GpioState)
+MESSAGE(2001, GpioStateGet)
+MESSAGE(2002, GpioStateSet)
+MESSAGE(2003, ColoredDissolvedOrganicMatter)
+MESSAGE(2004, FluorescentDissolvedOrganicMatter)
 MESSAGE(2006, TotalMagIntensity)
 #undef MESSAGE

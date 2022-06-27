@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: e79dff565382f2cf6d4b8b619b710976                            *
+// IMC XML MD5: 27ab9b0df28ae9ab959cdcdd74c17c62                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -684,6 +684,16 @@
 #define DUNE_IMC_CURRENTPROFILECELL 1015
 //! ADCPBeam identification number.
 #define DUNE_IMC_ADCPBEAM 1016
+//! GpioState identification number.
+#define DUNE_IMC_GPIOSTATE 2000
+//! GpioStateGet identification number.
+#define DUNE_IMC_GPIOSTATEGET 2001
+//! GpioStateSet identification number.
+#define DUNE_IMC_GPIOSTATESET 2002
+//! ColoredDissolvedOrganicMatter identification number.
+#define DUNE_IMC_COLOREDDISSOLVEDORGANICMATTER 2003
+//! FluorescentDissolvedOrganicMatter identification number.
+#define DUNE_IMC_FLUORESCENTDISSOLVEDORGANICMATTER 2004
 //! TotalMagIntensity identification number.
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 
