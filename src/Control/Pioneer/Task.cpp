@@ -208,6 +208,7 @@ namespace Control
         param("Initial Position", m_args.position)
         .units(Units::Degree)
         .size(2)
+        .defaultValue("")
         .description("Initial position of the vehicle");
 
         param("Depth Hold", m_args.depth_hold)
@@ -1028,6 +1029,9 @@ namespace Control
       void
       sendGpsFix(void)
       {
+        if (m_args.position.empty())
+          return;
+          
         m_position.lat = Math::Angles::radians(m_args.position[0]);
         m_position.lon = Math::Angles::radians(m_args.position[1]);
         m_position.type = IMC::GpsFix::GFT_STANDALONE;
