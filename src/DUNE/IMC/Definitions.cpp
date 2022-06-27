@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 27ab9b0df28ae9ab959cdcdd74c17c62                            *
+// IMC XML MD5: 7241246f65440cf326778a33996444d8                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -5405,6 +5405,7 @@ namespace DUNE
     AcousticRelease::clear(void)
     {
       system.clear();
+      op = 0;
     }
 
     bool
@@ -5412,6 +5413,7 @@ namespace DUNE
     {
       const IMC::AcousticRelease& other__ = static_cast<const AcousticRelease&>(msg__);
       if (system != other__.system) return false;
+      if (op != other__.op) return false;
       return true;
     }
 
@@ -5426,6 +5428,7 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(system, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
       return ptr__;
     }
 
@@ -5434,6 +5437,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(system, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -5442,6 +5446,7 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(system, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -5449,6 +5454,7 @@ namespace DUNE
     AcousticRelease::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "system", system, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
     }
 
     Rpm::Rpm(void)
@@ -5461,7 +5467,6 @@ namespace DUNE
     Rpm::clear(void)
     {
       value = 0;
-      op = 0;
     }
 
     bool
@@ -5469,7 +5474,6 @@ namespace DUNE
     {
       const IMC::Rpm& other__ = static_cast<const Rpm&>(msg__);
       if (value != other__.value) return false;
-      if (op != other__.op) return false;
       return true;
     }
 
@@ -5484,7 +5488,6 @@ namespace DUNE
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(value, ptr__);
-      ptr__ += IMC::serialize(op, ptr__);
       return ptr__;
     }
 
@@ -5493,7 +5496,6 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(value, bfr__, size__);
-      bfr__ += IMC::deserialize(op, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -5502,7 +5504,6 @@ namespace DUNE
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
-      bfr__ += IMC::deserialize(op, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -5522,7 +5523,6 @@ namespace DUNE
     Rpm::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
-      IMC::toJSON(os__, "op", op, nindent__);
     }
 
     Voltage::Voltage(void)

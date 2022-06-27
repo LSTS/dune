@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 27ab9b0df28ae9ab959cdcdd74c17c62                            *
+// IMC XML MD5: 7241246f65440cf326778a33996444d8                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5520,8 +5520,19 @@ namespace DUNE
     class AcousticRelease: public Message
     {
     public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Open.
+        AROP_OPEN = 0,
+        //! Close.
+        AROP_CLOSE = 1
+      };
+
       //! System.
       std::string system;
+      //! Operation.
+      uint8_t op;
 
       static uint16_t
       getIdStatic(void)
@@ -5570,7 +5581,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 1;
       }
 
       unsigned
@@ -5587,19 +5598,8 @@ namespace DUNE
     class Rpm: public Message
     {
     public:
-      //! Operation.
-      enum OperationEnum
-      {
-        //! Open.
-        AROP_OPEN = 0,
-        //! Close.
-        AROP_CLOSE = 1
-      };
-
       //! Value.
       int16_t value;
-      //! Operation.
-      uint8_t op;
 
       static uint16_t
       getIdStatic(void)
@@ -5648,7 +5648,7 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 3;
+        return 2;
       }
 
       fp64_t
