@@ -210,7 +210,7 @@ namespace DUNE
         bool nearby : 1;
         //! Set if course control is enabled.
         bool cc : 1;
-        //! Set if 3d tracking is active.
+        //! Set if 3d tracking is enabled.
         bool tracking_3d : 1;
       };
 
@@ -279,6 +279,12 @@ namespace DUNE
       getTimeFactor(void) const
       {
         return m_time_factor;
+      }
+
+      void
+      handle3D(bool force_2d = false)
+      {
+        m_ts.tracking_3d = force_2d ? 0 : m_3d_tracking;
       }
 
       //! Get EstimatedState value from z units
@@ -370,16 +376,12 @@ namespace DUNE
       //! Update tracking state variable
       void
       updateTrackingState(void);
-      void inline
-      updateLOSAttitude(void);
 
       // Helper functions for consume(const IMC::DesiredPath*)
       bool
       setStartPoint(double now, const IMC::DesiredPath* dpath);
       void
       setEndPoint(const IMC::DesiredPath* dpath);
-      void
-      updateTrackAttitude(const IMC::DesiredPath* dpath);
       void
       setControlLoops(const IMC::DesiredPath* dpath);
       void
@@ -426,8 +428,45 @@ namespace DUNE
       //! @param[in] coord current coordinate
       //! @param[out] x x coordinate relatively to path
       //! @param[out] y y coordinate relatively to path
+      template <typename T>
       inline void
-      getTrackPosition(const IMC::EstimatedState& coord, double* x, double* y = 0);
+      getTrackPosition(const T& coord, double* x, double* y = 0)
+      {
+        if (m_ts.tracking_3d)
+          Coordinates::getTrackPosition3D(m_ts.start, m_ts.end, coord, x, y);
+        else
+          Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
+      }
+
+      //! Get Bearing range and elevation in 2D or 3D
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      template <typename A, typename B>
+      inline void
+      toSpherical(const A& origin, const B& target, double& b, double& r, double& p)
+      {
+        p = 0;
+        if (m_ts.tracking_3d)
+          Coordinates::cartesianToSpherical(origin, target, b, r, p);
+        else
+          Coordinates::getBearingAndRange(origin, target, &b, &r);
+      }
+
+      //! Get Bearing range and elevation in 2D or 3D
+      //! @param[in] coord current coordinate
+      //! @param[out] x x coordinate relatively to path
+      //! @param[out] y y coordinate relatively to path
+      template <typename A>
+      inline void
+      toSpherical(const A& point, double& b, double& r, double& p)
+      {
+        p = 0;
+        if (m_ts.tracking_3d)
+          Coordinates::cartesianToSpherical(point, b, r, p);
+        else
+          Coordinates::toPolar(point, &b, &r);
+      }
 
       //! Get speed, course and elevation angles. (2D or 3D)
       //! @param[in] coord current coordinate
