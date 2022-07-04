@@ -27,8 +27,8 @@
 
 if(EXIV2)
   find_library(EXIV2_LIBRARY NAMES exiv2 PATHS /usr/lib)
-
-  if(${EXIV2_LIBRARY} STRLESS "libexiv2.so")
+  if(${EXIV2_LIBRARY} MATCHES "libexiv2.so")
+    message(STATUS "Found Exiv2 library: ${EXIV2_LIBRARY}")
     # Exiv2 Present
     set(DUNE_SYS_HAS_EXIV2 1 CACHE INTERNAL "Exiv2 library")
     set(DUNE_USING_EXIV2 1 CACHE INTERNAL "Exiv2 library")
