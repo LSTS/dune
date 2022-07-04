@@ -28,14 +28,15 @@
 ############################################################################
 
 if(OPENCV)
-  CHECK_LIBRARY_EXISTS(opencv_core cvGetImage "" HAVE_LIB_OPENCV)
+  #find_package(OpenCV4 REQUIRED)
+  find_library(OPENCV_LIBRARY NAMES opencv_core PATHS /usr/lib)
+  if(${OPENCV_LIBRARY} MATCHES "libopencv_core.so")
+    # OPENCV Present
+    message(STATUS "Found Opencv library: ${OPENCV_LIBRARY}")
+    set(DUNE_SYS_HAS_OPENCV 1 CACHE INTERNAL "Opencv library")
+    set(DUNE_USING_OPENCV 1 CACHE INTERNAL "Opencv library")
 
-  if(HAVE_LIB_OPENCV)
-    # OpenCV Present
-    set(DUNE_SYS_HAS_OPENCV 1 CACHE INTERNAL "OpenCV library")
-    set(DUNE_USING_OPENCV 1 CACHE INTERNAL "OpenCV library")
-
-    # FIND_PACKAGE(OpenCV REQUIRED)
+     # FIND_PACKAGE(OpenCV REQUIRED)
     dune_add_lib(opencv_calib3d)
     dune_add_lib(opencv_core)
     dune_add_lib(opencv_features2d)
@@ -54,19 +55,13 @@ if(OPENCV)
     #dune_add_lib(opencv_contrib)
     #dune_add_lib(opencv_gpu)
     #dune_add_lib(opencv_legacy)
+    dune_add_lib(opencv_imgcodecs)
 
-    # Check Header
-    dune_test_header(opencv2/opencv.hpp)
-    
-    dune_test_header(opencv2/imgcodecs.hpp)
-    if(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
-      dune_add_lib(opencv_imgcodecs)
-    endif(DUNE_SYS_HAS_OPENCV2_IMGCODECS_HPP)
-
-  else(HAVE_LIB_OPENCV)
+  else()
     # OpenCV not found on the system.
     message(SEND_ERROR "OpenCV was not found on the system.")
     set(DUNE_SYS_HAS_OPENCV 0 CACHE INTERNAL "OpenCV library")
     set(DUNE_USING_OPENCV 0 CACHE INTERNAL "OpenCV library")
-  endif(HAVE_LIB_OPENCV)
+  endif()
+
 endif(OPENCV)
