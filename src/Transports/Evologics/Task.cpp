@@ -270,14 +270,16 @@ namespace Transports
 
         try
         {
-          resolveEntity(m_args.simulator_elabel);
           m_simulating = m_ctx.profiles.isSelected("Simulation");
+          resolveEntity(m_args.simulator_elabel);          
           debug("Simulator detected");
         }
         catch(const std::exception& e)
         {
+          if (m_simulating)
+            war("No simulator detected: %s", e.what());          
           m_simulating = false;
-          debug("No simulator detected: %s", e.what());
+          
         }
         
       }
