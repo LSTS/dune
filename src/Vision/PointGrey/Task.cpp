@@ -37,7 +37,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#if defined(DUNE_CPU_ARMV7)
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
 //FlyCapture headers
 #include <flycapture/FlyCapture2.h>
 //Exiv2 headers
@@ -111,7 +111,7 @@ namespace Vision
     {
       //! Configuration parameters
       Arguments m_args;
-      #if defined(DUNE_CPU_ARMV7)
+      #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
       //! Camera object
       FlyCapture2::Camera m_camera;
       //! Structure of Camera object
@@ -165,7 +165,7 @@ namespace Vision
       long unsigned int m_frame_cnt;
       //! Number of frames lost
       long unsigned int m_frame_lost_cnt;
-      #if defined(DUNE_CPU_ARMV7)
+      #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
       //! Clase/thread to save image/exif data
       SaveImage *m_save[c_number_max_thread];
       #endif
@@ -351,7 +351,7 @@ namespace Vision
         for(int i = 0; i < c_number_max_thread; i++)
         {
           sprintf(text, "thr%d", i);
-          #if defined(DUNE_CPU_ARMV7)
+          #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
           m_save[i] = new SaveImage(this, text);
           m_save[i]->start();
           #endif
@@ -368,7 +368,7 @@ namespace Vision
         m_isStartTask = true;
       }
 
-      #if defined(DUNE_CPU_ARMV7)
+      #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
       void
       onResourceRelease(void)
       {
@@ -407,7 +407,10 @@ namespace Vision
       consume(const IMC::LoggingControl* msg)
       {
         std::string sysNameMsg = resolveSystemId(msg->getSource());
-        std::string sysLocalName = getSystemName();
+        //std::string sysLocalName = getSystemName() + " _cpu";
+        std::string sysLocalName = "caravela-cam";
+
+        war("%s ! %s ! %s", sysNameMsg.c_str(),  m_args.system_name.c_str(), sysLocalName.c_str());
 
         if(sysNameMsg != m_args.system_name && sysNameMsg != sysLocalName)
           return;
@@ -522,7 +525,7 @@ namespace Vision
         inf("on Deactivation");
         m_is_to_capture = false;
         m_isCapturing = false;
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         m_error = m_camera.StopCapture();
         if ( m_error != FlyCapture2::PGRERROR_OK )
           war("Error stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
@@ -590,7 +593,7 @@ namespace Vision
           {
             while (!std::feof(pipe) && !m_timeout_reading.overflow())
             {
-              #if defined(DUNE_CPU_ARMV7)
+              #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
               (void)std::fgets(m_buffer, sizeof(m_buffer), pipe);
               #endif
             }
@@ -635,12 +638,7 @@ namespace Vision
         char governor[16];
         std::string result = "";
         FILE* pipe;
-
-#ifdef __GNUC__
         if ((pipe = popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
-#else
-        if (true)
-#endif
         {
           war("popen() failed - set_cpu_governor!");
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
@@ -801,7 +799,7 @@ namespace Vision
       void
       getInfoCamera(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         debug("Vendor Name: %s", m_camInfo.vendorName);
         debug("Model Name: %s", m_camInfo.modelName);
         debug("Serial Number: %d", m_camInfo.serialNumber);
@@ -817,7 +815,7 @@ namespace Vision
       bool
       setUpCamera(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         unsigned int nb_cameras;
         int bus_attempts = 1;
         while (bus_attempts <= c_max_number_attempts_bus)
@@ -901,7 +899,7 @@ namespace Vision
       bool
       pollForTriggerReady(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         unsigned int k_softwareTrigger = 0x62C;
         unsigned int regVal = 0;
 
@@ -921,7 +919,7 @@ namespace Vision
       bool
       set_shutter_value(float value)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         //Declare a Property struct.
         FlyCapture2::Property prop;
         //Define the property to adjust.
@@ -952,7 +950,7 @@ namespace Vision
       bool
       fireSoftwareTrigger(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         const unsigned int k_softwareTrigger = 0x62C;
         const unsigned int k_fireVal = 0x80000000;
         m_error = m_camera.WriteRegister( k_softwareTrigger, k_fireVal );
@@ -968,7 +966,7 @@ namespace Vision
       bool
       getImage(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         bool result = false;
         saveInfoExif();
         if(m_is_strobe)
@@ -1052,7 +1050,7 @@ namespace Vision
       int
       sendImageThread(int cnt_thread)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         int pointer_cnt_thread = cnt_thread;
         bool jump_over = false;
         bool result_thread;
@@ -1103,7 +1101,7 @@ namespace Vision
       releaseRamCached(void)
       {
         debug("Releasing cache ram.");
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         (void)std::system("sync");
         (void)std::system("echo 1 > /proc/sys/vm/drop_caches");
         (void)std::system("sync");
@@ -1113,7 +1111,7 @@ namespace Vision
       void
       saveInfoExif(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         std::memset(&m_text_exif_timestamp, '\0', sizeof(m_text_exif_timestamp));
         std::sprintf(m_text_exif_timestamp, "%0.4f", Clock::getSinceEpoch());
         m_back_epoch = m_text_exif_timestamp;
@@ -1147,7 +1145,7 @@ namespace Vision
       void
       triggerFrame(void)
       {
-        #if defined(DUNE_CPU_ARMV7)
+        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
         if(!getImage() && m_is_to_capture)
         {
           war("Restarting camera...");
