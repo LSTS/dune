@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -184,6 +184,14 @@ namespace Transports
       {
         sendAT(String::str("!RT%u", value));
         expectOK();
+      }
+
+      //! Set modem driver timeout
+      //! @param[in] timeout time to wait (seconds).
+      void
+      setDriverTimeout(double timeout)
+      {
+        setTimeout(timeout);
       }
 
       //! Retrieve the firmware version string.
@@ -522,7 +530,6 @@ namespace Transports
       void
       sendInitialization(void)
       {
-
         // Get mode
         sendAT("?MODE");
         m_mode = readLine();

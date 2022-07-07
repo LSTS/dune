@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -43,6 +43,11 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Simulator command timeout.
+    static const double c_sim_timeout = 6.0;
+    //! Default port.
+    static const int c_default_port = 9200;
+
     struct Arguments
     {
       //! IP address.
@@ -53,6 +58,8 @@ namespace Transports
       bool low_gain;
       //! Source level.
       unsigned source_level;
+      //! Carrier  waveform ID.
+      unsigned waveform_id;
       //! Connection retry count.
       unsigned con_retry_count;
       //! Connection retry timeout.
@@ -67,6 +74,8 @@ namespace Transports
       double sound_speed_def;
       //! Entity label of sound speed provider.
       std::string sound_speed_elabel;
+      //! Entity label of modem simulator.
+      std::string simulator_elabel;
       //! Keep-alive timeout.
       double kalive_tout;
       //! Highest address.
@@ -112,6 +121,8 @@ namespace Transports
       Counter<double> m_kalive_counter;
       //! Medium.
       IMC::VehicleMedium m_medium;
+      //! Simulator flag
+      bool m_simulating;
       //! Task arguments.
       Arguments m_args;
 
@@ -130,7 +141,7 @@ namespace Transports
         .description("IPv4 address");
 
         param("TCP Port", m_args.port)
-        .defaultValue("9200")
+        .defaultValue(std::to_string(c_default_port))
         .description("TCP port");
 
         param("Low Gain", m_args.low_gain)
@@ -142,6 +153,12 @@ namespace Transports
         .minimumValue("0")
         .maximumValue("3")
         .description("Signal transmission source level during data exchange");
+
+        param("Waveform ID", m_args.waveform_id)
+        .defaultValue("2")
+        .minimumValue("0")
+        .maximumValue("2")
+        .description("Carrier waveform ID for Evologics modems");
 
         param("Connection Retry Count", m_args.con_retry_count)
         .defaultValue("3")
@@ -185,6 +202,10 @@ namespace Transports
 
         param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
         .description("Entity label of sound speed provider");
+
+        param("Simulator - Entity Label", m_args.simulator_elabel)
+        .defaultValue("Evologics Interface")
+        .description("Entity label of Evologics simulator");
 
         param("Keep Alive - Timeout", m_args.kalive_tout)
         .defaultValue("5.0")
@@ -252,6 +273,19 @@ namespace Transports
           m_sound_speed = m_args.sound_speed_def;
           m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
         }
+
+        try
+        {
+          resolveEntity(m_args.simulator_elabel);
+          m_simulating = m_ctx.profiles.isSelected("Simulation");
+          debug("Simulator detected");
+        }
+        catch(const std::exception& e)
+        {
+          m_simulating = false;
+          debug("No simulator detected: %s", e.what());
+        }
+        
       }
 
       void
@@ -279,8 +313,11 @@ namespace Transports
         }
 
         // Change port for simulation purposes
-        if (m_ctx.profiles.isSelected("Simulation") && m_args.port == 9200)
+        if (m_simulating && m_args.port == c_default_port)
+        {
           m_args.port += m_address;
+          m_args.address = Address(Address::Loopback);
+        }
 
         try
         {
@@ -293,7 +330,6 @@ namespace Transports
 
           m_sock = new TCPSocket;
           m_sock->connect(m_args.address, m_args.port);
-
         }
         catch (std::runtime_error& e)
         {
@@ -303,7 +339,6 @@ namespace Transports
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
         m_driver->setLineTermOut("\n");
-
       }
 
       void
@@ -323,16 +358,19 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-
-        try{
+        try
+        {
           m_driver->initialize();
         }
-        catch(std::runtime_error& e)
+        catch (std::runtime_error &e)
         {
           war(DTR("Evologics Task desactivation: %s"), e.what());
           requestDeactivation();
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
         }
+
+        if (m_simulating)
+          m_driver->setDriverTimeout(c_sim_timeout);
 
         if (!isActive())
           requestActivation();
@@ -350,6 +388,7 @@ namespace Transports
           m_driver->setHighestAddress(m_args.highest_addr);
           m_driver->setPositionDataOutput(true);
           m_driver->setPromiscuous(true);
+          m_driver->setCarrierWaveformID(m_args.waveform_id);
           m_driver->setExtendedNotifications(true);
           m_kalive_counter.setTop(m_args.kalive_tout);
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -474,7 +513,7 @@ namespace Transports
         else if (String::startsWith(msg->value, "FAILEDIM"))
           handleMessageFailed(msg->value);
         else if (String::startsWith(msg->value, "BUSY"))
-          handleMessageFailed(msg->value);
+          handleMessageBusy(msg->value);
         else if (String::startsWith(msg->value, "SENDEND"))
           handleSendEnd(msg->value);
         else if (String::startsWith(msg->value, "RECVSTART"))
@@ -621,11 +660,17 @@ namespace Transports
       }
 
       void
+      handleMessageBusy(const std::string& str)
+      {
+        (void)str;
+        m_driver->setBusy(false);
+        clearTicket(IMC::UamTxStatus::UTS_BUSY, "Modem replied busy");
+      }
+
+      void
       handleMessageDelivered(const std::string& str)
       {
-
-        debug("Message delivered.");
-
+  	debug("Message delivered.");
         //! Query propagation time.
         unsigned dst = 0;
         if ((std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1) ||
@@ -637,7 +682,7 @@ namespace Transports
 
             debug("Propagation time is %f", ptime);
 
-            if (ptime >= 0)
+            if (ptime > 0)
             {
               IMC::UamRxRange range;
               range.sys = lookupSystemName(dst);
