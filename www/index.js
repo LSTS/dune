@@ -140,11 +140,12 @@ function handleData(text)
     for (var i in data.dune_messages)
     {
         var msg = data.dune_messages[i];
-        if (msg.abbrev != 'EntityState')
+        if (msg.abbrev != 'EntityState' && msg.abbrev != 'CpuUsage')
             continue;
 
         data.dune_entities[msg.src_ent].state = msg.state;
         data.dune_entities[msg.src_ent].description = msg.description;
+        data.dune_entities[msg.src_ent].value = msg.value;
     }
 
     g_data = data;
