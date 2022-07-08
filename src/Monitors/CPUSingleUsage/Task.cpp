@@ -125,7 +125,7 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_cpu_check.setTop(c_time_between_reads);
       }
 
