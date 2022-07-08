@@ -65,9 +65,33 @@ Main.prototype.m_fields = [
         "side": "right"
     },
     {
-        "label": "CPU Usage:",
+        "label": "Daemon CPU Usage:",
         "data_function": function(data) { return getMessageValue(data, 'CpuUsage', 0); },
         "widget": new Gauge(1),
+        "side": "right"
+    },
+    {
+        "label": "CPU1:",
+        "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU1',  0); },
+        "widget": new Gauge(0),
+        "side": "right"
+    },
+    {
+        "label": "CPU2:",
+        "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU2',  0); },
+        "widget": new Gauge(0),
+        "side": "right"
+    },
+    {
+        "label": "CPU3:",
+        "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU3',  0); },
+        "widget": new Gauge(0),
+        "side": "right"
+    },
+    {
+        "label": "CPU4:",
+        "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU4',  0); },
+        "widget": new Gauge(0),
         "side": "right"
     },
     {
@@ -257,6 +281,29 @@ function getMessageValue(data, abbrev, defval)
     try
     {
         return findMessage(data, abbrev).value;
+    }
+    catch (err)
+    {
+        return defval;
+    }
+};
+
+function getMessageCpuSingleUsage(data, ent, defval)
+{
+    try
+    {
+      for (m in data.dune_entities)
+      {
+          var eid = data.dune_entities[m].label;
+          if (eid.localeCompare(ent) == 0)
+          {
+            console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
+            console.log(" ");
+            return data.dune_entities[m].value;
+          }
+      }
+      console.log(" ");
+      return defval;
     }
     catch (err)
     {
