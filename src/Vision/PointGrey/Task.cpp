@@ -407,10 +407,7 @@ namespace Vision
       consume(const IMC::LoggingControl* msg)
       {
         std::string sysNameMsg = resolveSystemId(msg->getSource());
-        //std::string sysLocalName = getSystemName() + " _cpu";
-        std::string sysLocalName = "caravela-cam";
-
-        war("%s ! %s ! %s", sysNameMsg.c_str(),  m_args.system_name.c_str(), sysLocalName.c_str());
+        std::string sysLocalName = getSystemName();
 
         if(sysNameMsg != m_args.system_name && sysNameMsg != sysLocalName)
           return;
