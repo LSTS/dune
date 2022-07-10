@@ -114,6 +114,7 @@ namespace Control
       Arguments m_args;
       //! Initial position.
       IMC::GpsFix m_position;
+      IMC::DesiredControl m_control_ref;
       //! Last motor actuation.
       float m_last_act[4];
 
@@ -330,6 +331,8 @@ namespace Control
       void
       onEntityReservation(void)
       {
+        if (getDebugLevel() >= DebugLevel::DEBUG_LEVEL_DEBUG)
+          m_control_ref.setSourceEntity(reserveEntity(String::str(getEntityLabel()) + " - Control Reference"));
       }
 
       //! Resolve entity names.
@@ -789,11 +792,7 @@ namespace Control
         inf("Battery = %d min", msg.battery_run_time_to_empty);
 
         // TEMPORARY - ACTUATION TESTING
-        war("Surge = %f (ref) | %f (control)", msg.reference_surge, msg.control_force_surge);
-        war("Sway = %f (ref) | %f (control)", msg.reference_sway, msg.control_force_sway);
-        war("Heave = %f (ref) | %f (control)", msg.reference_heave, msg.control_force_heave);
-        war("Yaw = %f (ref) | %f (control)", msg.reference_yaw, msg.control_force_yaw);
-        inf("Ref Heading = %f | Ref Depth = %d", msg.reference_heading, msg.reference_depth);
+        // inf("Ref Heading = %f | Ref Depth = %d", msg.reference_heading, msg.reference_depth);
 
         // Dispatching messages to bus
         IMC::Depth depth;
@@ -811,6 +810,18 @@ namespace Control
         IMC::Temperature temp;
         temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
         dispatch(temp);
+
+
+        if (getDebugLevel() >= DebugLevel::DEBUG_LEVEL_DEBUG)
+        {
+          m_control_ref.x = msg.reference_surge;
+          m_control_ref.y = msg.reference_sway;
+          m_control_ref.z = msg.reference_heading;
+          m_control_ref.n = msg.reference_yaw;
+          m_control_ref.flags = IMC::DesiredControl::FL_X | IMC::DesiredControl::FL_Y |
+                                IMC::DesiredControl::FL_Z | IMC::DesiredControl::FL_N;
+          dispatch(m_control_ref);
+        }
 
         IMC::DesiredControl dcontrol;
         dcontrol.x = msg.control_force_surge;
