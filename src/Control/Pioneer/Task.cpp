@@ -99,6 +99,8 @@ namespace Control
       std::string routine;
       //! Depth Hold Step
       std::string depth_step;
+      //! Supress velocity in X, Y plane
+      bool supress_mov;
     };
 
     enum LoggerEnum
@@ -245,6 +247,12 @@ namespace Control
         .values("Up, Down, None")
         .defaultValue("None")
         .description("Depth hold step.");
+
+        param("Supress Horizontal Velocity", m_args.supress_mov)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description("Lock surge and sway to 0.0.");
 
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
@@ -970,12 +978,24 @@ namespace Control
         if(m_args.routine != "None")
           return;
 
+        // Supress movement but leave heading
+        if (m_args.supress_mov)
+        {
+          if (msg->id != 2)
+          {
+            m_last_act[0] = 0;
+            m_last_act[1] = 0;
+            m_last_act[3] = 0;
+            return;
+          }
+        }
+
         ProtocolCommands::CmdVersion2MotionInput cmd;
         setMotionType(cmd);
         cmd.surge_motion_input = m_last_act[0];
         cmd.sway_motion_input = m_last_act[1];
-        cmd.heave_motion_input = m_last_act[2];
-        cmd.yaw_motion_input = m_last_act[3];
+        cmd.yaw_motion_input = m_last_act[2];
+        cmd.heave_motion_input = m_last_act[3];
 
         switch (msg->id)
         {
