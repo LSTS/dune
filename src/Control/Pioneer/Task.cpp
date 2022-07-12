@@ -208,7 +208,6 @@ namespace Control
 
         param("Initial Position", m_args.position)
         .units(Units::Degree)
-        .size(2)
         .defaultValue("")
         .description("Initial position of the vehicle");
 
@@ -1043,6 +1042,9 @@ namespace Control
         if (m_args.position.empty())
           return;
           
+        if (m_args.position.size() != 2)
+          return;
+
         m_position.lat = Math::Angles::radians(m_args.position[0]);
         m_position.lon = Math::Angles::radians(m_args.position[1]);
         m_position.type = IMC::GpsFix::GFT_STANDALONE;
