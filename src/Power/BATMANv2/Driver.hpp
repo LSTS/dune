@@ -70,11 +70,13 @@ namespace Power
             //! Cell Voltage
             float cell_volt[16];
             //! State of new data received
-            bool state_new_data[9];
+            bool state_new_data[10];
             //! Time, in min to full empty battery
             float time_empty;
             //! Time, in min, to full charge of battery
             float time_full;
+            //! Error in calculation of capacity
+            int max_error;
           };
 
           //! Serial port
@@ -100,7 +102,8 @@ namespace Power
           void
           resetStateNewData(void)
           {
-            for(uint8_t t = 0; t < 8; t++)
+            m_batManData.max_error = 100;
+            for(uint8_t t = 0; t < 9; t++)
               m_batManData.state_new_data[t] = false;
           }
 
@@ -280,9 +283,16 @@ namespace Power
               m_task->debug("Average Time to Full: %.0f min", m_batManData.time_full);
               m_batManData.state_new_data[8] = true;
             }
+            else if (std::strcmp(parameter, "$ERROR") == 0)
+            {
+              parameter = std::strtok(NULL, ",");
+              std::sscanf(parameter, "%d", &m_batManData.max_error);
+              m_task->debug("Error: %d %%", m_batManData.max_error);
+              m_batManData.state_new_data[9] = true;
+            }
 
             bool result = true;
-            for(uint8_t t = 0; t < 8; t++)
+            for(uint8_t t = 0; t < 9; t++)
             {
               if(m_batManData.state_new_data[t] == false)
                 result = false;
