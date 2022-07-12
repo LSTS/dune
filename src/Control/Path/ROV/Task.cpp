@@ -52,8 +52,6 @@ namespace Control
         double fixed_heading;
         //! Heading test mode
         bool direct_heading;
-        //! Supress velocity in X, Y plane
-        bool supress_mov;
         //! Vehicle max speed in x, y directions.
         //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
         std::vector<double> speed_limits;
@@ -87,12 +85,6 @@ namespace Control
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
           .description("Heading is aligned with course. Ignores fixed heading.");
-
-          param("Supress Horizontal Velocity", m_args.supress_mov)
-          .scope(Tasks::Parameter::SCOPE_MANEUVER)
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .defaultValue("false")
-          .description("Lock surge and sway to 0.0.");
 
           param("Speed Limits", m_args.speed_limits)
           .units(Units::MeterPerSecond)
@@ -152,12 +144,6 @@ namespace Control
         {
           // Velocity controller.
           m_velocity = getVelocity(state.psi, ts.los_angle, ts.los_elevation);
-
-          if (m_args.supress_mov)
-          {
-            m_velocity.u = 0.0;
-            m_velocity.v = 0.0;
-          }
 
           // Dispatch velocity reference
           dispatch(m_velocity);
