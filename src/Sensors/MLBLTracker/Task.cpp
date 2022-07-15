@@ -83,7 +83,9 @@ namespace Sensors
       // Micro-Modem pinging in progress.
       OP_PING_MM,
       // Abort in progress.
-      OP_ABORT
+      OP_ABORT,
+      // UAM Frame.
+      OP_UAM_FRAME
     };
 
     // Narrow band transponder.
@@ -401,6 +403,7 @@ namespace Sensors
       {
         m_op = OP_NONE;
         m_op_deadline = -1.0;
+        Memory::clear(m_frame);
       }
 
       bool
@@ -474,10 +477,13 @@ namespace Sensors
           return;
         }
 
+        m_op = OP_UAM_FRAME;
+
         // does the message fit in a packet?
         if (msg->data.size() > c_binary_size)
         {
           sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_SIZE, "Packet exceeds maximum allowed size");
+          resetOp();
           return;
         }
 
@@ -492,6 +498,7 @@ namespace Sensors
         {
           sendTxStatus(msg, IMC::UamTxStatus::UTS_FAILED, e.what());
           Memory::clear(m_frame);
+          resetOp();
         }
       }
 
@@ -557,6 +564,7 @@ namespace Sensors
           sendTxStatus(m_frame, IMC::UamTxStatus::UTS_SENT);
           sendTxStatus(m_frame, IMC::UamTxStatus::UTS_DONE);
           Memory::clear(m_frame);
+          resetOp();
           m_timer.reset();
         }
       }
@@ -1171,6 +1179,7 @@ namespace Sensors
         dispatchReply(*m_frame, status);
         Memory::clear(m_frame);
         m_timer.reset();
+        resetOp();
       }
 
        //! Handle reception of ping.
@@ -1269,7 +1278,7 @@ namespace Sensors
 
         double now = Clock::get();
 
-        if (now > m_op_deadline)
+        if (now > m_op_deadline && m_op != OP_UAM_FRAME)
         {
           m_acop_out.system = m_acop.system;
 
@@ -1277,6 +1286,8 @@ namespace Sensors
             m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
           else if (m_op == OP_ABORT)
             m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
+          else
+            m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
 
           dispatch(m_acop_out);
           resetOp();
