@@ -259,7 +259,7 @@ namespace Transports
         {
           if (m_args.sound_speed_elabel.length() == 0)
           {
-            inf("dynamic sound speed corrections are disabled, using default %d", (int)m_args.sound_speed_def);
+            debug("dynamic sound speed corrections are disabled, using default %d", (int)m_args.sound_speed_def);
             m_sound_speed = m_args.sound_speed_def;
             m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
           }
