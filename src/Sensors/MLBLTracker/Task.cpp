@@ -276,7 +276,7 @@ namespace Sensors
         m_ignore_gpio = false;
 
         // Register message handlers.
-        bind<IMC::AcousticOperation>(this);
+        //bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::UamTxFrame>(this);
         bind<IMC::UamTxRange>(this);
