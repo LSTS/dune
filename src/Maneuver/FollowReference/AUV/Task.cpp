@@ -490,7 +490,7 @@ namespace Maneuver
           // set end location according to received reference
           if (ref->flags & IMC::Reference::FLAG_DIRECT)
           {
-            war("Direct 1");
+            spew("Using direct path following");
             m_got_reference_start = false;
             m_start_lat = 0;
             m_start_lon = 0;
@@ -504,7 +504,7 @@ namespace Maneuver
           }
           else if (ref->flags & IMC::Reference::FLAG_START_POINT)
           {
-            war("startPoint 1");
+            spew("Using sent start point path following");
             m_got_reference_start = true;
             m_start_lat = ref->lat;
             m_start_lon = ref->lon;
@@ -516,7 +516,7 @@ namespace Maneuver
           }
           else if (m_got_reference_start && m_start_lat != 0 && m_start_lon != 0)
           {
-            war("prevStartPoint 1");
+            spew("Keeping last sent start point path following");
             // use previously received reference
             desired_path.start_lat = m_start_lat;
             desired_path.start_lon = m_start_lon;
@@ -526,7 +526,7 @@ namespace Maneuver
           }
           else
           {
-            war("else direct 1");
+            spew("Failing back to using direct path following");
             desired_path.flags = IMC::DesiredPath::FL_DIRECT;
           }
         }
