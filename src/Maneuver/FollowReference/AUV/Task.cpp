@@ -69,6 +69,7 @@ namespace Maneuver
         bool m_got_reference_start;
         double m_start_lat;
         double m_start_lon;
+        double m_start_z;
         //! Are we moving or idle (floating)
         bool m_moving;
         //! Store last timestamp when reference was received
@@ -493,9 +494,12 @@ namespace Maneuver
             m_got_reference_start = false;
             m_start_lat = 0;
             m_start_lon = 0;
+            m_start_z = 0;
             // just stay where we are
             desired_path.start_lat = curlat;
             desired_path.start_lon = curlon;
+            desired_path.start_z = 0;
+            desired_path.start_z_units = ZUnits::Z_NONE;
             desired_path.flags = IMC::DesiredPath::FL_DIRECT;
           }
           else if (ref->flags & IMC::Reference::FLAG_START_POINT)
@@ -506,6 +510,8 @@ namespace Maneuver
             m_start_lon = ref->lon;
             desired_path.start_lat = m_start_lat;
             desired_path.start_lon = m_start_lon;
+            desired_path.start_z = m_start_z;
+            desired_path.start_z_units = m_start_z >= 0 ? ZUnits::Z_DEPTH : ZUnits::Z_NONE;
             desired_path.flags = IMC::DesiredPath::FL_START;
           }
           else if (m_got_reference_start && m_start_lat != 0 && m_start_lon != 0)
@@ -514,6 +520,8 @@ namespace Maneuver
             // use previously received reference
             desired_path.start_lat = m_start_lat;
             desired_path.start_lon = m_start_lon;
+            desired_path.start_z = m_start_z;
+            desired_path.start_z_units = m_start_z >= 0 ? ZUnits::Z_DEPTH : ZUnits::Z_NONE;
             desired_path.flags = IMC::DesiredPath::FL_START;
           }
           else
