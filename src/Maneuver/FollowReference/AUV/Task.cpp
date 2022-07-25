@@ -542,7 +542,7 @@ namespace Maneuver
             desired_path.end_lat = ref->lat;
             desired_path.end_lon = ref->lon;
           }
-          else if (m_got_reference)
+          else if (m_got_reference && (m_cur_ref.flags & IMC::Reference::FLAG_LOCATION))
           {
             // use previously received reference
             desired_path.end_lat = m_cur_ref.lat;
