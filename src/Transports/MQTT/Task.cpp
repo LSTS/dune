@@ -50,24 +50,65 @@ namespace Transports
     struct Arguments
     {
     };
-
     struct Task: public DUNE::Tasks::Task
     {
       // //! Task arguments
       // Arguments m_args;
+      //! Mosquitto client arguments
+      MosquittoClient::Arguments m_client_args;
+      //! Client
+      MosquittoClient* m_client;
+      //! Topic buffer
+      std::string m_topic_bfr;
+      //! Payload buffer
+      std::string m_payload_bfr;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_client(NULL)
       {
+        param("Client ID", m_client_args.client_id)
+        .defaultValue(getSystemName())
+        .description("MQTT client ID.");
+
+        param("Broker Address", m_client_args.address)
+        .defaultValue("")
+        .description("MQTT broker address.");
+
+        param("Broker Port", m_client_args.port)
+        .defaultValue("1883")
+        .description("MQTT broker port.");
+
+        param("Keepalive Period", m_client_args.keepalive)
+        .defaultValue("60")
+        .units(Units::Second)
+        .description("");
+
+        param("Subscribe Topings", m_client_args.topics)
+        .defaultValue("")
+        .description("List of topics the task should subscribe to."
+                     "Use \'*\' instead of \'#\'.");
+
+        param("Authetication -- User", m_client_args.usr)
+        .defaultValue("")
+        .description("User for broker authetication.");
+
+        param("Authetication -- Password", m_client_args.pw)
+        .defaultValue("")
+        .description("Password for broker authetication."
+                     "If left blank only user is sent.");
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
+        // Workaround for ini comment char
+        for (unsigned i = 0; i < m_client_args.topics.size(); i++)
+          m_client_args.topics[i] = String::replace(m_client_args.topics[i], '*', "#");
       }
 
       //! Reserve entity identifiers.
@@ -86,18 +127,21 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        m_client = new MosquittoClient(this, &m_client_args);
       }
 
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
+        m_client->subscribe(m_client_args.topics);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+        Memory::clear(m_client);
       }
 
       void
@@ -120,6 +164,8 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+          if (!m_client->loop())
+            err("Loop error");
         }
       }
     };
