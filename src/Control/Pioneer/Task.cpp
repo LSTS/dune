@@ -804,6 +804,8 @@ namespace Control
         // Dispatching messages to bus
         IMC::Depth depth;
         depth.value = (fp32_t) msg.depth / 1000;
+        if (depth.value < 0.0)
+          depth.value = 0.0;
         dispatch(depth);
 
         IMC::EulerAngles euler;
