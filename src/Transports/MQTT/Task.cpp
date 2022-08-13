@@ -59,9 +59,12 @@ namespace Transports
       //! Client
       MosquittoClient* m_client;
       //! Topic buffer
-      std::string m_topic_bfr;
+      char m_topic_bfr[c_max_topic];
       //! Payload buffer
-      std::string m_payload_bfr;
+      uint8_t m_payload_bfr[c_max_payload];
+      uint32_t m_payloadlen_bfr;
+      //! Error message
+      std::string m_err_msg;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -128,20 +131,29 @@ namespace Transports
       onResourceAcquisition(void)
       {
         m_client = new MosquittoClient(this, &m_client_args);
+
+        if (m_client != NULL)
+          m_client->start();
       }
 
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        m_client->subscribe(m_client_args.topics);
+        if (m_client)
+          m_client->subscribe(m_client_args.topics);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_client);
+        if (m_client != NULL)
+        {
+          m_client->stopAndJoin();
+          delete m_client;
+          m_client = NULL;
+        }
       }
 
       void
@@ -164,8 +176,12 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (!m_client->loop())
-            err("Loop error");
+
+          if (!m_client)
+            continue;
+
+          if (m_client->hasError(m_err_msg))
+            throw RestartNeeded(m_err_msg.c_str(), 10);
         }
       }
     };

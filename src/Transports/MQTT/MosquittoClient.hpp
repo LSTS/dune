@@ -55,7 +55,7 @@ namespace Transports
     // const uint32_t c_max_payload = 268435455; // 255 MB
     const uint32_t c_max_payload = 1048576; // 1 MB
 
-    class MosquittoClient
+    class MosquittoClient: public Concurrency::Thread
     {
     public:
       //! Arguments
@@ -81,16 +81,23 @@ namespace Transports
 
       //! Constructor.
       //! @param[in] task parent task.
-      MosquittoClient(Tasks::Task* task, const Arguments* args): 
+      MosquittoClient(Tasks::Task* task, const Arguments* args):
       m_task(task),
       m_args(args)
       {
+        // Clear errors
+        m_err_str.clear();
+
         // Initialize library
 	      mosquitto_lib_init();
-        m_mosq = mosquitto_new(m_args->client_id.c_str(), true, this);
-
-        if (!m_mosq)
-          throw std::runtime_error("Unable to initialize mosquitto instance");
+        try
+        {
+          m_mosq = mosquitto_new(m_args->client_id.c_str(), true, this);
+        }
+        catch(const std::exception& e)
+        {
+          throw std::runtime_error(String::str("Client error: %s", e.what()).c_str());
+        }
 
         // Authetication
         setAuthentication();
@@ -113,7 +120,7 @@ namespace Transports
       void
       subscribe(std::string topic)
       {
-        checkResult(mosquitto_subscribe(m_mosq, NULL, topic.c_str(), 0));
+        checkRC(mosquitto_subscribe(m_mosq, NULL, topic.c_str(), 0));
       }
 
       void
@@ -156,7 +163,7 @@ namespace Transports
       void
       publish(std::string topic, uint8_t* payload, uint32_t payload_length)
       {
-        checkResult(mosquitto_publish(m_mosq, NULL, topic.c_str(), payload_length, payload, 0, false));
+        checkRC(mosquitto_publish(m_mosq, NULL, topic.c_str(), payload_length, payload, 0, false));
         m_task->spew("sent: %s: %s", topic.c_str(), sanitize(std::string((char*)payload, payload_length).c_str()).c_str());
       }
 
@@ -167,10 +174,26 @@ namespace Transports
       }
 
       //! Main loop
-      bool
-      loop()
+      void
+      run(void)
       {
-        return !mosquitto_loop(m_mosq, -1, 1);
+        while (!isStopping())
+        {
+          checkRC(mosquitto_loop(m_mosq, -1, 1));
+        }
+      }
+
+      bool
+      hasError(std::string& err_msg)
+      {
+        if (!m_err_str.empty())
+        {
+          err_msg = m_err_str;
+          m_err_str.clear();
+          return true;
+        }
+
+        return false;
       }
 
     private:
@@ -182,22 +205,26 @@ namespace Transports
 	    mosquitto *m_mosq;
       //! Message queue
       TSQueue<mosquitto_message> m_queue;
+      //! Error string. Since the client runs on a separate thread 
+      //! the string is used as a flag to poll for client error.
+      std::string m_err_str;
 
       void
       setAuthentication()
       {
         // TODO: Certificate authentication, as default
         // User + password login
-        checkResult(mosquitto_username_pw_set(m_mosq, m_args->usr.empty() ? NULL : m_args->usr.c_str(),
-                                                      m_args->pw.empty() ? NULL : m_args->pw.c_str()));
+        const char* user = m_args->usr.empty() ? NULL : m_args->usr.c_str();
+        const char* password = m_args->pw.empty() ? NULL : m_args->pw.c_str();
+        checkRC(mosquitto_username_pw_set(m_mosq, user, password));
       }
 
       void
       connect()
       {
-        checkResult(mosquitto_connect(m_mosq, m_args->address.str().c_str(), 
-                                              m_args->port, 
-                                              m_args->keepalive));
+        checkRC(mosquitto_connect(m_mosq, m_args->address.str().c_str(), 
+                                          m_args->port, 
+                                          m_args->keepalive));
       }
 
       void
@@ -222,7 +249,9 @@ namespace Transports
       {
         (void) mosq;
         MosquittoClient* self = (MosquittoClient*)obj;
-        self->m_task->inf("Disconnected from broker: result code: %d", rc);
+        
+        self->m_task->debug("Disconnected from broker");
+        self->checkRC(rc);
       }
       
       //! Message callback function
@@ -234,7 +263,6 @@ namespace Transports
 
         mosquitto_message bfr;
         mosquitto_message_copy(&bfr, msg);
-
         self->m_queue.push(bfr);
         self->m_task->spew("recv: %s: %s", msg->topic, sanitize(std::string((char*)msg->payload, msg->payloadlen).c_str()).c_str());
       }
@@ -252,10 +280,12 @@ namespace Transports
       on_unsubscribe(struct mosquitto *mosq, void *obj, int msg_id);
 
       void
-      checkResult(unsigned rc)
+      checkRC(unsigned rc)
       {
-        if (rc)
-          throw std::runtime_error(String::str("Error: %u", rc));
+        if (rc && m_err_str.empty())
+        {
+          m_err_str = String::str("Client Error: %u", rc);
+        }
       }
     };
   }
