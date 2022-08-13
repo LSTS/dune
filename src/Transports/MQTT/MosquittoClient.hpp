@@ -284,7 +284,7 @@ namespace Transports
       {
         if (rc && m_err_str.empty())
         {
-          m_err_str = String::str("Client Error: %u", rc);
+          m_err_str = String::str("Client Error: %s", mosquitto_strerror(rc));
         }
       }
     };
