@@ -90,6 +90,10 @@ namespace Transports
         .units(Units::Second)
         .description("");
 
+        param("Retain", m_client_args.retain)
+        .defaultValue("false")
+        .description("Retain messages.");
+
         param("Subscribe Topings", m_client_args.topics)
         .defaultValue("")
         .description("List of topics the task should subscribe to."

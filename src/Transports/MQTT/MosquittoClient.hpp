@@ -68,7 +68,11 @@ namespace Transports
         Address address;
         //! Broker port
         int port;
+        //! Broker ping period (in seconds).
+        //! Broker pings if no other messages were exchanged in this interval
         int keepalive;
+        //! Message retain flag
+        bool retain;
 
         //! User. For user + password authetication
         std::string usr;
@@ -163,7 +167,8 @@ namespace Transports
       void
       publish(std::string topic, uint8_t* payload, uint32_t payload_length)
       {
-        checkRC(mosquitto_publish(m_mosq, NULL, topic.c_str(), payload_length, payload, 0, false));
+        checkRC(mosquitto_publish(m_mosq, NULL, topic.c_str(), 
+                                  payload_length, payload, 0, m_args->retain));
         m_task->spew("sent: %s: %s", topic.c_str(), sanitize(std::string((char*)payload, payload_length).c_str()).c_str());
       }
 
