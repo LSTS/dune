@@ -197,7 +197,7 @@ namespace Control
 
             // Get velocity components in earth fixed frame
             double vx, vy;
-            toCartesian(mps_speed, los_angle, los_elevation, &vx, &vy);
+            toCartesian(mps_speed, los_angle, c_half_pi, &vx, &vy);
 
             // Convertion to body fixed frame
             Angles::rotate(heading, true, vx, vy);
