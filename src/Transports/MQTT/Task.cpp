@@ -162,6 +162,8 @@ namespace Transports
         {
           throw RestartNeeded(String::str("Unable to start client: %s", e.what()).c_str(), 10);
         }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Initialize resources.
