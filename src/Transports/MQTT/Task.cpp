@@ -49,22 +49,31 @@ namespace Transports
     //! %Task arguments.
     struct Arguments
     {
+      // List of messages to publish.
+      std::vector<std::string> messages;
     };
+
+    //! Message buffer size.
+    static const int c_bfr_size = 65535;
+
     struct Task: public DUNE::Tasks::Task
     {
-      // //! Task arguments
-      // Arguments m_args;
+      //! Task arguments
+      Arguments m_args;
       //! Mosquitto client arguments
       MosquittoClient::Arguments m_client_args;
       //! Client
       MosquittoClient* m_client;
+      //! Error message
+      std::string m_err_msg;
       //! Topic buffer
       char m_topic_bfr[c_max_topic];
       //! Payload buffer
       uint8_t m_payload_bfr[c_max_payload];
+      //! Payload length buffer
       uint32_t m_payloadlen_bfr;
-      //! Error message
-      std::string m_err_msg;
+      //! Serialization buffer.
+      uint8_t m_msg_bfr[c_bfr_size];
 
       //! Constructor.
       //! @param[in] name task name.
@@ -107,6 +116,10 @@ namespace Transports
         .defaultValue("")
         .description("Password for broker authetication."
                      "If left blank only user is sent.");
+
+        param("Transports", m_args.messages)
+        .defaultValue("")
+        .description("List of messages to transport");
       }
 
       //! Update internal state with new parameter values.
@@ -134,10 +147,21 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_client = new MosquittoClient(this, &m_client_args);
+        // Register normal messages.
+        bind(this, m_args.messages);
 
-        if (m_client != NULL)
-          m_client->start();
+        // Start client
+        try
+        {
+          m_client = new MosquittoClient(this, &m_client_args);
+
+          if (m_client != NULL)
+            m_client->start();
+        }
+        catch(const std::exception& e)
+        {
+          throw RestartNeeded(String::str("Unable to start client: %s", e.what()).c_str(), 10);
+        }
       }
 
       //! Initialize resources.
@@ -157,6 +181,36 @@ namespace Transports
           m_client->stopAndJoin();
           delete m_client;
           m_client = NULL;
+        }
+      }
+
+      void
+      consume(const IMC::Message* msg)
+      {
+        uint16_t rv;
+        try
+        {
+          rv = IMC::Packet::serialize(msg, m_msg_bfr, c_bfr_size);
+          m_client->publish(String::str("tests/IMC/%s", msg->getName()), m_msg_bfr, rv);
+        }
+        catch (const std::exception& e)
+        {
+          war(DTR("Failed to publish message %s: %s"), msg->getName(), e.what());
+          return;
+        }
+      }
+
+      void
+      onMessage(char *topic, uint8_t *payload, uint32_t payload_length)
+      {
+        IMC::Message* msg = IMC::Packet::deserialize(payload, payload_length);
+        // dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+
+        if (getDebugLevel() >= DEBUG_LEVEL_SPEW)
+        {
+          std::stringstream ss;
+          msg->toText(ss);
+          spew("recv msg (%s):\n%s", topic, ss.str().c_str());
         }
       }
 
@@ -186,6 +240,11 @@ namespace Transports
 
           if (m_client->hasError(m_err_msg))
             throw RestartNeeded(m_err_msg.c_str(), 10);
+
+          if (m_client->poll(m_topic_bfr, m_payload_bfr, &m_payloadlen_bfr))
+          {
+            onMessage(m_topic_bfr, m_payload_bfr, m_payloadlen_bfr);
+          }
         }
       }
     };
