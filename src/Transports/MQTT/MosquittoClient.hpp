@@ -78,9 +78,6 @@ namespace Transports
         std::string usr;
         //! Password. For user + password authetication
         std::string pw;
-
-        //! List of topics to subscribe
-        std::vector<std::string> topics;
       };
 
       //! Constructor.

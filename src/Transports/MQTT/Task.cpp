@@ -51,6 +51,8 @@ namespace Transports
     {
       // List of messages to publish.
       std::vector<std::string> messages;
+      //! List of topics to subscribe
+      std::vector<std::string> topics;
     };
 
     //! Message buffer size.
@@ -103,7 +105,7 @@ namespace Transports
         .defaultValue("false")
         .description("Retain messages.");
 
-        param("Subscribe Topings", m_client_args.topics)
+        param("Subscribe Topings", m_args.topics)
         .defaultValue("")
         .description("List of topics the task should subscribe to."
                      "Use \'*\' instead of \'#\'.");
@@ -127,8 +129,8 @@ namespace Transports
       onUpdateParameters(void)
       {
         // Workaround for ini comment char
-        for (unsigned i = 0; i < m_client_args.topics.size(); i++)
-          m_client_args.topics[i] = String::replace(m_client_args.topics[i], '*', "#");
+        for (unsigned i = 0; i < m_args.topics.size(); i++)
+          m_args.topics[i] = String::replace(m_args.topics[i], '*', "#");
       }
 
       //! Reserve entity identifiers.
@@ -171,7 +173,7 @@ namespace Transports
       onResourceInitialization(void)
       {
         if (m_client)
-          m_client->subscribe(m_client_args.topics);
+          m_client->subscribe(m_args.topics);
       }
 
       //! Release resources.
