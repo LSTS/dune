@@ -31,7 +31,7 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 if(COMMAND CMAKE_POLICY)
-  cmake_policy(SET CMP0003 NEW)
+  cmake_policy(SET CMP0075 NEW)
 endif(COMMAND CMAKE_POLICY)
 
 # Required C++ Standard.
@@ -92,7 +92,8 @@ dune_option(V4L2 "Enable support for libv4l2")
 dune_option(JS "Enable support for SpiderMonkey javascript engine")
 dune_option(XENETH "Enable support for the Xeneth SDK")
 dune_option(BLUEVIEW "Enable support for the BlueView SDK")
-dune_option(OPENCV "Enable support for OpenCV")
+dune_option(OPENCV "Enable support for OpenCV v2.x")
+dune_option(OPENCV4 "Enable support for OpenCV v4.x")
 dune_option(POINTGREY "Enable support for POINTGREY")
 dune_option(EXIV2 "Enable support for Exiv2")
 dune_option(NO_RTTI "Disable support for RTTI")
