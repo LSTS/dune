@@ -25,8 +25,8 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-#ifndef VISION_PIONNER_CAPTUREIMAGE_HPP_INCLUDED_
-#define VISION_PIONNER_CAPTUREIMAGE_HPP_INCLUDED_
+#ifndef VISION_PIONNER_PROCESSIMAGE_HPP_INCLUDED_
+#define VISION_PIONNER_PROCESSIMAGE_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -35,6 +35,7 @@
 using DUNE_NAMESPACES;
 
 //OpenCV headers
+#include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
 
@@ -43,9 +44,9 @@ namespace Vision
   namespace Pioneer
   {
     //! Mutex lock/unlock
-    static Concurrency::Mutex m_mutex_proc;
+    static Concurrency::Mutex m_mutex_cap;
 
-    class CaptureImage : public Concurrency::Thread
+    class ProcessImage : public Concurrency::Thread
     {
       public:
         //! Url of video capture
@@ -53,96 +54,64 @@ namespace Vision
 
         //! Constructor.
         //! @param[in] task parent task.
-        //! @param[in] url of ipcam.
         //! @param[in] imshow display
-        CaptureImage(DUNE::Tasks::Task* task, std::string url, std::string imshow) :
-          m_task(task),
-          m_is_capturing(false)
+        //! @param[in] cap of pioneer video device.
+        ProcessImage(DUNE::Tasks::Task* task, std::string imshow, CaptureImage* cap) :
+          m_task(task)
         {
+          m_cap = cap;
           m_imshow = imshow;
-          m_url = url;
           cv::setNumThreads(4);
-          m_capture = initCapture(m_url);
         }
 
         //! Destructor.
-        ~CaptureImage(void)
+        ~ProcessImage(void)
         {
-          m_capture.release();
-          if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
+          if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
             cv::destroyAllWindows();
-        }
-
-        cv::VideoCapture
-        initCapture(std::string url)
-        {
-          setenv("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp", 1);
-          cv::VideoCapture capture(url, cv::CAP_FFMPEG);
-          if (!capture.isOpened())
-          {
-            m_task->err("erro open cam url %s", url.c_str());
-            cv::VideoCapture capture_null(0, 0);
-            return capture_null;
-          }
-          return capture;
         }
 
         void
         run(void)
         {
-          if (!m_capture.isOpened())
+          Delay::wait(4);
+          if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
+              cv::namedWindow("Process Image Thread", cv::WINDOW_NORMAL);
+          while(!isStopping())
           {
-            m_task->err("erro capture video device");
-            m_is_capturing = false;
-          }
-          else
-          {
-            m_is_capturing = true;
-            if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
-              cv::namedWindow("RTSP stream thread", cv::WINDOW_NORMAL);
-            cv::Mat frame_temp;
-            while(!isStopping())
+            if(m_cap->isCapturing())
             {
-              if (!m_capture.read(frame_temp))
+              m_raw_frame = m_cap->getFrame();
+              if(!m_raw_frame.empty() && m_raw_frame.rows == 1080 && m_raw_frame.cols == 1920)
               {
-                m_task->war("fail getting frame");
+                m_task->debug("Frame size: %d x %d", m_raw_frame.rows, m_raw_frame.cols);
+                resize(m_raw_frame, m_image_resized, cv::Size(m_raw_frame.cols/2, m_raw_frame.rows/2), cv::INTER_LINEAR);
+                m_task->debug("Frame resized size: %d x %d", m_image_resized.rows, m_image_resized.cols);
+                if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
+                {
+                  cv::imshow("Process Image Thread", m_image_resized);
+                  cv::waitKey(1);
+                }
               }
               else
               {
-                m_frame = frame_temp.clone();
-                if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
-                {
-                  cv::imshow("RTSP stream thread", frame_temp);
-                  cv::waitKey(1);
-                }
+                m_task->war("No frame captured");
               }
             }
           }
         }
 
-        bool
-        isCapturing(void)
-        {
-          return m_is_capturing;
-        }
-
-        cv::Mat
-        getFrame(void)
-        {
-          return m_frame;
-        }
-
       private:
         //! Parent task.
         DUNE::Tasks::Task* m_task;
-        //! OpenCv Video Capture
-        cv::VideoCapture m_capture;
-        //! Flag to control state of capture
-        bool m_is_capturing;
         //! Flag to control imshow
         std::string m_imshow;
-        //! Buffer for image captured
-        cv::Mat m_frame;
+        //! Object from VideoCapture Pioneer;
+        CaptureImage* m_cap;
+        //! Raw frame captured
+        cv::Mat m_raw_frame;
+        //! Resize Image
+        cv::Mat m_image_resized;
     };
   }
 }
