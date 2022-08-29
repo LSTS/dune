@@ -228,8 +228,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          inf("exception: %s" ,e.what());
-          throw RestartNeeded(e.what(), 5, false);
+          throw RestartNeeded(DTR(e.what()), 5);
         }
       }
 
