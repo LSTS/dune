@@ -492,6 +492,26 @@ namespace DUNE
       }
 
       static inline unsigned
+      toLE(const float value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return rcopy4b(dst, (uint8_t*)&value);
+#else
+        return copy4b(dst, (uint8_t*)&value);
+#endif
+      }
+      
+      static inline unsigned
+      toLE(const double value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return rcopy8b(dst, (uint8_t*)&value);
+#else
+        return copy8b(dst, (uint8_t*)&value);
+#endif
+      }
+
+      static inline unsigned
       toBE(const uint8_t value, uint8_t* dst)
       {
         dst[0] = value;
