@@ -65,6 +65,11 @@ namespace Maneuver
         IMC::FollowRefState m_fref_state;
         //! Did we get a reference already?
         bool m_got_reference;
+        //! Did we get a reference start loc already?
+        bool m_got_reference_start;
+        double m_start_lat;
+        double m_start_lon;
+        double m_start_z;
         //! Are we moving or idle (floating)
         bool m_moving;
         //! Store last timestamp when reference was received
@@ -122,6 +127,9 @@ namespace Maneuver
           .description("Units to use for default z reference (one of 'DEPTH', 'ALTITUDE' or 'HEIGHT')");
 
           m_got_reference = false;
+          m_got_reference_start = false;
+          m_start_lat = 0;
+          m_start_lon = 0;
           m_moving = false;
           m_last_ref_time = 0;
           m_path_sent = false;
@@ -137,6 +145,9 @@ namespace Maneuver
         {
           m_moving = false;
           m_got_reference = false;
+          m_got_reference_start = false;
+          m_start_lat = 0;
+          m_start_lon = 0;
           m_spec = *msg;
           m_last_ref_time = Clock::get();
 
@@ -243,9 +254,11 @@ namespace Maneuver
           m_last_ref_time = Clock::get();
 
           m_last_ref = m_cur_ref;
-          m_cur_ref = *msg;
+          if (msg->flags & IMC::Reference::FLAG_LOCATION) {
+            m_cur_ref = *msg;
+          }
 
-          if (m_cur_ref.flags & IMC::Reference::FLAG_MANDONE)
+          if (msg->flags & IMC::Reference::FLAG_MANDONE)
           {
             m_fref_state.proximity = IMC::FollowRefState::PROX_FAR;
             m_fref_state.state = IMC::FollowRefState::FR_WAIT;
@@ -254,7 +267,8 @@ namespace Maneuver
             return;
           }
 
-          guide(&m_pcs, &m_cur_ref, &m_estate);
+          IMC::Reference ref = *msg;
+          guide(&m_pcs, &ref, &m_estate);
         }
 
         void
@@ -315,18 +329,15 @@ namespace Maneuver
           IMC::DesiredPath desired_path;
           double curlat = state->lat;
           double curlon = state->lon;
-          bool near_ref =
-          (pcs == NULL) || pcs->path_ref != m_last_desired_path.path_ref ? false :
+          bool near_ref = (pcs == NULL) || pcs->path_ref != m_last_desired_path.path_ref ? false :
           (pcs->flags & IMC::PathControlState::FL_NEAR) != 0;
 
           WGS84::displace(state->x, state->y, &curlat, &curlon);
 
           // command start corresponds to current position
-          desired_path.start_lat = curlat;
-          desired_path.start_lon = curlon;
-          desired_path.flags = IMC::DesiredPath::FL_DIRECT;
 
           // set attributes in desired path according to flags
+          updateStartLoc(ref, desired_path, curlat, curlon);
           updateEndLoc(ref, desired_path, curlat, curlon);
           updateSpeed(ref, desired_path);
 
@@ -341,7 +352,8 @@ namespace Maneuver
           bool target_at_surface = desired_path.end_z == 0
                                       && desired_path.end_z_units == Z_DEPTH;
 
-          bool still_same_reference = sameReference(ref, &m_last_ref);
+          bool still_same_reference = (ref->flags & IMC::Reference::FLAG_START_POINT) ||
+                                      sameReference(ref, &m_last_ref);
 
           updateRadius(ref, desired_path);
           int prev_mode = m_fref_state.state;
@@ -472,6 +484,54 @@ namespace Maneuver
 
       private:
         void
+        updateStartLoc(const IMC::Reference* ref, IMC::DesiredPath &desired_path,
+                     double curlat, double curlon)
+        {
+          // set end location according to received reference
+          if (ref->flags & IMC::Reference::FLAG_DIRECT)
+          {
+            spew("Using direct path following");
+            m_got_reference_start = false;
+            m_start_lat = 0;
+            m_start_lon = 0;
+            m_start_z = 0;
+            // just stay where we are
+            desired_path.start_lat = curlat;
+            desired_path.start_lon = curlon;
+            desired_path.start_z = 0;
+            desired_path.start_z_units = ZUnits::Z_NONE;
+            desired_path.flags = IMC::DesiredPath::FL_DIRECT;
+          }
+          else if (ref->flags & IMC::Reference::FLAG_START_POINT)
+          {
+            spew("Using sent start point path following");
+            m_got_reference_start = true;
+            m_start_lat = ref->lat;
+            m_start_lon = ref->lon;
+            desired_path.start_lat = m_start_lat;
+            desired_path.start_lon = m_start_lon;
+            desired_path.start_z = m_start_z;
+            desired_path.start_z_units = m_start_z >= 0 ? ZUnits::Z_DEPTH : ZUnits::Z_NONE;
+            desired_path.flags = IMC::DesiredPath::FL_START;
+          }
+          else if (m_got_reference_start && m_start_lat != 0 && m_start_lon != 0)
+          {
+            spew("Keeping last sent start point path following");
+            // use previously received reference
+            desired_path.start_lat = m_start_lat;
+            desired_path.start_lon = m_start_lon;
+            desired_path.start_z = m_start_z;
+            desired_path.start_z_units = m_start_z >= 0 ? ZUnits::Z_DEPTH : ZUnits::Z_NONE;
+            desired_path.flags = IMC::DesiredPath::FL_START;
+          }
+          else
+          {
+            spew("Failing back to using direct path following");
+            desired_path.flags = IMC::DesiredPath::FL_DIRECT;
+          }
+        }
+
+        void
         updateEndLoc(const IMC::Reference* ref, IMC::DesiredPath &desired_path,
                      double curlat, double curlon)
         {
@@ -482,7 +542,7 @@ namespace Maneuver
             desired_path.end_lat = ref->lat;
             desired_path.end_lon = ref->lon;
           }
-          else if (m_got_reference)
+          else if (m_got_reference && (m_cur_ref.flags & IMC::Reference::FLAG_LOCATION))
           {
             // use previously received reference
             desired_path.end_lat = m_cur_ref.lat;
