@@ -143,7 +143,7 @@ namespace Control
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           // Velocity controller.
-          m_velocity = getVelocity(state.psi, ts.los_angle, c_half_pi);
+          m_velocity = getVelocity(state.psi, ts.los_angle);
 
           // Dispatch velocity reference
           dispatch(m_velocity);
@@ -172,8 +172,7 @@ namespace Control
         }
 
         IMC::DesiredVelocity
-        getVelocity(const double heading, const double los_angle, 
-                       const double los_elevation)
+        getVelocity(const double heading, const double los_angle)
         {
           // Initialized desired velocity with no flags
           IMC::DesiredVelocity dvel;
@@ -199,18 +198,18 @@ namespace Control
             }
 
             // Get velocity components in earth fixed frame
-            double vx, vy;
-            sphericalToCartesian(mps_speed, los_angle, los_elevation, &vx, &vy);
+            TrackingState::Coord vel = {0, 0, 0};
+            displace(vel, los_angle, mps_speed);
 
             // Convertion to body fixed frame
-            Angles::rotate(heading, true, vx, vy);
+            Angles::rotate(heading, true, vel.x, vel.y);
 
             // Trim for max thruster speed
-            trim2D(vx, vy);
+            trim2D(vel.x, vel.y);
 
             dvel.flags = IMC::DesiredVelocity::FL_SURGE | IMC::DesiredVelocity::FL_SWAY;
-            dvel.u = vx;
-            dvel.v = vy;
+            dvel.u = vel.x;
+            dvel.v = vel.y;
 
             return dvel;
           }
