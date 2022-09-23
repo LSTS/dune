@@ -139,6 +139,10 @@ namespace Control
       //! Control how often set time
       double m_last_set_time;
 
+      //! Battery time remaining in minutes
+      uint16_t m_time_remaining;
+
+
       //! Pioneer command watchdog message
       ProtocolCommands::CmdVersion2Watchdog m_watchdog_msg;
       //! Pioneer command ping message
@@ -442,6 +446,8 @@ namespace Control
 
         for(int i=0; i<3; i++)
           m_last_act[i] = 0;
+
+        m_time_remaining = 0;
       }
 
       void
@@ -796,7 +802,8 @@ namespace Control
       handlePioneerV2Telemetry(ProtocolMessages::DataVersion2Telemetry msg)
       {
         // TODO something with msg
-        inf("Battery = %d min", msg.battery_run_time_to_empty);
+        // inf("Battery = %d min", msg.battery_run_time_to_empty);
+        m_time_remaining = msg.battery_run_time_to_empty;
 
         // TEMPORARY - ACTUATION TESTING
         // inf("Ref Heading = %f | Ref Depth = %d", msg.reference_heading, msg.reference_depth);
@@ -1081,7 +1088,8 @@ namespace Control
         while (!stopping())
         {
           if (!hasSomeError())
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE));
+
 
           // Handle IMC messages from bus
           consumeMessages();
@@ -1100,6 +1108,16 @@ namespace Control
 
           Time::Delay::waitMsec(500);
         }
+      }
+
+      std::string
+      getMessage(Status::Code code)
+      {
+        std::stringstream ss;
+        ss << getString(code);
+        ss << " | Bat: " << m_time_remaining << " min";
+
+        return ss.str();
       }
     };
   }
