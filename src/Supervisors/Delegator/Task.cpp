@@ -74,6 +74,8 @@ namespace Supervisors
       Counter<double> m_query_info_timer;
       //! Activation/deactivation timer.
       Counter<double> m_countdown;
+      //! Deactivation timer.
+      Counter<double> m_countdown_deactivate;
       //! Power channel control.
       IMC::PowerChannelControl m_pcc;
       //! Power channel state.
@@ -82,6 +84,8 @@ namespace Supervisors
       bool m_activating;
       //! True if task is deactivating.
       bool m_deactivating;
+      //! True if task is ongoing deactivating.
+      bool m_deactivating_ongoing;
       //! PushEntityParameters message.
       IMC::PushEntityParameters m_push;
       //! Entity Parameter message.
@@ -95,7 +99,8 @@ namespace Supervisors
         m_eid(DUNE_IMC_CONST_UNK_EID),
         m_query_info_timer(5.0),
         m_activating(false),
-        m_deactivating(false)
+        m_deactivating(false),
+        m_deactivating_ongoing(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -252,6 +257,7 @@ namespace Supervisors
           dispatch(m_pcc);
           m_countdown.reset();
           m_activating = true;
+          m_deactivating = false; // To abort an ongoing deactivation procedure
           debug("Power on surrogate PCC.");
         }
         else
@@ -392,20 +398,38 @@ namespace Supervisors
             }
           }
 
-          if (m_deactivating)
+          if (m_deactivating && !m_deactivating_ongoing)
           {
             IMC::PowerOperation pop;
-            pop.setDestination(m_sid);
+            pop.setDestination (m_sid);
             pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
-            dispatch(pop);
-            debug("Sent PowerOperation to surrogate.");
-            Delay::wait(getDeactivationTime());
+            dispatch (pop);
+            debug ("Sent PowerOperation to surrogate.");
+            m_countdown_deactivate.setTop (getDeactivationTime ());
+            m_deactivating_ongoing = true;
+          }
 
-            m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-            dispatch(m_pcc);
-            m_deactivating = false;
-            m_countdown.setTop(getActivationTime());
-            debug("Power off surrogate PCC.");
+          if (m_deactivating_ongoing && m_countdown_deactivate.overflow())
+          {
+            if (!m_deactivating)
+            {
+              IMC::PowerOperation pop;
+              pop.setDestination (m_sid);
+              pop.op = IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
+              dispatch (pop);
+              debug("Sent PowerOperation aborted to surrogate.");
+              m_deactivating = false;
+            }
+            else
+            {
+              m_pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+              dispatch (m_pcc);
+              m_deactivating = false;
+              m_countdown.setTop (getActivationTime ());
+              debug ("Power off surrogate PCC.");
+            }
+
+            m_deactivating_ongoing = false;
           }
         }
       }
