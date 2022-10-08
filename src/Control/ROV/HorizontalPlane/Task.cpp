@@ -246,7 +246,7 @@ namespace Control
             return 0.0;
 
           float cmd;
-          cmd = m_pid[LP_SURGE].step(timestep, ref - msg->u, 0);
+          cmd = m_pid[LP_SURGE].step(timestep, ref - msg->u);
           return cmd;
         }
 
@@ -260,7 +260,7 @@ namespace Control
             return 0.0;
 
           float cmd;
-          cmd = m_pid[LP_SWAY].step(timestep, ref - msg->v, 0);
+          cmd = m_pid[LP_SWAY].step(timestep, ref - msg->v);
           return cmd;
         }
 
@@ -302,7 +302,7 @@ namespace Control
 
           // Inner heading rate controller
           float hrate_err = cmd - msg->r;
-          cmd = m_pid[LP_HRATE].step(timestep, hrate_err, 0);
+          cmd = m_pid[LP_HRATE].step(timestep, hrate_err);
 
           return cmd;
         }
