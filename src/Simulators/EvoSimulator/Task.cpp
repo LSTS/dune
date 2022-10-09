@@ -404,20 +404,16 @@ namespace Simulators
       void
       sendSetting(std::string parameter, std::vector<T> values)
       {
-        if (!m_socket[SETTINGS])
-          throw RestartNeeded(DTR("error in settings socket, restarting"), 1);
-
         // Command format:
         // parameter = val1 val2 val3 ... valn\n
-        std::string str = parameter + " =";
+        std::vector<std::string> params;
+        params.push_back(parameter + " =");
         for (auto itr = values.begin(); itr != values.end(); ++itr)
-          str += " " + std::to_string(*itr);
-        str += "\n";
+          params.push_back(std::to_string(*itr));
 
-        m_socket[SETTINGS]->writeString(str.c_str());
+        sendMultiple(m_socket[SETTINGS], params);
 
         waitReply(parameter);
-        trace("Set: %s", sanitize(str).c_str());
       }
 
       //! Send setting to modem
