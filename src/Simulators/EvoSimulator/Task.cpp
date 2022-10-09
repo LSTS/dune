@@ -31,7 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "SafeTCPSocket.hpp"
+#include "Interface.hpp"
 
 namespace Simulators
 {
@@ -51,20 +51,20 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
-    enum sockets
+    enum InterfaceCode
     {
       //! Listener socket
-      LISTENER = 0,
+      IC_LISTENER = 0,
       //! Driver socket
-      DRIVER = 1,
+      IC_DRIVER = 1,
       //! Modem socket
-      MODEM = 2,
+      IC_MODEM = 2,
       //! Modem status socket
-      STATE = 3,
+      IC_STATE = 3,
       //! Modem settings socket
-      SETTINGS = 4,
+      IC_SETTINGS = 4,
       //! Number of sockets
-      NUM_SOCK
+      NUM_IC
     };
 
     //! Buffer capacity.
@@ -119,7 +119,7 @@ namespace Simulators
       // Task arguments.
       Arguments m_args;
       //! TCP sockets
-      SafeTCPSocket* m_socket[NUM_SOCK];
+      Interface* m_interface[NUM_IC];
       //! Last received SimulatedState
       IMC::SimulatedState m_sstate;
       //! Position update timer
@@ -275,18 +275,18 @@ namespace Simulators
           autoAssign();
 
         // Socket array initialization
-        m_socket[LISTENER]  = new SafeTCPSocket(this, "listener");
-        m_socket[MODEM]     = new SafeTCPSocket(this, "modem");
-        m_socket[STATE]     = new SafeTCPSocket(this, "state");
-        m_socket[SETTINGS]  = new SafeTCPSocket(this, "settings");
+        m_interface[IC_LISTENER]  = new Interface(this, "listener");
+        m_interface[IC_MODEM]     = new Interface(this, "modem");
+        m_interface[IC_STATE]     = new Interface(this, "state");
+        m_interface[IC_SETTINGS]  = new Interface(this, "settings");
 
-        m_socket[LISTENER]  ->startListen(m_args.local_port,
+        m_interface[IC_LISTENER]  ->startListen(m_args.local_port,
                                           Address(m_args.local_address),
                                           false,
                                           15);
-        m_socket[MODEM]     ->connect(m_args.modem_address, m_args.modem_port);
-        m_socket[STATE]     ->connect(m_args.modem_address, m_args.state_port);
-        m_socket[SETTINGS]  ->connect(m_args.modem_address, m_args.settings_port);
+        m_interface[IC_MODEM]     ->connect(m_args.modem_address, m_args.modem_port);
+        m_interface[IC_STATE]     ->connect(m_args.modem_address, m_args.state_port);
+        m_interface[IC_SETTINGS]  ->connect(m_args.modem_address, m_args.settings_port);
 
         // Acoustic model settings
         simulatorSetup();
@@ -302,8 +302,8 @@ namespace Simulators
       void
       onResourceRelease(void)
       {
-        for (unsigned i = 0; i < NUM_SOCK; ++i)
-          Memory::clear(m_socket[i]);
+        for (unsigned i = 0; i < NUM_IC; ++i)
+          Memory::clear(m_interface[i]);
       }
 
       //! Auto assign simualtor IP (node) and local port
@@ -376,27 +376,6 @@ namespace Simulators
         m_sstate.z = 0;
       }
 
-      //! Wait for simulator reply after sending setting
-      //! @param[in] parameter name of setting to wait for
-      void
-      waitReply(std::string parameter)
-      {
-        // Wait reply (timeout after c_reply_timeout)
-        double now = Clock::get();
-        while (!m_socket[SETTINGS]->poll(1.0))
-          if (Clock::get() - now > c_reply_timeout)
-            war("%s setting reply timedout", parameter.c_str());
-
-        // Read reply
-        size_t rv = m_socket[SETTINGS]->read(&m_bfr[0], m_bfr.size());
-        if (rv)
-        {
-          std::string str(m_bfr.begin(), m_bfr.begin()+rv);
-          if (!String::startsWith(str, parameter))
-            war("expected reply to %s, got: %s", parameter.c_str(), str.c_str());
-        }
-      }
-
       //! Send setting to modem
       //! @param[in] parameter name of setting to send
       //! @param[in] values setting values
@@ -411,9 +390,7 @@ namespace Simulators
         for (auto itr = values.begin(); itr != values.end(); ++itr)
           params.push_back(std::to_string(*itr));
 
-        sendMultiple(m_socket[SETTINGS], params);
-
-        // waitReply(parameter);
+        m_interface[IC_SETTINGS]->sendMultiple(params);
       }
 
       //! Send setting to modem
@@ -430,16 +407,16 @@ namespace Simulators
       void
       checkForDriver()
       {
-        if (!m_socket[LISTENER]->poll(1.0))
+        if (!m_interface[IC_LISTENER]->poll(1.0))
           return;
 
-        Memory::clear(m_socket[DRIVER]);
-        m_socket[DRIVER] = m_socket[LISTENER]->accept("driver");
+        Memory::clear(m_interface[IC_DRIVER]);
+        m_interface[IC_DRIVER] = m_interface[IC_LISTENER]->accept("driver");
 
         debug(DTR("%s socket connected: %s:%d"),
-              m_socket[DRIVER]->name.c_str(),
-              m_socket[DRIVER]->sock->getBoundAddress().c_str(),
-              m_socket[DRIVER]->sock->getBoundPort());
+              m_interface[IC_DRIVER]->m_name.c_str(),
+              m_interface[IC_DRIVER]->m_sock->getBoundAddress().c_str(),
+              m_interface[IC_DRIVER]->m_sock->getBoundPort());
       }
 
       //! Update modem position and attitude based on vehicle position and attitude
@@ -471,7 +448,7 @@ namespace Simulators
         state.vertCat(m_rotation * Matrix(att, 3, 1));
 
         std::vector<double> bfr(state.begin(), state.end());
-        sendMultiple(m_socket[STATE], bfr);
+        m_interface[IC_STATE]->sendMultiple(bfr);
 
         m_pos_update.reset();
       }
@@ -480,26 +457,26 @@ namespace Simulators
       //! @param[in] in identifier of incomming message socket
       //! @param[in] out identifier of outgoing message socket
       void
-      bridge(sockets from)
+      bridge(InterfaceCode from)
       {
-        sockets to;
-        if (from == DRIVER)
-          to = MODEM;
-        else if (from == MODEM)
-          to = DRIVER;
+        InterfaceCode to;
+        if (from == IC_DRIVER)
+          to = IC_MODEM;
+        else if (from == IC_MODEM)
+          to = IC_DRIVER;
         else
           return;
         
-        size_t rv = checkSocket(m_socket[from], &m_bfr);
+        size_t rv = m_interface[from]->read(&m_bfr);
         if (rv)
         {
           // Forward message
-          sendSocket(m_socket[to], &m_bfr, rv);
+          m_interface[to]->send(&m_bfr, rv);
 
           // Debug
           std::string str(m_bfr.begin(), m_bfr.begin()+rv);
-          trace(DTR("Message [%s -> %s]: %s"), m_socket[from]->name.c_str(),
-                                               m_socket[to]->name.c_str(),
+          trace(DTR("Message [%s -> %s]: %s"), m_interface[from]->m_name.c_str(),
+                                               m_interface[to]->m_name.c_str(),
                                                sanitize(str).c_str());
 
           // Check for reset command and reconnect
@@ -509,73 +486,9 @@ namespace Simulators
             debug(DTR("Reset command: %s -> Reconnecting to modem in 3.0s"),
                   sanitize(str).c_str());
             Delay::wait(3.0);
-            m_socket[MODEM]->reconnect();
+            m_interface[IC_MODEM]->reconnect();
           }
         }
-      }
-
-      template<typename T>
-      void
-      sendMultiple(SafeTCPSocket* sock, std::vector<T> values)
-      {
-        std::string str = "";
-        for (auto itr = values.begin(); itr != values.end(); ++itr)
-          str += " " + std::to_string(*itr);
-        str += "\n";
-
-        std::vector<uint8_t> bfr(str.begin(), str.end());
-        sendSocket(sock, &bfr, bfr.size());
-      }
-
-      void
-      sendMultiple(SafeTCPSocket* sock, std::vector<std::string> values)
-      {
-        auto itr = values.begin();
-        std::string str = *itr;
-        for (itr = values.begin() + 1; itr != values.end(); ++itr)
-          str += " " + *itr;
-        str += "\n";
-
-        std::vector<uint8_t> bfr(str.begin(), str.end());
-        sendSocket(sock, &bfr, bfr.size());
-      }
-
-      size_t
-      checkSocket(SafeTCPSocket* sock, std::vector<uint8_t>* bfr = nullptr)
-      {
-        if (!sock)
-        {
-          std::string msg = String::str("error in socket %s, restarting", 
-                                        sock->name.c_str());
-          throw RestartNeeded(DTR(msg.c_str()), 1);
-        }
-
-        if (!sock->poll(1.0))
-          return 0;
-
-        if (bfr == nullptr)
-          return 1;
-        
-        size_t rv = sock->read(&bfr->front(), bfr->size());
-        spew("sent (%s): %s", sock->name.c_str(), 
-             sanitize(std::string(bfr->begin(), bfr->begin()+rv)).c_str());
-
-        return rv;
-      }
-
-      void
-      sendSocket(SafeTCPSocket* sock, std::vector<uint8_t>* bfr, size_t size)
-      {
-        if (!sock)
-        {
-          std::string msg = String::str("error in socket %s, restarting", 
-                                        sock->name.c_str());
-          throw RestartNeeded(DTR(msg.c_str()), 1);
-        }
-
-        sock->write(&bfr->front(), size);
-        spew("sent (%s): %s", sock->name.c_str(), 
-             sanitize(std::string(bfr->begin(), bfr->begin()+size)).c_str());
       }
 
       //! Main loop.
@@ -591,8 +504,8 @@ namespace Simulators
 
           checkForDriver();
           updateState();
-          bridge(DRIVER);
-          bridge(MODEM);
+          bridge(IC_DRIVER);
+          bridge(IC_MODEM);
         }
       }
     };

@@ -40,42 +40,42 @@ namespace Simulators
   namespace EvoSimulator
   {
     //! TCPSocket wraper for the specific usecase
-    struct SafeTCPSocket
+    struct Interface
     {
       //! Handle to task using the wraper
-      Tasks::Task* task;
+      Tasks::Task* m_task;
       //! TCP socket
-      TCPSocket* sock;
+      TCPSocket* m_sock;
       //! Name of socket
-      std::string name;
+      std::string m_name;
 
       //! Port used in case of connection
-      uint16_t port;
+      uint16_t m_port;
       //! Address used in case of connection
-      Address address;
+      Address m_address;
 
       //! Constructor for new socket
-      SafeTCPSocket(Tasks::Task* a_task, std::string a_name):
-      task(a_task),
-      sock(new TCPSocket),
-      name(a_name),
-      port(0),
-      address("0.0.0.0")
+      Interface(Tasks::Task* task, std::string name):
+      m_task(task),
+      m_sock(new TCPSocket),
+      m_name(name),
+      m_port(0),
+      m_address("0.0.0.0")
       {}
 
       //! Constructor for existing socket
-      SafeTCPSocket(Tasks::Task* a_task, std::string a_name, TCPSocket* a_sock):
-      task(a_task),
-      sock(a_sock),
-      name(a_name),
-      port(0),
-      address("0.0.0.0")
+      Interface(Tasks::Task* task, std::string name, TCPSocket* sock):
+      m_task(task),
+      m_sock(sock),
+      m_name(name),
+      m_port(0),
+      m_address("0.0.0.0")
       {}
 
       //! Destructor
-      ~SafeTCPSocket()
+      ~Interface()
       {
-        delete sock;
+        delete m_sock;
       }
 
       //! Socket starts listening for connection requests
@@ -88,8 +88,8 @@ namespace Simulators
       {
         try
         {
-          sock->bind(a_port, a_address, reuse);
-          sock->listen(backlog);
+          m_sock->bind(a_port, a_address, reuse);
+          m_sock->listen(backlog);
         }
         catch (std::exception& e)
         {
@@ -100,31 +100,31 @@ namespace Simulators
       }
 
       //! Connect socket to remote port
-      //! @param[in] a_address address of remote socket
-      //! @param[in] a_port port of remote socket
+      //! @param[in] address address of remote socket
+      //! @param[in] port port of remote socket
       void
-      connect(Address a_address, uint16_t a_port)
+      connect(Address address, uint16_t port)
       {
-        if (port == 0 && address.str() == "0.0.0.0")
+        if (m_port == 0 && m_address.str() == "0.0.0.0")
         {
-          port = a_port;
-          address = a_address;
+          m_port = port;
+          m_address = address;
         }
 
         try
         {
-          Memory::clear(sock);
-          sock = new TCPSocket;
-          sock->connect(a_address, a_port);
+          Memory::clear(m_sock);
+          m_sock = new TCPSocket;
+          m_sock->connect(m_address, m_port);
 
-          task->debug(DTR("%s socket connected: %s:%d"),
-                      name.c_str(),
-                      address.c_str(),
-                      port);
+          m_task->inf(DTR("%s socket connected: %s:%d"),
+                      m_name.c_str(),
+                      m_address.c_str(),
+                      m_port);
         }
         catch (std::exception& e)
         {
-          std::string str = "Unable to start " + name
+          std::string str = "Unable to start " + m_name
                             + " socket: " + std::string(e.what());
           throw RestartNeeded(DTR(str.c_str()), 2, false);
         }
@@ -134,19 +134,19 @@ namespace Simulators
       void
       reconnect()
       {
-        if (port == 0 && address.str() == "0.0.0.0")
+        if (m_port == 0 && m_address.str() == "0.0.0.0")
           return;
 
-        connect(address, port);
+        connect(m_address, m_port);
       }
 
       //! Accept connection from outside socket
-      //! @param[in] a_name name of new SafeTCPSocket
+      //! @param[in] name name of new Interface
       //! @returns Safe
-      SafeTCPSocket*
-      accept(std::string a_name)
+      Interface*
+      accept(std::string name)
       {
-        return new SafeTCPSocket(task, a_name, sock->accept());
+        return new Interface(m_task, name, m_sock->accept());
       }
 
       //! Poll socket for reading
@@ -157,34 +157,77 @@ namespace Simulators
       {
         try
         {
-          return Poll::poll(*sock, timeout);
+          return Poll::poll(*m_sock, timeout);
         }
         catch(const std::exception& e)
         {
-          task->err("error polling %s socket: %s", name.c_str(), e.what());
+          m_task->err("error polling %s socket: %s", m_name.c_str(), e.what());
           return false;
         }
       }
 
-      //! Read from socket to buffer
-      //! @param[in] data buffer
-      //! @param[in] length number of bytes to read
-      //! @return number of bytes read
-      size_t
-      read(uint8_t *data, size_t length)
+      template<typename T>
+      void
+      sendMultiple(std::vector<T> values)
       {
+        std::string str = "";
+        for (auto itr = values.begin(); itr != values.end(); ++itr)
+          str += " " + std::to_string(*itr);
+        str += "\n";
+
+        std::vector<uint8_t> bfr(str.begin(), str.end());
+        send(&bfr, bfr.size());
+      }
+
+      void
+      sendMultiple(std::vector<std::string> values)
+      {
+        auto itr = values.begin();
+        std::string str = *itr;
+        for (itr = values.begin() + 1; itr != values.end(); ++itr)
+          str += " " + *itr;
+        str += "\n";
+
+        std::vector<uint8_t> bfr(str.begin(), str.end());
+        send(&bfr, bfr.size());
+      }
+
+      // TODO: Wait for reply method.
+
+      size_t
+      read(std::vector<uint8_t>* bfr = nullptr)
+      {
+        if (!m_sock)
+        {
+          std::string msg = String::str("error in socket %s, restarting", 
+                                        m_name.c_str());
+          throw RestartNeeded(DTR(msg.c_str()), 1);
+        }
+
+        if (!poll(1.0))
+          return 0;
+
+        if (bfr == nullptr)
+          return 1;
+        
         try
         {
-          return sock->read(data, length);
+          size_t rv = m_sock->read(&bfr->front(), bfr->size());
+
+          if (rv)
+            m_task->spew("recv (%s): %s", m_name.c_str(), 
+                         sanitize(std::string(bfr->begin(), bfr->begin()+rv)).c_str());
+
+          return rv;
         }
         catch(const ConnectionClosed& e)
         {
-          task->war("%s socket not connected, attepting to reconnect", name.c_str());
+          m_task->war("%s socket not connected, attepting to reconnect", m_name.c_str());
           reconnect();
         }
         catch(const NetworkError& e)
         {
-          std::string str = name + "socket network error: " + std::string(e.what());
+          std::string str = m_name + "socket network error: " + std::string(e.what());
           str += " -> restarting";
           throw RestartNeeded(DTR(str.c_str()), 1);
         }
@@ -192,77 +235,35 @@ namespace Simulators
         return 0;
       }
 
-      //! Write to socket
-      //! @param[in] data data buffer
-      //! @param[in] lenght number of bytes to write
-      //! @return number of bytes written
       size_t
-      write(const char *data, size_t length)
+      send(std::vector<uint8_t>* bfr, size_t length)
       {
+        if (!m_sock)
+        {
+          std::string msg = String::str("error in socket %s, restarting", 
+                                        m_name.c_str());
+          throw RestartNeeded(DTR(msg.c_str()), 1);
+        }
+
         try
         {
-          return sock->write(data, length);
+          size_t rv = m_sock->write(&bfr->front(), length);
+
+          if (rv)
+            m_task->spew("sent (%s): %s", m_name.c_str(), 
+                         sanitize(std::string(bfr->begin(), bfr->begin()+length)).c_str());
+
+          return rv;
         }
         catch(const ConnectionClosed& e)
         {
-          task->war("%s socket not connected, attepting to reconnect", name.c_str());
+          m_task->war("%s socket not connected, attepting to reconnect", m_name.c_str());
           reconnect();
         }
         catch(const NetworkError& e)
         {
-          std::string str = name + "socket network error: " + std::string(e.what());
+          std::string str = m_name + "socket network error: " + std::string(e.what());
           str += " -> restarting";
-          throw RestartNeeded(DTR(str.c_str()), 1);
-        }
-
-        return 0;
-      }
-
-      //! Write to socket
-      //! @param[in] data data buffer
-      //! @param[in] lenght number of bytes to write
-      //! @return number of bytes written
-      size_t
-      write(const uint8_t *data, size_t length)
-      {
-        try
-        {
-          return sock->write(data, length);
-        }
-        catch(const ConnectionClosed& e)
-        {
-          task->war("%s socket not connected, attepting to reconnect", name.c_str());
-          reconnect();
-        }
-        catch(const NetworkError& e)
-        {
-          std::string str = name + "socket network error: " + std::string(e.what());
-          str += " -> restarting";
-          throw RestartNeeded(DTR(str.c_str()), 1);
-        }
-
-        return 0;
-      }
-
-      //! Write string to socket
-      //! @param[in] str string to write
-      //! @return number of bytes written
-      size_t
-      writeString(const std::string str)
-      {
-        try
-        {
-          return sock->writeString(str.c_str());
-        }
-        catch(const ConnectionClosed& e)
-        {
-          task->war("%s socket not connected, attepting to reconnect", name.c_str());
-          reconnect();
-        }
-        catch(const NetworkError& e)
-        {
-          std::string msg = name + "socket network error: " + std::string(e.what());
-          msg += " -> restarting";
           throw RestartNeeded(DTR(str.c_str()), 1);
         }
 
