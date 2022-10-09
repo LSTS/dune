@@ -536,7 +536,6 @@ namespace Simulators
           str += " " + *itr;
         str += "\n";
 
-        war("%s", str.c_str());
         std::vector<uint8_t> bfr(str.begin(), str.end());
         sendSocket(sock, &bfr, bfr.size());
       }
