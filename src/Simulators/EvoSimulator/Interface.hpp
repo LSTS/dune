@@ -55,12 +55,12 @@ namespace Simulators
       Address m_address;
 
       //! Constructor for new socket
-      Interface(Tasks::Task* task, std::string name):
+      Interface(Tasks::Task* task, std::string name, std::string add, uint16_t port):
       m_task(task),
       m_sock(new TCPSocket),
       m_name(name),
-      m_port(0),
-      m_address("0.0.0.0")
+      m_port(port),
+      m_address(add.c_str())
       {}
 
       //! Constructor for existing socket
@@ -84,11 +84,11 @@ namespace Simulators
       //! @param[in] reuse flag to allow reuse of address
       //! @param[in] backlog number of connections allowed
       void
-      startListen(uint16_t a_port, Address a_address, bool reuse, int backlog)
+      startListen(bool reuse, int backlog)
       {
         try
         {
-          m_sock->bind(a_port, a_address, reuse);
+          m_sock->bind(m_port, m_address, reuse);
           m_sock->listen(backlog);
         }
         catch (std::exception& e)
@@ -103,14 +103,8 @@ namespace Simulators
       //! @param[in] address address of remote socket
       //! @param[in] port port of remote socket
       void
-      connect(Address address, uint16_t port)
+      connect()
       {
-        if (m_port == 0 && m_address.str() == "0.0.0.0")
-        {
-          m_port = port;
-          m_address = address;
-        }
-
         try
         {
           Memory::clear(m_sock);
@@ -137,7 +131,7 @@ namespace Simulators
         if (m_port == 0 && m_address.str() == "0.0.0.0")
           return;
 
-        connect(m_address, m_port);
+        connect();
       }
 
       //! Accept connection from outside socket

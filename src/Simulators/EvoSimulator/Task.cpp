@@ -77,9 +77,9 @@ namespace Simulators
       //! Local UDP port of interface
       uint16_t local_port;
       //! IPv4 Address of interface
-      Address local_address;
+      std::string local_address;
       //! IPv4 Address of modem
-      Address modem_address;
+      std::string modem_address;
       //! Port for simulated modem
       uint16_t modem_port;
       //! Port for settings of simulated modem
@@ -275,18 +275,23 @@ namespace Simulators
           autoAssign();
 
         // Socket array initialization
-        m_interface[IC_LISTENER]  = new Interface(this, "listener");
-        m_interface[IC_MODEM]     = new Interface(this, "modem");
-        m_interface[IC_STATE]     = new Interface(this, "state");
-        m_interface[IC_SETTINGS]  = new Interface(this, "settings");
+        m_interface[IC_LISTENER]  = new Interface(this, "LISTENER",
+                                                  m_args.local_address,
+                                                  m_args.local_port);
+        m_interface[IC_MODEM]     = new Interface(this, "MODEM",
+                                                  m_args.modem_address,
+                                                  m_args.modem_port);
+        m_interface[IC_STATE]     = new Interface(this, "STATE",
+                                                  m_args.modem_address,
+                                                  m_args.state_port);
+        m_interface[IC_SETTINGS]  = new Interface(this, "SETTINGS",
+                                                  m_args.modem_address,
+                                                  m_args.settings_port);
 
-        m_interface[IC_LISTENER]  ->startListen(m_args.local_port,
-                                          Address(m_args.local_address),
-                                          false,
-                                          15);
-        m_interface[IC_MODEM]     ->connect(m_args.modem_address, m_args.modem_port);
-        m_interface[IC_STATE]     ->connect(m_args.modem_address, m_args.state_port);
-        m_interface[IC_SETTINGS]  ->connect(m_args.modem_address, m_args.settings_port);
+        m_interface[IC_LISTENER]  ->startListen(false, 15);
+        m_interface[IC_MODEM]     ->connect();
+        m_interface[IC_STATE]     ->connect();
+        m_interface[IC_SETTINGS]  ->connect();
 
         // Acoustic model settings
         simulatorSetup();
@@ -313,16 +318,14 @@ namespace Simulators
       {
         // Get evologics address
         std::string system = getSystemName();
-        unsigned address = 0;
-        m_ctx.config.get(m_args.addr_section, system, "0", address);
+        unsigned evo_address = 0;
+        m_ctx.config.get(m_args.addr_section, system, "0", evo_address);
 
         // Maximum number of nodes = 10; Add more
-        if (address > 0 && address <= 10)
+        if (evo_address > 0 && evo_address <= 10)
         {
-          std::string simulator_address = "10.42.74." + std::to_string(address);
-          m_args.modem_address = Address(simulator_address.c_str());
-
-          m_args.local_port = 9200 + address;
+          m_args.modem_address = "10.42.74." + std::to_string(evo_address);
+          m_args.local_port = 9200 + evo_address;
         }
         else
         {
@@ -411,7 +414,7 @@ namespace Simulators
           return;
 
         Memory::clear(m_interface[IC_DRIVER]);
-        m_interface[IC_DRIVER] = m_interface[IC_LISTENER]->accept("driver");
+        m_interface[IC_DRIVER] = m_interface[IC_LISTENER]->accept("DRIVER");
 
         debug(DTR("%s socket connected: %s:%d"),
               m_interface[IC_DRIVER]->m_name.c_str(),
@@ -504,6 +507,7 @@ namespace Simulators
 
           checkForDriver();
           updateState();
+          
           bridge(IC_DRIVER);
           bridge(IC_MODEM);
         }
