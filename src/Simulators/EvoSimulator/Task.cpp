@@ -490,47 +490,41 @@ namespace Simulators
         m_pos_update.reset();
       }
 
-      //! Check string for a reset command
-      //! @param[in] str string to check
-      void
-      checkReset(std::string str)
-      {
-        if (!(String::startsWith(str, "ATZ0") ||
-            String::startsWith(str, "PHYOFF")))
-          return;
-
-        debug(DTR("Reset command: %s -> Reconnecting to modem"),
-              sanitize(str.substr(0, str.find('\n'))).c_str());
-        Delay::wait(5.0);
-        m_socket[MODEM]->connect(m_args.modem_address, m_args.modem_port);
-      }
-
       //! Relay incomming messages (modem to driver or driver to modem)
       //! @param[in] in identifier of incomming message socket
       //! @param[in] out identifier of outgoing message socket
       void
-      transport(unsigned in, unsigned out)
+      bridge(sockets from)
       {
-        if (!m_socket[MODEM] || !m_socket[DRIVER])
-          throw RestartNeeded(DTR("error in modem or driver socket, restarting"), 1);
-
-        if (!m_socket[in]->poll(1.0))
+        sockets to;
+        if (from == DRIVER)
+          to = MODEM;
+        else if (from == MODEM)
+          to = DRIVER;
+        else
           return;
-
-        size_t rv = m_socket[in]->read(&m_bfr[0], m_bfr.size());
+        
+        size_t rv = checkSocket(m_socket[from], &m_bfr);
         if (rv)
         {
           // Forward message
-          m_socket[out]->write(&m_bfr[0], rv);
-
-          // Check for reset command and reconnect
-          std::string str(m_bfr.begin(), m_bfr.begin()+rv);
-          checkReset(str);
+          sendSocket(m_socket[to], &m_bfr, rv);
 
           // Debug
-          spew(DTR("Message [%s -> %s]: %s"), m_socket[in]->name.c_str(),
-                                              m_socket[out]->name.c_str(),
-                                              sanitize(str).c_str());
+          std::string str(m_bfr.begin(), m_bfr.begin()+rv);
+          trace(DTR("Message [%s -> %s]: %s"), m_socket[from]->name.c_str(),
+                                               m_socket[to]->name.c_str(),
+                                               sanitize(str).c_str());
+
+          // Check for reset command and reconnect
+          if (String::startsWith(str, "ATZ0") ||
+              String::startsWith(str, "PHYOFF"))
+          {
+            debug(DTR("Reset command: %s -> Reconnecting to modem in 3.0s"),
+                  sanitize(str).c_str());
+            Delay::wait(3.0);
+            m_socket[MODEM]->reconnect();
+          }
         }
       }
 
@@ -612,8 +606,8 @@ namespace Simulators
 
           checkForDriver();
           updateState();
-          transport(DRIVER, MODEM);
-          transport(MODEM, DRIVER);
+          bridge(DRIVER);
+          bridge(MODEM);
         }
       }
     };
