@@ -507,6 +507,12 @@ namespace Simulators
 
           checkForDriver();
           updateState();
+
+          if (!m_interface[IC_DRIVER])
+          {
+            debug("DRIVER interface not ready");
+            continue;
+          }
           
           bridge(IC_DRIVER);
           bridge(IC_MODEM);
