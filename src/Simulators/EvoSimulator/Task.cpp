@@ -450,24 +450,19 @@ namespace Simulators
       void
       updateState()
       {
-        if (!m_socket[STATE])
-          throw RestartNeeded(DTR("error in state socket, restarting"), 1);
-
         if (!m_pos_update.overflow())
           return;
 
-        double ll[2] = {m_sstate.lat,
-                         m_sstate.lon};
-        float height = m_sstate.height;
-
+        double lat, lon;
+        float height;
         double ned[3] = {0.0};
         double att[3] = {m_sstate.phi,
                          m_sstate.theta,
                          m_sstate.psi};
 
-        Coordinates::toWGS84(m_sstate, ll[0], ll[1], height);
+        Coordinates::toWGS84(m_sstate, lat, lon, height);
         WGS84::displacement(m_origin.lat, m_origin.lon, m_origin.height,
-                            ll[0], ll[1], height,
+                            lat, lon, height,
                             &ned[0], &ned[1], &ned[2]);
 
         // Rotate to be compatible with modem reference frame
@@ -479,13 +474,8 @@ namespace Simulators
         state.vertCat(m_rotation * Matrix(ned, 3, 1));
         state.vertCat(m_rotation * Matrix(att, 3, 1));
 
-        std::string state_str = std::to_string(state(0));
-        for (int i = 1; i < state.size(); ++i)
-          state_str += " " + std::to_string(state(i));
-        state_str += "\n";
-
-        m_socket[STATE]->writeString(state_str.c_str());
-        spew("State: %s", sanitize(state_str).c_str());
+        std::vector<double> bfr(state.begin(), state.end());
+        sendMultiple(m_socket[STATE], bfr);
 
         m_pos_update.reset();
       }
