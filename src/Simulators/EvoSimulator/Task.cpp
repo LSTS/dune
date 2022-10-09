@@ -432,7 +432,7 @@ namespace Simulators
 
       //! Check listener socket for connection requests
       void
-      checkSocket()
+      checkForDriver()
       {
         if (!m_socket[LISTENER]->poll(1.0))
           return;
@@ -534,6 +534,71 @@ namespace Simulators
         }
       }
 
+      template<typename T>
+      void
+      sendMultiple(SafeTCPSocket* sock, std::vector<T> values)
+      {
+        std::string str = "";
+        for (auto itr = values.begin(); itr != values.end(); ++itr)
+          str += " " + std::to_string(*itr);
+        str += "\n";
+
+        std::vector<uint8_t> bfr(str.begin(), str.end());
+        sendSocket(sock, &bfr, bfr.size());
+      }
+
+      void
+      sendMultiple(SafeTCPSocket* sock, std::vector<std::string> values)
+      {
+        auto itr = values.begin();
+        std::string str = *itr;
+        for (itr = values.begin() + 1; itr != values.end(); ++itr)
+          str += " " + *itr;
+        str += "\n";
+
+        war("%s", str.c_str());
+        std::vector<uint8_t> bfr(str.begin(), str.end());
+        sendSocket(sock, &bfr, bfr.size());
+      }
+
+      size_t
+      checkSocket(SafeTCPSocket* sock, std::vector<uint8_t>* bfr = nullptr)
+      {
+        if (!sock)
+        {
+          std::string msg = String::str("error in socket %s, restarting", 
+                                        sock->name.c_str());
+          throw RestartNeeded(DTR(msg.c_str()), 1);
+        }
+
+        if (!sock->poll(1.0))
+          return 0;
+
+        if (bfr == nullptr)
+          return 1;
+        
+        size_t rv = sock->read(&bfr->front(), bfr->size());
+        spew("sent (%s): %s", sock->name.c_str(), 
+             sanitize(std::string(bfr->begin(), bfr->begin()+rv)).c_str());
+
+        return rv;
+      }
+
+      void
+      sendSocket(SafeTCPSocket* sock, std::vector<uint8_t>* bfr, size_t size)
+      {
+        if (!sock)
+        {
+          std::string msg = String::str("error in socket %s, restarting", 
+                                        sock->name.c_str());
+          throw RestartNeeded(DTR(msg.c_str()), 1);
+        }
+
+        sock->write(&bfr->front(), size);
+        spew("sent (%s): %s", sock->name.c_str(), 
+             sanitize(std::string(bfr->begin(), bfr->begin()+size)).c_str());
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -545,7 +610,7 @@ namespace Simulators
           if (!isActive())
             continue;
 
-          checkSocket();
+          checkForDriver();
           updateState();
           transport(DRIVER, MODEM);
           transport(MODEM, DRIVER);
