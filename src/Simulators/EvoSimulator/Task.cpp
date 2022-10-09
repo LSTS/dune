@@ -413,7 +413,7 @@ namespace Simulators
 
         sendMultiple(m_socket[SETTINGS], params);
 
-        waitReply(parameter);
+        // waitReply(parameter);
       }
 
       //! Send setting to modem
