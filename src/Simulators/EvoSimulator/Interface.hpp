@@ -39,7 +39,8 @@ namespace Simulators
 {
   namespace EvoSimulator
   {
-    //! TCPSocket wraper for the specific usecase
+    //! Interface to facilitate setup, sending and receiving from
+    //! TCPSocket.
     struct Interface
     {
       //! Handle to task using the wraper
@@ -72,15 +73,13 @@ namespace Simulators
       m_address("0.0.0.0")
       {}
 
-      //! Destructor
+      //! Clears socket pointer
       ~Interface()
       {
-        delete m_sock;
+        Memory::clear(m_sock);
       }
 
       //! Socket starts listening for connection requests
-      //! @param[in] a_port port to bind socket
-      //! @param[in] a_address address to bind socket
       //! @param[in] reuse flag to allow reuse of address
       //! @param[in] backlog number of connections allowed
       void
@@ -141,7 +140,7 @@ namespace Simulators
 
       //! Accept connection from outside socket
       //! @param[in] name name of new Interface
-      //! @returns Safe
+      //! @returns Pointer to connected interface
       Interface*
       accept(std::string name)
       {
@@ -165,6 +164,8 @@ namespace Simulators
         }
       }
 
+      //! Send multiple, space separated, values to interface
+      //! @param[in] values Values to send to interface
       template<typename T>
       void
       sendMultiple(std::vector<T> values)
@@ -178,6 +179,8 @@ namespace Simulators
         send(&bfr, bfr.size());
       }
 
+      //! Send multiple, space separated, strings to interface
+      //! @param[in] values Strings to send to interface
       void
       sendMultiple(std::vector<std::string> values)
       {
@@ -193,6 +196,10 @@ namespace Simulators
 
       // TODO: Wait for reply method.
 
+      //! Poll and read from socket.
+      //! @param[out] bfr pointer to data buffer
+      //! @return Number of bytes read. In case bfr 
+      //!         is NULL return 1 but do not read.
       size_t
       read(std::vector<uint8_t>* bfr = nullptr)
       {
@@ -234,6 +241,10 @@ namespace Simulators
         return 0;
       }
 
+      //! Send to socket.
+      //! @param[in] bfr pointer to data buffer
+      //! @param[in] lenght data lenght
+      //! @return Number of bytes written.
       size_t
       send(std::vector<uint8_t>* bfr, size_t length)
       {
