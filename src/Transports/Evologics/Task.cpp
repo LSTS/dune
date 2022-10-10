@@ -205,7 +205,9 @@ namespace Transports
 
         param("Simulator - Entity Label", m_args.simulator_elabel)
         .defaultValue("Evologics Interface")
-        .description("Entity label of Evologics simulator");
+        .description("Entity label of Evologics simulator. If task is found the "
+                     "address is set to local (172.0.0.1) and port is set based on "
+                     "\"Address Section\" parameter (default + address).");
 
         param("Keep Alive - Timeout", m_args.kalive_tout)
         .defaultValue("5.0")
@@ -250,6 +252,19 @@ namespace Transports
       onEntityResolution(void)
       {
         processEntityForSoundSpeed();
+
+        // Check for Evologics simulator
+        try
+        {
+          resolveEntity(m_args.simulator_elabel);
+          m_simulating = m_ctx.profiles.isSelected("Simulation");
+        }
+        catch(const std::exception& e)
+        {
+          m_simulating = false;
+        }
+
+        debug("Simulator %sfound", m_simulating ? "" : "not ");
       }
 
       void
@@ -273,19 +288,6 @@ namespace Transports
           m_sound_speed = m_args.sound_speed_def;
           m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
         }
-
-        try
-        {
-          resolveEntity(m_args.simulator_elabel);
-          m_simulating = m_ctx.profiles.isSelected("Simulation");
-          debug("Simulator detected");
-        }
-        catch(const std::exception& e)
-        {
-          m_simulating = false;
-          debug("No simulator detected: %s", e.what());
-        }
-        
       }
 
       void
@@ -313,9 +315,9 @@ namespace Transports
         }
 
         // Change port for simulation purposes
-        if (m_simulating && m_args.port == c_default_port)
+        if (m_simulating)
         {
-          m_args.port += m_address;
+          m_args.port = c_default_port + m_address;
           m_args.address = Address(Address::Loopback);
         }
 
