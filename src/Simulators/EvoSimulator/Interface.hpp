@@ -90,6 +90,11 @@ namespace Simulators
         {
           m_sock->bind(m_port, m_address, reuse);
           m_sock->listen(backlog);
+
+          m_task->inf(DTR("%s socket listening: %s:%d"),
+                      m_name.c_str(),
+                      m_address.c_str(),
+                      m_port);
         }
         catch (std::exception& e)
         {
