@@ -70,24 +70,22 @@ namespace Simulators
     //! Buffer capacity.
     static const unsigned c_bfr_size = 255;
     //! Timeout for settings reply
-    double c_reply_timeout = 5.0;
+    const uint16_t c_driver_default_port = 9200;
 
     struct Arguments
     {
       //! Local UDP port of interface
       uint16_t local_port;
       //! IPv4 Address of interface
-      std::string local_address;
+      Address local_address;
       //! IPv4 Address of modem
-      std::string modem_address;
+      Address modem_address;
       //! Port for simulated modem
       uint16_t modem_port;
       //! Port for settings of simulated modem
       uint16_t settings_port;
       //! Port for state of simulated modem (position and orientation)
       uint16_t state_port;
-      //! Flag for auto assign local port and simulator IP
-      bool auto_assign;
       //! Name of the section with modem addresses.
       std::string addr_section;
       //! Position update period
@@ -146,7 +144,7 @@ namespace Simulators
         m_valid_pos(false)
       {
         param("Local Address", m_args.local_address)
-        .defaultValue("172.0.0.1")
+        .defaultValue("127.0.0.1")
         .description("IP address of remote system.");
 
         param("Local Port", m_args.local_port)
@@ -177,13 +175,13 @@ namespace Simulators
         .maximumValue("65535")
         .description("TCP port for simulated modem state (position and orientation).");
 
-        param("Auto Assign", m_args.auto_assign)
-        .defaultValue("true")
-        .description("Flag for auto assign local port and simulator IP");
-
         param("Address Section", m_args.addr_section)
         .defaultValue("Evologics Addresses")
-        .description("Name of the configuration section with modem addresses");
+        .description("Name of the configuration section with modem addresses. "
+                     "If not blank the modem address and driver port are set "
+                     "based on the Evologics addresses in the \"Address Section\" "
+                     "(default + address). Driver address is also set to local "
+                     "(172.0.0.1).");
 
         param("State Update Period", m_args.update_period)
         .defaultValue("1.0")
@@ -256,6 +254,11 @@ namespace Simulators
           if (paramChanged(m_args.settings_port))
             throw RestartNeeded(DTR("Restarting to change modem settings port"), 1);
         }
+
+        // Auto assign local port and simulator IP
+        // based on evologics address
+        if (!m_args.addr_section.empty())
+          autoAssign();
       }
 
       //! Acquire resources by binding to the local TCP port.
@@ -270,11 +273,6 @@ namespace Simulators
         // To convert from vehicle frame to modem frame
         double angles[3] = {0, Angles::radians(180), Angles::radians(-90)};
         m_rotation = Matrix(angles, 3, 1).toDCM();
-
-        // Auto assign local port and simulator IP
-        // based on evologics address
-        if (m_args.auto_assign)
-          autoAssign();
 
         // Socket array initialization
         m_interface[IC_LISTENER]  = new Interface(this, "LISTENER",
@@ -326,8 +324,11 @@ namespace Simulators
         // Maximum number of nodes = 10; Add more
         if (evo_address > 0 && evo_address <= 10)
         {
-          m_args.modem_address = "10.42.74." + std::to_string(evo_address);
-          m_args.local_port = 9200 + evo_address;
+          std::string add = "10.42.74." + std::to_string(evo_address);
+          m_args.modem_address = Address(add.c_str());
+
+          m_args.local_address = Address(Address::Loopback);
+          m_args.local_port = c_driver_default_port + evo_address;
         }
         else
         {

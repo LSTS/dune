@@ -54,16 +54,16 @@ namespace Simulators
       //! Address used in case of connection
       Address m_address;
 
-      //! Constructor for new socket
-      Interface(Tasks::Task* task, std::string name, std::string add, uint16_t port):
+      //! Constructor for new interface
+      Interface(Tasks::Task* task, std::string name, Address add, uint16_t port):
       m_task(task),
       m_sock(new TCPSocket),
       m_name(name),
       m_port(port),
-      m_address(add.c_str())
+      m_address(add)
       {}
 
-      //! Constructor for existing socket
+      //! Constructor w/ socket
       Interface(Tasks::Task* task, std::string name, TCPSocket* sock):
       m_task(task),
       m_sock(sock),
