@@ -41,8 +41,8 @@ namespace Simulators
   //! instructions found in "dmace-74-FEUP-1-user-guide.pdf", at:
   //! https://drive.google.com/file/d/1ya361hHqA2l3uRWixb0BMUCODfzFMgxm/view?usp=sharing
   //!
-  //! You must also enable a driver task that connects to this interface.
-  //! Try enabling "Transports.Evologics/Simulator".
+  //! You must also enable the evologics-simulator.ini in evologics.ini or 
+  //! evologics_ip_1.ini.
   //!
   //! You must now be able to simulate all vehicles in the address section (up to 10).
   //!
@@ -57,7 +57,7 @@ namespace Simulators
       IC_LISTENER = 0,
       //! Driver socket
       IC_DRIVER = 1,
-      //! Modem socket
+      //! Modem command socket
       IC_MODEM = 2,
       //! Modem status socket
       IC_STATE = 3,
@@ -116,9 +116,9 @@ namespace Simulators
     {
       // Task arguments.
       Arguments m_args;
-      //! TCP sockets
+      //! Interfaces
       Interface* m_interface[NUM_IC];
-      //! Last received SimulatedState
+      //! Last received position
       IMC::SimulatedState m_sstate;
       //! Position update timer
       Time::Counter<double> m_pos_update;
@@ -449,8 +449,7 @@ namespace Simulators
       }
 
       //! Relay incomming messages (modem to driver or driver to modem)
-      //! @param[in] in identifier of incomming message socket
-      //! @param[in] out identifier of outgoing message socket
+      //! @param[in] from identifier of incomming message interface
       void
       bridge(InterfaceCode from)
       {
@@ -486,6 +485,8 @@ namespace Simulators
         }
       }
 
+      //! Activates task if there is a valid position and the MODEM and DRIVER
+      //! interfaces are up.
       void
       stateMachine()
       {
@@ -526,6 +527,8 @@ namespace Simulators
         }
       }
 
+      //! Sets entity state to boot/initializing adding an extra message.
+      //! @param[in] msg message to add.
       void
       setBoot(std::string msg)
       {
