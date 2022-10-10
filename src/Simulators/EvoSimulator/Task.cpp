@@ -69,22 +69,22 @@ namespace Simulators
 
     //! Buffer capacity.
     static const unsigned c_bfr_size = 255;
-    //! Timeout for settings reply
+    //! Default driver port.
     const uint16_t c_driver_default_port = 9200;
 
     struct Arguments
     {
-      //! Local UDP port of interface
-      uint16_t local_port;
-      //! IPv4 Address of interface
-      Address local_address;
-      //! IPv4 Address of modem
+      //! Driver IPv4 address
+      Address driver_address;
+      //! Driver port
+      uint16_t driver_port;
+      //! Modem IPv4 address
       Address modem_address;
-      //! Port for simulated modem
+      //! Modem command port
       uint16_t modem_port;
-      //! Port for settings of simulated modem
+      //! Modem settings port
       uint16_t settings_port;
-      //! Port for state of simulated modem (position and orientation)
+      //! Modem state port (position and orientation)
       uint16_t state_port;
       //! Name of the section with modem addresses.
       std::string addr_section;
@@ -126,6 +126,7 @@ namespace Simulators
       std::vector<uint8_t> m_bfr;
       //! Rotation matrix
       Matrix m_rotation;
+      //! Flag for valid position received
       bool m_valid_pos;
       //! Common position reference
       //! to use as origin in simulator
@@ -143,37 +144,37 @@ namespace Simulators
         DUNE::Tasks::Task(name, ctx),
         m_valid_pos(false)
       {
-        param("Local Address", m_args.local_address)
-        .defaultValue("127.0.0.1")
-        .description("IP address of remote system.");
+        param("Driver Address", m_args.driver_address)
+        .defaultValue("172.0.0.1")
+        .description("IP address driver attepts to connect to.");
 
-        param("Local Port", m_args.local_port)
-        .defaultValue("9200")
+        param("Driver Port", m_args.driver_port)
+        .defaultValue(std::to_string(c_driver_default_port))
         .minimumValue("0")
         .maximumValue("65535")
-        .description("Local TCP port.");
+        .description("Port driver attepts to connect to.");
 
         param("Modem Address", m_args.modem_address)
         .defaultValue("10.42.74.1")
-        .description("IP address of remote system.");
+        .description("Modem IP address.");
 
         param("Modem Port", m_args.modem_port)
         .defaultValue("9200")
         .minimumValue("0")
         .maximumValue("65535")
-        .description("TCP port of simulated modem.");
+        .description("Modem command port.");
 
         param("Modem Settings Port", m_args.settings_port)
         .defaultValue("4242")
         .minimumValue("0")
         .maximumValue("65535")
-        .description("TCP port for simulated modem settings.");
+        .description("Modem settings port.");
 
         param("Modem State Port", m_args.state_port)
         .defaultValue("11000")
         .minimumValue("0")
         .maximumValue("65535")
-        .description("TCP port for simulated modem state (position and orientation).");
+        .description("Modem state port (position and orientation).");
 
         param("Address Section", m_args.addr_section)
         .defaultValue("Evologics Addresses")
@@ -239,11 +240,11 @@ namespace Simulators
             paramChanged(m_args.settings.betta))
           simulatorSetup();
 
-          if (paramChanged(m_args.local_address))
-            throw RestartNeeded(DTR("Restarting to change local address"), 1);
+          if (paramChanged(m_args.driver_address))
+            throw RestartNeeded(DTR("Restarting to change driver address"), 1);
 
-          if (paramChanged(m_args.local_port))
-            throw RestartNeeded(DTR("Restarting to change local port"), 1);
+          if (paramChanged(m_args.driver_port))
+            throw RestartNeeded(DTR("Restarting to change driver port"), 1);
 
           if (paramChanged(m_args.modem_address))
             throw RestartNeeded(DTR("Restarting to change modem address"), 1);
@@ -276,8 +277,8 @@ namespace Simulators
 
         // Socket array initialization
         m_interface[IC_LISTENER]  = new Interface(this, "LISTENER",
-                                                  m_args.local_address,
-                                                  m_args.local_port);
+                                                  m_args.driver_address,
+                                                  m_args.driver_port);
         m_interface[IC_MODEM]     = new Interface(this, "MODEM",
                                                   m_args.modem_address,
                                                   m_args.modem_port);
@@ -311,7 +312,7 @@ namespace Simulators
           Memory::clear(m_interface[i]);
       }
 
-      //! Auto assign simualtor IP (node) and local port
+      //! Auto assign modem address and driver port
       //! based on local evologics address.
       void
       autoAssign(void)
@@ -327,8 +328,8 @@ namespace Simulators
           std::string add = "10.42.74." + std::to_string(evo_address);
           m_args.modem_address = Address(add.c_str());
 
-          m_args.local_address = Address(Address::Loopback);
-          m_args.local_port = c_driver_default_port + evo_address;
+          m_args.driver_address = Address(Address::Loopback);
+          m_args.driver_port = c_driver_default_port + evo_address;
         }
         else
         {
