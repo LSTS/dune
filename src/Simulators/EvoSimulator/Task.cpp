@@ -128,6 +128,7 @@ namespace Simulators
       std::vector<uint8_t> m_bfr;
       //! Rotation matrix
       Matrix m_rotation;
+      bool m_valid_pos;
       //! Common position reference
       //! to use as origin in simulator
       struct pos
@@ -141,7 +142,8 @@ namespace Simulators
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_valid_pos(false)
       {
         param("Local Address", m_args.local_address)
         .defaultValue("172.0.0.1")
@@ -348,25 +350,14 @@ namespace Simulators
       void
       consume(const IMC::SimulatedState* msg)
       {
-        if (!isActive())
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          requestActivation();
-        }
-
         m_sstate = *msg;
+        m_valid_pos = true;
       }
 
       //! Consume vehicle position
       void
       consume(const IMC::GpsFix* msg)
       {
-        if (!isActive())
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          requestActivation();
-        }
-
         if (msg->type != IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
@@ -377,6 +368,8 @@ namespace Simulators
         m_sstate.x = 0;
         m_sstate.y = 0;
         m_sstate.z = 0;
+
+        m_valid_pos = true;
       }
 
       //! Send setting to modem
@@ -426,9 +419,6 @@ namespace Simulators
       void
       updateState()
       {
-        if (!m_pos_update.overflow())
-          return;
-
         double lat, lon;
         float height;
         double ned[3] = {0.0};
@@ -494,6 +484,54 @@ namespace Simulators
         }
       }
 
+      void
+      stateMachine()
+      {
+        if (!m_valid_pos)
+        {
+          setBoot("No valid position");
+
+          if (isActive())
+            requestDeactivation();
+            
+          return;
+        }
+
+        if (!m_interface[IC_DRIVER])
+        {
+          setBoot("DRIVER interface not ready");
+
+          if (isActive())
+            requestDeactivation();
+
+          return;
+        }
+
+        if (!m_interface[IC_MODEM])
+        {
+          setBoot("MODEM interface not ready");
+          
+          if (isActive())
+            requestDeactivation();
+            
+          return;
+        }
+
+        if (!isActive())
+        {
+          requestActivation();
+          setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_ACTIVE);
+        }
+      }
+
+      void
+      setBoot(std::string msg)
+      {
+        std::string str(Status::getString(CODE_INIT));
+        str += " | " + msg;
+        setEntityState(IMC::EntityState::ESTA_BOOT, str.c_str());
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -501,18 +539,14 @@ namespace Simulators
         while (!stopping())
         {
           consumeMessages();
+          checkForDriver();
+          stateMachine();
 
           if (!isActive())
             continue;
-
-          checkForDriver();
-          updateState();
-
-          if (!m_interface[IC_DRIVER])
-          {
-            debug("DRIVER interface not ready");
-            continue;
-          }
+          
+          if (m_pos_update.overflow())
+            updateState();
           
           bridge(IC_DRIVER);
           bridge(IC_MODEM);
