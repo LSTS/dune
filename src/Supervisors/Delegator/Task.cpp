@@ -279,7 +279,7 @@ namespace Supervisors
           IMC::PowerOperation pop;
           pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
           relayTo(&pop);
-          debug ("Sent PowerOperation to surrogate.");
+          debug ("Sent PowerOperation shutdown in progress to surrogate.");
           m_deact_countdown.reset();
           m_deactivating = true;
         }
