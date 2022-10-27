@@ -52,6 +52,8 @@ namespace Control
       static const uint32_t c_required = 0;
       //! Minimum speed reference
       static const float c_min_speed = 0.01;
+      //! Tolerance for heading error.
+      static const float c_yaw_tol = 0.2;
       //! Loop names
       static const std::string c_loop_name[] = {DTR_RT("Heading Rate"), DTR_RT("Heading"),
                                                 DTR_RT("Surge"), DTR_RT("Sway")};
@@ -85,6 +87,8 @@ namespace Control
         Matrix tmat;
         bool stabilize_ground;
         bool log_parcels;
+        //! Maximum heading error to consider aligned.
+        float yaw_max;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -93,6 +97,8 @@ namespace Control
         DiscretePID m_pid[LP_MAX_LOOPS];
         //! PID parcels
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
+        //! Vehicle is aligned.
+        bool m_aligned;
         //! Task Arguments
         Arguments m_args;
 
@@ -141,6 +147,10 @@ namespace Control
           param("Maximum Sway Reference", m_args.max_sway)
           .defaultValue("1.0")
           .description("Maximum admissible sway speed reference");
+
+          param("Alignment Threshold", m_args.yaw_max)
+          .defaultValue("30.0")
+          .description("Maximum admissable heading error to consider aligned");
 
           // Thrust allocation pseudo inverse matrix
           // PSEUDO INVERSE METHOD NOT IMPLEMENTED
@@ -228,9 +238,18 @@ namespace Control
         void
         onEstimatedState(const double timestep, const IMC::EstimatedState* msg)
         {
-          double X = surgeControl(timestep, msg);
-          double Y = swayControl(timestep, msg);
-          double N = headingControl(timestep, msg);
+          double X = 0, Y = 0, N = 0;
+
+          // Only move horizontally if aligned
+          float yaw_err = Angles::normalizeRadian(getYawRef() - msg->psi);
+          if (isAligned(yaw_err))
+          {
+            X = surgeControl(timestep, msg);
+            Y = swayControl(timestep, msg);
+          }
+          
+          N = headingControl(timestep, msg);
+
 
           // Compute the necessary forces for each thruster and send to bus
           tal(X, Y, N);
@@ -334,6 +353,28 @@ namespace Control
                             IMC::DesiredControl::FL_Y |
                             IMC::DesiredControl::FL_N);
           dispatch(dcontrol);
+        }
+
+        //! Check if we are facing our waypoint to thrust horizontally.
+        //! @param[in] yaw_err yaw error.
+        //! @return true if aligned, false otherwise.
+        bool
+        isAligned(float yaw_err)
+        {
+          // Check if we can thrust.
+          if (m_aligned)
+          {
+            // Do not thrust forward if heading error is too large.
+            if (std::fabs(yaw_err) > m_args.yaw_max * (1 + c_yaw_tol))
+              m_aligned = false;
+          }
+          else
+          {
+            if (std::fabs(yaw_err) < m_args.yaw_max)
+              m_aligned = true;
+          }
+
+          return m_aligned;
         }
       };
     }
