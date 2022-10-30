@@ -78,6 +78,8 @@ namespace Control
         std::vector<float> gains[LP_MAX_LOOPS];
         bool hrate_bypass;
         unsigned n_thrusters;
+        float int_surge_limit;
+        float int_sway_limit;
         float int_heading_limit;
         float int_hrate_limit;
         float max_hrate;
@@ -113,6 +115,14 @@ namespace Control
             .size(3)
             .description("PID gains for " + c_loop_name[i] + " controller");
           }
+
+          param("Surge Integral Limit", m_args.int_surge_limit)
+          .defaultValue("1.0")
+          .description("Integral limit surge and sway");
+
+          param("Sway Integral Limit", m_args.int_sway_limit)
+          .defaultValue("1.0")
+          .description("Integral limit surge and sway");
 
           param("Heading Integral Limit", m_args.int_heading_limit)
           .defaultValue("-1.0")
@@ -217,6 +227,10 @@ namespace Control
             if (m_args.log_parcels)
               m_pid[i].enableParcels(this, &m_parcels[i]);
           }
+
+          // Surge and sway control parameters.
+          m_pid[LP_SURGE].setIntegralLimits(m_args.int_surge_limit);
+          m_pid[LP_SWAY].setIntegralLimits(m_args.int_sway_limit);
 
           // Heading control parameters.
           m_pid[LP_HEADING].setIntegralLimits(m_args.int_heading_limit);
