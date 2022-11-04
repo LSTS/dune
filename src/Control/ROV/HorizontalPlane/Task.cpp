@@ -265,18 +265,20 @@ namespace Control
         void
         onEstimatedState(const double timestep, const IMC::EstimatedState* msg)
         {
-          double X = 0, Y = 0, N = 0;
+          if (timestep > 1.0)
+            return;
+            
+          double X = surgeControl(timestep, msg);
+          double Y = swayControl(timestep, msg);
+          double N = headingControl(timestep, msg);
 
           // Only move horizontally if aligned
           float yaw_err = Angles::normalizeRadian(getYawRef() - msg->psi);
-          if (isAligned(yaw_err))
+          if (!isAligned(yaw_err))
           {
-            X = surgeControl(timestep, msg);
-            Y = swayControl(timestep, msg);
+            X = 0.0;
+            Y = 0.0;
           }
-          
-          N = headingControl(timestep, msg);
-
 
           // Compute the necessary forces for each thruster and send to bus
           tal(X, Y, N);
