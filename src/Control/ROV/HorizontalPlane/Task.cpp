@@ -91,12 +91,17 @@ namespace Control
         bool log_parcels;
         //! Maximum heading error to consider aligned.
         float yaw_max;
+        //! Ramp actuation limit when the value is rising in actuation per second
+        float act_ramp_surge;
+        float act_ramp_sway;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
       {
         //! PID controllers
         DiscretePID m_pid[LP_MAX_LOOPS];
+        //! Last actuation.
+        float m_last_act[LP_MAX_LOOPS];
         //! PID parcels
         IMC::ControlParcel m_parcels[LP_MAX_LOOPS];
         //! Vehicle is aligned.
@@ -177,6 +182,14 @@ namespace Control
           param("Log PID Parcels", m_args.log_parcels)
           .defaultValue("true")
           .description("Log the size of each PID parcel");
+
+          param("Ramp Actuation Limit - Surge", m_args.act_ramp_surge)
+          .defaultValue("0.0")
+          .description("Ramp actuation limit when the value is rising in actuation per second");
+
+          param("Ramp Actuation Limit - Sway", m_args.act_ramp_sway)
+          .defaultValue("0.0")
+          .description("Ramp actuation limit when the value is rising in actuation per second");
         }
 
         void
@@ -280,6 +293,14 @@ namespace Control
 
           float cmd;
           cmd = m_pid[LP_SURGE].step(timestep, ref - msg->u);
+
+          if ((cmd > m_last_act[LP_SURGE]) && (m_args.act_ramp_surge > 0.0))
+          {
+            cmd = m_last_act[LP_SURGE] + trimValue((cmd - m_last_act[LP_SURGE]) / timestep,
+                                                    0.0, m_args.act_ramp_surge * timestep);
+          }
+
+          m_last_act[LP_SURGE] = cmd;
           return cmd;
         }
 
@@ -294,6 +315,14 @@ namespace Control
 
           float cmd;
           cmd = m_pid[LP_SWAY].step(timestep, ref - msg->v);
+
+          if ((cmd > m_last_act[LP_SWAY]) && (m_args.act_ramp_sway > 0.0))
+          {
+            cmd = m_last_act[LP_SWAY] + trimValue((cmd - m_last_act[LP_SWAY]) / timestep,
+                                                   0.0, m_args.act_ramp_sway * timestep);
+          }
+
+          m_last_act[LP_SWAY] = cmd;
           return cmd;
         }
 
