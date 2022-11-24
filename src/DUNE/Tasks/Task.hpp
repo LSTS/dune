@@ -428,8 +428,8 @@ namespace DUNE
         std::stringstream ss;
         ss << DTR(Status::getString(code)) << " - " 
            << description;
-           
-        setEntityState(state, ss.str());
+        
+        m_entity->setState(state, ss.str());
       }
 
       //! Retrieve the current entity state.
