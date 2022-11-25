@@ -430,7 +430,7 @@ namespace DUNE
 
           // Begin activation sequence.
         case SM_ACT_BEGIN:
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
           m_wdog.setTop(getActivationTime());
           if (m_power_channels.empty())
           {
