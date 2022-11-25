@@ -211,6 +211,14 @@ namespace DUNE
         m_restart_delay = seconds;
       }
 
+      //! Set the data read period.
+      //! @param[in] seconds time between data polling, in seconds.
+      void
+      setReadInterval(double seconds)
+      {
+        m_read_interval = seconds;
+      }
+
     private:
       //! Finite state machine states.
       enum StateMachineStates
@@ -283,6 +291,10 @@ namespace DUNE
       double m_restart_delay;
       //! Restart timer.
       DUNE::Time::Counter<double> m_restart_timer;
+      //! Data read interval.
+      double m_read_interval;
+      //! Data read timer.
+      DUNE::Time::Counter<double> m_read_timer;
 
       void
       onResourceRelease(void) override;

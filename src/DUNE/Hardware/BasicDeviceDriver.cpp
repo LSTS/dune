@@ -53,7 +53,8 @@ namespace DUNE
         m_fault_count(0),
         m_timeout_count(0),
         m_restart(false),
-        m_restart_delay(0.0)
+        m_restart_delay(0.0),
+        m_read_interval(0.0)
     {
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
@@ -565,13 +566,18 @@ namespace DUNE
             break;
           }
 
+          m_read_timer.setTop(m_read_interval);
           queueState(SM_ACT_SAMPLE);
           spew("start read sample");
           break;
 
           // Read samples.
         case SM_ACT_SAMPLE:
-          readSample();
+          if (m_read_timer.overflow())
+          {
+            m_read_timer.setTop(m_read_interval);
+            readSample();
+          }
           break;
 
           // Start deactivation procedure.
