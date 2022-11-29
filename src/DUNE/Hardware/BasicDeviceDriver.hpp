@@ -67,6 +67,10 @@ namespace DUNE
       consume(const IMC::PowerChannelState* msg);
 
     protected:
+      //! Initialize resources.
+      void
+      onResourceInitialization(void) override;
+      
       //! Create an I/O handle given an URI.
       //!
       //! @param[in] uri URI.
@@ -298,9 +302,6 @@ namespace DUNE
 
       void
       onResourceRelease(void) override;
-
-      void
-      onResourceInitialization(void) override;
 
       //! Push a new state to the state queue.
       //! @param[in] state state machine state.
