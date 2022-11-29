@@ -171,6 +171,13 @@ namespace Sensors
         }
       }
 
+      void
+      onResourceInitialization(void) override
+      {
+        BasicDeviceDriver::onResourceInitialization();
+        requestActivation();
+      }
+
       //! Try to connect to the device.
       //! @return true if connection was established, false otherwise.
       bool
