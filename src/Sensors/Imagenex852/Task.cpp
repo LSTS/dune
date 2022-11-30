@@ -174,8 +174,8 @@ namespace Sensors
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description(String::str("IO device URI in the form \"uart://DEVICE:%d\"." 
-                                 "This device has only one baud rate.", c_uart_baud));
+        .description("IO device URI in the form \"uart://DEVICE\"." 
+                     "This device has only one baud rate.");
 
         param("Sampling Frequency", m_args.sample_frequency)
         .defaultValue("5")
@@ -330,13 +330,12 @@ namespace Sensors
         try
         {
           char uart[128] = {0};
-          unsigned baud = 0;
 
-          if (std::sscanf(m_args.io_dev.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
+          if (std::sscanf(m_args.io_dev.c_str(), "uart://%s", uart) != 1)
             return false;
 
           m_uart = new SerialPort(uart,
-                                  baud,
+                                  c_uart_baud,
                                   SerialPort::SP_PARITY_NONE,
                                   SerialPort::SP_STOPBITS_1,
                                   SerialPort::SP_DATABITS_8,
