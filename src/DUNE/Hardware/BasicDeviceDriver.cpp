@@ -259,6 +259,9 @@ namespace DUNE
       if (!enableLogControl())
         return;
 
+      if (discardLoggingControl(msg))
+        return;
+
       switch (msg->op)
       {
         case IMC::LoggingControl::COP_CURRENT_NAME:
