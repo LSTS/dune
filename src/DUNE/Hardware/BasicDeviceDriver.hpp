@@ -190,6 +190,17 @@ namespace DUNE
         return msg->getSource() != getSystemId();
       }
 
+      //! Test if the logging control message should be discarded.
+      //! @param[in] msg logging control message.
+      //! @return true to discard message, false otherwise.
+      virtual bool
+      discardLoggingControl(const IMC::LoggingControl* msg)
+      {
+        (void)msg;
+        
+        return false;
+      }
+
       void
       clearFaultCount(void)
       {
