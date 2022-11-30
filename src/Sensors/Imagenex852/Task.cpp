@@ -174,7 +174,7 @@ namespace Sensors
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description(String::str("IO device URI in the form \"uart://DEVICE:%s\"." 
+        .description(String::str("IO device URI in the form \"uart://DEVICE:%d\"." 
                                  "This device has only one baud rate.", c_uart_baud));
 
         param("Sampling Frequency", m_args.sample_frequency)
@@ -276,7 +276,6 @@ namespace Sensors
         m_profile.bits_per_point = 8;
         m_profile.scale_factor = 1.0f;
 
-        bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxStatus>(this);
       }
@@ -402,13 +401,11 @@ namespace Sensors
         m_uam_tx_ip = (msg->value == IMC::UamTxStatus::UTS_IP);
       }
 
-      void
-      consume(const IMC::SoundSpeed* msg)
-      {
-        if (msg->value < 0.0)
-          return;
 
-        m_sound_speed = msg->value;
+      void
+      onSoundSpeed(double value) override
+      {
+        m_sound_speed = value;
       }
 
       void
