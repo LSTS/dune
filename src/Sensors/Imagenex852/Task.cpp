@@ -376,7 +376,7 @@ namespace Sensors
       }
 
       bool
-      onSynchronize(void)
+      onSynchronize(void) override
       {
         m_trigger.setActive(isActive());
         m_trigger.setUART(m_uart);
@@ -399,7 +399,6 @@ namespace Sensors
       {
         m_uam_tx_ip = (msg->value == IMC::UamTxStatus::UTS_IP);
       }
-
 
       void
       onSoundSpeed(double value) override
