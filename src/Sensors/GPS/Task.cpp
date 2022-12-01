@@ -172,9 +172,8 @@ namespace Sensors
       }
 
       void
-      onResourceInitialization(void) override
+      onIdle(void)
       {
-        BasicDeviceDriver::onResourceInitialization();
         requestActivation();
       }
 
