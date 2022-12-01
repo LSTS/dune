@@ -533,6 +533,8 @@ namespace Sensors
           spew("%s", e.what());
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        return true;
       }
 
       //! Disconnect from device.
@@ -1009,7 +1011,11 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
           }
+
+          return true;
         }
+
+        return false;
       }
     };
   }
