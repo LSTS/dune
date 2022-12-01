@@ -64,6 +64,8 @@ namespace Sensors
     {
       //! IO device.
       std::string io_dev;
+      //! Read frequency.
+      double read_frequency;
       // Data gain.
       unsigned dat_gain;
       // Balance gain.
@@ -124,6 +126,11 @@ namespace Sensors
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("tcp://192.168.0.5:4040")
         .description("IO device URI in the form \"tcp://HOST:PORT\"");
+        
+        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
+        .units(Units::Hertz)
+        .defaultValue("1.0")
+        .description(DTR("Frequency at which task reads data"));
 
         param("Data Gain", m_args.dat_gain)
         .defaultValue("40")
@@ -179,6 +186,9 @@ namespace Sensors
 
         if (paramChanged(m_args.io_dev) && m_sock != NULL)
           throw RestartNeeded(DTR("restarting to change URI"), 1);
+
+        if (paramChanged(m_args.read_frequency))
+          setReadFrequency(m_args.read_frequency);
       }
 
       //! Try to connect to the device.
@@ -259,7 +269,7 @@ namespace Sensors
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_ping.min_range = 0;
         m_ping.max_range = c_ranges[idx];
-        setReadInterval(c_range_rates[idx] / 1000.0);
+        setReadFrequency(1.0 / (c_range_rates[idx] / 1000.0));
       }
 
       void
@@ -328,6 +338,8 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+        
+        return true;
       }
     };
   }
