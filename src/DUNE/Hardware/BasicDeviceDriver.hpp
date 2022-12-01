@@ -223,11 +223,14 @@ namespace DUNE
       }
 
       //! Set the data read period.
-      //! @param[in] seconds time between data polling, in seconds.
+      //! @param[in] freq polling frequency, in hertz.
       void
-      setReadInterval(double seconds)
+      setReadFrequency(double freq)
       {
-        m_read_interval = seconds;
+        if (freq != 0.0)
+          m_read_interval = 1.0 / freq;
+        else
+          m_read_interval = 0.0;
       }
 
     private:
