@@ -364,10 +364,6 @@ namespace Sensors
         m_sdata[20] = 0x08;
         m_sdata[26] = 0xfd;
         m_sdata[SD_FREQUENCY] = (uint8_t)86;
-
-        // Register consumers.
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::SoundSpeed>(this);
       }
 
       //! Update task parameters.
