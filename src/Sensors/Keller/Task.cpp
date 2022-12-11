@@ -202,6 +202,9 @@ namespace Sensors
 
         m_calibrated = false;
 
+        // Use only wait for messages
+        setWaitMessages(true);
+
         // Register consumers.
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
