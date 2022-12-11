@@ -54,7 +54,8 @@ namespace DUNE
         m_timeout_count(0),
         m_restart(false),
         m_restart_delay(0.0),
-        m_read_interval(0.0)
+        m_read_interval(0.0),
+        m_wait_msg(false)
     {
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
@@ -713,7 +714,7 @@ namespace DUNE
     void
     BasicDeviceDriver::step()
     {
-      if (isActive())
+      if (isActive() && !m_wait_msg)
         consumeMessages();
       else
         waitForMessages(1.0);
