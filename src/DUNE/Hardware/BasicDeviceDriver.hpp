@@ -233,6 +233,14 @@ namespace DUNE
           m_read_interval = 0.0;
       }
 
+      //! Only use waitForMessage method in main.
+      //! @param[in] wait_msg true to use waitForMessage.
+      void
+      setWaitMessages(bool wait_msg)
+      {
+        m_wait_msg = wait_msg;
+      }
+
     private:
       //! Finite state machine states.
       enum StateMachineStates
@@ -309,6 +317,8 @@ namespace DUNE
       double m_read_interval;
       //! Data read timer.
       DUNE::Time::Counter<double> m_read_timer;
+      //! Wait for meesage flag
+      bool m_wait_msg;
 
       void
       onResourceRelease(void) override;
