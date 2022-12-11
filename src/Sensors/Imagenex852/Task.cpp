@@ -446,8 +446,6 @@ namespace Sensors
       bool
       onReadData() override
       {
-        consumeMessages();
-
         if (m_wdog.overflow())
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
