@@ -153,6 +153,9 @@ namespace Sensors
         .defaultValue("false")
         .description("Enable novatel sbas mode");
 
+        // Use only wait for messages
+        setWaitMessages(true);
+
         // Initialize messages.
         clearMessages();
 
