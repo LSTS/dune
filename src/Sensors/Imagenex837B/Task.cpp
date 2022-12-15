@@ -321,7 +321,7 @@ namespace Sensors
         .description("837/83P file name");
 
         param("Power Channel", m_args.power_channel)
-        .defaultValue("Multibeam")
+        .defaultValue("")
         .description("Power channel that controls the power of the device");
 
         param("Adaptive Range Modifier", m_args.mod)
