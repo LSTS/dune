@@ -238,7 +238,7 @@ namespace Sensors
       }
 
       void
-      onIdle(void)
+      onIdle(void) override
       {
         requestActivation();
       }
