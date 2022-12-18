@@ -77,8 +77,8 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      std::string uart_dev;
-      unsigned uart_baud;
+      //! IO device (URI).
+      std::string io_dev;
       double data_tout;
       int data_rate;
     };
@@ -89,7 +89,7 @@ namespace Sensors
     //! characters to validate process.
     static const int c_min_chars = 10;
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Internal read buffer.
       static const unsigned c_bfr_size = 128;
@@ -119,18 +119,14 @@ namespace Sensors
       Counter<double> m_wdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_uart(NULL),
         m_tstamp(0)
       {
         // Retrieve config values.
-        param("Serial Port - Device", m_args.uart_dev)
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("19200")
-        .description("Serial port baud rate");
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
         param("Data Timeout", m_args.data_tout)
         .defaultValue("0.5")
@@ -181,51 +177,66 @@ namespace Sensors
         bind<IMC::DevCalibrationControl>(this);
       }
 
-      //! Release allocated resources.
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_uart);
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_uart->setCanonicalInput(true);
-        m_uart->flush();
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        m_accumulator = 0;
-        m_state = STA_BOOT;
-
-        while (!stopping())
-        {
-          if (setParameter("R", "Output rate", m_args.data_rate))
-            break;
-        }
-
-        while (!stopping())
-        {
-          if (setParameter("X", "Display", c_display_fields))
-            break;
-        }
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        m_wdog.reset();
-      }
-
       //! Update %Task parameters.
       void
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.data_tout))
           m_wdog.setTop(m_args.data_tout);
+      }
+
+      void
+      onIdle(void) override
+      {
+        requestActivation();
+      }
+
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        try
+        {
+          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+          m_uart->setCanonicalInput(true);
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        return true;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        Memory::clear(m_uart);
+      }
+
+      //! Synchronize with device.
+      bool
+      onSynchronize() override
+      {
+        m_accumulator = 0;
+        m_state = STA_BOOT;
+
+        if (!setParameter("R", "Output rate", m_args.data_rate))
+          return false;
+
+        if (setParameter("X", "Display", c_display_fields))
+          return false;
+
+        return true;
+      }
+
+      //! Device may be initialized.
+      void
+      onInitializeDevice() override
+      {
+        m_wdog.reset();
       }
 
       //! Read a string from the serial port,
@@ -394,75 +405,74 @@ namespace Sensors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      void
-      onMain(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        if (m_wdog.overflow())
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+
+        if (m_state == STA_WAIT_LEVEL)
         {
-          if (m_wdog.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-
-          consumeMessages();
-
-          if (m_state == STA_WAIT_LEVEL)
-          {
-            std::string desc = String::str(DTR("Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"),
-                                           m_euler.phi, m_euler.theta);
-            m_states[STA_WAIT_LEVEL].step = desc;
-            dispatch(m_states[m_state]);
-          }
-
-          if (m_state == STA_ROTATE)
-          {
-
-            calibrating();
-            continue;
-          }
-
-          int rv = readString();
-          if (rv <= 0)
-            continue;
-
-          unsigned rcsum = 0;
-          unsigned ccsum = XORChecksum::compute((uint8_t*)m_bfr + 1, rv - 1 - 5);
-
-          std::sscanf(m_bfr, "$C%lfP%lfR%lfT%fMx%lfMy%lfMz%lfAx%lfAy%lfAz%lf*%02X\r\n",
-                      &m_euler.psi_magnetic, &m_euler.theta, &m_euler.phi,
-                      &m_temp.value,
-                      &m_mag.x, &m_mag.y, &m_mag.z,
-                      &m_accel.x, &m_accel.y, &m_accel.z,
-                      &rcsum);
-
-          if (rcsum != ccsum)
-            continue;
-
-          // Convert degree to radian.
-          m_euler.setTimeStamp();
-          m_euler.psi_magnetic = Angles::radians(m_euler.psi_magnetic);
-          m_euler.psi = m_euler.psi_magnetic;
-          m_euler.phi = Angles::radians(m_euler.phi);
-          m_euler.theta = Angles::radians(m_euler.theta);
-          dispatch(m_euler, DF_KEEP_TIME);
-
-          // Convert G to m/s/s.
-          m_accel.setTimeStamp(m_euler.getTimeStamp());
-          m_accel.x = Math::c_gravity * m_accel.x;
-          m_accel.y = Math::c_gravity * m_accel.y * -1.0;
-          m_accel.z = Math::c_gravity * m_accel.z * -1.0;
-          dispatch(m_accel, DF_KEEP_TIME);
-
-          m_temp.setTimeStamp(m_euler.getTimeStamp());
-          dispatch(m_temp, DF_KEEP_TIME);
-
-          m_mag.setTimeStamp(m_euler.getTimeStamp());
-          m_mag.x /= 1000.0;
-          m_mag.y /= 1000.0;
-          m_mag.z /= 1000.0;
-          dispatch(m_mag, DF_KEEP_TIME);
-
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_wdog.reset();
+          std::string desc = String::str(DTR("Level the device and hit NEXT (Roll: %0.2f | Pitch: %0.2f)"),
+                                          m_euler.phi, m_euler.theta);
+          m_states[STA_WAIT_LEVEL].step = desc;
+          dispatch(m_states[m_state]);
         }
+
+        if (m_state == STA_ROTATE)
+        {
+
+          calibrating();
+          return false;
+        }
+
+        int rv = readString();
+        if (rv <= 0)
+          return false;
+
+        unsigned rcsum = 0;
+        unsigned ccsum = XORChecksum::compute((uint8_t*)m_bfr + 1, rv - 1 - 5);
+
+        std::sscanf(m_bfr, "$C%lfP%lfR%lfT%fMx%lfMy%lfMz%lfAx%lfAy%lfAz%lf*%02X\r\n",
+                    &m_euler.psi_magnetic, &m_euler.theta, &m_euler.phi,
+                    &m_temp.value,
+                    &m_mag.x, &m_mag.y, &m_mag.z,
+                    &m_accel.x, &m_accel.y, &m_accel.z,
+                    &rcsum);
+
+        if (rcsum != ccsum)
+          return false;
+
+        // Convert degree to radian.
+        m_euler.setTimeStamp();
+        m_euler.psi_magnetic = Angles::radians(m_euler.psi_magnetic);
+        m_euler.psi = m_euler.psi_magnetic;
+        m_euler.phi = Angles::radians(m_euler.phi);
+        m_euler.theta = Angles::radians(m_euler.theta);
+        dispatch(m_euler, DF_KEEP_TIME);
+
+        // Convert G to m/s/s.
+        m_accel.setTimeStamp(m_euler.getTimeStamp());
+        m_accel.x = Math::c_gravity * m_accel.x;
+        m_accel.y = Math::c_gravity * m_accel.y * -1.0;
+        m_accel.z = Math::c_gravity * m_accel.z * -1.0;
+        dispatch(m_accel, DF_KEEP_TIME);
+
+        m_temp.setTimeStamp(m_euler.getTimeStamp());
+        dispatch(m_temp, DF_KEEP_TIME);
+
+        m_mag.setTimeStamp(m_euler.getTimeStamp());
+        m_mag.x /= 1000.0;
+        m_mag.y /= 1000.0;
+        m_mag.z /= 1000.0;
+        dispatch(m_mag, DF_KEEP_TIME);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.reset();
+
+        return true;
       }
     };
   }
