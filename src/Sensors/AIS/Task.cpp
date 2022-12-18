@@ -121,6 +121,11 @@ namespace Sensors
         return true;
       }
 
+      //! No initialization process.
+      void
+      onInitializeDevice() override
+      { }
+
       //! Disconnect from device.
       void
       onDisconnect() override
