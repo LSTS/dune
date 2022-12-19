@@ -226,7 +226,7 @@ namespace Sensors
         if (!setParameter("R", "Output rate", m_args.data_rate))
           return false;
 
-        if (setParameter("X", "Display", c_display_fields))
+        if (!setParameter("X", "Display", c_display_fields))
           return false;
 
         return true;
