@@ -210,6 +210,8 @@ namespace Sensors
         for (unsigned i = 0; i <= c_num_addr - 1; i++)
           m_addr[i] = c_mag_addr + (uint16_t)(i * 2);
 
+        setWaitMessages(true);
+
         bind<IMC::MagneticField>(this);
       }
 
