@@ -65,12 +65,13 @@ namespace Sensors
       //! Interrupt/Poll for serial port
       Poll m_poll;
 
-      DriverOEMX(DUNE::Tasks::Task* task, SerialPort* uart, Poll poll):
+      DriverOEMX(DUNE::Tasks::Task* task, SerialPort* uart, Poll poll, bool d_all_set):
         m_task(task)
       {
         m_uart = uart;
         m_poll = poll;
         m_timeout_uart = 1.0f;;
+        m_d_all_set = d_all_set;
       }
 
       ~DriverOEMX(void)
@@ -145,6 +146,8 @@ namespace Sensors
           m_uart->writeString("display options\r\r");
           std::string txtRec;
           bool isFristTerminator = true;
+          std::string string_line;
+          std::string settings_block;
 
           while(!m_task->isStopping())
           {
@@ -153,6 +156,7 @@ namespace Sensors
               {
                 m_uart->read(usart_rec, 1);
                 txtRec += usart_rec[0];
+                string_line += usart_rec[0];
 
                 if (usart_rec[0] == '>')
                 {
@@ -161,24 +165,18 @@ namespace Sensors
                   else
                     break;
                 }
+
+                if (usart_rec[0] == '\n' && m_d_all_set)
+                {
+                  std::replace(string_line.begin(), string_line.end(), '\n', ' ');
+                  m_task->inf("%s", string_line.c_str());
+                  string_line.clear();
+                }
+
               }
           }
 
-          std::string delimiter = "\r\n\r\n";
-          size_t pos = 0;
-          size_t cnt = 0;
-          std::string token[4];
-          while ((pos = txtRec.find(delimiter)) != std::string::npos)
-          {
-            token[cnt] = txtRec.substr(0, pos);
-            txtRec.erase(0, pos + delimiter.length());
-            cnt++;
-          }
-          token[cnt] = txtRec;
-
-          getFirmwareVersion(token[0]);
-          m_ctdData.primaryInfo = getInfoMount(token[1]);
-          m_ctdData.secondaryInfo = getInfoMount(token[2]);
+          getFirmwareVersion(txtRec);
         }
 
         return result;
@@ -188,38 +186,14 @@ namespace Sensors
       getFirmwareVersion(std::string text)
       {
         m_task->spew("%s", text.c_str());
-        std::string identifier = "Firmware=V";
-        std::size_t found = text.find(identifier);
-        std::string version = text.substr(found, identifier.size() + 5);
-        std::replace(version.begin(), version.end(), '\r', ' ');
-        std::replace(version.begin(), version.end(), '\n', '\0');
+        std::string typeCTD = extractInformation("Type=", text);
+        std::string version = extractInformation("Firmware=", text);
+        std::string serialCTD = extractInformation("SN=", text);
+        m_task->inf("Type=%s", typeCTD.c_str());
+        m_task->inf("Firmware=%s", version.c_str());
+        m_task->inf("SN=%s", serialCTD.c_str());
+        m_ctdData.ctdInfo = typeCTD;
 
-        identifier = "SN=";
-        found = text.find(identifier);
-        std::string serialCTD = text.substr(found, identifier.size() + 6);
-        std::replace(serialCTD.begin(), serialCTD.end(), '\r', ' ');
-        std::replace(serialCTD.begin(), serialCTD.end(), '\n', '\0');
-
-        identifier = "Type=";
-        found = text.find(identifier);
-        std::string typeCTD = text.substr(found, identifier.size() + 4);
-        std::replace(typeCTD.begin(), typeCTD.end(), '\r', ' ');
-        std::replace(typeCTD.begin(), typeCTD.end(), '\n', '\0');
-
-        m_ctdData.ctdInfo = typeCTD + version + serialCTD;
-      }
-
-      std::string
-      getInfoMount(std::string text)
-      {
-        m_task->spew("%s", text.c_str());
-        std::string identifier = "SensorName=";
-        std::size_t found = text.find(identifier);
-        identifier = "\r\n";
-        std::size_t found2 = text.find(identifier, found);
-        std::string serialN = text.substr(found2 + 2, text.size() - found2 - 4);
-
-        return text.substr(found, found2 - found) + " " + serialN;
       }
 
       bool
@@ -273,6 +247,22 @@ namespace Sensors
       float m_timeout_uart;
       //! Buffer of uart
       char bfr[32];
+      //! Display all Settings
+      bool m_d_all_set;
+
+      std::string
+      extractInformation(std::string key, const std::string& theEntireString)
+      {
+        std::string s = key;
+        auto p1 = theEntireString.find(s);
+        if (std::string::npos != p1)
+          p1 += s.size();
+        auto p2 = theEntireString.find_first_of('\n', p1);
+        if (std::string::npos != p2)
+          return theEntireString.substr(p1, p2 - p1);
+
+        return "";
+      }
 
     };
   }

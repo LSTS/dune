@@ -63,6 +63,8 @@ namespace Sensors
       std::vector<std::string> primary_mount;
       //! List of sensors in secondary mount.
       std::vector<std::string> secondary_mount;
+      //! Display all Settings.
+      bool d_all_settings;
     };
 
     struct SensorStateData
@@ -173,6 +175,10 @@ namespace Sensors
         param("Secondary Mount", m_args.secondary_mount)
         .defaultValue("")
         .description("List of sensors in secondary mount");
+
+        param("Display all Settings", m_args.d_all_settings)
+        .defaultValue("false")
+        .description("Display all Settings of sensor");
       }
 
       //! Acquire resources.
@@ -212,7 +218,7 @@ namespace Sensors
           m_uart->setCanonicalInput(true);
           m_uart->flush();
           m_poll.add(*m_uart);
-          m_driver = new DriverOEMX(this, m_uart, m_poll);
+          m_driver = new DriverOEMX(this, m_uart, m_poll, m_args.d_all_settings);
           m_numberSensors = m_args.primary_mount.size() + m_args.secondary_mount.size();
           m_first_value = true;
         }
@@ -263,16 +269,8 @@ namespace Sensors
       void
       getInfoOfCTD()
       {
-        if(m_driver->getInfoOfCTD())
-        {
-          inf("CTD Info: %s", m_driver->m_ctdData.ctdInfo.c_str());
-          inf("Primary Mount Info: %s", m_driver->m_ctdData.primaryInfo.c_str());
-          inf("Secondary Mount Info: %s", m_driver->m_ctdData.secondaryInfo.c_str());
-        }
-        else
-        {
+        if(!m_driver->getInfoOfCTD())
           throw RestartNeeded(DTR("com error - get info"), 10, true);
-        }
       }
 
       void
