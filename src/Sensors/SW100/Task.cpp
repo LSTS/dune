@@ -119,9 +119,6 @@ namespace Sensors
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
 
-        // Use only wait for messages
-        setWaitMessages(true);
-
         // Register consumers.
         bind<IMC::VehicleMedium>(this);
         bind<IMC::VehicleState>(this);
