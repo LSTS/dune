@@ -282,8 +282,8 @@ namespace Sensors
           return true;
         }
         catch (...)
-        {        
-          return false;
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
         return false;
