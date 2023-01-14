@@ -523,6 +523,8 @@ namespace Sensors
             m_udp = new UDPSocket;
             m_udp->bind(port, Address::Any, false);
           }
+
+          return m_tcp || m_udp;
         }
         catch (std::runtime_error& e)
         {
@@ -530,7 +532,7 @@ namespace Sensors
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
