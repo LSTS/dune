@@ -244,13 +244,14 @@ namespace Sensors
         {
           m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
           m_ctl = new UCTK::Interface(m_uart);
+          return true;
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(DTR(e.what()), 5.0);
         }
 
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
