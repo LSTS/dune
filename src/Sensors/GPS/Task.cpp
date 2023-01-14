@@ -190,13 +190,14 @@ namespace Sensors
           m_handle = openDeviceHandle(m_args.io_dev);
           m_reader = new Reader(this, m_handle);
           m_reader->start();
+          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
