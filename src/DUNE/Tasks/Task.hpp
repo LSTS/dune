@@ -415,29 +415,6 @@ namespace DUNE
         m_entity->setState(state, description);
       }
 
-      //! Set entity state message.
-      //! @param[in] code status code.
-      //! @param[in] msg custom state message.
-      void
-      setStateMsg(const std::string& msg)
-      {
-        m_entity->setState(getEntityState(), msg);
-      }
-
-      //! Set entity state message with pre-defined code.
-      //! @param[in] code status code.
-      //! @param[in] msg custom state message.
-      void
-      setStateMsg(Status::Code code,
-                   const std::string& msg)
-      {
-        std::stringstream ss;
-        ss << DTR(Status::getString(code)) << " - " 
-           << msg;
-        
-        m_entity->setState(getEntityState(), ss.str());
-      }
-
       //! Retrieve the current entity state.
       //! @return entity state.
       IMC::EntityState::StateEnum
