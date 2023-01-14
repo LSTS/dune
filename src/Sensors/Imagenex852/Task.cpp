@@ -327,32 +327,33 @@ namespace Sensors
       bool
       onConnect() override
       {
+        char uart[128] = {0};
+
+        if (std::sscanf(m_args.io_dev.c_str(), "uart://%s", uart) != 1)
+          return false;
+        
         try
         {
-          char uart[128] = {0};
-
-          if (std::sscanf(m_args.io_dev.c_str(), "uart://%s", uart) != 1)
-            return false;
-
           m_uart = new SerialPort(uart,
                                   c_uart_baud,
                                   SerialPort::SP_PARITY_NONE,
                                   SerialPort::SP_STOPBITS_1,
                                   SerialPort::SP_DATABITS_8,
                                   true);
+
+          m_wdog.setTop(2.0);
+
+          if (m_args.pattern_filter)
+            m_pfilt = new PatternFilter(c_pattern_size, m_args.pattern_diff,
+                                        c_pattern_samples, c_pattern_occurs);
+          return true;
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(e.what(), 30);
         }
 
-        m_wdog.setTop(2.0);
-
-        if (m_args.pattern_filter)
-          m_pfilt = new PatternFilter(c_pattern_size, m_args.pattern_diff,
-                                      c_pattern_samples, c_pattern_occurs);
-
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
