@@ -255,13 +255,14 @@ namespace Sensors
         try
         {
           m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 30);
         }
 
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
