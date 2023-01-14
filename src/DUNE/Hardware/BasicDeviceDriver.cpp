@@ -54,8 +54,8 @@ namespace DUNE
         m_timeout_count(0),
         m_restart(false),
         m_restart_delay(0.0),
-        m_read_interval(0.0),
-        m_wait_msg(false)
+        m_read_period(0.0),
+        m_wait_msg_timeout(0.0)
     {
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
@@ -570,7 +570,7 @@ namespace DUNE
             break;
           }
 
-          m_read_timer.setTop(m_read_interval);
+          m_read_timer.setTop(m_read_period);
           queueState(SM_ACT_SAMPLE);
           spew("start read sample");
           break;
@@ -579,7 +579,7 @@ namespace DUNE
         case SM_ACT_SAMPLE:
           if (m_read_timer.overflow())
           {
-            m_read_timer.setTop(m_read_interval);
+            m_read_timer.setTop(m_read_period);
             readSample();
           }
           break;
@@ -714,11 +714,15 @@ namespace DUNE
     void
     BasicDeviceDriver::step()
     {
-      if (isActive() && !m_wait_msg)
-        consumeMessages();
-      else
+      if (!isActive())
         waitForMessages(1.0);
-
+      else if (m_read_period > 0.0)
+        waitForMessages(m_read_timer.getRemaining());
+      else if (m_wait_msg_timeout > 0.0)
+        waitForMessages(m_wait_msg_timeout);
+      else
+        consumeMessages();
+      
       updateStateMachine();
     }
 

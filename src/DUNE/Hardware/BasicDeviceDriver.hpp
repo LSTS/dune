@@ -227,18 +227,19 @@ namespace DUNE
       void
       setReadFrequency(double freq)
       {
-        if (freq != 0.0)
-          m_read_interval = 1.0 / freq;
-        else
-          m_read_interval = 0.0;
+        m_read_period = freq > 0.0 ? 1.0/freq : 0.0;
       }
 
-      //! Only use waitForMessage method in main.
-      //! @param[in] wait_msg true to use waitForMessage.
+      //! If set, task uses waitForMessages with specified timeout 
+      //! insted of consumeMessages.
+      //! @param[in] timeout waitForMessages timeout.
       void
-      setWaitMessages(bool wait_msg)
+      setWaitForMessages(double timeout)
       {
-        m_wait_msg = wait_msg;
+        if (timeout < 0.0)
+          return;
+        
+        m_wait_msg_timeout = timeout;
       }
 
     private:
@@ -287,6 +288,8 @@ namespace DUNE
       StateMachineStates m_sm_state;
       //! State machine state queue.
       std::queue<StateMachineStates> m_sm_state_queue;
+      //! Timeout used when forcing waitForMessage.
+      double m_wait_msg_timeout;
       //! Power channel names and states.
       std::map<std::string, bool> m_power_channels;
       //! True if log is opened.
@@ -313,12 +316,10 @@ namespace DUNE
       double m_restart_delay;
       //! Restart timer.
       DUNE::Time::Counter<double> m_restart_timer;
-      //! Data read interval.
-      double m_read_interval;
+      //! Data read period in seconds.
+      double m_read_period;
       //! Data read timer.
       DUNE::Time::Counter<double> m_read_timer;
-      //! Wait for meesage flag
-      bool m_wait_msg;
 
       void
       onResourceRelease(void) override;
