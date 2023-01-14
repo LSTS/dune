@@ -248,13 +248,14 @@ namespace Sensors
         try
         {
           m_handle = openDeviceHandle(m_args.io_dev);
+          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
