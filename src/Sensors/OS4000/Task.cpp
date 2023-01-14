@@ -200,13 +200,14 @@ namespace Sensors
         {
           m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
           m_uart->setCanonicalInput(true);
+          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        return true;
+        return false;
       }
 
       //! Disconnect from device.
