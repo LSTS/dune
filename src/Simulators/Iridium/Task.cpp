@@ -104,10 +104,10 @@ namespace Simulators
         m_send_empty = false;
 
         std::stringstream ss;
-        ss << "POST " << m_args.server_path << " HTTP/1.1\n";
-        ss << "Host: " << m_args.server_address << "\n";
-        ss << "Content-Type: application/hub\n";
-        ss << "Content-Length: "<< msg->data.size()*2 << "\n\n";
+        ss << "POST " << m_args.server_path << " HTTP/1.1\r\n";
+        ss << "Host: " << m_args.server_address << "\r\n";
+        ss << "Content-Type: application/hub\r\n";
+        ss << "Content-Length: "<< msg->data.size()*2 << "\r\n\r\n";
 
         std::vector<char>::const_iterator it = msg->data.begin();
         for(; it != msg->data.end(); it++)
