@@ -45,6 +45,7 @@ namespace DUNE
     BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ) :
         Tasks::Task(name, ctx),
         m_sm_state(SM_IDLE),
+        m_wait_msg_timeout(0.0),
         m_log_opened(false),
         m_log_name_pending(false),
         m_post_power_on_delay(0.0),
@@ -54,8 +55,7 @@ namespace DUNE
         m_timeout_count(0),
         m_restart(false),
         m_restart_delay(0.0),
-        m_read_period(0.0),
-        m_wait_msg_timeout(0.0)
+        m_read_period(0.0)
     {
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
@@ -73,6 +73,9 @@ namespace DUNE
     BasicDeviceDriver::onResourceInitialization(void)
     {
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+      if (getActivationTime() == 0.0)
+        war("Activation Time set to 0.0! Please set a positive time.");
     }
 
     IO::Handle *
@@ -164,6 +167,7 @@ namespace DUNE
     void
     BasicDeviceDriver::onRequestActivation(void)
     {
+      debug("activating");
       setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
       queueState(SM_ACT_BEGIN);
     }
@@ -209,7 +213,7 @@ namespace DUNE
       }
 
       if (rv)
-        trace("device is synchronized");
+        trace("synchronized");
 
       return rv;
     }
@@ -263,8 +267,9 @@ namespace DUNE
     void
     BasicDeviceDriver::initializeDevice(void)
     {
-      trace("initializing device");
+      trace("initializing...");
       onInitializeDevice();
+      trace("initialized");
     }
 
     //! Request the name of the current log file.
