@@ -48,6 +48,10 @@ namespace Sensors
     static const unsigned c_beams = 4;
     //! Transducer beam offset (the distance between the center of transducers and the device center).
     static const float c_xdcr_offset = 0.02;
+    //! Command ticket time to live in seconds.
+    static const float c_ttl = 1.0;
+    //! Interval for configuration request.
+    static const float c_config_interval = 5.0;
 
     //! %Task arguments.
     struct Arguments
@@ -84,6 +88,27 @@ namespace Sensors
       double m_timestamp;
       //! List of entities.
       std::vector<unsigned> m_entities;
+      //! Device configuration.
+      struct Configuration
+      {
+        double speed_of_sound;
+        bool acoustic_enabled;
+        bool dark_mode_enabled;
+        double mounting_rotation_offset;
+        std::string range_mode;
+      }m_config;
+      //! Bottom lock
+      bool m_bottom_lock;
+      //! Get config timer.
+      Time::Counter<double> m_config_timer;
+      //! Command ticket
+      struct Ticket
+      {
+        std::string cmd;
+        double ttl;
+      };
+      //! Ticker queue.
+      std::queue<Ticket> m_ticket_queue;
       //! Task arguments.
       Arguments m_args;
 
@@ -95,7 +120,8 @@ namespace Sensors
         m_filter(NULL),
         m_serial(false),
         m_handle(NULL),
-        m_timestamp(-1)
+        m_timestamp(-1),
+        m_bottom_lock(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_IDLE,
@@ -201,6 +227,8 @@ namespace Sensors
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        m_config_timer.setTop(c_config_interval);
       }
 
       //! Check if we have a TCP socket as device input argument.
@@ -217,7 +245,6 @@ namespace Sensors
         TCPSocket* sock = new TCPSocket;
         sock->connect(addr, port);
         m_handle = sock;
-        m_serial = false;
         return true;
       }
 
@@ -229,109 +256,282 @@ namespace Sensors
         Memory::clear(m_filter);
       }
 
-      //! Parser to interpret incoming data through TCP connection.
+      //! Parser for incoming TPC data.
+      //! @param[in] data JSON data string
       void
-      parseTCP(char* data)
+      parseTCP(std::string& data)
       {
-        try {
+        try 
+        {
           // Interpret received data
           auto msg = json::parse(data);
 
-          // Status
-          uint8_t status = msg["status"];
-          if (status) {
-            err("DVL high temperature warning!!!");
-            setEntityState(IMC::EntityState::ESTA_FAULT,
-                           Status::CODE_INTERNAL_ERROR);
-          }
-
-          // Water Velocity
-          uint8_t validity = msg["velocity_valid"];
-          if (validity) {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-            m_wvel.x = -(fp64_t)msg["vx"];
-            m_wvel.y = -(fp64_t)msg["vy"];
-            m_wvel.z = (fp64_t)msg["vz"];
-            m_wvel.validity =
-                (IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y |
-                 IMC::WaterVelocity::VAL_VEL_Z);
-
-          } else {
-            setEntityState(IMC::EntityState::ESTA_NORMAL,
-                           Status::CODE_NO_BOTTOM_LOCK);
-            m_wvel.clear();
-          }
-          m_wvel.setTimeStamp(m_timestamp);
-          dispatch(m_wvel, DF_KEEP_TIME);
-
-          // Bottom Ranges
-          uint8_t beam_valid;
-          float distance;
-          for (unsigned i = 0; i < c_beams; ++i) {
-            beam_valid = msg["transducers"][i]["beam_valid"];
-            distance = (float)msg["transducers"][i]["distance"];
-
-            (beam_valid && distance > 0)
-                ? m_filter->setValidity(i, IMC::Distance::DV_VALID)
-                : m_filter->setValidity(i, IMC::Distance::DV_INVALID);
-            m_filter->update(i, distance);
-          }
-          m_filter->dispatch(m_timestamp);
-
-          // Altitude from DVL
-          m_alt_dvl.value = (fp32_t)msg["altitude"];
-          m_alt_dvl.validity = validity;
-          m_alt_dvl.setTimeStamp(m_timestamp);
-          dispatch(m_alt_dvl, DF_KEEP_TIME);
-
-          // Filtered Altitude
-          m_alt_flt.value = m_filter->get();
-          m_alt_flt.validity =
-              (m_alt_flt.value > 0.0 ? IMC::Distance::DV_VALID
-                                     : IMC::Distance::DV_INVALID);
-          m_alt_flt.setTimeStamp(m_timestamp);
-          dispatch(m_alt_flt, DF_KEEP_TIME);
+          if (data.find("time") != std::string::npos)
+            parseTCPReport(msg);
+          else if (data.find("ts") != std::string::npos)
+            parseTCPDeadReckoning(msg);
+          else if (data.find("response_to") != std::string::npos)
+            parseTCPConfig(msg);
+          else
+            war("Unknown TCP message.");
         }
         catch (Exception e)
         {
-          debug("TCP driver parsing problem '%s'.", e.what());
+          err("TCP driver parsing problem '%s'.", e.what());
           spew("\ntcp problematic parsed data = >>%s<<", Streams::sanitize(data).c_str());
         }
       }
 
-      //! Parser to interpret incoming data through serial connection.
+      //! Parse velocity-and-transducer report.
+      //! @param[in] msg parsed JSON data.
       void
-      parseSerial(char* data)
+      parseTCPReport(const nlohmann::json& msg)
+      {
+        // Status
+        bool status = msg["status"];
+        checkStatus(status);
+
+        // Water Velocity
+        uint8_t validity = msg["velocity_valid"];
+        if (validity) 
+        {
+          m_wvel.x = -(fp64_t)msg["vx"];
+          m_wvel.y = -(fp64_t)msg["vy"];
+          m_wvel.z = (fp64_t)msg["vz"];
+          m_wvel.validity = (IMC::WaterVelocity::VAL_VEL_X | 
+                             IMC::WaterVelocity::VAL_VEL_Y |
+                             IMC::WaterVelocity::VAL_VEL_Z);
+          m_bottom_lock = true;
+        } 
+        else 
+        {
+          m_bottom_lock = false;
+          m_wvel.clear();
+        }
+        m_wvel.setTimeStamp(m_timestamp);
+        dispatch(m_wvel, DF_KEEP_TIME);
+
+        // Bottom Ranges
+        uint8_t beam_valid;
+        float distance;
+        for (unsigned i = 0; i < c_beams; ++i) 
+        {
+          beam_valid = msg["transducers"][i]["beam_valid"];
+          distance = (float)msg["transducers"][i]["distance"];
+
+          m_filter->setValidity(i, (beam_valid && distance > 0) ? 
+                                    IMC::Distance::DV_VALID : 
+                                    IMC::Distance::DV_INVALID);
+          m_filter->update(i, distance);
+        }
+        m_filter->dispatch(m_timestamp);
+
+        // Altitude from DVL
+        m_alt_dvl.value = (fp32_t)msg["altitude"];
+        m_alt_dvl.validity = validity;
+        m_alt_dvl.setTimeStamp(m_timestamp);
+        dispatch(m_alt_dvl, DF_KEEP_TIME);
+
+        // Filtered Altitude
+        m_alt_flt.value = m_filter->get();
+        m_alt_flt.validity = m_alt_flt.value > 0.0 ? IMC::Distance::DV_VALID
+                                                   : IMC::Distance::DV_INVALID;
+        m_alt_flt.setTimeStamp(m_timestamp);
+        dispatch(m_alt_flt, DF_KEEP_TIME);
+      }
+
+      //! Parse Dead Reckoning report.
+      void
+      parseTCPDeadReckoning(nlohmann::json& msg)
+      {
+        // Status
+        bool status = msg["status"];
+        checkStatus(status);
+      }
+
+      //! Parse configuration response.
+      //! @param[in] msg parsed JSON data.
+      void
+      parseTCPConfig(const nlohmann::json& msg)
+      {
+        if (m_ticket_queue.empty())
+          return;
+        
+        Ticket ticket = m_ticket_queue.front();
+        if ((bool)msg["success"])
+        {
+          if ((std::string)msg["response_to"] == ticket.cmd)
+            m_ticket_queue.pop();
+        }
+        else
+        {
+          std::string s(msg["error_message"]);
+          err("Configuration response error: %s", s.c_str());
+        }
+        
+        if ((std::string)msg["response_to"] == "get_config")
+        {
+          m_config.speed_of_sound = (double)msg["result"]["speed_of_sound"];
+          m_config.acoustic_enabled = (bool)msg["result"]["acoustic_enabled"];
+          m_config.dark_mode_enabled = (bool)msg["result"]["dark_mode_enabled"];
+          m_config.mounting_rotation_offset = (double)msg["result"]["mounting_rotation_offset"];
+          m_config.range_mode = (std::string)msg["result"]["range_mode"];
+        }
+      }
+
+      //! Parser to interpret incoming data through serial connection.
+      //! @param[in] data JSON data string.
+      void
+      parseSerial(std::string& data)
       {
         war("Serial driver not supported yet.");
-        spew("\nserial data = >>%s<<", Streams::sanitize(data).c_str());
+        spew("\nSerial data = >>%s<<", Streams::sanitize(data).c_str());
       }
 
       //! Read data from sensor.
       void
       readData()
       {
-        char bfr[1024] = {0};
+        char bfr[2000] = {0};
         IMC::DevDataText data;
 
         size_t rv = m_handle->read(bfr, sizeof(bfr));
         if(rv <= 0)
           return;
+
         m_timestamp = Clock::getSinceEpoch();
 
         // Ensure proper string of data
         std::string s = bfr, proper;
-        if(s.find("time") == std::string::npos)
-          return;
-        m_serial ? proper = s.substr(0, s.find("y")+4) : proper = s.substr(0, s.find("json_v1")+11);
-
-        // Parse received data
-        m_serial ? parseSerial(&proper[0]) : parseTCP(&proper[0]);
+        if (!m_serial)
+        {
+          proper = s.substr(0, s.find("}", s.find("json_v"))+2);
+          parseTCP(proper);
+        }
+        else
+        {
+          proper = s.substr(0, s.find("y")+4);
+          parseSerial(proper);
+        }
 
         // Log Raw Data
         data.value = proper.c_str();
         dispatch(data);
+      }
+
+      //! Check for device faults.
+      //! @param[in] status device status (0 -> OK; 1 -> fault).
+      void
+      checkStatus(const bool status)
+      {
+        if (status) 
+        {
+          if (getEntityState() > IMC::EntityState::ESTA_NORMAL)
+            return;
+          
+          // Disable acoustics until recovery
+          enableAcoustics(false);
+          std::stringstream ss;
+          ss << Status::getString(CODE_INTERNAL_ERROR)
+             << " - DVL temperature too high"
+             << " | Acoustics: Off";
+          
+          err(ss.str().c_str());
+          setEntityState(IMC::EntityState::ESTA_FAULT, ss.str().c_str());
+        }
+        else
+        {
+          if (getEntityState() < IMC::EntityState::ESTA_FAULT)
+            return;
+
+          // Recovered from fault
+          enableAcoustics(true);
+          displayConfig();
+        }
+      }
+
+      //! Get device configuration.
+      void
+      getConfig(void)
+      {
+        sendCommand("get_config");
+      }
+
+      //! Enable or disable device acoustics. 
+      //! @param[in] enable true to enable, false to disable.
+      void
+      enableAcoustics(const bool enable)
+      {
+        if (m_config.acoustic_enabled == enable)
+          return;
+        
+        sendCommand("set_config", "acoustic_enabled", 
+                    enable ? "true" : "false");
+        getConfig();
+      }
+
+      //! Set device sound speed. 
+      //! @param[in] sound_speed sound speed in m/s.
+      void
+      setSoundSpeed(const double sound_speed)
+      {
+        if (m_config.speed_of_sound == sound_speed)
+          return;
+
+        std::stringstream ss;
+        ss << sound_speed;
+        sendCommand("set_config", "speed_of_sound", ss.str());
+        getConfig();
+      }
+
+      //! Send command to device. 
+      //! @param[in] cmd command type.
+      //! @param[in] param_name parameter name, only used for "set_config" command. 
+      //!                       If empty only cmd is used.
+      //! @param[in] param_value parameter name, only used for "set_config" command. 
+      //!                       If empty only cmd is used.
+      void
+      sendCommand(const std::string cmd, const std::string param_name = "", 
+                  const std::string param_value = "")
+      {
+        std::string bfr;
+        if (!m_serial)
+        {
+          if (param_name.empty() || param_value.empty())
+            bfr = String::str("{\"command\":\"%s\"}", cmd.c_str());
+          else
+            bfr = String::str("{\"command\":\"%s\",\"parameters\":{\"%s\":%s}}", 
+                              cmd.c_str(),
+                              param_name.c_str(),
+                              param_value.c_str());
+        }
+        else
+        {
+          war("Serial commands not implemented");
+          return;
+        }
+        
+        spew("Sending: %s", bfr.c_str());
+        m_handle->writeString(bfr.c_str());
+
+        // Wait for response
+        Ticket ticket = {{cmd}, {Clock::get() + c_ttl}};
+        m_ticket_queue.push(ticket);
+      }
+
+      //! Check ttl of tickets in queue.
+      void
+      checkTicketTimeout()
+      {
+        if (m_ticket_queue.empty())
+          return;
+
+        Ticket ticket = m_ticket_queue.front();
+        if (Clock::get() > ticket.ttl)
+        {
+          war("%s failure (timeout)", ticket.cmd.c_str());
+          m_ticket_queue.pop();
+        }
       }
 
       //! Main loop.
@@ -345,6 +545,15 @@ namespace Sensors
             consumeMessages();
             if (Poll::poll(*m_handle, 0.01))
               readData();
+            
+            checkTicketTimeout();
+            // Periodically request device configuration
+            if (m_config_timer.overflow())
+            {
+              m_config_timer.reset();
+              getConfig();
+            }
+            displayConfig();
           }
           else
           {
@@ -352,6 +561,19 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
           }
         }
+      }
+
+      //! Set entity state description.
+      void
+      displayConfig(void)
+      {
+        std::string description;
+        description = String::str("%s - Acoustics: %s | Sound Speed: %.1f m/s", 
+                                  Status::getString(m_bottom_lock ? CODE_ACTIVE 
+                                                                  : CODE_NO_BOTTOM_LOCK),
+                                  m_config.acoustic_enabled ? "On" : "Off",
+                                  m_config.speed_of_sound);
+        setEntityState(getEntityState(), description);
       }
     };
   }
