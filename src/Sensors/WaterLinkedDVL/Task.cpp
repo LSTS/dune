@@ -73,7 +73,7 @@ namespace Sensors
     struct Task: public DUNE::Tasks::Task
     {
       //! Water velocity message.
-      IMC::WaterVelocity m_wvel;
+      IMC::GroundVelocity m_gvel;
       //! DVL altitude estimate.
       IMC::Distance m_alt_dvl;
       //! Filtered Altitude.
@@ -295,10 +295,10 @@ namespace Sensors
         uint8_t validity = msg["velocity_valid"];
         if (validity) 
         {
-          m_wvel.x = -(fp64_t)msg["vx"];
-          m_wvel.y = -(fp64_t)msg["vy"];
-          m_wvel.z = (fp64_t)msg["vz"];
-          m_wvel.validity = (IMC::WaterVelocity::VAL_VEL_X | 
+          m_gvel.x = (fp64_t)msg["vx"];
+          m_gvel.y = (fp64_t)msg["vy"];
+          m_gvel.z = (fp64_t)msg["vz"];
+          m_gvel.validity = (IMC::WaterVelocity::VAL_VEL_X | 
                              IMC::WaterVelocity::VAL_VEL_Y |
                              IMC::WaterVelocity::VAL_VEL_Z);
           m_bottom_lock = true;
@@ -306,10 +306,10 @@ namespace Sensors
         else 
         {
           m_bottom_lock = false;
-          m_wvel.clear();
+          m_gvel.clear();
         }
-        m_wvel.setTimeStamp(m_timestamp);
-        dispatch(m_wvel, DF_KEEP_TIME);
+        m_gvel.setTimeStamp(m_timestamp);
+        dispatch(m_gvel, DF_KEEP_TIME);
 
         // Bottom Ranges
         uint8_t beam_valid;
