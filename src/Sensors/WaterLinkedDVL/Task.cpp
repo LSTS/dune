@@ -50,16 +50,14 @@ namespace Sensors
     static const float c_xdcr_offset = 0.02;
     //! Command ticket time to live in seconds.
     static const float c_ttl = 1.0;
-    //! Interval for configuration request.
-    static const float c_config_interval = 5.0;
 
     //! %Task arguments.
     struct Arguments
     {
       //! IO device.
       std::string io_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
+      //! Power channels.
+      std::vector<std::string> pwr_channels;
       //! DVL position.
       std::vector<float> position;
       //! DVL orientation.
@@ -70,7 +68,7 @@ namespace Sensors
       double beam_width;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Water velocity message.
       IMC::GroundVelocity m_gvel;
@@ -99,8 +97,6 @@ namespace Sensors
       }m_config;
       //! Bottom lock
       bool m_bottom_lock;
-      //! Get config timer.
-      Time::Counter<double> m_config_timer;
       //! Command ticket
       struct Ticket
       {
@@ -116,25 +112,21 @@ namespace Sensors
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_filter(NULL),
         m_serial(false),
         m_handle(NULL),
         m_timestamp(-1),
         m_bottom_lock(false)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_IDLE,
-                  Tasks::Parameter::VISIBILITY_USER);
-
         param("IO Port - Device", m_args.io_dev)
-        .defaultValue("tcp://10.0.10.255:16171")
-        .description("IO port device used to communicate with the sensor."
-                     "For TCP connection usage as 'tcp://IP:PORT'.");
+        .defaultValue("")
+        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
+                     "or \"uart://DEVICE:BAUD\".");
 
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("115200")
-        .description("Serial port baud rate.");
+        param("Power Channel - Names", m_args.pwr_channels)
+        .defaultValue("")
+        .description("Device's power channels");
 
         param("Device Position", m_args.position)
         .defaultValue("0.0, 0.0, 0.0")
@@ -163,6 +155,13 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.pwr_channels))
+        {
+          clearPowerChannelNames();
+          for (std::string pc : m_args.pwr_channels)
+            addPowerChannelName(pc);
+        }
+
         if (!(paramChanged(m_args.beam_width)
               || paramChanged(m_args.orientation)
               || paramChanged(m_args.position)))
@@ -203,57 +202,53 @@ namespace Sensors
         m_alt_flt.setSourceEntity(reserveEntity("DVL Filtered"));
       }
 
-      //! Acquire resources.
+      //! Restart device when idle
       void
-      onResourceAcquisition(void)
+      onIdle(void) override
       {
+        requestActivation();
+      }
+
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        m_handle = openSocketTCP(m_args.io_dev);
+
+        if (m_handle == nullptr)
+        {
+          m_handle = openUART(m_args.io_dev);
+          m_serial = true;
+        }
+
+        return m_handle != nullptr;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        Memory::clear(m_handle);
+        Memory::clear(m_filter);
+      }
+
+      //! Initialize device.
+      void
+      onInitializeDevice() override
+      {
+        // Initialize device configuration
+        getConfig();
+
+        // Initialize filter
+        if (m_filter)
+          return;
+
         m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset,
                                     m_args.beam_angle, m_args.position, m_args.orientation,
                                     BeamFilter::CLOCKWISE);
 
         m_filter->setSourceEntities(m_entities);
-
-        try
-        {
-          // Establishes TCP or Serial connection
-          if (!openSocket())
-          {
-            m_handle = new SerialPort(m_args.io_dev, m_args.uart_baud);
-            m_handle->flush();
-            m_serial = true;
-          }
-        }
-        catch (...)
-        {
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        }
-
-        m_config_timer.setTop(c_config_interval);
-      }
-
-      //! Check if we have a TCP socket as device input argument.
-      //! @return true if it is a TCP socket, false otherwise.
-      bool
-      openSocket(void)
-      {
-        char addr[128] = {0};
-        unsigned port = 0;
-
-        if (std::sscanf(m_args.io_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
-          return false;
-
-        TCPSocket* sock = new TCPSocket;
-        sock->connect(addr, port);
-        m_handle = sock;
-        return true;
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_handle);
-        Memory::clear(m_filter);
       }
 
       //! Parser for incoming TPC data.
@@ -287,6 +282,9 @@ namespace Sensors
       void
       parseTCPReport(const nlohmann::json& msg)
       {
+        if (!m_filter)
+          return;
+        
         // Status
         bool status = msg["status"];
         checkStatus(status);
@@ -534,33 +532,22 @@ namespace Sensors
         }
       }
 
-      //! Main loop.
-      void
-      onMain(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        bool recv = false;
+        if (Poll::poll(*m_handle, 0.01))
         {
-          if(isActive())
-          {
-            consumeMessages();
-            if (Poll::poll(*m_handle, 0.01))
-              readData();
-            
-            checkTicketTimeout();
-            // Periodically request device configuration
-            if (m_config_timer.overflow())
-            {
-              m_config_timer.reset();
-              getConfig();
-            }
-            displayConfig();
-          }
-          else
-          {
-            waitForMessages(1.0);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          }
+          readData();
+          recv = true;
         }
+        
+        checkTicketTimeout();
+        displayConfig();
+
+        return recv;
       }
 
       //! Set entity state description.
