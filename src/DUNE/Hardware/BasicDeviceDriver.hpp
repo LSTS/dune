@@ -222,6 +222,14 @@ namespace DUNE
         m_restart_delay = seconds;
       }
 
+      // Set state machine to restart
+      void
+      restart(void);
+
+      // Request a restart
+      void
+      requestRestart();
+
       //! Set the data read period.
       //! @param[in] freq polling frequency, in hertz.
       void
@@ -320,6 +328,8 @@ namespace DUNE
       double m_read_period;
       //! Data read timer.
       DUNE::Time::Counter<double> m_read_timer;
+      //! Device URI.
+      std::string m_uri;
 
       void
       onResourceRelease(void) override;
