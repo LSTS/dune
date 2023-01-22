@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -48,9 +48,10 @@ namespace DUNE
     BasicNavigation::BasicNavigation(const std::string& name, Tasks::Context& ctx):
       Tasks::Periodic(name, ctx),
       m_active(false),
-      m_origin(NULL),
-      m_avg_heave(NULL),
-      m_avg_gps(NULL)
+      m_origin(nullptr),
+      m_avg_heave(nullptr),
+      m_avg_gps(nullptr),
+      m_usbl_filter(nullptr)
     {
       // Declare configuration parameters.
       param("Maximum Distance to Reference", m_max_dis2ref)
@@ -221,6 +222,17 @@ namespace DUNE
       .defaultValue("1.0")
       .description("Exponential moving average filter gain used in altitude");
 
+      param("USBL Filter -- Moving Average Samples", m_usbl_avg_samples)
+      .defaultValue("5")
+      .minimumValue("5")
+      .maximumValue("20")
+      .description("Number of moving average samples for USBL filter");
+
+      param("USBL Filter -- Maximum Deviation Factor", m_usbl_k_std)
+      .minimumValue("1")
+      .defaultValue("2")
+      .description("Maximum deviation possible to issue error");
+
       // Do not use the declination offset when simulating.
       m_use_declination = !m_ctx.profiles.isSelected("Simulation");
       m_declination_defined = false;
@@ -283,6 +295,7 @@ namespace DUNE
     void
     BasicNavigation::onResourceInitialization(void)
     {
+      m_usbl_filter = new UsblTools::Filter(m_usbl_avg_samples, m_usbl_k_std);
       m_avg_heave = new Math::MovingAverage<double>(m_avg_heave_samples);
       m_avg_gps = new Math::MovingAverage<double>(m_avg_gps_samples);
       reset();
@@ -338,6 +351,7 @@ namespace DUNE
       Memory::clear(m_origin);
       Memory::clear(m_avg_heave);
       Memory::clear(m_avg_gps);
+      Memory::clear(m_usbl_filter);
     }
 
     void
@@ -769,6 +783,9 @@ namespace DUNE
 
       if (msg->target != getSystemName())
         return;
+      
+      if (!m_usbl_filter->consume(msg))
+        return;
 
       double x = 0.0;
       double y = 0.0;
@@ -888,7 +905,7 @@ namespace DUNE
     {
       reset();
 
-      if (m_origin == NULL)
+      if (m_origin == nullptr)
         return false;
 
       m_estate.lat = m_origin->lat;
@@ -1019,6 +1036,8 @@ namespace DUNE
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
       m_navdata.cyaw = m_heading;
+
+      m_usbl_filter->consume(&m_estate);
     }
 
     bool

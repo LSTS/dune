@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -40,6 +40,7 @@ namespace DUNE
 #include <DUNE/Parsers/Config.hpp>
 #include <DUNE/Parsers/PD4.hpp>
 #include <DUNE/Parsers/NMEAReader.hpp>
+#include <DUNE/Parsers/NMEASentence.hpp>
 #include <DUNE/Parsers/NMEAWriter.hpp>
 #include <DUNE/Parsers/AbstractStringReader.hpp>
 #include <DUNE/Parsers/BasicStringReader.hpp>

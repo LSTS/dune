@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -146,7 +146,7 @@ class Message:
             self._fd.append('%s.%s.assign("%s");' % (self._var, name, value))
         elif type == 'rawdata':
             tname = self.make_temp()
-            self._fd.append('const char %s[] = {%s};' % (tname, self.make_array()))
+            self._fd.append('const signed char %s[] = {%s};' % (tname, self.make_array()))
             self._fd.append('{0}.{1}.assign({2}, {2} + sizeof({2}));'.format(self._var, name, tname))
         elif type == 'message':
             self.set_message(name, field)

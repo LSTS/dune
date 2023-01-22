@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -1060,6 +1060,10 @@ namespace Transports
 
         if (msg->getDestination() != getSystemId())
           return;
+
+        if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
+          return;
+
 
         // Create and fill new ticket.
         Ticket ticket;

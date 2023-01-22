@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -102,10 +102,11 @@ namespace Transports
       }
 
       void
-      answer(const IMC::AcousticOperation* req, int status, fp32_t range = 0.0)
+      answer(const IMC::AcousticOperation* req, int status, std::string system, fp32_t range = 0.0)
       {
         IMC::AcousticOperation msg;
         msg.op = status;
+        msg.system = system;
         msg.range = range;
         msg.setDestination(req->getSource());
         msg.setDestinationEntity(req->getSourceEntity());
@@ -198,10 +199,6 @@ namespace Transports
 
         AcousticRequest tx;
 
-        tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
-        if (tx.timeout < 0)
-          tx.timeout = 0;
-
         if (msg->destination == "")
           tx.destination = "broadcast";
         else
@@ -263,8 +260,12 @@ namespace Transports
         uint16_t newId = createInternalId();
         tx.req_id = newId;
         m_transmission_requests[newId] = msg->clone();
-        m_parent->dispatch(tx);
 
+        tx.timeout = msg->deadline - Time::Clock::getSinceEpoch();
+        if (tx.timeout < 0)
+          tx.timeout = 0;
+
+        m_parent->dispatch(tx);
       }
 
       void

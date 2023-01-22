@@ -13,4 +13,5 @@ build/
 .settings/
 /.vscode
 /.idea
-/cmake-build*
+cmake-build-debug/
+

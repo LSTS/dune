@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -183,6 +183,13 @@ namespace DUNE
       .defaultValue("3.0")
       .units(Units::Meter)
       .description("Admissible altitude when doing depth control");
+
+      param("Bottom Track -- Minimum Depth", m_btd.args.min_depth)
+      .defaultValue("0.0")
+      .units(Units::Meter)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
+      .scope(Tasks::Parameter::SCOPE_MANEUVER)
+      .description("Minimum depth to maintain during bottom tracking");
 
       param("Maximum Track Length", m_max_track_length)
       .defaultValue("25000")

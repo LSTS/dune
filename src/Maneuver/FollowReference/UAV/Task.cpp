@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -362,7 +362,8 @@ namespace Maneuver
             // command start corresponds to reference position
             m_desired_path.start_lat = m_cur_ref.lat;
             m_desired_path.start_lon = m_cur_ref.lon;
-            m_desired_path.start_lon = m_cur_ref.lon;
+            m_desired_path.start_z = m_cur_ref.z->value;
+            m_desired_path.start_z_units = m_cur_ref.z->z_units;
             m_desired_path.flags &= ~IMC::DesiredPath::FL_DIRECT;
           }
           else if (m_cur_ref.flags & IMC::Reference::FLAG_DIRECT)

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -43,8 +43,13 @@
 #endif
 
 #if defined(DUNE_SYS_HAS_STRUCT_TIMEVAL)
+#ifdef DUNE_OS_WINDOWS
+#  define DUNE_TIMEVAL_INIT_SEC_FP(sec)                                 \
+  {(long)sec, (long)((sec - (long)sec) * DUNE::Time::c_usec_per_sec)}
+#else
 #  define DUNE_TIMEVAL_INIT_SEC_FP(sec)                                 \
   {(time_t) sec, (suseconds_t)((sec - (long)sec) * DUNE::Time::c_usec_per_sec)}
+#endif
 #endif
 
 #if defined(DUNE_SYS_HAS_STRUCT_TIMESPEC)

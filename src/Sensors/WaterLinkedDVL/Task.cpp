@@ -209,7 +209,7 @@ namespace Sensors
       {
         m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset,
                                     m_args.beam_angle, m_args.position, m_args.orientation,
-                                    BeamFilter::STANDARD);
+                                    BeamFilter::CLOCKWISE);
 
         m_filter->setSourceEntities(m_entities);
 
@@ -436,8 +436,8 @@ namespace Sensors
              << " - DVL temperature too high"
              << " | Acoustics: Off";
           
-          err(ss.str().c_str());
-          setEntityState(IMC::EntityState::ESTA_FAULT, ss.str().c_str());
+          err("%s", ss.str().c_str());
+          setEntityState(IMC::EntityState::ESTA_FAULT, ss.str());
         }
         else
         {

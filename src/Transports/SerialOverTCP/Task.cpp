@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -47,6 +47,8 @@ namespace Transports
       std::string uart_dev;
       // Serial port baud rate.
       unsigned uart_baud;
+      // Serial set canonical input
+      bool uart_canonical_input;
       // TCP listening port.
       unsigned tcp_port;
     };
@@ -78,6 +80,10 @@ namespace Transports
         .defaultValue("9600")
         .description("Serial port baud rate");
 
+        param("Serial Port - Canonical Input", m_args.uart_canonical_input)
+        .defaultValue("false")
+        .description("Serial canonical input set");
+
         param("TCP - Port", m_args.tcp_port)
         .defaultValue("9999")
         .description("TCP port to listen on");
@@ -95,6 +101,11 @@ namespace Transports
         {
           m_sock = new TCPSocket;
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          if (m_args.uart_canonical_input)
+          {
+              m_uart->setCanonicalInput(true);
+              m_uart->flush();
+          }
         }
         catch (std::runtime_error& e)
         {

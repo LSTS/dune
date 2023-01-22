@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -160,6 +160,11 @@ namespace Transports
             " is relative to the origin of a system where the center of the"
             " reference frame is the USBL modem");
 
+        param("USBL Node -- Inverted", m_node_args.inverted)
+        .defaultValue("false")
+        .description("If this argument is enabled, USBL node anounces itself"
+            " for inverted positioning by USBL modems.");
+
         param("USBL Node -- Quick, No Range", m_node_args.no_range)
         .defaultValue("false")
         .description("In this mode, the USBL node does not request ranging information."
@@ -190,6 +195,7 @@ namespace Transports
         bind<IMC::AcousticRequest>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
+        bind<IMC::GpsFix>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::ReportControl>(this);
         bind<IMC::UamRxFrame>(this);
@@ -263,6 +269,15 @@ namespace Transports
           return;
 
         m_estate = *msg;
+      }
+
+      void
+      consume(const IMC::GpsFix* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_usbl_node->consume(msg);
       }
 
       void
@@ -368,20 +383,23 @@ namespace Transports
             break;
 
           case CODE_USBL:
+            std::vector<uint8_t> data;
+            data.push_back(CODE_USBL);
             if (UsblTools::toNode(msg->data[2]))
             {
               if (m_usbl_node != NULL)
-                m_usbl_node->parse(imc_addr_src, msg);
+              {
+                if (m_usbl_node->parse(imc_addr_src, msg, data))
+                  sendFrame(msg->sys_src, createInternalId(), data, false);
+              }
             }
             else
             {
               // handle request to USBL modem.
               if (m_usbl_modem != NULL)
               {
-                std::vector<uint8_t> data;
-                data.push_back(CODE_USBL);
-                if (m_usbl_modem->parse(msg, data))
-                  sendFrame(msg->sys_src,createInternalId(), data, false);
+                if (m_usbl_modem->parse(imc_addr_src, msg, data))
+                  sendFrame(msg->sys_src, createInternalId(), data, false);
               }
             }
             break;
@@ -479,7 +497,7 @@ namespace Transports
         if (m_usbl_modem == NULL)
         {
           announceUSBL();
-          m_usbl_modem = new UsblTools::Modem();
+          m_usbl_modem = new UsblTools::Modem(this);
           return;
         }
 
@@ -489,6 +507,17 @@ namespace Transports
 
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
+
+        // Inverted mode
+        if(m_usbl_modem->isInverted(msg->target, data))
+        {
+          m_usbl_modem->consume(msg);
+
+          if (m_usbl_modem->invertedFix(msg->target, fix))
+            dispatch(fix);
+
+          return;
+        }
 
         // The target wants an absolute fix?
         if (m_usbl_modem->wantsFix(msg->target))
@@ -511,7 +540,7 @@ namespace Transports
         if (m_usbl_modem == NULL)
         {
           announceUSBL();
-          m_usbl_modem = new UsblTools::Modem();
+          m_usbl_modem = new UsblTools::Modem(this);
           return;
         }
 
@@ -521,6 +550,10 @@ namespace Transports
 
         std::vector<uint8_t> data;
         data.push_back(CODE_USBL);
+        
+        if(m_usbl_modem->isInverted(msg->target, data))
+          return;
+
         if (m_usbl_modem->encode(msg, data))
           sendFrame(msg->target, createInternalId(), data, false);
       }
@@ -911,7 +944,14 @@ namespace Transports
         // Trigger target.
         std::string sys;
         if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
-          sendRange(sys,createInternalId());
+        {
+          std::vector<uint8_t> data;
+          data.push_back(CODE_USBL);
+          if (m_usbl_modem->isInverted(sys, data))
+            sendFrame(sys, createInternalId(), data, true);
+          else
+            sendRange(sys,createInternalId());
+        }
       }
 
       //! Main loop of USBL node.
@@ -932,7 +972,7 @@ namespace Transports
 
         while (it != m_transmission_requests.end())
         {
-          if (it->second->timeout <= 0.0)
+          if (it->second->getTimeStamp() + it->second->timeout <= Clock::getSinceEpoch())
           {
             sendAcousticStatus(it->second,IMC::AcousticStatus::STATUS_INPUT_FAILURE,"Transmission timed out.");
             Memory::clear(it->second);

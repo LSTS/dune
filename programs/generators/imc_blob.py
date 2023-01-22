@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -66,7 +66,7 @@ import xml.etree.ElementTree as ET
 tree = ET.parse(args.xml)
 
 # Remove 'description' tags.
-for parent in tree.getiterator():
+for parent in tree.iter():
     for child in parent:
         if child.tag == 'description':
             parent.remove(child)

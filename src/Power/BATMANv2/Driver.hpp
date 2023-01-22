@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -116,7 +116,9 @@ namespace Power
           bool
           initBatMan(int cellNumber, float scale)
           {
-            char textCmd[32];
+            // Smaller by 2 otherwise compiler complains of
+            // format overflow inside 'sendCommand'.
+            char textCmd[30];
             std::sprintf(textCmd, "@CELL,%d,*", cellNumber);
             if(sendCommand(textCmd, "$RSP,ACK,,*"))
             {

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -46,41 +46,6 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Finite state machine states.
-    enum StateMachineStates
-    {
-      //! Waiting for activation.
-      SM_IDLE,
-      //! Start activation sequence.
-      SM_ACT_BEGIN,
-      //! Turn power on.
-      SM_ACT_POWER_ON,
-      //! Wait for power to be turned on.
-      SM_ACT_POWER_WAIT,
-      //! Wait for device to become available.
-      SM_ACT_SS_WAIT,
-      //! Synchronize time.
-      SM_ACT_SS_SYNC,
-      //! Request log file.
-      SM_ACT_LOG_REQUEST,
-      //! Wait for log file.
-      SM_ACT_LOG_WAIT,
-      //! Activation sequence is complete.
-      SM_ACT_DONE,
-      //! Sampling.
-      SM_ACT_SAMPLE,
-      //! Start deactivation sequence.
-      SM_DEACT_BEGIN,
-      //! Disconnect from sidescan.
-      SM_DEACT_DISCONNECT,
-      //! Switch power off.
-      SM_DEACT_POWER_OFF,
-      //! Wait for power to be turned off.
-      SM_DEACT_POWER_WAIT,
-      //! Deactivation sequence is complete.
-      SM_DEACT_DONE
-    };
-
     //! Task arguments.
     struct Arguments
     {
@@ -116,7 +81,7 @@ namespace Sensors
       unsigned time_delta_init_samples;
     };
 
-    struct Task: public Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Buffer size.
       static const unsigned c_buffer_size = 256 * 1024;
@@ -130,30 +95,22 @@ namespace Sensors
       CommandLink* m_cmd;
       //! Log file.
       Log* m_log;
-      //! Watchdog timer.
-      Counter<double> m_wdog;
+      //! Start timer.
+      Counter<double> m_start_timer;
       //! Timer for time delta estimation.
       Counter<double> m_time_delta_timer;
       //! Subsystem specific data.
       SubsystemData m_subsys_data[c_subsys_count];
-      //! Current state machine state.
-      StateMachineStates m_sm_state;
-      //! State machine state queue.
-      std::queue<StateMachineStates> m_sm_state_queue;
-      //! True if device is powered on.
-      bool m_powered;
       //! Current packet being parsed.
       Packet* m_packet;
       //! Configuration parameters.
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_sock_dat(NULL),
         m_cmd(NULL),
         m_log(NULL),
-        m_sm_state(SM_IDLE),
-        m_powered(false),
         m_packet(NULL)
       {
         // Define configuration parameters.
@@ -262,8 +219,11 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (m_args.power_channel.empty())
-          m_powered = true;
+        if (paramChanged(m_args.power_channel))
+        {
+          clearPowerChannelNames();
+          addPowerChannelName(m_args.power_channel);
+        }
 
         if (!isActive())
           return;
@@ -305,61 +265,16 @@ namespace Sensors
       }
 
       void
-      onResourceRelease(void)
+      onIdle(void) override
       {
-        closeLog();
+        m_start_timer.setTop(getActivationTime());
       }
 
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      //! Push a new state to the state queue.
-      //! @param[in] state state machine state.
-      void
-      queueState(StateMachineStates state)
-      {
-        m_sm_state_queue.push(state);
-      }
-
-      //! Test if state queue has pending state transitions.
-      //! @return true if state queue has pending states, false otherwise.
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
       bool
-      hasQueuedStates(void) const
+      onConnect() override
       {
-        return !m_sm_state_queue.empty();
-      }
-
-      StateMachineStates
-      getCurrentState(void) const
-      {
-        return m_sm_state;
-      }
-
-      StateMachineStates
-      dequeueState(void)
-      {
-        if (hasQueuedStates())
-        {
-          m_sm_state = m_sm_state_queue.front();
-          m_sm_state_queue.pop();
-        }
-
-        return m_sm_state;
-      }
-
-      void
-      onRequestActivation(void)
-      {
-        queueState(SM_ACT_BEGIN);
-      }
-
-      bool
-      connect(void)
-      {
-        Counter<double> timer(1.0);
         try
         {
           m_cmd = new CommandLink(this, m_args.addr, m_args.port_cmd);
@@ -368,30 +283,15 @@ namespace Sensors
         }
         catch (...)
         {
-          double delay = timer.getRemaining();
-          if (delay > 0.0)
-            Delay::wait(delay);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
         return false;
       }
 
+      //! Disconnect from device.
       void
-      failActivation(const std::string& message)
-      {
-        activationFailed(message);
-        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      void
-      onRequestDeactivation(void)
-      {
-        queueState(SM_DEACT_BEGIN);
-      }
-
-      void
-      disconnect(void)
+      onDisconnect() override
       {
         debug("disconnecting");
         setDataActive(SUBSYS_SSL, "None");
@@ -404,17 +304,20 @@ namespace Sensors
         debug("disconnected");
       }
 
-      void
-      onDeactivation(void)
+      //! Synchronize with device.
+      bool
+      onSynchronize() override
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        debug("deactivation complete");
+        estimateTimeDelta(m_start_timer);
+
+        return true;
       }
 
+      //! Device may be initialized.
       void
-      onActivation(void)
+      onInitializeDevice() override
       {
-        debug("activation took %0.2f s", m_wdog.getElapsed());
+        m_time_delta_timer.setTop(5.0);
 
         for (size_t i = 0; i < c_subsys_count; ++i)
           m_subsys_data[i].clear();
@@ -430,66 +333,58 @@ namespace Sensors
         m_cmd->setPingTrigger(SUBSYS_SSL, TRIG_MODE_INTERNAL);
 
         initConfig();
+      }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      //! Enable log control.
+      bool
+      enableLogControl(void) override
+      {
+        return true;
       }
 
       void
-      requestLogName(void)
+      onOpenLog(const Path& path) override
       {
-        debug("requesting current log path");
-        IMC::LoggingControl lc;
-        lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
-        dispatch(lc);
+        BasicDeviceDriver::onOpenLog(path);
+
+        m_log = new Log(this, m_ctx.dir_log / path / "Data.jsf");
+        m_log->start();
+        m_packet = m_log->get();
+        debug("opened: %s", path.c_str());
       }
 
       void
-      consume(const IMC::PowerChannelState* msg)
+      logPacket(void)
       {
-        if (msg->name != m_args.power_channel)
-          return;
-
-        bool old_state = m_powered;
-        m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
-        if (!old_state && m_powered)
-          debug("device is powered");
-        else if (old_state && !m_powered)
-          debug("device is no longer powered");
-      }
-
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        if (!isActive())
-          return;
-
-        for (size_t i = 0; i < c_subsys_count; ++i)
+        if (m_log != NULL)
         {
-          if (m_subsys_data[i].active)
-            m_subsys_data[i].estates.push_back(*msg);
+          m_log->put(m_packet);
+          m_packet = m_log->get();
         }
       }
 
       void
-      consume(const IMC::LoggingControl* msg)
+      onCloseLog(void) override
       {
-        if (msg->getSource() != getSystemId())
+        BasicDeviceDriver::onCloseLog();
+
+        if (m_log == NULL)
           return;
 
-        switch (msg->op)
-        {
-          case IMC::LoggingControl::COP_STARTED:
-          case IMC::LoggingControl::COP_CURRENT_NAME:
-            if (getCurrentState() == SM_ACT_LOG_WAIT || getCurrentState() == SM_ACT_SAMPLE)
-              openLog(m_ctx.dir_log / msg->name / "Data.jsf");
-            break;
+        m_log->stopAndJoin();
+        debug("closed: %s", m_log->getPath().c_str());
 
-          case IMC::LoggingControl::COP_STOPPED:
-            closeLog();
-            break;
+        Memory::clear(m_packet);
+        Memory::clear(m_log);
+      }
+
+      void
+      onEstimatedState(const IMC::EstimatedState& msg) override
+      {
+        for (size_t i = 0; i < c_subsys_count; ++i)
+        {
+          if (m_subsys_data[i].active)
+            m_subsys_data[i].estates.push_back(msg);
         }
       }
 
@@ -774,9 +669,16 @@ namespace Sensors
           handleSonarData();
       }
 
+      // Read samples and continuously estimate time difference.
       bool
-      readData(void)
+      onReadData(void) override
       {
+        if (m_time_delta_timer.overflow())
+        {
+          m_time_delta_timer.reset();
+          m_cmd->estimateTimeDelta(m_args.time_delta_max_latency);
+        }
+
         if (!Poll::poll(*m_sock_dat, 1.0))
           return false;
 
@@ -823,229 +725,6 @@ namespace Sensors
         }
 
         debug("time is not synchronized");
-      }
-
-      void
-      openLog(const Path& path)
-      {
-        if (!isActive() && !isActivating())
-          return;
-
-        if (m_log != NULL)
-        {
-          if (m_log->getPath() == path)
-            return;
-        }
-
-        closeLog();
-
-        m_log = new Log(this, path);
-        m_log->start();
-        m_packet = m_log->get();
-        debug("opened: %s", path.c_str());
-      }
-
-      void
-      logPacket(void)
-      {
-        if (m_log != NULL)
-        {
-          m_log->put(m_packet);
-          m_packet = m_log->get();
-        }
-      }
-
-      void
-      closeLog(void)
-      {
-        if (m_log == NULL)
-          return;
-
-        m_log->stopAndJoin();
-        debug("closed: %s", m_log->getPath().c_str());
-
-        Memory::clear(m_packet);
-        Memory::clear(m_log);
-      }
-
-      void
-      controlPower(IMC::PowerChannelControl::OperationEnum op)
-      {
-        if (m_args.power_channel.empty())
-          return;
-
-        IMC::PowerChannelControl pcc;
-        pcc.op = op;
-        pcc.name = m_args.power_channel;
-        dispatch(pcc);
-      }
-
-      void
-      turnPowerOn(void)
-      {
-        trace("turning power on");
-        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_ON);
-      }
-
-      void
-      turnPowerOff(void)
-      {
-        trace("turning power off");
-        controlPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
-      }
-
-      //! Test if power channel is on.
-      //! @return true if power channel is on, false otherwise.
-      bool
-      isPowered(void)
-      {
-        return m_powered;
-      }
-
-      void
-      updateStateMachine(void)
-      {
-        switch (dequeueState())
-        {
-          // Wait for activation.
-          case SM_IDLE:
-            break;
-
-            // Begin activation sequence.
-          case SM_ACT_BEGIN:
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-            m_wdog.setTop(getActivationTime());
-            queueState(SM_ACT_POWER_ON);
-            break;
-
-            // Turn power on.
-          case SM_ACT_POWER_ON:
-            turnPowerOn();
-            queueState(SM_ACT_POWER_WAIT);
-            break;
-
-            // Wait for power to be on.
-          case SM_ACT_POWER_WAIT:
-            if (isPowered())
-            {
-              queueState(SM_ACT_SS_WAIT);
-            }
-
-            if (m_wdog.overflow())
-            {
-              failActivation(DTR("failed to turn power on"));
-              queueState(SM_IDLE);
-            }
-            break;
-
-            // Connect to sidescan.
-          case SM_ACT_SS_WAIT:
-            if (m_wdog.overflow())
-            {
-              failActivation(DTR("failed to connect to device"));
-              queueState(SM_IDLE);
-            }
-            else if (connect())
-            {
-              queueState(SM_ACT_SS_SYNC);
-            }
-            break;
-
-            // Synchronize time.
-          case SM_ACT_SS_SYNC:
-            estimateTimeDelta(m_wdog);
-            queueState(SM_ACT_LOG_REQUEST);
-            break;
-
-            // Request log name.
-          case SM_ACT_LOG_REQUEST:
-            closeLog();
-            requestLogName();
-            queueState(SM_ACT_LOG_WAIT);
-            break;
-
-            // Wait for log name.
-          case SM_ACT_LOG_WAIT:
-            if (m_log != NULL)
-              queueState(SM_ACT_DONE);
-            break;
-
-            // Activation procedure is complete.
-          case SM_ACT_DONE:
-            m_time_delta_timer.setTop(5.0);
-            queueState(SM_ACT_SAMPLE);
-            activate();
-            break;
-
-            // Read samples and continuously estimate time difference.
-          case SM_ACT_SAMPLE:
-            if (m_time_delta_timer.overflow())
-            {
-              m_time_delta_timer.reset();
-              m_cmd->estimateTimeDelta(m_args.time_delta_max_latency);
-            }
-
-            readData();
-            break;
-
-            // Start deactivation procedure.
-          case SM_DEACT_BEGIN:
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING);
-            m_wdog.setTop(getDeactivationTime());
-            queueState(SM_DEACT_DISCONNECT);
-            break;
-
-            // Disconnect and shutdown sidescan.
-          case SM_DEACT_DISCONNECT:
-            disconnect();
-            closeLog();
-            queueState(SM_DEACT_POWER_OFF);
-            break;
-
-            // Turn power off.
-          case SM_DEACT_POWER_OFF:
-            if (m_wdog.overflow())
-            {
-              turnPowerOff();
-              queueState(SM_DEACT_POWER_WAIT);
-            }
-            break;
-
-            // Wait for power to be turned off.
-          case SM_DEACT_POWER_WAIT:
-            if (!isPowered())
-              queueState(SM_DEACT_DONE);
-            break;
-
-            // Deactivation is complete.
-          case SM_DEACT_DONE:
-            deactivate();
-            queueState(SM_IDLE);
-            break;
-        }
-      }
-
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          if (isActive())
-            consumeMessages();
-          else if (hasQueuedStates())
-            updateStateMachine();
-          else
-            waitForMessages(1.0);
-
-          try
-          {
-            updateStateMachine();
-          }
-          catch (std::runtime_error& e)
-          {
-            throw RestartNeeded(e.what(), 5);
-          }
-        }
       }
     };
   }

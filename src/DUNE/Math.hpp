@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -50,5 +50,6 @@ namespace DUNE
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Math/MultiMovingAverage.hpp>
 #include <DUNE/Math/Grid.hpp>
+#include <DUNE/Math/FIRFilter.hpp>
 
 #endif

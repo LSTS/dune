@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,12 +58,14 @@ namespace Transports
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
-      Driver(Tasks::Task* task, SerialPort* uart):
+      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N, double wait_boot):
         HayesModem(task, uart),
         m_session_result_read(true),
         m_sbd_ring(false),
         m_queued_mt(0)
       {
+        m_use_9523 = use_9523N;
+        m_wait_boot = wait_boot;
         setLineTrim(true);
       }
 
@@ -74,6 +76,12 @@ namespace Transports
       void
       sendReset(void)
       {
+        if(m_use_9523)
+        {
+          sendAT("R");
+          Delay::wait(m_wait_boot);
+        }
+
         sendAT("Z0");
       }
 
@@ -122,11 +130,15 @@ namespace Transports
           if (length > 0)
           {
             readRaw(timer, data, length);
+            data[length] = '\0';
+            getTask()->debug("data: %s", data);
             computeChecksum(data, length, ccsum);
+            getTask()->debug("ccsum: %02x %02x", ccsum[0], ccsum[1]);
           }
 
           // Read and validate.
           readRaw(timer, bfr, 2);
+          getTask()->debug("bfr 0 | 1: %02x %02x", bfr[0], bfr[1]);
           if ((bfr[0] != ccsum[0]) || (bfr[1] != ccsum[1]))
             throw Hardware::InvalidChecksum(bfr, ccsum);
 
@@ -246,6 +258,12 @@ namespace Transports
         return m_queued_mt;
       }
 
+      std::string
+      getFirmVersionLIDB(void)
+      {
+        return readValue("V");
+      }
+
     private:
       //! Message buffer types.
       enum BufferType
@@ -266,6 +284,12 @@ namespace Transports
       bool m_sbd_ring;
       //! Number of MT messages waiting at the GSS.
       unsigned m_queued_mt;
+      //! Flag to control use of iridium module 9523N
+      bool m_use_9523;
+      //! Length of message received by 9523N
+      uint16_t m_length_msg_9523;
+      //! Delay of boot up of lidb board.
+      double m_wait_boot;
 
       //! Perform ISU initialization, this function must be called
       //! before any other.
@@ -352,7 +376,11 @@ namespace Transports
           m_session_result_read = false;
           m_session_result.parse(str);
           if (m_session_result.isSuccessMT())
+          {
             m_queued_mt = m_session_result.getQueuedMT();
+            if(m_use_9523)
+              m_length_msg_9523 = m_session_result.getLengthMT();
+          }
         }
 
         setSkipLine("OK");
@@ -365,8 +393,12 @@ namespace Transports
       void
       setRadioActivity(bool value)
       {
-        sendAT(value ? "*R1" : "*R0");
-        expectOK();
+        if(!m_use_9523)
+        {
+          getTask()->debug("setRadioActivity: %s", value ? "*R1" : "*R0");
+          sendAT(value ? "*R1" : "*R0");
+          expectOK();
+        }
       }
 
       //! Enable or disable the ISU to listen for SBD Ring Alerts.
@@ -374,6 +406,7 @@ namespace Transports
       void
       setRingAlert(bool value)
       {
+        getTask()->debug("setRingAlert: %s", value ? "+SBDMTA=1" : "+SBDMTA=0");
         sendAT(value ? "+SBDMTA=1" : "+SBDMTA=0");
         expectOK();
       }
@@ -383,6 +416,7 @@ namespace Transports
       void
       setAutomaticRegistration(bool value)
       {
+        getTask()->debug("setAutomaticRegistration %d", value);
         if (value)
           sendAT("+SBDAREG=1");
         else
@@ -394,6 +428,7 @@ namespace Transports
       void
       setIndicatorEventReporting(bool value)
       {
+        getTask()->debug("setIndicatorEventReporting %s", value ? "+CIER=1,1,0" : "+CIER=0");
         sendAT(value ? "+CIER=1,1,0" : "+CIER=0");
         expectOK();
       }
@@ -497,10 +532,31 @@ namespace Transports
         {
           return getBufferSizeMT(timer);
         }
+        else if(bfr[0] == 0)
+        {
+          if(m_use_9523)
+            return getBufferSizeMT(timer);
+        }
 
-        // Read second byte and handle SBD length.
-        readRaw(timer, bfr + 1, 1);
-        return (bfr[0] << 8) | bfr[1];
+        if(m_use_9523)
+        {
+          if(m_length_msg_9523 <= 255)
+          {
+            getTask()->debug("size <255: %d ! %d", m_length_msg_9523, bfr[0]);
+          }
+          else
+          {
+            readRaw(timer, bfr + 1, 1);
+            getTask()->debug("size >255: %d ! %d", m_length_msg_9523, (bfr[0] << 8) | bfr[1]);
+          }
+          return m_length_msg_9523;
+        }
+        else
+        {
+          // Read second byte and handle SBD length.
+          readRaw(timer, bfr + 1, 1);
+          return (bfr[0] << 8) | bfr[1];
+        }
       }
     };
   }

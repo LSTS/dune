@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -48,10 +48,10 @@ project("DUNE")
 set(PROJECT_NAME "DUNE: Unified Navigation Environment")
 set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
-set(PROJECT_COPYRIGHT "Copyright (C) 2007-2020 - ${PROJECT_VENDOR}")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2022 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
-set(PROJECT_VERSION_YEAR  "2020")
-set(PROJECT_VERSION_MONTH "01")
+set(PROJECT_VERSION_YEAR  "2022")
+set(PROJECT_VERSION_MONTH "04")
 set(PROJECT_VERSION_PATCH "0")
 set(PROJECT_VERSION_RCN   "0")
 
@@ -93,6 +93,8 @@ dune_option(JS "Enable support for SpiderMonkey javascript engine")
 dune_option(XENETH "Enable support for the Xeneth SDK")
 dune_option(BLUEVIEW "Enable support for the BlueView SDK")
 dune_option(OPENCV "Enable support for OpenCV")
+dune_option(POINTGREY "Enable support for POINTGREY")
+dune_option(EXIV2 "Enable support for Exiv2")
 dune_option(NO_RTTI "Disable support for RTTI")
 dune_option(UEYE "Enable support for IDS uEye cameras")
 dune_option(H5CPP "Enable support for hdf5 format i/o using the h5cpp library")
@@ -341,6 +343,11 @@ install(DIRECTORY www DESTINATION .)
 
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
+
+if(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
+  # Install private configuration files.
+  install(DIRECTORY private/etc DESTINATION ./private/)
+endif(EXISTS "${PROJECT_SOURCE_DIR}/private/etc/")
 
 if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   # Install user configuration files.

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -31,6 +31,7 @@
 #define DUNE_COORDINATES_GENERAL_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
+#include <cstdio>
 #include <cmath>
 
 // DUNE headers.
@@ -140,7 +141,7 @@ namespace DUNE
     //! @param y optional cross-track position on exit
     template <typename A, typename B>
     void
-    getTrackPosition(const A& origin, double orientation, const B& point, double* x, double* y = 0)
+    getTrackPosition(const A& origin, double orientation, const B& point, double* x, double* y = nullptr)
     {
       double b, r;
 
@@ -222,6 +223,18 @@ namespace DUNE
     //! @return NMEA formatted longitude.
     std::string
     longitudeToNMEA(double longitude);
+
+    //! Convert NMEA latitude to latitude in radians.
+    //! @param[in] str NMEA formatted latitude.
+    //! @return latitude in radians.
+    double
+    NMEAToLatitude(const std::string& str);
+
+    //! Convert NMEA longitude to longitude in radians.
+    //! @param[in] str NMEA formatted longitude.
+    //! @return longitude in radians.
+    double
+    NMEAToLongitude(const std::string& str);
   }
 }
 

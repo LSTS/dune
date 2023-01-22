@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -77,7 +77,26 @@ namespace DUNE
           m_queue.pop();
           return v;
         }
+
         return 0;
+      }
+
+      //! Retrieve the first element of the queue and removes it from
+      //! the queue.
+      //! @param[in,out] value where to store the popped value.
+      //! @return true if an element was popped, false otherwise.
+      bool
+      pop(T& value)
+      {
+        ScopedCondition l(m_cond);
+        if (m_queue.size() > 0)
+        {
+          value = m_queue.front();
+          m_queue.pop();
+          return true;
+        }
+
+        return false;
       }
 
       //! Wait for items to be available.

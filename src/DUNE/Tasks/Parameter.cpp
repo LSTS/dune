@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -106,7 +106,8 @@ namespace DUNE
       m_reader(NULL),
       m_changed(true),
       m_visibility(VISIBILITY_DEVELOPER),
-      m_scope(SCOPE_GLOBAL)
+      m_scope(SCOPE_GLOBAL),
+      m_editable(true)
     { }
 
     Parameter::~Parameter(void)
@@ -174,6 +175,8 @@ namespace DUNE
 
       os << "<param";
       XML::writeAttr("name", m_name, os);
+      if(!m_editable)
+        XML::writeAttr("editable", "false", os);
       os << ">\n";
 
       XML::writeTag("name-i18n", DTR(m_name.c_str()), os);

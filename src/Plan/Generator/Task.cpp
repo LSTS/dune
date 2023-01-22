@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -130,7 +130,7 @@ namespace Plan
       void
       consume(const IMC::Announce* msg)
       {
-        m_last_announces[msg->getSource()] = *msg;
+        m_last_announces.insert(std::pair<unsigned int, Announce>(msg->getSource(),*msg));
       }
 
       //! Stores the last received EstimatedState message.

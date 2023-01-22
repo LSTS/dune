@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -77,8 +77,10 @@ namespace Transports
       "SENDEND",
       "SENDPBM",
       "RECVPBM",
-      "CANCELEDPBM"
+      "RECVSRV",
+      "STATUS"
     };
+
 
     class Driver: public HayesModem
     {
@@ -184,6 +186,14 @@ namespace Transports
         expectOK();
       }
 
+      //! Set modem driver timeout
+      //! @param[in] timeout time to wait (seconds).
+      void
+      setDriverTimeout(double timeout)
+      {
+        setTimeout(timeout);
+      }
+
       //! Retrieve the firmware version string.
       //! @return firmware version.
       std::string
@@ -267,8 +277,10 @@ namespace Transports
         sendAT("?T");
         std::string str = readLine();
         unsigned value = 0;
-        if (!castLexical(str, value))
+        if (!castLexical(str, value)) {
+          getTask()->debug("invalid format: getPropagationTime");
           throw Hardware::InvalidFormat(str);
+        }
 
         return value;
       }
@@ -281,8 +293,10 @@ namespace Transports
         sendAT("?CA");
         std::string str = readLine();
         unsigned value = 0;
-        if (!castLexical(str, value))
+        if (!castLexical(str, value)) {
+          getTask()->debug("invalid format: getSoundSpeed");
           throw Hardware::InvalidFormat(str);
+        }
 
         return value;
       }
@@ -318,8 +332,11 @@ namespace Transports
         sendAT("?CLOCK");
         std::string str = readLine();
         unsigned value = 0;
-        if (!castLexical(str, value))
+        if (!castLexical(str, value)) {
+          getTask()->debug("invalid format: getClock");
+
           throw Hardware::InvalidFormat(str);
+        }
 
         return value;
       }
@@ -340,8 +357,10 @@ namespace Transports
         for (unsigned i = 0; i < 16; ++i)
         {
           ss >> mp[i];
-          if (ss.fail())
+          if (ss.fail()) {
+            getTask()->debug("invalid format: getMultipathStructure");
             throw Hardware::InvalidFormat(str);
+          }
         }
 
         return mp;
@@ -499,6 +518,8 @@ namespace Transports
     private:
       //! Firmware version.
       std::string m_version;
+      //! Mode
+      std::string m_mode = "unknown";
       //! Physical layer protocol version.
       std::string m_phy_ptl_version;
       //! Data-link layer protocol version.
@@ -509,6 +530,15 @@ namespace Transports
       void
       sendInitialization(void)
       {
+        // Get mode
+        sendAT("?MODE");
+        m_mode = readLine();
+        getTask()->debug("Mode: %s", m_mode.c_str());
+
+        if(m_mode.compare("NET") != 0) {
+            throw std::runtime_error("invalid mode for Evologics");
+        }
+
         // Get firmware version.
         sendAT("I0");
         m_version = readLine();

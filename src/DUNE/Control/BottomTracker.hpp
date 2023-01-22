@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -60,6 +60,8 @@ namespace DUNE
         float safe_pitch;
         //! Minimum admissible altitude for bottom tracking.
         float min_alt;
+        //! Minimum admissible depth for bottom tracking.
+        float min_depth;
         //! Minimum admissible forward range for bottom tracking.
         float min_range;
         //! Depth limit for tracking bottom.
@@ -136,8 +138,10 @@ namespace DUNE
         SM_TRACKING,
         //! Depth control.
         SM_DEPTH,
-        //! On limit depth control.
-        SM_LIMITDEPTH,
+        //! On limit depth control (enforce maximum depth).
+        SM_LIMITDEPTH_MAX,
+        //! On limit depth control (enforce minimum depth).
+        SM_LIMITDEPTH_MIN,
         //! In an unsafe yet controllable state.
         SM_UNSAFE,
         //! Avoiding unsurpassable obstacle.
@@ -203,8 +207,9 @@ namespace DUNE
       dispatchSafeDepth(void) const;
 
       //! Dispatch absolute limit for desired depth message.
+      //! @param[in] max_depth dispatch maximum or minimum depth limit
       void
-      dispatchLimitDepth(void) const;
+      dispatchLimitDepth(bool max_depth) const;
 
       //! Dispatch same altitude.
       void

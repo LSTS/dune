@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -489,6 +489,26 @@ namespace DUNE
       toLE(const int32_t value, uint8_t* dst)
       {
         return toLE(static_cast<uint32_t>(value), dst);
+      }
+
+      static inline unsigned
+      toLE(const float value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return rcopy4b(dst, (uint8_t*)&value);
+#else
+        return copy4b(dst, (uint8_t*)&value);
+#endif
+      }
+      
+      static inline unsigned
+      toLE(const double value, uint8_t* dst)
+      {
+#if defined(DUNE_CPU_BIG_ENDIAN)
+        return rcopy8b(dst, (uint8_t*)&value);
+#else
+        return copy8b(dst, (uint8_t*)&value);
+#endif
       }
 
       static inline unsigned

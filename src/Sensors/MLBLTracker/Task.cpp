@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -251,6 +251,7 @@ namespace Sensors
         // Register message handlers.
         bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
+        bind<IMC::AcousticSystemsQuery>(this);
       }
 
       ~Task(void)
@@ -366,6 +367,21 @@ namespace Sensors
         announce.service = std::string("imc+any://acoustic/operation/")
         + URL::encode(getEntityLabel());
         dispatch(announce);
+      }
+
+      void
+      consume(const IMC::AcousticSystemsQuery* msg)
+      {
+        if (m_args.addr_section.empty())
+        {
+          war("Modem address section was not properly set.");
+          return;
+        }
+        AcousticSystems reply;
+        std::vector<std::string> options = m_ctx.config.options(m_args.addr_section);
+        options.erase(std::remove(options.begin(), options.end(), m_ctx.resolver.name()), options.end());
+        reply.list = String::join(options.begin(), options.end(), ",");
+        dispatchReply(*msg, reply);
       }
 
       void

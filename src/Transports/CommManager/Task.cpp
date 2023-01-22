@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -480,7 +480,7 @@ namespace Transports
               switch (req->op)
               {
                 case IMC::AcousticOperation::AOP_MSG:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_QUEUED);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_QUEUED, req->system);
                   break;
 
                 default:
@@ -492,16 +492,16 @@ namespace Transports
               switch (req->op)
               {
                 case IMC::AcousticOperation::AOP_MSG:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_IP);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_IP, req->system);
                   break;
 
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_IP);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_IP, req->system);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_IP);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_IP, req->system);
                   break;
 
                 default:
@@ -513,13 +513,13 @@ namespace Transports
               switch (req->op)
               {
                 case IMC::AcousticOperation::AOP_MSG:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_DONE);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_DONE, req->system);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_ACKED);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_ACKED, req->system);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -534,6 +534,7 @@ namespace Transports
               {
                 case IMC::AcousticOperation::AOP_RANGE:
                   m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_RECVED,
+                                  req->system,
                                   msg->range);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
@@ -548,20 +549,20 @@ namespace Transports
               switch (req->op)
               {
                 case IMC::AcousticOperation::AOP_MSG:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_FAILURE);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_MSG_FAILURE, req->system);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_TIMEOUT);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_RANGE_TIMEOUT, req->system);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
 
                 case IMC::AcousticOperation::AOP_ABORT:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_TIMEOUT);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_ABORT_TIMEOUT, req->system);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -579,7 +580,7 @@ namespace Transports
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
                 case IMC::AcousticOperation::AOP_ABORT:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_BUSY);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_BUSY, req->system);
                   break;
 
                 default:
@@ -594,7 +595,7 @@ namespace Transports
                 case IMC::AcousticOperation::AOP_RANGE:
                 case IMC::AcousticOperation::AOP_REVERSE_RANGE:
                 case IMC::AcousticOperation::AOP_ABORT:
-                  m_router.answer(req, IMC::AcousticOperation::AOP_UNSUPPORTED);
+                  m_router.answer(req, IMC::AcousticOperation::AOP_UNSUPPORTED, req->system);
                   Memory::clear(req);
                   m_acoustic_requests.erase(msg->req_id);
                   break;
@@ -753,7 +754,7 @@ namespace Transports
         tx.setSource(getSystemId());
         tx.setSourceEntity(getEntityId());
 
-        tx.timeout = Clock::getSinceEpoch() + 10;
+        tx.timeout = 10;
 
         tx.range = msg->range;
 
@@ -899,6 +900,7 @@ namespace Transports
                 dispatch(msg);
                 inf("Requesting report transmission over Iridium.");
                 IMC::TransmissionRequest request;
+                request.setDestination (getSystemId());
                 request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
                 request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
                 request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;

@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2020 OceanScan - Marine Systems & Technology, Lda.        #
+# Copyright 2007-2021 OceanScan - Marine Systems & Technology, Lda.        #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
 #                                                                          #
