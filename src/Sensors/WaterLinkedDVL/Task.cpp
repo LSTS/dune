@@ -86,6 +86,16 @@ namespace Sensors
       double m_timestamp;
       //! List of entities.
       std::vector<unsigned> m_entities;
+      //! Bottom lock.
+      bool m_bottom_lock;
+      //! Command ticket (name, ttl).
+      typedef std::pair<std::string, double> Ticket;
+      //! Ticker queue.
+      std::queue<Ticket> m_ticket_queue;
+      //! Medium handler.
+      DUNE::Monitors::MediumHandler m_hand;
+      //! Task arguments.
+      Arguments m_args;
       //! Device configuration.
       struct Configuration
       {
@@ -95,18 +105,6 @@ namespace Sensors
         double mounting_rotation_offset;
         std::string range_mode;
       }m_config;
-      //! Bottom lock
-      bool m_bottom_lock;
-      //! Command ticket
-      struct Ticket
-      {
-        std::string cmd;
-        double ttl;
-      };
-      //! Ticker queue.
-      std::queue<Ticket> m_ticket_queue;
-      //! Task arguments.
-      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -149,6 +147,8 @@ namespace Sensors
         .defaultValue("4.4")
         .units(Units::Degree)
         .description("The nominal transducer beam width.");
+
+        bind<IMC::VehicleMedium>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -249,6 +249,17 @@ namespace Sensors
                                     BeamFilter::CLOCKWISE);
 
         m_filter->setSourceEntities(m_entities);
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        m_hand.update(msg);
+
+        // if (isActive() && m_hand.outWater())
+        //   enableAcoustics(false);
+        // else
+        //   enableAcoustics(true);
       }
 
       //! Parser for incoming TPC data.
@@ -352,21 +363,6 @@ namespace Sensors
       void
       parseTCPConfig(const nlohmann::json& msg)
       {
-        if (m_ticket_queue.empty())
-          return;
-        
-        Ticket ticket = m_ticket_queue.front();
-        if ((bool)msg["success"])
-        {
-          if ((std::string)msg["response_to"] == ticket.cmd)
-            m_ticket_queue.pop();
-        }
-        else
-        {
-          std::string s(msg["error_message"]);
-          err("Configuration response error: %s", s.c_str());
-        }
-        
         if ((std::string)msg["response_to"] == "get_config")
         {
           m_config.speed_of_sound = (double)msg["result"]["speed_of_sound"];
@@ -374,6 +370,21 @@ namespace Sensors
           m_config.dark_mode_enabled = (bool)msg["result"]["dark_mode_enabled"];
           m_config.mounting_rotation_offset = (double)msg["result"]["mounting_rotation_offset"];
           m_config.range_mode = (std::string)msg["result"]["range_mode"];
+        }
+
+        if (m_ticket_queue.empty())
+          return;
+        
+        Ticket ticket = m_ticket_queue.front();
+        if ((bool)msg["success"])
+        {
+          if ((std::string)msg["response_to"] == ticket.first)
+            m_ticket_queue.pop();
+        }
+        else
+        {
+          std::string s(msg["error_message"]);
+          err("Configuration response error: %s", s.c_str());
         }
       }
 
@@ -513,8 +524,8 @@ namespace Sensors
         m_handle->writeString(bfr.c_str());
 
         // Wait for response
-        Ticket ticket = {{cmd}, {Clock::get() + c_ttl}};
-        m_ticket_queue.push(ticket);
+        double now = Clock::get();
+        m_ticket_queue.push(Ticket(cmd, now + c_ttl));
       }
 
       //! Check ttl of tickets in queue.
@@ -525,9 +536,9 @@ namespace Sensors
           return;
 
         Ticket ticket = m_ticket_queue.front();
-        if (Clock::get() > ticket.ttl)
+        if (Clock::get() > ticket.second)
         {
-          war("%s failure (timeout)", ticket.cmd.c_str());
+          war("%s failure (timeout)", ticket.first.c_str());
           m_ticket_queue.pop();
         }
       }
