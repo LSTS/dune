@@ -297,7 +297,7 @@ namespace Sensors
           return;
         
         // Status
-        bool status = msg["status"];
+        uint8_t status = msg["status"];
         checkStatus(status);
 
         // Water Velocity
@@ -354,7 +354,7 @@ namespace Sensors
       parseTCPDeadReckoning(nlohmann::json& msg)
       {
         // Status
-        bool status = msg["status"];
+        uint8_t status = msg["status"];
         checkStatus(status);
       }
 
