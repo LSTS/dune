@@ -58,6 +58,8 @@ namespace Sensors
       std::string io_dev;
       //! Power channels.
       std::vector<std::string> pwr_channels;
+      //! Type of acoustics activation/deactivation.
+      std::string type_activation;
       //! DVL position.
       std::vector<float> position;
       //! DVL orientation.
@@ -127,6 +129,11 @@ namespace Sensors
         param("Power Channel - Names", m_args.pwr_channels)
         .defaultValue("")
         .description("Device's power channels");
+
+        param("Acoustics Activation", m_args.type_activation)
+        .values("Water, Always")
+        .defaultValue("Always")
+        .description("Operator is able to control acoustics");
 
         param("Device Position", m_args.position)
         .defaultValue("0.0, 0.0, 0.0")
@@ -242,6 +249,9 @@ namespace Sensors
         // Initialize device configuration
         getConfig();
 
+        if (m_args.type_activation == "Always")
+          enableAcoustics(true);
+
         // Initialize filter
         if (m_filter)
           return;
@@ -258,10 +268,18 @@ namespace Sensors
       {
         m_hand.update(msg);
 
-        // if (isActive() && m_hand.outWater())
-        //   enableAcoustics(false);
-        // else
-        //   enableAcoustics(true);
+        if (m_args.type_activation != "Water")
+          return;
+
+        if (!isActive())
+          return;
+        
+        if (!m_hand.isKnown())
+          enableAcoustics(false);
+        else if (m_hand.outWater())
+          enableAcoustics(false);
+        else
+          enableAcoustics(true);
       }
 
       //! Parser for incoming TPC data.
