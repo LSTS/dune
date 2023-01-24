@@ -82,6 +82,8 @@ namespace Sensors
       bool m_serial;
       //! Ethernet or Serial port handle.
       IO::Handle* m_handle;
+      //! Message fragment buffer.
+      std::string m_msg_frag;
       //! Timestamp of received data.
       double m_timestamp;
       //! List of entities.
@@ -407,25 +409,43 @@ namespace Sensors
         size_t rv = m_handle->read(bfr, sizeof(bfr));
         if(rv <= 0)
           return;
+        bfr[rv] = '\0';
 
         m_timestamp = Clock::getSinceEpoch();
 
         // Ensure proper string of data
-        std::string s = bfr, proper;
-        if (!m_serial)
+        std::vector<std::string> proper;
+        String::split(bfr, "\r\n", proper);
+        checkFragment(proper);
+        for (auto p : proper)
         {
-          proper = s.substr(0, s.find("}", s.find("json_v"))+2);
-          parseTCP(proper);
-        }
-        else
-        {
-          proper = s.substr(0, s.find("y")+4);
-          parseSerial(proper);
-        }
+          if (!m_serial)
+            parseTCP(p);
+          else
+            parseSerial(p);
 
-        // Log Raw Data
-        data.value = proper.c_str();
-        dispatch(data);
+          // Log Raw Data
+          data.value = p.c_str();
+          dispatch(data);
+        }
+      }
+
+      //! Check for message fragments.
+      //! @param[in] list message list.
+      void
+      checkFragment(std::vector<std::string>& list)
+      {
+        if (!m_msg_frag.empty() && 
+            list.front().front() != '{')
+        {
+          list.front() = m_msg_frag + list.front();
+          m_msg_frag.clear();
+        }
+        if (list.back().find("}", list.back().find("json_v")) == std::string::npos)
+        {
+          m_msg_frag = list.back();
+          list.pop_back();
+        }
       }
 
       //! Check for device faults.
