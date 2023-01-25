@@ -92,6 +92,8 @@ namespace Sensors
       std::vector<unsigned> m_entities;
       //! Bottom lock.
       bool m_bottom_lock;
+      //! Rotation matrix
+      Matrix m_rotation;
       //! Command ticket (name, ttl).
       typedef std::pair<std::string, double> Ticket;
       //! Ticker queue.
@@ -176,6 +178,9 @@ namespace Sensors
               || paramChanged(m_args.position)))
           return;
 
+        for (size_t i = 0; i < 3; i++)
+          m_args.orientation[i] = Angles::radians(m_args.orientation[i]);
+
         // Filtered altitude.
         IMC::BeamConfig bc;
         bc.beam_width = Angles::radians(m_args.beam_width);
@@ -185,9 +190,9 @@ namespace Sensors
         ds.x = m_args.position[0];
         ds.y = m_args.position[1];
         ds.z = m_args.position[2];
-        ds.phi = Angles::radians(m_args.orientation[0]);
-        ds.theta = Angles::radians(m_args.orientation[1]);
-        ds.psi = Angles::radians(m_args.orientation[2]);
+        ds.phi = m_args.orientation[0];
+        ds.theta = m_args.orientation[1];
+        ds.psi = m_args.orientation[2];
 
         m_alt_dvl.location.clear();
         m_alt_dvl.location.push_back(ds);
@@ -198,6 +203,12 @@ namespace Sensors
         m_alt_flt.location.push_back(ds);
         m_alt_flt.beam_config.clear();
         m_alt_flt.beam_config.push_back(bc);
+
+        // Rotation matrix
+        double orientation[3];
+        for (size_t i = 0; i < 3; i++)
+          orientation[i] = m_args.orientation[i];
+        m_rotation = Matrix(orientation, 3, 1).toDCM();
       }
 
       //! Reserve entity identifiers.
@@ -324,9 +335,16 @@ namespace Sensors
         uint8_t validity = msg["velocity_valid"];
         if (validity) 
         {
-          m_gvel.x = (fp64_t)msg["vx"];
-          m_gvel.y = (fp64_t)msg["vy"];
-          m_gvel.z = (fp64_t)msg["vz"];
+          // Rotate data
+          Matrix data(3, 1);
+          data(0) = (fp64_t)msg["vx"];
+          data(1) = (fp64_t)msg["vy"];
+          data(2) = (fp64_t)msg["vz"];
+          data = m_rotation * data;
+
+          m_gvel.x = data(0);
+          m_gvel.y = data(1);
+          m_gvel.z = data(2);
           m_gvel.validity = (IMC::WaterVelocity::VAL_VEL_X | 
                              IMC::WaterVelocity::VAL_VEL_Y |
                              IMC::WaterVelocity::VAL_VEL_Z);
