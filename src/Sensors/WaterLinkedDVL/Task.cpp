@@ -92,10 +92,8 @@ namespace Sensors
       std::vector<unsigned> m_entities;
       //! Bottom lock.
       bool m_bottom_lock;
-      //! Command ticket (name, ttl).
-      typedef std::pair<std::string, double> Ticket;
-      //! Ticker queue.
-      std::queue<Ticket> m_ticket_queue;
+      //! Command ticket.
+      std::string m_cmd_ticket;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
       //! Task arguments.
@@ -246,21 +244,19 @@ namespace Sensors
       void
       onInitializeDevice() override
       {
-        // Initialize device configuration
-        getConfig();
-        setRotation(m_args.orientation[2]);
-        if (m_args.type_activation == "Always")
-          enableAcoustics(true);
-
         // Initialize filter
-        if (m_filter)
-          return;
-
+        Memory::clear(m_filter);
         m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset,
                                     m_args.beam_angle, m_args.position, m_args.orientation,
                                     BeamFilter::CLOCKWISE);
 
         m_filter->setSourceEntities(m_entities);
+
+        // Initialize device configuration
+        getConfig();
+        setRotation(m_args.orientation[2]);
+        if (m_args.type_activation == "Always")
+          setAcoustics(true);
       }
 
       void
@@ -275,11 +271,11 @@ namespace Sensors
           return;
         
         if (!m_hand.isKnown())
-          enableAcoustics(false);
+          setAcoustics(false);
         else if (m_hand.outWater())
-          enableAcoustics(false);
+          setAcoustics(false);
         else
-          enableAcoustics(true);
+          setAcoustics(true);
       }
 
       //! Parser for incoming TPC data.
@@ -392,14 +388,13 @@ namespace Sensors
           m_config.range_mode = (std::string)msg["result"]["range_mode"];
         }
 
-        if (m_ticket_queue.empty())
+        if (m_cmd_ticket.empty())
           return;
         
-        Ticket ticket = m_ticket_queue.front();
         if ((bool)msg["success"])
         {
-          if ((std::string)msg["response_to"] == ticket.first)
-            m_ticket_queue.pop();
+          if ((std::string)msg["response_to"] == m_cmd_ticket)
+            m_cmd_ticket.clear();
         }
         else
         {
@@ -418,15 +413,19 @@ namespace Sensors
       }
 
       //! Read data from sensor.
-      void
+      //! @return true if data is read, false otherwise.
+      bool
       readData()
       {
+        if (!Poll::poll(*m_handle, 0.01))
+          return false;
+        
         char bfr[2000] = {0};
         IMC::DevDataText data;
 
         size_t rv = m_handle->read(bfr, sizeof(bfr));
         if(rv <= 0)
-          return;
+          return false;
         bfr[rv] = '\0';
 
         m_timestamp = Clock::getSinceEpoch();
@@ -446,6 +445,8 @@ namespace Sensors
           data.value = p.c_str();
           dispatch(data);
         }
+
+        return true;
       }
 
       //! Check for message fragments.
@@ -477,7 +478,7 @@ namespace Sensors
             return;
           
           // Disable acoustics until recovery
-          enableAcoustics(false);
+          setAcoustics(false);
           std::stringstream ss;
           ss << Status::getString(CODE_INTERNAL_ERROR)
              << " - DVL temperature too high"
@@ -492,7 +493,7 @@ namespace Sensors
             return;
 
           // Recovered from fault
-          enableAcoustics(true);
+          setAcoustics(true);
           displayConfig();
         }
       }
@@ -507,7 +508,7 @@ namespace Sensors
       //! Enable or disable device acoustics. 
       //! @param[in] enable true to enable, false to disable.
       void
-      enableAcoustics(const bool enable)
+      setAcoustics(const bool enable)
       {
         if (m_config.acoustic_enabled == enable)
           return;
@@ -579,23 +580,26 @@ namespace Sensors
         m_handle->writeString(bfr.c_str());
 
         // Wait for response
-        double now = Clock::get();
-        m_ticket_queue.push(Ticket(cmd, now + c_ttl));
+        if (!waitResponse(cmd))
+          war("%s failure (timeout)", cmd.c_str());
       }
 
-      //! Check ttl of tickets in queue.
-      void
-      checkTicketTimeout()
+      //! Wait command response
+      //! @return true if successful response, false otherwise
+      bool
+      waitResponse(const std::string& cmd)
       {
-        if (m_ticket_queue.empty())
-          return;
-
-        Ticket ticket = m_ticket_queue.front();
-        if (Clock::get() > ticket.second)
+        m_cmd_ticket = cmd;
+        double ttl = Clock::get() + c_ttl;
+        while (Clock::get() < ttl)
         {
-          war("%s failure (timeout)", ticket.first.c_str());
-          m_ticket_queue.pop();
+          readData();
+          if (m_cmd_ticket.empty())
+            return true;
         }
+
+        m_cmd_ticket.clear();
+        return false;
       }
 
       //! Get data from device.
@@ -603,14 +607,7 @@ namespace Sensors
       bool
       onReadData() override
       {
-        bool recv = false;
-        if (Poll::poll(*m_handle, 0.01))
-        {
-          readData();
-          recv = true;
-        }
-        
-        checkTicketTimeout();
+        bool recv = readData();
         displayConfig();
 
         return recv;
