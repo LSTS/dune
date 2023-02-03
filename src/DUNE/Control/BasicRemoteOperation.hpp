@@ -146,6 +146,8 @@ namespace DUNE
       IMC::RemoteActionsRequest m_actions;
       //! Control loops last reference
       uint32_t m_scope_ref;
+      //! Additional Remote Operation Actions
+      std::string m_additional_actions;
 
       //! IMC ID of the teleoperation source
       uint16_t m_teleop_src;

@@ -59,10 +59,14 @@ namespace DUNE
                   false);
 
       param("Connection Timeout", m_connection_timeout)
-      .defaultValue("1.0")
-      .units(Units::Second);
+          .defaultValue("1.0")
+          .units(Units::Second);
 
       addActionButton("Exit");
+
+      param("Additional Actions", m_additional_actions)
+          .defaultValue("")
+          .description("Actions to be added to Remote Actions List");
 
       m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
 
@@ -146,6 +150,22 @@ namespace DUNE
     void
     BasicRemoteOperation::onResourceInitialization(void)
     {
+      Utils::TupleList actions_tuples(m_additional_actions, "=", ",");
+      std::map<std::string, std::string> actions_map = actions_tuples.getMapReversed();
+      std::map<std::string, std::string>::iterator it;
+      for (it = actions_map.begin(); it != actions_map.end(); ++it)
+      {
+        std::string action_name = it->first.c_str();
+        if (!it->second.compare("Button"))
+        {
+          addActionButton(action_name);
+        }
+        else if (!it->second.compare("Axis"))
+        {
+          addActionAxis(action_name);
+        }
+      }
+
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
