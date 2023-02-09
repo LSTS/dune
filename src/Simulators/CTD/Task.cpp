@@ -30,6 +30,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// local headers
+#include "OctoTree.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Simulators
@@ -79,6 +82,8 @@ namespace Simulators
       Random::Generator* m_prng;
       //! Task arguments.
       Arguments m_args;
+      //! OctoTree
+      OctoTree* m_otree;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -118,7 +123,8 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        requestDeactivation();
+        m_otree = new OctoTree();
+        requestDeactivation();// ?
       }
 
       //! Acquire resources. Initializes the random number generator
@@ -146,8 +152,8 @@ namespace Simulators
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           requestActivation();
         }
-
         m_sstate = *msg;
+        m_otree->add(msg->x, msg->y, msg->z, msg->getId());
       }
 
       //! If active, computes all values using random value generators and dispatches:
