@@ -532,6 +532,28 @@ namespace Sensors
         getConfig();
       }
 
+      //! Set range mode.
+      //! Modes table:
+      //!   Mode    Min alt (m)   Max alt (m)
+      //!   0       0.05          0.6       
+      //!   1       0.3           3.0       
+      //!   2       1.5           14       
+      //!   3       7.7           36       
+      //!   4       15            max       
+      //! @param[in] spec Range specifier option:
+      //! auto  - The DVL will search for bottom lock in it's full operational area (Default)
+      //! =a    - The DVL is locked to range mode a where a is a number from 0-4
+      //! a<=b  - The DVL will search for bottom lock within range mode a and b
+      void
+      setRange(const std::string spec)
+      {
+        if (m_config.range_mode == spec)
+          return;
+
+        sendCommand("set_config", "range_mode", spec);
+        getConfig();
+      }
+
       //! Set device rotation angle. 
       //! @param[in] angle mounting rotation angle in degrees.
       void
