@@ -46,6 +46,8 @@ namespace DUNE
     {
       bind<IMC::StopManeuver>(this);
       bind<IMC::PathControlState>(this);
+      // always consume PeekManeuver, even if inactive
+      bind<IMC::PeekManeuver>(this,true);
     }
 
     Maneuver::~Maneuver(void)
@@ -162,6 +164,13 @@ namespace DUNE
         return;
 
       onPathControlState(pcs);
+    }
+
+    void
+    Maneuver::consume(const IMC::PeekManeuver* pman)
+    {
+      debug("Calling onPeekManeuver");
+      onPeekManeuver(pman);
     }
 
     void

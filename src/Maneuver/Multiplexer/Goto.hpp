@@ -59,6 +59,13 @@ namespace Maneuver
       {
         m_task->setControl(IMC::CL_PATH);
 
+        IMC::DesiredPath dpath = convertManeuverToPath(maneuver);
+        m_task->dispatch(dpath);
+      }
+
+      IMC::DesiredPath
+      convertManeuverToPath(const IMC::Goto* maneuver)
+      {
         IMC::DesiredPath path;
         path.end_lat = maneuver->lat;
         path.end_lon = maneuver->lon;
@@ -66,9 +73,9 @@ namespace Maneuver
         path.end_z_units = maneuver->z_units;
         path.speed = maneuver->speed;
         path.speed_units = maneuver->speed_units;
-
-        m_task->dispatch(path);
+        return path;
       }
+
 
       //! On PathControlState message
       //! @param[in] pcs pointer to PathControlState message
@@ -79,6 +86,17 @@ namespace Maneuver
           m_task->signalCompletion();
         else
           m_task->signalProgress(pcs->eta);
+      }
+
+      void
+      onPeekManeuver(const IMC::PeekManeuver* pman)
+      {
+        m_task->debug("Dispatching peeked DesiredPath");
+        IMC::PeekDesiredPath peek_dpath;
+        const IMC::PlanManeuver* planman = pman->man.get();
+        const IMC::Goto* m = static_cast<const IMC::Goto*>(planman->data.get());
+        peek_dpath.dpath.set(convertManeuverToPath(m));
+        m_task->dispatch(peek_dpath);
       }
 
       ~Goto(void)

@@ -86,6 +86,13 @@ namespace DUNE
         (void)pcs;
       }
 
+      //! On Peek Maneuver
+      virtual void
+      onPeekManeuver(const IMC::PeekManeuver* pman)
+      {
+        (void)pman;
+      }
+
       //! On task activation
       //! Should be used only by parent class Maneuver
       void
@@ -165,6 +172,9 @@ namespace DUNE
       //! @param pcs message to consume.
       void
       consume(const IMC::PathControlState* pcs);
+
+      void
+      consume(const IMC::PeekManeuver* pman);
 
       //! Set or reconfigure control loops used by maneuver task.
       //! @param mask mask identifying controllers that should be made active.
