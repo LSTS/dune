@@ -4,6 +4,15 @@
 #include <iostream>
 #include <vector>
 
+//  ERROR WHEN EXPANDING BOUNDS
+//  Error expanding bounds when prev point is in midpoint of new bounds  
+
+/**
+ * add(0, 0, 0) 1º Point
+ * add(0.5, 0.5, 0.5)
+ * add(-3, -3, -3)
+ * add(-7, -7, -7)
+*/
 
 #define INVALID_BOUNDS          1
 #define INVAILD_POINT 	        2
@@ -29,8 +38,8 @@ public:
 
         Bounds();
         Bounds(double _x, double _y, double _z);
-        Bounds(double min_x, double Max_x, double min_y, double Max_y, double min_z, double Max_z);
-        double getMidpoint(char axis);
+        Bounds(double _min_x, double _max_x, double _min_y, double _max_y, double _min_z, double _max_z);
+        double getMidpoint(char axis) const;
     };
     struct Node
     {
@@ -47,6 +56,7 @@ public:
         void expandeBounds(const Item& val);
         bool isOutBounds(const Item& val);
         int insert_data(Item *val);
+        int getOctante(const Bounds& volume);
         int getOctante(const Item& val);
         int getOctante(double x, double y, double z);
         Bounds getOctoBounds(int oct);
@@ -60,8 +70,9 @@ public:
         int remove_dat(const Item& val);
         //debug
         void printNode(int deep);
+        bool testNode();
     };
-    Node* new_root(Node* child, Item* prev_data, Item* new_data);
+    Node* new_root(Node* child, const Bounds& prev_volume, Item* new_data);
     OctoTree();
     OctoTree(double x, double y, double z, double val);
     ~OctoTree();
@@ -75,6 +86,7 @@ public:
     
     //debug
     void printTree();
+    bool testTree();
 
 private:
     Node *root;

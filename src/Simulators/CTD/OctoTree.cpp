@@ -45,17 +45,17 @@ OctoTree::Bounds::Bounds(double _x, double _y, double _z) :
 }
 
 /// @brief Create a new Bounds object
-/// @param min_x min_x limit
-/// @param Max_x max_x limit
-/// @param min_y min_y limit
-/// @param Max_y max_y limit
-/// @param min_z min_z limit
-/// @param Max_z max_z limit
+/// @param _min_x min_x limit
+/// @param _max_x max_x limit
+/// @param _min_y min_y limit
+/// @param _max_y max_y limit
+/// @param _min_z min_z limit
+/// @param _max_z max_z limit
 /// @throw INVALID_BOUNDS if arguments are incorrect
-OctoTree::Bounds::Bounds(double min_x, double Max_x, double min_y, double Max_y, double min_z, double Max_z) :
-	max_x(Max_x), max_y(Max_y), max_z(Max_z), min_x(min_x), min_y(min_y), min_z(min_z)
+OctoTree::Bounds::Bounds(double _min_x, double _max_x, double _min_y, double _max_y, double _min_z, double _max_z) :
+	max_x(_max_x), max_y(_max_y), max_z(_max_z), min_x(_min_x), min_y(_min_y), min_z(_min_z)
 {
-	if(Max_x < min_x || Max_y < min_y || Max_z < min_z)
+	if(_max_x < min_x || _max_y < min_y || _max_z < min_z)
 		throw INVALID_BOUNDS;
 }
 
@@ -63,7 +63,7 @@ OctoTree::Bounds::Bounds(double min_x, double Max_x, double min_y, double Max_y,
 /// @param axis {x , y , z}
 /// @return -1 if axis is not valid
 /// @return or bounds midpoint of axis
-double OctoTree::Bounds::getMidpoint(char axis)
+double OctoTree::Bounds::getMidpoint(char axis) const
 {
 	if (axis == 'x')
 		return (max_x+min_x)/2;
@@ -131,20 +131,20 @@ OctoTree::Node::~Node()
 /// @param new_data pointer to object Item to insert
 /// @return new Node root with bounds expanded and new_data inserted as root data
 /// @warning This may create nodes will data = nullptr if it expandes more than once
-OctoTree::Node* OctoTree::new_root(Node* child, Item* prev_data, Item* new_data)
+OctoTree::Node* OctoTree::new_root(Node* child, const Bounds& prev_volume, Item* new_data)
 {
 	Node* n_root = new Node(nullptr, nullptr, child->lim);
 	n_root->leaf = false;
 
 	n_root->expandeBounds(*new_data);
 
-	int pos = n_root->getOctante(*prev_data);
+	int pos = n_root->getOctante(prev_volume);
 
 	n_root->childs[pos] = child;
 	child->myRoot = n_root;
 
 	if(n_root->isOutBounds(*new_data))
-		return new_root(n_root, prev_data, new_data);
+		return new_root(n_root, prev_volume, new_data);
 	n_root->data = new_data;
 
     return n_root;
@@ -159,9 +159,9 @@ void OctoTree::Node::expandeBounds(const Item& val)
 	double length = lim.max_x-lim.min_x;
 	if (length == 0)
 	{
-		double dx = abs(val.x - lim.max_x);
-		double dy = abs(val.y - lim.max_y);
-		double dz = abs(val.z - lim.max_z);
+		double dx = (val.x - lim.max_x > 0 ? val.x - lim.max_x : lim.max_x - val.x);
+		double dy = (val.y - lim.max_y > 0 ? val.y - lim.max_y : lim.max_y - val.y);
+		double dz = (val.z - lim.max_z > 0 ? val.z - lim.max_z : lim.max_z - val.z);
 		
 		if (dx > dy)
 		{
@@ -173,6 +173,7 @@ void OctoTree::Node::expandeBounds(const Item& val)
 			if (dy > dz) length = dy;
 			else length = dz;
 		}
+		length += 0.5; // just a band aid doesn't completely fix the problem
 	}
 
 	double mid_x, mid_y, mid_z;
@@ -193,7 +194,7 @@ void OctoTree::Node::expandeBounds(const Item& val)
 
 
 /// @brief Checks if item is outside Node limits (Bounds)
-/// @param val Item object to test
+/// @param val Item object to verify
 /// @return True if item is outside Node bounds. Or false if inside
 bool OctoTree::Node::isOutBounds(const Item& val)
 {
@@ -237,8 +238,58 @@ int OctoTree::Node::insert_data(Item *val)
 	return childs[pos]->insert_data(val)+1;
 }
 
+int OctoTree::Node::getOctante(const Bounds &volume)
+{
+    double mp_x, mp_y, mp_z;
+	mp_x = lim.getMidpoint('x');
+	mp_y = lim.getMidpoint('y');
+	mp_z = lim.getMidpoint('z');
+
+	double x, y, z;
+	x = volume.getMidpoint('x');
+	y = volume.getMidpoint('y');
+	z = volume.getMidpoint('z');
+
+	if (x > mp_x)
+	{
+		if (y > mp_y)
+		{
+			if (z > mp_z)	/*add to Q1 - X > 0, Y > 0, Z > 0 */
+				return Q1;	
+			else 				/*add to Q5 - X > 0, Y > 0, Z < 0 */
+				return Q5;	
+		}
+		else
+		{
+			if (z > mp_z)	/*add to Q4 - X > 0, Y < 0, Z > 0 */
+				return Q4;
+			else 				/*add to Q8 - X > 0, Y < 0, Z < 0 */
+				return Q8;
+		}
+	}
+	else
+	{
+		if (y > mp_y)
+		{
+			if (z > mp_z)	/*add to Q2 - X < 0, Y > 0, Z > 0 */
+				return Q2;
+			else				/*add to Q6 - X < 0, Y > 0, Z < 0 */
+				return Q6;
+		}
+		else
+		{
+			if (z > mp_z)	/*add to Q3 - X < 0, Y < 0, Z > 0 */
+				return Q3;	
+			else				/*add to Q7 - X < 0, Y < 0, Z < 0 */
+				return Q7;
+		}
+	}
+	
+    return -1;
+}
+
 /// @brief Compares the Item coordinates and returns the Octante that corresponds to the Item
-/// @param val Item object to test
+/// @param val Item object to verify
 /// @warning Item must be inside Node bounds
 int OctoTree::Node::getOctante(const Item& val)
 {
@@ -251,7 +302,6 @@ int OctoTree::Node::getOctante(const Item& val)
 		std::cout << "\tz: (" 	<< lim.min_z << " ; " << lim.max_z << ")\n";
 
 		std::cout << "Failed Point:\tx:" << val.x << "\t y: " << val.y << "\t z:" << val.z << "\tvalue:" << val.value << "\n";
-	
 		throw INVALID_INSERT_POINT;
 	}
 	
@@ -314,14 +364,14 @@ int OctoTree::Node::getOctante(double x, double y, double z)
 	{
 		if (y > mp_y)
 		{
-			if (z > mp_z)	/*add to Q1 - X > 0, Y > 0, Z > 0 */
+			if (z > mp_z)		/*add to Q1 - X > 0, Y > 0, Z > 0 */
 				return Q1;	
 			else 				/*add to Q5 - X > 0, Y > 0, Z < 0 */
 				return Q5;	
 		}
 		else
 		{
-			if (z > mp_z)	/*add to Q4 - X > 0, Y < 0, Z > 0 */
+			if (z > mp_z)		/*add to Q4 - X > 0, Y < 0, Z > 0 */
 				return Q4;
 			else 				/*add to Q8 - X > 0, Y < 0, Z < 0 */
 				return Q8;
@@ -331,14 +381,14 @@ int OctoTree::Node::getOctante(double x, double y, double z)
 	{
 		if (y > mp_y)
 		{
-			if (z > mp_z)	/*add to Q2 - X < 0, Y > 0, Z > 0 */
+			if (z > mp_z)		/*add to Q2 - X < 0, Y > 0, Z > 0 */
 				return Q2;
 			else				/*add to Q6 - X < 0, Y > 0, Z < 0 */
 				return Q6;
 		}
 		else
 		{
-			if (z > mp_z)	/*add to Q3 - X < 0, Y < 0, Z > 0 */
+			if (z > mp_z)		/*add to Q3 - X < 0, Y < 0, Z > 0 */
 				return Q3;	
 			else				/*add to Q7 - X < 0, Y < 0, Z < 0 */
 				return Q7;
@@ -668,7 +718,7 @@ int OctoTree::add(double x, double y, double z, double v)
 	Item* point = new Item(x, y, z, v);
 	if(root->isOutBounds(*point))
 	{
-		root = new_root(root, root->data, point);
+		root = new_root(root, root->lim, point);
 		return 1;
 	}
 	return root->insert_data(point)+1;
@@ -691,7 +741,7 @@ int OctoTree::search(const Bounds &vol, std::vector<Item*> &points)
     return root->search_vol(vol, points);
 }
 
-/// @brief 
+
 /// @return Number of nodes inside tree
 int OctoTree::size()
 {
@@ -707,12 +757,20 @@ void OctoTree::printTree()
 {
 	if (root != nullptr)
 	{
+		std::cout << "Root not null\n";
 		root->printNode(0);
 	}
 	else
 		std::cout << "Tree root is null\n";
 
 }
+
+
+bool OctoTree::testTree()
+{
+	return root->testNode();
+}
+
 
 void OctoTree::Node::printNode(int deep)
 {
@@ -736,6 +794,7 @@ void OctoTree::Node::printNode(int deep)
 	{
 		if (childs[i] != nullptr)
 		{
+			std::cout << "Child at Q" << i+1 << "\n";
 			childs[i]->printNode(deep);
 		}
 	}
@@ -766,4 +825,27 @@ void print_error(int e)
 
 	exit(EXIT_FAILURE);
 	
+}
+
+bool OctoTree::Node::testNode()
+{
+	bool sta = false;
+	if (isOutBounds(*data))
+	{
+		std::cout << "My item is outside my own Bounds\n";
+		exit(1);
+	}
+	Bounds aux;
+	for (int i = 0; i < 8; i++)
+	{
+		if (childs[i] != nullptr)
+		{
+			aux = getOctoBounds(i);
+			if (aux.max_x != childs[i]->lim.max_x && aux.min_x != childs[i]->lim.min_x)
+				sta = true;
+			
+		}
+	}
+	
+    return !sta;
 }

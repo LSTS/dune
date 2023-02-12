@@ -124,7 +124,8 @@ namespace Simulators
       onResourceInitialization(void)
       {
         m_otree = new OctoTree();
-        requestDeactivation();// ?
+        inf("Created ocTree");
+        requestDeactivation();
       }
 
       //! Acquire resources. Initializes the random number generator
@@ -138,7 +139,8 @@ namespace Simulators
       //! Release resources.
       void
       onResourceRelease(void)
-      {
+      {      
+        Memory::clear(m_otree);
         Memory::clear(m_prng);
       }
 
@@ -153,7 +155,13 @@ namespace Simulators
           requestActivation();
         }
         m_sstate = *msg;
-        m_otree->add(msg->x, msg->y, msg->z, msg->getId());
+        m_otree->add(msg->x, msg->y, msg->z, m_otree->size()+1 );
+      }
+
+      void
+      onDeactivation(void)
+      {
+        m_otree->printTree();
       }
 
       //! If active, computes all values using random value generators and dispatches:
@@ -195,6 +203,7 @@ namespace Simulators
         dispatch(m_pressure, DF_KEEP_TIME);
         dispatch(m_salinity, DF_KEEP_TIME);
         dispatch(m_sspeed, DF_KEEP_TIME);
+        inf("Tree is: %d", m_otree->size());
       }
     };
   }
