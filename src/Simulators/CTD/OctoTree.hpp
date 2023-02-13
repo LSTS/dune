@@ -3,9 +3,10 @@
 
 #include <iostream>
 #include <vector>
+#include <DUNE/DUNE.hpp>
 
 //  ERROR WHEN EXPANDING BOUNDS
-//  Error expanding bounds when prev point is in midpoint of new bounds  
+//  Error expanding bounds when prev point is in midpoint of new bounds
 
 /**
  * add(0, 0, 0) 1º Point
@@ -69,7 +70,7 @@ public:
         int number_nodes();
         int remove_dat(const Item& val);
         //debug
-        void printNode(int deep);
+        void printNode(int deep, std::ostream& file = std::cout);
         bool testNode();
     };
     Node* new_root(Node* child, const Bounds& prev_volume, Item* new_data);
