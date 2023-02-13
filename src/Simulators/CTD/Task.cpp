@@ -155,8 +155,7 @@ namespace Simulators
           requestActivation();
         }
         m_sstate = *msg;
-        int dept = m_otree->add(msg->x, msg->y, msg->z, m_otree->size()+1 );
-        inf("Added point %lf, %lf, %lf at dept %d", msg->x, msg->y, msg->z, dept);
+        m_otree->add(msg->x, msg->y, msg->z, m_otree->size()+1 );
       }
 
       //! If active, computes all values using random value generators and dispatches:
@@ -198,7 +197,7 @@ namespace Simulators
         dispatch(m_pressure, DF_KEEP_TIME);
         dispatch(m_salinity, DF_KEEP_TIME);
         dispatch(m_sspeed, DF_KEEP_TIME);
-        inf("Tree is: %d", m_otree->size());
+        inf("Tree has: %d nodes", m_otree->size());
         m_otree->printTree();
         if (m_otree->testTree())
           inf("Tree is \'ok\'");

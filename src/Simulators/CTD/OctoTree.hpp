@@ -71,8 +71,6 @@ public:
     double search_data(double x, double y, double z);
     int search(const Bounds& vol, std::vector<Item*> &points);
     int size();
-
-    //to do
     int remove_data(const Item& val);
     
     //debug
