@@ -20,12 +20,10 @@
 OctoTree::Item::Item(double _x, double _y, double _z, double _v) :
 	x(_x), y(_y), z(_z), value(_v)
 {
-	//std::cout << "Creating point at (\t" << _x << "\t," << _y << "\t," << _z << "\t):" << value << "\tin address: " << this << '\n';
 }
 
 OctoTree::Item::~Item()
 {
-	//std::cout << "\t deleting point at:(\t" << x << "\t," << y << "\t," << z << "\t):" << value << "\tin address: " << this << '\n';
 }
 
 /// @brief Create a new Bounds object with bounds at 0
@@ -314,15 +312,8 @@ int OctoTree::Node::getOctante(const Item& val)
 {
 	
 	if (isOutBounds(val))
-	{	
-		std::cout << "\n\nFailed Bounds:";
-		std::cout << "x: ("		<< lim.min_x << " ; " << lim.max_x << ')';
-		std::cout << "\ty: (" 	<< lim.min_y << " ; " << lim.max_y << ')';
-		std::cout << "\tz: (" 	<< lim.min_z << " ; " << lim.max_z << ")\n";
-
-		std::cout << "Failed Point:\tx:" << val.x << "\t y: " << val.y << "\t z:" << val.z << "\tvalue:" << val.value << "\n";
 		throw INVALID_INSERT_POINT;
-	}
+
 	
 	double mp_x, mp_y, mp_z;
 	mp_x = lim.getMidpoint('x');
@@ -506,11 +497,8 @@ double OctoTree::Node::search(double x, double y, double z)
 	int pos = getOctante(x, y, z);
 
 	if (childs[pos] == nullptr)
-	{
-		std::cout << "Search failed \n";
-		std::cout << "Point:" << x << " " << y << " " << z << "\n";
 		throw INVAILD_POINT;
-	}
+
     return childs[pos]->search(x, y, z);
 }
 
@@ -746,7 +734,6 @@ int OctoTree::add(double x, double y, double z, double v)
 
 OctoTree::~OctoTree()
 {
-	std::cout << "\n\n\tDELETING TREE\n\n";
 	delete root;
 }
 
@@ -866,10 +853,7 @@ bool OctoTree::Node::testNode()
 {
 	bool sta = false;
 	if (isOutBounds(*data))
-	{
-		std::cout << "My item is outside my own Bounds\n";
 		exit(1);
-	}
 	Bounds aux;
 	for (int i = 0; i < 8; i++)
 	{
