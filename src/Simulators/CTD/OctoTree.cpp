@@ -143,13 +143,15 @@ OctoTree::Node* OctoTree::new_root(Node* child, const Bounds& prev_volume, Item*
 	// when expanding if prev point is in the bounds of its node
 	// it may be insered in the "wrong" octante because this point will collide with new bounds mid point
 	// the default is to insert the midpoints in the lower volume Ex: Bounds of z:[-1, 1] and new point is z = 0 -> inserting in Q5-8
-	int pos_data = n_root->getOctante(*child->data);
-	if (pos != pos_data)
+	if (child->data != nullptr)
 	{
-		n_root->insert_data(child->data);
-		child->data = nullptr;			
+		int pos_data = n_root->getOctante(*child->data);
+		if (pos != pos_data)
+		{
+			n_root->insert_data(child->data);
+			child->data = nullptr;			
+		}
 	}
-
 	n_root->childs[pos] = child;
 	child->myRoot = n_root;
 
@@ -188,7 +190,6 @@ void OctoTree::Node::expandeBounds(const Item& val)
 			if (dy > dz) length = dy;
 			else length = dz;
 		}
-		length += 0.5; // just a band aid doesn't completely fix the problem
 	}
 
 	double mid_x, mid_y, mid_z;

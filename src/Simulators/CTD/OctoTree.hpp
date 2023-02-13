@@ -5,16 +5,6 @@
 #include <vector>
 #include <DUNE/DUNE.hpp>
 
-//  ERROR WHEN EXPANDING BOUNDS
-//  Error expanding bounds when prev point is in midpoint of new bounds
-
-/**
- * add(0, 0, 0) 1º Point
- * add(0.5, 0.5, 0.5)
- * add(-3, -3, -3)
- * add(-7, -7, -7)
-*/
-
 #define INVALID_BOUNDS          1
 #define INVAILD_POINT 	        2
 #define INVALID_INSERT_POINT    3
