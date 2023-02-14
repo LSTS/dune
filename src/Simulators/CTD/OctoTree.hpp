@@ -59,9 +59,10 @@ public:
         int add_item(std::vector<Item*> &points);
         int number_nodes();
         int remove_dat(const Item& val);
+        
         //debug
         void printNode(int deep, std::ostream& file = std::cout);
-        bool testNode();
+        int testNode();
     };
     Node* new_root(Node* child, const Bounds& prev_volume, Item* new_data);
     OctoTree();

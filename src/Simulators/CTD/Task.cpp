@@ -199,7 +199,7 @@ namespace Simulators
         dispatch(m_sspeed, DF_KEEP_TIME);
         inf("Tree has: %d nodes", m_otree->size());
         m_otree->printTree();
-        if (m_otree->testTree())
+        if (!m_otree->testTree())
           inf("Tree is \'ok\'");
         else
           inf("Tree error"); 

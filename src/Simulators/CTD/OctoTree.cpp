@@ -681,9 +681,9 @@ int OctoTree::Node::number_nodes()
     return res;
 }
 
-/// @brief 
-/// @param val 
-/// @return 
+/// @brief removes Item object from tree
+/// @param val object
+/// @return 1 if successful or 0 if failed
 int OctoTree::Node::remove_dat(const Item& val)
 {
 	if (isOutBounds(val))
@@ -706,16 +706,25 @@ int OctoTree::Node::remove_dat(const Item& val)
 	return 0;    
 }
 
+
 OctoTree::OctoTree()
 {
     root = nullptr;
 }
+
 
 OctoTree::OctoTree(double x, double y, double z, double val)
 {
 	root = new Node(nullptr, x, y, z, val);
 }
 
+
+/// @brief Add point to tree
+/// @param x x coordinate
+/// @param y y coordinate
+/// @param z z coordinate
+/// @param v value to store
+/// @return dept at which the item was inserted
 int OctoTree::add(double x, double y, double z, double v)
 {
 	if (root == nullptr)
@@ -729,7 +738,7 @@ int OctoTree::add(double x, double y, double z, double v)
 		root = new_root(root, root->lim, point);
 		return 0;
 	}
-	return root->insert_data(point)+1;
+	return root->insert_data(point);
 }
 
 OctoTree::~OctoTree()
@@ -737,12 +746,18 @@ OctoTree::~OctoTree()
 	delete root;
 }
 
+/// @brief removes Item object from tree
+/// @param val object
+/// @return 1 if successful or 0 if failed
 int OctoTree::remove_data(const Item& val)
 {
     return root->remove_dat(val);
 }
 
-
+/// @brief Searches for points inside Bounds volume
+/// @param vol Bounds object
+/// @param points vector to store the points inside volume
+/// @return number of iterations
 int OctoTree::search(const Bounds &vol, std::vector<Item*> &points)
 {
     return root->search_vol(vol, points);
@@ -758,15 +773,31 @@ int OctoTree::size()
     return root->number_nodes();
 }
 
+
+/// @brief Search the tree for the point (x,y,z)
+/// @param x x coordinate
+/// @param y y coordinate
+/// @param z z coordinate
+/// @return value stored in the point
+/// @throw Throws INVALID_POINT if the point doesn't exist
 double OctoTree::search_data(double x, double y, double z)
 {
     return root->search(x, y, z);	
 }
 
+
+/// @brief Prints tree to file ../OctoTree Files/OctoTree_log.txt	
 void OctoTree::printTree()
 {
 	std::ofstream logFile;
-	logFile.open("OctoTree_log.txt");
+	logFile.open("OctoTree Files/OctoTree_log.txt");
+	if ( !logFile.is_open()	)
+	{
+		if(!system("mkdir \"OctoTree Files\""))
+			logFile.open("OctoTree Files/OctoTree_log.txt");
+		else return;
+	}
+		
 	if (root != nullptr)
 		root->printNode(0, logFile);
 	else
@@ -777,13 +808,22 @@ void OctoTree::printTree()
 }
 
 
+/// @brief Prints all points in tree to file ../OctoTree Files/OctoTree_teste.txt then searches for each point in Tree \n
+/// and testes if Nodes are in correct octante with correct bounds
+/// @return result of testNode()
 bool OctoTree::testTree()
 {
 	std::vector<Item*> points;
 	root->add_item(points);
 
 	std::ofstream testFile;	
-	testFile.open("OctoTree_teste.txt");
+	testFile.open("OctoTree Files/OctoTree_teste.txt");
+	if (!testFile.is_open())
+	{
+		if(!system("mkdir \"OctoTree Files\""))
+			testFile.open("OctoTree Files/OctoTree_teste.txt");
+		else return false;
+	}
 	for (long unsigned int i = 0; i < points.size(); i++)
 	{
 		testFile << "Point" << points[i]->x << " " << points[i]->y << " " << points[i]->z << " " << points[i]->value << "\n";		
@@ -794,9 +834,12 @@ bool OctoTree::testTree()
 }
 
 
-void OctoTree::Node::printNode(int deep, std::ostream& file)
+/// @brief Prints node information to output stream file
+/// @param dept Tree dept
+/// @param file output stream object
+void OctoTree::Node::printNode(int dept, std::ostream& file)
 {
-	file << "At deep(" << deep << ") leaf:" << leaf << "\n";
+	file << "At dept(" << dept << ") leaf:" << leaf << "\n";
 	file << "my root is:" << myRoot << "\tmy address:" << this << "\n";
 	if (data != nullptr)
 		file << "Point:\tx:" << data->x << "\t y: " << data->y << "\t z:" << data->z << "\tvalue:" << data->value << "\n";
@@ -811,20 +854,49 @@ void OctoTree::Node::printNode(int deep, std::ostream& file)
 	if(leaf){
 		return;
 	}
-	deep++;
+	dept++;
 	for (int i = 0; i < 8; i++)
 	{
 		if (childs[i] != nullptr)
 		{
 			file << "Child at Q" << i+1 << "\n";
-			childs[i]->printNode(deep, file);
+			childs[i]->printNode(dept, file);
 		}
 	}
 }
 
+
+/// @brief Tests point placement and child bounds are correct
+/// @return number of error founds
+/// @throw INVALID_BOUNDS if point is out of Node bounds 
+int OctoTree::Node::testNode()
+{
+	int sta = 0;
+	if (isOutBounds(*data))
+		throw INVALID_BOUNDS;
+	Bounds aux;
+	for (int i = 0; i < 8; i++)
+	{
+		if (childs[i] != nullptr)
+		{		
+			aux = getOctoBounds(i);
+			if (aux.max_x != childs[i]->lim.max_x || aux.min_x != childs[i]->lim.min_x)
+				sta ++;
+			if (aux.max_y != childs[i]->lim.max_y || aux.min_y != childs[i]->lim.min_y)
+				sta ++;
+			if (aux.max_z != childs[i]->lim.max_z || aux.min_z != childs[i]->lim.min_z)
+				sta ++;
+			sta += childs[i]->testNode();	
+		}
+	}
+	
+    return sta;
+}
+
+/// @brief Prints error and terminates program
+/// @param e error id
 void print_error(int e)
 {
-
 	std::cerr << "Error encoutered id: " << e << '\n';
 
 	switch (e)
@@ -846,29 +918,4 @@ void print_error(int e)
 	}
 
 	exit(EXIT_FAILURE);
-	
-}
-
-bool OctoTree::Node::testNode()
-{
-	bool sta = false;
-	if (isOutBounds(*data))
-		exit(1);
-	Bounds aux;
-	for (int i = 0; i < 8; i++)
-	{
-		if (childs[i] != nullptr)
-		{		
-			aux = getOctoBounds(i);
-			if (aux.max_x != childs[i]->lim.max_x || aux.min_x != childs[i]->lim.min_x)
-				sta = true;
-			if (aux.max_y != childs[i]->lim.max_y || aux.min_y != childs[i]->lim.min_y)
-				sta = true;
-			if (aux.max_z != childs[i]->lim.max_z || aux.min_z != childs[i]->lim.min_z)
-				sta = true;
-			
-		}
-	}
-	
-    return !sta;
 }
