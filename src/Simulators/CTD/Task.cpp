@@ -61,6 +61,8 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! OctoTree path
+      std::string o_path;
     };
 
     //! %SVS simulator task.
@@ -113,6 +115,10 @@ namespace Simulators
         .description("Random seed to use to random generator.")
         .defaultValue("-1");
 
+        param("OctoTree Path", m_args.o_path)
+        .description("Path to OctoTree debug files.")
+        .defaultValue("OctoTree_Files");
+
         // Register consumers.
         bind<IMC::SimulatedState>(this);
       }
@@ -123,7 +129,7 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        m_otree = new OctoTree();
+        m_otree = new OctoTree(m_args.o_path);
         inf("Created ocTree");
         requestDeactivation();
       }
