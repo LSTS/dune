@@ -22,15 +22,20 @@
 // language governing permissions and limitations at                        *
 // https://www.lsts.pt/dune/licence.                                        *
 //***************************************************************************
-// Author: João Bogas                                                  *
+// Author: João Bogas                                                  	    *
 //***************************************************************************
+
+// adicionar path para files
+// defines para enum
+
 
 // ISO C++ 98 headers.
 #include <iostream>
 #include <vector>
 #include <fstream>
+
 // DUNE headers.
-//#include <DUNE/DUNE.hpp>
+#include <DUNE/DUNE.hpp>
 
 // Local headers.
 #include "OctoTree.hpp"
