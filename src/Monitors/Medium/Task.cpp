@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -45,6 +45,13 @@ namespace Monitors
     static const float c_depth_hyst = 0.1;
     //! Timeout to check presence of wet measurement sensors.
     static const float c_water_presence = 30.0;
+    //! String to medium map
+    static const std::map<std::string, IMC::VehicleMedium::MediumEnum> c_str_to_medium = {
+      {"Air", IMC::VehicleMedium::VM_AIR},
+      {"Ground", IMC::VehicleMedium::VM_GROUND},
+      {"Water", IMC::VehicleMedium::VM_WATER},
+      {"Underwater", IMC::VehicleMedium::VM_UNDERWATER}
+    };
 
     //! %Task arguments.
     struct Arguments
@@ -73,6 +80,8 @@ namespace Monitors
       std::string stype;
       //! Medium Sensor Entity Label.
       std::string label_medium;
+      //! Vehicle Medium (force).
+      std::string vmedium;
     };
 
     //! %Medium task.
@@ -177,6 +186,11 @@ namespace Monitors
         param("Entity Label - Medium Sensor", m_args.label_medium)
         .defaultValue("Medium Sensor")
         .description("Entity label of 'EntityState' Medium Sensor messages");
+
+        param("Vehicle Medium", m_args.vmedium)
+        .defaultValue("Auto")
+        .values("Auto, Air, Ground, Water, Underwater")
+        .description("Set vehicle medium.");
 
         // GPS validity.
         m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE | IMC::GpsFix::GFV_VALID_TIME |
@@ -444,6 +458,9 @@ namespace Monitors
 
         if (isActive())
         {
+          if (m_args.vmedium != "Auto")
+            m_vm.medium = c_str_to_medium.at(m_args.vmedium);
+          
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           dispatch(m_vm);
         }

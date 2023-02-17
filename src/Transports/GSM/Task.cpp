@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -228,8 +228,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          inf("exception: %s" ,e.what());
-          throw RestartNeeded(e.what(), 5, false);
+          throw RestartNeeded(DTR(e.what()), 5);
         }
       }
 
