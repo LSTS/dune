@@ -146,6 +146,10 @@ namespace Sensors
         m_timeout_count(0)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE\"." 
@@ -227,12 +231,6 @@ namespace Sensors
           addPowerChannelName(m_args.pwr_name);
           setPostPowerOnDelay(c_power_up_delay);
         }
-      }
-
-      void
-      onIdle(void) override
-      {
-        requestActivation();
       }
 
       //! Try to connect to the device.
