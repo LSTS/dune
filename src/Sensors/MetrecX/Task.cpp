@@ -176,6 +176,10 @@ namespace Sensors
         Hardware::BasicDeviceDriver(name, ctx),
         m_uart(NULL)
       {
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
@@ -315,12 +319,6 @@ namespace Sensors
           m_msgs[ix] = IMC::Factory::produce(c_in_options[i]);
           m_slots[ix] = true;
         }
-      }
-
-      void
-      onIdle(void) override
-      {
-        requestActivation();
       }
 
       //! Try to connect to the device.
