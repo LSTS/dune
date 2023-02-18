@@ -72,6 +72,10 @@ namespace Sensors
         m_handle(nullptr),
         m_uart(false)
       {
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
@@ -85,12 +89,6 @@ namespace Sensors
         .minimumValue("1.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
-      }
-
-      void
-      onIdle(void) override
-      {
-        requestActivation();
       }
 
       //! Try to connect to the device.
