@@ -231,7 +231,7 @@ namespace DUNE
     {
       activationFailed(message);
       turnPowerOff();
-      err(message.c_str());
+      err("%s", message.c_str());
       setEntityState(IMC::EntityState::ESTA_FAILURE, message);
     }
 
