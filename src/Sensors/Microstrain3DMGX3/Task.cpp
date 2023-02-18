@@ -162,6 +162,10 @@ namespace Sensors
         m_faults_count(0),
         m_timeout_count(0)
       {
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
@@ -239,12 +243,6 @@ namespace Sensors
           if (paramChanged(m_args.hard_iron))
             runCalibration();
         }
-      }
-
-      void
-      onIdle(void) override
-      {
-        requestActivation();
       }
 
       //! Try to connect to the device.
