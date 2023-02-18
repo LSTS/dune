@@ -89,6 +89,10 @@ namespace Sensors
         m_handle(NULL)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
@@ -96,12 +100,6 @@ namespace Sensors
 
         m_bfr.resize(c_read_buffer_size);
         m_nmea5_wait_fg = false;
-      }
-
-      void
-      onIdle(void) override
-      {
-        requestActivation();
       }
 
       //! Try to connect to the device.
