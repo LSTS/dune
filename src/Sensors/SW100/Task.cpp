@@ -99,6 +99,10 @@ namespace Sensors
         m_cs(CS_UNABLE)
       {
         // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
@@ -129,12 +133,6 @@ namespace Sensors
       {
         if (paramChanged(m_args.read_frequency))
           setReadFrequency(m_args.read_frequency);
-      }
-
-      void
-      onIdle(void) override
-      {
-        requestActivation();
       }
 
       //! Try to connect to the device.
