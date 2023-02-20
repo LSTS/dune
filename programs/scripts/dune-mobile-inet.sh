@@ -95,12 +95,13 @@ log()
 
 modem_probe()
 {
-    nr="$(cat /proc/tty/driver/usbserial 2> /dev/null | grep GSM | head -n 1 | cut -f1 -d:)"
-    if [ -z "$nr" ]; then
-        echo ""
-    else
-        echo "/dev/ttyUSB$nr"
-    fi
+    #nr="$(cat /proc/tty/driver/usbserial 2> /dev/null | grep GSM | head -n 1 | cut -f1 -d:)"
+    #if [ -z "$nr" ]; then
+    #    echo ""
+    #else
+    #    echo "/dev/ttyUSB$nr"
+    #fi
+    echo "/dev/ttyACM1"
 }
 
 # Update DynDNS IPv4 address.
