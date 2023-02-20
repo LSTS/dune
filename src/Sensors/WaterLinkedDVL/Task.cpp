@@ -40,8 +40,6 @@
 
 namespace Sensors
 {
-  //! Device driver for the Water Linked DVL-A50.
-  //! @author Maria Costa
   namespace WaterLinkedDVL
   {
     using DUNE_NAMESPACES;
@@ -68,6 +66,8 @@ namespace Sensors
       double beam_width;
     };
 
+    //! Device driver for the Water Linked DVL-A50 and DVL-A125
+    //! @author Maria Costa
     struct Task : public Hardware::BasicDeviceDriver
     {
       //! Driver
@@ -90,8 +90,7 @@ namespace Sensors
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx) :
-        Hardware::BasicDeviceDriver(name, ctx), m_filter(NULL)
+      Task(const std::string& name, Tasks::Context& ctx) : Hardware::BasicDeviceDriver(name, ctx), m_filter(NULL)
       {
         param("IO Port - Device", m_args.io_dev)
             .defaultValue("")
