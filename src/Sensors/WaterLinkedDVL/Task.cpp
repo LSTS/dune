@@ -1,6 +1,8 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// Copyright 2016-2023 OceanScan - Marine Systems & Technology, Lda.        *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
@@ -25,19 +27,19 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Maria Costa                                                      *
+// Author: Luís Venâncio                                                    *
+// Author: Renato Campos                                                    *
 //***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 // JSON headers.
-#include "nlohmann-json/json.hpp"
+#include <json.hpp>
 
 namespace Sensors
 {
   //! Device driver for the Water Linked DVL-A50.
-  //!
-  //! TODO: Insert explanation on task behaviour here.
   //! @author Maria Costa
   namespace WaterLinkedDVL
   {
@@ -70,7 +72,7 @@ namespace Sensors
       double beam_width;
     };
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task : public Hardware::BasicDeviceDriver
     {
       //! Water velocity message.
       IMC::GroundVelocity m_gvel;
@@ -106,12 +108,12 @@ namespace Sensors
         bool dark_mode_enabled;
         double mounting_rotation_offset;
         std::string range_mode;
-      }m_config;
+      } m_config;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
+      Task(const std::string& name, Tasks::Context& ctx) :
         Hardware::BasicDeviceDriver(name, ctx),
         m_filter(NULL),
         m_serial(false),
@@ -120,40 +122,40 @@ namespace Sensors
         m_bottom_lock(false)
       {
         param("IO Port - Device", m_args.io_dev)
-        .defaultValue("")
-        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
-                     "or \"uart://DEVICE:BAUD\".");
+            .defaultValue("")
+            .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
+                         "or \"uart://DEVICE:BAUD\".");
 
         param("Power Channel - Names", m_args.pwr_channels)
-        .defaultValue("")
-        .description("Device's power channels");
+            .defaultValue("")
+            .description("Device's power channels");
 
         param("Acoustics Activation", m_args.type_activation)
-        .values("Water, Always")
-        .defaultValue("Always")
-        .description("Operator is able to control acoustics");
+            .values("Water, Always")
+            .defaultValue("Always")
+            .description("Operator is able to control acoustics");
 
         param("Device Position", m_args.position)
-        .defaultValue("0.0, 0.0, 0.0")
-        .units(Units::Meter)
-        .size(3)
-        .description("Device position relative to navigation estimation (relative to GPS sensor).");
+            .defaultValue("0.0, 0.0, 0.0")
+            .units(Units::Meter)
+            .size(3)
+            .description("Device position relative to navigation estimation (relative to GPS sensor).");
 
         param("Device Orientation", m_args.orientation)
-        .defaultValue("0, 0, 0")
-        .units(Units::Degree)
-        .size(3)
-        .description("Device orientation.");
+            .defaultValue("0, 0, 0")
+            .units(Units::Degree)
+            .size(3)
+            .description("Device orientation.");
 
         param("Beam Angle", m_args.beam_angle)
-        .defaultValue("22.5")
-        .units(Units::Degree)
-        .description("The angle between a transducer beam's main axis and the vertical axis of the device.");
+            .defaultValue("22.5")
+            .units(Units::Degree)
+            .description("The angle between a transducer beam's main axis and the vertical axis of the device.");
 
         param("Beam Width", m_args.beam_width)
-        .defaultValue("4.4")
-        .units(Units::Degree)
-        .description("The nominal transducer beam width.");
+            .defaultValue("4.4")
+            .units(Units::Degree)
+            .description("The nominal transducer beam width.");
 
         bind<IMC::VehicleMedium>(this);
       }
@@ -169,9 +171,7 @@ namespace Sensors
             addPowerChannelName(pc);
         }
 
-        if (!(paramChanged(m_args.beam_width)
-              || paramChanged(m_args.orientation)
-              || paramChanged(m_args.position)))
+        if (!(paramChanged(m_args.beam_width) || paramChanged(m_args.orientation) || paramChanged(m_args.position)))
           return;
 
         // Filtered altitude.
@@ -246,9 +246,8 @@ namespace Sensors
       {
         // Initialize filter
         Memory::clear(m_filter);
-        m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset,
-                                    m_args.beam_angle, m_args.position, m_args.orientation,
-                                    BeamFilter::CLOCKWISE);
+        m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset, m_args.beam_angle, m_args.position,
+                                  m_args.orientation, BeamFilter::CLOCKWISE);
 
         m_filter->setSourceEntities(m_entities);
 
@@ -269,7 +268,7 @@ namespace Sensors
 
         if (!isActive())
           return;
-        
+
         if (!m_hand.isKnown())
           setAcoustics(false);
         else if (m_hand.outWater())
@@ -283,7 +282,7 @@ namespace Sensors
       void
       parseTCP(std::string& data)
       {
-        try 
+        try
         {
           // Interpret received data
           auto msg = json::parse(data);
@@ -297,7 +296,7 @@ namespace Sensors
           else
             war("Unknown TCP message.");
         }
-        catch (Exception e)
+        catch (Exception &e)
         {
           err("TCP driver parsing problem '%s'.", e.what());
           spew("\ntcp problematic parsed data = >>%s<<", Streams::sanitize(data).c_str());
@@ -311,24 +310,23 @@ namespace Sensors
       {
         if (!m_filter)
           return;
-        
+
         // Status
         uint8_t status = msg["status"];
         checkStatus(status);
 
         // Water Velocity
         uint8_t validity = msg["velocity_valid"];
-        if (validity) 
+        if (validity)
         {
           m_gvel.x = (fp64_t)msg["vx"];
           m_gvel.y = (fp64_t)msg["vy"];
           m_gvel.z = (fp64_t)msg["vz"];
-          m_gvel.validity = (IMC::WaterVelocity::VAL_VEL_X | 
-                             IMC::WaterVelocity::VAL_VEL_Y |
-                             IMC::WaterVelocity::VAL_VEL_Z);
+          m_gvel.validity =
+              (IMC::WaterVelocity::VAL_VEL_X | IMC::WaterVelocity::VAL_VEL_Y | IMC::WaterVelocity::VAL_VEL_Z);
           m_bottom_lock = true;
-        } 
-        else 
+        }
+        else
         {
           m_bottom_lock = false;
           m_gvel.clear();
@@ -339,14 +337,12 @@ namespace Sensors
         // Bottom Ranges
         uint8_t beam_valid;
         float distance;
-        for (unsigned i = 0; i < c_beams; ++i) 
+        for (unsigned i = 0; i < c_beams; ++i)
         {
           beam_valid = msg["transducers"][i]["beam_valid"];
           distance = (float)msg["transducers"][i]["distance"];
 
-          m_filter->setValidity(i, (beam_valid && distance > 0) ? 
-                                    IMC::Distance::DV_VALID : 
-                                    IMC::Distance::DV_INVALID);
+          m_filter->setValidity(i, (beam_valid && distance > 0) ? IMC::Distance::DV_VALID : IMC::Distance::DV_INVALID);
           m_filter->update(i, distance);
         }
         m_filter->dispatch(m_timestamp);
@@ -359,8 +355,7 @@ namespace Sensors
 
         // Filtered Altitude
         m_alt_flt.value = m_filter->get();
-        m_alt_flt.validity = m_alt_flt.value > 0.0 ? IMC::Distance::DV_VALID
-                                                   : IMC::Distance::DV_INVALID;
+        m_alt_flt.validity = m_alt_flt.value > 0.0 ? IMC::Distance::DV_VALID : IMC::Distance::DV_INVALID;
         m_alt_flt.setTimeStamp(m_timestamp);
         dispatch(m_alt_flt, DF_KEEP_TIME);
       }
@@ -390,7 +385,7 @@ namespace Sensors
 
         if (m_cmd_ticket.empty())
           return;
-        
+
         if ((bool)msg["success"])
         {
           if ((std::string)msg["response_to"] == m_cmd_ticket)
@@ -419,12 +414,12 @@ namespace Sensors
       {
         if (!Poll::poll(*m_handle, 0.01))
           return false;
-        
-        char bfr[2000] = {0};
+
+        char bfr[2000] = { 0 };
         IMC::DevDataText data;
 
         size_t rv = m_handle->read(bfr, sizeof(bfr));
-        if(rv <= 0)
+        if (rv <= 0)
           return false;
         bfr[rv] = '\0';
 
@@ -454,8 +449,7 @@ namespace Sensors
       void
       checkFragment(std::vector<std::string>& list)
       {
-        if (!m_msg_frag.empty() && 
-            list.front().front() != '{')
+        if (!m_msg_frag.empty() && list.front().front() != '{')
         {
           list.front() = m_msg_frag + list.front();
           m_msg_frag.clear();
@@ -472,18 +466,17 @@ namespace Sensors
       void
       checkStatus(const bool status)
       {
-        if (status) 
+        if (status)
         {
           if (getEntityState() > IMC::EntityState::ESTA_NORMAL)
             return;
-          
+
           // Disable acoustics until recovery
           setAcoustics(false);
           std::stringstream ss;
-          ss << Status::getString(CODE_INTERNAL_ERROR)
-             << " - DVL temperature too high"
+          ss << Status::getString(CODE_INTERNAL_ERROR) << " - DVL temperature too high"
              << " | Acoustics: Off";
-          
+
           err("%s", ss.str().c_str());
           setEntityState(IMC::EntityState::ESTA_FAULT, ss.str());
         }
@@ -505,20 +498,19 @@ namespace Sensors
         sendCommand("get_config");
       }
 
-      //! Enable or disable device acoustics. 
+      //! Enable or disable device acoustics.
       //! @param[in] enable true to enable, false to disable.
       void
       setAcoustics(const bool enable)
       {
         if (m_config.acoustic_enabled == enable)
           return;
-        
-        sendCommand("set_config", "acoustic_enabled", 
-                    enable ? "true" : "false");
+
+        sendCommand("set_config", "acoustic_enabled", enable ? "true" : "false");
         getConfig();
       }
 
-      //! Set device sound speed. 
+      //! Set device sound speed.
       //! @param[in] sound_speed sound speed in m/s.
       void
       setSoundSpeed(const double sound_speed)
@@ -535,11 +527,11 @@ namespace Sensors
       //! Set range mode.
       //! Modes table:
       //!   Mode    Min alt (m)   Max alt (m)
-      //!   0       0.05          0.6       
-      //!   1       0.3           3.0       
-      //!   2       1.5           14       
-      //!   3       7.7           36       
-      //!   4       15            max       
+      //!   0       0.05          0.6
+      //!   1       0.3           3.0
+      //!   2       1.5           14
+      //!   3       7.7           36
+      //!   4       15            max
       //! @param[in] spec Range specifier option:
       //! auto  - The DVL will search for bottom lock in it's full operational area (Default)
       //! =a    - The DVL is locked to range mode a where a is a number from 0-4
@@ -554,7 +546,7 @@ namespace Sensors
         getConfig();
       }
 
-      //! Set device rotation angle. 
+      //! Set device rotation angle.
       //! @param[in] angle mounting rotation angle in degrees.
       void
       setRotation(const double angle)
@@ -568,28 +560,25 @@ namespace Sensors
         getConfig();
       }
 
-      //! Send command to device. 
+      //! Send command to device.
       //! @param[in] cmd command type.
-      //! @param[in] param_name parameter name, only used for "set_config" command. 
+      //! @param[in] param_name parameter name, only used for "set_config" command.
       //!                       If empty only cmd is used.
-      //! @param[in] param_value parameter value, only used for "set_config" command. 
+      //! @param[in] param_value parameter value, only used for "set_config" command.
       //!                       If empty only cmd is used.
       void
-      sendCommand(const std::string cmd, const std::string param_name = "", 
-                  const std::string param_value = "")
+      sendCommand(const std::string cmd, const std::string param_name = "", const std::string param_value = "")
       {
         if (!m_handle)
           return;
-        
+
         std::string bfr;
         if (!m_serial)
         {
           if (param_name.empty() || param_value.empty())
             bfr = String::str("{\"command\":\"%s\"}", cmd.c_str());
           else
-            bfr = String::str("{\"command\":\"%s\",\"parameters\":{\"%s\":%s}}", 
-                              cmd.c_str(),
-                              param_name.c_str(),
+            bfr = String::str("{\"command\":\"%s\",\"parameters\":{\"%s\":%s}}", cmd.c_str(), param_name.c_str(),
                               param_value.c_str());
         }
         else
@@ -597,7 +586,7 @@ namespace Sensors
           war("Serial commands not implemented");
           return;
         }
-        
+
         spew("Sending: %s", bfr.c_str());
         m_handle->writeString(bfr.c_str());
 
@@ -640,11 +629,9 @@ namespace Sensors
       displayConfig(void)
       {
         std::string description;
-        description = String::str("%s - Acoustics: %s | Sound Speed: %.1f m/s", 
-                                  Status::getString(m_bottom_lock ? CODE_ACTIVE 
-                                                                  : CODE_NO_BOTTOM_LOCK),
-                                  m_config.acoustic_enabled ? "On" : "Off",
-                                  m_config.speed_of_sound);
+        description = String::str("%s - Acoustics: %s | Sound Speed: %.1f m/s",
+                                  Status::getString(m_bottom_lock ? CODE_ACTIVE : CODE_NO_BOTTOM_LOCK),
+                                  m_config.acoustic_enabled ? "On" : "Off", m_config.speed_of_sound);
         setEntityState(getEntityState(), description);
       }
     };
