@@ -513,11 +513,10 @@ namespace Sensors
       //! Set device sound speed.
       //! @param[in] sound_speed sound speed in m/s.
       void
-      setSoundSpeed(const double sound_speed)
+      onSoundSpeed(const double sound_speed) override
       {
-        if (m_config.speed_of_sound == sound_speed)
+        if (m_config.speed_of_sound == sound_speed || m_handle == nullptr)
           return;
-
         std::stringstream ss;
         ss << sound_speed;
         sendCommand("set_config", "speed_of_sound", ss.str());
