@@ -62,7 +62,9 @@ namespace Simulators
       //! PRNG seed.
       int prng_seed;
       //! OctoTree path
-      std::string o_path;
+      std::string otree_path;
+      //! Search radius
+      double s_radius;
     };
 
     //! %SVS simulator task.
@@ -86,6 +88,14 @@ namespace Simulators
       Arguments m_args;
       //! OctoTree
       OctoTree* m_otree;
+      //! Reference latitude
+      double m_lat;
+      //! Reference longitude
+      double m_long;
+      //! North offset
+      double n_offset = 0;
+      //! East offset
+      double e_offset = 0;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -115,9 +125,14 @@ namespace Simulators
         .description("Random seed to use to random generator.")
         .defaultValue("-1");
 
-        param("OctoTree Path", m_args.o_path)
-        .description("Path to OctoTree debug files.")
-        .defaultValue("OctoTree_Files");
+        param("OctoTree Path", m_args.otree_path)
+        .description("Path to OctoTree data file.")
+        .defaultValue("ocTree.ini");
+
+        param("Search radius", m_args.s_radius)
+        .description("Radius to search around estimated state")
+        .units(Units::Meter)
+        .defaultValue("5.0");
 
         // Register consumers.
         bind<IMC::SimulatedState>(this);
@@ -129,7 +144,18 @@ namespace Simulators
       void
       onResourceInitialization(void)
       {
-        m_otree = new OctoTree(m_args.o_path);
+        Path path = m_ctx.dir_cfg / "simulation" / m_args.otree_path;
+        DUNE::Parsers::Config conf(path.c_str());
+
+        std::vector<std::string> data;
+        conf.get("ocTree", "3D_Data", "", data);
+        conf.get("ocTree", "Latitude (degrees)", "", m_lat);
+        conf.get("ocTree", "Longitude (degrees)", "", m_long);
+
+        m_lat = m_lat;
+        m_long = m_long;
+
+        m_otree = new OctoTree(data);
         inf("Created ocTree");
         requestDeactivation();
       }
@@ -161,7 +187,12 @@ namespace Simulators
           requestActivation();
         }
         m_sstate = *msg;
-        m_otree->add(msg->x, msg->y, msg->z, m_otree->size()+1 );
+
+        if (m_sstate.lat != m_lat)
+        {
+          WGS84::displacement(m_lat, m_long, 0, msg->lat, msg->lon, 0, &n_offset, &e_offset);
+          m_lat = m_sstate.lat;
+        }
       }
 
       //! If active, computes all values using random value generators and dispatches:
@@ -178,14 +209,35 @@ namespace Simulators
         if (!isActive())
           return;
 
+        OctoTree::Bounds vol(m_sstate.x-n_offset, m_sstate.y-e_offset, m_sstate.z, m_args.s_radius);
+        std::vector<OctoTree::Data> values;
+        int inter = m_otree->search(vol, values);
+        inf("Found %ld points", values.size());
+        
+        double avg_temp = 0, avg_cond = 0;
+
+        for (size_t i = 0; i < values.size(); i++)
+        {
+          avg_temp += values[i].temp;
+          avg_cond += values[i].cond;
+
+          if(i < values.size()-1)
+          {
+            avg_temp = avg_temp/(double)values.size();
+            avg_cond = avg_cond/(double)values.size();
+          }  
+        }
+                
         m_temp.setTimeStamp();
-        m_temp.value = m_args.mean_temp + m_prng->gaussian() * m_args.std_dev_temp;
+        m_temp.value = avg_temp;
 
         m_cond.setTimeStamp(m_temp.getTimeStamp());
-        m_cond.value = m_args.mean_cond + m_prng->gaussian() * m_args.std_dev_cond;
+        m_cond.value = avg_cond;
+
+        inf("Temp is %lf, cond is %lf", avg_temp, avg_cond);
 
         m_depth.setTimeStamp(m_temp.getTimeStamp());
-        m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0);
+        m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0); // = m_sstate.z ?
 
         // Compute pressure.
         m_pressure.setTimeStamp(m_temp.getTimeStamp());
@@ -203,12 +255,6 @@ namespace Simulators
         dispatch(m_pressure, DF_KEEP_TIME);
         dispatch(m_salinity, DF_KEEP_TIME);
         dispatch(m_sspeed, DF_KEEP_TIME);
-        inf("Tree has: %d nodes", m_otree->size());
-        m_otree->printTree();
-        if (!m_otree->testTree())
-          inf("Tree is \'ok\'");
-        else
-          inf("Tree error"); 
       }
     };
   }

@@ -28,6 +28,8 @@
 #ifndef SIMULATORS_CTD_OCTO_TREE_HPP_INCLUDED_
 #define SIMULATORS_CTD_OCTO_TREE_HPP_INCLUDED_
 
+// TODO: Use Data struct as pointers
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -48,17 +50,25 @@ namespace Simulators
       //! Errors
       enum
       {
-        ERR_INVALID_BOUNDS, ERR_INVAILD_POINT, ERR_INVALID_INSERT_POINT
+        ERR_INVALID_BOUNDS, ERR_INVALID_POINT, ERR_INVALID_INSERT_POINT
       };
 
+      //! Data structure
+      struct Data
+      {
+        double temp, cond;
+      };
+      
       //! Item structure
       struct Item
       {
-        double x, y, z, value;
+        double x, y, z;
+        Data val;
 
-        Item(double _x, double _y, double _z, double _v):
-          x(_x), y(_y), z(_z), value(_v)
-        { }
+        Item(double _x, double _y, double _z, double _temp, double _cond):
+          x(_x), y(_y), z(_z)
+        { val.temp = _temp;
+          val.cond = _cond;}
         
       };
 
@@ -80,6 +90,11 @@ namespace Simulators
         
         //! Create a new Bounds object
         Bounds(double _min_x, double _max_x, double _min_y, double _max_y, double _min_z, double _max_z);
+
+        //! Create a new Bounds object around one point
+        Bounds(double x, double y, double z, double radius):
+          max_x(x+radius), max_y(y+radius), max_z(z+radius), min_x(x-radius), min_y(y-radius), min_z(z-radius)
+        { };
         
         //! Return the bounds midpoint correspondent to the axis
         double
@@ -92,13 +107,13 @@ namespace Simulators
         Node* myRoot;
         std::vector<Node*> childs;
         Bounds lim;
-        Item* data;
+        Item* item;
         
         //! Creates a new Node object with variables null
         Node();
 
         //! Creates a new Node object 
-        Node(Node* parent, double x, double y, double z, double val);
+        Node(Node* parent, double x, double y, double z, double temp, double cond);
 
         //! Creates a new Node object
         Node(Node* parent, Item* _data, Bounds oct);
@@ -106,9 +121,9 @@ namespace Simulators
         //! Node Destructor
         ~Node();
         
-        //! Expandes node bounds in val direction
+        //! Expands node bounds in val direction
         void 
-        expandeBounds(const Item& val);
+        expandsBounds(const Item& val);
 
         //! Checks if item is outside Node bounds
         bool 
@@ -119,53 +134,58 @@ namespace Simulators
         int 
         insert_data(Item *val);
 
-        //! @return octante of midpoint of volume
+        //! @return octant of midpoint of volume
         //! @warning volume midpoint must be inside Node bounds
         int 
-        getOctante(const Bounds& volume);
+        getOctant(const Bounds& volume);
 
-        //! @return octante that corresponds to the Item
+        //! @return octant that corresponds to the Item
         //! @exception INVALID_INSERT_POINT if Item is out of bounds
         int 
-        getOctante(const Item& val);
+        getOctant(const Item& val);
 
-        //! @return Octante that corresponds to the point (x,y,z)
+        //! @return Octant that corresponds to the point (x,y,z)
         //! @warning Item must be inside Node bounds
         int 
-        getOctante(double x, double y, double z);
+        getOctant(double x, double y, double z);
 
-        //! @return Octante Bounds object correspondent the oct
+        //! @return Octant Bounds object correspondent the oct
         Bounds 
         getOctoBounds(int oct);
 
         //! Search the tree for the point (x,y,z)
         //! @return value stored in the point
         //! @exception Throws INVALID_POINT if the point doesn't exist  
-        double 
+        Data 
         search(double x, double y, double z);
 
         //! Searches for points inside Bounds volume
         //! Points inside are added to vector
         //! Returns number of iterations
         int 
-        search_vol(const Bounds& vol, std::vector<Item*>& points);
+        search_vol(const Bounds& vol, std::vector<Data>& points);
 
         //! Search_vol of child Node if not nullptr
         int 
-        search_child(const Bounds& vol, std::vector<Item*>& points, int oct);
+        search_child(const Bounds& vol, std::vector<Data>& points, int oct);
 
         //! Checks if this node item is inside Bounds vol
         bool 
         item_inside(const Bounds& vol);
 
-        //! Checks if Node bounds is inside volumne
+        //! Checks if Node bounds is inside volume
         bool 
         inside_vol(const Bounds& vol);
 
-        //! Add all itens in this node and his childs to vector
+        //! Add all items in this node and his childs to vector
         //! @return number of iterations
         int 
         add_item(std::vector<Item*>& points);
+
+        //! Add all data in this node and his childs to vector
+        //! @return number of iterations
+        int
+        add_data(std::vector<Data> &points);
 
         //! Returns number of nodes 
         int 
@@ -189,15 +209,15 @@ namespace Simulators
       
       //! Creates a new root to insert new_data
       //! @return New Node root with bounds expanded and new_data inserted as root data
-      //! @warning This may create nodes will data = nullptr if it expandes more than once
+      //! @warning This may create nodes will data = nullptr if it expands more than once
       Node* 
       new_root(Node* child, const Bounds& prev_volume, Item* new_data);
 
       //! 
-      OctoTree(std::string& dir);
+      OctoTree(std::vector<std::string>& data);
 
       //!
-      OctoTree(double x, double y, double z, double val);
+      OctoTree(double x, double y, double z, double temp, double cond);
 
       //!
       ~OctoTree();
@@ -205,19 +225,19 @@ namespace Simulators
       //! Add point to tree
       //! @return dept of point
       int 
-      add(double x, double y, double z, double v);
+      add(double x, double y, double z, double temp, double cond);
 
       //! Search the tree for the point (x,y,z)
       //! @return value stored in the point
       //! @exception INVALID_POINT if the point doesn't exist
-      double 
+      Data 
       search_data(double x, double y, double z);
 
       //! Searches for points inside Bounds volume
       //! Points inside are added to vector
       //! Returns number of iterations
       int 
-      search(const Bounds& vol, std::vector<Item*>& points);
+      search(const Bounds& vol, std::vector<Data>& points);
 
       //! Returns number of nodes inside tree
       int 
@@ -232,7 +252,7 @@ namespace Simulators
       void 
       printTree();
 
-      //! Prints all points in tree to file ../OctoTree Files/OctoTree_teste.txt 
+      //! Prints all points in tree to file ../OctoTree Files/OctoTree_test.txt 
       //! Searches for each point in Tree
       //! Returns result of testNode()
       bool 
@@ -244,8 +264,8 @@ namespace Simulators
 
     private:
       Node* root;		                            // Node pointer
-      std::string path;		                      // Path to Tree files
-      std::string log		= "OctoTree_log.txt";	  // Tree log file
+      std::string path  = "OctoTree_Files";		  // Path to Tree files
+      std::string log   = "OctoTree_log.txt";	  // Tree log file
       std::string test 	= "OctoTree_test.txt";	// Tree test file
     };
   }
