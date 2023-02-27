@@ -155,6 +155,9 @@ namespace Simulators
         m_lat = m_lat;
         m_long = m_long;
 
+        //m_lat = Angles::radians(m_lat);
+        //m_long = Angles::radians(m_long);
+
         m_otree = new OctoTree(data);
         inf("Created ocTree");
         requestDeactivation();
@@ -188,10 +191,11 @@ namespace Simulators
         }
         m_sstate = *msg;
 
-        if (m_sstate.lat != m_lat)
+        if (m_sstate.lat != m_lat && m_sstate.lon != m_long)
         {
           WGS84::displacement(m_lat, m_long, 0, msg->lat, msg->lon, 0, &n_offset, &e_offset);
           m_lat = m_sstate.lat;
+          m_long = m_sstate.lon;
         }
       }
 
@@ -233,11 +237,11 @@ namespace Simulators
 
         m_cond.setTimeStamp(m_temp.getTimeStamp());
         m_cond.value = avg_cond;
-
+        // TODO: if 0 revert commit 
         inf("Temp is %lf, cond is %lf", avg_temp, avg_cond);
 
         m_depth.setTimeStamp(m_temp.getTimeStamp());
-        m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0); // = m_sstate.z ?
+        m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0);
 
         // Compute pressure.
         m_pressure.setTimeStamp(m_temp.getTimeStamp());
