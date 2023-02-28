@@ -152,11 +152,8 @@ namespace Simulators
         conf.get("ocTree", "Latitude (degrees)", "", m_lat);
         conf.get("ocTree", "Longitude (degrees)", "", m_long);
 
-        m_lat = m_lat;
-        m_long = m_long;
-
-        //m_lat = Angles::radians(m_lat);
-        //m_long = Angles::radians(m_long);
+        m_lat = Angles::radians(m_lat);
+        m_long = Angles::radians(m_long);
 
         m_otree = new OctoTree(data);
         inf("Created ocTree");
