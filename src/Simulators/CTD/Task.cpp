@@ -216,29 +216,30 @@ namespace Simulators
         OctoTree::Bounds vol(m_sstate.x-n_offset, m_sstate.y-e_offset, m_sstate.z, m_args.s_radius);
         std::vector<OctoTree::Data> values;
         int inter = m_otree->search(vol, values);
-        inf("Found %ld points", values.size());
         
         double avg_temp = 0, avg_cond = 0;
-
-        for (size_t i = 0; i < values.size(); i++)
+        for (uint32_t i = 0; i < values.size(); i++)
         {
-          avg_temp += values[i].temp;
-          avg_cond += values[i].cond;
-
-          if(i < values.size()-1)
-          {
-            avg_temp = avg_temp/(double)values.size();
-            avg_cond = avg_cond/(double)values.size();
-          }  
+          avg_temp += (values[i].temp - avg_temp)/(double)(i+1);
+          avg_cond += (values[i].cond - avg_cond)/(double)(i+1);
         }
-                
-        m_temp.setTimeStamp();
-        m_temp.value = avg_temp;
 
-        m_cond.setTimeStamp(m_temp.getTimeStamp());
-        m_cond.value = avg_cond;
-        // TODO: if 0 revert commit 
-        inf("Temp is %lf, cond is %lf", avg_temp, avg_cond);
+        if (values.size())
+        {
+          m_temp.setTimeStamp();
+          m_temp.value = avg_temp;
+
+          m_cond.setTimeStamp(m_temp.getTimeStamp());
+          m_cond.value = avg_cond;
+        }
+        else
+        {
+          m_temp.setTimeStamp();
+          m_temp.value = m_args.mean_temp + m_prng->gaussian() * m_args.std_dev_temp;
+
+          m_cond.setTimeStamp(m_temp.getTimeStamp());
+          m_cond.value = m_args.mean_cond + m_prng->gaussian() * m_args.std_dev_cond;
+        }
 
         m_depth.setTimeStamp(m_temp.getTimeStamp());
         m_depth.value = std::max(m_sstate.z + m_prng->gaussian() * m_args.std_dev_depth, 0.0);
