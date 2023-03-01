@@ -85,9 +85,9 @@ namespace Actuators
       R_H_MOT1 = 1,
       R_H_AUX0 = 2,
       R_H_AUX1 = 2,
-      R_H_12V0 = 3,
       R_H_12V1 = 3,
       R_H_12V2 = 3,
+      R_H_12V3 = 3,
       R_H_VR0 = 3,
       R_H_VR1 = 3,
       R_H_5V = 3
@@ -98,9 +98,9 @@ namespace Actuators
       CH_H_MOT1 = 0,
       CH_H_AUX0 = 0,
       CH_H_AUX1 = 1,
-      CH_H_12V0 = 0,
-      CH_H_12V1 = 1,
-      CH_H_12V2 = 2,
+      CH_H_12V1 = 0,
+      CH_H_12V2 = 1,
+      CH_H_12V3 = 2,
       CH_H_VR0 = 3,
       CH_H_VR1 = 4,
       CH_H_5V = 5
@@ -196,9 +196,9 @@ namespace Actuators
         pcs[1] = {R_H_MOT1, CH_H_MOT1, IMC::PowerChannelState::PCS_OFF};
         pcs[2] = {R_H_AUX0, CH_H_AUX0, IMC::PowerChannelState::PCS_OFF};
         pcs[3] = {R_H_AUX1, CH_H_AUX1, IMC::PowerChannelState::PCS_OFF};
-        pcs[4] = {R_H_12V0, CH_H_12V0, IMC::PowerChannelState::PCS_OFF};
-        pcs[5] = {R_H_12V1, CH_H_12V1, IMC::PowerChannelState::PCS_OFF};
-        pcs[6] = {R_H_12V2, CH_H_12V2, IMC::PowerChannelState::PCS_OFF};
+        pcs[4] = {R_H_12V1, CH_H_12V1, IMC::PowerChannelState::PCS_OFF};
+        pcs[5] = {R_H_12V2, CH_H_12V2, IMC::PowerChannelState::PCS_OFF};
+        pcs[6] = {R_H_12V3, CH_H_12V3, IMC::PowerChannelState::PCS_OFF};
         pcs[7] = {R_H_VR0, CH_H_VR0, IMC::PowerChannelState::PCS_OFF};
         pcs[8] = {R_H_VR1, CH_H_VR1, IMC::PowerChannelState::PCS_OFF};
         pcs[9] = {R_H_5V, CH_H_5V, IMC::PowerChannelState::PCS_OFF};
