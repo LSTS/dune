@@ -166,7 +166,7 @@ namespace Actuators
         .defaultValue("20")
         .description("Write to motor every motor_write_divider times task is run");
 
-        char power_channel_pcb_labels[c_pwrs_count][8] = {"H_MOT0\0","H_MOT1\0","H_AUX0\0","H_AUX1\0","H_12V0\0","H_12V1\0","H_12V2\0","H_VR0\0","H_VR1\0","H_5V\0"};
+        char power_channel_pcb_labels[c_pwrs_count][8] = {"H_MOT0\0","H_MOT1\0","H_AUX0\0","H_AUX1\0","H_12V1\0","H_12V2\0","H_12V3\0","H_VR0\0","H_VR1\0","H_5V\0"};
         for (unsigned i= 0; i < c_pwrs_count; i++)
         {
           std::string option = String::str("Power Channel %s - Name", power_channel_pcb_labels[i]);
