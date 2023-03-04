@@ -54,13 +54,13 @@ namespace Transports
       // Status message.
       CidStatusMsg cid_status_msg;
       // Ping protocol messages.
-      CidPingRequestMsg  cid_ping_req_msg;
-      CidPingSendMsg  cid_ping_send_msg;
+      CidPingRequestMsg cid_ping_req_msg;
+      CidPingSendMsg cid_ping_send_msg;
       CidPingRespMsg cid_ping_resp_msg;
       CidPingErrorMsg cid_ping_error_msg;
       // Data protocol messages.
       CidDatReceiveMsg cid_dat_receive_msg;
-      CidDatSendMsg  cid_dat_send_msg;
+      CidDatSendMsg cid_dat_send_msg;
       // Configuration protocol messages.
       CidSysInfo cid_sys_info;
       CidSettingsMsg cid_settings_msg;
@@ -71,7 +71,7 @@ namespace Transports
       CidXcvrFixMsg  cid_xcvr_fix_msg;
       CidNavQueryReqMsg cid_nav_query_req_msg;
       CidNavQuerySendMsg cid_nav_query_send_msg;
-      CidNavQuerryRespMsg cid_nav_querry_resp_msg;
+      CidNavQueryRespMsg cid_nav_query_resp_msg;
       CidNavBeaconPosUpdateMsg cid_nav_beacon_pos_update_msg;
       CidNavBeaconPosSendMsg cid_nav_beacon_pos_send_msg;
       CidNavRefPosSendMsg  cid_nav_ref_pos_send_msg;
@@ -126,8 +126,8 @@ namespace Transports
     };
 
     //! Extract data to a Acofix_t structure.
-    //! @param[out] aco_fix pointer hwre data is stored.
-    //! @param[in] ind raw messagem index.
+    //! @param[out] aco_fix pointer where data is stored.
+    //! @param[in] ind raw message index.
     //! @param[in] msg_raw pointer to raw message.
     uint16_t
     updateEcoFix(Acofix_t* aco_fix, uint16_t ind, const char* msg_raw)
@@ -183,8 +183,8 @@ namespace Transports
     }
 
     //! Extract to DataSeatrac data structure.
-    //! @param[in] message_type type of msessage to decode.
-    //! @param[in] msg_raw raw messagem received by uart
+    //! @param[in] message_type type of message to decode.
+    //! @param[in] msg_raw raw message received by uart
     //! @param[out] data_Beacon pointer where the data is stored.
     void
     dataParser(uint16_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
@@ -384,35 +384,35 @@ namespace Transports
 
         case CID_NAV_QUERY_RESP:
           data_Beacon.set(CID_NAV_QUERY_RESP);
-          ind = updateEcoFix(&data_Beacon.cid_nav_querry_resp_msg.aco_fix, ind, msg_raw);
-          std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.query_flags, msg_raw + ind, 1);
+          ind = updateEcoFix(&data_Beacon.cid_nav_query_resp_msg.aco_fix, ind, msg_raw);
+          std::memcpy(&data_Beacon.cid_nav_query_resp_msg.query_flags, msg_raw + ind, 1);
           ind += 1;
-          data_Beacon.cid_nav_querry_resp_msg.queryFlagsExtract();
+          data_Beacon.cid_nav_query_resp_msg.queryFlagsExtract();
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[0])
           {
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_depth, msg_raw + ind,4);
+            std::memcpy(&data_Beacon.cid_nav_query_resp_msg.remote_depth, msg_raw + ind,4);
             ind += 4;
           }
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[1])
           {
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_supply, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_nav_query_resp_msg.remote_supply, msg_raw + ind, 2);
             ind += 2;
           }
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[2])
           {
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_temp, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_nav_query_resp_msg.remote_temp, msg_raw + ind, 2);
             ind += 2;
           }
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[3])
           {
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_yaw, msg_raw + ind, 2);
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_pitch,
+            std::memcpy(&data_Beacon.cid_nav_query_resp_msg.remote_yaw, msg_raw + ind, 2);
+            std::memcpy(&data_Beacon.cid_nav_query_resp_msg.remote_pitch,
                         msg_raw + ind + 2, 2);
-            std::memcpy(&data_Beacon.cid_nav_querry_resp_msg.remote_roll,
+            std::memcpy(&data_Beacon.cid_nav_query_resp_msg.remote_roll,
                         msg_raw + ind + 4, 2);
           }
           break;
@@ -515,9 +515,8 @@ namespace Transports
           ByteCopy::fromLE(data_Beacon.cid_xcvr_usbl_msg.signal_fit_error, (const uint8_t*)&msg_raw[ind]);
           break;
 
-          // Should never get here.
+        // Should never get here.
         default:
-          //m_data_state = DP_COMPLETE;
           break;
       }
     }
@@ -639,7 +638,7 @@ namespace Transports
                                       ((uint8_t) data_Beacon.cid_nav_query_send_msg.query_flags));
           break;
 
-          // should never get here.
+        // should never get here.
         default:
           break;
       }

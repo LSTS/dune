@@ -437,30 +437,30 @@ namespace Transports
 
         case CID_NAV_QUERY_RESP:
           task->debug("MESSAGE  CID_NAV_QUERY_RESP");
-          printAcoFixData("cid_nav_querry_resp_msg",
-                          &data_Beacon.cid_nav_querry_resp_msg.aco_fix, task);
-          task->debug("data_Beacon.cid_nav_querry_resp_msg.query_flags %d ",
-                      data_Beacon.cid_nav_querry_resp_msg.query_flags);
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_depth %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_depth);
+          printAcoFixData("cid_nav_query_resp_msg",
+                          &data_Beacon.cid_nav_query_resp_msg.aco_fix, task);
+          task->debug("data_Beacon.cid_nav_query_resp_msg.query_flags %d ",
+                      data_Beacon.cid_nav_query_resp_msg.query_flags);
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[0])
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_depth %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_depth);
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_supply %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_supply);
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[1])
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_supply %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_supply);
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_temp %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_temp);
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[2])
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_temp %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_temp);
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[3])
           {
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_yaw %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_yaw);
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_pitch %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_pitch);
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_roll %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_roll);
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_yaw %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_yaw);
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_pitch %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_pitch);
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_roll %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_roll);
           }
           break;
 

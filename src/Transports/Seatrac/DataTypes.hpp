@@ -174,7 +174,8 @@ namespace Transports
     };
 
     // Control XCVR flags
-    enum ControlXcvrFlags_E {
+    enum ControlXcvrFlags_E
+    {
       USBL_USE_AHRS_FLAG = 0x1,
       XCVR_POSFLT_ENABLE_FLAG = 0x2,
       XCVR_USBL_MSGS_FLAG = 0x20,

@@ -93,7 +93,7 @@ namespace Transports
       std::vector<float> hard_iron;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
-      // Rotation matrix values.
+      //! Rotation matrix values.
       std::vector<double> rotation_mx;
       //! Calibration threshold.
       double calib_threshold;
@@ -150,7 +150,7 @@ namespace Transports
       MapAddr m_modem_addrs;
       //! Current transmission ticket.
       Ticket* m_ticket;
-      // Save modem commands.
+      //! Save modem commands.
       IMC::DevDataText m_dev_data;
       //! Euler angles message.
       IMC::EulerAngles m_euler;
@@ -162,11 +162,11 @@ namespace Transports
       IMC::MagneticField m_magfield;
       //! Current sound speed.
       IMC::SoundSpeed m_sspeed;
-      // Depth.
+      //! Depth.
       IMC::Depth m_depth;
-      // Pressure.
+      //! Pressure.
       IMC::Pressure m_pressure;
-      // Measured temperature.
+      //! Measured temperature.
       IMC::Temperature m_temperature;
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
@@ -330,7 +330,7 @@ namespace Transports
               handlePressureSensor();
             }
 
-            //todo send environment_supply
+            //TODO: send environment_supply
             //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
           }
         }
@@ -1017,10 +1017,10 @@ namespace Transports
       //! Handle Pressure, Depth, Temperature and Sound Speed data and dispatch.
       //! The method tries to dispatch data prom sensors: Pressure, Depth, Temperature, and Sound Speed data
       void
-      handlePressureSensor (void)
+      handlePressureSensor(void)
       {
         m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_depth)) / 10.0; //int32_t // m_channel_readout * m_args.depth_conv;
-        m_pressure.value =  (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure)) / 1000.0) * Math::c_pascal_per_bar;
+        m_pressure.value = (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure)) / 1000.0) * Math::c_pascal_per_bar;
         m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature)) / 10.0;  //int16_t//m_channel_readout;
         m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_vos)) / 10.0;  //uint16_t
         dispatch(m_depth);
@@ -1063,7 +1063,6 @@ namespace Transports
 
         if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
           return;
-
 
         // Create and fill new ticket.
         Ticket ticket;
@@ -1179,8 +1178,7 @@ namespace Transports
       //! @param[in] reason reason value.
       //! @param[in] error error message.
       void
-      clearTicket(IMC::UamTxStatus::ValueEnum reason,
-                  const std::string& error = "")
+      clearTicket(IMC::UamTxStatus::ValueEnum reason, const std::string& error = "")
       {
         if (m_ticket != NULL)
         {
@@ -1264,7 +1262,7 @@ namespace Transports
       }
 
       void
-      resetOneWayTimer()
+      resetOneWayTimer(void)
       {
         int multiplier = 2;
         if(!(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
