@@ -50,7 +50,7 @@ namespace Actuators
     //! Number of power channels
     static const unsigned c_pwrs_count = 10;
     //! Number of power rails
-    static const unsigned c_pwr_rails_count = 4;
+    static const unsigned c_pwr_rails_count = 5;
     //! Number of motors
     static const unsigned c_motors = 2;
     enum torqeedo_msg_identifiers_t
@@ -90,7 +90,7 @@ namespace Actuators
       R_H_12V3 = 3,
       R_H_VR0 = 3,
       R_H_VR1 = 3,
-      R_H_5V = 3
+      R_H_5V = 4
     };
     enum torqeedo_power_channels_t
     {
@@ -103,7 +103,7 @@ namespace Actuators
       CH_H_12V3 = 2,
       CH_H_VR0 = 3,
       CH_H_VR1 = 4,
-      CH_H_5V = 5
+      CH_H_5V = 0
     };
     struct Arguments
     {
