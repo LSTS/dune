@@ -194,6 +194,7 @@ namespace Actuators
         }
 
         // Register handler routines.
+        bind<IMC::QueryPowerChannelState>(this);
         bind<IMC::SetThrusterActuation>(this);
         bind<IMC::PowerChannelControl>(this);
       }
@@ -318,6 +319,24 @@ namespace Actuators
         }
       }
 
+      void
+      consume(const IMC::QueryPowerChannelState* msg)
+      {
+        (void)msg;
+
+        IMC::PowerChannelState m_pwr_ch;
+
+        for (PowerChannelMap::iterator itr = m_pwr_chs.begin(); itr != m_pwr_chs.end(); ++itr)
+        {
+          if(!(itr->first.empty()))
+          {
+            m_pwr_ch.name = itr->first;
+            m_pwr_ch.state = itr->second.state;
+            dispatch(m_pwr_ch);
+          }
+        }
+      }
+
       //! Consume SetThrusterActuation messages
       void
       consume(const IMC::SetThrusterActuation* msg)
@@ -404,31 +423,37 @@ namespace Actuators
 
       //! Parses a received MSG_RAIL from CAN bus buffer and sends relevant data to IMC
       void
-      parseMSG_RAIL()
+      parseMSG_RAIL(uint32_t id)
       {
-        uint8_t rail_idx = m_can_bfr[0];
-        ///Voltage (mV)
-        uint16_t voltage_mV = combine2charToUint16(m_can_bfr[2], m_can_bfr[1]);
-        ///Current (mA) TODO: Should this be int32_t? signed in mrcan
-        int32_t current_mA = (int32_t)0 | (m_can_bfr[5] << 16) | (m_can_bfr[4] << 8) | m_can_bfr[3];
-        ///Electronic fuse trip current (A*2)
-        uint8_t fuse_halfamps = m_can_bfr[6];
-        char flags = m_can_bfr[7];
+        if(id == 0x0030abff)
+        {
+          uint8_t rail_idx = m_can_bfr[0];
+          ///Voltage (mV)
+          uint16_t voltage_mV = combine2charToUint16(m_can_bfr[2], m_can_bfr[1]);
+          ///Current (mA) TODO: Should this be int32_t? signed in mrcan
+          int32_t current_mA = (int32_t)0 | (m_can_bfr[5] << 16) | (m_can_bfr[4] << 8) | m_can_bfr[3];
+          ///Electronic fuse trip current (A*2)
+          uint8_t fuse_halfamps = m_can_bfr[6];
+          char flags = m_can_bfr[7];
 
-        
-        fp32_t voltage_V = fp32_t(voltage_mV) * 0.001;
-        fp32_t current_A = fp32_t(current_mA) * 0.001;
-        debug("MSG_RAIL: Rail#%d - Voltage: %0.3fV, Current: %f A, fuse_halfamps: %u, flags: %02X", rail_idx, voltage_V, current_A, fuse_halfamps, flags);
+          fp32_t voltage_V = fp32_t(voltage_mV) * 0.001;
+          fp32_t current_A = fp32_t(current_mA) * 0.001;
+          debug("MSG_RAIL: Rail#%d - Voltage: %0.3fV, Current: %f A, fuse_halfamps: %u, flags: %02X", rail_idx, voltage_V, current_A, fuse_halfamps, flags);
 
-        IMC::Voltage voltage_msg;
-        voltage_msg.setSourceEntity(m_power_rail_eid[rail_idx]);
-        voltage_msg.value = voltage_V;
-        dispatch(voltage_msg);
-        
-        IMC::Current current_msg;
-        current_msg.setSourceEntity(m_power_rail_eid[rail_idx]);
-        current_msg.value = current_A;
-        dispatch(current_msg);
+          IMC::Voltage voltage_msg;
+          voltage_msg.setSourceEntity(m_power_rail_eid[rail_idx]);
+          voltage_msg.value = voltage_V;
+          dispatch(voltage_msg);
+          
+          IMC::Current current_msg;
+          current_msg.setSourceEntity(m_power_rail_eid[rail_idx]);
+          current_msg.value = current_A;
+          dispatch(current_msg);
+        }
+        else
+        {
+          debug("Wrong message index: %08x", id);
+        }
       }
 
       //! Parses a received MSG_TQ_MOTOR_DRIVE from CAN bus buffer and sends relevant data to IMC
@@ -542,7 +567,7 @@ namespace Actuators
             parseMSG_TEXT();
             break;
           case MSG_RAIL:
-            parseMSG_RAIL();
+            parseMSG_RAIL(id);
             break;
           case MSG_TQ_MOTOR_DRIVE:
             parseMSG_TQ_MOTOR_DRIVE();
