@@ -119,7 +119,7 @@ namespace Transports
       //! Config Status.
       bool m_config_status;
       //! c_preamble detected
-      bool m_pre_detected;
+      bool m_preamble;
       //! Current state.
       EntityStates m_state_entity;
       //! Entity states.
@@ -176,13 +176,13 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
-        m_handle(NULL),
+        m_handle(nullptr),
         m_config_status(false),
-        m_pre_detected(false),
+        m_preamble(false),
         m_stop_comms(false),
         m_usbl_receiver(false),
         m_tstamp(0), 
-        m_ticket(NULL)
+        m_ticket(nullptr)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -207,11 +207,11 @@ namespace Transports
 
         param("AHRS Mode", m_args.arhs_mode)
         .defaultValue("false")
-        .description("Enable the AHRS information to used in navigation");
+        .description("Enable the AHRS information to be used in navigation");
 
         param("Pressure Sensor Mode", m_args.pressure_sensor_mode)
         .defaultValue("false")
-        .description("Enable the pressure sensor, depth, sound velocity and temperature information ");
+        .description("Enable pressure sensor, depth, sound velocity and temperature information ");
 
         param("Use Internal Pressure Sensor for Medium", m_args.use_pressure_sensor_for_medium)
         .defaultValue("false")
@@ -219,7 +219,7 @@ namespace Transports
 
         param("USBL Mode", m_args.usbl_mode)
         .defaultValue("false")
-        .description("Enable the USBL mode. USBL receivers can obtain position information.");
+        .description("Enable USBL mode. USBL receivers can obtain position information.");
 
         param("Enhanced USBL", m_args.enhanced_usbl)
         .defaultValue("false")
@@ -241,7 +241,7 @@ namespace Transports
         .defaultValue("0.1")
         .units(Units::Gauss)
         .minimumValue("0.0")
-        .description("Minimum magnetic field calibration values to reset hard iron parameters");
+        .description("Minimum magnetic field calibration values to reset hard-iron parameters");
 
         param("Max Range", m_args.max_range)
         .defaultValue("1000")
@@ -251,11 +251,11 @@ namespace Transports
         param("Acknowledged timeout time multiplier", m_args.ack_timeout_time_multiplier)
         .defaultValue("6")
         .minimumValue("3")
-        .description("A time multiplier to wait before timeout for acknowledge (it ack requested)");
+        .description("A time multiplier to wait before timeout for acknowledge (if ack requested)");
 
         param("Dummy Connection", m_args.dummy_connection)
         .defaultValue("false")
-        .description("To assume a dummy connection and not a modem (no replies");
+        .description("To assume a dummy connection and not a modem (no replies)");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -276,17 +276,17 @@ namespace Transports
       //! Set entity state.
       //! @param[in] state new entity state.
       void
-      setAndSendState(EntityStates state)
+      setState(EntityStates state)
       {
         m_state_entity = state;
         setEntityState((IMC::EntityState::StateEnum) m_states[m_state_entity].state,
                        m_states[m_state_entity].description);
       }
 
-      //! Process sentence.
-      //! @return true if message was correctly processed, false otherwise.
+      //! Check validity of received sentence (CRC and minimum length).
+      //! @return true if message is valid, false otherwise.
       bool
-      processSentence(void)
+      checkValidity(void)
       {
         bool msg_validity = false;
         uint16_t crc, crc2;
@@ -299,8 +299,10 @@ namespace Transports
           if (crc == crc2)
             msg_validity = true;
           else
-            war("%s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
+            war("Received message not valid: %s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
         }
+        else
+          war(DTR("Received message not valid: insufficient message length"));
         return msg_validity;
       }
 
@@ -308,7 +310,7 @@ namespace Transports
       void
       processNewData(void)
       {
-        if(m_config_status==true)
+        if(m_config_status)
         {
           if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
             handleBinaryMessage();
@@ -321,14 +323,10 @@ namespace Transports
           
           if(m_data_beacon.newDataAvailable(CID_STATUS))
           {
-            if(m_args.arhs_mode == true)
-            {
+            if(m_args.arhs_mode)
               handleAhrsData();
-            }
-            if(m_args.pressure_sensor_mode == true)
-            {
+            if(m_args.pressure_sensor_mode)
               handlePressureSensor();
-            }
 
             //TODO: send environment_supply
             //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
@@ -345,11 +343,10 @@ namespace Transports
         char bfr[c_bfr_size];
         uint16_t typemes = 0;
         const char* msg_raw;
-        size_t rv;
 
         if (Poll::poll(*m_handle, 0.001))
         {
-          rv = m_handle->readString(bfr, c_bfr_size);
+          size_t rv = m_handle->readString(bfr, c_bfr_size);
           m_tstamp = Clock::getSinceEpoch();
           m_last_input = Clock::get();
           for (size_t i = 0; i < rv; ++i)
@@ -359,9 +356,9 @@ namespace Transports
             {
               m_dev_data.value.assign(sanitize(m_data));
               dispatch(m_dev_data);
-              if(m_pre_detected==true)
+              if(m_preamble)
               {
-                if (processSentence())
+                if (checkValidity())
                 {
                   msg_raw = m_datahex.data();
                   std::memcpy(&typemes, msg_raw, 1);
@@ -371,7 +368,7 @@ namespace Transports
                   typemes = 0;
                 }
               }
-              m_pre_detected = false;
+              m_preamble = false;
               m_data.clear();
             }
             else
@@ -379,7 +376,7 @@ namespace Transports
               if (bfr[i] == c_preamble)
               {
                 m_data.clear();
-                m_pre_detected = true;
+                m_preamble = true;
               }
               else if (bfr[i] != '\r')
               {
@@ -411,10 +408,10 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        setAndSendState(STA_BOOT);
+        setState(STA_BOOT);
         try
         {
-          if (m_args.only_underwater == true)
+          if (m_args.only_underwater)
             m_stop_comms = true;
 
           if (openSocket())
@@ -482,7 +479,7 @@ namespace Transports
 
           StatusMode_E status_mode= STATUS_MODE_1HZ;
           bool chage_IMU = true;
-          if (m_args.arhs_mode == true)
+          if (m_args.arhs_mode)
           {
             status_mode = STATUS_MODE_10HZ;
             chage_IMU = isCalibrated();
@@ -492,7 +489,7 @@ namespace Transports
                 && (m_data_beacon.cid_settings_msg.status_output == output_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == m_args.max_range)
-                && chage_IMU == true))
+                && chage_IMU))
           {
             m_data_beacon.cid_settings_msg.status_flags = status_mode;
             m_data_beacon.cid_settings_msg.status_output = output_flags;
@@ -500,7 +497,7 @@ namespace Transports
             m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
             m_data_beacon.cid_settings_msg.xcvr_range_tmo = m_args.max_range;
             
-            if(chage_IMU == false)
+            if(!chage_IMU)
             {
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
               m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
@@ -516,18 +513,18 @@ namespace Transports
 
             if (m_data_beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
             {
-              setAndSendState(STA_ERR_STP);
+              setState(STA_ERR_STP);
               war(DTR("failed to configure device"));
             }
 
             inf("ready");
-            setAndSendState(STA_IDLE);
+            setState(STA_IDLE);
             m_config_status = true;
           }
           else
           {
             inf("ready (settings already set)");
-            setAndSendState(STA_IDLE);
+            setState(STA_IDLE);
             m_config_status = true;
           }
 
@@ -549,7 +546,7 @@ namespace Transports
         else
         {
           err("%s", DTR(Status::getString(CODE_COM_ERROR)));
-          setAndSendState(STA_ERR_STP);
+          setState(STA_ERR_STP);
           throw std::runtime_error(m_states[m_state_entity].description);
         }
       }
@@ -569,7 +566,7 @@ namespace Transports
         for (unsigned i = 0; i < 3; i++)
           m_hard_iron[i] = data(i);
 
-        if (m_handle != NULL)
+        if (m_handle != nullptr)
         {
 
           if (paramChanged(m_args.hard_iron))
@@ -580,7 +577,7 @@ namespace Transports
       void
       runCalibration(void)
       {
-        if (m_handle == NULL)
+        if (m_handle == nullptr)
           return;
 
         // See if vehicle has same hard iron calibration parameters.
@@ -728,11 +725,7 @@ namespace Transports
       bool
       hasConnection(void)
       {
-        if (Clock::get() >= (m_last_input + c_input_tout))
-        {
-          return false;
-        }
-        return true;
+        return (Clock::get() < (m_last_input + c_input_tout));
       }
 
       //! Processing incoming data.
@@ -742,7 +735,7 @@ namespace Transports
         if (m_data_beacon.cid_dat_receive_msg.ack_flag != 0)
         {
           // if msg has more than 1 packet, send next part
-          if (m_ticket != NULL)
+          if (m_ticket != nullptr)
           {
             debug(DTR("Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
                 m_data_beacon.cid_dat_send_msg.message_index,
@@ -751,13 +744,13 @@ namespace Transports
                 m_oway_timer.getElapsed());
           }
 
-          if (m_ticket != NULL && m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
+          if (m_ticket != nullptr && m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             resetOneWayTimer();
             debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                m_ticket == NULL ? -1 : m_ticket->seq,
+                m_ticket == nullptr ? -1 : m_ticket->seq,
                 m_oway_timer.getTop(),
                 m_data_beacon.cid_dat_send_msg.packet_len);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
@@ -769,7 +762,7 @@ namespace Transports
             handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
 
             // Data communication done
-            if (m_ticket != NULL)
+            if (m_ticket != nullptr)
             {
               debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
                   m_ticket->seq, 
@@ -794,7 +787,7 @@ namespace Transports
             war(DTR("wrong message order"));
 
           if (data_rec_flag == 0)
-            debug("colecting data");
+            debug("collecting data");
           if(data_rec_flag == -2)
             debug("no data size");
         }
@@ -861,7 +854,7 @@ namespace Transports
           {
             IMC::UamRxRange range;
             range.sys = sys_src;
-            if (m_ticket != NULL)
+            if (m_ticket != nullptr)
               range.seq = m_ticket->seq;
 
             range.value = range_dist;
@@ -912,27 +905,27 @@ namespace Transports
         if( !(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
         {
-          int next_part_code = m_ticket == NULL ? -1 : m_data_beacon.cid_dat_send_msg.packetDataNextPart(0);
+          int next_part_code = m_ticket == nullptr ? -1 : m_data_beacon.cid_dat_send_msg.packetDataNextPart(0);
           if (next_part_code < MAX_MESSAGE_ERRORS && next_part_code > 0)
           {
             resetOneWayTimer();
             debug(DTR("Error sending (handleCommunicationError) part %d of %d for ticket %d, resending"), 
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                m_ticket == NULL ? -1 : m_ticket->seq);
+                m_ticket == nullptr ? -1 : m_ticket->seq);
             sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
           }
           else
           {
             war(DTR("Communication failed for ticket %d %d"), 
-                m_ticket == NULL ? -1 : m_ticket->seq,
+                m_ticket == nullptr ? -1 : m_ticket->seq,
                 next_part_code);
             clearTicket(IMC::UamTxStatus::UTS_FAILED);
           }
         }
         else
         {
-          war(DTR("Next msg or part send to son for ticket %d with ERROR"), m_ticket == NULL ? -1 : m_ticket->seq);
+          war(DTR("Next msg or part send to son for ticket %d with ERROR"), m_ticket == nullptr ? -1 : m_ticket->seq);
         }
       }
 
@@ -1105,7 +1098,7 @@ namespace Transports
         debug(DTR("Sending UamTxStatus::UTS_IP. Ticket %d being processed"), ticket.seq);          
 
         // Fill the message type.
-        if ((ticket.addr != 0) && (ticket.ack == true))
+        if ((ticket.addr != 0) && ticket.ack)
         {
           if (m_args.usbl_mode)
           {
@@ -1180,11 +1173,11 @@ namespace Transports
       void
       clearTicket(IMC::UamTxStatus::ValueEnum reason, const std::string& error = "")
       {
-        if (m_ticket != NULL)
+        if (m_ticket != nullptr)
         {
           sendTxStatus(*m_ticket, reason, error);
           delete m_ticket;
-          m_ticket = NULL;
+          m_ticket = nullptr;
         }
       }
 
@@ -1238,9 +1231,9 @@ namespace Transports
           if (m_state_entity != STA_ERR_STP)
           {
             if (isActive())
-              setAndSendState(STA_ACTIVE);
+              setState(STA_ACTIVE);
             else
-              setAndSendState(STA_IDLE);
+              setState(STA_IDLE);
           }
         }
         while (Clock::get() <= deadline);
@@ -1251,10 +1244,7 @@ namespace Transports
       {
         if (m_args.only_underwater)
         {
-          if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
-            m_stop_comms = false;
-          else
-            m_stop_comms = true;
+          m_stop_comms = !(msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
           return;
         }
 
@@ -1293,7 +1283,7 @@ namespace Transports
               debug(DTR("NOACK Success transmission complete (part %d of %d) for ticket %d (in %f s)"), 
                   m_data_beacon.cid_dat_send_msg.message_index,
                   m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                  m_ticket == NULL ? -1 : m_ticket->seq,
+                  m_ticket == nullptr ? -1 : m_ticket->seq,
                   m_oway_timer.getElapsed());
 
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
@@ -1302,7 +1292,7 @@ namespace Transports
                 debug(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
                     m_data_beacon.cid_dat_send_msg.message_index,
                     m_data_beacon.cid_dat_send_msg.n_sub_messages,
-                    m_ticket == NULL ? -1 : m_ticket->seq,
+                    m_ticket == nullptr ? -1 : m_ticket->seq,
                     m_oway_timer.getTop(),
                     m_data_beacon.cid_dat_send_msg.packet_len);
                 sendProtectedCommand(commandCreateSeatrac(CID_DAT_SEND, m_data_beacon));
@@ -1310,7 +1300,7 @@ namespace Transports
               else
               {
                 debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
-                    m_ticket == NULL ? -1 : m_ticket->seq,
+                    m_ticket == nullptr ? -1 : m_ticket->seq,
                     m_oway_timer.getElapsed());
                 clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
@@ -1319,7 +1309,7 @@ namespace Transports
           else
           {
             // is with ack
-            if (m_ticket != NULL && m_oway_timer.overflow())
+            if (m_ticket != nullptr && m_oway_timer.overflow())
             {
               //Took too long, lets bail with error
               war(DTR("ACK TIMEOUT: Msg transmission with ack for ticket %d timeout ACK. Lets bail with error!! (%f s > %f s)"),
@@ -1342,8 +1332,8 @@ namespace Transports
           // Modem.
           processInput();
 
-          if (Clock::get() >= (m_last_input + c_input_tout))
-            setAndSendState(STA_ERR_COM);
+          if (!hasConnection())
+            setState(STA_ERR_COM);
         }
       }
     };
