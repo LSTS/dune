@@ -344,7 +344,7 @@ namespace Actuators
 
         fp32_t voltage = fp32_t(voltage_raw) * 0.01;
         fp32_t current = fp32_t(current_raw) * 0.1;
-        trace("MSG_TQ_BAT_STATUS: Batt#%d - Charge: %d; Voltage %0.2fV; Current: %0.1fA; Temp: %d, Error: %d",
+        debug("MSG_TQ_BAT_STATUS: Batt#%d - Charge: %d; Voltage %0.2fV; Current: %0.1fA; Temp: %d, Error: %d",
               bat_idx, soc, voltage, current, temp_C, err_code);
 
         IMC::Temperature temp_msg;
@@ -384,7 +384,7 @@ namespace Actuators
         
         fp32_t voltage_V = fp32_t(voltage_mV) * 0.001;
         fp32_t current_A = fp32_t(current_mA) * 0.001;
-        trace("MSG_RAIL: Rail#%d - Voltage: %0.3fV, Current: %f A, fuse_halfamps: %u, flags: %02X", rail_idx, voltage_V, current_A, fuse_halfamps, flags);
+        debug("MSG_RAIL: Rail#%d - Voltage: %0.3fV, Current: %f A, fuse_halfamps: %u, flags: %02X", rail_idx, voltage_V, current_A, fuse_halfamps, flags);
 
         IMC::Voltage voltage_msg;
         voltage_msg.setSourceEntity(m_power_rail_eid[rail_idx]);
@@ -412,9 +412,9 @@ namespace Actuators
         fp32_t temp = fp32_t(temp_raw) * 0.1;
         int16_t rpm = (int16_t)rpm_raw / 7; // Rounds down to nearest whole number
 
-        trace("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
+        debug("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
               mot_idx, power, temp, rpm);
-        
+
         IMC::Temperature temp_msg;
         temp_msg.setSourceEntity(m_motor_eid[mot_idx]);
         temp_msg.value = temp;
@@ -430,7 +430,7 @@ namespace Actuators
       void
       parseMSG_TEXT()
       {
-        inf("MSG_TEXT: %s", m_can_bfr);
+        trace("MSG_TEXT: %s", m_can_bfr);
       }
 
       //! Parses a received MSG_TQ_BATCTL from CAN bus buffer and makes it available for trace debug
@@ -443,7 +443,6 @@ namespace Actuators
         uint8_t firmware_ver = m_can_bfr[3];
         trace(DTR("MSG_TQ_BATCTL: Motor#%u - Master error: %u; Error count %u; Firmware version: %u"),
               motor_index, master_error, error_count, firmware_ver);
-
       }
 
       //! Parses a received MSG_OUTPUTS from CAN bus buffer and makes it available for trace debug
@@ -454,7 +453,6 @@ namespace Actuators
         uint32_t states = (m_can_bfr[4] << 24) | (m_can_bfr[3] << 16) | (m_can_bfr[2] << 8) | m_can_bfr[1];
         trace(DTR("MSG_OUTPUTS: Rail#%u - Master error: %08X;"),
               rail_index, states);
-
       }
 
       //! Parses a received MSG_UPTIME from CAN bus buffer and makes it available for trace debug
@@ -580,7 +578,6 @@ namespace Actuators
       void
       sendSetMotorThrottle( int16_t motor0, int16_t motor1)
       {
-        
         m_can_bfr[0] = (char)(motor0 & 0x00FF);
         m_can_bfr[1] = (char)((motor0 & 0xFF00) >> 8);
         m_can_bfr[2] = (char)(motor1 & 0x00FF);
