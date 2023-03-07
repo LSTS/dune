@@ -115,6 +115,10 @@ namespace Actuators
       unsigned pwr_states[c_pwrs_count];
       //! Write to motor every motor_write_divider times task is run
       unsigned int motor_write_divider;
+      //! Motor labels
+      std::string motor_labels[c_motors];
+      //! Rails labels
+      std::string rail_labels[c_pwr_rails_count];
     };
     //! Power Channel data structure.
     struct PowerChannel
@@ -176,6 +180,19 @@ namespace Actuators
           param(option, m_args.pwr_states[i])
           .defaultValue("0");
         }
+
+        for (unsigned i= 0; i < c_motors; i++)
+        {
+          std::string option = String::str("Motor %d - Label", i);
+          param(option, m_args.motor_labels[i]);
+        }
+
+        for (unsigned i= 0; i < c_pwr_rails_count; i++)
+        {
+          std::string option = String::str("Rail %d - Label", i);
+          param(option, m_args.rail_labels[i]);
+        }
+
         // Register handler routines.
         bind<IMC::SetThrusterActuation>(this);
         bind<IMC::PowerChannelControl>(this);
@@ -221,18 +238,35 @@ namespace Actuators
 
         for (unsigned i = 0; i < c_motors; i++)
         {
-          m_motor_eid[i] = reserveEntity(label + " - Motor " + std::to_string(i));
+          m_motor_eid[i] = getEid(m_args.motor_labels[i]);
         }
 
         for (unsigned i = 0; i < c_num_batteries; i++)
         {
-          m_battery_eid[i] = reserveEntity(label + " - Battery " + std::to_string(i));
+          m_battery_eid[i] = getEid(label + " - Battery " + std::to_string(i));
         }
 
         for (unsigned i = 0; i < c_pwr_rails_count; i++)
         {
-          m_power_rail_eid[i] = reserveEntity(label + " - Rail " + std::to_string(i));
+          m_power_rail_eid[i] = getEid(m_args.rail_labels[i]);
         }
+      }
+
+      unsigned
+      getEid(std::string label)
+      {
+        unsigned eid = 0;
+        try
+        {
+          eid = resolveEntity(label);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          (void)e;
+          eid = reserveEntity(label);
+        }
+
+        return eid;
       }
 
       //! Resolve entity names.
