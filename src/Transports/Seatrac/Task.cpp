@@ -77,8 +77,8 @@ namespace Transports
       std::string uart_dev;
       //! Serial port baud rate.
       unsigned uart_baud;
-      //! Transmit only underwater.
-      bool only_underwater;
+      //! Transmit only when medium is suitable.
+      bool honour_medium;
       //! Addresses Number - modem
       std::string addr_section;
       //! Enable AHRS mode
@@ -86,7 +86,7 @@ namespace Transports
       //! Enable pressure sensor
       bool pressure_sensor_mode;
       //! Enable pressure sensor use for checking if underwater
-      bool use_pressure_sensor_for_medium;
+      bool pressure_as_medium;
       //! Enable usbl mode
       bool usbl_mode;
       //! Hard-iron calibration.
@@ -117,8 +117,6 @@ namespace Transports
       EntityStates m_state_entity;
       //! Entity states.
       IMC::EntityState m_states[STA_MAX];
-      //! Stop reports on the ground.
-      bool m_stop_comms;
       //! True if the beacon has an USBL receiver.
       bool m_usbl_receiver;
       //! Modem address.
@@ -141,6 +139,8 @@ namespace Transports
       NodeMap<unsigned> m_node_map;
       //! Current transmission ticket.
       Ticket* m_ticket;
+      //! Vehicle Medium.
+      IMC::VehicleMedium m_medium;
       //! Save modem commands.
       IMC::DevDataText m_dev_data;
       //! Euler angles message.
@@ -170,7 +170,6 @@ namespace Transports
         m_handle(nullptr),
         m_config_status(false),
         m_preamble(false),
-        m_stop_comms(false),
         m_usbl_receiver(false),
         m_addr(0),
         m_tstamp(0),
@@ -190,9 +189,9 @@ namespace Transports
         .defaultValue("19200")
         .description("Serial port baud rate");
 
-        param("Transmit Only Underwater", m_args.only_underwater)
+        param("Honour Medium", m_args.honour_medium)
         .defaultValue("false")
-        .description("Do not transmit when at water surface");
+        .description("Set to true to transmit only when the medium is suitable");
 
         param("Address Section", m_args.addr_section)
         .defaultValue("Seatrac Addresses")
@@ -204,11 +203,11 @@ namespace Transports
 
         param("Pressure Sensor Mode", m_args.pressure_sensor_mode)
         .defaultValue("false")
-        .description("Enable pressure sensor, depth, sound velocity and temperature information ");
+        .description("Enables pressure sensor, depth, sound velocity and temperature information");
 
-        param("Use Internal Pressure Sensor for Medium", m_args.use_pressure_sensor_for_medium)
+        param("Use Internal Pressure Sensor as Medium", m_args.pressure_as_medium)
         .defaultValue("false")
-        .description("Enable pressure sensor use for checking if underwater");
+        .description("Enable internal pressure sensor use for honour medium");
 
         param("USBL Mode", m_args.usbl_mode)
         .defaultValue("false")
@@ -257,6 +256,9 @@ namespace Transports
         m_states[STA_ERR_COM].description = DTR("serial port communication error, modem not responding");
         m_states[STA_ERR_STP].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_STP].description = DTR("failed to configure modem, possible serial port communication error");
+
+        // Initialize medium.
+        m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxFrame>(this);
@@ -398,9 +400,6 @@ namespace Transports
         setState(STA_BOOT);
         try
         {
-          if (m_args.only_underwater)
-            m_stop_comms = true;
-
           if (openSocket())
             return;
 
@@ -666,15 +665,23 @@ namespace Transports
         processInput(delay_aft);
       }
 
-      //! Check if medium and configuration for protected msg send.
+      //! Check if communications are restricted by medium.
+      //! @return true if medium is not suitable for communications to happen.
       bool
-      isCommsBlockedByMedium(void)
+      isRestricted(void)
       {
-        if (m_args.only_underwater && m_args.pressure_sensor_mode 
-            && m_args.use_pressure_sensor_for_medium)
-          return m_pressure.value <= 0;
-        
-        return m_stop_comms;
+        bool restricted = false;
+        float pressure = (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure)) / 1000.0) * Math::c_pascal_per_bar;
+
+        if (m_args.honour_medium)
+        {
+          if ((m_medium.medium < IMC::VehicleMedium::VM_WATER) || (m_medium.medium == IMC::VehicleMedium::VM_UNKNOWN))
+            restricted = true;
+          if (m_args.pressure_as_medium)
+            restricted = (pressure <= 0) ? true : false;
+        }
+
+        return restricted;
       }
 
       //! Send command if the modem has conditions to operate.
@@ -682,9 +689,9 @@ namespace Transports
       void
       sendProtectedCommand(const std::string& cmd)
       {
-        if (isCommsBlockedByMedium())
+        if (isRestricted())
         {
-          war(DTR("Sending stopped: Communication out of water forbidden."));
+          war(DTR("Send stopped: Communications out of water forbidden."));
           clearTicket(IMC::UamTxStatus::UTS_FAILED);
           m_data_beacon.cid_dat_send_msg.lock_flag = 0;
           return;
@@ -697,9 +704,8 @@ namespace Transports
       void
       sendCommand(const std::string& cmd)
       {
-        debug(DTR("Send command to the acoustic modem %s"), cmd.c_str());
         m_handle->writeString(cmd.c_str());
-        debug(DTR("Sent done"));
+        trace(DTR("Sent command to the acoustic modem: %s"), cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
       }
@@ -996,10 +1002,10 @@ namespace Transports
       void
       handlePressureSensor(void)
       {
-        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_depth)) / 10.0; //int32_t // m_channel_readout * m_args.depth_conv;
+        m_depth.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_depth)) / 10.0;
         m_pressure.value = (((fp32_t) (m_data_beacon.cid_status_msg.environment_pressure)) / 1000.0) * Math::c_pascal_per_bar;
-        m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature)) / 10.0;  //int16_t//m_channel_readout;
-        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_vos)) / 10.0;  //uint16_t
+        m_temperature.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_temperature)) / 10.0;
+        m_sspeed.value = ((fp32_t) (m_data_beacon.cid_status_msg.environment_vos)) / 10.0;
         dispatch(m_depth);
         dispatch(m_pressure);
         dispatch(m_temperature);
@@ -1198,13 +1204,7 @@ namespace Transports
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        if (m_args.only_underwater)
-        {
-          m_stop_comms = !(msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
-          return;
-        }
-
-        m_stop_comms = false;
+        m_medium = *msg;
       }
 
       void
