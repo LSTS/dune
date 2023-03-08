@@ -103,11 +103,6 @@ namespace Transports
       uint8_t ack_timeout_time_multiplier;
     };
 
-    //! Map of system's names.
-    typedef std::map<std::string, unsigned> MapName;
-    //! Map of system's addresses.
-    typedef std::map<unsigned, std::string> MapAddr;
-
     struct Task: public DUNE::Tasks::Task
     {
       //! Serial port handle.
@@ -142,10 +137,8 @@ namespace Transports
       Time::Counter<double> m_oway_timer;
       //! Hard-iron calibration parameters (after rotation).
       float m_hard_iron[3];
-      //! Map of seatrac modems by name.
-      MapName m_modem_names;
-      //! Map of seatrac modems by address.
-      MapAddr m_modem_addrs;
+      //! Node map.
+      NodeMap<unsigned> m_node_map;
       //! Current transmission ticket.
       Ticket* m_ticket;
       //! Save modem commands.
@@ -179,7 +172,9 @@ namespace Transports
         m_preamble(false),
         m_stop_comms(false),
         m_usbl_receiver(false),
-        m_tstamp(0), 
+        m_addr(0),
+        m_tstamp(0),
+
         m_ticket(nullptr)
       {
         // Define configuration parameters.
@@ -424,22 +419,12 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        // Process modem addresses.
-        std::string agent = getSystemName();
-        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+        m_node_map.readConfigSection(m_ctx.config, m_args.addr_section);
+        if (!m_node_map.lookupAddress(getSystemName(), m_addr))
+          throw std::runtime_error(DTR("no modem address for current system"));
 
-        // Verify modem local address value.
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned addr = 0;
-          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-        }
-
-        m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
         if (m_addr < 1 || m_addr > 15)
-          throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
+          throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), getSystemName()));
 
         try
         {
@@ -803,7 +788,7 @@ namespace Transports
         // Lookup source system name.
         try
         {
-          msg.sys_src = lookupSystemName(m_data_beacon.cid_dat_receive_msg.aco_fix.src_id);
+          m_node_map.lookupName(m_data_beacon.cid_dat_receive_msg.aco_fix.src_id, msg.sys_src);
         }
         catch (...)
         {
@@ -813,7 +798,7 @@ namespace Transports
         // Lookup destination system name.
         try
         {
-          msg.sys_dst = lookupSystemName(m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id);
+          m_node_map.lookupName(m_data_beacon.cid_dat_receive_msg.aco_fix.dest_id, msg.sys_dst);
         }
         catch (...)
         {
@@ -838,7 +823,7 @@ namespace Transports
         // Lookup source system name.
         try
         {
-          sys_src = lookupSystemName(aco_fix.src_id);
+          m_node_map.lookupName(aco_fix.src_id, sys_src);
         }
         catch (...)
         { }
@@ -1072,16 +1057,14 @@ namespace Transports
           return;
         }
 
-        try
+        unsigned dst = 0;
+        if (!m_node_map.lookupAddress(msg->sys_dst, dst))
         {
-          ticket.addr = lookupSystemAddress(msg->sys_dst);
-        }
-        catch (...)
-        {
-          war(DTR("invalid system name %s"), msg->sys_dst.c_str());
+          war(DTR("invalid system name: %s"), msg->sys_dst.c_str());
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
           return;
         }
+        ticket.addr = dst;
 
         // Fail if busy.
         if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
@@ -1187,32 +1170,6 @@ namespace Transports
       {
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
         m_ticket = new Ticket(ticket);
-      }
-
-      //! Lookup system address.
-      //! @param[in] name system name
-      //! @return system address.
-      unsigned
-      lookupSystemAddress(const std::string& name)
-      {
-        MapName::iterator itr = m_modem_names.find(name);
-        if (itr == m_modem_names.end())
-          throw std::runtime_error("unknown system name");
-
-        return itr->second;
-      }
-
-      //! Lookup system name.
-      //! @param[in] addr system address.
-      //! @return system name.
-      std::string
-      lookupSystemName(unsigned addr)
-      {
-        MapAddr::iterator itr = m_modem_addrs.find(addr);
-        if (itr == m_modem_addrs.end())
-          throw std::runtime_error("unknown system address");
-
-        return itr->second;
       }
 
       //! Check for incoming data.
