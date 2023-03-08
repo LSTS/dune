@@ -109,7 +109,7 @@ namespace Transports
       //! Verify if new message was received.
       //! @param[in] setdata type of msg that was received.
       //! @return true if was received new message and flag is clean.
-      uint8_t
+      bool
       newDataAvailable(unsigned setdata)
       {
         if (setdata < MESSAGE_NUMBER)
@@ -117,11 +117,11 @@ namespace Transports
           if (new_message[setdata] == 1)
           {
             new_message[setdata] = 0;
-            return 1;
+            return true;
           }
         }
 
-        return 0;
+        return false;
       }
     };
 
@@ -526,7 +526,7 @@ namespace Transports
     //! @param[in] data_Beacon message structure.
     //! @return string with the command.
     std::string
-    commandCreateSeatrac(CommandID cid_type, DataSeatrac& data_Beacon)
+    createCommand(CommandID cid_type, DataSeatrac& data_Beacon)
     {
       std::string cmd = "#";
       std::string check_sum;
