@@ -73,7 +73,8 @@ namespace DUNE
         // If this section is not a task continue.
         if (!Factory::exists(getTaskName(vec[i])))
         {
-          // If not configured as non-task display warning
+          // We use '.' here to ignore configuration sections (such as General
+          // or Addresses)
           if (getTaskName(vec[i]).find('.') != std::string::npos)
           {
             std::string invalid = "Invalid task name: " + getTaskName(vec[i]);
