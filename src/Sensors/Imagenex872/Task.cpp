@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Ricardo Martins, Ana Santos                                      *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -39,6 +39,19 @@ namespace Sensors
   namespace Imagenex872
   {
     using DUNE_NAMESPACES;
+
+    //! Finite state machine states.
+    enum StateMachineStates
+    {
+      //! Waiting for activation.
+      SM_IDLE,
+      //! Start activation sequence
+      SM_BEGIN,
+      //! Connect with sidescan
+      SM_ACTIVE,
+      //! Wait for connection
+      SM_WAIT
+    };
 
     enum Side
     {
@@ -74,6 +87,10 @@ namespace Sensors
       unsigned frequency;
       // Default range.
       unsigned range;
+      // Error case timer
+      uint16_t wait_time;
+      // Time between attempts.
+      uint16_t wait_attempts;
     };
 
     // List of available ranges.
@@ -101,18 +118,25 @@ namespace Sensors
 
     struct Task: public Tasks::Periodic
     {
-      // TCP socket.
+      //! TCP socket.
       TCPSocket* m_sock;
-      // Output switch data.
+      //! Output switch data.
       uint8_t m_sdata[c_sdata_size];
-      // Return data.
+      //! Return data.
       uint8_t m_rdata_hdr[c_rdata_hdr_size];
-      // Return data.
+      //! Return data.
       uint8_t m_rdata_ftr[c_rdata_ftr_size];
-      // Single sidescan ping.
+      //! Single sidescan ping.
       IMC::SonarData m_ping;
-      // Configuration parameters.
+      //! Current state machine state.
+      StateMachineStates m_sm_state;
+      //! Watchdog timer to idle task.
+      Counter<double> m_wdog;
+      //! Timer between attempts.
+      Counter<double> m_timer_attempts;
+      //! Configuration parameters.
       Arguments m_args;
+
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -163,6 +187,18 @@ namespace Sensors
         .valuesIf("Frequency", "770", "10, 20, 30, 40, 50")
         .description(DTR("Operating range"));
 
+        param("Wait timer", m_args.wait_time)
+                .defaultValue("20")
+                .minimumValue("0")
+                .maximumValue("60")
+                .description("Error case timer");
+
+        param("Wait attempts", m_args.wait_attempts)
+                .defaultValue("5")
+                .minimumValue("0")
+                .maximumValue("60")
+                .description("Error case timer");
+
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
         m_sdata[0] = 0xfe;
@@ -192,13 +228,6 @@ namespace Sensors
       }
 
       void
-      onResourceAcquisition(void)
-      {
-        m_sock = new TCPSocket();
-        m_sock->setNoDelay(true);
-      }
-
-      void
       onResourceRelease(void)
       {
         Memory::clear(m_sock);
@@ -207,21 +236,46 @@ namespace Sensors
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      //! Set current state of task
+      //! @param[in] state state machine state.
+      void
+      setState(StateMachineStates state)
+      {
+        m_sm_state = state;
+      }
+
+      void
+      onActivation() {
+        setState(SM_BEGIN);
+      }
+
+      void
+      activation(void)
+      {
         try
         {
-          m_sock->connect(m_args.addr, m_args.port);
-          pingBoth();
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          connect();
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 10.0, false);
+          m_wdog.setTop(m_args.wait_time);
+          m_timer_attempts.setTop(m_args.wait_attempts);
+          setState(SM_WAIT);
         }
       }
 
       void
-      onActivation(void)
-      {
+      connect(void) {
+        m_sock = new TCPSocket();
+        m_sock->setNoDelay(true);
+        m_sock->setReceiveTimeout(5);
+        m_sock->setSendTimeout(5);
+        m_sock->connect(m_args.addr, m_args.port);
+        pingBoth();
+        setState(SM_ACTIVE);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -230,6 +284,69 @@ namespace Sensors
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
+
+      void
+      handleSonarData(void)
+      {
+        try
+        {
+          pingBoth();
+          dispatch(m_ping);
+        }
+        catch (std::runtime_error& e)
+        {
+          m_wdog.setTop(m_args.wait_time);
+          m_timer_attempts.setTop(m_args.wait_attempts);
+          setState(SM_WAIT);
+        }
+      }
+
+      void tryConnectAgain() {
+        try
+        {
+          connect();
+        }
+        catch (std::runtime_error& e)
+        {
+          m_timer_attempts.reset();
+        }
+      }
+
+      void
+      updateStateMachine(void)
+      {
+        switch(m_sm_state) {
+
+          // Wait for activation.
+          case SM_IDLE:
+            break;
+
+          // Begin activation
+          case SM_BEGIN:
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+            activation();
+            break;
+
+          // Works
+          case SM_ACTIVE:
+            handleSonarData();
+            break;
+
+          // Wait
+          case SM_WAIT:
+            if (m_wdog.overflow()) {
+              setState(SM_IDLE);
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+            }
+            else if(m_timer_attempts.overflow()) {
+              debug("Problem to connect. Try again...");
+              tryConnectAgain();
+            }
+            break;
+        }
+      }
+
 
       unsigned
       getIndex(unsigned value, const unsigned* table, unsigned table_size)
@@ -326,15 +443,13 @@ namespace Sensors
 
         try
         {
-          pingBoth();
-          dispatch(m_ping);
+          updateStateMachine();
         }
-        catch (std::exception& e)
+        catch (std::runtime_error& e)
         {
-          err("%s", e.what());
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          throw RestartNeeded(e.what(), 5);
         }
+
       }
     };
   }
