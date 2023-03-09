@@ -59,6 +59,8 @@ namespace Transports
     static const std::string c_hard_iron_param = "Hard-Iron Calibration";
     //! Number of axis.
     static const uint8_t c_number_axis = 3;
+    //! Acknowledged timeout time multiplier
+    static const uint8_t c_ack_timeout_multiplier = 6;
 
     //! Task arguments.
     struct Arguments
@@ -89,8 +91,6 @@ namespace Transports
       double calib_threshold;
       //! Maximum range.
       uint16_t max_range;
-      //! Timeout time multiplier for ack wait
-      uint8_t ack_timeout_time_multiplier;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -225,11 +225,6 @@ namespace Transports
         .defaultValue("1000")
         .minimumValue("250")
         .description("Maximum value of distance at which Ranges are considered");
-
-        param("Acknowledged timeout time multiplier", m_args.ack_timeout_time_multiplier)
-        .defaultValue("6")
-        .minimumValue("3")
-        .description("A time multiplier to wait before timeout for acknowledge (if ack requested)");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -927,7 +922,6 @@ namespace Transports
         {
           consumeMessages();
           m_driver->readSentence();
-          //m_tstamp = Clock::getSinceEpoch() - m_last_input;
           processNewData();
           checkTxOWAY();
 
@@ -948,7 +942,7 @@ namespace Transports
         int multiplier = 2;
         if(!(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
-          multiplier = m_args.ack_timeout_time_multiplier;
+          multiplier = c_ack_timeout_multiplier;
         m_oway_timer.setTop((m_data_beacon.cid_dat_send_msg.packet_len * 8 
             * 1.0/c_acoustic_bitrate + (m_args.max_range * 1.0 / MIN_SOUND_SPEED))
             * multiplier );
