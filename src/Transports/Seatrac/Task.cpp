@@ -222,10 +222,11 @@ namespace Transports
         .description("Minimum magnetic field calibration values to reset hard-iron parameters");
 
         param("Max Range", m_args.max_range)
-        .defaultValue("1000")
-        .minimumValue("250")
-        .description("Maximum value of distance at which Ranges are considered");
-
+        .defaultValue("1500")
+        .minimumValue("100")
+        .maximumValue("3000")
+        .description("Range timeout that specifies a distance beyond which replies are ignored and the remote beacon is considered to have timed out.");
+        
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
