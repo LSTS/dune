@@ -39,6 +39,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
+#include "Driver.hpp"
 #include "Parser.hpp"
 #include "MsgTypes.hpp"
 #include "DataTypes.hpp"
@@ -58,17 +59,6 @@ namespace Transports
     static const std::string c_hard_iron_param = "Hard-Iron Calibration";
     //! Number of axis.
     static const uint8_t c_number_axis = 3;
-
-    //! Entity states.
-    enum EntityStates
-    {
-      STA_BOOT,
-      STA_IDLE,
-      STA_ACTIVE,
-      STA_ERR_COM,
-      STA_ERR_STP,
-      STA_MAX
-    };
 
     //! Task arguments.
     struct Arguments
@@ -97,7 +87,7 @@ namespace Transports
       std::vector<double> rotation_mx;
       //! Calibration threshold.
       double calib_threshold;
-      //! max range
+      //! Maximum range.
       uint16_t max_range;
       //! Timeout time multiplier for ack wait
       uint8_t ack_timeout_time_multiplier;
@@ -107,6 +97,8 @@ namespace Transports
     {
       //! Serial port handle.
       IO::Handle* m_handle;
+      //! Driver.
+      Driver* m_driver;
       //! Task arguments.
       Arguments m_args;
       //! Config Status.
@@ -121,13 +113,9 @@ namespace Transports
       bool m_usbl_receiver;
       //! Modem address.
       unsigned m_addr;
-      //! Data buffer.
-      std::string m_data;
-      //! Converted data buffer.
-      std::string m_datahex;
-      //! Seatrac data structures.
+      //! Seatrac data structure.
       DataSeatrac m_data_beacon;
-      //! Time of last serial port input.
+      //! Time of last received input.
       double m_last_input;
       //! Read timestamp.
       double m_tstamp;
@@ -141,8 +129,6 @@ namespace Transports
       Ticket* m_ticket;
       //! Vehicle Medium.
       IMC::VehicleMedium m_medium;
-      //! Save modem commands.
-      IMC::DevDataText m_dev_data;
       //! Euler angles message.
       IMC::EulerAngles m_euler;
       //! Acceleration message.
@@ -168,12 +154,12 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx) :
         DUNE::Tasks::Task(name, ctx),
         m_handle(nullptr),
+        m_driver(nullptr),
         m_config_status(false),
         m_preamble(false),
         m_usbl_receiver(false),
         m_addr(0),
         m_tstamp(0),
-
         m_ticket(nullptr)
       {
         // Define configuration parameters.
@@ -274,108 +260,6 @@ namespace Transports
                        m_states[m_state_entity].description);
       }
 
-      //! Check validity of received sentence (CRC and minimum length).
-      //! @return true if message is valid, false otherwise.
-      bool
-      checkValidity(void)
-      {
-        bool msg_validity = false;
-        uint16_t crc, crc2;
-        if(m_data.size() >= MIN_MESSAGE_LENGTH)
-        {
-          std::string msg = String::fromHex(m_data.substr((m_data.size() - 4), 4));
-          std::memcpy(&crc2, msg.data(), 2);
-          m_datahex = String::fromHex(m_data.erase((m_data.size() - 4), 4));
-          crc = CRC16::compute((uint8_t*) m_datahex.data(), m_datahex.size(),0);
-          if (crc == crc2)
-            msg_validity = true;
-          else
-            war("Received message not valid: %s", DTR(Status::getString(Status::CODE_INVALID_CHECKSUM)));
-        }
-        else
-          war(DTR("Received message not valid: insufficient message length"));
-        return msg_validity;
-      }
-
-      //! Process new data.
-      void
-      processNewData(void)
-      {
-        if(m_config_status)
-        {
-          if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
-            handleBinaryMessage();
-
-          if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
-            handleDatSendResponse();
-
-          if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
-            handleCommunicationError();
-          
-          if(m_data_beacon.newDataAvailable(CID_STATUS))
-          {
-            if(m_args.ahrs_mode)
-              handleAhrsData();
-            if(m_args.pressure_sensor_mode)
-              handlePressureSensor();
-
-            //TODO: send environment_supply
-            //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
-          }
-        }
-      }
-
-      //! Release
-      //! Read sentence.
-      void
-      readSentence(void)
-      {
-        // Initialize received message parser
-        char bfr[c_bfr_size];
-        uint16_t type = 0;
-        const char* msg_raw;
-
-        if (!Poll::poll(*m_handle, 0.001))
-          return;
-
-        size_t rv = m_handle->readString(bfr, c_bfr_size);
-        m_tstamp = Clock::getSinceEpoch();
-        m_last_input = Clock::get();
-        for (size_t i = 0; i < rv; ++i)
-        {
-          // Detected line termination.
-          if (bfr[i] == '\n')
-          {
-            m_dev_data.value.assign(sanitize(m_data));
-            dispatch(m_dev_data);
-            if (m_preamble)
-            {
-              if (checkValidity())
-              {
-                msg_raw = m_datahex.data();
-                std::memcpy(&type, msg_raw, 1);
-                dataParser(type, msg_raw + 1, m_data_beacon);
-                processNewData();
-                printDebugFunction(type, m_data_beacon, this);
-                type = 0;
-              }
-            }
-            m_preamble = false;
-            m_data.clear();
-          }
-          else
-          {
-            if (bfr[i] == c_preamble)
-            {
-              m_data.clear();
-              m_preamble = true;
-            }
-            else if (bfr[i] != '\r')
-              m_data.push_back(bfr[i]);
-          }
-        }
-      }
-
       //! Open TCP socket.
       //! @return true if socket was opened, false otherwise.
       bool
@@ -425,9 +309,15 @@ namespace Transports
         if (m_addr < 1 || m_addr > 15)
           throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), getSystemName()));
 
+        // Initialize driver
+        m_driver = new Driver(this, m_handle, m_data_beacon, m_tstamp, m_last_input, m_preamble, m_addr,
+                              m_args.hard_iron[0], m_args.hard_iron[1], m_args.hard_iron[2]);
+
         try
         {
-          configure();
+          // Configure modem
+          setState(m_driver->configure(m_usbl_receiver, m_args.ahrs_mode, m_args.max_range));
+          m_config_status = true;
         }
         catch (...)
         {
@@ -435,113 +325,6 @@ namespace Transports
           setState(STA_ERR_STP);
           throw std::runtime_error(m_states[m_state_entity].description);
         }
-      }
-
-      //! Verification of current settings
-      //! @param[in] status_mode status output mode
-      //! @param[in] output_flags status output flags
-      //! @param[in] xcvr_flags control XCVR flags
-      //! @param[in] ahrs AHRS hard-iron calibration parameters match (when AHRS mode enabled)
-      //! @return true if settings match, false otherwise
-      bool
-      checkSettings(StatusMode_E status_mode, uint8_t output_flags, uint8_t xcvr_flags, bool ahrs)
-      {
-        return ((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
-               && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
-               && (m_data_beacon.cid_settings_msg.status_output == output_flags)
-               && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
-               && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == m_args.max_range)
-               && ahrs);
-      }
-
-      //! Seatrac Configuration
-      void
-      configure(void)
-      {
-        // Retrieve current settings and system information
-        sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 1);
-        sendCommandAndWait(createCommand(CID_SYS_INFO, m_data_beacon), 1);
-
-        if (m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
-          m_usbl_receiver = true;
-
-        uint8_t output_flags = (ENVIRONMENT_FLAG | ATTITUDE_FLAG
-                                | MAG_CAL_FLAG | ACC_CAL_FLAG
-                                | AHRS_RAW_DATA_FLAG | AHRS_COMP_DATA_FLAG);
-
-        uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
-
-        if (m_usbl_receiver)
-          xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
-
-        StatusMode_E status_mode = STATUS_MODE_1HZ;
-        bool ahrs = true;
-        if (m_args.ahrs_mode)
-        {
-          status_mode = STATUS_MODE_10HZ;
-          ahrs = isCalibrated();
-        }
-
-        // Verify modem settings
-        if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs))
-        {
-          // Setting correct settings
-          m_data_beacon.cid_settings_msg.status_flags = status_mode;
-          m_data_beacon.cid_settings_msg.status_output = output_flags;
-          m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
-          m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
-          m_data_beacon.cid_settings_msg.xcvr_range_tmo = m_args.max_range;
-
-          if(!ahrs)
-          {
-            m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
-            m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
-            m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
-          }
-
-          // Saving settings
-          inf("Saving settings to modem");
-          sendCommandAndWait(createCommand(CID_SETTINGS_SET, m_data_beacon), 2);
-          sendCommandAndWait(createCommand(CID_SETTINGS_SAVE, m_data_beacon), 2);
-          inf("Rebooting modem");
-          sendCommandAndWait(createCommand(CID_SYS_REBOOT, m_data_beacon), 6);
-          sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 2);
-
-          // Check modem settings again
-          if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs))
-          {
-            setState(STA_ERR_STP);
-            war(DTR("Failed to configure device"));
-          }
-
-          // Configuration complete
-          inf("Modem ready.");
-          setState(STA_IDLE);
-          m_config_status = true;
-        }
-        else
-        {
-          // Configuration complete
-          inf("Modem ready (settings successfully set).");
-          setState(STA_IDLE);
-          m_config_status = true;
-        }
-
-        // Print system information
-        inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d |%s USBL beacon"),
-            m_data_beacon.cid_settings_msg.xcvr_beacon_id,
-            m_data_beacon.cid_sys_info.hardware.part_number,
-            m_data_beacon.cid_sys_info.hardware.part_rev,
-            m_data_beacon.cid_sys_info.hardware.serial_number,
-            m_data_beacon.cid_sys_info.boot_firmware.part_number,
-            m_data_beacon.cid_sys_info.boot_firmware.version_maj,
-            m_data_beacon.cid_sys_info.boot_firmware.version_min,
-            m_data_beacon.cid_sys_info.boot_firmware.version_build,
-            m_data_beacon.cid_sys_info.main_firmware.part_number,
-            m_data_beacon.cid_sys_info.main_firmware.version_maj,
-            m_data_beacon.cid_sys_info.main_firmware.version_min,
-            m_data_beacon.cid_sys_info.main_firmware.version_build,
-            m_usbl_receiver ? "" : " Not");
       }
 
       //! Update parameters.
@@ -562,22 +345,7 @@ namespace Transports
         if (m_handle != nullptr)
         {
           if (paramChanged(m_args.hard_iron))
-            runCalibration();
-        }
-      }
-
-      //! Routine to check if AHRS has matching hard-iron calibration parameters and set new values if needed.
-      void
-      runCalibration(void)
-      {
-        // Check if vehicle has matching hard-iron calibration parameters.
-        if (!isCalibrated())
-        {
-          // Set hard-iron calibration parameters and reset device.
-          if (!setHardIron())
-          {
-            throw RestartNeeded(DTR("failed to set hard-iron correction factors"), 5);
-          }
+            m_driver->runCalibration();
         }
       }
 
@@ -609,60 +377,19 @@ namespace Transports
         dispatch(sp);
       }
 
-      //! Check if AHRS sensor has matching hard-iron calibration parameters.
-      //! @return true if the parameters are the same, false otherwise.
-      bool
-      isCalibrated(void)
-      {
-        if( ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x*100)) != ( (int32_t) (m_args.hard_iron[0]*100))
-            || ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y*100)) != ( (int32_t) (m_args.hard_iron[1]*100))
-            || ((int32_t) (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z*100)) != ( (int32_t) (m_args.hard_iron[2]*100)))
-        {
-          inf(DTR("AHRS has different calibration parameters."));
-          return false;
-        }
-
-        inf("AHRS is calibrated (matching parameters).");
-        return true;
-      }
-
-      //! Set new hard-iron calibration parameters.
-      //! @return true if successful, false otherwise.
-      bool
-      setHardIron(void)
-      {
-        inf("Set new hard-iron calibration parameters and reset device.");
-        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
-        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
-        m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
-        sendCommandAndWait(createCommand(CID_SETTINGS_SET, m_data_beacon), 2);
-        sendCommandAndWait(createCommand(CID_SETTINGS_SAVE, m_data_beacon), 2);
-        sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 2);
-
-        if((m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x != m_args.hard_iron[0])
-            || (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y != m_args.hard_iron[1])
-            || (m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z != m_args.hard_iron[2]))
-          return false;
-
-        return true;
-      }
       //! Release resources.
       void
       onResourceRelease(void)
       {
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
         Memory::clear(m_handle);
+        Memory::clear(m_driver);
       }
 
-      //! Send command and waits for response.
-      //! @param[in] cmd command string.
-      //! @param[in] delay_bef delay before send comamnd.
-      //! @param[in] delay_aft delay after send comamnd.
       void
-      sendCommandAndWait(const std::string& cmd, double delay_aft)
+      consume(const IMC::VehicleMedium* msg)
       {
-        sendCommand(cmd);
-        processInput(delay_aft);
+        m_medium = *msg;
       }
 
       //! Check if communications are restricted by medium.
@@ -696,18 +423,7 @@ namespace Transports
           m_data_beacon.cid_dat_send_msg.lock_flag = 0;
           return;
         }
-        sendCommand(cmd);
-      }
-
-      //! Send command to the acoustic modem.
-      //! @param[in] cmd command string.
-      void
-      sendCommand(const std::string& cmd)
-      {
-        m_handle->writeString(cmd.c_str());
-        trace(DTR("Sent command to the acoustic modem: %s"), cmd.c_str());
-        m_dev_data.value.assign(sanitize(cmd));
-        dispatch(m_dev_data);
+        m_driver->sendCommand(cmd);
       }
 
       //! Checks if the modem is working.
@@ -914,9 +630,7 @@ namespace Transports
           }
         }
         else
-        {
           war(DTR("Next msg or part send to son for ticket %d with ERROR"), m_ticket == nullptr ? -1 : m_ticket->seq);
-        }
       }
 
       //! Correct data according with mounting position.
@@ -1178,6 +892,31 @@ namespace Transports
         m_ticket = new Ticket(ticket);
       }
 
+      //! Process new data.
+      void
+      processNewData(void)
+      {
+        if (m_data_beacon.newDataAvailable(CID_DAT_RECEIVE))
+          handleBinaryMessage();
+
+        if (m_data_beacon.newDataAvailable(CID_DAT_SEND))
+          handleDatSendResponse();
+
+        if (m_data_beacon.newDataAvailable(CID_DAT_ERROR))
+          handleCommunicationError();
+
+        if(m_data_beacon.newDataAvailable(CID_STATUS))
+        {
+          if(m_args.ahrs_mode)
+            handleAhrsData();
+          if(m_args.pressure_sensor_mode)
+            handlePressureSensor();
+
+          //TODO: send environment_supply
+          //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
+        }
+      }
+
       //! Check for incoming data.
       //! @param[in] timeout timeout time.
       void
@@ -1187,7 +926,9 @@ namespace Transports
         do
         {
           consumeMessages();
-          readSentence();
+          m_driver->readSentence();
+          //m_tstamp = Clock::getSinceEpoch() - m_last_input;
+          processNewData();
           checkTxOWAY();
 
           if (m_state_entity != STA_ERR_STP)
@@ -1199,12 +940,6 @@ namespace Transports
           }
         }
         while (Clock::get() <= deadline);
-      }
-
-      void
-      consume(const IMC::VehicleMedium* msg)
-      {
-        m_medium = *msg;
       }
 
       void
@@ -1291,6 +1026,7 @@ namespace Transports
 
           // Check for incoming data.
           processInput();
+          waitForMessages(1.0);
 
           // Check modem connection
           if (!hasConnection())

@@ -54,6 +54,17 @@ namespace Transports
     //! Maximum buffer size.
     static const int c_bfr_size = 256;
 
+    //! Entity states.
+    enum EntityStates
+    {
+      STA_BOOT,
+      STA_IDLE,
+      STA_ACTIVE,
+      STA_ERR_COM,
+      STA_ERR_STP,
+      STA_MAX
+    };
+
     //! States of the internal SM.
     enum ParserStates
     {

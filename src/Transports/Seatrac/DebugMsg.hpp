@@ -40,6 +40,7 @@
 
 // Local headers
 #include "MsgTypes.hpp"
+#include "Parser.hpp"
 
 namespace Transports
 {

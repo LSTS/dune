@@ -185,7 +185,7 @@ namespace Transports
     //! Extract to DataSeatrac data structure.
     //! @param[in] message_type type of message to decode.
     //! @param[in] msg_raw raw message received by uart
-    //! @param[out] data_Beacon pointer where the data is stored.
+    //! @param[out] data_Beacon pointer to where the data is stored.
     void
     dataParser(uint16_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
     {
