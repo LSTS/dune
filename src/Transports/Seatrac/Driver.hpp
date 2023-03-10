@@ -244,11 +244,11 @@ namespace Transports
       //! Seatrac data structure.
       DataSeatrac& m_data_beacon;
       //! Read timestamp.
-      double m_tstamp;
+      double& m_tstamp;
       //! Time of last received input.
-      double m_last_input;
+      double& m_last_input;
       //! c_preamble detected
-      bool m_preamble;
+      bool &m_preamble;
       //! Modem address.
       unsigned m_addr;
       //! Hard-iron calibration parameter (x).

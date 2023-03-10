@@ -85,6 +85,8 @@ namespace Transports
       std::vector<float> hard_iron;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
+      //! Log AHRS data.
+      bool log_ahrs;
       //! Rotation matrix values.
       std::vector<double> rotation_mx;
       //! Calibration threshold.
@@ -185,7 +187,7 @@ namespace Transports
 
         param("AHRS Mode", m_args.ahrs_mode)
         .defaultValue("false")
-        .description("Enable the AHRS information to be used in navigation");
+        .description("Enable the AHRS information to be used in navigation (not recommended to be used with USBL receivers).");
 
         param("Pressure Sensor Mode", m_args.pressure_sensor_mode)
         .defaultValue("false")
@@ -204,6 +206,10 @@ namespace Transports
         .description("Request Enhanced USBL information. USBL receivers request enhanced "
                      "information in transmissions. This parameter is useful only when "
                      "the beacon has an USBL receiver.");
+
+        param("Log AHRS Data", m_args.log_ahrs)
+        .defaultValue("false")
+        .description("Enable to log AHRS data when 'AHRS Mode' disabled.");
 
         param("AHRS Rotation Matrix", m_args.rotation_mx)
         .defaultValue("")
@@ -226,7 +232,7 @@ namespace Transports
         .minimumValue("100")
         .maximumValue("3000")
         .description("Range timeout that specifies a distance beyond which replies are ignored and the remote beacon is considered to have timed out.");
-        
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -242,6 +248,7 @@ namespace Transports
         // Initialize medium.
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
+        bind<IMC::MagneticField>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxFrame>(this);
       }
@@ -307,7 +314,7 @@ namespace Transports
 
         // Initialize driver
         m_driver = new Driver(this, m_handle, m_data_beacon, m_tstamp, m_last_input, m_preamble, m_addr,
-                              m_args.hard_iron[0], m_args.hard_iron[1], m_args.hard_iron[2]);
+                              m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
 
         try
         {
@@ -340,7 +347,7 @@ namespace Transports
 
         if (m_handle != nullptr)
         {
-          if (paramChanged(m_args.hard_iron))
+          if (paramChanged(m_args.hard_iron) && m_args.ahrs_mode)
             m_driver->runCalibration();
         }
       }
@@ -348,6 +355,9 @@ namespace Transports
       void
       consume(const IMC::MagneticField* msg)
       {
+        if(!m_args.ahrs_mode)
+          return;
+
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
@@ -684,7 +694,7 @@ namespace Transports
           m_magfield.x = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_x;
           m_magfield.y = (fp32_t)m_data_beacon.cid_status_msg.ahrs_comp_mag_y;
           m_magfield.z = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_z;
-
+          //Euler angles.
           m_euler.theta= Angles::radians( ((fp32_t) m_data_beacon.cid_status_msg.attitude_roll)/10);
           m_euler.psi =  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_pitch)/10);
           m_euler.psi_magnetic = m_euler.psi;
@@ -693,12 +703,13 @@ namespace Transports
           m_agvel.x = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_x);
           m_agvel.y = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_y);
           m_agvel.z = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_z);
-          //Euler angles.
+
           m_euler.time = ((fp32_t) m_data_beacon.cid_status_msg.timestamp)/1000;
           m_accel.time = m_euler.time;
           m_agvel.time = m_euler.time;
           m_magfield.time = m_euler.time;
           rotateData();
+
           // Dispatch messages.
           dispatch(m_euler, DF_KEEP_TIME);
           dispatch(m_accel, DF_KEEP_TIME);
@@ -747,15 +758,18 @@ namespace Transports
       {
         debug(DTR("Received UamTxFrame with dst=0x%04X. Msg for system '%s'"), msg->getDestination(), msg->sys_dst.c_str());
 
-        std::string hex = String::toHex(msg->data);
-        std::vector<char> data_t;
-        std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
+        if (m_state_entity != STA_ACTIVE)
+          return;
 
         if (msg->getDestination() != getSystemId())
           return;
 
         if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
           return;
+
+        std::string hex = String::toHex(msg->data);
+        std::vector<char> data_t;
+        std::copy(hex.begin(), hex.end(), std::back_inserter(data_t));
 
         // Create and fill new ticket.
         Ticket ticket;
@@ -903,7 +917,7 @@ namespace Transports
 
         if(m_data_beacon.newDataAvailable(CID_STATUS))
         {
-          if(m_args.ahrs_mode)
+          if(m_args.ahrs_mode || m_args.log_ahrs)
             handleAhrsData();
           if(m_args.pressure_sensor_mode)
             handlePressureSensor();
