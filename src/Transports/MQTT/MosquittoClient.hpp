@@ -37,7 +37,7 @@
 // #include <mosquitto.h>
 // #endif
 
-// TODO: Response codes
+
 namespace Transports
 {
   //! Insert short task description here.
@@ -88,6 +88,8 @@ namespace Transports
       {
         // Clear errors
         m_err_str.clear();
+        //required by mosquitto_lib_init()
+        mosquitto_threaded_set(m_mosq, true);
 
         // Initialize library
 	      mosquitto_lib_init();
@@ -232,18 +234,25 @@ namespace Transports
       void
       setCallbacks()
       {
-        // mosquitto_connect_callback_set(m_mosq, on_connect);
+        mosquitto_connect_callback_set(m_mosq, on_connect);
         mosquitto_disconnect_callback_set(m_mosq, on_disconnect);
         mosquitto_message_callback_set(m_mosq, on_message);
-        // mosquitto_publish_callback_set(m_mosq, on_publish);
-        // mosquitto_subscribe_callback_set(m_mosq, on_subscribe);
-        // mosquitto_unsubscribe_callback_set(m_mosq, on_unsubscribe);
+        mosquitto_publish_callback_set(m_mosq, on_publish);
+        mosquitto_subscribe_callback_set(m_mosq, on_subscribe);
+        mosquitto_unsubscribe_callback_set(m_mosq, on_unsubscribe);
       }
 
       // CALLBACKS
       //! Connect callback function
       static void 
-      on_connect(struct mosquitto *mosq, void *obj, int rc);
+      on_connect(struct mosquitto *mosq, void *obj, int rc)
+      {
+        (void) mosq;
+        MosquittoClient* self = (MosquittoClient*) obj;
+
+        self->m_task->inf("Connected to broker");
+        self->checkRC(rc);
+      }
       
       //! Disconnect callback function
       static void
@@ -252,7 +261,7 @@ namespace Transports
         (void) mosq;
         MosquittoClient* self = (MosquittoClient*)obj;
         
-        self->m_task->debug("Disconnected from broker");
+        self->m_task->inf("Disconnected from broker");
         self->checkRC(rc);
       }
       
@@ -271,15 +280,36 @@ namespace Transports
 
       //! Publish callback function
       static void
-      on_publish(struct mosquitto *mosq, void *obj, int msg_id);
+      on_publish(struct mosquitto *mosq, void *obj, int msg_id)
+      {
+        (void) mosq;
+        MosquittoClient* self = (MosquittoClient*)obj;
+
+        self->m_task->spew("Published msg id: %d", msg_id);
+      }
 
       //! Subscribe callback function
       static void 
-      on_subscribe(struct mosquitto *mosq, void *obj, int msg_id, int sub_count, const int * granted_qos);
+      on_subscribe(struct mosquitto *mosq, void *obj, int msg_id, int sub_count, const int * granted_qos)
+      {
+        (void) mosq;
+        MosquittoClient* self = (MosquittoClient*)obj;
+
+        (void) msg_id;
+        self->m_task->inf("Granted subscriptions: %d", sub_count);
+        (void) granted_qos;
+      }
       
       //! Subscribe callback function
       static void 
-      on_unsubscribe(struct mosquitto *mosq, void *obj, int msg_id);
+      on_unsubscribe(struct mosquitto *mosq, void *obj, int msg_id)
+      {
+        (void) mosq;
+        MosquittoClient* self = (MosquittoClient*)obj;
+
+        (void) msg_id;
+        self->m_task->inf("Unsubscribed from topic");
+      }
 
       void
       checkRC(unsigned rc)

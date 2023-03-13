@@ -105,13 +105,13 @@ namespace Transports
         .defaultValue("false")
         .description("Retain messages.");
 
-        param("Subscribe Topings", m_args.topics)
+        param("Subscribe Topics", m_args.topics)
         .defaultValue("")
         .description("List of topics the task should subscribe to."
                      "Use \'*\' instead of \'#\'.");
 
         param("Authetication -- User", m_client_args.usr)
-        .defaultValue("")
+        .defaultValue("admin")
         .description("User for broker authetication.");
 
         param("Authetication -- Password", m_client_args.pw)
@@ -238,7 +238,6 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
-
           if (!m_client)
             continue;
 
