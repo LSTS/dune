@@ -1,13 +1,13 @@
 /.project
 *.pyc
 */__pycache__
-private/
+private*/
 *~
 \#*
 .\#*
 *.mo
 CMakeLists.txt.user
-user/
+user*/
 build/
 .cproject
 .settings/
