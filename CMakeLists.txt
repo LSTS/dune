@@ -214,8 +214,8 @@ foreach(extlib ${extlibs})
   include(${extlib})
 endforeach(extlib ${extlibs})
 
-# Fix to multi user and private folders
-include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/user/src ${DUNE_VENDOR_INCS_DIR})
+file(GLOB DUNE_SOURCE_USER ${PROJECT_SOURCE_DIR}/user*/src)
+include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_SOURCE_USER} ${DUNE_VENDOR_INCS_DIR})
 link_directories(${DUNE_VENDOR_LIBS_DIR})
 set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
 set(USER_CORE_FILES ${USER_CORE_SOURCES} ${USER_VENDOR_FILES})
@@ -343,7 +343,6 @@ install(DIRECTORY www DESTINATION .)
 # Install configuration files.
 install(DIRECTORY etc DESTINATION .)
 
-# FIX this for multi user and private folders
 if(EXISTS "${PROJECT_SOURCE_DIR}/user/etc/")
   # Install user configuration files.
   install(DIRECTORY user/etc DESTINATION ./user/)
