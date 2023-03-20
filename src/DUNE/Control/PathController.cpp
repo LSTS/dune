@@ -154,12 +154,14 @@ namespace DUNE
       param("Bottom Track -- Safe Pitch", m_btd.args.safe_pitch)
       .defaultValue("15.0")
       .units(Units::Degree)
-      .description("Safe pitch angle to perform bottom tracking");
+      .description("Safe pitch angle to perform bottom tracking. "
+                   "Reboot BottomTracker to update.");
 
       param("Bottom Track -- Slope Hysteresis", m_btd.args.slope_hyst)
       .defaultValue("1.5")
       .units(Units::Degree)
-      .description("Slope hysteresis when recovering from avoidance");
+      .description("Slope hysteresis when recovering from avoidance. "
+                   "Reboot BottomTracker to update.");
 
       param("Bottom Track -- Minimum Range", m_btd.args.min_range)
       .defaultValue("4.0")
@@ -173,7 +175,8 @@ namespace DUNE
       param("Bottom Track -- Execution Frequency", m_btd.args.control_period)
       .defaultValue("5")
       .units(Units::Hertz)
-      .description("Bottom tracker's execution frequency");
+      .description("Bottom tracker's execution frequency. "
+                   "Reboot BottomTracker to update.");
 
       param("Bottom Track -- Depth Avoidance", m_btd.args.depth_avoid)
       .defaultValue("true")
