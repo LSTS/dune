@@ -182,7 +182,7 @@ namespace Transports
       {
         // Initialize received message parser
         char bfr[c_bfr_size];
-        uint16_t type = 0;
+        uint8_t type = 0;
         const char* msg_raw;
 
         if (!Poll::poll(*m_handle, 0.001))
@@ -248,7 +248,7 @@ namespace Transports
       //! Time of last received input.
       double& m_last_input;
       //! c_preamble detected
-      bool &m_preamble;
+      bool& m_preamble;
       //! Modem address.
       unsigned m_addr;
       //! Hard-iron calibration parameter (x).

@@ -473,6 +473,9 @@ namespace Transports
             // Acoustic information can be computed when the target beacon replies with ACK.
             handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
 
+            if (m_data_beacon.cid_dat_receive_msg.packet_len > 0)
+              handleRxData(false);
+
             // Data communication done
             if (m_ticket != nullptr)
             {
@@ -485,30 +488,34 @@ namespace Transports
           return;
         }
         else
+          handleRxData();
+      }
+
+      void
+      handleRxData(bool acoustic=true)
+      {
+        int data_rec_flag = m_data_beacon.cid_dat_receive_msg.packetDataDecode();
+        if (data_rec_flag == 1)
         {
-          int data_rec_flag = m_data_beacon.cid_dat_receive_msg.packetDataDecode();
-          if (data_rec_flag == 1)
-          {
-            std::string msg;
-            m_data_beacon.cid_dat_receive_msg.getFullMsg(msg);
-            handleRxMessage(msg);
-            debug("new data");
-          }
-
-          if (data_rec_flag == -1)
-            war(DTR("wrong message order"));
-
-          if (data_rec_flag == 0)
-            debug("collecting data");
-          if(data_rec_flag == -2)
-            debug("no data size");
+          std::string msg;
+          m_data_beacon.cid_dat_receive_msg.getFullMsg(msg);
+          handleRxMessage(msg, acoustic);
+          debug("new data");
         }
+
+        if (data_rec_flag == -1)
+          war(DTR("wrong message order"));
+        if (data_rec_flag == 0)
+          debug("collecting data");
+        if(data_rec_flag == -2)
+          debug("no data size");
       }
 
       //! Publish received acoustic message.
       //! @param[in] str received message.
+      //! @param[in] acoustic handle acoustic information.
       void
-      handleRxMessage(const std::string& str)
+      handleRxMessage(const std::string& str, bool acoustic)
       {
         IMC::UamRxFrame msg;
         msg.data.assign((uint8_t*) &str[0], (uint8_t*) &str[str.size()]);
@@ -539,7 +546,8 @@ namespace Transports
 
         msg.flags |= IMC::UamRxFrame::URF_DELAYED;
         dispatch(msg);
-        handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
+        if (acoustic)
+          handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
       }
 
       //! Handle acoustic information from received data.
@@ -742,7 +750,7 @@ namespace Transports
       //! If the acknowledged message is an OWAY and it is compound
       //! by more than one packet, the method sends the following packet.
       //! If the sending fails, it tries to send the packet again.
-      //! If the modem is busy, it tries to send the packet to poll the status.
+      //! If the modem is busy, the packet to be sent is queued.
       void
       handleDatSendResponse(void)
       {
@@ -750,6 +758,11 @@ namespace Transports
         {
           if (m_data_beacon.cid_dat_send_msg.status != CST_XCVR_BUSY)
             handleCommunicationError();
+          else
+          {
+            inf("Modem is Busy! Queuing message.");
+            sendProtectedCommand(createCommand(CID_DAT_QUEUE_SET, m_data_beacon));
+          }
         }
       }
 
@@ -757,9 +770,6 @@ namespace Transports
       consume(const IMC::UamTxFrame* msg)
       {
         debug(DTR("Received UamTxFrame with dst=0x%04X. Msg for system '%s'"), msg->getDestination(), msg->sys_dst.c_str());
-
-        if (m_state_entity != STA_ACTIVE)
-          return;
 
         if (msg->getDestination() != getSystemId())
           return;
@@ -800,14 +810,14 @@ namespace Transports
         if (m_data_beacon.cid_dat_send_msg.packetDataSendStatus())
         {
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
-          debug(DTR("Sending UamTxStatus::UTS_BUSY. Ticket %d died"), ticket.seq);          
+          debug(DTR("Sending UamTxStatus::UTS_BUSY. Ticket %d died"), ticket.seq);
           return;
         }
 
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
-        debug(DTR("Sending UamTxStatus::UTS_IP. Ticket %d being processed"), ticket.seq);          
+        debug(DTR("Sending UamTxStatus::UTS_IP. Ticket %d being processed"), ticket.seq);
 
         // Fill the message type.
         if ((ticket.addr != 0) && ticket.ack)
@@ -851,7 +861,7 @@ namespace Transports
           default:
             resetOneWayTimer();
             debug(DTR("Sending package %f s"), m_oway_timer.getTop());
-            debug(DTR("Sending (consume UamTxFrame) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
+            debug(DTR("Sending (consume UamTxFrame) part %d of %d for ticket %d will take up to %f s for %d bytes"),
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
                 ticket.seq,
@@ -958,6 +968,7 @@ namespace Transports
         if(!(m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAY ||
               m_data_beacon.cid_dat_send_msg.msg_type == MSG_OWAYU))
           multiplier = c_ack_timeout_multiplier;
+
         m_oway_timer.setTop((m_data_beacon.cid_dat_send_msg.packet_len * 8 
             * 1.0/c_acoustic_bitrate + (m_args.max_range * 1.0 / MIN_SOUND_SPEED))
             * multiplier );

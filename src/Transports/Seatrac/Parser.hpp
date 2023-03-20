@@ -130,7 +130,7 @@ namespace Transports
     //! @param[in] ind raw message index.
     //! @param[in] msg_raw pointer to raw message.
     uint16_t
-    updateEcoFix(Acofix_t* aco_fix, uint16_t ind, const char* msg_raw)
+    updateAcoFix(Acofix_t* aco_fix, uint16_t ind, const char* msg_raw)
     {
       std::memcpy(&(*aco_fix).dest_id, msg_raw + ind, 1);
       std::memcpy(&(*aco_fix).src_id, msg_raw + ind + 1, 1);
@@ -187,7 +187,7 @@ namespace Transports
     //! @param[in] msg_raw raw message received by uart
     //! @param[out] data_Beacon pointer to where the data is stored.
     void
-    dataParser(uint16_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
+    dataParser(uint8_t message_type, const char* msg_raw, DataSeatrac& data_Beacon)
     {
       uint16_t ind = 0;
 
@@ -276,12 +276,12 @@ namespace Transports
 
         case CID_PING_REQ:
           data_Beacon.set(CID_PING_REQ);
-          ind = updateEcoFix(&data_Beacon.cid_ping_req_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_ping_req_msg.aco_fix, ind, msg_raw);
           break;
 
         case CID_PING_RESP:  // Message sent when a PING response is received.
           data_Beacon.set(CID_PING_RESP);
-          ind = updateEcoFix(&data_Beacon.cid_ping_resp_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_ping_resp_msg.aco_fix, ind, msg_raw);
           break;
 
         case CID_PING_ERROR:
@@ -303,7 +303,7 @@ namespace Transports
           break;
 
         case CID_DAT_RECEIVE:
-          ind = updateEcoFix(&data_Beacon.cid_dat_receive_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_dat_receive_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.ack_flag, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_dat_receive_msg.packet_len, msg_raw + ind +1, 1);
           ind += 2;
@@ -373,18 +373,18 @@ namespace Transports
 
         case  CID_NAV_QUERY_REQ:
           data_Beacon.set(CID_NAV_QUERY_REQ);
-          ind = updateEcoFix(&data_Beacon.cid_nav_query_req_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_nav_query_req_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_query_req_msg.nav_query_t, msg_raw + ind, 1);
           break;
 
         case  CID_XCVR_FIX:
           data_Beacon.set(CID_XCVR_FIX);
-          ind = updateEcoFix(&data_Beacon.cid_xcvr_fix_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_xcvr_fix_msg.aco_fix, ind, msg_raw);
           break;
 
         case CID_NAV_QUERY_RESP:
           data_Beacon.set(CID_NAV_QUERY_RESP);
-          ind = updateEcoFix(&data_Beacon.cid_nav_query_resp_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_nav_query_resp_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_query_resp_msg.query_flags, msg_raw + ind, 1);
           ind += 1;
           data_Beacon.cid_nav_query_resp_msg.queryFlagsExtract();
@@ -431,7 +431,7 @@ namespace Transports
 
         case CID_NAV_BEACON_POS_UPDATE:
           data_Beacon.set(CID_NAV_BEACON_POS_UPDATE);
-          ind = updateEcoFix(&data_Beacon.cid_nav_beacon_pos_update_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_nav_beacon_pos_update_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_beacon_pos_update_msg.beacon_id, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_nav_beacon_pos_update_msg.position_easting,
                       msg_raw + ind + 1, 2);
@@ -451,7 +451,7 @@ namespace Transports
 
         case CID_NAV_REF_POS_UPDATE:
           data_Beacon.set(CID_NAV_REF_POS_UPDATE);
-          ind = updateEcoFix(&data_Beacon.cid_nav_ref_pos_update_msg.aco_fix, ind, msg_raw);
+          ind = updateAcoFix(&data_Beacon.cid_nav_ref_pos_update_msg.aco_fix, ind, msg_raw);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.beacon_id, msg_raw + ind, 1);
           std::memcpy(&data_Beacon.cid_nav_ref_pos_update_msg.position_latitude,
                       msg_raw + ind + 1, 4);
@@ -545,6 +545,13 @@ namespace Transports
           message_build += String::str("%02X%02X%02X",
                                        ((uint8_t)data_Beacon.cid_dat_send_msg.dest_id),
                                        ((uint8_t)data_Beacon.cid_dat_send_msg.msg_type),
+                                       ((uint8_t)data_Beacon.cid_dat_send_msg.packet_len));
+          message_build += data_Beacon.cid_dat_send_msg.packet_data;
+          break;
+
+        case CID_DAT_QUEUE_SET:
+          message_build += String::str("%02X%02X",
+                                       ((uint8_t)data_Beacon.cid_ping_send_msg.dest_id),
                                        ((uint8_t)data_Beacon.cid_dat_send_msg.packet_len));
           message_build += data_Beacon.cid_dat_send_msg.packet_data;
           break;

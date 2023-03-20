@@ -287,7 +287,6 @@ namespace Transports
                       (int)data_Beacon.cid_dat_send_msg.beacon_id);
           break;
         case CID_DAT_RECEIVE: //8.3. DAT Protocol Messages
-
           task->debug("MESSAGE  CID_DAT_RECEIVE ");
           printAcoFixData("cid_dat_receive_msg",
                           &data_Beacon.cid_dat_receive_msg.aco_fix, task);
