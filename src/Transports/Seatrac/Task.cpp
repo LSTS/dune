@@ -71,6 +71,8 @@ namespace Transports
       unsigned uart_baud;
       //! Transmit only when medium is suitable.
       bool honour_medium;
+      //! Transmit only underwater.
+      bool only_underwater;
       //! Addresses Number - modem
       std::string addr_section;
       //! Enable AHRS mode
@@ -180,6 +182,10 @@ namespace Transports
         param("Honour Medium", m_args.honour_medium)
         .defaultValue("false")
         .description("Set to true to transmit only when the medium is suitable");
+
+        param("Transmit Only Underwater", m_args.only_underwater)
+        .defaultValue("false")
+        .description("Do not transmit when at surface (if modem installed upright on the vehicle, for instance)");
 
         param("Address Section", m_args.addr_section)
         .defaultValue("Seatrac Addresses")
@@ -412,6 +418,8 @@ namespace Transports
             restricted = true;
           if (m_args.pressure_as_medium)
             restricted = (pressure <= 0) ? true : false;
+          if (m_args.only_underwater && (m_medium.medium != IMC::VehicleMedium::VM_UNDERWATER))
+            restricted = true;
         }
 
         return restricted;
