@@ -27,8 +27,14 @@
 // Author: João Bogas                                                       *
 //***************************************************************************
 
+// C++ headers
+#include <unordered_map>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// local headers
+#include "PWMsignal.hpp"
 
 namespace Actuators
 {
@@ -46,15 +52,28 @@ namespace Actuators
 
       struct Arguments
       {
-        //! Io ports
-        int port_io[c_max_port];
-        
-        std::string id;
+        //! IO ports information
+        std::string port_inf[c_max_port];
       };
-      
+
+      struct IO
+      {
+        int port;
+        int id;
+      };
+
+      enum ID
+      {
+        ID_SERVO  = 0,
+        ID_PWM    = 1,
+        ID_GPIO   = 2
+      };
+
+      std::unordered_map<int,std::vector<IO>> m_data;
+      //! Task arguments
       Arguments m_args;
       //! PWM signals
-     // std::vector<PWMSignal*> m_pwm;
+      std::vector<PWMsignal*> m_pwm;
       //! id port
       int id_port;
 
@@ -64,28 +83,19 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
-        inf("Creating Task");
-        uint8_t id;
-        for(unsigned int i = 0; i < 6; i++)
+        for (unsigned int i = 0; i < 6; ++i)
         {
-          std::string type;
           std::string option = String::str("PinOut %u", i);
-          param(option, m_args.id)
+          param(option, m_args.port_inf[i])
           .defaultValue("")
-          .description("Port IO for type of signal and id");
+          .description("Port");
 
-          if (m_args.id.find("Servo") != std::string::npos)
-          {
-            inf("Found servo");
-          }
-          inf(m_args.id.c_str());
         }
-        inf(m_args.id.c_str());
+        
         bind<IMC::SetServoPosition>(this);
         //bind<IMC::GpioStateSet>(this);
         bind<IMC::SetPWM>(this);
 
-        exit(0);
       }
 
       //! Update internal state with new parameter values.
@@ -116,6 +126,18 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        for (size_t i = 0; i < c_max_port; i++)        
+        {
+          size_t pos = m_args.port_inf[i].find("Servo");
+          if ( pos != std::string::npos)
+          {
+            std::string id = m_args.port_inf[i].substr(pos+6, std::string::npos);
+            inf("Servo ID: %s", id.c_str());
+          }
+        }
+        
+        
       }
 
       //! Release resources.
@@ -127,13 +149,13 @@ namespace Actuators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-
+        (void)msg;
       }
 
       void
       consume(const IMC::SetPWM* msg)
       {
-
+        (void)msg;
       }
 
       //! Main loop.
