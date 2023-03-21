@@ -39,7 +39,6 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
-#include "MsgTypes.hpp"
 #include "Parser.hpp"
 
 namespace Transports

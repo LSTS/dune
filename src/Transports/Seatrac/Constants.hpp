@@ -28,8 +28,8 @@
 // Author: Raúl Sáez                                                        *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
-#define TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
+#ifndef TRANSPORTS_SEATRAC_CONSTANTS_HPP_INCLUDED_
+#define TRANSPORTS_SEATRAC_CONSTANTS_HPP_INCLUDED_
 
 #define MESSAGE_NUMBER (0x77 +0x1)
 #define MAX_MESSAGE_ERRORS 5
@@ -39,12 +39,25 @@
 //! Defines the minimum message length without preamble nor postamble
 #define MIN_MESSAGE_LENGTH 6
 
+// ISO C++ 98 headers.
+#include <string>
+#include <vector>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
 namespace Transports
 {
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
 
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+    //! Number of axis.
+    static const uint8_t c_number_axis = 3;
+    //! Acknowledged timeout time multiplier
+    static const uint8_t c_ack_timeout_multiplier = 6;
     //! Input Timeout (s).
     static const double c_input_tout =  5;
     //! The bitrate of acoustic communication (bits/second).
@@ -147,7 +160,6 @@ namespace Transports
       BT_X110 = 0x34B,
       BT_X150 = 0x31B
     };
-
 
     // Status Output Mode
     enum StatusMode_E

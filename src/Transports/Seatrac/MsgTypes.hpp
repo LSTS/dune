@@ -40,7 +40,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
-#include "DataTypes.hpp"
+#include "Constants.hpp"
 
 namespace Transports
 {
@@ -107,7 +107,6 @@ namespace Transports
         outputflags_list[4] = (AHRS_RAW_DATA_FLAG & output_flags);
         outputflags_list[5] = (AHRS_COMP_DATA_FLAG & output_flags);
       }
-
     };
 
     struct CidPingRespMsg

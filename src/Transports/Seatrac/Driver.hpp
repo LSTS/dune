@@ -17,9 +17,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "DataTypes.hpp"
 #include "DebugMsg.hpp"
-#include "MsgTypes.hpp"
 #include "Parser.hpp"
 
 namespace Transports

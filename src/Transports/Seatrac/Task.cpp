@@ -40,10 +40,6 @@
 
 // Local headers
 #include "Driver.hpp"
-#include "Parser.hpp"
-#include "MsgTypes.hpp"
-#include "DataTypes.hpp"
-#include "DebugMsg.hpp"
 
 namespace Transports
 {
@@ -54,13 +50,6 @@ namespace Transports
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
-
-    //! Hard Iron calibration parameter name.
-    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
-    //! Number of axis.
-    static const uint8_t c_number_axis = 3;
-    //! Acknowledged timeout time multiplier
-    static const uint8_t c_ack_timeout_multiplier = 6;
 
     //! Task arguments.
     struct Arguments
@@ -457,7 +446,7 @@ namespace Transports
           // if msg has more than 1 packet, send next part
           if (m_ticket != nullptr)
           {
-            debug(DTR("Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
+            trace(DTR("Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
                 m_ticket->seq,
@@ -467,7 +456,7 @@ namespace Transports
           if (m_ticket != nullptr && m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
           {
             resetOneWayTimer();
-            debug(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
+            trace(DTR("Sending (handleBinaryMessage) part %d of %d for ticket %d will take up to %f s for %d bytes"),
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
                 m_ticket == nullptr ? -1 : m_ticket->seq,
@@ -487,7 +476,7 @@ namespace Transports
             // Data communication done
             if (m_ticket != nullptr)
             {
-              debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
+              trace(DTR("Msg transmission complete  for ticket %d (in %f s)"),
                   m_ticket->seq, 
                   m_oway_timer.getElapsed());
               clearTicket(IMC::UamTxStatus::UTS_DONE);
@@ -508,15 +497,15 @@ namespace Transports
           std::string msg;
           m_data_beacon.cid_dat_receive_msg.getFullMsg(msg);
           handleRxMessage(msg, acoustic);
-          debug("new data");
+          trace("new data");
         }
 
         if (data_rec_flag == -1)
           war(DTR("wrong message order"));
         if (data_rec_flag == 0)
-          debug("collecting data");
+          trace("collecting data");
         if(data_rec_flag == -2)
-          debug("no data size");
+          trace("no data size");
       }
 
       //! Publish received acoustic message.
@@ -796,7 +785,7 @@ namespace Transports
         ticket.seq = msg->seq;
         ticket.ack = (msg->flags & IMC::UamTxFrame::UTF_ACK) != 0;
 
-        debug(DTR("Creating ticket %d"), ticket.seq);
+        trace(DTR("Creating ticket %d"), ticket.seq);
 
         if (msg->sys_dst == getSystemName())
         {
@@ -825,7 +814,7 @@ namespace Transports
         // Replace ticket and transmit.
         replaceTicket(ticket);
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
-        debug(DTR("Sending UamTxStatus::UTS_IP. Ticket %d being processed"), ticket.seq);
+        trace(DTR("Sending UamTxStatus::UTS_IP. Ticket %d being processed"), ticket.seq);
 
         // Fill the message type.
         if ((ticket.addr != 0) && ticket.ack)
@@ -841,7 +830,7 @@ namespace Transports
           {
             m_data_beacon.cid_dat_send_msg.msg_type = MSG_REQ;
           }
-          debug(DTR("Configuration as %s %s"), m_args.usbl_mode ? "USBL" : "MSG_ONLY", m_args.usbl_mode && m_args.enhanced_usbl ? "enhanced" : "");
+          trace(DTR("Configuration as %s %s"), m_args.usbl_mode ? "USBL" : "MSG_ONLY", m_args.usbl_mode && m_args.enhanced_usbl ? "enhanced" : "");
         }
         else
         {
@@ -849,7 +838,7 @@ namespace Transports
             m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAYU;
           else
             m_data_beacon.cid_dat_send_msg.msg_type = MSG_OWAY;
-          debug(DTR("Configuration as ONEWAY %s"), m_args.usbl_mode ? "USBL" : "MSG_ONLY");
+          trace(DTR("Configuration as ONEWAY %s"), m_args.usbl_mode ? "USBL" : "MSG_ONLY");
         }
 
         int code;
@@ -868,7 +857,7 @@ namespace Transports
             break;
           default:
             resetOneWayTimer();
-            debug(DTR("Sending package %f s"), m_oway_timer.getTop());
+            trace(DTR("Sending package %f s"), m_oway_timer.getTop());
             debug(DTR("Sending (consume UamTxFrame) part %d of %d for ticket %d will take up to %f s for %d bytes"),
                 m_data_beacon.cid_dat_send_msg.message_index,
                 m_data_beacon.cid_dat_send_msg.n_sub_messages,
@@ -999,7 +988,7 @@ namespace Transports
           {
             if (m_oway_timer.overflow())
             {
-              debug(DTR("NOACK Success transmission complete (part %d of %d) for ticket %d (in %f s)"), 
+              trace(DTR("NOACK Success transmission complete (part %d of %d) for ticket %d (in %f s)"),
                   m_data_beacon.cid_dat_send_msg.message_index,
                   m_data_beacon.cid_dat_send_msg.n_sub_messages,
                   m_ticket == nullptr ? -1 : m_ticket->seq,
@@ -1008,7 +997,7 @@ namespace Transports
               if (m_data_beacon.cid_dat_send_msg.packetDataNextPart(1) != -1)
               {
                 resetOneWayTimer();
-                debug(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s for %d bytes"), 
+                trace(DTR("Sending (checkTxOWAY) part %d of %d for ticket %d will take up to %f s for %d bytes"),
                     m_data_beacon.cid_dat_send_msg.message_index,
                     m_data_beacon.cid_dat_send_msg.n_sub_messages,
                     m_ticket == nullptr ? -1 : m_ticket->seq,
@@ -1018,7 +1007,7 @@ namespace Transports
               }
               else
               {
-                debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
+                trace(DTR("Msg transmission complete  for ticket %d (in %f s)"),
                     m_ticket == nullptr ? -1 : m_ticket->seq,
                     m_oway_timer.getElapsed());
                 clearTicket(IMC::UamTxStatus::UTS_DONE);
