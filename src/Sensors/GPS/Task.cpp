@@ -83,6 +83,8 @@ namespace Sensors
       std::string init_rpls[c_max_init_cmds];
       //! Power channels.
       std::vector<std::string> pwr_channels;
+      //! Power on delay
+      double post_pwr_on_delay;
       //! Enable novatel sbas mode.
       bool novatelSbas;
     };
@@ -138,6 +140,10 @@ namespace Sensors
         .defaultValue("")
         .description("Device's power channels");
 
+        param("Post Power On Delay", m_args.post_pwr_on_delay)
+        .defaultValue("0.0")
+        .description("Delay on power on before attempts to connect");
+
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
         .description("Sentence order");
@@ -175,6 +181,11 @@ namespace Sensors
           clearPowerChannelNames();
           for (std::string pc : m_args.pwr_channels)
             addPowerChannelName(pc);
+        }
+
+        if (paramChanged(m_args.post_pwr_on_delay))
+        {
+          setPostPowerOnDelay(m_args.post_pwr_on_delay);
         }
       }
 
