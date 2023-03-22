@@ -949,7 +949,7 @@ namespace Transports
 
           if (m_state_entity != STA_ERR_STP)
           {
-            if (isActive())
+            if (!isRestricted())
               setState(STA_ACTIVE);
             else
               setState(STA_IDLE);
