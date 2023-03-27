@@ -2,6 +2,8 @@
 // Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
+// Copyright 2023 OceanScan - Marine Systems & Technology, Lda.             *
+//***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
 // Commercial Licence Usage                                                 *
@@ -26,6 +28,7 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 // Author: Raúl Sáez                                                        *
+// Author: Maria Costa (small refactor and fix for iUSBL implementation)    *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_DEBUG_MSG_HPP_INCLUDED_
