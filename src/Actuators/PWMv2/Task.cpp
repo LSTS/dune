@@ -39,7 +39,6 @@
 
 // TODO: change read param Servo 0-.. Pin
 
-
 namespace Actuators
 {
   //! Insert short task description here.
@@ -52,62 +51,54 @@ namespace Actuators
 
     struct Task: public DUNE::Tasks::Task
     {
-      static const unsigned int c_max_port = 26;
+      static const unsigned int c_max_servo = 5;
+
+      static const unsigned int c_max_pwm = 5;
 
       struct Arguments
       {
         //! IO ports information
-        std::string port_inf[c_max_port];
+        int servo_inf[c_max_servo];
+
+        int pwm_inf[c_max_pwm];
       };
 
-      struct IO
-      {
-        int m_port;
-        PWMsignal* m_signal;
-
-        IO(): m_port(-1), m_signal(nullptr)
-        {};
-
-        ~IO()
-        {
-          delete m_signal;
-        }
-      };
-
-      enum ID
-      {
-        ID_SERVO  = 0,
-        ID_PWM    = 1,
-        ID_GPIO   = 2
-      };
-
-      std::unordered_map<std::string,IO> m_data;
       //! Task arguments
       Arguments m_args;
+      //! PWM servo signals
+      std::array<PWMsignal*,c_max_servo> m_servo;
       //! PWM signals
-      std::vector<PWMsignal*> m_pwm;
-      //! id port
-      int id_port;
+      std::array<PWMsignal*,c_max_pwm> m_pwm;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx), m_servo(), m_pwm()
       {
-        for (unsigned int i = 0; i < 6; ++i)
+        for (unsigned int i = 0; i < c_max_servo; i++)
         {
-          std::string option = String::str("PinOut %u", i);
-          param(option, m_args.port_inf[i])
-          .defaultValue("")
+          std::string option = String::str("Servo %u", i);
+          param(option, m_args.servo_inf[i])
+          .defaultValue("0")
           .description("Port");
 
         }
+
+        for (unsigned int i = 0; i < c_max_pwm; i++)
+        {
+          std::string option = String::str("PWM %u", i);
+          param(option, m_args.pwm_inf[i])
+          .defaultValue("0")
+          .description("");
+        }
+        
+        m_servo.fill(nullptr);
+        m_pwm.fill(nullptr);
         
         bind<IMC::SetServoPosition>(this);
         //bind<IMC::GpioStateSet>(this);
         bind<IMC::SetPWM>(this);
-
       }
 
       //! Update internal state with new parameter values.
@@ -138,70 +129,46 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        for (size_t pin = 0; pin < c_max_port; pin++)        
+        for (size_t id = 0; id < m_servo.size(); id++)
         {
-          /*
-          size_t pos = m_args.port_inf[pin].find("Servo");
-          if ( pos != std::string::npos)
+          if(m_servo[id] != 0)
           {
-            std::string id = m_args.port_inf[pin].substr(pos+6, std::string::npos);
-
-            std::vector<IO>& vec = m_data[ID_SERVO];
-            vec.emplace_back(this, pin, std::stoi(id));
-          }
-          */
-
-          if (m_args.port_inf[pin] != "")
-          {
-            inf(m_args.port_inf[pin].c_str());
-            auto& dat = m_data[m_args.port_inf[pin]];
-
-            dat.m_port = pin;
-            dat.m_signal = new PWMsignal(this, 18);
-            dat.m_signal->start();
+            m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
+            inf("Initialized Servo PWM id %u on id: %d", id, m_args.servo_inf[id]);
           }
         }
-        
-        for (auto &&id : m_data)
+
+        for (size_t id = 0; id < m_pwm.size(); id++)
         {
-          auto& vec = id.second;
-          inf("Key: %s", id.first.c_str());
-          inf("Port is %d", vec.m_port);
-        }
+          if(m_pwm[id] != 0)
+          {
+            m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
+            inf("Initialized Servo PWM id %u on id: %d", id, m_args.pwm_inf[id]);
+          }
+        }        
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        for (size_t pin = 0; pin < c_max_port; pin++)        
-        {
-
-          if (m_args.port_inf[pin] != "")
-          {
-            inf("Release");
-            auto& dat = m_data[m_args.port_inf[pin]];
-            if (dat.m_signal != nullptr)
-            {
-              dat.m_signal->stopAndJoin();
-              delete dat.m_signal;
-              dat.m_signal = nullptr;
-            }
-              
-          }
+        inf("Release resource");
+        for (size_t id = 0; id < c_max_servo; id++)        
+        {          
+          Memory::clear(m_servo[id]);
         }
+
+        for (size_t id = 0; id < c_max_pwm; id++)
+        {
+          Memory::clear(m_pwm[id]);
+        }
+        inf("End release");
       }
 
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        std::string key = String::str("Servo %u", msg->id);
-        IO& dat = m_data[key];
-        if (dat.m_port == -1)
-        {
-          err("Received msg with incorrect Servo ID %u", msg->id);
-          return;
-        }
+        (void)msg;
         // convert msg->value to dutycycle
 
       }
@@ -216,14 +183,12 @@ namespace Actuators
       void
       onMain(void)
       {
-        std::string key = String::str("Servo 1");
-        IO& dat = m_data[key];
-
+        m_servo[0]->start();
         while (!stopping())
         {
-          dat.m_signal->setDutyCycle(1); // period = 20 ms
+          m_servo[0]->setDutyCycle(1'000);
           Delay::wait(2);
-          dat.m_signal->setDutyCycle(2);
+          m_servo[0]->setDutyCycle(2'000);
           Delay::wait(2);
         }
       }
