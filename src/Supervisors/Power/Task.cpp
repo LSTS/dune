@@ -59,8 +59,6 @@ namespace Supervisors
       std::string pwr_main;
       //! Command to execute on power down.
       std::string cmd_pwr_down;
-      //! Command to execute on power down abort.
-      std::string cmd_pwr_down_abort;
       //! Slave systems.
       std::vector<std::string> slave_systems;
     };
@@ -87,10 +85,6 @@ namespace Supervisors
         .defaultValue("")
         .description("Command to execute before powering down the system");
 
-        param("Command - On Power Down Abort", m_args.cmd_pwr_down_abort)
-        .defaultValue("")
-        .description("Command to execute when the power down sequence is aborted");
-
         param("Slave System Names", m_args.slave_systems)
         .description("Name of the slave systems");
 
@@ -114,8 +108,7 @@ namespace Supervisors
         if (msg->name != "System")
           return;
 
-        if ((powerDownInProgress() && msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
-            || (powerDownAborted() && msg->op == IMC::PowerChannelControl::PCC_OP_TURN_ON))
+        if (powerDownInProgress() && msg->op == IMC::PowerChannelControl::PCC_OP_TURN_OFF)
         {
           trace("notified %04X", msg->getSource());
           m_notified_slaves.erase(msg->getSource());
@@ -157,39 +150,10 @@ namespace Supervisors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      void
-      powerDownAbort(void)
-      {
-        if (powerDownAborted())
-        {
-          notifySlaves(IMC::PowerOperation::POP_PWR_DOWN_ABORTED);
-          while (!m_notified_slaves.empty())
-            waitForMessages(1.0);
-        }
-
-        if (powerDownAborted())
-        {
-          while (!powerDownAbortCommand())
-            waitForMessages(1.0);
-        }
-
-        if (powerDownAborted())
-        {
-          controlSystemPower(IMC::PowerChannelControl::PCC_OP_TURN_ON);
-          m_power_op = c_power_op_invalid;
-        }
-      }
-
       bool
       powerDownCommand(void)
       {
         return std::system(m_args.cmd_pwr_down.c_str()) == 0;
-      }
-
-      bool
-      powerDownAbortCommand(void)
-      {
-        return std::system(m_args.cmd_pwr_down_abort.c_str()) == 0;
       }
 
       void
@@ -225,12 +189,6 @@ namespace Supervisors
         return m_power_op == IMC::PowerOperation::POP_PWR_DOWN_IP;
       }
 
-      bool
-      powerDownAborted(void)
-      {
-        return m_power_op == IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
-      }
-
       void
       onMain(void)
       {
@@ -240,8 +198,6 @@ namespace Supervisors
 
           if (powerDownInProgress())
             powerDown();
-          else if (powerDownAborted())
-            powerDownAbort();
         }
       }
     };
