@@ -198,10 +198,10 @@ namespace Actuators
         {
           m_servo[0]->setDutyCycle(1'000);
           inf("DutyCycle set 1ms");
-          Delay::wait(1);
-          m_servo[0]->setDutyCycle(2'000);
-          inf("DutyCycle set 2ms");
-          Delay::wait(1);
+          //Delay::wait(1);
+          //m_servo[0]->setDutyCycle(2'000);
+          //inf("DutyCycle set 2ms");
+          //Delay::wait(1);
         }
       }
     };
