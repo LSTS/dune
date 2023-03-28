@@ -32,7 +32,7 @@
 // DUNE headers
 #include <DUNE/DUNE.hpp>
 
-
+// TODO: validate duty cycle (1000 - 2000 us)
 namespace Actuators
 {
   namespace PWMv2
@@ -42,7 +42,7 @@ namespace Actuators
     class PWMsignal: public Thread
     {
     public:
-      PWMsignal(DUNE::Tasks::Task* task, int pin, double period = 20):
+      PWMsignal(DUNE::Tasks::Task* task, int pin, double period = 20'000):
         m_task(task), m_gpio(nullptr), m_pin(pin), m_period(period)
       {
         m_gpio = new Hardware::GPIO(pin);
@@ -50,19 +50,18 @@ namespace Actuators
         m_gpio->setValue(false);
 
         m_wdog.setTop(m_period);
-        m_duty_cycle = 1;
-        
+        m_duty_cycle = 1'000;
       }
 
       void
-      setPeriod(double period)
+      setPeriod(uint32_t period)
       {
         m_period = period;
-        m_wdog.setTop(m_period); // maybe will colide
+        m_wdog.setTop(m_period);
       }
 
       void
-      setDutyCycle(double _duty_cycle)
+      setDutyCycle(uint32_t _duty_cycle)
       {
         m_duty_cycle = _duty_cycle;
         if (m_duty_cycle > m_period)
@@ -91,9 +90,10 @@ namespace Actuators
             m_wdog.reset(); */
           write_dc = m_duty_cycle;
           m_gpio->setValue(true);
-          Delay::waitMsec(write_dc);
+          Delay::waitUsec(write_dc);
           m_gpio->setValue(false);
-          Delay::waitMsec(m_period - m_duty_cycle);
+          Delay::waitUsec(m_period - write_dc);
+
         }
       }
 
@@ -101,8 +101,8 @@ namespace Actuators
       DUNE::Tasks::Task* m_task;
       Hardware::GPIO* m_gpio;
       int m_pin;
-      float m_period; // period in microseconds
-      float m_duty_cycle;
+      uint32_t m_period;        // period in microseconds
+      uint32_t m_duty_cycle;
     };
   }
 }

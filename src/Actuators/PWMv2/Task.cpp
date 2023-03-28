@@ -129,23 +129,24 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        for (size_t id = 0; id < m_servo.size(); id++)
+        for (size_t id = 0; id < c_max_servo; id++)
         {
-          if(m_servo[id] != 0)
+          if(m_args.servo_inf[id] != 0)
           {
             m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
+            m_servo[id]->start();
             inf("Initialized Servo PWM id %u on id: %d", id, m_args.servo_inf[id]);
           }
         }
 
-        for (size_t id = 0; id < m_pwm.size(); id++)
+        for (size_t id = 0; id < c_max_pwm; id++)
         {
-          if(m_pwm[id] != 0)
+          if(m_args.pwm_inf[id] != 0)
           {
-            m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
+            //m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
             inf("Initialized Servo PWM id %u on id: %d", id, m_args.pwm_inf[id]);
           }
-        }        
+        }     
       }
 
       //! Release resources.
@@ -154,13 +155,23 @@ namespace Actuators
       {
         inf("Release resource");
         for (size_t id = 0; id < c_max_servo; id++)        
-        {          
-          Memory::clear(m_servo[id]);
+        {
+          if (m_servo[id] != nullptr)
+          {
+            m_servo[id]->stopAndJoin();
+            delete m_servo[id];
+            m_servo[id] = nullptr;
+          }
         }
 
         for (size_t id = 0; id < c_max_pwm; id++)
         {
-          Memory::clear(m_pwm[id]);
+          if (m_pwm[id] != nullptr)
+          {
+            m_pwm[id]->stopAndJoin();
+            delete m_pwm[id];
+            m_pwm[id] = nullptr;
+          }
         }
         inf("End release");
       }
@@ -183,13 +194,14 @@ namespace Actuators
       void
       onMain(void)
       {
-        m_servo[0]->start();
         while (!stopping())
         {
           m_servo[0]->setDutyCycle(1'000);
-          Delay::wait(2);
+          inf("DutyCycle set 1ms");
+          Delay::wait(1);
           m_servo[0]->setDutyCycle(2'000);
-          Delay::wait(2);
+          inf("DutyCycle set 2ms");
+          Delay::wait(1);
         }
       }
     };
