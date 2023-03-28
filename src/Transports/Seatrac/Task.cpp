@@ -87,6 +87,8 @@ namespace Transports
       double calib_threshold;
       //! Maximum range.
       uint16_t max_range;
+      //! Transponder turn around time.
+      uint16_t turn_around_time;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -133,13 +135,13 @@ namespace Transports
       IMC::AngularVelocity m_agvel;
       //! Magnetometer Vector message.
       IMC::MagneticField m_magfield;
-      //! Current sound speed.
+      //! Modem sound speed.
       IMC::SoundSpeed m_sspeed;
-      //! Depth.
+      //! Modem depth.
       IMC::Depth m_depth;
-      //! Pressure.
+      //! Modem measured pressure.
       IMC::Pressure m_pressure;
-      //! Measured temperature.
+      //! Modem measured temperature.
       IMC::Temperature m_temperature;
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
@@ -226,10 +228,18 @@ namespace Transports
         .description("Minimum magnetic field calibration values to reset hard-iron parameters");
 
         param("Max Range", m_args.max_range)
-        .defaultValue("1500")
+        .defaultValue("1000")
         .minimumValue("100")
         .maximumValue("3000")
         .description("Range timeout that specifies a distance beyond which replies are ignored and the remote beacon is considered to have timed out.");
+
+        param("Turn Around Time", m_args.turn_around_time)
+        .units( Units::Millisecond)
+        .defaultValue("10")
+        .minimumValue("10")
+        .maximumValue("1000")
+        .description("Specifies how long the beacon will wait between receiving a request message and starting transmission of the response message."
+                         "All beacons communicating must have the same value.");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -317,7 +327,7 @@ namespace Transports
         try
         {
           // Configure modem
-          setState(m_driver->configure(m_usbl_receiver, m_args.ahrs_mode, m_args.max_range));
+          setState(m_driver->configure(m_usbl_receiver, m_args.ahrs_mode, m_args.max_range, m_args.turn_around_time));
           m_config_status = true;
         }
         catch (...)

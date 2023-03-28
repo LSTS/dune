@@ -87,11 +87,12 @@ namespace Transports
 
       //! Seatrac Configuration
       //! @param[in] ahrs_mode true if AHRS mode enabled.
+      //! @param[in] max_range maximum range.
+      //! @param[in] turn_around_time turn around time.
       //! @param[out] usbl_receiver true if USBL modem.
-      //! @param[out] max_range maximum range.
       //! @return entity state after modem configuration.
       EntityStates
-      configure(bool& usbl_receiver, bool ahrs_mode, uint16_t& max_range)
+      configure(bool& usbl_receiver, bool ahrs_mode, uint16_t max_range, uint16_t turn_around_time)
       {
         // Retrieve current settings and system information
         sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 1);
@@ -119,7 +120,7 @@ namespace Transports
         }
 
         // Verify modem settings
-        if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range))
+        if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range, turn_around_time))
         {
           // Setting correct settings
           m_data_beacon.cid_settings_msg.status_flags = status_mode;
@@ -127,6 +128,7 @@ namespace Transports
           m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
           m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
           m_data_beacon.cid_settings_msg.xcvr_range_tmo = max_range;
+          m_data_beacon.cid_settings_msg.xcvr_resp_time = turn_around_time;
 
           if(!ahrs)
           {
@@ -144,7 +146,7 @@ namespace Transports
           sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 2);
 
           // Check modem settings again
-          if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range))
+          if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range, turn_around_time))
           {
             state = STA_ERR_STP;
             m_task->war(DTR("Failed to configure device"));
@@ -289,15 +291,17 @@ namespace Transports
       //! @param[in] xcvr_flags control XCVR flags
       //! @param[in] ahrs AHRS hard-iron calibration parameters match (when AHRS mode enabled)
       //! @param[in] max_range maximum range
+      //! @param[in] turn_around_time turn around time
       //! @return true if settings match, false otherwise
       bool
-      checkSettings(StatusMode_E status_mode, uint8_t output_flags, uint8_t xcvr_flags, bool ahrs, uint16_t max_range)
+      checkSettings(StatusMode_E status_mode, uint8_t output_flags, uint8_t xcvr_flags, bool ahrs, uint16_t max_range, uint16_t turn_around_time)
       {
         return ((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
                 && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
                 && (m_data_beacon.cid_settings_msg.status_output == output_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == max_range)
+                && (m_data_beacon.cid_settings_msg.xcvr_resp_time == turn_around_time)
                 && ahrs);
       }
 
