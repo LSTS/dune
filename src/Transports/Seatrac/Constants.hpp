@@ -69,6 +69,8 @@ namespace Transports
     static const char c_preamble = '$';
     //! Maximum buffer size.
     static const int c_bfr_size = 256;
+    //! Sound speed update window (m/s).
+    static const uint16_t c_sspeed_window = 1;
 
     //! Entity states.
     enum EntityStates

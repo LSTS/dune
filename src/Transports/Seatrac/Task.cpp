@@ -89,6 +89,10 @@ namespace Transports
       uint16_t max_range;
       //! Transponder turn around time.
       uint16_t turn_around_time;
+      //! Sound speed on water.
+      double sound_speed_def;
+      //! Entity label of sound speed provider.
+      std::string sound_speed_elabel;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -135,6 +139,8 @@ namespace Transports
       IMC::AngularVelocity m_agvel;
       //! Magnetometer Vector message.
       IMC::MagneticField m_magfield;
+      //! Sound speed entity id.
+      int m_sound_speed_eid;
       //! Modem sound speed.
       IMC::SoundSpeed m_sspeed;
       //! Modem depth.
@@ -158,7 +164,8 @@ namespace Transports
         m_usbl_receiver(false),
         m_addr(0),
         m_tstamp(0),
-        m_ticket(nullptr)
+        m_ticket(nullptr),
+        m_sound_speed_eid(-1)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
@@ -241,6 +248,14 @@ namespace Transports
         .description("Specifies how long the beacon will wait between receiving a request message and starting transmission of the response message."
                          "All beacons communicating must have the same value.");
 
+        param("Sound Speed - Default Value", m_args.sound_speed_def)
+        .units(Units::MeterPerSecond)
+        .defaultValue("1500")
+        .description("Default sound speed value to be used when computing ranges.");
+
+        param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
+        .description("Entity label of sound speed provider");
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -257,6 +272,7 @@ namespace Transports
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
         bind<IMC::MagneticField>(this);
+        bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxFrame>(this);
       }
@@ -286,6 +302,19 @@ namespace Transports
         sock->connect(socket_addr, port);
         m_handle = sock;
         return true;
+      }
+
+      void
+      onEntityResolution() override
+      {
+        try
+        {
+          m_sound_speed_eid = resolveEntity(m_args.sound_speed_elabel);
+        }
+        catch (...)
+        {
+          debug("Dynamic sound speed corrections are disabled (using default sound speed value).");
+        }
       }
 
       //! Acquire resources.
@@ -327,7 +356,7 @@ namespace Transports
         try
         {
           // Configure modem
-          setState(m_driver->configure(m_usbl_receiver, m_args.ahrs_mode, m_args.max_range, m_args.turn_around_time));
+          setState(m_driver->configure(m_usbl_receiver, m_args.ahrs_mode, m_args.max_range, m_args.turn_around_time, m_args.sound_speed_def));
           m_config_status = true;
         }
         catch (...)
@@ -358,6 +387,15 @@ namespace Transports
           if (paramChanged(m_args.hard_iron) && m_args.ahrs_mode)
             m_driver->runCalibration();
         }
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      {
+        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
+        Memory::clear(m_handle);
+        Memory::clear(m_driver);
       }
 
       void
@@ -391,13 +429,25 @@ namespace Transports
         dispatch(sp);
       }
 
-      //! Release resources.
       void
-      onResourceRelease(void)
+      consume(const IMC::SoundSpeed* msg)
       {
-        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
-        Memory::clear(m_handle);
-        Memory::clear(m_driver);
+        if (m_state_entity != STA_ACTIVE)
+          return;
+
+        if ((int)msg->getSourceEntity() != m_sound_speed_eid)
+          return;
+
+        if (msg->value < 0)
+          return;
+
+        // Do not change if new value difference to current value is below c_sspeed_window (m/s).
+        if (std::abs(m_data_beacon.cid_settings_msg.env_vos/10 - msg->value) < c_sspeed_window)
+          return;
+
+        // Set water sound speed on transponder
+        m_data_beacon.cid_settings_msg.env_vos = (uint16_t) msg->value * 10;
+        m_driver->sendCommand(createCommand(CID_SETTINGS_SET, m_data_beacon));
       }
 
       void
@@ -749,7 +799,7 @@ namespace Transports
         dispatch(m_pressure);
         dispatch(m_temperature);
         dispatch(m_sspeed);
-        trace("Received from modem: Depth %f m | Presure %f P | Temperature %f \u00B0C | SoundSpeed %f m/s",
+        trace("Received from modem: Depth %f m | Pressure %f P | Temperature %f \u00B0C | SoundSpeed %f m/s",
             m_depth.value,
             m_pressure.value,
             m_temperature.value,

@@ -89,10 +89,11 @@ namespace Transports
       //! @param[in] ahrs_mode true if AHRS mode enabled.
       //! @param[in] max_range maximum range.
       //! @param[in] turn_around_time turn around time.
+      //! @param[in] sspeed_def default water sound speed.
       //! @param[out] usbl_receiver true if USBL modem.
       //! @return entity state after modem configuration.
       EntityStates
-      configure(bool& usbl_receiver, bool ahrs_mode, uint16_t max_range, uint16_t turn_around_time)
+      configure(bool& usbl_receiver, bool ahrs_mode, uint16_t max_range, uint16_t turn_around_time, uint16_t sspeed_def)
       {
         // Retrieve current settings and system information
         sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 1);
@@ -120,7 +121,7 @@ namespace Transports
         }
 
         // Verify modem settings
-        if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range, turn_around_time))
+        if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range, turn_around_time, sspeed_def))
         {
           // Setting correct settings
           m_data_beacon.cid_settings_msg.status_flags = status_mode;
@@ -129,6 +130,7 @@ namespace Transports
           m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
           m_data_beacon.cid_settings_msg.xcvr_range_tmo = max_range;
           m_data_beacon.cid_settings_msg.xcvr_resp_time = turn_around_time;
+          m_data_beacon.cid_settings_msg.env_vos = sspeed_def * 10;
 
           if(!ahrs)
           {
@@ -146,7 +148,7 @@ namespace Transports
           sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 2);
 
           // Check modem settings again
-          if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range, turn_around_time))
+          if (!checkSettings(status_mode, output_flags, xcvr_flags, ahrs, max_range, turn_around_time, sspeed_def))
           {
             state = STA_ERR_STP;
             m_task->war(DTR("Failed to configure device"));
@@ -252,7 +254,7 @@ namespace Transports
       sendCommand(const std::string& cmd)
       {
         m_handle->writeString(cmd.c_str());
-        m_task->trace(DTR("Sent command to the acoustic modem: %s"), cmd.c_str());
+        m_task->spew(DTR("Sent command to the acoustic modem: %s"), cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         m_task->dispatch(m_dev_data);
       }
@@ -292,9 +294,10 @@ namespace Transports
       //! @param[in] ahrs AHRS hard-iron calibration parameters match (when AHRS mode enabled)
       //! @param[in] max_range maximum range
       //! @param[in] turn_around_time turn around time
+      //! @param[in] sspeed_def default water sound speed
       //! @return true if settings match, false otherwise
       bool
-      checkSettings(StatusMode_E status_mode, uint8_t output_flags, uint8_t xcvr_flags, bool ahrs, uint16_t max_range, uint16_t turn_around_time)
+      checkSettings(StatusMode_E status_mode, uint8_t output_flags, uint8_t xcvr_flags, bool ahrs, uint16_t max_range, uint16_t turn_around_time, uint16_t sspeed_def)
       {
         return ((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
                 && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
@@ -302,6 +305,7 @@ namespace Transports
                 && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == max_range)
                 && (m_data_beacon.cid_settings_msg.xcvr_resp_time == turn_around_time)
+                && (m_data_beacon.cid_settings_msg.env_vos == sspeed_def)
                 && ahrs);
       }
 
