@@ -483,13 +483,6 @@ namespace Power
             dispatch(m_pwr_op);
           }
         }
-        else if (m_pwr_down)
-        {
-          war(DTR("power down sequence aborted"));
-          m_pwr_down = false;
-          m_pwr_op.op = IMC::PowerOperation::POP_PWR_DOWN_ABORTED;
-          dispatch(m_pwr_op);
-        }
       }
 
       //! On Command call.
