@@ -139,12 +139,16 @@ namespace Transports
             m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_hard_iron_z;
           }
 
-          // Saving settings
-          m_task->inf("Saving settings to modem");
+          // Updating settings and saving if needed
+          m_task->inf("Sending updated settings to modem");
           sendCommandAndWait(createCommand(CID_SETTINGS_SET, m_data_beacon), 2);
-          sendCommandAndWait(createCommand(CID_SETTINGS_SAVE, m_data_beacon), 2);
-          m_task->inf("Rebooting modem");
-          sendCommandAndWait(createCommand(CID_SYS_REBOOT, m_data_beacon), 6);
+          if(!ahrs)
+          {
+            m_task->inf("Saving settings to modem");
+            sendCommandAndWait(createCommand(CID_SETTINGS_SAVE, m_data_beacon), 2);
+            m_task->inf("Rebooting modem");
+            sendCommandAndWait(createCommand(CID_SYS_REBOOT, m_data_beacon), 6);
+          }
           sendCommandAndWait(createCommand(CID_SETTINGS_GET, m_data_beacon), 2);
 
           // Check modem settings again
@@ -155,13 +159,13 @@ namespace Transports
           }
 
           // Configuration complete
-          m_task->inf("Modem ready.");
+          m_task->inf("Modem ready (settings successfully set).");
           state = EntityStates::STA_IDLE;
         }
         else
         {
           // Configuration complete
-          m_task->inf("Modem ready (settings successfully set).");
+          m_task->inf("Modem ready.");
           state = EntityStates::STA_IDLE;
         }
 
