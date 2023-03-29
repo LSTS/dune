@@ -349,9 +349,18 @@ namespace Transports
         if (m_addr < 1 || m_addr > 15)
           throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), getSystemName()));
 
-        // Initialize driver
-        m_driver = new Driver(this, m_handle, m_data_beacon, m_tstamp, m_last_input, m_preamble, m_addr,
-                              m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
+        try
+        {
+          // Initialize driver
+          m_driver = new Driver(this, m_handle, m_data_beacon, m_tstamp, m_last_input, m_preamble, m_addr,
+                                m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
+        }
+        catch (std::runtime_error& e)
+        {
+          err("%s: %s", DTR(Status::getString(CODE_COM_ERROR)), e.what());
+          setState(STA_ERR_COM);
+          throw std::runtime_error(m_states[m_state_entity].description);
+        }
 
         try
         {
@@ -497,6 +506,10 @@ namespace Transports
       bool
       hasConnection(void)
       {
+        // Throw runtime error if connection problem persists
+        if (Clock::get() > (m_last_input + c_input_tout + 30))
+          throw std::runtime_error(m_states[STA_ERR_COM].description);
+
         return (Clock::get() < (m_last_input + c_input_tout));
       }
 
@@ -1010,7 +1023,7 @@ namespace Transports
           processNewData();
           checkTxOWAY();
 
-          if (m_state_entity != STA_ERR_STP)
+          if ((m_state_entity != STA_ERR_STP) && hasConnection())
           {
             if (!isRestricted())
               setState(STA_ACTIVE);
@@ -1101,8 +1114,8 @@ namespace Transports
         while (!stopping())
         {
           // Wait for modem configuration
-          if (!m_config_status)
-            continue;
+          if(!m_config_status)
+            break;
 
           // Check for incoming data.
           processInput();
@@ -1110,7 +1123,10 @@ namespace Transports
 
           // Check modem connection
           if (!hasConnection())
+          {
             setState(STA_ERR_COM);
+            err("%s", DTR(Status::getString(CODE_COM_ERROR)));
+          }
         }
       }
     };

@@ -62,9 +62,9 @@ namespace Transports
     //! Acknowledged timeout time multiplier
     static const uint8_t c_ack_timeout_multiplier = 6;
     //! Input Timeout (s).
-    static const double c_input_tout =  5;
+    static const double c_input_tout = 5;
     //! The bitrate of acoustic communication (bits/second).
-    static const double c_acoustic_bitrate =  100;
+    static const double c_acoustic_bitrate = 100;
     //! Message preamble
     static const char c_preamble = '$';
     //! Maximum buffer size.

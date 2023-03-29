@@ -79,6 +79,8 @@ namespace Transports
       //! @param[in] handle I/O handle.
         DUNE::Time::Delay::wait(1.0);
         m_handle->flushInput();
+        if (!Poll::poll(*m_handle, 1.0))
+          throw std::runtime_error(DTR("failed to poll from modem"));
       }
 
       //! Destructor.
@@ -216,6 +218,9 @@ namespace Transports
           return;
 
         size_t rv = m_handle->readString(bfr, c_bfr_size);
+        if (rv == 0)
+          return;
+
         m_tstamp = Clock::getSinceEpoch();
         m_last_input = Clock::get();
         for (size_t i = 0; i < rv; ++i)
