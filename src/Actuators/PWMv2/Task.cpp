@@ -27,14 +27,12 @@
 // Author: João Bogas                                                       *
 //***************************************************************************
 
-// C++ headers
-#include <unordered_map>
-
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 // local headers
 #include "PWMsignal.hpp"
+#include "DMA.hpp"
 
 
 // TODO: change read param Servo 0-.. Pin
@@ -146,7 +144,9 @@ namespace Actuators
             //m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
             inf("Initialized Servo PWM id %u on id: %d", id, m_args.pwm_inf[id]);
           }
-        }     
+        }
+
+        DMA *res = new DMA(this);
       }
 
       //! Release resources.
@@ -194,14 +194,24 @@ namespace Actuators
       void
       onMain(void)
       {
+        Counter<double> dog;
+        
         while (!stopping())
         {
           m_servo[0]->setDutyCycle(1'000);
           inf("DutyCycle set 1ms");
-          //Delay::wait(1);
-          //m_servo[0]->setDutyCycle(2'000);
-          //inf("DutyCycle set 2ms");
-          //Delay::wait(1);
+          dog.setTop(1);
+          while(!dog.overflow())
+          {
+
+          }
+          m_servo[0]->setDutyCycle(2'000);
+          inf("DutyCycle set 2ms");
+          dog.setTop(1);
+          while(!dog.overflow())
+          {
+
+          }
         }
       }
     };

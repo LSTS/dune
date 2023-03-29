@@ -24,37 +24,64 @@ bit 30 -> Abort         -> write only
 bit 29 -> 
 */
 
+#include <sys/mman.h>
+
 namespace Actuators
 {
-  namespace DMA
+  namespace PWMv2
   {
     enum ControlRegisterAddr
     {
       DMA0 = 0x7E007000,
       DMA1 = 0x7E007100,
       DMA2 = 0x7E007200//, ...
-    }
+    };
 
     class DMA
     {
     public:
-      DMA()
+      DMA(DUNE::Tasks::Task* task)
       {
-        /* 
-          Write addr of CB structure into CONBLK_AD register and set active bit
+        int mem_f = open("/dev/mem", O_RDWR | O_SYNC);
+        if (mem_f < 0)
+        {
+          task->inf("Failed to open /dev/mem");
+          exit(1);
+        }
+        
 
-
-        */
+        // 4096 default page size
+        // 0x3F000000 Peripheral 
+        // 0x00007000 -> channel 7 offset
+        uint32_t *result = (uint32_t *)mmap(NULL, 4096, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+0x00007000);
+        
+        if (result == MAP_FAILED)
+        {
+          task->inf("mmap failed");
+          exit(1);
+        }
+        
+        close(mem_f);
+        int cs[32];
+        for (int i = 0; i < 32; i++)
+        {
+          int masked_bit = 1 << i;
+          int mask = (*result) & masked_bit;
+          int m_bit = mask >> i;
+          cs[i] = m_bit;
+        }
+        
+        std::cout << "CS channel 7: ";
+        for (int i = 0; i < 32; i++)
+        {
+          std::cout << cs[i];
+        }
+        std::cout << "\n";
+      
       }
+
       ~DMA(){}
     private:
-
-
-      struct Channel
-      {
-        ControlRegister m_reg;
-        ControlBlock m_block;
-      };
 
       struct ControlRegister
       {
@@ -73,7 +100,11 @@ namespace Actuators
         uint32_t m_debug[2];        // Padding set to 0
       };
       
-      
+      struct Channel
+      {
+        ControlRegister m_reg;
+        ControlBlock m_block;
+      };
       
       
     };
