@@ -309,7 +309,7 @@ namespace Transports
                 && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
                 && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == max_range)
                 && (m_data_beacon.cid_settings_msg.xcvr_resp_time == turn_around_time)
-                && (m_data_beacon.cid_settings_msg.env_vos == sspeed_def)
+                && (m_data_beacon.cid_settings_msg.env_vos == sspeed_def * 10)
                 && ahrs);
       }
 
