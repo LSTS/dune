@@ -42,10 +42,19 @@ namespace Actuators
     public:
       DMA(DUNE::Tasks::Task* task)
       {
+        m_task = task;
+        print_status();
+      }
+
+      ~DMA(){}
+    
+      void
+      print_status()
+      {
         int mem_f = open("/dev/mem", O_RDWR | O_SYNC);
         if (mem_f < 0)
         {
-          task->inf("Failed to open /dev/mem");
+          m_task->inf("Failed to open /dev/mem");
           exit(1);
         }
         
@@ -53,35 +62,47 @@ namespace Actuators
         // 4096 default page size
         // 0x3F000000 Peripheral 
         // 0x00007000 -> channel 7 offset
-        uint32_t *result = (uint32_t *)mmap(NULL, 4096, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+0x00007000);
-        
-        if (result == MAP_FAILED)
+        uint32_t off = 0x00001000;
+        if (off*2 == 0x00002000)
         {
-          task->inf("mmap failed");
-          exit(1);
+          std::cout << "Correct read\n";
         }
-        
-        close(mem_f);
-        int cs[32];
-        for (int i = 0; i < 32; i++)
-        {
-          int masked_bit = 1 << i;
-          int mask = (*result) & masked_bit;
-          int m_bit = mask >> i;
-          cs[i] = m_bit;
-        }
-        
-        std::cout << "CS channel 7: ";
-        for (int i = 0; i < 32; i++)
-        {
-          std::cout << cs[i];
-        }
-        std::cout << "\n";
-      
-      }
+        else
+          std::cout << "Incorrect read\n";
 
-      ~DMA(){}
+        for (int i = 0; i < 16; i++)
+        {
+          uint32_t *result = (uint32_t *)mmap(NULL, 4096, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+off*i);
+        
+          if (result == MAP_FAILED)
+          {
+            m_task->inf("mmap failed");
+            exit(1);
+          }
+          
+          
+          int cs[32];
+          for (int n = 0; n < 32; n++)
+          {
+            int masked_bit = 1 << n;
+            int mask = (*result) & masked_bit;
+            int m_bit = mask >> n;
+            cs[n] = m_bit;
+          }
+          
+          std::cout << "CS channel " << i << ": ";
+          for (int n = 0; n < 32; n++)
+            std::cout << cs[n];
+
+          std::cout << "\n";
+        }
+      
+        close(mem_f);
+      }
+    
     private:
+
+      DUNE::Tasks::Task* m_task;
 
       struct ControlRegister
       {

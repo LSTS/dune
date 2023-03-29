@@ -68,6 +68,8 @@ namespace Actuators
       //! PWM signals
       std::array<PWMsignal*,c_max_pwm> m_pwm;
 
+      DMA *res;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -146,7 +148,7 @@ namespace Actuators
           }
         }
 
-        DMA *res = new DMA(this);
+        res = new DMA(this);
       }
 
       //! Release resources.
@@ -212,6 +214,7 @@ namespace Actuators
           {
 
           }
+          res->print_status();
         }
       }
     };
