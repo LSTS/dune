@@ -67,8 +67,8 @@ namespace Actuators
       std::array<PWMsignal*,c_max_servo> m_servo;
       //! PWM signals
       std::array<PWMsignal*,c_max_pwm> m_pwm;
-
-      DMA *res;
+      //! Dma controller
+      DMA *control;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -133,8 +133,8 @@ namespace Actuators
         {
           if(m_args.servo_inf[id] != 0)
           {
-            m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
-            m_servo[id]->start();
+            //m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
+            //m_servo[id]->start();
             inf("Initialized Servo PWM id %u on id: %d", id, m_args.servo_inf[id]);
           }
         }
@@ -148,7 +148,18 @@ namespace Actuators
           }
         }
 
-        res = new DMA(this);
+        control = new DMA(this);
+        auto list = control->enumerate_channels();
+
+
+        for (int i = 0; i < list.size(); i++)
+        {
+          if(list[i].test(0))
+            inf("Channel %d is active", i);
+          else
+            inf("Channel %d is inactive", i);
+        }
+        
       }
 
       //! Release resources.
@@ -204,17 +215,13 @@ namespace Actuators
           inf("DutyCycle set 1ms");
           dog.setTop(1);
           while(!dog.overflow())
-          {
-
-          }
+          
           m_servo[0]->setDutyCycle(2'000);
           inf("DutyCycle set 2ms");
           dog.setTop(1);
+          
           while(!dog.overflow())
-          {
-
-          }
-          res->print_status();
+          control->print_status(this);
         }
       }
     };

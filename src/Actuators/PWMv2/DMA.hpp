@@ -24,17 +24,47 @@ bit 30 -> Abort         -> write only
 bit 29 -> 
 */
 
+// Download 
+// cmake -D CMAKE_C_COMPILER=/path/to/gcc/bin/gcc -D CMAKE_CXX_COMPILER=/path/to/gcc/bin/g++ .
 #include <sys/mman.h>
+#include <bitset>
+
+// To brute force cmake
+// cmake -D CMAKE_C_COMPILER=/home/bogas/dune/build-rpi/toolchain/glued-2022.06.c-lctr-rpi4-toolchain-x86_64-linux-gnu-armv7-lsts-linux-gnueabihf/bin/armv7-lsts-linux-gnueabihf-gcc -D CMAKE_CXX_COMPILER=/home/bogas/dune/build-rpi/toolchain/glued-2022.06.c-lctr-rpi4-toolchain-x86_64-linux-gnu-armv7-lsts-linux-gnueabihf/bin/armv7-lsts-linux-gnueabihf-g++ -DCROSS=/home/bogas/dune/build-rpi/toolchain/glued-2022.06.c-lctr-rpi4-toolchain-x86_64-linux-gnu-armv7-lsts-linux-gnueabihf/bin/armv7-lsts-linux-gnueabihf- ../source/
+
 
 namespace Actuators
 {
   namespace PWMv2
   {
+    const int c_page_size = 4096;
     enum ControlRegisterAddr
     {
       DMA0 = 0x7E007000,
       DMA1 = 0x7E007100,
       DMA2 = 0x7E007200//, ...
+    };
+
+
+    enum ControlStatus
+    {
+      ACTIVE                            = (1 << 0),
+      END                               = (1 << 1),
+      INT                               = (1 << 2),
+      DREQ                              = (1 << 3),
+      PAUSED                            = (1 << 4),
+      DREQ_STOPS_DMA                    = (1 << 5),
+      WAITING_FOR_OUTSTANDING_WRITES    = (1 << 6),
+      // 7 Reserved - Write as 0
+      ERROR                             = (1 << 8),
+      // 9:15 Reserved - Write as 0
+      PRIORITY                          = (1 << 16),  //16:19 Multiple bits
+      PANIC_PRIORITY                    = (1 << 20),  //20:23 Multiple bits
+      // 24:27 Reserved - Write as 0
+      WAIT_FOR_OUTSTANDING_WRITES       = (1 << 28),
+      DISDEBUG                          = (1 << 29),
+      ABORT                             = (1 << 30),
+      RESET                             = (1 << 31)
     };
 
     class DMA
@@ -43,63 +73,43 @@ namespace Actuators
       DMA(DUNE::Tasks::Task* task)
       {
         m_task = task;
-        print_status();
+        //print_status(m_task);
+        m_task->inf("Hello from home");
       }
 
       ~DMA(){}
     
+      
       void
-      print_status()
+      new_Handler(uint32_t size)
       {
+        size = (size + c_page_size -1) & (-c_page_size); // rounding to multiple of c_page_size 4096
+      }
+
+      static std::array<std::bitset<32>,16>
+      enumerate_channels()
+      {
+        std::array<std::bitset<32>,16> list;
         int mem_f = open("/dev/mem", O_RDWR | O_SYNC);
         if (mem_f < 0)
-        {
-          m_task->inf("Failed to open /dev/mem");
-          exit(1);
-        }
-        
+          throw std::runtime_error("Failed to open /dev/mem");
 
-        // 4096 default page size
-        // 0x3F000000 Peripheral 
-        // 0x00007000 -> channel 7 offset
+
         uint32_t off = 0x00001000;
-        if (off*2 == 0x00002000)
-        {
-          std::cout << "Correct read\n";
-        }
-        else
-          std::cout << "Incorrect read\n";
-
         for (int i = 0; i < 16; i++)
         {
-          uint32_t *result = (uint32_t *)mmap(NULL, 4096, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+off*i);
-        
+          uint32_t *result = (uint32_t *)mmap(NULL, c_page_size, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+off*i);
+          
           if (result == MAP_FAILED)
-          {
-            m_task->inf("mmap failed");
-            exit(1);
-          }
-          
-          
-          int cs[32];
-          for (int n = 0; n < 32; n++)
-          {
-            int masked_bit = 1 << n;
-            int mask = (*result) & masked_bit;
-            int m_bit = mask >> n;
-            cs[n] = m_bit;
-          }
-          
-          std::cout << "CS channel " << i << ": ";
-          for (int n = 0; n < 32; n++)
-            std::cout << cs[n];
+            throw std::runtime_error("Failed to map memory");    
 
-          std::cout << "\n";
+          list[i] = (*result);
         }
-      
+        
         close(mem_f);
+        return list;
       }
-    
+
     private:
 
       DUNE::Tasks::Task* m_task;
@@ -113,8 +123,8 @@ namespace Actuators
       struct ControlBlock           // 256 bits and must start at a 256-bit aligned address
       {
         uint32_t m_ti;              // Transfer information
-        uint32_t m_src;             // Source address
-        uint32_t m_dst;             // Destination address
+        uint32_t m_src;             // Source bus address
+        uint32_t m_dst;             // Destination bus address
         uint32_t m_len;             // Transfer lenght
         uint32_t m_stride;          // 2D mode stride ???wtf is this
         uint32_t m_next;            // Next controll block
@@ -127,11 +137,14 @@ namespace Actuators
         ControlBlock m_block;
       };
       
-      
+      struct DMAHandler
+      {
+        void* virtual_addr;
+        uint32_t bus_addr;
+        uint32_t mb_handle;
+        uint32_t size;
+      };
     };
-    
-    
-    
   } // namespace DMA
   
 } // namespace Actuators
