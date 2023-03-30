@@ -8,14 +8,17 @@ BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Allman
 BreakConstructorInitializers: AfterColon
 ColumnLimit: 100
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+PackConstructorInitializers: Never
 ConstructorInitializerIndentWidth: 2
 Cpp11BracedListStyle: false
 IndentCaseLabels: true
 NamespaceIndentation: All
 PointerAlignment: Left
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
 SpacesBeforeTrailingComments: 2
 SpaceAfterTemplateKeyword: false
 AlignEscapedNewlines: Left
 FixNamespaceComments: false
+ContinuationIndentWidth: 2
 ...
