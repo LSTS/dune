@@ -269,6 +269,7 @@ namespace Monitors
               else
               {
                 err("Shutting down system (%d%%)", (int)m_fuel.value);
+                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_POWER_DOWN);
               }
             }
           }
