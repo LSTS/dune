@@ -42,7 +42,8 @@ namespace Monitors
     using DUNE_NAMESPACES;
 
     static const unsigned int c_max_fuel_level = 5;
-    static const int c_timeout_warning_level = 10;
+    static const unsigned int c_timeout_warning_level = 10;
+    static const unsigned int c_max_len_row_line_lcd = 16;
 
     struct Arguments
     {
@@ -66,6 +67,8 @@ namespace Monitors
     {
       //! IMC msg for fuel level.
       IMC::FuelLevel m_fuel;
+      //! LCD Control Message.
+      IMC::LcdControl m_lcd;
       //! Task arguments.
       Arguments m_args;
       //! Flag to control state of task
@@ -219,12 +222,20 @@ namespace Monitors
         {
           fuel_level_perc = 0;
         }
-        
 
         if(fuel_level_perc > 100)
           fuel_level_perc = 100;
-        
+
         return fuel_level_perc;
+      }
+
+      std::string
+      fill(const std::string& var)
+      {
+        std::string str;
+        str.assign(var);
+        str.resize(c_max_len_row_line_lcd, ' ');
+        return str;
       }
 
       void
@@ -263,6 +274,9 @@ namespace Monitors
                 {
                   m_wdog.reset();
                   war("Fuel low (%d%%)", (int)m_fuel.value);
+                  m_lcd.op = IMC::LcdControl::OP_WRITE0;
+                  m_lcd.text = fill(String::str("Fuel low (%d%%)", (int)m_fuel.value));
+                  dispatch(m_lcd);
                 }
                 setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
               }
@@ -270,6 +284,15 @@ namespace Monitors
               {
                 err("Shutting down system (%d%%)", (int)m_fuel.value);
                 setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_POWER_DOWN);
+                m_lcd.op = IMC::LcdControl::OP_WRITE0;
+                m_lcd.text = fill(String::str("Very low bat!!!"));
+                dispatch(m_lcd);
+                m_lcd.op = IMC::LcdControl::OP_WRITE1;
+                m_lcd.text = fill(String::str("Turning off!!!"));
+                dispatch(m_lcd);
+                IMC::PowerOperation pop;
+                pop.setDestination(getSystemId());
+                pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
               }
             }
           }
