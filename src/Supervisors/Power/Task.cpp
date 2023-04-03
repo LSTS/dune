@@ -129,10 +129,6 @@ namespace Supervisors
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_POWER_DOWN);
 
-        // Execute power down command.
-        while (!powerDownCommand())
-          waitForMessages(1.0);
-
         // Split point.
         if (powerDownInProgress())
         {
@@ -141,13 +137,11 @@ namespace Supervisors
             waitForMessages(1.0);
         }
 
-        if (powerDownInProgress())
-        {
-          controlSystemPower(IMC::PowerChannelControl::PCC_OP_TURN_OFF);
-          m_power_op = c_power_op_invalid;
-        }
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        // Execute power down command.
+        // This is intended as DUNE's exit point
+        // Run 'poweroff' for safe shutdown, otherwise pctl cuts power
+        while (!powerDownCommand())
+          waitForMessages(1.0);
       }
 
       bool
