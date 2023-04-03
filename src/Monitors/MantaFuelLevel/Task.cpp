@@ -42,6 +42,7 @@ namespace Monitors
     using DUNE_NAMESPACES;
 
     static const unsigned int c_max_fuel_level = 5;
+    static const int c_timeout_warning_level = 10;
 
     struct Arguments
     {
@@ -55,6 +56,10 @@ namespace Monitors
       std::string elabel_current_charger;
       //! Current value of charger to reject
       float chager_current;
+      //! Warning fuel level
+      int warning_level;
+      //! Shutdown fuel level
+      int shutdow_level;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -71,6 +76,8 @@ namespace Monitors
       float m_current_charge;
       //! Buffer forEntityState
       char m_bufer_entity[64];
+      //! WatchDog for warning fuel level
+      Counter<float> m_wdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx)
@@ -98,6 +105,14 @@ namespace Monitors
         param("Current Value Charger Reject", m_args.chager_current)
         .defaultValue("0.2")
         .description("Minimun value to ignore charge.");
+
+        param("Fuel Percentage Warning", m_args.warning_level)
+        .defaultValue("15")
+        .description("Fuel Percentage Warning.");
+
+        param("Fuel Percentage Auto Shutdown", m_args.shutdow_level)
+        .defaultValue("5")
+        .description("Fuel Percentage Auto Shutdown.");
 
         bind<IMC::Voltage>(this);
         bind<IMC::Current>(this);
@@ -127,7 +142,8 @@ namespace Monitors
           err(DTR("Wrong values in config file, please check values."));
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
         }
-        
+        m_wdog.setTop(c_timeout_warning_level);
+        m_wdog.reset();
       }
 
       //! Consume message IMC::Voltage
@@ -234,7 +250,27 @@ namespace Monitors
               std::sprintf(m_bufer_entity, "active | %.2f V", m_battery_volts);
             else
               std::sprintf(m_bufer_entity, "active | %.2f V | Charging: %.2f A", m_battery_volts, m_current_charge);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+
+            if(m_fuel.value > m_args.warning_level)
+            {
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+            }
+            else
+            {
+              if(m_fuel.value > m_args.shutdow_level)
+              {
+                if(m_wdog.overflow())
+                {
+                  m_wdog.reset();
+                  war("Fuel low (%d%%)", (int)m_fuel.value);
+                }
+                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
+              }
+              else
+              {
+                err("Shutting down system (%d%%)", (int)m_fuel.value);
+              }
+            }
           }
         }
       }
