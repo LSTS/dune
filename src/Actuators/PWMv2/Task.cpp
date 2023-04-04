@@ -33,7 +33,7 @@
 // local headers
 #include "PWMsignal.hpp"
 #include "DMA.hpp"
-
+#include "DirectPWM.hpp"
 
 // TODO: change read param Servo 0-.. Pin
 
@@ -69,12 +69,12 @@ namespace Actuators
       std::array<PWMsignal*,c_max_pwm> m_pwm;
       //! Dma controller
       DMA *control;
-
+      DirectGPIO *pin;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), m_servo(), m_pwm()
+        DUNE::Tasks::Task(name, ctx), m_servo(), m_pwm(), pin(nullptr)
       {
         for (unsigned int i = 0; i < c_max_servo; i++)
         {
@@ -129,37 +129,45 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        for (size_t id = 0; id < c_max_servo; id++)
+        inf("Select test PWM: 1(PWMsignal), 2(DirectPWM)");
+        int mode;
+        std::cin >> mode;
+        if (mode == 1)
         {
-          if(m_args.servo_inf[id] != 0)
+          for (size_t id = 0; id < c_max_servo; id++)
           {
-            //m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
-            //m_servo[id]->start();
-            inf("Initialized Servo PWM id %u on id: %d", id, m_args.servo_inf[id]);
+            if(m_args.servo_inf[id] != 0)
+            {
+              m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
+              m_servo[id]->start();
+              inf("Initialized Servo PWM id %u on id: %d", id, m_args.servo_inf[id]);
+            }
+          }
+
+          for (size_t id = 0; id < c_max_pwm; id++)
+          {
+            if(m_args.pwm_inf[id] != 0)
+            {
+              //m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
+              //inf("Initialized Servo PWM id %u on id: %d", id, m_args.pwm_inf[id]);
+            }
           }
         }
-
-        for (size_t id = 0; id < c_max_pwm; id++)
+        else
         {
-          if(m_args.pwm_inf[id] != 0)
+          control = new DMA(this);
+          auto list = DMA::enumerate_channels();
+
+          for (size_t i = 0; i < list.size(); i++)
           {
-            //m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
-            inf("Initialized Servo PWM id %u on id: %d", id, m_args.pwm_inf[id]);
+            if(list[i].test(0))
+              inf("Channel %d is active", i);
+            else
+              inf("Channel %d is inactive", i);
           }
+
+          pin = new DirectGPIO(this, 18);
         }
-
-        control = new DMA(this);
-        auto list = control->enumerate_channels();
-
-
-        for (int i = 0; i < list.size(); i++)
-        {
-          if(list[i].test(0))
-            inf("Channel %d is active", i);
-          else
-            inf("Channel %d is inactive", i);
-        }
-        
       }
 
       //! Release resources.
@@ -186,6 +194,12 @@ namespace Actuators
             m_pwm[id] = nullptr;
           }
         }
+        if (pin != nullptr)
+        {
+          pin->stopAndJoin();
+        }
+        
+        
         inf("End release");
       }
 
@@ -208,20 +222,28 @@ namespace Actuators
       onMain(void)
       {
         Counter<double> dog;
-        
+        pin->setDutyCicle(1'000);
+        pin->start();
         while (!stopping())
         {
-          m_servo[0]->setDutyCycle(1'000);
+          //m_servo[0]->setDutyCycle(1'000);
+          pin->setDutyCicle(1'000);
           inf("DutyCycle set 1ms");
           dog.setTop(1);
           while(!dog.overflow())
+          {
+
+          }
           
-          m_servo[0]->setDutyCycle(2'000);
+          //m_servo[0]->setDutyCycle(2'000);
+          pin->setDutyCicle(2'000);
           inf("DutyCycle set 2ms");
           dog.setTop(1);
           
           while(!dog.overflow())
-          control->print_status(this);
+          {
+            
+          }
         }
       }
     };
