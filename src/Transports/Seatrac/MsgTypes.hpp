@@ -69,7 +69,7 @@ namespace Transports
       // Mag cal.
       uint8_t mag_cal_buf;
       bool    mag_cal_valid;
-      int32_t mag_cal_age;
+      uint32_t mag_cal_age;
       uint8_t mag_cal_fit;
       // Acc cal.
       int16_t acc_lim_min_x;

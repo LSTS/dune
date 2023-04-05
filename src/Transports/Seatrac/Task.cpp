@@ -151,6 +151,8 @@ namespace Transports
       IMC::Temperature m_temperature;
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
+      //! Timer.
+      Time::Counter<double> m_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -271,6 +273,7 @@ namespace Transports
         // Initialize medium.
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
+        bind<IMC::EulerAngles>(this);
         bind<IMC::MagneticField>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
@@ -374,6 +377,8 @@ namespace Transports
           setState(STA_ERR_STP);
           throw std::runtime_error(m_states[m_state_entity].description);
         }
+
+        m_timer.setTop(c_att_interval);
       }
 
       //! Update parameters.
@@ -405,6 +410,34 @@ namespace Transports
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
         Memory::clear(m_handle);
         Memory::clear(m_driver);
+      }
+
+      void
+      consume(const IMC::EulerAngles* msg)
+      {
+        if (m_args.ahrs_mode || !m_timer.overflow())
+          return;
+
+        // Rotate attitude values to transponder reference frame.
+        Math::Matrix data(3, 1);
+        data(0) = msg->phi;
+        data(1) = msg->theta;
+        data(2) = msg->psi;
+        data = transpose(m_rotation) * data;
+
+        // Change to seatrac defined intervals (Roll: -180.0:180.0º | Pitch: -90.0:90.0º | Yaw: 0.0:359.9º)
+        for (size_t i=0; i<3; i++)
+          data(i) = Angles::degrees(data(i));
+        if (data(2) < 0)
+          data(2) = 360 + data(2);
+
+        // Set current attitude on transponder
+        m_data_beacon.cid_settings_msg.xcvr_roll = (uint16_t)(data(0) * 10);
+        m_data_beacon.cid_settings_msg.xcvr_pitch = (uint16_t)(data(1) * 10);
+        m_data_beacon.cid_settings_msg.xcvr_yaw = (uint16_t)(data(2) * 10);
+        m_driver->sendCommand(createCommand(CID_SETTINGS_SET, m_data_beacon));
+
+        m_timer.reset();
       }
 
       void
@@ -667,6 +700,9 @@ namespace Transports
           usblPosition.n = aco_fix.position_northing / 10.0;
           usblPosition.d = aco_fix.position_depth / 10.0;
 
+          if (aco_fix.outputflags_list[4])
+            debug("Position received with filter error flag set!");
+
           dispatch(usblPosition);
         }
         else // Mimics Evologic: Only if position is not computed, compute angles.
@@ -776,10 +812,10 @@ namespace Transports
           m_magfield.y = (fp32_t)m_data_beacon.cid_status_msg.ahrs_comp_mag_y;
           m_magfield.z = (fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_mag_z;
           //Euler angles.
-          m_euler.theta= Angles::radians( ((fp32_t) m_data_beacon.cid_status_msg.attitude_roll)/10);
-          m_euler.psi =  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_pitch)/10);
+          m_euler.theta = Angles::radians( ((fp32_t) m_data_beacon.cid_status_msg.attitude_roll)/10);
+          m_euler.psi = Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_pitch)/10);
           m_euler.psi_magnetic = m_euler.psi;
-          m_euler.phi=  Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_yaw)/10);
+          m_euler.phi = Angles::radians(((fp32_t) m_data_beacon.cid_status_msg.attitude_yaw)/10);
           // Angular Velocity.
           m_agvel.x = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_x);
           m_agvel.y = Angles::radians((fp32_t) m_data_beacon.cid_status_msg.ahrs_comp_gyro_y);
@@ -1004,9 +1040,6 @@ namespace Transports
             handleAhrsData();
           if(m_args.pressure_sensor_mode)
             handlePressureSensor();
-
-          //TODO: send environment_supply
-          //m_data_beacon.cid_status_msg.environment_supply;   //uint16_t
         }
       }
 

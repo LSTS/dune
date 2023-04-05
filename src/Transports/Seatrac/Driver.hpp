@@ -111,7 +111,12 @@ namespace Transports
         uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
 
         if (usbl_receiver)
-          xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
+        {
+          if (ahrs_mode)
+            xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
+          else
+            xcvr_flags |= XCVR_USBL_MSGS_FLAG;
+        }
 
         StatusMode_E status_mode = STATUS_MODE_1HZ;
         bool ahrs = true;
