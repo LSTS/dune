@@ -79,8 +79,6 @@ namespace Transports
       std::vector<float> hard_iron;
       //! Enhanced usbl information will be requested.
       bool enhanced_usbl;
-      //! Log AHRS data.
-      bool log_ahrs;
       //! Rotation matrix values.
       std::vector<double> rotation_mx;
       //! Calibration threshold.
@@ -170,7 +168,7 @@ namespace Transports
         m_sound_speed_eid(-1)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Serial Port - Device", m_args.uart_dev)
@@ -215,10 +213,6 @@ namespace Transports
         .description("Request Enhanced USBL information. USBL receivers request enhanced "
                      "information in transmissions. This parameter is useful only when "
                      "the beacon has an USBL receiver.");
-
-        param("Log AHRS Data", m_args.log_ahrs)
-        .defaultValue("false")
-        .description("Enable to log AHRS data when 'AHRS Mode' disabled.");
 
         param("AHRS Rotation Matrix", m_args.rotation_mx)
         .defaultValue("")
@@ -1036,7 +1030,7 @@ namespace Transports
 
         if(m_data_beacon.newDataAvailable(CID_STATUS))
         {
-          if(m_args.ahrs_mode || m_args.log_ahrs)
+          if(m_args.ahrs_mode)
             handleAhrsData();
           if(m_args.pressure_sensor_mode)
             handlePressureSensor();
