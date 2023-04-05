@@ -36,7 +36,7 @@
 #include "DirectGPIO.hpp"
 #include "DirectPWM.hpp"
 
-// TODO: change read param Servo 0-.. Pin
+// TODO: make pwm channels available in /boot/config.txt
 
 namespace Actuators
 {
@@ -50,42 +50,32 @@ namespace Actuators
 
     struct Task: public DUNE::Tasks::Task
     {
-      static const unsigned int c_max_servo = 5;
-
-      static const unsigned int c_max_pwm = 5;
+      static const unsigned int c_max_pwm = 2;
 
       struct Arguments
       {
         //! IO ports information
-        int servo_inf[c_max_servo];
+        int servo_inf[c_max_pwm];
 
         int pwm_inf[c_max_pwm];
       };
 
       //! Task arguments
       Arguments m_args;
-      //! PWM servo signals
-      std::array<PWMsignal*,c_max_servo> m_servo;
       //! PWM signals
-      std::array<PWMsignal*,c_max_pwm> m_pwm;
-      //! Dma controller
-      DMA *control;
-      DirectGPIO *pin;
-      DirectPWM *new_pwm;
-      int mode;
+      std::array<DirectPWM*,2> m_channel;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), m_servo(), m_pwm(), pin(nullptr), new_pwm(nullptr)
+        DUNE::Tasks::Task(name, ctx), m_channel{nullptr}
       {
-        for (unsigned int i = 0; i < c_max_servo; i++)
+        for (unsigned int i = 0; i < c_max_pwm; i++)
         {
           std::string option = String::str("Servo %u", i);
           param(option, m_args.servo_inf[i])
           .defaultValue("0")
-          .description("Port");
-
+          .description("Servo information");
         }
 
         for (unsigned int i = 0; i < c_max_pwm; i++)
@@ -93,12 +83,8 @@ namespace Actuators
           std::string option = String::str("PWM %u", i);
           param(option, m_args.pwm_inf[i])
           .defaultValue("0")
-          .description("");
+          .description("PWM information");
         }
-        
-        m_servo.fill(nullptr);
-        m_pwm.fill(nullptr);
-
         
         bind<IMC::SetServoPosition>(this);
         //bind<IMC::GpioStateSet>(this);
@@ -133,151 +119,69 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        inf("Select test PWM: 1(PWMsignal), 2(DirectGPIO), 3(DirectPWM)");
-        std::cin >> mode;
-        if (mode == 1)
+        for (size_t i = 0; i < c_max_pwm; i++)
         {
-          for (size_t id = 0; id < c_max_servo; id++)
+          if (m_args.servo_inf[i] != 0)
           {
-            if(m_args.servo_inf[id] != 0)
-            {
-              m_servo[id] = new PWMsignal(this, m_args.servo_inf[id]);
-              m_servo[id]->start();
-              inf("Initialized Servo PWM id %u on id: %d", id, m_args.servo_inf[id]);
-            }
+            //if(validate_port(m_args.servo_inf[i], i))
+              //m_channel[i] = new DirectPWM();
           }
-
-          for (size_t id = 0; id < c_max_pwm; id++)
+          if(m_args.pwm_inf[i] != 0)
           {
-            if(m_args.pwm_inf[id] != 0)
-            {
-              //m_pwm[id] = new PWMsignal(this, m_args.pwm_inf[id]);
-              //inf("Initialized Servo PWM id %u on id: %d", id, m_args.pwm_inf[id]);
-            }
+            //validate_port(m_args.pwm_inf[i], i);
+              //m_channel[i] = new DirectPWM();
           }
         }
-        else if(mode == 2)
-        {
-          control = new DMA(this);
-          auto list = DMA::enumerate_channels();
-
-          for (size_t i = 0; i < list.size(); i++)
-          {
-            if(list[i].test(0))
-              inf("Channel %d is active", i);
-            else
-              inf("Channel %d is inactive", i);
-          }
-
-          pin = new DirectGPIO(this, 18);
-        }
-        else
-        {
-          new_pwm = new DirectPWM();
-        }
+        m_channel[0] = new DirectPWM();
+        //m_channel[1] = new DirectPWM();
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        inf("Release resource");
-        for (size_t id = 0; id < c_max_servo; id++)        
-        {
-          if (m_servo[id] != nullptr)
-          {
-            m_servo[id]->stopAndJoin();
-            delete m_servo[id];
-            m_servo[id] = nullptr;
-          }
-        }
-
-        for (size_t id = 0; id < c_max_pwm; id++)
-        {
-          if (m_pwm[id] != nullptr)
-          {
-            m_pwm[id]->stopAndJoin();
-            delete m_pwm[id];
-            m_pwm[id] = nullptr;
-          }
-        }
-        if (pin != nullptr)
-        {
-          pin->stopAndJoin();
-          delete pin;
-          pin = nullptr;
-        }
-        if (new_pwm != nullptr)
-        {
-          delete new_pwm;
-          new_pwm = nullptr;
-        }
-        
-        inf("End release");
+        Memory::clear(m_channel[0]);
+        Memory::clear(m_channel[1]);
       }
 
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        (void)msg;
-        // convert msg->value to dutycycle
-
+        m_channel[msg->id]->setDutyCycle(radToDutycycle(msg->value));
       }
 
+      uint32_t
+      radToDutycycle(fp32_t rad)
+      {
+        float angle = Angles::degrees(rad);
+        if (angle < -90)
+          angle = -90;
+        else if( angle > 90)
+          angle = 90;
+        
+        return angle * 5.5 + 1495;
+        // y = mx + b
+        // m = (-90 - 90)/(1000 - 2000) ; b = 1000 - (-90*m)
+      }
       void
       consume(const IMC::SetPWM* msg)
       {
-        (void)msg;
+        //m_channel[msg->id]->setPeriod(msg->period);
+        m_channel[msg->id]->setDutyCycle(msg->duty_cycle);
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        if(mode == 1)
-        { 
-          RestartSystem();
-        }
-        if(mode == 2)
+        while (!isStopping())
         {
-          Counter<double> dog;
-          pin->setDutyCicle(1'000);
-          pin->start();
-          while (!stopping())
-          {
-            //m_servo[0]->setDutyCycle(1'000);
-            pin->setDutyCicle(1'000);
-            inf("DutyCycle set 1ms");
-            dog.setTop(1);
-            while(!dog.overflow())
-            {
-
-            }
-            
-            //m_servo[0]->setDutyCycle(2'000);
-            pin->setDutyCicle(2'000);
-            inf("DutyCycle set 2ms");
-            dog.setTop(1);
-            
-            while(!dog.overflow())
-            {
-              
-            }
-          }
-        }
-        else
-        {
-          uint32_t cycle;
-          inf("Using direct PWM");
-          while (!isStopping())
-          {
-            new_pwm->setDutyCycle(1'000);
-            inf("DutyCycle set 1ms");
-            Delay::wait(1);
-            new_pwm->setDutyCycle(2'000);
-            inf("DutyCycle set 2ms");
-            Delay::wait(1);
-          }
+          m_channel[0]->setDutyCycle(1'000);
+          inf("DutyCycle set 1ms");
+          Delay::wait(1);
+          m_channel[0]->setDutyCycle(2'000);
+          inf("DutyCycle set 2ms");
+          Delay::wait(1);
         }
       }
     };
