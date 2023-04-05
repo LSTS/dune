@@ -1,5 +1,5 @@
-#ifndef ACTUATORS_DMA_HPP_INCLUDED_
-#define ACTUATORS_DMA_HPP_INCLUDED_
+#ifndef ACTUATORS_PWMV2_DMA_HPP_INCLUDED_
+#define ACTUATORS_PWMV2_DMA_HPP_INCLUDED_
 
 /*
 For DMA channel N
@@ -36,10 +36,9 @@ namespace Actuators
 {
   namespace PWMv2
   {
+    // for rasp 2
     const int c_page_size = 0x01000;
     const int c_dma_off   = 0x00100;
-    const int c_bus_addr  = 0x7E000000; // Bus addr
-    const int c_peri_phy  = 0x3F000000; // Peripheral physical addr
     const int c_dma_base  = 0x3F007000; // DMA base addr (physical addr) 
   
     enum ControlRegisterAddr

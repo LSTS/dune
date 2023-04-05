@@ -33,6 +33,7 @@
 // local headers
 #include "PWMsignal.hpp"
 #include "DMA.hpp"
+#include "DirectGPIO.hpp"
 #include "DirectPWM.hpp"
 
 // TODO: change read param Servo 0-.. Pin
@@ -70,11 +71,13 @@ namespace Actuators
       //! Dma controller
       DMA *control;
       DirectGPIO *pin;
+      DirectPWM *new_pwm;
+      int mode;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), m_servo(), m_pwm(), pin(nullptr)
+        DUNE::Tasks::Task(name, ctx), m_servo(), m_pwm(), pin(nullptr), new_pwm(nullptr)
       {
         for (unsigned int i = 0; i < c_max_servo; i++)
         {
@@ -95,6 +98,7 @@ namespace Actuators
         
         m_servo.fill(nullptr);
         m_pwm.fill(nullptr);
+
         
         bind<IMC::SetServoPosition>(this);
         //bind<IMC::GpioStateSet>(this);
@@ -129,8 +133,7 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        inf("Select test PWM: 1(PWMsignal), 2(DirectPWM)");
-        int mode;
+        inf("Select test PWM: 1(PWMsignal), 2(DirectGPIO), 3(DirectPWM)");
         std::cin >> mode;
         if (mode == 1)
         {
@@ -153,7 +156,7 @@ namespace Actuators
             }
           }
         }
-        else
+        else if(mode == 2)
         {
           control = new DMA(this);
           auto list = DMA::enumerate_channels();
@@ -167,6 +170,10 @@ namespace Actuators
           }
 
           pin = new DirectGPIO(this, 18);
+        }
+        else
+        {
+          new_pwm = new DirectPWM();
         }
       }
 
@@ -197,8 +204,14 @@ namespace Actuators
         if (pin != nullptr)
         {
           pin->stopAndJoin();
+          delete pin;
+          pin = nullptr;
         }
-        
+        if (new_pwm != nullptr)
+        {
+          delete new_pwm;
+          new_pwm = nullptr;
+        }
         
         inf("End release");
       }
@@ -221,28 +234,49 @@ namespace Actuators
       void
       onMain(void)
       {
-        Counter<double> dog;
-        pin->setDutyCicle(1'000);
-        pin->start();
-        while (!stopping())
+        if(mode == 1)
+        { 
+          RestartSystem();
+        }
+        if(mode == 2)
         {
-          //m_servo[0]->setDutyCycle(1'000);
+          Counter<double> dog;
           pin->setDutyCicle(1'000);
-          inf("DutyCycle set 1ms");
-          dog.setTop(1);
-          while(!dog.overflow())
+          pin->start();
+          while (!stopping())
           {
+            //m_servo[0]->setDutyCycle(1'000);
+            pin->setDutyCicle(1'000);
+            inf("DutyCycle set 1ms");
+            dog.setTop(1);
+            while(!dog.overflow())
+            {
 
-          }
-          
-          //m_servo[0]->setDutyCycle(2'000);
-          pin->setDutyCicle(2'000);
-          inf("DutyCycle set 2ms");
-          dog.setTop(1);
-          
-          while(!dog.overflow())
-          {
+            }
             
+            //m_servo[0]->setDutyCycle(2'000);
+            pin->setDutyCicle(2'000);
+            inf("DutyCycle set 2ms");
+            dog.setTop(1);
+            
+            while(!dog.overflow())
+            {
+              
+            }
+          }
+        }
+        else
+        {
+          uint32_t cycle;
+          inf("Using direct PWM");
+          while (!isStopping())
+          {
+            new_pwm->setDutyCycle(1'000);
+            inf("DutyCycle set 1ms");
+            Delay::wait(1);
+            new_pwm->setDutyCycle(2'000);
+            inf("DutyCycle set 2ms");
+            Delay::wait(1);
           }
         }
       }
