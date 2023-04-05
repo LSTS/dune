@@ -11,13 +11,27 @@ namespace Actuators
     const unsigned int c_PWM_REGISTER_OFFSET    = 0x20C000;
     const unsigned int c_CLOCK_REGISTER_OFFSET  = 0x101000;
     
+    enum FSEL
+    {
+      INPUT   = 0b000,
+      OUTPUT  = 0b001,
+      FUNC0   = 0b100,
+      FUNC1   = 0b101,
+      FUNC2   = 0b110,
+      FUNC3   = 0b111,
+      FUNC4   = 0b011,
+      FUNC5   = 0b010
+    };
+
     //! READING/WRITING WITHOUT BARRIER
     class DirectPWM
     {
     public:
 
-      DirectPWM()
+      DirectPWM(int port, int channel)
       {
+        // validate port and channel
+        // check /boot/config.txt for available pwm channels and its ports
         off_t p_off;
         size_t p_size;
         FILE* tree = fopen("/proc/device-tree/soc/ranges", "rb");
@@ -73,32 +87,21 @@ namespace Actuators
         if (peri == MAP_FAILED)
           throw std::runtime_error("Failed to map memory");
 
-        volatile uint32_t *gpio_base, *pwm_base, *clock_base;
-        gpio_base   = peri + c_GPIO_REGISTER_OFFSET/4;
-        pwm_base    = peri + c_PWM_REGISTER_OFFSET/4;
-        clock_base  = peri + c_CLOCK_REGISTER_OFFSET/4;
+        m_gpio   = peri + c_GPIO_REGISTER_OFFSET/4;
+        m_pwm       = peri + c_PWM_REGISTER_OFFSET/4;
+        m_clock  = peri + c_CLOCK_REGISTER_OFFSET/4;
         
         close(fd);
 
+        initGPIO(port, FSEL::FUNC5);
 
-        initGPIO(gpio_base, 18);
-        //set PWM clock
-        setPWMclock(clock_base);
+        setClock();
 
-        //set PWM mode
-        uint32_t ctl = read_peri(pwm_base);
-        ctl |= 0x01;    // enable pwm channel 0
-        ctl |= 0x080;   // use M/S transmission
-        write_peri(pwm_base, ctl);
+        setMode(channel, 1);
 
-        //pwm_base + 4 -> register channel 0 range
-        //write peripheral range 
-        write_peri(pwm_base+4, 20'000);//0x400
+        setRange(20'000);
 
-        //pwm_base + 5 -> register channel 0 range
-        //write peripheral data
-        write_peri(pwm_base+5, 1'000);
-        m_pwm = pwm_base;
+        setData(1'000);
       }
 
       void
@@ -109,7 +112,8 @@ namespace Actuators
 
       ~DirectPWM()
       {
-
+        setData(0);
+        //disable pwm
       }
 
     private:
@@ -134,41 +138,68 @@ namespace Actuators
 
 
       void
-      initGPIO(volatile uint32_t* base_addr, int pin)
+      initGPIO(int pin, int mode)
       {
-        // function select 0
+        // function select 5
         // shift ((index%10)*3) bits
-        // mask is always 7
+        // mask is always 0b111
         // 010 -> set GPIO PIN alt func
 
-        volatile uint32_t* pin_addr = base_addr + pin/10;
+        volatile uint32_t* pin_addr = m_gpio + pin/10;
         uint32_t shift = (pin%10) * 3;
         uint32_t mask = 0b111 << shift;
-        uint32_t mode = 0b010 << shift;
+        mode = mode << shift;
         uint32_t value = read_peri(pin_addr);
         value = (value & ~mask) | (mode & mask);
         write_peri(pin_addr, value);
       }
 
       void
-      setPWMclock(volatile uint32_t* clock_addr)
+      setClock()
       {
         uint32_t password = (0x5A << 24);
-        write_peri(clock_addr + 40, password | 0x01);//stop clock
+        //stop clock
+        write_peri(m_clock + 40, password | 0x01);
         Delay::waitMsec(110);
 
-        while ((read_peri(clock_addr + 40) & 0x80) != 0)
+        while ((read_peri(m_clock + 40) & 0x80) != 0)
         {
           Delay::waitMsec(10);
         }
 
-        uint32_t div = 19; // results in 2.4MHz      19.2MHz
+        uint32_t div = 19; // results in 19.2MHz/19
         div &= 0xfff;
-        write_peri(clock_addr +41, password | (div << 12)); // set freq
-        write_peri(clock_addr +40, password | 0x11);        // enable clock
+        write_peri(m_clock +41, password | (div << 12)); // set freq
+        write_peri(m_clock +40, password | 0x11);        // enable clock
+      }
+
+      void
+      setMode(uint32_t channel, uint32_t mode)
+      {
+        uint32_t ctl = read_peri(m_pwm);
+        ctl |= 0x01;    // enable pwm channel 0
+        ctl |= 0x080;   // use M/S transmission
+        write_peri(m_pwm, ctl);
+      }
+
+      void
+      setRange(uint32_t range)
+      {
+        //m_pwm + 4 -> register channel 0 range
+        //write peripheral range 
+        write_peri(m_pwm+4, range);
+      }
+
+      void
+      setData(uint32_t data)
+      {
+        //m_pwm + 5 -> register channel 0 range
+        //write peripheral data
+        write_peri(m_pwm+5, data);
       }
       
-      volatile uint32_t* base_gpio;
+      volatile uint32_t* m_gpio;
+      volatile uint32_t* m_clock;
       volatile uint32_t* m_pwm;
     };
     

@@ -132,7 +132,7 @@ namespace Actuators
               //m_channel[i] = new DirectPWM();
           }
         }
-        m_channel[0] = new DirectPWM();
+        m_channel[0] = new DirectPWM(18, 0);
         //m_channel[1] = new DirectPWM();
       }
 
