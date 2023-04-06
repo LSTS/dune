@@ -420,8 +420,8 @@ namespace Transports
           break;
 
         case CID_SETTINGS_SET:
-          task->debug("MESSAGE  CID_SETTINGS_SET");
-          task->debug("data_Beacon.cid_sys_settings_set_msg.status 0x%02X",
+          task->trace("MESSAGE  CID_SETTINGS_SET");
+          task->trace("data_Beacon.cid_sys_settings_set_msg.status 0x%02X",
                       (unsigned)data_Beacon.cid_sys_settings_set_msg.status);
           break;
 
