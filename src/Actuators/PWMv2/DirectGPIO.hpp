@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <stdexcept>
 #include "DMA.hpp"
+#include "DirectPWM.hpp"
 #include <DUNE/DUNE.hpp>
 
 namespace Actuators
@@ -14,11 +15,9 @@ namespace Actuators
     // Import namespaces.
     using DUNE_NAMESPACES;
 
-    const int c_GPIO_REGISTER_OFFSET  = 0x200000;
-    const int c_PERI_BASE             = 0x3F000000;
-    const int c_GPIO_SET_OFFSET       = 0x1C;
-    const int c_GPIO_CLR_OFFSET       = 0x28;
-
+    const unsigned int c_GPIO_SET_OFFSET        = 0x0000001C;
+    const unsigned int c_GPIO_CLR_OFFSET        = 0x00000028;
+    
     //TODO: Add Reading/Writing peri with Memory barrier
     class DirectGPIO: public Thread
     {
@@ -31,7 +30,7 @@ namespace Actuators
         if(fd < 0)
           throw std::runtime_error("Failed to open /dev/mem");
 
-        gpio_base = (uint32_t *)mmap(NULL, c_page_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, c_PERI_BASE+c_GPIO_REGISTER_OFFSET);
+        gpio_base = (uint32_t *)mmap(NULL, c_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, c_PERI_BASE+c_GPIO_REGISTER_OFFSET);
         if (gpio_base == MAP_FAILED)
           throw std::runtime_error("Failed addr mapping");
         
@@ -61,11 +60,15 @@ namespace Actuators
       { 
         // function select 0
         // shift ((index%10)*3) bits
-        // mask is always 7
+        // mask is always 7 -> 0b111
         // 001 -> set GPIO PIN output
 
-        *(port+(index/10)) &= ~(7 <<((index%10)*3));  //mask
-        *(port+(index/10)) |= (1 << (index%10)*3);    //set output
+        uint32_t shift = (index%10) * 3;
+        uint32_t mask = 0b111 << shift;
+        uint32_t mode = 0b001 << shift;
+
+        *(port+(index/10)) &= ~mask;    //mask -> all register bits to 0
+        *(port+(index/10)) |= mode;     //set output
       }
 
       

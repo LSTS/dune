@@ -132,8 +132,8 @@ namespace Actuators
               //m_channel[i] = new DirectPWM();
           }
         }
-        m_channel[0] = new DirectPWM(18, 0);
-        //m_channel[1] = new DirectPWM();
+        m_channel[0] = new DirectPWM(18);
+        m_channel[1] = new DirectPWM(19);
       }
 
       //! Release resources.
@@ -177,9 +177,11 @@ namespace Actuators
         while (!isStopping())
         {
           m_channel[0]->setDutyCycle(1'000);
+          m_channel[1]->setDutyCycle(1'000);
           inf("DutyCycle set 1ms");
           Delay::wait(1);
           m_channel[0]->setDutyCycle(2'000);
+          m_channel[1]->setDutyCycle(2'000);
           inf("DutyCycle set 2ms");
           Delay::wait(1);
         }

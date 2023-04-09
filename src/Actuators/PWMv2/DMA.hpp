@@ -37,9 +37,9 @@ namespace Actuators
   namespace PWMv2
   {
     // for rasp 2
-    const int c_page_size = 0x01000;
-    const int c_dma_off   = 0x00100;
-    const int c_dma_base  = 0x3F007000; // DMA base addr (physical addr) 
+    const int c_DMA_PAGE  = 0x00001000;
+    const int c_DMA_OFF   = 0x00000100; // DMA block offset
+    const int c_DMA_BASE  = 0x3F007000; // DMA base addr (physical addr) 
   
     enum ControlRegisterAddr
     {
@@ -47,7 +47,6 @@ namespace Actuators
       DMA1 = 0x7E007100,
       DMA2 = 0x7E007200//, ...
     };
-
 
     enum ControlStatus
     {
@@ -85,7 +84,7 @@ namespace Actuators
       MEM_FLAG_ZERO             = 1 << 4,  /* initialise buffer to all zeros */
       MEM_FLAG_NO_INIT          = 1 << 5, /* don't initialise (default is initialise to all ones */
       MEM_FLAG_HINT_PERMALOCK   = 1 << 6, /* Likely to be locked for long periods of time. */
-    }Alloc;
+    };
 
     class DMA
     {
@@ -131,7 +130,7 @@ namespace Actuators
         if(fd < 0)
           throw std::runtime_error("Failed to open /dev/mem");
 
-        uint32_t *result = (uint32_t *)mmap(NULL, c_page_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0x3F000000+c_dma_base);
+        uint32_t *result = (uint32_t *)mmap(NULL, c_DMA_PAGE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, c_DMA_BASE);
         if (result == MAP_FAILED)
           throw std::runtime_error("Failed addr mapping");
         
@@ -139,7 +138,7 @@ namespace Actuators
 
         uint8_t* base = (uint8_t*)result;
         int dma_channel = 1;
-        m_reg = (ControlRegister*)(base + dma_channel*c_dma_off); // using dma channel 1
+        m_reg = (ControlRegister*)(base + dma_channel*c_DMA_OFF); // using dma channel 1
         
       }
 
@@ -175,7 +174,7 @@ namespace Actuators
       void
       allocate_handlers(uint32_t size)
       {
-        size = (size + c_page_size -1) & (-c_page_size); // rounding to multiple of c_page_size 4096
+        size = (size + c_DMA_PAGE -1) & (-c_DMA_PAGE); // rounding to multiple of c_page_size 4096
 
         DMAHandle* mem = (DMAHandle*)malloc(sizeof(DMAHandle));
 
@@ -205,7 +204,7 @@ namespace Actuators
         //buff[4] = 12;             // size of data 
         buff[5] = size;           // number of bytes
         buff[6] = align;          // alignment
-        buff[7] = flags;          // falgs -> 
+        buff[7] = flags;          // flags -> 
 
         buff[8] = 0x0;            // process request end
 
@@ -224,7 +223,7 @@ namespace Actuators
         uint32_t off = 0x00001000;
         for (int i = 0; i < 16; i++)
         {
-          uint32_t *result = (uint32_t *)mmap(NULL, c_page_size, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+off*i);
+          uint32_t *result = (uint32_t *)mmap(NULL, c_DMA_PAGE, PROT_READ, MAP_SHARED, mem_f, 0x3F000000+off*i);
           
           if (result == MAP_FAILED)
             throw std::runtime_error("Failed to map memory");    
@@ -240,12 +239,12 @@ namespace Actuators
 
       DUNE::Tasks::Task* m_task;
       int m_mailbox;
-      volatile ControlRegister* m_reg;
-      volatile DMAHandle* m_handle;
+      ControlRegister* m_reg;
+      DMAHandle* m_handle;
     };
-  } // namespace DMA
+  }
   
-} // namespace Actuators
+}
 
 
 
