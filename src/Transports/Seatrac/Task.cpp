@@ -56,7 +56,7 @@ namespace Transports
 
     //! Task arguments.
     struct Arguments
-    {\
+    {
       //! Serial port device.
       std::string uart_dev;
       //! Serial port baud rate.
