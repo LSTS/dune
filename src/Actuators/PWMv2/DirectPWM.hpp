@@ -1,5 +1,5 @@
-#ifndef ACTUATORS_PWMV2_DIRECTPWM_HPP_
-#define ACTUATORS_PWMV2_DIRECTPWM_HPP_
+#ifndef ACTUATORS_PWMV2_DIRECTPWM_HPP_INCLUDED_
+#define ACTUATORS_PWMV2_DIRECTPWM_HPP_INCLUDED_
 
 #include "DMA.hpp"
 #include "DirectGPIO.hpp"
@@ -90,6 +90,7 @@ namespace Actuators
         else
           std::runtime_error("PWM port not available in /boot/config.txt");
 
+        std::cout << "Port " << m_port << " CHANNEL " << m_channel << "\n";
         int fd = open("/dev/mem", O_RDWR | O_SYNC);
         if(fd < 0)
           throw std::runtime_error("Failed to open /dev/mem");
@@ -104,7 +105,7 @@ namespace Actuators
         
         close(fd);
 
-        initGPIO(port, FSEL::FUNC5);
+        initGPIO(m_port, FSEL::FUNC5);
 
         setClock();
 
@@ -118,7 +119,7 @@ namespace Actuators
       void
       setDutyCycle(uint32_t _duty)
       {
-        *(m_pwm+5) = _duty;
+        setData(_duty);
       }
 
       ~DirectPWM()
@@ -132,18 +133,18 @@ namespace Actuators
       void
       write_peri(volatile uint32_t* addr, uint32_t value)
       {
-        //__sync_synchronize();
+        __sync_synchronize();
         *addr = value;
-        //__sync_synchronize();
+        __sync_synchronize();
       }
 
       uint32_t
       read_peri(volatile uint32_t* addr)
       {
         uint32_t read;
-        //__sync_synchronize();
+        __sync_synchronize();
         read = *addr;
-        //__sync_synchronize();
+        __sync_synchronize();
         return read;
       }
 
@@ -154,14 +155,16 @@ namespace Actuators
         // function select 5
         // shift ((index%10)*3) bits
         // mask is always 0b111
-        // 010 -> set GPIO PIN alt func
+        // 010 -> set GPIO PIN alt func 5
 
         volatile uint32_t* pin_addr = m_gpio + pin/10;
         uint32_t shift = (pin%10) * 3;
         uint32_t mask = 0b111 << shift;
         mode = mode << shift;
+
         uint32_t value = read_peri(pin_addr);
         value = (value & ~mask) | (mode & mask);
+        
         write_peri(pin_addr, value);
       }
 
