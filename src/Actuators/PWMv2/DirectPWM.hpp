@@ -85,7 +85,7 @@ namespace Actuators
 
         if (m_port == pin1)
           m_channel = 0;
-        else if(m_port = pin2)
+        else if(m_port == pin2)
           m_channel = 1;
         else
           std::runtime_error("PWM port not available in /boot/config.txt");
