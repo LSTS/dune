@@ -71,8 +71,6 @@ namespace Transports
     static const int c_bfr_size = 256;
     //! Sound speed update window (m/s).
     static const uint16_t c_sspeed_window = 1;
-    //! Time between attitude updates for transponder.
-    static const float c_att_interval = 0.05;
 
     //! Entity states.
     enum EntityStates

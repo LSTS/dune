@@ -93,6 +93,8 @@ namespace Transports
       std::string sound_speed_elabel;
       //! Calculate NED offsets
       bool calc_ned_locally;
+      //! Attitude update frequency when manually set.
+      float freq_attitude;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -261,6 +263,13 @@ namespace Transports
         .defaultValue("true")
         .description("Calculate NED offsets when USBL range is received.");
 
+        param("Attitude update frequency", m_args.freq_attitude)
+        .units(DUNE::Units::Hertz)
+        .defaultValue("20")
+        .minimumValue("0")
+        .maximumValue("50")
+        .description("Frequency at which the attitude is updated on the modem, when manually set.");
+
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
         m_states[STA_BOOT].description = DTR("initializing");
@@ -381,7 +390,8 @@ namespace Transports
           throw std::runtime_error(m_states[m_state_entity].description);
         }
 
-        m_timer.setTop(c_att_interval);
+        if (m_args.freq_attitude != 0)
+          m_timer.setTop(1/m_args.freq_attitude);
       }
 
       //! Update parameters.
@@ -420,8 +430,9 @@ namespace Transports
       {
         Memory::replace(m_last_angles, msg->clone());
 
-        if (m_args.ahrs_mode || !m_timer.overflow())
+        if (m_args.ahrs_mode || !m_timer.overflow() || !m_args.freq_attitude)
           return;
+
         // Rotate attitude values to transponder reference frame.
         Math::Matrix data(3, 1);
         data(0) = msg->phi;
