@@ -95,6 +95,8 @@ namespace Transports
       bool calc_ned_locally;
       //! Attitude update frequency when manually set.
       float freq_attitude;
+      //! Fit error threshold
+      float fit_threshold;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -269,6 +271,11 @@ namespace Transports
         .minimumValue("0")
         .maximumValue("50")
         .description("Frequency at which the attitude is updated on the modem, when manually set.");
+
+        param("Fit Error Threshold", m_args.fit_threshold)
+        .defaultValue("3.4")
+        .description("The fit error indicates the quality of fit (or confidence) of the signal azimuth and elevation values"
+                         " from the timing and phase-angle data available.");
 
         // Initialize state messages.
         m_states[STA_BOOT].state = IMC::EntityState::ESTA_BOOT;
@@ -786,7 +793,17 @@ namespace Transports
           }
           
           if (aco_fix.outputflags_list[4])
-            debug("Position received with filter error flag set!");
+          {
+            debug("Position received with filter error flag set! Discarding it!");
+            return;
+          }
+
+          if ((float)(aco_fix.usbl_fit_error/100) > m_args.fit_threshold)
+          {
+            debug("Position received with fit error above defined threshold (%f > %f)! Discarding it!",
+                  (float)(aco_fix.usbl_fit_error/100), m_args.fit_threshold);
+            return;
+          }
 
           dispatch(usblPosition);
         }
