@@ -663,45 +663,48 @@ namespace Transports
       // Convert AER to rotated XYZ position
       //! @param[in] aer AER position.
       //! @param[in] euler Euler angles.
-      //! @param[out] xyz XYZ position.      
-      void 
+      //! @param[out] xyz XYZ position.
+      void
       aer2xyz(double aer[3], double euler[3], double xyz[3])
       {
-          // Compute intermediate variables
-          double sinA = std::sin(aer[0]), cosA = std::cos(aer[0]);
-          double sinE = std::sin(aer[1]), cosE = std::cos(aer[1]);
+        // Compute intermediate variables
+        double sinA = std::sin(aer[0]), cosA = std::cos(aer[0]);
+        double sinE = std::sin(aer[1]), cosE = std::cos(aer[1]);
 
-          // Convert to local XYZ
-          xyz[0] = -aer[2]*sinE*cosA;    // X
-          xyz[1] = aer[2]*sinE*sinA;     // Y
-          xyz[2] = -aer[2]*cosE;         // Z
+        // Convert to local XYZ
+        xyz[0] = -aer[2] * sinE * cosA;// X
+        xyz[1] = aer[2] * sinE * sinA; // Y
+        xyz[2] = -aer[2] * cosE;       // Z
 
-          // Apply Euler rotation
-          double Rz[3][3] = {{std::cos(euler[0]), -std::sin(euler[0]), 0},
-                            {std::sin(euler[0]), std::cos(euler[0]), 0},
-                            {0, 0, 1}};
-          double Ry[3][3] = {{std::cos(euler[1]), 0, std::sin(euler[1])},
-                            {0, 1, 0},
-                            {-std::sin(euler[1]), 0, std::cos(euler[1])}};
-          double Rx[3][3] = {{1, 0, 0},
-                            {0, std::cos(euler[2]), -std::sin(euler[2])},
-                            {0, std::sin(euler[2]), std::cos(euler[2])}};
-          double R[3][3] = {{0}};
+        // Apply Euler rotation
+        double Rz[3][3] = { { std::cos(euler[0]), -std::sin(euler[0]), 0 },
+                            { std::sin(euler[0]), std::cos(euler[0]), 0 },
+                            { 0, 0, 1 } };
+        double Ry[3][3] = { { std::cos(euler[1]), 0, std::sin(euler[1]) },
+                            { 0, 1, 0 },
+                            { -std::sin(euler[1]), 0, std::cos(euler[1]) } };
+        double Rx[3][3] = { { 1, 0, 0 },
+                            { 0, std::cos(euler[2]), -std::sin(euler[2]) },
+                            { 0, std::sin(euler[2]), std::cos(euler[2]) } };
+        double R[3][3] = { { 0 } };
 
-          // Compute overall rotation matrix
-          for (int i = 0; i < 3; i++) {
-              for (int j = 0; j < 3; j++) {
-                  for (int k = 0; k < 3; k++) {
-                      R[i][j] += Rz[i][k] * Ry[k][j] * Rx[j][k];
-                  }
-              }
+        // Compute overall rotation matrix
+        for (int i = 0; i < 3; i++)
+        {
+          for (int j = 0; j < 3; j++)
+          {
+            for (int k = 0; k < 3; k++)
+            {
+              R[i][j] += Rz[i][k] * Ry[k][j] * Rx[j][k];
+            }
           }
+        }
 
-          // Rotate XYZ vector
-          double x = xyz[0], y = xyz[1], z = xyz[2];
-          xyz[0] = R[0][0]*x + R[0][1]*y + R[0][2]*z;
-          xyz[1] = R[1][0]*x + R[1][1]*y + R[1][2]*z;
-          xyz[2] = R[2][0]*x + R[2][1]*y + R[2][2]*z;
+        // Rotate XYZ vector
+        double x = xyz[0], y = xyz[1], z = xyz[2];
+        xyz[0] = R[0][0] * x + R[0][1] * y + R[0][2] * z;
+        xyz[1] = R[1][0] * x + R[1][1] * y + R[1][2] * z;
+        xyz[2] = R[2][0] * x + R[2][1] * y + R[2][2] * z;
       }
 
       //! Handle acoustic information from received data.
