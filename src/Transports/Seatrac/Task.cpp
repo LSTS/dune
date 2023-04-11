@@ -381,7 +381,7 @@ namespace Transports
         {
           err("%s: %s", DTR(Status::getString(CODE_COM_ERROR)), e.what());
           setState(STA_ERR_COM);
-          throw std::runtime_error(m_states[m_state_entity].description);
+          throw RestartNeeded(m_states[m_state_entity].description, 30);
         }
 
         try
@@ -563,7 +563,7 @@ namespace Transports
       {
         // Throw runtime error if connection problem persists
         if (Clock::get() > (m_last_input + c_input_tout + 30))
-          throw std::runtime_error(m_states[STA_ERR_COM].description);
+          throw RestartNeeded(m_states[STA_ERR_COM].description, 30);
 
         return (Clock::get() < (m_last_input + c_input_tout));
       }
@@ -789,7 +789,7 @@ namespace Transports
             aer2xyz(aer, euler, xyz);
             usblPosition.n = xyz[0];
             usblPosition.e = xyz[1];
-            usblPosition.d = xyz[2];            
+            usblPosition.d = xyz[2];
           }
           
           if (aco_fix.outputflags_list[4])
@@ -1258,10 +1258,7 @@ namespace Transports
 
           // Check modem connection
           if (!hasConnection())
-          {
             setState(STA_ERR_COM);
-            err("%s", DTR(Status::getString(CODE_COM_ERROR)));
-          }
         }
       }
     };
