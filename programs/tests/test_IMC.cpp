@@ -20257,6 +20257,9 @@ main(void)
     tmp_msg_1.commmon = 168U;
     tmp_msg_1.convergmon = 194U;
     msg.start_actions.push_back(tmp_msg_1);
+    IMC::SessionKeepAlive tmp_msg_2;
+    tmp_msg_2.sessid = 4126049340U;
+    msg.end_actions.push_back(tmp_msg_2);
 
     try
     {

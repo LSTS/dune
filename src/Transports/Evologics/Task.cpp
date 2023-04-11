@@ -274,7 +274,7 @@ namespace Transports
         {
           if (m_args.sound_speed_elabel.length() == 0)
           {
-            inf("dynamic sound speed corrections are disabled, using default %d", (int)m_args.sound_speed_def);
+            debug("dynamic sound speed corrections are disabled, using default %d", (int)m_args.sound_speed_def);
             m_sound_speed = m_args.sound_speed_def;
             m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
           }
@@ -288,6 +288,19 @@ namespace Transports
           m_sound_speed = m_args.sound_speed_def;
           m_sound_speed_eid = DUNE_IMC_CONST_UNK_EID;
         }
+
+        try
+        {
+          resolveEntity(m_args.simulator_elabel);
+          m_simulating = m_ctx.profiles.isSelected("Simulation");
+          debug("Simulator detected");
+        }
+        catch(const std::exception& e)
+        {
+          m_simulating = false;
+          debug("No simulator detected: %s", e.what());
+        }
+        
       }
 
       void
@@ -654,6 +667,8 @@ namespace Transports
       void
       handleMessageFailed(const std::string& str)
       {
+        debug("Message failed.");
+
         (void)str;
         m_driver->setBusy(false);
         clearTicket(IMC::UamTxStatus::UTS_FAILED);
@@ -670,6 +685,7 @@ namespace Transports
       void
       handleMessageDelivered(const std::string& str)
       {
+  	debug("Message delivered.");
         //! Query propagation time.
         unsigned dst = 0;
         if ((std::sscanf(str.c_str(), "DELIVEREDIM,%u", &dst) == 1) ||
@@ -678,6 +694,9 @@ namespace Transports
           try
           {
             double ptime = m_driver->getPropagationTime();
+
+            debug("Propagation time is %f", ptime);
+
             if (ptime > 0)
             {
               IMC::UamRxRange range;
@@ -696,6 +715,7 @@ namespace Transports
 
         // Clear ticket.
         m_driver->setBusy(false);
+        sendTxStatus(*m_ticket, IMC::UamTxStatus::UTS_DELIVERED, "");
         clearTicket(IMC::UamTxStatus::UTS_DONE);
       }
 
@@ -710,6 +730,7 @@ namespace Transports
         if (!m_ticket->ack)
         {
           m_driver->setBusy(false);
+          sendTxStatus(*m_ticket, IMC::UamTxStatus::UTS_SENT, "");
           clearTicket(IMC::UamTxStatus::UTS_DONE);
         }
       }

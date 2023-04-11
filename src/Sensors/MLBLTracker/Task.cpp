@@ -71,6 +71,9 @@ namespace Sensors
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
+    // .
+    static const std::string c_broadcast_string = "broadcast";
+
     enum Operation
     {
       // No operation is in progress.
@@ -80,7 +83,9 @@ namespace Sensors
       // Micro-Modem pinging in progress.
       OP_PING_MM,
       // Abort in progress.
-      OP_ABORT
+      OP_ABORT,
+      // UAM Frame.
+      OP_UAM_FRAME
     };
 
     // Narrow band transponder.
@@ -122,8 +127,12 @@ namespace Sensors
       unsigned rx_length;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Mode to receive messages not address to it.
+      bool promiscuous_mode;
       //! Navigation turn around time.
       unsigned turn_around_time;
+      //! UamTxFrame timeout
+      int tout;
     };
 
     // Type definition for mapping addresses.
@@ -169,15 +178,24 @@ namespace Sensors
       std::string m_line;
       // System position
       IMC::EstimatedState *m_estate;
+      // Ongoing frame transmission
+      IMC::UamTxFrame* m_frame;
+      // Signals UamTxRange received
+      bool m_range;
+      // Timer for UamTxFrame
+      Counter<double> m_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_handle(NULL),
         m_op_deadline(-1.0),
+        m_address(0),
         m_pc(NULL),
         m_op(OP_NONE),
         m_gpio_txd(NULL),
-        m_estate(NULL)
+        m_estate(NULL),
+        m_frame(NULL),
+        m_range(false)
       {
         // Define configuration parameters.
         param("Serial Port - Device", m_args.uart_dev)
@@ -230,12 +248,21 @@ namespace Sensors
         .defaultValue("20.0")
         .minimumValue("0");
 
+        param("Timeout - Raw Messages", m_args.tout)
+        .units(Units::Second)
+        .defaultValue("10.0")
+        .minimumValue("0");
+
         param("GPIO - Transducer Detection", m_args.gpio_txd)
         .defaultValue("-1");
 
         param("Address Section", m_args.addr_section)
         .defaultValue("Micromodem Addresses")
         .description("Name of the configuration section with modem addresses");
+
+        param("Promiscuous Mode", m_args.promiscuous_mode)
+        .defaultValue("false")
+        .description("Mode to receive messages not address to it");
 
         // Process narrow band transponders.
         std::vector<std::string> txponders = ctx.config.options("Narrow Band Transponders");
@@ -249,9 +276,10 @@ namespace Sensors
         m_ignore_gpio = false;
 
         // Register message handlers.
-        bind<IMC::AcousticOperation>(this);
+        //bind<IMC::AcousticOperation>(this);
         bind<IMC::EstimatedState>(this);
-        bind<IMC::AcousticSystemsQuery>(this);
+        bind<IMC::UamTxFrame>(this);
+        bind<IMC::UamTxRange>(this);
       }
 
       ~Task(void)
@@ -358,6 +386,7 @@ namespace Sensors
         Memory::clear(m_pc);
         Memory::clear(m_gpio_txd);
         Memory::clear(m_handle);
+        Memory::clear(m_frame);
       }
 
       void
@@ -389,6 +418,7 @@ namespace Sensors
       {
         m_op = OP_NONE;
         m_op_deadline = -1.0;
+        Memory::clear(m_frame);
       }
 
       bool
@@ -422,6 +452,160 @@ namespace Sensors
       consume(const IMC::EstimatedState* msg)
       {
         Memory::replace(m_estate, new IMC::EstimatedState(*msg));
+      }
+
+      void
+      consume(const IMC::UamTxFrame* msg)
+      {
+        if (msg->getDestinationEntity() != getEntityId() && msg->getDestinationEntity() != 255)
+          return;
+
+        if (msg->sys_dst == getSystemName())
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_ADDR);
+          return;
+        }
+
+        try
+        {
+          lookupSystemAddress(msg->sys_dst);
+        }
+        catch (...)
+        {
+          war(DTR("invalid system name %s"), msg->sys_dst.c_str());
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_ADDR);
+          return;
+        }
+
+        // check if we have a transducer connected.
+        if (!hasTransducer())
+        {
+          war(DTR("No MicroModem transducer connected!"));
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_CANCELED);
+          return;
+        }
+
+        // Fail if busy.
+        if ((m_op != OP_NONE) || (m_frame != NULL))
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_BUSY);
+          return;
+        }
+
+        m_op = OP_UAM_FRAME;
+
+        // does the message fit in a packet?
+        if (msg->data.size() > c_binary_size)
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_INV_SIZE, "Packet exceeds maximum allowed size");
+          resetOp();
+          return;
+        }
+
+        try
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_IP);
+          m_frame = msg->clone();
+          m_timer.setTop(m_args.tout);
+          transmitRawMessage(m_ummap[msg->sys_dst], msg->data, (msg->flags == IMC::UamTxFrame::UTF_ACK));
+        }
+        catch (std::runtime_error& e)
+        {
+          sendTxStatus(msg, IMC::UamTxStatus::UTS_FAILED, e.what());
+          Memory::clear(m_frame);
+          resetOp();
+        }
+      }
+
+      void
+      sendTxStatus(const IMC::UamTxFrame* msg, IMC::UamTxStatus::ValueEnum value,
+                   const std::string& error = "")
+      {
+        IMC::UamTxStatus status;
+        status.setDestination(msg->getSource());
+        status.setDestinationEntity(msg->getSourceEntity());
+        status.seq = msg->seq;
+        status.value = value;
+        status.error = error;
+        dispatch(status);
+      }
+
+      unsigned
+      lookupSystemAddress(const std::string& name)
+      {
+        MicroModemMap::iterator itr = m_ummap.find(name);
+        if (itr == m_ummap.end())
+          throw std::runtime_error("unknown system name");
+
+        return itr->second;
+      }
+
+      std::string
+      lookupSystemName(unsigned addr)
+      {
+        for (std::pair<std::string, unsigned> entry : m_ummap)
+        {
+          if (entry.second == addr)
+            return entry.first;
+        }
+        return "unknown";
+      }
+
+      void
+      transmitRawMessage(int destination, const std::vector<char>& data, bool ack)
+      {
+        std::vector<char> msg(c_binary_size, 0);
+        std::string hex = String::toHex(data);
+
+        if(!m_range)
+        {
+          std::string cmd = String::str("$CCTXD,%u,%u,%u,%s\r\n", m_address, destination, ack, hex.c_str());
+          sendCommand(cmd);
+
+          std::string cyc = String::str("$CCCYC,0,%u,%u,0,%u,1\r\n", m_address, destination, ack);
+          sendCommand(cyc);
+
+          debug("Raw data sent to uModem.");
+        }
+        else
+        {
+          debug("Range uModem!");
+          ping(m_frame->sys_dst);
+          m_range = false; //TEST
+        }
+
+        if(!ack)
+        {
+          sendTxStatus(m_frame, IMC::UamTxStatus::UTS_SENT);
+          sendTxStatus(m_frame, IMC::UamTxStatus::UTS_DONE);
+          Memory::clear(m_frame);
+          resetOp();
+          m_timer.reset();
+        }
+      }
+
+      void
+      consume(const IMC::UamTxRange* msg)
+      {
+        debug("Consume UamTxRange");
+
+        if (msg->getDestinationEntity() != getEntityId() && msg->getDestinationEntity() != 255)
+          return;
+
+        m_range = true;
+
+        IMC::UamTxFrame frame;
+        frame.seq = msg->seq;
+        frame.setDestination(msg->getDestination());
+        frame.setDestinationEntity(msg->getDestinationEntity());
+        frame.setSource(msg->getSource());
+        frame.setSourceEntity(msg->getSourceEntity());
+        frame.sys_dst = msg->sys_dst;
+        frame.flags = UamTxFrame::UTF_ACK;
+        frame.data.push_back((char)0xA1);
+        frame.data.push_back((char)0x01);
+        frame.data.push_back((char)0x0A);
+        dispatch(frame, DF_LOOP_BACK | DF_KEEP_SRC_EID);
       }
 
       void
@@ -516,7 +700,6 @@ namespace Sensors
 
             std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
             sendCommand(cyc);
-
           }
         }
 
@@ -657,6 +840,7 @@ namespace Sensors
       void
       handleRangeModem(NMEAReader* const stn)
       {
+        debug("handleRangeModem");
         unsigned src = 0;
         unsigned dst = 0;
         *stn >> src >> dst;
@@ -669,11 +853,29 @@ namespace Sensors
         {
           *stn >> ttime;
         }
-        catch (...)
-        { }
+        catch (std::exception &e)
+        {
+          err("%s", e.what());
+          return;
+        }
 
         if (ttime < 0)
           ttime = 0;
+
+        // Send received range
+        UamRxRange range;
+        range.seq = m_frame->seq;
+        range.sys = lookupSystemName(src); // TEST
+        range.value = ttime * m_args.sspeed;
+        dispatch(range);
+
+        UamTxStatus status;
+        status.seq = m_frame->seq;
+        status.value = IMC::UamTxStatus::UTS_DELIVERED;
+        dispatchReply(*m_frame, status);
+        status.value = IMC::UamTxStatus::UTS_DONE;
+        dispatchReply(*m_frame, status);
+        Memory::clear(m_frame);
 
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
         m_acop_out.system = m_acop.system;
@@ -687,6 +889,7 @@ namespace Sensors
       void
       handleRangeTransponder(NMEAReader* const stn)
       {
+          debug("handleRangeModem");
         double ttime = 0;
 
         try
@@ -702,6 +905,22 @@ namespace Sensors
         if (ttime < 0)
           ttime = 0;
 
+        // Send received range
+        UamRxRange range;
+        range.seq = m_frame->seq;
+        range.sys = m_frame->sys_dst;
+        range.value = ttime * m_args.sspeed;
+        dispatch(range);
+
+        UamTxStatus status;
+        status.seq = m_frame->seq;
+        status.value = IMC::UamTxStatus::UTS_SENT;
+        dispatchReply(*m_frame, status);
+        status.value = IMC::UamTxStatus::UTS_DONE;
+        dispatchReply(*m_frame, status);
+        Memory::clear(m_frame);
+        m_timer.reset();
+
         m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
         m_acop_out.system = m_acop.system;
         m_acop_out.range = ttime * m_args.sspeed;
@@ -714,6 +933,7 @@ namespace Sensors
       void
       handleMiniPacketReception(NMEAReader* const stn)
       {
+        debug("handleMiniPacketReception");
         unsigned src = 0;
         unsigned dst = 0;
         std::string val;
@@ -767,6 +987,7 @@ namespace Sensors
       void
       handleMiniPacketEcho(NMEAReader* const stn)
       {
+        debug("handleMiniPacketEcho");
         unsigned src = 0;
         unsigned dst = 0;
         std::string val;
@@ -788,23 +1009,46 @@ namespace Sensors
       void
       handleBinaryReception(NMEAReader* const stn)
       {
+        debug("Received Raw Data from uModem.");
+
         unsigned src, dst, ack, fnr;
         std::string hex;
 
         try
         {
           *stn >> src >> dst >> ack >> fnr >> hex;
+          debug("Received Data: %u %u %u %u %s", src, dst, ack, fnr, hex.c_str());
         }
         catch (...)
         {
           return;
         }
 
-        if (dst != 0)
+        if (!m_args.promiscuous_mode && dst != 0 
+            && (lookupSystemName(dst) != getSystemName()
+            || lookupSystemName(dst) != c_broadcast_string))
           return;
+
+        bool broadcast = false;
+        bool process_reception = true;
+
+        if (m_args.promiscuous_mode && lookupSystemName(dst) != getSystemName())
+          process_reception = false;
+        else if (lookupSystemName(dst) == c_broadcast_string)
+          broadcast = true;
 
         std::string msg = String::fromHex(hex);
         const char* msg_raw = msg.data();
+
+        // Dispatch received frame
+        UamRxFrame rx;
+        rx.data.assign(msg.begin(), msg.end());
+        rx.sys_src = lookupSystemName(src);
+        rx.sys_dst = broadcast ? c_broadcast_string : lookupSystemName(dst);
+        dispatch(rx);
+
+        if (!process_reception)
+          return;
 
         uint8_t code = static_cast<uint8_t>(msg_raw[0]);
 
@@ -907,9 +1151,77 @@ namespace Sensors
         }
         else
         {
-          debug("wrong code id");
+          debug("raw message");
         }
       }
+
+      void print(NMEAReader* const stn)
+      {
+          int val;
+          while (!stn->eos()) {
+              *stn >> val;
+              inf("%d",val);
+          }
+      }
+      //! Handle reception of acknowledgment.
+      //! @param[in] stn sentence to be handled.
+      void
+      handleAckReception(NMEAReader* const stn)
+      {
+        debug("ACK!");
+
+        unsigned src, dst, frame, ack;
+
+        try
+        {
+          *stn >> src >> dst >> frame >> ack;
+          debug("Received Data: %u %u %u %u", src, dst, frame, ack);
+        }
+        catch (std::exception& e)
+        {
+          err("%s", e.what());
+          return;
+        }
+
+        if(!ack)
+          return;
+
+        UamTxStatus status;
+        status.seq = m_frame->seq;
+        status.value = IMC::UamTxStatus::UTS_DELIVERED;
+        dispatchReply(*m_frame, status);
+        status.value = IMC::UamTxStatus::UTS_DONE;
+        dispatchReply(*m_frame, status);
+        Memory::clear(m_frame);
+        m_timer.reset();
+        resetOp();
+      }
+
+       //! Handle reception of ping.
+       //! @param[in] stn sentence to be handled.
+       void
+       handlePingReception(NMEAReader* const stn)
+       {
+         debug("Ping Received!");
+         unsigned src, dst;
+
+         try
+         {
+           *stn >> src >> dst;
+           debug("Received Data: %u %u", src, dst);
+         }
+         catch (std::exception& e)
+         {
+           err("%s", e.what());
+           return;
+         }
+
+         // Dispatch received frame
+         UamRxFrame rx;
+         rx.sys_src = lookupSystemName(src);
+         rx.sys_dst = lookupSystemName(dst);
+         dispatch(rx);
+       }
 
       //! Read sentence.
       void
@@ -959,6 +1271,10 @@ namespace Sensors
             handleRangeTransponder(stn);
           else if (std::strcmp(stn->code(), "CARXD") == 0)
             handleBinaryReception(stn);
+          else if (std::strcmp(stn->code(), "CAACK") == 0)
+            handleAckReception(stn);
+          else if (std::strcmp(stn->code(), "CAMPA") == 0)
+            handlePingReception(stn);
         }
         catch (std::exception& e)
         {
@@ -972,12 +1288,12 @@ namespace Sensors
       void
       checkTimeouts(void)
       {
-        if (m_op == OP_NONE)
+        if (m_op == OP_NONE && m_frame == NULL)
           return;
 
         double now = Clock::get();
 
-        if (now > m_op_deadline)
+        if (now > m_op_deadline && m_op != OP_UAM_FRAME)
         {
           m_acop_out.system = m_acop.system;
 
@@ -985,8 +1301,23 @@ namespace Sensors
             m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
           else if (m_op == OP_ABORT)
             m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
+          else
+            m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
 
           dispatch(m_acop_out);
+          resetOp();
+        }
+
+        if(m_timer.overflow())
+        {
+          debug("Timeout!");
+          UamTxStatus status;
+          status.seq = m_frame->seq;
+          status.value = IMC::UamTxStatus::UTS_FAILED;
+          dispatchReply(*m_frame, status);
+          resetOp();
+          Memory::clear(m_frame);
+          m_range = false;
           resetOp();
         }
       }

@@ -774,6 +774,7 @@ namespace Transports
               debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
                   m_ticket->seq, 
                   m_oway_timer.getElapsed());
+              sendTxStatus(*m_ticket, IMC::UamTxStatus::UTS_DELIVERED, "");
               clearTicket(IMC::UamTxStatus::UTS_DONE);
             }
           }
@@ -1314,6 +1315,7 @@ namespace Transports
                 debug(DTR("Msg transmission complete  for ticket %d (in %f s)"), 
                     m_ticket == NULL ? -1 : m_ticket->seq,
                     m_oway_timer.getElapsed());
+                sendTxStatus(*m_ticket, IMC::UamTxStatus::UTS_SENT, "");
                 clearTicket(IMC::UamTxStatus::UTS_DONE);
               }
             }
