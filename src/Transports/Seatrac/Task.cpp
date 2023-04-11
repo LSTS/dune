@@ -791,7 +791,8 @@ namespace Transports
             usblPosition.e = xyz[1];
             usblPosition.d = xyz[2];
           }
-          
+          usblPosition.accuracy = aco_fix.usbl_fit_error / 100.0;
+
           if (aco_fix.outputflags_list[4])
           {
             debug("Position received with filter error flag set! Discarding it!");
@@ -821,6 +822,7 @@ namespace Transports
             usblAnglesMsg.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
             usblAnglesMsg.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
             usblAnglesMsg.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
+            usblAnglesMsg.accuracy = aco_fix.usbl_fit_error / 100.0;
 
             dispatch(usblAnglesMsg);
           }
