@@ -397,7 +397,7 @@ namespace Actuators
 
         fp32_t voltage = fp32_t(voltage_raw) * 0.01;
         fp32_t current = fp32_t(current_raw) * 0.1;
-        debug("MSG_TQ_BAT_STATUS: Batt#%d - Charge: %d; Voltage %0.2fV; Current: %0.1fA; Temp: %d, Error: %d",
+        trace("MSG_TQ_BAT_STATUS: Batt#%d - Charge: %d; Voltage %0.2fV; Current: %0.1fA; Temp: %d, Error: %d",
               bat_idx, soc, voltage, current, temp_C, err_code);
 
         IMC::Temperature temp_msg;
@@ -438,7 +438,7 @@ namespace Actuators
 
           fp32_t voltage_V = fp32_t(voltage_mV) * 0.001;
           fp32_t current_A = fp32_t(current_mA) * 0.001;
-          debug("MSG_RAIL: Rail#%d - Voltage: %0.3fV, Current: %f A, fuse_halfamps: %u, flags: %02X", rail_idx, voltage_V, current_A, fuse_halfamps, flags);
+          trace("MSG_RAIL: Rail#%d - Voltage: %0.3fV, Current: %f A, fuse_halfamps: %u, flags: %02X", rail_idx, voltage_V, current_A, fuse_halfamps, flags);
 
           IMC::Voltage voltage_msg;
           voltage_msg.setSourceEntity(m_power_rail_eid[rail_idx]);
@@ -471,7 +471,7 @@ namespace Actuators
         fp32_t temp = fp32_t(temp_raw) * 0.1;
         int16_t rpm = (int16_t)rpm_raw / 7; // Rounds down to nearest whole number
 
-        debug("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
+        inf("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
               mot_idx, power, temp, rpm);
 
         IMC::Temperature temp_msg;
@@ -489,10 +489,10 @@ namespace Actuators
       void
       parseMSG_TEXT()
       {
-        trace("MSG_TEXT: %s", m_can_bfr);
+        spew("MSG_TEXT: %s", m_can_bfr);
       }
 
-      //! Parses a received MSG_TQ_BATCTL from CAN bus buffer and makes it available for trace debug
+      //! Parses a received MSG_TQ_BATCTL from CAN bus buffer and makes it available for spew debug
       void
       parseMSG_TQ_BATCTL()
       {
@@ -500,31 +500,31 @@ namespace Actuators
         uint8_t master_error = m_can_bfr[1];
         uint8_t error_count = m_can_bfr[2];
         uint8_t firmware_ver = m_can_bfr[3];
-        trace(DTR("MSG_TQ_BATCTL: Motor#%u - Master error: %u; Error count %u; Firmware version: %u"),
+        spew(DTR("MSG_TQ_BATCTL: Motor#%u - Master error: %u; Error count %u; Firmware version: %u"),
               motor_index, master_error, error_count, firmware_ver);
       }
 
-      //! Parses a received MSG_OUTPUTS from CAN bus buffer and makes it available for trace debug
+      //! Parses a received MSG_OUTPUTS from CAN bus buffer and makes it available for spew debug
       void
       parseMSG_OUTPUTS()
       {
         uint8_t rail_index = m_can_bfr[0];
         uint32_t states = (m_can_bfr[4] << 24) | (m_can_bfr[3] << 16) | (m_can_bfr[2] << 8) | m_can_bfr[1];
-        trace(DTR("MSG_OUTPUTS: Rail#%u - Master error: %08X;"),
+        spew(DTR("MSG_OUTPUTS: Rail#%u - Master error: %08X;"),
               rail_index, states);
       }
 
-      //! Parses a received MSG_UPTIME from CAN bus buffer and makes it available for trace debug
+      //! Parses a received MSG_UPTIME from CAN bus buffer and makes it available for spew debug
       void
       parseMSG_UPTIME()
       {
         uint32_t uptime_s = (uint32_t)0 | (m_can_bfr[2] << 16) | (m_can_bfr[1] << 8) | m_can_bfr[0];
         uint8_t last_reset_case = m_can_bfr[3];
-        trace(DTR("MSG_UPTIME: Uptime#%ds; Last reset case: %01X;"),
+        spew(DTR("MSG_UPTIME: Uptime#%ds; Last reset case: %01X;"),
               uptime_s, last_reset_case);
       }
 
-      //! Parses a received MSG_ID_V2 from CAN bus buffer and makes it available for trace debug
+      //! Parses a received MSG_ID_V2 from CAN bus buffer and makes it available for spew debug
       void
       parseMSG_ID_V2()
       {
@@ -532,18 +532,18 @@ namespace Actuators
         uint16_t product = combine2charToUint16(m_can_bfr[3], m_can_bfr[2]);
         uint16_t serial_number = combine2charToUint16(m_can_bfr[5], m_can_bfr[4]);
         uint16_t firmware_version = combine2charToUint16(m_can_bfr[7], m_can_bfr[6]);
-        trace(DTR("MSG_ID_V2: Company#%d; Product: %d; Serial number: %d; Firmware: %d;"),
+        spew(DTR("MSG_ID_V2: Company#%d; Product: %d; Serial number: %d; Firmware: %d;"),
               company, product, serial_number, firmware_version);
       }
 
-      //! Parses a received MSG_TQ_MOTOR_STATUS_BITS from CAN bus buffer and makes it available for trace debug
+      //! Parses a received MSG_TQ_MOTOR_STATUS_BITS from CAN bus buffer and makes it available for spew debug
       void
       parseMSG_TQ_MOTOR_STATUS_BITS()
       {
         uint8_t motor_index = m_can_bfr[0];
         uint16_t errors = combine2charToUint16(m_can_bfr[2], m_can_bfr[1]);
         uint8_t status = m_can_bfr[3];
-        trace(DTR("MSG_TQ_MOTOR_STATUS_BITS: Motor#%u - Errors: %u; Status %u"),
+        spew(DTR("MSG_TQ_MOTOR_STATUS_BITS: Motor#%u - Errors: %u; Status %u"),
               motor_index, errors, status);
       }
       //! Tries to read a message from CAN bus, if successful, call relevant parser
@@ -604,7 +604,7 @@ namespace Actuators
           case MSG_WINCH_COMMAND:
           case MSG_WINCH_MOVING:
           
-            trace(DTR("Known unimplemented MSG type received: %08X"), id);
+            debug(DTR("Known unimplemented MSG type received: %08X"), id);
             break;
           default:
             inf(DTR("Unknown CAN MSG received: %08X"), id);
@@ -641,6 +641,8 @@ namespace Actuators
         m_can_bfr[1] = (char)((motor0 & 0xFF00) >> 8);
         m_can_bfr[2] = (char)(motor1 & 0x00FF);
         m_can_bfr[3] = (char)((motor1 & 0xFF00) >> 8);
+
+        inf(DTR("CAN_MOTOR_MSG_SENT: %d, %d"), motor0, motor1);
 
         m_can->setTXID(prepareTorqeedoCANID(MSG_TQ_MOTOR_SET));
         m_can->write(m_can_bfr, 4);
