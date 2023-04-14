@@ -653,10 +653,9 @@ namespace Actuators
       task(void)
       {
         if(m_can != NULL) {
-          waitForMessages(0.01); // Parametriser?
+          waitForMessages(0.005);
           motor_send_counter++;
           if(motor_send_counter >= m_args.motor_write_divider) {
-            spew(DTR("Motor send: %d, %d"), motor0_throttle, motor1_throttle);
             sendSetMotorThrottle(motor0_throttle, motor1_throttle);
             motor_send_counter = 0;
           } else if(m_unsent_power_parameters) {
