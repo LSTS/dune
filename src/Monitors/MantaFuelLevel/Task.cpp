@@ -58,9 +58,15 @@ namespace Monitors
       //! Current value of charger to reject
       float chager_current;
       //! Warning fuel level
-      int warning_level;
+      float warning_level;
       //! Shutdown fuel level
-      int shutdow_level;
+      float shutdow_level;
+      //| Use Volatge to monitor fuel
+      bool is_to_use_voltage;
+      //! Warning fuel level voltage
+      float warning_level_voltage;
+      //! Shutdown fuel level voltage
+      float shutdow_level_voltage;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -110,12 +116,24 @@ namespace Monitors
         .description("Minimun value to ignore charge.");
 
         param("Fuel Percentage Warning", m_args.warning_level)
-        .defaultValue("15")
+        .defaultValue("40")
         .description("Fuel Percentage Warning.");
 
         param("Fuel Percentage Auto Shutdown", m_args.shutdow_level)
-        .defaultValue("5")
+        .defaultValue("20")
         .description("Fuel Percentage Auto Shutdown.");
+
+        param("Use Voltage Value", m_args.is_to_use_voltage)
+        .defaultValue("true")
+        .description("Monitor the fuel level using battery voltage.");
+
+        param("Fuel Voltage Warning", m_args.warning_level_voltage)
+        .defaultValue("21.5")
+        .description("Fuel Voltage Warning.");
+
+        param("Fuel Voltage Auto Shutdown", m_args.shutdow_level_voltage)
+        .defaultValue("20.5")
+        .description("Fuel Voltage Auto Shutdown.");
 
         bind<IMC::Voltage>(this);
         bind<IMC::Current>(this);
@@ -179,7 +197,7 @@ namespace Monitors
       }
 
       float
-      getFuelLevel(void)
+      getFuelLevelPercentage(void)
       {
         float fuel_level_perc = 0;
         float interval_fuel_level, diff_voltage;
@@ -239,14 +257,87 @@ namespace Monitors
       }
 
       void
+      parsePercentageValue(void)
+      {
+        if (m_fuel.value > m_args.warning_level)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+        }
+        else
+        {
+          if (m_fuel.value > m_args.shutdow_level)
+          {
+            if (m_wdog.overflow())
+            {
+              m_wdog.reset();
+              war("Fuel low (%d%%)", (int)m_fuel.value);
+              m_lcd.op = IMC::LcdControl::OP_WRITE0;
+              m_lcd.text = fill(String::str("Low fuel(%d%%)", (int)m_fuel.value));
+              dispatch(m_lcd);
+            }
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
+          }
+          else
+          {
+            err("Shutting down system (%d%%)", (int)m_fuel.value);
+            sendToLCDPowerOff();
+          }
+        }
+      }
+
+       void
+      parseVoltageValue(void)
+      {
+        if (m_battery_volts > m_args.warning_level_voltage)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+        }
+        else
+        {
+          if (m_battery_volts > m_args.shutdow_level_voltage)
+          {
+            if (m_wdog.overflow())
+            {
+              m_wdog.reset();
+              war("Fuel low (%.2f)", m_battery_volts);
+              m_lcd.op = IMC::LcdControl::OP_WRITE0;
+              m_lcd.text = fill(String::str("Low fuel(%.1fV)", m_battery_volts));
+              dispatch(m_lcd);
+            }
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
+          }
+          else
+          {
+            err("Shutting down system (%.2fV)", m_battery_volts);
+            sendToLCDPowerOff();
+          }
+        }
+      }
+
+      void
+      sendToLCDPowerOff(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_POWER_DOWN);
+        m_lcd.op = IMC::LcdControl::OP_WRITE0;
+        m_lcd.text = fill(String::str("Very low bat!!!"));
+        dispatch(m_lcd);
+        m_lcd.op = IMC::LcdControl::OP_WRITE1;
+        m_lcd.text = fill(String::str("Turning off!!!"));
+        dispatch(m_lcd);
+        IMC::PowerOperation pop;
+        pop.setDestination(getSystemId());
+        pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+      }
+
+      void
       task(void)
       {
         if(!m_is_task_in_error)
         {
           try
           {
-            m_fuel.value = getFuelLevel();
-            m_fuel.confidence = 70;
+            m_fuel.value = getFuelLevelPercentage();
+            m_fuel.confidence = 50;
           }
           catch (...)
           {
@@ -262,39 +353,10 @@ namespace Monitors
             else
               std::sprintf(m_bufer_entity, "active | %.2f V | Charging: %.2f A", m_battery_volts, m_current_charge);
 
-            if(m_fuel.value > m_args.warning_level)
-            {
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
-            }
+            if(m_args.is_to_use_voltage)
+              parseVoltageValue();
             else
-            {
-              if(m_fuel.value > m_args.shutdow_level)
-              {
-                if(m_wdog.overflow())
-                {
-                  m_wdog.reset();
-                  war("Fuel low (%d%%)", (int)m_fuel.value);
-                  m_lcd.op = IMC::LcdControl::OP_WRITE0;
-                  m_lcd.text = fill(String::str("Fuel low (%d%%)", (int)m_fuel.value));
-                  dispatch(m_lcd);
-                }
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
-              }
-              else
-              {
-                err("Shutting down system (%d%%)", (int)m_fuel.value);
-                setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_POWER_DOWN);
-                m_lcd.op = IMC::LcdControl::OP_WRITE0;
-                m_lcd.text = fill(String::str("Very low bat!!!"));
-                dispatch(m_lcd);
-                m_lcd.op = IMC::LcdControl::OP_WRITE1;
-                m_lcd.text = fill(String::str("Turning off!!!"));
-                dispatch(m_lcd);
-                IMC::PowerOperation pop;
-                pop.setDestination(getSystemId());
-                pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
-              }
-            }
+              parsePercentageValue();
           }
         }
       }
