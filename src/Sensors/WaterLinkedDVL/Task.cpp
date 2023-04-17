@@ -52,8 +52,8 @@ namespace Sensors
     {
       //! IO device.
       std::string io_dev;
-      //! Power channels.
-      std::vector<std::string> pwr_channels;
+      //! Power channel.
+      std::string pwr_channel;
       //! Type of acoustics activation/deactivation.
       std::string type_activation;
       //! DVL position.
@@ -97,11 +97,11 @@ namespace Sensors
             .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
                          "or \"uart://DEVICE:BAUD\".");
 
-        param("Power Channel - Names", m_args.pwr_channels).defaultValue("").description("Device's power channels");
+        param("Power Channel", m_args.pwr_channel).defaultValue("").description("Device's power channel");
 
         param("Acoustics Activation", m_args.type_activation)
             .values("Water, Always")
-            .defaultValue("Always")
+            .defaultValue("Water")
             .description("Operator is able to control acoustics");
 
         param("Device Position", m_args.position)
@@ -133,11 +133,11 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.pwr_channels))
+        if (paramChanged(m_args.pwr_channel))
         {
           clearPowerChannelNames();
-          for (std::string pc : m_args.pwr_channels)
-            addPowerChannelName(pc);
+          if (!m_args.pwr_channel.empty())
+            addPowerChannelName(m_args.pwr_channel);
         }
 
         if (!(paramChanged(m_args.beam_width) || paramChanged(m_args.orientation) || paramChanged(m_args.position)))
@@ -290,6 +290,7 @@ namespace Sensors
       void
       onSoundSpeed(const double sound_speed) override
       {
+        if (!isActive()) return;
         m_driver->setSoundSpeed(sound_speed);
       }
 
