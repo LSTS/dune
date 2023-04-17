@@ -58,8 +58,6 @@ namespace Sensors::WaterLinkedDVL
     Navigation::BeamFilter* m_filter;
     //! Bottom lock.
     bool m_bottom_lock;
-    
-
   public:
     Driver(Tasks::Task* task, IMC::Distance& alt_dvl, IMC::Distance& alt_flt) :
       m_parent(task),
@@ -146,30 +144,38 @@ namespace Sensors::WaterLinkedDVL
       if (!Poll::poll(*m_io, 0.01))
         return false;
 
-      char bfr[2000] = { 0 };
-      IMC::DevDataText data;
-
-      size_t rv = m_io->read(bfr, sizeof(bfr));
-      if (rv <= 0)
-        return false;
-      bfr[rv] = '\0';
-
-      m_timestamp = Clock::getSinceEpoch();
-
-      // Ensure proper string of data
-      std::vector<std::string> proper;
-      String::split(bfr, "\r\n", proper);
-      checkFragment(proper);
-      for (auto p : proper)
+      try
       {
-        if (!m_serial)
-          parseTCP(p);
-        else
-          parseSerial(p);
+        char bfr[2000] = { 0 };
+        IMC::DevDataText data;
 
-        // Log Raw Data
-        data.value = p.c_str();
-        m_parent->dispatch(data);
+        size_t rv = m_io->read(bfr, sizeof(bfr));
+        if (rv <= 0)
+          return false;
+        bfr[rv] = '\0';
+
+        m_timestamp = Clock::getSinceEpoch();
+
+        // Ensure proper string of data
+        std::vector<std::string> proper;
+        String::split(bfr, "\r\n", proper);
+        checkFragment(proper);
+        for (auto p : proper)
+        {
+          if (!m_serial)
+            parseTCP(p);
+          else
+            parseSerial(p);
+
+          // Log Raw Data
+          data.value = p.c_str();
+          m_parent->dispatch(data);
+        }
+      }
+      catch (const std::exception& e)
+      {
+        m_parent->err("%s", e.what());
+        return false;
       }
 
       return true;
@@ -208,8 +214,9 @@ namespace Sensors::WaterLinkedDVL
     }
 
     bool
-    getBottomLock() {
-        return m_bottom_lock;
+    getBottomLock()
+    {
+      return m_bottom_lock;
     }
 
     //! Parse velocity-and-transducer report.
@@ -335,6 +342,7 @@ namespace Sensors::WaterLinkedDVL
     void
     getConfig(void)
     {
+      m_parent->debug("Getting device config");
       sendCommand("get_config");
     }
 
@@ -345,7 +353,7 @@ namespace Sensors::WaterLinkedDVL
     {
       if (m_config.acoustic_enabled == enable)
         return;
-
+      m_parent->debug("%s acoustics", enable ? "Enabling" : "Disabling");
       sendCommand("set_config", "acoustic_enabled", enable ? "true" : "false");
       getConfig();
     }
@@ -357,6 +365,7 @@ namespace Sensors::WaterLinkedDVL
     {
       if (m_config.speed_of_sound == sound_speed || m_io == nullptr)
         return;
+      m_parent->debug("Setting sound speed");
       sendCommand("set_config", "speed_of_sound", String::str("%.2f", sound_speed));
       getConfig();
     }
@@ -390,7 +399,7 @@ namespace Sensors::WaterLinkedDVL
     {
       if (m_config.mounting_rotation_offset == angle)
         return;
-
+      m_parent->debug("Setting rotation angle");
       sendCommand("set_config", "mounting_rotation_offset", String::str("%.2f", angle));
       getConfig();
     }
