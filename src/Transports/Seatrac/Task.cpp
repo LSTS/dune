@@ -112,7 +112,7 @@ namespace Transports
       //! c_preamble detected
       bool m_preamble;
       //! Current state.
-      EntityStates m_state_entity;
+      EntityStates m_state;
       //! Entity states.
       IMC::EntityState m_states[STA_MAX];
       //! True if the beacon has an USBL receiver.
@@ -304,9 +304,9 @@ namespace Transports
       void
       setState(EntityStates state)
       {
-        m_state_entity = state;
-        setEntityState((IMC::EntityState::StateEnum) m_states[m_state_entity].state,
-                       m_states[m_state_entity].description);
+        m_state = state;
+        setEntityState((IMC::EntityState::StateEnum) m_states[m_state].state,
+                       m_states[m_state].description);
       }
 
       //! Open TCP socket.
@@ -381,7 +381,7 @@ namespace Transports
         {
           err("%s: %s", DTR(Status::getString(CODE_COM_ERROR)), e.what());
           setState(STA_ERR_COM);
-          throw RestartNeeded(m_states[m_state_entity].description, 30);
+          throw RestartNeeded(m_states[m_state].description, 30);
         }
 
         try
@@ -394,7 +394,7 @@ namespace Transports
         {
           err("%s", DTR(Status::getString(CODE_COM_ERROR)));
           setState(STA_ERR_STP);
-          throw std::runtime_error(m_states[m_state_entity].description);
+          throw std::runtime_error(m_states[m_state].description);
         }
 
         if (m_args.freq_attitude != 0)
@@ -435,6 +435,9 @@ namespace Transports
       void
       consume(const IMC::EulerAngles* msg)
       {
+        if (m_state != STA_ACTIVE)
+          return;
+
         Memory::replace(m_last_angles, msg->clone());
 
         if (m_args.ahrs_mode || !m_timer.overflow() || !m_args.freq_attitude)
@@ -465,6 +468,9 @@ namespace Transports
       void
       consume(const IMC::MagneticField* msg)
       {
+        if (m_state != STA_ACTIVE)
+          return;
+
         if(!m_args.ahrs_mode)
           return;
 
@@ -496,7 +502,7 @@ namespace Transports
       void
       consume(const IMC::SoundSpeed* msg)
       {
-        if (m_state_entity != STA_ACTIVE)
+        if (m_state != STA_ACTIVE)
           return;
 
         if ((int)msg->getSourceEntity() != m_sound_speed_eid)
@@ -561,6 +567,10 @@ namespace Transports
       bool
       hasConnection(void)
       {
+        // Don't verify connection if task is not active
+        if (!isActive())
+          m_last_input = Clock::get();
+
         // Throw runtime error if connection problem persists
         if (Clock::get() > (m_last_input + c_input_tout + 30))
           throw RestartNeeded(m_states[STA_ERR_COM].description, 30);
@@ -982,6 +992,9 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
+        if (m_state != STA_ACTIVE)
+          return;
+
         debug(DTR("Received UamTxFrame with dst=0x%04X. Msg for system '%s'"), msg->getDestination(), msg->sys_dst.c_str());
 
         if (msg->getDestination() != getSystemId())
@@ -1152,6 +1165,9 @@ namespace Transports
       void
       processInput(double timeout = 1.0)
       {
+        if (!isActive())
+          return;
+
         double deadline = Clock::get() + timeout;
         do
         {
@@ -1160,7 +1176,7 @@ namespace Transports
           processNewData();
           checkTxOWAY();
 
-          if ((m_state_entity != STA_ERR_STP) && hasConnection())
+          if ((m_state != STA_ERR_STP) && hasConnection())
           {
             if (!isRestricted())
               setState(STA_ACTIVE);
@@ -1259,7 +1275,7 @@ namespace Transports
           waitForMessages(1.0);
 
           // Check modem connection
-          if (!hasConnection())
+          if (!hasConnection() && isActive())
             setState(STA_ERR_COM);
         }
       }
