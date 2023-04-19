@@ -542,7 +542,7 @@ namespace DUNE
 
           if (m_wdog.overflow())
           {
-            std::string msg = "failed to turn power on: ";
+            std::string msg = "Activation timeout - turn power on: ";
             for (auto p : m_power_channels)
               if (!p.second)
                 msg += p.first + " ";
@@ -556,7 +556,7 @@ namespace DUNE
         case SM_ACT_DEV_WAIT:
           if (m_wdog.overflow())
           {
-            std::string msg = "failed to connect to device: ";
+            std::string msg = "Activation timeout - connect to device: ";
             msg += m_uri;
             failActivation(DTR(msg.c_str()));
             queueState(SM_IDLE);
@@ -573,7 +573,7 @@ namespace DUNE
         case SM_ACT_DEV_SYNC:
           if (m_wdog.overflow())
           {
-            failActivation(DTR("failed to synchronize with device"));
+            failActivation(DTR("Activation timeout - synchronize with device"));
             queueState(SM_IDLE);
           }
           else
@@ -592,7 +592,7 @@ namespace DUNE
         case SM_ACT_LOG_REQUEST:
           if (m_wdog.overflow())
           {
-            failActivation(DTR("failed to request current log name"));
+            failActivation(DTR("Activation timeout - request current log name"));
             queueState(SM_IDLE);
           }
           else
@@ -607,7 +607,7 @@ namespace DUNE
         case SM_ACT_LOG_WAIT:
           if (m_wdog.overflow())
           {
-            failActivation(DTR("failed to retrieve current log name"));
+            failActivation(DTR("Activation timeout - retrieve current log name"));
             queueState(SM_IDLE);
           }
           else
