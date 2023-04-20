@@ -501,7 +501,7 @@ namespace DUNE
           m_wdog.setTop(getActivationTime());
           if (m_power_channels.empty())
           {
-            m_power_on_timer.setTop(m_power_on_delay);
+            m_power_on_timer.setTop(m_post_power_on_delay);
             queueState(SM_ACT_DEV_WAIT);
           }
           else
