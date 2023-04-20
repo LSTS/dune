@@ -155,8 +155,6 @@ namespace Transports
       Math::Matrix m_rotation;
       //! Timer.
       Time::Counter<double> m_timer;
-      //! Last euler angles.
-      IMC::EulerAngles* m_last_angles;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -257,10 +255,6 @@ namespace Transports
 
         param("Sound Speed - Entity Label", m_args.sound_speed_elabel)
         .description("Entity label of sound speed provider");
-
-        param("Calculate NED offsets locally", m_args.calc_ned_locally)
-        .defaultValue("true")
-        .description("Calculate NED offsets when USBL range is received.");
 
         param("Attitude update frequency", m_args.freq_attitude)
         .units(DUNE::Units::Hertz)
