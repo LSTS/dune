@@ -379,9 +379,12 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          err("%s: %s", DTR(Status::getString(CODE_COM_ERROR)), e.what());
-          setState(STA_ERR_COM);
-          throw RestartNeeded(m_states[m_state].description, 30);
+          if (m_state != STA_ERR_COM)
+          {
+            err("%s: %s", DTR(Status::getString(CODE_COM_ERROR)), e.what());
+            setState(STA_ERR_COM);
+          }
+          return;
         }
 
         try
@@ -572,7 +575,7 @@ namespace Transports
           m_last_input = Clock::get();
 
         // Throw runtime error if connection problem persists
-        if (Clock::get() > (m_last_input + c_input_tout + 30))
+        if ((Clock::get() > (m_last_input + c_input_tout + 30)) && m_config_status)
           throw RestartNeeded(m_states[STA_ERR_COM].description, 30);
 
         return (Clock::get() < (m_last_input + c_input_tout));
@@ -1165,7 +1168,8 @@ namespace Transports
       void
       processInput(double timeout = 1.0)
       {
-        if (!isActive())
+        // Wait for modem configuration
+        if (!isActive() || !m_config_status)
           return;
 
         double deadline = Clock::get() + timeout;
@@ -1266,9 +1270,11 @@ namespace Transports
       {
         while (!stopping())
         {
-          // Wait for modem configuration
-          if(!m_config_status)
-            break;
+          // Retry initialization if it wasn't possible on boot
+          if (m_driver == nullptr && !m_config_status && isActive())
+            onResourceInitialization();
+          else if (!isActive() && m_state == STA_ACTIVE)
+            setState(STA_IDLE);
 
           // Check for incoming data.
           processInput();
