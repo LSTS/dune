@@ -91,8 +91,6 @@ namespace Transports
       double sound_speed_def;
       //! Entity label of sound speed provider.
       std::string sound_speed_elabel;
-      //! Calculate NED offsets
-      bool calc_ned_locally;
       //! Attitude update frequency when manually set.
       float freq_attitude;
       //! Fit error threshold
@@ -173,8 +171,7 @@ namespace Transports
         m_addr(0),
         m_tstamp(0),
         m_ticket(nullptr),
-        m_sound_speed_eid(-1),
-        m_last_angles(nullptr)
+        m_sound_speed_eid(-1)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -441,8 +438,6 @@ namespace Transports
         if (m_state != STA_ACTIVE)
           return;
 
-        Memory::replace(m_last_angles, msg->clone());
-
         if (m_args.ahrs_mode || !m_timer.overflow() || !m_args.freq_attitude)
           return;
 
@@ -691,53 +686,6 @@ namespace Transports
           handleAcousticInformation(m_data_beacon.cid_dat_receive_msg.aco_fix);
       }
 
-      // Convert AER to rotated XYZ position
-      //! @param[in] aer AER position.
-      //! @param[in] euler Euler angles.
-      //! @param[out] xyz XYZ position.
-      void
-      aer2xyz(double aer[3], double euler[3], double xyz[3])
-      {
-        // Compute intermediate variables
-        double sinA = std::sin(aer[0]), cosA = std::cos(aer[0]);
-        double sinE = std::sin(aer[1]), cosE = std::cos(aer[1]);
-
-        // Convert to local XYZ
-        xyz[0] = -aer[2] * sinE * cosA;// X
-        xyz[1] = aer[2] * sinE * sinA; // Y
-        xyz[2] = -aer[2] * cosE;       // Z
-
-        // Apply Euler rotation
-        double Rz[3][3] = { { std::cos(euler[0]), -std::sin(euler[0]), 0 },
-                            { std::sin(euler[0]), std::cos(euler[0]), 0 },
-                            { 0, 0, 1 } };
-        double Ry[3][3] = { { std::cos(euler[1]), 0, std::sin(euler[1]) },
-                            { 0, 1, 0 },
-                            { -std::sin(euler[1]), 0, std::cos(euler[1]) } };
-        double Rx[3][3] = { { 1, 0, 0 },
-                            { 0, std::cos(euler[2]), -std::sin(euler[2]) },
-                            { 0, std::sin(euler[2]), std::cos(euler[2]) } };
-        double R[3][3] = { { 0 } };
-
-        // Compute overall rotation matrix
-        for (int i = 0; i < 3; i++)
-        {
-          for (int j = 0; j < 3; j++)
-          {
-            for (int k = 0; k < 3; k++)
-            {
-              R[i][j] += Rz[i][k] * Ry[k][j] * Rx[j][k];
-            }
-          }
-        }
-
-        // Rotate XYZ vector
-        double x = xyz[0], y = xyz[1], z = xyz[2];
-        xyz[0] = R[0][0] * x + R[0][1] * y + R[0][2] * z;
-        xyz[1] = R[1][0] * x + R[1][1] * y + R[1][2] * z;
-        xyz[2] = R[2][0] * x + R[2][1] * y + R[2][2] * z;
-      }
-
       //! Handle acoustic information from received data.
       //! param[in] aco_fix Acoustic information field of the received message.
       void
@@ -778,32 +726,9 @@ namespace Transports
           usblPosition.phi = Angles::radians(aco_fix.attitude_roll / 10.0);
           usblPosition.theta = Angles::radians(aco_fix.attitude_pitch / 10.0);
           usblPosition.psi = Angles::radians(aco_fix.attitude_yaw / 10.0);
-          
-          if (!m_args.calc_ned_locally) 
-          {
-            usblPosition.e = aco_fix.position_easting / 10.0;
-            usblPosition.n = aco_fix.position_northing / 10.0;
-            usblPosition.d = aco_fix.position_depth / 10.0;
-          }
-          else // calculate the NED offsets locally
-          {
-            if (m_last_angles == nullptr)
-            {
-              war("Cannot calculate NED offsets internally because no euler angles have been received.");
-              return;
-            }
-            double xyz[3], aer[3], euler[3];
-            aer[0] = Angles::radians(aco_fix.usbl_azimuth / 10.0);
-            aer[1] = Angles::radians(aco_fix.usbl_elevation / 10.0);
-            aer[2] = aco_fix.range_dist / 10.0;
-            euler[0] = m_last_angles->phi;
-            euler[1] = m_last_angles->theta;
-            euler[2] = m_last_angles->psi;
-            aer2xyz(aer, euler, xyz);
-            usblPosition.n = xyz[0];
-            usblPosition.e = xyz[1];
-            usblPosition.d = xyz[2];
-          }
+          usblPosition.e = aco_fix.position_easting / 10.0;
+          usblPosition.n = aco_fix.position_northing / 10.0;
+          usblPosition.d = aco_fix.position_depth / 10.0;
           usblPosition.accuracy = aco_fix.usbl_fit_error / 100.0;
 
           if (aco_fix.outputflags_list[4])
