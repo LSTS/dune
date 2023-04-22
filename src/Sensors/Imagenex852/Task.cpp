@@ -75,7 +75,7 @@ namespace Sensors
     struct Arguments
     {
       //! Serial port device.
-      std::string io_dev;
+      std::string uart_dev;
       //! Default Range.
       unsigned range;
       //! Pulse length.
@@ -130,7 +130,7 @@ namespace Sensors
     static const unsigned c_pattern_occurs = 50;
 
     //! %Task.
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public Tasks::Task
     {
       //! Serial port handle.
       SerialPort* m_uart;
@@ -144,8 +144,6 @@ namespace Sensors
       Arguments m_args;
       //! Watchdog.
       Counter<double> m_wdog;
-      //! Device buffer.
-      uint8_t m_bfr[1024];
       //! Last valid sound speed value.
       double m_sound_speed;
       //! Switch data.
@@ -161,7 +159,7 @@ namespace Sensors
 
       //! %Task constructor.
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
+        Tasks::Task(name, ctx),
         m_uart(NULL),
         m_sound_speed(c_sound_speed),
         m_parser(m_profile.data),
@@ -171,11 +169,9 @@ namespace Sensors
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        // Define configuration parameters.
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"uart://DEVICE\"." 
-                     "This device has only one baud rate.");
+        .description("Serial port device used to communicate with the sensor");
 
         param("Sampling Frequency", m_args.sample_frequency)
         .defaultValue("5")
@@ -276,6 +272,7 @@ namespace Sensors
         m_profile.bits_per_point = 8;
         m_profile.scale_factor = 1.0f;
 
+        bind<IMC::SoundSpeed>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxStatus>(this);
       }
@@ -291,7 +288,7 @@ namespace Sensors
         m_switch.setDataPoints(m_args.data_points);
         m_trigger.setSampleFrequency(m_args.sample_frequency);
 
-        if (paramChanged(m_args.io_dev) && (m_uart != NULL))
+        if (paramChanged(m_args.uart_dev) && (m_uart != NULL))
           throw RestartNeeded(DTR("restarting to change UART device"), 1);
 
         m_sound_speed = m_args.sspeed;
@@ -322,43 +319,34 @@ namespace Sensors
         m_profile.beam_config.push_back(bc);
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
+      //! Acquire resources.
+      void
+      onResourceAcquisition(void)
       {
-        char uart[128] = {0};
-
-        if (std::sscanf(m_args.io_dev.c_str(), "uart://%s", uart) != 1)
-          return false;
-        
         try
         {
-          m_uart = new SerialPort(uart,
+          m_uart = new SerialPort(m_args.uart_dev,
                                   c_uart_baud,
                                   SerialPort::SP_PARITY_NONE,
                                   SerialPort::SP_STOPBITS_1,
                                   SerialPort::SP_DATABITS_8,
                                   true);
-
-          m_wdog.setTop(2.0);
-
-          if (m_args.pattern_filter)
-            m_pfilt = new PatternFilter(c_pattern_size, m_args.pattern_diff,
-                                        c_pattern_samples, c_pattern_occurs);
-          return true;
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(e.what(), 30);
         }
 
-        return false;
+        m_wdog.setTop(2.0);
+
+        if (m_args.pattern_filter)
+          m_pfilt = new PatternFilter(c_pattern_size, m_args.pattern_diff,
+                                      c_pattern_samples, c_pattern_occurs);
       }
 
-      //! Disconnect from device.
+      //! Release resources.
       void
-      onDisconnect() override
+      onResourceRelease(void)
       {
         if (m_trigger.isRunning() || m_trigger.isStopping())
         {
@@ -367,32 +355,36 @@ namespace Sensors
 
         Memory::clear(m_uart);
         Memory::clear(m_pfilt);
-
-        if (m_hand.isKnown())
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        else
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
-
-        m_trigger.setActive(false);
       }
 
-      bool
-      onSynchronize(void) override
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
       {
         m_trigger.setActive(isActive());
         m_trigger.setUART(m_uart);
         m_trigger.setSwitchData(m_switch.data(), m_switch.size());
         m_trigger.start();
 
-        return true;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      //! Initialize device.
       void
-      onInitializeDevice() override
+      onActivation(void)
       {
         m_wdog.reset();
         m_trigger.setActive(true);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        if (m_hand.isKnown())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_IDLE);
+
+        m_trigger.setActive(false);
       }
 
       void
@@ -402,9 +394,12 @@ namespace Sensors
       }
 
       void
-      onSoundSpeed(double value) override
+      consume(const IMC::SoundSpeed* msg)
       {
-        m_sound_speed = value;
+        if (msg->value < 0.0)
+          return;
+
+        m_sound_speed = msg->value;
       }
 
       void
@@ -428,6 +423,8 @@ namespace Sensors
         {
           if (isActive())
             requestDeactivation();
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         // Medium is unknown.
@@ -442,72 +439,81 @@ namespace Sensors
         }
       }
 
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
-      bool
-      onReadData() override
+      void
+      onMain(void)
       {
-        if (m_wdog.overflow())
+        uint8_t bfr[1024];
+
+        while (!stopping())
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          err("%s", DTR(Status::getString(Status::CODE_COM_ERROR)));
-        }
+          if (!isActive())
+          {
+            waitForMessages(1.0);
+            continue;
+          }
 
-        if (!Poll::poll(*m_uart, 1.0))
-          return false;
+          consumeMessages();
 
-        size_t rv = m_uart->read(m_bfr, sizeof(m_bfr));
-        if (rv == 0)
-          return false;
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            err("%s", DTR(Status::getString(Status::CODE_COM_ERROR)));
+          }
 
-        for (size_t i = 0; i < rv; ++i)
-        {
-          if (!m_parser.parse(m_bfr[i]))
+          if (!Poll::poll(*m_uart, 1.0))
             continue;
 
-          m_dist.validity = IMC::Distance::DV_VALID;
+          size_t rv = m_uart->read(bfr, sizeof(bfr));
+          if (rv == 0)
+            continue;
 
-          m_dist.value = m_parser.getProfileRange();
-
-          // If range is zero, there are no echoes.
-          if (m_dist.value < c_min_range)
-            m_dist.value = m_parser.getRange();
-
-          // Filter using data points
-          if (m_args.filter_enabled)
-            filterRange(m_dist, m_profile);
-
-          if (m_args.pattern_filter)
+          for (size_t i = 0; i < rv; ++i)
           {
-            if (!m_pfilt->filterPattern(m_profile.data))
-              m_dist.validity = IMC::Distance::DV_INVALID;
+            if (!m_parser.parse(bfr[i]))
+              continue;
+
+            m_dist.validity = IMC::Distance::DV_VALID;
+
+            m_dist.value = m_parser.getProfileRange();
+
+            // If range is zero, there are no echoes.
+            if (m_dist.value < c_min_range)
+              m_dist.value = m_parser.getRange();
+
+            // Filter using data points
+            if (m_args.filter_enabled)
+              filterRange(m_dist, m_profile);
+
+            if (m_args.pattern_filter)
+            {
+              if (!m_pfilt->filterPattern(m_profile.data))
+                m_dist.validity = IMC::Distance::DV_INVALID;
+            }
+
+            // Correct for dynamic sound speed.
+            if (m_args.sspeed_dyn)
+              m_dist.value = (m_dist.value * m_sound_speed) / c_sound_speed;
+
+            // UAM is transmitting, data are probably garbled.
+            if (!m_uam_tx_ip)
+              dispatch(m_dist);
+
+            if (m_parser.getDataPointsCount() > 0)
+            {
+              m_profile.setTimeStamp(m_dist.getTimeStamp());
+              m_profile.min_range = static_cast<uint16_t>(m_switch.getProfileMinRange());
+              m_profile.max_range = m_parser.getRange();
+              dispatch(m_profile);
+            }
+
+            if (m_hand.isKnown())
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            else
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_ACTIVE);
+
+            m_wdog.reset();
           }
-
-          // Correct for dynamic sound speed.
-          if (m_args.sspeed_dyn)
-            m_dist.value = (m_dist.value * m_sound_speed) / c_sound_speed;
-
-          // UAM is transmitting, data are probably garbled.
-          if (!m_uam_tx_ip)
-            dispatch(m_dist);
-
-          if (m_parser.getDataPointsCount() > 0)
-          {
-            m_profile.setTimeStamp(m_dist.getTimeStamp());
-            m_profile.min_range = static_cast<uint16_t>(m_switch.getProfileMinRange());
-            m_profile.max_range = m_parser.getRange();
-            dispatch(m_profile);
-          }
-
-          if (m_hand.isKnown())
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          else
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_NO_MEDIUM_ACTIVE);
-
-          m_wdog.reset();
         }
-
-        return true;
       }
 
       //! Filter profile range using information in data points

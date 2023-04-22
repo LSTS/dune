@@ -42,10 +42,10 @@ namespace Sensors
 
     struct Arguments
     {
-      //! IO device (URI).
-      std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
+      //! UART device.
+      std::string uart_dev;
+      //! UART baud rate.
+      unsigned uart_baud;
       //! Depth calibration parameters.
       std::vector<double> depth_cal;
       //! Input timeout.
@@ -60,7 +60,7 @@ namespace Sensors
       CS_ABLE
     };
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public DUNE::Tasks::Periodic
     {
       //! Device driver.
       Driver* m_driver;
@@ -90,7 +90,7 @@ namespace Sensors
       Counter<double> m_wdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
+        DUNE::Tasks::Periodic(name, ctx),
         m_driver(NULL),
         m_uart(NULL),
         m_depth_avg(10),
@@ -99,18 +99,13 @@ namespace Sensors
         m_cs(CS_UNABLE)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("9600")
+        .description("Serial port baud rate");
 
         param("Depth Calibration", m_args.depth_cal)
         .defaultValue("1.0, 0.0")
@@ -129,44 +124,23 @@ namespace Sensors
       }
 
       void
-      onUpdateParameters(void)
+      onResourceAcquisition(void)
       {
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
+        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+        m_driver = new Driver(this, *m_uart);
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
-      {
-        try
-        {
-          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
-          m_driver = new Driver(this, *m_uart);
-          return true;
-        }
-        catch (...)
-        {
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        }
-
-        return false;
-      }
-
-      //! Disconnect from device.
       void
-      onDisconnect() override
+      onResourceInitialization(void)
+      {
+        m_wdog.setTop(m_args.data_timeout);
+      }
+
+      void
+      onResourceRelease(void)
       {
         Memory::clear(m_uart);
         Memory::clear(m_driver);
-      }
-
-      //! Device may be initialized.
-      void
-      onInitializeDevice() override
-      {
-        m_wdog.setTop(m_args.data_timeout);
       }
 
       void
@@ -187,10 +161,8 @@ namespace Sensors
         return (m_at_surface && !m_maneuvering);
       }
 
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
-      bool
-      onReadData() override
+      void
+      task(void)
       {
         if (m_wdog.overflow())
         {
@@ -203,7 +175,7 @@ namespace Sensors
           else
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            return false;
+            return;
           }
         }
 
@@ -250,8 +222,6 @@ namespace Sensors
           if (m_cs == CS_ABLE)
             m_depth_offset.value = m_depth_avg.update(m_depth.value);
         }
-
-        return true;
       }
     };
   }

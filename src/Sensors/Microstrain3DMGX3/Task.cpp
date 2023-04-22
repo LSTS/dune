@@ -90,10 +90,10 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! IO device (URI).
-      std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
+      //! UART device.
+      std::string uart_dev;
+      //! UART baud rate.
+      unsigned uart_baud;
       //! Calibration threshold.
       double calib_threshold;
       //! Hard iron calibration.
@@ -110,7 +110,7 @@ namespace Sensors
     };
 
     //! %Microstrain3DMGX3 software driver.
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public DUNE::Tasks::Periodic
     {
       //! Internal read buffer.
       static const unsigned c_bfr_size = 128;
@@ -154,7 +154,7 @@ namespace Sensors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
+        DUNE::Tasks::Periodic(name, ctx),
         m_uart(NULL),
         m_tstamp(0),
         m_state_timer(1.0),
@@ -162,18 +162,13 @@ namespace Sensors
         m_faults_count(0),
         m_timeout_count(0)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("115200")
+        .description("Serial port baud rate");
 
         param("Calibration Threshold", m_args.calib_threshold)
         .defaultValue("0.1")
@@ -221,9 +216,6 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
-        
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
         // Rotate calibration parameters.
@@ -245,48 +237,45 @@ namespace Sensors
         }
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
-      {
-        try
-        {
-          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
-          return true;
-        }
-        catch (...)
-        {
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 30);
-        }
-
-        return false;
-      }
-
-      //! Disconnect from device.
+      //! Release resources.
       void
-      onDisconnect() override
+      onResourceRelease(void)
       {
         Memory::clear(m_uart);
       }
 
-      //! Synchronize with device.
-      bool
-      onSynchronize() override
+      //! Acquire resources.
+      void
+      onResourceAcquisition(void)
       {
-        // Read firmware version in order to assess if we can communicate
-        // with the device.
-        m_uart->setMinimumRead(CMD_FWARE_VERSION_SIZE);
-        if (poll(CMD_FWARE_VERSION, CMD_FWARE_VERSION_SIZE, 0, 0))
-          return true;
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
 
-        return false;
+        try
+        {
+          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_uart->flush();
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
-      //! Device may be initialized.
+      //! Initialize resources.
       void
-      onInitializeDevice() override
+      onResourceInitialization(void)
       {
+        while (!stopping())
+        {
+          // Read firmware version in order to assess if we can communicate
+          // with the device.
+          m_uart->setMinimumRead(CMD_FWARE_VERSION_SIZE);
+          if (poll(CMD_FWARE_VERSION, CMD_FWARE_VERSION_SIZE, 0, 0))
+            break;
+
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+        }
+
         // Calibrate sensor.
         runCalibration();
 
@@ -644,11 +633,13 @@ namespace Sensors
         m_sample_count = 0;
       }
 
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
-      bool
-      onReadData() override
+      //! Main task.
+      void
+      task(void)
       {
+        // Check for incoming messages.
+        consumeMessages();
+
         if (poll(CMD_DATA, CMD_DATA_SIZE, 0, 0))
         {
           // Set timestamps so we have realistic times.
@@ -726,7 +717,6 @@ namespace Sensors
         }
 
         reportEntityState();
-        return true;
       }
     };
   }

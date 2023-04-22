@@ -31,108 +31,111 @@
 #include <DUNE/DUNE.hpp>
 // #include "Controller.hpp"
 
-namespace KeyboardInputs
+namespace MiniASV
 {
-  //! Insert short task description here.
-  //!
-  //! Insert explanation on task behaviour here.
-  //! @author BGabriel
-  using DUNE_NAMESPACES;
-
-  struct Task : public DUNE::Tasks::Task
+  namespace KeyboardInputs
   {
-    //! Timer
-    Counter<double> m_wdog;
-    //! IMC msg
-    IMC::PWM m_pwmR;
-    IMC::PWM m_pwmL;
-    //! Read timestamp.
-    double m_tstamp;
-    //! Count for attempts
-    int m_count_attempts;
-    //! Flag to control reset of board
-    bool m_is_first_reset;
+    //! Insert short task description here.
+    //!
+    //! Insert explanation on task behaviour here.
+    //! @author BGabriel
+    using DUNE_NAMESPACES;
 
-    //! Constructor.
-    //! @param[in] name task name.
-    //! @param[in] ctx context.
-    Task(const std::string &name, Tasks::Context &ctx) : DUNE::Tasks::Task(name, ctx)
+    struct Task : public DUNE::Tasks::Task
     {
-    }
+      //! Timer
+      Counter<double> m_wdog;
+      //! IMC msg
+      IMC::PWM m_pwmR;
+      IMC::PWM m_pwmL;
+      //! Read timestamp.
+      double m_tstamp;
+      //! Count for attempts
+      int m_count_attempts;
+      //! Flag to control reset of board
+      bool m_is_first_reset;
 
-    //! Update internal state with new parameter values.
-    void
-    onUpdateParameters(void)
-    {
-    }
-
-    //! Reserve entity identifiers.
-    void
-    onEntityReservation(void)
-    {
-    }
-
-    //! Resolve entity names.
-    void
-    onEntityResolution(void)
-    {
-    }
-
-    //! Acquire resources.
-    void
-    onResourceAcquisition(void)
-    {
-    }
-
-    //! Initialize resources.
-    void
-    onResourceInitialization(void)
-    {
-      m_pwmR.setDestination(42);
-      m_pwmL.setDestination(42);
-
-      m_pwmR.id = 1;
-      m_pwmL.id = 2;
-      m_pwmR.period = 20000;
-      m_pwmL.period = 20000;
-    }
-
-    //! Release resources.
-    void
-    onResourceRelease(void)
-    {
-    }
-
-    void
-    dispatchData()
-    {
-      m_tstamp = Clock::getSinceEpoch();
-      m_pwmR.setTimeStamp(m_tstamp);
-      dispatch(m_pwmR, DF_KEEP_TIME);
-
-      m_tstamp = Clock::getSinceEpoch();
-      m_pwmL.setTimeStamp(m_tstamp);
-      dispatch(m_pwmL, DF_KEEP_TIME);
-    }
-
-    //! Main loop.
-    void
-    onMain(void)
-    {
-      while (!stopping())
+      //! Constructor.
+      //! @param[in] name task name.
+      //! @param[in] ctx context.
+      Task(const std::string &name, Tasks::Context &ctx) : DUNE::Tasks::Task(name, ctx)
       {
-        waitForMessages(1.0);
-
-        int input;
-
-        std::cin >> input;
-
-        m_pwmR.duty_cycle = m_pwmL.duty_cycle = input;
-
-        dispatchData();
       }
-    }
-  };
+
+      //! Update internal state with new parameter values.
+      void
+      onUpdateParameters(void)
+      {
+      }
+
+      //! Reserve entity identifiers.
+      void
+      onEntityReservation(void)
+      {
+      }
+
+      //! Resolve entity names.
+      void
+      onEntityResolution(void)
+      {
+      }
+
+      //! Acquire resources.
+      void
+      onResourceAcquisition(void)
+      {
+      }
+
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      {
+        m_pwmR.setDestination(42);
+        m_pwmL.setDestination(42);
+
+        m_pwmR.id = 1;
+        m_pwmL.id = 2;
+        m_pwmR.period = 20000;
+        m_pwmL.period = 20000;
+      }
+
+      //! Release resources.
+      void
+      onResourceRelease(void)
+      {
+      }
+
+      void
+      dispatchData()
+      {
+        m_tstamp = Clock::getSinceEpoch();
+        m_pwmR.setTimeStamp(m_tstamp);
+        dispatch(m_pwmR, DF_KEEP_TIME);
+
+        m_tstamp = Clock::getSinceEpoch();
+        m_pwmL.setTimeStamp(m_tstamp);
+        dispatch(m_pwmL, DF_KEEP_TIME);
+      }
+
+      //! Main loop.
+      void
+      onMain(void)
+      {
+        while (!stopping())
+        {
+          waitForMessages(1.0);
+
+          int input;
+
+          std::cin >> input;
+
+          m_pwmR.duty_cycle = m_pwmL.duty_cycle = input;
+
+          dispatchData();
+        }
+      }
+    };
+  }
 }
 
 DUNE_TASK

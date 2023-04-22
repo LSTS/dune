@@ -412,21 +412,10 @@ namespace Vision
         if(sysNameMsg != m_args.system_name && sysNameMsg != sysLocalName)
           return;
 
-        if(sysNameMsg != sysLocalName)
+        if(sysNameMsg != sysLocalName && !m_read_path)
         {
-          debug("Camera FLAG: %u", msg->op);
           if (msg->op == IMC::LoggingControl::COP_STARTED || msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
           {
-            if (m_read_path && msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
-            {
-              return; // Already know log folder
-            }
-
-            if (msg->op == IMC::LoggingControl::COP_STARTED && m_read_path)
-            {
-                m_isCapturing = false;
-            }
-
             m_read_path = true;
             m_frame_cnt = 0;
             m_frame_lost_cnt = 0;

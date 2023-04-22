@@ -45,7 +45,6 @@ namespace DUNE
     BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ) :
         Tasks::Task(name, ctx),
         m_sm_state(SM_IDLE),
-        m_wait_msg_timeout(0.0),
         m_log_opened(false),
         m_log_name_pending(false),
         m_post_power_on_delay(0.0),
@@ -54,9 +53,7 @@ namespace DUNE
         m_fault_count(0),
         m_timeout_count(0),
         m_restart(false),
-        m_restart_delay(0.0),
-        m_read_period(0.0),
-        m_uri()
+        m_restart_delay(0.0)
     {
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
@@ -74,9 +71,6 @@ namespace DUNE
     BasicDeviceDriver::onResourceInitialization(void)
     {
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-
-      if (getActivationTime() == 0.0)
-        war("Activation Time set to 0.0! Please set a positive time.");
     }
 
     IO::Handle *
@@ -98,10 +92,6 @@ namespace DUNE
       char uart[128] = {0};
       unsigned baud = 0;
 
-      // Save device URI
-      m_uri = device;
-      trace("[UART] >> attempting URI: %s", device.c_str());
-
       if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
         return nullptr;
 
@@ -113,10 +103,6 @@ namespace DUNE
     {
       char addr[128] = {0};
       unsigned port = 0;
-
-      // Save device URI
-      m_uri = device;
-      trace("[TCP] >> attempting URI: %s", device.c_str());
 
       if (std::sscanf(device.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
         return nullptr;
@@ -174,9 +160,6 @@ namespace DUNE
     void
     BasicDeviceDriver::onRequestActivation(void)
     {
-      debug("activating");
-      if (getEntityState() <= IMC::EntityState::ESTA_NORMAL)
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
       queueState(SM_ACT_BEGIN);
     }
 
@@ -184,46 +167,19 @@ namespace DUNE
     BasicDeviceDriver::connect(void)
     {
       Counter<double> timer(1.0);
-      bool rv = false;
       try
       {
         trace("connecting...");
-        rv = onConnect();
+        return onConnect();
       }
       catch (...)
       {
         double delay = timer.getRemaining();
         if (delay > 0.0)
           Delay::wait(delay);
-
-        return false;
       }
 
-      if (rv)
-        trace("connected");
-
-      return rv;
-    }
-
-    bool
-    BasicDeviceDriver::synchronize(void)
-    {
-      bool rv = false;
-      try
-      {
-        trace("synchronizing...");
-        rv = onSynchronize();
-      }
-      catch(const std::runtime_error& e)
-      {
-        err("synchronization failure: %s", e.what());
-        return false;
-      }
-
-      if (rv)
-        trace("synchronized");
-
-      return rv;
+      return false;
     }
 
     void
@@ -231,54 +187,27 @@ namespace DUNE
     {
       activationFailed(message);
       turnPowerOff();
-      err("%s", message.c_str());
-      setEntityState(IMC::EntityState::ESTA_FAILURE, message);
-    }
-
-    void
-    BasicDeviceDriver::restart(void)
-    {
-      m_restart_timer.setTop(m_restart_delay);
-      queueState(SM_RESTART_WAIT);
-    }
-
-    void
-    BasicDeviceDriver::requestRestart()
-    {
-      m_restart = true;
-      if (getCurrentState() >= SM_ACT_DONE)
-        requestDeactivation();
-      else
-        restart();
+      setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
     void
     BasicDeviceDriver::onRequestDeactivation(void)
     {
-      setEntityState(getEntityState(), Status::CODE_DEACTIVATING);
-      debug("deactivating");
       queueState(SM_DEACT_BEGIN);
     }
 
     void
     BasicDeviceDriver::disconnect(void)
     {
-      trace("disconnecting...");
-      try
-      {
-        onDisconnect();
-        trace("disconnected");
-      }
-      catch(const std::runtime_error& e)
-      {
-        err("disconnect failure: %s", e.what());
-      }
+      debug("disconnecting");
+      onDisconnect();
+      debug("disconnected");
     }
 
     void
     BasicDeviceDriver::onDeactivation(void)
     {
-      setEntityState(getEntityState(), Status::CODE_IDLE);
+      setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       debug("deactivation complete");
     }
 
@@ -293,9 +222,8 @@ namespace DUNE
     void
     BasicDeviceDriver::initializeDevice(void)
     {
-      trace("initializing...");
+      debug("initializing device");
       onInitializeDevice();
-      trace("initialized");
     }
 
     //! Request the name of the current log file.
@@ -305,7 +233,7 @@ namespace DUNE
       if (!enableLogControl())
         return;
 
-      trace("requesting current log path");
+      debug("requesting current log path");
       IMC::LoggingControl lc;
       lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
       dispatch(lc);
@@ -328,9 +256,6 @@ namespace DUNE
     BasicDeviceDriver::consume(const IMC::LoggingControl* msg)
     {
       if (!enableLogControl())
-        return;
-
-      if (discardLoggingControl(msg))
         return;
 
       switch (msg->op)
@@ -379,9 +304,7 @@ namespace DUNE
 
       closeLog();
 
-      trace("opening log file");
       onOpenLog(path);
-      trace("log file opened");
 
       m_log_opened = true;
     }
@@ -395,9 +318,9 @@ namespace DUNE
       if (!m_log_opened)
         return;
 
-      trace("closing log file");
+      debug("closing log file");
       onCloseLog();
-      trace("log file closed");
+      debug("log file closed");
       m_log_opened = false;
     }
 
@@ -434,9 +357,9 @@ namespace DUNE
       bool old_state = itr->second;
       itr->second = (msg->state == IMC::PowerChannelState::PCS_ON);
       if (!old_state && itr->second)
-        trace("device %s is powered", msg->name.c_str());
+        debug("device %s is powered", msg->name.c_str());
       else if (old_state && !itr->second)
-        trace("device %s is no longer powered", msg->name.c_str());
+        debug("device %s is no longer powered", msg->name.c_str());
     }
 
     //! Power-on device.
@@ -493,15 +416,24 @@ namespace DUNE
       {
         // Wait for activation.
         case SM_IDLE:
+          if (m_restart)
+          {
+            m_restart = false;
+            m_restart_timer.setTop(m_restart_delay);
+            queueState(SM_RESTART_WAIT);
+          }
+          else
+          {
             idle();
+          }
           break;
 
           // Begin activation sequence.
         case SM_ACT_BEGIN:
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
           m_wdog.setTop(getActivationTime());
           if (m_power_channels.empty())
           {
-            m_power_on_timer.setTop(m_power_on_delay);
             queueState(SM_ACT_DEV_WAIT);
           }
           else
@@ -542,12 +474,7 @@ namespace DUNE
 
           if (m_wdog.overflow())
           {
-            std::string msg = "failed to turn power on: ";
-            for (auto p : m_power_channels)
-              if (!p.second)
-                msg += p.first + " ";
-            
-            failActivation(DTR(msg.c_str()));
+            failActivation(DTR("failed to turn power on"));
             queueState(SM_IDLE);
           }
           break;
@@ -556,15 +483,16 @@ namespace DUNE
         case SM_ACT_DEV_WAIT:
           if (m_wdog.overflow())
           {
-            std::string msg = "failed to connect to device: ";
-            msg += m_uri;
-            failActivation(DTR(msg.c_str()));
+            failActivation(DTR("failed to connect to device"));
             queueState(SM_IDLE);
           }
           else if (m_power_on_timer.overflow())
           {
             if (connect())
+            {
               queueState(SM_ACT_DEV_SYNC);
+              spew("Connect ok");
+            }
           }
 
           break;
@@ -613,7 +541,13 @@ namespace DUNE
           else
           {
             if (m_log_opened)
+            {
               queueState(SM_ACT_DONE);
+            }
+            else
+            {
+              spew("Log don't open");
+            }
           }
           break;
 
@@ -625,33 +559,39 @@ namespace DUNE
           }
           catch(const std::runtime_error& e)
           {
+            m_restart = true;
             activationFailed(e.what()); // NOT calling failActivation to move into DEACT_BEGIN
-            requestRestart();
+            queueState(SM_DEACT_BEGIN);
             break;
           }
 
-          m_read_timer.setTop(m_read_period);
           queueState(SM_ACT_SAMPLE);
+          spew("start read sample");
           break;
 
           // Read samples.
         case SM_ACT_SAMPLE:
-          if (m_read_timer.overflow())
-          {
-            m_read_timer.setTop(m_read_period);
-            readSample();
-          }
+          readSample();
           break;
 
           // Start deactivation procedure.
         case SM_DEACT_BEGIN:
+          debug("Setting Entity State DEACTIVATING");
+          setEntityState( IMC::EntityState::ESTA_NORMAL, Status::CODE_DEACTIVATING );
           m_wdog.setTop( getDeactivationTime() );
           queueState( SM_DEACT_DISCONNECT );
           break;
 
           // Gracefully disconnect from device.
         case SM_DEACT_DISCONNECT:
-          disconnect();
+          try
+          {
+            disconnect();
+          }
+          catch(const std::runtime_error& e)
+          {
+            err("failed to disconnect: %s", e.what());
+          }
 
           if (enableLogControl())
             closeLog();
@@ -685,21 +625,36 @@ namespace DUNE
 
           // Deactivation is complete.
         case SM_DEACT_DONE:
-          deactivate();
-          if (m_restart)
-            restart();
-          else
-            queueState(SM_IDLE);
+          try
+          {
+            deactivate();
+          }
+          catch (const std::runtime_error& e)
+          {
+            err("failed deactivation: %s", e.what());
+          }
+
+          queueState(SM_IDLE);
           break;
 
         case SM_RESTART_WAIT:
           if (m_restart_timer.overflow())
           {
-            m_restart = false;
             requestActivation();
+            queueState(SM_IDLE);
           }
           break;
       }
+    }
+
+    bool
+    BasicDeviceDriver::synchronize(void)
+    {
+      bool rv = onSynchronize();
+      if (rv)
+        debug("device is synchronized");
+
+      return rv;
     }
 
     bool
@@ -749,15 +704,11 @@ namespace DUNE
     void
     BasicDeviceDriver::step()
     {
-      if (!isActive())
-        waitForMessages(1.0);
-      else if (m_read_period > 0.0)
-        waitForMessages(m_read_timer.getRemaining());
-      else if (m_wait_msg_timeout > 0.0)
-        waitForMessages(m_wait_msg_timeout);
-      else
+      if (isActive())
         consumeMessages();
-      
+      else
+        waitForMessages(1.0);
+
       updateStateMachine();
     }
 
@@ -773,8 +724,9 @@ namespace DUNE
         catch (std::runtime_error &e)
         {
           war("%s", e.what());
-          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
-          requestRestart();
+          setEntityState(IMC::EntityState::ESTA_NORMAL, e.what());
+          m_restart = isActive() || isActivating();
+          requestDeactivation();
         }
       }
     }

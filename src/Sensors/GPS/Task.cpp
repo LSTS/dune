@@ -25,7 +25,6 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
-// Author: Luis Venancio (BasicDeviceDriver compatibility)                  *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -71,8 +70,10 @@ namespace Sensors
 
     struct Arguments
     {
-      //! IO device (URI).
-      std::string io_dev;
+      //! Serial port device.
+      std::string uart_dev;
+      //! Serial port baud rate.
+      unsigned uart_baud;
       //! Order of sentences.
       std::vector<std::string> stn_order;
       //! Input timeout in seconds.
@@ -83,13 +84,11 @@ namespace Sensors
       std::string init_rpls[c_max_init_cmds];
       //! Power channels.
       std::vector<std::string> pwr_channels;
-      //! Power on delay
-      double post_pwr_on_delay;
       //! Enable novatel sbas mode.
       bool novatelSbas;
     };
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public Tasks::Task
     {
       //! Serial port handle.
       IO::Handle* m_handle;
@@ -115,20 +114,20 @@ namespace Sensors
       char m_bufer_entity[64];
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
+        Tasks::Task(name, ctx),
         m_handle(NULL),
         m_has_agvel(false),
         m_has_euler(false),
         m_reader(NULL)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("4800")
+        .description("Serial port baud rate");
 
         param("Input Timeout", m_args.inp_tout)
         .units(Units::Second)
@@ -139,10 +138,6 @@ namespace Sensors
         param("Power Channel - Names", m_args.pwr_channels)
         .defaultValue("")
         .description("Device's power channels");
-
-        param("Post Power On Delay", m_args.post_pwr_on_delay)
-        .defaultValue("0.0")
-        .description("Delay on power on before attempts to connect");
 
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
@@ -163,9 +158,6 @@ namespace Sensors
         .defaultValue("false")
         .description("Enable novatel sbas mode");
 
-        // Use wait for messages
-        setWaitForMessages(1.0);
-
         // Initialize messages.
         clearMessages();
 
@@ -174,57 +166,67 @@ namespace Sensors
       }
 
       void
-      onUpdateParameters(void)
+      onResourceAcquisition(void)
       {
-        if (paramChanged(m_args.pwr_channels))
+        if (m_args.pwr_channels.size() > 0)
         {
-          clearPowerChannelNames();
-          for (std::string pc : m_args.pwr_channels)
-            addPowerChannelName(pc);
+          IMC::PowerChannelControl pcc;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          for (size_t i = 0; i < m_args.pwr_channels.size(); ++i)
+          {
+            pcc.name = m_args.pwr_channels[i];
+            dispatch(pcc);
+          }
         }
 
-        if (paramChanged(m_args.post_pwr_on_delay))
-        {
-          setPostPowerOnDelay(m_args.post_pwr_on_delay);
-        }
-      }
+        Counter<double> timer(c_pwr_on_delay);
+        while (!stopping() && !timer.overflow())
+          waitForMessages(timer.getRemaining());
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
-      {
         try
         {
-          m_handle = openDeviceHandle(m_args.io_dev);
+          if (!openSocket())
+            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+
           m_reader = new Reader(this, m_handle);
           m_reader->start();
-          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
-
-        return false;
       }
 
-      //! Disconnect from device.
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
+      }
+
       void
-      onDisconnect() override
+      onResourceRelease(void)
       {
         if (m_reader != NULL)
         {
           m_reader->stopAndJoin();
-          Memory::clear(m_reader);
+          delete m_reader;
+          m_reader = NULL;
         }
 
         Memory::clear(m_handle);
       }
 
-      //! Initialize device.
       void
-      onInitializeDevice() override
+      onResourceInitialization(void)
       {
         if (m_args.novatelSbas)
         {
@@ -253,6 +255,7 @@ namespace Sensors
           }
         }
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.setTop(m_args.inp_tout);
       }
 
@@ -792,19 +795,19 @@ namespace Sensors
         }
       }
 
-      //! Check for input timeout.
-      //! Data is read in the DevDataText consume.
-      //! @return true.
-      bool
-      onReadData() override
+      void
+      onMain(void)
       {
-        if (m_wdog.overflow())
+        while (!stopping())
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        }
+          waitForMessages(1.0);
 
-        return true;
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
+        }
       }
     };
   }

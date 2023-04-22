@@ -48,7 +48,7 @@ namespace Control
         double scale;
       };
 
-      struct Task: public DUNE::Control::BasicRemoteOperation
+      struct Task : public DUNE::Control::BasicRemoteOperation
       {
         //! Motor commands.
         IMC::SetThrusterActuation m_thrust[2];
@@ -58,11 +58,10 @@ namespace Control
         double m_speed;
         double m_heading;
 
-        Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::BasicRemoteOperation(name, ctx)
+        Task(const std::string &name, Tasks::Context &ctx) : DUNE::Control::BasicRemoteOperation(name, ctx)
         {
           param("Thrust Scale", m_args.scale)
-          .defaultValue("1.0");
+              .defaultValue("1.0");
 
           // Add remote actions.
           addActionAxis("Port Motor");
@@ -112,7 +111,7 @@ namespace Control
         }
 
         void
-        onRemoteActions(const IMC::RemoteActions* msg)
+        onRemoteActions(const IMC::RemoteActions *msg)
         {
           TupleList tuples(msg->actions);
 
@@ -121,23 +120,23 @@ namespace Control
 
           if (m_thrust[0].value == 0 && m_thrust[1].value == 0)
           {
-              if (tuples.get("Decelerate", 0))
-                m_speed -= 0.05;
-              else if (tuples.get("Accelerate", 0))
-                m_speed += 0.05;
+            if (tuples.get("Decelerate", 0))
+              m_speed -= 0.05;
+            else if (tuples.get("Accelerate", 0))
+              m_speed += 0.05;
 
-              m_speed = Math::trimValue(m_speed, -1.0 , 1.0);
+            m_speed = Math::trimValue(m_speed, -1.0, 1.0);
 
-              double hdng = (tuples.get("Heading", 0)) / 127.0;
-              double leftThrust = m_speed;
-              double rightThrust = m_speed;
-              leftThrust *= 1+hdng*2;
-              rightThrust *= 1-hdng*2;
-              m_thrust[0].value = Math::trimValue(leftThrust, -1.0, 1.0);
-              m_thrust[1].value = Math::trimValue(rightThrust, -1.0, 1.0);
+            double hdng = (tuples.get("Heading", 0)) / 127.0;
+            double leftThrust = m_speed;
+            double rightThrust = m_speed;
+            leftThrust *= 1 + hdng * 2;
+            rightThrust *= 1 - hdng * 2;
+            m_thrust[0].value = Math::trimValue(leftThrust, -1.0, 1.0);
+            m_thrust[1].value = Math::trimValue(rightThrust, -1.0, 1.0);
 
-              if (tuples.get("Stop", 0))
-                m_speed = m_thrust[0].value = m_thrust[1].value = 0;
+            if (tuples.get("Stop", 0))
+              m_speed = m_thrust[0].value = m_thrust[1].value = 0;
           }
           else
             m_speed = m_heading = 0;
