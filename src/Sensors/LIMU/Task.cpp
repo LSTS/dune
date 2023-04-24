@@ -68,8 +68,8 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! IO device (URI).
-      std::string io_dev;
+      //! Serial port device.
+      std::string uart_dev;
       //! Output frequency.
       unsigned output_frq;
       //! Raw data output.
@@ -89,7 +89,7 @@ namespace Sensors
       std::string calib_time;
     };
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public Tasks::Task
     {
       //! Angular velocity.
       IMC::AngularVelocity m_ang_vel;
@@ -137,7 +137,7 @@ namespace Sensors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
+        Tasks::Task(name, ctx),
         m_uart(NULL),
         m_ctl(NULL),
         m_state_timer(1.0),
@@ -146,14 +146,9 @@ namespace Sensors
         m_timeout_count(0)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"uart://DEVICE\"." 
-                     "This device has only one baud rate.");
+        .description("Serial port device used to communicate with the sensor");
 
         param("Power Channel - Name", m_args.pwr_name)
         .defaultValue("")
@@ -203,9 +198,6 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.io_dev))
-          m_args.io_dev += String::str(":%u", c_baud_rate);
-
         m_rotation.fill(c_axes_count, c_axes_count, &m_args.rotation_mx[0]);
 
         // Rotate calibration parameters.
@@ -224,48 +216,25 @@ namespace Sensors
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
-
-        if (paramChanged(m_args.pwr_name))
-        {
-          clearPowerChannelNames();
-          addPowerChannelName(m_args.pwr_name);
-          setPostPowerOnDelay(c_power_up_delay);
-        }
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
-      {
-        try
-        {
-          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
-          m_ctl = new UCTK::Interface(m_uart);
-          return true;
-        }
-        catch (std::runtime_error& e)
-        {
-          throw RestartNeeded(DTR(e.what()), 5.0);
-        }
-
-        return false;
-      }
-
-      //! Disconnect from device.
+      //! Acquire resources.
       void
-      onDisconnect() override
+      onResourceAcquisition(void)
       {
-        Memory::clear(m_ctl);
-        Memory::clear(m_uart);
-      }
+        if (!m_args.pwr_name.empty())
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.name = m_args.pwr_name;
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(pcc);
+          Delay::wait(c_power_up_delay);
+        }
 
-      //! Synchronize with device.
-      bool
-      onSynchronize() override
-      {
         try
         {
+          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
+          m_ctl = new UCTK::Interface(m_uart);
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
             war(DTR("device is using unstable firmware"));
@@ -275,16 +244,23 @@ namespace Sensors
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(DTR(e.what()), 5.0);
+          throw RestartNeeded(DTR(e.what()), 5.0, false);
         }
-        
-        return true;
       }
 
-      //! Initialize device.
+      //! Release resources.
       void
-      onInitializeDevice() override
+      onResourceRelease(void)
       {
+        Memory::clear(m_ctl);
+        Memory::clear(m_uart);
+      }
+
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         setHardIronFactors();
         setOutputFrequency(m_args.output_frq);
       }
@@ -597,22 +573,20 @@ namespace Sensors
         m_sample_count = 0;
       }
 
-      //! Read data.
-      //! @return true.
-      bool
-      onReadData() override
+      void
+      onMain(void)
       {
-        bool got_data = false;
-        if (Poll::poll(*m_uart, 1.0))
+        while (!stopping())
         {
-          readInput();
-          got_data = true;
-        }
-        else
-          m_timeout_count++;
+          consumeMessages();
 
-        reportEntityState();
-        return got_data;
+          if (Poll::poll(*m_uart, 1.0))
+            readInput();
+          else
+            m_timeout_count++;
+
+          reportEntityState();
+        }
       }
     };
   }

@@ -76,10 +76,10 @@ namespace Sensors
 
     struct Arguments
     {
-      //! IO device (URI).
-      std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
+      // UART device.
+      std::string uart_dev;
+      // UART baud rate.
+      unsigned uart_baud;
       // True if UART has local echo enabled.
       bool uart_echo;
       // Depth conversion factor.
@@ -98,7 +98,7 @@ namespace Sensors
     // Number of seconds to wait before setting an entity error.
     static const float c_expire_wdog = 2.0f;
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public Tasks::Periodic
     {
       static const unsigned c_parser_data_size = 6;
       // Maximum number of consecutive CRC errors before bailing out.
@@ -153,8 +153,8 @@ namespace Sensors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
-        m_handle(nullptr),
+        Tasks::Periodic(name, ctx),
+        m_handle(NULL),
         m_crc_err_count(0),
         m_state_timer(1),
         m_sample_count(0),
@@ -162,19 +162,13 @@ namespace Sensors
         m_timeout_count(0)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
-                     "or \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("9600")
+        .description("Serial port baud rate");
 
         param("Serial Port - Local Echo", m_args.uart_echo)
         .defaultValue("false")
@@ -214,9 +208,6 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
-
         // Depth conversion (bar to meters of fluid).
         if (paramChanged(m_args.depth_conv))
           m_args.depth_conv = Math::c_pascal_per_bar / (Math::c_gravity * m_args.depth_conv);
@@ -238,58 +229,38 @@ namespace Sensors
           m_wdog.setTop(m_args.timeout_error);
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
+      void
+      onResourceAcquisition(void)
       {
+        onResourceRelease();
+
         try
         {
-          m_handle = openDeviceHandle(m_args.io_dev);
-          return true;
+          if (openSocket())
+            return;
+
+          m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_handle->flush();
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
-
-        return false;
       }
 
-      //! Disconnect from device.
-      void
-      onDisconnect() override
+      bool
+      openSocket(void)
       {
-        Memory::clear(m_handle);
-      }
+        char addr[128] = {0};
+        unsigned port = 0;
 
-      //! Device may be initialized.
-      void
-      onInitializeDevice() override
-      {
-        m_crc_err_count = 0;
-        m_handle->flush();
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
 
-        uint16_t crc = 0;
-        uint8_t bfr[10] =
-        {
-          (uint8_t)m_args.address,
-          (uint8_t)CMD_CONFIRMATION_FOR_INITIALIZATION
-        };
-
-        crc = Algorithms::CRC16::compute(bfr, 2, 0xFFFF);
-        ByteCopy::toBE(crc, &bfr[2]);
-        write(bfr, 4);
-        if (!read())
-          throw RestartNeeded(DTR("unable to initialize the device"), 5.0, false);
-
-        bfr[0] = m_args.address;
-        bfr[1] = CMD_READ_SERIAL_NUMBER;
-        crc = Algorithms::CRC16::compute(bfr, 2, 0xFFFF);
-        ByteCopy::toBE(crc, &bfr[2]);
-        write(bfr, 4);
-        if (!read())
-          throw RestartNeeded(DTR("unable to retrieve the serial number"), 5.0, false);
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
       }
 
       void
@@ -306,11 +277,21 @@ namespace Sensors
       }
 
       void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_handle);
+      }
+
+      void
+      onResourceInitialization(void)
+      {
+        m_crc_err_count = 0;
+        initialize();
+      }
+
+      void
       consume(const IMC::GpsFix* msg)
       {
-        if (!isActive())
-          return;
-
         if (msg->getSourceEntity() != m_gps_eid)
           return;
 
@@ -321,9 +302,6 @@ namespace Sensors
       void
       consume(const IMC::VehicleMedium* msg)
       {
-        if (!isActive())
-          return;
-
         if (msg->medium != IMC::VehicleMedium::VM_UNDERWATER)
           calibrate();
       }
@@ -342,9 +320,6 @@ namespace Sensors
       bool
       write(uint8_t* bfr, int len)
       {
-        if (m_handle == nullptr)
-          return false;
-        
         uint8_t rxbfr[10];
         int i = len;
         bool aborted = true;
@@ -509,7 +484,7 @@ namespace Sensors
           {
             err(DTR("device not initialized, initializing"));
             setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-            onInitializeDevice();
+            initialize();
           }
           else
           {
@@ -541,6 +516,33 @@ namespace Sensors
 
         // Everything correctly interpreted, so return true
         return true;
+      }
+
+      void
+      initialize(void)
+      {
+        m_handle->flush();
+
+        uint16_t crc = 0;
+        uint8_t bfr[10] =
+        {
+          (uint8_t)m_args.address,
+          (uint8_t)CMD_CONFIRMATION_FOR_INITIALIZATION
+        };
+
+        crc = Algorithms::CRC16::compute(bfr, 2, 0xFFFF);
+        ByteCopy::toBE(crc, &bfr[2]);
+        write(bfr, 4);
+        if (!read())
+          throw RestartNeeded(DTR("unable to initialize the device"), 5.0, false);
+
+        bfr[0] = m_args.address;
+        bfr[1] = CMD_READ_SERIAL_NUMBER;
+        crc = Algorithms::CRC16::compute(bfr, 2, 0xFFFF);
+        ByteCopy::toBE(crc, &bfr[2]);
+        write(bfr, 4);
+        if (!read())
+          throw RestartNeeded(DTR("unable to retrieve the serial number"), 5.0, false);
       }
 
       void
@@ -593,12 +595,9 @@ namespace Sensors
         m_sample_count = 0;
       }
 
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
-      bool
-      onReadData() override
+      void
+      task(void)
       {
-        bool reading = false;
         // Query pressure.
         if (write(m_msg_read_pressure, sizeof(m_msg_read_pressure)))
         {
@@ -609,7 +608,6 @@ namespace Sensors
             dispatch(m_pressure);
             m_depth.value = m_channel_readout * m_args.depth_conv;
             dispatch(m_depth);
-            reading = true;
           }
         }
 
@@ -620,12 +618,10 @@ namespace Sensors
           {
             m_temperature.value = m_channel_readout;
             dispatch(m_temperature);
-            reading = true;
           }
         }
 
         reportEntityState();
-        return reading;
       }
     };
   }

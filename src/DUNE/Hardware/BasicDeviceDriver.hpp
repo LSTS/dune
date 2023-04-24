@@ -186,17 +186,6 @@ namespace DUNE
         return msg->getSource() != getSystemId();
       }
 
-      //! Test if the logging control message should be discarded.
-      //! @param[in] msg logging control message.
-      //! @return true to discard message, false otherwise.
-      virtual bool
-      discardLoggingControl(const IMC::LoggingControl* msg)
-      {
-        (void)msg;
-        
-        return false;
-      }
-
       void
       clearFaultCount(void)
       {
@@ -220,34 +209,6 @@ namespace DUNE
       setRestartDelay(double seconds)
       {
         m_restart_delay = seconds;
-      }
-
-      // Set state machine to restart
-      void
-      restart(void);
-
-      // Request a restart
-      void
-      requestRestart();
-
-      //! Set the data read period.
-      //! @param[in] freq polling frequency, in hertz.
-      void
-      setReadFrequency(double freq)
-      {
-        m_read_period = freq > 0.0 ? 1.0/freq : 0.0;
-      }
-
-      //! If set, task uses waitForMessages with specified timeout 
-      //! insted of consumeMessages.
-      //! @param[in] timeout waitForMessages timeout.
-      void
-      setWaitForMessages(double timeout)
-      {
-        if (timeout < 0.0)
-          return;
-        
-        m_wait_msg_timeout = timeout;
       }
 
     private:
@@ -296,8 +257,6 @@ namespace DUNE
       StateMachineStates m_sm_state;
       //! State machine state queue.
       std::queue<StateMachineStates> m_sm_state_queue;
-      //! Timeout used when forcing waitForMessage.
-      double m_wait_msg_timeout;
       //! Power channel names and states.
       std::map<std::string, bool> m_power_channels;
       //! True if log is opened.
@@ -324,12 +283,6 @@ namespace DUNE
       double m_restart_delay;
       //! Restart timer.
       DUNE::Time::Counter<double> m_restart_timer;
-      //! Data read period in seconds.
-      double m_read_period;
-      //! Data read timer.
-      DUNE::Time::Counter<double> m_read_timer;
-      //! Device URI.
-      std::string m_uri;
 
       void
       onResourceRelease(void) override;

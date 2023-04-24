@@ -305,10 +305,7 @@ namespace DUNE
     Task::activationFailed(const std::string& reason)
     {
       spew("activation failed: %s", reason.c_str());
-      
-      if (m_honours_active)
-        m_params.set("Active", "false");
-
+      m_args.active = false;
       m_entity->failActivation(reason);
     }
 

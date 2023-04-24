@@ -243,24 +243,7 @@ namespace Supervisors
         if (msg->getDestination() != getSystemId())
           return;
 
-        if (msg->getSource() == getSystemId())
-        {
-          try
-          {
-            m_vs.last_error = DTR("got abort request from entity ") + resolveEntity(msg->getSourceEntity()) +
-                String::str(" @ 0x%02X", msg->getSourceEntity());
-          }
-          catch (Entities::EntityDataBase::InvalidId& e )
-          {
-            m_vs.last_error = DTR("got abort request from entity ") +
-                String::str("unknown @ 0x%02X", msg->getSourceEntity());
-          }
-        }
-        else
-        {
-          m_vs.last_error = DTR("got abort request from system ") + String::str("%s - 0x%04X @ 0x%02X",
-              resolveSystemId(msg->getSource()), msg->getSource(), msg->getSourceEntity());
-        }
+        m_vs.last_error = DTR("got abort request from ") + resolveEntity(msg->getSourceEntity());
         m_vs.last_error_time = Clock::getSinceEpoch();
         err("%s", m_vs.last_error.c_str());
 

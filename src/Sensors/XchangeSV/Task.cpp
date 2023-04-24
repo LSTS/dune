@@ -39,10 +39,10 @@ namespace Sensors
   {
     struct Arguments
     {
-      //! IO device (URI).
-      std::string io_dev;
-      //! Power on Delay
-      double pwr_on_delay;
+      //! Serial port device.
+      std::string uart_dev;
+      //! Serial port baud rate.
+      unsigned uart_baud;
       //! Input timeout.
       double input_timeout;
     };
@@ -52,7 +52,7 @@ namespace Sensors
     //! Maximum sound speed value.
     static const double c_max_speed = 1625.0;
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public DUNE::Tasks::Task
     {
       //! Sound speed message.
       IMC::SoundSpeed m_sspeed;
@@ -64,25 +64,19 @@ namespace Sensors
       Counter<double> m_wdog;
       //! True if IO handle is a SerialPort.
       bool m_uart;
-      //! Read buffer
-      char m_bfr[32];
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
-        m_handle(nullptr),
+        DUNE::Tasks::Task(name, ctx),
+        m_handle(NULL),
         m_uart(false)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
-        param("IO Port - Device", m_args.io_dev)
+        param("Serial Port - Device", m_args.uart_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
-                     "or \"uart://DEVICE:BAUD\"");
+        .description("Serial port device used to communicate with the sensor");
 
-        param(DTR_RT("Power On Delay"), m_args.pwr_on_delay)
-        .defaultValue("0.0");
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("19200")
+        .description("Serial port baud rate");
 
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("4.0")
@@ -91,63 +85,47 @@ namespace Sensors
         .description("Amount of seconds to wait for data before reporting an error");
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
+      void
+      onResourceAcquisition(void)
       {
-        Delay::wait(m_args.pwr_on_delay);
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        Delay::wait(getActivationTime());
 
         try
-        {        
-          m_handle = openSocketTCP(m_args.io_dev);
-
-          if (m_handle == nullptr)
-          {
-            m_handle = openUART(m_args.io_dev);
-            static_cast<SerialPort*>(m_handle)->setCanonicalInput(true);
-            m_uart = true;
-          }
-
-          if (m_handle != nullptr)
-            m_handle->flush();
-
-          return m_handle != nullptr;
-        }
-        catch (...)
         {
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          if (!openSocket())
+          {
+              m_handle = new SerialPort (m_args.uart_dev, m_args.uart_baud);
+              ((SerialPort*)m_handle)->setCanonicalInput (true);
+              m_handle->flush();
+              m_uart = true;
+          }
         }
-
-        return false;
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
       }
 
-      //! Disconnect from device.
+      bool
+      openSocket(void)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return false;
+
+        TCPSocket* sock = new TCPSocket;
+        sock->connect(addr, port);
+        m_handle = sock;
+        return true;
+      }
+
       void
-      onDisconnect() override
+      onResourceRelease(void)
       {
         Memory::clear(m_handle);
-      }
-
-      //! Device may be initialized.
-      void
-      onInitializeDevice() override
-      {
-        m_handle->writeString("\r");
-        Delay::wait(1.0);
-        m_handle->flush();
-
-        if (m_uart)
-          if (!sendCommand("\r", "\r\n"))
-            throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
-
-        if (!sendCommand("SET SAMPLE 1 s\r", ">SET SAMPLE 1 s\r\n"))
-          throw RestartNeeded(DTR("failed to set sampling rate"), 5, false);
-
-        if (!sendCommand("MONITOR\r", ">MONITOR\r\n"))
-          throw RestartNeeded(DTR("failed to enter monitor mode"), 5, false);
-
-        m_wdog.setTop(m_args.input_timeout);
       }
 
       bool
@@ -167,36 +145,59 @@ namespace Sensors
         return false;
       }
 
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
-      bool
-      onReadData() override
+      void
+      onResourceInitialization(void)
       {
-        if (m_wdog.overflow())
+        m_handle->writeString("\r");
+        Delay::wait(1.0);
+        m_handle->flush();
+
+        if (m_uart)
+          if (!sendCommand("\r", "\r\n"))
+            throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
+
+        if (!sendCommand("SET SAMPLE 1 s\r", ">SET SAMPLE 1 s\r\n"))
+          throw RestartNeeded(DTR("failed to set sampling rate"), 5, false);
+
+        if (!sendCommand("MONITOR\r", ">MONITOR\r\n"))
+          throw RestartNeeded(DTR("failed to enter monitor mode"), 5, false);
+
+        m_wdog.setTop(m_args.input_timeout);
+      }
+
+      void
+      onMain(void)
+      {
+        char bfr[32];
+
+        while (!stopping())
         {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          consumeMessages();
+
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
+
+          if (!Poll::poll(*m_handle, 1.0))
+            continue;
+
+          size_t rv = m_handle->readString(bfr, sizeof(bfr));
+
+          if (rv == 0)
+            throw RestartNeeded(DTR("I/O error"), 5);
+
+          if (std::sscanf(bfr, "%f", &m_sspeed.value) != 1)
+            continue;
+
+          if ((m_sspeed.value < c_min_speed) || (m_sspeed.value > c_max_speed))
+            m_sspeed.value = -1;
+
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          m_wdog.reset();
+          dispatch(m_sspeed);
         }
-
-        if (!Poll::poll(*m_handle, 1.0))
-          return false;
-
-        size_t rv = m_handle->readString(m_bfr, sizeof(m_bfr));
-
-        if (rv == 0)
-          throw RestartNeeded(DTR("I/O error"), 5);
-
-        if (std::sscanf(m_bfr, "%f", &m_sspeed.value) != 1)
-          return false;
-
-        if ((m_sspeed.value < c_min_speed) || (m_sspeed.value > c_max_speed))
-          m_sspeed.value = -1;
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_wdog.reset();
-        dispatch(m_sspeed);
-
-        return true;
       }
     };
   }
