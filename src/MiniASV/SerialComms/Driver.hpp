@@ -143,7 +143,7 @@ namespace MiniASV
     private:
       DUNE::Tasks::Task *m_task;
       float m_timeout_uart;
-      char bfr[64];
+      char bfr[128];
     };
 
   }
