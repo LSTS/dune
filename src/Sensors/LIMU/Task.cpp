@@ -229,8 +229,8 @@ namespace Sensors
         {
           clearPowerChannelNames();
           addPowerChannelName(m_args.pwr_name);
-          setPostPowerOnDelay(c_power_up_delay);
         }
+        setPostPowerOnDelay(c_power_up_delay);
       }
 
       //! Try to connect to the device.
@@ -272,13 +272,15 @@ namespace Sensors
           else
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+
+          return true;
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(DTR(e.what()), 5.0);
         }
         
-        return true;
+        return false;
       }
 
       //! Initialize device.
