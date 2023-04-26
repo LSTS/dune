@@ -299,8 +299,11 @@ namespace Sensors
       bool
       onReadData() override
       {
+        spew("read data");
         bool recv = m_driver->readData();
+        spew("check status");
         checkStatus();
+        spew("display config");
         displayConfig();
         return recv;
       }
