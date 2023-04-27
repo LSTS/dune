@@ -52,6 +52,8 @@ namespace Sensors
     static const double c_data_timeout = 8.0;
     //! Turn power off after being out of water for longer than this period
     static const double c_out_of_water_timeout = 15.0;
+    //! Sound speed update threshold (m/s)
+    static const double c_sspeed_threshold = 5.0;
 
     //! %Task arguments.
     struct Arguments
@@ -96,13 +98,15 @@ namespace Sensors
       Counter<double> m_wdog;
       //! Out of water watchdog
       Counter<double> m_out_water_wdog;
+      //! Last sound speed
+      double m_last_sspeed;
       //! Task arguments.
       Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx) : Hardware::BasicDeviceDriver(name, ctx), m_filter(NULL), m_out_water_wdog(c_out_of_water_timeout)
+      Task(const std::string& name, Tasks::Context& ctx) : Hardware::BasicDeviceDriver(name, ctx), m_filter(NULL), m_out_water_wdog(c_out_of_water_timeout), m_last_sspeed(-1)
       {
         param("IO Port - Device", m_args.io_dev)
             .defaultValue("")
@@ -334,7 +338,10 @@ namespace Sensors
       onSoundSpeed(const double sound_speed) override
       {
         if (!isActive()) return;
-        m_driver->setSoundSpeed(sound_speed);
+        if (abs(sound_speed - m_last_sspeed) > c_sspeed_threshold) {
+          m_last_sspeed = sound_speed;
+          m_driver->setSoundSpeed(sound_speed);
+        }
       }
 
       //! Get data from device.
