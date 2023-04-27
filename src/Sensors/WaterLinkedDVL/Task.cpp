@@ -46,6 +46,10 @@ namespace Sensors
 
     //! Transducer beam offset (the distance between the center of transducers and the device center).
     static const float c_xdcr_offset = 0.02;
+    //! Data input timeout.
+    static const double c_data_timeout = 8.0;
+    //! Turn power off after being out of water for longer than this period
+    static const double c_out_of_water_timeout = 15.0;
 
     //! %Task arguments.
     struct Arguments
@@ -84,13 +88,17 @@ namespace Sensors
       std::vector<unsigned> m_entities;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
+      //! Communication watchdog
+      Counter<double> m_wdog;
+      //! Out of water watchdog
+      Counter<double> m_out_water_wdog;
       //! Task arguments.
       Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx) : Hardware::BasicDeviceDriver(name, ctx), m_filter(NULL)
+      Task(const std::string& name, Tasks::Context& ctx) : Hardware::BasicDeviceDriver(name, ctx), m_filter(NULL), m_out_water_wdog(c_out_of_water_timeout)
       {
         param("IO Port - Device", m_args.io_dev)
             .defaultValue("")
@@ -182,7 +190,9 @@ namespace Sensors
       void
       onIdle(void) override
       {
-        requestActivation();
+        if (m_hand.inWater()) {
+          requestActivation();
+        }
       }
 
       //! Try to connect to the device.
@@ -195,8 +205,15 @@ namespace Sensors
         {
           m_driver = std::make_unique<Driver>(this, m_alt_dvl, m_alt_flt);
         }
-        m_io.reset(openSocketTCP(m_args.io_dev));
-
+        try
+        {
+          m_io.reset(openSocketTCP(m_args.io_dev));
+        }
+        catch(const std::exception& e)
+        {
+          throw RestartNeeded(e.what(), 5, true);
+        }
+        
         if (!m_io)
         {
           m_io.reset(openUART(m_args.io_dev));
@@ -220,6 +237,9 @@ namespace Sensors
       void
       onInitializeDevice() override
       {
+        // Wait for device to be ready
+        inf("On initialize device: waiting for device to be ready");
+        wait(15.0);
         // Initialize filter
         Memory::clear(m_filter);
         m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset, m_args.beam_angle, m_args.position,
@@ -233,6 +253,9 @@ namespace Sensors
         m_driver->setRotation(m_args.orientation[2]);
         if (m_args.type_activation == "Always")
           m_driver->setAcoustics(true);
+        
+        m_wdog.setTop(c_data_timeout);
+        inf("Initialization complete");
       }
 
       void
@@ -248,8 +271,17 @@ namespace Sensors
 
         if (!m_hand.isKnown())
           m_driver->setAcoustics(false);
-        else if (m_hand.outWater())
+        else if (m_hand.outWater()) {
           m_driver->setAcoustics(false);
+          if (m_hand.changed()) {
+            m_out_water_wdog.reset();
+          }
+          if (m_out_water_wdog.overflow()) {
+            inf("Deactivating to prevent damage from excessive heat");
+            requestDeactivation(); // Deactivate after being out of water for longer than the maximum period
+          }
+          
+        }
         else
           m_driver->setAcoustics(true);
       }
@@ -301,6 +333,13 @@ namespace Sensors
       {
         spew("read data");
         bool recv = m_driver->readData();
+        if (recv) {
+          m_wdog.reset();
+        }
+        if (m_wdog.overflow()) {
+          war("Timed out waiting for data");
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
         spew("check status");
         checkStatus();
         spew("display config");
