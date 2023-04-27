@@ -44,8 +44,10 @@ namespace Sensors
   {
     using DUNE_NAMESPACES;
 
-    //! Transducer beam offset (the distance between the center of transducers and the device center).
-    static const float c_xdcr_offset = 0.02;
+    //! Transducer beam offset (the distance between the center of transducers and the device center) for A50 model.
+    static const float c_xdcr_offset_a50 = 0.02;
+    //! Transducer beam offset (the distance between the center of transducers and the device center) for A125 model.
+    static const float c_xdcr_offset_a125 = 0.0398;
     //! Data input timeout.
     static const double c_data_timeout = 8.0;
     //! Turn power off after being out of water for longer than this period
@@ -68,6 +70,8 @@ namespace Sensors
       double beam_angle;
       //! Beam width.
       double beam_width;
+      //! DVL Model.
+      std::string dvl_model;
     };
 
     //! Device driver for the Water Linked DVL-A50 and DVL-A125
@@ -133,6 +137,11 @@ namespace Sensors
             .defaultValue("4.4")
             .units(Units::Degree)
             .description("The nominal transducer beam width.");
+
+        param("DVL Model", m_args.dvl_model)
+            .defaultValue("A125")
+            .values("A50, A125")
+            .description("Waterlinked DVL model.");
 
         bind<IMC::VehicleMedium>(this);
       }
@@ -242,7 +251,9 @@ namespace Sensors
         wait(15.0);
         // Initialize filter
         Memory::clear(m_filter);
-        m_filter = new BeamFilter(this, c_beams, m_args.beam_width, c_xdcr_offset, m_args.beam_angle, m_args.position,
+        static const float xdcr_offset = (m_args.dvl_model == "A125") ? c_xdcr_offset_a125 : c_xdcr_offset_a50;
+
+        m_filter = new BeamFilter(this, c_beams, m_args.beam_width, xdcr_offset, m_args.beam_angle, m_args.position,
                                   m_args.orientation, BeamFilter::CLOCKWISE);
 
         m_filter->setSourceEntities(m_entities);

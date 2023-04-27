@@ -66,7 +66,7 @@ namespace Sensors::WaterLinkedDVL
       m_status(0),
       m_alt_dvl(alt_dvl),
       m_alt_flt(alt_flt),
-      m_filter(NULL)
+      m_filter(nullptr)
     {
     }
 
