@@ -31,18 +31,14 @@
 #include <DUNE/DUNE.hpp>
 
 // local headers
-#include "PWMsignal.hpp"
-#include "DMA.hpp"
-#include "DirectGPIO.hpp"
 #include "DirectPWM.hpp"
-
-// TODO: make pwm channels available in /boot/config.txt
 
 namespace Actuators
 {
   //! Insert short task description here.
   //!
-  //! Insert explanation on task behaviour here.
+  //! This task requires 
+  //! dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2 in config.txt or equivalent
   //! @author João Bogas
   namespace PWMv2
   {
@@ -50,7 +46,7 @@ namespace Actuators
 
     struct Task: public DUNE::Tasks::Task
     {
-      static const unsigned int c_max_pwm = 2;
+      static const unsigned c_max_pwm  = 2;
 
       struct Arguments
       {
@@ -74,7 +70,7 @@ namespace Actuators
         {
           std::string option = String::str("Servo %u", i);
           param(option, m_args.servo_inf[i])
-          .defaultValue("0")
+          .defaultValue("-1")
           .description("Servo information");
         }
 
@@ -82,7 +78,7 @@ namespace Actuators
         {
           std::string option = String::str("PWM %u", i);
           param(option, m_args.pwm_inf[i])
-          .defaultValue("0")
+          .defaultValue("-1")
           .description("PWM information");
         }
         
@@ -121,19 +117,20 @@ namespace Actuators
       {
         for (size_t i = 0; i < c_max_pwm; i++)
         {
-          if (m_args.servo_inf[i] != 0)
+          if (m_args.servo_inf[i] != -1)
+            m_channel[i] = new DirectPWM(this, i);
+          
+
+          if(m_args.pwm_inf[i] != -1)
           {
-            //if(validate_port(m_args.servo_inf[i], i))
-              //m_channel[i] = new DirectPWM();
-          }
-          if(m_args.pwm_inf[i] != 0)
-          {
-            //validate_port(m_args.pwm_inf[i], i);
-              //m_channel[i] = new DirectPWM();
+            if (m_channel[i] != nullptr)
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
+              err("Error in config file! PWM and Servo competing for same pwm channel");
+            }
+            m_channel[i] = new DirectPWM(this, i);
           }
         }
-        m_channel[0] = new DirectPWM(18);
-        m_channel[1] = new DirectPWM(19);
       }
 
       //! Release resources.
@@ -166,8 +163,9 @@ namespace Actuators
       void
       consume(const IMC::SetPWM* msg)
       {
-        //m_channel[msg->id]->setPeriod(msg->period);
+        m_channel[msg->id]->setPeriod(msg->period);
         m_channel[msg->id]->setDutyCycle(msg->duty_cycle);
+        
       }
 
       //! Main loop.
@@ -176,14 +174,7 @@ namespace Actuators
       {
         while (!isStopping())
         {
-          m_channel[0]->setDutyCycle(1'000);
-          m_channel[1]->setDutyCycle(1'000);
-          inf("DutyCycle set 1ms");
-          Delay::wait(1);
-          m_channel[0]->setDutyCycle(2'000);
-          m_channel[1]->setDutyCycle(2'000);
-          inf("DutyCycle set 2ms");
-          Delay::wait(1);
+          waitForMessages(1.0);
         }
       }
     };
