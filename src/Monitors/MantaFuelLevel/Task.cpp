@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2016 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -177,6 +177,7 @@ namespace Monitors
         if(m_args.elabel_voltage_main != resolveEntity(msg->getSourceEntity()))
           return;
 
+        debug("Consume level: %.2f", m_battery_volts);
         m_battery_volts = msg->value;
       }
 
@@ -204,7 +205,7 @@ namespace Monitors
 
         if(m_battery_volts > m_args.fuel_level[0])
         {
-          fuel_level_perc = 100;
+          fuel_level_perc = 99;
         }
         else if(m_battery_volts > m_args.fuel_level[1] && m_battery_volts <= m_args.fuel_level[0])
         {
@@ -234,7 +235,7 @@ namespace Monitors
         {
           interval_fuel_level = m_args.fuel_level[4];
           diff_voltage = m_battery_volts - m_args.fuel_level[3];
-          fuel_level_perc = (diff_voltage * 20) / interval_fuel_level;
+          fuel_level_perc = abs((diff_voltage * 20) / interval_fuel_level);
         }
         else
         {
@@ -242,7 +243,10 @@ namespace Monitors
         }
 
         if(fuel_level_perc > 100)
-          fuel_level_perc = 100;
+          fuel_level_perc = 99;
+
+        if(fuel_level_perc < 0)
+          fuel_level_perc = 1;
 
         return fuel_level_perc;
       }
@@ -259,6 +263,8 @@ namespace Monitors
       void
       parsePercentageValue(void)
       {
+        debug("Battery percentage read: %.2f vs configured warning: %.2f, shutdown: %.2f", m_fuel.value, m_args.warning_level, m_args.shutdow_level);
+
         if (m_fuel.value > m_args.warning_level)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
@@ -288,6 +294,9 @@ namespace Monitors
        void
       parseVoltageValue(void)
       {
+        debug("Voltage: read %.2f, warning voltage: %.2f, shut down voltage: %.2f", m_battery_volts,
+              m_args.warning_level_voltage, m_args.shutdow_level_voltage);
+
         if (m_battery_volts > m_args.warning_level_voltage)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
@@ -327,6 +336,7 @@ namespace Monitors
         IMC::PowerOperation pop;
         pop.setDestination(getSystemId());
         pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+        dispatch(pop);
       }
 
       void
@@ -334,6 +344,7 @@ namespace Monitors
       {
         if(!m_is_task_in_error)
         {
+          debug("task is not in error");
           try
           {
             m_fuel.value = getFuelLevelPercentage();
@@ -344,7 +355,9 @@ namespace Monitors
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
           }
 
-          if (m_fuel.value >= 0)
+          debug("Fuel level: %.2f", m_fuel.value);
+
+          if (m_fuel.value >= 0 || m_battery_volts > 0)
           {
             m_fuel.setDestination(getSystemId());
             dispatch(m_fuel);
@@ -359,10 +372,14 @@ namespace Monitors
               parsePercentageValue();
           }
         }
+        else
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+          war("Task in error, not dispatching messages");
+        }
       }
     };
   }
 }
 
 DUNE_TASK
-
