@@ -333,6 +333,7 @@ namespace Maneuver
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Throttle>(this);
+        bind<IMC::ManeuverDone>(this);
       }
 
       void
@@ -492,6 +493,12 @@ namespace Maneuver
       consume(const IMC::Throttle* msg)
       {
         m_maneuvers[m_type]->onThrottle(msg);
+      }
+
+      void
+      consume(const IMC::ManeuverDone* msg)
+      {
+        m_maneuvers[m_type]->onManeuverDone(msg);
       }
 
       void
