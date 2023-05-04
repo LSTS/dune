@@ -67,6 +67,8 @@ namespace MiniASV
       DriverMiniASV *m_driver;
       //! Timer
       Counter<double> m_wdog;
+      //! IMC msg
+      IMC::EulerAngles m_angles;
       //! Read timestamp.
       double m_tstamp;
       //! Count for attempts
@@ -164,6 +166,8 @@ namespace MiniASV
       void
       initBoard()
       {
+        m_driver->stopAcquisition();
+
         if (!m_driver->getVersionFirmware())
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
@@ -184,6 +188,9 @@ namespace MiniASV
       void
       consume(const IMC::SetThrusterActuation *msg)
       {
+        /* if (msg->getDestination() != getSystemId())
+          return; */
+
         if (msg->id == 0)
         {
           m_driver->m_miniASVData.pwmR = static_cast<int>(msg->getValueFP() * 25);
@@ -202,6 +209,22 @@ namespace MiniASV
         }
       }
 
+      void
+      dispatchData()
+      {
+        m_tstamp = Clock::getSinceEpoch();
+
+        m_angles.setTimeStamp(m_tstamp);
+        m_angles.time = m_tstamp;
+        // to do: trim these values (these are in degrees, we need it in rad)
+        m_angles.phi = m_driver->m_miniASVData.roll;
+        m_angles.theta = m_driver->m_miniASVData.pitch;
+        m_angles.psi = m_driver->m_miniASVData.yaw;
+        m_angles.psi_magnetic = m_driver->m_miniASVData.yaw;
+
+        dispatch(m_angles, DF_KEEP_TIME);
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -210,10 +233,12 @@ namespace MiniASV
         {
           waitForMessages(1.0);
 
-          /* if (m_wdog.overflow())
+          if (m_wdog.overflow())
           {
             inf("Timer overflow");
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
+            m_uart->flush();
+            initBoard();
           }
 
           if (!Poll::poll(*m_uart, m_args.input_timeout))
@@ -222,7 +247,8 @@ namespace MiniASV
           if (m_driver->haveNewData())
           {
             m_wdog.reset();
-          } */
+            dispatchData();
+          }
 
           std::string send;
           send = String::str("@PWM,R,%d,*", m_driver->m_miniASVData.pwmR);
