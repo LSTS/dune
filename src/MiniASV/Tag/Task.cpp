@@ -184,9 +184,16 @@ namespace MiniASV
           m_distance1 = atof(param);
           param = std::strtok(NULL, ",");
           m_distance2 = atof(param);
+
+          m_x = (pow(m_distance1, 2) + pow(1, 2) - pow(m_distance2, 2)) / 2;
+          m_y = sqrt(pow(m_distance1, 2) - pow(m_x, 2));
+
+          inf("Estimated Vehicle Position: (%.3f, %.3f)", m_x, m_y);
         }
 
         bfr[0] = '\0';
+
+        m_uart->flush();
 
         return true;
       }
@@ -200,15 +207,7 @@ namespace MiniASV
           waitForMessages(0.1);
 
           if (haveNewData())
-          {
-            /*
-            calculate m_x and m_y with m_distance1 and m_ditance2
-            */
-
-            inf("d1 - %f | d2 - %f", m_distance1, m_distance2);
-            
             dispatchData();
-          }
         }
       }
     };
