@@ -174,11 +174,25 @@ namespace Monitors
         if (msg->getSource() != getSystemId())
           return;
 
-        if(m_args.elabel_voltage_main != resolveEntity(msg->getSourceEntity()))
+        if(m_args.elabel_voltage_main != resolveEntity(msg->getSourceEntity()) && m_args.elabel_current_charger != resolveEntity(msg->getSourceEntity()))
           return;
 
-        debug("Consume level: %.2f", m_battery_volts);
-        m_battery_volts = msg->value;
+        if(m_current_charge > 0)
+        {
+          if(m_args.elabel_current_charger != resolveEntity(msg->getSourceEntity()))
+            return;
+
+          m_battery_volts = msg->value;
+          debug("Consume level (%s): %.2f", m_args.elabel_current_charger.c_str(), m_battery_volts);
+        }
+        else
+        {
+          if(m_args.elabel_voltage_main != resolveEntity(msg->getSourceEntity()))
+            return;
+
+          m_battery_volts = msg->value;
+          debug("Consume level (%s): %.2f", m_args.elabel_current_charger.c_str(), m_battery_volts);
+        }
       }
 
       //! Consume message IMC::Current
@@ -362,14 +376,18 @@ namespace Monitors
             m_fuel.setDestination(getSystemId());
             dispatch(m_fuel);
             if(m_current_charge == 0)
+            {
               std::sprintf(m_bufer_entity, "active | %.2f V", m_battery_volts);
+              if(m_args.is_to_use_voltage)
+                parseVoltageValue();
+              else
+                parsePercentageValue();
+            }
             else
+            {
               std::sprintf(m_bufer_entity, "active | %.2f V | Charging: %.2f A", m_battery_volts, m_current_charge);
-
-            if(m_args.is_to_use_voltage)
-              parseVoltageValue();
-            else
-              parsePercentageValue();
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
+            }
           }
         }
         else
