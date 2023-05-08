@@ -56,5 +56,6 @@ namespace DUNE
 #include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
 #include <DUNE/Hardware/LUCL/BootLoader.hpp>
 #include <DUNE/Hardware/PWM.hpp>
+#include <DUNE/Hardware/SocketCAN.hpp>
 
 #endif

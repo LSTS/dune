@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,98 +24,101 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Pedro Calado                                                     *
+// Author: Nikolai Lauvås                                                  *
 //***************************************************************************
 
-#ifndef MANEUVER_MULTIPLEXER_ABSTRACT_MUX_HPP_INCLUDED_
-#define MANEUVER_MULTIPLEXER_ABSTRACT_MUX_HPP_INCLUDED_
-
+// DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Maneuver
+namespace Sensors
 {
-  namespace Multiplexer
+  //! Insert short task description here.
+  //!
+  //! Insert explanation on task behaviour here.
+  //! @author Nikolai Lauvås
+  namespace V104setup
   {
     using DUNE_NAMESPACES;
-
-    //! Abstract Multiplexed maneuver
-    class AbstractMux
+    struct Arguments
     {
-    public:
-      //! Constructor
-      //! @param[in] task pointer to Maneuver task
-      AbstractMux(Maneuvers::Maneuver* task):
-        m_task(task)
-      { }
+      std::string uart_dev;
+      int uart_baud;
+    };
+    struct Task: public DUNE::Tasks::Task
+    {
+      //! UART.
+      Hardware::SerialPort* m_uart;
+      //! Task arguments.
+      Arguments m_args;
 
-      //! Destructor
-      virtual
-      ~AbstractMux(void)
-      { }
-
-      //! Start function
-      virtual void
-      start(const IMC::Maneuver* maneuver) = 0;
-
-      //! On PathControlState message
-      virtual void
-      onPathControlState(const IMC::PathControlState* pcs)
+      //! Constructor.
+      //! @param[in] name task name.
+      //! @param[in] ctx context.
+      Task(const std::string& name, Tasks::Context& ctx):
+        DUNE::Tasks::Task(name, ctx),
+        m_uart(NULL)
       {
-        (void)pcs;
+        param("Serial Port - Device", m_args.uart_dev)
+        .defaultValue("")
+        .description("Serial port device used to communicate with the sensor");
+
+        param("Serial Port - Baud Rate", m_args.uart_baud)
+        .defaultValue("4800")
+        .description("Serial port baud rate");
       }
 
-      //! On Brake message
-      virtual void
-      onBrake(const IMC::Brake* msg)
+      //! Update internal state with new parameter values.
+      void
+      onUpdateParameters(void)
       {
-        (void)msg;
       }
 
-      //! On EstimatedState message
-      virtual void
-      onEstimatedState(const IMC::EstimatedState* msg)
+      //! Reserve entity identifiers.
+      void
+      onEntityReservation(void)
       {
-        (void)msg;
       }
 
-      //! On StateReport function
-      virtual void
-      onStateReport(void)
-      { }
-
-      //! On VehicleMedium message
-      virtual void
-      onVehicleMedium(const IMC::VehicleMedium* msg)
+      //! Resolve entity names.
+      void
+      onEntityResolution(void)
       {
-        (void)msg;
       }
 
-      //! On Rpm message
-      virtual void
-      onThrottle(const IMC::Throttle* msg)
+      //! Acquire resources.
+      void
+      onResourceAcquisition(void)
       {
-        (void)msg;
+        m_uart = new Hardware::SerialPort(m_args.uart_dev, m_args.uart_baud);
       }
 
-      //! On GpsFix message
-      virtual void
-      onGpsFix(const IMC::GpsFix* msg)
+      //! Initialize resources.
+      void
+      onResourceInitialization(void)
       {
-        (void)msg;
       }
 
-      //! On ManeuverDone message
-      virtual void
-      onManeuverDone(const IMC::ManeuverDone* msg)
+      //! Release resources.
+      void
+      onResourceRelease(void)
       {
-        (void)msg;
+        //Memory::clear(m_uart);
       }
 
-    protected:
-      //! Pointer to task
-      Maneuvers::Maneuver* m_task;
+      //! Main loop.
+      void
+      onMain(void)
+      {
+        std::string cmdText = "$JBAUD,19200\r\n";
+        m_uart->writeString(cmdText.c_str());
+        Memory::clear(m_uart);
+        while (!stopping())
+        {
+          waitForMessages(1.0);
+        }
+      }
     };
   }
 }
 
-#endif
+DUNE_TASK

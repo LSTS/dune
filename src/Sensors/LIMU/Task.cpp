@@ -216,6 +216,13 @@ namespace Sensors
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
+          
+        if (paramChanged(m_args.pwr_name))
+        {
+          clearPowerChannelNames();
+          addPowerChannelName(m_args.pwr_name);
+        }
+        setPostPowerOnDelay(c_power_up_delay);
       }
 
       //! Acquire resources.
@@ -241,11 +248,15 @@ namespace Sensors
           else
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+
+          return true;
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(DTR(e.what()), 5.0, false);
         }
+
+        return false;
       }
 
       //! Release resources.
