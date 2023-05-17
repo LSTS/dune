@@ -227,6 +227,18 @@ namespace Control
           return dvel;
         }
 
+        double
+        getEta(const TrackingState& ts) override
+        {
+          double h_eta = PathController::getEta(ts);
+
+          const float errz = std::abs(ts.track_pos.z);
+          double v_eta = errz / ts.vertical_speed;
+          v_eta = std::min(65535.0, v_eta - getTimeFactor());
+
+          return std::max(h_eta, v_eta);
+        }
+
         //! Trims a vector inside a 2D box defined by x,y limits.
         //! Think of a 2D vector trapped inside a box defined by your limits.
         //! If the vector exceeds the limits its components are trimmed to
