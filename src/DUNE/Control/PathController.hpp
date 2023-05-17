@@ -156,6 +156,7 @@ namespace DUNE
           double x;
           double y;
           double z;
+          uint8_t z_units;
         } start, end;
 
         //! bearing from start to end.
@@ -171,6 +172,8 @@ namespace DUNE
         //! current ground speed if course control enabled,
         //! body-fixed frame u speed otherwise.
         double speed;
+        //! Vertical speed.
+        double vertical_speed;
         //! course error in relation to track bearing.
         double course_error;
 
@@ -374,6 +377,12 @@ namespace DUNE
       {
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
+
+      //! Get EstimatedState vertical position, based on ZUnits 
+      //! @param unit Coordenate unit
+      //! @return EstimatedSate vertical position
+      double
+      getZ(IMC::ZUnits unit);
 
       //! Deactivate bottom tracker
       void
