@@ -65,6 +65,8 @@ namespace Control
         IMC::DesiredHeading m_heading;
         //! Outgoing desired velocity message.
         IMC::DesiredVelocity m_velocity;
+        //! Incoming desired speed message.
+        IMC::DesiredSpeed m_speed;
         //! Task arguments.
         Arguments m_args;
 
@@ -116,6 +118,14 @@ namespace Control
         onEntityReservation(void)
         {
           PathController::onEntityReservation();
+        }
+
+        void
+        consume(const IMC::DesiredSpeed* msg)
+        {
+          PathController::consume(msg);
+
+          m_speed = *msg;
         }
 
         void
