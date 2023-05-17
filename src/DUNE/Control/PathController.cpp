@@ -422,6 +422,7 @@ namespace DUNE
                           m_pcs.start_lat, m_pcs.start_lon, 0,
                           &m_ts.start.x, &m_ts.start.y);
       m_ts.start.z = m_pcs.start_z;
+      m_ts.start.z_units = m_pcs.start_z_units;
 
       if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
           dpath->lradius > 0)
@@ -445,6 +446,7 @@ namespace DUNE
                           m_pcs.end_lat, m_pcs.end_lon, 0,
                           &m_ts.end.x, &m_ts.end.y);
       m_ts.end.z = m_pcs.end_z;
+      m_ts.end.z_units = m_pcs.end_z_units;
     }
 
     void
@@ -749,10 +751,13 @@ namespace DUNE
       // Ground course and speed
       m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
       m_ts.speed = m_ts.cc ? Math::norm(m_estate.vx, m_estate.vy) : m_estate.u;
+      m_ts.vertical_speed = m_estate.vz;
 
       if (!m_ts.loitering)
       {
         getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
+        // vertical-track
+        m_ts.track_pos.z = m_ts.end.z - getZ(static_cast<IMC::ZUnits>(m_ts.end.z_units));
         m_ts.course_error = Angles::normalizeRadian(m_ts.course - m_ts.track_bearing);
 
         m_ts.eta = getEta(m_ts);
@@ -773,6 +778,7 @@ namespace DUNE
       {
         m_ts.track_pos.x = 0;
         m_ts.track_pos.y = m_ts.range - m_ts.loiter.radius;
+        m_ts.track_pos.z = m_ts.end.z - getZ(static_cast<IMC::ZUnits>(m_ts.end.z_units));
 
         if (m_ts.loiter.clockwise)
           m_ts.track_pos.y = -m_ts.track_pos.y;
@@ -786,7 +792,6 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_estate.z - m_ts.end.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
@@ -1081,6 +1086,20 @@ namespace DUNE
               : Math::norm(errx, erry) / speed;
 
       return std::min(65535.0, eta - time_factor);
+    }
+
+
+    double
+    PathController::getZ(IMC::ZUnits unit)
+    {
+      if (unit == IMC::Z_HEIGHT)
+        return m_estate.height;
+      
+      if (unit == IMC::Z_ALTITUDE)
+        return m_estate.alt;
+        
+      if (unit == IMC::Z_DEPTH)
+        return m_estate.depth;
     }
 
     void
