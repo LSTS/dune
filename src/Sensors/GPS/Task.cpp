@@ -196,7 +196,17 @@ namespace Sensors
       {
         try
         {
-          m_handle = openDeviceHandle(m_args.io_dev);
+          m_handle = openSocketTCP(m_args.io_dev);
+          if (m_handle == nullptr)
+          {
+            m_handle = openUART(m_args.io_dev);
+            static_cast<SerialPort*>(m_handle)->setCanonicalInput(true);
+          }
+
+          if (m_handle == nullptr)
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          
+          m_handle->flush();
           m_reader = new Reader(this, m_handle);
           m_reader->start();
           return true;
