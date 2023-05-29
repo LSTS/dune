@@ -29,10 +29,10 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+
+// local headers
 #include "MosquittoClient.hpp"
-// #ifdef DUNE_MOSQUITTO_ENABLED
-// #include "MosquittoClient.hpp"
-// #endif
+
 
 namespace Transports
 {
