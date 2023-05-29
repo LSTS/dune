@@ -139,7 +139,7 @@ namespace Sensors
             .description("The nominal transducer beam width.");
 
         param("DVL Model", m_args.dvl_model)
-            .defaultValue("A125")
+            .defaultValue("A50")
             .values("A50, A125")
             .description("Waterlinked DVL model.");
 
