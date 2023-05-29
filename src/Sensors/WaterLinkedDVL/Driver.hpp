@@ -17,7 +17,7 @@
 #include "Configuration.hpp"
 
 // JSON headers.
-#include <json.hpp>
+#include <nlohmann-json/json.hpp>
 
 namespace Sensors::WaterLinkedDVL
 {
