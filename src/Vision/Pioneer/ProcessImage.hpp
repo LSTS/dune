@@ -82,7 +82,7 @@ namespace Vision
         }
 
         void
-        setHSVIntervals(int hue, int saturation, int value)
+        setHSVIntervals(std::vector<int> hue, std::vector<int> saturation, std::vector<int> value)
         {
           m_filter_dots->setHSVIntervals(hue, saturation, value);
         }
@@ -91,13 +91,13 @@ namespace Vision
         run(void)
         {
           Delay::wait(4);
-          if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
+          if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
           {
             cv::namedWindow("Process Image Thread", cv::WINDOW_NORMAL);
             cv::waitKey(1);
           }
-          if(m_method.compare("Dots") == 0)
-            m_filter_dots->initCallBack();
+          //if(m_method.compare("Dots") == 0)
+          //  m_filter_dots->initCallBack();
 
           if(m_method.compare("Template") == 0)
             m_filter_template->initCallBack();
@@ -122,15 +122,19 @@ namespace Vision
                 else
                   m_task->war("No valide detection method selected.(config problem\?\?\?)");
 
-                if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
+                if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
                 {
                   cv::imshow("Process Image Thread", m_image_resized);
-                  if(cv::waitKey(1000/m_fps) == 't')
+                  char key = cv::waitKey(1000/m_fps);
+                  switch (key)
                   {
-                    if (m_method.compare("Template") == 0)
-                    {
-                      m_filter_template->requestNewTpl();
-                    }
+                    case 't':
+                      if (m_method.compare("Template") == 0)
+                        m_filter_template->requestNewTpl();
+                      break;
+
+                    default:
+                      break;
                   }
                 }
               }

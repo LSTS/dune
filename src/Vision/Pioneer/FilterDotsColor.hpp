@@ -85,53 +85,48 @@ namespace Vision
           ~FilterDotsColor(void){}
 
           void
-          setHSVIntervals(int hue, int saturation, int value)
+          setHSVIntervals(std::vector<int> hue, std::vector<int> saturation, std::vector<int> value)
           {
             m_hsv_hue_interval = hue;
-            m_hsv_hue_interval = saturation;
-            m_hsv_hue_interval = value;
+            m_hsv_saturation_interval = saturation;
+            m_hsv_value_interval = value;
+            m_task->war("New HSV Low values: %d | %d | %d", hue[HSV_VALUE_LOWER], saturation[HSV_VALUE_LOWER], value[HSV_VALUE_LOWER]);
+            m_task->war("New HSV High values: %d | %d | %d", hue[HSV_VALUE_UPPER], saturation[HSV_VALUE_UPPER], value[HSV_VALUE_UPPER]);
           }
 
-          void
-          initCallBack(void)
-          {
-            cv::setMouseCallback("Process Image Thread", callBackFunc, &m_mouse);
-          }
+         // void
+          //initCallBack(void)
+          //{
+          //  cv::setMouseCallback("Process Image Thread", callBackFunc, &m_mouse);
+          //}
 
           void
           colorPoints(cv::Mat input_image)
           {
-            if (m_mouse.new_tpl_coords)
+            cv::Mat hsvImage;
+            cv::cvtColor(input_image, hsvImage, cv::COLOR_BGR2HSV);
+            cv::Scalar lowerGreen = cv::Scalar(m_hsv_hue_interval[HSV_VALUE_LOWER],
+                                    m_hsv_saturation_interval[HSV_VALUE_LOWER],
+                                    m_hsv_value_interval[HSV_VALUE_LOWER]);  // Valores mínimos de HSV para verde
+            cv::Scalar upperGreen = cv::Scalar(m_hsv_hue_interval[HSV_VALUE_UPPER],
+                                    m_hsv_saturation_interval[HSV_VALUE_UPPER],
+                                    m_hsv_value_interval[HSV_VALUE_UPPER]);  // Valores máximos de HSV para verde
+
+            cv::Mat green_mask;
+            cv::inRange(hsvImage, lowerGreen, upperGreen, green_mask);
+            cv::Mat only_green;
+            cv::bitwise_and(input_image, input_image, only_green, green_mask);
+            cv::Mat binary_image;
+            thresholdImageToBinary(only_green, 200, 255, &binary_image);
+            cv::Mat dots_found_result;
+            mergePixelArea(binary_image, 2 , 2, &dots_found_result);
+            findBlobs(dots_found_result, &input_image);
+
+            if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
             {
-              m_mouse.new_tpl_coords = false;
-              int result_hsv_extract[3] = {0, 0, 0};
-              extractHSVValues(input_image, m_mouse.x, m_mouse.y, result_hsv_extract);
-              setHSVValues(result_hsv_extract);
-            }
-
-            if (m_have_color_hsv)
-            {
-              cv::Mat hsvImage;
-              cv::cvtColor(input_image, hsvImage, cv::COLOR_BGR2HSV);
-
-              int values_hsv[3][2];
-              filterHSVInterval(values_hsv);
-
-              cv::Mat color_selected;
-              extractColorSelected(hsvImage, values_hsv, &color_selected);
-
-              cv::Mat binary_image;
-              thresholdImageToBinary(color_selected, 0, 255, &binary_image);
-
-              findBlobs(binary_image, &input_image);
-
-              if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
-              {
-                cv::imshow("Extract Color", color_selected);
-                cv::waitKey(1);
-                cv::imshow("Binary Image", binary_image);
-                cv::waitKey(1);
-              }
+              cv::imshow("Only green", only_green);
+              cv::imshow("Binary Image", binary_image);
+              cv::imshow("Dots found", dots_found_result);
             }
           }
 
@@ -147,105 +142,54 @@ namespace Vision
           bool m_have_color_hsv;
           //! Save pixel.y of color selected
           int m_pixel_y;
-          int m_hue;
-          int m_saturation;
-          int m_value;
-          int m_hsv_hue_interval;
-          int m_hsv_saturation_interval;
-          int m_hsv_value_interval;
+          //! Hue HSV values
+          std::vector<int> m_hsv_hue_interval;
+          //! Saturation HSV values
+          std::vector<int> m_hsv_saturation_interval;
+          //! Value HSV values
+          std::vector<int> m_hsv_value_interval;
 
-          void static
-          callBackFunc(int event, int x, int y, int flags, void *userdata)
+          void
+          mergePixelArea(cv::Mat image_input, int area_pixel_size, int minimum_pixel, cv::Mat *output_image)
           {
-            (void)flags;
-            if (event == cv::EVENT_LBUTTONDOWN)
+            output_image[0] = image_input.clone();
+            // Go over image
+            for (int y = area_pixel_size; y < image_input.rows - area_pixel_size; y++)
             {
-              MouseEvent *p = (MouseEvent *)userdata;
-              p->x = x;
-              p->y = y;
-              p->new_tpl_coords = true;
+              for (int x = area_pixel_size; x < image_input.cols - area_pixel_size; x++)
+              {
+                // check if pixel is white
+                if (image_input.at<uchar>(y, x) == 255)
+                {
+                  int count = 0;
+                  // Loops the area_pixel_size x area_pixel_size radius area around the current pixel
+                  for (int j = -area_pixel_size; j <= area_pixel_size; j++)
+                  {
+                    for (int i = -area_pixel_size; i <= area_pixel_size; i++)
+                    {
+                      // check if neighboring pixel is white
+                      if (image_input.at<uchar>(y + j, x + i) == 255)
+                      {
+                        count++;
+                      }
+                    }
+                  }
+
+                  // Checks if there are at least minimum_pixel white pixels in the area
+                  if (count >= minimum_pixel)
+                  {
+                    // draw results
+                    for (int j = -area_pixel_size; j <= area_pixel_size; j++)
+                    {
+                      for (int i = -area_pixel_size; i <= area_pixel_size; i++)
+                      {
+                        output_image[0].at<uchar>(y + j, x + i) = 255;
+                      }
+                    }
+                  }
+                }
+              }
             }
-          }
-
-          bool
-          isValueInsideInterval(int value, int lowerBound, int upperBound)
-          {
-            return (value >= lowerBound) && (value <= upperBound);
-          }
-
-          //Extract HSV values of Point in image.
-          void
-          extractHSVValues(cv::Mat image, int x, int y, int *result_hsv_extract)
-          {
-            // Checking if coordinates are within image bounds
-            if (x >= 0 && x < image.cols && y >= 0 && y < image.rows)
-            {
-              cv::Vec3b pixel = image.at<cv::Vec3b>(cv::Point(x, y));
-              // Converting pixel from BGR to HSV
-              cv::Mat3b bgr(pixel);
-              cv::Mat3b hsv;
-              cv::cvtColor(bgr, hsv, cv::COLOR_BGR2HSV);
-              // Getting the pixel's HSV values
-              result_hsv_extract[HSV_CHANNEL_HUE] = hsv(cv::Point(0, 0))[HSV_CHANNEL_HUE];
-              result_hsv_extract[HSV_CHANNEL_SATURATION] = hsv(cv::Point(0, 0))[HSV_CHANNEL_SATURATION];
-              result_hsv_extract[HSV_CHANNEL_VALUE] = hsv(cv::Point(0, 0))[HSV_CHANNEL_VALUE];
-              m_have_color_hsv = true;
-              m_pixel_y = y;
-              std::string text_hsv_extract = "Cor HSV do pixel: Hue=" + std::to_string(result_hsv_extract[HSV_CHANNEL_HUE]) +
-                        ", Saturation=" + std::to_string(result_hsv_extract[HSV_CHANNEL_SATURATION]) +
-                        ", Value=" + std::to_string(result_hsv_extract[HSV_CHANNEL_VALUE]);
-              m_task->inf("%s", text_hsv_extract.c_str());
-            }
-          }
-
-          void
-          setHSVValues(int *m_hsv_color)
-          {
-            m_hue = m_hsv_color[HSV_CHANNEL_HUE];
-            m_saturation = m_hsv_color[HSV_CHANNEL_SATURATION];
-            m_value = m_hsv_color[HSV_CHANNEL_VALUE];
-          }
-
-          void
-          filterHSVInterval(int filter_hsv_interval[3][2])
-          {
-            // Define the lower and upper threshold values for the selected color
-            filter_hsv_interval[HSV_CHANNEL_HUE][HSV_VALUE_LOWER] = m_hue - m_hsv_hue_interval;
-            filter_hsv_interval[HSV_CHANNEL_HUE][HSV_VALUE_UPPER] = m_hue + m_hsv_hue_interval;
-            if (filter_hsv_interval[HSV_CHANNEL_HUE][HSV_VALUE_LOWER] < 0)
-              filter_hsv_interval[HSV_CHANNEL_HUE][HSV_VALUE_LOWER] = 0;
-            if (filter_hsv_interval[HSV_CHANNEL_HUE][HSV_VALUE_UPPER] > 255)
-              filter_hsv_interval[HSV_CHANNEL_HUE][HSV_VALUE_UPPER] = 255;
-
-            filter_hsv_interval[HSV_CHANNEL_SATURATION][HSV_VALUE_LOWER] = m_saturation - m_hsv_saturation_interval;
-            filter_hsv_interval[HSV_CHANNEL_SATURATION][HSV_VALUE_UPPER] = m_saturation + m_hsv_saturation_interval;
-            if (filter_hsv_interval[HSV_CHANNEL_SATURATION][HSV_VALUE_LOWER] < 0)
-              filter_hsv_interval[HSV_CHANNEL_SATURATION][HSV_VALUE_LOWER] = 0;
-            if (filter_hsv_interval[HSV_CHANNEL_SATURATION][HSV_VALUE_UPPER] > 255)
-              filter_hsv_interval[HSV_CHANNEL_SATURATION][HSV_VALUE_UPPER] = 255;
-
-            filter_hsv_interval[HSV_CHANNEL_VALUE][HSV_VALUE_LOWER] = m_value - m_hsv_value_interval;
-            filter_hsv_interval[HSV_CHANNEL_VALUE][HSV_VALUE_UPPER] = m_value + m_hsv_value_interval;
-            if (filter_hsv_interval[HSV_CHANNEL_VALUE][HSV_VALUE_LOWER] < 0)
-              filter_hsv_interval[HSV_CHANNEL_VALUE][HSV_VALUE_LOWER] = 0;
-            if (filter_hsv_interval[HSV_CHANNEL_VALUE][HSV_VALUE_UPPER] > 255)
-              filter_hsv_interval[HSV_CHANNEL_VALUE][HSV_VALUE_UPPER] = 255;
-          }
-
-          // Threshold the image to extract the color selected
-          void
-          extractColorSelected(cv::Mat input_image, int values_hsv[3][2], cv::Mat *output_image)
-          {
-            cv::Scalar lower_color(values_hsv[HSV_CHANNEL_HUE][HSV_VALUE_LOWER],
-                                   values_hsv[HSV_CHANNEL_SATURATION][HSV_VALUE_LOWER],
-                                   values_hsv[HSV_CHANNEL_VALUE][HSV_VALUE_LOWER]);
-            cv::Scalar upper_color(values_hsv[HSV_CHANNEL_HUE][HSV_VALUE_UPPER],
-                                   values_hsv[HSV_CHANNEL_SATURATION][HSV_VALUE_UPPER],
-                                   values_hsv[HSV_CHANNEL_VALUE][HSV_VALUE_UPPER]);
-            cv::Mat color_mask;
-            cv::inRange(input_image, lower_color, upper_color, color_mask);
-            // Bitwise AND the original image with the color mask
-            cv::bitwise_and(input_image, input_image, output_image[0], color_mask);
           }
 
           void
@@ -254,6 +198,12 @@ namespace Vision
             cv::Mat gray_image;
             cv::cvtColor(image_input, gray_image, cv::COLOR_BGR2GRAY);
             cv::threshold(gray_image, output_image[0], min_value, max_value, cv::THRESH_BINARY);
+          }
+
+          bool
+          isValueInsideInterval(int value, int lower_bound, int upper_bound)
+          {
+            return (value >= lower_bound) && (value <= upper_bound);
           }
 
           void
@@ -265,15 +215,16 @@ namespace Vision
 
             // Draw contours of blobs
             int id = 0;
-            m_task->debug("Dots Found: %ld", contours.size());
+            m_task->err("Dots Found: %d", (int)contours.size());
             if (contours.size() >= 1 && contours.size() <= 4)
             {
               for (const auto &contour : contours)
               {
                 double area = cv::contourArea(contour);
-                if (area >= 1 && area <= 60 && isValueInsideInterval(m_pixel_y, contour[0].y - 15, contour[0].y + 15))
+                m_task->war("%f", area);
+                if (area >= 10 && area <= 80)
                 {
-                  cv::circle(image_to_plot_result[0], contour[0], 6, cv::Scalar(0, 0, 255), 2);
+                  cv::circle(image_to_plot_result[0], contour[0], 10, cv::Scalar(0, 0, 255), 2);
                   std::string text_tpl = "Dot " + std::to_string(id+1) + " ("+ std::to_string(contours.size()) +") : (" +
                                           std::to_string(contour[0].x) + ", " +
                                           std::to_string(contour[0].y) + ")";

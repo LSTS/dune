@@ -59,11 +59,11 @@ namespace Vision
       //! Maximum fps
       int max_fps;
       //! Hue interval
-      int hue_interval;
+      std::vector<int> hue_interval;
       //! Saturation interval
-      int saturation_interval;
+      std::vector<int> saturation_interval;
       //! Value interval
-      int value_interval;
+      std::vector<int> value_interval;
     };
 
     //! Task.
@@ -108,16 +108,19 @@ namespace Vision
         param("Hue Interval", m_args.hue_interval)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("10")
+        .size(2)
         .description("Hue Interval");
 
         param("Saturation Interval", m_args.saturation_interval)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("40")
+        .size(2)
         .description("Saturation Interval");
 
         param("Value Interval", m_args.value_interval)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("40")
+        .size(2)
         .description("Value Interval");
       }
 
