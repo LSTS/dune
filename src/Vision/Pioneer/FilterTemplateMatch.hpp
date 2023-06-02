@@ -95,7 +95,7 @@ namespace Vision
             }
             if (m_mouse.new_tpl_coords)
             {
-              std::string text_mouse = "Left button of the mouse is clicked - position (" + std::to_string(m_mouse.x) + 
+              std::string text_mouse = "Left button of the mouse is clicked - position (" + std::to_string(m_mouse.x) +
                                        ", " + std::to_string(m_mouse.y) + ")";
               m_task->inf("%s", text_mouse.c_str());
               m_mouse.new_tpl_coords = false;
@@ -113,10 +113,12 @@ namespace Vision
           DUNE::Tasks::Task *m_task;
           //! Flag to control imshow
           std::string m_imshow;
-
+          //! control state of tpl image
           bool m_have_tpl;
+          //! Tpl image
           cv::Mat m_tpl;
-          cv::Mat result;
+          //! Storage result of tpl detection
+          cv::Mat m_result_tpl_track;
 
           void
           getTplImg(cv::Mat input_image, int cols, int rows)
@@ -148,16 +150,16 @@ namespace Vision
           {
             int result_cols = input_image.cols - m_tpl.cols + 1;
             int result_rows = input_image.rows - m_tpl.rows + 1;
-            result.create(result_rows, result_cols, CV_32FC1);
-            cv::matchTemplate(input_image, m_tpl, result, c_match_method);
+            m_result_tpl_track.create(result_rows, result_cols, CV_32FC1);
+            cv::matchTemplate(input_image, m_tpl, m_result_tpl_track, c_match_method);
             // Default 0, 1
-            cv::normalize(result, result, 50, 200, cv::NORM_MINMAX, -1, cv::Mat());
+            cv::normalize(m_result_tpl_track, m_result_tpl_track, 50, 200, cv::NORM_MINMAX, -1, cv::Mat());
             double minVal;
             double maxVal;
             cv::Point minLoc;
             cv::Point maxLoc;
             cv::Point matchLoc;
-            cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+            cv::minMaxLoc(m_result_tpl_track, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
             if (c_match_method == cv::TM_SQDIFF || c_match_method == cv::TM_SQDIFF_NORMED)
             {
               matchLoc = minLoc;
@@ -168,9 +170,9 @@ namespace Vision
             }
             if (m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
             {
-              /*cv::rectangle(result, matchLoc, cv::Point(matchLoc.x + m_tpl.cols, matchLoc.y + m_tpl.rows), cv::Scalar::all(0), 2, 8, 0);
+              /*cv::rectangle(m_result_tpl_track, matchLoc, cv::Point(matchLoc.x + m_tpl.cols, matchLoc.y + m_tpl.rows), cv::Scalar::all(0), 2, 8, 0);
               cv::imshow("image_window", img_display);
-              cv::imshow("result_window", result);
+              cv::imshow("result_window", m_result_tpl_track);
               cv::waitKey(1);*/
               cv::rectangle(input_image, matchLoc, cv::Point(matchLoc.x + m_tpl.cols, matchLoc.y + m_tpl.rows), cv::Scalar(0, 255, 0), 2, 8, 0);
             }

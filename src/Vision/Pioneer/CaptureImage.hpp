@@ -124,7 +124,7 @@ namespace Vision
               else
               {
                 m_frame = frame_temp.clone();
-                if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
+                if(m_imshow.compare("All") == 0 || m_imshow.compare("Input") == 0)
                 {
                   cv::imshow("RTSP stream thread", frame_temp);
                   cv::waitKey(1);

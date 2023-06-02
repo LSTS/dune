@@ -56,9 +56,17 @@ namespace Vision
       std::string imshow;
       //! Detection method
       std::string method;
+      //! Maximum fps
+      int max_fps;
+      //! Hue interval
+      int hue_interval;
+      //! Saturation interval
+      int saturation_interval;
+      //! Value interval
+      int value_interval;
     };
 
-    //! Device driver task.
+    //! Task.
     struct Task: public DUNE::Tasks::Task
     {
       //! Configuration parameters
@@ -91,6 +99,26 @@ namespace Vision
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("None")
         .description("Detection Method");
+
+        param("Maximum Fps", m_args.max_fps)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("8")
+        .description("Maximum Fps");
+
+        param("Hue Interval", m_args.hue_interval)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("10")
+        .description("Hue Interval");
+
+        param("Saturation Interval", m_args.saturation_interval)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("40")
+        .description("Saturation Interval");
+
+        param("Value Interval", m_args.value_interval)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("40")
+        .description("Value Interval");
       }
 
       void
@@ -103,7 +131,8 @@ namespace Vision
       {
         m_cap = new CaptureImage(this, m_args.url, m_args.imshow);
         m_cap->start();
-        m_img_proc = new ProcessImage(this, m_args.imshow, m_cap, m_args.method);
+        m_img_proc = new ProcessImage(this, m_args.imshow, m_cap, m_args.method, m_args.max_fps);
+        m_img_proc->setHSVIntervals(m_args.hue_interval, m_args.saturation_interval, m_args.value_interval);
         m_img_proc->start();
         m_task_ready = true;
       }
