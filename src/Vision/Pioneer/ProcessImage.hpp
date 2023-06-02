@@ -70,6 +70,7 @@ namespace Vision
           m_mouse.new_tpl_coords = false;
           cv::setNumThreads(4);
           m_filter_line = new FilterLine(task, imshow);
+          m_filter_template = new FilterTemplateMatch(task, imshow);
         }
 
         //! Destructor.
@@ -88,10 +89,13 @@ namespace Vision
             cv::namedWindow("Process Image Thread", cv::WINDOW_NORMAL);
             cv::waitKey(1);
           }
-          if(!m_have_tpl || m_method.compare("Color") == 0)
+          if(m_method.compare("Color") == 0)
           {
-            //set the callback function for any mouse event
             cv::setMouseCallback("Process Image Thread", CallBackFunc, &m_mouse);
+          }
+          if(m_method.compare("Template") == 0)
+          {
+            m_filter_template->initCallBack();
           }
           while(!isStopping())
           {
@@ -107,7 +111,7 @@ namespace Vision
                 if(m_method.compare("Lines") == 0)
                   m_filter_line->getLinesInImage(m_image_resized);
                 else if(m_method.compare("Template") == 0)
-                  templateMatch();
+                  m_filter_template->templateMatch(m_image_resized);
                 else if(m_method.compare("Color") == 0)
                   colorPoints();
                 else
@@ -118,8 +122,10 @@ namespace Vision
                   cv::imshow("Process Image Thread", m_image_resized);
                   if(cv::waitKey(1000/24) == 't')
                   {
-                    m_mouse.new_tpl_coords = false;
-                    m_have_tpl = false;
+                    if (m_method.compare("Template") == 0)
+                    {
+                      m_filter_template->requestNewTpl();
+                    }
                   }
                 }
               }
@@ -146,12 +152,8 @@ namespace Vision
         cv::Mat m_image_resized;
         //! Filter Line class
         FilterLine* m_filter_line;
-
-        bool m_have_tpl = false;
-        cv::Mat m_tpl;
-        int m_tpl_size = 100;
-        int match_method = cv::TM_SQDIFF;
-        cv::Mat result;
+        //! Filter Template Match class
+        FilterTemplateMatch* m_filter_template;
 
         struct MouseEvent
         {
@@ -161,34 +163,6 @@ namespace Vision
         };
 
         MouseEvent m_mouse;
-
-        void
-        templateMatch(void)
-        {
-          if(m_have_tpl)
-          {
-            MatchingMethod();
-          }
-          if (m_mouse.new_tpl_coords)
-          {
-            m_mouse.new_tpl_coords = false;
-            if (m_mouse.x - (m_tpl_size / 2) > 0 && m_mouse.x + (m_tpl_size / 2) <= m_image_resized.cols)
-              if (m_mouse.y - (m_tpl_size / 2) > 0 && m_mouse.y + (m_tpl_size / 2) <= m_image_resized.rows)
-                getTplImg(m_mouse.x - (m_tpl_size / 2), m_mouse.y - (m_tpl_size / 2));
-          }
-        }
-
-        void
-        getTplImg(int cols, int rows)
-        {
-          m_image_resized(cv::Rect(cols, rows, m_tpl_size, m_tpl_size)).copyTo(m_tpl);
-          if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
-          {
-            cv::imshow("TPL", m_tpl);
-            cv::waitKey(1);
-          }
-          m_have_tpl = true;
-        }
 
         void static CallBackFunc(int event, int x, int y, int flags, void *userdata)
         {
@@ -200,50 +174,6 @@ namespace Vision
             p->x = x;
             p->y = y;
             p->new_tpl_coords = true;
-          }
-          /*else if (event == cv::EVENT_RBUTTONDOWN)
-          {
-            std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
-          }
-          else if (event == cv::EVENT_MBUTTONDOWN)
-          {
-            std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
-          }
-          else if (event == cv::EVENT_MOUSEMOVE)
-          {
-            std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << std::endl;
-          }*/
-        }
-
-        void MatchingMethod(void)
-        {
-          int result_cols = m_image_resized.cols - m_tpl.cols + 1;
-          int result_rows = m_image_resized.rows - m_tpl.rows + 1;
-          result.create(result_rows, result_cols, CV_32FC1);
-          cv::matchTemplate(m_image_resized, m_tpl, result, match_method);
-          // Default 0, 1
-          cv::normalize(result, result, 50, 200, cv::NORM_MINMAX, -1, cv::Mat());
-          double minVal;
-          double maxVal;
-          cv::Point minLoc;
-          cv::Point maxLoc;
-          cv::Point matchLoc;
-          cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
-          if (match_method == cv::TM_SQDIFF || match_method == cv::TM_SQDIFF_NORMED)
-          {
-            matchLoc = minLoc;
-          }
-          else
-          {
-            matchLoc = maxLoc;
-          }
-          if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
-          {
-            /*cv::rectangle(result, matchLoc, cv::Point(matchLoc.x + m_tpl.cols, matchLoc.y + m_tpl.rows), cv::Scalar::all(0), 2, 8, 0);
-            cv::imshow("image_window", img_display);
-            cv::imshow("result_window", result);
-            cv::waitKey(1);*/
-            cv::rectangle(m_image_resized, matchLoc, cv::Point(matchLoc.x + m_tpl.cols, matchLoc.y + m_tpl.rows), cv::Scalar(0, 255, 0), 2, 8, 0);
           }
         }
 
