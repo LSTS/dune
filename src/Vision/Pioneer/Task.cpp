@@ -39,6 +39,7 @@
 
 //Local header
 #include "CaptureImage.hpp"
+#include "ProcessImage.hpp"
 
 namespace Vision
 {
@@ -46,13 +47,15 @@ namespace Vision
   {
     using DUNE_NAMESPACES;
 
-    static const std::string c_default_device_url = "rtsp://192.168.1.101:8554/test";
-
     //! %Task arguments.
     struct Arguments
     {
-      //! Master Name.
-      std::string system_name;
+      //! Stream url of pionner device
+      std::string url;
+      //! Display Imshow
+      std::string imshow;
+      //! Detection method
+      std::string method;
     };
 
     //! Device driver task.
@@ -62,12 +65,32 @@ namespace Vision
       Arguments m_args;
       //! Capture video frames of pioneer
       CaptureImage* m_cap;
+      //! Process image captured from pionner cam
+      ProcessImage* m_img_proc;
+      //! Flag to control state of task
+      bool m_task_ready;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_task_ready(false)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
+
+        param("Stream URL", m_args.url)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("rtsp://192.168.1.101:8554/test")
+        .description("Url of video stream");
+
+        param("Imshow Display", m_args.imshow)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("None")
+        .description("Display image output, only available in xorg systems");
+
+        param("Detection Method", m_args.method)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("None")
+        .description("Detection Method");
       }
 
       void
@@ -78,13 +101,23 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
-        m_cap = new CaptureImage(this, c_default_device_url);
+        m_cap = new CaptureImage(this, m_args.url, m_args.imshow);
         m_cap->start();
+        m_img_proc = new ProcessImage(this, m_args.imshow, m_cap, m_args.method);
+        m_img_proc->start();
+        m_task_ready = true;
       }
 
       void
       onResourceRelease(void)
       {
+        if(m_task_ready)
+        {
+          m_img_proc->stopAndJoin();
+          m_cap->stopAndJoin();
+          delete m_cap;
+          delete m_img_proc;
+        }
       }
 
       void
@@ -117,7 +150,7 @@ namespace Vision
       {
         while (!stopping())
         {
-          waitForMessages(0.1);
+          waitForMessages(0.01);
         }
       }
     };

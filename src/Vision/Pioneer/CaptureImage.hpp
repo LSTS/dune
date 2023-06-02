@@ -43,7 +43,7 @@ namespace Vision
   namespace Pioneer
   {
     //! Mutex lock/unlock
-    static Concurrency::Mutex m_mutex;
+    static Concurrency::Mutex m_mutex_proc;
 
     class CaptureImage : public Concurrency::Thread
     {
@@ -54,10 +54,12 @@ namespace Vision
         //! Constructor.
         //! @param[in] task parent task.
         //! @param[in] url of ipcam.
-        //! @param[in] name of ipcam.
-        CaptureImage(DUNE::Tasks::Task* task, std::string url) :
-          m_task(task)
+        //! @param[in] imshow display
+        CaptureImage(DUNE::Tasks::Task* task, std::string url, std::string imshow) :
+          m_task(task),
+          m_is_capturing(false)
         {
+          m_imshow = imshow;
           m_url = url;
           cv::setNumThreads(4);
           m_capture = initCapture(m_url);
@@ -67,21 +69,36 @@ namespace Vision
         ~CaptureImage(void)
         {
           m_capture.release();
-          cv::destroyAllWindows();
+          if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
+            cv::destroyAllWindows();
         }
 
         cv::VideoCapture
         initCapture(std::string url)
         {
-          setenv("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp", 1);
-          cv::VideoCapture capture(url, cv::CAP_FFMPEG);
-          if (!capture.isOpened())
+          if (url.find("video") != std::string::npos)
           {
-            std::cout << "erro open cam link %s" << url << std::endl;
-            cv::VideoCapture capture_null(0, 0);
-            return capture_null;
+            cv::VideoCapture capture(0);
+            if (!capture.isOpened())
+            {
+              m_task->err("erro open cam device %s", url.c_str());
+              cv::VideoCapture capture_null(0, 0);
+              return capture_null;
+            }
+            return capture;
           }
-          return capture;
+          else
+          {
+            setenv("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp", 1);
+            cv::VideoCapture capture(url, cv::CAP_FFMPEG);
+            if (!capture.isOpened())
+            {
+              m_task->err("erro open cam url %s", url.c_str());
+              cv::VideoCapture capture_null(0, 0);
+              return capture_null;
+            }
+            return capture;
+          }
         }
 
         void
@@ -90,25 +107,43 @@ namespace Vision
           if (!m_capture.isOpened())
           {
             m_task->err("erro capture video device");
+            m_is_capturing = false;
           }
           else
           {
-            cv::namedWindow("RTSP stream", cv::WINDOW_NORMAL);
-            cv::Mat frame;
+            m_is_capturing = true;
+            if(m_imshow.compare("All") == 0)
+              cv::namedWindow("RTSP stream thread", cv::WINDOW_NORMAL);
+            cv::Mat frame_temp;
             while(!isStopping())
             {
-              //Delay::waitMsec(100);
-              if (!m_capture.read(frame))
+              if (!m_capture.read(frame_temp))
               {
                 m_task->war("fail getting frame");
               }
               else
               {
-                cv::imshow("RTSP stream", frame);
-                cv::waitKey(1);
+                m_frame = frame_temp.clone();
+                if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
+                {
+                  cv::imshow("RTSP stream thread", frame_temp);
+                  cv::waitKey(1);
+                }
               }
             }
           }
+        }
+
+        bool
+        isCapturing(void)
+        {
+          return m_is_capturing;
+        }
+
+        cv::Mat
+        getFrame(void)
+        {
+          return m_frame;
         }
 
       private:
@@ -116,10 +151,15 @@ namespace Vision
         DUNE::Tasks::Task* m_task;
         //! OpenCv Video Capture
         cv::VideoCapture m_capture;
+        //! Flag to control state of capture
+        bool m_is_capturing;
+        //! Flag to control imshow
+        std::string m_imshow;
+        //! Buffer for image captured
+        cv::Mat m_frame;
     };
   }
 }
 
 #endif
-
 
