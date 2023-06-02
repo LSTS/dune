@@ -34,10 +34,15 @@
 // Import namespaces.
 using DUNE_NAMESPACES;
 
-//OpenCV headers
+// OpenCV headers
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
+
+// Local Headers
+#include "FilterLine.hpp"
+#include "FilterTemplateMatch.hpp"
+#include "FilterDotsColor.hpp"
 
 namespace Vision
 {
@@ -64,6 +69,7 @@ namespace Vision
           m_method = method;
           m_mouse.new_tpl_coords = false;
           cv::setNumThreads(4);
+          m_filter_line = new FilterLine(task, imshow);
         }
 
         //! Destructor.
@@ -99,7 +105,7 @@ namespace Vision
                 resize(m_raw_frame, m_image_resized, cv::Size(m_raw_frame.cols/2, m_raw_frame.rows/2), cv::INTER_LINEAR);
                 m_task->debug("Frame resized size: %d x %d", m_image_resized.rows, m_image_resized.cols);
                 if(m_method.compare("Lines") == 0)
-                  getLinesInImage();
+                  m_filter_line->getLinesInImage(m_image_resized);
                 else if(m_method.compare("Template") == 0)
                   templateMatch();
                 else if(m_method.compare("Color") == 0)
@@ -138,37 +144,8 @@ namespace Vision
         cv::Mat m_raw_frame;
         //! Resize Image
         cv::Mat m_image_resized;
-
-        void
-        getLinesInImage(void)
-        {
-          // Convert to gray-scale
-          cv::Mat gray;
-          cvtColor(m_image_resized, gray, cv::COLOR_BGR2GRAY);
-          // Store the edges
-          cv::Mat edges;
-          // Find the edges in the image using canny detector
-          Canny(gray, edges, 10, 250);
-          cv::Mat gray_check;
-          gray_check = cv::Scalar::all(0);
-          gray.copyTo(gray_check, edges);
-          cv::imshow("Canny Image", gray_check);
-          // Create a vector to store lines of the image
-          std::vector<cv::Vec4i> lines;
-          // Apply Hough Transform
-          HoughLinesP(edges, lines, 1, CV_PI/180, 50, 50, 10);
-          // Draw lines on the image
-          for (size_t i=0; i<lines.size(); i++) {
-              cv::Vec4i l = lines[i];
-              line(m_image_resized, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
-          }
-          if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
-          {
-            // Show result image
-            cv::imshow("Result Image", m_image_resized);
-            cv::waitKey(1);
-          }
-        }
+        //! Filter Line class
+        FilterLine* m_filter_line;
 
         bool m_have_tpl = false;
         cv::Mat m_tpl;
