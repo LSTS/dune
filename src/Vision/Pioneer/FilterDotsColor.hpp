@@ -43,6 +43,9 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
 
+// Local Headers
+#include "InterfaceCVUi.hpp"
+
 namespace Vision
 {
   namespace Pioneer
@@ -73,16 +76,18 @@ namespace Vision
             HSV_VALUE_UPPER = 1
           };
 
-          FilterDotsColor(DUNE::Tasks::Task* task, std::string imshow):
+          FilterDotsColor(DUNE::Tasks::Task* task, std::string imshow, InterfaceCVUi* gui):
             m_task(task)
           {
             cv::setNumThreads(4);
             m_imshow = imshow;
             m_have_color_hsv = false;
             m_mouse.new_tpl_coords = false;
+            m_gui = gui;
           }
 
-          ~FilterDotsColor(void){}
+          ~FilterDotsColor(void)
+          {}
 
           void
           setHSVIntervals(std::vector<int> hue, std::vector<int> saturation, std::vector<int> value)
@@ -120,8 +125,9 @@ namespace Vision
             thresholdImageToBinary(only_green, 200, 255, &binary_image);
             cv::Mat dots_found_result;
             mergePixelArea(binary_image, 2 , 2, &dots_found_result);
+            m_gui->updateTplBinary(dots_found_result, true);
             findBlobs(dots_found_result, &input_image);
-
+            m_gui->updateTplFilterGreen(only_green, true);
             if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
             {
               cv::imshow("Only green", only_green);
@@ -138,6 +144,8 @@ namespace Vision
           DUNE::Tasks::Task* m_task;
           //! Flag to control imshow
           std::string m_imshow;
+          //! Interface object
+          InterfaceCVUi* m_gui;
           //! Flag to control selection of color to detect
           bool m_have_color_hsv;
           //! Save pixel.y of color selected

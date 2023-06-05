@@ -43,6 +43,7 @@ using DUNE_NAMESPACES;
 #include "FilterLine.hpp"
 #include "FilterTemplateMatch.hpp"
 #include "FilterDotsColor.hpp"
+#include "InterfaceCVUi.hpp"
 
 namespace Vision
 {
@@ -50,6 +51,7 @@ namespace Vision
   {
     //! Mutex lock/unlock
     static Concurrency::Mutex m_mutex_cap;
+    static const std::string c_real_stream_window = "Main Stream";
 
     class ProcessImage : public Concurrency::Thread
     {
@@ -71,12 +73,23 @@ namespace Vision
           cv::setNumThreads(4);
           m_filter_line = new FilterLine(task, imshow);
           m_filter_template = new FilterTemplateMatch(task, imshow);
-          m_filter_dots = new FilterDotsColor(task, imshow);
+          m_gui = new InterfaceCVUi(task);
+          m_filter_dots = new FilterDotsColor(task, imshow, m_gui);
+          if(m_method.compare("Dots") == 0)
+          {
+            m_gui->initGUI();
+            m_gui->start();
+          }
         }
 
         //! Destructor.
         ~ProcessImage(void)
         {
+          if(m_method.compare("Dots") == 0)
+          {
+            m_gui->stopAndJoin();
+            delete m_gui;
+          }
           if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
             cv::destroyAllWindows();
         }
@@ -93,11 +106,9 @@ namespace Vision
           Delay::wait(4);
           if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
           {
-            cv::namedWindow("Process Image Thread", cv::WINDOW_NORMAL);
+            cv::namedWindow(c_real_stream_window.c_str(), cv::WINDOW_NORMAL);
             cv::waitKey(1);
           }
-          //if(m_method.compare("Dots") == 0)
-          //  m_filter_dots->initCallBack();
 
           if(m_method.compare("Template") == 0)
             m_filter_template->initCallBack();
@@ -124,7 +135,12 @@ namespace Vision
 
                 if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
                 {
-                  cv::imshow("Process Image Thread", m_image_resized);
+                  cv::imshow(c_real_stream_window.c_str(), m_image_resized);
+                  if(m_method.compare("Dots") == 0)
+                  {
+                    m_gui->updateTplOriginal(m_image_resized, true);
+                    m_gui->updateGUI();
+                  }
                   char key = cv::waitKey(1000/m_fps);
                   switch (key)
                   {
@@ -149,6 +165,8 @@ namespace Vision
       private:
         //! Parent task.
         DUNE::Tasks::Task* m_task;
+        //! Interface CVUi
+        InterfaceCVUi* m_gui;
         //! Flag to control imshow
         std::string m_imshow;
         //! Detection method
@@ -167,7 +185,6 @@ namespace Vision
         FilterDotsColor* m_filter_dots;
         //! Fps
         int m_fps;
-
     };
   }
 }

@@ -182,7 +182,7 @@ namespace Vision
       {
         while (!stopping())
         {
-          waitForMessages(0.01);
+          waitForMessages(0.001);
         }
       }
     };
