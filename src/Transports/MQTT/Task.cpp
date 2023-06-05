@@ -25,6 +25,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Luis Venancio                                                    *
+// Author: João Bogas                                                       *
 //***************************************************************************
 
 // DUNE headers.
@@ -49,10 +50,12 @@ namespace Transports
     //! %Task arguments.
     struct Arguments
     {
-      // List of messages to publish.
+      //! List of messages to publish.
       std::vector<std::string> messages;
       //! List of topics to subscribe
       std::vector<std::string> topics;
+      //! Basic topic name for MQTT messages
+      std::string basic_name;
     };
 
     //! Message buffer size.
@@ -122,6 +125,12 @@ namespace Transports
         param("Transports", m_args.messages)
         .defaultValue("")
         .description("List of messages to transport");
+
+        param("Basic Name", m_args.basic_name)
+        .defaultValue("IMC")
+        .description("Basic topic name for MQTT messages");
+
+        bind<IMC::MqttTXFrame>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -189,13 +198,28 @@ namespace Transports
       }
 
       void
+      consume(const IMC::MqttTXFrame* msg)
+      {
+        try
+        {
+          std::string mosquitto_payload(msg->payload.begin(), msg->payload.end());
+          m_client->publish(msg->topic, mosquitto_payload);
+        }
+        catch(const std::exception& e)
+        {
+          war(DTR("Failed to publish message %s: %s"), msg->topic.c_str(), e.what());
+          return;
+        }
+      }
+
+      void
       consume(const IMC::Message* msg)
       {
         uint16_t rv;
         try
         {
           rv = IMC::Packet::serialize(msg, m_msg_bfr, c_bfr_size);
-          m_client->publish(String::str("tests/IMC/%s", msg->getName()), m_msg_bfr, rv);
+          m_client->publish(String::str("%s/%s/%s", m_args.basic_name, getSystemName(), msg->getName()), m_msg_bfr, rv);
         }
         catch (const std::exception& e)
         {
@@ -207,8 +231,41 @@ namespace Transports
       void
       onMessage(char *topic, uint8_t *payload, uint32_t payload_length)
       {
-        IMC::Message* msg = IMC::Packet::deserialize(payload, payload_length);
-        // dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+        char base_name[64];
+        sscanf(topic, "%[^/]", base_name);
+        if (base_name == m_args.basic_name)
+          dispatchIMC(topic, payload, payload_length);
+        else
+          dispatchRaw(topic, payload, payload_length);
+      }
+
+      void
+      dispatchRaw(char *topic, uint8_t *payload, uint32_t payload_length)
+      {
+        IMC::MqttRXFrame msg;
+        msg.topic = topic;
+        msg.payload.reserve(payload_length);
+        for (size_t i = 0; i < payload_length; i++)
+          msg.payload.push_back(payload[i]);
+        
+        dispatch(msg);
+      }
+
+      void
+      dispatchIMC(char *topic, uint8_t *payload, uint32_t payload_length)
+      {
+        IMC::Message* msg;
+        try
+        {
+          msg = IMC::Packet::deserialize(payload, payload_length);
+        }
+        catch(const std::exception& e)
+        {
+          dispatchRaw(topic, payload, payload_length);
+          return;
+        }
+        
+        dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID); // ->MqttRXFrame
 
         if (getDebugLevel() >= DEBUG_LEVEL_SPEW)
         {
@@ -216,10 +273,13 @@ namespace Transports
           msg->toText(ss);
           spew("recv msg (%s):\n%s", topic, ss.str().c_str());
         }
+
+        Memory::clear(msg);
+        return;
       }
 
       void
-      annouce(void)
+      announce(void)
       {
         std::stringstream os;
         os << "imc+mqtt://" << "something something we are client" << "/";
