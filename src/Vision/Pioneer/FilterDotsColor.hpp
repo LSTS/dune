@@ -86,7 +86,7 @@ namespace Vision
             m_gui = gui;
             m_area_interval[0] = 10;
             m_area_interval[1] = 60;
-            m_pixel_distance = 0;
+            m_pixel_distance = -1;
           }
 
           ~FilterDotsColor(void)
@@ -247,7 +247,7 @@ namespace Vision
 
             // Draw contours of blobs
             int id = 0;
-            m_task->inf("Dots Found: %d", (int)contours.size());
+            m_task->debug("Dots Found: %d", (int)contours.size());
             int point_id = 0;
             cv::Point2f dots[2];
             if (contours.size() >= 1 && contours.size() <= 4)
@@ -267,12 +267,12 @@ namespace Vision
                   std::string text_tpl = "Dot " + std::to_string(id+1) + " ("+ std::to_string(contours.size()) +") : (" +
                                           std::to_string(contour[0].x) + ", " +
                                           std::to_string(contour[0].y) + ")";
-                  m_task->inf("%s", text_tpl.c_str());
+                  m_task->debug("%s", text_tpl.c_str());
                   point_id++;
                   if(point_id == 2)
                   {
                     m_pixel_distance = cv::norm(dots[0] - dots[1]);
-                    m_task->war("Pixel Distance: %d", (int)m_pixel_distance);
+                    m_task->debug("Pixel Distance: %d", (int)m_pixel_distance);
                   }
                 }
                 id++;

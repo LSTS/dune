@@ -64,6 +64,12 @@ namespace Vision
       std::vector<int> saturation_interval;
       //! Value interval
       std::vector<int> value_interval;
+      //! Baseline Lasers
+      float l_baseline;
+      //! Real Distance In Pixel
+      int dist_real_p;
+      //! Real Distance In cm
+      float dist_real_cm;
     };
 
     //! Task.
@@ -122,6 +128,21 @@ namespace Vision
         .defaultValue("40")
         .size(2)
         .description("Value Interval");
+
+        param("Baseline Lasers", m_args.l_baseline)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("10")
+        .description("Baseline Lasers in cm.");
+
+        param("Real Distance in Pixel", m_args.dist_real_p)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("87")
+        .description("Real Distance in Pixel.");
+
+        param("Real Distance in cm", m_args.dist_real_cm)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("64")
+        .description("Real Distance in cm.");
       }
 
       void
@@ -136,6 +157,7 @@ namespace Vision
         m_cap->start();
         m_img_proc = new ProcessImage(this, m_args.imshow, m_cap, m_args.method, m_args.max_fps);
         m_img_proc->setHSVIntervals(m_args.hue_interval, m_args.saturation_interval, m_args.value_interval);
+        m_img_proc->setValuesOfConversionDistance(m_args.l_baseline, m_args.dist_real_p, m_args.dist_real_cm);
         m_img_proc->start();
         m_task_ready = true;
       }

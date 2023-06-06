@@ -63,6 +63,8 @@ namespace Vision
           m_url = url;
           cv::setNumThreads(4);
           m_capture = initCapture(m_url);
+          m_wdog_cap_erro.setTop(1.0);
+          m_counter_erro_frame = 0;
         }
 
         //! Destructor.
@@ -119,10 +121,28 @@ namespace Vision
             {
               if (!m_capture.read(frame_temp))
               {
-                m_task->war("fail getting frame");
+                if(m_wdog_cap_erro.overflow())
+                {
+                  m_wdog_cap_erro.reset();
+                  m_counter_erro_frame++;
+                  m_task->war("fail getting frame");
+                  if(m_counter_erro_frame >= 5)
+                  {
+                    m_counter_erro_frame = 0;
+                    try
+                    {
+                      m_capture.release();
+                    }
+                    catch(const std::exception& e)
+                    {}
+                    m_capture = initCapture(m_url);
+                    m_task->war("resetting camara.");
+                  }
+                }
               }
               else
               {
+                m_counter_erro_frame = 0;
                 m_frame = frame_temp.clone();
                 if(m_imshow.compare("All") == 0 || m_imshow.compare("Input") == 0)
                 {
@@ -157,6 +177,10 @@ namespace Vision
         std::string m_imshow;
         //! Buffer for image captured
         cv::Mat m_frame;
+        //! Watchdog for erro capture info
+        Counter<double> m_wdog_cap_erro;
+        //! Counter of frames fail
+        int m_counter_erro_frame;
     };
   }
 }

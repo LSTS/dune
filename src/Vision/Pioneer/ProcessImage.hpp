@@ -80,6 +80,7 @@ namespace Vision
             m_gui->initGUI();
             m_gui->start();
           }
+          m_distancia_real_calc = -1;
         }
 
         //! Destructor.
@@ -98,6 +99,27 @@ namespace Vision
         setHSVIntervals(std::vector<int> hue, std::vector<int> saturation, std::vector<int> value)
         {
           m_filter_dots->setHSVIntervals(hue, saturation, value);
+        }
+
+        void
+        printInfoToImage(void)
+        {
+          float dist = m_filter_dots->getDistanceInPixeis();
+          if(dist > 0)
+          {
+            m_task->debug("Dots Pixel Distance: %d", (int)dist);
+            m_task->debug("%d | %.1f", m_real_pixel, m_real_cm);
+            m_distancia_real_calc = (m_real_cm * m_real_pixel) / dist;
+            m_task->debug("Real Distance to object, in cm: %.1f", m_distancia_real_calc);
+          }
+        }
+
+        void
+        setValuesOfConversionDistance(float baseline, int real_p, float real_cm)
+        {
+          m_baseline_lasers = baseline;
+          m_real_pixel = real_p;
+          m_real_cm = real_cm;
         }
 
         void
@@ -135,6 +157,7 @@ namespace Vision
 
                 if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
                 {
+                  printInfoToImage();
                   cv::imshow(c_real_stream_window.c_str(), m_image_resized);
                   if(m_method.compare("Dots") == 0)
                   {
@@ -185,6 +208,14 @@ namespace Vision
         FilterDotsColor* m_filter_dots;
         //! Fps
         int m_fps;
+        //! Baseline Lasers
+        float m_baseline_lasers;
+        //! Distance to object
+        float m_distancia_real_calc;
+        //! Real distance in pixel
+        int m_real_pixel;
+        //! Real distance in cm
+        float m_real_cm;
     };
   }
 }
