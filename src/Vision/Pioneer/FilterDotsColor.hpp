@@ -105,6 +105,7 @@ namespace Vision
           void
           colorPoints(cv::Mat input_image)
           {
+
             checkFilterParameters();
             cv::Mat hsvImage;
             cv::cvtColor(input_image, hsvImage, cv::COLOR_BGR2HSV);
@@ -125,6 +126,7 @@ namespace Vision
             mergePixelArea(binary_image, 2 , 2, &dots_found_result);
             m_gui->updateTplBinary(dots_found_result, true);
             findBlobs(dots_found_result, &input_image);
+            m_gui->updateOriginalImage(input_image);
             m_gui->updateTplFilterGreen(only_green, true);
             if(m_imshow.compare("All") == 0 || m_imshow.compare("Proc") == 0)
             {

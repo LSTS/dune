@@ -77,7 +77,7 @@ namespace Vision
           m_filter_dots = new FilterDotsColor(task, imshow, m_gui);
           if(m_method.compare("Dots") == 0)
           {
-            m_gui->initGUI();
+            m_gui->initGUI(m_fps);
             m_gui->start();
           }
           m_distancia_real_calc = -1;

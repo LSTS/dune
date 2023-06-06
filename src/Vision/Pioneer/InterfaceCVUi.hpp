@@ -60,6 +60,7 @@ namespace Vision
       static const int c_max_tpl_x = 640;
       static const int c_max_window_cols = 1340;
       static const int c_max_window_rows = 840;
+      static const int c_dist_buttons = 320;
 
       class InterfaceCVUi : public Concurrency::Thread
       {
@@ -76,7 +77,7 @@ namespace Vision
           {}
 
           void
-          initGUI(void)
+          initGUI(int fps)
           {
             ping_state[0] = 0;
             ping_state[1] = 0;
@@ -88,6 +89,10 @@ namespace Vision
             updateTplBinary(img_temp, false);
             cvui::init(c_gui_name.c_str());
             m_gui_background = cv::Mat(320, 640, CV_8UC3, cv::Scalar(70, 70, 70));
+            m_plan_on = false;
+            m_video_on = false;
+            m_log_folder_ok = false;
+            m_fps = fps;
           }
 
           void
@@ -101,6 +106,8 @@ namespace Vision
             drawSettings(m_gui_background, 5, 5);
             cvui::update();
             cvui::imshow(c_gui_name.c_str(), m_gui_background);
+            if(m_video_on)
+              addToVideo(m_original_frame, m_gui_background, false);
           }
 
           void
@@ -137,6 +144,12 @@ namespace Vision
           }
 
           void
+          updateOriginalImage(cv::Mat input)
+          {
+            input.copyTo(m_original_frame);
+          }
+
+          void
           getFilterParameters(int* h, int* s, int* v, int* a)
           {
             for(uint8_t i = 0; i < 2; i++)
@@ -156,7 +169,6 @@ namespace Vision
           }
 
         private:
-
           //! Parent task.
           DUNE::Tasks::Task *m_task;
           //! Background image for GUI
@@ -181,6 +193,22 @@ namespace Vision
           cv::Mat m_tpl_binary;
           //! State of ping (color)
           cv::Scalar ping_state;
+          //! Flag to control plan state
+          bool m_plan_on;
+          //! Flag to control video state
+          bool m_video_on;
+          //! Flag to control state of log folders
+          bool m_log_folder_ok;
+          //! Original frame
+          cv::Mat m_original_frame;
+          //! String path for pionner root folder
+          std::string pioneer_path;
+          //! String path for date folder
+          std::string date_path;
+          //! Object to save video
+          cv::VideoWriter m_video;
+          //! Number of fps
+          int m_fps;
 
           void
           drawSettings(cv::Mat main_image, int x, int y)
@@ -266,6 +294,7 @@ namespace Vision
             cvui::text(main_image, (c_max_tpl_x/2) - 20, y + c_max_tpl_y + 70, "Green Filter");
             drawImage(main_image, x, c_max_tpl_y + 100, m_tpl_green_filter, true);
 
+            addButtonsOptions(main_image, x, c_max_tpl_y * 2 + 100);
           }
 
           void
@@ -285,6 +314,100 @@ namespace Vision
             cv::Mat image_tmp(x, y, CV_8UC3, cv::Scalar(0,0,0));
             cv::circle(image_tmp, cv::Point(y/2, x/2), 20, cv::Scalar(125,125,125), 1);
             image_tmp.copyTo(output);
+          }
+
+          void addButtonsOptions(cv::Mat main_image, int x, int y)
+          {
+            if (m_plan_on)
+            {
+              if (cvui::button(main_image, x + 235, y + 28, "Stop Plan", 0.5, 0xff0f0f))
+              {
+                m_plan_on = false;
+                m_task->war("Stop Plan");
+              }
+            }
+            else
+            {
+              if (cvui::button(main_image, x + 235, y + 28, "Start Plan", 0.5, 0x0fff0f))
+              {
+                m_plan_on = true;
+                m_task->war("Start Plan");
+              }
+            }
+
+            if (m_video_on)
+            {
+              if (cvui::button(main_image, x + 235 + c_dist_buttons, y + 28, "Stop Video", 0.5, 0xFF5900))
+              {
+                createFoldersLogs();
+                if (m_log_folder_ok)
+                {
+                  m_video_on = false;
+                  m_task->inf("Stop Video");
+                  m_video.release();
+                }
+              }
+            }
+            else
+            {
+              if (cvui::button(main_image, x + 235 + c_dist_buttons, y + 28, "Start Video", 0.5, 0x00DAFF))
+              {
+                createFoldersLogs();
+                if (m_log_folder_ok)
+                {
+                  m_video_on = true;
+                  m_task->inf("Start Video");
+                  addToVideo(m_original_frame, m_gui_background, true);
+                }
+              }
+            }
+            if (cvui::button(main_image, x + 235 + c_dist_buttons * 2, y + 28, "Take snapshot", 0.5, 0xB39F5C))
+            {
+              createFoldersLogs();
+              if(m_log_folder_ok)
+              {
+                m_task->inf("Take snapshot");
+                saveSnapshot(m_original_frame, m_gui_background);
+              }
+            }
+          }
+
+          void
+          addToVideo(cv::Mat image1, cv::Mat image2, bool init_video_object)
+          {
+            cv::resize(image2, image2, image1.size());
+            if(init_video_object)
+            {
+              std::string name_file = date_path + "/" + getCurrentTime() + ".mp4";
+              m_video.open(name_file.c_str(), cv::VideoWriter::fourcc('M', 'P', '4', 'V'), m_fps, cv::Size(image1.cols + image2.cols, image1.rows));
+              if (!m_video.isOpened())
+              {
+                m_task->err("Erro creating video object");
+                m_video_on = false;
+              }
+            }
+            if(m_video_on)
+            {
+              cv::Mat result(image1.rows, image1.cols + image2.cols, image1.type());
+              cv::Mat left_roi(result, cv::Rect(0, 0, image1.cols, image1.rows));
+              image1.copyTo(left_roi);
+              cv::Mat right_roi(result, cv::Rect(image1.cols, 0, image2.cols, image2.rows));
+              image2.copyTo(right_roi);
+              m_video.write(result);
+            }
+          }
+
+          void
+          saveSnapshot(cv::Mat image1, cv::Mat image2)
+          {
+            cv::resize(image2, image2, image1.size());
+            cv::Mat result(image1.rows, image1.cols + image2.cols, image1.type());
+            cv::Mat left_roi(result, cv::Rect(0, 0, image1.cols, image1.rows));
+            image1.copyTo(left_roi);
+            cv::Mat right_roi(result, cv::Rect(image1.cols, 0, image2.cols, image2.rows));
+            image2.copyTo(right_roi);
+            std::string name_file = date_path + "/" + getCurrentTime() + ".jpg";
+            cv::imwrite(name_file.c_str(), result);
           }
 
           void
@@ -322,6 +445,63 @@ namespace Vision
             else
             {
               cv::circle(m_gui_background, center, radius, ping_state, -1);
+            }
+          }
+
+          std::string
+          getCurrentTime()
+          {
+            time_t now = time(0);
+            struct tm tstruct;
+            char buffer[32];
+            tstruct = *localtime(&now);
+            strftime(buffer, sizeof(buffer), "%H%M%S", &tstruct);
+            return buffer;
+          }
+
+          std::string
+          getCurrentDate()
+          {
+            time_t now = time(0);
+            struct tm tstruct;
+            char buffer[32];
+            tstruct = *localtime(&now);
+            strftime(buffer, sizeof(buffer), "%Y%m%d", &tstruct);
+            return buffer;
+          }
+
+          bool
+          directoryExists(const std::string &path)
+          {
+            struct stat info;
+            return stat(path.c_str(), &info) == 0 && S_ISDIR(info.st_mode);
+          }
+
+          void
+          createFoldersLogs(void)
+          {
+            m_log_folder_ok = true;
+            std::string desktop_path = getenv("HOME");
+            desktop_path += "/Desktop/";
+            pioneer_path = desktop_path + "pioneer";
+            date_path = pioneer_path + "/" + getCurrentDate();
+
+            if (!directoryExists(pioneer_path))
+            {
+              if (mkdir(pioneer_path.c_str(), 0777) == -1)
+              {
+                std::cout << "Fail creating folder 'pioneer'." << std::endl;
+                m_log_folder_ok = false;
+              }
+            }
+
+            if (!directoryExists(date_path))
+            {
+              if (mkdir(date_path.c_str(), 0777) == -1)
+              {
+                std::cout << "Fail creating folder data." << std::endl;
+                m_log_folder_ok = false;
+              }
             }
           }
       };
