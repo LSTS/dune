@@ -137,6 +137,18 @@ namespace Vision
           }
 
           void
+          getFilterParameters(int* h, int* s, int* v, int* a)
+          {
+            for(uint8_t i = 0; i < 2; i++)
+            {
+              h[i] = hsv_h[i];
+              s[i] = hsv_s[i];
+              v[i] = hsv_v[i];
+              a[i] = area_size[i];
+            }
+          }
+
+          void
           run(void)
           {
             updateGUI();
@@ -173,7 +185,7 @@ namespace Vision
           void
           drawSettings(cv::Mat main_image, int x, int y)
           {
-            int max_s_x = 610;
+            int max_s_x = 640;
             int max_s_y = 366;
             // Windows settings
             cvui::window(main_image, x, y, max_s_x, max_s_y, "Filter Settings");
@@ -244,7 +256,7 @@ namespace Vision
 
             // Draw result of detection
             cvui::text(main_image, max_s_x + (c_max_tpl_x/2), y + init_pos_ob_hsv[1] - 20, "Original Stream");
-            drawImage(main_image, max_s_x + 15 + 20, 50, m_tpl_original, true);
+            drawImage(main_image, max_s_x + 15 + 40, 50, m_tpl_original, true);
 
             // Draw binary of detection
             cvui::text(main_image, max_s_x + (c_max_tpl_x/2), y + c_max_tpl_y + 70, "Binary Result");
@@ -253,6 +265,7 @@ namespace Vision
             // Draw filter green
             cvui::text(main_image, (c_max_tpl_x/2) - 20, y + c_max_tpl_y + 70, "Green Filter");
             drawImage(main_image, x, c_max_tpl_y + 100, m_tpl_green_filter, true);
+
           }
 
           void

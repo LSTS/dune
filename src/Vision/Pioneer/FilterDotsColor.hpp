@@ -84,6 +84,9 @@ namespace Vision
             m_have_color_hsv = false;
             m_mouse.new_tpl_coords = false;
             m_gui = gui;
+            m_area_interval[0] = 10;
+            m_area_interval[1] = 60;
+            m_pixel_distance = 0;
           }
 
           ~FilterDotsColor(void)
@@ -95,19 +98,14 @@ namespace Vision
             m_hsv_hue_interval = hue;
             m_hsv_saturation_interval = saturation;
             m_hsv_value_interval = value;
-            m_task->war("New HSV Low values: %d | %d | %d", hue[HSV_VALUE_LOWER], saturation[HSV_VALUE_LOWER], value[HSV_VALUE_LOWER]);
-            m_task->war("New HSV High values: %d | %d | %d", hue[HSV_VALUE_UPPER], saturation[HSV_VALUE_UPPER], value[HSV_VALUE_UPPER]);
+            m_task->debug("New HSV Low values: %d | %d | %d", hue[HSV_VALUE_LOWER], saturation[HSV_VALUE_LOWER], value[HSV_VALUE_LOWER]);
+            m_task->debug("New HSV High values: %d | %d | %d", hue[HSV_VALUE_UPPER], saturation[HSV_VALUE_UPPER], value[HSV_VALUE_UPPER]);
           }
-
-         // void
-          //initCallBack(void)
-          //{
-          //  cv::setMouseCallback("Process Image Thread", callBackFunc, &m_mouse);
-          //}
 
           void
           colorPoints(cv::Mat input_image)
           {
+            checkFilterParameters();
             cv::Mat hsvImage;
             cv::cvtColor(input_image, hsvImage, cv::COLOR_BGR2HSV);
             cv::Scalar lowerGreen = cv::Scalar(m_hsv_hue_interval[HSV_VALUE_LOWER],
@@ -136,6 +134,28 @@ namespace Vision
             }
           }
 
+          void
+          checkFilterParameters(void)
+          {
+            int h[2];
+            int s[2];
+            int v[2];
+            int a[2];
+            m_gui->getFilterParameters(h, s, v, a);
+            std::vector<int> vec_h(h, h + 2);
+            std::vector<int> vec_s(s, s + 2);
+            std::vector<int> vec_v(v, v + 2);
+            setHSVIntervals(vec_h, vec_s, vec_v);
+            m_area_interval[0] = a[0];
+            m_area_interval[1] = a[1];
+          }
+
+          int
+          getDistanceInPixeis(void)
+          {
+            return m_pixel_distance;
+          }
+
           MouseEvent m_mouse;
 
         private:
@@ -156,6 +176,10 @@ namespace Vision
           std::vector<int> m_hsv_saturation_interval;
           //! Value HSV values
           std::vector<int> m_hsv_value_interval;
+          //! Area interval for dots size
+          int m_area_interval[2];
+          //! Distance from dots
+          double m_pixel_distance;
 
           void
           mergePixelArea(cv::Mat image_input, int area_pixel_size, int minimum_pixel, cv::Mat *output_image)
@@ -223,25 +247,37 @@ namespace Vision
 
             // Draw contours of blobs
             int id = 0;
-            m_task->err("Dots Found: %d", (int)contours.size());
+            m_task->inf("Dots Found: %d", (int)contours.size());
+            int point_id = 0;
+            cv::Point2f dots[2];
             if (contours.size() >= 1 && contours.size() <= 4)
             {
               for (const auto &contour : contours)
               {
                 double area = cv::contourArea(contour);
-                m_task->war("%f", area);
-                if (area >= 10 && area <= 80)
+                m_task->debug("Size dot area: %f", area);
+                if (area >= m_area_interval[0] && m_area_interval[1] <= 80)
                 {
+                  if(point_id >= 0 && point_id <=1)
+                  {
+                    dots[point_id].x = contour[0].x;
+                    dots[point_id].y = contour[0].y;
+                  }
                   cv::circle(image_to_plot_result[0], contour[0], 10, cv::Scalar(0, 0, 255), 2);
                   std::string text_tpl = "Dot " + std::to_string(id+1) + " ("+ std::to_string(contours.size()) +") : (" +
                                           std::to_string(contour[0].x) + ", " +
                                           std::to_string(contour[0].y) + ")";
                   m_task->inf("%s", text_tpl.c_str());
+                  point_id++;
+                  if(point_id == 2)
+                  {
+                    m_pixel_distance = cv::norm(dots[0] - dots[1]);
+                    m_task->war("Pixel Distance: %d", (int)m_pixel_distance);
+                  }
                 }
                 id++;
               }
             }
-            m_task->war("             ");
           }
       };
     }
