@@ -83,10 +83,13 @@ namespace Vision
       ProcessImage* m_img_proc;
       //! Flag to control state of task
       bool m_task_ready;
+      //! Flag to control state to start plan;
+      bool m_start_plan;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_task_ready(false)
+        m_task_ready(false),
+        m_start_plan(false)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -143,6 +146,11 @@ namespace Vision
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("64")
         .description("Real Distance in cm.");
+
+        bind<IMC::Depth>(this);
+        bind<IMC::EulerAngles>(this);
+        bind<IMC::Temperature>(this);
+        //bind<IMC::Voltage>(this);
       }
 
       void
@@ -158,6 +166,9 @@ namespace Vision
         m_img_proc = new ProcessImage(this, m_args.imshow, m_cap, m_args.method, m_args.max_fps);
         m_img_proc->setHSVIntervals(m_args.hue_interval, m_args.saturation_interval, m_args.value_interval);
         m_img_proc->setValuesOfConversionDistance(m_args.l_baseline, m_args.dist_real_p, m_args.dist_real_cm);
+        m_img_proc->setDepth(0);
+        m_img_proc->setHeading(0);
+        m_img_proc->setTemperature(0);
         m_img_proc->start();
         m_task_ready = true;
       }
@@ -195,6 +206,34 @@ namespace Vision
       }
 
       void
+      consume(const IMC::Depth* msg)
+      {
+        // Need filter for entity before set of value
+        m_img_proc->setDepth(msg->value);
+      }
+
+      void
+      consume(const IMC::EulerAngles* msg)
+      {
+        // Need filter for entity before set of value
+        m_img_proc->setHeading(msg->psi);
+      }
+
+      void
+      consume(const IMC::Temperature* msg)
+      {
+        // Need filter for entity before set of value
+        m_img_proc->setTemperature(msg->value);
+      }
+
+      /*void
+      consume(const IMC::Voltage* msg)
+      {
+        // Need filter for entity before set of value
+        m_img_proc->setVoltage(msg->value);
+      }*/
+
+      void
       onDeactivation(void)
       {
       }
@@ -205,6 +244,24 @@ namespace Vision
         while (!stopping())
         {
           waitForMessages(0.001);
+          if(!m_start_plan && m_img_proc->isToRunPlan())
+          {
+            m_start_plan = true;
+            war("Start plan!!!");
+            /*
+            Add code to start the plan
+            to get distance to object cal
+            int dist = m_img_proc->getDistance();
+            */
+          }
+          else if(m_start_plan && !m_img_proc->isToRunPlan())
+          {
+            m_start_plan = false;
+            war("Stop plan!!!");
+            /*
+            Add code to stop the plan and put system in service/idle
+            */
+          }
         }
       }
     };

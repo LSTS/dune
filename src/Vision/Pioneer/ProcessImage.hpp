@@ -44,6 +44,7 @@ using DUNE_NAMESPACES;
 #include "FilterTemplateMatch.hpp"
 #include "FilterDotsColor.hpp"
 #include "InterfaceCVUi.hpp"
+#include "IconLSTSData.hpp"
 
 namespace Vision
 {
@@ -81,6 +82,10 @@ namespace Vision
             m_gui->start();
           }
           m_distancia_real_calc = -1;
+          m_depth = 0;
+          m_heading = 0;
+          m_temperature = 0;
+          m_icon_lsts = loadLSTSIcon();
         }
 
         //! Destructor.
@@ -102,16 +107,70 @@ namespace Vision
         }
 
         void
+        setHeading(float rad_value)
+        {
+          m_heading = DUNE::Math::Angles::degrees(rad_value);
+        }
+
+        void
+        setDepth(float value)
+        {
+          m_depth = value;
+        }
+
+        void
+        setTemperature(float value)
+        {
+          m_temperature = value;
+        }
+
+        int
+        getDistance(void)
+        {
+          return m_distancia_real_calc;
+        }
+
+        void
         printInfoToImage(void)
         {
-          float dist = m_filter_dots->getDistanceInPixeis();
-          if(dist > 0)
+          m_distance = m_filter_dots->getDistanceInPixeis();
+          m_task->debug("%d | %.1f", m_real_pixel, m_real_cm);
+          m_distancia_real_calc = (m_real_cm * m_real_pixel) / m_distance;
+          m_task->debug("Dots Pixel Distance: %d", (int)m_distance);
+          m_task->debug("Real Distance to object, in cm: %.1f", m_distancia_real_calc);
+          int x = 6, y = 6;
+          cv::Mat roi = m_image_resized(cv::Rect(x, y, 220, 90));
+          cv::Mat color(roi.size(), CV_8UC3, cv::Scalar(125, 125, 125));
+          double alpha = 0.15;
+          cv::addWeighted(color, alpha, roi, 1.0 - alpha, 0.0, roi);
+          std::string text_image;
+          if(m_distance > 0)
           {
-            m_task->debug("Dots Pixel Distance: %d", (int)dist);
-            m_task->debug("%d | %.1f", m_real_pixel, m_real_cm);
-            m_distancia_real_calc = (m_real_cm * m_real_pixel) / dist;
-            m_task->debug("Real Distance to object, in cm: %.1f", m_distancia_real_calc);
+            text_image = "DISTANCE       " + std::to_string(m_distance) + " cm";
+            cvui::text(m_image_resized, x + 4, y + 4, text_image.c_str(), 0.5, 0x000000);
           }
+          else
+          {
+            cvui::text(m_image_resized, x + 4, y + 4, "DISTANCE       NAN", 0.5, 0x000000);
+          }
+          text_image = "HEADING        " + std::to_string(m_heading) + " deg";
+          cvui::text(m_image_resized, x + 4, y + 4 + 20, text_image.c_str(), 0.5, 0x000000);
+          text_image = "DEPTH          " + toStringWithPrecision(m_depth, 2) + " m";
+          cvui::text(m_image_resized, x + 4, y + 4 + 40, text_image.c_str(), 0.5, 0x000000);
+          text_image = "TEMPERATURE   " + toStringWithPrecision(m_temperature, 1) + " C";
+          cvui::text(m_image_resized, x + 4, y + 4 + 60, text_image.c_str(), 0.5, 0x000000);
+          // Icon LSTS
+          cv::Mat icon_color_cv;
+          cv::cvtColor(m_icon_lsts, icon_color_cv, cv::COLOR_GRAY2BGR);
+          cv::Rect roi_icon(m_image_resized.cols - 80, m_image_resized.rows - 80, m_icon_lsts.cols, m_icon_lsts.rows);
+          icon_color_cv.copyTo(m_image_resized(roi_icon));
+        }
+
+        std::string toStringWithPrecision(const float value, const int precision)
+        {
+          std::ostringstream oss;
+          oss << std::fixed << std::setprecision(precision) << value;
+          return oss.str();
         }
 
         void
@@ -120,6 +179,12 @@ namespace Vision
           m_baseline_lasers = baseline;
           m_real_pixel = real_p;
           m_real_cm = real_cm;
+        }
+
+        bool
+        isToRunPlan(void)
+        {
+          return m_gui->isToRunPlan();
         }
 
         void
@@ -162,6 +227,7 @@ namespace Vision
                   if(m_method.compare("Dots") == 0)
                   {
                     m_gui->updateTplOriginal(m_image_resized, true);
+                    m_gui->updateOriginalImage(m_image_resized);
                     m_gui->updateGUI();
                   }
                   char key = cv::waitKey(1000/m_fps);
@@ -216,6 +282,16 @@ namespace Vision
         int m_real_pixel;
         //! Real distance in cm
         float m_real_cm;
+        //! LSTS Icon
+        cv::Mat m_icon_lsts;
+        //! Heading value
+        int m_heading;
+        //! Temperature value
+        float m_temperature;
+        //! Depth
+        float m_depth;
+        //! Distance
+        int m_distance;
     };
   }
 }

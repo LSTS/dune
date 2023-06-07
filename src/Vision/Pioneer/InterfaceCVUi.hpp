@@ -161,6 +161,12 @@ namespace Vision
             }
           }
 
+          bool
+          isToRunPlan(void)
+          {
+            return m_plan_on;
+          }
+
           void
           run(void)
           {
@@ -323,7 +329,7 @@ namespace Vision
               if (cvui::button(main_image, x + 235, y + 28, "Stop Plan", 0.5, 0xff0f0f))
               {
                 m_plan_on = false;
-                m_task->war("Stop Plan");
+                m_task->debug("Stop Plan");
               }
             }
             else
@@ -331,7 +337,7 @@ namespace Vision
               if (cvui::button(main_image, x + 235, y + 28, "Start Plan", 0.5, 0x0fff0f))
               {
                 m_plan_on = true;
-                m_task->war("Start Plan");
+                m_task->debug("Start Plan");
               }
             }
 
