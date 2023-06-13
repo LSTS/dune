@@ -1100,6 +1100,8 @@ namespace DUNE
         
       if (unit == IMC::Z_DEPTH)
         return m_estate.depth;
+
+      return m_estate.z;
     }
 
     void
