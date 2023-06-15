@@ -74,7 +74,14 @@ namespace Vision
           }
 
           ~InterfaceCVUi(void)
-          {}
+          {
+            if(m_video_on)
+            {
+              m_video_on = false;
+              m_task->inf("Stop Video");
+              m_video.release();
+            }
+          }
 
           void
           initGUI(int fps)

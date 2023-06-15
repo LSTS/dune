@@ -70,6 +70,8 @@ namespace Vision
       int dist_real_p;
       //! Real Distance In cm
       float dist_real_cm;
+      //! Save original video
+      bool save_original_input;
     };
 
     //! Task.
@@ -108,6 +110,11 @@ namespace Vision
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("None")
         .description("Detection Method");
+
+        param("Save Original Video", m_args.save_original_input)
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .defaultValue("false")
+        .description("Save Original Video.");
 
         param("Maximum Fps", m_args.max_fps)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -161,7 +168,7 @@ namespace Vision
       void
       onResourceInitialization(void)
       {
-        m_cap = new CaptureImage(this, m_args.url, m_args.imshow);
+        m_cap = new CaptureImage(this, m_args.url, m_args.imshow, m_args.save_original_input);
         m_cap->start();
         m_img_proc = new ProcessImage(this, m_args.imshow, m_cap, m_args.method, m_args.max_fps);
         m_img_proc->setHSVIntervals(m_args.hue_interval, m_args.saturation_interval, m_args.value_interval);

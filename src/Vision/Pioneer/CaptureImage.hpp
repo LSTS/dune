@@ -55,16 +55,18 @@ namespace Vision
         //! @param[in] task parent task.
         //! @param[in] url of ipcam.
         //! @param[in] imshow display
-        CaptureImage(DUNE::Tasks::Task* task, std::string url, std::string imshow) :
+        CaptureImage(DUNE::Tasks::Task* task, std::string url, std::string imshow, bool save_original_input) :
           m_task(task),
           m_is_capturing(false)
         {
+          m_save_original_input = save_original_input;
           m_imshow = imshow;
           m_url = url;
           cv::setNumThreads(4);
           m_capture = initCapture(m_url);
           m_wdog_cap_erro.setTop(1.0);
           m_counter_erro_frame = 0;
+          m_first_frame = true;
         }
 
         //! Destructor.
@@ -73,6 +75,9 @@ namespace Vision
           m_capture.release();
           if(m_imshow.compare("All") == 0 || m_imshow.compare("Cap") == 0)
             cv::destroyAllWindows();
+
+          m_task->inf("Stop Saving Original Input");
+          m_video.release();
         }
 
         cv::VideoCapture
@@ -144,6 +149,15 @@ namespace Vision
               {
                 m_counter_erro_frame = 0;
                 m_frame = frame_temp.clone();
+                if(m_first_frame)
+                {
+                  m_first_frame = false;
+                  createObjectVideo(frame_temp);
+                }
+                else
+                {
+                  addToVideo(frame_temp);
+                }
                 if(m_imshow.compare("All") == 0 || m_imshow.compare("Input") == 0)
                 {
                   cv::imshow("RTSP stream thread", frame_temp);
@@ -181,6 +195,116 @@ namespace Vision
         Counter<double> m_wdog_cap_erro;
         //! Counter of frames fail
         int m_counter_erro_frame;
+        //! Save original input
+        bool m_save_original_input;
+        //! Object to save video
+        cv::VideoWriter m_video;
+        //! String path for pionner root folder
+        std::string pioneer_path;
+        //! String path for date folder
+        std::string date_path;
+        //! Flag to control state of video
+        bool m_save_original_ok;
+        //! Flag to control state of log folders
+        bool m_log_folder_ok;
+        //! Flag to control first frame
+        bool m_first_frame;
+
+        void
+        createObjectVideo(cv::Mat input_frame)
+        {
+          m_save_original_ok = true;
+          if(m_save_original_input)
+          {
+            createFoldersLogs();
+            if(m_log_folder_ok)
+            {
+              // Get the size of the image
+              int width = input_frame.cols;
+              int height = input_frame.rows;
+
+              // Convert to cv::Size
+              cv::Size imageSize(width, height);
+              std::string name_file = date_path + "/" + getCurrentTime() + ".mp4";
+              m_video.open(name_file.c_str(), cv::VideoWriter::fourcc('M', 'P', '4', 'V'), 12, imageSize);
+              if (!m_video.isOpened())
+              {
+                m_task->err("Erro creating video object for original input");
+                m_save_original_ok = false;
+              }
+              else
+              {
+                m_task->inf("Saving Original Input.");
+              }
+            }
+          }
+        }
+
+        std::string
+        getCurrentTime()
+        {
+          time_t now = time(0);
+          struct tm tstruct;
+          char buffer[32];
+          tstruct = *localtime(&now);
+          strftime(buffer, sizeof(buffer), "%H%M%S", &tstruct);
+          return buffer;
+        }
+
+        std::string
+        getCurrentDate()
+        {
+          time_t now = time(0);
+          struct tm tstruct;
+          char buffer[32];
+          tstruct = *localtime(&now);
+          strftime(buffer, sizeof(buffer), "%Y%m%d", &tstruct);
+          return buffer;
+        }
+
+        bool
+        directoryExists(const std::string &path)
+        {
+          struct stat info;
+          return stat(path.c_str(), &info) == 0 && S_ISDIR(info.st_mode);
+        }
+
+        void
+        createFoldersLogs(void)
+        {
+          m_log_folder_ok = true;
+          std::string desktop_path = getenv("HOME");
+          desktop_path += "/Desktop/";
+          pioneer_path = desktop_path + "pioneer";
+          date_path = pioneer_path + "/" + getCurrentDate();
+
+          if (!directoryExists(pioneer_path))
+          {
+            if (mkdir(pioneer_path.c_str(), 0777) == -1)
+            {
+              std::cout << "Fail creating folder 'pioneer'." << std::endl;
+              m_log_folder_ok = false;
+            }
+          }
+
+          if (!directoryExists(date_path))
+          {
+            if (mkdir(date_path.c_str(), 0777) == -1)
+            {
+              std::cout << "Fail creating folder data." << std::endl;
+              m_log_folder_ok = false;
+            }
+          }
+        }
+
+        void
+        addToVideo(cv::Mat image_input)
+        {
+          if (m_save_original_ok)
+          {
+            m_video.write(image_input);
+          }
+        }
     };
   }
 }
