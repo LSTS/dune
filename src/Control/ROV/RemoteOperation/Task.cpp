@@ -215,7 +215,7 @@ namespace Control
 
           // Add remote actions.
           addActionAxis("Forward");
-          addActionAxis("Starboard");
+          addActionAxis("Sideways");
           addActionAxis("Up");
           addActionAxis("Rotate");
           addActionButton("Stop");
@@ -405,7 +405,7 @@ namespace Control
 
             forwardControl(tuples.get("Forward", 0));
 
-            m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
+            m_forces(1, 0) = tuples.get("Sideways", 0) / 127.0; // Y
 
             int up = tuples.get("Up", 0);
 
@@ -438,7 +438,7 @@ namespace Control
           else
           {
             m_forces(0, 0) = tuples.get("Forward", 0) / 127.0;   // X
-            m_forces(1, 0) = tuples.get("Starboard", 0) / 127.0; // Y
+            m_forces(1, 0) = tuples.get("Sideways", 0) / 127.0; // Y
             m_forces(3, 0) = 0.0;                                // K
             m_forces(4, 0) = 0.0;                                // M
             m_forces(2, 0) = tuples.get("Up", 0) / 127.0;      // Z
