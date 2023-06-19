@@ -176,7 +176,7 @@ namespace DUNE
     {
       debug("activating");
       if (getEntityState() <= IMC::EntityState::ESTA_NORMAL)
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
       queueState(SM_ACT_BEGIN);
     }
 
