@@ -60,7 +60,9 @@ class ImageActor(DynamicActor):
                 self.camera.capture(path, 'jpeg')
 
                 # Log current state
-                logging.debug('Image captured and saved')
+                entry1 = imcpy.LogBookEntry()
+                entry1.text = 'Image captured and saved'
+                self.send(node, entry1)
 
                 # Insert Exif data
                 with open(path, "rb") as no_exif_file:
@@ -99,29 +101,33 @@ class ImageActor(DynamicActor):
                 no_exif_image.gps_altitude = self.msg_height
 
                 # Log current state
-                logging.debug('EXIF operation done')
-
+                entry2 = imcpy.LogBookEntry()
+                entry2.text = 'EXIF operation done'
+                self.send(node, entry2)
 
                 # Save Image with Exif data
                 with open(path, 'wb') as new_image_file:
                     new_image_file.write(no_exif_image.get_file())
 
                 # Log current state
-                logging.debug('Captured image with Estimated State Saved')
+                entry3 = imcpy.LogBookEntry()
+                entry3.text = 'Captured image with Estimated State Saved'
+                self.send(node, entry3)
 
                 # Resize image and send to Dune for processing (Maximum size allowed too small for processing)
                     #image = Image.open(path)
                     #image = image.resize((140,140))
 
                 # Create a message that contains the path of the newly created image as a response for the request
-                entry = imcpy.LogBookEntry()
-                entry.text = path
-                self.send(node, entry)
+                entry4 = imcpy.LogBookEntry()
+                entry4.text = 'Image is available at:' + path
+                self.send(node, entry4)
 
         except Exception as e:
-                logging.debug(e)
-    
-    @Subscribe(imcpy.EstimatedState)
+                entry5 = imcpy.LogBookEntry()
+                entry5.text = str(e)
+                self.send(node, entry5)
+
     def consumeEstimatedState(self, msg: imcpy.EstimatedState):
         try:
             # Check if message originates from the target system
@@ -156,7 +162,9 @@ class ImageActor(DynamicActor):
                 self.msg_height = height_new
 
         except Exception as e:
-                logging.debug(e)
+                entry6 = imcpy.LogBookEntry()
+                entry6.text = str(e)
+                self.send(node, entry6)
 
     @Subscribe(imcpy.LoggingControl)
     def consumeLoggingControl(self, msg: imcpy.LoggingControl):
@@ -168,9 +176,15 @@ class ImageActor(DynamicActor):
             # Check if logging has started and print path
             if msg.op == imcpy.LoggingControl.ControlOperationEnum.STARTED:
                 self.logname = self.log_root + '/' + msg.name
-                logging.debug('New log path' + self.logname)
+                
+                entry6 = imcpy.LogBookEntry()
+                entry6.text = 'New log path:' + self.logname
+                self.send(node, entry6)
+                
         except Exception as e:
-                logging.debug(e)
+                entry7 = imcpy.LogBookEntry()
+                entry7.text = str(e)
+                self.send(node, entry7)
 
     @Subscribe(imcpy.Event)
     def consumeEvent(self, msg: imcpy.Event):
@@ -188,11 +202,14 @@ class ImageActor(DynamicActor):
                 resolution_list = resolution_data.split(",")
                 self.camera.resolution = (int(resolution_list[0]), int(resolution_list[1]))
                 
-                logging.debug('Camera resolution changed')
-                logging.debug(self.camera.resolution)
+                entry8 = imcpy.LogBookEntry()
+                entry8.text = 'Camera resolution changed: ' + self.camera.resolution
+                self.send(node, entry8)
 
         except Exception as e:
-                logging.debug(e)
+                entry9 = imcpy.LogBookEntry()
+                entry9.text = 'Camera resolution changed: ' + self.camera.resolution
+                self.send(node, entry9)
 
 if __name__ == '__main__':
     

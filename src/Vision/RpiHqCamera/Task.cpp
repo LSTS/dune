@@ -147,7 +147,8 @@ namespace Vision
       {
         if (msg->getSource() == getSystemId())
           return;
-        inf("Image is available at %s", msg->text.c_str());
+        //inf("Image is available at %s", msg->text.c_str());
+        inf("MESSAGE: %s", msg->text.c_str());
       }
 
       //! Main loop.
@@ -157,7 +158,7 @@ namespace Vision
         IMC::CompressedImage img_req;
         img_req.frameid = m_frame_counter++;
         dispatch(img_req);
-        inf("Sent compressed image request %d", m_frame_counter);
+        inf("MESSAGE: Sent compressed image request %d", m_frame_counter);
       }
     };
   }
