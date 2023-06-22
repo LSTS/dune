@@ -47,6 +47,8 @@ class ImageActor(DynamicActor):
             # Check if message originates from the target system
             node = self.resolve_node_id(self.target)
             if msg.src == node.id:
+                
+                timestr = time.strftime("%Y%m%d-%H%M%S")
 
                 # Create Photos directory if it does not exist
                 photos_dir = self.logname + '/Photos/'
@@ -54,9 +56,11 @@ class ImageActor(DynamicActor):
                     os.makedirs(photos_dir)
 
                 # Capture and Save Image
-                path = photos_dir + str(msg.frameid) + ".jpeg"
+                path = photos_dir + str(timestr) + ".jpeg"
                 self.camera.capture(path, 'jpeg')
-                print("Image captured and saved")
+
+                # Log current state
+                logging.debug('Image captured and saved')
 
                 # Insert Exif data
                 with open(path, "rb") as no_exif_file:
@@ -94,12 +98,17 @@ class ImageActor(DynamicActor):
                 # Insert altitude exif data
                 no_exif_image.gps_altitude = self.msg_height
 
-                print("Exif operation done")
+                # Log current state
+                logging.debug('EXIF operation done')
+
 
                 # Save Image with Exif data
                 with open(path, 'wb') as new_image_file:
                     new_image_file.write(no_exif_image.get_file())
-                print("Captured image with Estimated State Saved")
+
+                # Log current state
+                logging.debug('Captured image with Estimated State Saved')
+
                 # Resize image and send to Dune for processing (Maximum size allowed too small for processing)
                     #image = Image.open(path)
                     #image = image.resize((140,140))
@@ -109,8 +118,8 @@ class ImageActor(DynamicActor):
                 entry.text = path
                 self.send(node, entry)
 
-        except KeyError as e:
-            pass
+        except Exception as e:
+                logging.debug(e)
     
     @Subscribe(imcpy.EstimatedState)
     def consumeEstimatedState(self, msg: imcpy.EstimatedState):
@@ -128,6 +137,7 @@ class ImageActor(DynamicActor):
 
                 # Earth radius constant
                 earth_radius = 6371000
+                
                 # Convert lon and lat rad values into degrees
                 latitude_deg = math.degrees(rlat)
                 longitude_deg = math.degrees(rlon)
@@ -145,8 +155,8 @@ class ImageActor(DynamicActor):
                 self.msg_longitude = longitude_new
                 self.msg_height = height_new
 
-        except KeyError as e:
-            pass
+        except Exception as e:
+                logging.debug(e)
 
     @Subscribe(imcpy.LoggingControl)
     def consumeLoggingControl(self, msg: imcpy.LoggingControl):
@@ -158,9 +168,9 @@ class ImageActor(DynamicActor):
             # Check if logging has started and print path
             if msg.op == imcpy.LoggingControl.ControlOperationEnum.STARTED:
                 self.logname = self.log_root + '/' + msg.name
-                print('New log path' + self.logname)
-        except KeyError as e:
-            pass
+                logging.debug('New log path' + self.logname)
+        except Exception as e:
+                logging.debug(e)
 
     @Subscribe(imcpy.Event)
     def consumeEvent(self, msg: imcpy.Event):
@@ -177,11 +187,12 @@ class ImageActor(DynamicActor):
                 resolution_data = msg.data
                 resolution_list = resolution_data.split(",")
                 self.camera.resolution = (int(resolution_list[0]), int(resolution_list[1]))
-                print('Camera resolution changed')
-                print(self.camera.resolution)
+                
+                logging.debug('Camera resolution changed')
+                logging.debug(self.camera.resolution)
 
-        except KeyError as e:
-            pass
+        except Exception as e:
+                logging.debug(e)
 
 if __name__ == '__main__':
     
