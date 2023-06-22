@@ -33,10 +33,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#ifdef DUNE_USING_MOSQUITTO
 #include <mosquitto.h>
-#endif
-
 
 namespace Transports
 {
@@ -88,7 +85,7 @@ namespace Transports
       {
         // Clear errors
         m_err_str.clear();
-#ifdef DUNE_USING_MOSQUITTO
+
         //required by mosquitto_lib_init()
         mosquitto_threaded_set(m_mosq, true);
 
@@ -100,7 +97,6 @@ namespace Transports
         }
         catch(const std::exception& e)
         {
-          exit(1);
           throw std::runtime_error(String::str("Client error: %s", e.what()).c_str());
         }
 
@@ -112,47 +108,32 @@ namespace Transports
 
         // Connect to broker
         connect();
-#else
-        
-        throw DUNE::Exception("Mosquitto build option off");
-#endif
       }
 
       //! Destructor.
       ~MosquittoClient(void)
       {
-#ifdef DUNE_USING_MOSQUITTO
         // libmosquitto cleanup
 		    mosquitto_destroy(m_mosq);
         mosquitto_lib_cleanup();
-#endif
       }
 
       void
       subscribe(std::string topic)
       {
-#ifdef DUNE_USING_MOSQUITTO
         checkRC(mosquitto_subscribe(m_mosq, NULL, topic.c_str(), 0));
-#else
-        (void)topic;
-#endif
       }
 
       void
       subscribe(std::vector<std::string> topics)
       {
-#ifdef DUNE_USING_MOSQUITTO
         for(unsigned i = 0; i < topics.size(); i++)
           subscribe(topics[i]);
-#else
-        (void)topics;
-#endif
       }
 
       bool
       poll(std::string& topic, std::string& payload)
       {
-#ifdef DUNE_USING_MOSQUITTO
         mosquitto_message msg;
 
         if (!m_queue.pop(msg))
@@ -163,17 +144,11 @@ namespace Transports
         payload = std::string((char*)msg.payload, msg.payloadlen);
 
         return true;
-#else
-        (void) topic;
-        (void) payload;
-        return false;
-#endif
       }
 
       bool
       poll(char* topic, uint8_t* payload, uint32_t* payload_length)
       {
-#ifdef DUNE_USING_MOSQUITTO
         mosquitto_message msg;
 
         if (!m_queue.pop(msg))
@@ -184,37 +159,20 @@ namespace Transports
         *payload_length = msg.payloadlen;
         
         return true;
-#else
-        (void) topic;
-        (void) payload;
-        (void) payload_length;
-        return false;
-#endif
       }
 
       void
       publish(std::string topic, uint8_t* payload, uint32_t payload_length)
       {
-#ifdef DUNE_USING_MOSQUITTO
         checkRC(mosquitto_publish(m_mosq, NULL, topic.c_str(), 
                                   payload_length, payload, 0, m_args->retain));
         m_task->spew("sent: %s: %s", topic.c_str(), sanitize(std::string((char*)payload, payload_length).c_str()).c_str());
-#else
-        (void) topic;
-        (void) payload;
-        (void) payload_length;
-#endif
       }
 
       void
       publish(std::string topic, std::string payload)
       {
-#ifdef DUNE_USING_MOSQUITTO
         publish(topic, (uint8_t*)payload.c_str(), payload.size());
-#else
-        (void) topic;
-        (void) payload;
-#endif
       }
 
       //! Main loop
@@ -223,9 +181,7 @@ namespace Transports
       {
         while (!isStopping())
         {
-#ifdef DUNE_USING_MOSQUITTO
           checkRC(mosquitto_loop(m_mosq, -1, 1));
-#endif
         }
       }
 
@@ -248,16 +204,13 @@ namespace Transports
       //! Arguments
       const Arguments* m_args;
       //! Mosquitto instance
-#ifdef DUNE_USING_MOSQUITTO
 	    mosquitto *m_mosq;
       //! Message queue
       TSQueue<mosquitto_message> m_queue;
-#endif
       //! Error string. Since the client runs on a separate thread 
       //! the string is used as a flag to poll for client error.
       std::string m_err_str;
 
-#ifdef DUNE_USING_MOSQUITTO
       void
       setAuthentication()
       {
@@ -364,7 +317,6 @@ namespace Transports
           m_err_str = String::str("Client Error: %s", mosquitto_strerror(rc));
         }
       }
-#endif
     };
   }
 }
