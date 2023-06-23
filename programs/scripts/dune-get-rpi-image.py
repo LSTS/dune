@@ -127,7 +127,8 @@ class ImageActor(DynamicActor):
                 entry5 = imcpy.LogBookEntry()
                 entry5.text = str(e)
                 self.send(node, entry5)
-
+                
+    @Subscribe(imcpy.EstimatedState)
     def consumeEstimatedState(self, msg: imcpy.EstimatedState):
         try:
             # Check if message originates from the target system
