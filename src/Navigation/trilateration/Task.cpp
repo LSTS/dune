@@ -50,10 +50,114 @@ namespace Navigation
         /* data */
       };
 
+      class Error: public std::exception
+      {
+      public:
+        Error(const char* str): m_error(str)
+        {}
+
+        ~Error()
+        {}
+
+        const char* what() const noexcept override
+        {
+          return m_error.c_str();
+        }
+
+      private:
+        std::string m_error;
+      };
+
       struct Point
       {
-        int x;
-        int y;
+        double x;
+        double y;
+
+        Point(): x(0), y(0)
+        {}
+
+        Point(double _x, double _y): x(_x), y(_y)
+        {}
+
+        Point(const Point& val): x(val.x), y(val.y)
+        {}
+
+        double norm(const Point& point)
+        {
+          return sqrt(pow(x-point.x, 2) + pow(y-point.y, 2));
+        }
+
+        double norm()
+        {
+          return sqrt(pow(x, 2) + pow(y, 2));
+        }
+
+        double normalize()
+        {
+          double dst = norm();
+          x /= dst;
+          y /= dst;
+          return dst;
+        }
+
+        Point getPerpendicular()
+        {
+          return Point(-y, x);
+        }
+
+        Point operator+(const Point& to_add) const
+        {
+          return Point(x+to_add.x, y+to_add.y);
+        }
+
+        Point operator-(const Point& to_add) const
+        {
+          return Point(x-to_add.x, y-to_add.y);
+        }
+
+        Point& operator+=(const Point& to_add)
+        {
+          x += to_add.x;
+          y += to_add.y;
+          return *this;
+        }
+
+        Point& operator-=(const Point& to_add)
+        {
+          x -= to_add.x;
+          y -= to_add.y;
+          return *this;
+        }
+
+        Point operator/(double ratio) const
+        {
+          return Point(x/ratio, y/ratio);
+        }
+
+        Point& operator/=(double ratio)
+        {
+          x /= ratio;
+          y /= ratio;
+          return *this;
+        }
+
+        Point operator*(double ratio) const
+        {
+          return Point(x*ratio, y*ratio);
+        }
+
+        Point& operator*=(double ratio)
+        {
+          x *= ratio;
+          y *= ratio;
+          return *this;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const Point& to_print)
+        {
+          os << '(' << to_print.x << ',' << to_print.y << ')';
+          return os;
+        }
       };
       
       
@@ -104,34 +208,39 @@ namespace Navigation
       void
       getInterception(const Point& p1, double distance1, const Point& p2, double distance2)
       {
-        Point solution = {};
-
-        solution.x = std::sqrt(std::pow(distance1, 2) - std::pow(solution.y - p1.x, 2)) - p1.x;
-        /*
-        ||S-p1|| = 4 -> s.x-p1.x ^2 + s.y-p1.y ^2 = 4^2  s.x = sqrt( d1^2 - s.y-p1.y ^2) - p1.x
-        ||S-p2|| = 5 -> s.x-p2.x ^2 + s.y-p2.y ^2 = 5^2  
-
-        (sqrt(d1^2 - s.y-p1.y ^2) - p1.x - p2.x) ^2 + s.y-p2.y ^2 = 5^2
-        d1^2 - (s.y-p1.y)^2 - 2(sqrt(d1^2 - s.y-p1.y ^2))(p1.x+p2.x) + (p1.x+p2.x)^2 + s.y^2 + 2(s.y)(p2.y) + p2.y^2 = d2^2
-        - (s.y-p1.y)^2 - 2(sqrt(d1^2 - s.y-p1.y ^2))(p1.x+p2.x) + s.y^2 + 2(s.y)(p2.y) = d2^2 - d1^2 - (p1.x+p2.x)^2 - p2.y^2
-        -s.y ^2 + 2(s.y)(p1.y) - 2(sqrt(d1^2 - s.y-p1.y ^2))(p1.x+p2.x) + s.y^2 + 2(s.y)(p2.y) = d2^2 - d1^2 - (p1.x+p2.x)^2 - p2.y^2 + p1.y^2
+        Point vector_x = p2-p1;
+        double length = vector_x.normalize()/2;
+        if (length > distance1+distance2)
+          throw Error("Interception impossible");
         
-        */
+        double delta_x = length + (distance1-distance2)/2;
+        double delta_y = sqrt(pow(distance1,2) - pow(delta_x,2));
+
+        Point vector_y = vector_x.getPerpendicular();
+        Point result_1 = p1+vector_x*delta_x + vector_y*delta_y;
+        Point result_2 = p1+vector_x*delta_x - vector_y*delta_y;
+
+        {
+          std::stringstream str;
+          str << "Interception 1: " << result_1;
+          inf(str.str().c_str());
+        }
+        std::stringstream str;
+        str << "Interception 2: " << result_2;
+        inf(str.str().c_str());
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        Point referential = {};
+        Point referential;
         while (!stopping())
         {
-          waitForMessages(1.0);
+          waitForMessages(3.0);
 
-          Point p1 = {}, p2 = {};
-          p2.x = 4;
-          double distance1 = 4;
-          double distance2 = 5;
+          Point p1(0,0), p2(6,0);
+          getInterception(p1, 5, p2, 5);
         }
       }
     };
