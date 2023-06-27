@@ -164,9 +164,22 @@ namespace Navigation
       {
         Point point;
         double distance;
+
+        Info(): point(), distance(0)
+        {}
+
+        Info(double _x, double _y, double _dst): point(_x, _y), distance(_dst)
+        {}
+
+        void
+        setPoint(double _x, double _y)
+        {
+          point.x = _x;
+          point.y = _y;
+        }
       };
 
-      std::queue<Info> m_points;
+      std::array<Info, 3> m_data;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -218,10 +231,10 @@ namespace Navigation
         Point vector_x = data_1.point - data_2.point;
         double length = vector_x.normalize()/2;
 
-        if (length > data_1.distance + data_2.distance)
+        if (2*length > data_1.distance + data_2.distance)
           throw Error("Interception impossible");
 
-        double delta_x = length + (data_1.distance-data_2.distance)/2;
+        double delta_x = length + (pow(data_1.distance,2) - pow(data_2.distance,2) )/(4*length);
         double delta_y = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
 
         Point vector_y = vector_x.getPerpendicular();
@@ -241,16 +254,29 @@ namespace Navigation
       }
 
       void
+      updatePoints(double x_pos, double y_pos, double new_distance)
+      {
+        m_data[0] = m_data[1];
+        m_data[1] = m_data[2];
+        m_data[2].setPoint(x_pos, y_pos);
+        m_data[2].distance = new_distance;
+      }
+
+      void
+      getArea()
+      {
+        
+      }
+
+      void
       consume(const IMC::Distance* msg)
       {
         if (msg->validity == IMC::Distance::DV_INVALID)
           return;
 
-        if (m_points.size() == 3)
-          m_points.pop();
-
-        auto iter = msg->location.end();
-        m_points.emplace((*iter)->x, (*iter)->y, msg->value);
+        auto var = msg->location.end();
+        updatePoints((*var)->x, (*var)->y, msg->value);
+        getArea();
       }
 
       //! Main loop.
